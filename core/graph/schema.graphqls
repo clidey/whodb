@@ -1,0 +1,18 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+enum DatabaseType {
+  Postgres,
+}
+
+type Query {
+  Schema(type: DatabaseType!): [String!]!
+  StorageUnit(type: DatabaseType!, schema: String!): [String!]! # tables, collections
+  Row(type: DatabaseType!, schema: String!, storageUnit: String!): [String!]! # row, document
+  Column(type: DatabaseType!, schema: String!, storageUnit: String!, row: String!): [String!]!
+}
+
+type Mutation {
+  CreateStorageUnit(type: DatabaseType!, schema: String!): String!
+}
