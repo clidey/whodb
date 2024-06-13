@@ -1,0 +1,5 @@
+mutation Login($credentails: LoginCredentials!) {
+  Login(credentails: $credentails) {
+    Status
+  }
+}

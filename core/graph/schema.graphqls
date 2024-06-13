@@ -6,13 +6,36 @@ enum DatabaseType {
   Postgres,
 }
 
+type Column {
+  Type: String!
+  Name: String!
+}
+
+type RowsResult {
+  Columns: [Column!]!
+  Rows: [[String!]!]!
+}
+
 type Query {
-  Schema(type: DatabaseType!): [String!]!
-  StorageUnit(type: DatabaseType!, schema: String!): [String!]! # tables, collections
-  Row(type: DatabaseType!, schema: String!, storageUnit: String!): [String!]! # row, document
-  Column(type: DatabaseType!, schema: String!, storageUnit: String!, row: String!): [String!]!
+  StorageUnit(type: DatabaseType!): [String!]! # tables, collections
+  Row(type: DatabaseType!, storageUnit: String!): RowsResult! # row, document
+  Column(type: DatabaseType!, storageUnit: String!, row: String!): [String!]!
+}
+
+input LoginCredentials {
+  Type: String!
+  Hostname: String!
+  Username: String!
+  Password: String!
+  Port: Int!
+}
+
+type LoginResponse {
+  Status: Boolean!
 }
 
 type Mutation {
-  CreateStorageUnit(type: DatabaseType!, schema: String!): String!
+  Login(credentails: LoginCredentials!): LoginResponse!
+
+  CreateStorageUnit(type: DatabaseType!): String!
 }

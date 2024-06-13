@@ -8,10 +8,8 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
-	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/clidey/whodb/core/graph"
 	"github.com/clidey/whodb/core/src/auth"
-	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -19,13 +17,6 @@ import (
 )
 
 const defaultPort = "8080"
-
-func setupPlaygroundHandler(r chi.Router, server *handler.Server) {
-	if env.IsDevelopment {
-		r.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	}
-	r.Handle("/query", server)
-}
 
 type OAuthLoginUrl struct {
 	Url string `json:"url"`
@@ -54,6 +45,7 @@ func setupMiddlewares(router *chi.Mux) {
 			AllowCredentials: false,
 			MaxAge:           300,
 		}),
+		contextMiddleware,
 		auth.AuthMiddleware,
 	)
 }

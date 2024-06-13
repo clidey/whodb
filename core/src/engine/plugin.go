@@ -11,11 +11,20 @@ type PluginConfig struct {
 	Credentials *Credentials
 }
 
+type Column struct {
+	Type string
+	Name string
+}
+
+type GetRowsResult struct {
+	Columns []Column
+	Rows    [][]string
+}
+
 type PluginFunctions interface {
-	GetSchema(config *PluginConfig) []string
-	GetStorageUnits(config *PluginConfig, schema string) ([]string, error)
-	GetRows(config *PluginConfig, schema string, storageUnit string) []string
-	GetColumns(config *PluginConfig, schema string, storageUnit string, row string) map[string][]string
+	GetStorageUnits(config *PluginConfig) ([]string, error)
+	GetRows(config *PluginConfig, storageUnit string) (*GetRowsResult, error)
+	GetColumns(config *PluginConfig, storageUnit string, row string) (map[string][]string, error)
 	GetConstraints(config *PluginConfig) map[string]string
 	RawExecute(config *PluginConfig, sql string) error
 }

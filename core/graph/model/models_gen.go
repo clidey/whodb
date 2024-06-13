@@ -8,10 +8,32 @@ import (
 	"strconv"
 )
 
+type Column struct {
+	Type string `json:"Type"`
+	Name string `json:"Name"`
+}
+
+type LoginCredentials struct {
+	Type     string `json:"Type"`
+	Hostname string `json:"Hostname"`
+	Username string `json:"Username"`
+	Password string `json:"Password"`
+	Port     int    `json:"Port"`
+}
+
+type LoginResponse struct {
+	Status bool `json:"Status"`
+}
+
 type Mutation struct {
 }
 
 type Query struct {
+}
+
+type RowsResult struct {
+	Columns []*Column  `json:"Columns"`
+	Rows    [][]string `json:"Rows"`
 }
 
 type DatabaseType string

@@ -10,31 +10,46 @@ import (
 
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src"
+	"github.com/clidey/whodb/core/src/auth"
 	"github.com/clidey/whodb/core/src/engine"
 )
 
-// CreateStorageUnit is the resolver for the CreateStorageUnit field.
-func (r *mutationResolver) CreateStorageUnit(ctx context.Context, typeArg model.DatabaseType, schema string) (string, error) {
-	panic(fmt.Errorf("not implemented: Schema - Schema"))
+// Login is the resolver for the Login field.
+func (r *mutationResolver) Login(ctx context.Context, credentails model.LoginCredentials) (*model.LoginResponse, error) {
+	return auth.Login(ctx, &credentails)
 }
 
-// Schema is the resolver for the Schema field.
-func (r *queryResolver) Schema(ctx context.Context, typeArg model.DatabaseType) ([]string, error) {
+// CreateStorageUnit is the resolver for the CreateStorageUnit field.
+func (r *mutationResolver) CreateStorageUnit(ctx context.Context, typeArg model.DatabaseType) (string, error) {
 	panic(fmt.Errorf("not implemented: Schema - Schema"))
 }
 
 // StorageUnit is the resolver for the StorageUnit field.
-func (r *queryResolver) StorageUnit(ctx context.Context, typeArg model.DatabaseType, schema string) ([]string, error) {
-	return src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetStorageUnits(&engine.PluginConfig{}, schema)
+func (r *queryResolver) StorageUnit(ctx context.Context, typeArg model.DatabaseType) ([]string, error) {
+	return src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetStorageUnits(&engine.PluginConfig{})
 }
 
 // Row is the resolver for the Row field.
-func (r *queryResolver) Row(ctx context.Context, typeArg model.DatabaseType, schema string, storageUnit string) ([]string, error) {
-	panic(fmt.Errorf("not implemented: Row - Row"))
+func (r *queryResolver) Row(ctx context.Context, typeArg model.DatabaseType, storageUnit string) (*model.RowsResult, error) {
+	rowsResult, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetRows(&engine.PluginConfig{}, storageUnit)
+	if err != nil {
+		return nil, err
+	}
+	columns := []*model.Column{}
+	for _, column := range rowsResult.Columns {
+		columns = append(columns, &model.Column{
+			Type: column.Type,
+			Name: column.Name,
+		})
+	}
+	return &model.RowsResult{
+		Columns: columns,
+		Rows:    rowsResult.Rows,
+	}, nil
 }
 
 // Column is the resolver for the Column field.
-func (r *queryResolver) Column(ctx context.Context, typeArg model.DatabaseType, schema string, storageUnit string, row string) ([]string, error) {
+func (r *queryResolver) Column(ctx context.Context, typeArg model.DatabaseType, storageUnit string, row string) ([]string, error) {
 	panic(fmt.Errorf("not implemented: Column - Column"))
 }
 
@@ -53,6 +68,9 @@ type queryResolver struct{ *Resolver }
 //   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
 //     it when you're done.
 //   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *queryResolver) Schema(ctx context.Context, typeArg model.DatabaseType) ([]string, error) {
+	panic(fmt.Errorf("not implemented: Schema - Schema"))
+}
 func (r *mutationResolver) CreateTable(ctx context.Context, typeArg model.DatabaseType) (string, error) {
 	panic(fmt.Errorf("not implemented: CreateTable - CreateTable"))
 }
