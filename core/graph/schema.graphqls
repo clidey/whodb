@@ -16,8 +16,18 @@ type RowsResult {
   Rows: [[String!]!]!
 }
 
+type Record {
+  Key: String!
+  Value: String!
+}
+
+type StorageUnit {
+  Name: String!
+  Attributes: [Record!]!
+}
+
 type Query {
-  StorageUnit(type: DatabaseType!): [String!]! # tables, collections
+  StorageUnit(type: DatabaseType!): [StorageUnit!]! # tables, collections
   Row(type: DatabaseType!, storageUnit: String!): RowsResult! # row, document
   Column(type: DatabaseType!, storageUnit: String!, row: String!): [String!]!
 }
@@ -27,7 +37,7 @@ input LoginCredentials {
   Hostname: String!
   Username: String!
   Password: String!
-  Port: Int!
+  Database: String!
 }
 
 type LoginResponse {
@@ -37,5 +47,5 @@ type LoginResponse {
 type Mutation {
   Login(credentails: LoginCredentials!): LoginResponse!
 
-  CreateStorageUnit(type: DatabaseType!): String!
+  CreateStorageUnit(type: DatabaseType!): StorageUnit!
 }

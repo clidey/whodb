@@ -28,9 +28,9 @@ export enum DatabaseType {
 }
 
 export type LoginCredentials = {
+  Database: Scalars['String']['input'];
   Hostname: Scalars['String']['input'];
   Password: Scalars['String']['input'];
-  Port: Scalars['Int']['input'];
   Type: Scalars['String']['input'];
   Username: Scalars['String']['input'];
 };

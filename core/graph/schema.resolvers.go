@@ -20,13 +20,32 @@ func (r *mutationResolver) Login(ctx context.Context, credentails model.LoginCre
 }
 
 // CreateStorageUnit is the resolver for the CreateStorageUnit field.
-func (r *mutationResolver) CreateStorageUnit(ctx context.Context, typeArg model.DatabaseType) (string, error) {
+func (r *mutationResolver) CreateStorageUnit(ctx context.Context, typeArg model.DatabaseType) (*model.StorageUnit, error) {
 	panic(fmt.Errorf("not implemented: Schema - Schema"))
 }
 
 // StorageUnit is the resolver for the StorageUnit field.
-func (r *queryResolver) StorageUnit(ctx context.Context, typeArg model.DatabaseType) ([]string, error) {
-	return src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetStorageUnits(&engine.PluginConfig{})
+func (r *queryResolver) StorageUnit(ctx context.Context, typeArg model.DatabaseType) ([]*model.StorageUnit, error) {
+	config := &engine.PluginConfig{}
+	units, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetStorageUnits(config)
+	if err != nil {
+		return nil, err
+	}
+	storageUnits := []*model.StorageUnit{}
+	for _, unit := range units {
+		attributes := []*model.Record{}
+		for key, value := range unit.Attributes {
+			attributes = append(attributes, &model.Record{
+				Key:   key,
+				Value: value,
+			})
+		}
+		storageUnits = append(storageUnits, &model.StorageUnit{
+			Name:       unit.Name,
+			Attributes: attributes,
+		})
+	}
+	return storageUnits, nil
 }
 
 // Row is the resolver for the Row field.

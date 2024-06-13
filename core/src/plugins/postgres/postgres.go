@@ -11,17 +11,51 @@ import (
 
 type PostgresPlugin struct{}
 
-func (p *PostgresPlugin) GetStorageUnits(config *engine.PluginConfig) ([]string, error) {
+func (p *PostgresPlugin) GetStorageUnits(config *engine.PluginConfig) ([]engine.StorageUnit, error) {
 	db, err := DB(config)
 	if err != nil {
 		return nil, err
 	}
-	tables := []string{}
-	if err := db.Raw("SELECT tablename FROM pg_tables WHERE schemaname = 'public'").Scan(&tables).Error; err != nil {
+	storageUnits := []engine.StorageUnit{}
+	rows, err := db.Raw(`
+		SELECT
+			table_name,
+			table_type,
+			table_schema,
+			pg_size_pretty(pg_total_relation_size('"' || table_schema || '"."' || table_name || '"')) AS total_size,
+			pg_size_pretty(pg_relation_size('"' || table_schema || '"."' || table_name || '"')) AS data_size,
+			COALESCE((SELECT reltuples::bigint FROM pg_class WHERE oid = ('"' || table_schema || '"."' || table_name || '"')::regclass), 0) AS row_count
+		FROM
+			information_schema.tables
+		WHERE
+			table_schema = 'public'
+	`).Rows()
+	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
-	return tables, nil
+	for rows.Next() {
+		var tableName, tableType, tableSchema, totalSize, dataSize string
+		var rowCount int64
+		if err := rows.Scan(&tableName, &tableType, &tableSchema, &totalSize, &dataSize, &rowCount); err != nil {
+			return nil, err
+		}
+
+		attributes := map[string]string{
+			"Table Type":   tableType,
+			"Table Schema": tableSchema,
+			"Total Size":   totalSize,
+			"Data Size":    dataSize,
+			"Row Count":    fmt.Sprintf("%d", rowCount),
+		}
+
+		storageUnits = append(storageUnits, engine.StorageUnit{
+			Name:       tableName,
+			Attributes: attributes,
+		})
+	}
+	return storageUnits, nil
 }
 
 func (p *PostgresPlugin) GetRows(config *engine.PluginConfig, storageUnit string) (*engine.GetRowsResult, error) {

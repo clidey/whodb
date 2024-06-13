@@ -4,11 +4,16 @@ type Credentials struct {
 	Hostname string
 	Username string
 	Password string
-	Port     int
+	Database string
 }
 
 type PluginConfig struct {
 	Credentials *Credentials
+}
+
+type StorageUnit struct {
+	Name       string
+	Attributes map[string]string
 }
 
 type Column struct {
@@ -22,7 +27,7 @@ type GetRowsResult struct {
 }
 
 type PluginFunctions interface {
-	GetStorageUnits(config *PluginConfig) ([]string, error)
+	GetStorageUnits(config *PluginConfig) ([]StorageUnit, error)
 	GetRows(config *PluginConfig, storageUnit string) (*GetRowsResult, error)
 	GetColumns(config *PluginConfig, storageUnit string, row string) (map[string][]string, error)
 	GetConstraints(config *PluginConfig) map[string]string

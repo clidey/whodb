@@ -18,7 +18,7 @@ type LoginCredentials struct {
 	Hostname string `json:"Hostname"`
 	Username string `json:"Username"`
 	Password string `json:"Password"`
-	Port     int    `json:"Port"`
+	Database string `json:"Database"`
 }
 
 type LoginResponse struct {
@@ -31,9 +31,19 @@ type Mutation struct {
 type Query struct {
 }
 
+type Record struct {
+	Key   string `json:"Key"`
+	Value string `json:"Value"`
+}
+
 type RowsResult struct {
 	Columns []*Column  `json:"Columns"`
 	Rows    [][]string `json:"Rows"`
+}
+
+type StorageUnit struct {
+	Name       string    `json:"Name"`
+	Attributes []*Record `json:"Attributes"`
 }
 
 type DatabaseType string

@@ -9,8 +9,7 @@ import (
 )
 
 func DB(config *engine.PluginConfig) (*gorm.DB, error) {
-	databaseName := "postgres"
-	dsn := fmt.Sprintf("host=%v user=%v password=%v dbname=%v port=%v", config.Credentials.Hostname, config.Credentials.Username, config.Credentials.Password, databaseName, config.Credentials.Port)
+	dsn := fmt.Sprintf("host=%v user=%v password=%v dbname=%v port=5432", config.Credentials.Hostname, config.Credentials.Username, config.Credentials.Password, config.Credentials.Database)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, err
