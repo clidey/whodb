@@ -20,7 +20,7 @@ func Login(ctx context.Context, input *model.LoginCredentials) (*model.LoginResp
 	cookieValue := base64.StdEncoding.EncodeToString(loginInfoJSON)
 
 	cookie := &http.Cookie{
-		Name:     string(Authkey_Token),
+		Name:     string(AuthKey_Token),
 		Value:    cookieValue,
 		Path:     "/",
 		HttpOnly: true,

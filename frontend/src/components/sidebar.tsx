@@ -106,12 +106,12 @@ export const Sidebar: FC = () => {
             {
                 title: "Tables",
                 icon: Icons.Tables,
-                path: InternalRoutes.StorageUnit.StorageUnit.path,
+                path: InternalRoutes.Dashboard.StorageUnit.path,
             },
             {
                 title: "Graph",
                 icon: Icons.GraphLayout,
-                path: InternalRoutes.StorageUnit.StorageUnit.path,
+                path: InternalRoutes.Graph.path,
             },
         ];
     }, []);

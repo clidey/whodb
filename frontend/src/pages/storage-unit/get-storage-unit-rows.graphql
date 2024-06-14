@@ -1,0 +1,9 @@
+query GetStorageUnitRows($type: DatabaseType!, $storageUnit: String!) {
+  Row(type: $type, storageUnit: $storageUnit) {
+    Columns {
+      Type
+      Name
+    }
+    Rows
+  }
+}

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins/common"
@@ -19,16 +20,24 @@ func (p *PostgresPlugin) GetStorageUnits(config *engine.PluginConfig) ([]engine.
 	storageUnits := []engine.StorageUnit{}
 	rows, err := db.Raw(`
 		SELECT
-			table_name,
-			table_type,
-			table_schema,
-			pg_size_pretty(pg_total_relation_size('"' || table_schema || '"."' || table_name || '"')) AS total_size,
-			pg_size_pretty(pg_relation_size('"' || table_schema || '"."' || table_name || '"')) AS data_size,
-			COALESCE((SELECT reltuples::bigint FROM pg_class WHERE oid = ('"' || table_schema || '"."' || table_name || '"')::regclass), 0) AS row_count
+			t.table_name,
+			t.table_type,
+			t.table_schema,
+			pg_size_pretty(pg_total_relation_size('"' || t.table_schema || '"."' || t.table_name || '"')) AS total_size,
+			pg_size_pretty(pg_relation_size('"' || t.table_schema || '"."' || t.table_name || '"')) AS data_size,
+			COALESCE((SELECT reltuples::bigint FROM pg_class WHERE oid = ('"' || t.table_schema || '"."' || t.table_name || '"')::regclass), 0) AS row_count,
+			c.relowner::regrole AS table_owner,
+			(SELECT description FROM pg_description WHERE objoid = c.oid AND objsubid = 0) AS description,
+			COALESCE((SELECT spcname FROM pg_tablespace WHERE oid = c.reltablespace), 'pg_default') AS tablespace,
+			(SELECT count(*) FROM pg_index WHERE indrelid = c.oid) AS num_indexes,
+			(SELECT count(*) FROM information_schema.table_constraints WHERE table_name = t.table_name AND constraint_type = 'FOREIGN KEY') AS num_foreign_keys,
+			(SELECT count(*) FROM information_schema.check_constraints WHERE table_name = t.table_name) AS num_check_constraints
 		FROM
-			information_schema.tables
+			information_schema.tables t
+		JOIN
+			pg_class c ON t.table_name = c.relname AND t.table_schema = c.relnamespace::regnamespace::text
 		WHERE
-			table_schema = 'public'
+			t.table_schema = 'public'
 	`).Rows()
 	if err != nil {
 		return nil, err
@@ -36,18 +45,30 @@ func (p *PostgresPlugin) GetStorageUnits(config *engine.PluginConfig) ([]engine.
 	defer rows.Close()
 
 	for rows.Next() {
-		var tableName, tableType, tableSchema, totalSize, dataSize string
-		var rowCount int64
-		if err := rows.Scan(&tableName, &tableType, &tableSchema, &totalSize, &dataSize, &rowCount); err != nil {
-			return nil, err
+		var tableName, tableType, tableSchema, totalSize, dataSize, tableOwner, tablespace string
+		var description sql.NullString
+		var rowCount, numIndexes, numForeignKeys, numCheckConstraints int64
+		if err := rows.Scan(&tableName, &tableType, &tableSchema, &totalSize, &dataSize, &rowCount, &tableOwner, &description, &tablespace, &numIndexes, &numForeignKeys, &numCheckConstraints); err != nil {
+			log.Fatal(err)
 		}
 
-		attributes := map[string]string{
-			"Table Type":   tableType,
-			"Table Schema": tableSchema,
-			"Total Size":   totalSize,
-			"Data Size":    dataSize,
-			"Row Count":    fmt.Sprintf("%d", rowCount),
+		desc := ""
+		if description.Valid {
+			desc = description.String
+		}
+
+		attributes := []engine.Record{
+			{Key: "Table Type", Value: tableType},
+			{Key: "Table Schema", Value: tableSchema},
+			{Key: "Total Size", Value: totalSize},
+			{Key: "Data Size", Value: dataSize},
+			{Key: "Row Count", Value: fmt.Sprintf("%d", rowCount)},
+			{Key: "Table Owner", Value: tableOwner},
+			{Key: "Description", Value: desc},
+			{Key: "Tablespace", Value: tablespace},
+			{Key: "Number of Indexes", Value: fmt.Sprintf("%d", numIndexes)},
+			{Key: "Number of Foreign Keys", Value: fmt.Sprintf("%d", numForeignKeys)},
+			{Key: "Number of Check Constraints", Value: fmt.Sprintf("%d", numCheckConstraints)},
 		}
 
 		storageUnits = append(storageUnits, engine.StorageUnit{
@@ -69,7 +90,7 @@ func (p *PostgresPlugin) GetRows(config *engine.PluginConfig, storageUnit string
 	}
 
 	query := fmt.Sprintf("SELECT * FROM %s LIMIT ? OFFSET ?", storageUnit)
-	rows, err := db.Raw(query, 10, 1).Rows()
+	rows, err := db.Raw(query, 10, 0).Rows()
 	if err != nil {
 		return nil, err
 	}

@@ -1,0 +1,9 @@
+query GetStorageUnits($type: DatabaseType!) {
+  StorageUnit(type: $type) {
+    Name
+    Attributes {
+      Key
+      Value
+    }
+  }
+}

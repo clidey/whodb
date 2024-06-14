@@ -42,7 +42,7 @@ export type LoginResponse = {
 
 export type Mutation = {
   __typename?: 'Mutation';
-  CreateStorageUnit: Scalars['String']['output'];
+  CreateStorageUnit: StorageUnit;
   Login: LoginResponse;
 };
 
@@ -60,7 +60,7 @@ export type Query = {
   __typename?: 'Query';
   Column: Array<Scalars['String']['output']>;
   Row: RowsResult;
-  StorageUnit: Array<Scalars['String']['output']>;
+  StorageUnit: Array<StorageUnit>;
 };
 
 
@@ -81,10 +81,22 @@ export type QueryStorageUnitArgs = {
   type: DatabaseType;
 };
 
+export type Record = {
+  __typename?: 'Record';
+  Key: Scalars['String']['output'];
+  Value: Scalars['String']['output'];
+};
+
 export type RowsResult = {
   __typename?: 'RowsResult';
   Columns: Array<Column>;
   Rows: Array<Array<Scalars['String']['output']>>;
+};
+
+export type StorageUnit = {
+  __typename?: 'StorageUnit';
+  Attributes: Array<Record>;
+  Name: Scalars['String']['output'];
 };
 
 export type LoginMutationVariables = Exact<{
@@ -93,6 +105,21 @@ export type LoginMutationVariables = Exact<{
 
 
 export type LoginMutation = { __typename?: 'Mutation', Login: { __typename?: 'LoginResponse', Status: boolean } };
+
+export type GetStorageUnitRowsQueryVariables = Exact<{
+  type: DatabaseType;
+  storageUnit: Scalars['String']['input'];
+}>;
+
+
+export type GetStorageUnitRowsQuery = { __typename?: 'Query', Row: { __typename?: 'RowsResult', Rows: Array<Array<string>>, Columns: Array<{ __typename?: 'Column', Type: string, Name: string }> } };
+
+export type GetStorageUnitsQueryVariables = Exact<{
+  type: DatabaseType;
+}>;
+
+
+export type GetStorageUnitsQuery = { __typename?: 'Query', StorageUnit: Array<{ __typename?: 'StorageUnit', Name: string, Attributes: Array<{ __typename?: 'Record', Key: string, Value: string }> }> };
 
 
 export const LoginDocument = gql`
@@ -128,3 +155,92 @@ export function useLoginMutation(baseOptions?: Apollo.MutationHookOptions<LoginM
 export type LoginMutationHookResult = ReturnType<typeof useLoginMutation>;
 export type LoginMutationResult = Apollo.MutationResult<LoginMutation>;
 export type LoginMutationOptions = Apollo.BaseMutationOptions<LoginMutation, LoginMutationVariables>;
+export const GetStorageUnitRowsDocument = gql`
+    query GetStorageUnitRows($type: DatabaseType!, $storageUnit: String!) {
+  Row(type: $type, storageUnit: $storageUnit) {
+    Columns {
+      Type
+      Name
+    }
+    Rows
+  }
+}
+    `;
+
+/**
+ * __useGetStorageUnitRowsQuery__
+ *
+ * To run a query within a React component, call `useGetStorageUnitRowsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetStorageUnitRowsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetStorageUnitRowsQuery({
+ *   variables: {
+ *      type: // value for 'type'
+ *      storageUnit: // value for 'storageUnit'
+ *   },
+ * });
+ */
+export function useGetStorageUnitRowsQuery(baseOptions: Apollo.QueryHookOptions<GetStorageUnitRowsQuery, GetStorageUnitRowsQueryVariables> & ({ variables: GetStorageUnitRowsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetStorageUnitRowsQuery, GetStorageUnitRowsQueryVariables>(GetStorageUnitRowsDocument, options);
+      }
+export function useGetStorageUnitRowsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetStorageUnitRowsQuery, GetStorageUnitRowsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetStorageUnitRowsQuery, GetStorageUnitRowsQueryVariables>(GetStorageUnitRowsDocument, options);
+        }
+export function useGetStorageUnitRowsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetStorageUnitRowsQuery, GetStorageUnitRowsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetStorageUnitRowsQuery, GetStorageUnitRowsQueryVariables>(GetStorageUnitRowsDocument, options);
+        }
+export type GetStorageUnitRowsQueryHookResult = ReturnType<typeof useGetStorageUnitRowsQuery>;
+export type GetStorageUnitRowsLazyQueryHookResult = ReturnType<typeof useGetStorageUnitRowsLazyQuery>;
+export type GetStorageUnitRowsSuspenseQueryHookResult = ReturnType<typeof useGetStorageUnitRowsSuspenseQuery>;
+export type GetStorageUnitRowsQueryResult = Apollo.QueryResult<GetStorageUnitRowsQuery, GetStorageUnitRowsQueryVariables>;
+export const GetStorageUnitsDocument = gql`
+    query GetStorageUnits($type: DatabaseType!) {
+  StorageUnit(type: $type) {
+    Name
+    Attributes {
+      Key
+      Value
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetStorageUnitsQuery__
+ *
+ * To run a query within a React component, call `useGetStorageUnitsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetStorageUnitsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetStorageUnitsQuery({
+ *   variables: {
+ *      type: // value for 'type'
+ *   },
+ * });
+ */
+export function useGetStorageUnitsQuery(baseOptions: Apollo.QueryHookOptions<GetStorageUnitsQuery, GetStorageUnitsQueryVariables> & ({ variables: GetStorageUnitsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetStorageUnitsQuery, GetStorageUnitsQueryVariables>(GetStorageUnitsDocument, options);
+      }
+export function useGetStorageUnitsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetStorageUnitsQuery, GetStorageUnitsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetStorageUnitsQuery, GetStorageUnitsQueryVariables>(GetStorageUnitsDocument, options);
+        }
+export function useGetStorageUnitsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetStorageUnitsQuery, GetStorageUnitsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetStorageUnitsQuery, GetStorageUnitsQueryVariables>(GetStorageUnitsDocument, options);
+        }
+export type GetStorageUnitsQueryHookResult = ReturnType<typeof useGetStorageUnitsQuery>;
+export type GetStorageUnitsLazyQueryHookResult = ReturnType<typeof useGetStorageUnitsLazyQuery>;
+export type GetStorageUnitsSuspenseQueryHookResult = ReturnType<typeof useGetStorageUnitsSuspenseQuery>;
+export type GetStorageUnitsQueryResult = Apollo.QueryResult<GetStorageUnitsQuery, GetStorageUnitsQueryVariables>;

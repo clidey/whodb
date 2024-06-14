@@ -62,7 +62,7 @@ export const LoginPage: FC = () => {
             onCompleted(data) {
                 if (data.Login.Status) {
                     dispatch(AuthActions.login(credentails));
-                    navigate(InternalRoutes.Dashboard.path);
+                    navigate(InternalRoutes.Dashboard.StorageUnit.path);
                     return notify("Login successfully", "success");
                 }
                 return notify("Login failed", "error");

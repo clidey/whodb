@@ -11,9 +11,14 @@ type PluginConfig struct {
 	Credentials *Credentials
 }
 
+type Record struct {
+	Key   string
+	Value string
+}
+
 type StorageUnit struct {
 	Name       string
-	Attributes map[string]string
+	Attributes []Record
 }
 
 type Column struct {
@@ -37,4 +42,10 @@ type PluginFunctions interface {
 type Plugin struct {
 	PluginFunctions
 	Type DatabaseType
+}
+
+func NewPluginConfig(credentials *Credentials) *PluginConfig {
+	return &PluginConfig{
+		Credentials: credentials,
+	}
 }

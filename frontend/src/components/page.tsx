@@ -1,6 +1,8 @@
+import { AnimatePresence, motion } from "framer-motion";
 import { FC, ReactNode } from "react";
 import { twMerge } from "tailwind-merge";
-import { AnimatePresence, motion } from "framer-motion";
+import { IInternalRoute } from "../config/routes";
+import { Breadcrumb } from "./breadcrumbs";
 import { Sidebar } from "./sidebar";
 
 type IPageProps = {
@@ -21,12 +23,22 @@ export const Page: FC<IPageProps> = (props) => {
     </div>
 }
 
-export const InternalPage: FC<IPageProps & { children: ReactNode }> = (props) => {
+type IInternalPageProps = IPageProps & {
+    children: ReactNode;
+    routes?: IInternalRoute[];
+}
+
+export const InternalPage: FC<IInternalPageProps> = (props) => {
     return (
         <div className="flex grow h-full w-full">
             <Sidebar />
             <Page {...props}>
-                {props.children}
+                <div className="flex flex-col grow">
+                    <Breadcrumb routes={props.routes ?? []} active={props.routes?.at(-1)} />
+                    <div className="flex grow flex-wrap gap-2 py-4 content-start">
+                        {props.children}
+                    </div>
+                </div>
             </Page>
         </div>
     )

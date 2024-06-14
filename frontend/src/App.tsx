@@ -1,8 +1,8 @@
+import { map } from "lodash";
 import { Route, Routes } from "react-router-dom";
 import './app.css';
 import { Notifications } from './components/notifications';
-import { InternalRoutes, PrivateRoute, PublicRoutes, getRoutes } from './config/routes';
-import { map } from "lodash";
+import { PrivateRoute, PublicRoutes, getRoutes } from './config/routes';
 
 export const App = () => {
   
@@ -10,7 +10,7 @@ export const App = () => {
     <div className="h-[100vh] w-[100vw]">
       <Notifications />
       <Routes>
-        <Route path={InternalRoutes.Dashboard.path} element={<PrivateRoute />}>
+        <Route path="/" element={<PrivateRoute />}>
           {map(getRoutes(), route => (
             <Route path={route.path} element={route.component} />
           ))}

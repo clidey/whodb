@@ -1,10 +1,11 @@
+import { values } from "lodash";
 import { FC, ReactNode } from "react";
 import { Navigate, Outlet } from "react-router-dom";
-import { DashboardPage } from "../pages/dashboard/dashboard";
+import { GraphPage } from "../pages/graph/graph";
 import { LoginPage } from "../pages/login/login";
-import { useAppSelector } from "../store/hooks";
-import { values } from "lodash";
+import { ExploreStorageUnit } from "../pages/storage-unit/explore-storage-unit";
 import { StorageUnitPage } from "../pages/storage-unit/storage-unit";
+import { useAppSelector } from "../store/hooks";
 
 export type IInternalRoute = {
     name: string;
@@ -23,16 +24,21 @@ export const PublicRoutes = {
 
 export const InternalRoutes = {
     Dashboard: {
-        name: "Home",
-        path: "/",
-        component: <DashboardPage />,
-    },
-    StorageUnit: {
         StorageUnit: {
-            name: "Storage Unit",
+            name: "Tables",
             path: "/storage-unit",
             component: <StorageUnitPage />,
         },
+        ExploreStorageUnit: {
+            name: "Explore Table",
+            path: "/storage-unit/explore",
+            component: <ExploreStorageUnit />,
+        },
+    },
+    Graph: {
+        name: "Graph",
+        path: "/graph",
+        component: <GraphPage />,
     },
     Logout: {
         name: "Logout",
@@ -62,7 +68,7 @@ export const getRoutes = (): IInternalRoute[] => {
             allRoutes.push(currentRoute);
             continue;
         }
-        currentRoutes.push(...values(currentRoute));
+        currentRoutes.push(...values((currentRoute)));
     }
     return allRoutes;
 }

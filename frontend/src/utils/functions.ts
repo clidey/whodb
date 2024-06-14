@@ -1,4 +1,4 @@
-import { isNaN } from "lodash";
+import { isNaN, startCase, toLower } from "lodash";
 
 export function isNumeric(str: string) {
     if (typeof str != "string") return false;
@@ -8,4 +8,8 @@ export function isNumeric(str: string) {
 
 export function createStub(name: string) {
     return name.split(" ").map(word => word.toLowerCase()).join("-");
+}
+
+export function toTitleCase(str: string) {
+    return startCase(toLower(str));
 }

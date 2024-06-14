@@ -26,7 +26,7 @@ func (r *mutationResolver) CreateStorageUnit(ctx context.Context, typeArg model.
 
 // StorageUnit is the resolver for the StorageUnit field.
 func (r *queryResolver) StorageUnit(ctx context.Context, typeArg model.DatabaseType) ([]*model.StorageUnit, error) {
-	config := &engine.PluginConfig{}
+	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
 	units, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetStorageUnits(config)
 	if err != nil {
 		return nil, err
@@ -34,10 +34,10 @@ func (r *queryResolver) StorageUnit(ctx context.Context, typeArg model.DatabaseT
 	storageUnits := []*model.StorageUnit{}
 	for _, unit := range units {
 		attributes := []*model.Record{}
-		for key, value := range unit.Attributes {
+		for _, attribute := range unit.Attributes {
 			attributes = append(attributes, &model.Record{
-				Key:   key,
-				Value: value,
+				Key:   attribute.Key,
+				Value: attribute.Value,
 			})
 		}
 		storageUnits = append(storageUnits, &model.StorageUnit{
@@ -50,7 +50,8 @@ func (r *queryResolver) StorageUnit(ctx context.Context, typeArg model.DatabaseT
 
 // Row is the resolver for the Row field.
 func (r *queryResolver) Row(ctx context.Context, typeArg model.DatabaseType, storageUnit string) (*model.RowsResult, error) {
-	rowsResult, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetRows(&engine.PluginConfig{}, storageUnit)
+	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	rowsResult, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetRows(config, storageUnit)
 	if err != nil {
 		return nil, err
 	}
@@ -80,16 +81,3 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *queryResolver) Schema(ctx context.Context, typeArg model.DatabaseType) ([]string, error) {
-	panic(fmt.Errorf("not implemented: Schema - Schema"))
-}
-func (r *mutationResolver) CreateTable(ctx context.Context, typeArg model.DatabaseType) (string, error) {
-	panic(fmt.Errorf("not implemented: CreateTable - CreateTable"))
-}

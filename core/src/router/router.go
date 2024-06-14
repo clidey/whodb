@@ -42,7 +42,7 @@ func setupMiddlewares(router *chi.Mux) {
 			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 			AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 			ExposedHeaders:   []string{},
-			AllowCredentials: false,
+			AllowCredentials: true,
 			MaxAge:           300,
 		}),
 		contextMiddleware,
