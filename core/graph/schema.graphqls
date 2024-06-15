@@ -28,7 +28,7 @@ type StorageUnit {
 
 type Query {
   StorageUnit(type: DatabaseType!): [StorageUnit!]! # tables, collections
-  Row(type: DatabaseType!, storageUnit: String!): RowsResult! # row, document
+  Row(type: DatabaseType!, storageUnit: String!, pageSize: Int!, pageOffset: Int!): RowsResult! # row, document
   Column(type: DatabaseType!, storageUnit: String!, row: String!): [String!]!
 }
 

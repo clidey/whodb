@@ -72,6 +72,8 @@ export type QueryColumnArgs = {
 
 
 export type QueryRowArgs = {
+  pageOffset: Scalars['Int']['input'];
+  pageSize: Scalars['Int']['input'];
   storageUnit: Scalars['String']['input'];
   type: DatabaseType;
 };
@@ -109,6 +111,8 @@ export type LoginMutation = { __typename?: 'Mutation', Login: { __typename?: 'Lo
 export type GetStorageUnitRowsQueryVariables = Exact<{
   type: DatabaseType;
   storageUnit: Scalars['String']['input'];
+  pageSize: Scalars['Int']['input'];
+  pageOffset: Scalars['Int']['input'];
 }>;
 
 
@@ -156,8 +160,13 @@ export type LoginMutationHookResult = ReturnType<typeof useLoginMutation>;
 export type LoginMutationResult = Apollo.MutationResult<LoginMutation>;
 export type LoginMutationOptions = Apollo.BaseMutationOptions<LoginMutation, LoginMutationVariables>;
 export const GetStorageUnitRowsDocument = gql`
-    query GetStorageUnitRows($type: DatabaseType!, $storageUnit: String!) {
-  Row(type: $type, storageUnit: $storageUnit) {
+    query GetStorageUnitRows($type: DatabaseType!, $storageUnit: String!, $pageSize: Int!, $pageOffset: Int!) {
+  Row(
+    type: $type
+    storageUnit: $storageUnit
+    pageSize: $pageSize
+    pageOffset: $pageOffset
+  ) {
     Columns {
       Type
       Name
@@ -181,6 +190,8 @@ export const GetStorageUnitRowsDocument = gql`
  *   variables: {
  *      type: // value for 'type'
  *      storageUnit: // value for 'storageUnit'
+ *      pageSize: // value for 'pageSize'
+ *      pageOffset: // value for 'pageOffset'
  *   },
  * });
  */

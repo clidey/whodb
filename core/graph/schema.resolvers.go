@@ -49,9 +49,9 @@ func (r *queryResolver) StorageUnit(ctx context.Context, typeArg model.DatabaseT
 }
 
 // Row is the resolver for the Row field.
-func (r *queryResolver) Row(ctx context.Context, typeArg model.DatabaseType, storageUnit string) (*model.RowsResult, error) {
+func (r *queryResolver) Row(ctx context.Context, typeArg model.DatabaseType, storageUnit string, pageSize int, pageOffset int) (*model.RowsResult, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
-	rowsResult, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetRows(config, storageUnit)
+	rowsResult, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetRows(config, storageUnit, pageSize, pageOffset)
 	if err != nil {
 		return nil, err
 	}

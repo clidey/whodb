@@ -63,7 +63,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		Column      func(childComplexity int, typeArg model.DatabaseType, storageUnit string, row string) int
-		Row         func(childComplexity int, typeArg model.DatabaseType, storageUnit string) int
+		Row         func(childComplexity int, typeArg model.DatabaseType, storageUnit string, pageSize int, pageOffset int) int
 		StorageUnit func(childComplexity int, typeArg model.DatabaseType) int
 	}
 
@@ -89,7 +89,7 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	StorageUnit(ctx context.Context, typeArg model.DatabaseType) ([]*model.StorageUnit, error)
-	Row(ctx context.Context, typeArg model.DatabaseType, storageUnit string) (*model.RowsResult, error)
+	Row(ctx context.Context, typeArg model.DatabaseType, storageUnit string, pageSize int, pageOffset int) (*model.RowsResult, error)
 	Column(ctx context.Context, typeArg model.DatabaseType, storageUnit string, row string) ([]string, error)
 }
 
@@ -179,7 +179,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Row(childComplexity, args["type"].(model.DatabaseType), args["storageUnit"].(string)), true
+		return e.complexity.Query.Row(childComplexity, args["type"].(model.DatabaseType), args["storageUnit"].(string), args["pageSize"].(int), args["pageOffset"].(int)), true
 
 	case "Query.StorageUnit":
 		if e.complexity.Query.StorageUnit == nil {
@@ -444,6 +444,24 @@ func (ec *executionContext) field_Query_Row_args(ctx context.Context, rawArgs ma
 		}
 	}
 	args["storageUnit"] = arg1
+	var arg2 int
+	if tmp, ok := rawArgs["pageSize"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageSize"))
+		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pageSize"] = arg2
+	var arg3 int
+	if tmp, ok := rawArgs["pageOffset"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageOffset"))
+		arg3, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pageOffset"] = arg3
 	return args, nil
 }
 
@@ -842,7 +860,7 @@ func (ec *executionContext) _Query_Row(ctx context.Context, field graphql.Collec
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Row(rctx, fc.Args["type"].(model.DatabaseType), fc.Args["storageUnit"].(string))
+		return ec.resolvers.Query().Row(rctx, fc.Args["type"].(model.DatabaseType), fc.Args["storageUnit"].(string), fc.Args["pageSize"].(int), fc.Args["pageOffset"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3975,6 +3993,21 @@ func (ec *executionContext) unmarshalNDatabaseType2githubᚗcomᚋclideyᚋwhodb
 
 func (ec *executionContext) marshalNDatabaseType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDatabaseType(ctx context.Context, sel ast.SelectionSet, v model.DatabaseType) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) unmarshalNLoginCredentials2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐLoginCredentials(ctx context.Context, v interface{}) (model.LoginCredentials, error) {
