@@ -15,14 +15,11 @@ export const ExploreStorageUnit: FC = () => {
     const [pageSize, setPageSize] = useState("10");
     const [currentPage, setCurrentPage] = useState(0);
     const [whereCondition, setWhereCondition] = useState("");
-    const [loading, setLoading] = useState(false);
-
     const unit: StorageUnit = useLocation().state?.unit;
 
-    const [getStorageUnitRows, { data: rows, refetch }] = useLazyQuery<GetStorageUnitRowsQuery, GetStorageUnitRowsQueryVariables>(GetStorageUnitRowsDocument);
+    const [getStorageUnitRows, { data: rows, refetch, loading }] = useLazyQuery<GetStorageUnitRowsQuery, GetStorageUnitRowsQueryVariables>(GetStorageUnitRowsDocument);
 
     const handleSubmitRequest = useCallback(() => {
-        setLoading(true);
         getStorageUnitRows({
             variables: {
                 type: DatabaseType.Postgres,
@@ -30,27 +27,16 @@ export const ExploreStorageUnit: FC = () => {
                 pageSize: Number.parseInt(pageSize),
                 pageOffset: currentPage,
             },
-            onCompleted() {
-                setLoading(false);
-            },
-            onError() {
-                setLoading(false);
-            },
         });
     }, [getStorageUnitRows, unit.Name, pageSize, currentPage]);
 
     const handlePageChange = useCallback((page: number) => {
-        setLoading(true);
         setCurrentPage(page-1);
         refetch({
             type: DatabaseType.Postgres,
             storageUnit: unit.Name,
             pageSize: Number.parseInt(pageSize),
             pageOffset: currentPage,
-        }).then(() => {
-            setLoading(false);
-        }).catch(() => {
-            setLoading(false);
         });
     }, [currentPage, pageSize, refetch, unit.Name]);
 
