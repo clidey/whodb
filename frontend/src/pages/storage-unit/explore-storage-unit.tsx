@@ -24,11 +24,12 @@ export const ExploreStorageUnit: FC = () => {
             variables: {
                 type: DatabaseType.Postgres,
                 storageUnit: unit.Name,
+                where: whereCondition,
                 pageSize: Number.parseInt(pageSize),
                 pageOffset: currentPage,
             },
         });
-    }, [getStorageUnitRows, unit.Name, pageSize, currentPage]);
+    }, [getStorageUnitRows, whereCondition, unit.Name, pageSize, currentPage]);
 
     const handlePageChange = useCallback((page: number) => {
         setCurrentPage(page-1);
@@ -36,11 +37,12 @@ export const ExploreStorageUnit: FC = () => {
             variables: {
                 type: DatabaseType.Postgres,
                 storageUnit: unit.Name,
+                where: whereCondition,
                 pageSize: Number.parseInt(pageSize),
                 pageOffset: currentPage,
             }
         });
-    }, [currentPage, getStorageUnitRows, pageSize, unit.Name]);
+    }, [currentPage, getStorageUnitRows, pageSize, unit.Name, whereCondition]);
 
     const handleQuery = useCallback(() => {
         handleSubmitRequest();

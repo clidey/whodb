@@ -79,11 +79,16 @@ func (p *PostgresPlugin) GetStorageUnits(config *engine.PluginConfig) ([]engine.
 	return storageUnits, nil
 }
 
-func (p *PostgresPlugin) GetRows(config *engine.PluginConfig, storageUnit string, pageSize int, pageOffset int) (*engine.GetRowsResult, error) {
+func (p *PostgresPlugin) GetRows(config *engine.PluginConfig, storageUnit string, where string, pageSize int, pageOffset int) (*engine.GetRowsResult, error) {
 	if !common.IsValidSQLTableName(storageUnit) {
 		return nil, errors.New("invalid table name")
 	}
-	query := fmt.Sprintf("SELECT * FROM %s LIMIT ? OFFSET ?", storageUnit)
+
+	query := fmt.Sprintf("SELECT * FROM %s", storageUnit)
+	if len(where) > 0 {
+		query = fmt.Sprintf("%v WHERE %v", query, where)
+	}
+	query = fmt.Sprintf("%v LIMIT ? OFFSET ?", query)
 	return p.executeRawSQL(config, query, pageSize, pageOffset)
 }
 

@@ -64,7 +64,7 @@ type ComplexityRoot struct {
 	Query struct {
 		Column      func(childComplexity int, typeArg model.DatabaseType, storageUnit string, row string) int
 		RawExecute  func(childComplexity int, typeArg model.DatabaseType, query string) int
-		Row         func(childComplexity int, typeArg model.DatabaseType, storageUnit string, pageSize int, pageOffset int) int
+		Row         func(childComplexity int, typeArg model.DatabaseType, storageUnit string, where string, pageSize int, pageOffset int) int
 		StorageUnit func(childComplexity int, typeArg model.DatabaseType) int
 	}
 
@@ -90,7 +90,7 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	StorageUnit(ctx context.Context, typeArg model.DatabaseType) ([]*model.StorageUnit, error)
-	Row(ctx context.Context, typeArg model.DatabaseType, storageUnit string, pageSize int, pageOffset int) (*model.RowsResult, error)
+	Row(ctx context.Context, typeArg model.DatabaseType, storageUnit string, where string, pageSize int, pageOffset int) (*model.RowsResult, error)
 	Column(ctx context.Context, typeArg model.DatabaseType, storageUnit string, row string) ([]string, error)
 	RawExecute(ctx context.Context, typeArg model.DatabaseType, query string) (*model.RowsResult, error)
 }
@@ -193,7 +193,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Row(childComplexity, args["type"].(model.DatabaseType), args["storageUnit"].(string), args["pageSize"].(int), args["pageOffset"].(int)), true
+		return e.complexity.Query.Row(childComplexity, args["type"].(model.DatabaseType), args["storageUnit"].(string), args["where"].(string), args["pageSize"].(int), args["pageOffset"].(int)), true
 
 	case "Query.StorageUnit":
 		if e.complexity.Query.StorageUnit == nil {
@@ -482,24 +482,33 @@ func (ec *executionContext) field_Query_Row_args(ctx context.Context, rawArgs ma
 		}
 	}
 	args["storageUnit"] = arg1
-	var arg2 int
-	if tmp, ok := rawArgs["pageSize"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageSize"))
-		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
+	var arg2 string
+	if tmp, ok := rawArgs["where"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("where"))
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["pageSize"] = arg2
+	args["where"] = arg2
 	var arg3 int
-	if tmp, ok := rawArgs["pageOffset"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageOffset"))
+	if tmp, ok := rawArgs["pageSize"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageSize"))
 		arg3, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["pageOffset"] = arg3
+	args["pageSize"] = arg3
+	var arg4 int
+	if tmp, ok := rawArgs["pageOffset"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageOffset"))
+		arg4, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pageOffset"] = arg4
 	return args, nil
 }
 
@@ -898,7 +907,7 @@ func (ec *executionContext) _Query_Row(ctx context.Context, field graphql.Collec
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Row(rctx, fc.Args["type"].(model.DatabaseType), fc.Args["storageUnit"].(string), fc.Args["pageSize"].(int), fc.Args["pageOffset"].(int))
+		return ec.resolvers.Query().Row(rctx, fc.Args["type"].(model.DatabaseType), fc.Args["storageUnit"].(string), fc.Args["where"].(string), fc.Args["pageSize"].(int), fc.Args["pageOffset"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

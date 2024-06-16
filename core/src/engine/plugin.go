@@ -53,7 +53,7 @@ type GraphUnit struct {
 
 type PluginFunctions interface {
 	GetStorageUnits(config *PluginConfig) ([]StorageUnit, error)
-	GetRows(config *PluginConfig, storageUnit string, pageSize int, pageOffset int) (*GetRowsResult, error)
+	GetRows(config *PluginConfig, storageUnit string, where string, pageSize int, pageOffset int) (*GetRowsResult, error)
 	GetGraph(config *PluginConfig) ([]GraphUnit, error)
 	RawExecute(config *PluginConfig, query string) (*GetRowsResult, error)
 }

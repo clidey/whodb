@@ -83,6 +83,7 @@ export type QueryRowArgs = {
   pageSize: Scalars['Int']['input'];
   storageUnit: Scalars['String']['input'];
   type: DatabaseType;
+  where: Scalars['String']['input'];
 };
 
 
@@ -126,6 +127,7 @@ export type RawExecuteQuery = { __typename?: 'Query', RawExecute: { __typename?:
 export type GetStorageUnitRowsQueryVariables = Exact<{
   type: DatabaseType;
   storageUnit: Scalars['String']['input'];
+  where: Scalars['String']['input'];
   pageSize: Scalars['Int']['input'];
   pageOffset: Scalars['Int']['input'];
 }>;
@@ -220,10 +222,11 @@ export type RawExecuteLazyQueryHookResult = ReturnType<typeof useRawExecuteLazyQ
 export type RawExecuteSuspenseQueryHookResult = ReturnType<typeof useRawExecuteSuspenseQuery>;
 export type RawExecuteQueryResult = Apollo.QueryResult<RawExecuteQuery, RawExecuteQueryVariables>;
 export const GetStorageUnitRowsDocument = gql`
-    query GetStorageUnitRows($type: DatabaseType!, $storageUnit: String!, $pageSize: Int!, $pageOffset: Int!) {
+    query GetStorageUnitRows($type: DatabaseType!, $storageUnit: String!, $where: String!, $pageSize: Int!, $pageOffset: Int!) {
   Row(
     type: $type
     storageUnit: $storageUnit
+    where: $where
     pageSize: $pageSize
     pageOffset: $pageOffset
   ) {
@@ -250,6 +253,7 @@ export const GetStorageUnitRowsDocument = gql`
  *   variables: {
  *      type: // value for 'type'
  *      storageUnit: // value for 'storageUnit'
+ *      where: // value for 'where'
  *      pageSize: // value for 'pageSize'
  *      pageOffset: // value for 'pageOffset'
  *   },
