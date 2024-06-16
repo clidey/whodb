@@ -63,6 +63,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		Column      func(childComplexity int, typeArg model.DatabaseType, storageUnit string, row string) int
+		RawExecute  func(childComplexity int, typeArg model.DatabaseType, query string) int
 		Row         func(childComplexity int, typeArg model.DatabaseType, storageUnit string, pageSize int, pageOffset int) int
 		StorageUnit func(childComplexity int, typeArg model.DatabaseType) int
 	}
@@ -91,6 +92,7 @@ type QueryResolver interface {
 	StorageUnit(ctx context.Context, typeArg model.DatabaseType) ([]*model.StorageUnit, error)
 	Row(ctx context.Context, typeArg model.DatabaseType, storageUnit string, pageSize int, pageOffset int) (*model.RowsResult, error)
 	Column(ctx context.Context, typeArg model.DatabaseType, storageUnit string, row string) ([]string, error)
+	RawExecute(ctx context.Context, typeArg model.DatabaseType, query string) (*model.RowsResult, error)
 }
 
 type executableSchema struct {
@@ -168,6 +170,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Column(childComplexity, args["type"].(model.DatabaseType), args["storageUnit"].(string), args["row"].(string)), true
+
+	case "Query.RawExecute":
+		if e.complexity.Query.RawExecute == nil {
+			break
+		}
+
+		args, err := ec.field_Query_RawExecute_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.RawExecute(childComplexity, args["type"].(model.DatabaseType), args["query"].(string)), true
 
 	case "Query.Row":
 		if e.complexity.Query.Row == nil {
@@ -420,6 +434,30 @@ func (ec *executionContext) field_Query_Column_args(ctx context.Context, rawArgs
 		}
 	}
 	args["row"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_RawExecute_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.DatabaseType
+	if tmp, ok := rawArgs["type"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+		arg0, err = ec.unmarshalNDatabaseType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDatabaseType(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["type"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["query"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("query"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["query"] = arg1
 	return args, nil
 }
 
@@ -956,6 +994,67 @@ func (ec *executionContext) fieldContext_Query_Column(ctx context.Context, field
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_Column_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_RawExecute(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_RawExecute(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().RawExecute(rctx, fc.Args["type"].(model.DatabaseType), fc.Args["query"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.RowsResult)
+	fc.Result = res
+	return ec.marshalNRowsResult2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRowsResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_RawExecute(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "Columns":
+				return ec.fieldContext_RowsResult_Columns(ctx, field)
+			case "Rows":
+				return ec.fieldContext_RowsResult_Rows(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RowsResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_RawExecute_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -3415,6 +3514,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_Column(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "RawExecute":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_RawExecute(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}

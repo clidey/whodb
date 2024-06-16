@@ -1,0 +1,9 @@
+query RawExecute($type: DatabaseType!, $query: String!) {
+  RawExecute(type: $type, query: $query) {
+        Columns {
+            Type
+            Name
+        }
+        Rows
+	}
+}

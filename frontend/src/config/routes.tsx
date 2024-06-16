@@ -6,6 +6,7 @@ import { LoginPage } from "../pages/login/login";
 import { ExploreStorageUnit } from "../pages/storage-unit/explore-storage-unit";
 import { StorageUnitPage } from "../pages/storage-unit/storage-unit";
 import { useAppSelector } from "../store/hooks";
+import { RawExecutePage } from "../pages/raw-execute/raw-execute";
 
 export type IInternalRoute = {
     name: string;
@@ -39,6 +40,11 @@ export const InternalRoutes = {
         name: "Graph",
         path: "/graph",
         component: <GraphPage />,
+    },
+    RawExecute: {
+        name: "Raw Execute",
+        path: "/raw-execute",
+        component: <RawExecutePage />,
     },
     Logout: {
         name: "Logout",

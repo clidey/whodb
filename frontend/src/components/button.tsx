@@ -11,11 +11,13 @@ export type IButtonProps = {
   labelClassName?: string;
   onClick?: () => void;
   disabled?: boolean;
+  type?: "lg" | "sm";
 }
 
 export const Button: FC<IButtonProps> = (props) => {
   return <motion.button className={twMerge(classNames("rounded-lg border flex justify-center items-center text-xs px-2 py-1 cursor-pointer gap-1 bg-white hover:bg-gray-100", props.className, {
     "cursor-not-allowed": props.disabled,
+    "h-[35px] rounded-[4px] gap-2 hover:gap-3": props.type === "lg",
   }))} onClick={props.onClick} disabled={props.disabled} whileTap={{ scale: 0.8 }}>
     <div className={classNames("text-xs text-gray-600", props.labelClassName)}>
       {props.label}

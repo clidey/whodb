@@ -47,7 +47,7 @@ export const SideMenu: FC<IRouteProps> = (props) => {
     return <div className={classNames("flex items-center", {
         "justify-center": props.collapse,
     })}  onMouseEnter={handleMouseEnter} onMouseOver={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="sync">
             <div className={twMerge(classNames("cursor-default text-md inline-flex gap-2 transition-all hover:gap-2 relative w-full py-4 rounded-md hover:bg-gray-100", {
                 "cursor-pointer": props.path != null,
                 "pl-4": !props.collapse,
@@ -83,7 +83,7 @@ export const SideMenu: FC<IRouteProps> = (props) => {
                     }} initial={status} animate={status}>
                         <ul className="py-2 px-2 text-sm flex flex-col justify-center w-full">
                             {props.routes.map(route => (
-                                <Link className="flex items-center gap-1 transition-all hover:gap-2 hover:bg-gray-100 w-full rounded-md pl-2 py-2" key={route.path} to={route.path}>
+                                <Link key={route.name} className="flex items-center gap-1 transition-all hover:gap-2 hover:bg-gray-100 w-full rounded-md pl-2 py-2" to={route.path}>
                                     {route.icon && cloneElement(route.icon, {
                                         className: "w-4 h-4"
                                     })}
@@ -113,6 +113,11 @@ export const Sidebar: FC = () => {
                 icon: Icons.GraphLayout,
                 path: InternalRoutes.Graph.path,
             },
+            {
+                title: "Raw Execute",
+                icon: Icons.Console,
+                path: InternalRoutes.RawExecute.path,
+            },
         ];
     }, []);
 
@@ -132,7 +137,7 @@ export const Sidebar: FC = () => {
         <div className={
             classNames("h-[100vh] flex flex-col gap-4 shadow-md relative transition-all duration-500", {
                 "w-[50px] py-20": collapsed,
-                "w-[350px] p-20": !collapsed,
+                "w-[350px] px-14 py-20": !collapsed,
             })}>
                 <motion.div className="flex flex-col gap-4" variants={{
                     show: {

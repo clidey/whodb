@@ -31,12 +31,31 @@ type GetRowsResult struct {
 	Rows    [][]string
 }
 
+type GraphUnitRelationshipType string
+
+const (
+	GraphUnitRelationshipType_OneToOne   = "OneToOne"
+	GraphUnitRelationshipType_OneToMany  = "OneToMany"
+	GraphUnitRelationshipType_ManyToOne  = "ManyToOne"
+	GraphUnitRelationshipType_ManyToMany = "ManyToMany"
+)
+
+type GraphUnitRelationship struct {
+	Name             string
+	RelationshipType GraphUnitRelationshipType
+}
+
+type GraphUnit struct {
+	Name       string
+	References []GraphUnitRelationship
+	Dependents []GraphUnitRelationship
+}
+
 type PluginFunctions interface {
 	GetStorageUnits(config *PluginConfig) ([]StorageUnit, error)
 	GetRows(config *PluginConfig, storageUnit string, pageSize int, pageOffset int) (*GetRowsResult, error)
-	GetColumns(config *PluginConfig, storageUnit string, row string) (map[string][]string, error)
-	GetConstraints(config *PluginConfig) map[string]string
-	RawExecute(config *PluginConfig, sql string) error
+	GetGraph(config *PluginConfig) ([]GraphUnit, error)
+	RawExecute(config *PluginConfig, query string) (*GetRowsResult, error)
 }
 
 type Plugin struct {

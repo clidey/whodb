@@ -1,5 +1,6 @@
 import { useQuery } from "@apollo/client";
 import { FC, useCallback, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AnimatedButton } from "../../components/button";
 import { ExpandableCard } from "../../components/card";
 import { Icons } from "../../components/icons";
@@ -7,7 +8,6 @@ import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { InternalRoutes } from "../../config/routes";
 import { DatabaseType, GetStorageUnitsDocument, GetStorageUnitsQuery, GetStorageUnitsQueryVariables, StorageUnit } from "../../generated/graphql";
-import { useNavigate } from "react-router-dom";
 
 const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
     const [expanded, setExpanded] = useState(false);
@@ -74,6 +74,7 @@ const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
 }
 
 export const StorageUnitPage: FC = () => {
+    const navigate = useNavigate();
     const { loading, data } = useQuery<GetStorageUnitsQuery, GetStorageUnitsQueryVariables>(GetStorageUnitsDocument, {
         variables: {
             type: DatabaseType.Postgres,
@@ -88,8 +89,7 @@ export const StorageUnitPage: FC = () => {
 
     return <InternalPage routes={[InternalRoutes.Dashboard.StorageUnit]}>
         <div className="flex w-full h-fit my-2 gap-2">
-            <AnimatedButton icon={Icons.Console} label="Raw Query" />
-            <AnimatedButton icon={Icons.Download} label="Export" />
+            <AnimatedButton icon={Icons.Console} label="Raw Query" onClick={() => navigate(InternalRoutes.RawExecute.path)} type="lg" />
         </div>
         {
             data?.StorageUnit.map(unit => (

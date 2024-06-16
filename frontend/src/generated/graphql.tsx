@@ -59,6 +59,7 @@ export type MutationLoginArgs = {
 export type Query = {
   __typename?: 'Query';
   Column: Array<Scalars['String']['output']>;
+  RawExecute: RowsResult;
   Row: RowsResult;
   StorageUnit: Array<StorageUnit>;
 };
@@ -67,6 +68,12 @@ export type Query = {
 export type QueryColumnArgs = {
   row: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
+  type: DatabaseType;
+};
+
+
+export type QueryRawExecuteArgs = {
+  query: Scalars['String']['input'];
   type: DatabaseType;
 };
 
@@ -107,6 +114,14 @@ export type LoginMutationVariables = Exact<{
 
 
 export type LoginMutation = { __typename?: 'Mutation', Login: { __typename?: 'LoginResponse', Status: boolean } };
+
+export type RawExecuteQueryVariables = Exact<{
+  type: DatabaseType;
+  query: Scalars['String']['input'];
+}>;
+
+
+export type RawExecuteQuery = { __typename?: 'Query', RawExecute: { __typename?: 'RowsResult', Rows: Array<Array<string>>, Columns: Array<{ __typename?: 'Column', Type: string, Name: string }> } };
 
 export type GetStorageUnitRowsQueryVariables = Exact<{
   type: DatabaseType;
@@ -159,6 +174,51 @@ export function useLoginMutation(baseOptions?: Apollo.MutationHookOptions<LoginM
 export type LoginMutationHookResult = ReturnType<typeof useLoginMutation>;
 export type LoginMutationResult = Apollo.MutationResult<LoginMutation>;
 export type LoginMutationOptions = Apollo.BaseMutationOptions<LoginMutation, LoginMutationVariables>;
+export const RawExecuteDocument = gql`
+    query RawExecute($type: DatabaseType!, $query: String!) {
+  RawExecute(type: $type, query: $query) {
+    Columns {
+      Type
+      Name
+    }
+    Rows
+  }
+}
+    `;
+
+/**
+ * __useRawExecuteQuery__
+ *
+ * To run a query within a React component, call `useRawExecuteQuery` and pass it any options that fit your needs.
+ * When your component renders, `useRawExecuteQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useRawExecuteQuery({
+ *   variables: {
+ *      type: // value for 'type'
+ *      query: // value for 'query'
+ *   },
+ * });
+ */
+export function useRawExecuteQuery(baseOptions: Apollo.QueryHookOptions<RawExecuteQuery, RawExecuteQueryVariables> & ({ variables: RawExecuteQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<RawExecuteQuery, RawExecuteQueryVariables>(RawExecuteDocument, options);
+      }
+export function useRawExecuteLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<RawExecuteQuery, RawExecuteQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<RawExecuteQuery, RawExecuteQueryVariables>(RawExecuteDocument, options);
+        }
+export function useRawExecuteSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<RawExecuteQuery, RawExecuteQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<RawExecuteQuery, RawExecuteQueryVariables>(RawExecuteDocument, options);
+        }
+export type RawExecuteQueryHookResult = ReturnType<typeof useRawExecuteQuery>;
+export type RawExecuteLazyQueryHookResult = ReturnType<typeof useRawExecuteLazyQuery>;
+export type RawExecuteSuspenseQueryHookResult = ReturnType<typeof useRawExecuteSuspenseQuery>;
+export type RawExecuteQueryResult = Apollo.QueryResult<RawExecuteQuery, RawExecuteQueryVariables>;
 export const GetStorageUnitRowsDocument = gql`
     query GetStorageUnitRows($type: DatabaseType!, $storageUnit: String!, $pageSize: Int!, $pageOffset: Int!) {
   Row(

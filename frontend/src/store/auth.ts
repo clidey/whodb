@@ -24,7 +24,7 @@ export const authSlice = createSlice({
       state.profiles = [];
     },
   },
-})
+});
 
 export const AuthActions = authSlice.actions;
 export const authReducers = authSlice.reducer;

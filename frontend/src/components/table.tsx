@@ -1,9 +1,9 @@
 import classNames from "classnames";
-import { ChangeEvent, FC, useCallback, useMemo, useRef, useState } from "react";
+import { clone } from "lodash";
+import { ChangeEvent, FC, ReactNode, RefObject, useCallback, useMemo, useRef, useState } from "react";
+import { twMerge } from "tailwind-merge";
 import { toTitleCase } from "../utils/functions";
 import { Icons } from "./icons";
-import { clone } from "lodash";
-import { twMerge } from "tailwind-merge";
  
 type IPaginationProps = {
     pageCount: number;
@@ -102,7 +102,8 @@ const TData: FC<ITDataProps> = ({ data, row }) => {
     }, [data, row]);
 
     return <td className="focus:outline-none group/data cursor-pointer transition-all text-xs table-cell  border-t border-l last:border-r group-last/row:border-b group-last/row:first:rounded-bl-lg group-last/row:last:rounded-br-lg border-gray-200 relative p-0 overflow-hidden">
-        <input className={classNames("w-full h-full p-2 leading-tight focus:outline-none focus:shadow-outline appearance-none", {
+        <span className="hidden">{editedData}</span>
+        <input className={classNames("w-full h-full p-2 leading-tight focus:outline-none focus:shadow-outline appearance-none transition-all duration-300", {
             "group-even/row:bg-gray-200 hover:bg-gray-300 group-even/row:hover:bg-gray-300": !editable,
             "bg-transparent": editable,
         })} disabled={!editable} value={editedData} onChange={handleChange} />
@@ -131,15 +132,18 @@ const TableRow: FC<{ rowIndex: number, row: string[] }> = ({ rowIndex, row }) =>
 }
 
 type ITableProps = {
+    tableRef?: RefObject<HTMLTableElement>;
+    className?: string;
     columns: string[];
     columnTags?: string[];
     rows: string[][];
     totalPages: number;
     currentPage: number;
     onPageChange?: (page: number) => void;
+    children?: ReactNode;
 }
 
-export const Table: FC<ITableProps> = ({ columns, rows, columnTags, totalPages, currentPage, onPageChange }) => {
+export const Table: FC<ITableProps> = ({ tableRef, className, columns, rows, columnTags, totalPages, currentPage, onPageChange, children }) => {
     const [direction, setDirection] = useState<"asc" | "dsc">();
     const [sortedColumn, setSortedColumn] = useState<string>();
 
@@ -176,8 +180,9 @@ export const Table: FC<ITableProps> = ({ columns, rows, columnTags, totalPages, 
 
     return (
         <div className="flex flex-col grow gap-4 items-center">
-            <div className="flex h-[70vh] grow flex-col gap-4 overflow-auto w-[80vw]">
-                <table className="table-auto border-separate border-spacing-0 mt-4 h-fit w-full">
+            {children}
+            <div className={twMerge(classNames("flex h-[70vh] grow flex-col gap-4 overflow-auto w-[80vw]", className))}>
+                <table className="table-auto border-separate border-spacing-0 mt-4 h-fit w-full" ref={tableRef}>
                     <thead>
                         <tr>
                             {
@@ -196,11 +201,13 @@ export const Table: FC<ITableProps> = ({ columns, rows, columnTags, totalPages, 
                             }
                         </tr>
                     </thead>
-                    {
-                        sortedRows.map((row, index) => (
-                            <TableRow key={`row-${row[0]}`} row={row} rowIndex={index} />
-                        ))
-                    }
+                    <tbody>
+                        {
+                            sortedRows.map((row, index) => (
+                                <TableRow key={`row-${row[0]}`} row={row} rowIndex={index} />
+                            ))
+                        }
+                    </tbody>
                 </table>
             </div>
             <div className="flex justify-center items-center">

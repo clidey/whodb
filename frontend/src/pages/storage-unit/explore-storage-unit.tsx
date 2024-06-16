@@ -17,7 +17,7 @@ export const ExploreStorageUnit: FC = () => {
     const [whereCondition, setWhereCondition] = useState("");
     const unit: StorageUnit = useLocation().state?.unit;
 
-    const [getStorageUnitRows, { data: rows, refetch, loading }] = useLazyQuery<GetStorageUnitRowsQuery, GetStorageUnitRowsQueryVariables>(GetStorageUnitRowsDocument);
+    const [getStorageUnitRows, { data: rows, loading }] = useLazyQuery<GetStorageUnitRowsQuery, GetStorageUnitRowsQueryVariables>(GetStorageUnitRowsDocument);
 
     const handleSubmitRequest = useCallback(() => {
         getStorageUnitRows({
@@ -32,13 +32,15 @@ export const ExploreStorageUnit: FC = () => {
 
     const handlePageChange = useCallback((page: number) => {
         setCurrentPage(page-1);
-        refetch({
-            type: DatabaseType.Postgres,
-            storageUnit: unit.Name,
-            pageSize: Number.parseInt(pageSize),
-            pageOffset: currentPage,
+        getStorageUnitRows({
+            variables: {
+                type: DatabaseType.Postgres,
+                storageUnit: unit.Name,
+                pageSize: Number.parseInt(pageSize),
+                pageOffset: currentPage,
+            }
         });
-    }, [currentPage, pageSize, refetch, unit.Name]);
+    }, [currentPage, getStorageUnitRows, pageSize, unit.Name]);
 
     const handleQuery = useCallback(() => {
         handleSubmitRequest();
@@ -80,14 +82,16 @@ export const ExploreStorageUnit: FC = () => {
             <div className="flex items-center justify-between">
                 <div className="flex gap-2 items-center">
                     <div className="text-xl font-bold mr-4">{unit.Name}</div>
-                    <AnimatedButton icon={Icons.Download} label="Export" />
                 </div>
                 <div className="text-sm mr-4"><span className="font-semibold">Count:</span> {totalCount}</div>
             </div>
-            <div className="flex gap-2 items-end">
-                <InputWithlabel label="Page Size" value={pageSize} setValue={setPageSize} />
-                <InputWithlabel label="Where Condition" value={whereCondition} setValue={setWhereCondition} />
-                <AnimatedButton className="h-[35px] rounded-[4px] gap-3 hover:gap-4" icon={Icons.CheckCircle} label="Query" onClick={handleQuery} />
+            <div className="flex justify-between items-center">
+                <div className="flex gap-2 items-end">
+                    <InputWithlabel label="Page Size" value={pageSize} setValue={setPageSize} />
+                    <InputWithlabel label="Where Condition" value={whereCondition} setValue={setWhereCondition} />
+                    <AnimatedButton type="lg" icon={Icons.CheckCircle} label="Query" onClick={handleQuery} />
+                </div>
+                <AnimatedButton icon={Icons.Download} label="Export" type="lg" />
             </div>
             {
                 rows != null &&

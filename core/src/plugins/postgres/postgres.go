@@ -83,14 +83,17 @@ func (p *PostgresPlugin) GetRows(config *engine.PluginConfig, storageUnit string
 	if !common.IsValidSQLTableName(storageUnit) {
 		return nil, errors.New("invalid table name")
 	}
+	query := fmt.Sprintf("SELECT * FROM %s LIMIT ? OFFSET ?", storageUnit)
+	return p.executeRawSQL(config, query, pageSize, pageOffset)
+}
 
+func (p *PostgresPlugin) executeRawSQL(config *engine.PluginConfig, query string, params ...interface{}) (*engine.GetRowsResult, error) {
 	db, err := DB(config)
 	if err != nil {
 		return nil, err
 	}
 
-	query := fmt.Sprintf("SELECT * FROM %s LIMIT ? OFFSET ?", storageUnit)
-	rows, err := db.Raw(query, pageSize, pageOffset).Rows()
+	rows, err := db.Raw(query, params...).Rows()
 	if err != nil {
 		return nil, err
 	}
@@ -142,16 +145,12 @@ func (p *PostgresPlugin) GetRows(config *engine.PluginConfig, storageUnit string
 	return result, nil
 }
 
-func (p *PostgresPlugin) GetColumns(config *engine.PluginConfig, storageUnit string, row string) (map[string][]string, error) {
+func (p *PostgresPlugin) GetGraph(config *engine.PluginConfig) ([]engine.GraphUnit, error) {
 	return nil, nil
 }
 
-func (p *PostgresPlugin) GetConstraints(config *engine.PluginConfig) map[string]string {
-	return nil
-}
-
-func (p *PostgresPlugin) RawExecute(config *engine.PluginConfig, sql string) error {
-	return nil
+func (p *PostgresPlugin) RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error) {
+	return p.executeRawSQL(config, query)
 }
 
 func NewPostgresPlugin() *engine.Plugin {

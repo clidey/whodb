@@ -73,6 +73,26 @@ func (r *queryResolver) Column(ctx context.Context, typeArg model.DatabaseType, 
 	panic(fmt.Errorf("not implemented: Column - Column"))
 }
 
+// RawExecute is the resolver for the RawExecute field.
+func (r *queryResolver) RawExecute(ctx context.Context, typeArg model.DatabaseType, query string) (*model.RowsResult, error) {
+	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	rowsResult, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).RawExecute(config, query)
+	if err != nil {
+		return nil, err
+	}
+	columns := []*model.Column{}
+	for _, column := range rowsResult.Columns {
+		columns = append(columns, &model.Column{
+			Type: column.Type,
+			Name: column.Name,
+		})
+	}
+	return &model.RowsResult{
+		Columns: columns,
+		Rows:    rowsResult.Rows,
+	}, nil
+}
+
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 

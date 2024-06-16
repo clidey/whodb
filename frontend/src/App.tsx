@@ -5,14 +5,13 @@ import { Notifications } from './components/notifications';
 import { PrivateRoute, PublicRoutes, getRoutes } from './config/routes';
 
 export const App = () => {
-  
   return (
     <div className="h-[100vh] w-[100vw]">
       <Notifications />
       <Routes>
         <Route path="/" element={<PrivateRoute />}>
           {map(getRoutes(), route => (
-            <Route path={route.path} element={route.component} />
+            <Route key={route.path} path={route.path} element={route.component} />
           ))}
         </Route>
         <Route path={PublicRoutes.Login.path} element={PublicRoutes.Login.component} />
