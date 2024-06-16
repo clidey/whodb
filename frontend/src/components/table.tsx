@@ -1,9 +1,12 @@
 import classNames from "classnames";
 import { clone } from "lodash";
-import { ChangeEvent, FC, ReactNode, RefObject, useCallback, useMemo, useRef, useState } from "react";
+import { ChangeEvent, FC, KeyboardEvent, ReactNode, RefObject, useCallback, useMemo, useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
 import { toTitleCase } from "../utils/functions";
 import { Icons } from "./icons";
+import { SearchInput } from "./search";
+import { AnimatedButton } from "./button";
+import { useExportToCSV } from "./hooks";
  
 type IPaginationProps = {
     pageCount: number;
@@ -132,7 +135,6 @@ const TableRow: FC<{ rowIndex: number, row: string[] }> = ({ rowIndex, row }) =>
 }
 
 type ITableProps = {
-    tableRef?: RefObject<HTMLTableElement>;
     className?: string;
     columns: string[];
     columnTags?: string[];
@@ -140,12 +142,70 @@ type ITableProps = {
     totalPages: number;
     currentPage: number;
     onPageChange?: (page: number) => void;
-    children?: ReactNode;
 }
 
-export const Table: FC<ITableProps> = ({ tableRef, className, columns, rows, columnTags, totalPages, currentPage, onPageChange, children }) => {
+export const Table: FC<ITableProps> = ({ className, columns, rows, columnTags, totalPages, currentPage, onPageChange }) => {
+    const tableRef = useRef<HTMLTableElement>(null);
     const [direction, setDirection] = useState<"asc" | "dsc">();
     const [sortedColumn, setSortedColumn] = useState<string>();
+    const [search, setSearch] = useState("");
+    const [searchIndex, setSearchIndex] = useState(0);
+
+    const rowCount = useMemo(() => {
+        return rows.length ?? 0;
+    }, [rows]);
+
+    const handleKeyUp = useCallback((e: KeyboardEvent<HTMLInputElement>) => {
+        if (tableRef.current == null) {
+            return;
+        }
+        let interval: NodeJS.Timeout;
+        if (e.key === "Enter") {
+            let newSearchIndex = (searchIndex+1) % rowCount;
+            setSearchIndex(newSearchIndex);
+            const searchText = search.toLowerCase();
+            let index = 0;
+            const tbody = tableRef.current.querySelector("tbody");
+            if (tbody == null) {
+                return;
+            }
+            for (const childNode of tbody.childNodes) {
+                if (childNode instanceof HTMLTableRowElement) {
+                    const text = childNode.textContent?.toLowerCase();
+                    if (text != null && searchText != null && text.includes(searchText)) {
+                        if (index === newSearchIndex) {
+                            childNode.scrollIntoView({
+                                behavior: "smooth",
+                                block: "center",
+                                inline: "center",
+                            });
+                            for (const cell of childNode.querySelectorAll("input")) {
+                                if (cell instanceof HTMLInputElement) {
+                                    cell.classList.add("!bg-yellow-100");
+                                    interval = setTimeout(() => {
+                                        cell.classList.remove("!bg-yellow-100");
+                                    }, 3000);
+                                }
+                            }
+                            return;
+                        }
+                        index++;
+                    }
+                }
+            };
+        }
+        
+        return () => {
+            if (interval != null) {
+                clearInterval(interval);
+            }
+        }
+    }, [search, rowCount, searchIndex]);
+
+    const handleSearchChange = useCallback((newValue: string) => {
+        setSearchIndex(-1);
+        setSearch(newValue);
+    }, []);
 
     const handleSort = useCallback((columnToSort: string) => {
         const columnSelectedIsDifferent = columnToSort !== sortedColumn;
@@ -178,10 +238,23 @@ export const Table: FC<ITableProps> = ({ tableRef, className, columns, rows, col
         return newRows;
     }, [sortedColumn, columns, direction, rows]);
 
+    const exportToCSV = useExportToCSV(columns, rows);
+
     return (
         <div className="flex flex-col grow gap-4 items-center">
-            {children}
-            <div className={twMerge(classNames("flex h-[70vh] grow flex-col gap-4 overflow-auto w-[80vw]", className))}>
+            <div className="flex justify-between items-center w-full">
+                <div>
+                    <SearchInput search={search} setSearch={handleSearchChange} placeholder="Search through rows     [Press Enter]" inputProps={{
+                        className: "w-[300px]",
+                        onKeyUp: handleKeyUp,
+                    }} />
+                </div>
+                <div className="flex gap-4 items-center">
+                    <div className="text-sm text-gray-600"><span className="font-semibold">Count:</span> {rowCount}</div>
+                    <AnimatedButton icon={Icons.Download} label="Export" type="lg" onClick={exportToCSV} />
+                </div>
+            </div>
+            <div className={twMerge(classNames("flex h-[60vh] grow flex-col gap-4 overflow-auto w-[80vw]", className))}>
                 <table className="table-auto border-separate border-spacing-0 mt-4 h-fit w-full" ref={tableRef}>
                     <thead>
                         <tr>

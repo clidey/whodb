@@ -85,13 +85,10 @@ export const ExploreStorageUnit: FC = () => {
                 </div>
                 <div className="text-sm mr-4"><span className="font-semibold">Count:</span> {totalCount}</div>
             </div>
-            <div className="flex justify-between items-center">
-                <div className="flex gap-2 items-end">
-                    <InputWithlabel label="Page Size" value={pageSize} setValue={setPageSize} />
-                    <InputWithlabel label="Where Condition" value={whereCondition} setValue={setWhereCondition} />
-                    <AnimatedButton type="lg" icon={Icons.CheckCircle} label="Query" onClick={handleQuery} />
-                </div>
-                <AnimatedButton icon={Icons.Download} label="Export" type="lg" />
+            <div className="flex gap-2 items-end">
+                <InputWithlabel label="Page Size" value={pageSize} setValue={setPageSize} />
+                <InputWithlabel label="Where Condition" value={whereCondition} setValue={setWhereCondition} />
+                <AnimatedButton type="lg" icon={Icons.CheckCircle} label="Query" onClick={handleQuery} />
             </div>
             {
                 rows != null &&
