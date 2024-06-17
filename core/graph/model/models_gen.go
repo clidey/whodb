@@ -8,9 +8,23 @@ import (
 	"strconv"
 )
 
+type AuthResponse struct {
+	Status bool `json:"Status"`
+}
+
 type Column struct {
 	Type string `json:"Type"`
 	Name string `json:"Name"`
+}
+
+type GraphUnit struct {
+	Unit      *StorageUnit             `json:"Unit"`
+	Relations []*GraphUnitRelationship `json:"Relations"`
+}
+
+type GraphUnitRelationship struct {
+	Name         string                    `json:"Name"`
+	Relationship GraphUnitRelationshipType `json:"Relationship"`
 }
 
 type LoginCredentials struct {
@@ -19,10 +33,6 @@ type LoginCredentials struct {
 	Username string `json:"Username"`
 	Password string `json:"Password"`
 	Database string `json:"Database"`
-}
-
-type LoginResponse struct {
-	Status bool `json:"Status"`
 }
 
 type Mutation struct {
@@ -82,5 +92,52 @@ func (e *DatabaseType) UnmarshalGQL(v interface{}) error {
 }
 
 func (e DatabaseType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type GraphUnitRelationshipType string
+
+const (
+	GraphUnitRelationshipTypeOneToOne   GraphUnitRelationshipType = "OneToOne"
+	GraphUnitRelationshipTypeOneToMany  GraphUnitRelationshipType = "OneToMany"
+	GraphUnitRelationshipTypeManyToOne  GraphUnitRelationshipType = "ManyToOne"
+	GraphUnitRelationshipTypeManyToMany GraphUnitRelationshipType = "ManyToMany"
+	GraphUnitRelationshipTypeUnknown    GraphUnitRelationshipType = "Unknown"
+)
+
+var AllGraphUnitRelationshipType = []GraphUnitRelationshipType{
+	GraphUnitRelationshipTypeOneToOne,
+	GraphUnitRelationshipTypeOneToMany,
+	GraphUnitRelationshipTypeManyToOne,
+	GraphUnitRelationshipTypeManyToMany,
+	GraphUnitRelationshipTypeUnknown,
+}
+
+func (e GraphUnitRelationshipType) IsValid() bool {
+	switch e {
+	case GraphUnitRelationshipTypeOneToOne, GraphUnitRelationshipTypeOneToMany, GraphUnitRelationshipTypeManyToOne, GraphUnitRelationshipTypeManyToMany, GraphUnitRelationshipTypeUnknown:
+		return true
+	}
+	return false
+}
+
+func (e GraphUnitRelationshipType) String() string {
+	return string(e)
+}
+
+func (e *GraphUnitRelationshipType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = GraphUnitRelationshipType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid GraphUnitRelationshipType", str)
+	}
+	return nil
+}
+
+func (e GraphUnitRelationshipType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

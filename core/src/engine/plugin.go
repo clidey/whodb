@@ -38,6 +38,7 @@ const (
 	GraphUnitRelationshipType_OneToMany  = "OneToMany"
 	GraphUnitRelationshipType_ManyToOne  = "ManyToOne"
 	GraphUnitRelationshipType_ManyToMany = "ManyToMany"
+	GraphUnitRelationshipType_Unknown    = "Unknown"
 )
 
 type GraphUnitRelationship struct {
@@ -46,9 +47,8 @@ type GraphUnitRelationship struct {
 }
 
 type GraphUnit struct {
-	Name       string
-	References []GraphUnitRelationship
-	Dependents []GraphUnitRelationship
+	Unit      StorageUnit
+	Relations []GraphUnitRelationship
 }
 
 type PluginFunctions interface {

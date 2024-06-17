@@ -1,12 +1,12 @@
 import classNames from "classnames";
 import { clone } from "lodash";
-import { ChangeEvent, FC, KeyboardEvent, ReactNode, RefObject, useCallback, useMemo, useRef, useState } from "react";
+import { ChangeEvent, FC, KeyboardEvent, useCallback, useMemo, useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
 import { toTitleCase } from "../utils/functions";
-import { Icons } from "./icons";
-import { SearchInput } from "./search";
 import { AnimatedButton } from "./button";
 import { useExportToCSV } from "./hooks";
+import { Icons } from "./icons";
+import { SearchInput } from "./search";
  
 type IPaginationProps = {
     pageCount: number;

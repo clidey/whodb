@@ -1,0 +1,15 @@
+query GetGraph($type: DatabaseType!) {
+  Graph(type:$type) {
+    Unit {
+      Name
+      Attributes {
+        Key
+        Value
+      }
+    }
+    Relations {
+      Name
+      Relationship
+    }
+  }
+}

@@ -11,7 +11,7 @@ import (
 	"github.com/clidey/whodb/core/src/common"
 )
 
-func Login(ctx context.Context, input *model.LoginCredentials) (*model.LoginResponse, error) {
+func Login(ctx context.Context, input *model.LoginCredentials) (*model.AuthResponse, error) {
 	loginInfoJSON, err := json.Marshal(input)
 	if err != nil {
 		return nil, err
@@ -29,7 +29,7 @@ func Login(ctx context.Context, input *model.LoginCredentials) (*model.LoginResp
 
 	http.SetCookie(ctx.Value(common.RouterKey_ResponseWriter).(http.ResponseWriter), cookie)
 
-	return &model.LoginResponse{
+	return &model.AuthResponse{
 		Status: true,
 	}, nil
 }

@@ -8,6 +8,7 @@ import (
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins/common"
+	"gorm.io/gorm"
 )
 
 type PostgresPlugin struct{}
@@ -18,43 +19,37 @@ func (p *PostgresPlugin) GetStorageUnits(config *engine.PluginConfig) ([]engine.
 		return nil, err
 	}
 	storageUnits := []engine.StorageUnit{}
-	rows, err := db.Raw(`
+	schema := "public"
+	rows, err := db.Raw(fmt.Sprintf(`
 		SELECT
 			t.table_name,
 			t.table_type,
 			t.table_schema,
 			pg_size_pretty(pg_total_relation_size('"' || t.table_schema || '"."' || t.table_name || '"')) AS total_size,
 			pg_size_pretty(pg_relation_size('"' || t.table_schema || '"."' || t.table_name || '"')) AS data_size,
-			COALESCE((SELECT reltuples::bigint FROM pg_class WHERE oid = ('"' || t.table_schema || '"."' || t.table_name || '"')::regclass), 0) AS row_count,
-			c.relowner::regrole AS table_owner,
-			(SELECT description FROM pg_description WHERE objoid = c.oid AND objsubid = 0) AS description,
-			COALESCE((SELECT spcname FROM pg_tablespace WHERE oid = c.reltablespace), 'pg_default') AS tablespace,
-			(SELECT count(*) FROM pg_index WHERE indrelid = c.oid) AS num_indexes,
-			(SELECT count(*) FROM information_schema.table_constraints WHERE table_name = t.table_name AND constraint_type = 'FOREIGN KEY') AS num_foreign_keys,
-			(SELECT count(*) FROM information_schema.check_constraints WHERE table_name = t.table_name) AS num_check_constraints
+			COALESCE((SELECT reltuples::bigint FROM pg_class WHERE oid = ('"' || t.table_schema || '"."' || t.table_name || '"')::regclass), 0) AS row_count
 		FROM
 			information_schema.tables t
 		JOIN
 			pg_class c ON t.table_name = c.relname AND t.table_schema = c.relnamespace::regnamespace::text
 		WHERE
-			t.table_schema = 'public'
-	`).Rows()
+			t.table_schema = '%v'
+	`, schema)).Rows()
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	for rows.Next() {
-		var tableName, tableType, tableSchema, totalSize, dataSize, tableOwner, tablespace string
-		var description sql.NullString
-		var rowCount, numIndexes, numForeignKeys, numCheckConstraints int64
-		if err := rows.Scan(&tableName, &tableType, &tableSchema, &totalSize, &dataSize, &rowCount, &tableOwner, &description, &tablespace, &numIndexes, &numForeignKeys, &numCheckConstraints); err != nil {
-			log.Fatal(err)
-		}
+	allTablesWithColumns, err := getTableSchema(db)
+	if err != nil {
+		return nil, err
+	}
 
-		desc := ""
-		if description.Valid {
-			desc = description.String
+	for rows.Next() {
+		var tableName, tableType, tableSchema, totalSize, dataSize string
+		var rowCount int64
+		if err := rows.Scan(&tableName, &tableType, &tableSchema, &totalSize, &dataSize, &rowCount); err != nil {
+			log.Fatal(err)
 		}
 
 		attributes := []engine.Record{
@@ -63,13 +58,9 @@ func (p *PostgresPlugin) GetStorageUnits(config *engine.PluginConfig) ([]engine.
 			{Key: "Total Size", Value: totalSize},
 			{Key: "Data Size", Value: dataSize},
 			{Key: "Row Count", Value: fmt.Sprintf("%d", rowCount)},
-			{Key: "Table Owner", Value: tableOwner},
-			{Key: "Description", Value: desc},
-			{Key: "Tablespace", Value: tablespace},
-			{Key: "Number of Indexes", Value: fmt.Sprintf("%d", numIndexes)},
-			{Key: "Number of Foreign Keys", Value: fmt.Sprintf("%d", numForeignKeys)},
-			{Key: "Number of Check Constraints", Value: fmt.Sprintf("%d", numCheckConstraints)},
 		}
+
+		attributes = append(attributes, allTablesWithColumns[tableName]...)
 
 		storageUnits = append(storageUnits, engine.StorageUnit{
 			Name:       tableName,
@@ -77,6 +68,32 @@ func (p *PostgresPlugin) GetStorageUnits(config *engine.PluginConfig) ([]engine.
 		})
 	}
 	return storageUnits, nil
+}
+
+func getTableSchema(db *gorm.DB) (map[string][]engine.Record, error) {
+	var result []struct {
+		TableName  string `gorm:"column:table_name"`
+		ColumnName string `gorm:"column:column_name"`
+		DataType   string `gorm:"column:data_type"`
+	}
+
+	query := `
+		SELECT table_name, column_name, data_type
+		FROM information_schema.columns
+		WHERE table_schema = 'public'
+		ORDER BY table_name, ordinal_position
+	`
+
+	if err := db.Raw(query).Scan(&result).Error; err != nil {
+		return nil, err
+	}
+
+	tableColumnsMap := make(map[string][]engine.Record)
+	for _, row := range result {
+		tableColumnsMap[row.TableName] = append(tableColumnsMap[row.TableName], engine.Record{Key: row.ColumnName, Value: row.DataType})
+	}
+
+	return tableColumnsMap, nil
 }
 
 func (p *PostgresPlugin) GetRows(config *engine.PluginConfig, storageUnit string, where string, pageSize int, pageOffset int) (*engine.GetRowsResult, error) {
@@ -148,10 +165,6 @@ func (p *PostgresPlugin) executeRawSQL(config *engine.PluginConfig, query string
 	}
 
 	return result, nil
-}
-
-func (p *PostgresPlugin) GetGraph(config *engine.PluginConfig) ([]engine.GraphUnit, error) {
-	return nil, nil
 }
 
 func (p *PostgresPlugin) RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error) {

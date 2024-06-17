@@ -2,7 +2,7 @@ import { values } from "lodash";
 import { FC, ReactNode } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { GraphPage } from "../pages/graph/graph";
-import { LoginPage } from "../pages/login/login";
+import { LoginPage } from "../pages/auth/login";
 import { ExploreStorageUnit } from "../pages/storage-unit/explore-storage-unit";
 import { StorageUnitPage } from "../pages/storage-unit/storage-unit";
 import { useAppSelector } from "../store/hooks";

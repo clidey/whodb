@@ -21,11 +21,11 @@ const databaseDropdownItems: IDropdownItem[] = [
         label: "Postgres",
         icon: Icons.Logos.Postgres,
     },
-    {
-        id: "MySQL",
-        label: "MySQL",
-        icon: Icons.Logos.MySQL,
-    },
+    // {
+    //     id: "MySQL",
+    //     label: "MySQL",
+    //     icon: Icons.Logos.MySQL,
+    // },
 ]
 
 export const LoginPage: FC = () => {

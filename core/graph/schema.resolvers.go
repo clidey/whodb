@@ -15,8 +15,13 @@ import (
 )
 
 // Login is the resolver for the Login field.
-func (r *mutationResolver) Login(ctx context.Context, credentails model.LoginCredentials) (*model.LoginResponse, error) {
+func (r *mutationResolver) Login(ctx context.Context, credentails model.LoginCredentials) (*model.AuthResponse, error) {
 	return auth.Login(ctx, &credentails)
+}
+
+// Logout is the resolver for the Logout field.
+func (r *mutationResolver) Logout(ctx context.Context) (*model.AuthResponse, error) {
+	return auth.Logout(ctx)
 }
 
 // CreateStorageUnit is the resolver for the CreateStorageUnit field.
@@ -33,17 +38,7 @@ func (r *queryResolver) StorageUnit(ctx context.Context, typeArg model.DatabaseT
 	}
 	storageUnits := []*model.StorageUnit{}
 	for _, unit := range units {
-		attributes := []*model.Record{}
-		for _, attribute := range unit.Attributes {
-			attributes = append(attributes, &model.Record{
-				Key:   attribute.Key,
-				Value: attribute.Value,
-			})
-		}
-		storageUnits = append(storageUnits, &model.StorageUnit{
-			Name:       unit.Name,
-			Attributes: attributes,
-		})
+		storageUnits = append(storageUnits, engine.GetStorageUnitModel(unit))
 	}
 	return storageUnits, nil
 }
@@ -68,11 +63,6 @@ func (r *queryResolver) Row(ctx context.Context, typeArg model.DatabaseType, sto
 	}, nil
 }
 
-// Column is the resolver for the Column field.
-func (r *queryResolver) Column(ctx context.Context, typeArg model.DatabaseType, storageUnit string, row string) ([]string, error) {
-	panic(fmt.Errorf("not implemented: Column - Column"))
-}
-
 // RawExecute is the resolver for the RawExecute field.
 func (r *queryResolver) RawExecute(ctx context.Context, typeArg model.DatabaseType, query string) (*model.RowsResult, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
@@ -91,6 +81,30 @@ func (r *queryResolver) RawExecute(ctx context.Context, typeArg model.DatabaseTy
 		Columns: columns,
 		Rows:    rowsResult.Rows,
 	}, nil
+}
+
+// Graph is the resolver for the Graph field.
+func (r *queryResolver) Graph(ctx context.Context, typeArg model.DatabaseType) ([]*model.GraphUnit, error) {
+	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	graphUnits, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetGraph(config)
+	if err != nil {
+		return nil, err
+	}
+	graphUnitsModel := []*model.GraphUnit{}
+	for _, graphUnit := range graphUnits {
+		relations := []*model.GraphUnitRelationship{}
+		for _, relation := range graphUnit.Relations {
+			relations = append(relations, &model.GraphUnitRelationship{
+				Name:         relation.Name,
+				Relationship: model.GraphUnitRelationshipType(relation.RelationshipType),
+			})
+		}
+		graphUnitsModel = append(graphUnitsModel, &model.GraphUnit{
+			Unit:      engine.GetStorageUnitModel(graphUnit.Unit),
+			Relations: relations,
+		})
+	}
+	return graphUnitsModel, nil
 }
 
 // Mutation returns MutationResolver implementation.

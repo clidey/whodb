@@ -1,6 +1,6 @@
 import classNames from "classnames";
 import { motion } from "framer-motion";
-import { FC, ReactElement, cloneElement } from "react";
+import { FC, ReactElement, ReactNode, cloneElement } from "react";
 import { twMerge } from "tailwind-merge";
 
 export type IButtonProps = {
@@ -30,4 +30,29 @@ export const Button: FC<IButtonProps> = (props) => {
 
 export const AnimatedButton: FC<IButtonProps> = (props) => {
   return <Button {...props} className={twMerge(classNames("transition-all hover:gap-2", props.className))} />
+}
+
+
+export type IActionButtonProps = {
+  icon: ReactElement;
+  className?: string;
+  containerClassName?: string;
+  onClick?: () => void;
+  disabled?: boolean;
+  children?: ReactNode;
+}
+
+export const ActionButton: FC<IActionButtonProps> = ({ onClick, icon, className, containerClassName, disabled, children }) => {
+  return (
+  <div className="group relative">
+    <motion.button className={twMerge(classNames("rounded-full bg-white h-12 w-12 transition-all border border-gray-300 shadow-sm flex items-center justify-center", containerClassName, {
+      "cursor-not-allowed": disabled,
+      "hover:shadow-lg hover:cursor-pointer hover:scale-110": !disabled,
+    }))} onClick={disabled ? undefined : onClick} whileTap={{ scale: 0.6, transition: { duration: 0.05 }, }}>
+      {cloneElement(icon, {
+          className: twMerge(classNames("w-8 h-8 stroke-gray-500 cursor-pointer", className))
+      })}
+    </motion.button>
+    {children}
+  </div>);
 }

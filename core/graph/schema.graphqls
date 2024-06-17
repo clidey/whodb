@@ -26,11 +26,29 @@ type StorageUnit {
   Attributes: [Record!]!
 }
 
+enum GraphUnitRelationshipType {
+  OneToOne,
+  OneToMany,
+  ManyToOne,
+  ManyToMany,
+  Unknown,
+}
+
+type GraphUnitRelationship {
+  Name: String!
+  Relationship: GraphUnitRelationshipType!
+}
+
+type GraphUnit {
+  Unit: StorageUnit!
+	Relations: [GraphUnitRelationship!]!
+}
+
 type Query {
   StorageUnit(type: DatabaseType!): [StorageUnit!]! # tables, collections
   Row(type: DatabaseType!, storageUnit: String!, where: String!, pageSize: Int!, pageOffset: Int!): RowsResult! # row, document
-  Column(type: DatabaseType!, storageUnit: String!, row: String!): [String!]!
   RawExecute(type: DatabaseType!, query: String!): RowsResult!
+  Graph(type: DatabaseType!): [GraphUnit!]!
 }
 
 input LoginCredentials {
@@ -41,12 +59,13 @@ input LoginCredentials {
   Database: String!
 }
 
-type LoginResponse {
+type AuthResponse {
   Status: Boolean!
 }
 
 type Mutation {
-  Login(credentails: LoginCredentials!): LoginResponse!
+  Login(credentails: LoginCredentials!): AuthResponse!
+  Logout: AuthResponse!
 
   CreateStorageUnit(type: DatabaseType!): StorageUnit!
 }

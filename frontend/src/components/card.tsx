@@ -73,7 +73,7 @@ export const Card: FC<ICardProps> = ({
     <motion.div
       className={twMerge(
         classNames(
-          "bg-white h-[200px] w-[200px] rounded-3xl shadow-sm border p-4 flex flex-col justify-between relative transition-all duration-300",
+          "bg-white h-[200px] w-[200px] rounded-3xl shadow-sm border p-4 flex flex-col justify-between relative transition-all duration-300 overflow-y-auto",
           {
             "shadow-2xl z-10": highlightStatus,
           },
