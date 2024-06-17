@@ -45,10 +45,11 @@ type GraphUnit {
 }
 
 type Query {
-  StorageUnit(type: DatabaseType!): [StorageUnit!]! # tables, collections
-  Row(type: DatabaseType!, storageUnit: String!, where: String!, pageSize: Int!, pageOffset: Int!): RowsResult! # row, document
+  Schema(type: DatabaseType!): [String!]!
+  StorageUnit(type: DatabaseType!, schema: String!): [StorageUnit!]! # tables, collections
+  Row(type: DatabaseType!, schema: String!, storageUnit: String!, where: String!, pageSize: Int!, pageOffset: Int!): RowsResult! # row, document
   RawExecute(type: DatabaseType!, query: String!): RowsResult!
-  Graph(type: DatabaseType!): [GraphUnit!]!
+  Graph(type: DatabaseType!, schema: String!): [GraphUnit!]!
 }
 
 input LoginCredentials {

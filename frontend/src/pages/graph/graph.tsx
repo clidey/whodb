@@ -9,15 +9,18 @@ import { InternalPage } from "../../components/page";
 import { InternalRoutes } from "../../config/routes";
 import { DatabaseType, GetGraphDocument, GetGraphQuery, GetGraphQueryVariables } from "../../generated/graphql";
 import { StorageUnitGraphCard } from "../storage-unit/storage-unit";
+import { useAppSelector } from "../../store/hooks";
 
 export const GraphPage: FC = () => {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const reactFlowRef = useRef<IGraphInstance>();
+    const schema = useAppSelector(state => state.common.schema);
 
     const { data, loading } = useQuery<GetGraphQuery, GetGraphQueryVariables>(GetGraphDocument, {
         variables: {
             type: DatabaseType.Postgres,
+            schema,
         },
         onCompleted(data) {
             const newNodes: Node[] = [];

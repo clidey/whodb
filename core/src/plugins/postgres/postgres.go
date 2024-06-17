@@ -13,13 +13,30 @@ import (
 
 type PostgresPlugin struct{}
 
-func (p *PostgresPlugin) GetStorageUnits(config *engine.PluginConfig) ([]engine.StorageUnit, error) {
+func (p *PostgresPlugin) GetSchema(config *engine.PluginConfig) ([]string, error) {
+	db, err := DB(config)
+	if err != nil {
+		return nil, err
+	}
+	var schemas []struct {
+		SchemaName string `gorm:"column:schemaname"`
+	}
+	if err := db.Raw("SELECT schema_name AS schemaname FROM information_schema.schemata").Scan(&schemas).Error; err != nil {
+		return nil, err
+	}
+	schemaNames := []string{}
+	for _, schema := range schemas {
+		schemaNames = append(schemaNames, schema.SchemaName)
+	}
+	return schemaNames, nil
+}
+
+func (p *PostgresPlugin) GetStorageUnits(config *engine.PluginConfig, schema string) ([]engine.StorageUnit, error) {
 	db, err := DB(config)
 	if err != nil {
 		return nil, err
 	}
 	storageUnits := []engine.StorageUnit{}
-	schema := "public"
 	rows, err := db.Raw(fmt.Sprintf(`
 		SELECT
 			t.table_name,
@@ -40,7 +57,7 @@ func (p *PostgresPlugin) GetStorageUnits(config *engine.PluginConfig) ([]engine.
 	}
 	defer rows.Close()
 
-	allTablesWithColumns, err := getTableSchema(db)
+	allTablesWithColumns, err := getTableSchema(db, schema)
 	if err != nil {
 		return nil, err
 	}
@@ -70,19 +87,19 @@ func (p *PostgresPlugin) GetStorageUnits(config *engine.PluginConfig) ([]engine.
 	return storageUnits, nil
 }
 
-func getTableSchema(db *gorm.DB) (map[string][]engine.Record, error) {
+func getTableSchema(db *gorm.DB, schema string) (map[string][]engine.Record, error) {
 	var result []struct {
 		TableName  string `gorm:"column:table_name"`
 		ColumnName string `gorm:"column:column_name"`
 		DataType   string `gorm:"column:data_type"`
 	}
 
-	query := `
+	query := fmt.Sprintf(`
 		SELECT table_name, column_name, data_type
 		FROM information_schema.columns
-		WHERE table_schema = 'public'
+		WHERE table_schema = '%v'
 		ORDER BY table_name, ordinal_position
-	`
+	`, schema)
 
 	if err := db.Raw(query).Scan(&result).Error; err != nil {
 		return nil, err
@@ -96,12 +113,12 @@ func getTableSchema(db *gorm.DB) (map[string][]engine.Record, error) {
 	return tableColumnsMap, nil
 }
 
-func (p *PostgresPlugin) GetRows(config *engine.PluginConfig, storageUnit string, where string, pageSize int, pageOffset int) (*engine.GetRowsResult, error) {
+func (p *PostgresPlugin) GetRows(config *engine.PluginConfig, schema string, storageUnit string, where string, pageSize int, pageOffset int) (*engine.GetRowsResult, error) {
 	if !common.IsValidSQLTableName(storageUnit) {
 		return nil, errors.New("invalid table name")
 	}
 
-	query := fmt.Sprintf("SELECT * FROM %s", storageUnit)
+	query := fmt.Sprintf("SELECT * FROM '%v'.'%s'", schema, storageUnit)
 	if len(where) > 0 {
 		query = fmt.Sprintf("%v WHERE %v", query, where)
 	}

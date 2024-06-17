@@ -1,0 +1,3 @@
+query GetSchema {
+    Schema(type: Postgres)
+}

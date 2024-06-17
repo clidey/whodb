@@ -3,13 +3,20 @@ import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import { debounce } from "lodash";
 import { FC, cloneElement, useCallback, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { InternalRoutes } from "../config/routes";
-import { createStub } from "../utils/functions";
-import { BRAND_COLOR } from "./classes";
-import { Icons } from "./icons";
+import { Link, useLocation } from "react-router-dom";
+import { InternalRoutes } from "../../config/routes";
+import { createStub } from "../../utils/functions";
+import { BRAND_COLOR } from "../classes";
+import { Icons } from "../icons";
 import { twMerge } from "tailwind-merge";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@apollo/client";
+import { GetSchemaDocument, GetSchemaQuery, GetSchemaQueryVariables } from "../../generated/graphql";
+import { Loading } from "../loading";
+import { Dropdown, IDropdownItem } from "../dropdown";
+import { useAppSelector } from "../../store/hooks";
+import { useDispatch } from "react-redux";
+import { CommonActions } from "../../store/common";
 
 type IRoute = {
     icon?: React.ReactElement;
@@ -100,6 +107,18 @@ export const SideMenu: FC<IRouteProps> = (props) => {
 
 export const Sidebar: FC = () => {
     const [collapsed, setCollapsed] = useState(false);
+    const schema = useAppSelector(state => state.common.schema);
+    const dispatch = useDispatch();
+    const pathname = useLocation().pathname;
+    const { data, loading } = useQuery<GetSchemaQuery, GetSchemaQueryVariables>(GetSchemaDocument, {
+        onCompleted(data) {
+            dispatch(CommonActions.setSchema(data.Schema[0]));
+        },
+    });
+
+    const handleSchemaChange = useCallback((item: IDropdownItem) => {
+        dispatch(CommonActions.setSchema(item.id));
+    }, [dispatch]);
 
     const sidebarRoutes: IRouteProps[] = useMemo(() => {
         return [
@@ -173,15 +192,25 @@ export const Sidebar: FC = () => {
             }}>
                 {Icons.DoubleRightArrow}
             </motion.div>
-            <div className="flex flex-col justify-center mt-[20vh] grow max-w-[150px]">
-                <AnimatePresence mode="wait">
-                    <div className="flex flex-col">
-                        {routes}
+            {
+                loading || data == null
+                ? <Loading />
+                :  <div className="flex flex-col justify-center mt-[20vh] grow">
+                        <AnimatePresence mode="wait">
+                            <div className="flex flex-col">
+                                <div className={classNames("flex gap-2 items-center mb-8 ml-4", {
+                                    "hidden": pathname === InternalRoutes.RawExecute.path,
+                                })}>
+                                    <div className="text-sm text-gray-600">Schema:</div>
+                                    <Dropdown className="w-full" value={{ id: schema, label: schema }} items={data.Schema.map(schema => ({ id: schema, label: schema }))} onChange={handleSchemaChange} />
+                                </div>
+                                {routes}
+                            </div>
+                            <div className="grow" />
+                            <SideMenu collapse={collapsed} title="Logout" icon={Icons.Logout} path={InternalRoutes.Logout.path} />
+                        </AnimatePresence>
                     </div>
-                    <div className="grow" />
-                    <SideMenu collapse={collapsed} title="Logout" icon={Icons.Logout} path={InternalRoutes.Logout.path} />
-                </AnimatePresence>
-            </div>
+            }
         </div>
     )
 }

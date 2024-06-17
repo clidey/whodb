@@ -1,5 +1,5 @@
-query GetStorageUnits($type: DatabaseType!) {
-  StorageUnit(type: $type) {
+query GetStorageUnits($type: DatabaseType!, $schema: String!) {
+  StorageUnit(type: $type, schema: $schema) {
     Name
     Attributes {
       Key

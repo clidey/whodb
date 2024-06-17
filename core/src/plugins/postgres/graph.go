@@ -104,7 +104,7 @@ UNION
 SELECT * FROM many_to_many_constraints
 `
 
-func (p *PostgresPlugin) GetGraph(config *engine.PluginConfig) ([]engine.GraphUnit, error) {
+func (p *PostgresPlugin) GetGraph(config *engine.PluginConfig, schema string) ([]engine.GraphUnit, error) {
 	db, err := DB(config)
 	if err != nil {
 		return nil, err
@@ -112,7 +112,7 @@ func (p *PostgresPlugin) GetGraph(config *engine.PluginConfig) ([]engine.GraphUn
 
 	tableRelations := []tableRelations{}
 
-	query := fmt.Sprintf(GraphQuery, "public", "public", "public", "public", "public", "public", "public", "public")
+	query := fmt.Sprintf(GraphQuery, schema, schema, schema, schema, schema, schema, schema, schema)
 	if err := db.Raw(query).Scan(&tableRelations).Error; err != nil {
 		return nil, err
 	}
@@ -122,7 +122,7 @@ func (p *PostgresPlugin) GetGraph(config *engine.PluginConfig) ([]engine.GraphUn
 		tableMap[tr.Table1] = append(tableMap[tr.Table1], engine.GraphUnitRelationship{Name: tr.Table2, RelationshipType: engine.GraphUnitRelationshipType(tr.Relation)})
 	}
 
-	storageUnits, err := p.GetStorageUnits(config)
+	storageUnits, err := p.GetStorageUnits(config, schema)
 	if err != nil {
 		return nil, err
 	}

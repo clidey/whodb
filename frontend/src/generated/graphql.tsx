@@ -82,11 +82,13 @@ export type Query = {
   Graph: Array<GraphUnit>;
   RawExecute: RowsResult;
   Row: RowsResult;
+  Schema: Array<Scalars['String']['output']>;
   StorageUnit: Array<StorageUnit>;
 };
 
 
 export type QueryGraphArgs = {
+  schema: Scalars['String']['input'];
   type: DatabaseType;
 };
 
@@ -100,13 +102,20 @@ export type QueryRawExecuteArgs = {
 export type QueryRowArgs = {
   pageOffset: Scalars['Int']['input'];
   pageSize: Scalars['Int']['input'];
+  schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
   type: DatabaseType;
   where: Scalars['String']['input'];
 };
 
 
+export type QuerySchemaArgs = {
+  type: DatabaseType;
+};
+
+
 export type QueryStorageUnitArgs = {
+  schema: Scalars['String']['input'];
   type: DatabaseType;
 };
 
@@ -128,6 +137,11 @@ export type StorageUnit = {
   Name: Scalars['String']['output'];
 };
 
+export type GetSchemaQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetSchemaQuery = { __typename?: 'Query', Schema: Array<string> };
+
 export type LoginMutationVariables = Exact<{
   credentails: LoginCredentials;
 }>;
@@ -142,6 +156,7 @@ export type LogoutMutation = { __typename?: 'Mutation', Logout: { __typename?: '
 
 export type GetGraphQueryVariables = Exact<{
   type: DatabaseType;
+  schema: Scalars['String']['input'];
 }>;
 
 
@@ -157,6 +172,7 @@ export type RawExecuteQuery = { __typename?: 'Query', RawExecute: { __typename?:
 
 export type GetStorageUnitRowsQueryVariables = Exact<{
   type: DatabaseType;
+  schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
   where: Scalars['String']['input'];
   pageSize: Scalars['Int']['input'];
@@ -168,12 +184,50 @@ export type GetStorageUnitRowsQuery = { __typename?: 'Query', Row: { __typename?
 
 export type GetStorageUnitsQueryVariables = Exact<{
   type: DatabaseType;
+  schema: Scalars['String']['input'];
 }>;
 
 
 export type GetStorageUnitsQuery = { __typename?: 'Query', StorageUnit: Array<{ __typename?: 'StorageUnit', Name: string, Attributes: Array<{ __typename?: 'Record', Key: string, Value: string }> }> };
 
 
+export const GetSchemaDocument = gql`
+    query GetSchema {
+  Schema(type: Postgres)
+}
+    `;
+
+/**
+ * __useGetSchemaQuery__
+ *
+ * To run a query within a React component, call `useGetSchemaQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSchemaQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSchemaQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetSchemaQuery(baseOptions?: Apollo.QueryHookOptions<GetSchemaQuery, GetSchemaQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetSchemaQuery, GetSchemaQueryVariables>(GetSchemaDocument, options);
+      }
+export function useGetSchemaLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSchemaQuery, GetSchemaQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetSchemaQuery, GetSchemaQueryVariables>(GetSchemaDocument, options);
+        }
+export function useGetSchemaSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetSchemaQuery, GetSchemaQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetSchemaQuery, GetSchemaQueryVariables>(GetSchemaDocument, options);
+        }
+export type GetSchemaQueryHookResult = ReturnType<typeof useGetSchemaQuery>;
+export type GetSchemaLazyQueryHookResult = ReturnType<typeof useGetSchemaLazyQuery>;
+export type GetSchemaSuspenseQueryHookResult = ReturnType<typeof useGetSchemaSuspenseQuery>;
+export type GetSchemaQueryResult = Apollo.QueryResult<GetSchemaQuery, GetSchemaQueryVariables>;
 export const LoginDocument = gql`
     mutation Login($credentails: LoginCredentials!) {
   Login(credentails: $credentails) {
@@ -240,8 +294,8 @@ export type LogoutMutationHookResult = ReturnType<typeof useLogoutMutation>;
 export type LogoutMutationResult = Apollo.MutationResult<LogoutMutation>;
 export type LogoutMutationOptions = Apollo.BaseMutationOptions<LogoutMutation, LogoutMutationVariables>;
 export const GetGraphDocument = gql`
-    query GetGraph($type: DatabaseType!) {
-  Graph(type: $type) {
+    query GetGraph($type: DatabaseType!, $schema: String!) {
+  Graph(type: $type, schema: $schema) {
     Unit {
       Name
       Attributes {
@@ -270,6 +324,7 @@ export const GetGraphDocument = gql`
  * const { data, loading, error } = useGetGraphQuery({
  *   variables: {
  *      type: // value for 'type'
+ *      schema: // value for 'schema'
  *   },
  * });
  */
@@ -335,9 +390,10 @@ export type RawExecuteLazyQueryHookResult = ReturnType<typeof useRawExecuteLazyQ
 export type RawExecuteSuspenseQueryHookResult = ReturnType<typeof useRawExecuteSuspenseQuery>;
 export type RawExecuteQueryResult = Apollo.QueryResult<RawExecuteQuery, RawExecuteQueryVariables>;
 export const GetStorageUnitRowsDocument = gql`
-    query GetStorageUnitRows($type: DatabaseType!, $storageUnit: String!, $where: String!, $pageSize: Int!, $pageOffset: Int!) {
+    query GetStorageUnitRows($type: DatabaseType!, $schema: String!, $storageUnit: String!, $where: String!, $pageSize: Int!, $pageOffset: Int!) {
   Row(
     type: $type
+    schema: $schema
     storageUnit: $storageUnit
     where: $where
     pageSize: $pageSize
@@ -365,6 +421,7 @@ export const GetStorageUnitRowsDocument = gql`
  * const { data, loading, error } = useGetStorageUnitRowsQuery({
  *   variables: {
  *      type: // value for 'type'
+ *      schema: // value for 'schema'
  *      storageUnit: // value for 'storageUnit'
  *      where: // value for 'where'
  *      pageSize: // value for 'pageSize'
@@ -389,8 +446,8 @@ export type GetStorageUnitRowsLazyQueryHookResult = ReturnType<typeof useGetStor
 export type GetStorageUnitRowsSuspenseQueryHookResult = ReturnType<typeof useGetStorageUnitRowsSuspenseQuery>;
 export type GetStorageUnitRowsQueryResult = Apollo.QueryResult<GetStorageUnitRowsQuery, GetStorageUnitRowsQueryVariables>;
 export const GetStorageUnitsDocument = gql`
-    query GetStorageUnits($type: DatabaseType!) {
-  StorageUnit(type: $type) {
+    query GetStorageUnits($type: DatabaseType!, $schema: String!) {
+  StorageUnit(type: $type, schema: $schema) {
     Name
     Attributes {
       Key
@@ -413,6 +470,7 @@ export const GetStorageUnitsDocument = gql`
  * const { data, loading, error } = useGetStorageUnitsQuery({
  *   variables: {
  *      type: // value for 'type'
+ *      schema: // value for 'schema'
  *   },
  * });
  */

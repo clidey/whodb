@@ -3,7 +3,9 @@ import { FC, ReactNode } from "react";
 import { twMerge } from "tailwind-merge";
 import { IInternalRoute } from "../config/routes";
 import { Breadcrumb } from "./breadcrumbs";
-import { Sidebar } from "./sidebar";
+import { Sidebar } from "./sidebar/sidebar";
+import { useAppSelector } from "../store/hooks";
+import { Loading } from "./loading";
 
 type IPageProps = {
     className?: string;
@@ -29,15 +31,21 @@ type IInternalPageProps = IPageProps & {
 }
 
 export const InternalPage: FC<IInternalPageProps> = (props) => {
+    const schema = useAppSelector(state => state.common.schema);
+
     return (
         <div className="flex grow h-full w-full">
             <Sidebar />
             <Page {...props}>
                 <div className="flex flex-col grow">
                     <Breadcrumb routes={props.routes ?? []} active={props.routes?.at(-1)} />
-                    <div className="flex grow flex-wrap gap-2 py-4 content-start">
-                        {props.children}
-                    </div>
+                    {
+                        schema.length === 0
+                        ? <Loading />
+                        : <div className="flex grow flex-wrap gap-2 py-4 content-start">
+                            {props.children}
+                        </div>
+                    }
                 </div>
             </Page>
         </div>

@@ -10,6 +10,7 @@ import { InternalPage } from "../../components/page";
 import { InternalRoutes } from "../../config/routes";
 import { DatabaseType, GetStorageUnitsDocument, GetStorageUnitsQuery, GetStorageUnitsQueryVariables, StorageUnit } from "../../generated/graphql";
 import { Handle, Position } from "reactflow";
+import { useAppSelector } from "../../store/hooks";
 
 const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
     const [expanded, setExpanded] = useState(false);
@@ -77,9 +78,11 @@ const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
 
 export const StorageUnitPage: FC = () => {
     const navigate = useNavigate();
+    const schema = useAppSelector(state => state.common.schema);
     const { loading, data } = useQuery<GetStorageUnitsQuery, GetStorageUnitsQueryVariables>(GetStorageUnitsDocument, {
         variables: {
             type: DatabaseType.Postgres,
+            schema,
         }
     });
 

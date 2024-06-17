@@ -11,7 +11,6 @@ import { DatabaseType, RawExecuteDocument, RawExecuteQuery, RawExecuteQueryVaria
 
 export const RawExecutePage: FC = () => {
     const [code, setCode] = useState("");
-
     const [rawExecute, { data: rows, loading, error }] = useLazyQuery<RawExecuteQuery, RawExecuteQueryVariables>(RawExecuteDocument);
 
     const handleRawExecute = useCallback(() => {

@@ -13,12 +13,9 @@ type InputProps = {
     value: string;
     setValue?: (value: string) => void;
     type?: "text" | "password";
-    multiline?: boolean;
-    autoHeight?: boolean;
-    onSubmit?: () => void;
 }
 
-export const Input: FC<InputProps> = ({ value, setValue, type, placeholder, multiline, inputProps = {}, autoHeight, onSubmit }) => {
+export const Input: FC<InputProps> = ({ value, setValue, type, placeholder, inputProps = {} }) => {
     const handleChange: ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
         setValue?.(e.target.value);
         inputProps.onChange?.(e);
@@ -30,7 +27,7 @@ export const Input: FC<InputProps> = ({ value, setValue, type, placeholder, mult
     
     return <input type={type} placeholder={placeholder}
         value={value}  {...inputProps} onChange={handleChange} onKeyDown={handleKeyDown}
-        className={twMerge(classNames("appearance-none border border-gray-200 rounded w-full p-1 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-sm h-[34px] px-2", inputProps.className))} />
+        className={twMerge(classNames("appearance-none border border-gray-200 rounded-md w-full p-1 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-sm h-[34px] px-2", inputProps.className))} />
 }
 
 type InputWithLabelProps = {

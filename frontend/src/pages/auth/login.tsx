@@ -104,7 +104,7 @@ export const LoginPage: FC = () => {
                             </div>
                         </div>
                         <div className="flex flex-col grow justify-center gap-1">
-                            <DropdownWithLabel label="Database" value={databaseType} onChange={setDatabaseType} items={databaseDropdownItems} />
+                            <DropdownWithLabel fullWidth label="Database" value={databaseType} onChange={setDatabaseType} items={databaseDropdownItems} />
                             <InputWithlabel label="Host Name" value={hostName} setValue={setHostName} />
                             <InputWithlabel label="Username" value={username} setValue={setUsername} />
                             <InputWithlabel label="Password" value={password} setValue={setPassword} type="password" />

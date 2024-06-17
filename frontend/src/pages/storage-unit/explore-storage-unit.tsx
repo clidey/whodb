@@ -10,12 +10,14 @@ import { Table } from "../../components/table";
 import { InternalRoutes } from "../../config/routes";
 import { DatabaseType, GetStorageUnitRowsDocument, GetStorageUnitRowsQuery, GetStorageUnitRowsQueryVariables, StorageUnit } from "../../generated/graphql";
 import { isNumeric } from "../../utils/functions";
+import { useAppSelector } from "../../store/hooks";
 
 export const ExploreStorageUnit: FC = () => {
     const [pageSize, setPageSize] = useState("10");
     const [currentPage, setCurrentPage] = useState(0);
     const [whereCondition, setWhereCondition] = useState("");
     const unit: StorageUnit = useLocation().state?.unit;
+    const schema = useAppSelector(state => state.common.schema);
 
     const [getStorageUnitRows, { data: rows, loading }] = useLazyQuery<GetStorageUnitRowsQuery, GetStorageUnitRowsQueryVariables>(GetStorageUnitRowsDocument);
 
@@ -23,26 +25,28 @@ export const ExploreStorageUnit: FC = () => {
         getStorageUnitRows({
             variables: {
                 type: DatabaseType.Postgres,
+                schema,
                 storageUnit: unit.Name,
                 where: whereCondition,
                 pageSize: Number.parseInt(pageSize),
                 pageOffset: currentPage,
             },
         });
-    }, [getStorageUnitRows, whereCondition, unit.Name, pageSize, currentPage]);
+    }, [getStorageUnitRows, schema, unit.Name, whereCondition, pageSize, currentPage]);
 
     const handlePageChange = useCallback((page: number) => {
         setCurrentPage(page-1);
         getStorageUnitRows({
             variables: {
                 type: DatabaseType.Postgres,
+                schema,
                 storageUnit: unit.Name,
                 where: whereCondition,
                 pageSize: Number.parseInt(pageSize),
                 pageOffset: currentPage,
             }
         });
-    }, [currentPage, getStorageUnitRows, pageSize, unit.Name, whereCondition]);
+    }, [currentPage, getStorageUnitRows, pageSize, schema, unit.Name, whereCondition]);
 
     const handleQuery = useCallback(() => {
         handleSubmitRequest();

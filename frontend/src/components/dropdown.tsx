@@ -16,6 +16,7 @@ export type IDropdownProps = {
     loading?: boolean;
     value?: IDropdownItem;
     onChange?: (item: IDropdownItem) => void;
+    fullWidth?: boolean;
 }
 
 export const Dropdown: FC<IDropdownProps> = (props) => {
@@ -37,12 +38,14 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
     return (
         <button className={classNames("relative", props.className)} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
             {props.loading ? <Loading hideText={true} /> : 
-            <>  <div className="flex items-center border border-gray-200 rounded w-full p-1 text-gray-700 text-sm h-[34px] px-2 gap-1">
+            <>  <div className="flex items-center border border-gray-200 rounded-lg w-full p-1 text-gray-700 text-sm h-[34px] px-2 gap-1">
                     {props.value?.icon} {props.value?.label}
                 </div>
-                <div className={classNames("absolute w-full z-10 divide-y rounded-lg shadow bg-white py-1 border border-gray-200 overflow-y-auto max-h-40", {
+                <div className={classNames("absolute z-10 divide-y rounded-lg shadow bg-white py-1 border border-gray-200 overflow-y-auto max-h-40", {
                     "hidden": !hover,
                     "block animate-fade": hover,
+                    "w-fit": !props.fullWidth,
+                    "w-full": props.fullWidth,
                 })}>
                     <ul className="py-1 text-sm text-gray-700 nowheel flex flex-col">
                         {

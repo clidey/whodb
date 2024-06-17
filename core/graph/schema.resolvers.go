@@ -29,10 +29,16 @@ func (r *mutationResolver) CreateStorageUnit(ctx context.Context, typeArg model.
 	panic(fmt.Errorf("not implemented: Schema - Schema"))
 }
 
-// StorageUnit is the resolver for the StorageUnit field.
-func (r *queryResolver) StorageUnit(ctx context.Context, typeArg model.DatabaseType) ([]*model.StorageUnit, error) {
+// Schema is the resolver for the Schema field.
+func (r *queryResolver) Schema(ctx context.Context, typeArg model.DatabaseType) ([]string, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
-	units, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetStorageUnits(config)
+	return src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetSchema(config)
+}
+
+// StorageUnit is the resolver for the StorageUnit field.
+func (r *queryResolver) StorageUnit(ctx context.Context, typeArg model.DatabaseType, schema string) ([]*model.StorageUnit, error) {
+	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	units, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetStorageUnits(config, schema)
 	if err != nil {
 		return nil, err
 	}
@@ -44,9 +50,9 @@ func (r *queryResolver) StorageUnit(ctx context.Context, typeArg model.DatabaseT
 }
 
 // Row is the resolver for the Row field.
-func (r *queryResolver) Row(ctx context.Context, typeArg model.DatabaseType, storageUnit string, where string, pageSize int, pageOffset int) (*model.RowsResult, error) {
+func (r *queryResolver) Row(ctx context.Context, typeArg model.DatabaseType, schema string, storageUnit string, where string, pageSize int, pageOffset int) (*model.RowsResult, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
-	rowsResult, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetRows(config, storageUnit, where, pageSize, pageOffset)
+	rowsResult, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetRows(config, schema, storageUnit, where, pageSize, pageOffset)
 	if err != nil {
 		return nil, err
 	}
@@ -84,9 +90,9 @@ func (r *queryResolver) RawExecute(ctx context.Context, typeArg model.DatabaseTy
 }
 
 // Graph is the resolver for the Graph field.
-func (r *queryResolver) Graph(ctx context.Context, typeArg model.DatabaseType) ([]*model.GraphUnit, error) {
+func (r *queryResolver) Graph(ctx context.Context, typeArg model.DatabaseType, schema string) ([]*model.GraphUnit, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
-	graphUnits, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetGraph(config)
+	graphUnits, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetGraph(config, schema)
 	if err != nil {
 		return nil, err
 	}
