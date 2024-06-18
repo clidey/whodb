@@ -1,6 +1,6 @@
 # WhoDB
 
-Clidey Build: <img src="https://hello.clidey.com/api/flows/status?id=b32257fa-1415-4847-a0f3-e684f5f76608&secret=cd74dbd5-36ec-42f9-b4f0-12ce9fcc762b" alt="Clidey build status" height="10px" />
+Clidey Build: <img src="https://hello.clidey.com/api/flows/status?id=b32257fa-1415-4847-a0f3-e684f5f76608&secret=cd74dbd5-36ec-42f9-b4f0-12ce9fcc762b" alt="Clidey build status" height="20px" />
 
 ### *"Making your database management disappear like magic!"*
 
