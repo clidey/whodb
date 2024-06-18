@@ -1,7 +1,12 @@
 import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
 
+let uri = "/api/query"
+if (window.location.port === "3000") {
+  uri = "http://localhost:8080/api/query";
+}
+
 const httpLink = createHttpLink({
-  uri: 'http://localhost:8080/query',
+  uri,
   credentials: "include",
 });
 
