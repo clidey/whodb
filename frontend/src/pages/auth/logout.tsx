@@ -4,6 +4,7 @@ import { useDispatch } from "react-redux";
 import { LogoutDocument, LogoutMutation, LogoutMutationVariables } from "../../generated/graphql";
 import { notify } from "../../store/function";
 import { AuthActions } from "../../store/auth";
+import { Icons } from "../../components/icons";
 
 export const LogoutPage: FC = () => {
   const [logout, ] = useMutation<LogoutMutation, LogoutMutationVariables>(LogoutDocument);
@@ -21,7 +22,8 @@ export const LogoutPage: FC = () => {
     });
   }, [dispatch, logout]);
 
-  return <div className="flex grow justify-center items-center">
+  return <div className="flex grow justify-center items-center w-full h-full gap-1">
+    {Icons.Lock}
     <div className="text-md">
       Logging out
     </div>
