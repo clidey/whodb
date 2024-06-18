@@ -1,6 +1,6 @@
 import classNames from "classnames";
 import { motion } from "framer-motion";
-import { FC, ReactElement, ReactNode, cloneElement } from "react";
+import { FC, MouseEvent, ReactElement, ReactNode, cloneElement } from "react";
 import { twMerge } from "tailwind-merge";
 
 export type IButtonProps = {
@@ -9,7 +9,7 @@ export type IButtonProps = {
   icon: ReactElement;
   iconClassName?: string;
   labelClassName?: string;
-  onClick?: () => void;
+  onClick?: (e: MouseEvent<HTMLButtonElement>, ...args: any) => void;
   disabled?: boolean;
   type?: "lg" | "sm";
 }

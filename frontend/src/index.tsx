@@ -5,10 +5,11 @@ import reportWebVitals from './reportWebVitals';
 import { ApolloProvider } from "@apollo/client";
 import { graphqlClient } from './config/graphql-client';
 import { Provider } from "react-redux";
-import { reduxStore } from './store';
+import { reduxStore, reduxStorePersistor } from './store';
 import App from './app';
 import { BrowserRouter } from "react-router-dom";
 import 'reactflow/dist/style.css';
+import { PersistGate } from 'redux-persist/integration/react';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -18,7 +19,9 @@ root.render(
     <BrowserRouter>
       <ApolloProvider client={graphqlClient}>
         <Provider store={reduxStore}>
-          <App />
+          <PersistGate loading={null} persistor={reduxStorePersistor}>
+            <App />
+          </PersistGate>
         </Provider>
       </ApolloProvider>
     </BrowserRouter>

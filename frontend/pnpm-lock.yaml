@@ -74,6 +74,9 @@ dependencies:
   reactflow:
     specifier: ^11.11.3
     version: 11.11.3(@types/react@18.3.3)(react-dom@18.3.1)(react@18.3.1)
+  redux-persist:
+    specifier: ^6.0.0
+    version: 6.0.0(react@18.3.1)(redux@5.0.1)
   tailwind-merge:
     specifier: ^2.3.0
     version: 2.3.0
@@ -10231,6 +10234,19 @@ packages:
     dependencies:
       indent-string: 4.0.0
       strip-indent: 3.0.0
+    dev: false
+
+  /redux-persist@6.0.0(react@18.3.1)(redux@5.0.1):
+    resolution: {integrity: sha512-71LLMbUq2r02ng2We9S215LtPu3fY0KgaGE0k8WRgl6RkqxtGfl7HUozz1Dftwsb0D/5mZ8dwAaPbtnzfvbEwQ==}
+    peerDependencies:
+      react: '>=16'
+      redux: '>4.0.0'
+    peerDependenciesMeta:
+      react:
+        optional: true
+    dependencies:
+      react: 18.3.1
+      redux: 5.0.1
     dev: false
 
   /redux-thunk@3.1.0(redux@5.0.1):

@@ -2,10 +2,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { FC, ReactNode } from "react";
 import { twMerge } from "tailwind-merge";
 import { IInternalRoute } from "../config/routes";
-import { Breadcrumb } from "./breadcrumbs";
-import { Sidebar } from "./sidebar/sidebar";
 import { useAppSelector } from "../store/hooks";
+import { Breadcrumb } from "./breadcrumbs";
 import { Loading } from "./loading";
+import { Sidebar } from "./sidebar/sidebar";
 
 type IPageProps = {
     className?: string;
@@ -31,6 +31,7 @@ type IInternalPageProps = IPageProps & {
 }
 
 export const InternalPage: FC<IInternalPageProps> = (props) => {
+    const current = useAppSelector(state => state.auth.current);
     const schema = useAppSelector(state => state.common.schema);
 
     return (
@@ -40,7 +41,7 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
                 <div className="flex flex-col grow">
                     <Breadcrumb routes={props.routes ?? []} active={props.routes?.at(-1)} />
                     {
-                        schema.length === 0
+                        current == null || schema.length === 0
                         ? <Loading />
                         : <div className="flex grow flex-wrap gap-2 py-4 content-start">
                             {props.children}

@@ -13,6 +13,11 @@ import (
 
 type PostgresPlugin struct{}
 
+func (p *PostgresPlugin) IsAvailable(config *engine.PluginConfig) bool {
+	_, err := DB(config)
+	return err == nil
+}
+
 func (p *PostgresPlugin) GetSchema(config *engine.PluginConfig) ([]string, error) {
 	db, err := DB(config)
 	if err != nil {
@@ -118,7 +123,7 @@ func (p *PostgresPlugin) GetRows(config *engine.PluginConfig, schema string, sto
 		return nil, errors.New("invalid table name")
 	}
 
-	query := fmt.Sprintf("SELECT * FROM '%v'.'%s'", schema, storageUnit)
+	query := fmt.Sprintf("SELECT * FROM \"%v\".\"%s\"", schema, storageUnit)
 	if len(where) > 0 {
 		query = fmt.Sprintf("%v WHERE %v", query, where)
 	}

@@ -116,7 +116,9 @@ const TData: FC<ITDataProps> = ({ data, row }) => {
                 {Icons.Cancel}
             </div>
         }
-        <div className="transition-all hidden group-hover/data:flex absolute right-2 top-1/2 -translate-y-1/2 hover:scale-125" onClick={editable ? handleUpdate : handleEdit}>
+        <div className={classNames("transition-all hidden group-hover/data:flex absolute right-2 top-1/2 -translate-y-1/2 hover:scale-125", {
+            "!hidden": true,
+        })} onClick={editable ? handleUpdate : handleEdit}>
             {editable ? Icons.CheckCircle : Icons.Edit}
         </div>
     </td>

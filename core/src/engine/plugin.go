@@ -52,6 +52,7 @@ type GraphUnit struct {
 }
 
 type PluginFunctions interface {
+	IsAvailable(config *PluginConfig) bool
 	GetSchema(config *PluginConfig) ([]string, error)
 	GetStorageUnits(config *PluginConfig, schema string) ([]StorageUnit, error)
 	GetRows(config *PluginConfig, schema string, storageUnit string, where string, pageSize int, pageOffset int) (*GetRowsResult, error)

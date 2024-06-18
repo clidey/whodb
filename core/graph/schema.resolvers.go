@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/clidey/whodb/core/graph/model"
@@ -16,6 +17,16 @@ import (
 
 // Login is the resolver for the Login field.
 func (r *mutationResolver) Login(ctx context.Context, credentails model.LoginCredentials) (*model.AuthResponse, error) {
+	if !src.MainEngine.Choose(engine.DatabaseType(credentails.Type)).IsAvailable(&engine.PluginConfig{
+		Credentials: &engine.Credentials{
+			Hostname: credentails.Hostname,
+			Username: credentails.Username,
+			Password: credentails.Password,
+			Database: credentails.Database,
+		},
+	}) {
+		return nil, errors.New("unauthorized")
+	}
 	return auth.Login(ctx, &credentails)
 }
 

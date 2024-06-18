@@ -1,22 +1,24 @@
 
+import { useMutation, useQuery } from "@apollo/client";
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import { debounce } from "lodash";
-import { FC, cloneElement, useCallback, useMemo, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { InternalRoutes } from "../../config/routes";
-import { createStub } from "../../utils/functions";
-import { BRAND_COLOR } from "../classes";
-import { Icons } from "../icons";
-import { twMerge } from "tailwind-merge";
-import { useNavigate } from "react-router-dom";
-import { useQuery } from "@apollo/client";
-import { GetSchemaDocument, GetSchemaQuery, GetSchemaQueryVariables } from "../../generated/graphql";
-import { Loading } from "../loading";
-import { Dropdown, IDropdownItem } from "../dropdown";
-import { useAppSelector } from "../../store/hooks";
+import { FC, MouseEvent, cloneElement, useCallback, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { twMerge } from "tailwind-merge";
+import { InternalRoutes, PublicRoutes } from "../../config/routes";
+import { GetSchemaDocument, GetSchemaQuery, GetSchemaQueryVariables, LoginDocument, LoginMutation, LoginMutationVariables } from "../../generated/graphql";
+import { AuthActions, LoginProfile } from "../../store/auth";
 import { CommonActions } from "../../store/common";
+import { notify } from "../../store/function";
+import { useAppSelector } from "../../store/hooks";
+import { createStub } from "../../utils/functions";
+import { AnimatedButton } from "../button";
+import { BRAND_COLOR } from "../classes";
+import { Dropdown, IDropdownItem } from "../dropdown";
+import { Icons } from "../icons";
+import { Loading } from "../loading";
 
 type IRoute = {
     icon?: React.ReactElement;
@@ -105,16 +107,30 @@ export const SideMenu: FC<IRouteProps> = (props) => {
     </div>
 }
 
+function getDropdownLoginProfileItem(profile: LoginProfile): IDropdownItem {
+    return {
+        id: profile.id,
+        label: `${profile.Database} - ${profile.Hostname}[${profile.Username}]`,
+    };
+}
+
 export const Sidebar: FC = () => {
     const [collapsed, setCollapsed] = useState(false);
     const schema = useAppSelector(state => state.common.schema);
     const dispatch = useDispatch();
     const pathname = useLocation().pathname;
+    const current = useAppSelector(state => state.auth.current);
+    const profiles = useAppSelector(state => state.auth.profiles);
     const { data, loading } = useQuery<GetSchemaQuery, GetSchemaQueryVariables>(GetSchemaDocument, {
         onCompleted(data) {
             dispatch(CommonActions.setSchema(data.Schema[0]));
         },
+        onError() {
+            notify("Unable to connect to database", "error");
+        }
     });
+    const [login, ] = useMutation<LoginMutation, LoginMutationVariables>(LoginDocument);
+    const navigate = useNavigate();
 
     const handleSchemaChange = useCallback((item: IDropdownItem) => {
         dispatch(CommonActions.setSchema(item.id));
@@ -144,11 +160,58 @@ export const Sidebar: FC = () => {
         setCollapsed(c => !c);
     }, []);
 
+    const handleProfileChange = useCallback((item: IDropdownItem) => {
+        const selectedProfile = profiles.find(profile => profile.id === item.id);
+        if (selectedProfile == null) {
+            return;
+        }
+        login({
+            variables: {
+                credentails: {
+                    Type: selectedProfile.Type,
+                    Database: selectedProfile.Database,
+                    Hostname: selectedProfile.Hostname,
+                    Password: selectedProfile.Password,
+                    Username: selectedProfile.Username,
+                },
+            },
+            onCompleted(status) {
+                if (status.Login.Status) {
+                    dispatch(AuthActions.switch({ id: selectedProfile.id }));
+                    navigate(0);
+                }
+            },
+            onError(error) {
+                notify(`Error signing you in: ${error.message}`, "error")
+            },
+        })
+    }, [dispatch, login, navigate, profiles]);
+
+    const handleNavigateToLogin = useCallback(() => {
+        navigate(PublicRoutes.Login.path);
+    }, [navigate]);
+
     const routes = useMemo(() => {
         return sidebarRoutes.map(route => (
             <SideMenu key={`sidebar-routes-${createStub(route.title)}`} collapse={collapsed} title={route.title} icon={route.icon} routes={route.routes} path={route.path} />
         ));
     }, [collapsed, sidebarRoutes]);
+
+    const loginItems: IDropdownItem[] = useMemo(() => {
+        return profiles.map(profile => getDropdownLoginProfileItem(profile));
+    }, [profiles]);
+
+    const handleMenuLogout = useCallback((e: MouseEvent, item: IDropdownItem) => {
+        e.stopPropagation();
+        const selectedProfile = profiles.find(profile => profile.id === item.id);
+        if (selectedProfile == null) {
+            return;
+        }
+        if (selectedProfile.id === current?.id) {
+            return navigate(InternalRoutes.Logout.path);
+        }
+        dispatch(AuthActions.remove({ id: selectedProfile.id }));
+    }, [current?.id, dispatch, navigate, profiles]);
 
     const animate = collapsed ? "hide" : "show";
 
@@ -193,21 +256,47 @@ export const Sidebar: FC = () => {
                 {Icons.DoubleRightArrow}
             </motion.div>
             {
-                loading || data == null
+                loading
                 ? <Loading />
-                :  <div className="flex flex-col justify-center mt-[20vh] grow">
+                :  <div className="flex flex-col justify-center mt-[10vh] grow">
                         <AnimatePresence mode="wait">
                             <div className="flex flex-col">
-                                <div className={classNames("flex gap-2 items-center mb-8 ml-4", {
-                                    "hidden": pathname === InternalRoutes.RawExecute.path,
-                                })}>
-                                    <div className="text-sm text-gray-600">Schema:</div>
-                                    <Dropdown className="w-full" value={{ id: schema, label: schema }} items={data.Schema.map(schema => ({ id: schema, label: schema }))} onChange={handleSchemaChange} />
+                                <div className="flex flex-col mb-[10vh] gap-4 ml-4">
+                                    <div className={classNames("flex gap-2 items-center", {
+                                        "hidden": collapsed,
+                                    })}>
+                                        <div className="text-sm text-gray-600 mr-2.5">Profile:</div>
+                                        {
+                                            current != null &&
+                                            <Dropdown items={loginItems} value={{
+                                                id: current.id,
+                                                label: `${current.Hostname} [${current.Username}]`,
+                                            }} onChange={handleProfileChange}
+                                                defaultItem={{
+                                                    label: "Add another profile",
+                                                    icon: cloneElement(Icons.Add, {
+                                                        className: "w-6 h-6 stroke-green-800",
+                                                    }),
+                                                }} defaultItemClassName="text-green-800" onDefaultItemClick={handleNavigateToLogin} 
+                                                action={<AnimatedButton icon={Icons.Logout} label="Logout" onClick={handleMenuLogout} /> }/>
+                                        }
+                                    </div>
+                                    {
+                                        data != null &&
+                                        <div className={classNames("flex gap-2 items-center justify-between", {
+                                            "hidden": pathname === InternalRoutes.RawExecute.path || collapsed,
+                                        })}>
+                                            <div className="text-sm text-gray-600">Schema:</div>
+                                            <Dropdown className="w-full" value={{ id: schema, label: schema }} items={data.Schema.map(schema => ({ id: schema, label: schema }))} onChange={handleSchemaChange} />
+                                        </div>
+                                    }
                                 </div>
                                 {routes}
                             </div>
                             <div className="grow" />
-                            <SideMenu collapse={collapsed} title="Logout" icon={Icons.Logout} path={InternalRoutes.Logout.path} />
+                            <div className="flex flex-col">
+                                <SideMenu collapse={collapsed} title="Logout" icon={Icons.Logout} path={InternalRoutes.Logout.path} />
+                            </div>
                         </AnimatePresence>
                     </div>
             }

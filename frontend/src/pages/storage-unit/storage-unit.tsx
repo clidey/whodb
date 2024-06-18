@@ -1,6 +1,7 @@
 import { useQuery } from "@apollo/client";
 import { FC, useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Handle, Position } from "reactflow";
 import { AnimatedButton } from "../../components/button";
 import { Card, ExpandableCard } from "../../components/card";
 import { IGraphCardProps } from "../../components/graph/graph";
@@ -9,7 +10,6 @@ import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { InternalRoutes } from "../../config/routes";
 import { DatabaseType, GetStorageUnitsDocument, GetStorageUnitsQuery, GetStorageUnitsQueryVariables, StorageUnit } from "../../generated/graphql";
-import { Handle, Position } from "reactflow";
 import { useAppSelector } from "../../store/hooks";
 
 const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
@@ -83,7 +83,7 @@ export const StorageUnitPage: FC = () => {
         variables: {
             type: DatabaseType.Postgres,
             schema,
-        }
+        },
     });
 
     if (loading) {

@@ -7,6 +7,7 @@ import { ExploreStorageUnit } from "../pages/storage-unit/explore-storage-unit";
 import { StorageUnitPage } from "../pages/storage-unit/storage-unit";
 import { useAppSelector } from "../store/hooks";
 import { RawExecutePage } from "../pages/raw-execute/raw-execute";
+import { LogoutPage } from "../pages/auth/logout";
 
 export type IInternalRoute = {
     name: string;
@@ -49,12 +50,12 @@ export const InternalRoutes = {
     Logout: {
         name: "Logout",
         path: "/logout",
-        component: <LoginPage />,
+        component: <LogoutPage />,
     },
 }
 
 export const PrivateRoute: FC = () => {
-    const loggedIn = useAppSelector(state => state.auth.profiles.length > 0);
+    const loggedIn = useAppSelector(state => state.auth.status === "logged-in");
     if(loggedIn) {
         return <Outlet />;
     }
