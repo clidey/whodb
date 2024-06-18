@@ -268,7 +268,7 @@ export const Sidebar: FC = () => {
                                         <div className="text-sm text-gray-600 mr-2.5">Profile:</div>
                                         {
                                             current != null &&
-                                            <Dropdown items={loginItems} value={{
+                                            <Dropdown className="max-w-[120px]" items={loginItems} value={{
                                                 id: current.id,
                                                 label: `${current.Hostname} [${current.Username}]`,
                                             }} onChange={handleProfileChange}
@@ -287,7 +287,7 @@ export const Sidebar: FC = () => {
                                             "hidden": pathname === InternalRoutes.RawExecute.path || collapsed,
                                         })}>
                                             <div className="text-sm text-gray-600">Schema:</div>
-                                            <Dropdown className="w-full" value={{ id: schema, label: schema }} items={data.Schema.map(schema => ({ id: schema, label: schema }))} onChange={handleSchemaChange} />
+                                            <Dropdown className="w-full max-w-[120px]" value={{ id: schema, label: schema }} items={data.Schema.map(schema => ({ id: schema, label: schema }))} onChange={handleSchemaChange} />
                                         </div>
                                     }
                                 </div>
