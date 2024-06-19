@@ -14,8 +14,16 @@ import (
 type PostgresPlugin struct{}
 
 func (p *PostgresPlugin) IsAvailable(config *engine.PluginConfig) bool {
-	_, err := DB(config)
-	return err == nil
+	db, err := DB(config)
+	if err != nil {
+		return false
+	}
+	sqlDb, err := db.DB()
+	if err != nil {
+		return false
+	}
+	sqlDb.Close()
+	return true
 }
 
 func (p *PostgresPlugin) GetSchema(config *engine.PluginConfig) ([]string, error) {
@@ -23,6 +31,11 @@ func (p *PostgresPlugin) GetSchema(config *engine.PluginConfig) ([]string, error
 	if err != nil {
 		return nil, err
 	}
+	sqlDb, err := db.DB()
+	if err != nil {
+		return nil, err
+	}
+	defer sqlDb.Close()
 	var schemas []struct {
 		SchemaName string `gorm:"column:schemaname"`
 	}
@@ -41,6 +54,11 @@ func (p *PostgresPlugin) GetStorageUnits(config *engine.PluginConfig, schema str
 	if err != nil {
 		return nil, err
 	}
+	sqlDb, err := db.DB()
+	if err != nil {
+		return nil, err
+	}
+	defer sqlDb.Close()
 	storageUnits := []engine.StorageUnit{}
 	rows, err := db.Raw(fmt.Sprintf(`
 		SELECT
@@ -137,6 +155,11 @@ func (p *PostgresPlugin) executeRawSQL(config *engine.PluginConfig, query string
 		return nil, err
 	}
 
+	sqlDb, err := db.DB()
+	if err != nil {
+		return nil, err
+	}
+	defer sqlDb.Close()
 	rows, err := db.Raw(query, params...).Rows()
 	if err != nil {
 		return nil, err

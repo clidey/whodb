@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
 )
@@ -22,8 +23,17 @@ func GetCredentials(ctx context.Context) *engine.Credentials {
 	return ctx.Value(AuthKey_Credentials).(*engine.Credentials)
 }
 
+func isPublicRoute(r *http.Request) bool {
+	return !strings.HasPrefix(r.URL.Path, "/api/") && r.URL.Path != "/api"
+}
+
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if isPublicRoute(r) {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)

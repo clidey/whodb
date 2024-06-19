@@ -23,7 +23,7 @@ type OAuthLoginUrl struct {
 }
 
 func setupServer(router *chi.Mux) {
-	fileServer(router, "/", http.Dir("./build"))
+	fileServer(router)
 
 	server := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
 	server.AddTransport(&transport.Websocket{})
