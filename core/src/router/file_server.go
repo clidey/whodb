@@ -9,6 +9,7 @@ import (
 
 func fileServer(r chi.Router) {
 	fs := http.FileServer(http.Dir("./build"))
+	r.Handle("/static/*", fs)
 	r.Handle("/images/*", fs)
 	r.Handle("/favicon.ico", fs)
 	r.Handle("/asset-manifest.json", fs)
