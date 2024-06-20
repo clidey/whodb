@@ -6,7 +6,7 @@ import { ApolloProvider } from "@apollo/client";
 import { graphqlClient } from './config/graphql-client';
 import { Provider } from "react-redux";
 import { reduxStore, reduxStorePersistor } from './store';
-import App from './app';
+import { App } from './app';
 import { BrowserRouter } from "react-router-dom";
 import 'reactflow/dist/style.css';
 import { PersistGate } from 'redux-persist/integration/react';
