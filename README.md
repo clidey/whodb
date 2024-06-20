@@ -1,25 +1,27 @@
 # WhoDB
 
+Clidey Build: <img src="https://hello.clidey.com/api/flows/status?id=b32257fa-1415-4847-a0f3-e684f5f76608&secret=cd74dbd5-36ec-42f9-b4f0-12ce9fcc762b" alt="Clidey build status" height="20px" />
+
 ### *"Making your database management disappear like magic!"*
 
 ## Description
 Welcome to **WhoDB** – a powerful and user-friendly database management tool that combines the simplicity of Adminer with superior UX and performance. WhoDB is written in GoLang for optimal speed and efficiency and features interactive graphs for visualizing your entire database schema. Whether you're managing a small project or a complex enterprise system, WhoDB is designed to make your database administration tasks smoother and more intuitive.
-
-## Features
-- **Better UX:** Intuitive and easy-to-use interface.
-- **Faster Performance:** Built with GoLang for exceptional speed.
-- **Schema Visualization:** Interactive graphs to visualize your entire database schema.
-- **Current Support:** PostgreSQL
 
 ## Quick Start
 
 To start using WhoDB right away, you can run it using Docker:
 
 ```sh
-docker run -p 8080:8080 clidey/whodb
+docker run -it -p 8080:8080 clidey/whodb
 ```
 
 Go to http://localhost:8080 and get started!
+
+## Features
+- **Better UX:** Intuitive and easy-to-use interface.
+- **Faster Performance:** Built with GoLang for exceptional speed.
+- **Schema Visualization:** Interactive graphs to visualize your entire database schema.
+- **Current Support:** PostgreSQL
 
 ## Development Setup
 

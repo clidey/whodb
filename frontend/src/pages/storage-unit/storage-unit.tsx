@@ -78,7 +78,7 @@ const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
 
 export const StorageUnitPage: FC = () => {
     const navigate = useNavigate();
-    const schema = useAppSelector(state => state.common.schema);
+    const schema = useAppSelector(state => state.database.schema);
     const { loading, data } = useQuery<GetStorageUnitsQuery, GetStorageUnitsQueryVariables>(GetStorageUnitsDocument, {
         variables: {
             type: DatabaseType.Postgres,

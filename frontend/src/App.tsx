@@ -1,8 +1,8 @@
 import { map } from "lodash";
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import './app.css';
 import { Notifications } from './components/notifications';
-import { PrivateRoute, PublicRoutes, getRoutes } from './config/routes';
+import { InternalRoutes, PrivateRoute, PublicRoutes, getRoutes } from './config/routes';
 
 export const App = () => {
   return (
@@ -13,6 +13,7 @@ export const App = () => {
           {map(getRoutes(), route => (
             <Route key={route.path} path={route.path} element={route.component} />
           ))}
+          <Route path="/" element={<Navigate to={InternalRoutes.Dashboard.StorageUnit.path} />} />
         </Route>
         <Route path={PublicRoutes.Login.path} element={PublicRoutes.Login.component} />
       </Routes>

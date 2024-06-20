@@ -9,12 +9,10 @@ export type INotification = {
 }
 
 type ICommonState = {
-  schema: string;
   notifications: INotification[];
 }
 
 const initialState: ICommonState = {
-  schema: "",
   notifications: [],
 }
 
@@ -27,9 +25,6 @@ export const commonSlice = createSlice({
     },
     removeNotifications: (state, action: PayloadAction<INotification>) => {
       state.notifications = state.notifications.filter(notification => notification.id !== action.payload.id);
-    },
-    setSchema: (state, action: PayloadAction<string>) => {
-      state.schema = action.payload;
     },
   },
 });

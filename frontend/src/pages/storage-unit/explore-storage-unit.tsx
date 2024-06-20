@@ -17,7 +17,7 @@ export const ExploreStorageUnit: FC = () => {
     const [currentPage, setCurrentPage] = useState(0);
     const [whereCondition, setWhereCondition] = useState("");
     const unit: StorageUnit = useLocation().state?.unit;
-    const schema = useAppSelector(state => state.common.schema);
+    const schema = useAppSelector(state => state.database.schema);
 
     const [getStorageUnitRows, { data: rows, loading }] = useLazyQuery<GetStorageUnitRowsQuery, GetStorageUnitRowsQueryVariables>(GetStorageUnitRowsDocument);
 

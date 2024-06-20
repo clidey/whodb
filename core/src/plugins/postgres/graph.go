@@ -109,6 +109,11 @@ func (p *PostgresPlugin) GetGraph(config *engine.PluginConfig, schema string) ([
 	if err != nil {
 		return nil, err
 	}
+	sqlDb, err := db.DB()
+	if err != nil {
+		return nil, err
+	}
+	defer sqlDb.Close()
 
 	tableRelations := []tableRelations{}
 

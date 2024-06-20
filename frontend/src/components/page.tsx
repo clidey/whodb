@@ -32,7 +32,7 @@ type IInternalPageProps = IPageProps & {
 
 export const InternalPage: FC<IInternalPageProps> = (props) => {
     const current = useAppSelector(state => state.auth.current);
-    const schema = useAppSelector(state => state.common.schema);
+    const schema = useAppSelector(state => state.database.schema);
 
     return (
         <div className="flex grow h-full w-full">

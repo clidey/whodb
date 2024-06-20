@@ -15,7 +15,7 @@ export const GraphPage: FC = () => {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const reactFlowRef = useRef<IGraphInstance>();
-    const schema = useAppSelector(state => state.common.schema);
+    const schema = useAppSelector(state => state.database.schema);
 
     const { data, loading } = useQuery<GetGraphQuery, GetGraphQueryVariables>(GetGraphDocument, {
         variables: {
