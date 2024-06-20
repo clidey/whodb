@@ -12,7 +12,7 @@ Welcome to **WhoDB** – a powerful and user-friendly database management tool t
 To start using WhoDB right away, you can run it using Docker:
 
 ```sh
-docker run -p 8080:8080 clidey/whodb
+docker run -it -p 8080:8080 clidey/whodb
 ```
 
 Go to http://localhost:8080 and get started!
