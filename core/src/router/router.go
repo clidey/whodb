@@ -63,7 +63,13 @@ func InitializeRouter() {
 	setupMiddlewares(router)
 	setupServer(router)
 
-	log.Logger.Infof("connect to 0.0.0.0:%s/ for GraphQL playground", port)
+	log.Logger.Infof(
+		"🎉 Welcome to WhoDB! 🎉\n\n"+
+			"Get started by visiting:\n"+
+			"http://0.0.0.0:%s/\n\n"+
+			"Explore and enjoy working with your databases!",
+		port,
+	)
 
 	if err := http.ListenAndServe(fmt.Sprintf(":%v", port), router); err != nil {
 		panic(err)

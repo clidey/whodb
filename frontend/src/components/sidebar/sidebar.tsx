@@ -1,16 +1,16 @@
 
-import { useMutation, useQuery } from "@apollo/client";
+import { useLazyQuery, useMutation } from "@apollo/client";
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import { debounce } from "lodash";
-import { FC, MouseEvent, cloneElement, useCallback, useMemo, useState } from "react";
+import { FC, MouseEvent, cloneElement, useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
 import { InternalRoutes, PublicRoutes } from "../../config/routes";
 import { GetSchemaDocument, GetSchemaQuery, GetSchemaQueryVariables, LoginDocument, LoginMutation, LoginMutationVariables } from "../../generated/graphql";
 import { AuthActions, LoginProfile } from "../../store/auth";
-import { CommonActions } from "../../store/common";
+import { DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
 import { createStub } from "../../utils/functions";
@@ -116,15 +116,12 @@ function getDropdownLoginProfileItem(profile: LoginProfile): IDropdownItem {
 
 export const Sidebar: FC = () => {
     const [collapsed, setCollapsed] = useState(false);
-    const schema = useAppSelector(state => state.common.schema);
+    const schema = useAppSelector(state => state.database.schema);
     const dispatch = useDispatch();
     const pathname = useLocation().pathname;
     const current = useAppSelector(state => state.auth.current);
     const profiles = useAppSelector(state => state.auth.profiles);
-    const { data, loading } = useQuery<GetSchemaQuery, GetSchemaQueryVariables>(GetSchemaDocument, {
-        onCompleted(data) {
-            dispatch(CommonActions.setSchema(data.Schema[0]));
-        },
+    const [getSchema,{ data, loading }] = useLazyQuery<GetSchemaQuery, GetSchemaQueryVariables>(GetSchemaDocument, {
         onError() {
             notify("Unable to connect to database", "error");
         }
@@ -133,8 +130,20 @@ export const Sidebar: FC = () => {
     const navigate = useNavigate();
 
     const handleSchemaChange = useCallback((item: IDropdownItem) => {
-        dispatch(CommonActions.setSchema(item.id));
+        dispatch(DatabaseActions.setSchema(item.id));
     }, [dispatch]);
+
+    useEffect(() => {
+        if (schema === "") {
+            getSchema({
+                onCompleted(data) {
+                    dispatch(DatabaseActions.setSchema(data.Schema[0]));
+                },
+            });
+        } else {
+            getSchema();
+        }
+    }, [dispatch, getSchema, schema]);
 
     const sidebarRoutes: IRouteProps[] = useMemo(() => {
         return [

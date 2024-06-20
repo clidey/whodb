@@ -3,9 +3,11 @@ import { persistReducer, persistStore } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import { authReducers } from './auth';
 import { commonReducers } from './common';
+import { databaseReducers } from './database';
 
 const persistedReducer = combineReducers({
   auth: persistReducer({ key: "auth", storage, }, authReducers),
+  database: persistReducer({ key: "database", storage, }, databaseReducers),
   common: commonReducers,
 });
 
