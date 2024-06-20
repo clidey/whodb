@@ -17,6 +17,8 @@ docker run -it -p 8080:8080 clidey/whodb
 
 Go to http://localhost:8080 and get started!
 
+Or try here: https://whodb.clidey.com (does not support non https hosts)
+
 ## Features
 - **Better UX:** Intuitive and easy-to-use interface.
 - **Faster Performance:** Built with GoLang for exceptional speed.
