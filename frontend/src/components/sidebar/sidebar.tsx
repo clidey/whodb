@@ -130,8 +130,11 @@ export const Sidebar: FC = () => {
     const navigate = useNavigate();
 
     const handleSchemaChange = useCallback((item: IDropdownItem) => {
+        if (pathname !== InternalRoutes.Graph.path && pathname !== InternalRoutes.Dashboard.StorageUnit.path) {
+            navigate(InternalRoutes.Dashboard.StorageUnit.path);
+        }
         dispatch(DatabaseActions.setSchema(item.id));
-    }, [dispatch]);
+    }, [dispatch, navigate, pathname]);
 
     useEffect(() => {
         if (current == null) {
