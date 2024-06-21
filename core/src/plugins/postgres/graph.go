@@ -138,8 +138,13 @@ func (p *PostgresPlugin) GetGraph(config *engine.PluginConfig, schema string) ([
 	}
 
 	tables := []engine.GraphUnit{}
-	for tableName, relations := range tableMap {
-		tables = append(tables, engine.GraphUnit{Unit: storageUnitsMap[tableName], Relations: relations})
+	for _, storageUnit := range storageUnits {
+		foundTable, ok := tableMap[storageUnit.Name]
+		var relations []engine.GraphUnitRelationship
+		if ok {
+			relations = foundTable
+		}
+		tables = append(tables, engine.GraphUnit{Unit: storageUnit, Relations: relations})
 	}
 
 	return tables, nil

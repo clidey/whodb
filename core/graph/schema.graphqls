@@ -4,6 +4,7 @@
 
 enum DatabaseType {
   Postgres,
+  MySQL,
 }
 
 type Column {

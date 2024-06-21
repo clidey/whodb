@@ -18,13 +18,14 @@ export const ExploreStorageUnit: FC = () => {
     const [whereCondition, setWhereCondition] = useState("");
     const unit: StorageUnit = useLocation().state?.unit;
     const schema = useAppSelector(state => state.database.schema);
+    const current = useAppSelector(state => state.auth.current);
 
     const [getStorageUnitRows, { data: rows, loading }] = useLazyQuery<GetStorageUnitRowsQuery, GetStorageUnitRowsQueryVariables>(GetStorageUnitRowsDocument);
 
     const handleSubmitRequest = useCallback(() => {
         getStorageUnitRows({
             variables: {
-                type: DatabaseType.Postgres,
+                type: current?.Type as DatabaseType,
                 schema,
                 storageUnit: unit.Name,
                 where: whereCondition,
@@ -32,13 +33,13 @@ export const ExploreStorageUnit: FC = () => {
                 pageOffset: currentPage,
             },
         });
-    }, [getStorageUnitRows, schema, unit.Name, whereCondition, pageSize, currentPage]);
+    }, [getStorageUnitRows, current?.Type, schema, unit.Name, whereCondition, pageSize, currentPage]);
 
     const handlePageChange = useCallback((page: number) => {
         setCurrentPage(page-1);
         getStorageUnitRows({
             variables: {
-                type: DatabaseType.Postgres,
+                type: current?.Type as DatabaseType,
                 schema,
                 storageUnit: unit.Name,
                 where: whereCondition,
@@ -46,7 +47,7 @@ export const ExploreStorageUnit: FC = () => {
                 pageOffset: currentPage,
             }
         });
-    }, [currentPage, getStorageUnitRows, pageSize, schema, unit.Name, whereCondition]);
+    }, [current?.Type, currentPage, getStorageUnitRows, pageSize, schema, unit.Name, whereCondition]);
 
     const handleQuery = useCallback(() => {
         handleSubmitRequest();

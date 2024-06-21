@@ -1,5 +1,5 @@
 import { useMutation } from "@apollo/client";
-import { FC, cloneElement, useCallback, useState } from "react";
+import { FC, cloneElement, useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
 import { AnimatedButton } from "../../components/button";
@@ -12,6 +12,7 @@ import { Page } from "../../components/page";
 import { InternalRoutes } from "../../config/routes";
 import { LoginDocument, LoginMutation, LoginMutationVariables } from '../../generated/graphql';
 import { AuthActions } from "../../store/auth";
+import { DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";
 import { useAppDispatch } from "../../store/hooks";
 
@@ -21,11 +22,11 @@ const databaseDropdownItems: IDropdownItem[] = [
         label: "Postgres",
         icon: Icons.Logos.Postgres,
     },
-    // {
-    //     id: "MySQL",
-    //     label: "MySQL",
-    //     icon: Icons.Logos.MySQL,
-    // },
+    {
+        id: "MySQL",
+        label: "MySQL",
+        icon: Icons.Logos.MySQL,
+    },
 ]
 
 export const LoginPage: FC = () => {
@@ -72,6 +73,10 @@ export const LoginPage: FC = () => {
             }
         })
     }, [databaseType.id, dispatch, hostName, login, navigate, password, database, username]);
+
+    useEffect(() => {
+        dispatch(DatabaseActions.setSchema(""));
+    }, [dispatch]);
 
     if (loading)  {
         return (

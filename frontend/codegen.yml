@@ -1,4 +1,4 @@
-schema: http://localhost:8080/query
+schema: http://localhost:8080/api/query
 documents: src/**/*.graphql
 generates:
   src/generated/graphql.tsx:

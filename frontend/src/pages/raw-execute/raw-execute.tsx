@@ -8,19 +8,21 @@ import { InternalPage } from "../../components/page";
 import { Table } from "../../components/table";
 import { InternalRoutes } from "../../config/routes";
 import { DatabaseType, RawExecuteDocument, RawExecuteQuery, RawExecuteQueryVariables } from "../../generated/graphql";
+import { useAppSelector } from "../../store/hooks";
 
 export const RawExecutePage: FC = () => {
     const [code, setCode] = useState("");
     const [rawExecute, { data: rows, loading, error }] = useLazyQuery<RawExecuteQuery, RawExecuteQueryVariables>(RawExecuteDocument);
+    const current = useAppSelector(state => state.auth.current);
 
     const handleRawExecute = useCallback(() => {
         rawExecute({
             variables: {
-                type: DatabaseType.Postgres,
+                type: current?.Type as DatabaseType,
                 query: code,
             },
         })
-    }, [code, rawExecute]);
+    }, [code, current?.Type, rawExecute]);
 
     if (loading) {
         return <InternalPage routes={[InternalRoutes.Dashboard.StorageUnit, InternalRoutes.Dashboard.ExploreStorageUnit]}>
@@ -35,7 +37,7 @@ export const RawExecutePage: FC = () => {
                     <CodeEditor language="sql" value={code} setValue={setCode} onRun={handleRawExecute} />
                 </div>
                 <div className="flex items-center justify-between">
-                    <div className="text-sm text-red-500">{error?.message ?? ""}</div>
+                    <div className="text-sm text-red-500 w-[33vw]">{error?.message ?? ""}</div>
                     <AnimatedButton icon={Icons.CheckCircle} label="Submit query" onClick={handleRawExecute} type="lg" />
                 </div>
                 {
