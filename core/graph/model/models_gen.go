@@ -60,15 +60,17 @@ type DatabaseType string
 
 const (
 	DatabaseTypePostgres DatabaseType = "Postgres"
+	DatabaseTypeMySQL    DatabaseType = "MySQL"
 )
 
 var AllDatabaseType = []DatabaseType{
 	DatabaseTypePostgres,
+	DatabaseTypeMySQL,
 }
 
 func (e DatabaseType) IsValid() bool {
 	switch e {
-	case DatabaseTypePostgres:
+	case DatabaseTypePostgres, DatabaseTypeMySQL:
 		return true
 	}
 	return false

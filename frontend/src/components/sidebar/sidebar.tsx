@@ -8,7 +8,7 @@ import { useDispatch } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
 import { InternalRoutes, PublicRoutes } from "../../config/routes";
-import { GetSchemaDocument, GetSchemaQuery, GetSchemaQueryVariables, LoginDocument, LoginMutation, LoginMutationVariables } from "../../generated/graphql";
+import { DatabaseType, GetSchemaDocument, GetSchemaQuery, GetSchemaQueryVariables, LoginDocument, LoginMutation, LoginMutationVariables } from "../../generated/graphql";
 import { AuthActions, LoginProfile } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";
@@ -134,16 +134,26 @@ export const Sidebar: FC = () => {
     }, [dispatch]);
 
     useEffect(() => {
+        if (current == null) {
+            return;
+        }
         if (schema === "") {
             getSchema({
+                variables: {
+                    type: current?.Type as DatabaseType,
+                },
                 onCompleted(data) {
                     dispatch(DatabaseActions.setSchema(data.Schema[0]));
                 },
             });
-        } else {
-            getSchema();
-        }
-    }, [dispatch, getSchema, schema]);
+            return;
+        } 
+        getSchema({
+            variables: {
+                type: current?.Type as DatabaseType,
+            },
+        });
+    }, [current, dispatch, getSchema, schema]);
 
     const sidebarRoutes: IRouteProps[] = useMemo(() => {
         return [
@@ -186,6 +196,7 @@ export const Sidebar: FC = () => {
             },
             onCompleted(status) {
                 if (status.Login.Status) {
+                    dispatch(DatabaseActions.setSchema(""));
                     dispatch(AuthActions.switch({ id: selectedProfile.id }));
                     navigate(0);
                 }

@@ -16,10 +16,11 @@ export const GraphPage: FC = () => {
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const reactFlowRef = useRef<IGraphInstance>();
     const schema = useAppSelector(state => state.database.schema);
+    const current = useAppSelector(state => state.auth.current);
 
     const { data, loading } = useQuery<GetGraphQuery, GetGraphQueryVariables>(GetGraphDocument, {
         variables: {
-            type: DatabaseType.Postgres,
+            type: current?.Type as DatabaseType,
             schema,
         },
         onCompleted(data) {
