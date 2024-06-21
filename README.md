@@ -23,7 +23,7 @@ Or try here: https://whodb.clidey.com (does not support non https hosts)
 - **Better UX:** Intuitive and easy-to-use interface.
 - **Faster Performance:** Built with GoLang for exceptional speed.
 - **Schema Visualization:** Interactive graphs to visualize your entire database schema.
-- **Current Support:** PostgreSQL
+- **Current Support:** PostgreSQL, MySQL
 
 ## Development Setup
 

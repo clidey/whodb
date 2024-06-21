@@ -29,6 +29,7 @@ export type Column = {
 };
 
 export enum DatabaseType {
+  MySql = 'MySQL',
   Postgres = 'Postgres'
 }
 
@@ -137,7 +138,9 @@ export type StorageUnit = {
   Name: Scalars['String']['output'];
 };
 
-export type GetSchemaQueryVariables = Exact<{ [key: string]: never; }>;
+export type GetSchemaQueryVariables = Exact<{
+  type: DatabaseType;
+}>;
 
 
 export type GetSchemaQuery = { __typename?: 'Query', Schema: Array<string> };
@@ -192,8 +195,8 @@ export type GetStorageUnitsQuery = { __typename?: 'Query', StorageUnit: Array<{ 
 
 
 export const GetSchemaDocument = gql`
-    query GetSchema {
-  Schema(type: Postgres)
+    query GetSchema($type: DatabaseType!) {
+  Schema(type: $type)
 }
     `;
 
@@ -209,10 +212,11 @@ export const GetSchemaDocument = gql`
  * @example
  * const { data, loading, error } = useGetSchemaQuery({
  *   variables: {
+ *      type: // value for 'type'
  *   },
  * });
  */
-export function useGetSchemaQuery(baseOptions?: Apollo.QueryHookOptions<GetSchemaQuery, GetSchemaQueryVariables>) {
+export function useGetSchemaQuery(baseOptions: Apollo.QueryHookOptions<GetSchemaQuery, GetSchemaQueryVariables> & ({ variables: GetSchemaQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetSchemaQuery, GetSchemaQueryVariables>(GetSchemaDocument, options);
       }

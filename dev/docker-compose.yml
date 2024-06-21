@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  postgres:
+    container_name: postgres
+    image: postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      PGDATA: /data/postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres:/data/postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - db
+  mysql:
+    container_name: mysql
+    image: mysql
+    environment:
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: mysql
+      MYSQL_ROOT_PASSWORD: password
+    volumes:
+      - mysql:/data/postgres
+    ports:
+      - "3306:3306"
+    networks:
+      - db
+networks:
+  db:
+    driver: bridge
+
+volumes:
+  postgres:
+  mysql:

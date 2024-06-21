@@ -6,6 +6,7 @@ type DatabaseType string
 
 const (
 	DatabaseType_Postgres = "Postgres"
+	DatabaseType_MySQL    = "MySQL"
 )
 
 type Engine struct {
