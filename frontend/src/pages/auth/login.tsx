@@ -1,6 +1,6 @@
 import { useMutation } from "@apollo/client";
 import { FC, cloneElement, useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
 import { AnimatedButton } from "../../components/button";
 import { BASE_CARD_CLASS, BRAND_COLOR } from "../../components/classes";
@@ -34,6 +34,7 @@ export const LoginPage: FC = () => {
     const navigate = useNavigate();
     
     const [login, { loading }] = useMutation<LoginMutation, LoginMutationVariables>(LoginDocument);
+    const [searchParams, ] = useSearchParams();
 
     const [databaseType, setDatabaseType] = useState<IDropdownItem>(databaseDropdownItems[0]);
     const [hostName, setHostName] = useState("");
@@ -77,6 +78,19 @@ export const LoginPage: FC = () => {
     useEffect(() => {
         dispatch(DatabaseActions.setSchema(""));
     }, [dispatch]);
+
+    useEffect(() => {
+        if (searchParams.size > 0) {
+            if (searchParams.has("type")) {
+                const databaseType = searchParams.get("type")!;
+                setDatabaseType(databaseDropdownItems.find(item => item.id === databaseType) ?? databaseDropdownItems[0]);
+            }
+            if (searchParams.has("host")) setHostName(searchParams.get("host")!);
+            if (searchParams.has("username")) setUsername(searchParams.get("username")!);
+            if (searchParams.has("password")) setPassword(searchParams.get("password")!);
+            if (searchParams.has("database")) setDatabase(searchParams.get("database")!);
+        }
+    }, [searchParams]);
 
     if (loading)  {
         return (
