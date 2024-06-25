@@ -92,7 +92,7 @@ export const LoginPage: FC = () => {
         }
     }, [searchParams]);
 
-    if (true)  {
+    if (loading)  {
         return (
             <Page className="justify-center items-center">
                 <div className={twMerge(BASE_CARD_CLASS, "w-[350px] h-fit flex-col gap-4 justify-center py-16")}>
