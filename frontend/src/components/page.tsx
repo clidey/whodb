@@ -13,11 +13,11 @@ type IPageProps = {
 }
 
 export const Page: FC<IPageProps> = (props) => {
-    return <div className="flex grow px-8 pt-6 flex-col h-full w-full">
+    return <div className="flex grow px-8 py-6 flex-col h-full w-full">
         <AnimatePresence>
             <motion.div className={twMerge("flex flex-row grow flex-wrap gap-2 w-full h-full overflow-y-auto", props.className)}
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 100, }}
+                animate={{ opacity: 100, transition: { duration: 0.5 } }}
                 exit={{ opacity: 0 }}>
                     {props.children}
             </motion.div>
@@ -43,7 +43,7 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
                     {
                         current == null || schema.length === 0
                         ? <Loading />
-                        : <div className="flex grow flex-wrap gap-2 py-4 content-start">
+                        : <div className="flex grow flex-wrap gap-2 py-4 content-start relative">
                             {props.children}
                         </div>
                     }
