@@ -27,6 +27,10 @@ Or checkout our Demo Video: [![Demo Video](/docs/demo-thumbnail.png)](https://yo
 - **Schema Visualization:** Interactive graphs to visualize your entire database schema.
 - **Current Support:** PostgreSQL, MySQL
 
+## Documentation
+
+Check the following [Documentation README](/docs/README)
+
 ## Development Setup
 
 If you want to run and develop WhoDB locally, follow these steps:
