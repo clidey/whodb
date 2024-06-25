@@ -17,9 +17,11 @@ docker run -it -p 8080:8080 clidey/whodb
 
 Go to http://localhost:8080 and get started!
 
-Or try here: https://whodb.clidey.com (does not support non https hosts)
+Or try here: https://whodb.clidey.com/login?host=quick-container-491288b0-3138-48fa-93b4-1e730296c0b7.hello.svc.cluster.local&username=user&password=password&database=Adventureworks
 
-Or checkout our Demo Video: [![Demo Video](/docs/demo-thumbnail.png)](https://youtu.be/w3tOjRt8jGU)
+- This is currently populated with fake database from [postgresDBSamples](https://github.com/morenoh149/postgresDBSamples/) and the URL should automatically put the credentials
+
+Or checkout our Demo Video: [![Demo Video](/docs/images/demo-thumbnail.png)](https://youtu.be/w3tOjRt8jGU)
 
 ## Features
 - **Better UX:** Intuitive and easy-to-use interface.
