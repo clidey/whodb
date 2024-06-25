@@ -59,6 +59,32 @@ cd frontend/
 pnpm i && pnpm start
 ```
 
+## FAQs
+
+**Q: What inspired the creation of WhoDB?**
+
+A: WhoDB was inspired by Adminer due to its lightweight nature and ease of use. We aimed to enhance these qualities with a focus on graph-based visualization and a consistent user experience across different types of databases.
+
+**Q: How does WhoDB handle large queries?**
+
+A: WhoDB will support lazy loading to efficiently manage and display large query results, ensuring smooth performance even with extensive datasets. Although, currently the frontend could be laggy with handling large queries.
+
+**Q: What makes WhoDB different from DBeaver?**
+
+A: While DBeaver is a highly advanced tool written in Java, it can be resource-intensive. WhoDB, on the other hand, is designed to be lightweight and runs with minimal resources, making it accessible to a wider range of users and devices. You can run WhoDB with as little as 50m core and 100Mi RAM.
+
+**Q: Can I use WhoDB with any type of database?**
+
+A: Yes, WhoDB aims to provide a consistent exploration and editing experience across SQL, NoSQL, and Graph databases. It currently only supports Postgres & MySQL.
+
+**Q: How do I deploy WhoDB?**
+
+A: WhoDB can be easily deployed using Docker Compose. Simply clone the repository and run docker-compose up to get started.
+
+**Q: Is WhoDB suitable for production environments?**
+
+A: While WhoDB is designed for lightweight and efficient database exploration, it is always recommended to evaluate its suitability for your specific production environment and use case.
+
 ## Contributing
 
 We welcome contributions from the community! Feel free to open issues or submit pull requests to help improve WhoDB.
