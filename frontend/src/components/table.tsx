@@ -243,7 +243,7 @@ export const Table: FC<ITableProps> = ({ className, columns, rows, columnTags, t
     const exportToCSV = useExportToCSV(columns, rows);
 
     return (
-        <div className="flex flex-col grow gap-4 items-center">
+        <div className="flex flex-col grow gap-4 items-center w-full">
             <div className="flex justify-between items-center w-full">
                 <div>
                     <SearchInput search={search} setSearch={handleSearchChange} placeholder="Search through rows     [Press Enter]" inputProps={{
@@ -256,7 +256,7 @@ export const Table: FC<ITableProps> = ({ className, columns, rows, columnTags, t
                     <AnimatedButton icon={Icons.Download} label="Export" type="lg" onClick={exportToCSV} />
                 </div>
             </div>
-            <div className={twMerge(classNames("flex h-[60vh] grow flex-col gap-4 overflow-auto w-[80vw]", className))}>
+            <div className={twMerge(classNames("flex h-[60vh] grow flex-col gap-4 overflow-auto w-full", className))}>
                 <table className="table-auto border-separate border-spacing-0 mt-4 h-fit w-full" ref={tableRef}>
                     <thead>
                         <tr>

@@ -19,11 +19,17 @@ Go to http://localhost:8080 and get started!
 
 Or try here: https://whodb.clidey.com (does not support non https hosts)
 
+Or checkout our Demo Video: [![Demo Video](/docs/demo-thumbnail.png)](https://youtu.be/w3tOjRt8jGU)
+
 ## Features
 - **Better UX:** Intuitive and easy-to-use interface.
 - **Faster Performance:** Built with GoLang for exceptional speed.
 - **Schema Visualization:** Interactive graphs to visualize your entire database schema.
 - **Current Support:** PostgreSQL, MySQL
+
+## Documentation
+
+Check the following [Documentation README](/docs/docs.md)
 
 ## Development Setup
 

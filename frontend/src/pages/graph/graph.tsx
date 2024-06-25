@@ -10,6 +10,8 @@ import { InternalRoutes } from "../../config/routes";
 import { DatabaseType, GetGraphDocument, GetGraphQuery, GetGraphQueryVariables } from "../../generated/graphql";
 import { StorageUnitGraphCard } from "../storage-unit/storage-unit";
 import { useAppSelector } from "../../store/hooks";
+import { EmptyMessage } from "../../components/common";
+import { Icons } from "../../components/icons";
 
 export const GraphPage: FC = () => {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -66,11 +68,15 @@ export const GraphPage: FC = () => {
 
     return <InternalPage routes={[InternalRoutes.Graph]}>
         <ReactFlowProvider>
-            <Graph nodes={nodes} edges={edges} nodeTypes={nodeTypes}
-                setNodes={setNodes} setEdges={setEdges}
-                onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}    
-                minZoom={0.1}
-                onReady={handleOnReady} />
+            {
+                !loading && nodes.length === 0
+                ? <EmptyMessage icon={Icons.SadSmile} label="No tables found. Try changing schema." />
+                : <Graph nodes={nodes} edges={edges} nodeTypes={nodeTypes}
+                    setNodes={setNodes} setEdges={setEdges}
+                    onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}    
+                    minZoom={0.1}
+                    onReady={handleOnReady} />
+            }
         </ReactFlowProvider>
     </InternalPage>
 }

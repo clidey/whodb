@@ -11,6 +11,7 @@ import { InternalPage } from "../../components/page";
 import { InternalRoutes } from "../../config/routes";
 import { DatabaseType, GetStorageUnitsDocument, GetStorageUnitsQuery, GetStorageUnitsQueryVariables, StorageUnit } from "../../generated/graphql";
 import { useAppSelector } from "../../store/hooks";
+import { EmptyMessage } from "../../components/common";
 
 const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
     const [expanded, setExpanded] = useState(false);
@@ -98,9 +99,13 @@ export const StorageUnitPage: FC = () => {
             <AnimatedButton icon={Icons.Console} label="Raw Query" onClick={() => navigate(InternalRoutes.RawExecute.path)} type="lg" />
         </div>
         {
-            data?.StorageUnit.map(unit => (
-                <StorageUnitCard unit={unit} />
-            ))
+            data != null && (
+                data.StorageUnit.length === 0
+                ? <EmptyMessage icon={Icons.SadSmile} label="No tables found. Try changing schema." />
+                : data.StorageUnit.map(unit => (
+                    <StorageUnitCard unit={unit} />
+                ))
+            )
         }
     </InternalPage>
 }
