@@ -29,7 +29,7 @@ Or checkout our Demo Video: [![Demo Video](/docs/demo-thumbnail.png)](https://yo
 
 ## Documentation
 
-Check the following [Documentation README](/docs/README)
+Check the following [Documentation README](/docs/docs.md)
 
 ## Development Setup
 
