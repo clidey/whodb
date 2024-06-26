@@ -15,7 +15,7 @@ import { DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";
 import { useAppDispatch } from "../../store/hooks";
 
-const databaseDropdownItems: IDropdownItem[] = [
+const databaseTypeDropdownItems: IDropdownItem[] = [
     {
         id: "Postgres",
         label: "Postgres",
@@ -41,7 +41,7 @@ export const LoginPage: FC = () => {
     const [getDatabases, { loading: databasesLoading, data: foundDatabases }] = useGetDatabaseLazyQuery();
     const [searchParams, ] = useSearchParams();
     
-    const [databaseType, setDatabaseType] = useState<IDropdownItem>(databaseDropdownItems[0]);
+    const [databaseType, setDatabaseType] = useState<IDropdownItem>(databaseTypeDropdownItems[0]);
     const [hostName, setHostName] = useState("");
     const [database, setDatabase] = useState("");
     const [username, setUsername] = useState("");
@@ -83,7 +83,7 @@ export const LoginPage: FC = () => {
         })
     }, [databaseType.id, dispatch, hostName, login, navigate, password, database, username]);
 
-    const handleDatabaseChange = useCallback((item: IDropdownItem) => {
+    const handleDatabaseTypeChange = useCallback((item: IDropdownItem) => {
         if (item.id === DatabaseType.Sqlite3) {
             getDatabases({
                 variables: {
@@ -102,7 +102,7 @@ export const LoginPage: FC = () => {
         if (searchParams.size > 0) {
             if (searchParams.has("type")) {
                 const databaseType = searchParams.get("type")!;
-                setDatabaseType(databaseDropdownItems.find(item => item.id === databaseType) ?? databaseDropdownItems[0]);
+                setDatabaseType(databaseTypeDropdownItems.find(item => item.id === databaseType) ?? databaseTypeDropdownItems[0]);
             }
             if (searchParams.has("host")) setHostName(searchParams.get("host")!);
             if (searchParams.has("username")) setUsername(searchParams.get("username")!);
@@ -164,7 +164,7 @@ export const LoginPage: FC = () => {
                             </div>
                         </div>
                         <div className="flex flex-col grow justify-center gap-1">
-                            <DropdownWithLabel fullWidth label="Database" value={databaseType} onChange={handleDatabaseChange} items={databaseDropdownItems} />
+                            <DropdownWithLabel fullWidth label="Database Type" value={databaseType} onChange={handleDatabaseTypeChange} items={databaseTypeDropdownItems} />
                             {fields}
                         </div>
                     </div>
