@@ -1,0 +1,3 @@
+query GetDatabase($type: DatabaseType!) {
+    Database(type: $type)
+}

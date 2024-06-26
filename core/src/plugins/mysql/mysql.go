@@ -26,6 +26,10 @@ func (p *MySQLPlugin) IsAvailable(config *engine.PluginConfig) bool {
 	return true
 }
 
+func (p *MySQLPlugin) GetDatabases() ([]string, error) {
+	return nil, errors.ErrUnsupported
+}
+
 func (p *MySQLPlugin) GetSchema(config *engine.PluginConfig) ([]string, error) {
 	db, err := DB(config)
 	if err != nil {

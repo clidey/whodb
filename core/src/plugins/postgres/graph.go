@@ -12,7 +12,7 @@ type tableRelations struct {
 	Relation string
 }
 
-const GraphQuery = `
+const graphQuery = `
 WITH fk_constraints AS (
     SELECT DISTINCT
         ccu.table_name AS table1,
@@ -117,7 +117,7 @@ func (p *PostgresPlugin) GetGraph(config *engine.PluginConfig, schema string) ([
 
 	tableRelations := []tableRelations{}
 
-	query := fmt.Sprintf(GraphQuery, schema, schema, schema, schema, schema, schema, schema, schema)
+	query := fmt.Sprintf(graphQuery, schema, schema, schema, schema, schema, schema, schema, schema)
 	if err := db.Raw(query).Scan(&tableRelations).Error; err != nil {
 		return nil, err
 	}

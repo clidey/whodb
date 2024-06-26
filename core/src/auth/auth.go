@@ -41,7 +41,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		r.Body = io.NopCloser(bytes.NewReader(body))
-		if isMutationAlowed(r, body) {
+		if isAllowed(r, body) {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -75,7 +75,7 @@ type GraphQLRequest struct {
 	OperationName string `json:"operationName"`
 }
 
-func isMutationAlowed(r *http.Request, body []byte) bool {
+func isAllowed(r *http.Request, body []byte) bool {
 	if r.Method != http.MethodPost {
 		return false
 	}
@@ -86,5 +86,5 @@ func isMutationAlowed(r *http.Request, body []byte) bool {
 		return false
 	}
 
-	return query.OperationName == "Login" || query.OperationName == "Logout"
+	return query.OperationName == "Login" || query.OperationName == "Logout" || query.OperationName == "GetDatabase"
 }

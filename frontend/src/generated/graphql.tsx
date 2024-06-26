@@ -30,7 +30,8 @@ export type Column = {
 
 export enum DatabaseType {
   MySql = 'MySQL',
-  Postgres = 'Postgres'
+  Postgres = 'Postgres',
+  Sqlite3 = 'Sqlite3'
 }
 
 export type GraphUnit = {
@@ -80,11 +81,17 @@ export type MutationLoginArgs = {
 
 export type Query = {
   __typename?: 'Query';
+  Database: Array<Scalars['String']['output']>;
   Graph: Array<GraphUnit>;
   RawExecute: RowsResult;
   Row: RowsResult;
   Schema: Array<Scalars['String']['output']>;
   StorageUnit: Array<StorageUnit>;
+};
+
+
+export type QueryDatabaseArgs = {
+  type: DatabaseType;
 };
 
 
@@ -144,6 +151,13 @@ export type GetSchemaQueryVariables = Exact<{
 
 
 export type GetSchemaQuery = { __typename?: 'Query', Schema: Array<string> };
+
+export type GetDatabaseQueryVariables = Exact<{
+  type: DatabaseType;
+}>;
+
+
+export type GetDatabaseQuery = { __typename?: 'Query', Database: Array<string> };
 
 export type LoginMutationVariables = Exact<{
   credentails: LoginCredentials;
@@ -232,6 +246,44 @@ export type GetSchemaQueryHookResult = ReturnType<typeof useGetSchemaQuery>;
 export type GetSchemaLazyQueryHookResult = ReturnType<typeof useGetSchemaLazyQuery>;
 export type GetSchemaSuspenseQueryHookResult = ReturnType<typeof useGetSchemaSuspenseQuery>;
 export type GetSchemaQueryResult = Apollo.QueryResult<GetSchemaQuery, GetSchemaQueryVariables>;
+export const GetDatabaseDocument = gql`
+    query GetDatabase($type: DatabaseType!) {
+  Database(type: $type)
+}
+    `;
+
+/**
+ * __useGetDatabaseQuery__
+ *
+ * To run a query within a React component, call `useGetDatabaseQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetDatabaseQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetDatabaseQuery({
+ *   variables: {
+ *      type: // value for 'type'
+ *   },
+ * });
+ */
+export function useGetDatabaseQuery(baseOptions: Apollo.QueryHookOptions<GetDatabaseQuery, GetDatabaseQueryVariables> & ({ variables: GetDatabaseQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetDatabaseQuery, GetDatabaseQueryVariables>(GetDatabaseDocument, options);
+      }
+export function useGetDatabaseLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetDatabaseQuery, GetDatabaseQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetDatabaseQuery, GetDatabaseQueryVariables>(GetDatabaseDocument, options);
+        }
+export function useGetDatabaseSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetDatabaseQuery, GetDatabaseQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetDatabaseQuery, GetDatabaseQueryVariables>(GetDatabaseDocument, options);
+        }
+export type GetDatabaseQueryHookResult = ReturnType<typeof useGetDatabaseQuery>;
+export type GetDatabaseLazyQueryHookResult = ReturnType<typeof useGetDatabaseLazyQuery>;
+export type GetDatabaseSuspenseQueryHookResult = ReturnType<typeof useGetDatabaseSuspenseQuery>;
+export type GetDatabaseQueryResult = Apollo.QueryResult<GetDatabaseQuery, GetDatabaseQueryVariables>;
 export const LoginDocument = gql`
     mutation Login($credentails: LoginCredentials!) {
   Login(credentails: $credentails) {
