@@ -31,6 +31,12 @@ Whodb is a powerful database management tool designed to simplify and enhance yo
 - Select your database type, enter your username, password, and database name.
   <br /><p align="center"><img src="./images/database-types.png" alt="Database Types" width="400" /></p>
 
+NOTE: When selecting SQLite Database - you would need to mount one or more database files to /db/ inside the docker container. For example:
+
+```sh
+docker run -it -v ./sample.db:/db/sample.db -p 8080:8080 clidey/whodb:latest
+```
+
 ### Side Bar Navigation
 
 - After logging in, you will see a side bar with the following options:
