@@ -13,7 +13,7 @@ COPY ./frontend/tsconfig.json ./tsconfig.json
 COPY ./frontend/config-overrides.js ./config-overrides.js
 RUN pnpm run build
 
-FROM golang:1.22.1-bullseye
+FROM golang:1.22.1-alpine3.19
 
 WORKDIR /app
 COPY ./core/go.mod /app
@@ -28,4 +28,6 @@ COPY ./core/tools/ /app/tools/
 COPY --from=build-stage /app/build/ /app/build/
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o /core
+RUN go clean -cache
+RUN rm -rf /app/
 CMD ["/core"]
