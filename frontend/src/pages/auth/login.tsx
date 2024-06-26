@@ -1,5 +1,4 @@
-import { useMutation } from "@apollo/client";
-import { FC, cloneElement, useCallback, useEffect, useState } from "react";
+import { FC, cloneElement, useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
 import { AnimatedButton } from "../../components/button";
@@ -10,7 +9,7 @@ import { InputWithlabel } from "../../components/input";
 import { Loading } from "../../components/loading";
 import { Page } from "../../components/page";
 import { InternalRoutes } from "../../config/routes";
-import { LoginDocument, LoginMutation, LoginMutationVariables } from '../../generated/graphql';
+import { DatabaseType, useGetDatabaseLazyQuery, useLoginMutation } from '../../generated/graphql';
 import { AuthActions } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";
@@ -27,15 +26,21 @@ const databaseDropdownItems: IDropdownItem[] = [
         label: "MySQL",
         icon: Icons.Logos.MySQL,
     },
+    {
+        id: "Sqlite3",
+        label: "Sqlite3",
+        icon: Icons.Logos.Sqlite3,
+    },
 ]
 
 export const LoginPage: FC = () => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     
-    const [login, { loading }] = useMutation<LoginMutation, LoginMutationVariables>(LoginDocument);
+    const [login, { loading }] = useLoginMutation();
+    const [getDatabases, { loading: databasesLoading, data: foundDatabases }] = useGetDatabaseLazyQuery();
     const [searchParams, ] = useSearchParams();
-
+    
     const [databaseType, setDatabaseType] = useState<IDropdownItem>(databaseDropdownItems[0]);
     const [hostName, setHostName] = useState("");
     const [database, setDatabase] = useState("");
@@ -44,7 +49,10 @@ export const LoginPage: FC = () => {
     const [error, setError] = useState<string>();
 
     const handleSubmit = useCallback(() => {
-        if (hostName.length === 0 || database.length === 0 || username.length === 0 || password.length === 0) {
+        if (databaseType.id !== DatabaseType.Sqlite3 && (hostName.length === 0 || database.length === 0 || username.length === 0 || password.length === 0)) {
+            return setError(`All fields are required`);
+        }
+        if (databaseType.id === DatabaseType.Sqlite3 && database.length === 0) {
             return setError(`All fields are required`);
         }
         setError(undefined);
@@ -75,6 +83,17 @@ export const LoginPage: FC = () => {
         })
     }, [databaseType.id, dispatch, hostName, login, navigate, password, database, username]);
 
+    const handleDatabaseChange = useCallback((item: IDropdownItem) => {
+        if (item.id === DatabaseType.Sqlite3) {
+            getDatabases({
+                variables: {
+                    type: item.id,
+                },
+            });
+        }
+        setDatabaseType(item);
+    }, [getDatabases]);
+
     useEffect(() => {
         dispatch(DatabaseActions.setSchema(""));
     }, [dispatch]);
@@ -91,6 +110,28 @@ export const LoginPage: FC = () => {
             if (searchParams.has("database")) setDatabase(searchParams.get("database")!);
         }
     }, [searchParams]);
+
+    const fields = useMemo(() => {
+        if (databaseType.id === DatabaseType.Sqlite3) {
+            return <>
+                <DropdownWithLabel label="Database" items={foundDatabases?.Database?.map(database => ({
+                    id: database,
+                    label: database,
+                    icon: Icons.Database,
+                })) ?? []} loading={databasesLoading} noItemsLabel="Not available. Mount SQLite file in /db/" fullWidth={true} value={{
+                    id: database,
+                    label: database,
+                    icon: Icons.Database,
+                }} onChange={(item) => setDatabase(item.id)} />
+            </>
+        }
+        return <>
+            <InputWithlabel label="Host Name" value={hostName} setValue={setHostName} />
+            <InputWithlabel label="Username" value={username} setValue={setUsername} />
+            <InputWithlabel label="Password" value={password} setValue={setPassword} type="password" />
+            <InputWithlabel label="Database" value={database} setValue={setDatabase} />
+        </>
+    }, [database, databaseType.id, databasesLoading, foundDatabases?.Database, hostName, password, username]);
 
     if (loading)  {
         return (
@@ -123,11 +164,8 @@ export const LoginPage: FC = () => {
                             </div>
                         </div>
                         <div className="flex flex-col grow justify-center gap-1">
-                            <DropdownWithLabel fullWidth label="Database" value={databaseType} onChange={setDatabaseType} items={databaseDropdownItems} />
-                            <InputWithlabel label="Host Name" value={hostName} setValue={setHostName} />
-                            <InputWithlabel label="Username" value={username} setValue={setUsername} />
-                            <InputWithlabel label="Password" value={password} setValue={setPassword} type="password" />
-                            <InputWithlabel label="Database" value={database} setValue={setDatabase} />
+                            <DropdownWithLabel fullWidth label="Database" value={databaseType} onChange={handleDatabaseChange} items={databaseDropdownItems} />
+                            {fields}
                         </div>
                     </div>
                     <div className="flex justify-end">

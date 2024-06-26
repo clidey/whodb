@@ -21,6 +21,7 @@ export type IDropdownProps = {
     onDefaultItemClick?: () => void;
     defaultItemClassName?: string;
     action?: ReactElement;
+    noItemsLabel?: string;
 }
 
 const ITEM_CLASS = "group/item flex items-center gap-1 transition-all cursor-pointer relative hover:bg-black/10 py-1 mx-2 px-4 rounded-lg pl-1";
@@ -50,7 +51,7 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
                 <div className={classNames("absolute z-10 divide-y rounded-lg shadow bg-white py-1 border border-gray-200 overflow-y-auto max-h-40", {
                     "hidden": !hover,
                     "block animate-fade": hover,
-                    "w-fit": !props.fullWidth,
+                    "w-fit min-w-[200px]": !props.fullWidth,
                     "w-full": props.fullWidth,
                 })}>
                     <ul className="py-1 text-sm text-gray-700 nowheel flex flex-col">
@@ -75,6 +76,13 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
                             }, props.defaultItemClassName)} onClick={props.onDefaultItemClick}>
                                 <div>{props.defaultItem.icon}</div>
                                 <div>{props.defaultItem.label}</div>
+                            </li>
+                        }
+                        {
+                            props.items.length === 0 && props.defaultItem == null &&
+                            <li className="flex items-center gap-1 px-2" onClick={props.onDefaultItemClick}>
+                                <div>{Icons.SadSmile}</div>
+                                <div>{props.noItemsLabel}</div>
                             </li>
                         }
                     </ul>

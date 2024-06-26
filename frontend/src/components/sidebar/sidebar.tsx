@@ -108,9 +108,15 @@ export const SideMenu: FC<IRouteProps> = (props) => {
 }
 
 function getDropdownLoginProfileItem(profile: LoginProfile): IDropdownItem {
+    if (profile.Type === DatabaseType.Sqlite3) {
+        return {
+            id: profile.id,
+            label: `${profile.Database} [${profile.Type}]`,
+        }
+    }
     return {
         id: profile.id,
-        label: `${profile.Database} - ${profile.Hostname}[${profile.Username}]`,
+        label: `${profile.Database} - ${profile.Username} [${profile.Type}]`,
     };
 }
 
@@ -137,7 +143,7 @@ export const Sidebar: FC = () => {
     }, [dispatch, navigate, pathname]);
 
     useEffect(() => {
-        if (current == null) {
+        if (current == null || current?.Type === DatabaseType.Sqlite3) {
             return;
         }
         if (schema === "") {
@@ -146,11 +152,11 @@ export const Sidebar: FC = () => {
                     type: current?.Type as DatabaseType,
                 },
                 onCompleted(data) {
-                    dispatch(DatabaseActions.setSchema(data.Schema[0]));
+                    if (data.Schema.length > 0) dispatch(DatabaseActions.setSchema(data.Schema[0]));
                 },
             });
             return;
-        } 
+        }
         getSchema({
             variables: {
                 type: current?.Type as DatabaseType,
@@ -293,7 +299,7 @@ export const Sidebar: FC = () => {
                                             current != null &&
                                             <Dropdown className="max-w-[120px]" items={loginItems} value={{
                                                 id: current.id,
-                                                label: `${current.Hostname} [${current.Username}]`,
+                                                label: current.Type === DatabaseType.Sqlite3 ? current.Database : `${current.Hostname} [${current.Username}]`,
                                             }} onChange={handleProfileChange}
                                                 defaultItem={{
                                                     label: "Add another profile",
@@ -307,7 +313,7 @@ export const Sidebar: FC = () => {
                                     {
                                         data != null &&
                                         <div className={classNames("flex gap-2 items-center justify-between", {
-                                            "hidden": pathname === InternalRoutes.RawExecute.path || collapsed,
+                                            "hidden": pathname === InternalRoutes.RawExecute.path || collapsed || current?.Type === DatabaseType.Sqlite3,
                                         })}>
                                             <div className="text-sm text-gray-600">Schema:</div>
                                             <Dropdown className="w-full max-w-[120px]" value={{ id: schema, label: schema }} items={data.Schema.map(schema => ({ id: schema, label: schema }))} onChange={handleSchemaChange} />
