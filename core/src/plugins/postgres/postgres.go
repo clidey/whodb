@@ -26,6 +26,10 @@ func (p *PostgresPlugin) IsAvailable(config *engine.PluginConfig) bool {
 	return true
 }
 
+func (p *PostgresPlugin) GetDatabases() ([]string, error) {
+	return nil, errors.ErrUnsupported
+}
+
 func (p *PostgresPlugin) GetSchema(config *engine.PluginConfig) ([]string, error) {
 	db, err := DB(config)
 	if err != nil {

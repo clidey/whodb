@@ -1,17 +1,17 @@
 import { useQuery } from "@apollo/client";
 import { FC, useCallback, useMemo, useRef } from "react";
 import { Edge, Node, ReactFlowProvider, useEdgesState, useNodesState } from "reactflow";
+import { EmptyMessage } from "../../components/common";
 import { GraphElements } from "../../components/graph/constants";
 import { Graph, IGraphInstance } from "../../components/graph/graph";
 import { createEdge, createNode } from "../../components/graph/utils";
+import { Icons } from "../../components/icons";
 import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { InternalRoutes } from "../../config/routes";
 import { DatabaseType, GetGraphDocument, GetGraphQuery, GetGraphQueryVariables } from "../../generated/graphql";
-import { StorageUnitGraphCard } from "../storage-unit/storage-unit";
 import { useAppSelector } from "../../store/hooks";
-import { EmptyMessage } from "../../components/common";
-import { Icons } from "../../components/icons";
+import { StorageUnitGraphCard } from "../storage-unit/storage-unit";
 
 export const GraphPage: FC = () => {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -20,7 +20,7 @@ export const GraphPage: FC = () => {
     const schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
 
-    const { data, loading } = useQuery<GetGraphQuery, GetGraphQueryVariables>(GetGraphDocument, {
+    const { loading } = useQuery<GetGraphQuery, GetGraphQueryVariables>(GetGraphDocument, {
         variables: {
             type: current?.Type as DatabaseType,
             schema,
@@ -60,7 +60,7 @@ export const GraphPage: FC = () => {
         [GraphElements.StorageUnit]: StorageUnitGraphCard,
     }), []);
 
-    if (loading || data == null) {
+    if (loading) {
         return <InternalPage routes={[InternalRoutes.Graph]}>
             <Loading />
         </InternalPage>

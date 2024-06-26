@@ -32,7 +32,6 @@ type IInternalPageProps = IPageProps & {
 
 export const InternalPage: FC<IInternalPageProps> = (props) => {
     const current = useAppSelector(state => state.auth.current);
-    const schema = useAppSelector(state => state.database.schema);
 
     return (
         <div className="flex grow h-full w-full">
@@ -41,7 +40,7 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
                 <div className="flex flex-col grow">
                     <Breadcrumb routes={props.routes ?? []} active={props.routes?.at(-1)} />
                     {
-                        current == null || schema.length === 0
+                        current == null
                         ? <Loading />
                         : <div className="flex grow flex-wrap gap-2 py-4 content-start relative">
                             {props.children}

@@ -12,7 +12,7 @@ type tableRelations struct {
 	Relation string
 }
 
-const GraphQuery = `
+const graphQuery = `
 SELECT DISTINCT
     rc.TABLE_NAME AS Table1,
     rc.REFERENCED_TABLE_NAME AS Table2,
@@ -52,7 +52,7 @@ func (p *MySQLPlugin) GetGraph(config *engine.PluginConfig, schema string) ([]en
 
 	tableRelations := []tableRelations{}
 
-	query := fmt.Sprintf(GraphQuery, schema, schema)
+	query := fmt.Sprintf(graphQuery, schema, schema)
 	if err := db.Raw(query).Scan(&tableRelations).Error; err != nil {
 		return nil, err
 	}

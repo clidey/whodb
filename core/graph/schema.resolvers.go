@@ -40,6 +40,11 @@ func (r *mutationResolver) CreateStorageUnit(ctx context.Context, typeArg model.
 	panic(fmt.Errorf("not implemented: Schema - Schema"))
 }
 
+// Database is the resolver for the Database field.
+func (r *queryResolver) Database(ctx context.Context, typeArg model.DatabaseType) ([]string, error) {
+	return src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetDatabases()
+}
+
 // Schema is the resolver for the Schema field.
 func (r *queryResolver) Schema(ctx context.Context, typeArg model.DatabaseType) ([]string, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))

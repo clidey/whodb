@@ -5,6 +5,7 @@
 enum DatabaseType {
   Postgres,
   MySQL,
+  Sqlite3,
 }
 
 type Column {
@@ -45,14 +46,6 @@ type GraphUnit {
 	Relations: [GraphUnitRelationship!]!
 }
 
-type Query {
-  Schema(type: DatabaseType!): [String!]!
-  StorageUnit(type: DatabaseType!, schema: String!): [StorageUnit!]! # tables, collections
-  Row(type: DatabaseType!, schema: String!, storageUnit: String!, where: String!, pageSize: Int!, pageOffset: Int!): RowsResult! # row, document
-  RawExecute(type: DatabaseType!, query: String!): RowsResult!
-  Graph(type: DatabaseType!, schema: String!): [GraphUnit!]!
-}
-
 input LoginCredentials {
   Type: String!
   Hostname: String!
@@ -63,6 +56,15 @@ input LoginCredentials {
 
 type AuthResponse {
   Status: Boolean!
+}
+
+type Query {
+  Database(type: DatabaseType!): [String!]!
+  Schema(type: DatabaseType!): [String!]!
+  StorageUnit(type: DatabaseType!, schema: String!): [StorageUnit!]! # tables, collections
+  Row(type: DatabaseType!, schema: String!, storageUnit: String!, where: String!, pageSize: Int!, pageOffset: Int!): RowsResult! # row, document
+  RawExecute(type: DatabaseType!, query: String!): RowsResult!
+  Graph(type: DatabaseType!, schema: String!): [GraphUnit!]!
 }
 
 type Mutation {
