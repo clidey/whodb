@@ -15,6 +15,19 @@ To start using WhoDB right away, you can run it using Docker:
 docker run -it -p 8080:8080 clidey/whodb
 ```
 
+or using docker-compose
+
+```sh
+version: "3.8"
+services:
+  whodb:
+    image: clidey/whodb
+    # volumes: # (optional for sqlite) 
+    #   - ./sample.db:/db/sample.db
+    ports:
+      - "8080:8080"
+```
+
 Go to http://localhost:8080 and get started!
 
 Or try here: https://whodb.clidey.com/login?host=quick-container-491288b0-3138-48fa-93b4-1e730296c0b7.hello.svc.cluster.local&username=user&password=password&database=Adventureworks
