@@ -1,13 +1,14 @@
 import classNames from "classnames";
-import { clone } from "lodash";
-import { ChangeEvent, FC, KeyboardEvent, useCallback, useMemo, useRef, useState } from "react";
+import { CSSProperties, ChangeEvent, FC, KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Cell, Row, useBlockLayout, useTable } from 'react-table';
+import { FixedSizeList, ListChildComponentProps } from "react-window";
 import { twMerge } from "tailwind-merge";
-import { toTitleCase } from "../utils/functions";
+import { isNumeric } from "../utils/functions";
 import { AnimatedButton } from "./button";
 import { useExportToCSV } from "./hooks";
 import { Icons } from "./icons";
 import { SearchInput } from "./search";
- 
+
 type IPaginationProps = {
     pageCount: number;
     currentPage: number;
@@ -32,7 +33,6 @@ const Pagination: FC<IPaginationProps> = ({ pageCount, currentPage, onPageChange
                 );
             }
         } else {
-            // Show first, last, current, and adjacent pages with ellipses
             const createPageItem = (i: number) => (
                 <div
                     key={i}
@@ -78,12 +78,11 @@ const Pagination: FC<IPaginationProps> = ({ pageCount, currentPage, onPageChange
 };
 
 type ITDataProps = {
-    row: string[];
-    data: string;
+    cell: Cell<Record<string, string>>;
 }
 
-const TData: FC<ITDataProps> = ({ data, row }) => {
-    const [editedData, setEditedData] = useState(data);
+const TData: FC<ITDataProps> = ({ cell }) => {
+    const [editedData, setEditedData] = useState(cell.value);
     const ref = useRef<HTMLTableCellElement>(null);
     const [editable, setEditable] = useState(false);
 
@@ -92,22 +91,23 @@ const TData: FC<ITDataProps> = ({ data, row }) => {
     }, []);
     
     const handleCancel = useCallback(() => {
-        setEditedData(data);
+        setEditedData(cell.value);
         setEditable(false);
-    }, [data]);
+    }, [cell]);
 
     const handleEdit = useCallback(() => {
         setEditable(true);
     }, []);
 
     const handleUpdate = useCallback(() => {
-        console.log("Update", row, data, ref.current?.innerText);
-    }, [data, row]);
+        console.log("Update", cell.value, ref.current?.innerText);
+    }, [cell]);
 
-    return <td className="focus:outline-none group/data cursor-pointer transition-all text-xs table-cell  border-t border-l last:border-r group-last/row:border-b group-last/row:first:rounded-bl-lg group-last/row:last:rounded-br-lg border-gray-200 relative p-0 overflow-hidden">
+    return <div {...cell.getCellProps()}
+            className="focus:outline-none group/data cursor-pointer transition-all text-xs table-cell border-t border-l last:border-r group-last/row:border-b group-last/row:first:rounded-bl-lg group-last/row:last:rounded-br-lg border-gray-200 relative p-0 overflow-hidden">
         <span className="hidden">{editedData}</span>
         <input className={classNames("w-full h-full p-2 leading-tight focus:outline-none focus:shadow-outline appearance-none transition-all duration-300", {
-            "group-even/row:bg-gray-200 hover:bg-gray-300 group-even/row:hover:bg-gray-300": !editable,
+            "group-even/row:bg-gray-100 hover:bg-gray-300 group-even/row:hover:bg-gray-300": !editable,
             "bg-transparent": editable,
         })} disabled={!editable} value={editedData} onChange={handleChange} />
         {
@@ -121,18 +121,24 @@ const TData: FC<ITDataProps> = ({ data, row }) => {
         })} onClick={editable ? handleUpdate : handleEdit}>
             {editable ? Icons.CheckCircle : Icons.Edit}
         </div>
-    </td>
+    </div>
 }
 
-const TableRow: FC<{ rowIndex: number, row: string[] }> = ({ rowIndex, row }) => {
+type ITableRow = {
+    rowIndex: number;
+    row: Row<Record<string, string>>;
+    style: CSSProperties;
+}
+
+const TableRow: FC<ITableRow> = ({ rowIndex, row, style }) => {
     return (
-        <tr className="text-xs group/row">
+        <div className="table-row-group text-xs group/row" {...row.getRowProps({ style })}>
             {
-                row.map((datum, columnIndex) => (
-                    <TData key={`data-${rowIndex}-${columnIndex}`} data={datum} row={row} />
+                row.cells.map((cell) => (
+                    <TData key={cell.getCellProps().key} cell={cell} />
                 ))
             }
-        </tr>
+        </div>
     )
 }
 
@@ -146,12 +152,82 @@ type ITableProps = {
     onPageChange?: (page: number) => void;
 }
 
-export const Table: FC<ITableProps> = ({ className, columns, rows, columnTags, totalPages, currentPage, onPageChange }) => {
+export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows: actualRows, columnTags, totalPages, currentPage, onPageChange }) => {
+    const containerRef = useRef<HTMLDivElement>(null);
     const tableRef = useRef<HTMLTableElement>(null);
     const [direction, setDirection] = useState<"asc" | "dsc">();
     const [sortedColumn, setSortedColumn] = useState<string>();
     const [search, setSearch] = useState("");
     const [searchIndex, setSearchIndex] = useState(0);
+    const [width, setWidth] = useState(0);
+
+    const defaultColumn = useMemo(() => ({
+        maxWidth: 150,
+    }), []);
+
+    const columns = useMemo(() => {
+        const cols = actualColumns.map(col => ({
+            id: col,
+            Header: col,
+            accessor: col,
+        }));
+        cols.unshift({
+            id: "#",
+            Header: "#",
+            accessor: "#",
+        });
+        return cols;
+    }, [actualColumns]);
+
+    const data = useMemo(() => {
+        return actualRows.map((row, rowIndex) => {
+            return row.reduce((all, one, colIndex) => {
+                all[actualColumns[colIndex]] = one;
+                return all;
+            }, { "#": (rowIndex+1).toString() } as Record<string, string>);
+        });
+    }, [actualColumns, actualRows]);
+
+    const sortedRows = useMemo(() => {
+        if (!sortedColumn) {
+            return data;
+        }
+        const newRows = [...data];
+        newRows.sort((a, b) => {
+            const aValue = a[sortedColumn];
+            const bValue = b[sortedColumn];
+            if (isNumeric(aValue) && isNumeric(bValue)) {
+                const aValueNumber = Number.parseFloat(aValue);
+                const bValueNumber = Number.parseFloat(bValue);
+                return direction === 'asc' ? aValueNumber - bValueNumber : bValueNumber - aValueNumber;
+            }
+
+            if (aValue < bValue) {
+                return direction === 'asc' ? -1 : 1;
+            }
+            
+            if (aValue > bValue) {
+                return direction === 'asc' ? 1 : -1;
+            }
+            return 0;
+        });
+        return newRows;
+    }, [sortedColumn, direction, data]);
+
+    const {
+        getTableProps,
+        getTableBodyProps,
+        headerGroups,
+        rows,
+        prepareRow,
+    } = useTable(
+        {
+            columns,
+            data: sortedRows,
+            defaultColumn,
+        },
+        useBlockLayout,
+    );
 
     const rowCount = useMemo(() => {
         return rows.length ?? 0;
@@ -163,11 +239,11 @@ export const Table: FC<ITableProps> = ({ className, columns, rows, columnTags, t
         }
         let interval: NodeJS.Timeout;
         if (e.key === "Enter") {
-            let newSearchIndex = (searchIndex+1) % rowCount;
+            let newSearchIndex = (searchIndex + 1) % rowCount;
             setSearchIndex(newSearchIndex);
             const searchText = search.toLowerCase();
             let index = 0;
-            const tbody = tableRef.current.querySelector("tbody");
+            const tbody = tableRef.current.querySelector(".tbody");
             if (tbody == null) {
                 return;
             }
@@ -196,7 +272,7 @@ export const Table: FC<ITableProps> = ({ className, columns, rows, columnTags, t
                 }
             };
         }
-        
+
         return () => {
             if (interval != null) {
                 clearInterval(interval);
@@ -221,29 +297,24 @@ export const Table: FC<ITableProps> = ({ className, columns, rows, columnTags, t
         }
         setDirection("dsc");
     }, [sortedColumn, direction]);
-    
-    const sortedRows = useMemo(() => {
-        if (sortedColumn == null) {
-            return rows;
-        }
-        const columnIndex = columns.indexOf(sortedColumn);
-        const newRows = clone(rows);
-        newRows.sort((a, b) => {
-            if (a[columnIndex] < b[columnIndex]) {
-                return direction === 'asc' ? -1 : 1;
-            }
-            if (a[columnIndex] > b[columnIndex]) {
-                return direction === 'asc' ? 1 : -1;
-            }
-            return 0;
-        });
-        return newRows;
-    }, [sortedColumn, columns, direction, rows]);
 
-    const exportToCSV = useExportToCSV(columns, rows);
+    const handleRenderRow = useCallback(({ index, style }: ListChildComponentProps) => {
+        const row = rows[index];
+        prepareRow(row);
+        return <TableRow key={`row-${row.values[actualColumns[0]]}`} row={row} rowIndex={index} style={style} />;
+    }, [rows, prepareRow, actualColumns]);
+
+    useEffect(() => {
+        if (containerRef.current == null) {
+            return;
+        }
+        setWidth(containerRef.current.getBoundingClientRect().width);
+    }, []);
+
+    const exportToCSV = useExportToCSV(actualColumns, sortedRows);
 
     return (
-        <div className="flex flex-col grow gap-4 items-center w-full">
+        <div className="flex flex-col grow gap-4 items-center w-full" ref={containerRef}>
             <div className="flex justify-between items-center w-full">
                 <div>
                     <SearchInput search={search} setSearch={handleSearchChange} placeholder="Search through rows     [Press Enter]" inputProps={{
@@ -256,34 +327,39 @@ export const Table: FC<ITableProps> = ({ className, columns, rows, columnTags, t
                     <AnimatedButton icon={Icons.Download} label="Export" type="lg" onClick={exportToCSV} />
                 </div>
             </div>
-            <div className={twMerge(classNames("flex h-[60vh] grow flex-col gap-4 overflow-auto w-full", className))}>
-                <table className="table-auto border-separate border-spacing-0 mt-4 h-fit w-full" ref={tableRef}>
-                    <thead>
-                        <tr>
-                            {
-                                columns.map((column, i) => (                        
-                                    <th key={`column-name-${column}`} className="min-w-[150px] text-xs border-t border-l last:border-r border-gray-200 p-2 text-left bg-gray-500 text-white first:rounded-tl-lg last:rounded-tr-lg relative group/header cursor-pointer"
-                                        onClick={() => handleSort(column)}>
-                                        {toTitleCase(column)} [<span className="text-[11px]">{columnTags?.[i]}]</span>
+            <div className={twMerge(classNames("flex h-[60vh] flex-col gap-4 overflow-x-auto", className))} style={{
+                width,
+            }}>
+                <div className="table border-separate border-spacing-0 mt-4 h-fit" ref={tableRef} {...getTableProps()}>
+                    <div>
+                        {headerGroups.map(headerGroup => (
+                            <div {...headerGroup.getHeaderGroupProps()} className="table-header-group">
+                                {headerGroup.headers.map((column, i) => (
+                                    <div className="text-xs border-t border-l last:border-r border-gray-200 p-2 text-left bg-gray-500 text-white first:rounded-tl-lg last:rounded-tr-lg relative group/header cursor-pointer select-none"
+                                        onClick={() => handleSort(column.id)} {...column.getHeaderProps()}>
+                                        {column.render('Header')} {i > 0 && <span className="text-[11px]">[{columnTags?.[i-1]}]</span>}
                                         <div className={twMerge(classNames("transition-all absolute top-2 right-2 opacity-0", {
-                                            "opacity-100": sortedColumn === column,
+                                            "opacity-100": sortedColumn === column.id,
                                             "rotate-180": direction === "dsc",
                                         }))}>
                                             {Icons.ArrowUp}
                                         </div>
-                                    </th>
-                                ))
-                            }
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {
-                            sortedRows.map((row, index) => (
-                                <TableRow key={`row-${row[0]}`} row={row} rowIndex={index} />
-                            ))
-                        }
-                    </tbody>
-                </table>
+                                    </div>
+                                ))}
+                            </div>
+                        ))}
+                    </div>
+                    <div className="tbody" {...getTableBodyProps()}>
+                        <FixedSizeList
+                            height={window.innerHeight * 0.6 - 100}
+                            itemCount={sortedRows.length}
+                            itemSize={31}
+                            width="100%"
+                        >
+                            {handleRenderRow}
+                        </FixedSizeList>
+                    </div>
+                </div>
             </div>
             <div className="flex justify-center items-center">
                 <Pagination pageCount={totalPages} currentPage={currentPage} onPageChange={onPageChange} />

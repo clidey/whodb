@@ -13,9 +13,10 @@ import { isNumeric } from "../../utils/functions";
 import { useAppSelector } from "../../store/hooks";
 
 export const ExploreStorageUnit: FC = () => {
-    const [pageSize, setPageSize] = useState("10");
+    const [bufferPageSize, setBufferPageSize] = useState("10");
     const [currentPage, setCurrentPage] = useState(0);
     const [whereCondition, setWhereCondition] = useState("");
+    const [pageSize, setPageSize] = useState("");
     const unit: StorageUnit = useLocation().state?.unit;
     const schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
@@ -29,11 +30,14 @@ export const ExploreStorageUnit: FC = () => {
                 schema,
                 storageUnit: unit.Name,
                 where: whereCondition,
-                pageSize: Number.parseInt(pageSize),
+                pageSize: Number.parseInt(bufferPageSize),
                 pageOffset: currentPage,
             },
+            onCompleted() {
+                setPageSize(bufferPageSize);
+            },
         });
-    }, [getStorageUnitRows, current?.Type, schema, unit.Name, whereCondition, pageSize, currentPage]);
+    }, [getStorageUnitRows, current?.Type, schema, unit.Name, whereCondition, bufferPageSize, currentPage]);
 
     const handlePageChange = useCallback((page: number) => {
         setCurrentPage(page-1);
@@ -43,11 +47,11 @@ export const ExploreStorageUnit: FC = () => {
                 schema,
                 storageUnit: unit.Name,
                 where: whereCondition,
-                pageSize: Number.parseInt(pageSize),
+                pageSize: Number.parseInt(bufferPageSize),
                 pageOffset: currentPage,
             }
         });
-    }, [current?.Type, currentPage, getStorageUnitRows, pageSize, schema, unit.Name, whereCondition]);
+    }, [current?.Type, currentPage, getStorageUnitRows, bufferPageSize, schema, unit.Name, whereCondition]);
 
     const handleQuery = useCallback(() => {
         handleSubmitRequest();
@@ -93,7 +97,7 @@ export const ExploreStorageUnit: FC = () => {
                 <div className="text-sm mr-4"><span className="font-semibold">Count:</span> {totalCount}</div>
             </div>
             <div className="flex gap-2 items-end">
-                <InputWithlabel label="Page Size" value={pageSize} setValue={setPageSize} />
+                <InputWithlabel label="Page Size" value={bufferPageSize} setValue={setBufferPageSize} />
                 <InputWithlabel label="Where Condition" value={whereCondition} setValue={setWhereCondition} />
                 <AnimatedButton type="lg" icon={Icons.CheckCircle} label="Query" onClick={handleQuery} />
             </div>

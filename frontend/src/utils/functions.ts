@@ -1,9 +1,7 @@
 import { isNaN, startCase, toLower } from "lodash";
 
 export function isNumeric(str: string) {
-    if (typeof str != "string") return false;
-    return !isNaN(str) && 
-           !isNaN(parseFloat(str));
+    return !isNaN(Number(str));
 }
 
 export function createStub(name: string) {
