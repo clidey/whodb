@@ -1,10 +1,10 @@
 import { useCallback } from "react";
 
-export const useExportToCSV = (columns: string[], rows: string[][]) => {
+export const useExportToCSV = (columns: string[], rows: Record<string, string>[]) => {
     return useCallback(() => {
       const csvContent = [
         columns.join(','), 
-        ...rows.map(row => row.join(','))
+        ...rows.map(row => columns.map(col => row[col]).join(","))
       ].join('\n'); 
   
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });

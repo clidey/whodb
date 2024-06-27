@@ -84,7 +84,7 @@ docker run -it -v ./sample.db:/db/sample.db -p 8080:8080 clidey/whodb:latest
 
 ## Pending Features
 
-- **Database Support**: Currently supports Postgres and MySQL. Support for MongoDB, Neo4JS, etc., is coming soon with the same experience.
+- **Database Support**: Currently supports Postgres, MySQL, & SQLite. Support for MongoDB, Neo4JS, etc., is coming soon with the same experience.
 - **Inline Edit**: Ability to update column values directly within the table view.
 - **Detailed Graph Visualization**: Display connection types and constraints on foreign keys.
 

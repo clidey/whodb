@@ -5,7 +5,7 @@ Clidey Build: <img src="https://hello.clidey.com/api/flows/status?id=b32257fa-14
 ### *"Making your database management disappear like magic!"*
 
 ## Description
-Welcome to **WhoDB** – a powerful and user-friendly database management tool that combines the simplicity of Adminer with superior UX and performance. WhoDB is written in GoLang for optimal speed and efficiency and features interactive graphs for visualizing your entire database schema. Whether you're managing a small project or a complex enterprise system, WhoDB is designed to make your database administration tasks smoother and more intuitive.
+Welcome to **WhoDB** – a powerful, lightweight (~20Mi), and user-friendly database management tool that combines the simplicity of Adminer with superior UX and performance. WhoDB is written in GoLang for optimal speed and efficiency and features interactive graphs for visualizing your entire database schema. Whether you're managing a small project or a complex enterprise system, WhoDB is designed to make your database administration tasks smoother and more intuitive.
 
 ## Quick Start
 
@@ -25,7 +25,7 @@ Or checkout our Demo Video: [![Demo Video](/docs/images/demo-thumbnail.png)](htt
 
 ## Features
 - **Better UX:** Intuitive and easy-to-use interface.
-- **Faster Performance:** Built with GoLang for exceptional speed.
+- **Faster Performance:** Built with GoLang for exceptional speed and table virtualization in Frontend.
 - **Schema Visualization:** Interactive graphs to visualize your entire database schema.
 - **Current Support:** PostgreSQL, MySQL
 
@@ -67,7 +67,7 @@ A: WhoDB was inspired by Adminer due to its lightweight nature and ease of use. 
 
 **Q: How does WhoDB handle large queries?**
 
-A: WhoDB will support lazy loading to efficiently manage and display large query results, ensuring smooth performance even with extensive datasets. Although, currently the frontend could be laggy with handling large queries.
+A: WhoDB supports lazy loading to efficiently manage and display large query results, ensuring smooth performance even with extensive datasets.
 
 **Q: What makes WhoDB different from DBeaver?**
 
