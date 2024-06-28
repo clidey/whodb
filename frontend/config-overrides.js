@@ -2,7 +2,7 @@ const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 module.exports = function override(config, env) {  
     config.plugins.push(new MonacoWebpackPlugin({
-        languages: ["sql"],
+        languages: ["sql", "json", "markdown"],
     }));
     return config;
 }
