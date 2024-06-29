@@ -40,7 +40,8 @@ Or checkout our Demo Video: [![Demo Video](/docs/images/demo-thumbnail.png)](htt
 - **Better UX:** Intuitive and easy-to-use interface.
 - **Faster Performance:** Built with GoLang for exceptional speed and table virtualization in Frontend.
 - **Schema Visualization:** Interactive graphs to visualize your entire database schema.
-- **Current Support:** PostgreSQL, MySQL
+- **Inline Editing & Preview:** Easily preview cell or edit inline
+- **Current Support:** PostgreSQL, MySQL, and SQLite3
 
 ## Documentation
 
@@ -84,15 +85,15 @@ A: WhoDB supports lazy loading to efficiently manage and display large query res
 
 **Q: What makes WhoDB different from DBeaver?**
 
-A: While DBeaver is a highly advanced tool written in Java, it can be resource-intensive. WhoDB, on the other hand, is designed to be lightweight and runs with minimal resources, making it accessible to a wider range of users and devices. You can run WhoDB with as little as 50m core and 100Mi RAM.
+A: While DBeaver is a highly advanced tool written in Java, it can be resource-intensive. WhoDB, on the other hand, is designed to be lightweight and runs with minimal resources, making it accessible to a wider range of users and devices. You can run WhoDB with as little as 50m core and 100Mi RAM. WhoDB is also only ~20Mi compressed size.
 
 **Q: Can I use WhoDB with any type of database?**
 
-A: Yes, WhoDB aims to provide a consistent exploration and editing experience across SQL, NoSQL, and Graph databases. It currently only supports Postgres & MySQL.
+A: Yes, WhoDB aims to provide a consistent exploration and editing experience across SQL, NoSQL, and Graph databases. It currently only supports Postgres, MySQL, & SQLite3.
 
 **Q: How do I deploy WhoDB?**
 
-A: WhoDB can be easily deployed using Docker Compose. Simply clone the repository and run docker-compose up to get started.
+A: WhoDB can be easily deployed using Docker or Docker Compose. Check "Getting Started" section for more details.
 
 **Q: Is WhoDB suitable for production environments?**
 

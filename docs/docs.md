@@ -11,6 +11,8 @@ Whodb is a powerful database management tool designed to simplify and enhance yo
 - **Table Management**: Navigate directly to tables, check basic information, view and filter data, and export to CSV.
 - **Graph Visualization**: Visualize how tables are interconnected.
 - **Raw SQL Execution**: Perform arbitrary SQL queries.
+- **Inline Preview**: Click & hold a cell to preview value (string, JSON, or Markdown)
+- **Inline Edit**: Click "Edit" Icon, edit changes easily, and apply right away.
 
 ## Getting Started
 
@@ -67,7 +69,12 @@ docker run -it -v ./sample.db:/db/sample.db -p 8080:8080 clidey/whodb:latest
   <br /><p align="center"><img src="./images/export-data.png" alt="Export Data" width="400" /></p>
 - Use the search feature to quickly find specific data within the table.
   <br /><p align="center"><img src="./images/search-all.png" alt="Search All" width="400" /></p>
-  - **Pending Feature**: Inline editing to update column values directly.
+- Click on a cell and hold to preview the value easily. Currently, WhoDB supports previewing **string**, **JSON**, and **Markdown** values. For example, Markdowns would be shown like this:
+ <br /><p align="center"><img src="./images/table-cell-preview.png" alt="Table cell preview" width="400" /></p>
+- Easily edit the content of the cell by simply hitting "Edit" icon. 
+<br /><p align="center"><img src="./images/table-cell-inline-edit-action.png" alt="Table cell preview" width="400" /></p>
+This should show a popup like below and you can hit "Check" to apply changes. It should reflect in the cell right away if the action is successful! [Note: on the bottom right, "Preview" icon will show for support previews. Click to switch to preview mode]
+<br /><p align="center"><img src="./images/table-cell-inline-edit-input.png" alt="Table cell preview" width="400" /></p>
 
 ### Graph Visualization
 
@@ -77,6 +84,7 @@ docker run -it -v ./sample.db:/db/sample.db -p 8080:8080 clidey/whodb:latest
   <br /><p align="center"><img src="./images/graph-node.png" alt="Graph Node" width="400" /></p>
   - **Pending Feature**: View the type of connection (e.g., OneToOne, ManyToOne) and constraints (e.g., nullable) on foreign keys.
 
+
 ### Raw Execute
 
 - Go to "Raw Execute" in the side bar to perform arbitrary SQL queries directly.
@@ -85,7 +93,6 @@ docker run -it -v ./sample.db:/db/sample.db -p 8080:8080 clidey/whodb:latest
 ## Pending Features
 
 - **Database Support**: Currently supports Postgres, MySQL, & SQLite. Support for MongoDB, Neo4JS, etc., is coming soon with the same experience.
-- **Inline Edit**: Ability to update column values directly within the table view.
 - **Detailed Graph Visualization**: Display connection types and constraints on foreign keys.
 
 ## Contributing
