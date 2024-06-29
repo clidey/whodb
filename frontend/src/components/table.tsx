@@ -1,11 +1,14 @@
 import classNames from "classnames";
-import { CSSProperties, ChangeEvent, FC, KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { CSSProperties, FC, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Cell, Row, useBlockLayout, useTable } from 'react-table';
 import { FixedSizeList, ListChildComponentProps } from "react-window";
 import { twMerge } from "tailwind-merge";
-import { isNumeric } from "../utils/functions";
-import { AnimatedButton } from "./button";
-import { useExportToCSV } from "./hooks";
+import { isMarkdown, isNumeric, isValidJSON } from "../utils/functions";
+import { ActionButton, AnimatedButton } from "./button";
+import { Portal } from "./common";
+import { CodeEditor } from "./editor";
+import { useExportToCSV, useLongPress } from "./hooks";
 import { Icons } from "./icons";
 import { SearchInput } from "./search";
 
@@ -82,45 +85,169 @@ type ITDataProps = {
 }
 
 const TData: FC<ITDataProps> = ({ cell }) => {
-    const [editedData, setEditedData] = useState(cell.value);
+    const [changed, setChanged] = useState(false);
+    const [editedData, setEditedData] = useState<string>(cell.value);
     const ref = useRef<HTMLTableCellElement>(null);
     const [editable, setEditable] = useState(false);
+    const [preview, setPreview] = useState(false);
+    const [cellRect, setCellRect] = useState<DOMRect | null>(null);
+    const cellRef = useRef<HTMLDivElement>(null);
+    const [copied, setCopied] = useState(false);
 
-    const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-        setEditedData(e.target.value);
-    }, []);
+    const handleChange = useCallback((value: string) => {
+        setEditedData(value);
+        if (!changed) setChanged(true);
+    }, [changed]);
     
     const handleCancel = useCallback(() => {
         setEditedData(cell.value);
         setEditable(false);
+        setCellRect(null);
     }, [cell]);
 
-    const handleEdit = useCallback(() => {
-        setEditable(true);
+    const handleEdit = useCallback((e: MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (cellRef.current) {
+            setCellRect(cellRef.current.getBoundingClientRect());
+            setEditable(true);
+        }
     }, []);
+
+    const handlePreview = useCallback(() => {
+        if (cellRef.current) {
+            setCellRect(cellRef.current.getBoundingClientRect());
+            setPreview(true);
+        }
+    }, []);
+
+    const handleLongPress = useCallback(() => {
+        handlePreview();
+        return () => {
+            setCellRect(null);
+            setPreview(false);
+        }
+    }, [handlePreview]);
+
+    const handleCopy = useCallback(() => {
+        navigator.clipboard.writeText(editedData).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        });
+    }, [editedData]);
+
+    const longPressProps = useLongPress({
+        onLongPress: handleLongPress,
+        onClick: handleCopy,
+    });
 
     const handleUpdate = useCallback(() => {
         console.log("Update", cell.value, ref.current?.innerText);
     }, [cell]);
 
-    return <div {...cell.getCellProps()}
-            className="focus:outline-none group/data cursor-pointer transition-all text-xs table-cell border-t border-l last:border-r group-last/row:border-b group-last/row:first:rounded-bl-lg group-last/row:last:rounded-br-lg border-gray-200 relative p-0 overflow-hidden">
+    const language = useMemo(() => {
+        if (isValidJSON(editedData)) {
+            return "json";
+        }
+        if (isMarkdown(editedData)) {
+            return "markdown";
+        }
+    }, [editedData]);
+
+    return <div ref={cellRef} {...cell.getCellProps()}
+        className={classNames("relative group/data cursor-pointer transition-all text-xs table-cell border-t border-l last:border-r group-last/row:border-b group-last/row:first:rounded-bl-lg group-last/row:last:rounded-br-lg border-gray-200 p-0", {
+            "bg-gray-200 blur-[2px]": editable || preview,
+        })}
+    >
         <span className="hidden">{editedData}</span>
-        <input className={classNames("w-full h-full p-2 leading-tight focus:outline-none focus:shadow-outline appearance-none transition-all duration-300", {
-            "group-even/row:bg-gray-100 hover:bg-gray-300 group-even/row:hover:bg-gray-300": !editable,
-            "bg-transparent": editable,
-        })} disabled={!editable} value={editedData} onChange={handleChange} />
-        {
-            editable &&
+        <div 
+            className={classNames("w-full h-full p-2 leading-tight focus:outline-none focus:shadow-outline appearance-none transition-all duration-300 border-solid border-gray-200 overflow-hidden whitespace-nowrap select-none", {
+                "group-even/row:bg-gray-100 hover:bg-gray-300 group-even/row:hover:bg-gray-300": !editable,
+                "bg-transparent": editable,
+            })}
+        {...longPressProps}>{editedData}</div>
+        {editable && (
             <div className="transition-all hidden group-hover/data:flex absolute right-8 top-1/2 -translate-y-1/2 hover:scale-125" onClick={handleCancel}>
                 {Icons.Cancel}
             </div>
-        }
-        <div className={classNames("transition-all hidden group-hover/data:flex absolute right-2 top-1/2 -translate-y-1/2 hover:scale-125", {
-            "!hidden": true,
+        )}
+        <div className={classNames("transition-all !hidden absolute right-2 top-1/2 -translate-y-1/2 hover:scale-125", {
+            "hidden": copied,
+            "group-hover/data:flex": !copied,
         })} onClick={editable ? handleUpdate : handleEdit}>
             {editable ? Icons.CheckCircle : Icons.Edit}
         </div>
+         <AnimatePresence>
+            {cellRect != null && (
+                <Portal>
+                    <motion.div
+                        initial={{ opacity: 0, }}
+                        animate={{ opacity: 1, }}
+                        exit={{ opacity: 0, }}
+                        transition={{ duration: 0.3 }}
+                        className="fixed top-0 left-0 w-screen h-screen flex items-center justify-center z-50 bg-gray-500/40">
+                        <motion.div
+                            initial={{
+                                top: cellRect.top,
+                                left: cellRect.left,
+                                width: cellRect.width,
+                                height: cellRect.height,
+                                transform: "unset",
+                            }}
+                            animate={{
+                                top: "35vh",
+                                left: "25vw",
+                                height: '30vh',
+                                width: '50vw',
+                            }}
+                            exit={{
+                                top: cellRect.top,
+                                left: cellRect.left,
+                                width: cellRect.width,
+                                height: cellRect.height,
+                                transform: "unset",
+                            }}
+                            transition={{ duration: 0.3 }}
+                            className="absolute flex flex-col h-full justify-between gap-4">
+                            <div className="rounded-lg shadow-lg overflow-hidden grow">
+                                <CodeEditor
+                                    defaultShowPreview={preview}
+                                    disabled={preview}
+                                    language={language}
+                                    value={editedData}
+                                    setValue={handleChange}
+                                />
+                            </div>
+                            <motion.div
+                                initial={{ opacity: 0, }}
+                                animate={{ opacity: 1, }}
+                                exit={{ opacity: 0, }}
+                                transition={{ duration: 0.1 }}
+                                className={classNames("flex gap-2 justify-center w-full", {
+                                    "hidden": preview,
+                                })}>
+                                <ActionButton icon={Icons.Cancel} onClick={handleCancel} />
+                                <ActionButton icon={Icons.CheckCircle} className={changed ? "stroke-green-500" : undefined} onClick={handleUpdate} disabled={changed} />
+                            </motion.div>
+                        </motion.div>
+                    </motion.div>
+                </Portal>
+            )}
+        </AnimatePresence>
+        <AnimatePresence>
+            {copied && (
+                <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    transition={{ duration: 0.5 }}
+                    className="absolute top-0 h-full right-2 flex justify-center items-center pointer-events-none">
+                    <div className="text-xs rounded-md px-2 bg-green-200 text-green-800">
+                        Copied!
+                    </div>
+                </motion.div>
+            )}
+        </AnimatePresence>
     </div>
 }
 
