@@ -171,7 +171,7 @@ const TData: FC<ITDataProps> = ({ cell }) => {
                 {Icons.Cancel}
             </div>
         )}
-        <div className={classNames("transition-all hidden absolute right-2 top-1/2 -translate-y-1/2 hover:scale-125", {
+        <div className={classNames("transition-all !hidden absolute right-2 top-1/2 -translate-y-1/2 hover:scale-125", {
             "hidden": copied,
             "group-hover/data:flex": !copied,
         })} onClick={editable ? handleUpdate : handleEdit}>
