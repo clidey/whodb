@@ -1,6 +1,6 @@
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
-import { CSSProperties, FC, KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { CSSProperties, FC, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Cell, Row, useBlockLayout, useTable } from 'react-table';
 import { FixedSizeList, ListChildComponentProps } from "react-window";
 import { twMerge } from "tailwind-merge";
@@ -92,6 +92,7 @@ const TData: FC<ITDataProps> = ({ cell }) => {
     const [preview, setPreview] = useState(false);
     const [cellRect, setCellRect] = useState<DOMRect | null>(null);
     const cellRef = useRef<HTMLDivElement>(null);
+    const [copied, setCopied] = useState(false);
 
     const handleChange = useCallback((value: string) => {
         setEditedData(value);
@@ -104,7 +105,9 @@ const TData: FC<ITDataProps> = ({ cell }) => {
         setCellRect(null);
     }, [cell]);
 
-    const handleEdit = useCallback(() => {
+    const handleEdit = useCallback((e: MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
         if (cellRef.current) {
             setCellRect(cellRef.current.getBoundingClientRect());
             setEditable(true);
@@ -126,8 +129,16 @@ const TData: FC<ITDataProps> = ({ cell }) => {
         }
     }, [handlePreview]);
 
+    const handleCopy = useCallback(() => {
+        navigator.clipboard.writeText(editedData).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        });
+    }, [editedData]);
+
     const longPressProps = useLongPress({
         onLongPress: handleLongPress,
+        onClick: handleCopy,
     });
 
     const handleUpdate = useCallback(() => {
@@ -147,7 +158,6 @@ const TData: FC<ITDataProps> = ({ cell }) => {
         className={classNames("relative group/data cursor-pointer transition-all text-xs table-cell border-t border-l last:border-r group-last/row:border-b group-last/row:first:rounded-bl-lg group-last/row:last:rounded-br-lg border-gray-200 p-0", {
             "bg-gray-200 blur-[2px]": editable || preview,
         })}
-        {...longPressProps}
     >
         <span className="hidden">{editedData}</span>
         <div 
@@ -155,17 +165,19 @@ const TData: FC<ITDataProps> = ({ cell }) => {
                 "group-even/row:bg-gray-100 hover:bg-gray-300 group-even/row:hover:bg-gray-300": !editable,
                 "bg-transparent": editable,
             })}
-        >{editedData}</div>
+        {...longPressProps}>{editedData}</div>
         {editable && (
             <div className="transition-all hidden group-hover/data:flex absolute right-8 top-1/2 -translate-y-1/2 hover:scale-125" onClick={handleCancel}>
                 {Icons.Cancel}
             </div>
         )}
-        <div className="transition-all hidden group-hover/data:flex absolute right-2 top-1/2 -translate-y-1/2 hover:scale-125" onClick={editable ? handleUpdate : handleEdit}>
+        <div className={classNames("transition-all hidden absolute right-2 top-1/2 -translate-y-1/2 hover:scale-125", {
+            "hidden": copied,
+            "group-hover/data:flex": !copied,
+        })} onClick={editable ? handleUpdate : handleEdit}>
             {editable ? Icons.CheckCircle : Icons.Edit}
         </div>
-
-        <AnimatePresence>
+         <AnimatePresence>
             {cellRect != null && (
                 <Portal>
                     <motion.div
@@ -220,6 +232,20 @@ const TData: FC<ITDataProps> = ({ cell }) => {
                         </motion.div>
                     </motion.div>
                 </Portal>
+            )}
+        </AnimatePresence>
+        <AnimatePresence>
+            {copied && (
+                <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    transition={{ duration: 0.5 }}
+                    className="absolute top-0 h-full right-2 flex justify-center items-center pointer-events-none">
+                    <div className="text-xs rounded-md px-2 bg-green-200 text-green-800">
+                        Copied!
+                    </div>
+                </motion.div>
             )}
         </AnimatePresence>
     </div>
