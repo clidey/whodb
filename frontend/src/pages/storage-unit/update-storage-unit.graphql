@@ -1,0 +1,5 @@
+mutation UpdateStorageUnit($type: DatabaseType!, $schema: String!, $storageUnit:String!, $values: [RecordInput!]!) {
+  UpdateStorageUnit(type: $type, schema: $schema, storageUnit: $storageUnit, values: $values) {
+    Status
+  }
+}
