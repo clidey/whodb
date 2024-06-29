@@ -7,7 +7,6 @@ package graph
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src"
@@ -16,7 +15,7 @@ import (
 )
 
 // Login is the resolver for the Login field.
-func (r *mutationResolver) Login(ctx context.Context, credentails model.LoginCredentials) (*model.AuthResponse, error) {
+func (r *mutationResolver) Login(ctx context.Context, credentails model.LoginCredentials) (*model.StatusResponse, error) {
 	if !src.MainEngine.Choose(engine.DatabaseType(credentails.Type)).IsAvailable(&engine.PluginConfig{
 		Credentials: &engine.Credentials{
 			Hostname: credentails.Hostname,
@@ -31,13 +30,24 @@ func (r *mutationResolver) Login(ctx context.Context, credentails model.LoginCre
 }
 
 // Logout is the resolver for the Logout field.
-func (r *mutationResolver) Logout(ctx context.Context) (*model.AuthResponse, error) {
+func (r *mutationResolver) Logout(ctx context.Context) (*model.StatusResponse, error) {
 	return auth.Logout(ctx)
 }
 
-// CreateStorageUnit is the resolver for the CreateStorageUnit field.
-func (r *mutationResolver) CreateStorageUnit(ctx context.Context, typeArg model.DatabaseType) (*model.StorageUnit, error) {
-	panic(fmt.Errorf("not implemented: Schema - Schema"))
+// UpdateStorageUnit is the resolver for the UpdateStorageUnit field.
+func (r *mutationResolver) UpdateStorageUnit(ctx context.Context, typeArg model.DatabaseType, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error) {
+	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	valuesMap := map[string]string{}
+	for _, value := range values {
+		valuesMap[value.Key] = value.Value
+	}
+	status, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).UpdateStorageUnit(config, schema, storageUnit, valuesMap)
+	if err != nil {
+		return nil, err
+	}
+	return &model.StatusResponse{
+		Status: status,
+	}, nil
 }
 
 // Database is the resolver for the Database field.

@@ -82,12 +82,12 @@ const Pagination: FC<IPaginationProps> = ({ pageCount, currentPage, onPageChange
 
 type ITDataProps = {
     cell: Cell<Record<string, string>>;
+    onCellUpdate?: (row: Cell<Record<string, string>>) => Promise<void>;
 }
 
-const TData: FC<ITDataProps> = ({ cell }) => {
+const TData: FC<ITDataProps> = ({ cell, onCellUpdate }) => {
     const [changed, setChanged] = useState(false);
     const [editedData, setEditedData] = useState<string>(cell.value);
-    const ref = useRef<HTMLTableCellElement>(null);
     const [editable, setEditable] = useState(false);
     const [preview, setPreview] = useState(false);
     const [cellRect, setCellRect] = useState<DOMRect | null>(null);
@@ -142,8 +142,16 @@ const TData: FC<ITDataProps> = ({ cell }) => {
     });
 
     const handleUpdate = useCallback(() => {
-        console.log("Update", cell.value, ref.current?.innerText);
-    }, [cell]);
+        let previousValue = cell.value;
+        cell.value = editedData;
+        onCellUpdate?.(cell).then(() => {
+            setEditable(false);
+            setCellRect(null);
+        }).catch(() => {
+            cell.value = previousValue;
+            handleCancel();
+        });
+    }, [cell, editedData, handleCancel, onCellUpdate]);
 
     const language = useMemo(() => {
         if (isValidJSON(editedData)) {
@@ -166,16 +174,11 @@ const TData: FC<ITDataProps> = ({ cell }) => {
                 "bg-transparent": editable,
             })}
         {...longPressProps}>{editedData}</div>
-        {editable && (
-            <div className="transition-all hidden group-hover/data:flex absolute right-8 top-1/2 -translate-y-1/2 hover:scale-125" onClick={handleCancel}>
-                {Icons.Cancel}
-            </div>
-        )}
-        <div className={classNames("transition-all !hidden absolute right-2 top-1/2 -translate-y-1/2 hover:scale-125", {
+        <div className={classNames("transition-all hidden absolute right-2 top-1/2 -translate-y-1/2 hover:scale-125 p-1", {
             "hidden": copied,
             "group-hover/data:flex": !copied,
-        })} onClick={editable ? handleUpdate : handleEdit}>
-            {editable ? Icons.CheckCircle : Icons.Edit}
+        })} onClick={handleEdit}>
+            {Icons.Edit}
         </div>
          <AnimatePresence>
             {cellRect != null && (
@@ -227,7 +230,7 @@ const TData: FC<ITDataProps> = ({ cell }) => {
                                     "hidden": preview,
                                 })}>
                                 <ActionButton icon={Icons.Cancel} onClick={handleCancel} />
-                                <ActionButton icon={Icons.CheckCircle} className={changed ? "stroke-green-500" : undefined} onClick={handleUpdate} disabled={changed} />
+                                <ActionButton icon={Icons.CheckCircle} className={changed ? "stroke-green-500" : undefined} onClick={handleUpdate} disabled={!changed} />
                             </motion.div>
                         </motion.div>
                     </motion.div>
@@ -239,7 +242,7 @@ const TData: FC<ITDataProps> = ({ cell }) => {
                 <motion.div
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
+                    exit={{ opacity: 0, x: 10 }}
                     transition={{ duration: 0.5 }}
                     className="absolute top-0 h-full right-2 flex justify-center items-center pointer-events-none">
                     <div className="text-xs rounded-md px-2 bg-green-200 text-green-800">
@@ -252,17 +255,32 @@ const TData: FC<ITDataProps> = ({ cell }) => {
 }
 
 type ITableRow = {
-    rowIndex: number;
     row: Row<Record<string, string>>;
     style: CSSProperties;
+    onRowUpdate?: (row: Record<string, string>) => Promise<void>;
 }
 
-const TableRow: FC<ITableRow> = ({ rowIndex, row, style }) => {
+const TableRow: FC<ITableRow> = ({ row, style, onRowUpdate }) => {
+    const handleCellUpdate = useCallback((cell: Cell<Record<string, string>>) => {
+        if (onRowUpdate == null) {
+            return Promise.reject();
+        }
+        const updatedRow = row.cells.reduce((all, one) => {
+            if (one.column.id === "#") {
+                return all;
+            }
+            all[one.column.id] = one.value;
+            return all;
+        }, {} as Record<string, string>);
+        updatedRow[cell.column.id] = cell.value;
+        return onRowUpdate?.(updatedRow);
+    }, [onRowUpdate, row.cells]);
+
     return (
         <div className="table-row-group text-xs group/row" {...row.getRowProps({ style })}>
             {
                 row.cells.map((cell) => (
-                    <TData key={cell.getCellProps().key} cell={cell} />
+                    <TData key={cell.getCellProps().key} cell={cell} onCellUpdate={handleCellUpdate} />
                 ))
             }
         </div>
@@ -277,9 +295,10 @@ type ITableProps = {
     totalPages: number;
     currentPage: number;
     onPageChange?: (page: number) => void;
+    onRowUpdate?: (row: Record<string, string>) => Promise<void>;
 }
 
-export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows: actualRows, columnTags, totalPages, currentPage, onPageChange }) => {
+export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows: actualRows, columnTags, totalPages, currentPage, onPageChange, onRowUpdate, }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const tableRef = useRef<HTMLTableElement>(null);
     const [direction, setDirection] = useState<"asc" | "dsc">();
@@ -428,8 +447,8 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
     const handleRenderRow = useCallback(({ index, style }: ListChildComponentProps) => {
         const row = rows[index];
         prepareRow(row);
-        return <TableRow key={`row-${row.values[actualColumns[0]]}`} row={row} rowIndex={index} style={style} />;
-    }, [rows, prepareRow, actualColumns]);
+        return <TableRow key={`row-${row.values[actualColumns[0]]}`} row={row} style={style} onRowUpdate={onRowUpdate} />;
+    }, [rows, prepareRow, actualColumns, onRowUpdate]);
 
     useEffect(() => {
         if (containerRef.current == null) {

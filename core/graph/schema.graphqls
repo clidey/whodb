@@ -23,6 +23,11 @@ type Record {
   Value: String!
 }
 
+input RecordInput {
+  Key: String!
+  Value: String!
+}
+
 type StorageUnit {
   Name: String!
   Attributes: [Record!]!
@@ -54,9 +59,10 @@ input LoginCredentials {
   Database: String!
 }
 
-type AuthResponse {
+type StatusResponse {
   Status: Boolean!
 }
+
 
 type Query {
   Database(type: DatabaseType!): [String!]!
@@ -68,8 +74,8 @@ type Query {
 }
 
 type Mutation {
-  Login(credentails: LoginCredentials!): AuthResponse!
-  Logout: AuthResponse!
+  Login(credentails: LoginCredentials!): StatusResponse!
+  Logout: StatusResponse!
 
-  CreateStorageUnit(type: DatabaseType!): StorageUnit!
+  UpdateStorageUnit(type: DatabaseType!, schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
 }
