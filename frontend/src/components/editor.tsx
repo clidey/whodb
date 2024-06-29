@@ -1,7 +1,7 @@
-import { FC, cloneElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import MonacoEditor, { EditorDidMount, monaco } from 'react-monaco-editor';
 import MarkdownPreview from "@uiw/react-markdown-preview";
 import classNames from "classnames";
+import { FC, cloneElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import MonacoEditor, { EditorDidMount, monaco } from 'react-monaco-editor';
 import { Icons } from "./icons";
 
 type ICodeEditorProps = {
@@ -11,9 +11,10 @@ type ICodeEditorProps = {
     options?: monaco.editor.IStandaloneEditorConstructionOptions;
     onRun?: () => void;
     defaultShowPreview?: boolean;
+    disabled?: boolean;
 }
 
-export const CodeEditor: FC<ICodeEditorProps> = ({ value, setValue, language, options = {}, onRun, defaultShowPreview }) => {
+export const CodeEditor: FC<ICodeEditorProps> = ({ value, setValue, language, options = {}, onRun, defaultShowPreview, disabled }) => {
     const [previousValue, setPreviousValue] = useState<string>();
     const [showPreview, setShowPreview] = useState(defaultShowPreview);
     const editorRef = useRef<monaco.editor.IStandaloneCodeEditor>();
@@ -67,8 +68,8 @@ export const CodeEditor: FC<ICodeEditorProps> = ({ value, setValue, language, op
         }
         return <MonacoEditor
             className={classNames({
-                "pointer-events-none": showPreview,
-                "pointer-events-auto": !showPreview,
+                "pointer-events-none": showPreview || disabled,
+                "pointer-events-auto": !showPreview && !disabled,
             })}
             height="100%"
             width="100%"
@@ -84,7 +85,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({ value, setValue, language, op
             }}
             editorDidMount={handleEditorDidMount}
         />;
-    }, [handleEditorDidMount, language, options, setValue, showPreview, value]);
+    }, [disabled, handleEditorDidMount, language, options, setValue, showPreview, value]);
 
     const actionButtons = useMemo(() => {
         return <button className="transition-all cursor-pointer hover:scale-110 hover:bg-gray-100/50 rounded-full p-1" onClick={handlePreviewToggle}>

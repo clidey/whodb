@@ -8,7 +8,7 @@ import { isMarkdown, isNumeric, isValidJSON } from "../utils/functions";
 import { ActionButton, AnimatedButton } from "./button";
 import { Portal } from "./common";
 import { CodeEditor } from "./editor";
-import { useExportToCSV } from "./hooks";
+import { useExportToCSV, useLongPress } from "./hooks";
 import { Icons } from "./icons";
 import { SearchInput } from "./search";
 
@@ -89,6 +89,7 @@ const TData: FC<ITDataProps> = ({ cell }) => {
     const [editedData, setEditedData] = useState<string>(cell.value);
     const ref = useRef<HTMLTableCellElement>(null);
     const [editable, setEditable] = useState(false);
+    const [preview, setPreview] = useState(false);
     const [cellRect, setCellRect] = useState<DOMRect | null>(null);
     const cellRef = useRef<HTMLDivElement>(null);
 
@@ -100,6 +101,7 @@ const TData: FC<ITDataProps> = ({ cell }) => {
     const handleCancel = useCallback(() => {
         setEditedData(cell.value);
         setEditable(false);
+        setCellRect(null);
     }, [cell]);
 
     const handleEdit = useCallback(() => {
@@ -108,6 +110,25 @@ const TData: FC<ITDataProps> = ({ cell }) => {
             setEditable(true);
         }
     }, []);
+
+    const handlePreview = useCallback(() => {
+        if (cellRef.current) {
+            setCellRect(cellRef.current.getBoundingClientRect());
+            setPreview(true);
+        }
+    }, []);
+
+    const handleLongPress = useCallback(() => {
+        handlePreview();
+        return () => {
+            setCellRect(null);
+            setPreview(false);
+        }
+    }, [handlePreview]);
+
+    const longPressProps = useLongPress({
+        onLongPress: handleLongPress,
+    });
 
     const handleUpdate = useCallback(() => {
         console.log("Update", cell.value, ref.current?.innerText);
@@ -124,12 +145,13 @@ const TData: FC<ITDataProps> = ({ cell }) => {
 
     return <div ref={cellRef} {...cell.getCellProps()}
         className={classNames("relative group/data cursor-pointer transition-all text-xs table-cell border-t border-l last:border-r group-last/row:border-b group-last/row:first:rounded-bl-lg group-last/row:last:rounded-br-lg border-gray-200 p-0", {
-            "bg-gray-200 blur-[2px]": editable,
+            "bg-gray-200 blur-[2px]": editable || preview,
         })}
+        {...longPressProps}
     >
         <span className="hidden">{editedData}</span>
         <div 
-            className={classNames("w-full h-full p-2 leading-tight focus:outline-none focus:shadow-outline appearance-none transition-all duration-300 border-solid border-gray-200 overflow-hidden", {
+            className={classNames("w-full h-full p-2 leading-tight focus:outline-none focus:shadow-outline appearance-none transition-all duration-300 border-solid border-gray-200 overflow-hidden whitespace-nowrap", {
                 "group-even/row:bg-gray-100 hover:bg-gray-300 group-even/row:hover:bg-gray-300": !editable,
                 "bg-transparent": editable,
             })}
@@ -144,7 +166,7 @@ const TData: FC<ITDataProps> = ({ cell }) => {
         </div>
 
         <AnimatePresence>
-            {editable && cellRect != null && (
+            {cellRect != null && (
                 <Portal>
                     <motion.div
                         initial={{ opacity: 0, }}
@@ -177,12 +199,16 @@ const TData: FC<ITDataProps> = ({ cell }) => {
                             className="absolute flex flex-col h-full justify-between gap-4">
                             <div className="rounded-lg shadow-lg overflow-hidden grow">
                                 <CodeEditor
+                                    defaultShowPreview={preview}
+                                    disabled={preview}
                                     language={language}
                                     value={editedData}
                                     setValue={handleChange}
                                 />
                             </div>
-                            <div className="flex gap-2 justify-center w-full">
+                            <div className={classNames("flex gap-2 justify-center w-full", {
+                                "hidden": preview,
+                            })}>
                                 <ActionButton icon={Icons.Cancel} onClick={handleCancel} />
                                 <ActionButton icon={Icons.CheckCircle} className={changed ? "stroke-green-500" : undefined} onClick={handleUpdate} disabled={changed} />
                             </div>
