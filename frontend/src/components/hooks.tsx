@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { MouseEvent, TouchEvent, useCallback, useRef, useState } from "react";
 
 
 export const useExportToCSV = (columns: string[], rows: Record<string, string>[]) => {
@@ -23,21 +23,20 @@ export const useExportToCSV = (columns: string[], rows: Record<string, string>[]
     }, [columns, rows]);
 };
   
-  
 function preventDefault(e: Event) {
-  if ( !isTouchEvent(e) ) return;
-  if (e.touches.length < 2 && e.preventDefault) {
+  if (!isTouchEvent(e)) return;
+  if (e.touches.length < 2 && e.preventDefault != null) {
     e.preventDefault();
   }
-};
+}
 
-function isTouchEvent(e: Event): e is TouchEvent {
+function isTouchEvent<T extends unknown = any>(e: MouseEvent<T> | TouchEvent<T> | Event): e is TouchEvent<T> {
   return e && "touches" in e;
-};
+}
 
 type IPressHandlers<T> = {
-  onLongPress: (e: React.MouseEvent<T> | React.TouchEvent<T>) => void | (() => void),
-  onClick?: (e: React.MouseEvent<T> | React.TouchEvent<T>) => void,
+  onLongPress: (e: MouseEvent<T> | TouchEvent<T>) => void | (() => void),
+  onClick?: (e: MouseEvent<T> | TouchEvent<T>) => void,
 }
 
 type IOptions = {
@@ -45,11 +44,9 @@ type IOptions = {
   shouldPreventDefault?: boolean;
 }
 
-export const useLongPress = <T extends unknown = any,>(
+export const useLongPress = <T extends unknown = any>(
   { onLongPress, onClick }: IPressHandlers<T>,
-  { delay = 300, shouldPreventDefault = true }
-  : IOptions
-  = {}
+  { delay = 300, shouldPreventDefault = true }: IOptions = {}
 ) => {
   const [longPressTriggered, setLongPressTriggered] = useState(false);
   const timeout = useRef<NodeJS.Timeout>();
@@ -57,16 +54,12 @@ export const useLongPress = <T extends unknown = any,>(
   const cleanUpFunction = useRef<Function>();
 
   const start = useCallback(
-    (e: React.MouseEvent<T> | React.TouchEvent<T>) => {
+    (e: MouseEvent<T> | TouchEvent<T>) => {
       e.persist();
-      const clonedEvent = {...e};
+      const clonedEvent = { ...e };
       
       if (shouldPreventDefault && e.target) {
-        e.target.addEventListener(
-          "touchend",
-          preventDefault,
-          { passive: false }
-        );
+        e.target.addEventListener("touchend", preventDefault, { passive: false });
         target.current = e.target;
       }
 
@@ -77,14 +70,16 @@ export const useLongPress = <T extends unknown = any,>(
         }
         setLongPressTriggered(true);
       }, delay);
+
+      if (!isTouchEvent(e)) {
+        document.addEventListener("mousemove", e => e.preventDefault());
+      }
     },
     [onLongPress, delay, shouldPreventDefault]
   );
 
-  const clear = useCallback((
-      e: React.MouseEvent<T> | React.TouchEvent<T>,
-      shouldTriggerClick = true
-    ) => {
+  const clear = useCallback(
+    (e: MouseEvent<T> | TouchEvent<T>, shouldTriggerClick = true) => {
       if (timeout.current != null) {
         clearTimeout(timeout.current);
       }
@@ -93,7 +88,7 @@ export const useLongPress = <T extends unknown = any,>(
         cleanUpFunction.current();
         cleanUpFunction.current = undefined;
       }
-      
+
       if (shouldTriggerClick && !longPressTriggered) {
         onClick?.(e);
       }
@@ -103,15 +98,19 @@ export const useLongPress = <T extends unknown = any,>(
       if (shouldPreventDefault && target.current) {
         target.current.removeEventListener("touchend", preventDefault);
       }
+
+      if (!isTouchEvent(e)) {
+        document.removeEventListener("mousemove", e => e.preventDefault());
+      }
     },
     [shouldPreventDefault, onClick, longPressTriggered]
   );
 
   return {
-    onMouseDown: (e: React.MouseEvent<T>) => start(e),
-    onTouchStart: (e: React.TouchEvent<T>) => start(e),
-    onMouseUp: (e: React.MouseEvent<T>) => clear(e),
-    onMouseLeave: (e: React.MouseEvent<T>) => clear(e, false),
-    onTouchEnd: (e: React.TouchEvent<T>) => clear(e)
+    onMouseDown: (e: MouseEvent<T>) => start(e),
+    onTouchStart: (e: TouchEvent<T>) => start(e),
+    onMouseUp: (e: MouseEvent<T>) => clear(e),
+    onMouseLeave: (e: MouseEvent<T>) => clear(e, false),
+    onTouchEnd: (e: TouchEvent<T>) => clear(e)
   };
 };

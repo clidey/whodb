@@ -151,7 +151,7 @@ const TData: FC<ITDataProps> = ({ cell }) => {
     >
         <span className="hidden">{editedData}</span>
         <div 
-            className={classNames("w-full h-full p-2 leading-tight focus:outline-none focus:shadow-outline appearance-none transition-all duration-300 border-solid border-gray-200 overflow-hidden whitespace-nowrap", {
+            className={classNames("w-full h-full p-2 leading-tight focus:outline-none focus:shadow-outline appearance-none transition-all duration-300 border-solid border-gray-200 overflow-hidden whitespace-nowrap select-none", {
                 "group-even/row:bg-gray-100 hover:bg-gray-300 group-even/row:hover:bg-gray-300": !editable,
                 "bg-transparent": editable,
             })}
@@ -195,7 +195,7 @@ const TData: FC<ITDataProps> = ({ cell }) => {
                                 height: cellRect.height,
                                 transform: "unset",
                             }}
-                            transition={{ duration: 0.4 }}
+                            transition={{ duration: 0.3 }}
                             className="absolute flex flex-col h-full justify-between gap-4">
                             <div className="rounded-lg shadow-lg overflow-hidden grow">
                                 <CodeEditor
@@ -206,12 +206,17 @@ const TData: FC<ITDataProps> = ({ cell }) => {
                                     setValue={handleChange}
                                 />
                             </div>
-                            <div className={classNames("flex gap-2 justify-center w-full", {
-                                "hidden": preview,
-                            })}>
+                            <motion.div
+                                initial={{ opacity: 0, }}
+                                animate={{ opacity: 1, }}
+                                exit={{ opacity: 0, }}
+                                transition={{ duration: 0.1 }}
+                                className={classNames("flex gap-2 justify-center w-full", {
+                                    "hidden": preview,
+                                })}>
                                 <ActionButton icon={Icons.Cancel} onClick={handleCancel} />
                                 <ActionButton icon={Icons.CheckCircle} className={changed ? "stroke-green-500" : undefined} onClick={handleUpdate} disabled={changed} />
-                            </div>
+                            </motion.div>
                         </motion.div>
                     </motion.div>
                 </Portal>
