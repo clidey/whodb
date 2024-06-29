@@ -8,9 +8,9 @@ import (
 	"github.com/clidey/whodb/core/src/common"
 )
 
-func Logout(ctx context.Context) (*model.AuthResponse, error) {
+func Logout(ctx context.Context) (*model.StatusResponse, error) {
 	http.SetCookie(ctx.Value(common.RouterKey_ResponseWriter).(http.ResponseWriter), nil)
-	return &model.AuthResponse{
+	return &model.StatusResponse{
 		Status: true,
 	}, nil
 }

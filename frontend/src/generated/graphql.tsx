@@ -17,11 +17,6 @@ export type Scalars = {
   Float: { input: number; output: number; }
 };
 
-export type AuthResponse = {
-  __typename?: 'AuthResponse';
-  Status: Scalars['Boolean']['output'];
-};
-
 export type Column = {
   __typename?: 'Column';
   Name: Scalars['String']['output'];
@@ -64,19 +59,22 @@ export type LoginCredentials = {
 
 export type Mutation = {
   __typename?: 'Mutation';
-  CreateStorageUnit: StorageUnit;
-  Login: AuthResponse;
-  Logout: AuthResponse;
-};
-
-
-export type MutationCreateStorageUnitArgs = {
-  type: DatabaseType;
+  Login: StatusResponse;
+  Logout: StatusResponse;
+  UpdateStorageUnit: StatusResponse;
 };
 
 
 export type MutationLoginArgs = {
   credentails: LoginCredentials;
+};
+
+
+export type MutationUpdateStorageUnitArgs = {
+  schema: Scalars['String']['input'];
+  storageUnit: Scalars['String']['input'];
+  type: DatabaseType;
+  values: Array<RecordInput>;
 };
 
 export type Query = {
@@ -133,10 +131,20 @@ export type Record = {
   Value: Scalars['String']['output'];
 };
 
+export type RecordInput = {
+  Key: Scalars['String']['input'];
+  Value: Scalars['String']['input'];
+};
+
 export type RowsResult = {
   __typename?: 'RowsResult';
   Columns: Array<Column>;
   Rows: Array<Array<Scalars['String']['output']>>;
+};
+
+export type StatusResponse = {
+  __typename?: 'StatusResponse';
+  Status: Scalars['Boolean']['output'];
 };
 
 export type StorageUnit = {
@@ -164,12 +172,12 @@ export type LoginMutationVariables = Exact<{
 }>;
 
 
-export type LoginMutation = { __typename?: 'Mutation', Login: { __typename?: 'AuthResponse', Status: boolean } };
+export type LoginMutation = { __typename?: 'Mutation', Login: { __typename?: 'StatusResponse', Status: boolean } };
 
 export type LogoutMutationVariables = Exact<{ [key: string]: never; }>;
 
 
-export type LogoutMutation = { __typename?: 'Mutation', Logout: { __typename?: 'AuthResponse', Status: boolean } };
+export type LogoutMutation = { __typename?: 'Mutation', Logout: { __typename?: 'StatusResponse', Status: boolean } };
 
 export type GetGraphQueryVariables = Exact<{
   type: DatabaseType;
@@ -206,6 +214,16 @@ export type GetStorageUnitsQueryVariables = Exact<{
 
 
 export type GetStorageUnitsQuery = { __typename?: 'Query', StorageUnit: Array<{ __typename?: 'StorageUnit', Name: string, Attributes: Array<{ __typename?: 'Record', Key: string, Value: string }> }> };
+
+export type UpdateStorageUnitMutationVariables = Exact<{
+  type: DatabaseType;
+  schema: Scalars['String']['input'];
+  storageUnit: Scalars['String']['input'];
+  values: Array<RecordInput> | RecordInput;
+}>;
+
+
+export type UpdateStorageUnitMutation = { __typename?: 'Mutation', UpdateStorageUnit: { __typename?: 'StatusResponse', Status: boolean } };
 
 
 export const GetSchemaDocument = gql`
@@ -546,3 +564,44 @@ export type GetStorageUnitsQueryHookResult = ReturnType<typeof useGetStorageUnit
 export type GetStorageUnitsLazyQueryHookResult = ReturnType<typeof useGetStorageUnitsLazyQuery>;
 export type GetStorageUnitsSuspenseQueryHookResult = ReturnType<typeof useGetStorageUnitsSuspenseQuery>;
 export type GetStorageUnitsQueryResult = Apollo.QueryResult<GetStorageUnitsQuery, GetStorageUnitsQueryVariables>;
+export const UpdateStorageUnitDocument = gql`
+    mutation UpdateStorageUnit($type: DatabaseType!, $schema: String!, $storageUnit: String!, $values: [RecordInput!]!) {
+  UpdateStorageUnit(
+    type: $type
+    schema: $schema
+    storageUnit: $storageUnit
+    values: $values
+  ) {
+    Status
+  }
+}
+    `;
+export type UpdateStorageUnitMutationFn = Apollo.MutationFunction<UpdateStorageUnitMutation, UpdateStorageUnitMutationVariables>;
+
+/**
+ * __useUpdateStorageUnitMutation__
+ *
+ * To run a mutation, you first call `useUpdateStorageUnitMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateStorageUnitMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateStorageUnitMutation, { data, loading, error }] = useUpdateStorageUnitMutation({
+ *   variables: {
+ *      type: // value for 'type'
+ *      schema: // value for 'schema'
+ *      storageUnit: // value for 'storageUnit'
+ *      values: // value for 'values'
+ *   },
+ * });
+ */
+export function useUpdateStorageUnitMutation(baseOptions?: Apollo.MutationHookOptions<UpdateStorageUnitMutation, UpdateStorageUnitMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateStorageUnitMutation, UpdateStorageUnitMutationVariables>(UpdateStorageUnitDocument, options);
+      }
+export type UpdateStorageUnitMutationHookResult = ReturnType<typeof useUpdateStorageUnitMutation>;
+export type UpdateStorageUnitMutationResult = Apollo.MutationResult<UpdateStorageUnitMutation>;
+export type UpdateStorageUnitMutationOptions = Apollo.BaseMutationOptions<UpdateStorageUnitMutation, UpdateStorageUnitMutationVariables>;

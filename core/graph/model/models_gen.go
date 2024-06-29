@@ -8,10 +8,6 @@ import (
 	"strconv"
 )
 
-type AuthResponse struct {
-	Status bool `json:"Status"`
-}
-
 type Column struct {
 	Type string `json:"Type"`
 	Name string `json:"Name"`
@@ -46,9 +42,18 @@ type Record struct {
 	Value string `json:"Value"`
 }
 
+type RecordInput struct {
+	Key   string `json:"Key"`
+	Value string `json:"Value"`
+}
+
 type RowsResult struct {
 	Columns []*Column  `json:"Columns"`
 	Rows    [][]string `json:"Rows"`
+}
+
+type StatusResponse struct {
+	Status bool `json:"Status"`
 }
 
 type StorageUnit struct {

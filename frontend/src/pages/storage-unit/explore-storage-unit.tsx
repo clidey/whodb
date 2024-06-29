@@ -1,4 +1,4 @@
-import { useLazyQuery } from "@apollo/client";
+import { entries, map } from "lodash";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { AnimatedButton } from "../../components/button";
@@ -7,10 +7,13 @@ import { InputWithlabel } from "../../components/input";
 import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { Table } from "../../components/table";
+import { graphqlClient } from "../../config/graphql-client";
 import { InternalRoutes } from "../../config/routes";
-import { DatabaseType, GetStorageUnitRowsDocument, GetStorageUnitRowsQuery, GetStorageUnitRowsQueryVariables, StorageUnit } from "../../generated/graphql";
-import { isNumeric } from "../../utils/functions";
+import { DatabaseType, StorageUnit, UpdateStorageUnitDocument, UpdateStorageUnitMutationResult, useGetStorageUnitRowsLazyQuery } from "../../generated/graphql";
+import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
+import { isNumeric } from "../../utils/functions";
+import { FetchResult } from "@apollo/client";
 
 export const ExploreStorageUnit: FC = () => {
     const [bufferPageSize, setBufferPageSize] = useState("10");
@@ -21,7 +24,7 @@ export const ExploreStorageUnit: FC = () => {
     const schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
 
-    const [getStorageUnitRows, { data: rows, loading }] = useLazyQuery<GetStorageUnitRowsQuery, GetStorageUnitRowsQueryVariables>(GetStorageUnitRowsDocument);
+    const [getStorageUnitRows, { data: rows, loading }] = useGetStorageUnitRowsLazyQuery();
 
     const handleSubmitRequest = useCallback(() => {
         getStorageUnitRows({
@@ -57,6 +60,39 @@ export const ExploreStorageUnit: FC = () => {
         handleSubmitRequest();
         setCurrentPage(0);
     }, [handleSubmitRequest]);
+
+    const handleRowUpdate = useCallback((row: Record<string, string>) => {
+        if (current == null) {
+            return Promise.reject();
+        }
+        const values = map(entries(row), ([Key, Value]) => ({
+            Key,
+            Value,
+        }));
+        return new Promise<void>(async (res, rej) => {
+            // this method ensures that the component is not rerendered
+            // hence, the edited cache in the table would stay intact & performant
+            try {
+                const { data }: FetchResult<UpdateStorageUnitMutationResult["data"]> = await graphqlClient.mutate({
+                    mutation: UpdateStorageUnitDocument,
+                    variables: {
+                        schema,
+                        storageUnit: unit.Name,
+                        type: current.Type as DatabaseType,
+                        values,
+                    },
+                });
+                if (data?.UpdateStorageUnit.Status) {
+                    notify("Row updated successfully!", "success");
+                    return res();
+                }
+                notify("Unable to update the row!", "error");
+            } catch (err) {
+                notify(`Unable to update the row: ${err}`, "error");
+            }
+            return rej();
+        });
+    }, [current, schema, unit.Name]);
 
     const totalCount: number = useMemo(() => {
         const rowCount = unit?.Attributes.find(attribute => attribute.Key === "Row Count")?.Value ?? "0";
@@ -104,7 +140,8 @@ export const ExploreStorageUnit: FC = () => {
             {
                 rows != null &&
                 <Table columns={rows.Row.Columns.map(c => c.Name)} columnTags={rows.Row.Columns.map(c => c.Type)}
-                    rows={rows.Row.Rows} totalPages={totalPages} currentPage={currentPage+1} onPageChange={handlePageChange} />
+                    rows={rows.Row.Rows} totalPages={totalPages} currentPage={currentPage+1} onPageChange={handlePageChange}
+                    onRowUpdate={handleRowUpdate} />
             }
         </div>
     </InternalPage>

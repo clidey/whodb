@@ -63,13 +63,10 @@ func InitializeRouter() {
 	setupMiddlewares(router)
 	setupServer(router)
 
-	log.Logger.Infof(
-		"🎉 Welcome to WhoDB! 🎉\n\n"+
-			"Get started by visiting:\n"+
-			"http://0.0.0.0:%s/\n\n"+
-			"Explore and enjoy working with your databases!",
-		port,
-	)
+	log.Logger.Infof("🎉 Welcome to WhoDB! 🎉")
+	log.Logger.Infof("Get started by visiting:")
+	log.Logger.Infof("http://0.0.0.0:%s", port)
+	log.Logger.Info("Explore and enjoy working with your databases!")
 
 	if err := http.ListenAndServe(fmt.Sprintf(":%v", port), router); err != nil {
 		panic(err)

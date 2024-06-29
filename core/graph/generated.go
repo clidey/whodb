@@ -47,10 +47,6 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
-	AuthResponse struct {
-		Status func(childComplexity int) int
-	}
-
 	Column struct {
 		Name func(childComplexity int) int
 		Type func(childComplexity int) int
@@ -67,9 +63,9 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateStorageUnit func(childComplexity int, typeArg model.DatabaseType) int
 		Login             func(childComplexity int, credentails model.LoginCredentials) int
 		Logout            func(childComplexity int) int
+		UpdateStorageUnit func(childComplexity int, typeArg model.DatabaseType, schema string, storageUnit string, values []*model.RecordInput) int
 	}
 
 	Query struct {
@@ -91,6 +87,10 @@ type ComplexityRoot struct {
 		Rows    func(childComplexity int) int
 	}
 
+	StatusResponse struct {
+		Status func(childComplexity int) int
+	}
+
 	StorageUnit struct {
 		Attributes func(childComplexity int) int
 		Name       func(childComplexity int) int
@@ -98,9 +98,9 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	Login(ctx context.Context, credentails model.LoginCredentials) (*model.AuthResponse, error)
-	Logout(ctx context.Context) (*model.AuthResponse, error)
-	CreateStorageUnit(ctx context.Context, typeArg model.DatabaseType) (*model.StorageUnit, error)
+	Login(ctx context.Context, credentails model.LoginCredentials) (*model.StatusResponse, error)
+	Logout(ctx context.Context) (*model.StatusResponse, error)
+	UpdateStorageUnit(ctx context.Context, typeArg model.DatabaseType, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
 }
 type QueryResolver interface {
 	Database(ctx context.Context, typeArg model.DatabaseType) ([]string, error)
@@ -129,13 +129,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
-
-	case "AuthResponse.Status":
-		if e.complexity.AuthResponse.Status == nil {
-			break
-		}
-
-		return e.complexity.AuthResponse.Status(childComplexity), true
 
 	case "Column.Name":
 		if e.complexity.Column.Name == nil {
@@ -179,18 +172,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.GraphUnitRelationship.Relationship(childComplexity), true
 
-	case "Mutation.CreateStorageUnit":
-		if e.complexity.Mutation.CreateStorageUnit == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_CreateStorageUnit_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CreateStorageUnit(childComplexity, args["type"].(model.DatabaseType)), true
-
 	case "Mutation.Login":
 		if e.complexity.Mutation.Login == nil {
 			break
@@ -209,6 +190,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.Logout(childComplexity), true
+
+	case "Mutation.UpdateStorageUnit":
+		if e.complexity.Mutation.UpdateStorageUnit == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_UpdateStorageUnit_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateStorageUnit(childComplexity, args["type"].(model.DatabaseType), args["schema"].(string), args["storageUnit"].(string), args["values"].([]*model.RecordInput)), true
 
 	case "Query.Database":
 		if e.complexity.Query.Database == nil {
@@ -310,6 +303,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.RowsResult.Rows(childComplexity), true
 
+	case "StatusResponse.Status":
+		if e.complexity.StatusResponse.Status == nil {
+			break
+		}
+
+		return e.complexity.StatusResponse.Status(childComplexity), true
+
 	case "StorageUnit.Attributes":
 		if e.complexity.StorageUnit.Attributes == nil {
 			break
@@ -333,6 +333,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputLoginCredentials,
+		ec.unmarshalInputRecordInput,
 	)
 	first := true
 
@@ -449,21 +450,6 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
-func (ec *executionContext) field_Mutation_CreateStorageUnit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 model.DatabaseType
-	if tmp, ok := rawArgs["type"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-		arg0, err = ec.unmarshalNDatabaseType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDatabaseType(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["type"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_Login_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -476,6 +462,48 @@ func (ec *executionContext) field_Mutation_Login_args(ctx context.Context, rawAr
 		}
 	}
 	args["credentails"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_UpdateStorageUnit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.DatabaseType
+	if tmp, ok := rawArgs["type"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+		arg0, err = ec.unmarshalNDatabaseType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDatabaseType(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["type"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["schema"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("schema"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["schema"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["storageUnit"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageUnit"))
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["storageUnit"] = arg2
+	var arg3 []*model.RecordInput
+	if tmp, ok := rawArgs["values"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("values"))
+		arg3, err = ec.unmarshalNRecordInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordInputᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["values"] = arg3
 	return args, nil
 }
 
@@ -693,50 +721,6 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
-
-func (ec *executionContext) _AuthResponse_Status(ctx context.Context, field graphql.CollectedField, obj *model.AuthResponse) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_AuthResponse_Status(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Status, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_AuthResponse_Status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "AuthResponse",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
 
 func (ec *executionContext) _Column_Type(ctx context.Context, field graphql.CollectedField, obj *model.Column) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Column_Type(ctx, field)
@@ -1040,9 +1024,9 @@ func (ec *executionContext) _Mutation_Login(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.AuthResponse)
+	res := resTmp.(*model.StatusResponse)
 	fc.Result = res
-	return ec.marshalNAuthResponse2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAuthResponse(ctx, field.Selections, res)
+	return ec.marshalNStatusResponse2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐStatusResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_Login(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1054,9 +1038,9 @@ func (ec *executionContext) fieldContext_Mutation_Login(ctx context.Context, fie
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "Status":
-				return ec.fieldContext_AuthResponse_Status(ctx, field)
+				return ec.fieldContext_StatusResponse_Status(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type AuthResponse", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type StatusResponse", field.Name)
 		},
 	}
 	defer func() {
@@ -1099,9 +1083,9 @@ func (ec *executionContext) _Mutation_Logout(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.AuthResponse)
+	res := resTmp.(*model.StatusResponse)
 	fc.Result = res
-	return ec.marshalNAuthResponse2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAuthResponse(ctx, field.Selections, res)
+	return ec.marshalNStatusResponse2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐStatusResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_Logout(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1113,16 +1097,16 @@ func (ec *executionContext) fieldContext_Mutation_Logout(_ context.Context, fiel
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "Status":
-				return ec.fieldContext_AuthResponse_Status(ctx, field)
+				return ec.fieldContext_StatusResponse_Status(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type AuthResponse", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type StatusResponse", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_CreateStorageUnit(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_CreateStorageUnit(ctx, field)
+func (ec *executionContext) _Mutation_UpdateStorageUnit(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_UpdateStorageUnit(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1135,7 +1119,7 @@ func (ec *executionContext) _Mutation_CreateStorageUnit(ctx context.Context, fie
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateStorageUnit(rctx, fc.Args["type"].(model.DatabaseType))
+		return ec.resolvers.Mutation().UpdateStorageUnit(rctx, fc.Args["type"].(model.DatabaseType), fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["values"].([]*model.RecordInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1147,12 +1131,12 @@ func (ec *executionContext) _Mutation_CreateStorageUnit(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.StorageUnit)
+	res := resTmp.(*model.StatusResponse)
 	fc.Result = res
-	return ec.marshalNStorageUnit2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐStorageUnit(ctx, field.Selections, res)
+	return ec.marshalNStatusResponse2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐStatusResponse(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_CreateStorageUnit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_UpdateStorageUnit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -1160,12 +1144,10 @@ func (ec *executionContext) fieldContext_Mutation_CreateStorageUnit(ctx context.
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "Name":
-				return ec.fieldContext_StorageUnit_Name(ctx, field)
-			case "Attributes":
-				return ec.fieldContext_StorageUnit_Attributes(ctx, field)
+			case "Status":
+				return ec.fieldContext_StatusResponse_Status(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type StorageUnit", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type StatusResponse", field.Name)
 		},
 	}
 	defer func() {
@@ -1175,7 +1157,7 @@ func (ec *executionContext) fieldContext_Mutation_CreateStorageUnit(ctx context.
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_CreateStorageUnit_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_UpdateStorageUnit_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -1842,6 +1824,50 @@ func (ec *executionContext) fieldContext_RowsResult_Rows(_ context.Context, fiel
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StatusResponse_Status(ctx context.Context, field graphql.CollectedField, obj *model.StatusResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_StatusResponse_Status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_StatusResponse_Status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StatusResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3769,6 +3795,40 @@ func (ec *executionContext) unmarshalInputLoginCredentials(ctx context.Context, 
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputRecordInput(ctx context.Context, obj interface{}) (model.RecordInput, error) {
+	var it model.RecordInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"Key", "Value"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "Key":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Key"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Key = data
+		case "Value":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Value"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Value = data
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -3776,45 +3836,6 @@ func (ec *executionContext) unmarshalInputLoginCredentials(ctx context.Context, 
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
-
-var authResponseImplementors = []string{"AuthResponse"}
-
-func (ec *executionContext) _AuthResponse(ctx context.Context, sel ast.SelectionSet, obj *model.AuthResponse) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, authResponseImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("AuthResponse")
-		case "Status":
-			out.Values[i] = ec._AuthResponse_Status(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
 
 var columnImplementors = []string{"Column"}
 
@@ -3981,9 +4002,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "CreateStorageUnit":
+		case "UpdateStorageUnit":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_CreateStorageUnit(ctx, field)
+				return ec._Mutation_UpdateStorageUnit(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -4255,6 +4276,45 @@ func (ec *executionContext) _RowsResult(ctx context.Context, sel ast.SelectionSe
 			}
 		case "Rows":
 			out.Values[i] = ec._RowsResult_Rows(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var statusResponseImplementors = []string{"StatusResponse"}
+
+func (ec *executionContext) _StatusResponse(ctx context.Context, sel ast.SelectionSet, obj *model.StatusResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, statusResponseImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("StatusResponse")
+		case "Status":
+			out.Values[i] = ec._StatusResponse_Status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -4651,20 +4711,6 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNAuthResponse2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAuthResponse(ctx context.Context, sel ast.SelectionSet, v model.AuthResponse) graphql.Marshaler {
-	return ec._AuthResponse(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNAuthResponse2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAuthResponse(ctx context.Context, sel ast.SelectionSet, v *model.AuthResponse) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._AuthResponse(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -4936,6 +4982,28 @@ func (ec *executionContext) marshalNRecord2ᚖgithubᚗcomᚋclideyᚋwhodbᚋco
 	return ec._Record(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNRecordInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordInputᚄ(ctx context.Context, v interface{}) ([]*model.RecordInput, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.RecordInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNRecordInput2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNRecordInput2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordInput(ctx context.Context, v interface{}) (*model.RecordInput, error) {
+	res, err := ec.unmarshalInputRecordInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNRowsResult2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRowsResult(ctx context.Context, sel ast.SelectionSet, v model.RowsResult) graphql.Marshaler {
 	return ec._RowsResult(ctx, sel, &v)
 }
@@ -4950,8 +5018,18 @@ func (ec *executionContext) marshalNRowsResult2ᚖgithubᚗcomᚋclideyᚋwhodb�
 	return ec._RowsResult(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNStorageUnit2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐStorageUnit(ctx context.Context, sel ast.SelectionSet, v model.StorageUnit) graphql.Marshaler {
-	return ec._StorageUnit(ctx, sel, &v)
+func (ec *executionContext) marshalNStatusResponse2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐStatusResponse(ctx context.Context, sel ast.SelectionSet, v model.StatusResponse) graphql.Marshaler {
+	return ec._StatusResponse(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNStatusResponse2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐStatusResponse(ctx context.Context, sel ast.SelectionSet, v *model.StatusResponse) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._StatusResponse(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNStorageUnit2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐStorageUnitᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.StorageUnit) graphql.Marshaler {

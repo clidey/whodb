@@ -1,4 +1,5 @@
-import { FC, ReactElement } from "react";
+import { FC, ReactElement, ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 type IEmptyMessageProps = {
     icon: ReactElement;
@@ -13,3 +14,11 @@ export const EmptyMessage: FC<IEmptyMessageProps> = ({ icon, label }) => {
         </div>
     )   
 }
+
+interface PortalProps {
+  children: ReactNode;
+}
+
+export const Portal: FC<PortalProps> = ({ children }) => {
+  return createPortal(children, document.body);
+};
