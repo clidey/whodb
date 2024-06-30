@@ -188,7 +188,10 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate }) => {
                         animate={{ opacity: 1, }}
                         exit={{ opacity: 0, }}
                         transition={{ duration: 0.3 }}
-                        className="fixed top-0 left-0 w-screen h-screen flex items-center justify-center z-50 bg-gray-500/40">
+                        className={classNames("fixed top-0 left-0 w-screen h-screen flex items-center justify-center z-50 bg-gray-500/40", {
+                            "select-none": preview,
+                        })}
+                        onMouseUp={preview ? longPressProps.onMouseUp : undefined} onTouchEnd={preview ? longPressProps.onTouchEnd : undefined}>
                         <motion.div
                             initial={{
                                 top: cellRect.top,
@@ -198,10 +201,10 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate }) => {
                                 transform: "unset",
                             }}
                             animate={{
-                                top: "35vh",
+                                top: preview ? "25vh" : "35vh",
                                 left: "25vw",
-                                height: '30vh',
-                                width: '50vw',
+                                height: preview ? "50vh" : "30vh",
+                                width: "50vw",
                             }}
                             exit={{
                                 top: cellRect.top,

@@ -6,9 +6,10 @@ type ILoadingProps = {
   className?: string;
   hideText?: boolean;
   loadingText?: string;
+  textClassName?: string;
 }
 
-export const Loading: FC<ILoadingProps> = ({ className, hideText, loadingText }) => {
+export const Loading: FC<ILoadingProps> = ({ className, hideText, loadingText, textClassName }) => {
   return (
     <div className="h-full w-full flex flex-col justify-center items-center gap-2" role="status">
       <svg aria-hidden="true" className={twMerge(classNames("w-8 h-8 text-gray-200 animate-spin fill-green-600", className))} viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -17,7 +18,7 @@ export const Loading: FC<ILoadingProps> = ({ className, hideText, loadingText })
       </svg>
       {
         !hideText &&
-        <div className="text-sm text-gray-500">{ loadingText ?? "Loading..."}</div>
+        <div className={classNames("text-sm text-gray-500", textClassName)}>{ loadingText ?? "Loading..."}</div>
       }
     </div>
   )
