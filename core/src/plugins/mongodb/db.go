@@ -12,7 +12,8 @@ import (
 func DB(config *engine.PluginConfig) (*mongo.Client, error) {
 	ctx := context.Background()
 	var connectionString string
-	if config.Credentials.Hostname == "localhost" {
+	// TODO: add TLS enabled logic to work instead of hard coded domains
+	if config.Credentials.Hostname == "localhost" || config.Credentials.Hostname == "host.docker.internal" {
 		connectionString = fmt.Sprintf("mongodb://%s:%s@%s:%d/%s",
 			config.Credentials.Username,
 			config.Credentials.Password,
