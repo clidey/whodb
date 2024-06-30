@@ -100,7 +100,7 @@ func (p *MySQLPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 			{Key: "Table Schema", Value: tableSchema},
 			{Key: "Total Size", Value: fmt.Sprintf("%.2f MB", totalSize)},
 			{Key: "Data Size", Value: fmt.Sprintf("%.2f MB", dataSize)},
-			{Key: "Row Count", Value: fmt.Sprintf("%d", rowCount)},
+			{Key: "Count", Value: fmt.Sprintf("%d", rowCount)},
 		}
 
 		attributes = append(attributes, allTablesWithColumns[tableName]...)

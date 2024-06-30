@@ -137,7 +137,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data })
                 bgClassName: "bg-teal-500",
                 component: Icons.Database,
             }} className="h-fit">
-                <div className="flex flex-col grow mt-2">
+                <div className="flex flex-col grow mt-2 gap-4">
                     <div className="flex flex-col grow">
                         <div className="text-md font-semibold mb-2 break-words">{data.Name}</div>
                         {

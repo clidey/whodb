@@ -25,7 +25,7 @@ export const RawExecutePage: FC = () => {
     }, [code, current?.Type, rawExecute]);
 
     if (loading) {
-        return <InternalPage routes={[InternalRoutes.Dashboard.StorageUnit, InternalRoutes.Dashboard.ExploreStorageUnit]}>
+        return <InternalPage routes={[InternalRoutes.RawExecute]}>
             <Loading />
         </InternalPage>
     }

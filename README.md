@@ -41,7 +41,7 @@ Or checkout our Demo Video: [![Demo Video](/docs/images/demo-thumbnail.png)](htt
 - **Faster Performance:** Built with GoLang for exceptional speed and table virtualization in Frontend.
 - **Schema Visualization:** Interactive graphs to visualize your entire database schema.
 - **Inline Editing & Preview:** Easily preview cell or edit inline
-- **Current Support:** PostgreSQL, MySQL, and SQLite3
+- **Current Support:** PostgreSQL, MySQL, SQLite3, and MongoDB
 
 ## Documentation
 
@@ -89,7 +89,7 @@ A: While DBeaver is a highly advanced tool written in Java, it can be resource-i
 
 **Q: Can I use WhoDB with any type of database?**
 
-A: Yes, WhoDB aims to provide a consistent exploration and editing experience across SQL, NoSQL, and Graph databases. It currently only supports Postgres, MySQL, & SQLite3.
+A: Yes, WhoDB aims to provide a consistent exploration and editing experience across SQL, NoSQL, and Graph databases. It currently only supports PostgreSQL, MySQL, SQLite3, and MongoDB.
 
 **Q: How do I deploy WhoDB?**
 

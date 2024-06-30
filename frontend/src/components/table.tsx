@@ -11,6 +11,7 @@ import { CodeEditor } from "./editor";
 import { useExportToCSV, useLongPress } from "./hooks";
 import { Icons } from "./icons";
 import { SearchInput } from "./search";
+import { Loading } from "./loading";
 
 type IPaginationProps = {
     pageCount: number;
@@ -93,6 +94,7 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate }) => {
     const [cellRect, setCellRect] = useState<DOMRect | null>(null);
     const cellRef = useRef<HTMLDivElement>(null);
     const [copied, setCopied] = useState(false);
+    const [updating, setUpdating] = useState(false);
 
     const handleChange = useCallback((value: string) => {
         setEditedData(value);
@@ -144,14 +146,16 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate }) => {
     const handleUpdate = useCallback(() => {
         let previousValue = cell.value;
         cell.value = editedData;
+        setUpdating(true);
         onCellUpdate?.(cell).then(() => {
             setEditable(false);
             setCellRect(null);
         }).catch(() => {
             cell.value = previousValue;
-            handleCancel();
+        }).finally(() => {
+            setUpdating(false); 
         });
-    }, [cell, editedData, handleCancel, onCellUpdate]);
+    }, [cell, editedData, onCellUpdate]);
 
     const language = useMemo(() => {
         if (isValidJSON(editedData)) {
@@ -232,8 +236,12 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate }) => {
                                 className={classNames("flex gap-2 justify-center w-full", {
                                     "hidden": preview,
                                 })}>
-                                <ActionButton icon={Icons.Cancel} onClick={handleCancel} />
-                                <ActionButton icon={Icons.CheckCircle} className={changed ? "stroke-green-500" : undefined} onClick={handleUpdate} disabled={!changed} />
+                                <ActionButton icon={Icons.Cancel} onClick={handleCancel} disabled={updating} />
+                                {
+                                    updating
+                                    ? <div className="bg-white rounded-full p-2"><Loading hideText={true} /></div>
+                                    : <ActionButton icon={Icons.CheckCircle} className={changed ? "stroke-green-500" : undefined} onClick={handleUpdate} disabled={!changed} />
+                                }
                             </motion.div>
                         </motion.div>
                     </motion.div>
@@ -310,23 +318,25 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
     const [searchIndex, setSearchIndex] = useState(0);
     const [width, setWidth] = useState(0);
 
-    const defaultColumn = useMemo(() => ({
-        maxWidth: 150,
-    }), []);
-
     const columns = useMemo(() => {
+        let colWidth = 150;
+        if (actualColumns.length === 1) {
+            colWidth = width - 50;
+        }
         const cols = actualColumns.map(col => ({
             id: col,
             Header: col,
             accessor: col,
+            width: colWidth,
         }));
         cols.unshift({
             id: "#",
             Header: "#",
             accessor: "#",
+            width: 50,
         });
         return cols;
-    }, [actualColumns]);
+    }, [actualColumns, width]);
 
     const data = useMemo(() => {
         return actualRows.map((row, rowIndex) => {
@@ -373,7 +383,6 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
         {
             columns,
             data: sortedRows,
-            defaultColumn,
         },
         useBlockLayout,
     );
@@ -484,9 +493,9 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                         {headerGroups.map(headerGroup => (
                             <div {...headerGroup.getHeaderGroupProps()} className="table-header-group">
                                 {headerGroup.headers.map((column, i) => (
-                                    <div className="text-xs border-t border-l last:border-r border-gray-200 p-2 text-left bg-gray-500 text-white first:rounded-tl-lg last:rounded-tr-lg relative group/header cursor-pointer select-none"
-                                        onClick={() => handleSort(column.id)} {...column.getHeaderProps()}>
-                                        {column.render('Header')} {i > 0 && <span className="text-[11px]">[{columnTags?.[i-1]}]</span>}
+                                    <div {...column.getHeaderProps()} className="text-xs border-t border-l last:border-r border-gray-200 p-2 text-left bg-gray-500 text-white first:rounded-tl-lg last:rounded-tr-lg relative group/header cursor-pointer select-none"
+                                        onClick={() => handleSort(column.id)}>
+                                        {column.render('Header')} {i > 0 && columnTags?.[i-1] != null && columnTags?.[i-1].length > 0 && <span className="text-[11px]">[{columnTags?.[i-1]}]</span>}
                                         <div className={twMerge(classNames("transition-all absolute top-2 right-2 opacity-0", {
                                             "opacity-100": sortedColumn === column.id,
                                             "rotate-180": direction === "dsc",
