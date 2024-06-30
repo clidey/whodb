@@ -108,6 +108,12 @@ export const SideMenu: FC<IRouteProps> = (props) => {
 }
 
 function getDropdownLoginProfileItem(profile: LoginProfile): IDropdownItem {
+    if (profile.Type === DatabaseType.MongoDb) {
+        return {
+            id: profile.id,
+            label: `${profile.Hostname} - ${profile.Username} [${profile.Type}]`,
+        }
+    }
     if (profile.Type === DatabaseType.Sqlite3) {
         return {
             id: profile.id,
@@ -116,7 +122,7 @@ function getDropdownLoginProfileItem(profile: LoginProfile): IDropdownItem {
     }
     return {
         id: profile.id,
-        label: `${profile.Database} - ${profile.Username} [${profile.Type}]`,
+        label: `${profile.Hostname} - ${profile.Database} [${profile.Type}]`,
     };
 }
 
@@ -213,7 +219,7 @@ export const Sidebar: FC = () => {
                 if (status.Login.Status) {
                     dispatch(DatabaseActions.setSchema(""));
                     dispatch(AuthActions.switch({ id: selectedProfile.id }));
-                    navigate(0);
+                    navigate(InternalRoutes.Dashboard.StorageUnit.path);
                 }
             },
             onError(error) {

@@ -319,7 +319,10 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
     const [width, setWidth] = useState(0);
 
     const columns = useMemo(() => {
-        const colWidth = width - 50;
+        let colWidth = 150;
+        if (actualColumns.length === 1) {
+            colWidth = width - 50;
+        }
         const cols = actualColumns.map(col => ({
             id: col,
             Header: col,

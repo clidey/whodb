@@ -101,7 +101,7 @@ func (p *PostgresPlugin) GetStorageUnits(config *engine.PluginConfig, schema str
 			{Key: "Table Schema", Value: tableSchema},
 			{Key: "Total Size", Value: totalSize},
 			{Key: "Data Size", Value: dataSize},
-			{Key: "Row Count", Value: fmt.Sprintf("%d", rowCount)},
+			{Key: "Count", Value: fmt.Sprintf("%d", rowCount)},
 		}
 
 		attributes = append(attributes, allTablesWithColumns[tableName]...)

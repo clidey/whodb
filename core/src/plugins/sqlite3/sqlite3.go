@@ -56,6 +56,7 @@ func (p *Sqlite3Plugin) GetStorageUnits(config *engine.PluginConfig, schema stri
 		return nil, err
 	}
 	defer sqlDb.Close()
+
 	storageUnits := []engine.StorageUnit{}
 	rows, err := db.Raw(`
 		SELECT
@@ -75,14 +76,24 @@ func (p *Sqlite3Plugin) GetStorageUnits(config *engine.PluginConfig, schema stri
 	if err != nil {
 		return nil, err
 	}
+
 	for rows.Next() {
 		var tableName, tableType string
 		if err := rows.Scan(&tableName, &tableType); err != nil {
 			log.Fatal(err)
 		}
 
+		var rowCount int64
+		rowCountRow := db.Raw(fmt.Sprintf("SELECT COUNT(*) FROM '%s'", tableName)).Row()
+		rowCountRow.Scan(&rowCount)
+
+		var dataSize int64
+		db.Raw(fmt.Sprintf("PRAGMA table_info('%s')", tableName)).Scan(&dataSize)
+
 		attributes := []engine.Record{
 			{Key: "Table Type", Value: tableType},
+			{Key: "Count", Value: fmt.Sprintf("%d", rowCount)},
+			{Key: "Data Size", Value: fmt.Sprintf("%d", dataSize)},
 		}
 
 		attributes = append(attributes, allTablesWithColumns[tableName]...)

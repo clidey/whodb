@@ -65,7 +65,7 @@ func (p *MongoDBPlugin) GetStorageUnits(config *engine.PluginConfig, database st
 			Name: collectionName,
 			Attributes: []engine.Record{
 				{Key: "Storage Size", Value: fmt.Sprintf("%v", stats["storageSize"])},
-				{Key: "Document Count", Value: fmt.Sprintf("%v", stats["count"])},
+				{Key: "Count", Value: fmt.Sprintf("%v", stats["count"])},
 			},
 		})
 	}

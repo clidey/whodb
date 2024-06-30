@@ -95,7 +95,7 @@ export const ExploreStorageUnit: FC = () => {
     }, [current, schema, unit.Name]);
 
     const totalCount: number = useMemo(() => {
-        const rowCount = unit?.Attributes.find(attribute => attribute.Key === "Row Count")?.Value ?? "0";
+        const rowCount = unit?.Attributes.find(attribute => attribute.Key === "Count")?.Value ?? "0";
         if (isNumeric(rowCount)) {
             return Number.parseInt(rowCount);
         }

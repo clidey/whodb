@@ -54,10 +54,9 @@ export const LoginPage: FC = () => {
     const [error, setError] = useState<string>();
 
     const handleSubmit = useCallback(() => {
-        if (databaseType.id !== DatabaseType.Sqlite3 && (hostName.length === 0 || database.length === 0 || username.length === 0 || password.length === 0)) {
-            return setError(`All fields are required`);
-        }
-        if (databaseType.id === DatabaseType.Sqlite3 && database.length === 0) {
+        if (([DatabaseType.MySql, DatabaseType.Postgres].includes(databaseType.id as DatabaseType) && (hostName.length === 0 || database.length === 0 || username.length === 0 || password.length === 0))
+            || (databaseType.id === DatabaseType.Sqlite3 && database.length === 0)
+            || (databaseType.id === DatabaseType.MongoDb && (hostName.length === 0 || username.length === 0 || password.length === 0))) {
             return setError(`All fields are required`);
         }
         setError(undefined);
@@ -134,7 +133,7 @@ export const LoginPage: FC = () => {
             <InputWithlabel label="Host Name" value={hostName} setValue={setHostName} />
             <InputWithlabel label="Username" value={username} setValue={setUsername} />
             <InputWithlabel label="Password" value={password} setValue={setPassword} type="password" />
-            <InputWithlabel label="Database" value={database} setValue={setDatabase} />
+            { databaseType.id !== DatabaseType.MongoDb && <InputWithlabel label="Database" value={database} setValue={setDatabase} /> }
         </>
     }, [database, databaseType.id, databasesLoading, foundDatabases?.Database, hostName, password, username]);
 
