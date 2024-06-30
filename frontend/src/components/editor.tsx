@@ -82,14 +82,15 @@ export const CodeEditor: FC<ICodeEditorProps> = ({ value, setValue, language, op
             language={language}
             value={value}
             onChange={handleChange}
-            loading={<div className="flex justify-center items-center h-full w-full">
-                <Loading textClassName="text-white" />
+            loading={<div className="flex justify-center items-center h-full w-full bg-white p-2 rounded-full">
+                <Loading hideText={true} />
             </div>}
             options={{
                 fontSize: 12,
                 glyphMargin: false,
                 automaticLayout: true,
                 selectOnLineNumbers: true,
+                wordWrap: "on",
                 ...options,
             }}
             onMount={handleEditorDidMount}

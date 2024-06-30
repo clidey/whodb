@@ -8,6 +8,7 @@ const (
 	DatabaseType_Postgres = "Postgres"
 	DatabaseType_MySQL    = "MySQL"
 	DatabaseType_Sqlite3  = "Sqlite3"
+	DatabaseType_MongoDB  = "MongoDB"
 )
 
 type Engine struct {

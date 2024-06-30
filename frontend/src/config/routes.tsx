@@ -27,12 +27,12 @@ export const PublicRoutes = {
 export const InternalRoutes = {
     Dashboard: {
         StorageUnit: {
-            name: "Tables",
+            name: "Storage Unit", // should update on the page
             path: "/storage-unit",
             component: <StorageUnitPage />,
         },
         ExploreStorageUnit: {
-            name: "Explore Table",
+            name: "Explore",
             path: "/storage-unit/explore",
             component: <ExploreStorageUnit />,
         },

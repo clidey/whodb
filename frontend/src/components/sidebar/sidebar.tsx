@@ -13,7 +13,7 @@ import { AuthActions, LoginProfile } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
-import { createStub } from "../../utils/functions";
+import { createStub, isNoSQL } from "../../utils/functions";
 import { AnimatedButton } from "../button";
 import { BRAND_COLOR } from "../classes";
 import { Dropdown, IDropdownItem } from "../dropdown";
@@ -108,6 +108,12 @@ export const SideMenu: FC<IRouteProps> = (props) => {
 }
 
 function getDropdownLoginProfileItem(profile: LoginProfile): IDropdownItem {
+    if (profile.Type === DatabaseType.MongoDb) {
+        return {
+            id: profile.id,
+            label: `${profile.Hostname} - ${profile.Username} [${profile.Type}]`,
+        }
+    }
     if (profile.Type === DatabaseType.Sqlite3) {
         return {
             id: profile.id,
@@ -116,7 +122,7 @@ function getDropdownLoginProfileItem(profile: LoginProfile): IDropdownItem {
     }
     return {
         id: profile.id,
-        label: `${profile.Database} - ${profile.Username} [${profile.Type}]`,
+        label: `${profile.Hostname} - ${profile.Database} [${profile.Type}]`,
     };
 }
 
@@ -165,9 +171,12 @@ export const Sidebar: FC = () => {
     }, [current, dispatch, getSchema, schema]);
 
     const sidebarRoutes: IRouteProps[] = useMemo(() => {
-        return [
+        if (current == null) {
+            return [];
+        }
+        const routes = [
             {
-                title: "Tables",
+                title: isNoSQL(current.Type) ? "Collections" : "Tables",
                 icon: Icons.Tables,
                 path: InternalRoutes.Dashboard.StorageUnit.path,
             },
@@ -176,13 +185,16 @@ export const Sidebar: FC = () => {
                 icon: Icons.GraphLayout,
                 path: InternalRoutes.Graph.path,
             },
-            {
+        ];
+        if (current.Type !== DatabaseType.MongoDb) {
+            routes.push({
                 title: "Raw Execute",
                 icon: Icons.Console,
                 path: InternalRoutes.RawExecute.path,
-            },
-        ];
-    }, []);
+            });
+        }
+        return routes;
+    }, [current]);
 
     const handleCollapseToggle = useCallback(() => {
         setCollapsed(c => !c);
@@ -207,7 +219,7 @@ export const Sidebar: FC = () => {
                 if (status.Login.Status) {
                     dispatch(DatabaseActions.setSchema(""));
                     dispatch(AuthActions.switch({ id: selectedProfile.id }));
-                    navigate(0);
+                    navigate(InternalRoutes.Dashboard.StorageUnit.path);
                 }
             },
             onError(error) {

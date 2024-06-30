@@ -1,6 +1,8 @@
 package common
 
-import "regexp"
+import (
+	"regexp"
+)
 
 func IsValidSQLTableName(tableName string) bool {
 	const pattern = `^[a-zA-Z0-9_]+$`
