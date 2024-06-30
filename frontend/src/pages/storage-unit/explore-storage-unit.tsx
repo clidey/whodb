@@ -12,7 +12,7 @@ import { InternalRoutes } from "../../config/routes";
 import { DatabaseType, StorageUnit, UpdateStorageUnitDocument, UpdateStorageUnitMutationResult, useGetStorageUnitRowsLazyQuery } from "../../generated/graphql";
 import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
-import { isNumeric } from "../../utils/functions";
+import { isNoSQL, isNumeric } from "../../utils/functions";
 import { FetchResult } from "@apollo/client";
 
 export const ExploreStorageUnit: FC = () => {
@@ -114,17 +114,28 @@ export const ExploreStorageUnit: FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    const routes = useMemo(() => {
+        const name = current == null || !isNoSQL(current.Type) ? "Tables" : "Collections";
+        return [
+            {
+                ...InternalRoutes.Dashboard.StorageUnit,
+                name,
+            },
+            InternalRoutes.Dashboard.ExploreStorageUnit
+        ];
+    }, [current]);
+
     if (unit == null) {
         return <Navigate to={InternalRoutes.Dashboard.StorageUnit.path} />
     }
 
     if (loading) {
-        return <InternalPage routes={[InternalRoutes.Dashboard.StorageUnit, InternalRoutes.Dashboard.ExploreStorageUnit]}>
+        return <InternalPage routes={routes}>
             <Loading />
         </InternalPage>
     }
 
-    return <InternalPage routes={[InternalRoutes.Dashboard.StorageUnit, InternalRoutes.Dashboard.ExploreStorageUnit]}>
+    return <InternalPage routes={routes}>
         <div className="flex flex-col grow gap-4">
             <div className="flex items-center justify-between">
                 <div className="flex gap-2 items-center">

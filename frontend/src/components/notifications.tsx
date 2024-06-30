@@ -49,7 +49,7 @@ export const Notifications: FC<INotificationsProps> = () => {
   const notifications = useAppSelector((state) => state.common.notifications);
 
   return (
-    <div className="fixed z-50 w-auto top-8 bottom-8 m-[0_auto] left-8 right-8 flex flex-col gap-2 items-end xs:items-center pointer-events-none">
+    <div className="fixed z-[100] w-auto top-8 bottom-8 m-[0_auto] left-8 right-8 flex flex-col gap-2 items-end xs:items-center pointer-events-none">
       <AnimatePresence mode="sync">
         <motion.ul className="flex flex-col gap-4">
           {notifications.map((notification) => (

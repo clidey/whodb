@@ -6,6 +6,7 @@ enum DatabaseType {
   Postgres,
   MySQL,
   Sqlite3,
+  MongoDB,
 }
 
 type Column {

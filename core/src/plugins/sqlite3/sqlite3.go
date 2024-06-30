@@ -100,7 +100,6 @@ func getTableSchema(db *gorm.DB) (map[string][]engine.Record, error) {
 		TableName string `gorm:"column:table_name"`
 	}
 
-	// Get the list of tables
 	query := `
 		SELECT name AS table_name
 		FROM sqlite_master
@@ -112,7 +111,6 @@ func getTableSchema(db *gorm.DB) (map[string][]engine.Record, error) {
 
 	tableColumnsMap := make(map[string][]engine.Record)
 
-	// Get the columns info for each table
 	for _, table := range tables {
 		var columns []struct {
 			ColumnName string `gorm:"column:name"`

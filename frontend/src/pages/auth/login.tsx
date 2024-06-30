@@ -31,6 +31,11 @@ const databaseTypeDropdownItems: IDropdownItem[] = [
         label: "Sqlite3",
         icon: Icons.Logos.Sqlite3,
     },
+    {
+        id: "MongoDB",
+        label: "MongoDB",
+        icon: Icons.Logos.MongoDB,
+    },
 ]
 
 export const LoginPage: FC = () => {

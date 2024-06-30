@@ -24,6 +24,7 @@ export type Column = {
 };
 
 export enum DatabaseType {
+  MongoDb = 'MongoDB',
   MySql = 'MySQL',
   Postgres = 'Postgres',
   Sqlite3 = 'Sqlite3'

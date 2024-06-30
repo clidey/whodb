@@ -2,7 +2,6 @@ version: "3.8"
 
 services:
   postgres:
-    container_name: postgres
     image: postgres
     environment:
       POSTGRES_USER: user
@@ -16,7 +15,6 @@ services:
     networks:
       - db
   mysql:
-    container_name: mysql
     image: mysql
     environment:
       MYSQL_USER: user
@@ -29,6 +27,17 @@ services:
       - "3306:3306"
     networks:
       - db
+  mongo:
+    image: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: user
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - mongo:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - db
 networks:
   db:
     driver: bridge
@@ -36,3 +45,4 @@ networks:
 volumes:
   postgres:
   mysql:
+  mongo:
