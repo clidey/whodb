@@ -75,6 +75,7 @@ docker run -it -v ./sample.db:/db/sample.db -p 8080:8080 clidey/whodb:latest
 <br /><p align="center"><img src="./images/table-cell-inline-edit-action.png" alt="Table cell preview" width="400" /></p>
 This should show a popup like below and you can hit "Check" to apply changes. It should reflect in the cell right away if the action is successful! [Note: on the bottom right, "Preview" icon will show for support previews. Click to switch to preview mode]
 <br /><p align="center"><img src="./images/table-cell-inline-edit-input.png" alt="Table cell preview" width="400" /></p>
+Note: Currently, Redis does not support "set" fields to be inline edited.
 
 ### Graph Visualization
 
@@ -90,11 +91,11 @@ This should show a popup like below and you can hit "Check" to apply changes. It
 - Go to "Raw Execute" in the side bar to perform arbitrary SQL queries directly.
   <br /><p align="center"><img src="./images/raw-execute.png" alt="Raw Execute" width="400" /></p>
 
-**Note:** Currently, MongoDB does not support raw execute.
+**Note:** Currently, MongoDB & Redis does not support raw execute.
 
 ## Pending Features
 
-- **Database Support**: Currently supports PostgreSQL, MySQL, SQLite, and MongoDB. Support for other NoSQL databases, graph databases (Neo4JS), etc., is coming soon with the same experience.
+- **Database Support**: Currently supports PostgreSQL, MySQL, SQLite, MongoDB, & Redis. Support for other NoSQL databases, graph databases (Neo4JS), etc., is coming soon with the same experience.
 - **Detailed Graph Visualization**: Display connection types and constraints on foreign keys.
 
 ## Contributing
