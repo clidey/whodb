@@ -48,8 +48,9 @@ type RecordInput struct {
 }
 
 type RowsResult struct {
-	Columns []*Column  `json:"Columns"`
-	Rows    [][]string `json:"Rows"`
+	Columns       []*Column  `json:"Columns"`
+	Rows          [][]string `json:"Rows"`
+	DisableUpdate bool       `json:"DisableUpdate"`
 }
 
 type StatusResponse struct {
@@ -68,6 +69,7 @@ const (
 	DatabaseTypeMySQL    DatabaseType = "MySQL"
 	DatabaseTypeSqlite3  DatabaseType = "Sqlite3"
 	DatabaseTypeMongoDb  DatabaseType = "MongoDB"
+	DatabaseTypeRedis    DatabaseType = "Redis"
 )
 
 var AllDatabaseType = []DatabaseType{
@@ -75,11 +77,12 @@ var AllDatabaseType = []DatabaseType{
 	DatabaseTypeMySQL,
 	DatabaseTypeSqlite3,
 	DatabaseTypeMongoDb,
+	DatabaseTypeRedis,
 }
 
 func (e DatabaseType) IsValid() bool {
 	switch e {
-	case DatabaseTypePostgres, DatabaseTypeMySQL, DatabaseTypeSqlite3, DatabaseTypeMongoDb:
+	case DatabaseTypePostgres, DatabaseTypeMySQL, DatabaseTypeSqlite3, DatabaseTypeMongoDb, DatabaseTypeRedis:
 		return true
 	}
 	return false

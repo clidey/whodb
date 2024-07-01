@@ -83,8 +83,9 @@ type ComplexityRoot struct {
 	}
 
 	RowsResult struct {
-		Columns func(childComplexity int) int
-		Rows    func(childComplexity int) int
+		Columns       func(childComplexity int) int
+		DisableUpdate func(childComplexity int) int
+		Rows          func(childComplexity int) int
 	}
 
 	StatusResponse struct {
@@ -295,6 +296,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.RowsResult.Columns(childComplexity), true
+
+	case "RowsResult.DisableUpdate":
+		if e.complexity.RowsResult.DisableUpdate == nil {
+			break
+		}
+
+		return e.complexity.RowsResult.DisableUpdate(childComplexity), true
 
 	case "RowsResult.Rows":
 		if e.complexity.RowsResult.Rows == nil {
@@ -1378,6 +1386,8 @@ func (ec *executionContext) fieldContext_Query_Row(ctx context.Context, field gr
 				return ec.fieldContext_RowsResult_Columns(ctx, field)
 			case "Rows":
 				return ec.fieldContext_RowsResult_Rows(ctx, field)
+			case "DisableUpdate":
+				return ec.fieldContext_RowsResult_DisableUpdate(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type RowsResult", field.Name)
 		},
@@ -1439,6 +1449,8 @@ func (ec *executionContext) fieldContext_Query_RawExecute(ctx context.Context, f
 				return ec.fieldContext_RowsResult_Columns(ctx, field)
 			case "Rows":
 				return ec.fieldContext_RowsResult_Rows(ctx, field)
+			case "DisableUpdate":
+				return ec.fieldContext_RowsResult_DisableUpdate(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type RowsResult", field.Name)
 		},
@@ -1824,6 +1836,50 @@ func (ec *executionContext) fieldContext_RowsResult_Rows(_ context.Context, fiel
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RowsResult_DisableUpdate(ctx context.Context, field graphql.CollectedField, obj *model.RowsResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RowsResult_DisableUpdate(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DisableUpdate, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RowsResult_DisableUpdate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RowsResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4276,6 +4332,11 @@ func (ec *executionContext) _RowsResult(ctx context.Context, sel ast.SelectionSe
 			}
 		case "Rows":
 			out.Values[i] = ec._RowsResult_Rows(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "DisableUpdate":
+			out.Values[i] = ec._RowsResult_DisableUpdate(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

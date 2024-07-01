@@ -152,7 +152,7 @@ export const ExploreStorageUnit: FC = () => {
                 rows != null &&
                 <Table columns={rows.Row.Columns.map(c => c.Name)} columnTags={rows.Row.Columns.map(c => c.Type)}
                     rows={rows.Row.Rows} totalPages={totalPages} currentPage={currentPage+1} onPageChange={handlePageChange}
-                    onRowUpdate={handleRowUpdate} />
+                    onRowUpdate={handleRowUpdate} disableEdit={rows.Row.DisableUpdate} />
             }
         </div>
     </InternalPage>
