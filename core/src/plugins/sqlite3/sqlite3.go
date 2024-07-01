@@ -87,13 +87,9 @@ func (p *Sqlite3Plugin) GetStorageUnits(config *engine.PluginConfig, schema stri
 		rowCountRow := db.Raw(fmt.Sprintf("SELECT COUNT(*) FROM '%s'", tableName)).Row()
 		rowCountRow.Scan(&rowCount)
 
-		var dataSize int64
-		db.Raw(fmt.Sprintf("PRAGMA table_info('%s')", tableName)).Scan(&dataSize)
-
 		attributes := []engine.Record{
 			{Key: "Table Type", Value: tableType},
 			{Key: "Count", Value: fmt.Sprintf("%d", rowCount)},
-			{Key: "Data Size", Value: fmt.Sprintf("%d", dataSize)},
 		}
 
 		attributes = append(attributes, allTablesWithColumns[tableName]...)

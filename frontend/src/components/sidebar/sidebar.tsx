@@ -254,6 +254,28 @@ export const Sidebar: FC = () => {
         dispatch(AuthActions.remove({ id: selectedProfile.id }));
     }, [current?.id, dispatch, navigate, profiles]);
 
+    const currentProfile = useMemo(() => {
+        if (current == null) {
+            return;
+        }
+        if (current.Type === DatabaseType.Redis) {
+            return {
+                id: current.id,
+                label: current.Hostname,
+            }
+        }
+        if (current.Type === DatabaseType.Sqlite3) {
+            return {
+                id: current.id,
+                label: current.Database,
+            }
+        }
+        return {
+            id: current.id,
+            label: `${current.Hostname} [${current.Username}]`,
+        }
+    }, [current]);
+
     const animate = collapsed ? "hide" : "show";
 
     return (
@@ -309,10 +331,7 @@ export const Sidebar: FC = () => {
                                         <div className="text-sm text-gray-600 mr-2.5">Profile:</div>
                                         {
                                             current != null &&
-                                            <Dropdown className="max-w-[120px]" items={loginItems} value={{
-                                                id: current.id,
-                                                label: current.Type === DatabaseType.Sqlite3 ? current.Database : `${current.Hostname} [${current.Username}]`,
-                                            }} onChange={handleProfileChange}
+                                            <Dropdown className="max-w-[120px]" items={loginItems} value={currentProfile} onChange={handleProfileChange}
                                                 defaultItem={{
                                                     label: "Add another profile",
                                                     icon: cloneElement(Icons.Add, {
