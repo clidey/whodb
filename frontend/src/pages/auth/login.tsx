@@ -36,6 +36,11 @@ const databaseTypeDropdownItems: IDropdownItem[] = [
         label: "MongoDB",
         icon: Icons.Logos.MongoDB,
     },
+    {
+        id: "Redis",
+        label: "Redis",
+        icon: Icons.Logos.Redis,
+    },
 ]
 
 export const LoginPage: FC = () => {
@@ -56,7 +61,8 @@ export const LoginPage: FC = () => {
     const handleSubmit = useCallback(() => {
         if (([DatabaseType.MySql, DatabaseType.Postgres].includes(databaseType.id as DatabaseType) && (hostName.length === 0 || database.length === 0 || username.length === 0 || password.length === 0))
             || (databaseType.id === DatabaseType.Sqlite3 && database.length === 0)
-            || (databaseType.id === DatabaseType.MongoDb && (hostName.length === 0 || username.length === 0 || password.length === 0))) {
+            || (databaseType.id === DatabaseType.MongoDb && (hostName.length === 0 || username.length === 0 || password.length === 0))
+            || (databaseType.id === DatabaseType.Redis && (hostName.length === 0 || password.length === 0))) {
             return setError(`All fields are required`);
         }
         setError(undefined);
@@ -131,9 +137,9 @@ export const LoginPage: FC = () => {
         }
         return <>
             <InputWithlabel label="Host Name" value={hostName} setValue={setHostName} />
-            <InputWithlabel label="Username" value={username} setValue={setUsername} />
+            { databaseType.id !== DatabaseType.Redis && <InputWithlabel label="Username" value={username} setValue={setUsername} /> }
             <InputWithlabel label="Password" value={password} setValue={setPassword} type="password" />
-            { databaseType.id !== DatabaseType.MongoDb && <InputWithlabel label="Database" value={database} setValue={setDatabase} /> }
+            { (databaseType.id !== DatabaseType.MongoDb && databaseType.id !== DatabaseType.Redis)  && <InputWithlabel label="Database" value={database} setValue={setDatabase} /> }
         </>
     }, [database, databaseType.id, databasesLoading, foundDatabases?.Database, hostName, password, username]);
 

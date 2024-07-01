@@ -7,6 +7,7 @@ enum DatabaseType {
   MySQL,
   Sqlite3,
   MongoDB,
+  Redis,
 }
 
 type Column {
@@ -17,6 +18,7 @@ type Column {
 type RowsResult {
   Columns: [Column!]!
   Rows: [[String!]!]!
+  DisableUpdate: Boolean!
 }
 
 type Record {

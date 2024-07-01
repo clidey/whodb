@@ -27,8 +27,9 @@ type Column struct {
 }
 
 type GetRowsResult struct {
-	Columns []Column
-	Rows    [][]string
+	Columns       []Column
+	Rows          [][]string
+	DisableUpdate bool
 }
 
 type GraphUnitRelationshipType string

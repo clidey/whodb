@@ -5,6 +5,7 @@ import (
 	"github.com/clidey/whodb/core/src/plugins/mongodb"
 	"github.com/clidey/whodb/core/src/plugins/mysql"
 	"github.com/clidey/whodb/core/src/plugins/postgres"
+	"github.com/clidey/whodb/core/src/plugins/redis"
 	"github.com/clidey/whodb/core/src/plugins/sqlite3"
 )
 
@@ -16,5 +17,6 @@ func InitializeEngine() *engine.Engine {
 	MainEngine.RegistryPlugin(mysql.NewMySQLPlugin())
 	MainEngine.RegistryPlugin(sqlite3.NewSqlite3Plugin())
 	MainEngine.RegistryPlugin(mongodb.NewMongoDBPlugin())
+	MainEngine.RegistryPlugin(redis.NewRedisPlugin())
 	return MainEngine
 }

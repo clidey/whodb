@@ -84,9 +84,10 @@ const Pagination: FC<IPaginationProps> = ({ pageCount, currentPage, onPageChange
 type ITDataProps = {
     cell: Cell<Record<string, string>>;
     onCellUpdate?: (row: Cell<Record<string, string>>) => Promise<void>;
+    disableEdit?: boolean;
 }
 
-const TData: FC<ITDataProps> = ({ cell, onCellUpdate }) => {
+const TData: FC<ITDataProps> = ({ cell, onCellUpdate, disableEdit }) => {
     const [changed, setChanged] = useState(false);
     const [editedData, setEditedData] = useState<string>(cell.value);
     const [editable, setEditable] = useState(false);
@@ -179,8 +180,8 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate }) => {
             })}
         {...longPressProps}>{editedData}</div>
         <div className={classNames("transition-all hidden absolute right-2 top-1/2 -translate-y-1/2 hover:scale-125 p-1", {
-            "hidden": copied,
-            "group-hover/data:flex": !copied,
+            "hidden": copied || disableEdit,
+            "group-hover/data:flex": !copied && !disableEdit,
         })} onClick={handleEdit}>
             {Icons.Edit}
         </div>
@@ -269,9 +270,10 @@ type ITableRow = {
     row: Row<Record<string, string>>;
     style: CSSProperties;
     onRowUpdate?: (row: Record<string, string>) => Promise<void>;
+    disableEdit?: boolean;
 }
 
-const TableRow: FC<ITableRow> = ({ row, style, onRowUpdate }) => {
+const TableRow: FC<ITableRow> = ({ row, style, onRowUpdate, disableEdit }) => {
     const handleCellUpdate = useCallback((cell: Cell<Record<string, string>>) => {
         if (onRowUpdate == null) {
             return Promise.reject();
@@ -291,7 +293,7 @@ const TableRow: FC<ITableRow> = ({ row, style, onRowUpdate }) => {
         <div className="table-row-group text-xs group/row" {...row.getRowProps({ style })}>
             {
                 row.cells.map((cell) => (
-                    <TData key={cell.getCellProps().key} cell={cell} onCellUpdate={handleCellUpdate} />
+                    <TData key={cell.getCellProps().key} cell={cell} onCellUpdate={handleCellUpdate} disableEdit={disableEdit} />
                 ))
             }
         </div>
@@ -307,9 +309,10 @@ type ITableProps = {
     currentPage: number;
     onPageChange?: (page: number) => void;
     onRowUpdate?: (row: Record<string, string>) => Promise<void>;
+    disableEdit?: boolean;
 }
 
-export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows: actualRows, columnTags, totalPages, currentPage, onPageChange, onRowUpdate, }) => {
+export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows: actualRows, columnTags, totalPages, currentPage, onPageChange, onRowUpdate, disableEdit }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const tableRef = useRef<HTMLTableElement>(null);
     const [direction, setDirection] = useState<"asc" | "dsc">();
@@ -459,8 +462,8 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
     const handleRenderRow = useCallback(({ index, style }: ListChildComponentProps) => {
         const row = rows[index];
         prepareRow(row);
-        return <TableRow key={`row-${row.values[actualColumns[0]]}`} row={row} style={style} onRowUpdate={onRowUpdate} />;
-    }, [rows, prepareRow, actualColumns, onRowUpdate]);
+        return <TableRow key={`row-${row.values[actualColumns[0]]}`} row={row} style={style} onRowUpdate={onRowUpdate} disableEdit={disableEdit} />;
+    }, [rows, prepareRow, actualColumns, onRowUpdate, disableEdit]);
 
     useEffect(() => {
         if (containerRef.current == null) {
