@@ -149,7 +149,7 @@ export const Sidebar: FC = () => {
     }, [dispatch, navigate, pathname]);
 
     useEffect(() => {
-        if (current == null || current?.Type === DatabaseType.Sqlite3) {
+        if (current == null || [DatabaseType.Sqlite3, DatabaseType.Redis].includes(current?.Type as DatabaseType)) {
             return;
         }
         if (schema === "") {
@@ -186,7 +186,7 @@ export const Sidebar: FC = () => {
                 path: InternalRoutes.Graph.path,
             },
         ];
-        if (current.Type !== DatabaseType.MongoDb) {
+        if (current.Type !== DatabaseType.MongoDb && current.Type !== DatabaseType.Redis) {
             routes.push({
                 title: "Raw Execute",
                 icon: Icons.Console,
@@ -325,10 +325,11 @@ export const Sidebar: FC = () => {
                                     {
                                         data != null &&
                                         <div className={classNames("flex gap-2 items-center justify-between", {
-                                            "hidden": pathname === InternalRoutes.RawExecute.path || collapsed || current?.Type === DatabaseType.Sqlite3,
+                                            "hidden": pathname === InternalRoutes.RawExecute.path || collapsed || [DatabaseType.Sqlite3, DatabaseType.Redis].includes(current?.Type as DatabaseType),
                                         })}>
                                             <div className="text-sm text-gray-600">Schema:</div>
-                                            <Dropdown className="w-full max-w-[120px]" value={{ id: schema, label: schema }} items={data.Schema.map(schema => ({ id: schema, label: schema }))} onChange={handleSchemaChange} />
+                                            <Dropdown className="w-full max-w-[120px]" value={{ id: schema, label: schema }} items={data.Schema.map(schema => ({ id: schema, label: schema }))} onChange={handleSchemaChange}
+                                                noItemsLabel="No schema found"/>
                                         </div>
                                     }
                                 </div>

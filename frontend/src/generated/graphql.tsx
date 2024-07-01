@@ -27,6 +27,7 @@ export enum DatabaseType {
   MongoDb = 'MongoDB',
   MySql = 'MySQL',
   Postgres = 'Postgres',
+  Redis = 'Redis',
   Sqlite3 = 'Sqlite3'
 }
 
@@ -140,6 +141,7 @@ export type RecordInput = {
 export type RowsResult = {
   __typename?: 'RowsResult';
   Columns: Array<Column>;
+  DisableUpdate: Scalars['Boolean']['output'];
   Rows: Array<Array<Scalars['String']['output']>>;
 };
 
@@ -206,7 +208,7 @@ export type GetStorageUnitRowsQueryVariables = Exact<{
 }>;
 
 
-export type GetStorageUnitRowsQuery = { __typename?: 'Query', Row: { __typename?: 'RowsResult', Rows: Array<Array<string>>, Columns: Array<{ __typename?: 'Column', Type: string, Name: string }> } };
+export type GetStorageUnitRowsQuery = { __typename?: 'Query', Row: { __typename?: 'RowsResult', Rows: Array<Array<string>>, DisableUpdate: boolean, Columns: Array<{ __typename?: 'Column', Type: string, Name: string }> } };
 
 export type GetStorageUnitsQueryVariables = Exact<{
   type: DatabaseType;
@@ -479,6 +481,7 @@ export const GetStorageUnitRowsDocument = gql`
       Name
     }
     Rows
+    DisableUpdate
   }
 }
     `;

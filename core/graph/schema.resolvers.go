@@ -90,8 +90,9 @@ func (r *queryResolver) Row(ctx context.Context, typeArg model.DatabaseType, sch
 		})
 	}
 	return &model.RowsResult{
-		Columns: columns,
-		Rows:    rowsResult.Rows,
+		Columns:       columns,
+		Rows:          rowsResult.Rows,
+		DisableUpdate: rowsResult.DisableUpdate,
 	}, nil
 }
 
