@@ -48,6 +48,26 @@ services:
       - redis:/bitnami
     networks:
       - db
+  elasticsearch:
+    container_name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.14.1
+    environment:
+      - node.name=elasticsearch
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - ES_JAVA_OPTS=-Xms100m -Xmx100m
+      - xpack.security.enabled=false
+      - ELASTIC_PASSWORD=password
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elasticsearch:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - db
 networks:
   db:
     driver: bridge
@@ -57,3 +77,4 @@ volumes:
   mysql:
   mongo:
   redis:
+  elasticsearch:

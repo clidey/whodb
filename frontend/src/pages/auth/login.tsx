@@ -41,6 +41,11 @@ const databaseTypeDropdownItems: IDropdownItem[] = [
         label: "Redis",
         icon: Icons.Logos.Redis,
     },
+    {
+        id: "ElasticSearch",
+        label: "ElasticSearch",
+        icon: Icons.Logos.ElasticSearch,
+    },
 ]
 
 export const LoginPage: FC = () => {
