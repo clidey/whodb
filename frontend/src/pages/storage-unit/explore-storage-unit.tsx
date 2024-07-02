@@ -94,19 +94,15 @@ export const ExploreStorageUnit: FC = () => {
         });
     }, [current, schema, unit.Name]);
 
-    const totalCount: number = useMemo(() => {
-        const rowCount = unit?.Attributes.find(attribute => attribute.Key === "Count")?.Value ?? "0";
-        if (isNumeric(rowCount)) {
-            return Number.parseInt(rowCount);
-        }
-        return 0;
+    const totalCount = useMemo(() => {
+        return unit?.Attributes.find(attribute => attribute.Key === "Count")?.Value ?? "unknown";
     }, [unit]);
 
     const totalPages = useMemo(() => {
-        if (!isNumeric(pageSize)) {
+        if (!isNumeric(totalCount) || !isNumeric(pageSize)) {
             return 1;
         }
-        return Math.max(Math.round(totalCount/(Number.parseInt(pageSize)+1)), 1);
+        return Math.max(Math.round(Number.parseInt(totalCount)/(Number.parseInt(pageSize)+1)), 1);
     }, [pageSize, totalCount]);
 
     useEffect(() => {
@@ -141,7 +137,7 @@ export const ExploreStorageUnit: FC = () => {
                 <div className="flex gap-2 items-center">
                     <div className="text-xl font-bold mr-4">{unit.Name}</div>
                 </div>
-                <div className="text-sm mr-4"><span className="font-semibold">Count:</span> {totalCount}</div>
+                <div className="text-sm mr-4"><span className="font-semibold">Total Count:</span> {totalCount}</div>
             </div>
             <div className="flex gap-2 items-end">
                 <InputWithlabel label="Page Size" value={bufferPageSize} setValue={setBufferPageSize} />

@@ -282,7 +282,7 @@ export const Sidebar: FC = () => {
         <div className={
             classNames("h-[100vh] flex flex-col gap-4 shadow-md relative transition-all duration-500", {
                 "w-[50px] py-20": collapsed,
-                "w-[350px] px-14 py-20": !collapsed,
+                "w-[300px] px-10 py-20": !collapsed,
             })}>
                 <motion.div className="flex flex-col gap-4" variants={{
                     show: {
@@ -331,7 +331,7 @@ export const Sidebar: FC = () => {
                                         <div className="text-sm text-gray-600 mr-2.5">Profile:</div>
                                         {
                                             current != null &&
-                                            <Dropdown className="max-w-[120px]" items={loginItems} value={currentProfile} onChange={handleProfileChange}
+                                            <Dropdown className="w-[140px]" items={loginItems} value={currentProfile} onChange={handleProfileChange}
                                                 defaultItem={{
                                                     label: "Add another profile",
                                                     icon: cloneElement(Icons.Add, {
@@ -343,11 +343,11 @@ export const Sidebar: FC = () => {
                                     </div>
                                     {
                                         data != null &&
-                                        <div className={classNames("flex gap-2 items-center justify-between", {
+                                        <div className={classNames("flex gap-2 items-center w-full", {
                                             "hidden": pathname === InternalRoutes.RawExecute.path || collapsed || [DatabaseType.Sqlite3, DatabaseType.Redis].includes(current?.Type as DatabaseType),
                                         })}>
                                             <div className="text-sm text-gray-600">Schema:</div>
-                                            <Dropdown className="w-full max-w-[120px]" value={{ id: schema, label: schema }} items={data.Schema.map(schema => ({ id: schema, label: schema }))} onChange={handleSchemaChange}
+                                            <Dropdown className="w-[140px]" value={{ id: schema, label: schema }} items={data.Schema.map(schema => ({ id: schema, label: schema }))} onChange={handleSchemaChange}
                                                 noItemsLabel="No schema found"/>
                                         </div>
                                     }

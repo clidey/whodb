@@ -45,8 +45,13 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
     return (
         <button className={classNames("relative", props.className)} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
             {props.loading ? <Loading hideText={true} /> : 
-            <>  <div className="flex items-center border border-gray-200 rounded-lg w-full p-1 text-gray-700 text-sm h-[34px] px-2 gap-1 truncate">
-                    {props.value?.icon} {props.value?.label}
+            <>  <div className="flex justify-between items-center border border-gray-200 rounded-lg w-full p-1 h-[34px] px-2">
+                    <div className="flex gap-1 text-gray-700 text-sm truncate items-center">
+                        {props.value?.icon} {props.value?.label}
+                    </div>
+                    {cloneElement(Icons.DownCaret, {
+                        className: "w-4 h-4 stroke-gray-600",
+                    })}
                 </div>
                 <div className={classNames("absolute z-10 divide-y rounded-lg shadow bg-white py-1 border border-gray-200 overflow-y-auto max-h-40", {
                     "hidden": !hover,
