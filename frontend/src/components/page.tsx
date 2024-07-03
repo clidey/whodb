@@ -39,7 +39,7 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
             <Sidebar />
             <Page wrapperClassName="p-0" {...props}>
                 <div className="flex flex-col grow py-6">
-                    <div className="px-8">
+                    <div className="px-4 sticky z-10 top-2 left-4 bg-white w-fit rounded-xl py-2">
                         <Breadcrumb routes={props.routes ?? []} active={props.routes?.at(-1)} />
                     </div>
                     {

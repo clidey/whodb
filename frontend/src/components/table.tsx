@@ -480,7 +480,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
     const exportToCSV = useExportToCSV(actualColumns, sortedRows);
 
     return (
-        <div className="flex flex-col grow gap-4 items-center w-full" ref={containerRef}>
+        <div className="flex flex-col grow gap-4 items-center w-full h-full" ref={containerRef}>
             <div className="flex justify-between items-center w-full" ref={operationsRef}>
                 <div>
                     <SearchInput search={search} setSearch={handleSearchChange} placeholder="Search through rows     [Press Enter]" inputProps={{

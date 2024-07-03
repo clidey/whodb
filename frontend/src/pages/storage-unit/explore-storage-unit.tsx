@@ -1,3 +1,4 @@
+import { FetchResult } from "@apollo/client";
 import { entries, map } from "lodash";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
@@ -13,7 +14,6 @@ import { DatabaseType, StorageUnit, UpdateStorageUnitDocument, UpdateStorageUnit
 import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
 import { isNoSQL, isNumeric } from "../../utils/functions";
-import { FetchResult } from "@apollo/client";
 
 export const ExploreStorageUnit: FC = () => {
     const [bufferPageSize, setBufferPageSize] = useState("10");
@@ -132,7 +132,7 @@ export const ExploreStorageUnit: FC = () => {
     }
 
     return <InternalPage routes={routes}>
-        <div className="flex flex-col grow gap-4">
+        <div className="flex flex-col grow gap-4 h-[calc(100%-100px)]">
             <div className="flex items-center justify-between">
                 <div className="flex gap-2 items-center">
                     <div className="text-xl font-bold mr-4">{unit.Name}</div>
@@ -144,12 +144,14 @@ export const ExploreStorageUnit: FC = () => {
                 <InputWithlabel label="Where Condition" value={whereCondition} setValue={setWhereCondition} />
                 <AnimatedButton type="lg" icon={Icons.CheckCircle} label="Query" onClick={handleQuery} />
             </div>
-            {
-                rows != null &&
-                <Table columns={rows.Row.Columns.map(c => c.Name)} columnTags={rows.Row.Columns.map(c => c.Type)}
-                    rows={rows.Row.Rows} totalPages={totalPages} currentPage={currentPage+1} onPageChange={handlePageChange}
-                    onRowUpdate={handleRowUpdate} disableEdit={rows.Row.DisableUpdate} />
-            }
+            <div className="grow">
+                {
+                    rows != null &&
+                    <Table columns={rows.Row.Columns.map(c => c.Name)} columnTags={rows.Row.Columns.map(c => c.Type)}
+                        rows={rows.Row.Rows} totalPages={totalPages} currentPage={currentPage+1} onPageChange={handlePageChange}
+                        onRowUpdate={handleRowUpdate} disableEdit={rows.Row.DisableUpdate} />
+                }
+            </div>
         </div>
     </InternalPage>
 }

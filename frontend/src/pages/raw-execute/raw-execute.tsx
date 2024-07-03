@@ -68,7 +68,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete }) =
                 rows != null &&
                 <div className="flex flex-col w-full h-[250px]">
                     <Table columns={rows.RawExecute.Columns.map(c => c.Name)} columnTags={rows.RawExecute.Columns.map(c => c.Type)}
-                        rows={rows.RawExecute.Rows} totalPages={1} currentPage={1} />
+                        rows={rows.RawExecute.Rows} totalPages={1} currentPage={1} disableEdit={true} />
                 </div>
             }
         </div>
