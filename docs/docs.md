@@ -6,11 +6,11 @@ Whodb is a powerful database management tool designed to simplify and enhance yo
 
 - **Login and Authentication**: Securely log in to your database.
 - **Database Selection**: Choose your database type, username, password, and specific database.
-- **Side Bar Navigation**: Access different sections like Login Profile, Table Schema, Tables, Graph Visualization, and Raw Execute.
+- **Side Bar Navigation**: Access different sections like Login Profile, Table Schema, Tables, Graph Visualization, and Scratchpad.
 - **Table Schema**: View detailed schemas of your tables.
 - **Table Management**: Navigate directly to tables, check basic information, view and filter data, and export to CSV.
 - **Graph Visualization**: Visualize how tables are interconnected.
-- **Raw SQL Execution**: Perform arbitrary SQL queries.
+- **Scratchpad**: Perform arbitrary SQL queries with Jupyter notebook like experience.
 - **Inline Preview**: Click & hold a cell to preview value (string, JSON, or Markdown)
 - **Inline Edit**: Click "Edit" Icon, edit changes easily, and apply right away.
 
@@ -47,7 +47,7 @@ docker run -it -v ./sample.db:/db/sample.db -p 8080:8080 clidey/whodb:latest
   - **Table Schema**: View and explore table schemas.
   - **Tables**: Access tables to view basic information and data.
   - **Graph Visualization**: See how tables are interconnected.
-  - **Raw Execute**: Perform arbitrary SQL queries.
+  - **Scratchpad**: Perform arbitrary SQL queries with Jupyter notebook like experience.
 
 ### Table Schema
 
@@ -86,12 +86,12 @@ Note: Currently, Redis does not support "set" fields to be inline edited.
   - **Pending Feature**: View the type of connection (e.g., OneToOne, ManyToOne) and constraints (e.g., nullable) on foreign keys.
 
 
-### Raw Execute
+### Scratchpad
 
-- Go to "Raw Execute" in the side bar to perform arbitrary SQL queries directly.
-  <br /><p align="center"><img src="./images/raw-execute.png" alt="Raw Execute" width="400" /></p>
+- Go to "Scratchpad" in the side bar to perform arbitrary SQL queries directly. This will allow you to create cells like Jupyter notebook to run separate, independent queries on each cell. This should be performant.
+  <br /><p align="center"><img src="./images/scratchpad.png" alt="Scratchpad" width="400" /></p>
 
-**Note:** Currently, MongoDB & Redis does not support raw execute.
+**Note:** Currently, MongoDB & Redis does not support scratchpad.
 
 ## Pending Features
 

@@ -37,11 +37,12 @@ Or try here: https://whodb.clidey.com/login?host=quick-container-491288b0-3138-4
 Or checkout our Demo Video: [![Demo Video](/docs/images/demo-thumbnail.png)](https://youtu.be/w3tOjRt8jGU)
 
 ## Features
-- **Better UX:** Intuitive and easy-to-use interface.
-- **Faster Performance:** Built with GoLang for exceptional speed and table virtualization in Frontend.
-- **Schema Visualization:** Interactive graphs to visualize your entire database schema.
+- **Better UX:** Intuitive and easy-to-use interface
+- **Faster Performance:** Built with GoLang for exceptional speed and table virtualization in Frontend
+- **Schema Visualization:** Interactive graphs to visualize your entire database schema
 - **Inline Editing & Preview:** Easily preview cell or edit inline
 - **Current Support:** PostgreSQL, MySQL, SQLite3, MongoDB, & Redis
+- **Scratchpad:** Perform database queries in a jupyter notebook like experience
 
 ## Documentation
 
