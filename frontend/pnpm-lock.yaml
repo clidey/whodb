@@ -53,6 +53,9 @@ dependencies:
   graphql:
     specifier: ^16.8.2
     version: 16.8.2
+  html-to-image:
+    specifier: ^1.11.11
+    version: 1.11.11
   lodash:
     specifier: ^4.17.21
     version: 4.17.21
@@ -7631,6 +7634,10 @@ packages:
       param-case: 3.0.4
       relateurl: 0.2.7
       terser: 5.31.1
+    dev: false
+
+  /html-to-image@1.11.11:
+    resolution: {integrity: sha512-9gux8QhvjRO/erSnDPv28noDZcPZmYE7e1vFsBLKLlRlKDSqNJYebj6Qz1TGd5lsRV+X+xYyjCKjuZdABinWjA==}
     dev: false
 
   /html-url-attributes@3.0.0:

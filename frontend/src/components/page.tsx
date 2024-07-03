@@ -8,12 +8,13 @@ import { Loading } from "./loading";
 import { Sidebar } from "./sidebar/sidebar";
 
 type IPageProps = {
+    wrapperClassName?: string;
     className?: string;
     children: ReactNode;
 }
 
 export const Page: FC<IPageProps> = (props) => {
-    return <div className="flex grow px-8 py-6 flex-col h-full w-full">
+    return <div className={twMerge("flex grow px-8 py-6 flex-col h-full w-full", props.wrapperClassName)}>
         <AnimatePresence>
             <motion.div className={twMerge("flex flex-row grow flex-wrap gap-2 w-full h-full overflow-y-auto", props.className)}
                 initial={{ opacity: 0 }}
@@ -36,13 +37,15 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
     return (
         <div className="flex grow h-full w-full">
             <Sidebar />
-            <Page {...props}>
-                <div className="flex flex-col grow">
-                    <Breadcrumb routes={props.routes ?? []} active={props.routes?.at(-1)} />
+            <Page wrapperClassName="p-0" {...props}>
+                <div className="flex flex-col grow py-6">
+                    <div className="px-4 sticky z-10 top-2 left-4 bg-white w-fit rounded-xl py-2">
+                        <Breadcrumb routes={props.routes ?? []} active={props.routes?.at(-1)} />
+                    </div>
                     {
                         current == null
                         ? <Loading />
-                        : <div className="flex grow flex-wrap gap-2 py-4 content-start relative">
+                        : <div className="flex grow flex-wrap gap-2 py-4 content-start relative px-8">
                             {props.children}
                         </div>
                     }
