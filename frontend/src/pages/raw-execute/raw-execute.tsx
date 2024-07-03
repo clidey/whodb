@@ -14,7 +14,7 @@ import { useAppSelector } from "../../store/hooks";
 type IRawExecuteCellProps = {
     cellId: string;
     onAdd: (cellId: string) => void;
-    onDelete: (cellId: string) => void;
+    onDelete?: (cellId: string) => void;
 }
 
 const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete }) => {
@@ -38,10 +38,10 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete }) =
 
 
     const handleDelete = useCallback(() => {
-        onDelete(cellId);
+        onDelete?.(cellId);
     }, [cellId, onDelete]);
 
-    return <div className="flex flex-col grow gap-2 group/cell">
+    return <div className="flex flex-col grow group/cell">
             <div className="relative">
                 <div className="flex grow h-[150px] border border-gray-200 rounded-md overflow-hidden">
                     {
@@ -53,7 +53,10 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete }) =
                 <div className="absolute -bottom-3 z-20 flex justify-between px-3 pr-8 w-full opacity-0 transition-all duration-500 group-hover/cell:opacity-100">
                     <div className="flex gap-2">
                         <AnimatedButton icon={Icons.PlusCircle} label="Add" onClick={handleAdd} />
-                        <AnimatedButton className="bg-red-100/80 hover:bg-red-200" iconClassName="stroke-red-800" labelClassName="text-red-800"  icon={Icons.Delete} label="Delete" onClick={handleDelete} />
+                        {
+                            onDelete != null &&
+                            <AnimatedButton className="bg-red-100/80 hover:bg-red-200" iconClassName="stroke-red-800" labelClassName="text-red-800"  icon={Icons.Delete} label="Delete" onClick={handleDelete} />
+                        }
                     </div>
                     <AnimatedButton className="bg-green-200 hover:bg-green-400" iconClassName="stroke-green-800" labelClassName="text-green-800" icon={Icons.CheckCircle} label="Submit query" onClick={handleRawExecute} />
                 </div>
@@ -63,8 +66,8 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete }) =
             </div>
             {
                 rows != null &&
-                <div className="flex flex-col w-full">
-                    <Table className="h-[100%] max-h-[250px] overflow-y-scroll" columns={rows.RawExecute.Columns.map(c => c.Name)} columnTags={rows.RawExecute.Columns.map(c => c.Type)}
+                <div className="flex flex-col w-full h-[250px]">
+                    <Table columns={rows.RawExecute.Columns.map(c => c.Name)} columnTags={rows.RawExecute.Columns.map(c => c.Type)}
                         rows={rows.RawExecute.Rows} totalPages={1} currentPage={1} />
                 </div>
             }
@@ -82,16 +85,23 @@ export const RawExecutePage: FC = () => {
     }, [cellIds]);
 
     const handleDelete = useCallback((cellId: string) => {
+        if (cellIds.length <= 1) {
+            return;
+        }
         setCellIds(ids => ids.filter(id => id !== cellId));
-    }, []);
+    }, [cellIds.length]);
 
     return (
         <InternalPage routes={[InternalRoutes.RawExecute]}>
-            {
-                cellIds.map((cellId) => (
-                    <RawExecuteCell key={cellId} cellId={cellId} onAdd={handleAdd} onDelete={handleDelete} />
-                ))
-            }
+            <div className="flex justify-center items-center w-full">
+                <div className="w-full max-w-[1000px] flex flex-col gap-4">
+                    {
+                        cellIds.map((cellId) => (
+                            <RawExecuteCell key={cellId} cellId={cellId} onAdd={handleAdd} onDelete={cellIds.length <= 1 ? undefined : handleDelete} />
+                        ))
+                    }
+                </div>
+            </div>
         </InternalPage>
     )
 }   
