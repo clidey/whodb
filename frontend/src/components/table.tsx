@@ -472,7 +472,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
             return;
         }
         const { height, width } = containerRef.current.getBoundingClientRect();
-        const padding = 80;
+        const padding = 60;
         setHeight(height - operationsRef.current.getBoundingClientRect().height - padding); 
         setWidth(width);
     }, []);
