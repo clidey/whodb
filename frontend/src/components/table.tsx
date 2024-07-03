@@ -493,7 +493,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                     <AnimatedButton icon={Icons.Download} label="Export" type="lg" onClick={exportToCSV} />
                 </div>
             </div>
-            <div className={twMerge(classNames("flex flex-col gap-4 overflow-x-auto h-full", className))} style={{
+            <div className={twMerge(classNames("flex flex-col items-center gap-4 overflow-x-auto h-full", className))} style={{
                 width,
             }}>
                 <div className="table border-separate border-spacing-0 h-fit" ref={tableRef} {...getTableProps()}>
