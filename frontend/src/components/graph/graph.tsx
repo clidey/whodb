@@ -38,6 +38,7 @@ export const Graph: FC<IGraphProps> = (props) => {
     const { fitView } = useReactFlow();
     const [isLayingOut, setIsLayingOut] = useState(false);
     const { getNodes, getEdges, setNodes, setEdges } = useReactFlow();
+    const [downloading, setDownloading] = useState(false);
 
     const edgeTypes = useMemo(() => ({
         floatingGraphEdge: FloatingGraphEdge,
@@ -86,6 +87,7 @@ export const Graph: FC<IGraphProps> = (props) => {
             return;
           }
       
+          setDownloading(true);
           toPng(reactFlowWrapper.current)
             .then((dataUrl) => {
               const link = document.createElement('a');
@@ -95,6 +97,8 @@ export const Graph: FC<IGraphProps> = (props) => {
             })
             .catch((err) => {
               console.error('Could not capture the image', err);
+            }).finally(() => {
+                setDownloading(false);
             });
     }, []);
 
@@ -120,8 +124,12 @@ export const Graph: FC<IGraphProps> = (props) => {
         connectionLineComponent={GraphEdgeConnectionLine}
     >
         <Background />
-        <Controls />
-        <div className="flex flex-row gap-2 absolute bottom-8 right-5 z-10">
+        {
+            !downloading && <Controls />
+        }
+        <div className={classNames("flex flex-row gap-2 absolute bottom-8 right-5 z-10", {
+            "hidden": downloading,
+        })}>
             <div className="flex flex-col gap-2">
                 <ActionButton icon={Icons.Download} onClick={handleDownloadImage} />
                 <ActionButton icon={Icons.GraphLayout} onClick={() => onLayout("dagre")} />
