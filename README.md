@@ -86,7 +86,7 @@ A: WhoDB supports lazy loading to efficiently manage and display large query res
 
 **Q: What makes WhoDB different from DBeaver?**
 
-A: While DBeaver is a highly advanced tool written in Java, it can be resource-intensive. WhoDB, on the other hand, is designed to be lightweight and runs with minimal resources, making it accessible to a wider range of users and devices. You can run WhoDB with as little as 50m core and 100Mi RAM. WhoDB is also only ~20Mi compressed size.
+A: While DBeaver is a highly advanced tool written in Java, it can be resource-intensive. WhoDB, on the other hand, is designed to be lightweight and runs with minimal resources, making it accessible to a wider range of users and devices. You can run WhoDB with as little as 50m core and 100Mb RAM. WhoDB is also only ~25Mb compressed size.
 
 **Q: Can I use WhoDB with any type of database?**
 
