@@ -314,11 +314,13 @@ type ITableProps = {
 
 export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows: actualRows, columnTags, totalPages, currentPage, onPageChange, onRowUpdate, disableEdit }) => {
     const containerRef = useRef<HTMLDivElement>(null);
+    const operationsRef = useRef<HTMLDivElement>(null);
     const tableRef = useRef<HTMLTableElement>(null);
     const [direction, setDirection] = useState<"asc" | "dsc">();
     const [sortedColumn, setSortedColumn] = useState<string>();
     const [search, setSearch] = useState("");
     const [searchIndex, setSearchIndex] = useState(0);
+    const [height, setHeight] = useState(0);
     const [width, setWidth] = useState(0);
 
     const columns = useMemo(() => {
@@ -466,17 +468,20 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
     }, [rows, prepareRow, actualColumns, onRowUpdate, disableEdit]);
 
     useEffect(() => {
-        if (containerRef.current == null) {
+        if (containerRef.current == null || operationsRef.current == null) {
             return;
         }
-        setWidth(containerRef.current.getBoundingClientRect().width);
+        const { height, width } = containerRef.current.getBoundingClientRect();
+        const padding = 60;
+        setHeight(height - operationsRef.current.getBoundingClientRect().height - padding); 
+        setWidth(width);
     }, []);
 
     const exportToCSV = useExportToCSV(actualColumns, sortedRows);
 
     return (
-        <div className="flex flex-col grow gap-4 items-center w-full" ref={containerRef}>
-            <div className="flex justify-between items-center w-full">
+        <div className="flex flex-col grow gap-4 items-center w-full h-full" ref={containerRef}>
+            <div className="flex justify-between items-center w-full" ref={operationsRef}>
                 <div>
                     <SearchInput search={search} setSearch={handleSearchChange} placeholder="Search through rows     [Press Enter]" inputProps={{
                         className: "w-[300px]",
@@ -488,10 +493,10 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                     <AnimatedButton icon={Icons.Download} label="Export" type="lg" onClick={exportToCSV} />
                 </div>
             </div>
-            <div className={twMerge(classNames("flex h-[60vh] flex-col gap-4 overflow-x-auto", className))} style={{
+            <div className={twMerge(classNames("flex flex-col items-center gap-4 overflow-x-auto h-full", className))} style={{
                 width,
             }}>
-                <div className="table border-separate border-spacing-0 mt-4 h-fit" ref={tableRef} {...getTableProps()}>
+                <div className="table border-separate border-spacing-0 h-fit" ref={tableRef} {...getTableProps()}>
                     <div>
                         {headerGroups.map(headerGroup => (
                             <div {...headerGroup.getHeaderGroupProps()} className="table-header-group">
@@ -512,7 +517,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                     </div>
                     <div className="tbody" {...getTableBodyProps()}>
                         <FixedSizeList
-                            height={window.innerHeight * 0.6 - 100}
+                            height={height}
                             itemCount={sortedRows.length}
                             itemSize={31}
                             width="100%"
@@ -522,9 +527,12 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                     </div>
                 </div>
             </div>
-            <div className="flex justify-center items-center">
-                <Pagination pageCount={totalPages} currentPage={currentPage} onPageChange={onPageChange} />
-            </div>
+            {
+                totalPages > 1 &&
+                <div className="flex justify-center items-center">
+                    <Pagination pageCount={totalPages} currentPage={currentPage} onPageChange={onPageChange} />
+                </div>
+            }
         </div>
     )
 }

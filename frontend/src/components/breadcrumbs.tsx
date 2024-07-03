@@ -15,7 +15,7 @@ export const Breadcrumb: FC<IBreadcrumbProps> = ({ routes, active }) => {
     const handleNavigate = useNavigate();
     return (
         <nav className="flex" aria-label="Breadcrumb">
-            <ol className="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse mb-4">
+            <ol className="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
                 {
                     routes.map((route, i) => (
                         <li>

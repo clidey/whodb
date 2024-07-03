@@ -188,7 +188,7 @@ export const Sidebar: FC = () => {
         ];
         if (current.Type !== DatabaseType.MongoDb && current.Type !== DatabaseType.Redis) {
             routes.push({
-                title: "Raw Execute",
+                title: "Scratchpad",
                 icon: Icons.Console,
                 path: InternalRoutes.RawExecute.path,
             });
