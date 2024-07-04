@@ -1,6 +1,7 @@
 package router
 
 import (
+	"embed"
 	"fmt"
 	"net/http"
 	"os"
@@ -22,8 +23,8 @@ type OAuthLoginUrl struct {
 	Url string `json:"url"`
 }
 
-func setupServer(router *chi.Mux) {
-	fileServer(router)
+func setupServer(router *chi.Mux, staticFiles embed.FS) {
+	fileServer(router, staticFiles)
 
 	server := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
 	server.AddTransport(&transport.Websocket{})
@@ -52,7 +53,7 @@ func setupMiddlewares(router *chi.Mux) {
 	)
 }
 
-func InitializeRouter() {
+func InitializeRouter(staticFiles embed.FS) {
 	router := chi.NewRouter()
 
 	port := os.Getenv("PORT")
@@ -61,7 +62,7 @@ func InitializeRouter() {
 	}
 
 	setupMiddlewares(router)
-	setupServer(router)
+	setupServer(router, staticFiles)
 
 	log.Logger.Infof("🎉 Welcome to WhoDB! 🎉")
 	log.Logger.Infof("Get started by visiting:")
