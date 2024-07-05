@@ -11,7 +11,7 @@ import (
 
 func DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	port := common.GetRecordValueOrDefault(config.Credentials.Advanced, "Port", "5432")
-	sslMode := common.GetRecordValueOrDefault(config.Credentials.Advanced, "SSL Mode", "off")
+	sslMode := common.GetRecordValueOrDefault(config.Credentials.Advanced, "SSL Mode", "disable")
 	dsn := fmt.Sprintf("host=%v user=%v password=%v dbname=%v port=%v sslmode=%v", config.Credentials.Hostname, config.Credentials.Username, config.Credentials.Password, config.Credentials.Database, port, sslMode)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
