@@ -52,6 +52,7 @@ export enum GraphUnitRelationshipType {
 }
 
 export type LoginCredentials = {
+  Advanced?: InputMaybe<Array<RecordInput>>;
   Database: Scalars['String']['input'];
   Hostname: Scalars['String']['input'];
   Password: Scalars['String']['input'];
@@ -68,7 +69,7 @@ export type Mutation = {
 
 
 export type MutationLoginArgs = {
-  credentails: LoginCredentials;
+  credentials: LoginCredentials;
 };
 
 
@@ -171,7 +172,7 @@ export type GetDatabaseQueryVariables = Exact<{
 export type GetDatabaseQuery = { __typename?: 'Query', Database: Array<string> };
 
 export type LoginMutationVariables = Exact<{
-  credentails: LoginCredentials;
+  credentials: LoginCredentials;
 }>;
 
 
@@ -306,8 +307,8 @@ export type GetDatabaseLazyQueryHookResult = ReturnType<typeof useGetDatabaseLaz
 export type GetDatabaseSuspenseQueryHookResult = ReturnType<typeof useGetDatabaseSuspenseQuery>;
 export type GetDatabaseQueryResult = Apollo.QueryResult<GetDatabaseQuery, GetDatabaseQueryVariables>;
 export const LoginDocument = gql`
-    mutation Login($credentails: LoginCredentials!) {
-  Login(credentails: $credentails) {
+    mutation Login($credentials: LoginCredentials!) {
+  Login(credentials: $credentials) {
     Status
   }
 }
@@ -327,7 +328,7 @@ export type LoginMutationFn = Apollo.MutationFunction<LoginMutation, LoginMutati
  * @example
  * const [loginMutation, { data, loading, error }] = useLoginMutation({
  *   variables: {
- *      credentails: // value for 'credentails'
+ *      credentials: // value for 'credentials'
  *   },
  * });
  */

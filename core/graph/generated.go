@@ -63,7 +63,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		Login             func(childComplexity int, credentails model.LoginCredentials) int
+		Login             func(childComplexity int, credentials model.LoginCredentials) int
 		Logout            func(childComplexity int) int
 		UpdateStorageUnit func(childComplexity int, typeArg model.DatabaseType, schema string, storageUnit string, values []*model.RecordInput) int
 	}
@@ -99,7 +99,7 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	Login(ctx context.Context, credentails model.LoginCredentials) (*model.StatusResponse, error)
+	Login(ctx context.Context, credentials model.LoginCredentials) (*model.StatusResponse, error)
 	Logout(ctx context.Context) (*model.StatusResponse, error)
 	UpdateStorageUnit(ctx context.Context, typeArg model.DatabaseType, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
 }
@@ -183,7 +183,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.Login(childComplexity, args["credentails"].(model.LoginCredentials)), true
+		return e.complexity.Mutation.Login(childComplexity, args["credentials"].(model.LoginCredentials)), true
 
 	case "Mutation.Logout":
 		if e.complexity.Mutation.Logout == nil {
@@ -462,14 +462,14 @@ func (ec *executionContext) field_Mutation_Login_args(ctx context.Context, rawAr
 	var err error
 	args := map[string]interface{}{}
 	var arg0 model.LoginCredentials
-	if tmp, ok := rawArgs["credentails"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("credentails"))
+	if tmp, ok := rawArgs["credentials"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("credentials"))
 		arg0, err = ec.unmarshalNLoginCredentials2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐLoginCredentials(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["credentails"] = arg0
+	args["credentials"] = arg0
 	return args, nil
 }
 
@@ -1020,7 +1020,7 @@ func (ec *executionContext) _Mutation_Login(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().Login(rctx, fc.Args["credentails"].(model.LoginCredentials))
+		return ec.resolvers.Mutation().Login(rctx, fc.Args["credentials"].(model.LoginCredentials))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3803,7 +3803,7 @@ func (ec *executionContext) unmarshalInputLoginCredentials(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"Type", "Hostname", "Username", "Password", "Database"}
+	fieldsInOrder := [...]string{"Type", "Hostname", "Username", "Password", "Database", "Advanced"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -3845,6 +3845,13 @@ func (ec *executionContext) unmarshalInputLoginCredentials(ctx context.Context, 
 				return it, err
 			}
 			it.Database = data
+		case "Advanced":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Advanced"))
+			data, err := ec.unmarshalORecordInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Advanced = data
 		}
 	}
 
@@ -5503,6 +5510,26 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	}
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalORecordInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordInputᚄ(ctx context.Context, v interface{}) ([]*model.RecordInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.RecordInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNRecordInput2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {

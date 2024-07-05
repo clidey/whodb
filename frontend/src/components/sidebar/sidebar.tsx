@@ -207,12 +207,13 @@ export const Sidebar: FC = () => {
         }
         login({
             variables: {
-                credentails: {
+                credentials: {
                     Type: selectedProfile.Type,
                     Database: selectedProfile.Database,
                     Hostname: selectedProfile.Hostname,
                     Password: selectedProfile.Password,
                     Username: selectedProfile.Username,
+                    Advanced: selectedProfile.Advanced,
                 },
             },
             onCompleted(status) {
