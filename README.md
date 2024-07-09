@@ -34,7 +34,7 @@ Or try here: https://whodb.clidey.com/demo/login?host=quick-container-491288b0-3
 
 - This is currently populated with fake database from [postgresDBSamples](https://github.com/morenoh149/postgresDBSamples/) and the URL should automatically put the credentials
 
-Or checkout our Demo Video: [![Demo Video](/docs/images/demo-thumbnail.png)](https://youtu.be/w3tOjRt8jGU)
+Or checkout our Demo Video: [![Demo Video](/docs/images/demo-thumbnail.png)](https://youtu.be/hnAQcYYzcLo)
 
 ## Features
 - **Better UX:** Intuitive and easy-to-use interface
