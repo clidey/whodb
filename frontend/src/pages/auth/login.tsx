@@ -1,3 +1,5 @@
+import classNames from "classnames";
+import { entries } from "lodash";
 import { FC, cloneElement, useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
@@ -9,22 +11,24 @@ import { InputWithlabel } from "../../components/input";
 import { Loading } from "../../components/loading";
 import { Page } from "../../components/page";
 import { InternalRoutes } from "../../config/routes";
-import { DatabaseType, useGetDatabaseLazyQuery, useLoginMutation } from '../../generated/graphql';
+import { DatabaseType, LoginCredentials, useGetDatabaseLazyQuery, useLoginMutation } from '../../generated/graphql';
 import { AuthActions } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";
 import { useAppDispatch } from "../../store/hooks";
 
-const databaseTypeDropdownItems: IDropdownItem[] = [
+const databaseTypeDropdownItems: IDropdownItem<Record<string, string>>[] = [
     {
         id: "Postgres",
         label: "Postgres",
         icon: Icons.Logos.Postgres,
+        extra: {"Port": "5432", "SSL Mode": "disable"},
     },
     {
         id: "MySQL",
         label: "MySQL",
         icon: Icons.Logos.MySQL,
+        extra: {"Port": "3306", "Charset": "utf8mb4", "Parse Time": "True", "Loc": "Local"},
     },
     {
         id: "Sqlite3",
@@ -35,11 +39,13 @@ const databaseTypeDropdownItems: IDropdownItem[] = [
         id: "MongoDB",
         label: "MongoDB",
         icon: Icons.Logos.MongoDB,
+        extra: {"Port": "27017", "URL Params [starts with ?]": "?"},
     },
     {
         id: "Redis",
         label: "Redis",
         icon: Icons.Logos.Redis,
+        extra: {"Port": "6379"},
     },
     {
         id: "ElasticSearch",
@@ -62,31 +68,34 @@ export const LoginPage: FC = () => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string>();
+    const [advancedForm, setAdvancedForm] = useState<Record<string, string>>(databaseType.extra);
+    const [showAdvanced, setShowAdvanced] = useState(false);
 
     const handleSubmit = useCallback(() => {
         if (([DatabaseType.MySql, DatabaseType.Postgres].includes(databaseType.id as DatabaseType) && (hostName.length === 0 || database.length === 0 || username.length === 0 || password.length === 0))
             || (databaseType.id === DatabaseType.Sqlite3 && database.length === 0)
-            || (databaseType.id === DatabaseType.MongoDb && (hostName.length === 0 || username.length === 0 || password.length === 0))
-            || (databaseType.id === DatabaseType.Redis && (hostName.length === 0 || password.length === 0))) {
+            || (databaseType.id === DatabaseType.MongoDb && (hostName.length === 0 || username.length === 0))
+            || (databaseType.id === DatabaseType.Redis && (hostName.length === 0))) {
             return setError(`All fields are required`);
         }
         setError(undefined);
 
-        const credentails = {
+        const credentials: LoginCredentials = {
             Type: databaseType.id,
             Hostname: hostName,
             Database: database,
             Username: username,
             Password: password,
+            Advanced: entries(advancedForm).map(([Key, Value]) => ({ Key, Value })),
         };
 
         login({
             variables: {
-                credentails,
+                credentials,
             },
             onCompleted(data) {
                 if (data.Login.Status) {
-                    dispatch(AuthActions.login(credentails));
+                    dispatch(AuthActions.login(credentials));
                     navigate(InternalRoutes.Dashboard.StorageUnit.path);
                     return notify("Login successfully", "success");
                 }
@@ -96,7 +105,7 @@ export const LoginPage: FC = () => {
                 return notify(`Login failed: ${error.message}`, "error");
             }
         })
-    }, [databaseType.id, dispatch, hostName, login, navigate, password, database, username]);
+    }, [databaseType.id, hostName, database, username, password, advancedForm, login, dispatch, navigate]);
 
     const handleDatabaseTypeChange = useCallback((item: IDropdownItem) => {
         if (item.id === DatabaseType.Sqlite3) {
@@ -106,8 +115,25 @@ export const LoginPage: FC = () => {
                 },
             });
         }
+        setHostName("");
+        setUsername("");
+        setPassword("");
+        setDatabase("");
         setDatabaseType(item);
+        setAdvancedForm(item.extra);
     }, [getDatabases]);
+
+    const handleAdvancedToggle = useCallback(() => {
+        setShowAdvanced(a => !a);
+    }, []);
+
+    const handleAdvancedForm = useCallback((key: string, value: string) => {
+        setAdvancedForm(form => {
+            const newForm = {...form};
+            newForm[key] = value;
+            return newForm;
+        });
+    }, []);
 
     useEffect(() => {
         dispatch(DatabaseActions.setSchema(""));
@@ -162,28 +188,44 @@ export const LoginPage: FC = () => {
 
     return (
         <Page className="justify-center items-center">
-            <div className={twMerge(BASE_CARD_CLASS, "w-[350px] h-fit")}>
+            <div className={twMerge(BASE_CARD_CLASS, "w-fit h-fit")}>
                 <div className="flex flex-col justify-between grow gap-4">
-                    <div className="flex flex-col gap-4 grow">
-                        <div className="flex justify-between">
-                            <div className="text-lg text-gray-600 flex gap-2 items-center">
-                                <div className="h-[40px] w-[40px] rounded-xl flex justify-center items-center bg-teal-500">
-                                    {cloneElement(Icons.Lock, {
-                                        className: "w-6 h-6 stroke-white",
-                                    })}
+                    <div className="flex grow">
+                        <div className="flex flex-col gap-4 grow w-[350px]">
+                            <div className="flex justify-between">
+                                <div className="text-lg text-gray-600 flex gap-2 items-center">
+                                    <div className="h-[40px] w-[40px] rounded-xl flex justify-center items-center bg-teal-500">
+                                        {cloneElement(Icons.Lock, {
+                                            className: "w-6 h-6 stroke-white",
+                                        })}
+                                    </div>
+                                    <span className={BRAND_COLOR}>WhoDB</span> Login
                                 </div>
-                                <span className={BRAND_COLOR}>WhoDB</span> Login
+                                <div className="text-red-500 text-xs flex items-center">
+                                    {error}
+                                </div>
                             </div>
-                            <div className="text-red-500 text-xs flex items-center">
-                                {error}
+                            <div className="flex flex-col grow justify-center gap-1">
+                                <DropdownWithLabel fullWidth label="Database Type" value={databaseType} onChange={handleDatabaseTypeChange} items={databaseTypeDropdownItems} />
+                                {fields}
                             </div>
                         </div>
-                        <div className="flex flex-col grow justify-center gap-1">
-                            <DropdownWithLabel fullWidth label="Database Type" value={databaseType} onChange={handleDatabaseTypeChange} items={databaseTypeDropdownItems} />
-                            {fields}
-                        </div>
+                        {
+                            (showAdvanced && advancedForm != null) &&
+                            <div className="transition-all h-full overflow-hidden mt-[56px] w-[350px] ml-4">
+                                {entries(advancedForm).map(([key, value]) => (
+                                    <InputWithlabel label={key} value={value} setValue={(newValue) => handleAdvancedForm(key, newValue)} />
+                                ))}
+                            </div>
+                        }
                     </div>
-                    <div className="flex justify-end">
+                    <div className={classNames("flex", {
+                        "justify-end": advancedForm == null,
+                        "justify-between": advancedForm != null,
+                    })}>
+                        <AnimatedButton className={classNames({
+                            "hidden": advancedForm == null,
+                        })} icon={Icons.Adjustments} label={showAdvanced ? "Less Advanced" : "Advanced"} onClick={handleAdvancedToggle} />
                         <AnimatedButton icon={Icons.CheckCircle} label="Submit" onClick={handleSubmit} />
                     </div>
                 </div>

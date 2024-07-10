@@ -68,7 +68,6 @@ func (p *MySQLPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 		SELECT
 			TABLE_NAME,
 			TABLE_TYPE,
-			TABLE_SCHEMA,
 			IFNULL(ROUND(((DATA_LENGTH + INDEX_LENGTH) / 1024 / 1024), 2), 0) AS total_size,
 			IFNULL(ROUND((DATA_LENGTH / 1024 / 1024), 2), 0) AS data_size,
 			IFNULL(TABLE_ROWS, 0) AS row_count
@@ -88,16 +87,15 @@ func (p *MySQLPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 	}
 
 	for rows.Next() {
-		var tableName, tableType, tableSchema string
+		var tableName, tableType string
 		var totalSize, dataSize float64
 		var rowCount int64
-		if err := rows.Scan(&tableName, &tableType, &tableSchema, &totalSize, &dataSize, &rowCount); err != nil {
+		if err := rows.Scan(&tableName, &tableType, &totalSize, &dataSize, &rowCount); err != nil {
 			log.Fatal(err)
 		}
 
 		attributes := []engine.Record{
 			{Key: "Table Type", Value: tableType},
-			{Key: "Table Schema", Value: tableSchema},
 			{Key: "Total Size", Value: fmt.Sprintf("%.2f MB", totalSize)},
 			{Key: "Data Size", Value: fmt.Sprintf("%.2f MB", dataSize)},
 			{Key: "Count", Value: fmt.Sprintf("%d", rowCount)},

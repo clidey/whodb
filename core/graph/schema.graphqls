@@ -61,6 +61,7 @@ input LoginCredentials {
   Username: String!
   Password: String!
   Database: String!
+  Advanced: [RecordInput!]
 }
 
 type StatusResponse {
@@ -78,7 +79,7 @@ type Query {
 }
 
 type Mutation {
-  Login(credentails: LoginCredentials!): StatusResponse!
+  Login(credentials: LoginCredentials!): StatusResponse!
   Logout: StatusResponse!
 
   UpdateStorageUnit(type: DatabaseType!, schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!

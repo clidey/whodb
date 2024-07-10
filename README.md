@@ -30,18 +30,19 @@ services:
 
 Go to http://localhost:8080 and get started!
 
-Or try here: https://whodb.clidey.com/login?host=quick-container-491288b0-3138-48fa-93b4-1e730296c0b7.hello.svc.cluster.local&username=user&password=password&database=Adventureworks
+Or try here: https://whodb.clidey.com/demo/login?host=quick-container-491288b0-3138-48fa-93b4-1e730296c0b7.hello.svc.cluster.local&username=user&password=password&database=Adventureworks
 
 - This is currently populated with fake database from [postgresDBSamples](https://github.com/morenoh149/postgresDBSamples/) and the URL should automatically put the credentials
 
-Or checkout our Demo Video: [![Demo Video](/docs/images/demo-thumbnail.png)](https://youtu.be/w3tOjRt8jGU)
+Or checkout our Demo Video: [![Demo Video](/docs/images/demo-thumbnail.png)](https://youtu.be/hnAQcYYzcLo)
 
 ## Features
-- **Better UX:** Intuitive and easy-to-use interface.
-- **Faster Performance:** Built with GoLang for exceptional speed and table virtualization in Frontend.
-- **Schema Visualization:** Interactive graphs to visualize your entire database schema.
+- **Better UX:** Intuitive and easy-to-use interface
+- **Faster Performance:** Built with GoLang for exceptional speed and table virtualization in Frontend
+- **Schema Visualization:** Interactive graphs to visualize your entire database schema
 - **Inline Editing & Preview:** Easily preview cell or edit inline
 - **Current Support:** PostgreSQL, MySQL, SQLite3, MongoDB, & Redis
+- **Scratchpad:** Perform database queries in a jupyter notebook like experience
 
 ## Documentation
 
@@ -85,7 +86,7 @@ A: WhoDB supports lazy loading to efficiently manage and display large query res
 
 **Q: What makes WhoDB different from DBeaver?**
 
-A: While DBeaver is a highly advanced tool written in Java, it can be resource-intensive. WhoDB, on the other hand, is designed to be lightweight and runs with minimal resources, making it accessible to a wider range of users and devices. You can run WhoDB with as little as 50m core and 100Mi RAM. WhoDB is also only ~20Mi compressed size.
+A: While DBeaver is a highly advanced tool written in Java, it can be resource-intensive. WhoDB, on the other hand, is designed to be lightweight and runs with minimal resources, making it accessible to a wider range of users and devices. You can run WhoDB with as little as 50m core and 100Mb RAM. WhoDB is also only ~25Mb compressed size.
 
 **Q: Can I use WhoDB with any type of database?**
 

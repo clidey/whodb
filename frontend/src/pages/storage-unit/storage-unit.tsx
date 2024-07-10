@@ -12,6 +12,7 @@ import { InternalRoutes } from "../../config/routes";
 import { DatabaseType, GetStorageUnitsDocument, GetStorageUnitsQuery, GetStorageUnitsQueryVariables, StorageUnit } from "../../generated/graphql";
 import { useAppSelector } from "../../store/hooks";
 import { EmptyMessage } from "../../components/common";
+import { isNoSQL } from "../../utils/functions";
 
 const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
     const [expanded, setExpanded] = useState(false);
@@ -88,13 +89,23 @@ export const StorageUnitPage: FC = () => {
         },
     });
 
+    const routes = useMemo(() => {
+        const name = current == null || !isNoSQL(current.Type) ? "Tables" : "Collections";
+        return [
+            {
+                ...InternalRoutes.Dashboard.StorageUnit,
+                name,
+            },
+        ];
+    }, [current]);
+
     if (loading) {
-        return <InternalPage>
+        return <InternalPage routes={routes}>
             <Loading />
         </InternalPage>
     }
 
-    return <InternalPage routes={[InternalRoutes.Dashboard.StorageUnit]}>
+    return <InternalPage routes={routes}>
         <div className="flex w-full h-fit my-2 gap-2">
             <AnimatedButton icon={Icons.Console} label="Raw Query" onClick={() => navigate(InternalRoutes.RawExecute.path)} type="lg" />
         </div>

@@ -66,6 +66,14 @@ services:
       - elasticsearch:/usr/share/elasticsearch/data
     ports:
       - "9200:9200"
+  redis_without_password:
+    image: bitnami/redis
+    ports:
+      - '6380:6379'
+    environment:
+      ALLOW_EMPTY_PASSWORD: yes
+    volumes:
+      - redis:/bitnami
     networks:
       - db
 networks:

@@ -4,13 +4,15 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/go-redis/redis/v8"
 )
 
 func DB(config *engine.PluginConfig) (*redis.Client, error) {
 	ctx := context.Background()
-	addr := fmt.Sprintf("%s:%d", config.Credentials.Hostname, 6379)
+	port := common.GetRecordValueOrDefault(config.Credentials.Advanced, "Port", "6379")
+	addr := fmt.Sprintf("%s:%s", config.Credentials.Hostname, port)
 	client := redis.NewClient(&redis.Options{
 		Addr:     addr,
 		Password: config.Credentials.Password,

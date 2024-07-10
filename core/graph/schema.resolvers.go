@@ -15,18 +15,26 @@ import (
 )
 
 // Login is the resolver for the Login field.
-func (r *mutationResolver) Login(ctx context.Context, credentails model.LoginCredentials) (*model.StatusResponse, error) {
-	if !src.MainEngine.Choose(engine.DatabaseType(credentails.Type)).IsAvailable(&engine.PluginConfig{
+func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCredentials) (*model.StatusResponse, error) {
+	advanced := []engine.Record{}
+	for _, recordInput := range credentials.Advanced {
+		advanced = append(advanced, engine.Record{
+			Key:   recordInput.Key,
+			Value: recordInput.Value,
+		})
+	}
+	if !src.MainEngine.Choose(engine.DatabaseType(credentials.Type)).IsAvailable(&engine.PluginConfig{
 		Credentials: &engine.Credentials{
-			Hostname: credentails.Hostname,
-			Username: credentails.Username,
-			Password: credentails.Password,
-			Database: credentails.Database,
+			Hostname: credentials.Hostname,
+			Username: credentials.Username,
+			Password: credentials.Password,
+			Database: credentials.Database,
+			Advanced: advanced,
 		},
 	}) {
 		return nil, errors.New("unauthorized")
 	}
-	return auth.Login(ctx, &credentails)
+	return auth.Login(ctx, &credentials)
 }
 
 // Logout is the resolver for the Logout field.

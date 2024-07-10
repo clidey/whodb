@@ -68,7 +68,6 @@ func (p *PostgresPlugin) GetStorageUnits(config *engine.PluginConfig, schema str
 		SELECT
 			t.table_name,
 			t.table_type,
-			t.table_schema,
 			pg_size_pretty(pg_total_relation_size('"' || t.table_schema || '"."' || t.table_name || '"')) AS total_size,
 			pg_size_pretty(pg_relation_size('"' || t.table_schema || '"."' || t.table_name || '"')) AS data_size,
 			COALESCE((SELECT reltuples::bigint FROM pg_class WHERE oid = ('"' || t.table_schema || '"."' || t.table_name || '"')::regclass), 0) AS row_count
@@ -90,18 +89,22 @@ func (p *PostgresPlugin) GetStorageUnits(config *engine.PluginConfig, schema str
 	}
 
 	for rows.Next() {
-		var tableName, tableType, tableSchema, totalSize, dataSize string
+		var tableName, tableType, totalSize, dataSize string
 		var rowCount int64
-		if err := rows.Scan(&tableName, &tableType, &tableSchema, &totalSize, &dataSize, &rowCount); err != nil {
+		if err := rows.Scan(&tableName, &tableType, &totalSize, &dataSize, &rowCount); err != nil {
 			log.Fatal(err)
+		}
+
+		rowCountRecordValue := "unknown"
+		if rowCount >= 0 {
+			rowCountRecordValue = fmt.Sprintf("%d", rowCount)
 		}
 
 		attributes := []engine.Record{
 			{Key: "Table Type", Value: tableType},
-			{Key: "Table Schema", Value: tableSchema},
 			{Key: "Total Size", Value: totalSize},
 			{Key: "Data Size", Value: dataSize},
-			{Key: "Count", Value: fmt.Sprintf("%d", rowCount)},
+			{Key: "Count", Value: rowCountRecordValue},
 		}
 
 		attributes = append(attributes, allTablesWithColumns[tableName]...)
