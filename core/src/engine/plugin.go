@@ -5,6 +5,7 @@ type Credentials struct {
 	Username string
 	Password string
 	Database string
+	Advanced []Record
 }
 
 type PluginConfig struct {
