@@ -4,10 +4,11 @@ import { Icons } from "./icons";
 import { Label } from "./input";
 import { Loading } from "./loading";
 
-export type IDropdownItem = {
+export type IDropdownItem<T extends unknown = any> = {
     id: string;
     label: string;
     icon?: ReactElement;
+    extra?: T;
 };
 
 export type IDropdownProps = {
