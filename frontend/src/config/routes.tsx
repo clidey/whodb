@@ -43,8 +43,8 @@ export const InternalRoutes = {
         component: <GraphPage />,
     },
     RawExecute: {
-        name: "Raw Execute",
-        path: "/raw-execute",
+        name: "Scratchpad",
+        path: "/scratchpad",
         component: <RawExecutePage />,
     },
     Logout: {

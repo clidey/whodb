@@ -110,6 +110,10 @@ export const LoginPage: FC = () => {
                 },
             });
         }
+        setHostName("");
+        setUsername("");
+        setPassword("");
+        setDatabase("");
         setDatabaseType(item);
         setAdvancedForm(item.extra);
     }, [getDatabases]);
@@ -179,8 +183,8 @@ export const LoginPage: FC = () => {
 
     return (
         <Page className="justify-center items-center">
-            <div className={twMerge(BASE_CARD_CLASS, "w-fit h-fit transition-all")}>
-                <div className="flex flex-col justify-between grow gap-4 transition-all">
+            <div className={twMerge(BASE_CARD_CLASS, "w-fit h-fit")}>
+                <div className="flex flex-col justify-between grow gap-4">
                     <div className="flex grow">
                         <div className="flex flex-col gap-4 grow w-[350px]">
                             <div className="flex justify-between">
@@ -210,7 +214,10 @@ export const LoginPage: FC = () => {
                             </div>
                         }
                     </div>
-                    <div className="flex justify-between">
+                    <div className={classNames("flex", {
+                        "justify-end": advancedForm == null,
+                        "justify-between": advancedForm != null,
+                    })}>
                         <AnimatedButton className={classNames({
                             "hidden": advancedForm == null,
                         })} icon={Icons.Adjustments} label={showAdvanced ? "Less Advanced" : "Advanced"} onClick={handleAdvancedToggle} />
