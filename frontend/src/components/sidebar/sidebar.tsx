@@ -126,7 +126,7 @@ function getDropdownLoginProfileItem(profile: LoginProfile): IDropdownItem {
     };
 }
 
-const DATABASES_THAT_SUPPORT_SCRATCH_PAD = [DatabaseType.MongoDb, DatabaseType.Redis, DatabaseType.ElasticSearch];
+const DATABASES_THAT_DONT_SUPPORT_SCRATCH_PAD = [DatabaseType.MongoDb, DatabaseType.Redis, DatabaseType.ElasticSearch];
 const DATABASES_THAT_DONT_SUPPORT_SCHEMA = [DatabaseType.Sqlite3, DatabaseType.Redis, DatabaseType.ElasticSearch];
 
 export const Sidebar: FC = () => {
@@ -189,7 +189,7 @@ export const Sidebar: FC = () => {
                 path: InternalRoutes.Graph.path,
             },
         ];
-        if (!DATABASES_THAT_SUPPORT_SCRATCH_PAD.includes(current.Type as DatabaseType)) {
+        if (!DATABASES_THAT_DONT_SUPPORT_SCRATCH_PAD.includes(current.Type as DatabaseType)) {
             routes.push({
                 title: "Scratchpad",
                 icon: Icons.Console,

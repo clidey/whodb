@@ -223,3 +223,9 @@ func NewMySQLPlugin() *engine.Plugin {
 		PluginFunctions: &MySQLPlugin{},
 	}
 }
+func NewMyMariaDBPlugin() *engine.Plugin {
+	return &engine.Plugin{
+		Type:            engine.DatabaseType_MariaDB,
+		PluginFunctions: &MySQLPlugin{},
+	}
+}
