@@ -10,6 +10,7 @@ enum DatabaseType {
   Redis,
   ElasticSearch,
   MariaDB,
+  ClickHouse,
 }
 
 type Column {

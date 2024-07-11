@@ -89,6 +89,22 @@ services:
       - redis:/bitnami
     networks:
       - db
+  clickhouse:
+    image: bitnami/clickhouse
+    container_name: clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    environment:
+      - CLICKHOUSE_HTTP_PORT_NUMBER=8123
+      - CLICKHOUSE_TCP_PORT_NUMBER=9000
+      - CLICKHOUSE_USER=user
+      - CLICKHOUSE_PASSWORD=password
+      - CLICKHOUSE_DATABASE=clickhouse
+    volumes:
+      - clickhouse:/bitnami/clickhouse
+    networks:
+      - db
 networks:
   db:
     driver: bridge
@@ -100,3 +116,4 @@ volumes:
   mongo:
   redis:
   elasticsearch:
+  clickhouse:

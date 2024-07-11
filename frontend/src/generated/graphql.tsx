@@ -24,6 +24,7 @@ export type Column = {
 };
 
 export enum DatabaseType {
+  ClickHouse = 'ClickHouse',
   ElasticSearch = 'ElasticSearch',
   MariaDb = 'MariaDB',
   MongoDb = 'MongoDB',
