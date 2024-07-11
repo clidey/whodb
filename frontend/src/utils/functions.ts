@@ -43,3 +43,19 @@ export function isNoSQL(databaseType: string) {
     }
     return false;
 }
+
+export function getDatabaseStorageUnitLabel(databaseType: string | undefined) {
+    switch(databaseType) {
+        case DatabaseType.ElasticSearch:
+            return "Indices";
+        case DatabaseType.MongoDb:
+            return "Collections";
+        case DatabaseType.Redis:
+            return "Keys";
+        case DatabaseType.MySql:
+        case DatabaseType.Postgres:
+        case DatabaseType.Sqlite3:
+            return "Tables";
+    }
+    return "Storage Unit";
+}

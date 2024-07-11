@@ -1,0 +1,15 @@
+{ "index": { "_index": "sample_data", "_id": "1" } }
+{ "name": "John Doe", "age": 30, "occupation": "Software Engineer" }
+{ "index": { "_index": "sample_data", "_id": "2" } }
+{ "name": "Jane Smith", "age": 25, "occupation": "Data Scientist" }
+{ "index": { "_index": "sample_data2", "_id": "1" } }
+{ "name": "John Doe", "age": 30, "occupation": "Software Engineer" }
+{ "index": { "_index": "sample_data2", "_id": "2" } }
+{ "name": "Jane Smith", "age": 25, "occupation": "Data Scientist" }
+{ "index": { "_index": "sample_data3", "_id": "1" } }
+{ "name": "John Doe", "age": 30, "occupation": "Software Engineer" }
+{ "index": { "_index": "sample_data3", "_id": "2" } }
+{ "name": "Jane Smith", "age": 25, "occupation": "Data Scientist", "sample_data3_id": "2" }
+
+
+

@@ -66,11 +66,12 @@ type StorageUnit struct {
 type DatabaseType string
 
 const (
-	DatabaseTypePostgres DatabaseType = "Postgres"
-	DatabaseTypeMySQL    DatabaseType = "MySQL"
-	DatabaseTypeSqlite3  DatabaseType = "Sqlite3"
-	DatabaseTypeMongoDb  DatabaseType = "MongoDB"
-	DatabaseTypeRedis    DatabaseType = "Redis"
+	DatabaseTypePostgres      DatabaseType = "Postgres"
+	DatabaseTypeMySQL         DatabaseType = "MySQL"
+	DatabaseTypeSqlite3       DatabaseType = "Sqlite3"
+	DatabaseTypeMongoDb       DatabaseType = "MongoDB"
+	DatabaseTypeRedis         DatabaseType = "Redis"
+	DatabaseTypeElasticSearch DatabaseType = "ElasticSearch"
 )
 
 var AllDatabaseType = []DatabaseType{
@@ -79,11 +80,12 @@ var AllDatabaseType = []DatabaseType{
 	DatabaseTypeSqlite3,
 	DatabaseTypeMongoDb,
 	DatabaseTypeRedis,
+	DatabaseTypeElasticSearch,
 }
 
 func (e DatabaseType) IsValid() bool {
 	switch e {
-	case DatabaseTypePostgres, DatabaseTypeMySQL, DatabaseTypeSqlite3, DatabaseTypeMongoDb, DatabaseTypeRedis:
+	case DatabaseTypePostgres, DatabaseTypeMySQL, DatabaseTypeSqlite3, DatabaseTypeMongoDb, DatabaseTypeRedis, DatabaseTypeElasticSearch:
 		return true
 	}
 	return false

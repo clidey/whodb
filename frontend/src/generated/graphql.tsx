@@ -24,6 +24,7 @@ export type Column = {
 };
 
 export enum DatabaseType {
+  ElasticSearch = 'ElasticSearch',
   MongoDb = 'MongoDB',
   MySql = 'MySQL',
   Postgres = 'Postgres',
