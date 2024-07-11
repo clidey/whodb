@@ -8,6 +8,8 @@ enum DatabaseType {
   Sqlite3,
   MongoDB,
   Redis,
+  ElasticSearch,
+  MariaDB,
 }
 
 type Column {

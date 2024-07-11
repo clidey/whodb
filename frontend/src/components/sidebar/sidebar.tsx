@@ -13,7 +13,7 @@ import { AuthActions, LoginProfile } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
-import { createStub, isNoSQL } from "../../utils/functions";
+import { createStub, getDatabaseStorageUnitLabel } from "../../utils/functions";
 import { AnimatedButton } from "../button";
 import { BRAND_COLOR } from "../classes";
 import { Dropdown, IDropdownItem } from "../dropdown";
@@ -126,6 +126,9 @@ function getDropdownLoginProfileItem(profile: LoginProfile): IDropdownItem {
     };
 }
 
+const DATABASES_THAT_DONT_SUPPORT_SCRATCH_PAD = [DatabaseType.MongoDb, DatabaseType.Redis, DatabaseType.ElasticSearch];
+const DATABASES_THAT_DONT_SUPPORT_SCHEMA = [DatabaseType.Sqlite3, DatabaseType.Redis, DatabaseType.ElasticSearch];
+
 export const Sidebar: FC = () => {
     const [collapsed, setCollapsed] = useState(false);
     const schema = useAppSelector(state => state.database.schema);
@@ -149,7 +152,7 @@ export const Sidebar: FC = () => {
     }, [dispatch, navigate, pathname]);
 
     useEffect(() => {
-        if (current == null || [DatabaseType.Sqlite3, DatabaseType.Redis].includes(current?.Type as DatabaseType)) {
+        if (current == null || DATABASES_THAT_DONT_SUPPORT_SCHEMA.includes(current?.Type as DatabaseType)) {
             return;
         }
         if (schema === "") {
@@ -176,7 +179,7 @@ export const Sidebar: FC = () => {
         }
         const routes = [
             {
-                title: isNoSQL(current.Type) ? "Collections" : "Tables",
+                title: getDatabaseStorageUnitLabel(current.Type),
                 icon: Icons.Tables,
                 path: InternalRoutes.Dashboard.StorageUnit.path,
             },
@@ -186,7 +189,7 @@ export const Sidebar: FC = () => {
                 path: InternalRoutes.Graph.path,
             },
         ];
-        if (current.Type !== DatabaseType.MongoDb && current.Type !== DatabaseType.Redis) {
+        if (!DATABASES_THAT_DONT_SUPPORT_SCRATCH_PAD.includes(current.Type as DatabaseType)) {
             routes.push({
                 title: "Scratchpad",
                 icon: Icons.Console,
@@ -345,7 +348,7 @@ export const Sidebar: FC = () => {
                                     {
                                         data != null &&
                                         <div className={classNames("flex gap-2 items-center w-full", {
-                                            "hidden": pathname === InternalRoutes.RawExecute.path || collapsed || [DatabaseType.Sqlite3, DatabaseType.Redis].includes(current?.Type as DatabaseType),
+                                            "hidden": pathname === InternalRoutes.RawExecute.path || collapsed || DATABASES_THAT_DONT_SUPPORT_SCHEMA.includes(current?.Type as DatabaseType),
                                         })}>
                                             <div className="text-sm text-gray-600">Schema:</div>
                                             <Dropdown className="w-[140px]" value={{ id: schema, label: schema }} items={data.Schema.map(schema => ({ id: schema, label: schema }))} onChange={handleSchemaChange}

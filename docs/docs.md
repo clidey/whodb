@@ -95,7 +95,7 @@ Note: Currently, Redis does not support "set" fields to be inline edited.
 
 ## Pending Features
 
-- **Database Support**: Currently supports PostgreSQL, MySQL, SQLite, MongoDB, & Redis. Support for other NoSQL databases, graph databases (Neo4JS), etc., is coming soon with the same experience.
+- **Database Support**: Currently supports PostgreSQL, MySQL, SQLite, MongoDB, Redis, MariaDB, & Elastic Search. Support for other NoSQL databases, graph databases (Neo4JS), etc., is coming soon with the same experience.
 - **Detailed Graph Visualization**: Display connection types and constraints on foreign keys.
 
 ## Contributing

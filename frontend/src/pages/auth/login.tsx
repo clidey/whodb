@@ -31,6 +31,12 @@ const databaseTypeDropdownItems: IDropdownItem<Record<string, string>>[] = [
         extra: {"Port": "3306", "Charset": "utf8mb4", "Parse Time": "True", "Loc": "Local"},
     },
     {
+        id: "MariaDB",
+        label: "MariaDB",
+        icon: Icons.Logos.MariaDB,
+        extra: {"Port": "3306", "Charset": "utf8mb4", "Parse Time": "True", "Loc": "Local"},
+    },
+    {
         id: "Sqlite3",
         label: "Sqlite3",
         icon: Icons.Logos.Sqlite3,
@@ -46,6 +52,12 @@ const databaseTypeDropdownItems: IDropdownItem<Record<string, string>>[] = [
         label: "Redis",
         icon: Icons.Logos.Redis,
         extra: {"Port": "6379"},
+    },
+    {
+        id: "ElasticSearch",
+        label: "ElasticSearch",
+        icon: Icons.Logos.ElasticSearch,
+        extra: {"Port": "9200", "SSL Mode": "disable"},
     },
 ]
 
@@ -165,7 +177,7 @@ export const LoginPage: FC = () => {
             <InputWithlabel label="Host Name" value={hostName} setValue={setHostName} />
             { databaseType.id !== DatabaseType.Redis && <InputWithlabel label="Username" value={username} setValue={setUsername} /> }
             <InputWithlabel label="Password" value={password} setValue={setPassword} type="password" />
-            { (databaseType.id !== DatabaseType.MongoDb && databaseType.id !== DatabaseType.Redis)  && <InputWithlabel label="Database" value={database} setValue={setDatabase} /> }
+            { (databaseType.id !== DatabaseType.MongoDb && databaseType.id !== DatabaseType.Redis && databaseType.id !== DatabaseType.ElasticSearch)  && <InputWithlabel label="Database" value={database} setValue={setDatabase} /> }
         </>
     }, [database, databaseType.id, databasesLoading, foundDatabases?.Database, hostName, password, username]);
 

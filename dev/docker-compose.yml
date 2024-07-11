@@ -22,9 +22,22 @@ services:
       MYSQL_DATABASE: mysql
       MYSQL_ROOT_PASSWORD: password
     volumes:
-      - mysql:/data/postgres
+      - mysql:/var/lib/mysql
     ports:
       - "3306:3306"
+    networks:
+      - db
+  mariadb:
+    image: mariadb
+    environment:
+      MARIADB_USER: user
+      MARIADB_PASSWORD: password
+      MARIADB_DATABASE: mariadb
+      MARIADB_ROOT_PASSWORD: password
+    volumes:
+      - mariadb:/var/lib/mysql
+    ports:
+      - "3307:3306"
     networks:
       - db
   mongo:
@@ -48,6 +61,24 @@ services:
       - redis:/bitnami
     networks:
       - db
+  elasticsearch:
+    container_name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.14.1
+    environment:
+      - node.name=elasticsearch
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - ES_JAVA_OPTS=-Xms100m -Xmx100m
+      - xpack.security.enabled=false
+      - ELASTIC_PASSWORD=password
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elasticsearch:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
   redis_without_password:
     image: bitnami/redis
     ports:
@@ -65,5 +96,7 @@ networks:
 volumes:
   postgres:
   mysql:
+  mariadb:
   mongo:
   redis:
+  elasticsearch:
