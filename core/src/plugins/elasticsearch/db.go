@@ -3,19 +3,22 @@ package elasticsearch
 import (
 	"fmt"
 
+	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/elastic/go-elasticsearch/v8"
 )
 
 func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 	var addresses []string
-	if config.Credentials.Hostname == "localhost" || config.Credentials.Hostname == "host.docker.internal" {
+	port := common.GetRecordValueOrDefault(config.Credentials.Advanced, "Port", "9200")
+	sslMode := common.GetRecordValueOrDefault(config.Credentials.Advanced, "SSL Mode", "disable")
+	if sslMode == "enable" {
 		addresses = []string{
-			fmt.Sprintf("http://%s:%d", config.Credentials.Hostname, 9200),
+			fmt.Sprintf("https://%s:%s", config.Credentials.Hostname, port),
 		}
 	} else {
 		addresses = []string{
-			fmt.Sprintf("https://%s:%d", config.Credentials.Hostname, 443),
+			fmt.Sprintf("http://%s:%s", config.Credentials.Hostname, port),
 		}
 	}
 

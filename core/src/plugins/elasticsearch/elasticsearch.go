@@ -25,36 +25,11 @@ func (p *ElasticSearchPlugin) IsAvailable(config *engine.PluginConfig) bool {
 }
 
 func (p *ElasticSearchPlugin) GetDatabases() ([]string, error) {
-	return nil, errors.New("unsupported operation")
+	return nil, errors.ErrUnsupported
 }
 
 func (p *ElasticSearchPlugin) GetSchema(config *engine.PluginConfig) ([]string, error) {
-	client, err := DB(config)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := client.Indices.Get([]string{})
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-
-	if res.IsError() {
-		return nil, fmt.Errorf("error getting indices: %s", res.String())
-	}
-
-	var indices map[string]interface{}
-	if err := json.NewDecoder(res.Body).Decode(&indices); err != nil {
-		return nil, err
-	}
-
-	databases := make([]string, 0, len(indices))
-	for index := range indices {
-		databases = append(databases, index)
-	}
-
-	return databases, nil
+	return nil, errors.ErrUnsupported
 }
 
 func (p *ElasticSearchPlugin) GetStorageUnits(config *engine.PluginConfig, database string) ([]engine.StorageUnit, error) {
@@ -63,14 +38,14 @@ func (p *ElasticSearchPlugin) GetStorageUnits(config *engine.PluginConfig, datab
 		return nil, err
 	}
 
-	res, err := client.Indices.Stats(client.Indices.Stats.WithIndex(database))
+	res, err := client.Indices.Stats()
 	if err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return nil, fmt.Errorf("error getting stats for index %s: %s", database, res.String())
+		return nil, fmt.Errorf("error getting stats for indices: %s", res.String())
 	}
 
 	var stats map[string]interface{}
@@ -79,19 +54,22 @@ func (p *ElasticSearchPlugin) GetStorageUnits(config *engine.PluginConfig, datab
 	}
 
 	indicesStats := stats["indices"].(map[string]interface{})
-	indexStats := indicesStats[database].(map[string]interface{})
-	primaries := indexStats["primaries"].(map[string]interface{})
-	docs := primaries["docs"].(map[string]interface{})
-	store := primaries["store"].(map[string]interface{})
+	storageUnits := make([]engine.StorageUnit, 0, len(indicesStats))
 
-	storageUnits := []engine.StorageUnit{
-		{
-			Name: database,
+	for indexName, indexStatsInterface := range indicesStats {
+		indexStats := indexStatsInterface.(map[string]interface{})
+		primaries := indexStats["primaries"].(map[string]interface{})
+		docs := primaries["docs"].(map[string]interface{})
+		store := primaries["store"].(map[string]interface{})
+
+		storageUnit := engine.StorageUnit{
+			Name: indexName,
 			Attributes: []engine.Record{
 				{Key: "Storage Size", Value: fmt.Sprintf("%v", store["size_in_bytes"])},
 				{Key: "Count", Value: fmt.Sprintf("%v", docs["count"])},
 			},
-		},
+		}
+		storageUnits = append(storageUnits, storageUnit)
 	}
 
 	return storageUnits, nil
@@ -103,17 +81,20 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 		return nil, err
 	}
 
-	var esFilter map[string]interface{}
+	var elasticSearchConditions map[string]interface{}
 	if len(filter) > 0 {
-		if err := json.Unmarshal([]byte(filter), &esFilter); err != nil {
+		if err := json.Unmarshal([]byte(filter), &elasticSearchConditions); err != nil {
 			return nil, fmt.Errorf("invalid filter format: %v", err)
 		}
 	}
 
 	query := map[string]interface{}{
-		"from":  pageOffset,
-		"size":  pageSize,
-		"query": esFilter,
+		"from": pageOffset,
+		"size": pageSize,
+	}
+
+	for key, value := range elasticSearchConditions {
+		query[key] = value
 	}
 
 	var buf bytes.Buffer
@@ -150,8 +131,13 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 	}
 
 	for _, hit := range hits {
-		doc := hit.(map[string]interface{})["_source"]
-		jsonBytes, err := json.Marshal(doc)
+		hitMap := hit.(map[string]interface{})
+		source := hitMap["_source"]
+		id := hitMap["_id"]
+		document := map[string]interface{}{}
+		document["_id"] = id
+		document["source"] = source
+		jsonBytes, err := json.Marshal(document)
 		if err != nil {
 			return nil, err
 		}

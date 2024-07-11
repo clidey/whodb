@@ -8,8 +8,12 @@ import (
 	"fmt"
 
 	"github.com/clidey/whodb/core/src/engine"
-	"github.com/elastic/go-elasticsearch/esapi"
 )
+
+type JsonSourceMap struct {
+	Id     string          `json:"_id"`
+	Source json.RawMessage `json:"source"`
+}
 
 func (p *ElasticSearchPlugin) UpdateStorageUnit(config *engine.PluginConfig, database string, storageUnit string, values map[string]string) (bool, error) {
 	client, err := DB(config)
@@ -22,38 +26,49 @@ func (p *ElasticSearchPlugin) UpdateStorageUnit(config *engine.PluginConfig, dat
 		return false, errors.New("missing 'document' key in values map")
 	}
 
+	jsonSourceMap := &JsonSourceMap{}
+	if err := json.Unmarshal([]byte(documentJSON), jsonSourceMap); err != nil {
+		return false, errors.New("source is not correctly formatted")
+	}
+
 	var jsonValues map[string]interface{}
-	if err := json.Unmarshal([]byte(documentJSON), &jsonValues); err != nil {
+	if err := json.Unmarshal(jsonSourceMap.Source, &jsonValues); err != nil {
 		return false, err
 	}
 
-	id, ok := jsonValues["_id"]
-	if !ok {
-		return false, errors.New("missing '_id' field in the document")
-	}
-
-	idStr, ok := id.(string)
-	if !ok {
-		return false, errors.New("invalid '_id' field; not a valid string")
-	}
-
-	delete(jsonValues, "_id")
+	script := `
+		for (entry in params.entrySet()) {
+			ctx._source[entry.getKey()] = entry.getValue();
+		}
+		for (key in ctx._source.keySet().toArray()) {
+			if (!params.containsKey(key)) {
+				ctx._source.remove(key);
+			}
+		}
+	`
+	params := jsonValues
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(jsonValues); err != nil {
+	if err := json.NewEncoder(&buf).Encode(map[string]interface{}{
+		"script": map[string]interface{}{
+			"source": script,
+			"lang":   "painless",
+			"params": params,
+		},
+		"upsert": jsonValues,
+	}); err != nil {
 		return false, err
 	}
 
-	req := esapi.UpdateRequest{
-		Index:      storageUnit,
-		DocumentID: idStr,
-		Body:       &buf,
-		Refresh:    "true",
-	}
-
-	res, err := req.Do(context.Background(), client)
+	res, err := client.Update(
+		storageUnit,
+		jsonSourceMap.Id,
+		&buf,
+		client.Update.WithContext(context.Background()),
+		client.Update.WithRefresh("true"),
+	)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("failed to execute update: %w", err)
 	}
 	defer res.Body.Close()
 

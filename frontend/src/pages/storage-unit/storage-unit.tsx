@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Handle, Position } from "reactflow";
 import { AnimatedButton } from "../../components/button";
 import { Card, ExpandableCard } from "../../components/card";
+import { EmptyMessage } from "../../components/common";
 import { IGraphCardProps } from "../../components/graph/graph";
 import { Icons } from "../../components/icons";
 import { Loading } from "../../components/loading";
@@ -11,8 +12,7 @@ import { InternalPage } from "../../components/page";
 import { InternalRoutes } from "../../config/routes";
 import { DatabaseType, GetStorageUnitsDocument, GetStorageUnitsQuery, GetStorageUnitsQueryVariables, StorageUnit } from "../../generated/graphql";
 import { useAppSelector } from "../../store/hooks";
-import { EmptyMessage } from "../../components/common";
-import { isNoSQL } from "../../utils/functions";
+import { getDatabaseStorageUnitLabel } from "../../utils/functions";
 
 const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
     const [expanded, setExpanded] = useState(false);
@@ -90,7 +90,7 @@ export const StorageUnitPage: FC = () => {
     });
 
     const routes = useMemo(() => {
-        const name = current == null || !isNoSQL(current.Type) ? "Tables" : "Collections";
+        const name = getDatabaseStorageUnitLabel(current?.Type);
         return [
             {
                 ...InternalRoutes.Dashboard.StorageUnit,

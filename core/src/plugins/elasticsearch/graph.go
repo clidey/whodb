@@ -21,7 +21,8 @@ func (p *ElasticSearchPlugin) GetGraph(config *engine.PluginConfig, database str
 	if err != nil {
 		return nil, err
 	}
-	res, err := client.Indices.Get([]string{database})
+
+	res, err := client.Indices.Stats()
 	if err != nil {
 		return nil, err
 	}
@@ -31,19 +32,15 @@ func (p *ElasticSearchPlugin) GetGraph(config *engine.PluginConfig, database str
 		return nil, fmt.Errorf("error getting indices: %s", res.String())
 	}
 
-	var indices map[string]interface{}
-	if err := json.NewDecoder(res.Body).Decode(&indices); err != nil {
+	var stats map[string]interface{}
+	if err := json.NewDecoder(res.Body).Decode(&stats); err != nil {
 		return nil, err
 	}
 
-	collections := make([]string, 0, len(indices))
-	for index := range indices {
-		collections = append(collections, index)
-	}
+	indicesStats := stats["indices"].(map[string]interface{})
 
 	relations := []tableRelation{}
-
-	for _, collectionName := range collections {
+	for indexName := range indicesStats {
 		var buf bytes.Buffer
 		query := map[string]interface{}{
 			"size": 1,
@@ -57,7 +54,7 @@ func (p *ElasticSearchPlugin) GetGraph(config *engine.PluginConfig, database str
 
 		res, err := client.Search(
 			client.Search.WithContext(context.Background()),
-			client.Search.WithIndex(collectionName),
+			client.Search.WithIndex(indexName),
 			client.Search.WithBody(&buf),
 		)
 		if err != nil {
@@ -79,12 +76,12 @@ func (p *ElasticSearchPlugin) GetGraph(config *engine.PluginConfig, database str
 			doc := hits[0].(map[string]interface{})["_source"].(map[string]interface{})
 
 			for key := range doc {
-				for _, otherCollection := range collections {
-					singularName := strings.TrimSuffix(otherCollection, "s")
-					if key == singularName+"_id" || key == otherCollection+"_id" {
+				for otherIndexName := range indicesStats {
+					singularName := strings.TrimSuffix(otherIndexName, "s")
+					if key == singularName+"_id" || key == otherIndexName+"_id" {
 						relations = append(relations, tableRelation{
-							Table1:   collectionName,
-							Table2:   otherCollection,
+							Table1:   indexName,
+							Table2:   otherIndexName,
 							Relation: "ManyToMany",
 						})
 					}

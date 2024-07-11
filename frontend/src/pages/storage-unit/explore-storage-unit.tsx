@@ -13,7 +13,7 @@ import { InternalRoutes } from "../../config/routes";
 import { DatabaseType, StorageUnit, UpdateStorageUnitDocument, UpdateStorageUnitMutationResult, useGetStorageUnitRowsLazyQuery } from "../../generated/graphql";
 import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
-import { isNoSQL, isNumeric } from "../../utils/functions";
+import { getDatabaseStorageUnitLabel, isNumeric } from "../../utils/functions";
 
 export const ExploreStorageUnit: FC = () => {
     const [bufferPageSize, setBufferPageSize] = useState("10");
@@ -111,7 +111,7 @@ export const ExploreStorageUnit: FC = () => {
     }, []);
 
     const routes = useMemo(() => {
-        const name = current == null || !isNoSQL(current.Type) ? "Tables" : "Collections";
+        const name = getDatabaseStorageUnitLabel(current?.Type);
         return [
             {
                 ...InternalRoutes.Dashboard.StorageUnit,
