@@ -31,6 +31,12 @@ const databaseTypeDropdownItems: IDropdownItem<Record<string, string>>[] = [
         extra: {"Port": "3306", "Charset": "utf8mb4", "Parse Time": "True", "Loc": "Local"},
     },
     {
+        id: "MariaDB",
+        label: "MariaDB",
+        icon: Icons.Logos.MariaDB,
+        extra: {"Port": "3306", "Charset": "utf8mb4", "Parse Time": "True", "Loc": "Local"},
+    },
+    {
         id: "Sqlite3",
         label: "Sqlite3",
         icon: Icons.Logos.Sqlite3,

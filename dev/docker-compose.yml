@@ -22,9 +22,22 @@ services:
       MYSQL_DATABASE: mysql
       MYSQL_ROOT_PASSWORD: password
     volumes:
-      - mysql:/data/postgres
+      - mysql:/var/lib/mysql
     ports:
       - "3306:3306"
+    networks:
+      - db
+  mariadb:
+    image: mariadb
+    environment:
+      MARIADB_USER: user
+      MARIADB_PASSWORD: password
+      MARIADB_DATABASE: mariadb
+      MARIADB_ROOT_PASSWORD: password
+    volumes:
+      - mariadb:/var/lib/mysql
+    ports:
+      - "3307:3306"
     networks:
       - db
   mongo:
@@ -83,6 +96,7 @@ networks:
 volumes:
   postgres:
   mysql:
+  mariadb:
   mongo:
   redis:
   elasticsearch:

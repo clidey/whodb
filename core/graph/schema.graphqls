@@ -9,6 +9,7 @@ enum DatabaseType {
   MongoDB,
   Redis,
   ElasticSearch,
+  MariaDB,
 }
 
 type Column {

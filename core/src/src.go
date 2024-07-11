@@ -16,6 +16,7 @@ func InitializeEngine() *engine.Engine {
 	MainEngine = &engine.Engine{}
 	MainEngine.RegistryPlugin(postgres.NewPostgresPlugin())
 	MainEngine.RegistryPlugin(mysql.NewMySQLPlugin())
+	MainEngine.RegistryPlugin(mysql.NewMyMariaDBPlugin())
 	MainEngine.RegistryPlugin(sqlite3.NewSqlite3Plugin())
 	MainEngine.RegistryPlugin(mongodb.NewMongoDBPlugin())
 	MainEngine.RegistryPlugin(redis.NewRedisPlugin())
