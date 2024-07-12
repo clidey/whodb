@@ -10,7 +10,7 @@ const persistedReducer = combineReducers({
   auth: persistReducer({ key: "auth", storage, }, authReducers),
   database: persistReducer({ key: "database", storage, }, databaseReducers),
   common: commonReducers,
-  global: globalReducers,
+  global: persistReducer({ key: "global", storage, }, globalReducers),
 });
 
 export const reduxStore = configureStore({
