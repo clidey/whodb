@@ -104,7 +104,7 @@ export const Graph: FC<IGraphProps> = (props) => {
 
     return <ReactFlow
         ref={reactFlowWrapper}
-        className={classNames("group bg-white", {
+        className={classNames("group bg-white dark:bg-white/5 rounded-lg", {
             "laying-out": isLayingOut,
         })}
         {...props}

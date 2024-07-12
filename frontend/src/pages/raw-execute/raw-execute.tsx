@@ -43,7 +43,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete }) =
 
     return <div className="flex flex-col grow group/cell">
             <div className="relative">
-                <div className="flex grow h-[150px] border border-gray-200 rounded-md overflow-hidden">
+                <div className="flex grow h-[150px] border border-gray-200 rounded-md overflow-hidden dark:bg-white/10 dark:border-white/5">
                     {
                         loading
                         ? <Loading hideText={true} />
@@ -55,10 +55,10 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete }) =
                         <AnimatedButton icon={Icons.PlusCircle} label="Add" onClick={handleAdd} />
                         {
                             onDelete != null &&
-                            <AnimatedButton className="bg-red-100/80 hover:bg-red-200" iconClassName="stroke-red-800" labelClassName="text-red-800"  icon={Icons.Delete} label="Delete" onClick={handleDelete} />
+                            <AnimatedButton className="bg-red-100/80 hover:bg-red-200 dark:hover:bg-red-900" iconClassName="stroke-red-800" labelClassName="text-red-800"  icon={Icons.Delete} label="Delete" onClick={handleDelete} />
                         }
                     </div>
-                    <AnimatedButton className="bg-green-200 hover:bg-green-400" iconClassName="stroke-green-800" labelClassName="text-green-800" icon={Icons.CheckCircle} label="Submit query" onClick={handleRawExecute} />
+                    <AnimatedButton className="bg-green-200 hover:bg-green-400 dark:hover:bg-green-900" iconClassName="stroke-green-800" labelClassName="text-green-800" icon={Icons.CheckCircle} label="Submit query" onClick={handleRawExecute} />
                 </div>
             </div>
             {
@@ -101,7 +101,7 @@ export const RawExecutePage: FC = () => {
                     {
                         cellIds.map((cellId, index) => (
                             <>
-                                {index > 0 && <div className="border-dashed border-t border-gray-300 my-2"></div>}
+                                {index > 0 && <div className="border-dashed border-t border-gray-300 my-2 dark:border-neutral-600"></div>}
                                 <RawExecuteCell key={cellId} cellId={cellId} onAdd={handleAdd} onDelete={cellIds.length <= 1 ? undefined : handleDelete} />
                             </>
                         ))

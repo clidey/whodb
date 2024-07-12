@@ -30,17 +30,15 @@ export const GraphEdgeConnectionLine: FC<ConnectionLineComponentProps> = ({ toX,
       <g>
         <path
             fill="none"
-            stroke="#222"
+            className="stroke-neutral-800 dark:stroke-neutral-300 animated"
             strokeWidth={1.5}
-            className="animated"
             d={edgePath}
         />
         <circle
+            className="fill-white stroke-neutral-800 dark:stroke-neutral-300"
             cx={toX}
             cy={toY}
-            fill="#fff"
             r={3}
-            stroke="#222"
             strokeWidth={1.5}
         />
       </g>
