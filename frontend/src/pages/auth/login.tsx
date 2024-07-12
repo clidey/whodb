@@ -206,7 +206,7 @@ export const LoginPage: FC = () => {
                                             className: "w-6 h-6 stroke-white",
                                         })}
                                     </div>
-                                    <span className={BRAND_COLOR}>WhoDB</span> Login
+                                    <span className={BRAND_COLOR}>WhoDB</span> <span className="dark:text-neutral-300">Login</span>
                                 </div>
                                 <div className="text-red-500 text-xs flex items-center">
                                     {error}

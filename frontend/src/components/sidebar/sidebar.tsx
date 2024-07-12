@@ -57,18 +57,20 @@ export const SideMenu: FC<IRouteProps> = (props) => {
         "justify-center": props.collapse,
     })}  onMouseEnter={handleMouseEnter} onMouseOver={handleMouseEnter} onMouseLeave={handleMouseLeave}>
         <AnimatePresence mode="sync">
-            <div className={twMerge(classNames("cursor-default text-md inline-flex gap-2 transition-all hover:gap-2 relative w-full py-4 rounded-md hover:bg-gray-100", {
+            <div className={twMerge(classNames("cursor-default text-md inline-flex gap-2 transition-all hover:gap-2 relative w-full py-4 rounded-md hover:bg-gray-100 dark:border-white/5 dark:hover:bg-white/15", {
                 "cursor-pointer": props.path != null,
                 "pl-4": !props.collapse,
                 "pl-2": props.collapse,
             }))} onClick={handleClick}>
                 {cloneElement(props.icon, {
-                    className: classNames("transition-all", {
+                    className: classNames("transition-all dark:stroke-white", {
                         "w-4 h-4": !props.collapse,
                         "w-6 h-6 hover:scale-110 ml-1": props.collapse,
                     })
                 })}
-                {!props.collapse  && props.title}
+                <span className="dark:text-neutral-300">
+                    {!props.collapse  && props.title}
+                </span>
                 {
                     props.routes != null &&
                     <motion.div className="absolute z-40 divide-y rounded-lg shadow-lg min-w-[250px] bg-white left-[100%] -top-[20px] border border-gray-200" variants={{
@@ -284,7 +286,7 @@ export const Sidebar: FC = () => {
 
     return (
         <div className={
-            classNames("h-[100vh] flex flex-col gap-4 shadow-md relative transition-all duration-500", {
+            classNames("h-[100vh] flex flex-col gap-4 shadow-md relative transition-all duration-500 dark:bg-black/85 dark:shadow-neutral-100/5", {
                 "w-[50px] py-20": collapsed,
                 "w-[300px] px-10 py-20": !collapsed,
             })}>
@@ -307,7 +309,7 @@ export const Sidebar: FC = () => {
                     <span className={classNames(BRAND_COLOR, "text-2xl")}>WhoDB</span>
                 </div>
             </motion.div>
-            <motion.div className={classNames("absolute top-4 cursor-pointer transition-all", {
+            <motion.div className={classNames("absolute top-4 cursor-pointer transition-all dark:text-neutral-300", {
                 "right-2 hover:right-3": !collapsed,
                 "right-3 hover:right-2": collapsed,
             })} initial="show" variants={{
@@ -332,14 +334,14 @@ export const Sidebar: FC = () => {
                                     <div className={classNames("flex gap-2 items-center", {
                                         "hidden": collapsed,
                                     })}>
-                                        <div className="text-sm text-gray-600 mr-2.5">Profile:</div>
+                                        <div className="text-sm text-gray-600 dark:text-neutral-300 mr-2.5">Profile:</div>
                                         {
                                             current != null &&
                                             <Dropdown className="w-[140px]" items={loginItems} value={currentProfile} onChange={handleProfileChange}
                                                 defaultItem={{
                                                     label: "Add another profile",
                                                     icon: cloneElement(Icons.Add, {
-                                                        className: "w-6 h-6 stroke-green-800",
+                                                        className: "w-6 h-6 stroke-green-800 dark:stroke-green-400",
                                                     }),
                                                 }} defaultItemClassName="text-green-800" onDefaultItemClick={handleNavigateToLogin} 
                                                 action={<AnimatedButton icon={Icons.Logout} label="Logout" onClick={handleMenuLogout} /> }/>
@@ -350,7 +352,7 @@ export const Sidebar: FC = () => {
                                         <div className={classNames("flex gap-2 items-center w-full", {
                                             "hidden": pathname === InternalRoutes.RawExecute.path || collapsed || DATABASES_THAT_DONT_SUPPORT_SCHEMA.includes(current?.Type as DatabaseType),
                                         })}>
-                                            <div className="text-sm text-gray-600">Schema:</div>
+                                            <div className="text-sm text-gray-600 dark:text-neutral-300">Schema:</div>
                                             <Dropdown className="w-[140px]" value={{ id: schema, label: schema }} items={data.Schema.map(schema => ({ id: schema, label: schema }))} onChange={handleSchemaChange}
                                                 noItemsLabel="No schema found"/>
                                         </div>
@@ -359,7 +361,7 @@ export const Sidebar: FC = () => {
                                 {routes}
                             </div>
                             <div className="grow" />
-                            <div className="flex flex-col">
+                            <div className="flex flex-col gap-8">
                                 <SideMenu collapse={collapsed} title="Logout" icon={Icons.Logout} path={InternalRoutes.Logout.path} />
                             </div>
                         </AnimatePresence>

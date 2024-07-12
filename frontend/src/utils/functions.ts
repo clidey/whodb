@@ -57,5 +57,5 @@ export function getDatabaseStorageUnitLabel(databaseType: string | undefined) {
         case DatabaseType.Sqlite3:
             return "Tables";
     }
-    return "Storage Unit";
+    return "Storage Units";
 }

@@ -12,6 +12,7 @@ import { useExportToCSV, useLongPress } from "./hooks";
 import { Icons } from "./icons";
 import { SearchInput } from "./search";
 import { Loading } from "./loading";
+import { clone } from "lodash";
 
 type IPaginationProps = {
     pageCount: number;
@@ -40,7 +41,9 @@ const Pagination: FC<IPaginationProps> = ({ pageCount, currentPage, onPageChange
             const createPageItem = (i: number) => (
                 <div
                     key={i}
-                    className={`cursor-pointer p-2 text-sm hover:scale-110 hover:bg-gray-200 rounded-md text-gray-600 ${currentPage === i ? 'bg-gray-300' : ''}`}
+                    className={classNames("cursor-pointer p-2 text-sm hover:scale-110 hover:bg-gray-200 dark:hover:bg-white/15 rounded-md text-gray-600 dark:text-neutral-300", {
+                        "bg-gray-300 dark:bg-white/10": currentPage === i,
+                    })}
                     onClick={() => onPageChange?.(i)}
                 >
                     {i}
@@ -51,7 +54,7 @@ const Pagination: FC<IPaginationProps> = ({ pageCount, currentPage, onPageChange
 
             if (currentPage > 3) {
                 pageNumbers.push(
-                    <div key="start-ellipsis" className="cursor-default p-2 text-sm text-gray-600">...</div>
+                    <div key="start-ellipsis" className="cursor-default p-2 text-sm text-gray-600 dark:text-neutral-300">...</div>
                 );
             }
 
@@ -64,7 +67,7 @@ const Pagination: FC<IPaginationProps> = ({ pageCount, currentPage, onPageChange
 
             if (currentPage < pageCount - 2) {
                 pageNumbers.push(
-                    <div key="end-ellipsis" className="cursor-default p-2 text-sm text-gray-600">...</div>
+                    <div key="end-ellipsis" className="cursor-default p-2 text-sm text-gray-600 dark:text-neutral-300">...</div>
                 );
             }
 
@@ -167,15 +170,19 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, disableEdit }) => {
         }
     }, [editedData]);
 
+    useEffect(() => {
+        setEditedData(cell.value);
+    }, [cell.value]);
+
     return <div ref={cellRef} {...cell.getCellProps()}
-        className={classNames("relative group/data cursor-pointer transition-all text-xs table-cell border-t border-l last:border-r group-last/row:border-b group-last/row:first:rounded-bl-lg group-last/row:last:rounded-br-lg border-gray-200 p-0", {
-            "bg-gray-200 blur-[2px]": editable || preview,
+        className={classNames("relative group/data cursor-pointer transition-all text-xs table-cell border-t border-l last:border-r group-last/row:border-b group-last/row:first:rounded-bl-lg group-last/row:last:rounded-br-lg border-gray-200 dark:border-white/5 p-0", {
+            "bg-gray-200 dark:bg-white/10 blur-[2px]": editable || preview,
         })}
     >
         <span className="hidden">{editedData}</span>
         <div 
-            className={classNames("w-full h-full p-2 leading-tight focus:outline-none focus:shadow-outline appearance-none transition-all duration-300 border-solid border-gray-200 overflow-hidden whitespace-nowrap select-none", {
-                "group-even/row:bg-gray-100 hover:bg-gray-300 group-even/row:hover:bg-gray-300": !editable,
+            className={classNames("w-full h-full p-2 leading-tight focus:outline-none focus:shadow-outline appearance-none transition-all duration-300 border-solid border-gray-200 dark:border-white/5 overflow-hidden whitespace-nowrap select-none text-gray-600 dark:text-neutral-300", {
+                "group-even/row:bg-gray-100 hover:bg-gray-300 group-even/row:hover:bg-gray-300 dark:group-even/row:bg-white/10 dark:group-odd/row:bg-white/5 dark:group-even/row:hover:bg-white/15 dark:group-odd/row:hover:bg-white/15": !editable,
                 "bg-transparent": editable,
             })}
         {...longPressProps}>{editedData}</div>
@@ -279,9 +286,6 @@ const TableRow: FC<ITableRow> = ({ row, style, onRowUpdate, disableEdit }) => {
             return Promise.reject();
         }
         const updatedRow = row.cells.reduce((all, one) => {
-            if (one.column.id === "#") {
-                return all;
-            }
             all[one.column.id] = one.value;
             return all;
         }, {} as Record<string, string>);
@@ -322,6 +326,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
     const [searchIndex, setSearchIndex] = useState(0);
     const [height, setHeight] = useState(0);
     const [width, setWidth] = useState(0);
+    const [data, setData] = useState<Record<string, string>[]>([]);
 
     const columns = useMemo(() => {
         let colWidth = 150;
@@ -343,13 +348,13 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
         return cols;
     }, [actualColumns, width]);
 
-    const data = useMemo(() => {
-        return actualRows.map((row, rowIndex) => {
+    useEffect(() => {
+        setData(actualRows.map((row, rowIndex) => {
             return row.reduce((all, one, colIndex) => {
                 all[actualColumns[colIndex]] = one;
                 return all;
             }, { "#": (rowIndex+1).toString() } as Record<string, string>);
-        });
+        }));
     }, [actualColumns, actualRows]);
 
     const sortedRows = useMemo(() => {
@@ -461,11 +466,24 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
         setDirection("dsc");
     }, [sortedColumn, direction]);
 
+    const handleRowUpdate = useCallback((index: number, row: Record<string, string>) => {
+        if (onRowUpdate == null) {
+            return Promise.resolve();
+        }
+        setData(value => {
+            const newValue = clone(value);
+            newValue[index] = clone(row);
+            return newValue;
+        });
+        delete row["#"];
+        return onRowUpdate(row);
+    }, [onRowUpdate]);
+
     const handleRenderRow = useCallback(({ index, style }: ListChildComponentProps) => {
         const row = rows[index];
         prepareRow(row);
-        return <TableRow key={`row-${row.values[actualColumns[0]]}`} row={row} style={style} onRowUpdate={onRowUpdate} disableEdit={disableEdit} />;
-    }, [rows, prepareRow, actualColumns, onRowUpdate, disableEdit]);
+        return <TableRow key={`row-${row.values[actualColumns[0]]}`} row={row} style={style} onRowUpdate={(row) => handleRowUpdate(index, row)} disableEdit={disableEdit} />;
+    }, [rows, prepareRow, actualColumns, handleRowUpdate, disableEdit]);
 
     useEffect(() => {
         if (containerRef.current == null || operationsRef.current == null) {
@@ -489,7 +507,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                     }} />
                 </div>
                 <div className="flex gap-4 items-center">
-                    <div className="text-sm text-gray-600"><span className="font-semibold">Count:</span> {rowCount}</div>
+                    <div className="text-sm text-gray-600 dark:text-neutral-300"><span className="font-semibold">Count:</span> {rowCount}</div>
                     <AnimatedButton icon={Icons.Download} label="Export" type="lg" onClick={exportToCSV} />
                 </div>
             </div>
@@ -501,7 +519,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                         {headerGroups.map(headerGroup => (
                             <div {...headerGroup.getHeaderGroupProps()} className="table-header-group">
                                 {headerGroup.headers.map((column, i) => (
-                                    <div {...column.getHeaderProps()} className="text-xs border-t border-l last:border-r border-gray-200 p-2 text-left bg-gray-500 text-white first:rounded-tl-lg last:rounded-tr-lg relative group/header cursor-pointer select-none"
+                                    <div {...column.getHeaderProps()} className="text-xs border-t border-l last:border-r border-gray-200 dark:border-white/5 p-2 text-left bg-gray-500 dark:bg-white/20 text-white first:rounded-tl-lg last:rounded-tr-lg relative group/header cursor-pointer select-none"
                                         onClick={() => handleSort(column.id)}>
                                         {column.render('Header')} {i > 0 && columnTags?.[i-1] != null && columnTags?.[i-1].length > 0 && <span className="text-[11px]">[{columnTags?.[i-1]}]</span>}
                                         <div className={twMerge(classNames("transition-all absolute top-2 right-2 opacity-0", {
