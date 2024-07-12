@@ -53,7 +53,7 @@ export const InputWithlabel: FC<InputWithLabelProps> = ({ value, setValue, label
         <div className="relative">
             <Input type={inputType} value={value} setValue={setValue} inputProps={inputProps} placeholder={placeholder} />
             {type === "password" && cloneElement(hide ? Icons.Show : Icons.Hide, {
-                className: "w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer transition-all hover:scale-110",
+                className: "w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer transition-all hover:scale-110 dark:stroke-neutral-300",
                 onClick: handleShow,
             })}
         </div>

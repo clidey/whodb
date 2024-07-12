@@ -12,6 +12,7 @@ import { useExportToCSV, useLongPress } from "./hooks";
 import { Icons } from "./icons";
 import { SearchInput } from "./search";
 import { Loading } from "./loading";
+import { clone } from "lodash";
 
 type IPaginationProps = {
     pageCount: number;
@@ -169,6 +170,10 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, disableEdit }) => {
         }
     }, [editedData]);
 
+    useEffect(() => {
+        setEditedData(cell.value);
+    }, [cell.value]);
+
     return <div ref={cellRef} {...cell.getCellProps()}
         className={classNames("relative group/data cursor-pointer transition-all text-xs table-cell border-t border-l last:border-r group-last/row:border-b group-last/row:first:rounded-bl-lg group-last/row:last:rounded-br-lg border-gray-200 dark:border-white/5 p-0", {
             "bg-gray-200 dark:bg-white/10 blur-[2px]": editable || preview,
@@ -281,9 +286,6 @@ const TableRow: FC<ITableRow> = ({ row, style, onRowUpdate, disableEdit }) => {
             return Promise.reject();
         }
         const updatedRow = row.cells.reduce((all, one) => {
-            if (one.column.id === "#") {
-                return all;
-            }
             all[one.column.id] = one.value;
             return all;
         }, {} as Record<string, string>);
@@ -324,6 +326,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
     const [searchIndex, setSearchIndex] = useState(0);
     const [height, setHeight] = useState(0);
     const [width, setWidth] = useState(0);
+    const [data, setData] = useState<Record<string, string>[]>([]);
 
     const columns = useMemo(() => {
         let colWidth = 150;
@@ -345,13 +348,13 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
         return cols;
     }, [actualColumns, width]);
 
-    const data = useMemo(() => {
-        return actualRows.map((row, rowIndex) => {
+    useEffect(() => {
+        setData(actualRows.map((row, rowIndex) => {
             return row.reduce((all, one, colIndex) => {
                 all[actualColumns[colIndex]] = one;
                 return all;
             }, { "#": (rowIndex+1).toString() } as Record<string, string>);
-        });
+        }));
     }, [actualColumns, actualRows]);
 
     const sortedRows = useMemo(() => {
@@ -463,11 +466,24 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
         setDirection("dsc");
     }, [sortedColumn, direction]);
 
+    const handleRowUpdate = useCallback((index: number, row: Record<string, string>) => {
+        if (onRowUpdate == null) {
+            return Promise.resolve();
+        }
+        setData(value => {
+            const newValue = clone(value);
+            newValue[index] = clone(row);
+            return newValue;
+        });
+        delete row["#"];
+        return onRowUpdate(row);
+    }, [onRowUpdate]);
+
     const handleRenderRow = useCallback(({ index, style }: ListChildComponentProps) => {
         const row = rows[index];
         prepareRow(row);
-        return <TableRow key={`row-${row.values[actualColumns[0]]}`} row={row} style={style} onRowUpdate={onRowUpdate} disableEdit={disableEdit} />;
-    }, [rows, prepareRow, actualColumns, onRowUpdate, disableEdit]);
+        return <TableRow key={`row-${row.values[actualColumns[0]]}`} row={row} style={style} onRowUpdate={(row) => handleRowUpdate(index, row)} disableEdit={disableEdit} />;
+    }, [rows, prepareRow, actualColumns, handleRowUpdate, disableEdit]);
 
     useEffect(() => {
         if (containerRef.current == null || operationsRef.current == null) {
