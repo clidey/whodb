@@ -1,4 +1,3 @@
-import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import { FC, ReactNode, useCallback } from "react";
 import { twMerge } from "tailwind-merge";
@@ -17,10 +16,7 @@ type IPageProps = {
 }
 
 export const Page: FC<IPageProps> = (props) => {
-    const darkModeEnabled = useAppSelector(state => state.global.theme === "dark");
-    return <div className={twMerge(classNames("flex grow px-8 py-6 flex-col h-full w-full bg-white dark:bg-black/90", props.wrapperClassName, {
-        "dark": darkModeEnabled,
-    }))}>
+    return <div className={twMerge("flex grow px-8 py-6 flex-col h-full w-full bg-white dark:bg-black/90", props.wrapperClassName)}>
         <AnimatePresence>
             <motion.div className={twMerge("flex flex-row grow flex-wrap gap-2 w-full h-full overflow-y-auto", props.className)}
                 initial={{ opacity: 0 }}
@@ -47,9 +43,7 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
     }, [dispatch]);
 
     return (
-        <div className={classNames("flex grow h-full w-full", {
-            "dark": darkModeEnabled,
-        })}>
+        <div className="flex grow h-full w-full">
             <Sidebar />
             <Page wrapperClassName="p-0" {...props}>
                 <div className="flex flex-col grow py-6">
