@@ -62,15 +62,17 @@ export const CodeEditor: FC<ICodeEditorProps> = ({ value, setValue, language, op
     const children = useMemo(() => {
         if (showPreview) {
             if (language === "markdown") {
-                return <div className="overflow-y-auto h-full bg-white p-4 pl-8">
+                return <div className="overflow-y-auto h-full bg-white p-4 pl-8 dark:bg-[#252526] dark:backdrop-blur-md">
                     <MarkdownPreview className="pointer-events-none" source={value} wrapperElement={{
-                        "data-color-mode": "light",
+                        "data-color-mode": darkModeEnabled ? "dark" : "light",
+                    }} style={{
+                        backgroundColor: "unset",
                     }} />
                 </div>
             }
             if (language === "json") {
-                return <div className="overflow-y-auto h-full bg-white p-4 pl-8">
-                    <ReactJson src={JSON.parse(value)}  />
+                return <div className="overflow-y-auto h-full bg-white p-4 pl-8 dark:bg-[#252526] dark:backdrop-blur-md">
+                    <ReactJson src={JSON.parse(value)} theme={darkModeEnabled ? "bright" : undefined} style={{height: "100%", backgroundColor: "unset"}} />
                 </div>
             }
         }
