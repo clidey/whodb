@@ -25,7 +25,7 @@ export type IDropdownProps = {
     noItemsLabel?: string;
 }
 
-const ITEM_CLASS = "group/item flex items-center gap-1 transition-all cursor-pointer relative hover:bg-black/10 py-1 mx-2 px-4 rounded-lg pl-1";
+const ITEM_CLASS = "group/item flex items-center gap-1 transition-all cursor-pointer relative hover:bg-black/10 py-1 mx-2 px-4 rounded-lg pl-1 dark:text-neutral-300/100";
 
 export const Dropdown: FC<IDropdownProps> = (props) => {
     const [hover, setHover] = useState(false);
@@ -46,15 +46,15 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
     return (
         <button className={classNames("relative", props.className)} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
             {props.loading ? <Loading hideText={true} /> : 
-            <>  <div className="flex justify-between items-center border border-gray-200 rounded-lg w-full p-1 h-[34px] px-2">
-                    <div className="flex gap-1 text-gray-700 text-sm truncate items-center">
+            <>  <div className="flex justify-between items-center border border-gray-200 rounded-lg w-full p-1 h-[34px] px-2 dark:bg-white/10 dark:border-white/20">
+                    <div className="flex gap-1 text-gray-700 text-sm truncate items-center dark:text-neutral-300">
                         {props.value?.icon} {props.value?.label}
                     </div>
                     {cloneElement(Icons.DownCaret, {
                         className: "w-4 h-4 stroke-gray-600",
                     })}
                 </div>
-                <div className={classNames("absolute z-10 divide-y rounded-lg shadow bg-white py-1 border border-gray-200 overflow-y-auto max-h-40", {
+                <div className={classNames("absolute z-10 divide-y rounded-lg shadow bg-white py-1 border border-gray-200 overflow-y-auto max-h-40 dark:bg-white/10 dark:backdrop-blur-md dark:border-white/20", {
                     "hidden": !hover,
                     "block animate-fade": hover,
                     "w-fit min-w-[200px]": !props.fullWidth,

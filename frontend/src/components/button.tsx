@@ -15,15 +15,15 @@ export type IButtonProps = {
 }
 
 export const Button: FC<IButtonProps> = (props) => {
-  return <motion.button className={twMerge(classNames("rounded-lg border flex justify-center items-center text-xs px-2 py-1 cursor-pointer gap-1 bg-white hover:bg-gray-100", props.className, {
+  return <motion.button className={twMerge(classNames("rounded-lg border flex justify-center items-center text-xs px-2 py-1 cursor-pointer gap-1 bg-white hover:bg-gray-100 dark:bg-white/10 dark:hover:bg-white/15 dark:border-white/20 dark:backdrop-blur-md", props.className, {
     "cursor-not-allowed": props.disabled,
     "h-[35px] rounded-[4px] gap-2 hover:gap-3": props.type === "lg",
   }))} onClick={props.onClick} disabled={props.disabled} whileTap={{ scale: 0.8 }}>
-    <div className={classNames("text-xs text-gray-600", props.labelClassName)}>
+    <div className={classNames("text-xs text-gray-600 dark:text-neutral-100", props.labelClassName)}>
       {props.label}
     </div>
     {cloneElement(props.icon, {
-      className: classNames("w-4 h-4 stroke-gray-600", props.iconClassName),
+      className: classNames("w-4 h-4 stroke-gray-600 dark:stroke-white", props.iconClassName),
     })}
   </motion.button>
 }

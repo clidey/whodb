@@ -40,10 +40,10 @@ const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
     }}>
         <div className="flex flex-col grow mt-2">
             <div className="flex flex-col grow">
-                <div className="text-md font-semibold mb-2 break-words">{unit.Name}</div>
+                <div className="text-md font-semibold mb-2 break-words dark:text-neutral-100">{unit.Name}</div>
                 {
                     introAttributes.slice(0,2).map(attribute => (
-                        <div className="text-sm">{attribute.Key}: {attribute.Value}</div>
+                        <div className="text-sm dark:text-neutral-300">{attribute.Key}: {attribute.Value}</div>
                     ))
                 }
             </div>
@@ -55,17 +55,17 @@ const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
         <div className="flex flex-col grow mt-2 gap-4">
             <div className="flex flex-row grow">
                 <div className="flex flex-col grow">
-                    <div className="text-md font-semibold mb-2">{unit.Name}</div>
+                    <div className="text-md font-semibold mb-2 dark:text-neutral-100">{unit.Name}</div>
                     {
                         introAttributes.map(attribute => (
-                            <div className="text-xs"><span className="font-semibold">{attribute.Key}:</span> {attribute.Value}</div>
+                            <div className="text-xs dark:text-neutral-300"><span className="font-semibold">{attribute.Key}:</span> {attribute.Value}</div>
                         ))
                     }
                 </div>
                 <div className="flex flex-col grow mt-6">
                     {
                         expandedAttributes.map(attribute => (
-                            <div className="text-xs"><span className="font-semibold">{attribute.Key}:</span> {attribute.Value}</div>
+                            <div className="text-xs dark:text-neutral-300"><span className="font-semibold">{attribute.Key}:</span> {attribute.Value}</div>
                         ))
                     }
                 </div>
@@ -112,7 +112,7 @@ export const StorageUnitPage: FC = () => {
         {
             data != null && (
                 data.StorageUnit.length === 0
-                ? <EmptyMessage icon={Icons.SadSmile} label="No tables found. Try changing schema." />
+                ? <EmptyMessage icon={Icons.SadSmile} label={`No ${getDatabaseStorageUnitLabel(current?.Type)} found`} />
                 : data.StorageUnit.map(unit => (
                     <StorageUnitCard unit={unit} />
                 ))
@@ -143,17 +143,17 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data })
 
     return (
         <>
-            <Handle type="target" position={Position.Left} />
+            <Handle className="dark:border-white/5" type="target" position={Position.Left} />
             <Card icon={{
                 bgClassName: "bg-teal-500",
                 component: Icons.Database,
-            }} className="h-fit">
+            }} className="h-fit backdrop-blur-[2px]">
                 <div className="flex flex-col grow mt-2 gap-4">
                     <div className="flex flex-col grow">
-                        <div className="text-md font-semibold mb-2 break-words">{data.Name}</div>
+                        <div className="text-md font-semibold mb-2 break-words dark:text-neutral-300">{data.Name}</div>
                         {
                             data.Attributes.slice(0, 5).map(attribute => (
-                                <div className="text-xs"><span className="font-semibold">{attribute.Key}:</span> {attribute.Value}</div>
+                                <div className="text-xs dark:text-neutral-300"><span className="font-semibold">{attribute.Key}:</span> {attribute.Value}</div>
                             ))
                         }
                     </div>
@@ -162,7 +162,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data })
                     </div>
                 </div>
             </Card>
-            <Handle type="source" position={Position.Right} />
+            <Handle className="dark:border-white/5" type="source" position={Position.Right} />
         </>
     );
 }

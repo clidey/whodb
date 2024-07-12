@@ -4,11 +4,13 @@ import storage from 'redux-persist/lib/storage';
 import { authReducers } from './auth';
 import { commonReducers } from './common';
 import { databaseReducers } from './database';
+import { globalReducers } from './global';
 
 const persistedReducer = combineReducers({
   auth: persistReducer({ key: "auth", storage, }, authReducers),
   database: persistReducer({ key: "database", storage, }, databaseReducers),
   common: commonReducers,
+  global: globalReducers,
 });
 
 export const reduxStore = configureStore({

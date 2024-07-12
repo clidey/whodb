@@ -1,9 +1,12 @@
+import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
-import { FC, ReactNode } from "react";
+import { FC, ReactNode, useCallback } from "react";
 import { twMerge } from "tailwind-merge";
 import { IInternalRoute } from "../config/routes";
-import { useAppSelector } from "../store/hooks";
+import { GlobalActions } from "../store/global";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { Breadcrumb } from "./breadcrumbs";
+import { Text, ToggleInput } from "./input";
 import { Loading } from "./loading";
 import { Sidebar } from "./sidebar/sidebar";
 
@@ -14,7 +17,10 @@ type IPageProps = {
 }
 
 export const Page: FC<IPageProps> = (props) => {
-    return <div className={twMerge("flex grow px-8 py-6 flex-col h-full w-full", props.wrapperClassName)}>
+    const darkModeEnabled = useAppSelector(state => state.global.theme === "dark");
+    return <div className={twMerge(classNames("flex grow px-8 py-6 flex-col h-full w-full bg-white dark:bg-black/90", props.wrapperClassName, {
+        "dark": darkModeEnabled,
+    }))}>
         <AnimatePresence>
             <motion.div className={twMerge("flex flex-row grow flex-wrap gap-2 w-full h-full overflow-y-auto", props.className)}
                 initial={{ opacity: 0 }}
@@ -33,14 +39,28 @@ type IInternalPageProps = IPageProps & {
 
 export const InternalPage: FC<IInternalPageProps> = (props) => {
     const current = useAppSelector(state => state.auth.current);
+    const darkModeEnabled = useAppSelector(state => state.global.theme === "dark");
+    const dispatch = useAppDispatch();
+
+    const handleDarkModeToggle = useCallback((enabled: boolean) => {
+        dispatch(GlobalActions.setTheme(enabled ? "dark" : "light"));
+    }, [dispatch]);
 
     return (
-        <div className="flex grow h-full w-full">
+        <div className={classNames("flex grow h-full w-full", {
+            "dark": darkModeEnabled,
+        })}>
             <Sidebar />
             <Page wrapperClassName="p-0" {...props}>
                 <div className="flex flex-col grow py-6">
-                    <div className="px-4 sticky z-10 top-2 left-4 bg-white w-fit rounded-xl py-2">
-                        <Breadcrumb routes={props.routes ?? []} active={props.routes?.at(-1)} />
+                    <div className="flex justify-between items-center">
+                        <div className="px-4 sticky z-10 top-2 left-4 bg-white dark:bg-white/5 w-fit rounded-xl py-2 transition-all">
+                            <Breadcrumb routes={props.routes ?? []} active={props.routes?.at(-1)} />
+                        </div>
+                        <div className="flex gap-2 items-center mr-8">
+                            <Text label={darkModeEnabled ? "Dark Mode" : "Light Mode"} />
+                            <ToggleInput value={darkModeEnabled} setValue={handleDarkModeToggle} />
+                        </div>
                     </div>
                     {
                         current == null

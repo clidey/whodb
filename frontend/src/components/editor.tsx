@@ -3,9 +3,10 @@ import MarkdownPreview from "@uiw/react-markdown-preview";
 import classNames from "classnames";
 import { KeyCode, editor, languages } from "monaco-editor";
 import { FC, cloneElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import ReactJson from 'react-json-view';
+import { useAppSelector } from "../store/hooks";
 import { Icons } from "./icons";
 import { Loading } from "./loading";
-import ReactJson from 'react-json-view';
 
 languages.register({ id: 'markdown' });
 languages.register({ id: 'json' });
@@ -24,6 +25,7 @@ type ICodeEditorProps = {
 export const CodeEditor: FC<ICodeEditorProps> = ({ value, setValue, language, options = {}, onRun, defaultShowPreview, disabled }) => {
     const [showPreview, setShowPreview] = useState(defaultShowPreview);
     const editorRef = useRef<editor.IStandaloneCodeEditor>();
+    const darkModeEnabled = useAppSelector(state => state.global.theme === "dark");
 
     const handleEditorDidMount: OnMount = useCallback(editor => {
         editorRef.current = editor;
@@ -81,8 +83,9 @@ export const CodeEditor: FC<ICodeEditorProps> = ({ value, setValue, language, op
             width="100%"
             language={language}
             value={value}
+            theme={darkModeEnabled ? "vs-dark" : "light"}
             onChange={handleChange}
-            loading={<div className="flex justify-center items-center h-full w-full bg-white p-2 rounded-full">
+            loading={<div className="flex justify-center items-center h-full w-full p-2 rounded-md">
                 <Loading hideText={true} />
             </div>}
             options={{
@@ -95,7 +98,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({ value, setValue, language, op
             }}
             onMount={handleEditorDidMount}
         />;
-    }, [disabled, handleChange, handleEditorDidMount, language, options, showPreview, value]);
+    }, [darkModeEnabled, disabled, handleChange, handleEditorDidMount, language, options, showPreview, value]);
 
     const actionButtons = useMemo(() => {
         return <button className="transition-all cursor-pointer hover:scale-110 hover:bg-gray-100/50 rounded-full p-1" onClick={handlePreviewToggle}>

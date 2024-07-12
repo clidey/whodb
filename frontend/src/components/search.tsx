@@ -14,7 +14,7 @@ export const SearchInput: FC<ISearchInputProps> = ({ search, setSearch, placehol
     return (<div className="relative grow">
         <Input value={search} setValue={setSearch} placeholder={placeholder} inputProps={{ autoFocus: true, ...inputProps }} />
         {cloneElement(Icons.Search, {
-            className: "w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 stroke-gray-500 cursor-pointer transition-all hover:scale-110 bg-white rounded-full",
+            className: "w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 stroke-gray-500 dark:stroke-neutral-500 cursor-pointer transition-all hover:scale-110 bg-white dark:bg-neutral-800 rounded-full",
         })}
     </div>)
 }

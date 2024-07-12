@@ -12,6 +12,7 @@ import { InternalRoutes } from "../../config/routes";
 import { DatabaseType, GetGraphDocument, GetGraphQuery, GetGraphQueryVariables } from "../../generated/graphql";
 import { useAppSelector } from "../../store/hooks";
 import { StorageUnitGraphCard } from "../storage-unit/storage-unit";
+import { getDatabaseStorageUnitLabel } from "../../utils/functions";
 
 export const GraphPage: FC = () => {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -70,7 +71,7 @@ export const GraphPage: FC = () => {
         <ReactFlowProvider>
             {
                 !loading && nodes.length === 0
-                ? <EmptyMessage icon={Icons.SadSmile} label="No tables found. Try changing schema." />
+                ? <EmptyMessage icon={Icons.SadSmile} label={`No ${getDatabaseStorageUnitLabel(current?.Type)} found`} />
                 : <Graph nodes={nodes} edges={edges} nodeTypes={nodeTypes}
                     setNodes={setNodes} setEdges={setEdges}
                     onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}    
