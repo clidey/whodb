@@ -56,7 +56,7 @@ export const Notifications: FC<INotificationsProps> = () => {
             <motion.li
               key={notification.id}
               layout
-              className={classNames("bg-white dark:bg-white/20 dark:backdrop-blur-lg box-border overflow-hidden w-[40ch] sm:width-full shadow-lg rounded-xl border border-gray-200 dark:border-white/5 pointer-events-auto border-r-8", {
+              className={classNames("bg-white dark:bg-white/15 dark:backdrop-blur-lg box-border overflow-hidden w-[40ch] sm:width-full shadow-lg rounded-xl border border-gray-200 dark:border-white/5 pointer-events-auto border-r-8", {
                   "border-r-gray-400 dark:border-r-gray-200": notification.intent === "default",
                   "border-r-red-400 dark:border-r-red-200": notification.intent === "error",
                   "border-r-orange-400 dark:border-r-orange-200": notification.intent === "warning",

@@ -328,43 +328,41 @@ export const Sidebar: FC = () => {
                 loading
                 ? <Loading />
                 :  <div className="flex flex-col justify-center mt-[10vh] grow">
-                        <AnimatePresence mode="wait">
-                            <div className="flex flex-col">
-                                <div className="flex flex-col mb-[10vh] gap-4 ml-4">
-                                    <div className={classNames("flex gap-2 items-center", {
-                                        "hidden": collapsed,
-                                    })}>
-                                        <div className="text-sm text-gray-600 dark:text-neutral-300 mr-2.5">Profile:</div>
-                                        {
-                                            current != null &&
-                                            <Dropdown className="w-[140px]" items={loginItems} value={currentProfile} onChange={handleProfileChange}
-                                                defaultItem={{
-                                                    label: "Add another profile",
-                                                    icon: cloneElement(Icons.Add, {
-                                                        className: "w-6 h-6 stroke-green-800 dark:stroke-green-400",
-                                                    }),
-                                                }} defaultItemClassName="text-green-800" onDefaultItemClick={handleNavigateToLogin} 
-                                                action={<AnimatedButton icon={Icons.Logout} label="Logout" onClick={handleMenuLogout} /> }/>
-                                        }
-                                    </div>
+                        <div className="flex flex-col">
+                            <div className="flex flex-col mb-[10vh] gap-4 ml-4">
+                                <div className={classNames("flex gap-2 items-center", {
+                                    "hidden": collapsed,
+                                })}>
+                                    <div className="text-sm text-gray-600 dark:text-neutral-300 mr-2.5">Profile:</div>
                                     {
-                                        data != null &&
-                                        <div className={classNames("flex gap-2 items-center w-full", {
-                                            "hidden": pathname === InternalRoutes.RawExecute.path || collapsed || DATABASES_THAT_DONT_SUPPORT_SCHEMA.includes(current?.Type as DatabaseType),
-                                        })}>
-                                            <div className="text-sm text-gray-600 dark:text-neutral-300">Schema:</div>
-                                            <Dropdown className="w-[140px]" value={{ id: schema, label: schema }} items={data.Schema.map(schema => ({ id: schema, label: schema }))} onChange={handleSchemaChange}
-                                                noItemsLabel="No schema found"/>
-                                        </div>
+                                        current != null &&
+                                        <Dropdown className="w-[140px]" items={loginItems} value={currentProfile} onChange={handleProfileChange}
+                                            defaultItem={{
+                                                label: "Add another profile",
+                                                icon: cloneElement(Icons.Add, {
+                                                    className: "w-6 h-6 stroke-green-800 dark:stroke-green-400",
+                                                }),
+                                            }} defaultItemClassName="text-green-800" onDefaultItemClick={handleNavigateToLogin} 
+                                            action={<AnimatedButton icon={Icons.Logout} label="Logout" onClick={handleMenuLogout} /> }/>
                                     }
                                 </div>
-                                {routes}
+                                {
+                                    data != null &&
+                                    <div className={classNames("flex gap-2 items-center w-full", {
+                                        "hidden": pathname === InternalRoutes.RawExecute.path || collapsed || DATABASES_THAT_DONT_SUPPORT_SCHEMA.includes(current?.Type as DatabaseType),
+                                    })}>
+                                        <div className="text-sm text-gray-600 dark:text-neutral-300">Schema:</div>
+                                        <Dropdown className="w-[140px]" value={{ id: schema, label: schema }} items={data.Schema.map(schema => ({ id: schema, label: schema }))} onChange={handleSchemaChange}
+                                            noItemsLabel="No schema found"/>
+                                    </div>
+                                }
                             </div>
-                            <div className="grow" />
-                            <div className="flex flex-col gap-8">
-                                <SideMenu collapse={collapsed} title="Logout" icon={Icons.Logout} path={InternalRoutes.Logout.path} />
-                            </div>
-                        </AnimatePresence>
+                            {routes}
+                        </div>
+                        <div className="grow" />
+                        <div className="flex flex-col gap-8">
+                            <SideMenu collapse={collapsed} title="Logout" icon={Icons.Logout} path={InternalRoutes.Logout.path} />
+                        </div>
                     </div>
             }
         </div>

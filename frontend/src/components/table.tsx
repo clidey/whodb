@@ -174,7 +174,11 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, disableEdit }) => {
         setEditedData(cell.value);
     }, [cell.value]);
 
-    return <div ref={cellRef} {...cell.getCellProps()}
+    const props = useMemo(() => {
+        return cell.getCellProps();
+    }, [cell]);
+
+    return <div ref={cellRef} {...props} key={props.key}
         className={classNames("relative group/data cursor-pointer transition-all text-xs table-cell border-t border-l last:border-r group-last/row:border-b group-last/row:first:rounded-bl-lg group-last/row:last:rounded-br-lg border-gray-200 dark:border-white/5 p-0", {
             "bg-gray-200 dark:bg-white/10 blur-[2px]": editable || preview,
         })}
@@ -293,8 +297,12 @@ const TableRow: FC<ITableRow> = ({ row, style, onRowUpdate, disableEdit }) => {
         return onRowUpdate?.(updatedRow);
     }, [onRowUpdate, row.cells]);
 
+    const props = useMemo(() => {
+        return row.getRowProps({ style });
+    }, [row, style]);
+
     return (
-        <div className="table-row-group text-xs group/row" {...row.getRowProps({ style })}>
+        <div className="table-row-group text-xs group/row" {...props} key={props.key}>
             {
                 row.cells.map((cell) => (
                     <TData key={cell.getCellProps().key} cell={cell} onCellUpdate={handleCellUpdate} disableEdit={disableEdit} />
@@ -329,10 +337,8 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
     const [data, setData] = useState<Record<string, string>[]>([]);
 
     const columns = useMemo(() => {
-        let colWidth = 150;
-        if (actualColumns.length === 1) {
-            colWidth = width - 50;
-        }
+        const indexWidth = 50;
+        const colWidth = Math.max(((width - indexWidth)/actualColumns.length), 150);
         const cols = actualColumns.map(col => ({
             id: col,
             Header: col,
@@ -343,7 +349,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
             id: "#",
             Header: "#",
             accessor: "#",
-            width: 50,
+            width: indexWidth,
         });
         return cols;
     }, [actualColumns, width]);
@@ -511,15 +517,15 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                     <AnimatedButton icon={Icons.Download} label="Export" type="lg" onClick={exportToCSV} />
                 </div>
             </div>
-            <div className={twMerge(classNames("flex flex-col items-center gap-4 overflow-x-auto h-full", className))} style={{
+            <div className={twMerge(classNames("flex overflow-x-auto h-full", className))} style={{
                 width,
             }}>
-                <div className="table border-separate border-spacing-0 h-fit" ref={tableRef} {...getTableProps()}>
+                <div className="border-separate border-spacing-0 h-fit" ref={tableRef} {...getTableProps()}>
                     <div>
                         {headerGroups.map(headerGroup => (
-                            <div {...headerGroup.getHeaderGroupProps()} className="table-header-group">
+                            <div {...headerGroup.getHeaderGroupProps()} key={headerGroup.getHeaderGroupProps().key}>
                                 {headerGroup.headers.map((column, i) => (
-                                    <div {...column.getHeaderProps()} className="text-xs border-t border-l last:border-r border-gray-200 dark:border-white/5 p-2 text-left bg-gray-500 dark:bg-white/20 text-white first:rounded-tl-lg last:rounded-tr-lg relative group/header cursor-pointer select-none"
+                                    <div {...column.getHeaderProps()} key={column.getHeaderProps().key} className="text-xs border-t border-l last:border-r border-gray-200 dark:border-white/5 p-2 text-left bg-gray-500 dark:bg-white/20 text-white first:rounded-tl-lg last:rounded-tr-lg relative group/header cursor-pointer select-none"
                                         onClick={() => handleSort(column.id)}>
                                         {column.render('Header')} {i > 0 && columnTags?.[i-1] != null && columnTags?.[i-1].length > 0 && <span className="text-[11px]">[{columnTags?.[i-1]}]</span>}
                                         <div className={twMerge(classNames("transition-all absolute top-2 right-2 opacity-0", {

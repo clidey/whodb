@@ -15,6 +15,11 @@ const persistedReducer = combineReducers({
 
 export const reduxStore = configureStore({
   reducer: persistedReducer,
+  middleware: (getDefaultMiddleware) => {
+    return getDefaultMiddleware({
+      serializableCheck: false,
+    });
+  },
 });
 
 export const reduxStorePersistor = persistStore(reduxStore);
