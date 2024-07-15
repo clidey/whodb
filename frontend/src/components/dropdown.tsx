@@ -44,7 +44,7 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
     }, []);
 
     return (
-        <button className={classNames("relative", props.className)} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+        <div className={classNames("relative", props.className)} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
             {props.loading ? <Loading hideText={true} /> : 
             <>  <div className="flex justify-between items-center border border-gray-200 rounded-lg w-full p-1 h-[34px] px-2 dark:bg-white/10 dark:border-white/20">
                     <div className="flex gap-1 text-gray-700 text-sm truncate items-center dark:text-neutral-300">
@@ -94,7 +94,7 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
                     </ul>
                 </div>
             </>}
-        </button>
+        </div>
     )
 }
 

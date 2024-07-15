@@ -39,6 +39,7 @@ export const ExploreStorageUnit: FC = () => {
             onCompleted() {
                 setPageSize(bufferPageSize);
             },
+            fetchPolicy: "no-cache",
         });
     }, [getStorageUnitRows, current?.Type, schema, unit.Name, whereCondition, bufferPageSize, currentPage]);
 

@@ -43,7 +43,7 @@ const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
                 <div className="text-md font-semibold mb-2 break-words dark:text-neutral-100">{unit.Name}</div>
                 {
                     introAttributes.slice(0,2).map(attribute => (
-                        <div className="text-sm dark:text-neutral-300">{attribute.Key}: {attribute.Value}</div>
+                        <div key={attribute.Key} className="text-sm dark:text-neutral-300">{attribute.Key}: {attribute.Value}</div>
                     ))
                 }
             </div>
@@ -58,14 +58,14 @@ const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
                     <div className="text-md font-semibold mb-2 dark:text-neutral-100">{unit.Name}</div>
                     {
                         introAttributes.map(attribute => (
-                            <div className="text-xs dark:text-neutral-300"><span className="font-semibold">{attribute.Key}:</span> {attribute.Value}</div>
+                            <div key={attribute.Key} className="text-xs dark:text-neutral-300"><span className="font-semibold">{attribute.Key}:</span> {attribute.Value}</div>
                         ))
                     }
                 </div>
                 <div className="flex flex-col grow mt-6">
                     {
                         expandedAttributes.map(attribute => (
-                            <div className="text-xs dark:text-neutral-300"><span className="font-semibold">{attribute.Key}:</span> {attribute.Value}</div>
+                            <div key={attribute.Key} className="text-xs dark:text-neutral-300"><span className="font-semibold">{attribute.Key}:</span> {attribute.Value}</div>
                         ))
                     }
                 </div>
@@ -114,7 +114,7 @@ export const StorageUnitPage: FC = () => {
                 data.StorageUnit.length === 0
                 ? <EmptyMessage icon={Icons.SadSmile} label={`No ${getDatabaseStorageUnitLabel(current?.Type)} found`} />
                 : data.StorageUnit.map(unit => (
-                    <StorageUnitCard unit={unit} />
+                    <StorageUnitCard key={unit.Name} unit={unit} />
                 ))
             )
         }
@@ -153,7 +153,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data })
                         <div className="text-md font-semibold mb-2 break-words dark:text-neutral-300">{data.Name}</div>
                         {
                             data.Attributes.slice(0, 5).map(attribute => (
-                                <div className="text-xs dark:text-neutral-300"><span className="font-semibold">{attribute.Key}:</span> {attribute.Value}</div>
+                                <div key={attribute.Key} className="text-xs dark:text-neutral-300"><span className="font-semibold">{attribute.Key}:</span> {attribute.Value}</div>
                             ))
                         }
                     </div>

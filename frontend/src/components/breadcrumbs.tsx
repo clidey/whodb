@@ -18,7 +18,7 @@ export const Breadcrumb: FC<IBreadcrumbProps> = ({ routes, active }) => {
             <ol className="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
                 {
                     routes.map((route, i) => (
-                        <li>
+                        <li key={route.name}>
                             <div className="flex items-center transition-all gap-2 hover:gap-3 group/breadcrumb dark:text-neutral-300">
                                 {i > 0 && Icons.RightChevron}
                                 <div onClick={() => handleNavigate(route.path)} className={classNames("cursor-pointer text-sm font-medium text-gray-700 hover:text-teal-500 flex items-center gap-2 hover:gap-3 transition-all dark:text-neutral-300", {
