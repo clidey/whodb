@@ -79,7 +79,7 @@ export const LoginPage: FC = () => {
     const [showAdvanced, setShowAdvanced] = useState(false);
 
     const handleSubmit = useCallback(() => {
-        if (([DatabaseType.MySql, DatabaseType.Postgres].includes(databaseType.id as DatabaseType) && (hostName.length === 0 || database.length === 0 || username.length === 0 || password.length === 0))
+        if (([DatabaseType.MySql, DatabaseType.Postgres].includes(databaseType.id as DatabaseType) && (hostName.length === 0 || database.length === 0 || username.length === 0))
             || (databaseType.id === DatabaseType.Sqlite3 && database.length === 0)
             || (databaseType.id === DatabaseType.MongoDb && (hostName.length === 0 || username.length === 0))
             || (databaseType.id === DatabaseType.Redis && (hostName.length === 0))) {
