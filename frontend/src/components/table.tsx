@@ -409,7 +409,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
     }, [rows]);
 
     const handleKeyUp = useCallback((e: KeyboardEvent<HTMLInputElement>) => {
-        if (tableRef.current == null) {
+        if (tableRef.current == null || search.length === 0) {
             return;
         }
         let interval: NodeJS.Timeout;

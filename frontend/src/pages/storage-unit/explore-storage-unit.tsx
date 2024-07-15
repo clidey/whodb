@@ -1,7 +1,7 @@
 import { FetchResult } from "@apollo/client";
 import { entries, map } from "lodash";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { AnimatedButton } from "../../components/button";
 import { Icons } from "../../components/icons";
 import { InputWithlabel } from "../../components/input";
@@ -23,15 +23,20 @@ export const ExploreStorageUnit: FC = () => {
     const unit: StorageUnit = useLocation().state?.unit;
     const schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
+    const navigate = useNavigate();
 
     const [getStorageUnitRows, { data: rows, loading }] = useGetStorageUnitRowsLazyQuery();
+
+    const unitName = useMemo(() => {
+        return unit?.Name;
+    }, [unit]);
 
     const handleSubmitRequest = useCallback(() => {
         getStorageUnitRows({
             variables: {
                 type: current?.Type as DatabaseType,
                 schema,
-                storageUnit: unit.Name,
+                storageUnit: unitName,
                 where: whereCondition,
                 pageSize: Number.parseInt(bufferPageSize),
                 pageOffset: currentPage,
@@ -41,7 +46,7 @@ export const ExploreStorageUnit: FC = () => {
             },
             fetchPolicy: "no-cache",
         });
-    }, [getStorageUnitRows, current?.Type, schema, unit.Name, whereCondition, bufferPageSize, currentPage]);
+    }, [getStorageUnitRows, current?.Type, schema, unitName, whereCondition, bufferPageSize, currentPage]);
 
     const handlePageChange = useCallback((page: number) => {
         setCurrentPage(page-1);
@@ -49,13 +54,13 @@ export const ExploreStorageUnit: FC = () => {
             variables: {
                 type: current?.Type as DatabaseType,
                 schema,
-                storageUnit: unit.Name,
+                storageUnit: unitName,
                 where: whereCondition,
                 pageSize: Number.parseInt(bufferPageSize),
                 pageOffset: currentPage,
             }
         });
-    }, [current?.Type, currentPage, getStorageUnitRows, bufferPageSize, schema, unit.Name, whereCondition]);
+    }, [getStorageUnitRows, current?.Type, schema, unitName, whereCondition, bufferPageSize, currentPage]);
 
     const handleQuery = useCallback(() => {
         handleSubmitRequest();
@@ -78,7 +83,7 @@ export const ExploreStorageUnit: FC = () => {
                     mutation: UpdateStorageUnitDocument,
                     variables: {
                         schema,
-                        storageUnit: unit.Name,
+                        storageUnit: unitName,
                         type: current.Type as DatabaseType,
                         values,
                     },
@@ -93,7 +98,7 @@ export const ExploreStorageUnit: FC = () => {
             }
             return rej();
         });
-    }, [current, schema, unit.Name]);
+    }, [current, schema, unitName]);
 
     const totalCount = useMemo(() => {
         return unit?.Attributes.find(attribute => attribute.Key === "Count")?.Value ?? "unknown";
@@ -122,6 +127,12 @@ export const ExploreStorageUnit: FC = () => {
         ];
     }, [current]);
 
+    useEffect(() => {
+        if (unitName == null) {
+            navigate(InternalRoutes.Dashboard.StorageUnit.path);
+        }
+    }, [navigate, unitName]);
+
     if (unit == null) {
         return <Navigate to={InternalRoutes.Dashboard.StorageUnit.path} />
     }
@@ -136,7 +147,7 @@ export const ExploreStorageUnit: FC = () => {
         <div className="flex flex-col grow gap-4 h-[calc(100%-100px)]">
             <div className="flex items-center justify-between">
                 <div className="flex gap-2 items-center">
-                    <div className="text-xl font-bold mr-4 dark:text-neutral-300">{unit.Name}</div>
+                    <div className="text-xl font-bold mr-4 dark:text-neutral-300">{unitName}</div>
                 </div>
                 <div className="text-sm mr-4 dark:text-neutral-300"><span className="font-semibold">Total Count:</span> {totalCount}</div>
             </div>
