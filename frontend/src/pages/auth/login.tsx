@@ -45,7 +45,7 @@ const databaseTypeDropdownItems: IDropdownItem<Record<string, string>>[] = [
         id: "MongoDB",
         label: "MongoDB",
         icon: Icons.Logos.MongoDB,
-        extra: {"Port": "27017", "URL Params [starts with ?]": "?"},
+        extra: {"Port": "27017", "URL Params": "?"},
     },
     {
         id: "Redis",
@@ -159,6 +159,21 @@ export const LoginPage: FC = () => {
         }
     }, [searchParams]);
 
+    const handleHoseNameChange = useCallback((newHostName: string) => {
+        if (databaseType.id !== DatabaseType.MongoDb || !newHostName.startsWith("mongodb+srv://")) {
+            return setHostName(newHostName);
+        }
+        const url = new URL(newHostName);
+        setHostName(url.hostname);
+        setUsername(url.username);
+        setPassword(url.password);
+        setDatabase(url.pathname.substring(1));
+        setAdvancedForm({ "Port": url.port, "URL Params": `?${url.searchParams.toString()}` });
+        if (url.port != null || url.searchParams.size !== 0) {
+            setShowAdvanced(true);
+        }
+    }, [databaseType.id]);
+
     const fields = useMemo(() => {
         if (databaseType.id === DatabaseType.Sqlite3) {
             return <>
@@ -174,19 +189,19 @@ export const LoginPage: FC = () => {
             </>
         }
         return <>
-            <InputWithlabel label="Host Name" value={hostName} setValue={setHostName} />
+            <InputWithlabel label={databaseType.id === DatabaseType.MongoDb ? "Host Name (or paste Connection URL)" : "Host Name"} value={hostName} setValue={handleHoseNameChange} />
             { databaseType.id !== DatabaseType.Redis && <InputWithlabel label="Username" value={username} setValue={setUsername} /> }
             <InputWithlabel label="Password" value={password} setValue={setPassword} type="password" />
             { (databaseType.id !== DatabaseType.MongoDb && databaseType.id !== DatabaseType.Redis && databaseType.id !== DatabaseType.ElasticSearch)  && <InputWithlabel label="Database" value={database} setValue={setDatabase} /> }
         </>
-    }, [database, databaseType.id, databasesLoading, foundDatabases?.Database, hostName, password, username]);
+    }, [database, databaseType.id, databasesLoading, foundDatabases?.Database, handleHoseNameChange, hostName, password, username]);
 
     if (loading)  {
         return (
             <Page className="justify-center items-center">
                 <div className={twMerge(BASE_CARD_CLASS, "w-[350px] h-fit flex-col gap-4 justify-center py-16")}>
                     <Loading hideText={true} />
-                    <div className="text-gray-600 text-center">
+                    <div className="text-neutral-800 text-center dark:text-neutral-300">
                         Logging in
                     </div>
                 </div>
