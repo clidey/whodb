@@ -168,7 +168,7 @@ export const LoginPage: FC = () => {
         setUsername(url.username);
         setPassword(url.password);
         setDatabase(url.pathname.substring(1));
-        setAdvancedForm({ "Port": url.port, "URL Params": `?${url.searchParams.toString()}` });
+        setAdvancedForm({ "Port": url.port.length > 0 ? url.port : "80", "URL Params": `?${url.searchParams.toString()}` });
         if (url.port != null || url.searchParams.size !== 0) {
             setShowAdvanced(true);
         }
