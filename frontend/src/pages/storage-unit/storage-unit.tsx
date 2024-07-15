@@ -39,11 +39,11 @@ const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
         component: Icons.Tables,
     }}>
         <div className="flex flex-col grow mt-2">
-            <div className="flex flex-col grow">
-                <div className="text-md font-semibold mb-2 break-words dark:text-neutral-100">{unit.Name}</div>
+            <div className="flex flex-col grow mb-2">
+                <div className="text-sm font-semibold mb-2 break-words dark:text-neutral-100">{unit.Name}</div>
                 {
                     introAttributes.slice(0,2).map(attribute => (
-                        <div key={attribute.Key} className="text-sm dark:text-neutral-300">{attribute.Key}: {attribute.Value}</div>
+                        <div key={attribute.Key} className="text-xs dark:text-neutral-300">{attribute.Key}: {attribute.Value}</div>
                     ))
                 }
             </div>

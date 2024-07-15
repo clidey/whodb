@@ -217,10 +217,10 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, disableEdit }) => {
                                 transform: "unset",
                             }}
                             animate={{
-                                top: preview ? "25vh" : "35vh",
-                                left: "25vw",
-                                height: preview ? "50vh" : "30vh",
-                                width: "50vw",
+                                top: "20vh",
+                                left: "20vw",
+                                height: "60vh",
+                                width: "60vw",
                             }}
                             exit={{
                                 top: cellRect.top,
