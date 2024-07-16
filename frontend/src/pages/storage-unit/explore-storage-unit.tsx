@@ -1,5 +1,5 @@
 import { FetchResult } from "@apollo/client";
-import { entries, map } from "lodash";
+import { entries, keys, map } from "lodash";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { AnimatedButton } from "../../components/button";
@@ -14,6 +14,7 @@ import { DatabaseType, StorageUnit, UpdateStorageUnitDocument, UpdateStorageUnit
 import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
 import { getDatabaseStorageUnitLabel, isNumeric } from "../../utils/functions";
+import { ExploreStorageUnitWhereCondition, IExploreStorageUnitWhereConditionFilter } from "./explore-storage-unit-where-condition";
 
 export const ExploreStorageUnit: FC = () => {
     const [bufferPageSize, setBufferPageSize] = useState("10");
@@ -126,12 +127,86 @@ export const ExploreStorageUnit: FC = () => {
             InternalRoutes.Dashboard.ExploreStorageUnit
         ];
     }, [current]);
+    
+    const columns = useMemo(() => {
+        const dataColumns = rows?.Row.Columns.map(c => c.Name) ?? [];
+        if (dataColumns.length !== 1 || dataColumns[0] !== "document") {
+            return dataColumns;
+        }
+        const firstRow = rows?.Row.Rows?.[0];
+        if (firstRow == null) {
+            return dataColumns;
+        }
+        return keys(JSON.parse(firstRow[0]));
+    }, [rows?.Row.Columns, rows?.Row.Rows]);
 
     useEffect(() => {
         if (unitName == null) {
             navigate(InternalRoutes.Dashboard.StorageUnit.path);
         }
     }, [navigate, unitName]);
+    const handleFilterChange = useCallback((filters: IExploreStorageUnitWhereConditionFilter[]) => {
+        if (!current?.Type) {
+            return;
+        }
+    
+        const databaseType = current.Type;
+        let whereClause = "";
+    
+        switch (databaseType) {
+            case DatabaseType.Postgres:
+            case DatabaseType.MySql:
+            case DatabaseType.Sqlite3:
+            case DatabaseType.MariaDb:
+                whereClause = filters.map(filter => `${filter.field} ${filter.operator} '${filter.value}'`).join(' AND ');
+                break;
+            case DatabaseType.ElasticSearch:
+                const elasticSearchConditions: Record<string, Record<string, any>> = {};
+                filters.forEach(filter => {
+                    elasticSearchConditions[filter.field] = { [filter.operator]: filter.value };
+                });
+                whereClause = JSON.stringify({ query: { bool: { must: Object.values(elasticSearchConditions) } } });
+                break;
+            case DatabaseType.MongoDb:
+                const mongoDbConditions: Record<string, Record<string, any>> = {};
+                filters.forEach(filter => {
+                    mongoDbConditions[filter.field] = { [filter.operator]: filter.value };
+                });
+                whereClause = JSON.stringify(mongoDbConditions);
+                break;
+            default:
+                throw new Error(`Unsupported database type: ${databaseType}`);
+        }
+        
+        setWhereCondition(whereClause);
+    }, [current?.Type]);
+
+    const validOperators = useMemo(() => {
+        if (!current?.Type) {
+            return [];
+        }
+    
+        switch (current.Type) {
+            case DatabaseType.Postgres:
+            case DatabaseType.MySql:
+            case DatabaseType.Sqlite3:
+            case DatabaseType.MariaDb:
+                return ["=", ">=", ">", "<=", "<"];
+            case DatabaseType.ElasticSearch:
+                return [
+                    "match", "match_phrase", "match_phrase_prefix", "multi_match", "bool", 
+                    "term", "terms", "range", "exists", "prefix", "wildcard", "regexp", 
+                    "fuzzy", "ids", "constant_score", "function_score", "dis_max", "nested", 
+                    "has_child", "has_parent"
+                ];
+            case DatabaseType.MongoDb:
+                return ["eq", "ne", "gt", "gte", "lt", "lte", "in", "nin", "and", "or", 
+                        "not", "nor", "exists", "type", "regex", "expr", "mod", "all", 
+                        "elemMatch", "size", "bitsAllClear", "bitsAllSet", "bitsAnyClear", 
+                        "bitsAnySet", "geoIntersects", "geoWithin", "near", "nearSphere"];
+        }
+        return [];
+    }, [current?.Type]);
 
     if (unit == null) {
         return <Navigate to={InternalRoutes.Dashboard.StorageUnit.path} />
@@ -151,10 +226,10 @@ export const ExploreStorageUnit: FC = () => {
                 </div>
                 <div className="text-sm mr-4 dark:text-neutral-300"><span className="font-semibold">Total Count:</span> {totalCount}</div>
             </div>
-            <div className="flex gap-2 items-end">
+            <div className="flex gap-2">
                 <InputWithlabel label="Page Size" value={bufferPageSize} setValue={setBufferPageSize} />
-                <InputWithlabel label="Where Condition" value={whereCondition} setValue={setWhereCondition} />
-                <AnimatedButton type="lg" icon={Icons.CheckCircle} label="Query" onClick={handleQuery} />
+                { current?.Type !== DatabaseType.Redis && <ExploreStorageUnitWhereCondition options={columns} operators={validOperators} onChange={handleFilterChange} /> }
+                <AnimatedButton className="mt-5" type="lg" icon={Icons.CheckCircle} label="Query" onClick={handleQuery} />
             </div>
             <div className="grow">
                 {

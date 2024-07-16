@@ -71,6 +71,7 @@ func (p *MongoDBPlugin) GetStorageUnits(config *engine.PluginConfig, database st
 	}
 	return storageUnits, nil
 }
+
 func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collection, filter string, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	client, err := DB(config)
 	if err != nil {
