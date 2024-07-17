@@ -14,9 +14,9 @@ func DB(config *engine.PluginConfig) (*mongo.Client, error) {
 	ctx := context.Background()
 	port := common.GetRecordValueOrDefault(config.Credentials.Advanced, "Port", "27017")
 	queryParams := common.GetRecordValueOrDefault(config.Credentials.Advanced, "URL Params", "")
+	dnsEnabled := common.GetRecordValueOrDefault(config.Credentials.Advanced, "DNS Enabled", "false")
 	var connectionString string
-	// TODO: add TLS enabled logic to work instead of hard coded domains
-	if config.Credentials.Hostname == "localhost" || config.Credentials.Hostname == "host.docker.internal" {
+	if dnsEnabled == "false" {
 		connectionString = fmt.Sprintf("mongodb://%s:%s@%s:%s/%s%s",
 			config.Credentials.Username,
 			config.Credentials.Password,
