@@ -194,7 +194,11 @@ export const ExploreStorageUnit: FC = () => {
             case DatabaseType.MySql:
             case DatabaseType.Sqlite3:
             case DatabaseType.MariaDb:
-                return ["=", ">=", ">", "<=", "<"];
+                return [
+                    "=", ">=", ">", "<=", "<", "<>", "!=", "!>", "!<", "BETWEEN", "NOT BETWEEN", 
+                    "LIKE", "NOT LIKE", "IN", "NOT IN", "IS NULL", "IS NOT NULL", "AND", "OR", 
+                    "NOT"
+                ];
             case DatabaseType.ElasticSearch:
                 return [
                     "match", "match_phrase", "match_phrase_prefix", "multi_match", "bool", 
