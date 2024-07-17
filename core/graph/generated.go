@@ -63,6 +63,8 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
+		AddRow            func(childComplexity int, typeArg model.DatabaseType, schema string, storageUnit string, values []*model.RecordInput) int
+		AddStorageUnit    func(childComplexity int, typeArg model.DatabaseType, schema string, storageUnit string, fields []*model.RecordInput) int
 		Login             func(childComplexity int, credentials model.LoginCredentials) int
 		Logout            func(childComplexity int) int
 		UpdateStorageUnit func(childComplexity int, typeArg model.DatabaseType, schema string, storageUnit string, values []*model.RecordInput) int
@@ -101,7 +103,9 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	Login(ctx context.Context, credentials model.LoginCredentials) (*model.StatusResponse, error)
 	Logout(ctx context.Context) (*model.StatusResponse, error)
+	AddStorageUnit(ctx context.Context, typeArg model.DatabaseType, schema string, storageUnit string, fields []*model.RecordInput) (*model.StatusResponse, error)
 	UpdateStorageUnit(ctx context.Context, typeArg model.DatabaseType, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
+	AddRow(ctx context.Context, typeArg model.DatabaseType, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
 }
 type QueryResolver interface {
 	Database(ctx context.Context, typeArg model.DatabaseType) ([]string, error)
@@ -172,6 +176,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.GraphUnitRelationship.Relationship(childComplexity), true
+
+	case "Mutation.AddRow":
+		if e.complexity.Mutation.AddRow == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_AddRow_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AddRow(childComplexity, args["type"].(model.DatabaseType), args["schema"].(string), args["storageUnit"].(string), args["values"].([]*model.RecordInput)), true
+
+	case "Mutation.AddStorageUnit":
+		if e.complexity.Mutation.AddStorageUnit == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_AddStorageUnit_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AddStorageUnit(childComplexity, args["type"].(model.DatabaseType), args["schema"].(string), args["storageUnit"].(string), args["fields"].([]*model.RecordInput)), true
 
 	case "Mutation.Login":
 		if e.complexity.Mutation.Login == nil {
@@ -457,6 +485,90 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutation_AddRow_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.DatabaseType
+	if tmp, ok := rawArgs["type"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+		arg0, err = ec.unmarshalNDatabaseType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDatabaseType(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["type"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["schema"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("schema"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["schema"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["storageUnit"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageUnit"))
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["storageUnit"] = arg2
+	var arg3 []*model.RecordInput
+	if tmp, ok := rawArgs["values"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("values"))
+		arg3, err = ec.unmarshalNRecordInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordInputᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["values"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_AddStorageUnit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.DatabaseType
+	if tmp, ok := rawArgs["type"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+		arg0, err = ec.unmarshalNDatabaseType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDatabaseType(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["type"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["schema"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("schema"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["schema"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["storageUnit"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageUnit"))
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["storageUnit"] = arg2
+	var arg3 []*model.RecordInput
+	if tmp, ok := rawArgs["fields"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fields"))
+		arg3, err = ec.unmarshalNRecordInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordInputᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["fields"] = arg3
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_Login_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -1113,6 +1225,65 @@ func (ec *executionContext) fieldContext_Mutation_Logout(_ context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_AddStorageUnit(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_AddStorageUnit(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().AddStorageUnit(rctx, fc.Args["type"].(model.DatabaseType), fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["fields"].([]*model.RecordInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.StatusResponse)
+	fc.Result = res
+	return ec.marshalNStatusResponse2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐStatusResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_AddStorageUnit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "Status":
+				return ec.fieldContext_StatusResponse_Status(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type StatusResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_AddStorageUnit_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_UpdateStorageUnit(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_UpdateStorageUnit(ctx, field)
 	if err != nil {
@@ -1166,6 +1337,65 @@ func (ec *executionContext) fieldContext_Mutation_UpdateStorageUnit(ctx context.
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_UpdateStorageUnit_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_AddRow(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_AddRow(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().AddRow(rctx, fc.Args["type"].(model.DatabaseType), fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["values"].([]*model.RecordInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.StatusResponse)
+	fc.Result = res
+	return ec.marshalNStatusResponse2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐStatusResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_AddRow(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "Status":
+				return ec.fieldContext_StatusResponse_Status(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type StatusResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_AddRow_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -4065,9 +4295,23 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "AddStorageUnit":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_AddStorageUnit(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "UpdateStorageUnit":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_UpdateStorageUnit(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "AddRow":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_AddRow(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

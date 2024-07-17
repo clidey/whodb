@@ -83,5 +83,7 @@ type Mutation {
   Login(credentials: LoginCredentials!): StatusResponse!
   Logout: StatusResponse!
 
+  AddStorageUnit(type: DatabaseType!, schema: String!, storageUnit: String!, fields: [RecordInput!]!): StatusResponse!
   UpdateStorageUnit(type: DatabaseType!, schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
+  AddRow(type: DatabaseType!, schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
 }

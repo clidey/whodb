@@ -42,6 +42,22 @@ func (r *mutationResolver) Logout(ctx context.Context) (*model.StatusResponse, e
 	return auth.Logout(ctx)
 }
 
+// AddStorageUnit is the resolver for the AddStorageUnit field.
+func (r *mutationResolver) AddStorageUnit(ctx context.Context, typeArg model.DatabaseType, schema string, storageUnit string, fields []*model.RecordInput) (*model.StatusResponse, error) {
+	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	fieldsMap := map[string]string{}
+	for _, field := range fields {
+		fieldsMap[field.Key] = field.Value
+	}
+	status, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).AddStorageUnit(config, schema, storageUnit, fieldsMap)
+	if err != nil {
+		return nil, err
+	}
+	return &model.StatusResponse{
+		Status: status,
+	}, nil
+}
+
 // UpdateStorageUnit is the resolver for the UpdateStorageUnit field.
 func (r *mutationResolver) UpdateStorageUnit(ctx context.Context, typeArg model.DatabaseType, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
@@ -50,6 +66,22 @@ func (r *mutationResolver) UpdateStorageUnit(ctx context.Context, typeArg model.
 		valuesMap[value.Key] = value.Value
 	}
 	status, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).UpdateStorageUnit(config, schema, storageUnit, valuesMap)
+	if err != nil {
+		return nil, err
+	}
+	return &model.StatusResponse{
+		Status: status,
+	}, nil
+}
+
+// AddRow is the resolver for the AddRow field.
+func (r *mutationResolver) AddRow(ctx context.Context, typeArg model.DatabaseType, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error) {
+	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	valuesMap := map[string]string{}
+	for _, value := range values {
+		valuesMap[value.Key] = value.Value
+	}
+	status, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).AddRow(config, schema, storageUnit, valuesMap)
 	if err != nil {
 		return nil, err
 	}
