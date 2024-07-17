@@ -107,7 +107,7 @@ export const StorageUnitPage: FC = () => {
 
     return <InternalPage routes={routes}>
         <div className="flex w-full h-fit my-2 gap-2">
-            <AnimatedButton icon={Icons.Console} label="Raw Query" onClick={() => navigate(InternalRoutes.RawExecute.path)} type="lg" />
+            <AnimatedButton icon={Icons.Console} label="Scratchpad" onClick={() => navigate(InternalRoutes.RawExecute.path)} type="lg" />
         </div>
         {
             data != null && (

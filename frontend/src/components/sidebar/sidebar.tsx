@@ -231,7 +231,7 @@ export const Sidebar: FC = () => {
             onError(error) {
                 notify(`Error signing you in: ${error.message}`, "error")
             },
-        })
+        });
     }, [dispatch, login, navigate, profiles]);
 
     const handleNavigateToLogin = useCallback(() => {

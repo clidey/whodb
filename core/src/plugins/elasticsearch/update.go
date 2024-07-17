@@ -10,10 +10,16 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 )
 
-type JsonSourceMap struct {
-	Id     string          `json:"_id"`
-	Source json.RawMessage `json:"source"`
+var script = `
+for (entry in params.entrySet()) {
+	ctx._source[entry.getKey()] = entry.getValue();
 }
+for (key in ctx._source.keySet().toArray()) {
+	if (!params.containsKey(key)) {
+		ctx._source.remove(key);
+	}
+}
+`
 
 func (p *ElasticSearchPlugin) UpdateStorageUnit(config *engine.PluginConfig, database string, storageUnit string, values map[string]string) (bool, error) {
 	client, err := DB(config)
@@ -26,34 +32,24 @@ func (p *ElasticSearchPlugin) UpdateStorageUnit(config *engine.PluginConfig, dat
 		return false, errors.New("missing 'document' key in values map")
 	}
 
-	jsonSourceMap := &JsonSourceMap{}
-	if err := json.Unmarshal([]byte(documentJSON), jsonSourceMap); err != nil {
-		return false, errors.New("source is not correctly formatted")
-	}
-
 	var jsonValues map[string]interface{}
-	if err := json.Unmarshal(jsonSourceMap.Source, &jsonValues); err != nil {
+	if err := json.Unmarshal([]byte(documentJSON), &jsonValues); err != nil {
 		return false, err
 	}
 
-	script := `
-		for (entry in params.entrySet()) {
-			ctx._source[entry.getKey()] = entry.getValue();
-		}
-		for (key in ctx._source.keySet().toArray()) {
-			if (!params.containsKey(key)) {
-				ctx._source.remove(key);
-			}
-		}
-	`
-	params := jsonValues
+	id, ok := jsonValues["_id"]
+	if !ok {
+		return false, errors.New("missing '_id' field in the document")
+	}
+
+	delete(jsonValues, "_id")
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(map[string]interface{}{
 		"script": map[string]interface{}{
 			"source": script,
 			"lang":   "painless",
-			"params": params,
+			"params": jsonValues,
 		},
 		"upsert": jsonValues,
 	}); err != nil {
@@ -62,7 +58,7 @@ func (p *ElasticSearchPlugin) UpdateStorageUnit(config *engine.PluginConfig, dat
 
 	res, err := client.Update(
 		storageUnit,
-		jsonSourceMap.Id,
+		id.(string),
 		&buf,
 		client.Update.WithContext(context.Background()),
 		client.Update.WithRefresh("true"),

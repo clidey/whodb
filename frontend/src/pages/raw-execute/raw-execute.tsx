@@ -10,14 +10,16 @@ import { Table } from "../../components/table";
 import { InternalRoutes } from "../../config/routes";
 import { DatabaseType, useRawExecuteLazyQuery } from "../../generated/graphql";
 import { useAppSelector } from "../../store/hooks";
+import classNames from "classnames";
 
 type IRawExecuteCellProps = {
     cellId: string;
     onAdd: (cellId: string) => void;
     onDelete?: (cellId: string) => void;
+    showTools?: boolean;
 }
 
-const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete }) => {
+const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, showTools }) => {
     const [code, setCode] = useState("");
     const [rawExecute, { data: rows, loading, error }] = useRawExecuteLazyQuery();
 
@@ -50,7 +52,9 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete }) =
                         : <CodeEditor language="sql" value={code} setValue={setCode} onRun={handleRawExecute} />
                     }
                 </div>
-                <div className="absolute -bottom-3 z-20 flex justify-between px-3 pr-8 w-full opacity-0 transition-all duration-500 group-hover/cell:opacity-100">
+                <div className={classNames("absolute -bottom-3 z-20 flex justify-between px-3 pr-8 w-full opacity-0 transition-all duration-500 group-hover/cell:opacity-100", {
+                    "opacity-100": showTools,
+                })}>
                     <div className="flex gap-2">
                         <AnimatedButton icon={Icons.PlusCircle} label="Add" onClick={handleAdd} />
                         {
@@ -102,7 +106,8 @@ export const RawExecutePage: FC = () => {
                         cellIds.map((cellId, index) => (
                             <>
                                 {index > 0 && <div className="border-dashed border-t border-gray-300 my-2 dark:border-neutral-600"></div>}
-                                <RawExecuteCell key={cellId} cellId={cellId} onAdd={handleAdd} onDelete={cellIds.length <= 1 ? undefined : handleDelete} />
+                                <RawExecuteCell key={cellId} cellId={cellId} onAdd={handleAdd} onDelete={cellIds.length <= 1 ? undefined : handleDelete}
+                                    showTools={cellIds.length === 1} />
                             </>
                         ))
                     }
