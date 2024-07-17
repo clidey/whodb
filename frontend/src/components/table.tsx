@@ -12,7 +12,7 @@ import { useExportToCSV, useLongPress } from "./hooks";
 import { Icons } from "./icons";
 import { SearchInput } from "./search";
 import { Loading } from "./loading";
-import { clone } from "lodash";
+import { clone, values } from "lodash";
 
 type IPaginationProps = {
     pageCount: number;
@@ -183,7 +183,7 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, disableEdit }) => {
             "bg-gray-200 dark:bg-white/10 blur-[2px]": editable || preview,
         })}
     >
-        <span className="hidden">{editedData}</span>
+        <span className="cell-data hidden">{editedData}</span>
         <div 
             className={classNames("w-full h-full p-2 leading-tight focus:outline-none focus:shadow-outline appearance-none transition-all duration-300 border-solid border-gray-200 dark:border-white/5 overflow-hidden whitespace-nowrap select-none text-gray-600 dark:text-neutral-300", {
                 "group-even/row:bg-gray-100 hover:bg-gray-300 group-even/row:hover:bg-gray-300 dark:group-even/row:bg-white/10 dark:group-odd/row:bg-white/5 dark:group-even/row:hover:bg-white/15 dark:group-odd/row:hover:bg-white/15": !editable,
@@ -305,7 +305,7 @@ const TableRow: FC<ITableRow> = ({ row, style, onRowUpdate, disableEdit }) => {
         <div className="table-row-group text-xs group/row" {...props} key={props.key}>
             {
                 row.cells.map((cell) => (
-                    <TData key={cell.getCellProps().key} cell={cell} onCellUpdate={handleCellUpdate} disableEdit={disableEdit} />
+                    <TData key={cell.getCellProps().key} cell={cell} onCellUpdate={handleCellUpdate} disableEdit={disableEdit || cell.column.id === "#"} />
                 ))
             }
         </div>
@@ -325,6 +325,7 @@ type ITableProps = {
 }
 
 export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows: actualRows, columnTags, totalPages, currentPage, onPageChange, onRowUpdate, disableEdit }) => {
+    const fixedTableRef = useRef<FixedSizeList>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const operationsRef = useRef<HTMLDivElement>(null);
     const tableRef = useRef<HTMLTableElement>(null);
@@ -408,43 +409,43 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
     }, [rows]);
 
     const handleKeyUp = useCallback((e: KeyboardEvent<HTMLInputElement>) => {
-        if (tableRef.current == null) {
+        if (tableRef.current == null || search.length === 0) {
             return;
         }
         let interval: NodeJS.Timeout;
         if (e.key === "Enter") {
-            let newSearchIndex = (searchIndex + 1) % rowCount;
-            setSearchIndex(newSearchIndex);
             const searchText = search.toLowerCase();
-            let index = 0;
-            const tbody = tableRef.current.querySelector(".tbody");
-            if (tbody == null) {
-                return;
-            }
-            for (const childNode of tbody.childNodes) {
-                if (childNode instanceof HTMLTableRowElement) {
-                    const text = childNode.textContent?.toLowerCase();
+            const filteredToOriginalIndex = [];
+            for (const [index, row] of rows.entries()) {
+                for (const value of values(row.values)) {
+                    const text = value.toLowerCase();
                     if (text != null && searchText != null && text.includes(searchText)) {
-                        if (index === newSearchIndex) {
-                            childNode.scrollIntoView({
-                                behavior: "smooth",
-                                block: "center",
-                                inline: "center",
-                            });
-                            for (const cell of childNode.querySelectorAll("input")) {
-                                if (cell instanceof HTMLInputElement) {
-                                    cell.classList.add("!bg-yellow-100");
-                                    interval = setTimeout(() => {
-                                        cell.classList.remove("!bg-yellow-100");
-                                    }, 3000);
-                                }
-                            }
-                            return;
-                        }
-                        index++;
+                        filteredToOriginalIndex.push(index);
                     }
                 }
-            };
+            }
+            
+            if (rows.length > 0 &&  filteredToOriginalIndex.length > 0) {
+                const newSearchIndex = (searchIndex + 1) % filteredToOriginalIndex.length;
+                setSearchIndex(newSearchIndex);
+                const originalIndex = filteredToOriginalIndex[newSearchIndex] + 1;
+                fixedTableRef.current?.scrollToItem(originalIndex, "center");
+                setTimeout(() => {
+                    const currentVisibleRows = tableRef.current?.querySelectorAll(".table-row-group") ?? [];
+                    for (const currentVisibleRow of currentVisibleRows) {
+                        const text = currentVisibleRow.querySelector("div > span")?.textContent ?? "";
+                        if (isNumeric(text)) {
+                            const id = parseInt(text);
+                            if (id === originalIndex) {
+                                currentVisibleRow.classList.add("!bg-yellow-100", "dark:!bg-yellow-800");
+                                interval = setTimeout(() => {
+                                    currentVisibleRow.classList.remove("!bg-yellow-100", "dark:!bg-yellow-800");
+                                }, 3000);
+                            }
+                        }
+                    }
+                }, 100);
+            }
         }
 
         return () => {
@@ -452,7 +453,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                 clearInterval(interval);
             }
         }
-    }, [search, rowCount, searchIndex]);
+    }, [rows, search, searchIndex]);
 
     const handleSearchChange = useCallback((newValue: string) => {
         setSearchIndex(-1);
@@ -541,6 +542,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                     </div>
                     <div className="tbody" {...getTableBodyProps()}>
                         <FixedSizeList
+                            ref={fixedTableRef}
                             height={height}
                             itemCount={sortedRows.length}
                             itemSize={31}

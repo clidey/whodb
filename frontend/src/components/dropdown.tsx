@@ -4,6 +4,14 @@ import { Icons } from "./icons";
 import { Label } from "./input";
 import { Loading } from "./loading";
 
+export function createDropdownItem(option: string, icon?: ReactElement): IDropdownItem {
+    return {
+        id: option,
+        label: option,
+        icon,
+    };
+}
+
 export type IDropdownItem<T extends unknown = any> = {
     id: string;
     label: string;
@@ -86,7 +94,7 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
                         }
                         {
                             props.items.length === 0 && props.defaultItem == null &&
-                            <li className="flex items-center gap-1 px-2" onClick={props.onDefaultItemClick}>
+                            <li className="flex items-center gap-1 px-2 dark:text-neutral-300" onClick={props.onDefaultItemClick}>
                                 <div>{Icons.SadSmile}</div>
                                 <div>{props.noItemsLabel}</div>
                             </li>

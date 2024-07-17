@@ -31,7 +31,7 @@ export const Input: FC<InputProps> = ({ value, setValue, type, placeholder, inpu
     }, [inputProps]);
     
     return <input type={type} placeholder={placeholder}
-        value={value}  {...inputProps} onChange={handleChange} onKeyDown={handleKeyDown}
+        {...inputProps} onChange={handleChange} onKeyDown={handleKeyDown} value={value}
         className={twMerge(classNames("appearance-none border border-gray-200 rounded-md w-full p-1 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-sm h-[34px] px-2 dark:text-neutral-300/100 dark:bg-white/10 dark:border-white/20", inputProps.className))} />
 }
 

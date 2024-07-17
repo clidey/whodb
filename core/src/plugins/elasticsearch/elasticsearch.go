@@ -132,12 +132,10 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 
 	for _, hit := range hits {
 		hitMap := hit.(map[string]interface{})
-		source := hitMap["_source"]
+		source := hitMap["_source"].(map[string]interface{})
 		id := hitMap["_id"]
-		document := map[string]interface{}{}
-		document["_id"] = id
-		document["source"] = source
-		jsonBytes, err := json.Marshal(document)
+		source["_id"] = id
+		jsonBytes, err := json.Marshal(source)
 		if err != nil {
 			return nil, err
 		}
