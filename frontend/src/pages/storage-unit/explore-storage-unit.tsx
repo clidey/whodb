@@ -20,6 +20,7 @@ export const ExploreStorageUnit: FC = () => {
     const [bufferPageSize, setBufferPageSize] = useState("10");
     const [currentPage, setCurrentPage] = useState(0);
     const [whereCondition, setWhereCondition] = useState("");
+    const [currentFilters, setCurrentFilters] = useState<IExploreStorageUnitWhereConditionFilter[]>([]);
     const [pageSize, setPageSize] = useState("");
     const unit: StorageUnit = useLocation().state?.unit;
     const schema = useAppSelector(state => state.database.schema);
@@ -135,7 +136,7 @@ export const ExploreStorageUnit: FC = () => {
         }
         const firstRow = rows?.Row.Rows?.[0];
         if (firstRow == null) {
-            return dataColumns;
+            return [];
         }
         return keys(JSON.parse(firstRow[0]));
     }, [rows?.Row.Columns, rows?.Row.Rows]);
@@ -145,7 +146,9 @@ export const ExploreStorageUnit: FC = () => {
             navigate(InternalRoutes.Dashboard.StorageUnit.path);
         }
     }, [navigate, unitName]);
+
     const handleFilterChange = useCallback((filters: IExploreStorageUnitWhereConditionFilter[]) => {
+        setCurrentFilters(filters);
         if (!current?.Type) {
             return;
         }
@@ -163,9 +166,9 @@ export const ExploreStorageUnit: FC = () => {
             case DatabaseType.ElasticSearch:
                 const elasticSearchConditions: Record<string, Record<string, any>> = {};
                 filters.forEach(filter => {
-                    elasticSearchConditions[filter.field] = { [filter.operator]: filter.value };
+                    elasticSearchConditions[filter.operator] = { [filter.field]: filter.value };
                 });
-                whereClause = JSON.stringify({ query: { bool: { must: Object.values(elasticSearchConditions) } } });
+                whereClause = JSON.stringify({ query: { bool: { must: Object.entries(elasticSearchConditions).map(([field, condition]) => ({ [field]: condition })) } } });
                 break;
             case DatabaseType.MongoDb:
                 const mongoDbConditions: Record<string, Record<string, any>> = {};
@@ -228,7 +231,7 @@ export const ExploreStorageUnit: FC = () => {
             </div>
             <div className="flex gap-2">
                 <InputWithlabel label="Page Size" value={bufferPageSize} setValue={setBufferPageSize} />
-                { current?.Type !== DatabaseType.Redis && <ExploreStorageUnitWhereCondition options={columns} operators={validOperators} onChange={handleFilterChange} /> }
+                { current?.Type !== DatabaseType.Redis && <ExploreStorageUnitWhereCondition defaultFilters={currentFilters} options={columns} operators={validOperators} onChange={handleFilterChange} /> }
                 <AnimatedButton className="mt-5" type="lg" icon={Icons.CheckCircle} label="Query" onClick={handleQuery} />
             </div>
             <div className="grow">
