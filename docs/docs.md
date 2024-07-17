@@ -13,6 +13,7 @@ Whodb is a powerful database management tool designed to simplify and enhance yo
 - **Scratchpad**: Perform arbitrary SQL queries with Jupyter notebook like experience.
 - **Inline Preview**: Click & hold a cell to preview value (string, JSON, or Markdown)
 - **Inline Edit**: Click "Edit" Icon, edit changes easily, and apply right away.
+- **Smart filters**: Easily create filters across all databases with the same UX.
 
 ## Getting Started
 
@@ -64,7 +65,8 @@ docker run -it -v ./sample.db:/db/sample.db -p 8080:8080 clidey/whodb:latest
   <br /><p align="center"><img src="./images/table-data.png" alt="Table Data" width="400" /></p>
 - Change the number of rows per page using the configuration on top.
   <br /><p align="center"><img src="./images/table-search-configuration.png" alt="Table Search Configuration" width="400" /></p>
-- Apply filters (e.g., `id=10` or `component_name='Name'`) to narrow down your data set.
+- Apply filters using the "+" icon to narrow down your data set. The filters will be dynamically generated based on the database used and fields present.
+  <br /><p align="center"><img src="./images/table-smart-filter.png" alt="Table Smart Filters" width="400" /></p>
 - Export the filtered data to CSV using the export option on the right side.
   <br /><p align="center"><img src="./images/export-data.png" alt="Export Data" width="400" /></p>
 - Use the search feature to quickly find specific data within the table.
@@ -75,7 +77,8 @@ docker run -it -v ./sample.db:/db/sample.db -p 8080:8080 clidey/whodb:latest
 <br /><p align="center"><img src="./images/table-cell-inline-edit-action.png" alt="Table cell preview" width="400" /></p>
 This should show a popup like below and you can hit "Check" to apply changes. It should reflect in the cell right away if the action is successful! [Note: on the bottom right, "Preview" icon will show for support previews. Click to switch to preview mode]
 <br /><p align="center"><img src="./images/table-cell-inline-edit-input.png" alt="Table cell preview" width="400" /></p>
-Note: Currently, Redis does not support "set" fields to be inline edited.
+
+**Note:** Currently, Redis does not support "set" fields to be inline edited.
 
 ### Graph Visualization
 
