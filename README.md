@@ -1,8 +1,7 @@
-# WhoDB
-
-Clidey Build: <img src="https://hello.clidey.com/api/flows/status?id=b32257fa-1415-4847-a0f3-e684f5f76608&secret=cd74dbd5-36ec-42f9-b4f0-12ce9fcc762b" alt="Clidey build status" height="20px" />
+# <img src="./docs/images/logo.png" width="30px" height="auto" />  WhoDB
 
 ### *"Making your database management disappear like magic!"*
+<p align="center"><img src="./docs/images/trailer.png" alt="Trailer" width="600" /></p>
 
 ## Description
 Welcome to **WhoDB** – a powerful, lightweight (~20Mi), and user-friendly database management tool that combines the simplicity of Adminer with superior UX and performance. WhoDB is written in GoLang for optimal speed and efficiency and features interactive graphs for visualizing your entire database schema. Whether you're managing a small project or a complex enterprise system, WhoDB is designed to make your database administration tasks smoother and more intuitive.
@@ -104,10 +103,16 @@ A: While WhoDB is designed for lightweight and efficient database exploration, i
 
 We welcome contributions from the community! Feel free to open issues or submit pull requests to help improve WhoDB.
 
+## Infrastrucutre
+
+The Deployment and CI/CD is completely managed by Clidey (a no-code DevOps platform). For more information, visit https://clidey.com
+
+Clidey Build Status: &nbsp; <img src="https://hello.clidey.com/api/flows/status?id=b32257fa-1415-4847-a0f3-e684f5f76608&secret=cd74dbd5-36ec-42f9-b4f0-12ce9fcc762b" alt="Clidey build status" height="20px" />
 
 ## Contact
 
 For any inquiries or support, please reach out to [support@clidey.com](mailto:support@clidey.com).
+
 
 <div style="width:100%;border-bottom:0.5px solid white;margin:50px 0px;"></div>
 
