@@ -1,7 +1,7 @@
 # <img src="./docs/images/logo.png" width="30px" height="auto" />  WhoDB
 
 ### *"Making your database management disappear like magic!"*
-<p align="center"><img src="./docs/images/trailer.png" alt="Trailer" width="600" /></p>
+<p align="center"><img src="./docs/images/trailer.png" alt="Trailer" width="100%" height="auto" /></p>
 
 ## Description
 Welcome to **WhoDB** – a powerful, lightweight (~20Mi), and user-friendly database management tool that combines the simplicity of Adminer with superior UX and performance. WhoDB is written in GoLang for optimal speed and efficiency and features interactive graphs for visualizing your entire database schema. Whether you're managing a small project or a complex enterprise system, WhoDB is designed to make your database administration tasks smoother and more intuitive.
