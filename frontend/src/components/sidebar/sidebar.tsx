@@ -328,7 +328,7 @@ export const Sidebar: FC = () => {
                 loading
                 ? <Loading />
                 :  <div className="flex flex-col justify-center mt-[10vh] grow">
-                        <div className="flex flex-col">
+                        <div className="flex flex-col" data-testid="sidebar-navigation">
                             <div className="flex flex-col mb-[10vh] gap-4 ml-4">
                                 <div className={classNames("flex gap-2 items-center", {
                                     "hidden": collapsed,
@@ -350,10 +350,10 @@ export const Sidebar: FC = () => {
                                     data != null &&
                                     <div className={classNames("flex gap-2 items-center w-full", {
                                         "hidden": pathname === InternalRoutes.RawExecute.path || collapsed || DATABASES_THAT_DONT_SUPPORT_SCHEMA.includes(current?.Type as DatabaseType),
-                                    })}>
+                                    })} data-testid="schema-selector">
                                         <div className="text-sm text-gray-600 dark:text-neutral-300">Schema:</div>
                                         <Dropdown className="w-[140px]" value={{ id: schema, label: schema }} items={data.Schema.map(schema => ({ id: schema, label: schema }))} onChange={handleSchemaChange}
-                                            noItemsLabel="No schema found"/>
+                                            noItemsLabel="No schema found" />
                                     </div>
                                 }
                             </div>

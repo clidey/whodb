@@ -51,9 +51,10 @@ export const Notifications: FC<INotificationsProps> = () => {
   return (
     <div className="fixed z-[100] w-auto top-8 bottom-8 m-[0_auto] left-8 right-8 flex flex-col gap-2 items-end xs:items-center pointer-events-none">
       <AnimatePresence mode="sync">
-        <motion.ul className="flex flex-col gap-4">
+        <motion.ul className="flex flex-col gap-4" data-testid="notifications">
           {notifications.map((notification) => (
             <motion.li
+              data-testid="notification"
               key={notification.id}
               layout
               className={classNames("bg-white dark:bg-white/15 dark:backdrop-blur-lg box-border overflow-hidden w-[40ch] sm:width-full shadow-lg rounded-xl border border-gray-200 dark:border-white/5 pointer-events-auto border-r-8", {

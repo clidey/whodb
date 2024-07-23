@@ -42,7 +42,8 @@
     "build": "GENERATE_SOURCEMAP=false react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "generate": "npx graphql-codegen"
+    "generate": "npx graphql-codegen",
+    "cy:on": "npx cypress open"
   },
   "eslintConfig": {
     "extends": [
@@ -70,6 +71,7 @@
     "@types/lodash": "^4.17.5",
     "@types/react-window": "^1.8.8",
     "@types/uuid": "^9.0.8",
+    "cypress": "^13.13.1",
     "eslint-config-react-app": "^7.0.1",
     "tailwindcss": "^3.4.4"
   }
