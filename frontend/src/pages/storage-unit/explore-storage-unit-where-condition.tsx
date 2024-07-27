@@ -155,7 +155,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
         <AnimatePresence mode="wait">
             {
                 newFilter &&
-                <motion.div className="flex gap-1 z-[5] py-2 px-4 absolute top-full mt-1 rounded-lg shadow-md border border-neutral-100  dark:border-white/5 dark:bg-white/20 dark:backdrop-blur-xl translate-y-full bg-white" initial={{
+                <motion.div className="flex gap-1 z-[5] py-2 px-4 absolute top-full mt-1 rounded-lg shadow-md border border-neutral-100 dark:border-white/5 dark:bg-white/20 translate-y-full bg-white" initial={{
                     y: -10,
                     opacity: 0,
                 }} animate={{
@@ -165,6 +165,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                     y: -10,
                     opacity: 0,
                 }}>
+                    <div className="hidden absolute inset-0 rounded-lg dark:flex dark:backdrop-blur-xl -z-[1]" />
                     <Dropdown noItemsLabel="No fields found" className="min-w-[100px]" value={createDropdownItem(currentFilter.field)} items={fieldsDropdownItems} onChange={handleFieldSelect} />
                     <Dropdown noItemsLabel="No operators found" className="min-w-20" value={createDropdownItem(currentFilter.operator)} items={validOperators} onChange={handleOperatorSelector} />
                     <Input inputProps={{

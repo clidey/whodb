@@ -305,7 +305,7 @@ export const Sidebar: FC = () => {
                     }
                 }} animate={animate}>
                 <div className="flex gap-2">
-                    <img src="https://clidey.com/logo.svg" alt="clidey logo" className="w-8 h-8" />
+                    <img src="/images/logo.png" alt="clidey logo" className="w-auto h-8" />
                     <span className={classNames(BRAND_COLOR, "text-2xl")}>WhoDB</span>
                 </div>
             </motion.div>
