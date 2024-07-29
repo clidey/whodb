@@ -44,18 +44,18 @@ export function isNoSQL(databaseType: string) {
     return false;
 }
 
-export function getDatabaseStorageUnitLabel(databaseType: string | undefined) {
+export function getDatabaseStorageUnitLabel(databaseType: string | undefined, singular: boolean = false) {
     switch(databaseType) {
         case DatabaseType.ElasticSearch:
-            return "Indices";
+            return singular ? "Index" : "Indices";
         case DatabaseType.MongoDb:
-            return "Collections";
+            return singular ? "Collection" : "Collections";
         case DatabaseType.Redis:
-            return "Keys";
+            return singular ? "Key" : "Keys";
         case DatabaseType.MySql:
         case DatabaseType.Postgres:
         case DatabaseType.Sqlite3:
-            return "Tables";
+            return singular ? "Table" : "Tables";
     }
-    return "Storage Units";
+    return singular ? "Storage Unit" : "Storage Units";
 }

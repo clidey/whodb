@@ -59,7 +59,7 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
                         {props.value?.icon} {props.value?.label}
                     </div>
                     {cloneElement(Icons.DownCaret, {
-                        className: "w-4 h-4 stroke-gray-600",
+                        className: "w-4 h-4 stroke-neutral-600 dark:stroke-neutral-400",
                     })}
                 </div>
                 <div className={classNames("absolute z-10 divide-y rounded-lg shadow bg-white py-1 border border-gray-200 overflow-y-auto max-h-40 dark:bg-white/10 dark:backdrop-blur-md dark:border-white/20", {

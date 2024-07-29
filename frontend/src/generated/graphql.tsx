@@ -64,9 +64,27 @@ export type LoginCredentials = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  AddRow: StatusResponse;
+  AddStorageUnit: StatusResponse;
   Login: StatusResponse;
   Logout: StatusResponse;
   UpdateStorageUnit: StatusResponse;
+};
+
+
+export type MutationAddRowArgs = {
+  schema: Scalars['String']['input'];
+  storageUnit: Scalars['String']['input'];
+  type: DatabaseType;
+  values: Array<RecordInput>;
+};
+
+
+export type MutationAddStorageUnitArgs = {
+  fields: Array<RecordInput>;
+  schema: Scalars['String']['input'];
+  storageUnit: Scalars['String']['input'];
+  type: DatabaseType;
 };
 
 
@@ -200,6 +218,16 @@ export type RawExecuteQueryVariables = Exact<{
 
 
 export type RawExecuteQuery = { __typename?: 'Query', RawExecute: { __typename?: 'RowsResult', Rows: Array<Array<string>>, Columns: Array<{ __typename?: 'Column', Type: string, Name: string }> } };
+
+export type AddStorageUnitMutationVariables = Exact<{
+  type: DatabaseType;
+  schema: Scalars['String']['input'];
+  storageUnit: Scalars['String']['input'];
+  fields: Array<RecordInput> | RecordInput;
+}>;
+
+
+export type AddStorageUnitMutation = { __typename?: 'Mutation', AddStorageUnit: { __typename?: 'StatusResponse', Status: boolean } };
 
 export type GetStorageUnitRowsQueryVariables = Exact<{
   type: DatabaseType;
@@ -469,6 +497,47 @@ export type RawExecuteQueryHookResult = ReturnType<typeof useRawExecuteQuery>;
 export type RawExecuteLazyQueryHookResult = ReturnType<typeof useRawExecuteLazyQuery>;
 export type RawExecuteSuspenseQueryHookResult = ReturnType<typeof useRawExecuteSuspenseQuery>;
 export type RawExecuteQueryResult = Apollo.QueryResult<RawExecuteQuery, RawExecuteQueryVariables>;
+export const AddStorageUnitDocument = gql`
+    mutation AddStorageUnit($type: DatabaseType!, $schema: String!, $storageUnit: String!, $fields: [RecordInput!]!) {
+  AddStorageUnit(
+    type: $type
+    schema: $schema
+    storageUnit: $storageUnit
+    fields: $fields
+  ) {
+    Status
+  }
+}
+    `;
+export type AddStorageUnitMutationFn = Apollo.MutationFunction<AddStorageUnitMutation, AddStorageUnitMutationVariables>;
+
+/**
+ * __useAddStorageUnitMutation__
+ *
+ * To run a mutation, you first call `useAddStorageUnitMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddStorageUnitMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addStorageUnitMutation, { data, loading, error }] = useAddStorageUnitMutation({
+ *   variables: {
+ *      type: // value for 'type'
+ *      schema: // value for 'schema'
+ *      storageUnit: // value for 'storageUnit'
+ *      fields: // value for 'fields'
+ *   },
+ * });
+ */
+export function useAddStorageUnitMutation(baseOptions?: Apollo.MutationHookOptions<AddStorageUnitMutation, AddStorageUnitMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddStorageUnitMutation, AddStorageUnitMutationVariables>(AddStorageUnitDocument, options);
+      }
+export type AddStorageUnitMutationHookResult = ReturnType<typeof useAddStorageUnitMutation>;
+export type AddStorageUnitMutationResult = Apollo.MutationResult<AddStorageUnitMutation>;
+export type AddStorageUnitMutationOptions = Apollo.BaseMutationOptions<AddStorageUnitMutation, AddStorageUnitMutationVariables>;
 export const GetStorageUnitRowsDocument = gql`
     query GetStorageUnitRows($type: DatabaseType!, $schema: String!, $storageUnit: String!, $where: String!, $pageSize: Int!, $pageOffset: Int!) {
   Row(
