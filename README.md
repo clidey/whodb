@@ -107,7 +107,16 @@ We welcome contributions from the community! Feel free to open issues or submit 
 
 The Deployment and CI/CD is completely managed by Clidey (a no-code DevOps platform). For more information, visit https://clidey.com
 
-Clidey Build Status: &nbsp; <img src="https://hello.clidey.com/api/flows/status?id=b32257fa-1415-4847-a0f3-e684f5f76608&secret=cd74dbd5-36ec-42f9-b4f0-12ce9fcc762b" alt="Clidey build status" height="20px" />
+<style>
+img {
+  margin-top: 2px;
+  width: 100px;
+  height: auto;
+}
+</style>
+
+Clidey Build Status <br />
+![Clidey build status](https://hello.clidey.com/api/flows/status?id=b32257fa-1415-4847-a0f3-e684f5f76608&secret=cd74dbd5-36ec-42f9-b4f0-12ce9fcc762b)
 
 ## Contact
 
