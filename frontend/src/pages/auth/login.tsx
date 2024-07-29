@@ -45,7 +45,7 @@ const databaseTypeDropdownItems: IDropdownItem<Record<string, string>>[] = [
         id: "MongoDB",
         label: "MongoDB",
         icon: Icons.Logos.MongoDB,
-        extra: {"Port": "27017", "URL Params": "?"},
+        extra: {"Port": "27017", "URL Params": "?", "DNS Enabled": "false"},
     },
     {
         id: "Redis",
@@ -168,10 +168,13 @@ export const LoginPage: FC = () => {
         setUsername(url.username);
         setPassword(url.password);
         setDatabase(url.pathname.substring(1));
-        setAdvancedForm({ "Port": url.port.length > 0 ? url.port : "80", "URL Params": `?${url.searchParams.toString()}` });
-        if (url.port != null || url.searchParams.size !== 0) {
-            setShowAdvanced(true);
+        const advancedForm = { "Port": "27017", "URL Params": `?${url.searchParams.toString()}`, "DNS Enabled": "false" };
+        if (url.port.length === 0) {
+            advancedForm["Port"] = "";
+            advancedForm["DNS Enabled"] = "true";
         }
+        setAdvancedForm(advancedForm);
+        setShowAdvanced(true);
     }, [databaseType.id]);
 
     const fields = useMemo(() => {
