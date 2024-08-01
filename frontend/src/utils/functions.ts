@@ -39,6 +39,8 @@ export function isValidJSON(str: string): boolean {
 export function isNoSQL(databaseType: string) {
     switch (databaseType) {
         case DatabaseType.MongoDb:
+        case DatabaseType.Redis:
+        case DatabaseType.ElasticSearch:
             return true;
     }
     return false;

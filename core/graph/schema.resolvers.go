@@ -77,11 +77,19 @@ func (r *mutationResolver) UpdateStorageUnit(ctx context.Context, typeArg model.
 // AddRow is the resolver for the AddRow field.
 func (r *mutationResolver) AddRow(ctx context.Context, typeArg model.DatabaseType, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
-	valuesMap := map[string]string{}
-	for _, value := range values {
-		valuesMap[value.Key] = value.Value
+	valuesRecords := []engine.Record{}
+	for _, field := range values {
+		extraFields := map[string]string{}
+		for _, extraField := range field.Extra {
+			extraFields[extraField.Key] = extraField.Value
+		}
+		valuesRecords = append(valuesRecords, engine.Record{
+			Key:   field.Key,
+			Value: field.Value,
+			Extra: extraFields,
+		})
 	}
-	status, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).AddRow(config, schema, storageUnit, valuesMap)
+	status, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).AddRow(config, schema, storageUnit, valuesRecords)
 	if err != nil {
 		return nil, err
 	}

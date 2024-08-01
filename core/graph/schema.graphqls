@@ -31,6 +31,7 @@ type Record {
 input RecordInput {
   Key: String!
   Value: String!
+  Extra: [RecordInput!]
 }
 
 type StorageUnit {

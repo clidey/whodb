@@ -91,7 +91,7 @@ export const StorageUnitPage: FC = () => {
     const schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
     const [addStorageUnit,] = useAddStorageUnitMutation();
-    const { loading, data } = useGetStorageUnitsQuery({
+    const { loading, data, refetch } = useGetStorageUnitsQuery({
         variables: {
             type: current?.Type as DatabaseType,
             schema,
@@ -116,7 +116,7 @@ export const StorageUnitPage: FC = () => {
         if (storageUnitName.length === 0) {
             return setError("Name is required");
         }
-        if (fields.some(field => field.Key.length === 0 || field.Value.length === 0)) {
+        if (!isNoSQL(current?.Type as DatabaseType) && fields.some(field => field.Key.length === 0 || field.Value.length === 0)) {
             return setError("Fields cannot be empty");
         }
         setError(undefined);
@@ -131,12 +131,14 @@ export const StorageUnitPage: FC = () => {
                 notify(`${getDatabaseStorageUnitLabel(current?.Type, true)} ${storageUnitName} created successfully!`, "success");
                 setStorageUnitName("");
                 setFields([]);
+                refetch();
+                setCreate(false);
             },
             onError(e) {
                 notify(e.message, "error");
             },
         });
-    }, [addStorageUnit, current?.Type, fields, schema, storageUnitName]);
+    }, [addStorageUnit, current?.Type, fields, refetch, schema, storageUnitName]);
 
     const handleAddField = useCallback(() => {
         setFields(f => [...f, { Key: "", Value: "" }]);
@@ -166,23 +168,49 @@ export const StorageUnitPage: FC = () => {
             return [];
         }
         let items: string[] = [];
-        
+    
         switch(current.Type) {
-          case DatabaseType.MariaDb:
-            items = ["VARCHAR", "INT", "TEXT", "DATE", "BOOLEAN"];
-            break;
-          case DatabaseType.MySql:
-            items = ["VARCHAR", "INT", "TEXT", "DATE", "BOOLEAN"];
-            break;
-          case DatabaseType.Postgres:
-            items = ["VARCHAR", "INT", "TEXT", "DATE", "BOOLEAN", "UUID", "JSONB"];
-            break;
-          case DatabaseType.Sqlite3:
-            items = ["TEXT", "INTEGER", "REAL", "BLOB", "NUMERIC"];
-            break;
+            case DatabaseType.MariaDb:
+                items = [
+                    "TINYINT", "SMALLINT", "MEDIUMINT", "INT", "INTEGER", "BIGINT", "FLOAT", "DOUBLE", "DECIMAL",
+                    "DATE", "DATETIME", "TIMESTAMP", "TIME", "YEAR",
+                    "CHAR", "VARCHAR", "BINARY", "VARBINARY", "TINYBLOB", "BLOB", "MEDIUMBLOB", "LONGBLOB", 
+                    "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT",
+                    "ENUM", "SET", "JSON", "BOOLEAN"
+                ];
+                break;
+            case DatabaseType.MySql:
+                items = [
+                    "TINYINT", "SMALLINT", "MEDIUMINT", "INT", "INTEGER", "BIGINT", "FLOAT", "DOUBLE", "DECIMAL",
+                    "DATE", "DATETIME", "TIMESTAMP", "TIME", "YEAR",
+                    "CHAR", "VARCHAR(255)", "BINARY", "VARBINARY", "TINYBLOB", "BLOB", "MEDIUMBLOB", "LONGBLOB", 
+                    "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT",
+                    "ENUM", "SET", "JSON", "BOOLEAN", "VARCHAR(100)", "VARCHAR(1000)"
+                ];
+                break;
+            case DatabaseType.Postgres:
+                items = [
+                    "SMALLINT", "INTEGER", "BIGINT", "DECIMAL", "NUMERIC", "REAL", "DOUBLE PRECISION", "SMALLSERIAL", 
+                    "SERIAL", "BIGSERIAL", "MONEY",
+                    "CHAR", "VARCHAR", "TEXT", "BYTEA",
+                    "TIMESTAMP", "TIMESTAMPTZ", "DATE", "TIME", "TIMETZ", "INTERVAL",
+                    "BOOLEAN", "POINT", "LINE", "LSEG", "BOX", "PATH", "POLYGON", "CIRCLE",
+                    "CIDR", "INET", "MACADDR", "UUID", "XML", "JSON", "JSONB", "ARRAY", "HSTORE"
+                ];
+                break;
+            case DatabaseType.Sqlite3:
+                items = [
+                    "NULL", "INTEGER", "REAL", "TEXT", "BLOB",
+                    "NUMERIC", "BOOLEAN", "DATE", "DATETIME"
+                ];
+                break;
+            default:
+                items = [];
+                break;
         }
         return items.map(item => createDropdownItem(item));
     }, [current?.Type]);
+    
 
     if (loading) {
         return <InternalPage routes={routes}>
@@ -207,34 +235,38 @@ export const StorageUnitPage: FC = () => {
                     }} isExpanded={create} tag={<div className="text-red-700 dark:text-red-400 text-xs">
                         {error}
                     </div>}>
-                        <div className="flex grow flex-col justify-between my-2 text-neutral-800 dark:text-neutral-100">
+                        <div className="flex grow flex-col justify-between mt-3 text-neutral-800 dark:text-neutral-100">
                             Create a {getDatabaseStorageUnitLabel(current?.Type, true)}
                             <AnimatedButton className="self-end" icon={Icons.Add} label="Create" onClick={handleCreate} />
                         </div>
                         <div className="flex grow flex-col justify-between my-2 gap-4">
                             <div className="flex flex-col gap-2">
                                 <InputWithlabel label="Name" value={storageUnitName} setValue={setStorageUnitName} />
-                                <div className="flex gap-2 justify-between">
-                                    <Label label="Field Name" />
-                                    <Label label="Value" />
-                                    <div className="w-14" />
-                                </div>
-                                {
-                                    fields.map((field, index) => (
-                                        <div className="flex gap-2">
-                                            <Input inputProps={{ className: "w-1/2" }} value={field.Key} setValue={(value) => handleFieldValueChange("Key", index, value)} placeholder="Enter field name" />
-                                            <Dropdown className="w-1/2" items={storageUnitTypesDropdownItems} value={createDropdownItem(field.Value)}
-                                                onChange={(item) => handleFieldValueChange("Value", index, item.id)} />
-                                            <div className="flex items-end mb-2">
-                                                <ActionButton disabled={fields.length === 1} containerClassName="w-6 h-6" icon={Icons.Delete} className={classNames({
-                                                    "stroke-red-500 dark:stroke-red-400": fields.length > 1,
-                                                    "stroke-neutral-300 dark:stroke-neutral-600": fields.length === 1,
-                                                })} onClick={() => handleRemove(index)} />
+                                <div className={classNames("flex flex-col gap-2", {
+                                    "hidden": isNoSQL(current?.Type as DatabaseType),
+                                })}>
+                                    <div className="flex gap-2 justify-between">
+                                        <Label label="Field Name" />
+                                        <Label label="Value" />
+                                        <div className="w-14" />
+                                    </div>
+                                    {
+                                        fields.map((field, index) => (
+                                            <div className="flex gap-2">
+                                                <Input inputProps={{ className: "w-1/2" }} value={field.Key} setValue={(value) => handleFieldValueChange("Key", index, value)} placeholder="Enter field name" />
+                                                <Dropdown className="w-1/2" items={storageUnitTypesDropdownItems} value={createDropdownItem(field.Value)}
+                                                    onChange={(item) => handleFieldValueChange("Value", index, item.id)} />
+                                                <div className="flex items-end mb-2">
+                                                    <ActionButton disabled={fields.length === 1} containerClassName="w-6 h-6" icon={Icons.Delete} className={classNames({
+                                                        "stroke-red-500 dark:stroke-red-400": fields.length > 1,
+                                                        "stroke-neutral-300 dark:stroke-neutral-600": fields.length === 1,
+                                                    })} onClick={() => handleRemove(index)} />
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))
-                                }
-                                <AnimatedButton className="self-end" icon={Icons.Add} label="Add field" onClick={handleAddField} />
+                                        ))
+                                    }
+                                    <AnimatedButton className="self-end" icon={Icons.Add} label="Add field" onClick={handleAddField} />
+                                </div>
                             </div>
                             <div className="flex items-center justify-between">
                                 <AnimatedButton icon={Icons.Cancel} label="Cancel" onClick={handleCreate} />

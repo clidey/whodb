@@ -66,7 +66,7 @@ func (p *RedisPlugin) AddStorageUnit(config *engine.PluginConfig, schema string,
 	return true, nil
 }
 
-func (p *RedisPlugin) AddRow(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
+func (p *RedisPlugin) AddRow(config *engine.PluginConfig, schema string, storageUnit string, values []engine.Record) (bool, error) {
 	client, err := DB(config)
 	if err != nil {
 		return false, err
@@ -86,24 +86,24 @@ func (p *RedisPlugin) AddRow(config *engine.PluginConfig, schema string, storage
 	switch keyType {
 	case "hash":
 		hashFieldsInterface := make(map[string]interface{}, len(values))
-		for k, v := range values {
-			hashFieldsInterface[k] = v
+		for _, value := range values {
+			hashFieldsInterface[value.Key] = value.Value
 		}
 		if err := client.HMSet(ctx, storageUnit, hashFieldsInterface).Err(); err != nil {
 			return false, err
 		}
 	case "list":
 		listValuesInterface := make([]interface{}, len(values))
-		for _, v := range values {
-			listValuesInterface = append(listValuesInterface, v)
+		for _, value := range values {
+			listValuesInterface = append(listValuesInterface, value.Value)
 		}
 		if err := client.RPush(ctx, storageUnit, listValuesInterface...).Err(); err != nil {
 			return false, err
 		}
 	case "set":
 		setValuesInterface := make([]interface{}, len(values))
-		for _, v := range values {
-			setValuesInterface = append(setValuesInterface, v)
+		for _, value := range values {
+			setValuesInterface = append(setValuesInterface, value.Value)
 		}
 		if err := client.SAdd(ctx, storageUnit, setValuesInterface...).Err(); err != nil {
 			return false, err

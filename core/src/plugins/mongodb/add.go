@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/clidey/whodb/core/src/engine"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -25,7 +26,7 @@ func (p *MongoDBPlugin) AddStorageUnit(config *engine.PluginConfig, schema strin
 	return true, nil
 }
 
-func (p *MongoDBPlugin) AddRow(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
+func (p *MongoDBPlugin) AddRow(config *engine.PluginConfig, schema string, storageUnit string, values []engine.Record) (bool, error) {
 	client, err := DB(config)
 	if err != nil {
 		return false, err
@@ -35,8 +36,8 @@ func (p *MongoDBPlugin) AddRow(config *engine.PluginConfig, schema string, stora
 	collection := client.Database(schema).Collection(storageUnit)
 
 	document := make(map[string]interface{})
-	for k, v := range values {
-		document[k] = v
+	for _, value := range values {
+		document[value.Key] = value.Value
 	}
 
 	_, err = collection.InsertOne(context.Background(), document)
@@ -48,7 +49,7 @@ func (p *MongoDBPlugin) AddRow(config *engine.PluginConfig, schema string, stora
 }
 
 func createCollectionIfNotExists(database *mongo.Database, collectionName string) error {
-	collections, err := database.ListCollectionNames(context.Background(), nil)
+	collections, err := database.ListCollectionNames(context.Background(), bson.D{})
 	if err != nil {
 		return err
 	}

@@ -15,6 +15,7 @@ type PluginConfig struct {
 type Record struct {
 	Key   string
 	Value string
+	Extra map[string]string
 }
 
 type StorageUnit struct {
@@ -60,7 +61,7 @@ type PluginFunctions interface {
 	GetStorageUnits(config *PluginConfig, schema string) ([]StorageUnit, error)
 	AddStorageUnit(config *PluginConfig, schema string, storageUnit string, fields map[string]string) (bool, error)
 	UpdateStorageUnit(config *PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error)
-	AddRow(config *PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error)
+	AddRow(config *PluginConfig, schema string, storageUnit string, values []Record) (bool, error)
 	GetRows(config *PluginConfig, schema string, storageUnit string, where string, pageSize int, pageOffset int) (*GetRowsResult, error)
 	GetGraph(config *PluginConfig, schema string) ([]GraphUnit, error)
 	RawExecute(config *PluginConfig, query string) (*GetRowsResult, error)

@@ -4095,7 +4095,7 @@ func (ec *executionContext) unmarshalInputRecordInput(ctx context.Context, obj i
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"Key", "Value"}
+	fieldsInOrder := [...]string{"Key", "Value", "Extra"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -4116,6 +4116,13 @@ func (ec *executionContext) unmarshalInputRecordInput(ctx context.Context, obj i
 				return it, err
 			}
 			it.Value = data
+		case "Extra":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Extra"))
+			data, err := ec.unmarshalORecordInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Extra = data
 		}
 	}
 

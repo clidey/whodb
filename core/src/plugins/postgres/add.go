@@ -34,7 +34,7 @@ func (p *PostgresPlugin) AddStorageUnit(config *engine.PluginConfig, schema stri
 	return true, nil
 }
 
-func (p *PostgresPlugin) AddRow(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
+func (p *PostgresPlugin) AddRow(config *engine.PluginConfig, schema string, storageUnit string, values []engine.Record) (bool, error) {
 	db, err := DB(config)
 	if err != nil {
 		return false, err
@@ -54,10 +54,14 @@ func (p *PostgresPlugin) AddRow(config *engine.PluginConfig, schema string, stor
 	placeholders := make([]string, 0, len(values))
 	args := make([]interface{}, 0, len(values))
 
-	for column, value := range values {
-		columns = append(columns, column)
-		placeholders = append(placeholders, "?")
-		args = append(args, value)
+	for _, value := range values {
+		columns = append(columns, value.Key)
+		if value.Extra["Config"] == "sql" {
+			placeholders = append(placeholders, value.Value)
+		} else {
+			placeholders = append(placeholders, fmt.Sprintf("?::%v", value.Extra["Type"]))
+			args = append(args, value.Value)
+		}
 	}
 
 	insertSQL := fmt.Sprintf(

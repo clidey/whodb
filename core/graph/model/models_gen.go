@@ -44,8 +44,9 @@ type Record struct {
 }
 
 type RecordInput struct {
-	Key   string `json:"Key"`
-	Value string `json:"Value"`
+	Key   string         `json:"Key"`
+	Value string         `json:"Value"`
+	Extra []*RecordInput `json:"Extra,omitempty"`
 }
 
 type RowsResult struct {

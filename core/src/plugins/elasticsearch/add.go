@@ -28,13 +28,18 @@ func (p *ElasticSearchPlugin) AddStorageUnit(config *engine.PluginConfig, schema
 	return true, nil
 }
 
-func (p *ElasticSearchPlugin) AddRow(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
+func (p *ElasticSearchPlugin) AddRow(config *engine.PluginConfig, schema string, storageUnit string, values []engine.Record) (bool, error) {
 	client, err := DB(config)
 	if err != nil {
 		return false, err
 	}
 
-	documentBytes, err := json.Marshal(values)
+	jsonValue := map[string]string{}
+	for _, value := range values {
+		jsonValue[value.Key] = value.Value
+	}
+
+	documentBytes, err := json.Marshal(jsonValue)
 	if err != nil {
 		return false, fmt.Errorf("error marshaling document to JSON: %v", err)
 	}

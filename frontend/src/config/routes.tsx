@@ -18,7 +18,7 @@ export type IInternalRoute = {
 
 export const PublicRoutes = {
     Login: {
-        name: "Home",
+        name: "Login",
         path: "/login",
         component: <LoginPage />,
     },

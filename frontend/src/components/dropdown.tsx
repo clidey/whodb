@@ -31,6 +31,7 @@ export type IDropdownProps = {
     defaultItemClassName?: string;
     action?: ReactElement;
     noItemsLabel?: string;
+    showIconOnly?: boolean;
 }
 
 const ITEM_CLASS = "group/item flex items-center gap-1 transition-all cursor-pointer relative hover:bg-black/10 py-1 mx-2 px-4 rounded-lg pl-1 dark:text-neutral-300/100";
@@ -54,9 +55,9 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
     return (
         <div className={classNames("relative", props.className)} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
             {props.loading ? <Loading hideText={true} /> : 
-            <>  <div className="flex justify-between items-center border border-gray-200 rounded-lg w-full p-1 h-[34px] px-2 dark:bg-white/10 dark:border-white/20">
+            <>  <div className="flex gap-1 justify-between items-center border border-gray-200 rounded-lg w-full p-1 h-[34px] px-2 dark:bg-white/10 dark:border-white/20">
                     <div className="flex gap-1 text-gray-700 text-sm truncate items-center dark:text-neutral-300">
-                        {props.value?.icon} {props.value?.label}
+                        {props.value?.icon} {!props.showIconOnly && props.value?.label}
                     </div>
                     {cloneElement(Icons.DownCaret, {
                         className: "w-4 h-4 stroke-neutral-600 dark:stroke-neutral-400",
