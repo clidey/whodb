@@ -337,7 +337,9 @@ export const ExploreStorageUnit: FC = () => {
                     { current?.Type !== DatabaseType.Redis && <ExploreStorageUnitWhereCondition defaultFilters={currentFilters} options={columns} operators={validOperators} onChange={handleFilterChange} /> }
                     <AnimatedButton className="mt-5" type="lg" icon={Icons.CheckCircle} label="Query" onClick={handleQuery} />
                 </div>
-                <motion.div className="flex flex-col absolute z-10 right-0 top-0 backdrop-blur-xl" variants={{
+                <motion.div className={classNames("flex flex-col absolute z-10 right-0 top-0 backdrop-blur-xl", {
+                        "hidden": current?.Type === DatabaseType.Redis,
+                    })} variants={{
                     "open": {
                         height: "500px",
                         width: "800px",

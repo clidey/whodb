@@ -229,7 +229,9 @@ export const StorageUnitPage: FC = () => {
                     <EmptyMessage icon={Icons.SadSmile} label={`No ${getDatabaseStorageUnitLabel(current?.Type)} found`} />
                 </>
                 : <>
-                    <ExpandableCard className="overflow-visible" icon={{
+                    <ExpandableCard className={classNames("overflow-visible", {
+                        "hidden": current?.Type === DatabaseType.Redis,
+                    })} icon={{
                         bgClassName: "bg-teal-500",
                         component: Icons.Add,
                     }} isExpanded={create} tag={<div className="text-red-700 dark:text-red-400 text-xs">
