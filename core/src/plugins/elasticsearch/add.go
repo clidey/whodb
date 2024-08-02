@@ -14,7 +14,7 @@ func (p *ElasticSearchPlugin) AddStorageUnit(config *engine.PluginConfig, schema
 		return false, err
 	}
 
-	res, err := client.Indices.Create(schema)
+	res, err := client.Indices.Create(storageUnit)
 	if err != nil {
 		return false, err
 	}

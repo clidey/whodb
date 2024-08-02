@@ -284,7 +284,9 @@ export const ExploreStorageUnit: FC = () => {
             onCompleted() {
                 notify("Added data row successfully!", "success");
                 setShowAdd(false);
-                handleSubmitRequest();
+                setTimeout(() => {
+                    handleSubmitRequest();
+                }, 500);
             },
             onError(e) {
                 notify(`Unable to add the data row: ${e.message}`, "error");
