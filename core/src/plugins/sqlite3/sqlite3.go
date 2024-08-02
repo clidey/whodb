@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/plugins/common"
 	"gorm.io/gorm"
 )
 
@@ -138,10 +137,6 @@ func getTableSchema(db *gorm.DB) (map[string][]engine.Record, error) {
 }
 
 func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, schema string, storageUnit string, where string, pageSize int, pageOffset int) (*engine.GetRowsResult, error) {
-	if !common.IsValidSQLTableName(storageUnit) {
-		return nil, errors.New("invalid table name")
-	}
-
 	query := fmt.Sprintf("SELECT * FROM \"%s\"", storageUnit)
 	if len(where) > 0 {
 		query = fmt.Sprintf("%v WHERE %v", query, where)
