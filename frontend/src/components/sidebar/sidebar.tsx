@@ -64,7 +64,7 @@ export const SideMenu: FC<IRouteProps> = (props) => {
                 "pl-4": !props.collapse,
                 "pl-2": props.collapse,
             }))} onClick={handleClick}>
-                {pathname === props.path && <motion.div layoutId="indicator" className={classNames("w-[5px] h-full absolute top-0 right-0 z-10 rounded-3xl", BRAND_COLOR_BG)} />}
+                {pathname === props.path && <motion.div layoutId="indicator" className={classNames("w-[5px] h-full absolute top-0 right-0 rounded-3xl", BRAND_COLOR_BG)} />}
                 {cloneElement(props.icon, {
                     className: classNames("transition-all dark:stroke-white", {
                         "w-4 h-4": !props.collapse,
