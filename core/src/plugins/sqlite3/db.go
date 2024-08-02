@@ -23,9 +23,6 @@ var errDoesNotExist = errors.New("unauthorized or the database doesn't exist")
 
 func DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	database := config.Credentials.Database
-	if !isValidDatabaseFileName(database) {
-		return nil, errDoesNotExist
-	}
 	fileNameDatabase := filepath.Join(getDefaultDirectory(), database)
 	if _, err := os.Stat(fileNameDatabase); errors.Is(err, os.ErrNotExist) {
 		return nil, errDoesNotExist

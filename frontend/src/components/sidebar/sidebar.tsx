@@ -3,7 +3,7 @@ import { useLazyQuery, useMutation } from "@apollo/client";
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import { debounce } from "lodash";
-import { FC, MouseEvent, cloneElement, useCallback, useEffect, useMemo, useState } from "react";
+import { cloneElement, FC, MouseEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
@@ -15,10 +15,11 @@ import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
 import { createStub, getDatabaseStorageUnitLabel } from "../../utils/functions";
 import { AnimatedButton } from "../button";
-import { BRAND_COLOR } from "../classes";
+import { BRAND_COLOR, BRAND_COLOR_BG } from "../classes";
 import { Dropdown, IDropdownItem } from "../dropdown";
 import { Icons } from "../icons";
 import { Loading } from "../loading";
+
 
 type IRoute = {
     icon?: React.ReactElement;
@@ -38,6 +39,7 @@ export const SideMenu: FC<IRouteProps> = (props) => {
     const navigate = useNavigate();
     const [hover, setHover] = useState(false);
     const status = hover ? "show" : "hide";
+    const pathname = useLocation().pathname;
 
     const handleMouseEnter = useMemo(() => {
         return debounce(() => setHover(true));
@@ -62,6 +64,7 @@ export const SideMenu: FC<IRouteProps> = (props) => {
                 "pl-4": !props.collapse,
                 "pl-2": props.collapse,
             }))} onClick={handleClick}>
+                {pathname === props.path && <motion.div layoutId="indicator" className={classNames("w-[5px] h-full absolute top-0 right-0 z-10 rounded-3xl", BRAND_COLOR_BG)} />}
                 {cloneElement(props.icon, {
                     className: classNames("transition-all dark:stroke-white", {
                         "w-4 h-4": !props.collapse,
@@ -240,7 +243,8 @@ export const Sidebar: FC = () => {
 
     const routes = useMemo(() => {
         return sidebarRoutes.map(route => (
-            <SideMenu key={`sidebar-routes-${createStub(route.title)}`} collapse={collapsed} title={route.title} icon={route.icon} routes={route.routes} path={route.path} />
+            <SideMenu key={`sidebar-routes-${createStub(route.title)}`} collapse={collapsed} title={route.title} icon={route.icon}
+                routes={route.routes} path={route.path} />
         ));
     }, [collapsed, sidebarRoutes]);
 
@@ -349,7 +353,7 @@ export const Sidebar: FC = () => {
                                 {
                                     data != null &&
                                     <div className={classNames("flex gap-2 items-center w-full", {
-                                        "hidden": pathname === InternalRoutes.RawExecute.path || collapsed || DATABASES_THAT_DONT_SUPPORT_SCHEMA.includes(current?.Type as DatabaseType),
+                                        "opacity-0 pointer-events-none": pathname === InternalRoutes.RawExecute.path || collapsed || DATABASES_THAT_DONT_SUPPORT_SCHEMA.includes(current?.Type as DatabaseType),
                                     })}>
                                         <div className="text-sm text-gray-600 dark:text-neutral-300">Schema:</div>
                                         <Dropdown className="w-[140px]" value={{ id: schema, label: schema }} items={data.Schema.map(schema => ({ id: schema, label: schema }))} onChange={handleSchemaChange}

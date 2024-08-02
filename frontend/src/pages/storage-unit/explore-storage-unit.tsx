@@ -1,23 +1,26 @@
 import { FetchResult } from "@apollo/client";
-import { entries, keys, map } from "lodash";
-import { FC, useCallback, useEffect, useMemo, useState } from "react";
+import classNames from "classnames";
+import { motion } from "framer-motion";
+import { clone, entries, keys, map } from "lodash";
+import { cloneElement, FC, useCallback, useEffect, useMemo, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { AnimatedButton } from "../../components/button";
+import { Dropdown } from "../../components/dropdown";
 import { Icons } from "../../components/icons";
-import { InputWithlabel } from "../../components/input";
+import { Input, InputWithlabel } from "../../components/input";
 import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { Table } from "../../components/table";
 import { graphqlClient } from "../../config/graphql-client";
 import { InternalRoutes } from "../../config/routes";
-import { DatabaseType, StorageUnit, UpdateStorageUnitDocument, UpdateStorageUnitMutationResult, useGetStorageUnitRowsLazyQuery } from "../../generated/graphql";
+import { Column, DatabaseType, RecordInput, RowsResult, StorageUnit, UpdateStorageUnitDocument, UpdateStorageUnitMutationResult, useAddRowMutation, useGetStorageUnitRowsLazyQuery } from "../../generated/graphql";
 import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
-import { getDatabaseStorageUnitLabel, isNumeric } from "../../utils/functions";
+import { getDatabaseStorageUnitLabel, isNoSQL, isNumeric } from "../../utils/functions";
 import { ExploreStorageUnitWhereCondition, IExploreStorageUnitWhereConditionFilter } from "./explore-storage-unit-where-condition";
 
 export const ExploreStorageUnit: FC = () => {
-    const [bufferPageSize, setBufferPageSize] = useState("10");
+    const [bufferPageSize, setBufferPageSize] = useState("100");
     const [currentPage, setCurrentPage] = useState(0);
     const [whereCondition, setWhereCondition] = useState("");
     const [currentFilters, setCurrentFilters] = useState<IExploreStorageUnitWhereConditionFilter[]>([]);
@@ -26,8 +29,12 @@ export const ExploreStorageUnit: FC = () => {
     const schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
     const navigate = useNavigate();
+    const [rows, setRows] = useState<RowsResult>();
+    const [showAdd, setShowAdd] = useState(false);
+    const [newRowForm, setNewRowForm] = useState<RecordInput[]>([]);
 
-    const [getStorageUnitRows, { data: rows, loading }] = useGetStorageUnitRowsLazyQuery();
+    const [getStorageUnitRows, { loading }] = useGetStorageUnitRowsLazyQuery();
+    const [addRow,] = useAddRowMutation();
 
     const unitName = useMemo(() => {
         return unit?.Name;
@@ -43,7 +50,8 @@ export const ExploreStorageUnit: FC = () => {
                 pageSize: Number.parseInt(bufferPageSize),
                 pageOffset: currentPage,
             },
-            onCompleted() {
+            onCompleted(data) {
+                setRows(data.Row);
                 setPageSize(bufferPageSize);
             },
             fetchPolicy: "no-cache",
@@ -130,16 +138,16 @@ export const ExploreStorageUnit: FC = () => {
     }, [current]);
     
     const columns = useMemo(() => {
-        const dataColumns = rows?.Row.Columns.map(c => c.Name) ?? [];
+        const dataColumns = rows?.Columns.map(c => c.Name) ?? [];
         if (dataColumns.length !== 1 || dataColumns[0] !== "document") {
             return dataColumns;
         }
-        const firstRow = rows?.Row.Rows?.[0];
+        const firstRow = rows?.Rows?.[0];
         if (firstRow == null) {
             return [];
         }
         return keys(JSON.parse(firstRow[0]));
-    }, [rows?.Row.Columns, rows?.Row.Rows]);
+    }, [rows?.Columns, rows?.Rows]);
 
     useEffect(() => {
         if (unitName == null) {
@@ -215,6 +223,98 @@ export const ExploreStorageUnit: FC = () => {
         return [];
     }, [current?.Type]);
 
+    const handleToggleShowAdd = useCallback(() => {
+        const showAddStatus = !showAdd;
+        if (showAddStatus) {
+            if (newRowForm.length === 0) {
+                let columns: Column[] = [];
+                if (isNoSQL(current?.Type as DatabaseType)) {
+                    if (rows?.Rows != null && rows.Rows.length > 0) {
+                        columns = entries(JSON.parse(rows.Rows[0][0])).filter(([col,]) => col !== "_id").map(([col, value]) => ({
+                            Name: col,
+                            Type: typeof value,
+                        }));
+                    }
+                }
+                if (columns.length === 0) {
+                    columns = rows?.Columns ?? [];
+                }
+                setNewRowForm((columns.map(col => {
+                    const colName = col.Name.toLowerCase();
+                    const isId = colName === "id" && col.Type === "UUID";
+                    const isDate = col.Type === "TIMESTAMPTZ";
+                    const isNumeric = col.Type === "NUMERIC";
+                    const isCode = isId || isDate;
+                    return {
+                        Key: col.Name,
+                        Value: isId ? "gen_random_uuid()" : isDate ? "now()" : isNumeric ? "0" : "",
+                        Extra: [
+                            {
+                                Key: "Config",
+                                Value: isCode ? "sql" : "text",
+                            },
+                            {
+                                Key: "Type",
+                                Value: col.Type,
+                            },
+                        ],
+                    }
+                })));
+            }
+        }
+        setShowAdd(showAddStatus);
+    }, [current?.Type, newRowForm.length, rows?.Columns, rows?.Rows, showAdd]);
+
+    const handleAddSubmitRequest = useCallback(() => {
+        let values = newRowForm;
+        if (isNoSQL(current?.Type as DatabaseType) && rows?.Rows != null && rows.Rows.length === 0) {
+            try {
+                values = entries(JSON.parse(newRowForm[0].Value)).map(([Key, Value]) => ({ Key, Value } as RecordInput));
+            } catch {
+                values = [];
+            }
+        }
+        addRow({
+            variables: {
+                type: current?.Type as DatabaseType,
+                schema,
+                storageUnit: unit.Name,
+                values,
+            },
+            onCompleted() {
+                notify("Added data row successfully!", "success");
+                setShowAdd(false);
+                setTimeout(() => {
+                    handleSubmitRequest();
+                }, 500);
+            },
+            onError(e) {
+                notify(`Unable to add the data row: ${e.message}`, "error");
+            },
+        });
+    }, [addRow, current?.Type, handleSubmitRequest, newRowForm, rows?.Rows, schema, unit.Name]);
+
+    const handleNewFormChange = useCallback((type: "value" | "config", index: number, value: string) => {
+        setNewRowForm(rowForm => {
+            const newFormClone = clone(rowForm);
+            if (type === "value") {
+                newFormClone[index].Value = value;
+            } else {
+                newFormClone[index].Extra![0].Value = value;
+            }
+                
+            return newFormClone;
+        });
+    }, []);
+
+    const configDropdown = useMemo(() => {
+        return [{id: "text", label: "Text", icon: cloneElement(Icons.Text, {
+            className: "w-4 h-4",
+        })}, { id: "sql", label: "SQL", icon: cloneElement(Icons.Code, {
+            className: "w-4 h-4",
+        })}];
+    }, []);
+
     if (unit == null) {
         return <Navigate to={InternalRoutes.Dashboard.StorageUnit.path} />
     }
@@ -233,17 +333,60 @@ export const ExploreStorageUnit: FC = () => {
                 </div>
                 <div className="text-sm mr-4 dark:text-neutral-300"><span className="font-semibold">Total Count:</span> {totalCount}</div>
             </div>
-            <div className="flex gap-2">
-                <InputWithlabel label="Page Size" value={bufferPageSize} setValue={setBufferPageSize} />
-                { current?.Type !== DatabaseType.Redis && <ExploreStorageUnitWhereCondition defaultFilters={currentFilters} options={columns} operators={validOperators} onChange={handleFilterChange} /> }
-                <AnimatedButton className="mt-5" type="lg" icon={Icons.CheckCircle} label="Query" onClick={handleQuery} />
+            <div className="flex w-full relative">
+                <div className="flex gap-2">
+                    <InputWithlabel label="Page Size" value={bufferPageSize} setValue={setBufferPageSize} />
+                    { current?.Type !== DatabaseType.Redis && <ExploreStorageUnitWhereCondition defaultFilters={currentFilters} options={columns} operators={validOperators} onChange={handleFilterChange} /> }
+                    <AnimatedButton className="mt-5" type="lg" icon={Icons.CheckCircle} label="Query" onClick={handleQuery} />
+                </div>
+                <motion.div className={classNames("flex flex-col absolute z-10 right-0 top-0 backdrop-blur-xl", {
+                        "hidden": current?.Type === DatabaseType.Redis,
+                    })} variants={{
+                    "open": {
+                        height: "500px",
+                        width: "800px",
+                    },
+                    "close": {
+                        height: "35px",
+                        width: "150px",
+                    },
+                }} animate={showAdd ? "open" : "close"}>
+                    <div className="flex w-full justify-end">
+                        <AnimatedButton type="lg" icon={Icons.Add} label={showAdd ? "Cancel" : "Add Row"} onClick={handleToggleShowAdd} />
+                    </div>
+                    <div className={classNames("flex flex-col gap-2 overflow-y-auto h-full p-8 mt-2", {
+                        "flex border border-white/5 rounded-lg": showAdd,
+                        "hidden": !showAdd,
+                    })}>
+                        <div className="flex justify-between gap-4">
+                            <div className="text-lg text-neutral-800 dark:text-neutral-300 w-full border-b border-white/10 pb-2 mb-2">
+                                New row
+                            </div>
+                            <AnimatedButton type="lg" icon={Icons.CheckCircle} label="Submit" onClick={handleAddSubmitRequest} />
+                        </div>
+                        {newRowForm.map((col, i) => <>
+                            <div key={`add-row-${col.Key}`} className="flex gap-2 items-center">
+                                <div className="text-xs text-neutral-800 dark:text-neutral-300 w-[150px]">{col.Key} [{col.Extra?.at(1)?.Value}]</div>
+                                <Dropdown className={classNames({
+                                    "hidden": isNoSQL(current?.Type as DatabaseType),
+                                })} value={configDropdown.find(item => item.id === col.Extra?.at(0)?.Value)}
+                                    onChange={item => handleNewFormChange("config", i, item.id)}
+                                    items={configDropdown}
+                                    showIconOnly={true} />
+                                <Input value={col.Value} inputProps={{
+                                    placeholder: `Enter value for ${col.Key}`,
+                                }} setValue={(value) => handleNewFormChange("value", i, value)} />
+                            </div>
+                        </>)}
+                    </div>
+                </motion.div>
             </div>
             <div className="grow">
                 {
                     rows != null &&
-                    <Table columns={rows.Row.Columns.map(c => c.Name)} columnTags={rows.Row.Columns.map(c => c.Type)}
-                        rows={rows.Row.Rows} totalPages={totalPages} currentPage={currentPage+1} onPageChange={handlePageChange}
-                        onRowUpdate={handleRowUpdate} disableEdit={rows.Row.DisableUpdate} />
+                    <Table columns={rows.Columns.map(c => c.Name)} columnTags={rows.Columns.map(c => c.Type)}
+                        rows={rows.Rows} totalPages={totalPages} currentPage={currentPage+1} onPageChange={handlePageChange}
+                        onRowUpdate={handleRowUpdate} disableEdit={rows.DisableUpdate} />
                 }
             </div>
         </div>
