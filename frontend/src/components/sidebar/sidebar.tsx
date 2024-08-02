@@ -15,7 +15,7 @@ import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
 import { createStub, getDatabaseStorageUnitLabel } from "../../utils/functions";
 import { AnimatedButton } from "../button";
-import { BRAND_COLOR } from "../classes";
+import { BRAND_COLOR, BRAND_COLOR_BG } from "../classes";
 import { Dropdown, IDropdownItem } from "../dropdown";
 import { Icons } from "../icons";
 import { Loading } from "../loading";
@@ -64,7 +64,7 @@ export const SideMenu: FC<IRouteProps> = (props) => {
                 "pl-4": !props.collapse,
                 "pl-2": props.collapse,
             }))} onClick={handleClick}>
-                {pathname === props.path && <motion.div layoutId="indicator" className="w-[1px] bg-white h-full absolute top-0 right-0 z-10" />}
+                {pathname === props.path && <motion.div layoutId="indicator" className={classNames("w-[5px] h-full absolute top-0 right-0 z-10 rounded-3xl", BRAND_COLOR_BG)} />}
                 {cloneElement(props.icon, {
                     className: classNames("transition-all dark:stroke-white", {
                         "w-4 h-4": !props.collapse,
