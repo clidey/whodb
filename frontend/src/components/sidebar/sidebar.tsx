@@ -39,6 +39,7 @@ export const SideMenu: FC<IRouteProps> = (props) => {
     const navigate = useNavigate();
     const [hover, setHover] = useState(false);
     const status = hover ? "show" : "hide";
+    const pathname = useLocation().pathname;
 
     const handleMouseEnter = useMemo(() => {
         return debounce(() => setHover(true));
@@ -63,6 +64,7 @@ export const SideMenu: FC<IRouteProps> = (props) => {
                 "pl-4": !props.collapse,
                 "pl-2": props.collapse,
             }))} onClick={handleClick}>
+                {pathname === props.path && <motion.div layoutId="indicator" className="w-[1px] bg-white h-full absolute top-0 right-0 z-10" />}
                 {cloneElement(props.icon, {
                     className: classNames("transition-all dark:stroke-white", {
                         "w-4 h-4": !props.collapse,
@@ -241,7 +243,8 @@ export const Sidebar: FC = () => {
 
     const routes = useMemo(() => {
         return sidebarRoutes.map(route => (
-            <SideMenu key={`sidebar-routes-${createStub(route.title)}`} collapse={collapsed} title={route.title} icon={route.icon} routes={route.routes} path={route.path} />
+            <SideMenu key={`sidebar-routes-${createStub(route.title)}`} collapse={collapsed} title={route.title} icon={route.icon}
+                routes={route.routes} path={route.path} />
         ));
     }, [collapsed, sidebarRoutes]);
 
@@ -350,7 +353,7 @@ export const Sidebar: FC = () => {
                                 {
                                     data != null &&
                                     <div className={classNames("flex gap-2 items-center w-full", {
-                                        "hidden": pathname === InternalRoutes.RawExecute.path || collapsed || DATABASES_THAT_DONT_SUPPORT_SCHEMA.includes(current?.Type as DatabaseType),
+                                        "opacity-0 pointer-events-none": pathname === InternalRoutes.RawExecute.path || collapsed || DATABASES_THAT_DONT_SUPPORT_SCHEMA.includes(current?.Type as DatabaseType),
                                     })}>
                                         <div className="text-sm text-gray-600 dark:text-neutral-300">Schema:</div>
                                         <Dropdown className="w-[140px]" value={{ id: schema, label: schema }} items={data.Schema.map(schema => ({ id: schema, label: schema }))} onChange={handleSchemaChange}
