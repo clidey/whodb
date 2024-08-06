@@ -15,18 +15,23 @@ const (
 )
 
 type Engine struct {
-	Plugins map[DatabaseType]*Plugin
+	Plugins []*Plugin
 }
 
 func (e *Engine) RegistryPlugin(plugin *Plugin) {
 	if e.Plugins == nil {
-		e.Plugins = map[DatabaseType]*Plugin{}
+		e.Plugins = []*Plugin{}
 	}
-	e.Plugins[plugin.Type] = plugin
+	e.Plugins = append(e.Plugins, plugin)
 }
 
 func (e *Engine) Choose(databaseType DatabaseType) *Plugin {
-	return e.Plugins[databaseType]
+	for _, plugin := range e.Plugins {
+		if plugin.Type == databaseType {
+			return plugin
+		}
+	}
+	return nil
 }
 
 func GetStorageUnitModel(unit StorageUnit) *model.StorageUnit {

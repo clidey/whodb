@@ -72,6 +72,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 				profileId := src.GetLoginProfileId(i, loginProfile)
 				if *credentials.Id == profileId {
 					credentials = src.GetLoginCredentials(loginProfile)
+					break
 				}
 			}
 		}
