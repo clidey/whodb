@@ -1,15 +1,15 @@
 
-import { useLazyQuery, useMutation } from "@apollo/client";
+import { useLazyQuery } from "@apollo/client";
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import { debounce } from "lodash";
-import { cloneElement, FC, MouseEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { cloneElement, FC, MouseEvent, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
 import { InternalRoutes, PublicRoutes } from "../../config/routes";
-import { DatabaseType, GetSchemaDocument, GetSchemaQuery, GetSchemaQueryVariables, LoginDocument, LoginMutation, LoginMutationVariables } from "../../generated/graphql";
-import { AuthActions, LoginProfile } from "../../store/auth";
+import { DatabaseType, GetSchemaDocument, GetSchemaQuery, GetSchemaQueryVariables, useLoginMutation, useLoginWithProfileMutation } from "../../generated/graphql";
+import { AuthActions, LocalLoginProfile } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
@@ -112,22 +112,33 @@ export const SideMenu: FC<IRouteProps> = (props) => {
     </div>
 }
 
-function getDropdownLoginProfileItem(profile: LoginProfile): IDropdownItem {
+function getDropdownLoginProfileItem(profile: LocalLoginProfile): IDropdownItem {
+    const icon = (Icons.Logos as Record<string, ReactElement>)[profile.Type];
+    if (profile.Saved) {
+        return {
+            id: profile.Id,
+            label: profile.Id,
+            icon,
+        }
+    }
     if (profile.Type === DatabaseType.MongoDb) {
         return {
-            id: profile.id,
+            id: profile.Id,
             label: `${profile.Hostname} - ${profile.Username} [${profile.Type}]`,
+            icon,
         }
     }
     if (profile.Type === DatabaseType.Sqlite3) {
         return {
-            id: profile.id,
+            id: profile.Id,
             label: `${profile.Database} [${profile.Type}]`,
+            icon,
         }
     }
     return {
-        id: profile.id,
+        id: profile.Id,
         label: `${profile.Hostname} - ${profile.Database} [${profile.Type}]`,
+        icon,
     };
 }
 
@@ -146,7 +157,8 @@ export const Sidebar: FC = () => {
             notify("Unable to connect to database", "error");
         }
     });
-    const [login, ] = useMutation<LoginMutation, LoginMutationVariables>(LoginDocument);
+    const [login, ] = useLoginMutation();
+    const [loginWithProfile, ] = useLoginWithProfileMutation();
     const navigate = useNavigate();
 
     const handleSchemaChange = useCallback((item: IDropdownItem) => {
@@ -209,9 +221,29 @@ export const Sidebar: FC = () => {
     }, []);
 
     const handleProfileChange = useCallback((item: IDropdownItem) => {
-        const selectedProfile = profiles.find(profile => profile.id === item.id);
+        const selectedProfile = profiles.find(profile => profile.Id === item.id);
         if (selectedProfile == null) {
             return;
+        }
+        if (selectedProfile.Saved) {
+            return loginWithProfile({
+                variables: {
+                    profile: {
+                        Id: item.id,
+                        Type: selectedProfile.Type as DatabaseType,
+                    },
+                },
+                onCompleted(status) {
+                    if (status.LoginWithProfile.Status) {
+                        dispatch(DatabaseActions.setSchema(""));
+                        dispatch(AuthActions.switch({ id: item.id }));
+                        navigate(InternalRoutes.Dashboard.StorageUnit.path);
+                    }
+                },
+                onError(error) {
+                    notify(`Error signing you in: ${error.message}`, "error")
+                },
+            })
         }
         login({
             variables: {
@@ -227,7 +259,7 @@ export const Sidebar: FC = () => {
             onCompleted(status) {
                 if (status.Login.Status) {
                     dispatch(DatabaseActions.setSchema(""));
-                    dispatch(AuthActions.switch({ id: selectedProfile.id }));
+                    dispatch(AuthActions.switch({ id: selectedProfile.Id }));
                     navigate(InternalRoutes.Dashboard.StorageUnit.path);
                 }
             },
@@ -235,7 +267,7 @@ export const Sidebar: FC = () => {
                 notify(`Error signing you in: ${error.message}`, "error")
             },
         });
-    }, [dispatch, login, navigate, profiles]);
+    }, [dispatch, login, loginWithProfile, navigate, profiles]);
 
     const handleNavigateToLogin = useCallback(() => {
         navigate(PublicRoutes.Login.path);
@@ -254,35 +286,46 @@ export const Sidebar: FC = () => {
 
     const handleMenuLogout = useCallback((e: MouseEvent, item: IDropdownItem) => {
         e.stopPropagation();
-        const selectedProfile = profiles.find(profile => profile.id === item.id);
+        const selectedProfile = profiles.find(profile => profile.Id === item.id);
         if (selectedProfile == null) {
             return;
         }
-        if (selectedProfile.id === current?.id) {
+        if (selectedProfile.Id === current?.Id) {
             return navigate(InternalRoutes.Logout.path);
         }
-        dispatch(AuthActions.remove({ id: selectedProfile.id }));
-    }, [current?.id, dispatch, navigate, profiles]);
+        dispatch(AuthActions.remove({ id: selectedProfile.Id }));
+    }, [current?.Id, dispatch, navigate, profiles]);
 
     const currentProfile = useMemo(() => {
         if (current == null) {
             return;
         }
+        const icon = (Icons.Logos as Record<string, ReactElement>)[current.Type];
+        if (current.Saved) {
+            return {
+                id: current.Id,
+                label: current.Id,
+                icon,
+            }
+        }
         if (current.Type === DatabaseType.Redis) {
             return {
-                id: current.id,
+                id: current.Id,
                 label: current.Hostname,
+                icon,
             }
         }
         if (current.Type === DatabaseType.Sqlite3) {
             return {
-                id: current.id,
+                id: current.Id,
                 label: current.Database,
+                icon,
             }
         }
         return {
-            id: current.id,
+            id: current.Id,
             label: `${current.Hostname} [${current.Username}]`,
+            icon,
         }
     }, [current]);
 
@@ -339,7 +382,7 @@ export const Sidebar: FC = () => {
                                 })}>
                                     <div className="text-sm text-gray-600 dark:text-neutral-300 mr-2.5">Profile:</div>
                                     {
-                                        current != null &&
+                                        currentProfile != null &&
                                         <Dropdown className="w-[140px]" items={loginItems} value={currentProfile} onChange={handleProfileChange}
                                             defaultItem={{
                                                 label: "Add another profile",

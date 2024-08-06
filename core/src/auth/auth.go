@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/engine"
 )
 
@@ -65,6 +66,17 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		if credentials.Id != nil {
+			profiles := src.GetLoginProfiles()
+			for i, loginProfile := range profiles {
+				profileId := src.GetLoginProfileId(i, loginProfile)
+				if *credentials.Id == profileId {
+					credentials = src.GetLoginCredentials(loginProfile)
+					break
+				}
+			}
+		}
+
 		ctx := r.Context()
 		ctx = context.WithValue(ctx, AuthKey_Credentials, credentials)
 		next.ServeHTTP(w, r.WithContext(ctx))
@@ -86,5 +98,5 @@ func isAllowed(r *http.Request, body []byte) bool {
 		return false
 	}
 
-	return query.OperationName == "Login" || query.OperationName == "Logout" || query.OperationName == "GetDatabase"
+	return strings.HasPrefix(query.OperationName, "Login") || query.OperationName == "Logout" || query.OperationName == "GetDatabase" || query.OperationName == "GetProfiles"
 }
