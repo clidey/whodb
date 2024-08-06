@@ -1,6 +1,6 @@
 import classNames from "classnames";
 import { entries } from "lodash";
-import { cloneElement, FC, useCallback, useEffect, useMemo, useState } from "react";
+import { cloneElement, FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
 import { AnimatedButton } from "../../components/button";
@@ -248,7 +248,7 @@ export const LoginPage: FC = () => {
     }, [database, databaseType.id, databasesLoading, foundDatabases?.Database, handleHoseNameChange, hostName, password, username]);
 
     const availableProfiles = useMemo(() => {
-        return profiles?.Profiles.map(profile => createDropdownItem(profile.Id, Icons.User)) ?? [];
+        return profiles?.Profiles.map(profile => createDropdownItem(profile.Id, (Icons.Logos as Record<string, ReactElement>)[profile.Type])) ?? [];
     }, [profiles?.Profiles])
 
     if (loading || profilesLoading)  {
