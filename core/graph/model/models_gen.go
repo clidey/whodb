@@ -24,12 +24,23 @@ type GraphUnitRelationship struct {
 }
 
 type LoginCredentials struct {
+	ID       *string        `json:"Id,omitempty"`
 	Type     string         `json:"Type"`
 	Hostname string         `json:"Hostname"`
 	Username string         `json:"Username"`
 	Password string         `json:"Password"`
 	Database string         `json:"Database"`
 	Advanced []*RecordInput `json:"Advanced,omitempty"`
+}
+
+type LoginProfile struct {
+	ID   string       `json:"Id"`
+	Type DatabaseType `json:"Type"`
+}
+
+type LoginProfileInput struct {
+	ID   string       `json:"Id"`
+	Type DatabaseType `json:"Type"`
 }
 
 type Mutation struct {

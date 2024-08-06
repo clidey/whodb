@@ -37,6 +37,25 @@ func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCre
 	return auth.Login(ctx, &credentials)
 }
 
+// LoginWithProfile is the resolver for the LoginWithProfile field.
+func (r *mutationResolver) LoginWithProfile(ctx context.Context, profile model.LoginProfileInput) (*model.StatusResponse, error) {
+	profiles := src.GetLoginProfiles()
+	for i, loginProfile := range profiles {
+		profileId := src.GetLoginProfileId(i, loginProfile)
+		if profile.ID == profileId {
+			if !src.MainEngine.Choose(engine.DatabaseType(loginProfile.Type)).IsAvailable(&engine.PluginConfig{
+				Credentials: src.GetLoginCredentials(loginProfile),
+			}) {
+				return nil, errors.New("unauthorized")
+			}
+			return auth.Login(ctx, &model.LoginCredentials{
+				ID: &profile.ID,
+			})
+		}
+	}
+	return nil, errors.New("login profile does not exist or is not authorized")
+}
+
 // Logout is the resolver for the Logout field.
 func (r *mutationResolver) Logout(ctx context.Context) (*model.StatusResponse, error) {
 	return auth.Logout(ctx)
@@ -96,6 +115,19 @@ func (r *mutationResolver) AddRow(ctx context.Context, typeArg model.DatabaseTyp
 	return &model.StatusResponse{
 		Status: status,
 	}, nil
+}
+
+// Profiles is the resolver for the Profiles field.
+func (r *queryResolver) Profiles(ctx context.Context) ([]*model.LoginProfile, error) {
+	profiles := []*model.LoginProfile{}
+	for i, profile := range src.GetLoginProfiles() {
+		profileName := src.GetLoginProfileId(i, profile)
+		profiles = append(profiles, &model.LoginProfile{
+			ID:   profileName,
+			Type: model.DatabaseType(profile.Type),
+		})
+	}
+	return profiles, nil
 }
 
 // Database is the resolver for the Database field.
