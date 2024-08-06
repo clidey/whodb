@@ -1,7 +1,10 @@
 package src
 
 import (
+	"fmt"
+
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/plugins/elasticsearch"
 	"github.com/clidey/whodb/core/src/plugins/mongodb"
 	"github.com/clidey/whodb/core/src/plugins/mysql"
@@ -22,4 +25,43 @@ func InitializeEngine() *engine.Engine {
 	MainEngine.RegistryPlugin(redis.NewRedisPlugin())
 	MainEngine.RegistryPlugin(elasticsearch.NewElasticSearchPlugin())
 	return MainEngine
+}
+
+var profiles []env.DatabaseCredentials
+
+func GetLoginProfiles() []env.DatabaseCredentials {
+	if profiles != nil {
+		return profiles
+	}
+	for _, plugin := range MainEngine.Plugins {
+		databaseProfiles := env.GetDefaultDatabaseCredentials(string(plugin.Type))
+		for _, databaseProfile := range databaseProfiles {
+			databaseProfile.Type = string(plugin.Type)
+			profiles = append(profiles, databaseProfile)
+		}
+	}
+
+	return profiles
+}
+
+func GetLoginProfileId(index int, profile env.DatabaseCredentials) string {
+	return fmt.Sprintf("#%v - %v@%v [%v]", index+1, profile.Username, profile.Hostname, profile.Database)
+}
+
+func GetLoginCredentials(profile env.DatabaseCredentials) *engine.Credentials {
+	advanced := []engine.Record{}
+	for key, value := range profile.Config {
+		advanced = append(advanced, engine.Record{
+			Key:   key,
+			Value: value,
+		})
+	}
+
+	return &engine.Credentials{
+		Hostname: profile.Hostname,
+		Username: profile.Username,
+		Password: profile.Password,
+		Database: profile.Database,
+		Advanced: advanced,
+	}
 }

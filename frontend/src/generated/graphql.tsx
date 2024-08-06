@@ -57,9 +57,21 @@ export type LoginCredentials = {
   Advanced?: InputMaybe<Array<RecordInput>>;
   Database: Scalars['String']['input'];
   Hostname: Scalars['String']['input'];
+  Id?: InputMaybe<Scalars['String']['input']>;
   Password: Scalars['String']['input'];
   Type: Scalars['String']['input'];
   Username: Scalars['String']['input'];
+};
+
+export type LoginProfile = {
+  __typename?: 'LoginProfile';
+  Id: Scalars['String']['output'];
+  Type: DatabaseType;
+};
+
+export type LoginProfileInput = {
+  Id: Scalars['String']['input'];
+  Type: DatabaseType;
 };
 
 export type Mutation = {
@@ -67,6 +79,7 @@ export type Mutation = {
   AddRow: StatusResponse;
   AddStorageUnit: StatusResponse;
   Login: StatusResponse;
+  LoginWithProfile: StatusResponse;
   Logout: StatusResponse;
   UpdateStorageUnit: StatusResponse;
 };
@@ -93,6 +106,11 @@ export type MutationLoginArgs = {
 };
 
 
+export type MutationLoginWithProfileArgs = {
+  profile: LoginProfileInput;
+};
+
+
 export type MutationUpdateStorageUnitArgs = {
   schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
@@ -104,6 +122,7 @@ export type Query = {
   __typename?: 'Query';
   Database: Array<Scalars['String']['output']>;
   Graph: Array<GraphUnit>;
+  Profiles: Array<LoginProfile>;
   RawExecute: RowsResult;
   Row: RowsResult;
   Schema: Array<Scalars['String']['output']>;
@@ -178,6 +197,11 @@ export type StorageUnit = {
   Name: Scalars['String']['output'];
 };
 
+export type GetProfilesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetProfilesQuery = { __typename?: 'Query', Profiles: Array<{ __typename?: 'LoginProfile', Id: string, Type: DatabaseType }> };
+
 export type GetSchemaQueryVariables = Exact<{
   type: DatabaseType;
 }>;
@@ -191,6 +215,13 @@ export type GetDatabaseQueryVariables = Exact<{
 
 
 export type GetDatabaseQuery = { __typename?: 'Query', Database: Array<string> };
+
+export type LoginWithProfileMutationVariables = Exact<{
+  profile: LoginProfileInput;
+}>;
+
+
+export type LoginWithProfileMutation = { __typename?: 'Mutation', LoginWithProfile: { __typename?: 'StatusResponse', Status: boolean } };
 
 export type LoginMutationVariables = Exact<{
   credentials: LoginCredentials;
@@ -271,6 +302,46 @@ export type UpdateStorageUnitMutationVariables = Exact<{
 export type UpdateStorageUnitMutation = { __typename?: 'Mutation', UpdateStorageUnit: { __typename?: 'StatusResponse', Status: boolean } };
 
 
+export const GetProfilesDocument = gql`
+    query GetProfiles {
+  Profiles {
+    Id
+    Type
+  }
+}
+    `;
+
+/**
+ * __useGetProfilesQuery__
+ *
+ * To run a query within a React component, call `useGetProfilesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetProfilesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetProfilesQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetProfilesQuery(baseOptions?: Apollo.QueryHookOptions<GetProfilesQuery, GetProfilesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetProfilesQuery, GetProfilesQueryVariables>(GetProfilesDocument, options);
+      }
+export function useGetProfilesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetProfilesQuery, GetProfilesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetProfilesQuery, GetProfilesQueryVariables>(GetProfilesDocument, options);
+        }
+export function useGetProfilesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetProfilesQuery, GetProfilesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetProfilesQuery, GetProfilesQueryVariables>(GetProfilesDocument, options);
+        }
+export type GetProfilesQueryHookResult = ReturnType<typeof useGetProfilesQuery>;
+export type GetProfilesLazyQueryHookResult = ReturnType<typeof useGetProfilesLazyQuery>;
+export type GetProfilesSuspenseQueryHookResult = ReturnType<typeof useGetProfilesSuspenseQuery>;
+export type GetProfilesQueryResult = Apollo.QueryResult<GetProfilesQuery, GetProfilesQueryVariables>;
 export const GetSchemaDocument = gql`
     query GetSchema($type: DatabaseType!) {
   Schema(type: $type)
@@ -347,6 +418,39 @@ export type GetDatabaseQueryHookResult = ReturnType<typeof useGetDatabaseQuery>;
 export type GetDatabaseLazyQueryHookResult = ReturnType<typeof useGetDatabaseLazyQuery>;
 export type GetDatabaseSuspenseQueryHookResult = ReturnType<typeof useGetDatabaseSuspenseQuery>;
 export type GetDatabaseQueryResult = Apollo.QueryResult<GetDatabaseQuery, GetDatabaseQueryVariables>;
+export const LoginWithProfileDocument = gql`
+    mutation LoginWithProfile($profile: LoginProfileInput!) {
+  LoginWithProfile(profile: $profile) {
+    Status
+  }
+}
+    `;
+export type LoginWithProfileMutationFn = Apollo.MutationFunction<LoginWithProfileMutation, LoginWithProfileMutationVariables>;
+
+/**
+ * __useLoginWithProfileMutation__
+ *
+ * To run a mutation, you first call `useLoginWithProfileMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useLoginWithProfileMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [loginWithProfileMutation, { data, loading, error }] = useLoginWithProfileMutation({
+ *   variables: {
+ *      profile: // value for 'profile'
+ *   },
+ * });
+ */
+export function useLoginWithProfileMutation(baseOptions?: Apollo.MutationHookOptions<LoginWithProfileMutation, LoginWithProfileMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<LoginWithProfileMutation, LoginWithProfileMutationVariables>(LoginWithProfileDocument, options);
+      }
+export type LoginWithProfileMutationHookResult = ReturnType<typeof useLoginWithProfileMutation>;
+export type LoginWithProfileMutationResult = Apollo.MutationResult<LoginWithProfileMutation>;
+export type LoginWithProfileMutationOptions = Apollo.BaseMutationOptions<LoginWithProfileMutation, LoginWithProfileMutationVariables>;
 export const LoginDocument = gql`
     mutation Login($credentials: LoginCredentials!) {
   Login(credentials: $credentials) {

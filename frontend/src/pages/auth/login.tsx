@@ -1,17 +1,17 @@
 import classNames from "classnames";
 import { entries } from "lodash";
-import { FC, cloneElement, useCallback, useEffect, useMemo, useState } from "react";
+import { cloneElement, FC, useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
 import { AnimatedButton } from "../../components/button";
 import { BASE_CARD_CLASS, BRAND_COLOR } from "../../components/classes";
-import { DropdownWithLabel, IDropdownItem } from "../../components/dropdown";
+import { createDropdownItem, DropdownWithLabel, IDropdownItem } from "../../components/dropdown";
 import { Icons } from "../../components/icons";
 import { InputWithlabel } from "../../components/input";
 import { Loading } from "../../components/loading";
 import { Page } from "../../components/page";
 import { InternalRoutes } from "../../config/routes";
-import { DatabaseType, LoginCredentials, useGetDatabaseLazyQuery, useLoginMutation } from '../../generated/graphql';
+import { DatabaseType, LoginCredentials, useGetDatabaseLazyQuery, useGetProfilesQuery, useLoginMutation, useLoginWithProfileMutation } from '../../generated/graphql';
 import { AuthActions } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";
@@ -65,8 +65,10 @@ export const LoginPage: FC = () => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     
-    const [login, { loading }] = useLoginMutation();
+    const [login, { loading: loginLoading }] = useLoginMutation();
+    const [loginWithProfile, { loading: loginWithProfileLoading }] = useLoginWithProfileMutation();
     const [getDatabases, { loading: databasesLoading, data: foundDatabases }] = useGetDatabaseLazyQuery();
+    const { loading: profilesLoading, data: profiles } = useGetProfilesQuery();
     const [searchParams, ] = useSearchParams();
     
     const [databaseType, setDatabaseType] = useState<IDropdownItem>(databaseTypeDropdownItems[0]);
@@ -77,13 +79,18 @@ export const LoginPage: FC = () => {
     const [error, setError] = useState<string>();
     const [advancedForm, setAdvancedForm] = useState<Record<string, string>>(databaseType.extra);
     const [showAdvanced, setShowAdvanced] = useState(false);
+    const [selectedAvailableProfile, setSelectedAvailableProfile] = useState<IDropdownItem>();
+
+    const loading = useMemo(() => {
+        return loginLoading || loginWithProfileLoading;
+    }, [loginLoading, loginWithProfileLoading]);
 
     const handleSubmit = useCallback(() => {
         if (([DatabaseType.MySql, DatabaseType.Postgres].includes(databaseType.id as DatabaseType) && (hostName.length === 0 || database.length === 0 || username.length === 0))
             || (databaseType.id === DatabaseType.Sqlite3 && database.length === 0)
             || (databaseType.id === DatabaseType.MongoDb && (hostName.length === 0 || username.length === 0))
             || (databaseType.id === DatabaseType.Redis && (hostName.length === 0))) {
-            return setError(`All fields are required`);
+            return setError("All fields are required");
         }
         setError(undefined);
 
@@ -111,8 +118,45 @@ export const LoginPage: FC = () => {
             onError(error) {
                 return notify(`Login failed: ${error.message}`, "error");
             }
-        })
+        });
     }, [databaseType.id, hostName, database, username, password, advancedForm, login, dispatch, navigate]);
+
+    const handleLoginWithProfileSubmit = useCallback(() => {
+        if (selectedAvailableProfile == null) {
+            return setError("Select a profile");
+        }
+        setError(undefined);
+
+        const profile = profiles?.Profiles.find(p => p.Id === selectedAvailableProfile.id);
+
+        loginWithProfile({
+            variables: {
+                profile: {
+                    Id:  selectedAvailableProfile.id,
+                    Type: profile?.Type as DatabaseType,
+                },
+            },
+            onCompleted(data) {
+                if (data.LoginWithProfile.Status) {
+                    dispatch(AuthActions.login({
+                        Type: profile?.Type as DatabaseType,
+                        Id: selectedAvailableProfile.id,
+                        Database: "",
+                        Hostname: "",
+                        Password: "",
+                        Username: "",
+                        Saved: true,
+                    }));
+                    navigate(InternalRoutes.Dashboard.StorageUnit.path);
+                    return notify("Login successfully", "success");
+                }
+                return notify("Login failed", "error");
+            },
+            onError(error) {
+                return notify(`Login failed: ${error.message}`, "error");
+            }
+        });
+    }, [dispatch, loginWithProfile, navigate, profiles?.Profiles, selectedAvailableProfile]);
 
     const handleDatabaseTypeChange = useCallback((item: IDropdownItem) => {
         if (item.id === DatabaseType.Sqlite3) {
@@ -140,6 +184,10 @@ export const LoginPage: FC = () => {
             newForm[key] = value;
             return newForm;
         });
+    }, []);
+
+    const handleAvailableProfileChange = useCallback((item: IDropdownItem) => {
+        setSelectedAvailableProfile(item);
     }, []);
 
     useEffect(() => {
@@ -199,7 +247,11 @@ export const LoginPage: FC = () => {
         </>
     }, [database, databaseType.id, databasesLoading, foundDatabases?.Database, handleHoseNameChange, hostName, password, username]);
 
-    if (loading)  {
+    const availableProfiles = useMemo(() => {
+        return profiles?.Profiles.map(profile => createDropdownItem(profile.Id, Icons.User)) ?? [];
+    }, [profiles?.Profiles])
+
+    if (loading || profilesLoading)  {
         return (
             <Page className="justify-center items-center">
                 <div className={twMerge(BASE_CARD_CLASS, "w-[350px] h-fit flex-col gap-4 justify-center py-16")}>
@@ -254,6 +306,14 @@ export const LoginPage: FC = () => {
                         <AnimatedButton icon={Icons.CheckCircle} label="Submit" onClick={handleSubmit} />
                     </div>
                 </div>
+                {
+                    availableProfiles.length > 0 &&
+                    <div className="mt-4 pt-2 border-t border-t-neutral-100/10 flex flex-col gap-2">
+                        <DropdownWithLabel fullWidth label="Available profiles" value={selectedAvailableProfile} onChange={handleAvailableProfileChange}
+                            items={availableProfiles} noItemsLabel="No available profiles" />
+                        <AnimatedButton className="self-end" icon={Icons.CheckCircle} label="Login" onClick={handleLoginWithProfileSubmit} />
+                    </div>
+                }
             </div>
         </Page>
     )

@@ -1,0 +1,6 @@
+query GetProfiles {
+  Profiles {
+    Id
+    Type
+  }
+}

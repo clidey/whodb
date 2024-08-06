@@ -57,10 +57,13 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
             {props.loading ? <Loading hideText={true} /> : 
             <>  <div className="flex gap-1 justify-between items-center border border-gray-200 rounded-lg w-full p-1 h-[34px] px-2 dark:bg-white/10 dark:border-white/20">
                     <div className="flex gap-1 text-gray-700 text-sm truncate items-center dark:text-neutral-300">
-                        {props.value?.icon} {!props.showIconOnly && props.value?.label}
+                        {props.value?.icon != null && <div className="flex items-center w-6">
+                            {props.value.icon}
+                        </div>}
+                        {!props.showIconOnly && props.value?.label}
                     </div>
                     {cloneElement(Icons.DownCaret, {
-                        className: "w-4 h-4 stroke-neutral-600 dark:stroke-neutral-400",
+                        className: "absolute right-2 top-1/2 -translate-y-1/2 p-1 w-5 h-5 stroke-neutral-600 dark:stroke-neutral-400 backdrop-blur-sm rounded-full",
                     })}
                 </div>
                 <div className={classNames("absolute z-10 divide-y rounded-lg shadow bg-white py-1 border border-gray-200 overflow-y-auto max-h-40 dark:bg-white/10 dark:backdrop-blur-md dark:border-white/20", {
