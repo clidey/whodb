@@ -1,5 +1,4 @@
 
-import { useLazyQuery } from "@apollo/client";
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import { debounce } from "lodash";
@@ -8,15 +7,15 @@ import { useDispatch } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
 import { InternalRoutes, PublicRoutes } from "../../config/routes";
-import { DatabaseType, GetSchemaDocument, GetSchemaQuery, GetSchemaQueryVariables, useLoginMutation, useLoginWithProfileMutation } from "../../generated/graphql";
+import { DatabaseType, useGetDatabaseLazyQuery, useGetSchemaLazyQuery, useLoginMutation, useLoginWithProfileMutation } from "../../generated/graphql";
 import { AuthActions, LocalLoginProfile } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
-import { createStub, getDatabaseStorageUnitLabel } from "../../utils/functions";
+import { createStub, getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
 import { AnimatedButton } from "../button";
 import { BRAND_COLOR, BRAND_COLOR_BG } from "../classes";
-import { Dropdown, IDropdownItem } from "../dropdown";
+import { createDropdownItem, Dropdown, IDropdownItem } from "../dropdown";
 import { Icons } from "../icons";
 import { Loading } from "../loading";
 
@@ -152,73 +151,19 @@ export const Sidebar: FC = () => {
     const pathname = useLocation().pathname;
     const current = useAppSelector(state => state.auth.current);
     const profiles = useAppSelector(state => state.auth.profiles);
-    const [getSchema,{ data, loading }] = useLazyQuery<GetSchemaQuery, GetSchemaQueryVariables>(GetSchemaDocument, {
+    const [getDatabases, { data: availableDatabases, loading: availableDatabasesLoading }] = useGetDatabaseLazyQuery({
         onError() {
-            notify("Unable to connect to database", "error");
+            notify("Unable to get databases", "error");
+        }
+    });
+    const [getSchema,{ data: availableSchemas, loading: availableSchemasLoading }] = useGetSchemaLazyQuery({
+        onError() {
+            notify("Unable to get schemas", "error");
         }
     });
     const [login, ] = useLoginMutation();
     const [loginWithProfile, ] = useLoginWithProfileMutation();
     const navigate = useNavigate();
-
-    const handleSchemaChange = useCallback((item: IDropdownItem) => {
-        if (pathname !== InternalRoutes.Graph.path && pathname !== InternalRoutes.Dashboard.StorageUnit.path) {
-            navigate(InternalRoutes.Dashboard.StorageUnit.path);
-        }
-        dispatch(DatabaseActions.setSchema(item.id));
-    }, [dispatch, navigate, pathname]);
-
-    useEffect(() => {
-        if (current == null || DATABASES_THAT_DONT_SUPPORT_SCHEMA.includes(current?.Type as DatabaseType)) {
-            return;
-        }
-        if (schema === "") {
-            getSchema({
-                variables: {
-                    type: current?.Type as DatabaseType,
-                },
-                onCompleted(data) {
-                    if (data.Schema.length > 0) dispatch(DatabaseActions.setSchema(data.Schema[0]));
-                },
-            });
-            return;
-        }
-        getSchema({
-            variables: {
-                type: current?.Type as DatabaseType,
-            },
-        });
-    }, [current, dispatch, getSchema, schema]);
-
-    const sidebarRoutes: IRouteProps[] = useMemo(() => {
-        if (current == null) {
-            return [];
-        }
-        const routes = [
-            {
-                title: getDatabaseStorageUnitLabel(current.Type),
-                icon: Icons.Tables,
-                path: InternalRoutes.Dashboard.StorageUnit.path,
-            },
-            {
-                title: "Graph",
-                icon: Icons.GraphLayout,
-                path: InternalRoutes.Graph.path,
-            },
-        ];
-        if (!DATABASES_THAT_DONT_SUPPORT_SCRATCH_PAD.includes(current.Type as DatabaseType)) {
-            routes.push({
-                title: "Scratchpad",
-                icon: Icons.Console,
-                path: InternalRoutes.RawExecute.path,
-            });
-        }
-        return routes;
-    }, [current]);
-
-    const handleCollapseToggle = useCallback(() => {
-        setCollapsed(c => !c);
-    }, []);
 
     const handleProfileChange = useCallback((item: IDropdownItem) => {
         const selectedProfile = profiles.find(profile => profile.Id === item.id);
@@ -268,6 +213,106 @@ export const Sidebar: FC = () => {
             },
         });
     }, [dispatch, login, loginWithProfile, navigate, profiles]);
+
+    const handleDatabaseChange = useCallback((item: IDropdownItem) => {
+        if (current?.Id == null) {
+            return;
+        }
+        if (pathname !== InternalRoutes.Graph.path && pathname !== InternalRoutes.Dashboard.StorageUnit.path) {
+            navigate(InternalRoutes.Dashboard.StorageUnit.path);
+        }
+        dispatch(AuthActions.setLoginProfileDatabase({ id: current?.Id, database: item.id }));
+        handleProfileChange(createDropdownItem(current.Id));
+        dispatch(DatabaseActions.setSchema(""));
+    }, [current?.Id, dispatch, handleProfileChange, navigate, pathname]);
+
+    const handleSchemaChange = useCallback((item: IDropdownItem) => {
+        if (pathname !== InternalRoutes.Graph.path && pathname !== InternalRoutes.Dashboard.StorageUnit.path) {
+            navigate(InternalRoutes.Dashboard.StorageUnit.path);
+        }
+        dispatch(DatabaseActions.setSchema(item.id));
+    }, [dispatch, navigate, pathname]);
+
+    useEffect(() => {
+        if (current == null || isNoSQL(current.Type)) {
+            return;
+        }
+        if (current.Database === "") {
+            getDatabases({
+                variables: {
+                    type: current?.Type as DatabaseType,
+                },
+                onCompleted(data) {
+                    if (data.Database.length > 0) dispatch(AuthActions.setLoginProfileDatabase({
+                        id: current.Id,
+                        database: data.Database[0],
+                    }));
+                },
+            });
+            return;
+        }
+        getDatabases({
+            variables: {
+                type: current?.Type as DatabaseType,
+            },
+        });
+    }, [current, dispatch, getDatabases, getSchema, schema]);
+    
+    useEffect(() => {
+        if (current == null || DATABASES_THAT_DONT_SUPPORT_SCHEMA.includes(current?.Type as DatabaseType)) {
+            return;
+        }
+        if (schema === "") {
+            getSchema({
+                variables: {
+                    type: current?.Type as DatabaseType,
+                },
+                onCompleted(data) {
+                    if (data.Schema.length > 0) dispatch(DatabaseActions.setSchema(data.Schema[0]));
+                },
+            });
+            return;
+        }
+        getSchema({
+            variables: {
+                type: current?.Type as DatabaseType,
+            },
+        });
+    }, [current, dispatch, getSchema, schema]);
+
+    const loading = useMemo(() => {
+        return availableDatabasesLoading || availableSchemasLoading;
+    }, [availableDatabasesLoading, availableSchemasLoading]);
+
+    const sidebarRoutes: IRouteProps[] = useMemo(() => {
+        if (current == null) {
+            return [];
+        }
+        const routes = [
+            {
+                title: getDatabaseStorageUnitLabel(current.Type),
+                icon: Icons.Tables,
+                path: InternalRoutes.Dashboard.StorageUnit.path,
+            },
+            {
+                title: "Graph",
+                icon: Icons.GraphLayout,
+                path: InternalRoutes.Graph.path,
+            },
+        ];
+        if (!DATABASES_THAT_DONT_SUPPORT_SCRATCH_PAD.includes(current.Type as DatabaseType)) {
+            routes.push({
+                title: "Scratchpad",
+                icon: Icons.Console,
+                path: InternalRoutes.RawExecute.path,
+            });
+        }
+        return routes;
+    }, [current]);
+
+    const handleCollapseToggle = useCallback(() => {
+        setCollapsed(c => !c);
+    }, []);
 
     const handleNavigateToLogin = useCallback(() => {
         navigate(PublicRoutes.Login.path);
@@ -394,12 +439,23 @@ export const Sidebar: FC = () => {
                                     }
                                 </div>
                                 {
-                                    data != null &&
+                                    availableDatabases != null && current != null &&
+                                    <div className={classNames("flex gap-2 items-center w-full", {
+                                        "opacity-0 pointer-events-none": collapsed || isNoSQL(current?.Type as DatabaseType),
+                                    })}>
+                                        <div className="text-sm text-gray-600 dark:text-neutral-300">Databases:</div>
+                                        <Dropdown className="w-[140px]" value={createDropdownItem(current!.Database)} items={availableDatabases.Database.map(database => createDropdownItem(database))}
+                                            onChange={handleDatabaseChange}
+                                            noItemsLabel="No available database found"/>
+                                    </div>
+                                }
+                                {
+                                    availableSchemas != null &&
                                     <div className={classNames("flex gap-2 items-center w-full", {
                                         "opacity-0 pointer-events-none": pathname === InternalRoutes.RawExecute.path || collapsed || DATABASES_THAT_DONT_SUPPORT_SCHEMA.includes(current?.Type as DatabaseType),
                                     })}>
                                         <div className="text-sm text-gray-600 dark:text-neutral-300">Schema:</div>
-                                        <Dropdown className="w-[140px]" value={{ id: schema, label: schema }} items={data.Schema.map(schema => ({ id: schema, label: schema }))} onChange={handleSchemaChange}
+                                        <Dropdown className="w-[140px]" value={createDropdownItem(schema)} items={availableSchemas.Schema.map(schema => createDropdownItem(schema))} onChange={handleSchemaChange}
                                             noItemsLabel="No schema found"/>
                                     </div>
                                 }

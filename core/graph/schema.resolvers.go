@@ -132,7 +132,8 @@ func (r *queryResolver) Profiles(ctx context.Context) ([]*model.LoginProfile, er
 
 // Database is the resolver for the Database field.
 func (r *queryResolver) Database(ctx context.Context, typeArg model.DatabaseType) ([]string, error) {
-	return src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetDatabases()
+	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	return src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetDatabases(config)
 }
 
 // Schema is the resolver for the Schema field.

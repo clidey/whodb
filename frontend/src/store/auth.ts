@@ -42,6 +42,16 @@ export const authSlice = createSlice({
       state.current = undefined;
       state.status = "unauthorized";
     },
+    setLoginProfileDatabase: (state, action: PayloadAction<{ id: string, database: string }>) => {
+      const profile = state.profiles.find(profile => profile.Id === action.payload.id);
+      if (profile == null) {
+        return;
+      }
+      if (state.current?.Id === profile.Id) {
+        state.current.Database = action.payload.database;
+      }
+      profile.Database = action.payload.database;
+    }
   },
 });
 
