@@ -26,7 +26,7 @@ func (p *Sqlite3Plugin) IsAvailable(config *engine.PluginConfig) bool {
 	return true
 }
 
-func (p *Sqlite3Plugin) GetDatabases() ([]string, error) {
+func (p *Sqlite3Plugin) GetDatabases(config *engine.PluginConfig) ([]string, error) {
 	directory := getDefaultDirectory()
 	entries, err := os.ReadDir(directory)
 	if err != nil {

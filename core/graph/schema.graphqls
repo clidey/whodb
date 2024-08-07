@@ -70,11 +70,13 @@ input LoginCredentials {
 input LoginProfileInput {
   Id: String!
   Type: DatabaseType!
+  Database: String
 }
 
 type LoginProfile {
   Id: String!
   Type: DatabaseType!
+  Database: String
 }
 
 type StatusResponse {

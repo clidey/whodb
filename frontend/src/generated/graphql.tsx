@@ -65,11 +65,13 @@ export type LoginCredentials = {
 
 export type LoginProfile = {
   __typename?: 'LoginProfile';
+  Database?: Maybe<Scalars['String']['output']>;
   Id: Scalars['String']['output'];
   Type: DatabaseType;
 };
 
 export type LoginProfileInput = {
+  Database?: InputMaybe<Scalars['String']['input']>;
   Id: Scalars['String']['input'];
   Type: DatabaseType;
 };

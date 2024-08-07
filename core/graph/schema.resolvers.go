@@ -48,9 +48,13 @@ func (r *mutationResolver) LoginWithProfile(ctx context.Context, profile model.L
 			}) {
 				return nil, errors.New("unauthorized")
 			}
-			return auth.Login(ctx, &model.LoginCredentials{
+			credentials := &model.LoginCredentials{
 				ID: &profile.ID,
-			})
+			}
+			if profile.Database != nil {
+				credentials.Database = *profile.Database
+			}
+			return auth.Login(ctx, credentials)
 		}
 	}
 	return nil, errors.New("login profile does not exist or is not authorized")
@@ -132,7 +136,8 @@ func (r *queryResolver) Profiles(ctx context.Context) ([]*model.LoginProfile, er
 
 // Database is the resolver for the Database field.
 func (r *queryResolver) Database(ctx context.Context, typeArg model.DatabaseType) ([]string, error) {
-	return src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetDatabases()
+	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	return src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetDatabases(config)
 }
 
 // Schema is the resolver for the Schema field.
