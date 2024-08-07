@@ -104,6 +104,10 @@ func getTableInfo(db *gorm.DB, tableName string) ([]string, map[string]string, e
 	return primaryKeys, columnTypes, nil
 }
 
+func (p *Sqlite3Plugin) DeleteStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
+	return false, errors.New("not implemented")
+}
+
 func convertStringValue(value, columnType string) (interface{}, error) {
 	switch columnType {
 	case "INTEGER":

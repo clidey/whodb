@@ -8,7 +8,7 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 )
 
-func (p *PostgresPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
+func (p *PostgresPlugin) DeleteStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
 	db, err := DB(config)
 	if err != nil {
 		return false, err
@@ -56,7 +56,7 @@ func (p *PostgresPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema s
 		dbConditions = dbConditions.Where(fmt.Sprintf("\"%s\" = ?", key), value)
 	}
 
-	result := dbConditions.Table(tableName).Updates(convertedValues)
+	result := dbConditions.Table(tableName).Delete(convertedValues)
 	if result.Error != nil {
 		return false, result.Error
 	}

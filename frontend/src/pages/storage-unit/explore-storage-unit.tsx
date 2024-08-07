@@ -13,7 +13,8 @@ import { InternalPage } from "../../components/page";
 import { Table } from "../../components/table";
 import { graphqlClient } from "../../config/graphql-client";
 import { InternalRoutes } from "../../config/routes";
-import { Column, DatabaseType, RecordInput, RowsResult, StorageUnit, UpdateStorageUnitDocument, UpdateStorageUnitMutationResult, useAddRowMutation, useGetStorageUnitRowsLazyQuery } from "../../generated/graphql";
+import { Column, DatabaseType, DeleteStorageUnitDocument, DeleteStorageUnitMutationResult, RecordInput, RowsResult, StorageUnit, 
+    UpdateStorageUnitDocument, UpdateStorageUnitMutationResult, useAddRowMutation, useGetStorageUnitRowsLazyQuery } from "../../generated/graphql";
 import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
 import { getDatabaseStorageUnitLabel, isNoSQL, isNumeric } from "../../utils/functions";
@@ -100,6 +101,37 @@ export const ExploreStorageUnit: FC = () => {
                 });
                 if (data?.UpdateStorageUnit.Status) {
                     notify("Row updated successfully!", "success");
+                    return res();
+                }
+                notify("Unable to update the row!", "error");
+            } catch (err) {
+                notify(`Unable to update the row: ${err}`, "error");
+            }
+            return rej();
+        });
+    }, [current, schema, unitName]);
+
+    const handleRowDelete = useCallback((row: Record<string, string>) => {
+        if (current == null) {
+            return Promise.reject();
+        }
+        const values = map(entries(row), ([Key, Value]) => ({
+            Key,
+            Value,
+        }));
+        return new Promise<void>(async (res, rej) => {
+            try {
+                const { data }: FetchResult<DeleteStorageUnitMutationResult["data"]> = await graphqlClient.mutate({
+                    mutation: DeleteStorageUnitDocument,
+                    variables: {
+                        schema,
+                        storageUnit: unitName,
+                        type: current.Type as DatabaseType,
+                        values,
+                    }
+                });
+                if (data?.DeleteStorageUnit.Status) {
+                    notify("Row deleted successfully!", "success");
                     return res();
                 }
                 notify("Unable to update the row!", "error");
@@ -386,7 +418,7 @@ export const ExploreStorageUnit: FC = () => {
                     rows != null &&
                     <Table columns={rows.Columns.map(c => c.Name)} columnTags={rows.Columns.map(c => c.Type)}
                         rows={rows.Rows} totalPages={totalPages} currentPage={currentPage+1} onPageChange={handlePageChange}
-                        onRowUpdate={handleRowUpdate} disableEdit={rows.DisableUpdate} />
+                        onRowUpdate={handleRowUpdate} disableEdit={rows.DisableUpdate} onRowDelete={handleRowDelete}/>
                 }
             </div>
         </div>

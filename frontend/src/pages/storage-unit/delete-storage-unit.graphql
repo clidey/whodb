@@ -1,0 +1,5 @@
+mutation DeleteStorageUnit($type: DatabaseType!, $schema: String!, $storageUnit:String!, $values: [RecordInput!]!) {
+  DeleteStorageUnit(type: $type, schema: $schema, storageUnit: $storageUnit, values: $values) {
+    Status
+  }
+}
