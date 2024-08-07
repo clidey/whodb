@@ -21,7 +21,11 @@ const (
 )
 
 func GetCredentials(ctx context.Context) *engine.Credentials {
-	return ctx.Value(AuthKey_Credentials).(*engine.Credentials)
+	credentials := ctx.Value(AuthKey_Credentials)
+	if credentials == nil {
+		return nil
+	}
+	return credentials.(*engine.Credentials)
 }
 
 func isPublicRoute(r *http.Request) bool {
@@ -71,7 +75,11 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			for i, loginProfile := range profiles {
 				profileId := src.GetLoginProfileId(i, loginProfile)
 				if *credentials.Id == profileId {
-					credentials = src.GetLoginCredentials(loginProfile)
+					profile := *src.GetLoginCredentials(loginProfile)
+					if credentials.Database != "" {
+						profile.Database = credentials.Database
+					}
+					credentials = &profile
 					break
 				}
 			}
@@ -84,7 +92,8 @@ func AuthMiddleware(next http.Handler) http.Handler {
 }
 
 type GraphQLRequest struct {
-	OperationName string `json:"operationName"`
+	OperationName string                 `json:"operationName"`
+	Variables     map[string]interface{} `json:"variables"`
 }
 
 func isAllowed(r *http.Request, body []byte) bool {
@@ -98,5 +107,9 @@ func isAllowed(r *http.Request, body []byte) bool {
 		return false
 	}
 
-	return strings.HasPrefix(query.OperationName, "Login") || query.OperationName == "Logout" || query.OperationName == "GetDatabase" || query.OperationName == "GetProfiles"
+	if query.OperationName == "GetDatabase" {
+		return query.Variables["type"] == string(engine.DatabaseType_Sqlite3)
+	}
+
+	return strings.HasPrefix(query.OperationName, "Login") || query.OperationName == "Logout" || query.OperationName == "GetProfiles"
 }

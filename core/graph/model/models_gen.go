@@ -34,13 +34,15 @@ type LoginCredentials struct {
 }
 
 type LoginProfile struct {
-	ID   string       `json:"Id"`
-	Type DatabaseType `json:"Type"`
+	ID       string       `json:"Id"`
+	Type     DatabaseType `json:"Type"`
+	Database *string      `json:"Database,omitempty"`
 }
 
 type LoginProfileInput struct {
-	ID   string       `json:"Id"`
-	Type DatabaseType `json:"Type"`
+	ID       string       `json:"Id"`
+	Type     DatabaseType `json:"Type"`
+	Database *string      `json:"Database,omitempty"`
 }
 
 type Mutation struct {

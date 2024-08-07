@@ -2,7 +2,6 @@ package mysql
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"log"
 
@@ -25,8 +24,30 @@ func (p *MySQLPlugin) IsAvailable(config *engine.PluginConfig) bool {
 	return true
 }
 
-func (p *MySQLPlugin) GetDatabases() ([]string, error) {
-	return nil, errors.ErrUnsupported
+func (p *MySQLPlugin) GetDatabases(config *engine.PluginConfig) ([]string, error) {
+	db, err := DB(config)
+	if err != nil {
+		return nil, err
+	}
+	sqlDb, err := db.DB()
+	if err != nil {
+		return nil, err
+	}
+	defer sqlDb.Close()
+
+	var databases []struct {
+		DatabaseName string `gorm:"column:databasename"`
+	}
+	if err := db.Raw("SHOW DATABASES").Scan(&databases).Error; err != nil {
+		return nil, err
+	}
+
+	databaseNames := []string{}
+	for _, database := range databases {
+		databaseNames = append(databaseNames, database.DatabaseName)
+	}
+
+	return databaseNames, nil
 }
 
 func (p *MySQLPlugin) GetSchema(config *engine.PluginConfig) ([]string, error) {

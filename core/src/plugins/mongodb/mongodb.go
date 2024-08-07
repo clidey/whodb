@@ -22,7 +22,7 @@ func (p *MongoDBPlugin) IsAvailable(config *engine.PluginConfig) bool {
 	return true
 }
 
-func (p *MongoDBPlugin) GetDatabases() ([]string, error) {
+func (p *MongoDBPlugin) GetDatabases(config *engine.PluginConfig) ([]string, error) {
 	return nil, errors.ErrUnsupported
 }
 

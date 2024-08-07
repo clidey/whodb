@@ -24,7 +24,7 @@ func (p *ElasticSearchPlugin) IsAvailable(config *engine.PluginConfig) bool {
 	return true
 }
 
-func (p *ElasticSearchPlugin) GetDatabases() ([]string, error) {
+func (p *ElasticSearchPlugin) GetDatabases(config *engine.PluginConfig) ([]string, error) {
 	return nil, errors.ErrUnsupported
 }
 
