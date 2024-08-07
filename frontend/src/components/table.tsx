@@ -13,6 +13,7 @@ import { Icons } from "./icons";
 import { SearchInput } from "./search";
 import { Loading } from "./loading";
 import { clone, values } from "lodash";
+import { notify } from "../store/function";
 
 type IPaginationProps = {
     pageCount: number;
@@ -100,6 +101,7 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, onCellDelete, disableEdit 
     const cellRef = useRef<HTMLDivElement>(null);
     const [copied, setCopied] = useState(false);
     const [updating, setUpdating] = useState(false);
+    const [escapeAttempted, setEscapeAttempted] = useState(false);
 
     const handleChange = useCallback((value: string) => {
         setEditedData(value);
@@ -161,6 +163,21 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, onCellDelete, disableEdit 
             setUpdating(false); 
         });
     }, [cell, editedData, onCellUpdate]);
+
+    const handleEditorEscapeButton = useCallback((e: KeyboardEvent) => {
+        if (e.key === "Escape" && !changed) {
+            handleCancel();
+        } else if (e.key === "Escape" && changed) {
+            if (escapeAttempted) {
+                setEscapeAttempted(false);
+                handleCancel();
+            } else {
+                setEscapeAttempted(true);
+                notify("You have unsaved changes, please save or cancel. Pressing Escape again will close without saving.", "warning");
+                setTimeout(() => setEscapeAttempted(false), 2000); // reset it in case
+            }
+        }
+    }, [changed, handleCancel, escapeAttempted]);
 
     const language = useMemo(() => {
         if (isValidJSON(editedData)) {
@@ -232,7 +249,7 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, onCellDelete, disableEdit 
                             }}
                             transition={{ duration: 0.3 }}
                             className="absolute flex flex-col h-full justify-between gap-4">
-                            <div className="rounded-lg shadow-lg overflow-hidden grow" onKeyDown={(e) => {e.key === "Escape" && handleCancel()}}>
+                            <div className="rounded-lg shadow-lg overflow-hidden grow" onKeyDown={handleEditorEscapeButton}>
                                 <CodeEditor
                                     defaultShowPreview={preview}
                                     disabled={preview}
