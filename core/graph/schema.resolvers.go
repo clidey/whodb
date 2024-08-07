@@ -48,9 +48,13 @@ func (r *mutationResolver) LoginWithProfile(ctx context.Context, profile model.L
 			}) {
 				return nil, errors.New("unauthorized")
 			}
-			return auth.Login(ctx, &model.LoginCredentials{
+			credentials := &model.LoginCredentials{
 				ID: &profile.ID,
-			})
+			}
+			if profile.Database != nil {
+				credentials.Database = *profile.Database
+			}
+			return auth.Login(ctx, credentials)
 		}
 	}
 	return nil, errors.New("login profile does not exist or is not authorized")
