@@ -161,8 +161,22 @@ func getTableSchema(db *gorm.DB, schema string) (map[string][]engine.Record, err
 	return tableColumnsMap, nil
 }
 
+func (p *PostgresPlugin) getTablePrimaryKey(config *engine.PluginConfig, tableName string, tableSchema string) (*engine.GetRowsResult, error) {
+	primaryKeyQuery := fmt.Sprintf(`
+		SELECT c.column_name
+		FROM information_schema.table_constraints tc 
+		JOIN information_schema.constraint_column_usage AS ccu USING (constraint_schema, constraint_name) 
+		JOIN information_schema.columns AS c ON c.table_schema = tc.constraint_schema
+		AND tc.table_name = c.table_name AND ccu.column_name = c.column_name
+		WHERE constraint_type = 'PRIMARY KEY' and tc.table_name = '%s' and tc.table_schema = '%s';
+	`, tableName, tableSchema)
+	return p.executeRawSQL(config, primaryKeyQuery)
+}
+
 func (p *PostgresPlugin) GetRows(config *engine.PluginConfig, schema string, storageUnit string, where string, pageSize int, pageOffset int) (*engine.GetRowsResult, error) {
-	query := fmt.Sprintf("SELECT * FROM \"%v\".\"%s\"", schema, storageUnit)
+	sortKeyRes, _ := p.getTablePrimaryKey(config, storageUnit, schema)
+	sortKey := sortKeyRes.Rows[0][0]
+	query := fmt.Sprintf("SELECT * FROM \"%v\".\"%s\" order by \"%v\" asc", schema, storageUnit, sortKey)
 	if len(where) > 0 {
 		query = fmt.Sprintf("%v WHERE %v", query, where)
 	}

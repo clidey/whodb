@@ -63,6 +63,7 @@ type PluginFunctions interface {
 	AddStorageUnit(config *PluginConfig, schema string, storageUnit string, fields map[string]string) (bool, error)
 	UpdateStorageUnit(config *PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error)
 	AddRow(config *PluginConfig, schema string, storageUnit string, values []Record) (bool, error)
+	DeleteStorageUnit(config *PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error)
 	GetRows(config *PluginConfig, schema string, storageUnit string, where string, pageSize int, pageOffset int) (*GetRowsResult, error)
 	GetGraph(config *PluginConfig, schema string) ([]GraphUnit, error)
 	RawExecute(config *PluginConfig, query string) (*GetRowsResult, error)

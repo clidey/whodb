@@ -87,10 +87,11 @@ const Pagination: FC<IPaginationProps> = ({ pageCount, currentPage, onPageChange
 type ITDataProps = {
     cell: Cell<Record<string, string>>;
     onCellUpdate?: (row: Cell<Record<string, string>>) => Promise<void>;
+    onCellDelete?: (row: Cell<Record<string, string>>) => Promise<void>;
     disableEdit?: boolean;
 }
 
-const TData: FC<ITDataProps> = ({ cell, onCellUpdate, disableEdit }) => {
+const TData: FC<ITDataProps> = ({ cell, onCellUpdate, onCellDelete, disableEdit }) => {
     const [changed, setChanged] = useState(false);
     const [editedData, setEditedData] = useState<string>(cell.value);
     const [editable, setEditable] = useState(false);
@@ -231,7 +232,7 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, disableEdit }) => {
                             }}
                             transition={{ duration: 0.3 }}
                             className="absolute flex flex-col h-full justify-between gap-4">
-                            <div className="rounded-lg shadow-lg overflow-hidden grow">
+                            <div className="rounded-lg shadow-lg overflow-hidden grow" onKeyDown={(e) => {e.key === "Escape" && handleCancel()}}>
                                 <CodeEditor
                                     defaultShowPreview={preview}
                                     disabled={preview}
@@ -281,10 +282,11 @@ type ITableRow = {
     row: Row<Record<string, string>>;
     style: CSSProperties;
     onRowUpdate?: (row: Record<string, string>) => Promise<void>;
+    onRowDelete?: (row: Record<string, string>) => Promise<void>;
     disableEdit?: boolean;
 }
 
-const TableRow: FC<ITableRow> = ({ row, style, onRowUpdate, disableEdit }) => {
+const TableRow: FC<ITableRow> = ({ row, style, onRowUpdate, onRowDelete, disableEdit }) => {
     const handleCellUpdate = useCallback((cell: Cell<Record<string, string>>) => {
         if (onRowUpdate == null) {
             return Promise.reject();
@@ -297,12 +299,26 @@ const TableRow: FC<ITableRow> = ({ row, style, onRowUpdate, disableEdit }) => {
         return onRowUpdate?.(updatedRow);
     }, [onRowUpdate, row.cells]);
 
+    const handleRowDelete = useCallback((e: MouseEvent) => {
+        if (onRowDelete == null) {
+            return Promise.reject();
+        }
+        const updatedRow = row.cells.reduce((all, one) => {
+            all[one.column.id] = one.value;
+            return all;
+        }, {} as Record<string, string>);
+        return onRowDelete?.(updatedRow);
+    }, [onRowDelete, row]);
+
     const props = useMemo(() => {
         return row.getRowProps({ style });
     }, [row, style]);
 
     return (
         <div className="table-row-group text-xs group/row" {...props} key={props.key}>
+            <div className="dark:invert group-hover/data:flex hover:scale-125 mt-1" onClick={handleRowDelete}>
+                {Icons.Delete}
+            </div>
             {
                 row.cells.map((cell) => (
                     <TData key={cell.getCellProps().key} cell={cell} onCellUpdate={handleCellUpdate} disableEdit={disableEdit || cell.column.id === "#"} />
@@ -321,10 +337,11 @@ type ITableProps = {
     currentPage: number;
     onPageChange?: (page: number) => void;
     onRowUpdate?: (row: Record<string, string>) => Promise<void>;
+    onRowDelete?: (row: Record<string, string>) => Promise<void>;
     disableEdit?: boolean;
 }
 
-export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows: actualRows, columnTags, totalPages, currentPage, onPageChange, onRowUpdate, disableEdit }) => {
+export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows: actualRows, columnTags, totalPages, currentPage, onPageChange, onRowUpdate, onRowDelete, disableEdit }) => {
     const fixedTableRef = useRef<FixedSizeList>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const operationsRef = useRef<HTMLDivElement>(null);
@@ -350,7 +367,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
             id: "#",
             Header: "#",
             accessor: "#",
-            width: indexWidth,
+            width: indexWidth + 10,
         });
         return cols;
     }, [actualColumns, width]);
@@ -486,11 +503,26 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
         return onRowUpdate(row);
     }, [onRowUpdate]);
 
+    const handleRowDelete = useCallback(async (index: number, row: Record<string, string>) => {
+        if (onRowDelete == null) {
+            return Promise.resolve();
+        }
+        delete row["#"];
+        await onRowDelete(row).then( () => {
+            setData(value => {
+                const newValue = value.filter((_, i) => i !== index);
+                return newValue.map((row, i) => ({ ...row, "#": (i + 1).toString() }));
+            });
+        }).catch((e) => {
+            console.log(e);
+        });
+    }, [onRowDelete]);
+
     const handleRenderRow = useCallback(({ index, style }: ListChildComponentProps) => {
         const row = rows[index];
         prepareRow(row);
-        return <TableRow key={`row-${row.values[actualColumns[0]]}`} row={row} style={style} onRowUpdate={(row) => handleRowUpdate(index, row)} disableEdit={disableEdit} />;
-    }, [rows, prepareRow, actualColumns, handleRowUpdate, disableEdit]);
+        return <TableRow key={`row-${row.values[actualColumns[0]]}`} row={row} style={style} onRowDelete={(row) => handleRowDelete(index, row)} onRowUpdate={(row) => handleRowUpdate(index, row)} disableEdit={disableEdit} />;
+    }, [rows, prepareRow, actualColumns, handleRowUpdate, disableEdit, handleRowDelete]);
 
     useEffect(() => {
         if (containerRef.current == null || operationsRef.current == null) {
@@ -524,7 +556,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                 <div className="border-separate border-spacing-0 h-fit" ref={tableRef} {...getTableProps()}>
                     <div>
                         {headerGroups.map(headerGroup => (
-                            <div {...headerGroup.getHeaderGroupProps()} key={headerGroup.getHeaderGroupProps().key}>
+                            <div {...headerGroup.getHeaderGroupProps()} key={headerGroup.getHeaderGroupProps().key} className="ml-6">
                                 {headerGroup.headers.map((column, i) => (
                                     <div {...column.getHeaderProps()} key={column.getHeaderProps().key} className="text-xs border-t border-l last:border-r border-gray-200 dark:border-white/5 p-2 text-left bg-gray-500 dark:bg-white/20 text-white first:rounded-tl-lg last:rounded-tr-lg relative group/header cursor-pointer select-none"
                                         onClick={() => handleSort(column.id)}>
