@@ -75,11 +75,11 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			for i, loginProfile := range profiles {
 				profileId := src.GetLoginProfileId(i, loginProfile)
 				if *credentials.Id == profileId {
-					profile := src.GetLoginCredentials(loginProfile)
+					profile := *src.GetLoginCredentials(loginProfile)
 					if credentials.Database != "" {
 						profile.Database = credentials.Database
 					}
-					credentials = profile
+					credentials = &profile
 					break
 				}
 			}
