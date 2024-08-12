@@ -23,7 +23,7 @@ func (p *RedisPlugin) IsAvailable(config *engine.PluginConfig) bool {
 	return status.Err() == nil
 }
 
-func (p *RedisPlugin) GetDatabases() ([]string, error) {
+func (p *RedisPlugin) GetDatabases(config *engine.PluginConfig) ([]string, error) {
 	return nil, errors.New("unsupported operation for Redis")
 }
 

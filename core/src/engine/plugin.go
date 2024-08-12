@@ -1,6 +1,7 @@
 package engine
 
 type Credentials struct {
+	Id       *string
 	Hostname string
 	Username string
 	Password string
@@ -55,7 +56,7 @@ type GraphUnit struct {
 }
 
 type PluginFunctions interface {
-	GetDatabases() ([]string, error)
+	GetDatabases(config *PluginConfig) ([]string, error)
 	IsAvailable(config *PluginConfig) bool
 	GetSchema(config *PluginConfig) ([]string, error)
 	GetStorageUnits(config *PluginConfig, schema string) ([]StorageUnit, error)

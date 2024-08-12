@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"log"
 
@@ -25,8 +24,28 @@ func (p *PostgresPlugin) IsAvailable(config *engine.PluginConfig) bool {
 	return true
 }
 
-func (p *PostgresPlugin) GetDatabases() ([]string, error) {
-	return nil, errors.ErrUnsupported
+func (p *PostgresPlugin) GetDatabases(config *engine.PluginConfig) ([]string, error) {
+	db, err := DB(config)
+	if err != nil {
+		return nil, err
+	}
+	sqlDb, err := db.DB()
+	if err != nil {
+		return nil, err
+	}
+	defer sqlDb.Close()
+
+	var databases []struct {
+		Datname string `gorm:"column:datname"`
+	}
+	if err := db.Raw("SELECT datname AS datname FROM pg_database WHERE datistemplate = false").Scan(&databases).Error; err != nil {
+		return nil, err
+	}
+	databaseNames := []string{}
+	for _, database := range databases {
+		databaseNames = append(databaseNames, database.Datname)
+	}
+	return databaseNames, nil
 }
 
 func (p *PostgresPlugin) GetSchema(config *engine.PluginConfig) ([]string, error) {

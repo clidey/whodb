@@ -254,7 +254,7 @@ export const StorageUnitPage: FC = () => {
                                     </div>
                                     {
                                         fields.map((field, index) => (
-                                            <div className="flex gap-2">
+                                            <div className="flex gap-2" key={field.Key}>
                                                 <Input inputProps={{ className: "w-1/2" }} value={field.Key} setValue={(value) => handleFieldValueChange("Key", index, value)} placeholder="Enter field name" />
                                                 <Dropdown className="w-1/2" items={storageUnitTypesDropdownItems} value={createDropdownItem(field.Value)}
                                                     onChange={(item) => handleFieldValueChange("Value", index, item.id)} />
@@ -313,7 +313,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data })
             <Card icon={{
                 bgClassName: "bg-teal-500",
                 component: Icons.Database,
-            }} className="h-fit backdrop-blur-[2px]">
+            }} className="h-fit backdrop-blur-[2px] bg-transparent">
                 <div className="flex flex-col grow mt-2 gap-4">
                     <div className="flex flex-col grow">
                         <div className="text-md font-semibold mb-2 break-words dark:text-neutral-300">{data.Name}</div>

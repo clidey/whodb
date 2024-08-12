@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/engine"
 )
 
@@ -20,7 +21,11 @@ const (
 )
 
 func GetCredentials(ctx context.Context) *engine.Credentials {
-	return ctx.Value(AuthKey_Credentials).(*engine.Credentials)
+	credentials := ctx.Value(AuthKey_Credentials)
+	if credentials == nil {
+		return nil
+	}
+	return credentials.(*engine.Credentials)
 }
 
 func isPublicRoute(r *http.Request) bool {
@@ -65,6 +70,21 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		if credentials.Id != nil {
+			profiles := src.GetLoginProfiles()
+			for i, loginProfile := range profiles {
+				profileId := src.GetLoginProfileId(i, loginProfile)
+				if *credentials.Id == profileId {
+					profile := *src.GetLoginCredentials(loginProfile)
+					if credentials.Database != "" {
+						profile.Database = credentials.Database
+					}
+					credentials = &profile
+					break
+				}
+			}
+		}
+
 		ctx := r.Context()
 		ctx = context.WithValue(ctx, AuthKey_Credentials, credentials)
 		next.ServeHTTP(w, r.WithContext(ctx))
@@ -72,7 +92,8 @@ func AuthMiddleware(next http.Handler) http.Handler {
 }
 
 type GraphQLRequest struct {
-	OperationName string `json:"operationName"`
+	OperationName string                 `json:"operationName"`
+	Variables     map[string]interface{} `json:"variables"`
 }
 
 func isAllowed(r *http.Request, body []byte) bool {
@@ -86,5 +107,9 @@ func isAllowed(r *http.Request, body []byte) bool {
 		return false
 	}
 
-	return query.OperationName == "Login" || query.OperationName == "Logout" || query.OperationName == "GetDatabase"
+	if query.OperationName == "GetDatabase" {
+		return query.Variables["type"] == string(engine.DatabaseType_Sqlite3)
+	}
+
+	return strings.HasPrefix(query.OperationName, "Login") || query.OperationName == "Logout" || query.OperationName == "GetProfiles"
 }

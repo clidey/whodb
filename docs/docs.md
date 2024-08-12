@@ -4,7 +4,7 @@ Whodb is a powerful database management tool designed to simplify and enhance yo
 
 ## Features
 
-- **Login and Authentication**: Securely log in to your database.
+- **Login Profiles & Authentication**: Securely log in to your database.
 - **Database Selection**: Choose your database type, username, password, and specific database.
 - **Side Bar Navigation**: Access different sections like Login Profile, Table Schema, Tables, Graph Visualization, and Scratchpad.
 - **Table Schema**: View detailed schemas of your tables.
@@ -40,6 +40,56 @@ NOTE: When selecting SQLite Database - you would need to mount one or more datab
 ```sh
 docker run -it -v ./sample.db:/db/sample.db -p 8080:8080 clidey/whodb:latest
 ```
+
+### Login Profiles (Environment Variables Setup)
+
+Now, you can configure Whodb to use pre-configured database login profiles using environment variables. This allows for easy switching between different database configurations without exposing passwords to the frontend.
+
+#### Using Environment Variables
+You can define environment variables to specify multiple database configurations. Here are the formats supported:
+
+**Single Database Configuration:** Use WHODB_DATABASETYPE_1='{}' where DATABASETYPE can be POSTGRES, MYSQL, SQLITE3, etc., to configure the first profile.
+
+Example:
+
+```bash
+WHODB_POSTGRES_1='{"host":"localhost","user":"user","password":"password","database":"postgres"}'
+WHODB_SQLITE3_1='{"database":"sample.db"}'
+```
+
+**Multiple Database Configurations:** Alternatively, you can use a list of JSON objects in WHODB_DATABASETYPE='[{}]' format to define multiple profiles for a database type.
+
+
+Example:
+
+```bash
+WHODB_MYSQL='[{"host":"localhost","user":"user","password":"password","database":"mysql"}]'
+```
+
+Docker compose example:
+
+```yaml
+version: '3.7'
+services:
+  whodb:
+    image: clidey/whodb
+    ports:
+      - "8080:8080"
+    environment:
+      WHODB_POSTGRES_1: '{"host":"localhost","user":"user","password":"password","database":"postgres"}'
+      WHODB_MYSQL: '[{"host":"localhost","user":"user","password":"password","database":"mysql"}]'
+      WHODB_SQLITE3_1: '{"database":"sample.db"}'
+```
+
+#### Using in Whodb
+Once configured, you can switch between these profiles within the Whodb application:
+
+- Navigate to the login page.
+- At the bottom of the login form, select the profile you want to use.
+  <br /><p align="center"><img src="./images/login-profiles.png" alt="Initial Login Profiles" width="400" /></p>
+- Profiles can also be switched using the sidebar as before, ensuring seamless integration with existing workflows.
+
+##### Security Note: Passwords are not sent to the frontend, ensuring secure handling of sensitive information.
 
 ### Side Bar Navigation
 

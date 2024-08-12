@@ -88,7 +88,9 @@ export const Graph: FC<IGraphProps> = (props) => {
           }
       
           setDownloading(true);
-          toPng(reactFlowWrapper.current)
+          toPng(reactFlowWrapper.current, {
+            pixelRatio: 5,
+          })
             .then((dataUrl) => {
               const link = document.createElement('a');
               link.download = 'clidey-whodb-diagram.png';

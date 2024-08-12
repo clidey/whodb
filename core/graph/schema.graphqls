@@ -58,6 +58,7 @@ type GraphUnit {
 }
 
 input LoginCredentials {
+  Id: String
   Type: String!
   Hostname: String!
   Username: String!
@@ -66,12 +67,25 @@ input LoginCredentials {
   Advanced: [RecordInput!]
 }
 
+input LoginProfileInput {
+  Id: String!
+  Type: DatabaseType!
+  Database: String
+}
+
+type LoginProfile {
+  Id: String!
+  Type: DatabaseType!
+  Database: String
+}
+
 type StatusResponse {
   Status: Boolean!
 }
 
 
 type Query {
+  Profiles: [LoginProfile!]!
   Database(type: DatabaseType!): [String!]!
   Schema(type: DatabaseType!): [String!]!
   StorageUnit(type: DatabaseType!, schema: String!): [StorageUnit!]! # tables, collections
@@ -82,6 +96,7 @@ type Query {
 
 type Mutation {
   Login(credentials: LoginCredentials!): StatusResponse!
+  LoginWithProfile(profile: LoginProfileInput!): StatusResponse!
   Logout: StatusResponse!
 
   AddStorageUnit(type: DatabaseType!, schema: String!, storageUnit: String!, fields: [RecordInput!]!): StatusResponse!
