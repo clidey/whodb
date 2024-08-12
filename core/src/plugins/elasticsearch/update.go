@@ -21,7 +21,7 @@ for (key in ctx._source.keySet().toArray()) {
 }
 `
 
-func (p *ElasticSearchPlugin) DeleteStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
+func (p *ElasticSearchPlugin) DeleteRow(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
 	return false, errors.New("not implemented")
 }
 

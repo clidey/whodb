@@ -104,7 +104,7 @@ func getTableInfo(db *gorm.DB, tableName string) ([]string, map[string]string, e
 	return primaryKeys, columnTypes, nil
 }
 
-func (p *Sqlite3Plugin) DeleteStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
+func (p *Sqlite3Plugin) DeleteRow(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
 	return false, errors.New("not implemented")
 }
 

@@ -8,7 +8,7 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 )
 
-func (p *PostgresPlugin) DeleteStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
+func (p *PostgresPlugin) DeleteRow(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
 	db, err := DB(config)
 	if err != nil {
 		return false, err

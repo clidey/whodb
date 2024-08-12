@@ -54,6 +54,6 @@ func (p *RedisPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema stri
 	return true, nil
 }
 
-func (p *RedisPlugin) DeleteStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
+func (p *RedisPlugin) DeleteRow(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
 	return false, errors.New("not implemented")
 }

@@ -13,7 +13,7 @@ import { InternalPage } from "../../components/page";
 import { Table } from "../../components/table";
 import { graphqlClient } from "../../config/graphql-client";
 import { InternalRoutes } from "../../config/routes";
-import { Column, DatabaseType, DeleteStorageUnitDocument, DeleteStorageUnitMutationResult, RecordInput, RowsResult, StorageUnit, 
+import { Column, DatabaseType, DeleteRowDocument, DeleteRowMutationResult, RecordInput, RowsResult, StorageUnit, 
     UpdateStorageUnitDocument, UpdateStorageUnitMutationResult, useAddRowMutation, useGetStorageUnitRowsLazyQuery } from "../../generated/graphql";
 import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
@@ -121,8 +121,8 @@ export const ExploreStorageUnit: FC = () => {
         }));
         return new Promise<void>(async (res, rej) => {
             try {
-                const { data }: FetchResult<DeleteStorageUnitMutationResult["data"]> = await graphqlClient.mutate({
-                    mutation: DeleteStorageUnitDocument,
+                const { data }: FetchResult<DeleteRowMutationResult["data"]> = await graphqlClient.mutate({
+                    mutation: DeleteRowDocument,
                     variables: {
                         schema,
                         storageUnit: unitName,
@@ -130,7 +130,7 @@ export const ExploreStorageUnit: FC = () => {
                         values,
                     }
                 });
-                if (data?.DeleteStorageUnit.Status) {
+                if (data?.DeleteRow.Status) {
                     notify("Row deleted successfully!", "success");
                     return res();
                 }

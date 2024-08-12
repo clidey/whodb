@@ -106,7 +106,7 @@ func getPrimaryKeyColumns(db *gorm.DB, schema string, tableName string) ([]strin
 	return primaryKeys, nil
 }
 
-func (p *MySQLPlugin) DeleteStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
+func (p *MySQLPlugin) DeleteRow(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
 	return false, errors.New("not implemented")
 }
 

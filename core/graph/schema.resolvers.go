@@ -122,14 +122,14 @@ func (r *mutationResolver) AddRow(ctx context.Context, typeArg model.DatabaseTyp
 	}, nil
 }
 
-// DeleteStorageUnit is the resolver for the DeleteStorageUnit field.
-func (r *mutationResolver) DeleteStorageUnit(ctx context.Context, typeArg model.DatabaseType, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error) {
+// DeleteRow is the resolver for the DeleteRow field.
+func (r *mutationResolver) DeleteRow(ctx context.Context, typeArg model.DatabaseType, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
 	valuesMap := map[string]string{}
 	for _, value := range values {
 		valuesMap[value.Key] = value.Value
 	}
-	status, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).DeleteStorageUnit(config, schema, storageUnit, valuesMap)
+	status, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).DeleteRow(config, schema, storageUnit, valuesMap)
 	if err != nil {
 		return nil, err
 	}
