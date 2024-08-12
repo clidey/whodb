@@ -134,9 +134,9 @@ export const ExploreStorageUnit: FC = () => {
                     notify("Row deleted successfully!", "success");
                     return res();
                 }
-                notify("Unable to update the row!", "error");
+                notify("Unable to delete the row!", "error");
             } catch (err) {
-                notify(`Unable to update the row: ${err}`, "error");
+                notify(`Unable to delete the row: ${err}`, "error");
             }
             return rej();
         });
