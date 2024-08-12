@@ -8,7 +8,7 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 )
 
-func (p *MySQLPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
+func (p *MySQLPlugin) DeleteRow(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
 	db, err := DB(config)
 	if err != nil {
 		return false, err
@@ -56,13 +56,13 @@ func (p *MySQLPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema stri
 		dbConditions = dbConditions.Where(fmt.Sprintf("%s = ?", key), value)
 	}
 
-	result := dbConditions.Table(tableName).Updates(convertedValues)
+	result := dbConditions.Table(tableName).Delete(convertedValues)
 	if result.Error != nil {
 		return false, result.Error
 	}
 
 	if result.RowsAffected == 0 {
-		return false, errors.New("no rows were updated")
+		return false, errors.New("no rows were deleted")
 	}
 
 	return true, nil

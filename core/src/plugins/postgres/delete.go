@@ -55,15 +55,13 @@ func (p *PostgresPlugin) DeleteRow(config *engine.PluginConfig, schema string, s
 	for key, value := range conditions {
 		dbConditions = dbConditions.Where(fmt.Sprintf("\"%s\" = ?", key), value)
 	}
-	print(fmt.Sprintf("%v", convertedValues))
-	print(fmt.Sprintf("%v", conditions))
 	result := dbConditions.Table(tableName).Delete(convertedValues)
 	if result.Error != nil {
 		return false, result.Error
 	}
 
 	if result.RowsAffected == 0 {
-		return false, errors.New("no rows were updated")
+		return false, errors.New("no rows were deleted")
 	}
 
 	return true, nil
