@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"strings"
 
+	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"gorm.io/gorm"
 )
@@ -171,7 +171,8 @@ func (p *PostgresPlugin) GetRows(config *engine.PluginConfig, schema string, sto
 	if err != nil {
 		return nil, err
 	}
-	query := fmt.Sprintf("SELECT * FROM \"%v\".\"%s\" order by \"%v\" asc", schema, storageUnit, strings.Join(sortKeyRes[:], ","))
+	quotedKeys := common.JoinWithQuotes(sortKeyRes)
+	query := fmt.Sprintf("SELECT * FROM \"%v\".\"%s\" order by %v asc", schema, storageUnit, quotedKeys)
 	if len(where) > 0 {
 		query = fmt.Sprintf("%v WHERE %v", query, where)
 	}
