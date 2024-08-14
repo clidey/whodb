@@ -47,7 +47,7 @@ func (p *Sqlite3Plugin) UpdateStorageUnit(config *engine.PluginConfig, schema st
 
 	dbConditions := db.Table(storageUnit)
 	for key, value := range conditions {
-		dbConditions = dbConditions.Where(fmt.Sprintf("%s = ?", key), value)
+		dbConditions = dbConditions.Where(fmt.Sprintf("\"%s\" = ?", key), value)
 	}
 
 	result := dbConditions.Table(storageUnit).Updates(convertedValues)
