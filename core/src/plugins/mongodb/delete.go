@@ -4,13 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-
 	"github.com/clidey/whodb/core/src/engine"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func (p *MongoDBPlugin) UpdateStorageUnit(config *engine.PluginConfig, database string, storageUnit string, values map[string]string) (bool, error) {
+func (p *MongoDBPlugin) DeleteRow(config *engine.PluginConfig, database string, storageUnit string, values map[string]string) (bool, error) {
 	ctx := context.Background()
 	client, err := DB(config)
 	if err != nil {
@@ -44,18 +43,14 @@ func (p *MongoDBPlugin) UpdateStorageUnit(config *engine.PluginConfig, database 
 	delete(jsonValues, "_id")
 
 	filter := bson.M{"_id": objectID}
-	update := bson.M{"$set": jsonValues}
 
-	result, err := collection.UpdateOne(ctx, filter, update)
+	result, err := collection.DeleteOne(ctx, filter)
 	if err != nil {
 		return false, err
 	}
 
-	if result.MatchedCount == 0 {
-		return false, errors.New("no documents matched the filter")
-	}
-	if result.ModifiedCount == 0 {
-		return false, errors.New("no documents were updated")
+	if result.DeletedCount == 0 {
+		return false, errors.New("no documents were deleted")
 	}
 
 	return true, nil
