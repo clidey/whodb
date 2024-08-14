@@ -8,6 +8,7 @@ import { StorageUnitPage } from "../pages/storage-unit/storage-unit";
 import { useAppSelector } from "../store/hooks";
 import { RawExecutePage } from "../pages/raw-execute/raw-execute";
 import { LogoutPage } from "../pages/auth/logout";
+import { ChatPage } from "../pages/chat/chat";
 
 export type IInternalRoute = {
     name: string;
@@ -46,6 +47,11 @@ export const InternalRoutes = {
         name: "Scratchpad",
         path: "/scratchpad",
         component: <RawExecutePage />,
+    },
+    Chat: {
+        name: "Chat",
+        path: "/chat",
+        component: <ChatPage />,
     },
     Logout: {
         name: "Logout",

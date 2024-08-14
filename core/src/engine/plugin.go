@@ -55,6 +55,12 @@ type GraphUnit struct {
 	Relations []GraphUnitRelationship
 }
 
+type ChatMessage struct {
+	Type   string
+	Result *GetRowsResult
+	Text   string
+}
+
 type PluginFunctions interface {
 	GetDatabases(config *PluginConfig) ([]string, error)
 	IsAvailable(config *PluginConfig) bool
@@ -66,6 +72,7 @@ type PluginFunctions interface {
 	GetRows(config *PluginConfig, schema string, storageUnit string, where string, pageSize int, pageOffset int) (*GetRowsResult, error)
 	GetGraph(config *PluginConfig, schema string) ([]GraphUnit, error)
 	RawExecute(config *PluginConfig, query string) (*GetRowsResult, error)
+	Chat(config *PluginConfig, schema string, model string, previousConversation string, query string) ([]*ChatMessage, error)
 }
 
 type Plugin struct {

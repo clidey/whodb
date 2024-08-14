@@ -14,7 +14,7 @@ languages.register({ id: 'sql' });
 
 type ICodeEditorProps = {
     value: string;
-    setValue: (value: string) => void;
+    setValue?: (value: string) => void;
     language?: "sql" | "markdown" | "json";
     options?: EditorProps["options"];
     onRun?: () => void;
@@ -55,7 +55,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({ value, setValue, language, op
 
     const handleChange = useCallback((newValue: string | undefined) => {
         if (newValue != null) {
-            setValue(newValue);
+            setValue?.(newValue);
         }
     }, [setValue]);
 

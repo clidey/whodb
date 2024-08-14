@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import { ChangeEvent, ChangeEventHandler, DetailedHTMLProps, FC, InputHTMLAttributes, KeyboardEvent, cloneElement, useCallback, useState } from "react";
+import { ChangeEvent, ChangeEventHandler, DetailedHTMLProps, FC, InputHTMLAttributes, KeyboardEventHandler, cloneElement, useCallback, useState } from "react";
 import { twMerge } from "tailwind-merge";
 import { Icons } from "./icons";
 
@@ -18,20 +18,24 @@ type InputProps = {
     value: string;
     setValue?: (value: string) => void;
     type?: "text" | "password";
+    onSubmit?: () => void;
 }
 
-export const Input: FC<InputProps> = ({ value, setValue, type, placeholder, inputProps = {} }) => {
+export const Input: FC<InputProps> = ({ value, setValue, type, placeholder, onSubmit, inputProps = {} }) => {
     const handleChange: ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
         setValue?.(e.target.value);
         inputProps.onChange?.(e);
     }, [inputProps, setValue]);
 
-    const handleKeyDown = useCallback((e: KeyboardEvent<HTMLInputElement>) => {
-        inputProps.onKeyDown?.(e);
-    }, [inputProps]);
-    
+    const handleHandleKeyUp: KeyboardEventHandler<HTMLInputElement> = useCallback((e) => {
+        if (e.key === "Enter") {
+            onSubmit?.();
+        }
+        inputProps?.onKeyUp?.(e);
+    }, [inputProps, onSubmit]);
+
     return <input type={type} placeholder={placeholder}
-        {...inputProps} onChange={handleChange} onKeyDown={handleKeyDown} value={value}
+        {...inputProps} onChange={handleChange} value={value} onKeyUp={handleHandleKeyUp}
         className={twMerge(classNames("appearance-none border border-gray-200 rounded-md w-full p-1 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-sm h-[34px] px-2 dark:text-neutral-300/100 dark:bg-white/10 dark:border-white/20", inputProps.className))} />
 }
 

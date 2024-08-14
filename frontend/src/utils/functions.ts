@@ -61,3 +61,17 @@ export function getDatabaseStorageUnitLabel(databaseType: string | undefined, si
     }
     return singular ? "Storage Unit" : "Storage Units";
 }
+
+export function chooseRandomItems<T>(array: T[], n: number = 3): T[] {
+    if (n > array.length) {
+        throw new Error("n cannot be greater than the array length");
+    }
+
+    const shuffledArray = [...array];
+    for (let i = shuffledArray.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledArray[i], shuffledArray[j]] = [shuffledArray[j], shuffledArray[i]];
+    }
+
+    return shuffledArray.slice(0, n);
+}

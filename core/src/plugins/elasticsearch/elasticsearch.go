@@ -149,6 +149,10 @@ func (p *ElasticSearchPlugin) RawExecute(config *engine.PluginConfig, query stri
 	return nil, errors.New("unsupported operation")
 }
 
+func (p *ElasticSearchPlugin) Chat(config *engine.PluginConfig, schema string, model string, previousConversation string, query string) ([]*engine.ChatMessage, error) {
+	return nil, errors.ErrUnsupported
+}
+
 func NewElasticSearchPlugin() *engine.Plugin {
 	return &engine.Plugin{
 		Type:            engine.DatabaseType_ElasticSearch,

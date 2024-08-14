@@ -322,9 +322,10 @@ type ITableProps = {
     onPageChange?: (page: number) => void;
     onRowUpdate?: (row: Record<string, string>) => Promise<void>;
     disableEdit?: boolean;
+    hideActions?: boolean;
 }
 
-export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows: actualRows, columnTags, totalPages, currentPage, onPageChange, onRowUpdate, disableEdit }) => {
+export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows: actualRows, columnTags, totalPages, currentPage, onPageChange, onRowUpdate, disableEdit, hideActions }) => {
     const fixedTableRef = useRef<FixedSizeList>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const operationsRef = useRef<HTMLDivElement>(null);
@@ -506,7 +507,9 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
 
     return (
         <div className="flex flex-col grow gap-4 items-center w-full h-full" ref={containerRef}>
-            <div className="flex justify-between items-center w-full" ref={operationsRef}>
+            <div className={classNames("flex justify-between items-center w-full", {
+                "hidden": hideActions,
+            })} ref={operationsRef}>
                 <div>
                     <SearchInput search={search} setSearch={handleSearchChange} placeholder="Search through rows     [Press Enter]" inputProps={{
                         className: "w-[300px]",

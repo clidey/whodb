@@ -1,9 +1,10 @@
-import { map } from "lodash";
-import { Navigate, Route, Routes } from "react-router-dom";
-import { Notifications } from './components/notifications';
-import { InternalRoutes, PrivateRoute, PublicRoutes, getRoutes } from './config/routes';
-import { useAppSelector } from "./store/hooks";
 import classNames from "classnames";
+import { map } from "lodash";
+import { Route, Routes } from "react-router-dom";
+import { Notifications } from './components/notifications';
+import { PrivateRoute, PublicRoutes, getRoutes } from './config/routes';
+import { NavigateToDefault } from "./pages/chat/default-chat-route";
+import { useAppSelector } from "./store/hooks";
 
 export const App = () => {
   const darkModeEnabled = useAppSelector(state => state.global.theme === "dark");
@@ -17,7 +18,7 @@ export const App = () => {
           {map(getRoutes(), route => (
             <Route key={route.path} path={route.path} element={route.component} />
           ))}
-          <Route path="/" element={<Navigate to={InternalRoutes.Dashboard.StorageUnit.path} />} />
+          <Route path="/" element={<NavigateToDefault />} />
         </Route>
         <Route path={PublicRoutes.Login.path} element={PublicRoutes.Login.component} />
       </Routes>
