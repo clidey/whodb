@@ -21,10 +21,6 @@ for (key in ctx._source.keySet().toArray()) {
 }
 `
 
-func (p *ElasticSearchPlugin) DeleteRow(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
-	return false, errors.New("not implemented")
-}
-
 func (p *ElasticSearchPlugin) UpdateStorageUnit(config *engine.PluginConfig, database string, storageUnit string, values map[string]string) (bool, error) {
 	client, err := DB(config)
 	if err != nil {
