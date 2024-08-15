@@ -207,7 +207,7 @@ export const LoginPage: FC = () => {
         }
     }, [searchParams]);
 
-    const handleHoseNameChange = useCallback((newHostName: string) => {
+    const handleHostNameChange = useCallback((newHostName: string) => {
         if (databaseType.id !== DatabaseType.MongoDb || !newHostName.startsWith("mongodb+srv://")) {
             return setHostName(newHostName);
         }
@@ -240,12 +240,12 @@ export const LoginPage: FC = () => {
             </>
         }
         return <>
-            <InputWithlabel label={databaseType.id === DatabaseType.MongoDb ? "Host Name (or paste Connection URL)" : "Host Name"} value={hostName} setValue={handleHoseNameChange} />
+            <InputWithlabel label={databaseType.id === DatabaseType.MongoDb ? "Host Name (or paste Connection URL)" : "Host Name"} value={hostName} setValue={handleHostNameChange} />
             { databaseType.id !== DatabaseType.Redis && <InputWithlabel label="Username" value={username} setValue={setUsername} /> }
             <InputWithlabel label="Password" value={password} setValue={setPassword} type="password" />
             { (databaseType.id !== DatabaseType.MongoDb && databaseType.id !== DatabaseType.Redis && databaseType.id !== DatabaseType.ElasticSearch)  && <InputWithlabel label="Database" value={database} setValue={setDatabase} /> }
         </>
-    }, [database, databaseType.id, databasesLoading, foundDatabases?.Database, handleHoseNameChange, hostName, password, username]);
+    }, [database, databaseType.id, databasesLoading, foundDatabases?.Database, handleHostNameChange, hostName, password, username]);
 
     const availableProfiles = useMemo(() => {
         return profiles?.Profiles.map(profile => createDropdownItem(profile.Id, (Icons.Logos as Record<string, ReactElement>)[profile.Type])) ?? [];

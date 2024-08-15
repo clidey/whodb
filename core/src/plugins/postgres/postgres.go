@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"gorm.io/gorm"
 )
@@ -162,7 +163,16 @@ func getTableSchema(db *gorm.DB, schema string) (map[string][]engine.Record, err
 }
 
 func (p *PostgresPlugin) GetRows(config *engine.PluginConfig, schema string, storageUnit string, where string, pageSize int, pageOffset int) (*engine.GetRowsResult, error) {
-	query := fmt.Sprintf("SELECT * FROM \"%v\".\"%s\"", schema, storageUnit)
+	db, err := DB(config)
+	if err != nil {
+		return nil, err
+	}
+	sortKeyRes, err := getPrimaryKeyColumns(db, schema, storageUnit)
+	if err != nil {
+		return nil, err
+	}
+	quotedKeys := common.JoinWithQuotes(sortKeyRes)
+	query := fmt.Sprintf("SELECT * FROM \"%v\".\"%s\" order by %v asc", schema, storageUnit, quotedKeys)
 	if len(where) > 0 {
 		query = fmt.Sprintf("%v WHERE %v", query, where)
 	}

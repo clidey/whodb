@@ -1,6 +1,11 @@
 package common
 
-import "github.com/clidey/whodb/core/src/engine"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/clidey/whodb/core/src/engine"
+)
 
 func ContainsString(slice []string, element string) bool {
 	for _, item := range slice {
@@ -18,4 +23,14 @@ func GetRecordValueOrDefault(records []engine.Record, key string, defaultValue s
 		}
 	}
 	return defaultValue
+}
+
+func JoinWithQuotes(arr []string) string {
+	quotedStrings := make([]string, len(arr))
+
+	for i, str := range arr {
+		quotedStrings[i] = fmt.Sprintf("\"%s\"", str)
+	}
+
+	return strings.Join(quotedStrings, ", ")
 }
