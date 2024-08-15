@@ -34,7 +34,7 @@ const TablePreview: FC<{ data: TableData, text: string }> = ({ data, text }) => 
             {
                 showSQL
                 ? <div className="h-[150px] w-full">
-                    <CodeEditor value={text} disabled={true} />
+                    <CodeEditor value={text} />
                 </div>
                 :   text.trim().startsWith("SELECT")
                     ? <Table className="h-[150px]" columns={data?.Columns.map(c => c.Name) ?? []} columnTags={data?.Columns.map(c => c.Type)}
