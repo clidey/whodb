@@ -93,6 +93,7 @@ export type Mutation = {
   __typename?: 'Mutation';
   AddRow: StatusResponse;
   AddStorageUnit: StatusResponse;
+  DeleteRow: StatusResponse;
   Login: StatusResponse;
   LoginWithProfile: StatusResponse;
   Logout: StatusResponse;
@@ -113,6 +114,14 @@ export type MutationAddStorageUnitArgs = {
   schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
   type: DatabaseType;
+};
+
+
+export type MutationDeleteRowArgs = {
+  schema: Scalars['String']['input'];
+  storageUnit: Scalars['String']['input'];
+  type: DatabaseType;
+  values: Array<RecordInput>;
 };
 
 
@@ -310,6 +319,16 @@ export type AddStorageUnitMutationVariables = Exact<{
 
 
 export type AddStorageUnitMutation = { __typename?: 'Mutation', AddStorageUnit: { __typename?: 'StatusResponse', Status: boolean } };
+
+export type DeleteRowMutationVariables = Exact<{
+  type: DatabaseType;
+  schema: Scalars['String']['input'];
+  storageUnit: Scalars['String']['input'];
+  values: Array<RecordInput> | RecordInput;
+}>;
+
+
+export type DeleteRowMutation = { __typename?: 'Mutation', DeleteRow: { __typename?: 'StatusResponse', Status: boolean } };
 
 export type GetStorageUnitRowsQueryVariables = Exact<{
   type: DatabaseType;
@@ -822,6 +841,47 @@ export function useAddStorageUnitMutation(baseOptions?: Apollo.MutationHookOptio
 export type AddStorageUnitMutationHookResult = ReturnType<typeof useAddStorageUnitMutation>;
 export type AddStorageUnitMutationResult = Apollo.MutationResult<AddStorageUnitMutation>;
 export type AddStorageUnitMutationOptions = Apollo.BaseMutationOptions<AddStorageUnitMutation, AddStorageUnitMutationVariables>;
+export const DeleteRowDocument = gql`
+    mutation DeleteRow($type: DatabaseType!, $schema: String!, $storageUnit: String!, $values: [RecordInput!]!) {
+  DeleteRow(
+    type: $type
+    schema: $schema
+    storageUnit: $storageUnit
+    values: $values
+  ) {
+    Status
+  }
+}
+    `;
+export type DeleteRowMutationFn = Apollo.MutationFunction<DeleteRowMutation, DeleteRowMutationVariables>;
+
+/**
+ * __useDeleteRowMutation__
+ *
+ * To run a mutation, you first call `useDeleteRowMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteRowMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteRowMutation, { data, loading, error }] = useDeleteRowMutation({
+ *   variables: {
+ *      type: // value for 'type'
+ *      schema: // value for 'schema'
+ *      storageUnit: // value for 'storageUnit'
+ *      values: // value for 'values'
+ *   },
+ * });
+ */
+export function useDeleteRowMutation(baseOptions?: Apollo.MutationHookOptions<DeleteRowMutation, DeleteRowMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteRowMutation, DeleteRowMutationVariables>(DeleteRowDocument, options);
+      }
+export type DeleteRowMutationHookResult = ReturnType<typeof useDeleteRowMutation>;
+export type DeleteRowMutationResult = Apollo.MutationResult<DeleteRowMutation>;
+export type DeleteRowMutationOptions = Apollo.BaseMutationOptions<DeleteRowMutation, DeleteRowMutationVariables>;
 export const GetStorageUnitRowsDocument = gql`
     query GetStorageUnitRows($type: DatabaseType!, $schema: String!, $storageUnit: String!, $where: String!, $pageSize: Int!, $pageOffset: Int!) {
   Row(

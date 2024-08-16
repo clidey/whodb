@@ -1,7 +1,9 @@
 package common
 
 import (
+	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
 )
@@ -62,4 +64,14 @@ func ExtractCodeFromResponse(response string) []ExtractedText {
 	}
 
 	return result
+}
+
+func JoinWithQuotes(arr []string) string {
+	quotedStrings := make([]string, len(arr))
+
+	for i, str := range arr {
+		quotedStrings[i] = fmt.Sprintf("\"%s\"", str)
+	}
+
+	return strings.Join(quotedStrings, ", ")
 }

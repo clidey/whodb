@@ -1,0 +1,5 @@
+mutation DeleteRow($type: DatabaseType!, $schema: String!, $storageUnit:String!, $values: [RecordInput!]!) {
+  DeleteRow(type: $type, schema: $schema, storageUnit: $storageUnit, values: $values) {
+    Status
+  }
+}
