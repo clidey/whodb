@@ -588,7 +588,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                 </div>
                 <div className="flex gap-4 items-center">
                     <div className="text-sm text-gray-600 dark:text-neutral-300"><span className="font-semibold">Count:</span> {rowCount}</div>
-                    <AnimatedButton icon={Icons.Download} label="Export" type="lg" onClick={exportToCSV} />
+                    <AnimatedButton icon={Icons.Download} label={checkedRows != null && checkedRows?.size > 0 ? "Export selected" : "Export"} type="lg" onClick={exportToCSV} />
                 </div>
             </div>
             <div className={twMerge(classNames("flex overflow-x-auto h-full", className))} style={{
