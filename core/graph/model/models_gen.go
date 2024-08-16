@@ -8,6 +8,18 @@ import (
 	"strconv"
 )
 
+type AIChatMessage struct {
+	Type   string      `json:"Type"`
+	Result *RowsResult `json:"Result,omitempty"`
+	Text   string      `json:"Text"`
+}
+
+type ChatInput struct {
+	PreviousConversation string `json:"PreviousConversation"`
+	Query                string `json:"Query"`
+	Model                string `json:"Model"`
+}
+
 type Column struct {
 	Type string `json:"Type"`
 	Name string `json:"Name"`

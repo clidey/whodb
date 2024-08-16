@@ -133,9 +133,9 @@ func (p *MySQLPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 
 func getTableSchema(db *gorm.DB, schema string) (map[string][]engine.Record, error) {
 	var result []struct {
-		TableName  string `gorm:"column:table_name"`
-		ColumnName string `gorm:"column:column_name"`
-		DataType   string `gorm:"column:data_type"`
+		TableName  string `gorm:"column:TABLE_NAME"`
+		ColumnName string `gorm:"column:COLUMN_NAME"`
+		DataType   string `gorm:"column:DATA_TYPE"`
 	}
 
 	query := fmt.Sprintf(`
@@ -239,6 +239,7 @@ func NewMySQLPlugin() *engine.Plugin {
 		PluginFunctions: &MySQLPlugin{},
 	}
 }
+
 func NewMyMariaDBPlugin() *engine.Plugin {
 	return &engine.Plugin{
 		Type:            engine.DatabaseType_MariaDB,

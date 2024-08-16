@@ -131,6 +131,10 @@ func (p *MongoDBPlugin) RawExecute(config *engine.PluginConfig, query string) (*
 	return nil, errors.ErrUnsupported
 }
 
+func (p *MongoDBPlugin) Chat(config *engine.PluginConfig, schema string, model string, previousConversation string, query string) ([]*engine.ChatMessage, error) {
+	return nil, errors.ErrUnsupported
+}
+
 func NewMongoDBPlugin() *engine.Plugin {
 	return &engine.Plugin{
 		Type:            engine.DatabaseType_MongoDB,

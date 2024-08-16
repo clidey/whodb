@@ -7,7 +7,7 @@ import { useDispatch } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
 import { InternalRoutes, PublicRoutes } from "../../config/routes";
-import { DatabaseType, useGetDatabaseQuery, useGetSchemaQuery, useLoginMutation, useLoginWithProfileMutation } from "../../generated/graphql";
+import { DatabaseType, useGetAiModelsQuery, useGetDatabaseQuery, useGetSchemaQuery, useLoginMutation, useLoginWithProfileMutation } from "../../generated/graphql";
 import { AuthActions, LocalLoginProfile } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";
@@ -151,6 +151,7 @@ export const Sidebar: FC = () => {
     const pathname = useLocation().pathname;
     const current = useAppSelector(state => state.auth.current);
     const profiles = useAppSelector(state => state.auth.profiles);
+    const { data: aiModels } = useGetAiModelsQuery();
     const { data: availableDatabases, loading: availableDatabasesLoading } = useGetDatabaseQuery({
         variables: {
             type: current?.Type as DatabaseType,
@@ -266,6 +267,14 @@ export const Sidebar: FC = () => {
                 path: InternalRoutes.Graph.path,
             },
         ];
+
+        if (!isNoSQL(current.Type) && aiModels?.AIModel != null && aiModels.AIModel.length > 0) {
+            routes.unshift({
+                title: "Chat",
+                icon: Icons.Chat,
+                path: InternalRoutes.Chat.path,
+            });
+        }
         if (!DATABASES_THAT_DONT_SUPPORT_SCRATCH_PAD.includes(current.Type as DatabaseType)) {
             routes.push({
                 title: "Scratchpad",
@@ -274,7 +283,7 @@ export const Sidebar: FC = () => {
             });
         }
         return routes;
-    }, [current]);
+    }, [aiModels?.AIModel, current]);
 
     const handleCollapseToggle = useCallback(() => {
         setCollapsed(c => !c);
