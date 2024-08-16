@@ -1,6 +1,6 @@
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
-import { clone, values } from "lodash";
+import { clone, isString, values } from "lodash";
 import { CSSProperties, FC, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Cell, Row, useBlockLayout, useTable } from 'react-table';
 import { FixedSizeList, ListChildComponentProps } from "react-window";
@@ -87,8 +87,8 @@ const Pagination: FC<IPaginationProps> = ({ pageCount, currentPage, onPageChange
 };
 
 type ITDataProps = {
-    cell: Cell<Record<string, string>>;
-    onCellUpdate?: (row: Cell<Record<string, string>>) => Promise<void>;
+    cell: Cell<Record<string, string | number>>;
+    onCellUpdate?: (row: Cell<Record<string, string | number>>) => Promise<void>;
     disableEdit?: boolean;
     checked?: boolean;
     onRowCheck?: (value: boolean) => void;
@@ -311,23 +311,23 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, checked, onRowCheck, disab
 }
 
 type ITableRow = {
-    row: Row<Record<string, string>>;
+    row: Row<Record<string, string | number>>;
     style: CSSProperties;
-    onRowUpdate?: (row: Record<string, string>) => Promise<void>;
+    onRowUpdate?: (row: Record<string, string | number>) => Promise<void>;
     checked?: boolean;
     onRowCheck?: (value: boolean) => void;
     disableEdit?: boolean;
 }
 
 const TableRow: FC<ITableRow> = ({ row, style, onRowUpdate, checked, onRowCheck, disableEdit }) => {
-    const handleCellUpdate = useCallback((cell: Cell<Record<string, string>>) => {
+    const handleCellUpdate = useCallback((cell: Cell<Record<string, string | number>>) => {
         if (onRowUpdate == null) {
             return Promise.reject();
         }
         const updatedRow = row.cells.reduce((all, one) => {
             all[one.column.id] = one.value;
             return all;
-        }, {} as Record<string, string>);
+        }, {} as Record<string, string | number>);
         updatedRow[cell.column.id] = cell.value;
         return onRowUpdate?.(updatedRow);
     }, [onRowUpdate, row.cells]);
@@ -358,8 +358,8 @@ type ITableProps = {
     totalPages: number;
     currentPage: number;
     onPageChange?: (page: number) => void;
-    onRowUpdate?: (row: Record<string, string>) => Promise<void>;
-    onRowDelete?: (row: Record<string, string>) => Promise<void>;
+    onRowUpdate?: (row: Record<string, string | number>) => Promise<void>;
+    onRowDelete?: (row: Record<string, string | number>) => Promise<void>;
     disableEdit?: boolean;
     checkedRows?: Set<number>;
     setCheckedRows?: (checkedRows: Set<number>) => void;
@@ -376,7 +376,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
     const [searchIndex, setSearchIndex] = useState(0);
     const [height, setHeight] = useState(0);
     const [width, setWidth] = useState(0);
-    const [data, setData] = useState<Record<string, string>[]>([]);
+    const [data, setData] = useState<Record<string, string | number>[]>([]);
 
     const columns = useMemo(() => {
         const indexWidth = 50;
@@ -398,10 +398,12 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
 
     useEffect(() => {
         setData(actualRows.map((row, rowIndex) => {
-            return row.reduce((all, one, colIndex) => {
+            const newRow = row.reduce((all, one, colIndex) => {
                 all[actualColumns[colIndex]] = one;
                 return all;
-            }, { "#": (rowIndex+1).toString() } as Record<string, string>);
+            }, { "#": (rowIndex+1).toString() } as Record<string, string | number>);
+            newRow.originalIndex = rowIndex;
+            return newRow;
         }));
     }, [actualColumns, actualRows]);
 
@@ -413,7 +415,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
         newRows.sort((a, b) => {
             const aValue = a[sortedColumn];
             const bValue = b[sortedColumn];
-            if (isNumeric(aValue) && isNumeric(bValue)) {
+            if (isString(aValue) && isString(bValue) && isNumeric(aValue) && isNumeric(bValue)) {
                 const aValueNumber = Number.parseFloat(aValue);
                 const bValueNumber = Number.parseFloat(bValue);
                 return direction === 'asc' ? aValueNumber - bValueNumber : bValueNumber - aValueNumber;
@@ -514,7 +516,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
         setDirection("dsc");
     }, [sortedColumn, direction]);
 
-    const handleRowUpdate = useCallback((index: number, row: Record<string, string>) => {
+    const handleRowUpdate = useCallback((index: number, row: Record<string, string | number>) => {
         if (onRowUpdate == null) {
             return Promise.resolve();
         }
@@ -540,10 +542,11 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
     const handleRenderRow = useCallback(({ index, style }: ListChildComponentProps) => {
         const row = rows[index];
         prepareRow(row);
+        const originalIndex = row.original.originalIndex as number;
         return <TableRow key={`row-${row.values[actualColumns[0]]}`} row={row} style={style}
             onRowUpdate={(row) => handleRowUpdate(index, row)}
-            checked={checkedRows?.has(index)}
-            onRowCheck={(value) => handleRowCheck(index, value)}
+            checked={checkedRows?.has(originalIndex)}
+            onRowCheck={(value) => handleRowCheck(originalIndex, value)}
             disableEdit={disableEdit} />;
     }, [rows, prepareRow, actualColumns, checkedRows, disableEdit, handleRowUpdate, handleRowCheck]);
 

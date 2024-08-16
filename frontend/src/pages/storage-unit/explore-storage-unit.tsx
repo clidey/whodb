@@ -81,7 +81,7 @@ export const ExploreStorageUnit: FC = () => {
         setCurrentPage(0);
     }, [handleSubmitRequest]);
 
-    const handleRowUpdate = useCallback((row: Record<string, string>) => {
+    const handleRowUpdate = useCallback((row: Record<string, string | number>) => {
         if (current == null) {
             return Promise.reject();
         }

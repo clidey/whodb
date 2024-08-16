@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 
-export const useExportToCSV = (columns: string[], rows: Record<string, string>[], specificIndexes: number[] = []) => {
+export const useExportToCSV = (columns: string[], rows: Record<string, string | number>[], specificIndexes: number[] = []) => {
     return useCallback(() => {
-      let selectedRows: Record<string, string>[];
+      let selectedRows: Record<string, string | number>[];
       if (specificIndexes.length === 0) {
         selectedRows = rows;
       } else {
