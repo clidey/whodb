@@ -24,6 +24,10 @@ const TablePreview: FC<{ data: TableData, text: string }> = ({ data, text }) => 
         setShowSQL(status => !status);
     }, []);
 
+    const textWithoutComments = useMemo(() => {
+        return text.split("\n").filter(text => !text.startsWith("--")).join("\n");
+    }, [text]);
+
     return <div className="flex flex-col w-full group/table-preview gap-2 relative">
         <div className="absolute -top-3 -left-3 opacity-0 group-hover/table-preview:opacity-100 transition-all z-[1]">
             <ActionButton containerClassName="w-8 h-8" className="w-5 h-5" icon={cloneElement(showSQL ? Icons.Tables : Icons.Code, {
@@ -36,7 +40,7 @@ const TablePreview: FC<{ data: TableData, text: string }> = ({ data, text }) => 
                 ? <div className="h-[150px] w-full">
                     <CodeEditor value={text} />
                 </div>
-                :   text.trim().startsWith("SELECT")
+                :  (data != null && data.Rows.length > 0) || textWithoutComments.trim().startsWith("SELECT")
                     ? <Table className="h-[150px]" columns={data?.Columns.map(c => c.Name) ?? []} columnTags={data?.Columns.map(c => c.Type)}
                     rows={data?.Rows ?? []} totalPages={1} currentPage={1} disableEdit={true} hideActions={true} />
                     : <div className="bg-white/10 text-neutral-800 dark:text-neutral-300 rounded-lg p-2 flex gap-2">

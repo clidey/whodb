@@ -210,15 +210,15 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, checked, onRowCheck, disab
                 "bg-transparent": editable,
             })}>
             <div className={classNames("absolute top-0 left-0 h-full w-full justify-center items-center bg-transparent z-[1] hover:scale-110 transition-all", {
-                "group-hover/row:flex": cell.column.id === "#",
-                "flex": cell.column.id === "#" && checked,
-                "hidden": cell.column.id !== "#" || !checked,
+                "group-hover/row:flex": checked != null && cell.column.id === "#",
+                "flex": cell.column.id === "#" && checked === true,
+                "hidden": checked == null || cell.column.id !== "#" || checked === false,
             })}>
                 <CheckBoxInput value={checked ?? false} setValue={onRowCheck} />
             </div>
             <div className={classNames({
-                "group-hover/row:hidden": cell.column.id === "#",
-                "hidden": cell.column.id === "#" && checked,
+                "group-hover/row:hidden": checked != null && cell.column.id === "#",
+                "hidden": cell.column.id === "#" && checked === true,
             })} {...longPressProps}>
                 {editedData}
             </div>
@@ -521,13 +521,14 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
         if (onRowUpdate == null) {
             return Promise.resolve();
         }
-        setData(value => {
-            const newValue = clone(value);
-            newValue[index] = clone(row);
-            return newValue;
+        return onRowUpdate(row).then(() => {
+            setData(value => {
+                const newValue = clone(value);
+                newValue[index] = clone(row);
+                return newValue;
+            });
+            delete row["#"];
         });
-        delete row["#"];
-        return onRowUpdate(row);
     }, [onRowUpdate]);
 
     const handleRowCheck = useCallback((index: number, value: boolean) => {
@@ -608,15 +609,15 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                                     <>
                                         <div {...column.getHeaderProps()} key={column.getHeaderProps().key} className="text-xs border-t border-l last:border-r border-gray-200 dark:border-white/5 p-2 text-left bg-gray-500 dark:bg-white/20 text-white first:rounded-tl-lg last:rounded-tr-lg relative group/header cursor-pointer select-none">
                                             <div className={classNames({
-                                                "group-hover/header-row:hidden": column.id === "#",
+                                                "group-hover/header-row:hidden": checkedRows != null && column.id === "#",
                                                 "hidden": column.id === "#" && allChecked,
                                             })} onClick={() => handleSort(column.id)}>
                                                 {column.render('Header')} {i > 0 && columnTags?.[i-1] != null && columnTags?.[i-1].length > 0 && <span className="text-[11px]">[{columnTags?.[i-1]}]</span>}
                                             </div>
                                             <div className={classNames("absolute top-0 left-0 h-full w-full justify-center items-center bg-transparent z-[1] hover:scale-110 transition-all", {
-                                                "group-hover/header-row:flex": column.id === "#",
+                                                "group-hover/header-row:flex": checkedRows != null && column.id === "#",
                                                 "flex": column.id === "#" && allChecked,
-                                                "hidden": column.id !== "#" || !allChecked,
+                                                "hidden": checkedRows == null || column.id !== "#" || !allChecked,
                                             })}>
                                                 <CheckBoxInput value={allChecked} setValue={handleCheckAll} />
                                             </div>
