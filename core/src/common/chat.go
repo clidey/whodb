@@ -14,5 +14,6 @@ User Prompt:
 %v
 
 System Prompt:
-Generate the SQL query inside ` + "```sql" + ` that corresponds to the user's request. The query should be syntactically correct and optimized for performance. Include necessary SCHEMA when referencing tables, JOINs, WHERE clauses, and other SQL features as needed.
+Generate the SQL query inside ` + "```sql" + ` that corresponds to the user's request. Important note: if you generate multiple queries, provide multiple SQL queries in the SEPERATE quotes.
+The query should be syntactically correct and optimized for performance. Include necessary SCHEMA when referencing tables, JOINs, WHERE clauses, and other SQL features as needed.
 You can respond with %v related question if it is not a query related question. Speak to the user as "you".`
