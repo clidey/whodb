@@ -1,19 +1,20 @@
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
+import { clone, values } from "lodash";
 import { CSSProperties, FC, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Cell, Row, useBlockLayout, useTable } from 'react-table';
 import { FixedSizeList, ListChildComponentProps } from "react-window";
 import { twMerge } from "tailwind-merge";
+import { notify } from "../store/function";
 import { isMarkdown, isNumeric, isValidJSON } from "../utils/functions";
 import { ActionButton, AnimatedButton } from "./button";
 import { Portal } from "./common";
 import { CodeEditor } from "./editor";
 import { useExportToCSV, useLongPress } from "./hooks";
 import { Icons } from "./icons";
-import { SearchInput } from "./search";
+import { CheckBoxInput } from "./input";
 import { Loading } from "./loading";
-import { clone, values } from "lodash";
-import { notify } from "../store/function";
+import { SearchInput } from "./search";
 
 type IPaginationProps = {
     pageCount: number;
@@ -88,11 +89,12 @@ const Pagination: FC<IPaginationProps> = ({ pageCount, currentPage, onPageChange
 type ITDataProps = {
     cell: Cell<Record<string, string>>;
     onCellUpdate?: (row: Cell<Record<string, string>>) => Promise<void>;
-    onCellDelete?: (row: Cell<Record<string, string>>) => Promise<void>;
     disableEdit?: boolean;
+    checked?: boolean;
+    onRowCheck?: (value: boolean) => void;
 }
 
-const TData: FC<ITDataProps> = ({ cell, onCellUpdate, onCellDelete, disableEdit }) => {
+const TData: FC<ITDataProps> = ({ cell, onCellUpdate, checked, onRowCheck, disableEdit }) => {
     const [changed, setChanged] = useState(false);
     const [editedData, setEditedData] = useState<string>(cell.value);
     const [editable, setEditable] = useState(false);
@@ -206,8 +208,21 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, onCellDelete, disableEdit 
             className={classNames("w-full h-full p-2 leading-tight focus:outline-none focus:shadow-outline appearance-none transition-all duration-300 border-solid border-gray-200 dark:border-white/5 overflow-hidden whitespace-nowrap select-none text-gray-600 dark:text-neutral-300", {
                 "group-even/row:bg-gray-100 hover:bg-gray-300 group-even/row:hover:bg-gray-300 dark:group-even/row:bg-white/10 dark:group-odd/row:bg-white/5 dark:group-even/row:hover:bg-white/15 dark:group-odd/row:hover:bg-white/15": !editable,
                 "bg-transparent": editable,
-            })}
-        {...longPressProps}>{editedData}</div>
+            })}>
+            <div className={classNames("absolute top-0 left-0 h-full w-full justify-center items-center bg-transparent z-[1] hover:scale-110 transition-all", {
+                "group-hover/row:flex": cell.column.id === "#",
+                "flex": cell.column.id === "#" && checked,
+                "hidden": cell.column.id !== "#" || !checked,
+            })}>
+                <CheckBoxInput value={checked ?? false} setValue={onRowCheck} />
+            </div>
+            <div className={classNames({
+                "group-hover/row:hidden": cell.column.id === "#",
+                "hidden": cell.column.id === "#" && checked,
+            })} {...longPressProps}>
+                {editedData}
+            </div>
+        </div>
         <div className={classNames("transition-all hidden absolute right-2 top-1/2 -translate-y-1/2 hover:scale-125 p-1", {
             "hidden": copied || disableEdit,
             "group-hover/data:flex": !copied && !disableEdit,
@@ -299,11 +314,12 @@ type ITableRow = {
     row: Row<Record<string, string>>;
     style: CSSProperties;
     onRowUpdate?: (row: Record<string, string>) => Promise<void>;
-    onRowDelete?: (row: Record<string, string>) => Promise<void>;
+    checked?: boolean;
+    onRowCheck?: (value: boolean) => void;
     disableEdit?: boolean;
 }
 
-const TableRow: FC<ITableRow> = ({ row, style, onRowUpdate, onRowDelete, disableEdit }) => {
+const TableRow: FC<ITableRow> = ({ row, style, onRowUpdate, checked, onRowCheck, disableEdit }) => {
     const handleCellUpdate = useCallback((cell: Cell<Record<string, string>>) => {
         if (onRowUpdate == null) {
             return Promise.reject();
@@ -316,29 +332,18 @@ const TableRow: FC<ITableRow> = ({ row, style, onRowUpdate, onRowDelete, disable
         return onRowUpdate?.(updatedRow);
     }, [onRowUpdate, row.cells]);
 
-    const handleRowDelete = useCallback((e: MouseEvent) => {
-        if (onRowDelete == null) {
-            return Promise.reject();
-        }
-        const updatedRow = row.cells.reduce((all, one) => {
-            all[one.column.id] = one.value;
-            return all;
-        }, {} as Record<string, string>);
-        return onRowDelete?.(updatedRow);
-    }, [onRowDelete, row]);
-
     const props = useMemo(() => {
         return row.getRowProps({ style });
     }, [row, style]);
 
     return (
         <div className="table-row-group text-xs group/row" {...props} key={props.key}>
-            <div className="dark:invert group-hover/data:flex hover:scale-125 mt-1" onClick={handleRowDelete}>
-                {Icons.Delete}
-            </div>
             {
                 row.cells.map((cell) => (
-                    <TData key={cell.getCellProps().key} cell={cell} onCellUpdate={handleCellUpdate} disableEdit={disableEdit || cell.column.id === "#"} />
+                    <TData key={cell.getCellProps().key} cell={cell} onCellUpdate={handleCellUpdate}
+                        disableEdit={disableEdit || cell.column.id === "#"}
+                        checked={checked}
+                        onRowCheck={onRowCheck} />
                 ))
             }
         </div>
@@ -356,9 +361,11 @@ type ITableProps = {
     onRowUpdate?: (row: Record<string, string>) => Promise<void>;
     onRowDelete?: (row: Record<string, string>) => Promise<void>;
     disableEdit?: boolean;
+    checkedRows?: Set<number>;
+    setCheckedRows?: (checkedRows: Set<number>) => void;
 }
 
-export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows: actualRows, columnTags, totalPages, currentPage, onPageChange, onRowUpdate, onRowDelete, disableEdit }) => {
+export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows: actualRows, columnTags, totalPages, currentPage, onPageChange, onRowUpdate, onRowDelete, disableEdit, checkedRows, setCheckedRows }) => {
     const fixedTableRef = useRef<FixedSizeList>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const operationsRef = useRef<HTMLDivElement>(null);
@@ -520,26 +527,25 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
         return onRowUpdate(row);
     }, [onRowUpdate]);
 
-    const handleRowDelete = useCallback(async (index: number, row: Record<string, string>) => {
-        if (onRowDelete == null) {
-            return Promise.resolve();
+    const handleRowCheck = useCallback((index: number, value: boolean) => {
+        const newCheckedRows = new Set(checkedRows);
+        if (value) {
+            newCheckedRows.add(index);
+        } else {
+            newCheckedRows.delete(index);
         }
-        delete row["#"];
-        await onRowDelete(row).then( () => {
-            setData(value => {
-                const newValue = value.filter((_, i) => i !== index);
-                return newValue.map((row, i) => ({ ...row, "#": (i + 1).toString() }));
-            });
-        }).catch((e) => {
-            console.log(e);
-        });
-    }, [onRowDelete]);
+        setCheckedRows?.(newCheckedRows);
+    }, [checkedRows, setCheckedRows]);
 
     const handleRenderRow = useCallback(({ index, style }: ListChildComponentProps) => {
         const row = rows[index];
         prepareRow(row);
-        return <TableRow key={`row-${row.values[actualColumns[0]]}`} row={row} style={style} onRowDelete={(row) => handleRowDelete(index, row)} onRowUpdate={(row) => handleRowUpdate(index, row)} disableEdit={disableEdit} />;
-    }, [rows, prepareRow, actualColumns, handleRowUpdate, disableEdit, handleRowDelete]);
+        return <TableRow key={`row-${row.values[actualColumns[0]]}`} row={row} style={style}
+            onRowUpdate={(row) => handleRowUpdate(index, row)}
+            checked={checkedRows?.has(index)}
+            onRowCheck={(value) => handleRowCheck(index, value)}
+            disableEdit={disableEdit} />;
+    }, [rows, prepareRow, actualColumns, checkedRows, disableEdit, handleRowUpdate, handleRowCheck]);
 
     useEffect(() => {
         if (containerRef.current == null || operationsRef.current == null) {
@@ -551,7 +557,25 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
         setWidth(width);
     }, []);
 
-    const exportToCSV = useExportToCSV(actualColumns, sortedRows);
+    const allChecked = useMemo(() => {
+        return (checkedRows?.size ?? 0) === rows.length;
+    }, [checkedRows?.size, rows.length]);;
+
+    const handleCheckAll = useCallback(() => {
+        if (setCheckedRows == null) {
+            return;
+        }
+        if (allChecked) {
+            return setCheckedRows(new Set<number>());
+        }
+        setCheckedRows(new Set(rows.map((_, i) => i)));
+    }, [allChecked, rows, setCheckedRows]);
+
+    const specificIndexes = useMemo(() => {
+        return  [...checkedRows ?? []];
+    }, [checkedRows]);
+
+    const exportToCSV = useExportToCSV(actualColumns, sortedRows, specificIndexes);
 
     return (
         <div className="flex flex-col grow gap-4 items-center w-full h-full" ref={containerRef}>
@@ -573,18 +597,31 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                 <div className="border-separate border-spacing-0 h-fit" ref={tableRef} {...getTableProps()}>
                     <div>
                         {headerGroups.map(headerGroup => (
-                            <div {...headerGroup.getHeaderGroupProps()} key={headerGroup.getHeaderGroupProps().key} className="ml-6">
+                            <div className="group/header-row" {...headerGroup.getHeaderGroupProps()} key={headerGroup.getHeaderGroupProps().key}>
                                 {headerGroup.headers.map((column, i) => (
-                                    <div {...column.getHeaderProps()} key={column.getHeaderProps().key} className="text-xs border-t border-l last:border-r border-gray-200 dark:border-white/5 p-2 text-left bg-gray-500 dark:bg-white/20 text-white first:rounded-tl-lg last:rounded-tr-lg relative group/header cursor-pointer select-none"
-                                        onClick={() => handleSort(column.id)}>
-                                        {column.render('Header')} {i > 0 && columnTags?.[i-1] != null && columnTags?.[i-1].length > 0 && <span className="text-[11px]">[{columnTags?.[i-1]}]</span>}
-                                        <div className={twMerge(classNames("transition-all absolute top-2 right-2 opacity-0", {
-                                            "opacity-100": sortedColumn === column.id,
-                                            "rotate-180": direction === "dsc",
-                                        }))}>
-                                            {Icons.ArrowUp}
+                                    <>
+                                        <div {...column.getHeaderProps()} key={column.getHeaderProps().key} className="text-xs border-t border-l last:border-r border-gray-200 dark:border-white/5 p-2 text-left bg-gray-500 dark:bg-white/20 text-white first:rounded-tl-lg last:rounded-tr-lg relative group/header cursor-pointer select-none">
+                                            <div className={classNames({
+                                                "group-hover/header-row:hidden": column.id === "#",
+                                                "hidden": column.id === "#" && allChecked,
+                                            })} onClick={() => handleSort(column.id)}>
+                                                {column.render('Header')} {i > 0 && columnTags?.[i-1] != null && columnTags?.[i-1].length > 0 && <span className="text-[11px]">[{columnTags?.[i-1]}]</span>}
+                                            </div>
+                                            <div className={classNames("absolute top-0 left-0 h-full w-full justify-center items-center bg-transparent z-[1] hover:scale-110 transition-all", {
+                                                "group-hover/header-row:flex": column.id === "#",
+                                                "flex": column.id === "#" && allChecked,
+                                                "hidden": column.id !== "#" || !allChecked,
+                                            })}>
+                                                <CheckBoxInput value={allChecked} setValue={handleCheckAll} />
+                                            </div>
+                                            <div className={twMerge(classNames("transition-all absolute top-2 right-2 opacity-0", {
+                                                "opacity-100": sortedColumn === column.id,
+                                                "rotate-180": direction === "dsc",
+                                            }))}>
+                                                {Icons.ArrowUp}
+                                            </div>
                                         </div>
-                                    </div>
+                                    </>
                                 ))}
                             </div>
                         ))}

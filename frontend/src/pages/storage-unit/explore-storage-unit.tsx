@@ -13,8 +13,10 @@ import { InternalPage } from "../../components/page";
 import { Table } from "../../components/table";
 import { graphqlClient } from "../../config/graphql-client";
 import { InternalRoutes } from "../../config/routes";
-import { Column, DatabaseType, DeleteRowDocument, DeleteRowMutationResult, RecordInput, RowsResult, StorageUnit, 
-    UpdateStorageUnitDocument, UpdateStorageUnitMutationResult, useAddRowMutation, useGetStorageUnitRowsLazyQuery } from "../../generated/graphql";
+import {
+    Column, DatabaseType, DeleteRowDocument, DeleteRowMutationResult, RecordInput, RowsResult, StorageUnit,
+    UpdateStorageUnitDocument, UpdateStorageUnitMutationResult, useAddRowMutation, useGetStorageUnitRowsLazyQuery
+} from "../../generated/graphql";
 import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
 import { getDatabaseStorageUnitLabel, isNoSQL, isNumeric } from "../../utils/functions";
@@ -33,6 +35,7 @@ export const ExploreStorageUnit: FC = () => {
     const [rows, setRows] = useState<RowsResult>();
     const [showAdd, setShowAdd] = useState(false);
     const [newRowForm, setNewRowForm] = useState<RecordInput[]>([]);
+    const [checkedRows, setCheckedRows] = useState<Set<number>>(new Set());
 
     const [getStorageUnitRows, { loading }] = useGetStorageUnitRowsLazyQuery();
     const [addRow,] = useAddRowMutation();
@@ -111,36 +114,63 @@ export const ExploreStorageUnit: FC = () => {
         });
     }, [current, schema, unitName]);
 
-    const handleRowDelete = useCallback((row: Record<string, string>) => {
-        if (current == null) {
-            return Promise.reject();
+    const handleRowDelete = useCallback(async () => {
+        if (current == null || rows == null || checkedRows.size === 0) {
+            return;
         }
-        const values = map(entries(row), ([Key, Value]) => ({
-            Key,
-            Value,
-        }));
-        return new Promise<void>(async (res, rej) => {
+        const deletedIndexes = [];
+        for (const index of [...checkedRows].sort()) {
+            const row = rows.Rows[index];
+            if (row == null) {
+                continue;
+            }
+            const values = map(rows.Columns, (column, i) => ({
+                Key: column.Name,
+                Value: row[i],
+            }));
             try {
-                const { data }: FetchResult<DeleteRowMutationResult["data"]> = await graphqlClient.mutate({
-                    mutation: DeleteRowDocument,
-                    variables: {
-                        schema,
-                        storageUnit: unitName,
-                        type: current.Type as DatabaseType,
-                        values,
+                await new Promise<void>(async (res, rej) => {
+                    try {
+                        const { data }: FetchResult<DeleteRowMutationResult["data"]> = await graphqlClient.mutate({
+                            mutation: DeleteRowDocument,
+                            variables: {
+                                schema,
+                                storageUnit: unitName,
+                                type: current.Type as DatabaseType,
+                                values,
+                            }
+                        });
+                        if (data?.DeleteRow.Status) {
+                            return res();
+                        }
+                        return rej();
+                    } catch (err) {
+                        return rej(err);
                     }
                 });
-                if (data?.DeleteRow.Status) {
-                    notify("Row deleted successfully!", "success");
-                    return res();
+                deletedIndexes.push(index);
+            } catch (e) {
+                if ((checkedRows.size-1) > index) {
+                    notify(`Unable to delete the row: ${e}. Stopping deleting other selected rows.`, "error");
+                } else {
+                    notify(`Unable to delete the row: ${e}`, "error");
                 }
-                notify("Unable to delete the row!", "error");
-            } catch (err) {
-                notify(`Unable to delete the row: ${err}`, "error");
+                break;
             }
-            return rej();
+        }
+        const newRows = clone(rows.Rows);
+        const newCheckedRows = new Set(checkedRows);
+        for (const deletedIndex of deletedIndexes.reverse()) {
+            newRows.splice(deletedIndex, 1);
+            newCheckedRows.delete(deletedIndex);
+        }
+        setRows({
+            ...rows,
+            Rows: newRows,
         });
-    }, [current, schema, unitName]);
+        setCheckedRows(newCheckedRows);
+        notify("Row deleted successfully!", "success");
+    }, [checkedRows, current, rows, schema, unitName]);
 
     const totalCount = useMemo(() => {
         return unit?.Attributes.find(attribute => attribute.Key === "Count")?.Value ?? "unknown";
@@ -380,10 +410,11 @@ export const ExploreStorageUnit: FC = () => {
                     },
                     "close": {
                         height: "35px",
-                        width: "150px",
+                        width: "fit-content",
                     },
                 }} animate={showAdd ? "open" : "close"}>
-                    <div className="flex w-full justify-end">
+                    <div className="flex w-full justify-end gap-2">
+                        {checkedRows.size > 0 && <AnimatedButton type="lg" icon={Icons.Delete} label={checkedRows.size > 1 ? "Delete rows" : "Delete row"} iconClassName="stroke-red-500 dark:stroke-red-500" labelClassName="text-red-500 dark:text-red-500" onClick={handleRowDelete} /> }
                         <AnimatedButton type="lg" icon={Icons.Add} label={showAdd ? "Cancel" : "Add Row"} onClick={handleToggleShowAdd} />
                     </div>
                     <div className={classNames("flex flex-col gap-2 overflow-y-auto h-full p-8 mt-2", {
@@ -418,7 +449,8 @@ export const ExploreStorageUnit: FC = () => {
                     rows != null &&
                     <Table columns={rows.Columns.map(c => c.Name)} columnTags={rows.Columns.map(c => c.Type)}
                         rows={rows.Rows} totalPages={totalPages} currentPage={currentPage+1} onPageChange={handlePageChange}
-                        onRowUpdate={handleRowUpdate} disableEdit={rows.DisableUpdate} onRowDelete={handleRowDelete}/>
+                        onRowUpdate={handleRowUpdate} disableEdit={rows.DisableUpdate} onRowDelete={handleRowDelete}
+                        checkedRows={checkedRows} setCheckedRows={setCheckedRows} />
                 }
             </div>
         </div>

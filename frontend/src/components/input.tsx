@@ -77,3 +77,19 @@ export const ToggleInput: FC<IToggleInputProps> = ({ value, setValue }) => {
         </label>
     );
 }
+
+
+type ICheckBoxInputProps = {
+    value: boolean;
+    setValue?: (value: boolean) => void;
+}
+
+export const CheckBoxInput: FC<ICheckBoxInputProps> = ({ value, setValue }) => {
+    const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+        setValue?.(e.target.checked);
+    }, [setValue]);
+
+    return (
+        <input className="hover:cursor-pointer" type="checkbox" checked={value} onChange={handleChange} />
+    );
+}

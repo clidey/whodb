@@ -1,11 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 
-export const useExportToCSV = (columns: string[], rows: Record<string, string>[]) => {
+export const useExportToCSV = (columns: string[], rows: Record<string, string>[], specificIndexes: number[] = []) => {
     return useCallback(() => {
+      let selectedRows: Record<string, string>[];
+      if (specificIndexes.length === 0) {
+        selectedRows = rows;
+      } else {
+        selectedRows = specificIndexes.map(index => rows[index]);
+      }
       const csvContent = [
         columns.join(','), 
-        ...rows.map(row => columns.map(col => row[col]).join(","))
+        ...selectedRows.map(row => columns.map(col => row[col]).join(","))
       ].join('\n'); 
   
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -20,7 +26,7 @@ export const useExportToCSV = (columns: string[], rows: Record<string, string>[]
         link.click();
         document.body.removeChild(link);
       }
-    }, [columns, rows]);
+    }, [columns, rows, specificIndexes]);
 };
 
 type ILongPressProps = {
