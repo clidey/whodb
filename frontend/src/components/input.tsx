@@ -90,6 +90,6 @@ export const CheckBoxInput: FC<ICheckBoxInputProps> = ({ value, setValue }) => {
     }, [setValue]);
 
     return (
-        <input className="hover:cursor-pointer" type="checkbox" checked={value} onChange={handleChange} />
+        <input className="hover:cursor-pointer accent-[#ca6f1e] dark:accent-[#ca6f1e]" type="checkbox" checked={value} onChange={handleChange} />
     );
 }
