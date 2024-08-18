@@ -17,6 +17,19 @@ export type Scalars = {
   Float: { input: number; output: number; }
 };
 
+export type AiChatMessage = {
+  __typename?: 'AIChatMessage';
+  Result?: Maybe<RowsResult>;
+  Text: Scalars['String']['output'];
+  Type: Scalars['String']['output'];
+};
+
+export type ChatInput = {
+  Model: Scalars['String']['input'];
+  PreviousConversation: Scalars['String']['input'];
+  Query: Scalars['String']['input'];
+};
+
 export type Column = {
   __typename?: 'Column';
   Name: Scalars['String']['output'];
@@ -80,6 +93,7 @@ export type Mutation = {
   __typename?: 'Mutation';
   AddRow: StatusResponse;
   AddStorageUnit: StatusResponse;
+  DeleteRow: StatusResponse;
   Login: StatusResponse;
   LoginWithProfile: StatusResponse;
   Logout: StatusResponse;
@@ -103,6 +117,14 @@ export type MutationAddStorageUnitArgs = {
 };
 
 
+export type MutationDeleteRowArgs = {
+  schema: Scalars['String']['input'];
+  storageUnit: Scalars['String']['input'];
+  type: DatabaseType;
+  values: Array<RecordInput>;
+};
+
+
 export type MutationLoginArgs = {
   credentials: LoginCredentials;
 };
@@ -122,6 +144,8 @@ export type MutationUpdateStorageUnitArgs = {
 
 export type Query = {
   __typename?: 'Query';
+  AIChat: Array<AiChatMessage>;
+  AIModel: Array<Scalars['String']['output']>;
   Database: Array<Scalars['String']['output']>;
   Graph: Array<GraphUnit>;
   Profiles: Array<LoginProfile>;
@@ -129,6 +153,13 @@ export type Query = {
   Row: RowsResult;
   Schema: Array<Scalars['String']['output']>;
   StorageUnit: Array<StorageUnit>;
+};
+
+
+export type QueryAiChatArgs = {
+  input: ChatInput;
+  schema: Scalars['String']['input'];
+  type: DatabaseType;
 };
 
 
@@ -237,6 +268,22 @@ export type LogoutMutationVariables = Exact<{ [key: string]: never; }>;
 
 export type LogoutMutation = { __typename?: 'Mutation', Logout: { __typename?: 'StatusResponse', Status: boolean } };
 
+export type GetAiChatQueryVariables = Exact<{
+  type: DatabaseType;
+  schema: Scalars['String']['input'];
+  previousConversation: Scalars['String']['input'];
+  query: Scalars['String']['input'];
+  model: Scalars['String']['input'];
+}>;
+
+
+export type GetAiChatQuery = { __typename?: 'Query', AIChat: Array<{ __typename?: 'AIChatMessage', Type: string, Text: string, Result?: { __typename?: 'RowsResult', Rows: Array<Array<string>>, Columns: Array<{ __typename?: 'Column', Type: string, Name: string }> } | null }> };
+
+export type GetAiModelsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetAiModelsQuery = { __typename?: 'Query', AIModel: Array<string> };
+
 export type GetGraphQueryVariables = Exact<{
   type: DatabaseType;
   schema: Scalars['String']['input'];
@@ -272,6 +319,16 @@ export type AddStorageUnitMutationVariables = Exact<{
 
 
 export type AddStorageUnitMutation = { __typename?: 'Mutation', AddStorageUnit: { __typename?: 'StatusResponse', Status: boolean } };
+
+export type DeleteRowMutationVariables = Exact<{
+  type: DatabaseType;
+  schema: Scalars['String']['input'];
+  storageUnit: Scalars['String']['input'];
+  values: Array<RecordInput> | RecordInput;
+}>;
+
+
+export type DeleteRowMutation = { __typename?: 'Mutation', DeleteRow: { __typename?: 'StatusResponse', Status: boolean } };
 
 export type GetStorageUnitRowsQueryVariables = Exact<{
   type: DatabaseType;
@@ -518,6 +575,99 @@ export function useLogoutMutation(baseOptions?: Apollo.MutationHookOptions<Logou
 export type LogoutMutationHookResult = ReturnType<typeof useLogoutMutation>;
 export type LogoutMutationResult = Apollo.MutationResult<LogoutMutation>;
 export type LogoutMutationOptions = Apollo.BaseMutationOptions<LogoutMutation, LogoutMutationVariables>;
+export const GetAiChatDocument = gql`
+    query GetAIChat($type: DatabaseType!, $schema: String!, $previousConversation: String!, $query: String!, $model: String!) {
+  AIChat(
+    type: $type
+    schema: $schema
+    input: {PreviousConversation: $previousConversation, Query: $query, Model: $model}
+  ) {
+    Type
+    Result {
+      Columns {
+        Type
+        Name
+      }
+      Rows
+    }
+    Text
+  }
+}
+    `;
+
+/**
+ * __useGetAiChatQuery__
+ *
+ * To run a query within a React component, call `useGetAiChatQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetAiChatQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetAiChatQuery({
+ *   variables: {
+ *      type: // value for 'type'
+ *      schema: // value for 'schema'
+ *      previousConversation: // value for 'previousConversation'
+ *      query: // value for 'query'
+ *      model: // value for 'model'
+ *   },
+ * });
+ */
+export function useGetAiChatQuery(baseOptions: Apollo.QueryHookOptions<GetAiChatQuery, GetAiChatQueryVariables> & ({ variables: GetAiChatQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetAiChatQuery, GetAiChatQueryVariables>(GetAiChatDocument, options);
+      }
+export function useGetAiChatLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetAiChatQuery, GetAiChatQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetAiChatQuery, GetAiChatQueryVariables>(GetAiChatDocument, options);
+        }
+export function useGetAiChatSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetAiChatQuery, GetAiChatQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetAiChatQuery, GetAiChatQueryVariables>(GetAiChatDocument, options);
+        }
+export type GetAiChatQueryHookResult = ReturnType<typeof useGetAiChatQuery>;
+export type GetAiChatLazyQueryHookResult = ReturnType<typeof useGetAiChatLazyQuery>;
+export type GetAiChatSuspenseQueryHookResult = ReturnType<typeof useGetAiChatSuspenseQuery>;
+export type GetAiChatQueryResult = Apollo.QueryResult<GetAiChatQuery, GetAiChatQueryVariables>;
+export const GetAiModelsDocument = gql`
+    query GetAIModels {
+  AIModel
+}
+    `;
+
+/**
+ * __useGetAiModelsQuery__
+ *
+ * To run a query within a React component, call `useGetAiModelsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetAiModelsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetAiModelsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetAiModelsQuery(baseOptions?: Apollo.QueryHookOptions<GetAiModelsQuery, GetAiModelsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetAiModelsQuery, GetAiModelsQueryVariables>(GetAiModelsDocument, options);
+      }
+export function useGetAiModelsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetAiModelsQuery, GetAiModelsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetAiModelsQuery, GetAiModelsQueryVariables>(GetAiModelsDocument, options);
+        }
+export function useGetAiModelsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetAiModelsQuery, GetAiModelsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetAiModelsQuery, GetAiModelsQueryVariables>(GetAiModelsDocument, options);
+        }
+export type GetAiModelsQueryHookResult = ReturnType<typeof useGetAiModelsQuery>;
+export type GetAiModelsLazyQueryHookResult = ReturnType<typeof useGetAiModelsLazyQuery>;
+export type GetAiModelsSuspenseQueryHookResult = ReturnType<typeof useGetAiModelsSuspenseQuery>;
+export type GetAiModelsQueryResult = Apollo.QueryResult<GetAiModelsQuery, GetAiModelsQueryVariables>;
 export const GetGraphDocument = gql`
     query GetGraph($type: DatabaseType!, $schema: String!) {
   Graph(type: $type, schema: $schema) {
@@ -691,6 +841,47 @@ export function useAddStorageUnitMutation(baseOptions?: Apollo.MutationHookOptio
 export type AddStorageUnitMutationHookResult = ReturnType<typeof useAddStorageUnitMutation>;
 export type AddStorageUnitMutationResult = Apollo.MutationResult<AddStorageUnitMutation>;
 export type AddStorageUnitMutationOptions = Apollo.BaseMutationOptions<AddStorageUnitMutation, AddStorageUnitMutationVariables>;
+export const DeleteRowDocument = gql`
+    mutation DeleteRow($type: DatabaseType!, $schema: String!, $storageUnit: String!, $values: [RecordInput!]!) {
+  DeleteRow(
+    type: $type
+    schema: $schema
+    storageUnit: $storageUnit
+    values: $values
+  ) {
+    Status
+  }
+}
+    `;
+export type DeleteRowMutationFn = Apollo.MutationFunction<DeleteRowMutation, DeleteRowMutationVariables>;
+
+/**
+ * __useDeleteRowMutation__
+ *
+ * To run a mutation, you first call `useDeleteRowMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteRowMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteRowMutation, { data, loading, error }] = useDeleteRowMutation({
+ *   variables: {
+ *      type: // value for 'type'
+ *      schema: // value for 'schema'
+ *      storageUnit: // value for 'storageUnit'
+ *      values: // value for 'values'
+ *   },
+ * });
+ */
+export function useDeleteRowMutation(baseOptions?: Apollo.MutationHookOptions<DeleteRowMutation, DeleteRowMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteRowMutation, DeleteRowMutationVariables>(DeleteRowDocument, options);
+      }
+export type DeleteRowMutationHookResult = ReturnType<typeof useDeleteRowMutation>;
+export type DeleteRowMutationResult = Apollo.MutationResult<DeleteRowMutation>;
+export type DeleteRowMutationOptions = Apollo.BaseMutationOptions<DeleteRowMutation, DeleteRowMutationVariables>;
 export const GetStorageUnitRowsDocument = gql`
     query GetStorageUnitRows($type: DatabaseType!, $schema: String!, $storageUnit: String!, $where: String!, $pageSize: Int!, $pageOffset: Int!) {
   Row(

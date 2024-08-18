@@ -1,4 +1,4 @@
-package sqlite3
+package mysql
 
 import (
 	"errors"
@@ -8,7 +8,7 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 )
 
-func (p *Sqlite3Plugin) UpdateStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
+func (p *MySQLPlugin) DeleteRow(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
 	db, err := DB(config)
 	if err != nil {
 		return false, err
@@ -20,7 +20,12 @@ func (p *Sqlite3Plugin) UpdateStorageUnit(config *engine.PluginConfig, schema st
 	}
 	defer sqlDb.Close()
 
-	pkColumns, columnTypes, err := getTableInfo(db, storageUnit)
+	pkColumns, err := getPrimaryKeyColumns(db, schema, storageUnit)
+	if err != nil {
+		return false, err
+	}
+
+	columnTypes, err := getColumnTypes(db, schema, storageUnit)
 	if err != nil {
 		return false, err
 	}
@@ -45,18 +50,19 @@ func (p *Sqlite3Plugin) UpdateStorageUnit(config *engine.PluginConfig, schema st
 		}
 	}
 
-	dbConditions := db.Table(storageUnit)
+	tableName := fmt.Sprintf("%s.%s", schema, storageUnit)
+	dbConditions := db.Table(tableName)
 	for key, value := range conditions {
-		dbConditions = dbConditions.Where(fmt.Sprintf("\"%s\" = ?", key), value)
+		dbConditions = dbConditions.Where(fmt.Sprintf("%s = ?", key), value)
 	}
 
-	result := dbConditions.Table(storageUnit).Updates(convertedValues)
+	result := dbConditions.Table(tableName).Delete(convertedValues)
 	if result.Error != nil {
 		return false, result.Error
 	}
 
 	if result.RowsAffected == 0 {
-		return false, errors.New("no rows were updated")
+		return false, errors.New("no rows were deleted")
 	}
 
 	return true, nil

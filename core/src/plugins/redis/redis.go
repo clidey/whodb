@@ -214,6 +214,10 @@ func (p *RedisPlugin) RawExecute(config *engine.PluginConfig, query string) (*en
 	return nil, errors.New("unsupported operation for Redis")
 }
 
+func (p *RedisPlugin) Chat(config *engine.PluginConfig, schema string, model string, previousConversation string, query string) ([]*engine.ChatMessage, error) {
+	return nil, errors.ErrUnsupported
+}
+
 func NewRedisPlugin() *engine.Plugin {
 	return &engine.Plugin{
 		Type:            engine.DatabaseType_Redis,

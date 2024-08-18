@@ -23,7 +23,7 @@ export const Button: FC<IButtonProps> = (props) => {
       {props.label}
     </div>
     {cloneElement(props.icon, {
-      className: classNames("w-4 h-4 stroke-gray-600 dark:stroke-white", props.iconClassName),
+      className: twMerge(classNames("w-4 h-4 stroke-gray-600 dark:stroke-white", props.iconClassName)),
     })}
   </motion.button>
 }

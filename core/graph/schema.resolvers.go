@@ -12,6 +12,7 @@ import (
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/auth"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/llm"
 )
 
 // Login is the resolver for the Login field.
@@ -113,6 +114,23 @@ func (r *mutationResolver) AddRow(ctx context.Context, typeArg model.DatabaseTyp
 		})
 	}
 	status, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).AddRow(config, schema, storageUnit, valuesRecords)
+
+	if err != nil {
+		return nil, err
+	}
+	return &model.StatusResponse{
+		Status: status,
+	}, nil
+}
+
+// DeleteRow is the resolver for the DeleteRow field.
+func (r *mutationResolver) DeleteRow(ctx context.Context, typeArg model.DatabaseType, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error) {
+	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	valuesMap := map[string]string{}
+	for _, value := range values {
+		valuesMap[value.Key] = value.Value
+	}
+	status, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).DeleteRow(config, schema, storageUnit, valuesMap)
 	if err != nil {
 		return nil, err
 	}
@@ -223,6 +241,51 @@ func (r *queryResolver) Graph(ctx context.Context, typeArg model.DatabaseType, s
 		})
 	}
 	return graphUnitsModel, nil
+}
+
+// AIModel is the resolver for the AIModel field.
+func (r *queryResolver) AIModel(ctx context.Context) ([]string, error) {
+	models, err := llm.Instance(llm.Ollama_LLMType).GetSupportedModels()
+	if err != nil {
+		return nil, err
+	}
+	return models, nil
+}
+
+// AIChat is the resolver for the AIChat field.
+func (r *queryResolver) AIChat(ctx context.Context, typeArg model.DatabaseType, schema string, input model.ChatInput) ([]*model.AIChatMessage, error) {
+	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	messages, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).Chat(config, schema, input.Model, input.PreviousConversation, input.Query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	chatResponse := []*model.AIChatMessage{}
+
+	for _, message := range messages {
+		var result *model.RowsResult
+		if message.Type == "sql" {
+			columns := []*model.Column{}
+			for _, column := range message.Result.Columns {
+				columns = append(columns, &model.Column{
+					Type: column.Type,
+					Name: column.Name,
+				})
+			}
+			result = &model.RowsResult{
+				Columns: columns,
+				Rows:    message.Result.Rows,
+			}
+		}
+		chatResponse = append(chatResponse, &model.AIChatMessage{
+			Type:   message.Type,
+			Result: result,
+			Text:   message.Text,
+		})
+	}
+
+	return chatResponse, nil
 }
 
 // Mutation returns MutationResolver implementation.

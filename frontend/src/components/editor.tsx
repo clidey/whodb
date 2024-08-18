@@ -14,7 +14,7 @@ languages.register({ id: 'sql' });
 
 type ICodeEditorProps = {
     value: string;
-    setValue: (value: string) => void;
+    setValue?: (value: string) => void;
     language?: "sql" | "markdown" | "json";
     options?: EditorProps["options"];
     onRun?: () => void;
@@ -29,7 +29,9 @@ export const CodeEditor: FC<ICodeEditorProps> = ({ value, setValue, language, op
 
     const handleEditorDidMount: OnMount = useCallback(editor => {
         editorRef.current = editor;
-    }, []);
+        editor.setSelection({ startLineNumber: 1, startColumn: value.length+1, endLineNumber: 1, endColumn: value.length+1 });
+        editor.focus();
+    }, [value.length]);
 
     const handlePreviewToggle = useCallback(async () => {
         setShowPreview(p => !p);
@@ -55,7 +57,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({ value, setValue, language, op
 
     const handleChange = useCallback((newValue: string | undefined) => {
         if (newValue != null) {
-            setValue(newValue);
+            setValue?.(newValue);
         }
     }, [setValue]);
 

@@ -1,0 +1,17 @@
+query GetAIChat($type: DatabaseType!, $schema: String!, $previousConversation: String!, $query: String!, $model: String!) {
+  AIChat(type: $type, schema: $schema, input: {
+    PreviousConversation: $previousConversation,
+    Query: $query,
+    Model: $model,
+  }) {
+    Type
+    Result {
+      Columns {
+        Type
+        Name
+      }
+      Rows
+    }
+    Text
+  }
+}

@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import { ChangeEvent, ChangeEventHandler, DetailedHTMLProps, FC, InputHTMLAttributes, KeyboardEvent, cloneElement, useCallback, useState } from "react";
+import { ChangeEvent, ChangeEventHandler, DetailedHTMLProps, FC, InputHTMLAttributes, KeyboardEventHandler, cloneElement, useCallback, useState } from "react";
 import { twMerge } from "tailwind-merge";
 import { Icons } from "./icons";
 
@@ -18,20 +18,24 @@ type InputProps = {
     value: string;
     setValue?: (value: string) => void;
     type?: "text" | "password";
+    onSubmit?: () => void;
 }
 
-export const Input: FC<InputProps> = ({ value, setValue, type, placeholder, inputProps = {} }) => {
+export const Input: FC<InputProps> = ({ value, setValue, type, placeholder, onSubmit, inputProps = {} }) => {
     const handleChange: ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
         setValue?.(e.target.value);
         inputProps.onChange?.(e);
     }, [inputProps, setValue]);
 
-    const handleKeyDown = useCallback((e: KeyboardEvent<HTMLInputElement>) => {
-        inputProps.onKeyDown?.(e);
-    }, [inputProps]);
-    
+    const handleHandleKeyUp: KeyboardEventHandler<HTMLInputElement> = useCallback((e) => {
+        if (e.key === "Enter") {
+            onSubmit?.();
+        }
+        inputProps?.onKeyUp?.(e);
+    }, [inputProps, onSubmit]);
+
     return <input type={type} placeholder={placeholder}
-        {...inputProps} onChange={handleChange} onKeyDown={handleKeyDown} value={value}
+        {...inputProps} onChange={handleChange} value={value} onKeyUp={handleHandleKeyUp}
         className={twMerge(classNames("appearance-none border border-gray-200 rounded-md w-full p-1 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-sm h-[34px] px-2 dark:text-neutral-300/100 dark:bg-white/10 dark:border-white/20", inputProps.className))} />
 }
 
@@ -75,5 +79,21 @@ export const ToggleInput: FC<IToggleInputProps> = ({ value, setValue }) => {
             <input type="checkbox" checked={value} className="sr-only peer" onChange={handleChange} />
             <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#ca6f1e]"></div>
         </label>
+    );
+}
+
+
+type ICheckBoxInputProps = {
+    value: boolean;
+    setValue?: (value: boolean) => void;
+}
+
+export const CheckBoxInput: FC<ICheckBoxInputProps> = ({ value, setValue }) => {
+    const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+        setValue?.(e.target.checked);
+    }, [setValue]);
+
+    return (
+        <input className="hover:cursor-pointer accent-[#ca6f1e] dark:accent-[#ca6f1e]" type="checkbox" checked={value} onChange={handleChange} />
     );
 }
