@@ -74,8 +74,8 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
                 })}>
                     <ul className="py-1 text-sm text-gray-700 nowheel flex flex-col">
                         {
-                            props.items.map((item) => (
-                                <li key={item.id} className={classNames(ITEM_CLASS, {
+                            props.items.map((item, i) => (
+                                <li key={`dropdown-item-${i}`} className={classNames(ITEM_CLASS, {
                                     "hover:gap-2": item.icon != null,
                                 })} onClick={() => handleClick(item)}>
                                     <div>{props.value?.id === item.id ? Icons.CheckCircle : item.icon}</div>
