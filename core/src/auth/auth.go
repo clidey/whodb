@@ -17,6 +17,7 @@ type AuthKey string
 
 const (
 	AuthKey_Token       AuthKey = "Token"
+	AuthKey_Profiles    AuthKey = "Profiles"
 	AuthKey_Credentials AuthKey = "Credentials"
 )
 
@@ -26,6 +27,14 @@ func GetCredentials(ctx context.Context) *engine.Credentials {
 		return nil
 	}
 	return credentials.(*engine.Credentials)
+}
+
+func GetProfiles(ctx context.Context) []*engine.Credentials {
+	profiles := ctx.Value(AuthKey_Profiles)
+	if profiles == nil {
+		return nil
+	}
+	return profiles.([]*engine.Credentials)
 }
 
 func isPublicRoute(r *http.Request) bool {
@@ -70,6 +79,22 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		allProfiles := []*engine.Credentials{}
+		profileCookie, err := r.Cookie(string(AuthKey_Profiles))
+		if err == nil {
+			decodedValue, err := base64.StdEncoding.DecodeString(profileCookie.Value)
+			if err != nil {
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+
+			err = json.Unmarshal(decodedValue, &allProfiles)
+			if err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+		}
+
 		if credentials.Id != nil {
 			profiles := src.GetLoginProfiles()
 			for i, loginProfile := range profiles {
@@ -87,6 +112,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 		ctx := r.Context()
 		ctx = context.WithValue(ctx, AuthKey_Credentials, credentials)
+		ctx = context.WithValue(ctx, AuthKey_Profiles, allProfiles)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

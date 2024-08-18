@@ -11,6 +11,7 @@ import (
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/auth"
+	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/llm"
 )
@@ -254,8 +255,17 @@ func (r *queryResolver) AIModel(ctx context.Context) ([]string, error) {
 
 // AIChat is the resolver for the AIChat field.
 func (r *queryResolver) AIChat(ctx context.Context, typeArg model.DatabaseType, schema string, input model.ChatInput) ([]*model.AIChatMessage, error) {
-	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
-	messages, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).Chat(config, schema, input.Model, input.PreviousConversation, input.Query)
+	var messages []*engine.ChatMessage
+	var err error
+	if typeArg == model.DatabaseTypeAll {
+		configs := common.MapArrayPtr(auth.GetProfiles(ctx), func(credential *engine.Credentials) *engine.PluginConfig {
+			return engine.NewPluginConfig(credential)
+		})
+		messages, err = src.MainEngine.Chat(configs)
+	} else {
+		config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+		messages, err = src.MainEngine.Choose(engine.DatabaseType(typeArg)).Chat(config, schema, input.Model, input.PreviousConversation, input.Query)
+	}
 
 	if err != nil {
 		return nil, err

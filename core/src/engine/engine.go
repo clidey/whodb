@@ -1,6 +1,10 @@
 package engine
 
-import "github.com/clidey/whodb/core/graph/model"
+import (
+	"fmt"
+
+	"github.com/clidey/whodb/core/graph/model"
+)
 
 type DatabaseType string
 
@@ -32,6 +36,27 @@ func (e *Engine) Choose(databaseType DatabaseType) *Plugin {
 		}
 	}
 	return nil
+}
+
+func (e *Engine) Chat(configs []*PluginConfig) ([]*ChatMessage, error) {
+	for _, config := range configs {
+		plugin := e.Choose(config.Credentials.Type)
+		schemas, err := plugin.GetSchema(config)
+		if err != nil {
+			return nil, err
+		}
+		for _, schema := range schemas {
+			storageUnits, err := plugin.GetStorageUnits(config, schema)
+			if err != nil {
+				return nil, err
+			}
+			for _, storageUnit := range storageUnits {
+				// use this to actually create the query
+				fmt.Sprintf("%v", storageUnit.Name)
+			}
+		}
+	}
+	return []*ChatMessage{}, nil
 }
 
 func GetStorageUnitModel(unit StorageUnit) *model.StorageUnit {

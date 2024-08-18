@@ -3,6 +3,7 @@
 # https://gqlgen.com/getting-started/
 
 enum DatabaseType {
+  All,
   Postgres,
   MySQL,
   Sqlite3,

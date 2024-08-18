@@ -75,3 +75,11 @@ func JoinWithQuotes(arr []string) string {
 
 	return strings.Join(quotedStrings, ", ")
 }
+
+func MapArrayPtr[T any, V any](items []*T, mapFunc func(*T) *V) []*V {
+	mappedItems := []*V{}
+	for _, item := range items {
+		mappedItems = append(mappedItems, mapFunc(item))
+	}
+	return mappedItems
+}
