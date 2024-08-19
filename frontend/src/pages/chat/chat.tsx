@@ -42,7 +42,7 @@ const TablePreview: FC<{ data: TableData, text: string }> = ({ data, text }) => 
                 </div>
                 :  (data != null && data.Rows.length > 0) || textWithoutComments.trim().startsWith("SELECT")
                     ? <Table className="h-[150px]" columns={data?.Columns.map(c => c.Name) ?? []} columnTags={data?.Columns.map(c => c.Type)}
-                    rows={data?.Rows ?? []} totalPages={1} currentPage={1} disableEdit={true} hideActions={true} />
+                        rows={data?.Rows ?? []} totalPages={1} currentPage={1} disableEdit={true} />
                     : <div className="bg-white/10 text-neutral-800 dark:text-neutral-300 rounded-lg p-2 flex gap-2">
                         Action Executed
                         {Icons.CheckCircle}
