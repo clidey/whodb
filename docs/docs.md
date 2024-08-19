@@ -4,6 +4,7 @@ Whodb is a powerful database management tool designed to simplify and enhance yo
 
 ## Features
 
+- **Conversate With Your Data:** No more wasting time crafting complex SQL queries - ask away!
 - **Login Profiles & Authentication**: Securely log in to your database.
 - **Database Selection**: Choose your database type, username, password, and specific database.
 - **Side Bar Navigation**: Access different sections like Login Profile, Table Schema, Tables, Graph Visualization, and Scratchpad.
@@ -105,6 +106,37 @@ Once configured, you can switch between these profiles within the Whodb applicat
 
 - Select "Table Schema" from the side bar to view detailed information about your table schemas.
   <br /><p align="center"><img src="./images/schema-change.png" alt="Table Schema" width="400" /></p>
+
+### Houdini
+
+#### Overview
+
+Houdini lets you interact with your data sources through a natural, conversational interface. Simply type in English, and Houdini will automatically understand and respond using the relevant data.
+
+#### Getting started
+
+- Visit [Ollama's website](https://ollama.com) and follow the installation instructions.
+- Once installed, run your desired model (e.g., Llama3.1) with the following command:
+
+```bash
+ollama run ollama3.1
+```
+
+#### Using Houdini
+- After installing Ollama, you’ll find the "Chat" feature available in the sidebar navigation.
+- This feature offers a ChatGPT-like experience, allowing you to engage in natural conversations with your data.
+
+<br /><p align="center"><img src="./images/chat.png" alt="Chat" width="400" /></p>
+
+**Note:** All data processing is done locally on your computer, ensuring complete privacy.
+
+<details>
+    <summary>View screenshots on examples</summary>
+    <img src="./images/chat-example-1.png" alt="Chat example 1" width="100%" height="auto" />
+    <img src="./images/chat-example-2.png" alt="Chat example 2" width="100%" height="auto" />
+    <img src="./images/chat-example-3.png" alt="Chat example 3" width="100%" height="auto" />
+    <img src="./images/chat-example-4.png" alt="Chat example 4" width="100%" height="auto" />
+</details>
 
 ### Tables
 
