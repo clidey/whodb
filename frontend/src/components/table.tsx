@@ -182,6 +182,9 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, checked, onRowCheck, disab
     }, [changed, handleCancel, escapeAttempted]);
 
     const language = useMemo(() => {
+        if (editedData == null) {
+            return;
+        }
         if (isValidJSON(editedData)) {
             return "json";
         }
@@ -521,13 +524,13 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
         if (onRowUpdate == null) {
             return Promise.resolve();
         }
+        delete row["#"];
         return onRowUpdate(row).then(() => {
             setData(value => {
                 const newValue = clone(value);
                 newValue[index] = clone(row);
                 return newValue;
             });
-            delete row["#"];
         });
     }, [onRowUpdate]);
 
