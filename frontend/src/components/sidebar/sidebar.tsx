@@ -270,7 +270,7 @@ export const Sidebar: FC = () => {
 
         if (!isNoSQL(current.Type) && aiModels?.AIModel != null && aiModels.AIModel.length > 0) {
             routes.unshift({
-                title: "Chat",
+                title: "Houdini",
                 icon: Icons.Chat,
                 path: InternalRoutes.Chat.path,
             });
