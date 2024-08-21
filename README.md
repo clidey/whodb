@@ -57,7 +57,7 @@ Or checkout our [demo video](https://youtu.be/hnAQcYYzcLo)
 
 ## Documentation
 
-For more detailed information, check out our [Documentation README](/docs/docs.md)
+For more detailed information, check out our [Documentation.](https://whodb.clidey.com/docs/)
 
 <div style="width:100%;border-bottom:0.5px solid white;margin:50px 0px;"></div>
 
