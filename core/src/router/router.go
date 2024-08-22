@@ -69,6 +69,10 @@ func InitializeRouter(staticFiles embed.FS) {
 	log.Logger.Infof("http://0.0.0.0:%s", port)
 	log.Logger.Info("Explore and enjoy working with your databases!")
 
+	if !isDocker() {
+		openBrowser(fmt.Sprintf("http://localhost:%v", port))
+	}
+
 	if err := http.ListenAndServe(fmt.Sprintf(":%v", port), router); err != nil {
 		panic(err)
 	}
