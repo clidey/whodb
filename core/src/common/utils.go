@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"strings"
 
@@ -74,4 +75,9 @@ func JoinWithQuotes(arr []string) string {
 	}
 
 	return strings.Join(quotedStrings, ", ")
+}
+
+func IsRunningInsideDocker() bool {
+	_, err := os.Stat("/.dockerenv")
+	return !os.IsNotExist(err)
 }

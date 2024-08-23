@@ -9,6 +9,9 @@ import (
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/clidey/whodb/core/src/common"
+	"github.com/clidey/whodb/core/src/env"
 )
 
 type completionRequest struct {
@@ -22,8 +25,6 @@ type completionResponse struct {
 	Response  string `json:"response"`
 	Done      bool   `json:"done"`
 }
-
-const ollamaLocalEndpoint = "http://localhost:11434/api"
 
 type LLMType string
 
@@ -54,7 +55,7 @@ func (c *LLMClient) Complete(prompt string, model LLMModel, receiverChan *chan s
 	var url string
 	switch c.Type {
 	case Ollama_LLMType:
-		url = fmt.Sprintf("%v/generate", ollamaLocalEndpoint)
+		url = fmt.Sprintf("%v/generate", getOllamaEndpoint())
 	}
 
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(requestBody))
@@ -96,7 +97,7 @@ func (c *LLMClient) GetSupportedModels() ([]string, error) {
 	var url string
 	switch c.Type {
 	case Ollama_LLMType:
-		url = fmt.Sprintf("%v/tags", ollamaLocalEndpoint)
+		url = fmt.Sprintf("%v/tags", getOllamaEndpoint())
 	}
 
 	resp, err := http.Get(url)
@@ -142,4 +143,22 @@ func Instance(llmType LLMType) *LLMClient {
 	}
 	llmInstance[llmType] = instance
 	return instance
+}
+
+func getOllamaEndpoint() string {
+	host := "localhost"
+	port := "11434"
+
+	if common.IsRunningInsideDocker() {
+		host = "host.docker.internal"
+	}
+
+	if env.OllamaHost != "" {
+		host = env.OllamaHost
+	}
+	if env.OllamaPort != "" {
+		port = env.OllamaPort
+	}
+
+	return fmt.Sprintf("http://%v:%v/api", host, port)
 }

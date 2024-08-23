@@ -1,7 +1,6 @@
 package router
 
 import (
-	"os"
 	"os/exec"
 	"runtime"
 
@@ -23,9 +22,4 @@ func openBrowser(url string) {
 	if err != nil {
 		log.Logger.Warnf("Failed to open browser: %v\n", err)
 	}
-}
-
-func isDocker() bool {
-	_, err := os.Stat("/.dockerenv")
-	return !os.IsNotExist(err)
 }
