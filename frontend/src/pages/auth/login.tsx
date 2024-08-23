@@ -59,6 +59,12 @@ const databaseTypeDropdownItems: IDropdownItem<Record<string, string>>[] = [
         icon: Icons.Logos.ElasticSearch,
         extra: {"Port": "9200", "SSL Mode": "disable"},
     },
+    {
+        id: "Memcached",
+        label: "Memcached",
+        icon: Icons.Logos.Memcached,
+        extra: {"Port": "11211"},
+    },
 ]
 
 export const LoginPage: FC = () => {
@@ -89,7 +95,7 @@ export const LoginPage: FC = () => {
         if (([DatabaseType.MySql, DatabaseType.Postgres].includes(databaseType.id as DatabaseType) && (hostName.length === 0 || database.length === 0 || username.length === 0))
             || (databaseType.id === DatabaseType.Sqlite3 && database.length === 0)
             || (databaseType.id === DatabaseType.MongoDb && (hostName.length === 0 || username.length === 0))
-            || (databaseType.id === DatabaseType.Redis && (hostName.length === 0))) {
+            || ([DatabaseType.Redis, DatabaseType.Memcached].includes(databaseType.id as DatabaseType) && (hostName.length === 0))) {
             return setError("All fields are required");
         }
         setError(undefined);
@@ -241,9 +247,9 @@ export const LoginPage: FC = () => {
         }
         return <>
             <InputWithlabel label={databaseType.id === DatabaseType.MongoDb ? "Host Name (or paste Connection URL)" : "Host Name"} value={hostName} setValue={handleHostNameChange} />
-            { databaseType.id !== DatabaseType.Redis && <InputWithlabel label="Username" value={username} setValue={setUsername} /> }
+            { databaseType.id !== DatabaseType.Redis && databaseType.id !== DatabaseType.Memcached && <InputWithlabel label="Username" value={username} setValue={setUsername} /> }
             <InputWithlabel label="Password" value={password} setValue={setPassword} type="password" />
-            { (databaseType.id !== DatabaseType.MongoDb && databaseType.id !== DatabaseType.Redis && databaseType.id !== DatabaseType.ElasticSearch)  && <InputWithlabel label="Database" value={database} setValue={setDatabase} /> }
+            { (databaseType.id !== DatabaseType.MongoDb && databaseType.id !== DatabaseType.Redis && databaseType.id !== DatabaseType.Memcached && databaseType.id !== DatabaseType.ElasticSearch)  && <InputWithlabel label="Database" value={database} setValue={setDatabase} /> }
         </>
     }, [database, databaseType.id, databasesLoading, foundDatabases?.Database, handleHostNameChange, hostName, password, username]);
 

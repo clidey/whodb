@@ -61,6 +61,17 @@ services:
       - redis:/bitnami
     networks:
       - db
+  memcached:
+    image: bitnami/memcached
+    ports:
+      - '11211:11211'
+    environment:
+      MEMCACHED_CACHE_SIZE: 64
+      MEMCACHED_MAX_CONNECTIONS: 1024
+    volumes:
+      - memcached:/bitnami
+    networks:
+      - db
   elasticsearch:
     container_name: elasticsearch
     image: docker.elastic.co/elasticsearch/elasticsearch:8.14.1
@@ -100,3 +111,4 @@ volumes:
   mongo:
   redis:
   elasticsearch:
+  memcached:

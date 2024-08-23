@@ -211,7 +211,6 @@ export const StorageUnitPage: FC = () => {
         return items.map(item => createDropdownItem(item));
     }, [current?.Type]);
     
-
     if (loading) {
         return <InternalPage routes={routes}>
             <Loading />

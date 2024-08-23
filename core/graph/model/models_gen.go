@@ -99,6 +99,7 @@ const (
 	DatabaseTypeRedis         DatabaseType = "Redis"
 	DatabaseTypeElasticSearch DatabaseType = "ElasticSearch"
 	DatabaseTypeMariaDb       DatabaseType = "MariaDB"
+	DatabaseTypeMemcached     DatabaseType = "Memcached"
 )
 
 var AllDatabaseType = []DatabaseType{
@@ -109,11 +110,12 @@ var AllDatabaseType = []DatabaseType{
 	DatabaseTypeRedis,
 	DatabaseTypeElasticSearch,
 	DatabaseTypeMariaDb,
+	DatabaseTypeMemcached,
 }
 
 func (e DatabaseType) IsValid() bool {
 	switch e {
-	case DatabaseTypePostgres, DatabaseTypeMySQL, DatabaseTypeSqlite3, DatabaseTypeMongoDb, DatabaseTypeRedis, DatabaseTypeElasticSearch, DatabaseTypeMariaDb:
+	case DatabaseTypePostgres, DatabaseTypeMySQL, DatabaseTypeSqlite3, DatabaseTypeMongoDb, DatabaseTypeRedis, DatabaseTypeElasticSearch, DatabaseTypeMariaDb, DatabaseTypeMemcached:
 		return true
 	}
 	return false
