@@ -11,6 +11,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/clidey/whodb/core/graph"
 	"github.com/clidey/whodb/core/src/auth"
+	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -69,7 +70,7 @@ func InitializeRouter(staticFiles embed.FS) {
 	log.Logger.Infof("http://0.0.0.0:%s", port)
 	log.Logger.Info("Explore and enjoy working with your databases!")
 
-	if !isDocker() {
+	if !common.IsRunningInsideDocker() {
 		openBrowser(fmt.Sprintf("http://localhost:%v", port))
 	}
 

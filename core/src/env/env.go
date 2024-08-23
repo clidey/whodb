@@ -10,6 +10,8 @@ import (
 )
 
 var IsDevelopment = os.Getenv("ENVIRONMENT") == "dev"
+var OllamaHost = os.Getenv("WHODB_OLLAMA_HOST")
+var OllamaPort = os.Getenv("WHODB_OLLAMA_PORT")
 
 type DatabaseCredentials struct {
 	Hostname string            `json:"host"`
