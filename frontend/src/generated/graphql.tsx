@@ -37,6 +37,7 @@ export type Column = {
 };
 
 export enum DatabaseType {
+  All = 'All',
   ElasticSearch = 'ElasticSearch',
   MariaDb = 'MariaDB',
   MongoDb = 'MongoDB',
