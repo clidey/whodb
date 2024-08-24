@@ -39,6 +39,7 @@ export type Column = {
 export enum DatabaseType {
   ElasticSearch = 'ElasticSearch',
   MariaDb = 'MariaDB',
+  Memcached = 'Memcached',
   MongoDb = 'MongoDB',
   MySql = 'MySQL',
   Postgres = 'Postgres',

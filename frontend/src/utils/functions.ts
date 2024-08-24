@@ -40,6 +40,7 @@ export function isNoSQL(databaseType: string) {
     switch (databaseType) {
         case DatabaseType.MongoDb:
         case DatabaseType.Redis:
+        case DatabaseType.Memcached:
         case DatabaseType.ElasticSearch:
             return true;
     }

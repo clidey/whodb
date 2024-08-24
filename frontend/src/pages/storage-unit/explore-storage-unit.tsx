@@ -72,7 +72,12 @@ export const ExploreStorageUnit: FC = () => {
                 where: whereCondition,
                 pageSize: Number.parseInt(bufferPageSize),
                 pageOffset: currentPage,
-            }
+            },
+            onCompleted(data) {
+                setRows(data.Row);
+                setPageSize(bufferPageSize);
+            },
+            fetchPolicy: "no-cache",
         });
     }, [getStorageUnitRows, current?.Type, schema, unitName, whereCondition, bufferPageSize, currentPage]);
 
@@ -301,7 +306,7 @@ export const ExploreStorageUnit: FC = () => {
                 if (columns.length === 0) {
                     columns = rows?.Columns ?? [];
                 }
-                setNewRowForm((columns.map(col => {
+                setNewRowForm((rows?.Columns.map(col => {
                     const colName = col.Name.toLowerCase();
                     const isId = colName === "id" && col.Type === "UUID";
                     const isDate = col.Type === "TIMESTAMPTZ";
@@ -321,7 +326,7 @@ export const ExploreStorageUnit: FC = () => {
                             },
                         ],
                     }
-                })));
+                }) ?? []));
             }
         }
         setShowAdd(showAddStatus);
