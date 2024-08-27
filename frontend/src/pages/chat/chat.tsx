@@ -1,19 +1,22 @@
 import classNames from "classnames";
-import { cloneElement, FC, KeyboardEventHandler, useCallback, useMemo, useRef, useState } from "react";
-import { createDropdownItem, Dropdown, IDropdownItem } from "../../components/dropdown";
+import { AnimatePresence, motion } from "framer-motion";
+import { map } from "lodash";
+import { cloneElement, FC, KeyboardEventHandler, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ActionButton, AnimatedButton } from "../../components/button";
+import { createDropdownItem, Dropdown, DropdownWithLabel, IDropdownItem } from "../../components/dropdown";
+import { CodeEditor } from "../../components/editor";
 import { Icons } from "../../components/icons";
-import { Input } from "../../components/input";
+import { Input, InputWithlabel } from "../../components/input";
 import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { Table } from "../../components/table";
 import { InternalRoutes } from "../../config/routes";
-import { DatabaseType, GetAiChatQuery, useGetAiChatLazyQuery, useGetAiModelsQuery } from "../../generated/graphql";
+import { DatabaseType, GetAiChatQuery, useGetAiChatLazyQuery, useGetAiModelsLazyQuery } from "../../generated/graphql";
+import { availableExternalModelTypes, availableInternalModelTypes, DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";
-import { useAppSelector } from "../../store/hooks";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { chooseRandomItems } from "../../utils/functions";
 import { chatExamples } from "./examples";
-import { CodeEditor } from "../../components/editor";
-import { ActionButton } from "../../components/button";
 
 type TableData = GetAiChatQuery["AIChat"][0]["Result"];
 
@@ -63,26 +66,59 @@ type IChatMessage = {
     isUserInput?: true;
 }
 
+
+export const externalModelTypes = map(availableExternalModelTypes, (model) => createDropdownItem(model));
+
 export const ChatPage: FC = () => {
     const [chats, setChats] = useState<IChatMessage[]>([]);
     const [currentModel, setCurrentModel] = useState("");
     const [query, setQuery] = useState("");
-    const { data } = useGetAiModelsQuery({
+    const [addExternalModel, setAddExternalModel] = useState(false);
+    const [externalModelType, setExternalModel] = useState(externalModelTypes[0]);
+    const [externalModelToken, setExternalModelToken] = useState("");
+    const modelType = useAppSelector(state => state.database.current?.modelType);
+    const modelTypes = useAppSelector(state => state.database.models);
+    const [getAIModels, { data, loading: getAIModelsLoading }] = useGetAiModelsLazyQuery({
+        variables: {
+            modelType: availableInternalModelTypes[0],
+        },
         onCompleted(data) {
             if (data.AIModel.length > 0) {
                 setCurrentModel(data.AIModel[0]);
             }
         },
     });
-    const [getAIChat, { loading }] = useGetAiChatLazyQuery();
+    const [getAIChat, { loading: getAIChatLoading }] = useGetAiChatLazyQuery();
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const current = useAppSelector(state => state.auth.current);
     const schema = useAppSelector(state => state.database.schema);
     const [currentSearchIndex, setCurrentSearchIndex] = useState<number>();
+    const dispatch = useAppDispatch();
+
+    const loading = useMemo(() => {
+        return getAIChatLoading || getAIModelsLoading;
+    }, [getAIModelsLoading, getAIChatLoading]);
+
+    const handleAIModelTypeChange = useCallback((item: IDropdownItem) => {
+        dispatch(DatabaseActions.setCurrentModel({ id: item.id }));
+        getAIModels({
+            variables: {
+                modelType: externalModelType.id,
+                token: externalModelToken,
+            },
+            onError(error) {
+                notify(`Unable to connect to the model: ${error.message}`, "error");
+            },
+        });
+    }, [dispatch, externalModelToken, externalModelType.id, getAIModels]);
 
     const handleAIModelChange = useCallback((item: IDropdownItem) => {
         setCurrentModel(item.id);
     }, []);
+
+    const handleAIModelRemove = useCallback((_: MouseEvent<HTMLDivElement>, item?: IDropdownItem) => {
+        dispatch(DatabaseActions.removeAIModel({ id: item!.id }));
+    }, [dispatch]);
 
     const models = useMemo(() => {
         return data?.AIModel.map(model => createDropdownItem(model)) ?? [];
@@ -104,6 +140,7 @@ export const ChatPage: FC = () => {
         }, 250);
         getAIChat({
             variables: {
+                modelType: modelType ?? availableInternalModelTypes[0],
                 query,
                 model: currentModel,
                 previousConversation: chats.map(chat => `${chat.isUserInput ? "User" : "System"}: ${chat.text}`).join("\n"),
@@ -139,7 +176,7 @@ export const ChatPage: FC = () => {
             },
         });
         setQuery("");
-    }, [chats, current?.Type, currentModel, getAIChat, query, schema]);
+    }, [chats, current?.Type, currentModel, getAIChat, modelType, query, schema]);
 
     const handleKeyUp: KeyboardEventHandler<HTMLInputElement> = useCallback((e) => {
         if (e.key === "ArrowUp") {
@@ -173,13 +210,95 @@ export const ChatPage: FC = () => {
         setQuery(example);
     }, []);
 
+    const handleAddExternalModel = useCallback(() => {
+        setAddExternalModel(status => !status);
+    }, []);
+
+    const handleExternalModelChange = useCallback((item: IDropdownItem) => {
+        setExternalModel(item);
+    }, []);
+
+    const handleExternalModelSubmit = useCallback(() => {
+        getAIModels({
+            variables: {
+                modelType: externalModelType.id,
+                token: externalModelToken,
+            },
+            onCompleted(data) {
+                if (data.AIModel.length > 0) {
+                    dispatch(DatabaseActions.addAIModel({
+                        modelType: externalModelType.id,
+                        token: externalModelToken,
+                    }));
+                    setExternalModel(externalModelTypes[0]);
+                    setExternalModelToken("");
+                    setAddExternalModel(false);
+                    return;
+                }
+                notify("Unable to connect to the model", "error");
+            },
+            onError(error) {
+                notify(`Unable to connect to the model: ${error.message}`, "error");
+            },
+        });
+    }, [getAIModels, externalModelType.id, externalModelToken, dispatch]);
+
+    useEffect(() => {
+        const modelType = modelTypes[0];
+        if (modelType == null) {
+            return;
+        }
+        handleAIModelTypeChange({ id: modelType.id, label: modelType.modelType });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     return (
         <InternalPage routes={[InternalRoutes.Chat]}>
+            <AnimatePresence mode="wait">
+                {
+                    addExternalModel && 
+                    <div className="absolute inset-0 flex justify-center items-center">
+                        <motion.div className="w-[min(450px,calc(100vw-20px))] shadow-2xl z-10 rounded-xl bg-black/10 backdrop-blur-xl px-8 py-12 flex flex-col gap-2"
+                            initial={{ y: 50, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: 50, opacity: 0 }}>
+                            <div className="text-neutral-800 dark:text-neutral-300">
+                                Add External Model
+                            </div>
+                            <DropdownWithLabel label="Model Type" items={externalModelTypes} fullWidth={true} value={externalModelType} onChange={handleExternalModelChange} />
+                            <InputWithlabel label="Token" value={externalModelToken} setValue={setExternalModelToken} type="password" />
+                            <div className={classNames("flex items-center", {
+                                "justify-between": models.length > 0,
+                                "justify-end": models.length === 0,
+                            })}>
+                                {
+                                    models.length > 0 &&
+                                    <AnimatedButton icon={Icons.CheckCircle} label="Cancel" onClick={handleAddExternalModel} />
+                                }
+                                <AnimatedButton icon={Icons.CheckCircle} label="Submit" onClick={handleExternalModelSubmit} />
+                            </div>
+                        </motion.div>
+                    </div>
+                }
+            </AnimatePresence>
             <div className="flex flex-col justify-center items-center w-full h-full gap-2">
-                <div className="flex justify-end w-full">
+                <div className={classNames("flex justify-end w-full gap-2", {
+                    "opacity-50 pointer-events-none": addExternalModel,
+                })}>
+                    <Dropdown className="w-[200px]" value={createDropdownItem(modelType ?? availableInternalModelTypes[0])}
+                        items={modelTypes.map(modelType => ({
+                            id: modelType.id,
+                            label: modelType.modelType,
+                        }))}
+                        onChange={handleAIModelTypeChange}
+                        action={<div onClick={handleAIModelRemove}>{cloneElement(Icons.Delete, {
+                            className: "w-6 h-6 stroke-red-500"
+                        })}</div>}
+                        defaultItem={{ label: "Add External Model", icon: Icons.Add }}
+                        onDefaultItemClick={handleAddExternalModel} />
                     <Dropdown className="w-[200px]" value={createDropdownItem(currentModel)}
                         items={models}
-                        onChange={handleAIModelChange}/>
+                        onChange={handleAIModelChange} />
                 </div>
                 <div className="flex bg-white/5 grow w-full rounded-xl overflow-hidden">
                     {
@@ -236,7 +355,7 @@ export const ChatPage: FC = () => {
                         })}
                     </div>
                     <Input value={query} setValue={setQuery} placeholder="Talk to me..." onSubmit={handleSubmitQuery} inputProps={{
-                        disabled: loading,
+                        disabled: loading || models.length === 0,
                         onKeyUp: handleKeyUp,
                     }} />
                 </div>

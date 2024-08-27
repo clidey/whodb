@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/clidey/whodb/core/src/common"
+	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
 )
 
@@ -26,20 +27,28 @@ type completionResponse struct {
 	Done      bool   `json:"done"`
 }
 
+const (
+	chatgptAPIEndpoint = "https://api.openai.com/v1"
+)
+
 type LLMType string
 
 const (
-	Ollama_LLMType LLMType = "Ollama"
+	Ollama_LLMType  LLMType = "Ollama"
+	ChatGPT_LLMType LLMType = "ChatGPT"
 )
 
 type LLMModel string
 
 const (
 	Llama3_LLMModel LLMModel = "Llama3"
+	GPT3_5_LLMModel LLMModel = "gpt-3.5-turbo"
+	GPT4_LLMModel   LLMModel = "gpt-4"
 )
 
 type LLMClient struct {
-	Type LLMType
+	Type   LLMType
+	APIKey string
 }
 
 func (c *LLMClient) Complete(prompt string, model LLMModel, receiverChan *chan string) (*string, error) {
@@ -53,12 +62,29 @@ func (c *LLMClient) Complete(prompt string, model LLMModel, receiverChan *chan s
 	}
 
 	var url string
+	var headers map[string]string
 	switch c.Type {
 	case Ollama_LLMType:
 		url = fmt.Sprintf("%v/generate", getOllamaEndpoint())
+	case ChatGPT_LLMType:
+		url = fmt.Sprintf("%v/completions", chatgptAPIEndpoint)
+		headers = map[string]string{
+			"Authorization": fmt.Sprintf("Bearer %s", c.APIKey),
+			"Content-Type":  "application/json",
+		}
 	}
 
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(requestBody))
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(requestBody))
+	if err != nil {
+		return nil, err
+	}
+
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -98,9 +124,21 @@ func (c *LLMClient) GetSupportedModels() ([]string, error) {
 	switch c.Type {
 	case Ollama_LLMType:
 		url = fmt.Sprintf("%v/tags", getOllamaEndpoint())
+	case ChatGPT_LLMType:
+		url = fmt.Sprintf("%v/models", chatgptAPIEndpoint)
 	}
 
-	resp, err := http.Get(url)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if c.Type == ChatGPT_LLMType {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.APIKey))
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -111,35 +149,57 @@ func (c *LLMClient) GetSupportedModels() ([]string, error) {
 		return nil, errors.New(string(body))
 	}
 
-	var modelsResp struct {
-		Models []struct {
-			Name string `json:"model"`
-		} `json:"models"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&modelsResp); err != nil {
-		return nil, err
-	}
+	if c.Type == Ollama_LLMType {
+		var modelsResp struct {
+			Models []struct {
+				Name string `json:"model"`
+			} `json:"models"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&modelsResp); err != nil {
+			return nil, err
+		}
 
-	models := []string{}
-	for _, model := range modelsResp.Models {
-		models = append(models, model.Name)
-	}
+		models := []string{}
+		for _, model := range modelsResp.Models {
+			models = append(models, model.Name)
+		}
 
-	return models, nil
+		return models, nil
+	} else if c.Type == ChatGPT_LLMType {
+		var modelsResp struct {
+			Models []struct {
+				Name string `json:"id"`
+			} `json:"data"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&modelsResp); err != nil {
+			return nil, err
+		}
+
+		models := []string{}
+		for _, model := range modelsResp.Models {
+			models = append(models, model.Name)
+		}
+
+		return models, nil
+	}
+	return []string{}, nil
 }
 
 var llmInstance map[LLMType]*LLMClient
 
-func Instance(llmType LLMType) *LLMClient {
+func Instance(config *engine.PluginConfig) *LLMClient {
 	if llmInstance == nil {
 		llmInstance = make(map[LLMType]*LLMClient)
 	}
+
+	llmType := LLMType(config.ExternalModel.Type)
 
 	if _, ok := llmInstance[llmType]; ok {
 		return llmInstance[llmType]
 	}
 	instance := &LLMClient{
-		Type: llmType,
+		Type:   llmType,
+		APIKey: config.ExternalModel.Token,
 	}
 	llmInstance[llmType] = instance
 	return instance

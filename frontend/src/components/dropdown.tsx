@@ -30,6 +30,7 @@ export type IDropdownProps = {
     onDefaultItemClick?: () => void;
     defaultItemClassName?: string;
     action?: ReactElement;
+    disableAction?: (index: number) => boolean;
     noItemsLabel?: string;
     showIconOnly?: boolean;
 }
@@ -80,7 +81,7 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
                                 })} onClick={() => handleClick(item)}>
                                     <div>{props.value?.id === item.id ? Icons.CheckCircle : item.icon}</div>
                                     <div className="whitespace-nowrap">{item.label}</div>
-                                    {props.action != null && cloneElement(props.action, {
+                                    {(props.disableAction?.(i) ?? true) && props.action != null && cloneElement(props.action, {
                                         className: "absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer transition-all opacity-0 group-hover/item:opacity-100",
                                         onClick: (e: MouseEvent) => props.action?.props?.onClick?.(e, item),
                                     })}

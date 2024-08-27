@@ -37,7 +37,7 @@ func (p *Sqlite3Plugin) Chat(config *engine.PluginConfig, schema string, model s
 
 	completeQuery := fmt.Sprintf(common.RawSQLQueryPrompt, "SQLite3", schema, context, previousConversation, query, "SQLite3")
 
-	response, err := llm.Instance(llm.Ollama_LLMType).Complete(completeQuery, llm.LLMModel(model), nil)
+	response, err := llm.Instance(config).Complete(completeQuery, llm.LLMModel(model), nil)
 	if err != nil {
 		return nil, err
 	}
