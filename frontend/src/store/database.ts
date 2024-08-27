@@ -1,5 +1,4 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
-import { v4 } from 'uuid';
 
 export const availableInternalModelTypes = ["Ollama"];
 export const availableExternalModelTypes = ["ChatGPT"];
@@ -16,9 +15,15 @@ type IDatabaseState = {
   models: IAIModel[];
 }
 
+const defaultModels = availableInternalModelTypes.map(modelType => ({
+  id: modelType,
+  modelType,
+}));
+
 const initialState: IDatabaseState = {
   schema: "",
-  models: [],
+  models: defaultModels,
+  current: defaultModels[0],
 }
 
 export const databaseSlice = createSlice({
@@ -31,15 +36,15 @@ export const databaseSlice = createSlice({
     setCurrentModel: (state, action: PayloadAction<{ id: string }>) => {
       state.current = state.models.find(model => model.id === action.payload.id)!;
     },
-    addAIModel(state, action: PayloadAction<Omit<IAIModel, "id">>) {
-      state.models.push({
-        id: v4(),
-        ...action.payload,
-      });
+    addAIModel(state, action: PayloadAction<IAIModel>) {
+      state.models.push(action.payload);
     },
     removeAIModel(state, action: PayloadAction<{ id: string }>) {
       if (availableInternalModelTypes.includes(action.payload.id)) {
         return;
+      }
+      if (state.current?.id === action.payload.id) {
+        state.current = undefined;
       }
       state.models = state.models.filter(model => model.id !== action.payload.id);
     },
