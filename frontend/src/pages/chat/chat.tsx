@@ -148,7 +148,7 @@ export const ChatPage: FC = () => {
         }, 250);
         getAIChat({
             variables: {
-                modelType: modelType.id,
+                modelType: modelType.modelType,
                 query,
                 model: currentModel,
                 previousConversation: chats.map(chat => `${chat.isUserInput ? "User" : "System"}: ${chat.text}`).join("\n"),
@@ -293,10 +293,11 @@ export const ChatPage: FC = () => {
                 {
                     addExternalModel && 
                     <div className="absolute inset-0 flex justify-center items-center">
-                        <motion.div className="w-[min(450px,calc(100vw-20px))] shadow-2xl z-10 rounded-xl bg-white/5 backdrop-blur-xl px-8 py-12 flex flex-col gap-2"
+                        <motion.div className="w-[min(450px,calc(100vw-20px))] shadow-2xl z-10 rounded-xl px-8 py-12 flex flex-col gap-2 relative"
                             initial={{ y: 50, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             exit={{ y: 50, opacity: 0 }}>
+                            <div className="absolute inset-0 bg-white/5 backdrop-blur-xl -z-10" />
                             <div className="text-neutral-800 dark:text-neutral-300 self-center flex gap-2 items-center">
                                 Run Ollama locally <Button icon={Icons.RightArrowUp} label="Docs" onClick={handleOpenDocs} />
                             </div>
