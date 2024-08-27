@@ -283,6 +283,10 @@ export const ChatPage: FC = () => {
         }));
     }, [modelTypes]);
 
+    const disableAll = useMemo(() => {
+        return models.length === 0 || !modelAvailable;
+    }, [modelAvailable, models.length]);
+    
     const disableChat = useMemo(() => {
         return loading || models.length === 0 || !modelAvailable;
     }, [loading, modelAvailable, models.length]);
@@ -345,7 +349,7 @@ export const ChatPage: FC = () => {
                     }
                 </div>
                 <div className={classNames("flex bg-white/5 grow w-full rounded-xl overflow-hidden", {
-                    "opacity-[4%] pointer-events-none": disableChat
+                    "opacity-[4%] pointer-events-none": disableAll,
                 })}>
                     {
                         chats.length === 0
@@ -393,7 +397,8 @@ export const ChatPage: FC = () => {
                     }
                 </div>
                 <div className={classNames("relative w-full", {
-                    "opacity-10": disableChat,
+                    "opacity-80": disableChat,
+                    "opacity-10": disableAll,
                 })}>
                     <div className={classNames("absolute right-2 top-1/2 -translate-y-1/2 z-10 backdrop-blur-lg rounded-full cursor-pointer hover:scale-110 transition-all", {
                         "opacity-50": loading,
