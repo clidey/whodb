@@ -28,12 +28,6 @@ const (
 
 type LLMModel string
 
-const (
-	Llama3_LLMModel LLMModel = "Llama3"
-	GPT3_5_LLMModel LLMModel = "gpt-3.5-turbo"
-	GPT4_LLMModel   LLMModel = "gpt-4"
-)
-
 type LLMClient struct {
 	Type   LLMType
 	APIKey string
