@@ -15,9 +15,10 @@ type AIChatMessage struct {
 }
 
 type ChatInput struct {
-	PreviousConversation string `json:"PreviousConversation"`
-	Query                string `json:"Query"`
-	Model                string `json:"Model"`
+	PreviousConversation string  `json:"PreviousConversation"`
+	Query                string  `json:"Query"`
+	Model                string  `json:"Model"`
+	Token                *string `json:"Token,omitempty"`
 }
 
 type Column struct {

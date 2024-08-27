@@ -37,7 +37,7 @@ func (p *MySQLPlugin) Chat(config *engine.PluginConfig, schema string, model str
 
 	completeQuery := fmt.Sprintf(common.RawSQLQueryPrompt, "MySQL", schema, context, previousConversation, query, "MySQL")
 
-	response, err := llm.Instance(llm.Ollama_LLMType).Complete(completeQuery, llm.LLMModel(model), nil)
+	response, err := llm.Instance(config).Complete(completeQuery, llm.LLMModel(model), nil)
 	if err != nil {
 		return nil, err
 	}

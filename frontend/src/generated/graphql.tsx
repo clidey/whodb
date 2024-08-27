@@ -28,6 +28,7 @@ export type ChatInput = {
   Model: Scalars['String']['input'];
   PreviousConversation: Scalars['String']['input'];
   Query: Scalars['String']['input'];
+  Token?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type Column = {
@@ -158,8 +159,16 @@ export type Query = {
 
 export type QueryAiChatArgs = {
   input: ChatInput;
+  modelType: Scalars['String']['input'];
   schema: Scalars['String']['input'];
+  token?: InputMaybe<Scalars['String']['input']>;
   type: DatabaseType;
+};
+
+
+export type QueryAiModelArgs = {
+  modelType: Scalars['String']['input'];
+  token?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -269,6 +278,8 @@ export type LogoutMutationVariables = Exact<{ [key: string]: never; }>;
 export type LogoutMutation = { __typename?: 'Mutation', Logout: { __typename?: 'StatusResponse', Status: boolean } };
 
 export type GetAiChatQueryVariables = Exact<{
+  modelType: Scalars['String']['input'];
+  token?: InputMaybe<Scalars['String']['input']>;
   type: DatabaseType;
   schema: Scalars['String']['input'];
   previousConversation: Scalars['String']['input'];
@@ -279,7 +290,10 @@ export type GetAiChatQueryVariables = Exact<{
 
 export type GetAiChatQuery = { __typename?: 'Query', AIChat: Array<{ __typename?: 'AIChatMessage', Type: string, Text: string, Result?: { __typename?: 'RowsResult', Rows: Array<Array<string>>, Columns: Array<{ __typename?: 'Column', Type: string, Name: string }> } | null }> };
 
-export type GetAiModelsQueryVariables = Exact<{ [key: string]: never; }>;
+export type GetAiModelsQueryVariables = Exact<{
+  modelType: Scalars['String']['input'];
+  token?: InputMaybe<Scalars['String']['input']>;
+}>;
 
 
 export type GetAiModelsQuery = { __typename?: 'Query', AIModel: Array<string> };
@@ -576,8 +590,10 @@ export type LogoutMutationHookResult = ReturnType<typeof useLogoutMutation>;
 export type LogoutMutationResult = Apollo.MutationResult<LogoutMutation>;
 export type LogoutMutationOptions = Apollo.BaseMutationOptions<LogoutMutation, LogoutMutationVariables>;
 export const GetAiChatDocument = gql`
-    query GetAIChat($type: DatabaseType!, $schema: String!, $previousConversation: String!, $query: String!, $model: String!) {
+    query GetAIChat($modelType: String!, $token: String, $type: DatabaseType!, $schema: String!, $previousConversation: String!, $query: String!, $model: String!) {
   AIChat(
+    modelType: $modelType
+    token: $token
     type: $type
     schema: $schema
     input: {PreviousConversation: $previousConversation, Query: $query, Model: $model}
@@ -607,6 +623,8 @@ export const GetAiChatDocument = gql`
  * @example
  * const { data, loading, error } = useGetAiChatQuery({
  *   variables: {
+ *      modelType: // value for 'modelType'
+ *      token: // value for 'token'
  *      type: // value for 'type'
  *      schema: // value for 'schema'
  *      previousConversation: // value for 'previousConversation'
@@ -632,8 +650,8 @@ export type GetAiChatLazyQueryHookResult = ReturnType<typeof useGetAiChatLazyQue
 export type GetAiChatSuspenseQueryHookResult = ReturnType<typeof useGetAiChatSuspenseQuery>;
 export type GetAiChatQueryResult = Apollo.QueryResult<GetAiChatQuery, GetAiChatQueryVariables>;
 export const GetAiModelsDocument = gql`
-    query GetAIModels {
-  AIModel
+    query GetAIModels($modelType: String!, $token: String) {
+  AIModel(modelType: $modelType, token: $token)
 }
     `;
 
@@ -649,10 +667,12 @@ export const GetAiModelsDocument = gql`
  * @example
  * const { data, loading, error } = useGetAiModelsQuery({
  *   variables: {
+ *      modelType: // value for 'modelType'
+ *      token: // value for 'token'
  *   },
  * });
  */
-export function useGetAiModelsQuery(baseOptions?: Apollo.QueryHookOptions<GetAiModelsQuery, GetAiModelsQueryVariables>) {
+export function useGetAiModelsQuery(baseOptions: Apollo.QueryHookOptions<GetAiModelsQuery, GetAiModelsQueryVariables> & ({ variables: GetAiModelsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetAiModelsQuery, GetAiModelsQueryVariables>(GetAiModelsDocument, options);
       }

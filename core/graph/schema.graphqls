@@ -87,6 +87,7 @@ input ChatInput {
   PreviousConversation: String!
   Query: String!
   Model: String!
+  Token: String
 }
 
 type AIChatMessage {
@@ -103,8 +104,8 @@ type Query {
   Row(type: DatabaseType!, schema: String!, storageUnit: String!, where: String!, pageSize: Int!, pageOffset: Int!): RowsResult! # row, document
   RawExecute(type: DatabaseType!, query: String!): RowsResult!
   Graph(type: DatabaseType!, schema: String!): [GraphUnit!]!
-  AIModel: [String!]!
-  AIChat(type: DatabaseType!, schema: String!, input: ChatInput!): [AIChatMessage!]!
+  AIModel(modelType: String!, token: String): [String!]!
+  AIChat(modelType: String!,token: String, type: DatabaseType!, schema: String!, input: ChatInput!): [AIChatMessage!]!
 }
 
 type Mutation {
