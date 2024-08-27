@@ -172,10 +172,11 @@ func (p *PostgresPlugin) GetRows(config *engine.PluginConfig, schema string, sto
 		return nil, err
 	}
 	quotedKeys := common.JoinWithQuotes(sortKeyRes)
-	query := fmt.Sprintf("SELECT * FROM \"%v\".\"%s\" order by %v asc", schema, storageUnit, quotedKeys)
+	query := fmt.Sprintf("SELECT * FROM \"%v\".\"%s\"", schema, storageUnit)
 	if len(where) > 0 {
 		query = fmt.Sprintf("%v WHERE %v", query, where)
 	}
+	query = fmt.Sprintf("%v ORDER BY %v ASC", query, quotedKeys)
 	query = fmt.Sprintf("%v LIMIT ? OFFSET ?", query)
 	return p.executeRawSQL(config, query, pageSize, pageOffset)
 }
