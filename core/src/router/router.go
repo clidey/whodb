@@ -30,6 +30,7 @@ func setupServer(router *chi.Mux, staticFiles embed.FS) {
 	server := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
 	server.AddTransport(&transport.Websocket{})
 	setupPlaygroundHandler(router, server)
+	graph.SetupHTTPServer(router)
 }
 
 func setupMiddlewares(router *chi.Mux) {
