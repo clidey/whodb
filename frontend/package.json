@@ -67,7 +67,7 @@
     "@graphql-codegen/typescript": "^4.0.7",
     "@graphql-codegen/typescript-operations": "^4.2.1",
     "@graphql-codegen/typescript-react-apollo": "^4.3.0",
-    "@types/lodash": "^4.17.5",
+    "@types/lodash": "^4.17.7",
     "@types/react-window": "^1.8.8",
     "@types/uuid": "^9.0.8",
     "eslint-config-react-app": "^7.0.1",
