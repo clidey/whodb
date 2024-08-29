@@ -37,7 +37,13 @@ export const ExploreStorageUnit: FC = () => {
     const [newRowForm, setNewRowForm] = useState<RecordInput[]>([]);
     const [checkedRows, setCheckedRows] = useState<Set<number>>(new Set());
 
-    const [getStorageUnitRows, { loading }] = useGetStorageUnitRowsLazyQuery();
+    const [getStorageUnitRows, { loading }] = useGetStorageUnitRowsLazyQuery({
+        onCompleted(data) {
+            setRows(data.Row);
+            setPageSize(bufferPageSize);
+        },
+        fetchPolicy: "no-cache",
+    });
     const [addRow,] = useAddRowMutation();
 
     const unitName = useMemo(() => {
@@ -54,11 +60,6 @@ export const ExploreStorageUnit: FC = () => {
                 pageSize: Number.parseInt(bufferPageSize),
                 pageOffset: currentPage,
             },
-            onCompleted(data) {
-                setRows(data.Row);
-                setPageSize(bufferPageSize);
-            },
-            fetchPolicy: "no-cache",
         });
     }, [getStorageUnitRows, current?.Type, schema, unitName, whereCondition, bufferPageSize, currentPage]);
 
@@ -72,7 +73,7 @@ export const ExploreStorageUnit: FC = () => {
                 where: whereCondition,
                 pageSize: Number.parseInt(bufferPageSize),
                 pageOffset: currentPage,
-            }
+            },
         });
     }, [getStorageUnitRows, current?.Type, schema, unitName, whereCondition, bufferPageSize, currentPage]);
 

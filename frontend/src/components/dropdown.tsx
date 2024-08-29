@@ -30,7 +30,7 @@ export type IDropdownProps = {
     onDefaultItemClick?: () => void;
     defaultItemClassName?: string;
     action?: ReactElement;
-    disableAction?: (index: number) => boolean;
+    enableAction?: (index: number) => boolean;
     noItemsLabel?: string;
     showIconOnly?: boolean;
 }
@@ -55,7 +55,9 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
 
     return (
         <div className={classNames("relative", props.className)} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-            {props.loading ? <Loading hideText={true} /> : 
+            {props.loading ? <div className="flex h-full w-full items-center justify-center">
+                <Loading hideText={true} containerClassName="w-4 h-4" />
+            </div> :
             <>  <div className="group/dropdown flex gap-1 justify-between items-center border border-gray-200 rounded-lg w-full p-1 h-[34px] px-2 dark:bg-white/10 dark:border-white/20">
                     <div className="flex gap-1 text-gray-700 text-sm truncate items-center dark:text-neutral-300">
                         {props.value?.icon != null && <div className="flex items-center w-6">
@@ -81,9 +83,12 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
                                 })} onClick={() => handleClick(item)}>
                                     <div>{props.value?.id === item.id ? Icons.CheckCircle : item.icon}</div>
                                     <div className="whitespace-nowrap">{item.label}</div>
-                                    {(props.disableAction?.(i) ?? true) && props.action != null && cloneElement(props.action, {
+                                    {(props.enableAction?.(i) ?? true) && props.action != null && cloneElement(props.action, {
                                         className: "absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer transition-all opacity-0 group-hover/item:opacity-100",
-                                        onClick: (e: MouseEvent) => props.action?.props?.onClick?.(e, item),
+                                        onClick: (e: MouseEvent) => {
+                                            props.action?.props?.onClick?.(e, item);
+                                            e.stopPropagation();
+                                        },
                                     })}
                                 </li>
                             ))

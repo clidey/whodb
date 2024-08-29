@@ -1,10 +1,9 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
-import { v4 } from 'uuid';
 
 export const availableInternalModelTypes = ["Ollama"];
-export const availableExternalModelTypes = ["ChatGPT"];
+export const availableExternalModelTypes = ["ChatGPT", "Anthropic"];
 
-type IAIModel = {
+type IAIModelType = {
   id: string;
   modelType: string;
   token?: string;
@@ -12,13 +11,18 @@ type IAIModel = {
 
 type IDatabaseState = {
   schema: string;
-  current?: IAIModel;
-  models: IAIModel[];
+  current?: IAIModelType;
+  modelTypes: IAIModelType[];
 }
+
+const defaultModelTypes = availableInternalModelTypes.map(modelType => ({
+  id: modelType,
+  modelType,
+}));
 
 const initialState: IDatabaseState = {
   schema: "",
-  models: [],
+  modelTypes: defaultModelTypes,
 }
 
 export const databaseSlice = createSlice({
@@ -28,20 +32,20 @@ export const databaseSlice = createSlice({
     setSchema: (state, action: PayloadAction<string>) => {
       state.schema = action.payload;
     },
-    setCurrentModel: (state, action: PayloadAction<{ id: string }>) => {
-      state.current = state.models.find(model => model.id === action.payload.id)!;
+    setCurrentModelType: (state, action: PayloadAction<{ id: string }>) => {
+      state.current = state.modelTypes.find(model => model.id === action.payload.id)!;
     },
-    addAIModel(state, action: PayloadAction<Omit<IAIModel, "id">>) {
-      state.models.push({
-        id: v4(),
-        ...action.payload,
-      });
+    addAIModelType(state, action: PayloadAction<IAIModelType>) {
+      state.modelTypes.push(action.payload);
     },
-    removeAIModel(state, action: PayloadAction<{ id: string }>) {
+    removeAIModelType(state, action: PayloadAction<{ id: string }>) {
       if (availableInternalModelTypes.includes(action.payload.id)) {
         return;
       }
-      state.models = state.models.filter(model => model.id !== action.payload.id);
+      if (state.current?.id === action.payload.id) {
+        state.current = undefined;
+      }
+      state.modelTypes = state.modelTypes.filter(model => model.id !== action.payload.id);
     },
   },
 });
