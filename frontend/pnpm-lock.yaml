@@ -12,8 +12,8 @@ importers:
         specifier: ^3.11.4
         version: 3.11.4(@types/react@18.3.3)(graphql-ws@5.16.0(graphql@16.9.0))(graphql@16.9.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@dagrejs/dagre':
-        specifier: ^1.1.2
-        version: 1.1.2
+        specifier: ^1.1.4
+        version: 1.1.4
       '@monaco-editor/react':
         specifier: ^4.6.0
         version: 4.6.0(monaco-editor@0.51.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -1006,11 +1006,11 @@ packages:
     peerDependencies:
       postcss-selector-parser: ^6.0.10
 
-  '@dagrejs/dagre@1.1.2':
-    resolution: {integrity: sha512-F09dphqvHsbe/6C2t2unbmpr5q41BNPEfJCdn8Z7aEBpVSy/zFQ/b4SWsweQjWNsYMDvE2ffNUN8X0CeFsEGNw==}
+  '@dagrejs/dagre@1.1.4':
+    resolution: {integrity: sha512-QUTc54Cg/wvmlEUxB+uvoPVKFazM1H18kVHBQNmK2NbrDR5ihOCR6CXLnDSZzMcSQKJtabPUWridBOlJM3WkDg==}
 
-  '@dagrejs/graphlib@2.2.2':
-    resolution: {integrity: sha512-CbyGpCDKsiTg/wuk79S7Muoj8mghDGAESWGxcSyhHX5jD35vYMBZochYVFzlHxynpE9unpu6O+4ZuhrLxASsOg==}
+  '@dagrejs/graphlib@2.2.4':
+    resolution: {integrity: sha512-mepCf/e9+SKYy1d02/UkvSy6+6MoyXhVxP8lLDfA7BPE1X1d4dR0sZznmbM8/XVJ1GPM+Svnx7Xj6ZweByWUkw==}
     engines: {node: '>17.0.0'}
 
   '@eslint-community/eslint-utils@4.4.0':
@@ -8440,11 +8440,11 @@ snapshots:
     dependencies:
       postcss-selector-parser: 6.1.0
 
-  '@dagrejs/dagre@1.1.2':
+  '@dagrejs/dagre@1.1.4':
     dependencies:
-      '@dagrejs/graphlib': 2.2.2
+      '@dagrejs/graphlib': 2.2.4
 
-  '@dagrejs/graphlib@2.2.2': {}
+  '@dagrejs/graphlib@2.2.4': {}
 
   '@eslint-community/eslint-utils@4.4.0(eslint@8.57.0)':
     dependencies:
