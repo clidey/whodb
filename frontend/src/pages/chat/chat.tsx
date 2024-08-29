@@ -1,19 +1,23 @@
 import classNames from "classnames";
-import { cloneElement, FC, KeyboardEventHandler, useCallback, useMemo, useRef, useState } from "react";
-import { createDropdownItem, Dropdown, IDropdownItem } from "../../components/dropdown";
+import { AnimatePresence, motion } from "framer-motion";
+import { map } from "lodash";
+import { cloneElement, FC, KeyboardEventHandler, MouseEvent, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { v4 } from "uuid";
+import { ActionButton, AnimatedButton, Button } from "../../components/button";
+import { createDropdownItem, Dropdown, DropdownWithLabel, IDropdownItem } from "../../components/dropdown";
+import { CodeEditor } from "../../components/editor";
 import { Icons } from "../../components/icons";
-import { Input } from "../../components/input";
+import { Input, InputWithlabel } from "../../components/input";
 import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { Table } from "../../components/table";
 import { InternalRoutes } from "../../config/routes";
-import { DatabaseType, GetAiChatQuery, useGetAiChatLazyQuery, useGetAiModelsQuery } from "../../generated/graphql";
+import { DatabaseType, GetAiChatQuery, useGetAiChatLazyQuery, useGetAiModelsLazyQuery } from "../../generated/graphql";
+import { availableExternalModelTypes, DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";
-import { useAppSelector } from "../../store/hooks";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { chooseRandomItems } from "../../utils/functions";
 import { chatExamples } from "./examples";
-import { CodeEditor } from "../../components/editor";
-import { ActionButton } from "../../components/button";
 
 type TableData = GetAiChatQuery["AIChat"][0]["Result"];
 
@@ -63,36 +67,74 @@ type IChatMessage = {
     isUserInput?: true;
 }
 
+
+export const externalModelTypes = map(availableExternalModelTypes, (model) => createDropdownItem(model, (Icons.Logos as Record<string, ReactElement>)[model]));
+
 export const ChatPage: FC = () => {
     const [chats, setChats] = useState<IChatMessage[]>([]);
     const [currentModel, setCurrentModel] = useState("");
     const [query, setQuery] = useState("");
-    const { data } = useGetAiModelsQuery({
-        onCompleted(data) {
-            if (data.AIModel.length > 0) {
-                setCurrentModel(data.AIModel[0]);
-            }
+    const [addExternalModel, setAddExternalModel] = useState(false);
+    const [externalModelType, setExternalModel] = useState(externalModelTypes[0]);
+    const [externalModelToken, setExternalModelToken] = useState<string>();
+    const modelType = useAppSelector(state => state.database.current);
+    const modelTypes = useAppSelector(state => state.database.modelTypes);
+    const [modelAvailable, setModelAvailable] = useState(true);
+    const [ models, setModels ] = useState<IDropdownItem[]>([]);
+    const [getAIModels, { loading: getAIModelsLoading }] = useGetAiModelsLazyQuery({
+        onError() {
+            setModelAvailable(false);
         },
+        fetchPolicy: "network-only",
     });
-    const [getAIChat, { loading }] = useGetAiChatLazyQuery();
+    const [getAIChat, { loading: getAIChatLoading }] = useGetAiChatLazyQuery();
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const current = useAppSelector(state => state.auth.current);
     const schema = useAppSelector(state => state.database.schema);
     const [currentSearchIndex, setCurrentSearchIndex] = useState<number>();
+    const dispatch = useAppDispatch();
+
+    const loading = useMemo(() => {
+        return getAIChatLoading || getAIModelsLoading;
+    }, [getAIModelsLoading, getAIChatLoading]);
+
+    const handleAIModelTypeChange = useCallback((item: IDropdownItem) => {
+        setModelAvailable(true);
+        dispatch(DatabaseActions.setCurrentModelType({ id: item.id }));
+        getAIModels({
+            variables: {
+                modelType: item.label,
+                token: item.extra?.token,
+            },
+            onCompleted(data) {
+                setModels(data?.AIModel.map(model => createDropdownItem(model)) ?? []);
+                if (data.AIModel.length > 0) {
+                    setCurrentModel(data.AIModel[0]);
+                }
+            },
+        });
+    }, [dispatch, getAIModels]);
 
     const handleAIModelChange = useCallback((item: IDropdownItem) => {
         setCurrentModel(item.id);
     }, []);
 
-    const models = useMemo(() => {
-        return data?.AIModel.map(model => createDropdownItem(model)) ?? [];
-    }, [data?.AIModel]);
+    const handleAIModelRemove = useCallback((_: MouseEvent<HTMLDivElement>, item?: IDropdownItem) => {
+        if (modelType?.id === item!.id) {
+            setModels([]);
+            setCurrentModel("");
+        }
+        dispatch(DatabaseActions.removeAIModelType({ id: item!.id }));
+    }, [dispatch, modelType?.id]);
 
     const examples = useMemo(() => {
         return chooseRandomItems(chatExamples);
     }, []);
 
     const handleSubmitQuery = useCallback(() => {
+        if (modelType == null) {
+            return;
+        }
         setChats(chats => [...chats, { type: "message", text: query, isUserInput: true, }]);
         setTimeout(() => {
             if (scrollContainerRef.current != null) {
@@ -104,6 +146,8 @@ export const ChatPage: FC = () => {
         }, 250);
         getAIChat({
             variables: {
+                modelType: modelType.modelType,
+                token: modelType.token,
                 query,
                 model: currentModel,
                 previousConversation: chats.map(chat => `${chat.isUserInput ? "User" : "System"}: ${chat.text}`).join("\n"),
@@ -139,7 +183,7 @@ export const ChatPage: FC = () => {
             },
         });
         setQuery("");
-    }, [chats, current?.Type, currentModel, getAIChat, query, schema]);
+    }, [chats, current?.Type, currentModel, getAIChat, modelType, query, schema]);
 
     const handleKeyUp: KeyboardEventHandler<HTMLInputElement> = useCallback((e) => {
         if (e.key === "ArrowUp") {
@@ -173,15 +217,143 @@ export const ChatPage: FC = () => {
         setQuery(example);
     }, []);
 
+    const handleAddExternalModel = useCallback(() => {
+        setAddExternalModel(status => !status);
+    }, []);
+
+    const handleExternalModelChange = useCallback((item: IDropdownItem) => {
+        setExternalModel(item);
+    }, []);
+
+    const handleExternalModelSubmit = useCallback(() => {
+        setCurrentModel("");
+        setModels([]);
+        getAIModels({
+            variables: {
+                modelType: externalModelType.id,
+                token: externalModelToken,
+            },
+            onCompleted(data) {
+                setModels(data?.AIModel.map(model => createDropdownItem(model)) ?? []);
+                const id = v4();
+                dispatch(DatabaseActions.addAIModelType({
+                    id,
+                    modelType: externalModelType.id,
+                    token: externalModelToken,
+                }));
+                dispatch(DatabaseActions.setCurrentModelType({ id }));
+                setExternalModel(externalModelTypes[0]);
+                setExternalModelToken("");
+                setAddExternalModel(false);
+                if (data.AIModel.length > 0) {
+                    setCurrentModel(data.AIModel[0]);
+                }
+            },
+            onError(error) {
+                notify(`Unable to connect to the model: ${error.message}`, "error");
+            },
+        });
+    }, [getAIModels, externalModelType.id, externalModelToken, dispatch]);
+
+    const handleOpenDocs = useCallback(() => {
+        window.open("https://whodb.clidey.com/docs/usage-houdini/what-is-houdini", "_blank");
+    }, []);
+
+    useEffect(() => {
+        const modelType = modelTypes[0];
+        if (modelType == null) {
+            return;
+        }
+        handleAIModelTypeChange({
+            id: modelType.id,
+            label: modelType.modelType,
+            extra: {
+                token: modelType.token,
+            },
+        });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const modelTypesDropdownItems = useMemo(() => {
+        return modelTypes.map(modelType => ({
+            id: modelType.id,
+            label: modelType.modelType,
+            icon: (Icons.Logos as Record<string, ReactElement>)[modelType.modelType],
+            extra: {
+                token: modelType.token,
+            }
+        }));
+    }, [modelTypes]);
+
+    const disableAll = useMemo(() => {
+        return models.length === 0 || !modelAvailable;
+    }, [modelAvailable, models.length]);
+    
+    const disableChat = useMemo(() => {
+        return loading || models.length === 0 || !modelAvailable;
+    }, [loading, modelAvailable, models.length]);
+
     return (
         <InternalPage routes={[InternalRoutes.Chat]}>
+            <AnimatePresence mode="wait">
+                {
+                    addExternalModel && 
+                    <div className="absolute inset-0 flex justify-center items-center">
+                        <motion.div className="w-[min(450px,calc(100vw-20px))] shadow-2xl z-10 rounded-xl px-8 py-12 flex flex-col gap-2 relative overflow-hidden"
+                            initial={{ y: 50, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: 50, opacity: 0 }}>
+                            <div className="absolute inset-0 bg-white/5 backdrop-blur-xl -z-10" />
+                            <div className="text-neutral-800 dark:text-neutral-300 self-center flex gap-2 items-center">
+                                Run Ollama locally <Button icon={Icons.RightArrowUp} label="Docs" onClick={handleOpenDocs} />
+                            </div>
+                            <div className="text-neutral-800 dark:text-neutral-300 my-4 w-full flex items-center gap-2">
+                                <div className="border-t-[1px] border-t-white/5 rounded-lg grow border-dashed" /> or <div className="border-t-[1px] border-t-white/5 rounded-lg grow border-dashed" /> 
+                            </div>
+                            <div className="text-neutral-800 dark:text-neutral-300 self-center">
+                                Add External Model
+                            </div>
+                            <DropdownWithLabel label="Model Type" items={externalModelTypes} fullWidth={true} value={externalModelType} onChange={handleExternalModelChange} />
+                            <InputWithlabel label="Token" value={externalModelToken ?? ""} setValue={setExternalModelToken} type="password" />
+                            <div className="flex items-center justify-between">
+                                <AnimatedButton icon={Icons.CheckCircle} label="Cancel" onClick={handleAddExternalModel} />
+                                <AnimatedButton icon={Icons.CheckCircle} label="Submit" onClick={handleExternalModelSubmit} disabled={getAIModelsLoading} />
+                            </div>
+                        </motion.div>
+                    </div>
+                }
+            </AnimatePresence>
             <div className="flex flex-col justify-center items-center w-full h-full gap-2">
-                <div className="flex justify-end w-full">
-                    <Dropdown className="w-[200px]" value={createDropdownItem(currentModel)}
-                        items={models}
-                        onChange={handleAIModelChange}/>
+                <div className={classNames("flex justify-end w-full gap-2", {
+                    "opacity-50 pointer-events-none": addExternalModel,
+                })}>
+                    <Dropdown className="w-[200px]" value={modelType && {
+                            id: modelType.id,
+                            label: modelType.modelType,
+                            icon: (Icons.Logos as Record<string, ReactElement>)[modelType.modelType],
+                        }}
+                        items={modelTypesDropdownItems}
+                        onChange={handleAIModelTypeChange}
+                        action={<div onClick={handleAIModelRemove}>{cloneElement(Icons.Delete, {
+                            className: "w-6 h-6 stroke-red-500"
+                        })}</div>}
+                        defaultItem={{ label: "Add External Model", icon: Icons.Add }}
+                        onDefaultItemClick={handleAddExternalModel}
+                        enableAction={(index) => index !== 0} />
+                    {
+                        modelAvailable
+                        ? <Dropdown className="w-[200px]" value={createDropdownItem(currentModel)}
+                                items={models}
+                                onChange={handleAIModelChange} 
+                                loading={getAIModelsLoading} />
+                        : <div className="text-neutral-500 w-[200px] rounded-lg bg-white/5 flex items-center pl-4">
+                            Unavailable
+                        </div>
+                    }
                 </div>
-                <div className="flex bg-white/5 grow w-full rounded-xl overflow-hidden">
+                <div className={classNames("flex bg-white/5 grow w-full rounded-xl overflow-hidden", {
+                    "opacity-[4%] pointer-events-none": disableAll,
+                })}>
                     {
                         chats.length === 0
                         ? <div className="flex flex-col justify-center items-center w-full gap-8">
@@ -227,7 +399,10 @@ export const ChatPage: FC = () => {
                         </div>
                     }
                 </div>
-                <div className="relative w-full">
+                <div className={classNames("relative w-full", {
+                    "opacity-80": disableChat,
+                    "opacity-10": disableAll,
+                })}>
                     <div className={classNames("absolute right-2 top-1/2 -translate-y-1/2 z-10 backdrop-blur-lg rounded-full cursor-pointer hover:scale-110 transition-all", {
                         "opacity-50": loading,
                     })} onClick={loading ? undefined : handleSubmitQuery}>
@@ -236,10 +411,16 @@ export const ChatPage: FC = () => {
                         })}
                     </div>
                     <Input value={query} setValue={setQuery} placeholder="Talk to me..." onSubmit={handleSubmitQuery} inputProps={{
-                        disabled: loading,
+                        disabled: disableChat,
                         onKeyUp: handleKeyUp,
                     }} />
                 </div>
+                {
+                    (!modelAvailable || models.length === 0) &&
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-neutral-800 dark:text-neutral-300">
+                        Please choose an available model
+                    </div>
+                }
             </div>
         </InternalPage>
     )

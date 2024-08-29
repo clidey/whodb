@@ -37,7 +37,7 @@ func (p *PostgresPlugin) Chat(config *engine.PluginConfig, schema string, model 
 
 	completeQuery := fmt.Sprintf(common.RawSQLQueryPrompt, "Postgres", schema, context, previousConversation, query, "Postgres")
 
-	response, err := llm.Instance(llm.Ollama_LLMType).Complete(completeQuery, llm.LLMModel(model), nil)
+	response, err := llm.Instance(config).Complete(completeQuery, llm.LLMModel(model), nil)
 	if err != nil {
 		return nil, err
 	}

@@ -244,8 +244,15 @@ func (r *queryResolver) Graph(ctx context.Context, typeArg model.DatabaseType, s
 }
 
 // AIModel is the resolver for the AIModel field.
-func (r *queryResolver) AIModel(ctx context.Context) ([]string, error) {
-	models, err := llm.Instance(llm.Ollama_LLMType).GetSupportedModels()
+func (r *queryResolver) AIModel(ctx context.Context, modelType string, token *string) ([]string, error) {
+	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	config.ExternalModel = &engine.ExternalModel{
+		Type: modelType,
+	}
+	if token != nil {
+		config.ExternalModel.Token = *token
+	}
+	models, err := llm.Instance(config).GetSupportedModels()
 	if err != nil {
 		return nil, err
 	}
@@ -253,8 +260,14 @@ func (r *queryResolver) AIModel(ctx context.Context) ([]string, error) {
 }
 
 // AIChat is the resolver for the AIChat field.
-func (r *queryResolver) AIChat(ctx context.Context, typeArg model.DatabaseType, schema string, input model.ChatInput) ([]*model.AIChatMessage, error) {
+func (r *queryResolver) AIChat(ctx context.Context, modelType string, token *string, typeArg model.DatabaseType, schema string, input model.ChatInput) ([]*model.AIChatMessage, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	config.ExternalModel = &engine.ExternalModel{
+		Type: modelType,
+	}
+	if token != nil {
+		config.ExternalModel.Token = *token
+	}
 	messages, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).Chat(config, schema, input.Model, input.PreviousConversation, input.Query)
 
 	if err != nil {

@@ -6,10 +6,15 @@ import { InternalRoutes } from "../../config/routes";
 import { InternalPage } from "../../components/page";
 import { useAppSelector } from "../../store/hooks";
 import { isNoSQL } from "../../utils/functions";
+import { availableInternalModelTypes } from "../../store/database";
 
 export const NavigateToDefault: FC = () => {
     const current = useAppSelector(state => state.auth.current);
-    const { data, error } = useGetAiModelsQuery();
+    const { data, error } = useGetAiModelsQuery({
+        variables: {
+            modelType: availableInternalModelTypes[0],
+        }
+    });
 
     if (isNoSQL(current?.Type as DatabaseType) ||  error != null) {
         return <Navigate to={InternalRoutes.Dashboard.StorageUnit.path} />

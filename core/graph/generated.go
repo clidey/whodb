@@ -85,8 +85,8 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		AIChat      func(childComplexity int, typeArg model.DatabaseType, schema string, input model.ChatInput) int
-		AIModel     func(childComplexity int) int
+		AIChat      func(childComplexity int, modelType string, token *string, typeArg model.DatabaseType, schema string, input model.ChatInput) int
+		AIModel     func(childComplexity int, modelType string, token *string) int
 		Database    func(childComplexity int, typeArg model.DatabaseType) int
 		Graph       func(childComplexity int, typeArg model.DatabaseType, schema string) int
 		Profiles    func(childComplexity int) int
@@ -134,8 +134,8 @@ type QueryResolver interface {
 	Row(ctx context.Context, typeArg model.DatabaseType, schema string, storageUnit string, where string, pageSize int, pageOffset int) (*model.RowsResult, error)
 	RawExecute(ctx context.Context, typeArg model.DatabaseType, query string) (*model.RowsResult, error)
 	Graph(ctx context.Context, typeArg model.DatabaseType, schema string) ([]*model.GraphUnit, error)
-	AIModel(ctx context.Context) ([]string, error)
-	AIChat(ctx context.Context, typeArg model.DatabaseType, schema string, input model.ChatInput) ([]*model.AIChatMessage, error)
+	AIModel(ctx context.Context, modelType string, token *string) ([]string, error)
+	AIChat(ctx context.Context, modelType string, token *string, typeArg model.DatabaseType, schema string, input model.ChatInput) ([]*model.AIChatMessage, error)
 }
 
 type executableSchema struct {
@@ -330,14 +330,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.AIChat(childComplexity, args["type"].(model.DatabaseType), args["schema"].(string), args["input"].(model.ChatInput)), true
+		return e.complexity.Query.AIChat(childComplexity, args["modelType"].(string), args["token"].(*string), args["type"].(model.DatabaseType), args["schema"].(string), args["input"].(model.ChatInput)), true
 
 	case "Query.AIModel":
 		if e.complexity.Query.AIModel == nil {
 			break
 		}
 
-		return e.complexity.Query.AIModel(childComplexity), true
+		args, err := ec.field_Query_AIModel_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.AIModel(childComplexity, args["modelType"].(string), args["token"].(*string)), true
 
 	case "Query.Database":
 		if e.complexity.Query.Database == nil {
@@ -803,33 +808,75 @@ func (ec *executionContext) field_Mutation_UpdateStorageUnit_args(ctx context.Co
 func (ec *executionContext) field_Query_AIChat_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.DatabaseType
+	var arg0 string
+	if tmp, ok := rawArgs["modelType"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("modelType"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["modelType"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["token"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("token"))
+		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["token"] = arg1
+	var arg2 model.DatabaseType
 	if tmp, ok := rawArgs["type"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-		arg0, err = ec.unmarshalNDatabaseType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDatabaseType(ctx, tmp)
+		arg2, err = ec.unmarshalNDatabaseType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDatabaseType(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["type"] = arg0
-	var arg1 string
+	args["type"] = arg2
+	var arg3 string
 	if tmp, ok := rawArgs["schema"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("schema"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		arg3, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["schema"] = arg1
-	var arg2 model.ChatInput
+	args["schema"] = arg3
+	var arg4 model.ChatInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg2, err = ec.unmarshalNChatInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐChatInput(ctx, tmp)
+		arg4, err = ec.unmarshalNChatInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐChatInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["input"] = arg2
+	args["input"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_AIModel_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["modelType"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("modelType"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["modelType"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["token"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("token"))
+		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["token"] = arg1
 	return args, nil
 }
 
@@ -2416,7 +2463,7 @@ func (ec *executionContext) _Query_AIModel(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().AIModel(rctx)
+		return ec.resolvers.Query().AIModel(rctx, fc.Args["modelType"].(string), fc.Args["token"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2433,7 +2480,7 @@ func (ec *executionContext) _Query_AIModel(ctx context.Context, field graphql.Co
 	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_AIModel(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_AIModel(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -2442,6 +2489,17 @@ func (ec *executionContext) fieldContext_Query_AIModel(_ context.Context, field 
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_AIModel_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -2460,7 +2518,7 @@ func (ec *executionContext) _Query_AIChat(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().AIChat(rctx, fc.Args["type"].(model.DatabaseType), fc.Args["schema"].(string), fc.Args["input"].(model.ChatInput))
+		return ec.resolvers.Query().AIChat(rctx, fc.Args["modelType"].(string), fc.Args["token"].(*string), fc.Args["type"].(model.DatabaseType), fc.Args["schema"].(string), fc.Args["input"].(model.ChatInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4782,7 +4840,7 @@ func (ec *executionContext) unmarshalInputChatInput(ctx context.Context, obj int
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"PreviousConversation", "Query", "Model"}
+	fieldsInOrder := [...]string{"PreviousConversation", "Query", "Model", "Token"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -4810,6 +4868,13 @@ func (ec *executionContext) unmarshalInputChatInput(ctx context.Context, obj int
 				return it, err
 			}
 			it.Model = data
+		case "Token":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Token"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Token = data
 		}
 	}
 

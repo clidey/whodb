@@ -7,7 +7,7 @@ import { useDispatch } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
 import { InternalRoutes, PublicRoutes } from "../../config/routes";
-import { DatabaseType, useGetAiModelsQuery, useGetDatabaseQuery, useGetSchemaQuery, useLoginMutation, useLoginWithProfileMutation } from "../../generated/graphql";
+import { DatabaseType, useGetDatabaseQuery, useGetSchemaQuery, useLoginMutation, useLoginWithProfileMutation } from "../../generated/graphql";
 import { AuthActions, LocalLoginProfile } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";
@@ -151,7 +151,6 @@ export const Sidebar: FC = () => {
     const pathname = useLocation().pathname;
     const current = useAppSelector(state => state.auth.current);
     const profiles = useAppSelector(state => state.auth.profiles);
-    const { data: aiModels } = useGetAiModelsQuery();
     const { data: availableDatabases, loading: availableDatabasesLoading } = useGetDatabaseQuery({
         variables: {
             type: current?.Type as DatabaseType,
@@ -268,7 +267,7 @@ export const Sidebar: FC = () => {
             },
         ];
 
-        if (!isNoSQL(current.Type) && aiModels?.AIModel != null && aiModels.AIModel.length > 0) {
+        if (!isNoSQL(current.Type)) {
             routes.unshift({
                 title: "Houdini",
                 icon: Icons.Chat,
@@ -283,7 +282,7 @@ export const Sidebar: FC = () => {
             });
         }
         return routes;
-    }, [aiModels?.AIModel, current]);
+    }, [current]);
 
     const handleCollapseToggle = useCallback(() => {
         setCollapsed(c => !c);

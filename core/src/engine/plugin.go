@@ -9,8 +9,14 @@ type Credentials struct {
 	Advanced []Record
 }
 
+type ExternalModel struct {
+	Type  string
+	Token string
+}
+
 type PluginConfig struct {
-	Credentials *Credentials
+	Credentials   *Credentials
+	ExternalModel *ExternalModel
 }
 
 type Record struct {
