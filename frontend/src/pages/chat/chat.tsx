@@ -1,7 +1,8 @@
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import { map } from "lodash";
-import { cloneElement, FC, KeyboardEventHandler, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { cloneElement, FC, KeyboardEventHandler, MouseEvent, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { v4 } from "uuid";
 import { ActionButton, AnimatedButton, Button } from "../../components/button";
 import { createDropdownItem, Dropdown, DropdownWithLabel, IDropdownItem } from "../../components/dropdown";
 import { CodeEditor } from "../../components/editor";
@@ -12,12 +13,11 @@ import { InternalPage } from "../../components/page";
 import { Table } from "../../components/table";
 import { InternalRoutes } from "../../config/routes";
 import { DatabaseType, GetAiChatQuery, useGetAiChatLazyQuery, useGetAiModelsLazyQuery } from "../../generated/graphql";
-import { availableExternalModelTypes, availableInternalModelTypes, DatabaseActions } from "../../store/database";
+import { availableExternalModelTypes, DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { chooseRandomItems } from "../../utils/functions";
 import { chatExamples } from "./examples";
-import { v4 } from "uuid";
 
 type TableData = GetAiChatQuery["AIChat"][0]["Result"];
 
@@ -68,7 +68,7 @@ type IChatMessage = {
 }
 
 
-export const externalModelTypes = map(availableExternalModelTypes, (model) => createDropdownItem(model));
+export const externalModelTypes = map(availableExternalModelTypes, (model) => createDropdownItem(model, (Icons.Logos as Record<string, ReactElement>)[model]));
 
 export const ChatPage: FC = () => {
     const [chats, setChats] = useState<IChatMessage[]>([]);
@@ -78,22 +78,14 @@ export const ChatPage: FC = () => {
     const [externalModelType, setExternalModel] = useState(externalModelTypes[0]);
     const [externalModelToken, setExternalModelToken] = useState<string>();
     const modelType = useAppSelector(state => state.database.current);
-    const modelTypes = useAppSelector(state => state.database.models);
+    const modelTypes = useAppSelector(state => state.database.modelTypes);
     const [modelAvailable, setModelAvailable] = useState(true);
     const [ models, setModels ] = useState<IDropdownItem[]>([]);
     const [getAIModels, { loading: getAIModelsLoading }] = useGetAiModelsLazyQuery({
-        variables: {
-            modelType: availableInternalModelTypes[0],
-        },
-        onCompleted(data) {
-            setModels(data?.AIModel.map(model => createDropdownItem(model)) ?? []);
-            if (data.AIModel.length > 0) {
-                setCurrentModel(data.AIModel[0]);
-            }
-        },
         onError() {
             setModelAvailable(false);
         },
+        fetchPolicy: "network-only",
     });
     const [getAIChat, { loading: getAIChatLoading }] = useGetAiChatLazyQuery();
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -108,11 +100,17 @@ export const ChatPage: FC = () => {
 
     const handleAIModelTypeChange = useCallback((item: IDropdownItem) => {
         setModelAvailable(true);
-        dispatch(DatabaseActions.setCurrentModel({ id: item.id }));
+        dispatch(DatabaseActions.setCurrentModelType({ id: item.id }));
         getAIModels({
             variables: {
                 modelType: item.label,
                 token: item.extra?.token,
+            },
+            onCompleted(data) {
+                setModels(data?.AIModel.map(model => createDropdownItem(model)) ?? []);
+                if (data.AIModel.length > 0) {
+                    setCurrentModel(data.AIModel[0]);
+                }
             },
         });
     }, [dispatch, getAIModels]);
@@ -126,7 +124,7 @@ export const ChatPage: FC = () => {
             setModels([]);
             setCurrentModel("");
         }
-        dispatch(DatabaseActions.removeAIModel({ id: item!.id }));
+        dispatch(DatabaseActions.removeAIModelType({ id: item!.id }));
     }, [dispatch, modelType?.id]);
 
     const examples = useMemo(() => {
@@ -149,6 +147,7 @@ export const ChatPage: FC = () => {
         getAIChat({
             variables: {
                 modelType: modelType.modelType,
+                token: modelType.token,
                 query,
                 model: currentModel,
                 previousConversation: chats.map(chat => `${chat.isUserInput ? "User" : "System"}: ${chat.text}`).join("\n"),
@@ -227,26 +226,28 @@ export const ChatPage: FC = () => {
     }, []);
 
     const handleExternalModelSubmit = useCallback(() => {
+        setCurrentModel("");
+        setModels([]);
         getAIModels({
             variables: {
                 modelType: externalModelType.id,
                 token: externalModelToken,
             },
             onCompleted(data) {
+                setModels(data?.AIModel.map(model => createDropdownItem(model)) ?? []);
+                const id = v4();
+                dispatch(DatabaseActions.addAIModelType({
+                    id,
+                    modelType: externalModelType.id,
+                    token: externalModelToken,
+                }));
+                dispatch(DatabaseActions.setCurrentModelType({ id }));
+                setExternalModel(externalModelTypes[0]);
+                setExternalModelToken("");
+                setAddExternalModel(false);
                 if (data.AIModel.length > 0) {
-                    const id = v4();
-                    dispatch(DatabaseActions.addAIModel({
-                        id,
-                        modelType: externalModelType.id,
-                        token: externalModelToken,
-                    }));
-                    dispatch(DatabaseActions.setCurrentModel({ id }));
-                    setExternalModel(externalModelTypes[0]);
-                    setExternalModelToken("");
-                    setAddExternalModel(false);
-                    return;
+                    setCurrentModel(data.AIModel[0]);
                 }
-                notify("Unable to connect to the model", "error");
             },
             onError(error) {
                 notify(`Unable to connect to the model: ${error.message}`, "error");
@@ -277,6 +278,7 @@ export const ChatPage: FC = () => {
         return modelTypes.map(modelType => ({
             id: modelType.id,
             label: modelType.modelType,
+            icon: (Icons.Logos as Record<string, ReactElement>)[modelType.modelType],
             extra: {
                 token: modelType.token,
             }
@@ -297,7 +299,7 @@ export const ChatPage: FC = () => {
                 {
                     addExternalModel && 
                     <div className="absolute inset-0 flex justify-center items-center">
-                        <motion.div className="w-[min(450px,calc(100vw-20px))] shadow-2xl z-10 rounded-xl px-8 py-12 flex flex-col gap-2 relative"
+                        <motion.div className="w-[min(450px,calc(100vw-20px))] shadow-2xl z-10 rounded-xl px-8 py-12 flex flex-col gap-2 relative overflow-hidden"
                             initial={{ y: 50, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             exit={{ y: 50, opacity: 0 }}>
@@ -328,6 +330,7 @@ export const ChatPage: FC = () => {
                     <Dropdown className="w-[200px]" value={modelType && {
                             id: modelType.id,
                             label: modelType.modelType,
+                            icon: (Icons.Logos as Record<string, ReactElement>)[modelType.modelType],
                         }}
                         items={modelTypesDropdownItems}
                         onChange={handleAIModelTypeChange}
