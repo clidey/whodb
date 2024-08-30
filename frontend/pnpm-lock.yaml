@@ -105,8 +105,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       web-vitals:
-        specifier: ^2.1.4
-        version: 2.1.4
+        specifier: ^4.2.3
+        version: 4.2.3
     devDependencies:
       '@graphql-codegen/cli':
         specifier: ^5.0.2
@@ -7032,8 +7032,8 @@ packages:
     resolution: {integrity: sha512-d2JWLCivmZYTSIoge9MsgFCZrt571BikcWGYkjC1khllbTeDlGqZ2D8vD8E/lJa8WGWbb7Plm8/XJYV7IJHZZw==}
     engines: {node: '>= 8'}
 
-  web-vitals@2.1.4:
-    resolution: {integrity: sha512-sVWcwhU5mX6crfI5Vd2dC4qchyTqxV8URinzt25XqVh+bHEPGH4C3NPrNionCP7Obx59wrYEbNlw4Z8sjALzZg==}
+  web-vitals@4.2.3:
+    resolution: {integrity: sha512-/CFAm1mNxSmOj6i0Co+iGFJ58OS4NRGVP+AWS/l509uIK5a1bSoIVaHz/ZumpHTfHSZBpgrJ+wjfpAOrTHok5Q==}
 
   webcrypto-core@1.8.0:
     resolution: {integrity: sha512-kR1UQNH8MD42CYuLzvibfakG5Ew5seG85dMMoAM/1LqvckxaF6pUiidLuraIu4V+YCIFabYecUZAW0TuxAoaqw==}
@@ -16128,7 +16128,7 @@ snapshots:
 
   web-streams-polyfill@3.3.3: {}
 
-  web-vitals@2.1.4: {}
+  web-vitals@4.2.3: {}
 
   webcrypto-core@1.8.0:
     dependencies:
