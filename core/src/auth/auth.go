@@ -11,6 +11,7 @@ import (
 
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/env"
 )
 
 type AuthKey string
@@ -51,13 +52,27 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		var token string
+
 		dbCookie, err := r.Cookie(string(AuthKey_Token))
-		if err != nil {
+		if err == nil {
+			token = dbCookie.Value
+		} else {
+			authHeader := r.Header.Get("Authorization")
+			if strings.HasPrefix(authHeader, "Bearer ") {
+				token = strings.TrimPrefix(authHeader, "Bearer ")
+				if !isTokenValid(token) {
+					token = ""
+				}
+			}
+		}
+
+		if token == "" {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
-		decodedValue, err := base64.StdEncoding.DecodeString(dbCookie.Value)
+		decodedValue, err := base64.StdEncoding.DecodeString(token)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
@@ -112,4 +127,13 @@ func isAllowed(r *http.Request, body []byte) bool {
 	}
 
 	return strings.HasPrefix(query.OperationName, "Login") || query.OperationName == "Logout" || query.OperationName == "GetProfiles"
+}
+
+func isTokenValid(token string) bool {
+	for _, t := range env.Tokens {
+		if t == token {
+			return true
+		}
+	}
+	return false
 }
