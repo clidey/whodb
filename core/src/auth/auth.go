@@ -54,16 +54,15 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 		var token string
 
-		dbCookie, err := r.Cookie(string(AuthKey_Token))
-		if err == nil {
-			token = dbCookie.Value
-		} else {
+		if env.IsAPIGatewayEnabled {
 			authHeader := r.Header.Get("Authorization")
 			if strings.HasPrefix(authHeader, "Bearer ") {
 				token = strings.TrimPrefix(authHeader, "Bearer ")
-				if !isTokenValid(token) {
-					token = ""
-				}
+			}
+		} else {
+			dbCookie, err := r.Cookie(string(AuthKey_Token))
+			if err == nil {
+				token = dbCookie.Value
 			}
 		}
 
@@ -81,6 +80,11 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		credentials := &engine.Credentials{}
 		err = json.Unmarshal(decodedValue, credentials)
 		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		if env.IsAPIGatewayEnabled && (credentials.AccessToken == nil || (credentials.AccessToken != nil && !isTokenValid(*credentials.AccessToken))) {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}

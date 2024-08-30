@@ -12,6 +12,7 @@ import (
 	"github.com/clidey/whodb/core/graph"
 	"github.com/clidey/whodb/core/src/auth"
 	"github.com/clidey/whodb/core/src/common"
+	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -71,7 +72,7 @@ func InitializeRouter(staticFiles embed.FS) {
 	log.Logger.Infof("http://0.0.0.0:%s", port)
 	log.Logger.Info("Explore and enjoy working with your databases!")
 
-	if !common.IsRunningInsideDocker() {
+	if !env.IsAPIGatewayEnabled && !common.IsRunningInsideDocker() {
 		openBrowser(fmt.Sprintf("http://localhost:%v", port))
 	}
 

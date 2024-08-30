@@ -1,12 +1,13 @@
 package engine
 
 type Credentials struct {
-	Id       *string
-	Hostname string
-	Username string
-	Password string
-	Database string
-	Advanced []Record
+	Id          *string
+	Hostname    string
+	Username    string
+	Password    string
+	Database    string
+	Advanced    []Record
+	AccessToken *string
 }
 
 type ExternalModel struct {

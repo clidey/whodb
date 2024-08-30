@@ -1,7 +1,6 @@
 package graph
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -29,7 +28,7 @@ func SetupHTTPServer(router chi.Router) {
 var resolver = mutationResolver{}
 
 func getProfilesHandler(w http.ResponseWriter, r *http.Request) {
-	profiles, err := resolver.Query().Profiles(context.Background())
+	profiles, err := resolver.Query().Profiles(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -39,7 +38,7 @@ func getProfilesHandler(w http.ResponseWriter, r *http.Request) {
 
 func getDatabasesHandler(w http.ResponseWriter, r *http.Request) {
 	dbType := model.DatabaseType(r.URL.Query().Get("type"))
-	databases, err := resolver.Query().Database(context.Background(), dbType)
+	databases, err := resolver.Query().Database(r.Context(), dbType)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -49,7 +48,7 @@ func getDatabasesHandler(w http.ResponseWriter, r *http.Request) {
 
 func getSchemaHandler(w http.ResponseWriter, r *http.Request) {
 	dbType := model.DatabaseType(r.URL.Query().Get("type"))
-	schemas, err := resolver.Query().Schema(context.Background(), dbType)
+	schemas, err := resolver.Query().Schema(r.Context(), dbType)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -60,7 +59,7 @@ func getSchemaHandler(w http.ResponseWriter, r *http.Request) {
 func getStorageUnitsHandler(w http.ResponseWriter, r *http.Request) {
 	dbType := model.DatabaseType(r.URL.Query().Get("type"))
 	schema := r.URL.Query().Get("schema")
-	storageUnits, err := resolver.Query().StorageUnit(context.Background(), dbType, schema)
+	storageUnits, err := resolver.Query().StorageUnit(r.Context(), dbType, schema)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -76,7 +75,7 @@ func getRowsHandler(w http.ResponseWriter, r *http.Request) {
 	pageSize := parseQueryParamToInt(r.URL.Query().Get("pageSize"))
 	pageOffset := parseQueryParamToInt(r.URL.Query().Get("pageOffset"))
 
-	rowsResult, err := resolver.Query().Row(context.Background(), dbType, schema, storageUnit, where, pageSize, pageOffset)
+	rowsResult, err := resolver.Query().Row(r.Context(), dbType, schema, storageUnit, where, pageSize, pageOffset)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -95,7 +94,7 @@ func rawExecuteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rowsResult, err := resolver.Query().RawExecute(context.Background(), req.Type, req.Query)
+	rowsResult, err := resolver.Query().RawExecute(r.Context(), req.Type, req.Query)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -106,7 +105,7 @@ func rawExecuteHandler(w http.ResponseWriter, r *http.Request) {
 func getGraphHandler(w http.ResponseWriter, r *http.Request) {
 	dbType := model.DatabaseType(r.URL.Query().Get("type"))
 	schema := r.URL.Query().Get("schema")
-	graphUnits, err := resolver.Query().Graph(context.Background(), dbType, schema)
+	graphUnits, err := resolver.Query().Graph(r.Context(), dbType, schema)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -117,7 +116,7 @@ func getGraphHandler(w http.ResponseWriter, r *http.Request) {
 func getAIModelsHandler(w http.ResponseWriter, r *http.Request) {
 	modelType := r.URL.Query().Get("modelType")
 	token := r.URL.Query().Get("token")
-	models, err := resolver.Query().AIModel(context.Background(), modelType, &token)
+	models, err := resolver.Query().AIModel(r.Context(), modelType, &token)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -139,7 +138,7 @@ func aiChatHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	messages, err := resolver.Query().AIChat(context.Background(), req.ModelType, &req.Token, req.Type, req.Schema, req.Input)
+	messages, err := resolver.Query().AIChat(r.Context(), req.ModelType, &req.Token, req.Type, req.Schema, req.Input)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -160,7 +159,7 @@ func addStorageUnitHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	status, err := resolver.Mutation().AddStorageUnit(context.Background(), req.Type, req.Schema, req.StorageUnit, req.Fields)
+	status, err := resolver.Mutation().AddStorageUnit(r.Context(), req.Type, req.Schema, req.StorageUnit, req.Fields)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -181,7 +180,7 @@ func addRowHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	status, err := resolver.Mutation().AddRow(context.Background(), req.Type, req.Schema, req.StorageUnit, req.Values)
+	status, err := resolver.Mutation().AddRow(r.Context(), req.Type, req.Schema, req.StorageUnit, req.Values)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -202,7 +201,7 @@ func deleteRowHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	status, err := resolver.Mutation().DeleteRow(context.Background(), req.Type, req.Schema, req.StorageUnit, req.Values)
+	status, err := resolver.Mutation().DeleteRow(r.Context(), req.Type, req.Schema, req.StorageUnit, req.Values)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
