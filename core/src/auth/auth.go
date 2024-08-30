@@ -29,7 +29,7 @@ func GetCredentials(ctx context.Context) *engine.Credentials {
 }
 
 func isPublicRoute(r *http.Request) bool {
-	return !strings.HasPrefix(r.URL.Path, "/api/") && r.URL.Path != "/api"
+	return (!strings.HasPrefix(r.URL.Path, "/api/") && r.URL.Path != "/api")
 }
 
 func AuthMiddleware(next http.Handler) http.Handler {

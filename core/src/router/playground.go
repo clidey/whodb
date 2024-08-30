@@ -14,7 +14,7 @@ func setupPlaygroundHandler(router chi.Router, server *handler.Server) {
 	if env.IsDevelopment {
 		pathHandler = playground.Handler("API Gateway", "/api/query")
 	}
-	router.HandleFunc("/api*", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/api/query", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "POST" || r.Header.Get("Connection") == "upgrade" {
 			server.ServeHTTP(w, r)
 		} else if env.IsDevelopment {

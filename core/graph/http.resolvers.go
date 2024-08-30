@@ -11,23 +11,19 @@ import (
 )
 
 func SetupHTTPServer(router chi.Router) {
-	router.Get("/profiles", getProfilesHandler)
-	router.Get("/databases/{type}", getDatabasesHandler)
-	router.Get("/schema/{type}", getSchemaHandler)
-	router.Get("/storage-units/{type}/{schema}", getStorageUnitsHandler)
-	router.Get("/rows", getRowsHandler)
-	router.Post("/raw-execute", rawExecuteHandler)
-	router.Get("/graph/{type}/{schema}", getGraphHandler)
-	router.Get("/ai-models", getAIModelsHandler)
-	router.Post("/ai-chat", aiChatHandler)
+	router.Get("/api/profiles", getProfilesHandler)
+	router.Get("/api/databases/{type}", getDatabasesHandler)
+	router.Get("/api/schema/{type}", getSchemaHandler)
+	router.Get("/api/storage-units/{type}/{schema}", getStorageUnitsHandler)
+	router.Get("/api/rows", getRowsHandler)
+	router.Post("/api/raw-execute", rawExecuteHandler)
+	router.Get("/api/graph/{type}/{schema}", getGraphHandler)
+	router.Get("/api/ai-models", getAIModelsHandler)
+	router.Post("/api/ai-chat", aiChatHandler)
 
-	router.Post("/auth/login", loginHandler)
-	router.Post("/auth/login-with-profile", loginWithProfileHandler)
-	router.Post("/auth/logout", logoutHandler)
-
-	router.Post("/storage-units", addStorageUnitHandler)
-	router.Post("/rows", addRowHandler)
-	router.Delete("/rows", deleteRowHandler)
+	router.Post("/api/storage-units", addStorageUnitHandler)
+	router.Post("/api/rows", addRowHandler)
+	router.Delete("/api/rows", deleteRowHandler)
 }
 
 var resolver = mutationResolver{}
@@ -149,45 +145,6 @@ func aiChatHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	json.NewEncoder(w).Encode(messages)
-}
-
-func loginHandler(w http.ResponseWriter, r *http.Request) {
-	var credentials model.LoginCredentials
-	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	status, err := resolver.Mutation().Login(context.Background(), credentials)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
-		return
-	}
-	json.NewEncoder(w).Encode(status)
-}
-
-func loginWithProfileHandler(w http.ResponseWriter, r *http.Request) {
-	var profile model.LoginProfileInput
-	if err := json.NewDecoder(r.Body).Decode(&profile); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	status, err := resolver.Mutation().LoginWithProfile(context.Background(), profile)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
-		return
-	}
-	json.NewEncoder(w).Encode(status)
-}
-
-func logoutHandler(w http.ResponseWriter, r *http.Request) {
-	status, err := resolver.Mutation().Logout(context.Background())
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	json.NewEncoder(w).Encode(status)
 }
 
 func addStorageUnitHandler(w http.ResponseWriter, r *http.Request) {
