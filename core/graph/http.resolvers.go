@@ -12,12 +12,12 @@ import (
 
 func SetupHTTPServer(router chi.Router) {
 	router.Get("/api/profiles", getProfilesHandler)
-	router.Get("/api/databases/{type}", getDatabasesHandler)
-	router.Get("/api/schema/{type}", getSchemaHandler)
-	router.Get("/api/storage-units/{type}/{schema}", getStorageUnitsHandler)
+	router.Get("/api/databases", getDatabasesHandler)
+	router.Get("/api/schema", getSchemaHandler)
+	router.Get("/api/storage-units", getStorageUnitsHandler)
 	router.Get("/api/rows", getRowsHandler)
 	router.Post("/api/raw-execute", rawExecuteHandler)
-	router.Get("/api/graph/{type}/{schema}", getGraphHandler)
+	router.Get("/api/graph", getGraphHandler)
 	router.Get("/api/ai-models", getAIModelsHandler)
 	router.Post("/api/ai-chat", aiChatHandler)
 
@@ -38,7 +38,7 @@ func getProfilesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getDatabasesHandler(w http.ResponseWriter, r *http.Request) {
-	dbType := model.DatabaseType(chi.URLParam(r, "type"))
+	dbType := model.DatabaseType(r.URL.Query().Get("type"))
 	databases, err := resolver.Query().Database(context.Background(), dbType)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -48,7 +48,7 @@ func getDatabasesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getSchemaHandler(w http.ResponseWriter, r *http.Request) {
-	dbType := model.DatabaseType(chi.URLParam(r, "type"))
+	dbType := model.DatabaseType(r.URL.Query().Get("type"))
 	schemas, err := resolver.Query().Schema(context.Background(), dbType)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -58,8 +58,8 @@ func getSchemaHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getStorageUnitsHandler(w http.ResponseWriter, r *http.Request) {
-	dbType := model.DatabaseType(chi.URLParam(r, "type"))
-	schema := chi.URLParam(r, "schema")
+	dbType := model.DatabaseType(r.URL.Query().Get("type"))
+	schema := r.URL.Query().Get("schema")
 	storageUnits, err := resolver.Query().StorageUnit(context.Background(), dbType, schema)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -104,8 +104,8 @@ func rawExecuteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getGraphHandler(w http.ResponseWriter, r *http.Request) {
-	dbType := model.DatabaseType(chi.URLParam(r, "type"))
-	schema := chi.URLParam(r, "schema")
+	dbType := model.DatabaseType(r.URL.Query().Get("type"))
+	schema := r.URL.Query().Get("schema")
 	graphUnits, err := resolver.Query().Graph(context.Background(), dbType, schema)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
