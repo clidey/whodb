@@ -26,7 +26,9 @@ type OAuthLoginUrl struct {
 }
 
 func setupServer(router *chi.Mux, staticFiles embed.FS) {
-	fileServer(router, staticFiles)
+	if !env.IsAPIGatewayEnabled {
+		fileServer(router, staticFiles)
+	}
 
 	server := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
 	server.AddTransport(&transport.Websocket{})
