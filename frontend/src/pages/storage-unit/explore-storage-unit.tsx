@@ -53,7 +53,6 @@ export const ExploreStorageUnit: FC = () => {
     const handleSubmitRequest = useCallback(() => {
         getStorageUnitRows({
             variables: {
-                type: current?.Type as DatabaseType,
                 schema,
                 storageUnit: unitName,
                 where: whereCondition,
@@ -61,13 +60,12 @@ export const ExploreStorageUnit: FC = () => {
                 pageOffset: currentPage,
             },
         });
-    }, [getStorageUnitRows, current?.Type, schema, unitName, whereCondition, bufferPageSize, currentPage]);
+    }, [getStorageUnitRows, schema, unitName, whereCondition, bufferPageSize, currentPage]);
 
     const handlePageChange = useCallback((page: number) => {
         setCurrentPage(page-1);
         getStorageUnitRows({
             variables: {
-                type: current?.Type as DatabaseType,
                 schema,
                 storageUnit: unitName,
                 where: whereCondition,
@@ -75,7 +73,7 @@ export const ExploreStorageUnit: FC = () => {
                 pageOffset: currentPage,
             },
         });
-    }, [getStorageUnitRows, current?.Type, schema, unitName, whereCondition, bufferPageSize, currentPage]);
+    }, [getStorageUnitRows, schema, unitName, whereCondition, bufferPageSize, currentPage]);
 
     const handleQuery = useCallback(() => {
         handleSubmitRequest();
@@ -339,7 +337,6 @@ export const ExploreStorageUnit: FC = () => {
         }
         addRow({
             variables: {
-                type: current?.Type as DatabaseType,
                 schema,
                 storageUnit: unit.Name,
                 values,

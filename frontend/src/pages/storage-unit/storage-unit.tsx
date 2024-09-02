@@ -93,7 +93,6 @@ export const StorageUnitPage: FC = () => {
     const [addStorageUnit,] = useAddStorageUnitMutation();
     const { loading, data, refetch } = useGetStorageUnitsQuery({
         variables: {
-            type: current?.Type as DatabaseType,
             schema,
         },
     });
@@ -122,7 +121,6 @@ export const StorageUnitPage: FC = () => {
         setError(undefined);
         addStorageUnit({
             variables: {
-                type: current?.Type as DatabaseType,
                 schema,
                 storageUnit: storageUnitName,
                 fields,

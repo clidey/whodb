@@ -2,6 +2,7 @@ package engine
 
 type Credentials struct {
 	Id       *string
+	Type     string
 	Hostname string
 	Username string
 	Password string

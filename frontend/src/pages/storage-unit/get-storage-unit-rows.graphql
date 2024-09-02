@@ -1,5 +1,5 @@
-query GetStorageUnitRows($type: DatabaseType!, $schema: String!, $storageUnit: String!, $where: String!, $pageSize: Int!, $pageOffset: Int!) {
-  Row(type: $type, schema: $schema, storageUnit: $storageUnit, where: $where, pageSize: $pageSize, pageOffset: $pageOffset) {
+query GetStorageUnitRows($schema: String!, $storageUnit: String!, $where: String!, $pageSize: Int!, $pageOffset: Int!) {
+  Row(schema: $schema, storageUnit: $storageUnit, where: $where, pageSize: $pageSize, pageOffset: $pageOffset) {
     Columns {
       Type
       Name

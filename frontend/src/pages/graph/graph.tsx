@@ -9,10 +9,10 @@ import { Icons } from "../../components/icons";
 import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { InternalRoutes } from "../../config/routes";
-import { DatabaseType, GetGraphDocument, GetGraphQuery, GetGraphQueryVariables } from "../../generated/graphql";
+import { GetGraphDocument, GetGraphQuery, GetGraphQueryVariables } from "../../generated/graphql";
 import { useAppSelector } from "../../store/hooks";
-import { StorageUnitGraphCard } from "../storage-unit/storage-unit";
 import { getDatabaseStorageUnitLabel } from "../../utils/functions";
+import { StorageUnitGraphCard } from "../storage-unit/storage-unit";
 
 export const GraphPage: FC = () => {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -23,7 +23,6 @@ export const GraphPage: FC = () => {
 
     const { loading } = useQuery<GetGraphQuery, GetGraphQueryVariables>(GetGraphDocument, {
         variables: {
-            type: current?.Type as DatabaseType,
             schema,
         },
         onCompleted(data) {

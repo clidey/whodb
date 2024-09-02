@@ -1,3 +1,4 @@
+import classNames from "classnames";
 import { indexOf } from "lodash";
 import { FC, useCallback, useState } from "react";
 import { v4 } from "uuid";
@@ -8,9 +9,7 @@ import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { Table } from "../../components/table";
 import { InternalRoutes } from "../../config/routes";
-import { DatabaseType, useRawExecuteLazyQuery } from "../../generated/graphql";
-import { useAppSelector } from "../../store/hooks";
-import classNames from "classnames";
+import { useRawExecuteLazyQuery } from "../../generated/graphql";
 
 type IRawExecuteCellProps = {
     cellId: string;
@@ -23,16 +22,13 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     const [code, setCode] = useState("");
     const [rawExecute, { data: rows, loading, error }] = useRawExecuteLazyQuery();
 
-    const current = useAppSelector(state => state.auth.current);
-
     const handleRawExecute = useCallback(() => {
         rawExecute({
             variables: {
-                type: current?.Type as DatabaseType,
                 query: code,
             },
         })
-    }, [code, current?.Type, rawExecute]);
+    }, [code, rawExecute]);
 
     const handleAdd = useCallback(() => {
         onAdd(cellId);
