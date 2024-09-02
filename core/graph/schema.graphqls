@@ -1,7 +1,3 @@
-# GraphQL schema example
-#
-# https://gqlgen.com/getting-started/
-
 enum DatabaseType {
   Postgres,
   MySQL,
@@ -98,14 +94,14 @@ type AIChatMessage {
 
 type Query {
   Profiles: [LoginProfile!]!
-  Database(type: DatabaseType!): [String!]!
-  Schema(type: DatabaseType!): [String!]!
-  StorageUnit(type: DatabaseType!, schema: String!): [StorageUnit!]! # tables, collections
-  Row(type: DatabaseType!, schema: String!, storageUnit: String!, where: String!, pageSize: Int!, pageOffset: Int!): RowsResult! # row, document
-  RawExecute(type: DatabaseType!, query: String!): RowsResult!
-  Graph(type: DatabaseType!, schema: String!): [GraphUnit!]!
+  Database: [String!]!
+  Schema: [String!]!
+  StorageUnit(schema: String!): [StorageUnit!]!
+  Row(schema: String!, storageUnit: String!, where: String!, pageSize: Int!, pageOffset: Int!): RowsResult!
+  RawExecute(query: String!): RowsResult!
+  Graph(schema: String!): [GraphUnit!]!
   AIModel(modelType: String!, token: String): [String!]!
-  AIChat(modelType: String!,token: String, type: DatabaseType!, schema: String!, input: ChatInput!): [AIChatMessage!]!
+  AIChat(modelType: String!,token: String, schema: String!, input: ChatInput!): [AIChatMessage!]!
 }
 
 type Mutation {
@@ -113,8 +109,8 @@ type Mutation {
   LoginWithProfile(profile: LoginProfileInput!): StatusResponse!
   Logout: StatusResponse!
 
-  AddStorageUnit(type: DatabaseType!, schema: String!, storageUnit: String!, fields: [RecordInput!]!): StatusResponse!
-  UpdateStorageUnit(type: DatabaseType!, schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
-  AddRow(type: DatabaseType!, schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
-  DeleteRow(type: DatabaseType!, schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
+  AddStorageUnit(schema: String!, storageUnit: String!, fields: [RecordInput!]!): StatusResponse!
+  UpdateStorageUnit(schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
+  AddRow(schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
+  DeleteRow(schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
 }

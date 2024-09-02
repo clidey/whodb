@@ -12,7 +12,7 @@ import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { Table } from "../../components/table";
 import { InternalRoutes } from "../../config/routes";
-import { DatabaseType, GetAiChatQuery, useGetAiChatLazyQuery, useGetAiModelsLazyQuery } from "../../generated/graphql";
+import { GetAiChatQuery, useGetAiChatLazyQuery, useGetAiModelsLazyQuery } from "../../generated/graphql";
 import { availableExternalModelTypes, DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
@@ -89,7 +89,6 @@ export const ChatPage: FC = () => {
     });
     const [getAIChat, { loading: getAIChatLoading }] = useGetAiChatLazyQuery();
     const scrollContainerRef = useRef<HTMLDivElement>(null);
-    const current = useAppSelector(state => state.auth.current);
     const schema = useAppSelector(state => state.database.schema);
     const [currentSearchIndex, setCurrentSearchIndex] = useState<number>();
     const dispatch = useAppDispatch();
@@ -152,7 +151,6 @@ export const ChatPage: FC = () => {
                 model: currentModel,
                 previousConversation: chats.map(chat => `${chat.isUserInput ? "User" : "System"}: ${chat.text}`).join("\n"),
                 schema,
-                type: current?.Type as DatabaseType,
             },
             onCompleted(data) {
                 const systemChats: IChatMessage[] = data.AIChat.map(chat => {
@@ -183,7 +181,7 @@ export const ChatPage: FC = () => {
             },
         });
         setQuery("");
-    }, [chats, current?.Type, currentModel, getAIChat, modelType, query, schema]);
+    }, [chats, currentModel, getAIChat, modelType, query, schema]);
 
     const handleKeyUp: KeyboardEventHandler<HTMLInputElement> = useCallback((e) => {
         if (e.key === "ArrowUp") {
