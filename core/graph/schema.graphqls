@@ -101,7 +101,7 @@ type Query {
   RawExecute(query: String!): RowsResult!
   Graph(schema: String!): [GraphUnit!]!
   AIModel(modelType: String!, token: String): [String!]!
-  AIChat(modelType: String!,token: String, , schema: String!, input: ChatInput!): [AIChatMessage!]!
+  AIChat(modelType: String!,token: String, schema: String!, input: ChatInput!): [AIChatMessage!]!
 }
 
 type Mutation {
