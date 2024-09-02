@@ -105,7 +105,6 @@ export type Mutation = {
 export type MutationAddRowArgs = {
   schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
-  type: DatabaseType;
   values: Array<RecordInput>;
 };
 
@@ -114,14 +113,12 @@ export type MutationAddStorageUnitArgs = {
   fields: Array<RecordInput>;
   schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
-  type: DatabaseType;
 };
 
 
 export type MutationDeleteRowArgs = {
   schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
-  type: DatabaseType;
   values: Array<RecordInput>;
 };
 
@@ -139,7 +136,6 @@ export type MutationLoginWithProfileArgs = {
 export type MutationUpdateStorageUnitArgs = {
   schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
-  type: DatabaseType;
   values: Array<RecordInput>;
 };
 
@@ -162,7 +158,6 @@ export type QueryAiChatArgs = {
   modelType: Scalars['String']['input'];
   schema: Scalars['String']['input'];
   token?: InputMaybe<Scalars['String']['input']>;
-  type: DatabaseType;
 };
 
 
@@ -172,20 +167,13 @@ export type QueryAiModelArgs = {
 };
 
 
-export type QueryDatabaseArgs = {
-  type: DatabaseType;
-};
-
-
 export type QueryGraphArgs = {
   schema: Scalars['String']['input'];
-  type: DatabaseType;
 };
 
 
 export type QueryRawExecuteArgs = {
   query: Scalars['String']['input'];
-  type: DatabaseType;
 };
 
 
@@ -194,19 +182,12 @@ export type QueryRowArgs = {
   pageSize: Scalars['Int']['input'];
   schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
-  type: DatabaseType;
   where: Scalars['String']['input'];
-};
-
-
-export type QuerySchemaArgs = {
-  type: DatabaseType;
 };
 
 
 export type QueryStorageUnitArgs = {
   schema: Scalars['String']['input'];
-  type: DatabaseType;
 };
 
 export type Record = {
@@ -244,16 +225,12 @@ export type GetProfilesQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type GetProfilesQuery = { __typename?: 'Query', Profiles: Array<{ __typename?: 'LoginProfile', Id: string, Type: DatabaseType }> };
 
-export type GetSchemaQueryVariables = Exact<{
-  type: DatabaseType;
-}>;
+export type GetSchemaQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetSchemaQuery = { __typename?: 'Query', Schema: Array<string> };
 
-export type GetDatabaseQueryVariables = Exact<{
-  type: DatabaseType;
-}>;
+export type GetDatabaseQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetDatabaseQuery = { __typename?: 'Query', Database: Array<string> };
@@ -280,7 +257,6 @@ export type LogoutMutation = { __typename?: 'Mutation', Logout: { __typename?: '
 export type GetAiChatQueryVariables = Exact<{
   modelType: Scalars['String']['input'];
   token?: InputMaybe<Scalars['String']['input']>;
-  type: DatabaseType;
   schema: Scalars['String']['input'];
   previousConversation: Scalars['String']['input'];
   query: Scalars['String']['input'];
@@ -299,7 +275,6 @@ export type GetAiModelsQueryVariables = Exact<{
 export type GetAiModelsQuery = { __typename?: 'Query', AIModel: Array<string> };
 
 export type GetGraphQueryVariables = Exact<{
-  type: DatabaseType;
   schema: Scalars['String']['input'];
 }>;
 
@@ -307,7 +282,6 @@ export type GetGraphQueryVariables = Exact<{
 export type GetGraphQuery = { __typename?: 'Query', Graph: Array<{ __typename?: 'GraphUnit', Unit: { __typename?: 'StorageUnit', Name: string, Attributes: Array<{ __typename?: 'Record', Key: string, Value: string }> }, Relations: Array<{ __typename?: 'GraphUnitRelationship', Name: string, Relationship: GraphUnitRelationshipType }> }> };
 
 export type RawExecuteQueryVariables = Exact<{
-  type: DatabaseType;
   query: Scalars['String']['input'];
 }>;
 
@@ -315,7 +289,6 @@ export type RawExecuteQueryVariables = Exact<{
 export type RawExecuteQuery = { __typename?: 'Query', RawExecute: { __typename?: 'RowsResult', Rows: Array<Array<string>>, Columns: Array<{ __typename?: 'Column', Type: string, Name: string }> } };
 
 export type AddRowMutationVariables = Exact<{
-  type: DatabaseType;
   schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
   values: Array<RecordInput> | RecordInput;
@@ -325,7 +298,6 @@ export type AddRowMutationVariables = Exact<{
 export type AddRowMutation = { __typename?: 'Mutation', AddRow: { __typename?: 'StatusResponse', Status: boolean } };
 
 export type AddStorageUnitMutationVariables = Exact<{
-  type: DatabaseType;
   schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
   fields: Array<RecordInput> | RecordInput;
@@ -335,7 +307,6 @@ export type AddStorageUnitMutationVariables = Exact<{
 export type AddStorageUnitMutation = { __typename?: 'Mutation', AddStorageUnit: { __typename?: 'StatusResponse', Status: boolean } };
 
 export type DeleteRowMutationVariables = Exact<{
-  type: DatabaseType;
   schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
   values: Array<RecordInput> | RecordInput;
@@ -345,7 +316,6 @@ export type DeleteRowMutationVariables = Exact<{
 export type DeleteRowMutation = { __typename?: 'Mutation', DeleteRow: { __typename?: 'StatusResponse', Status: boolean } };
 
 export type GetStorageUnitRowsQueryVariables = Exact<{
-  type: DatabaseType;
   schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
   where: Scalars['String']['input'];
@@ -357,7 +327,6 @@ export type GetStorageUnitRowsQueryVariables = Exact<{
 export type GetStorageUnitRowsQuery = { __typename?: 'Query', Row: { __typename?: 'RowsResult', Rows: Array<Array<string>>, DisableUpdate: boolean, Columns: Array<{ __typename?: 'Column', Type: string, Name: string }> } };
 
 export type GetStorageUnitsQueryVariables = Exact<{
-  type: DatabaseType;
   schema: Scalars['String']['input'];
 }>;
 
@@ -365,7 +334,6 @@ export type GetStorageUnitsQueryVariables = Exact<{
 export type GetStorageUnitsQuery = { __typename?: 'Query', StorageUnit: Array<{ __typename?: 'StorageUnit', Name: string, Attributes: Array<{ __typename?: 'Record', Key: string, Value: string }> }> };
 
 export type UpdateStorageUnitMutationVariables = Exact<{
-  type: DatabaseType;
   schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
   values: Array<RecordInput> | RecordInput;
@@ -416,8 +384,8 @@ export type GetProfilesLazyQueryHookResult = ReturnType<typeof useGetProfilesLaz
 export type GetProfilesSuspenseQueryHookResult = ReturnType<typeof useGetProfilesSuspenseQuery>;
 export type GetProfilesQueryResult = Apollo.QueryResult<GetProfilesQuery, GetProfilesQueryVariables>;
 export const GetSchemaDocument = gql`
-    query GetSchema($type: DatabaseType!) {
-  Schema(type: $type)
+    query GetSchema {
+  Schema
 }
     `;
 
@@ -433,11 +401,10 @@ export const GetSchemaDocument = gql`
  * @example
  * const { data, loading, error } = useGetSchemaQuery({
  *   variables: {
- *      type: // value for 'type'
  *   },
  * });
  */
-export function useGetSchemaQuery(baseOptions: Apollo.QueryHookOptions<GetSchemaQuery, GetSchemaQueryVariables> & ({ variables: GetSchemaQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+export function useGetSchemaQuery(baseOptions?: Apollo.QueryHookOptions<GetSchemaQuery, GetSchemaQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetSchemaQuery, GetSchemaQueryVariables>(GetSchemaDocument, options);
       }
@@ -454,8 +421,8 @@ export type GetSchemaLazyQueryHookResult = ReturnType<typeof useGetSchemaLazyQue
 export type GetSchemaSuspenseQueryHookResult = ReturnType<typeof useGetSchemaSuspenseQuery>;
 export type GetSchemaQueryResult = Apollo.QueryResult<GetSchemaQuery, GetSchemaQueryVariables>;
 export const GetDatabaseDocument = gql`
-    query GetDatabase($type: DatabaseType!) {
-  Database(type: $type)
+    query GetDatabase {
+  Database
 }
     `;
 
@@ -471,11 +438,10 @@ export const GetDatabaseDocument = gql`
  * @example
  * const { data, loading, error } = useGetDatabaseQuery({
  *   variables: {
- *      type: // value for 'type'
  *   },
  * });
  */
-export function useGetDatabaseQuery(baseOptions: Apollo.QueryHookOptions<GetDatabaseQuery, GetDatabaseQueryVariables> & ({ variables: GetDatabaseQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+export function useGetDatabaseQuery(baseOptions?: Apollo.QueryHookOptions<GetDatabaseQuery, GetDatabaseQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetDatabaseQuery, GetDatabaseQueryVariables>(GetDatabaseDocument, options);
       }
@@ -590,11 +556,10 @@ export type LogoutMutationHookResult = ReturnType<typeof useLogoutMutation>;
 export type LogoutMutationResult = Apollo.MutationResult<LogoutMutation>;
 export type LogoutMutationOptions = Apollo.BaseMutationOptions<LogoutMutation, LogoutMutationVariables>;
 export const GetAiChatDocument = gql`
-    query GetAIChat($modelType: String!, $token: String, $type: DatabaseType!, $schema: String!, $previousConversation: String!, $query: String!, $model: String!) {
+    query GetAIChat($modelType: String!, $token: String, $schema: String!, $previousConversation: String!, $query: String!, $model: String!) {
   AIChat(
     modelType: $modelType
     token: $token
-    type: $type
     schema: $schema
     input: {PreviousConversation: $previousConversation, Query: $query, Model: $model}
   ) {
@@ -625,7 +590,6 @@ export const GetAiChatDocument = gql`
  *   variables: {
  *      modelType: // value for 'modelType'
  *      token: // value for 'token'
- *      type: // value for 'type'
  *      schema: // value for 'schema'
  *      previousConversation: // value for 'previousConversation'
  *      query: // value for 'query'
@@ -689,8 +653,8 @@ export type GetAiModelsLazyQueryHookResult = ReturnType<typeof useGetAiModelsLaz
 export type GetAiModelsSuspenseQueryHookResult = ReturnType<typeof useGetAiModelsSuspenseQuery>;
 export type GetAiModelsQueryResult = Apollo.QueryResult<GetAiModelsQuery, GetAiModelsQueryVariables>;
 export const GetGraphDocument = gql`
-    query GetGraph($type: DatabaseType!, $schema: String!) {
-  Graph(type: $type, schema: $schema) {
+    query GetGraph($schema: String!) {
+  Graph(schema: $schema) {
     Unit {
       Name
       Attributes {
@@ -718,7 +682,6 @@ export const GetGraphDocument = gql`
  * @example
  * const { data, loading, error } = useGetGraphQuery({
  *   variables: {
- *      type: // value for 'type'
  *      schema: // value for 'schema'
  *   },
  * });
@@ -740,8 +703,8 @@ export type GetGraphLazyQueryHookResult = ReturnType<typeof useGetGraphLazyQuery
 export type GetGraphSuspenseQueryHookResult = ReturnType<typeof useGetGraphSuspenseQuery>;
 export type GetGraphQueryResult = Apollo.QueryResult<GetGraphQuery, GetGraphQueryVariables>;
 export const RawExecuteDocument = gql`
-    query RawExecute($type: DatabaseType!, $query: String!) {
-  RawExecute(type: $type, query: $query) {
+    query RawExecute($query: String!) {
+  RawExecute(query: $query) {
     Columns {
       Type
       Name
@@ -763,7 +726,6 @@ export const RawExecuteDocument = gql`
  * @example
  * const { data, loading, error } = useRawExecuteQuery({
  *   variables: {
- *      type: // value for 'type'
  *      query: // value for 'query'
  *   },
  * });
@@ -785,8 +747,8 @@ export type RawExecuteLazyQueryHookResult = ReturnType<typeof useRawExecuteLazyQ
 export type RawExecuteSuspenseQueryHookResult = ReturnType<typeof useRawExecuteSuspenseQuery>;
 export type RawExecuteQueryResult = Apollo.QueryResult<RawExecuteQuery, RawExecuteQueryVariables>;
 export const AddRowDocument = gql`
-    mutation AddRow($type: DatabaseType!, $schema: String!, $storageUnit: String!, $values: [RecordInput!]!) {
-  AddRow(type: $type, schema: $schema, storageUnit: $storageUnit, values: $values) {
+    mutation AddRow($schema: String!, $storageUnit: String!, $values: [RecordInput!]!) {
+  AddRow(schema: $schema, storageUnit: $storageUnit, values: $values) {
     Status
   }
 }
@@ -806,7 +768,6 @@ export type AddRowMutationFn = Apollo.MutationFunction<AddRowMutation, AddRowMut
  * @example
  * const [addRowMutation, { data, loading, error }] = useAddRowMutation({
  *   variables: {
- *      type: // value for 'type'
  *      schema: // value for 'schema'
  *      storageUnit: // value for 'storageUnit'
  *      values: // value for 'values'
@@ -821,13 +782,8 @@ export type AddRowMutationHookResult = ReturnType<typeof useAddRowMutation>;
 export type AddRowMutationResult = Apollo.MutationResult<AddRowMutation>;
 export type AddRowMutationOptions = Apollo.BaseMutationOptions<AddRowMutation, AddRowMutationVariables>;
 export const AddStorageUnitDocument = gql`
-    mutation AddStorageUnit($type: DatabaseType!, $schema: String!, $storageUnit: String!, $fields: [RecordInput!]!) {
-  AddStorageUnit(
-    type: $type
-    schema: $schema
-    storageUnit: $storageUnit
-    fields: $fields
-  ) {
+    mutation AddStorageUnit($schema: String!, $storageUnit: String!, $fields: [RecordInput!]!) {
+  AddStorageUnit(schema: $schema, storageUnit: $storageUnit, fields: $fields) {
     Status
   }
 }
@@ -847,7 +803,6 @@ export type AddStorageUnitMutationFn = Apollo.MutationFunction<AddStorageUnitMut
  * @example
  * const [addStorageUnitMutation, { data, loading, error }] = useAddStorageUnitMutation({
  *   variables: {
- *      type: // value for 'type'
  *      schema: // value for 'schema'
  *      storageUnit: // value for 'storageUnit'
  *      fields: // value for 'fields'
@@ -862,13 +817,8 @@ export type AddStorageUnitMutationHookResult = ReturnType<typeof useAddStorageUn
 export type AddStorageUnitMutationResult = Apollo.MutationResult<AddStorageUnitMutation>;
 export type AddStorageUnitMutationOptions = Apollo.BaseMutationOptions<AddStorageUnitMutation, AddStorageUnitMutationVariables>;
 export const DeleteRowDocument = gql`
-    mutation DeleteRow($type: DatabaseType!, $schema: String!, $storageUnit: String!, $values: [RecordInput!]!) {
-  DeleteRow(
-    type: $type
-    schema: $schema
-    storageUnit: $storageUnit
-    values: $values
-  ) {
+    mutation DeleteRow($schema: String!, $storageUnit: String!, $values: [RecordInput!]!) {
+  DeleteRow(schema: $schema, storageUnit: $storageUnit, values: $values) {
     Status
   }
 }
@@ -888,7 +838,6 @@ export type DeleteRowMutationFn = Apollo.MutationFunction<DeleteRowMutation, Del
  * @example
  * const [deleteRowMutation, { data, loading, error }] = useDeleteRowMutation({
  *   variables: {
- *      type: // value for 'type'
  *      schema: // value for 'schema'
  *      storageUnit: // value for 'storageUnit'
  *      values: // value for 'values'
@@ -903,9 +852,8 @@ export type DeleteRowMutationHookResult = ReturnType<typeof useDeleteRowMutation
 export type DeleteRowMutationResult = Apollo.MutationResult<DeleteRowMutation>;
 export type DeleteRowMutationOptions = Apollo.BaseMutationOptions<DeleteRowMutation, DeleteRowMutationVariables>;
 export const GetStorageUnitRowsDocument = gql`
-    query GetStorageUnitRows($type: DatabaseType!, $schema: String!, $storageUnit: String!, $where: String!, $pageSize: Int!, $pageOffset: Int!) {
+    query GetStorageUnitRows($schema: String!, $storageUnit: String!, $where: String!, $pageSize: Int!, $pageOffset: Int!) {
   Row(
-    type: $type
     schema: $schema
     storageUnit: $storageUnit
     where: $where
@@ -934,7 +882,6 @@ export const GetStorageUnitRowsDocument = gql`
  * @example
  * const { data, loading, error } = useGetStorageUnitRowsQuery({
  *   variables: {
- *      type: // value for 'type'
  *      schema: // value for 'schema'
  *      storageUnit: // value for 'storageUnit'
  *      where: // value for 'where'
@@ -960,8 +907,8 @@ export type GetStorageUnitRowsLazyQueryHookResult = ReturnType<typeof useGetStor
 export type GetStorageUnitRowsSuspenseQueryHookResult = ReturnType<typeof useGetStorageUnitRowsSuspenseQuery>;
 export type GetStorageUnitRowsQueryResult = Apollo.QueryResult<GetStorageUnitRowsQuery, GetStorageUnitRowsQueryVariables>;
 export const GetStorageUnitsDocument = gql`
-    query GetStorageUnits($type: DatabaseType!, $schema: String!) {
-  StorageUnit(type: $type, schema: $schema) {
+    query GetStorageUnits($schema: String!) {
+  StorageUnit(schema: $schema) {
     Name
     Attributes {
       Key
@@ -983,7 +930,6 @@ export const GetStorageUnitsDocument = gql`
  * @example
  * const { data, loading, error } = useGetStorageUnitsQuery({
  *   variables: {
- *      type: // value for 'type'
  *      schema: // value for 'schema'
  *   },
  * });
@@ -1005,13 +951,8 @@ export type GetStorageUnitsLazyQueryHookResult = ReturnType<typeof useGetStorage
 export type GetStorageUnitsSuspenseQueryHookResult = ReturnType<typeof useGetStorageUnitsSuspenseQuery>;
 export type GetStorageUnitsQueryResult = Apollo.QueryResult<GetStorageUnitsQuery, GetStorageUnitsQueryVariables>;
 export const UpdateStorageUnitDocument = gql`
-    mutation UpdateStorageUnit($type: DatabaseType!, $schema: String!, $storageUnit: String!, $values: [RecordInput!]!) {
-  UpdateStorageUnit(
-    type: $type
-    schema: $schema
-    storageUnit: $storageUnit
-    values: $values
-  ) {
+    mutation UpdateStorageUnit($schema: String!, $storageUnit: String!, $values: [RecordInput!]!) {
+  UpdateStorageUnit(schema: $schema, storageUnit: $storageUnit, values: $values) {
     Status
   }
 }
@@ -1031,7 +972,6 @@ export type UpdateStorageUnitMutationFn = Apollo.MutationFunction<UpdateStorageU
  * @example
  * const [updateStorageUnitMutation, { data, loading, error }] = useUpdateStorageUnitMutation({
  *   variables: {
- *      type: // value for 'type'
  *      schema: // value for 'schema'
  *      storageUnit: // value for 'storageUnit'
  *      values: // value for 'values'

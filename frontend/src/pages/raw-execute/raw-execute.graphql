@@ -1,5 +1,5 @@
-query RawExecute($type: DatabaseType!, $query: String!) {
-  RawExecute(type: $type, query: $query) {
+query RawExecute($query: String!) {
+  RawExecute(query: $query) {
       Columns {
           Type
           Name

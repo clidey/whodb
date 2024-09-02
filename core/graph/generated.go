@@ -75,25 +75,25 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AddRow            func(childComplexity int, typeArg model.DatabaseType, schema string, storageUnit string, values []*model.RecordInput) int
-		AddStorageUnit    func(childComplexity int, typeArg model.DatabaseType, schema string, storageUnit string, fields []*model.RecordInput) int
-		DeleteRow         func(childComplexity int, typeArg model.DatabaseType, schema string, storageUnit string, values []*model.RecordInput) int
+		AddRow            func(childComplexity int, schema string, storageUnit string, values []*model.RecordInput) int
+		AddStorageUnit    func(childComplexity int, schema string, storageUnit string, fields []*model.RecordInput) int
+		DeleteRow         func(childComplexity int, schema string, storageUnit string, values []*model.RecordInput) int
 		Login             func(childComplexity int, credentials model.LoginCredentials) int
 		LoginWithProfile  func(childComplexity int, profile model.LoginProfileInput) int
 		Logout            func(childComplexity int) int
-		UpdateStorageUnit func(childComplexity int, typeArg model.DatabaseType, schema string, storageUnit string, values []*model.RecordInput) int
+		UpdateStorageUnit func(childComplexity int, schema string, storageUnit string, values []*model.RecordInput) int
 	}
 
 	Query struct {
-		AIChat      func(childComplexity int, modelType string, token *string, typeArg model.DatabaseType, schema string, input model.ChatInput) int
+		AIChat      func(childComplexity int, modelType string, token *string, schema string, input model.ChatInput) int
 		AIModel     func(childComplexity int, modelType string, token *string) int
-		Database    func(childComplexity int, typeArg model.DatabaseType) int
-		Graph       func(childComplexity int, typeArg model.DatabaseType, schema string) int
+		Database    func(childComplexity int) int
+		Graph       func(childComplexity int, schema string) int
 		Profiles    func(childComplexity int) int
-		RawExecute  func(childComplexity int, typeArg model.DatabaseType, query string) int
-		Row         func(childComplexity int, typeArg model.DatabaseType, schema string, storageUnit string, where string, pageSize int, pageOffset int) int
-		Schema      func(childComplexity int, typeArg model.DatabaseType) int
-		StorageUnit func(childComplexity int, typeArg model.DatabaseType, schema string) int
+		RawExecute  func(childComplexity int, query string) int
+		Row         func(childComplexity int, schema string, storageUnit string, where string, pageSize int, pageOffset int) int
+		Schema      func(childComplexity int) int
+		StorageUnit func(childComplexity int, schema string) int
 	}
 
 	Record struct {
@@ -121,21 +121,21 @@ type MutationResolver interface {
 	Login(ctx context.Context, credentials model.LoginCredentials) (*model.StatusResponse, error)
 	LoginWithProfile(ctx context.Context, profile model.LoginProfileInput) (*model.StatusResponse, error)
 	Logout(ctx context.Context) (*model.StatusResponse, error)
-	AddStorageUnit(ctx context.Context, typeArg model.DatabaseType, schema string, storageUnit string, fields []*model.RecordInput) (*model.StatusResponse, error)
-	UpdateStorageUnit(ctx context.Context, typeArg model.DatabaseType, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
-	AddRow(ctx context.Context, typeArg model.DatabaseType, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
-	DeleteRow(ctx context.Context, typeArg model.DatabaseType, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
+	AddStorageUnit(ctx context.Context, schema string, storageUnit string, fields []*model.RecordInput) (*model.StatusResponse, error)
+	UpdateStorageUnit(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
+	AddRow(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
+	DeleteRow(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
 }
 type QueryResolver interface {
 	Profiles(ctx context.Context) ([]*model.LoginProfile, error)
-	Database(ctx context.Context, typeArg model.DatabaseType) ([]string, error)
-	Schema(ctx context.Context, typeArg model.DatabaseType) ([]string, error)
-	StorageUnit(ctx context.Context, typeArg model.DatabaseType, schema string) ([]*model.StorageUnit, error)
-	Row(ctx context.Context, typeArg model.DatabaseType, schema string, storageUnit string, where string, pageSize int, pageOffset int) (*model.RowsResult, error)
-	RawExecute(ctx context.Context, typeArg model.DatabaseType, query string) (*model.RowsResult, error)
-	Graph(ctx context.Context, typeArg model.DatabaseType, schema string) ([]*model.GraphUnit, error)
+	Database(ctx context.Context) ([]string, error)
+	Schema(ctx context.Context) ([]string, error)
+	StorageUnit(ctx context.Context, schema string) ([]*model.StorageUnit, error)
+	Row(ctx context.Context, schema string, storageUnit string, where string, pageSize int, pageOffset int) (*model.RowsResult, error)
+	RawExecute(ctx context.Context, query string) (*model.RowsResult, error)
+	Graph(ctx context.Context, schema string) ([]*model.GraphUnit, error)
 	AIModel(ctx context.Context, modelType string, token *string) ([]string, error)
-	AIChat(ctx context.Context, modelType string, token *string, typeArg model.DatabaseType, schema string, input model.ChatInput) ([]*model.AIChatMessage, error)
+	AIChat(ctx context.Context, modelType string, token *string, schema string, input model.ChatInput) ([]*model.AIChatMessage, error)
 }
 
 type executableSchema struct {
@@ -251,7 +251,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.AddRow(childComplexity, args["type"].(model.DatabaseType), args["schema"].(string), args["storageUnit"].(string), args["values"].([]*model.RecordInput)), true
+		return e.complexity.Mutation.AddRow(childComplexity, args["schema"].(string), args["storageUnit"].(string), args["values"].([]*model.RecordInput)), true
 
 	case "Mutation.AddStorageUnit":
 		if e.complexity.Mutation.AddStorageUnit == nil {
@@ -263,7 +263,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.AddStorageUnit(childComplexity, args["type"].(model.DatabaseType), args["schema"].(string), args["storageUnit"].(string), args["fields"].([]*model.RecordInput)), true
+		return e.complexity.Mutation.AddStorageUnit(childComplexity, args["schema"].(string), args["storageUnit"].(string), args["fields"].([]*model.RecordInput)), true
 
 	case "Mutation.DeleteRow":
 		if e.complexity.Mutation.DeleteRow == nil {
@@ -275,7 +275,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteRow(childComplexity, args["type"].(model.DatabaseType), args["schema"].(string), args["storageUnit"].(string), args["values"].([]*model.RecordInput)), true
+		return e.complexity.Mutation.DeleteRow(childComplexity, args["schema"].(string), args["storageUnit"].(string), args["values"].([]*model.RecordInput)), true
 
 	case "Mutation.Login":
 		if e.complexity.Mutation.Login == nil {
@@ -318,7 +318,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateStorageUnit(childComplexity, args["type"].(model.DatabaseType), args["schema"].(string), args["storageUnit"].(string), args["values"].([]*model.RecordInput)), true
+		return e.complexity.Mutation.UpdateStorageUnit(childComplexity, args["schema"].(string), args["storageUnit"].(string), args["values"].([]*model.RecordInput)), true
 
 	case "Query.AIChat":
 		if e.complexity.Query.AIChat == nil {
@@ -330,7 +330,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.AIChat(childComplexity, args["modelType"].(string), args["token"].(*string), args["type"].(model.DatabaseType), args["schema"].(string), args["input"].(model.ChatInput)), true
+		return e.complexity.Query.AIChat(childComplexity, args["modelType"].(string), args["token"].(*string), args["schema"].(string), args["input"].(model.ChatInput)), true
 
 	case "Query.AIModel":
 		if e.complexity.Query.AIModel == nil {
@@ -349,12 +349,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_Query_Database_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.Database(childComplexity, args["type"].(model.DatabaseType)), true
+		return e.complexity.Query.Database(childComplexity), true
 
 	case "Query.Graph":
 		if e.complexity.Query.Graph == nil {
@@ -366,7 +361,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Graph(childComplexity, args["type"].(model.DatabaseType), args["schema"].(string)), true
+		return e.complexity.Query.Graph(childComplexity, args["schema"].(string)), true
 
 	case "Query.Profiles":
 		if e.complexity.Query.Profiles == nil {
@@ -385,7 +380,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.RawExecute(childComplexity, args["type"].(model.DatabaseType), args["query"].(string)), true
+		return e.complexity.Query.RawExecute(childComplexity, args["query"].(string)), true
 
 	case "Query.Row":
 		if e.complexity.Query.Row == nil {
@@ -397,19 +392,14 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Row(childComplexity, args["type"].(model.DatabaseType), args["schema"].(string), args["storageUnit"].(string), args["where"].(string), args["pageSize"].(int), args["pageOffset"].(int)), true
+		return e.complexity.Query.Row(childComplexity, args["schema"].(string), args["storageUnit"].(string), args["where"].(string), args["pageSize"].(int), args["pageOffset"].(int)), true
 
 	case "Query.Schema":
 		if e.complexity.Query.Schema == nil {
 			break
 		}
 
-		args, err := ec.field_Query_Schema_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.Schema(childComplexity, args["type"].(model.DatabaseType)), true
+		return e.complexity.Query.Schema(childComplexity), true
 
 	case "Query.StorageUnit":
 		if e.complexity.Query.StorageUnit == nil {
@@ -421,7 +411,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.StorageUnit(childComplexity, args["type"].(model.DatabaseType), args["schema"].(string)), true
+		return e.complexity.Query.StorageUnit(childComplexity, args["schema"].(string)), true
 
 	case "Record.Key":
 		if e.complexity.Record.Key == nil {
@@ -610,126 +600,99 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 func (ec *executionContext) field_Mutation_AddRow_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.DatabaseType
-	if tmp, ok := rawArgs["type"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-		arg0, err = ec.unmarshalNDatabaseType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDatabaseType(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["schema"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("schema"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["type"] = arg0
+	args["schema"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["schema"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("schema"))
+	if tmp, ok := rawArgs["storageUnit"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageUnit"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["schema"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["storageUnit"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageUnit"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["storageUnit"] = arg2
-	var arg3 []*model.RecordInput
+	args["storageUnit"] = arg1
+	var arg2 []*model.RecordInput
 	if tmp, ok := rawArgs["values"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("values"))
-		arg3, err = ec.unmarshalNRecordInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordInputᚄ(ctx, tmp)
+		arg2, err = ec.unmarshalNRecordInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordInputᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["values"] = arg3
+	args["values"] = arg2
 	return args, nil
 }
 
 func (ec *executionContext) field_Mutation_AddStorageUnit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.DatabaseType
-	if tmp, ok := rawArgs["type"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-		arg0, err = ec.unmarshalNDatabaseType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDatabaseType(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["schema"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("schema"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["type"] = arg0
+	args["schema"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["schema"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("schema"))
+	if tmp, ok := rawArgs["storageUnit"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageUnit"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["schema"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["storageUnit"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageUnit"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["storageUnit"] = arg2
-	var arg3 []*model.RecordInput
+	args["storageUnit"] = arg1
+	var arg2 []*model.RecordInput
 	if tmp, ok := rawArgs["fields"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fields"))
-		arg3, err = ec.unmarshalNRecordInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordInputᚄ(ctx, tmp)
+		arg2, err = ec.unmarshalNRecordInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordInputᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["fields"] = arg3
+	args["fields"] = arg2
 	return args, nil
 }
 
 func (ec *executionContext) field_Mutation_DeleteRow_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.DatabaseType
-	if tmp, ok := rawArgs["type"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-		arg0, err = ec.unmarshalNDatabaseType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDatabaseType(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["schema"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("schema"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["type"] = arg0
+	args["schema"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["schema"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("schema"))
+	if tmp, ok := rawArgs["storageUnit"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageUnit"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["schema"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["storageUnit"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageUnit"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["storageUnit"] = arg2
-	var arg3 []*model.RecordInput
+	args["storageUnit"] = arg1
+	var arg2 []*model.RecordInput
 	if tmp, ok := rawArgs["values"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("values"))
-		arg3, err = ec.unmarshalNRecordInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordInputᚄ(ctx, tmp)
+		arg2, err = ec.unmarshalNRecordInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordInputᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["values"] = arg3
+	args["values"] = arg2
 	return args, nil
 }
 
@@ -766,42 +729,33 @@ func (ec *executionContext) field_Mutation_Login_args(ctx context.Context, rawAr
 func (ec *executionContext) field_Mutation_UpdateStorageUnit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.DatabaseType
-	if tmp, ok := rawArgs["type"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-		arg0, err = ec.unmarshalNDatabaseType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDatabaseType(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["schema"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("schema"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["type"] = arg0
+	args["schema"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["schema"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("schema"))
+	if tmp, ok := rawArgs["storageUnit"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageUnit"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["schema"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["storageUnit"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageUnit"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["storageUnit"] = arg2
-	var arg3 []*model.RecordInput
+	args["storageUnit"] = arg1
+	var arg2 []*model.RecordInput
 	if tmp, ok := rawArgs["values"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("values"))
-		arg3, err = ec.unmarshalNRecordInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordInputᚄ(ctx, tmp)
+		arg2, err = ec.unmarshalNRecordInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordInputᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["values"] = arg3
+	args["values"] = arg2
 	return args, nil
 }
 
@@ -826,33 +780,24 @@ func (ec *executionContext) field_Query_AIChat_args(ctx context.Context, rawArgs
 		}
 	}
 	args["token"] = arg1
-	var arg2 model.DatabaseType
-	if tmp, ok := rawArgs["type"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-		arg2, err = ec.unmarshalNDatabaseType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDatabaseType(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["type"] = arg2
-	var arg3 string
+	var arg2 string
 	if tmp, ok := rawArgs["schema"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("schema"))
-		arg3, err = ec.unmarshalNString2string(ctx, tmp)
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["schema"] = arg3
-	var arg4 model.ChatInput
+	args["schema"] = arg2
+	var arg3 model.ChatInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg4, err = ec.unmarshalNChatInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐChatInput(ctx, tmp)
+		arg3, err = ec.unmarshalNChatInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐChatInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["input"] = arg4
+	args["input"] = arg3
 	return args, nil
 }
 
@@ -880,165 +825,99 @@ func (ec *executionContext) field_Query_AIModel_args(ctx context.Context, rawArg
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_Database_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 model.DatabaseType
-	if tmp, ok := rawArgs["type"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-		arg0, err = ec.unmarshalNDatabaseType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDatabaseType(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["type"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Query_Graph_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.DatabaseType
-	if tmp, ok := rawArgs["type"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-		arg0, err = ec.unmarshalNDatabaseType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDatabaseType(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["type"] = arg0
-	var arg1 string
+	var arg0 string
 	if tmp, ok := rawArgs["schema"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("schema"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["schema"] = arg1
+	args["schema"] = arg0
 	return args, nil
 }
 
 func (ec *executionContext) field_Query_RawExecute_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.DatabaseType
-	if tmp, ok := rawArgs["type"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-		arg0, err = ec.unmarshalNDatabaseType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDatabaseType(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["type"] = arg0
-	var arg1 string
+	var arg0 string
 	if tmp, ok := rawArgs["query"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("query"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["query"] = arg1
+	args["query"] = arg0
 	return args, nil
 }
 
 func (ec *executionContext) field_Query_Row_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.DatabaseType
-	if tmp, ok := rawArgs["type"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-		arg0, err = ec.unmarshalNDatabaseType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDatabaseType(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["schema"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("schema"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["type"] = arg0
+	args["schema"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["schema"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("schema"))
+	if tmp, ok := rawArgs["storageUnit"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageUnit"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["schema"] = arg1
+	args["storageUnit"] = arg1
 	var arg2 string
-	if tmp, ok := rawArgs["storageUnit"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageUnit"))
+	if tmp, ok := rawArgs["where"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("where"))
 		arg2, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["storageUnit"] = arg2
-	var arg3 string
-	if tmp, ok := rawArgs["where"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("where"))
-		arg3, err = ec.unmarshalNString2string(ctx, tmp)
+	args["where"] = arg2
+	var arg3 int
+	if tmp, ok := rawArgs["pageSize"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageSize"))
+		arg3, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["where"] = arg3
+	args["pageSize"] = arg3
 	var arg4 int
-	if tmp, ok := rawArgs["pageSize"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageSize"))
+	if tmp, ok := rawArgs["pageOffset"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageOffset"))
 		arg4, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["pageSize"] = arg4
-	var arg5 int
-	if tmp, ok := rawArgs["pageOffset"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageOffset"))
-		arg5, err = ec.unmarshalNInt2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["pageOffset"] = arg5
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_Schema_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 model.DatabaseType
-	if tmp, ok := rawArgs["type"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-		arg0, err = ec.unmarshalNDatabaseType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDatabaseType(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["type"] = arg0
+	args["pageOffset"] = arg4
 	return args, nil
 }
 
 func (ec *executionContext) field_Query_StorageUnit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.DatabaseType
-	if tmp, ok := rawArgs["type"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-		arg0, err = ec.unmarshalNDatabaseType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDatabaseType(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["type"] = arg0
-	var arg1 string
+	var arg0 string
 	if tmp, ok := rawArgs["schema"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("schema"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["schema"] = arg1
+	args["schema"] = arg0
 	return args, nil
 }
 
@@ -1817,7 +1696,7 @@ func (ec *executionContext) _Mutation_AddStorageUnit(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().AddStorageUnit(rctx, fc.Args["type"].(model.DatabaseType), fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["fields"].([]*model.RecordInput))
+		return ec.resolvers.Mutation().AddStorageUnit(rctx, fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["fields"].([]*model.RecordInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1876,7 +1755,7 @@ func (ec *executionContext) _Mutation_UpdateStorageUnit(ctx context.Context, fie
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateStorageUnit(rctx, fc.Args["type"].(model.DatabaseType), fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["values"].([]*model.RecordInput))
+		return ec.resolvers.Mutation().UpdateStorageUnit(rctx, fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["values"].([]*model.RecordInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1935,7 +1814,7 @@ func (ec *executionContext) _Mutation_AddRow(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().AddRow(rctx, fc.Args["type"].(model.DatabaseType), fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["values"].([]*model.RecordInput))
+		return ec.resolvers.Mutation().AddRow(rctx, fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["values"].([]*model.RecordInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1994,7 +1873,7 @@ func (ec *executionContext) _Mutation_DeleteRow(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteRow(rctx, fc.Args["type"].(model.DatabaseType), fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["values"].([]*model.RecordInput))
+		return ec.resolvers.Mutation().DeleteRow(rctx, fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["values"].([]*model.RecordInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2105,7 +1984,7 @@ func (ec *executionContext) _Query_Database(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Database(rctx, fc.Args["type"].(model.DatabaseType))
+		return ec.resolvers.Query().Database(rctx)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2122,7 +2001,7 @@ func (ec *executionContext) _Query_Database(ctx context.Context, field graphql.C
 	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_Database(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_Database(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -2131,17 +2010,6 @@ func (ec *executionContext) fieldContext_Query_Database(ctx context.Context, fie
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_Database_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
 	}
 	return fc, nil
 }
@@ -2160,7 +2028,7 @@ func (ec *executionContext) _Query_Schema(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Schema(rctx, fc.Args["type"].(model.DatabaseType))
+		return ec.resolvers.Query().Schema(rctx)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2177,7 +2045,7 @@ func (ec *executionContext) _Query_Schema(ctx context.Context, field graphql.Col
 	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_Schema(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_Schema(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -2186,17 +2054,6 @@ func (ec *executionContext) fieldContext_Query_Schema(ctx context.Context, field
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_Schema_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
 	}
 	return fc, nil
 }
@@ -2215,7 +2072,7 @@ func (ec *executionContext) _Query_StorageUnit(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().StorageUnit(rctx, fc.Args["type"].(model.DatabaseType), fc.Args["schema"].(string))
+		return ec.resolvers.Query().StorageUnit(rctx, fc.Args["schema"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2276,7 +2133,7 @@ func (ec *executionContext) _Query_Row(ctx context.Context, field graphql.Collec
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Row(rctx, fc.Args["type"].(model.DatabaseType), fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["where"].(string), fc.Args["pageSize"].(int), fc.Args["pageOffset"].(int))
+		return ec.resolvers.Query().Row(rctx, fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["where"].(string), fc.Args["pageSize"].(int), fc.Args["pageOffset"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2339,7 +2196,7 @@ func (ec *executionContext) _Query_RawExecute(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().RawExecute(rctx, fc.Args["type"].(model.DatabaseType), fc.Args["query"].(string))
+		return ec.resolvers.Query().RawExecute(rctx, fc.Args["query"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2402,7 +2259,7 @@ func (ec *executionContext) _Query_Graph(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Graph(rctx, fc.Args["type"].(model.DatabaseType), fc.Args["schema"].(string))
+		return ec.resolvers.Query().Graph(rctx, fc.Args["schema"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2518,7 +2375,7 @@ func (ec *executionContext) _Query_AIChat(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().AIChat(rctx, fc.Args["modelType"].(string), fc.Args["token"].(*string), fc.Args["type"].(model.DatabaseType), fc.Args["schema"].(string), fc.Args["input"].(model.ChatInput))
+		return ec.resolvers.Query().AIChat(rctx, fc.Args["modelType"].(string), fc.Args["token"].(*string), fc.Args["schema"].(string), fc.Args["input"].(model.ChatInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
