@@ -81,3 +81,13 @@ func IsRunningInsideDocker() bool {
 	_, err := os.Stat("/.dockerenv")
 	return !os.IsNotExist(err)
 }
+
+func FilterList[T any](items []T, by func(input T) bool) []T {
+	filteredItems := []T{}
+	for _, item := range items {
+		if by(item) {
+			filteredItems = append(filteredItems, item)
+		}
+	}
+	return filteredItems
+}
