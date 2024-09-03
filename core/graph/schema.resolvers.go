@@ -70,7 +70,7 @@ func (r *mutationResolver) Logout(ctx context.Context) (*model.StatusResponse, e
 // AddStorageUnit is the resolver for the AddStorageUnit field.
 func (r *mutationResolver) AddStorageUnit(ctx context.Context, schema string, storageUnit string, fields []*model.RecordInput) (*model.StatusResponse, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
-	typeArg := config.Credentials.Database
+	typeArg := config.Credentials.Type
 	fieldsMap := map[string]string{}
 	for _, field := range fields {
 		fieldsMap[field.Key] = field.Value

@@ -252,7 +252,7 @@ export const StorageUnitPage: FC = () => {
                                     </div>
                                     {
                                         fields.map((field, index) => (
-                                            <div className="flex gap-2" key={field.Key}>
+                                            <div className="flex gap-2" key={`field-${index}`}>
                                                 <Input inputProps={{ className: "w-1/2" }} value={field.Key} setValue={(value) => handleFieldValueChange("Key", index, value)} placeholder="Enter field name" />
                                                 <Dropdown className="w-1/2" items={storageUnitTypesDropdownItems} value={createDropdownItem(field.Value)}
                                                     onChange={(item) => handleFieldValueChange("Value", index, item.id)} />
