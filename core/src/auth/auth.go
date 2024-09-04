@@ -11,6 +11,7 @@ import (
 
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/env"
 )
 
 type AuthKey string
@@ -29,7 +30,7 @@ func GetCredentials(ctx context.Context) *engine.Credentials {
 }
 
 func isPublicRoute(r *http.Request) bool {
-	return !strings.HasPrefix(r.URL.Path, "/api/") && r.URL.Path != "/api"
+	return (!strings.HasPrefix(r.URL.Path, "/api/") && r.URL.Path != "/api")
 }
 
 func AuthMiddleware(next http.Handler) http.Handler {
@@ -51,13 +52,26 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		dbCookie, err := r.Cookie(string(AuthKey_Token))
-		if err != nil {
+		var token string
+
+		if env.IsAPIGatewayEnabled {
+			authHeader := r.Header.Get("Authorization")
+			if strings.HasPrefix(authHeader, "Bearer ") {
+				token = strings.TrimPrefix(authHeader, "Bearer ")
+			}
+		} else {
+			dbCookie, err := r.Cookie(string(AuthKey_Token))
+			if err == nil {
+				token = dbCookie.Value
+			}
+		}
+
+		if token == "" {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
-		decodedValue, err := base64.StdEncoding.DecodeString(dbCookie.Value)
+		decodedValue, err := base64.StdEncoding.DecodeString(token)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
@@ -66,6 +80,11 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		credentials := &engine.Credentials{}
 		err = json.Unmarshal(decodedValue, credentials)
 		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		if env.IsAPIGatewayEnabled && (credentials.AccessToken == nil || (credentials.AccessToken != nil && !isTokenValid(*credentials.AccessToken))) {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -112,4 +131,13 @@ func isAllowed(r *http.Request, body []byte) bool {
 	}
 
 	return strings.HasPrefix(query.OperationName, "Login") || query.OperationName == "Logout" || query.OperationName == "GetProfiles"
+}
+
+func isTokenValid(token string) bool {
+	for _, t := range env.Tokens {
+		if t == token {
+			return true
+		}
+	}
+	return false
 }

@@ -1,5 +1,6 @@
+import classNames from "classnames";
 import { indexOf } from "lodash";
-import { FC, useCallback, useState } from "react";
+import { FC, useCallback, useMemo, useState } from "react";
 import { v4 } from "uuid";
 import { AnimatedButton } from "../../components/button";
 import { CodeEditor } from "../../components/editor";
@@ -8,9 +9,7 @@ import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { Table } from "../../components/table";
 import { InternalRoutes } from "../../config/routes";
-import { DatabaseType, useRawExecuteLazyQuery } from "../../generated/graphql";
-import { useAppSelector } from "../../store/hooks";
-import classNames from "classnames";
+import { useRawExecuteLazyQuery } from "../../generated/graphql";
 
 type IRawExecuteCellProps = {
     cellId: string;
@@ -23,16 +22,13 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     const [code, setCode] = useState("");
     const [rawExecute, { data: rows, loading, error }] = useRawExecuteLazyQuery();
 
-    const current = useAppSelector(state => state.auth.current);
-
     const handleRawExecute = useCallback(() => {
         rawExecute({
             variables: {
-                type: current?.Type as DatabaseType,
                 query: code,
             },
         })
-    }, [code, current?.Type, rawExecute]);
+    }, [code, rawExecute]);
 
     const handleAdd = useCallback(() => {
         onAdd(cellId);
@@ -42,6 +38,11 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     const handleDelete = useCallback(() => {
         onDelete?.(cellId);
     }, [cellId, onDelete]);
+
+
+    const codeWithoutComments = useMemo(() => {
+        return code.split("\n").filter(text => !text.startsWith("--")).join("\n");
+    }, [code]);
 
     return <div className="flex flex-col grow group/cell">
             <div className="relative">
@@ -72,11 +73,17 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                 </div>
             }
             {
-                rows != null &&
-                <div className="flex flex-col w-full h-[250px] mt-4">
-                    <Table columns={rows.RawExecute.Columns.map(c => c.Name)} columnTags={rows.RawExecute.Columns.map(c => c.Type)}
-                        rows={rows.RawExecute.Rows} totalPages={1} currentPage={1} disableEdit={true} />
-                </div>
+                rows != null && 
+                (codeWithoutComments.trim().startsWith("SELECT")
+                    ?
+                        <div className="flex flex-col w-full h-[250px] mt-4">
+                            <Table columns={rows.RawExecute.Columns.map(c => c.Name)} columnTags={rows.RawExecute.Columns.map(c => c.Type)}
+                            rows={rows.RawExecute.Rows} totalPages={1} currentPage={1} disableEdit={true} />
+                        </div>
+                :   <div className="bg-white/10 text-neutral-800 dark:text-neutral-300 rounded-lg p-2 flex gap-2 self-start items-center my-4">
+                        Action Executed
+                        {Icons.CheckCircle}
+                    </div>)
             }
         </div>
 }

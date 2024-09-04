@@ -152,15 +152,9 @@ export const Sidebar: FC = () => {
     const current = useAppSelector(state => state.auth.current);
     const profiles = useAppSelector(state => state.auth.profiles);
     const { data: availableDatabases, loading: availableDatabasesLoading } = useGetDatabaseQuery({
-        variables: {
-            type: current?.Type as DatabaseType,
-        },
         skip: current == null || isNoSQL(current?.Type as DatabaseType),
     });
     const { data: availableSchemas, loading: availableSchemasLoading, refetch: getSchemas } = useGetSchemaQuery({
-        variables: {
-            type: current?.Type as DatabaseType,
-        },
         onCompleted(data) {
             if (schema === "") {
                 dispatch(DatabaseActions.setSchema(data.Schema[0] ?? ""));
@@ -191,9 +185,7 @@ export const Sidebar: FC = () => {
                         dispatch(DatabaseActions.setSchema(""));
                         dispatch(AuthActions.switch({ id: item.id }));
                         navigate(InternalRoutes.Dashboard.StorageUnit.path);
-                        getSchemas({
-                            type: selectedProfile.Type as DatabaseType,
-                        });
+                        getSchemas();
                     }
                 },
                 onError(error) {
@@ -217,9 +209,7 @@ export const Sidebar: FC = () => {
                     dispatch(DatabaseActions.setSchema(""));
                     dispatch(AuthActions.switch({ id: selectedProfile.Id }));
                     navigate(InternalRoutes.Dashboard.StorageUnit.path);
-                    getSchemas({
-                        type: selectedProfile.Type as DatabaseType,
-                    });
+                    getSchemas();
                 }
             },
             onError(error) {

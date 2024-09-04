@@ -58,6 +58,7 @@ func GetLoginCredentials(profile env.DatabaseCredentials) *engine.Credentials {
 	}
 
 	return &engine.Credentials{
+		Type:     profile.Type,
 		Hostname: profile.Hostname,
 		Username: profile.Username,
 		Password: profile.Password,

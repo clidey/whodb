@@ -35,7 +35,7 @@ Build Status: &nbsp; <img src="https://hello.clidey.com/api/flows/status?id=b322
 Combining the simplicity of Adminer with enhanced UX and performance, WhoDB is built with GoLang to deliver optimal speed and efficiency.
 With features like interactive schema visualization and inline editing, WhoDB caters to both small projects and complex enterprise systems.
 
-**WhoDB offers you the opportunity to talk to your data using natural language thanks to our integration with Ollama.
+**WhoDB offers you the opportunity to talk to your data using natural language thanks to our integration with Ollama, ChatGPT, and Anthropic.
 This feature allows you to perform queries and manage your data through conversation instead of complex SQL.**
 
 ## Key Features

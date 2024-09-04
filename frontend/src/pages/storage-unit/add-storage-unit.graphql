@@ -1,5 +1,5 @@
-mutation AddStorageUnit($type: DatabaseType!, $schema: String!, $storageUnit: String!, $fields: [RecordInput!]!) {
-    AddStorageUnit(type: $type, schema: $schema, storageUnit: $storageUnit, fields: $fields) {
+mutation AddStorageUnit($schema: String!, $storageUnit: String!, $fields: [RecordInput!]!) {
+    AddStorageUnit(schema: $schema, storageUnit: $storageUnit, fields: $fields) {
         Status
     }
 }

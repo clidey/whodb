@@ -26,6 +26,7 @@ func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCre
 	}
 	if !src.MainEngine.Choose(engine.DatabaseType(credentials.Type)).IsAvailable(&engine.PluginConfig{
 		Credentials: &engine.Credentials{
+			Type:     credentials.Type,
 			Hostname: credentials.Hostname,
 			Username: credentials.Username,
 			Password: credentials.Password,
@@ -67,8 +68,9 @@ func (r *mutationResolver) Logout(ctx context.Context) (*model.StatusResponse, e
 }
 
 // AddStorageUnit is the resolver for the AddStorageUnit field.
-func (r *mutationResolver) AddStorageUnit(ctx context.Context, typeArg model.DatabaseType, schema string, storageUnit string, fields []*model.RecordInput) (*model.StatusResponse, error) {
+func (r *mutationResolver) AddStorageUnit(ctx context.Context, schema string, storageUnit string, fields []*model.RecordInput) (*model.StatusResponse, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	typeArg := config.Credentials.Type
 	fieldsMap := map[string]string{}
 	for _, field := range fields {
 		fieldsMap[field.Key] = field.Value
@@ -83,8 +85,9 @@ func (r *mutationResolver) AddStorageUnit(ctx context.Context, typeArg model.Dat
 }
 
 // UpdateStorageUnit is the resolver for the UpdateStorageUnit field.
-func (r *mutationResolver) UpdateStorageUnit(ctx context.Context, typeArg model.DatabaseType, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error) {
+func (r *mutationResolver) UpdateStorageUnit(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	typeArg := config.Credentials.Type
 	valuesMap := map[string]string{}
 	for _, value := range values {
 		valuesMap[value.Key] = value.Value
@@ -99,8 +102,9 @@ func (r *mutationResolver) UpdateStorageUnit(ctx context.Context, typeArg model.
 }
 
 // AddRow is the resolver for the AddRow field.
-func (r *mutationResolver) AddRow(ctx context.Context, typeArg model.DatabaseType, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error) {
+func (r *mutationResolver) AddRow(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	typeArg := config.Credentials.Type
 	valuesRecords := []engine.Record{}
 	for _, field := range values {
 		extraFields := map[string]string{}
@@ -124,8 +128,9 @@ func (r *mutationResolver) AddRow(ctx context.Context, typeArg model.DatabaseTyp
 }
 
 // DeleteRow is the resolver for the DeleteRow field.
-func (r *mutationResolver) DeleteRow(ctx context.Context, typeArg model.DatabaseType, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error) {
+func (r *mutationResolver) DeleteRow(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	typeArg := config.Credentials.Type
 	valuesMap := map[string]string{}
 	for _, value := range values {
 		valuesMap[value.Key] = value.Value
@@ -153,20 +158,23 @@ func (r *queryResolver) Profiles(ctx context.Context) ([]*model.LoginProfile, er
 }
 
 // Database is the resolver for the Database field.
-func (r *queryResolver) Database(ctx context.Context, typeArg model.DatabaseType) ([]string, error) {
+func (r *queryResolver) Database(ctx context.Context) ([]string, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	typeArg := config.Credentials.Type
 	return src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetDatabases(config)
 }
 
 // Schema is the resolver for the Schema field.
-func (r *queryResolver) Schema(ctx context.Context, typeArg model.DatabaseType) ([]string, error) {
+func (r *queryResolver) Schema(ctx context.Context) ([]string, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	typeArg := config.Credentials.Type
 	return src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetSchema(config)
 }
 
 // StorageUnit is the resolver for the StorageUnit field.
-func (r *queryResolver) StorageUnit(ctx context.Context, typeArg model.DatabaseType, schema string) ([]*model.StorageUnit, error) {
+func (r *queryResolver) StorageUnit(ctx context.Context, schema string) ([]*model.StorageUnit, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	typeArg := config.Credentials.Type
 	units, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetStorageUnits(config, schema)
 	if err != nil {
 		return nil, err
@@ -179,8 +187,9 @@ func (r *queryResolver) StorageUnit(ctx context.Context, typeArg model.DatabaseT
 }
 
 // Row is the resolver for the Row field.
-func (r *queryResolver) Row(ctx context.Context, typeArg model.DatabaseType, schema string, storageUnit string, where string, pageSize int, pageOffset int) (*model.RowsResult, error) {
+func (r *queryResolver) Row(ctx context.Context, schema string, storageUnit string, where string, pageSize int, pageOffset int) (*model.RowsResult, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	typeArg := config.Credentials.Type
 	rowsResult, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetRows(config, schema, storageUnit, where, pageSize, pageOffset)
 	if err != nil {
 		return nil, err
@@ -200,8 +209,9 @@ func (r *queryResolver) Row(ctx context.Context, typeArg model.DatabaseType, sch
 }
 
 // RawExecute is the resolver for the RawExecute field.
-func (r *queryResolver) RawExecute(ctx context.Context, typeArg model.DatabaseType, query string) (*model.RowsResult, error) {
+func (r *queryResolver) RawExecute(ctx context.Context, query string) (*model.RowsResult, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	typeArg := config.Credentials.Type
 	rowsResult, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).RawExecute(config, query)
 	if err != nil {
 		return nil, err
@@ -220,8 +230,9 @@ func (r *queryResolver) RawExecute(ctx context.Context, typeArg model.DatabaseTy
 }
 
 // Graph is the resolver for the Graph field.
-func (r *queryResolver) Graph(ctx context.Context, typeArg model.DatabaseType, schema string) ([]*model.GraphUnit, error) {
+func (r *queryResolver) Graph(ctx context.Context, schema string) ([]*model.GraphUnit, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	typeArg := config.Credentials.Type
 	graphUnits, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetGraph(config, schema)
 	if err != nil {
 		return nil, err
@@ -260,8 +271,9 @@ func (r *queryResolver) AIModel(ctx context.Context, modelType string, token *st
 }
 
 // AIChat is the resolver for the AIChat field.
-func (r *queryResolver) AIChat(ctx context.Context, modelType string, token *string, typeArg model.DatabaseType, schema string, input model.ChatInput) ([]*model.AIChatMessage, error) {
+func (r *queryResolver) AIChat(ctx context.Context, modelType string, token *string, schema string, input model.ChatInput) ([]*model.AIChatMessage, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	typeArg := config.Credentials.Type
 	config.ExternalModel = &engine.ExternalModel{
 		Type: modelType,
 	}

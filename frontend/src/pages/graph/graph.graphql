@@ -1,5 +1,5 @@
-query GetGraph($type: DatabaseType!, $schema: String!) {
-  Graph(type:$type, schema: $schema) {
+query GetGraph($schema: String!) {
+  Graph(schema: $schema) {
     Unit {
       Name
       Attributes {
