@@ -6,7 +6,7 @@ RUN pnpm install
 COPY ./frontend/ ./
 RUN pnpm run build
 
-FROM golang:1.22.1-alpine3.19 AS backend-stage
+FROM golang:1.22.5-alpine3.19 AS backend-stage
 RUN apk update && apk add --no-cache gcc musl-dev
 WORKDIR /app
 COPY ./core/go.mod ./core/go.sum ./
