@@ -22,19 +22,19 @@ const databaseTypeDropdownItems: IDropdownItem<Record<string, string>>[] = [
         id: "Postgres",
         label: "Postgres",
         icon: Icons.Logos.Postgres,
-        extra: {"Port": "5432", "SSL Mode": "disable"},
+        extra: {"Port": "5432", "SSL Mode": "disable",},
     },
     {
         id: "MySQL",
         label: "MySQL",
         icon: Icons.Logos.MySQL,
-        extra: {"Port": "3306", "Charset": "utf8mb4", "Parse Time": "True", "Loc": "Local"},
+        extra: {"Port": "3306", "Charset": "utf8mb4", "Parse Time": "True", "Loc": "Local", "Allow clear text passwords": "0"},
     },
     {
         id: "MariaDB",
         label: "MariaDB",
         icon: Icons.Logos.MariaDB,
-        extra: {"Port": "3306", "Charset": "utf8mb4", "Parse Time": "True", "Loc": "Local"},
+        extra: {"Port": "3306", "Charset": "utf8mb4", "Parse Time": "True", "Loc": "Local", "Allow clear text passwords": "0"},
     },
     {
         id: "Sqlite3",

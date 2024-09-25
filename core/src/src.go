@@ -49,7 +49,13 @@ func GetLoginProfileId(index int, profile env.DatabaseCredentials) string {
 }
 
 func GetLoginCredentials(profile env.DatabaseCredentials) *engine.Credentials {
-	advanced := []engine.Record{}
+	advanced := []engine.Record{
+		{
+			Key:   "Port",
+			Value: profile.Port,
+		},
+	}
+
 	for key, value := range profile.Config {
 		advanced = append(advanced, engine.Record{
 			Key:   key,
