@@ -1,6 +1,9 @@
 module github.com/clidey/whodb/core
 
-go 1.22.1
+go 1.22.5
+
+toolchain go1.22.7
+
 require (
 	github.com/99designs/gqlgen v0.17.51
 	github.com/elastic/go-elasticsearch/v8 v8.15.0
