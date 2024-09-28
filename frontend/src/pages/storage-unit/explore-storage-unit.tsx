@@ -230,7 +230,7 @@ export const ExploreStorageUnit: FC = () => {
             case DatabaseType.MySql:
             case DatabaseType.Sqlite3:
             case DatabaseType.MariaDb:
-                whereClause = filters.map(filter => `${filter.field} ${filter.operator} '${filter.value}'`).join(' AND ');
+                whereClause = filters.map(filter => `"${filter.field}" ${filter.operator} '${filter.value}'`).join(' AND ');
                 break;
             case DatabaseType.ElasticSearch:
                 const elasticSearchConditions: Record<string, Record<string, any>> = {};
