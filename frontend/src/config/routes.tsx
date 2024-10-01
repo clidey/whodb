@@ -9,7 +9,7 @@ import { useAppSelector } from "../store/hooks";
 import { RawExecutePage } from "../pages/raw-execute/raw-execute";
 import { LogoutPage } from "../pages/auth/logout";
 import { ChatPage } from "../pages/chat/chat";
-// import {SettingsPage} from "../pages/settings/settings";
+import {SettingsPage} from "../pages/settings/settings";
 import {ContactUsPage} from "../pages/contact-us/contact-us";
 
 export type IInternalRoute = {
@@ -60,11 +60,11 @@ export const InternalRoutes = {
         path: "/logout",
         component: <LogoutPage />,
     },
-    // Settings: {
-    //     name: "Settings",
-    //     path: "/settings",
-    //     component: <SettingsPage />
-    // },
+    Settings: {
+        name: "Settings",
+        path: "/settings",
+        component: <SettingsPage />
+    },
     ContactUs: {
         name: "Contact Us",
         path: "/contact-us",

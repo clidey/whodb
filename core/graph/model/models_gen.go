@@ -81,6 +81,14 @@ type RowsResult struct {
 	DisableUpdate bool       `json:"DisableUpdate"`
 }
 
+type SettingsConfig struct {
+	MetricsEnabled *bool `json:"MetricsEnabled,omitempty"`
+}
+
+type SettingsConfigInput struct {
+	MetricsEnabled *string `json:"MetricsEnabled,omitempty"`
+}
+
 type StatusResponse struct {
 	Status bool `json:"Status"`
 }

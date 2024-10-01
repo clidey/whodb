@@ -5,6 +5,7 @@
   "dependencies": {
     "@apollo/client": "^3.11.8",
     "@dagrejs/dagre": "^1.1.4",
+    "@highlight-run/react": "^6.0.3",
     "@monaco-editor/react": "^4.6.0",
     "@reduxjs/toolkit": "^2.2.7",
     "@testing-library/jest-dom": "^6.5.0",
@@ -19,6 +20,7 @@
     "classnames": "^2.5.1",
     "framer-motion": "^11.9.0",
     "graphql": "^16.9.0",
+    "highlight.run": "^9.4.3",
     "html-to-image": "^1.11.11",
     "lodash": "^4.17.21",
     "monaco-editor": "^0.52.0",

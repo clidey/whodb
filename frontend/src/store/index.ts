@@ -5,12 +5,14 @@ import { authReducers } from './auth';
 import { commonReducers } from './common';
 import { databaseReducers } from './database';
 import { globalReducers } from './global';
+import { settingsReducers } from "./settings";
 
 const persistedReducer = combineReducers({
   auth: persistReducer({ key: "auth", storage, }, authReducers),
   database: persistReducer({ key: "database", storage, }, databaseReducers),
   common: commonReducers,
   global: persistReducer({ key: "global", storage, }, globalReducers),
+  settings: persistReducer({key: "settings", storage}, settingsReducers)
 });
 
 export const reduxStore = configureStore({
