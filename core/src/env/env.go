@@ -18,6 +18,18 @@ var IsAPIGatewayEnabled = len(Tokens) > 0
 var OllamaHost = os.Getenv("WHODB_OLLAMA_HOST")
 var OllamaPort = os.Getenv("WHODB_OLLAMA_PORT")
 
+func GetClideyQuickContainerImage() string {
+	image := os.Getenv("CLIDEY_QUICK_CONTAINER_IMAGE")
+	if len(image) == 0 {
+		return ""
+	}
+	splitImage := strings.Split(image, ":")
+	if len(splitImage) != 2 {
+		return ""
+	}
+	return splitImage[1]
+}
+
 type DatabaseCredentials struct {
 	Hostname string            `json:"host"`
 	Username string            `json:"user"`

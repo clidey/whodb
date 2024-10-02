@@ -93,6 +93,7 @@ type AIChatMessage {
 }
 
 type Query {
+  Version: String!
   Profiles: [LoginProfile!]!
   Database: [String!]!
   Schema: [String!]!
