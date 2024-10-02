@@ -2,8 +2,11 @@ package common
 
 import (
 	"fmt"
+	"github.com/clidey/whodb/core/src/log"
 	"os"
+	"os/exec"
 	"regexp"
+	"runtime"
 	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
@@ -90,4 +93,21 @@ func FilterList[T any](items []T, by func(input T) bool) []T {
 		}
 	}
 	return filteredItems
+}
+
+func OpenBrowser(url string) {
+	var err error
+	switch runtime.GOOS {
+	case "windows":
+		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
+	case "darwin":
+		err = exec.Command("open", url).Start()
+	case "linux":
+		err = exec.Command("xdg-open", url).Start()
+	default:
+		log.Logger.Warnf("Unsupported platform. Please open the URL manually: %s\n", url)
+	}
+	if err != nil {
+		log.Logger.Warnf("Failed to open browser: %v\n", err)
+	}
 }

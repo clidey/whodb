@@ -2,24 +2,17 @@ package router
 
 import (
 	"embed"
-	"fmt"
-	"net/http"
-	"os"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/clidey/whodb/core/graph"
 	"github.com/clidey/whodb/core/src/auth"
-	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/env"
-	"github.com/clidey/whodb/core/src/log"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 )
-
-const defaultPort = "8080"
 
 type OAuthLoginUrl struct {
 	Url string `json:"url"`
@@ -58,27 +51,11 @@ func setupMiddlewares(router *chi.Mux) {
 	)
 }
 
-func InitializeRouter(staticFiles embed.FS) {
+func InitializeRouter(staticFiles embed.FS) *chi.Mux {
 	router := chi.NewRouter()
-
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = defaultPort
-	}
 
 	setupMiddlewares(router)
 	setupServer(router, staticFiles)
 
-	log.Logger.Infof("🎉 Welcome to WhoDB! 🎉")
-	log.Logger.Infof("Get started by visiting:")
-	log.Logger.Infof("http://0.0.0.0:%s", port)
-	log.Logger.Info("Explore and enjoy working with your databases!")
-
-	if !env.IsAPIGatewayEnabled && !common.IsRunningInsideDocker() {
-		openBrowser(fmt.Sprintf("http://localhost:%v", port))
-	}
-
-	if err := http.ListenAndServe(fmt.Sprintf(":%v", port), router); err != nil {
-		panic(err)
-	}
+	return router
 }

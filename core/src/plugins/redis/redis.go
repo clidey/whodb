@@ -24,7 +24,23 @@ func (p *RedisPlugin) IsAvailable(config *engine.PluginConfig) bool {
 }
 
 func (p *RedisPlugin) GetDatabases(config *engine.PluginConfig) ([]string, error) {
-	return nil, errors.New("unsupported operation for Redis")
+	maxDatabases := 16
+	availableDatabases := []string{}
+
+	for i := 0; i < maxDatabases; i++ {
+		dbConfig := *config
+		dbConfig.Credentials.Database = strconv.Itoa(i)
+
+		if p.IsAvailable(&dbConfig) {
+			availableDatabases = append(availableDatabases, strconv.Itoa(i))
+		}
+	}
+
+	if len(availableDatabases) == 0 {
+		return nil, errors.New("no available databases found")
+	}
+
+	return availableDatabases, nil
 }
 
 func (p *RedisPlugin) GetSchema(config *engine.PluginConfig) ([]string, error) {

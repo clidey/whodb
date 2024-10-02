@@ -1,6 +1,6 @@
 import classNames from "classnames";
-import { clone } from "lodash";
-import { FC, useCallback, useMemo, useState } from "react";
+import { clone, filter } from "lodash";
+import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Handle, Position } from "reactflow";
 import { ActionButton, AnimatedButton } from "../../components/button";
@@ -17,6 +17,8 @@ import { DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useG
 import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
 import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
+import { DATABASES_THAT_DONT_SUPPORT_SCRATCH_PAD } from "../../components/sidebar/sidebar";
+import { SearchInput } from "../../components/search";
 
 const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
     const [expanded, setExpanded] = useState(false);
@@ -96,6 +98,7 @@ export const StorageUnitPage: FC = () => {
             schema,
         },
     });
+    const [filterValue, setFilterValue] = useState("");
 
     const routes = useMemo(() => {
         const name = getDatabaseStorageUnitLabel(current?.Type);
@@ -209,6 +212,14 @@ export const StorageUnitPage: FC = () => {
         return items.map(item => createDropdownItem(item));
     }, [current?.Type]);
     
+    useEffect(() => {
+        refetch();
+    }, [current, refetch]);
+
+    const filterStorageUnits = useMemo(() => {
+        const lowerCaseFilterValue = filterValue.toLowerCase();
+        return filter(data?.StorageUnit ?? [], unit => unit.Name.toLowerCase().includes(lowerCaseFilterValue));
+    }, [data?.StorageUnit, filterValue]);
 
     if (loading) {
         return <InternalPage routes={routes}>
@@ -217,8 +228,16 @@ export const StorageUnitPage: FC = () => {
     }
 
     return <InternalPage routes={routes}>
-        <div className="flex w-full h-fit my-2 gap-2">
-            <AnimatedButton icon={Icons.Console} label="Scratchpad" onClick={() => navigate(InternalRoutes.RawExecute.path)} type="lg" />
+        <div className="flex w-full h-fit my-2 gap-2 justify-between">
+            <div>
+                {
+                    !DATABASES_THAT_DONT_SUPPORT_SCRATCH_PAD.includes(current?.Type as DatabaseType) &&
+                    <AnimatedButton icon={Icons.Console} label="Scratchpad" onClick={() => navigate(InternalRoutes.RawExecute.path)} type="lg" />
+                }
+            </div>
+            <div>
+                <SearchInput search={filterValue} setSearch={setFilterValue} placeholder="Enter filter value..." />
+            </div>
         </div>
         {
             data != null && (
@@ -276,7 +295,7 @@ export const StorageUnitPage: FC = () => {
                             </div>
                         </div>
                     </ExpandableCard>
-                    {data.StorageUnit.map(unit => (
+                    {filterStorageUnits.map(unit => (
                         <StorageUnitCard key={unit.Name} unit={unit} />
                     ))}
                 </>
