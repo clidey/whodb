@@ -156,7 +156,14 @@ export const Sidebar: FC = () => {
     });
     const { data: availableSchemas, loading: availableSchemasLoading, refetch: getSchemas } = useGetSchemaQuery({
         onCompleted(data) {
+            if (current == null) {
+                return;
+            }
             if (schema === "") {
+                if (([DatabaseType.MySql, DatabaseType.MariaDb].includes(current.Type as DatabaseType)) && data.Schema.includes(current.Database)) {
+                    dispatch(DatabaseActions.setSchema(current.Database));
+                    return;   
+                }
                 dispatch(DatabaseActions.setSchema(data.Schema[0] ?? ""));
             }
         },
@@ -349,7 +356,7 @@ export const Sidebar: FC = () => {
 
     return (
         <div className={
-            classNames("h-[100vh] flex flex-col gap-4 shadow-md relative transition-all duration-500 dark:bg-black/85 dark:shadow-neutral-100/5", {
+            classNames("h-[100vh] flex flex-col gap-4 shadow-md relative transition-all duration-500 dark:bg-white/10 dark:shadow-neutral-100/5", {
                 "w-[50px] py-20": collapsed,
                 "w-[300px] px-10 py-20": !collapsed,
             })}>

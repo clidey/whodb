@@ -224,7 +224,7 @@ export type StorageUnit = {
 export type GetProfilesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetProfilesQuery = { __typename?: 'Query', Profiles: Array<{ __typename?: 'LoginProfile', Id: string, Type: DatabaseType }> };
+export type GetProfilesQuery = { __typename?: 'Query', Profiles: Array<{ __typename?: 'LoginProfile', Id: string, Type: DatabaseType, Database?: string | null }> };
 
 export type GetSchemaQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -354,6 +354,7 @@ export const GetProfilesDocument = gql`
   Profiles {
     Id
     Type
+    Database
   }
 }
     `;
