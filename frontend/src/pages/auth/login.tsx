@@ -28,7 +28,7 @@ const databaseTypeDropdownItems: IDropdownItem<Record<string, string>>[] = [
         id: "MySQL",
         label: "MySQL",
         icon: Icons.Logos.MySQL,
-        extra: {"Port": "3306", "Charset": "utf8mb4", "Parse Time": "True", "Loc": "Local", "Allow clear text passwords": "0"},
+        extra: {"Port": "3306", "Charset": "utf8mb4", "Parse Time": "True", "Loc": "Local", "Allow clear text passwords": "0", "SSL Mode": "", "SSL CA": "", "SSL Cert": "", "SSL Key": ""},
     },
     {
         id: "MariaDB",
@@ -277,7 +277,7 @@ export const LoginPage: FC = () => {
                                     {error}
                                 </div>
                             </div>
-                            <div className="flex flex-col grow justify-center gap-1">
+                            <div className="flex flex-col grow gap-1">
                                 <DropdownWithLabel fullWidth label="Database Type" value={databaseType} onChange={handleDatabaseTypeChange} items={databaseTypeDropdownItems} />
                                 {fields}
                             </div>
