@@ -16,6 +16,7 @@ const (
 	parseTimeKey               = "Parse Time"
 	locKey                     = "Loc"
 	allowClearTextPasswordsKey = "Allow clear text passwords"
+	hostPathKey                = "Host path"
 )
 
 func DB(config *engine.PluginConfig) (*gorm.DB, error) {
@@ -24,6 +25,7 @@ func DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	parseTime := common.GetRecordValueOrDefault(config.Credentials.Advanced, parseTimeKey, "True")
 	loc := common.GetRecordValueOrDefault(config.Credentials.Advanced, locKey, "Local")
 	allowClearTextPasswords := common.GetRecordValueOrDefault(config.Credentials.Advanced, allowClearTextPasswordsKey, "0")
+	hostPath := common.GetRecordValueOrDefault(config.Credentials.Advanced, hostPathKey, "/")
 
 	params := url.Values{}
 
@@ -36,7 +38,7 @@ func DB(config *engine.PluginConfig) (*gorm.DB, error) {
 		}
 	}
 
-	dsn := fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?charset=%v&parseTime=%v&loc=%v&allowCleartextPasswords=%v&%v", config.Credentials.Username, config.Credentials.Password, config.Credentials.Hostname, port, config.Credentials.Database, charset, parseTime, loc, allowClearTextPasswords, params.Encode())
+	dsn := fmt.Sprintf("%v:%v@tcp(%v:%v)%v%v?charset=%v&parseTime=%v&loc=%v&allowCleartextPasswords=%v&%v", config.Credentials.Username, config.Credentials.Password, config.Credentials.Hostname, port, hostPath, config.Credentials.Database, charset, parseTime, loc, allowClearTextPasswords, params.Encode())
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, err
