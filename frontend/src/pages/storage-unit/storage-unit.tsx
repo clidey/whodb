@@ -5,20 +5,19 @@ import { useNavigate } from "react-router-dom";
 import { Handle, Position } from "reactflow";
 import { ActionButton, AnimatedButton } from "../../components/button";
 import { Card, ExpandableCard } from "../../components/card";
-import { EmptyMessage } from "../../components/common";
 import { createDropdownItem, Dropdown } from "../../components/dropdown";
 import { IGraphCardProps } from "../../components/graph/graph";
 import { Icons } from "../../components/icons";
 import { Input, InputWithlabel, Label } from "../../components/input";
 import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
+import { SearchInput } from "../../components/search";
+import { DATABASES_THAT_DONT_SUPPORT_SCRATCH_PAD } from "../../components/sidebar/sidebar";
 import { InternalRoutes } from "../../config/routes";
 import { DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useGetStorageUnitsQuery } from "../../generated/graphql";
 import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
 import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
-import { DATABASES_THAT_DONT_SUPPORT_SCRATCH_PAD } from "../../components/sidebar/sidebar";
-import { SearchInput } from "../../components/search";
 
 const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
     const [expanded, setExpanded] = useState(false);
@@ -239,67 +238,59 @@ export const StorageUnitPage: FC = () => {
                 <SearchInput search={filterValue} setSearch={setFilterValue} placeholder="Enter filter value..." />
             </div>
         </div>
-        {
-            data != null && (
-                data.StorageUnit.length === 0
-                ? <>
-                    <EmptyMessage icon={Icons.SadSmile} label={`No ${getDatabaseStorageUnitLabel(current?.Type)} found`} />
-                </>
-                : <>
-                    <ExpandableCard className={classNames("overflow-visible", {
-                        "hidden": current?.Type === DatabaseType.Redis,
-                    })} icon={{
-                        bgClassName: "bg-teal-500",
-                        component: Icons.Add,
-                    }} isExpanded={create} tag={<div className="text-red-700 dark:text-red-400 text-xs">
-                        {error}
-                    </div>}>
-                        <div className="flex grow flex-col justify-between mt-3 text-neutral-800 dark:text-neutral-100">
-                            Create a {getDatabaseStorageUnitLabel(current?.Type, true)}
-                            <AnimatedButton className="self-end" icon={Icons.Add} label="Create" onClick={handleCreate} />
+        <ExpandableCard className={classNames("overflow-visible", {
+            "hidden": current?.Type === DatabaseType.Redis,
+        })} icon={{
+            bgClassName: "bg-teal-500",
+            component: Icons.Add,
+        }} isExpanded={create} tag={<div className="text-red-700 dark:text-red-400 text-xs">
+            {error}
+        </div>}>
+            <div className="flex grow flex-col justify-between mt-3 text-neutral-800 dark:text-neutral-100">
+                Create a {getDatabaseStorageUnitLabel(current?.Type, true)}
+                <AnimatedButton className="self-end" icon={Icons.Add} label="Create" onClick={handleCreate} />
+            </div>
+            <div className="flex grow flex-col justify-between my-2 gap-4">
+                <div className="flex flex-col gap-2">
+                    <InputWithlabel label="Name" value={storageUnitName} setValue={setStorageUnitName} />
+                    <div className={classNames("flex flex-col gap-2", {
+                        "hidden": isNoSQL(current?.Type as DatabaseType),
+                    })}>
+                        <div className="flex gap-2 justify-between">
+                            <Label label="Field Name" />
+                            <Label label="Value" />
+                            <div className="w-14" />
                         </div>
-                        <div className="flex grow flex-col justify-between my-2 gap-4">
-                            <div className="flex flex-col gap-2">
-                                <InputWithlabel label="Name" value={storageUnitName} setValue={setStorageUnitName} />
-                                <div className={classNames("flex flex-col gap-2", {
-                                    "hidden": isNoSQL(current?.Type as DatabaseType),
-                                })}>
-                                    <div className="flex gap-2 justify-between">
-                                        <Label label="Field Name" />
-                                        <Label label="Value" />
-                                        <div className="w-14" />
+                        {
+                            fields.map((field, index) => (
+                                <div className="flex gap-2" key={`field-${index}`}>
+                                    <Input inputProps={{ className: "w-1/2" }} value={field.Key} setValue={(value) => handleFieldValueChange("Key", index, value)} placeholder="Enter field name" />
+                                    <Dropdown className="w-1/2" items={storageUnitTypesDropdownItems} value={createDropdownItem(field.Value)}
+                                        onChange={(item) => handleFieldValueChange("Value", index, item.id)} />
+                                    <div className="flex items-end mb-2">
+                                        <ActionButton disabled={fields.length === 1} containerClassName="w-6 h-6" icon={Icons.Delete} className={classNames({
+                                            "stroke-red-500 dark:stroke-red-400": fields.length > 1,
+                                            "stroke-neutral-300 dark:stroke-neutral-600": fields.length === 1,
+                                        })} onClick={() => handleRemove(index)} />
                                     </div>
-                                    {
-                                        fields.map((field, index) => (
-                                            <div className="flex gap-2" key={`field-${index}`}>
-                                                <Input inputProps={{ className: "w-1/2" }} value={field.Key} setValue={(value) => handleFieldValueChange("Key", index, value)} placeholder="Enter field name" />
-                                                <Dropdown className="w-1/2" items={storageUnitTypesDropdownItems} value={createDropdownItem(field.Value)}
-                                                    onChange={(item) => handleFieldValueChange("Value", index, item.id)} />
-                                                <div className="flex items-end mb-2">
-                                                    <ActionButton disabled={fields.length === 1} containerClassName="w-6 h-6" icon={Icons.Delete} className={classNames({
-                                                        "stroke-red-500 dark:stroke-red-400": fields.length > 1,
-                                                        "stroke-neutral-300 dark:stroke-neutral-600": fields.length === 1,
-                                                    })} onClick={() => handleRemove(index)} />
-                                                </div>
-                                            </div>
-                                        ))
-                                    }
-                                    <AnimatedButton className="self-end" icon={Icons.Add} label="Add field" onClick={handleAddField} />
                                 </div>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <AnimatedButton icon={Icons.Cancel} label="Cancel" onClick={handleCreate} />
-                                <AnimatedButton labelClassName="text-green-600 dark:text-green-300"
-                                    iconClassName="stroke-green-600 dark:stroke-green-300" icon={Icons.Add}
-                                    label="Submit" onClick={handleSubmit} />
-                            </div>
-                        </div>
-                    </ExpandableCard>
-                    {filterStorageUnits.map(unit => (
-                        <StorageUnitCard key={unit.Name} unit={unit} />
-                    ))}
-                </>
-            )
+                            ))
+                        }
+                        <AnimatedButton className="self-end" icon={Icons.Add} label="Add field" onClick={handleAddField} />
+                    </div>
+                </div>
+                <div className="flex items-center justify-between">
+                    <AnimatedButton icon={Icons.Cancel} label="Cancel" onClick={handleCreate} />
+                    <AnimatedButton labelClassName="text-green-600 dark:text-green-300"
+                        iconClassName="stroke-green-600 dark:stroke-green-300" icon={Icons.Add}
+                        label="Submit" onClick={handleSubmit} />
+                </div>
+            </div>
+        </ExpandableCard>
+        {
+            data != null && data.StorageUnit.length > 0 && filterStorageUnits.map(unit => (
+                <StorageUnitCard key={unit.Name} unit={unit} />
+            ))
         }
     </InternalPage>
 }

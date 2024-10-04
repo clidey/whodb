@@ -156,8 +156,9 @@ func (r *queryResolver) Profiles(ctx context.Context) ([]*model.LoginProfile, er
 	for i, profile := range src.GetLoginProfiles() {
 		profileName := src.GetLoginProfileId(i, profile)
 		profiles = append(profiles, &model.LoginProfile{
-			ID:   profileName,
-			Type: model.DatabaseType(profile.Type),
+			ID:       profileName,
+			Type:     model.DatabaseType(profile.Type),
+			Database: &profile.Database,
 		})
 	}
 	return profiles, nil
