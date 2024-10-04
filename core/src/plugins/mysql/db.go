@@ -31,7 +31,7 @@ func DB(config *engine.PluginConfig) (*gorm.DB, error) {
 
 	for _, record := range config.Credentials.Advanced {
 		switch record.Key {
-		case portKey, charsetKey, parseTimeKey, locKey, allowClearTextPasswordsKey:
+		case portKey, charsetKey, parseTimeKey, locKey, allowClearTextPasswordsKey, hostPathKey:
 			continue
 		default:
 			params.Add(record.Key, fmt.Sprintf("%v", record.Value))
