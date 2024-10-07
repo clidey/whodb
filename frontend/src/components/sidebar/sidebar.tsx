@@ -7,7 +7,7 @@ import { useDispatch } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
 import { InternalRoutes, PublicRoutes } from "../../config/routes";
-import { DatabaseType, useGetDatabaseQuery, useGetSchemaQuery, useLoginMutation, useLoginWithProfileMutation } from "../../generated/graphql";
+import { DatabaseType, useGetDatabaseQuery, useGetSchemaQuery, useGetVersionQuery, useLoginMutation, useLoginWithProfileMutation } from "../../generated/graphql";
 import { AuthActions, LocalLoginProfile } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";
@@ -141,7 +141,7 @@ function getDropdownLoginProfileItem(profile: LocalLoginProfile): IDropdownItem 
     };
 }
 
-const DATABASES_THAT_DONT_SUPPORT_SCRATCH_PAD = [DatabaseType.MongoDb, DatabaseType.Redis, DatabaseType.ElasticSearch];
+export const DATABASES_THAT_DONT_SUPPORT_SCRATCH_PAD = [DatabaseType.MongoDb, DatabaseType.Redis, DatabaseType.ElasticSearch];
 const DATABASES_THAT_DONT_SUPPORT_SCHEMA = [DatabaseType.Sqlite3, DatabaseType.Redis, DatabaseType.ElasticSearch];
 
 export const Sidebar: FC = () => {
@@ -152,16 +152,24 @@ export const Sidebar: FC = () => {
     const current = useAppSelector(state => state.auth.current);
     const profiles = useAppSelector(state => state.auth.profiles);
     const { data: availableDatabases, loading: availableDatabasesLoading } = useGetDatabaseQuery({
-        skip: current == null || isNoSQL(current?.Type as DatabaseType),
+        skip: current == null || (current.Type !== DatabaseType.Redis && isNoSQL(current?.Type as DatabaseType)),
     });
     const { data: availableSchemas, loading: availableSchemasLoading, refetch: getSchemas } = useGetSchemaQuery({
         onCompleted(data) {
+            if (current == null) {
+                return;
+            }
             if (schema === "") {
+                if (([DatabaseType.MySql, DatabaseType.MariaDb].includes(current.Type as DatabaseType)) && data.Schema.includes(current.Database)) {
+                    dispatch(DatabaseActions.setSchema(current.Database));
+                    return;   
+                }
                 dispatch(DatabaseActions.setSchema(data.Schema[0] ?? ""));
             }
         },
         skip: current == null || DATABASES_THAT_DONT_SUPPORT_SCHEMA.includes(current?.Type as DatabaseType),
     });
+    const { data: version } = useGetVersionQuery();
     const [login, ] = useLoginMutation();
     const [loginWithProfile, ] = useLoginWithProfileMutation();
     const navigate = useNavigate();
@@ -185,7 +193,9 @@ export const Sidebar: FC = () => {
                         dispatch(DatabaseActions.setSchema(""));
                         dispatch(AuthActions.switch({ id: item.id }));
                         navigate(InternalRoutes.Dashboard.StorageUnit.path);
-                        getSchemas();
+                        if (!DATABASES_THAT_DONT_SUPPORT_SCHEMA.includes(current?.Type as DatabaseType)) {
+                            getSchemas();
+                        }
                     }
                 },
                 onError(error) {
@@ -216,7 +226,7 @@ export const Sidebar: FC = () => {
                 notify(`Error signing you in: ${error.message}`, "error")
             },
         });
-    }, [current?.Database, dispatch, getSchemas, login, loginWithProfile, navigate, profiles]);
+    }, [current?.Database, current?.Type, dispatch, getSchemas, login, loginWithProfile, navigate, profiles]);
 
     const handleDatabaseChange = useCallback((item: IDropdownItem) => {
         if (current?.Id == null) {
@@ -346,7 +356,7 @@ export const Sidebar: FC = () => {
 
     return (
         <div className={
-            classNames("h-[100vh] flex flex-col gap-4 shadow-md relative transition-all duration-500 dark:bg-black/85 dark:shadow-neutral-100/5", {
+            classNames("h-[100vh] flex flex-col gap-4 shadow-md relative transition-all duration-500 dark:bg-white/10 dark:shadow-neutral-100/5", {
                 "w-[50px] py-20": collapsed,
                 "w-[300px] px-10 py-20": !collapsed,
             })}>
@@ -412,7 +422,7 @@ export const Sidebar: FC = () => {
                                 {
                                     availableDatabases != null && current != null &&
                                     <div className={classNames("flex gap-2 items-center w-full", {
-                                        "opacity-0 pointer-events-none": collapsed || isNoSQL(current?.Type as DatabaseType),
+                                        "opacity-0 pointer-events-none": collapsed || (current.Type !== DatabaseType.Redis && isNoSQL(current?.Type as DatabaseType)),
                                     })}>
                                         <div className="text-sm text-gray-600 dark:text-neutral-300">Database:</div>
                                         <Dropdown className="w-[140px]" value={createDropdownItem(current!.Database)}
@@ -436,7 +446,7 @@ export const Sidebar: FC = () => {
                             {routes}
                         </div>
                         <div className="grow"/>
-                        <div className="flex flex-col gap-8">
+                        <div className="flex flex-col">
                             <SideMenu collapse={collapsed} title="Contact Us" icon={Icons.QuestionMark}
                                       path={InternalRoutes.ContactUs.path}/>
                         </div>
@@ -450,6 +460,7 @@ export const Sidebar: FC = () => {
                         </div>
                     </div>
             }
+            <div className="absolute right-8 bottom-8 text-sm text-gray-300 hover:text-gray-600 dark:text-neutral-600 self-end dark:hover:text-neutral-300 transition-all">{version?.Version}</div>
         </div>
     )
 }

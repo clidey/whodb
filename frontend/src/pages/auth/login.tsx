@@ -9,7 +9,7 @@ import { createDropdownItem, DropdownWithLabel, IDropdownItem } from "../../comp
 import { Icons } from "../../components/icons";
 import { InputWithlabel } from "../../components/input";
 import { Loading } from "../../components/loading";
-import { Page } from "../../components/page";
+import { Container, Page } from "../../components/page";
 import { InternalRoutes } from "../../config/routes";
 import { DatabaseType, LoginCredentials, useGetDatabaseLazyQuery, useGetProfilesQuery, useLoginMutation, useLoginWithProfileMutation } from '../../generated/graphql';
 import { AuthActions } from "../../store/auth";
@@ -28,7 +28,7 @@ const databaseTypeDropdownItems: IDropdownItem<Record<string, string>>[] = [
         id: "MySQL",
         label: "MySQL",
         icon: Icons.Logos.MySQL,
-        extra: {"Port": "3306", "Charset": "utf8mb4", "Parse Time": "True", "Loc": "Local", "Allow clear text passwords": "0"},
+        extra: {"Port": "3306", "Charset": "utf8mb4", "Parse Time": "True", "Loc": "Local", "Allow clear text passwords": "0", "Host path": "/"},
     },
     {
         id: "MariaDB",
@@ -140,7 +140,7 @@ export const LoginPage: FC = () => {
                     dispatch(AuthActions.login({
                         Type: profile?.Type as DatabaseType,
                         Id: selectedAvailableProfile.id,
-                        Database: "",
+                        Database: profile?.Database ?? "",
                         Hostname: "",
                         Password: "",
                         Username: "",
@@ -259,7 +259,7 @@ export const LoginPage: FC = () => {
     }
 
     return (
-        <Page className="justify-center items-center">
+        <Container className="justify-center items-center">
             <div className={twMerge(BASE_CARD_CLASS, "w-fit h-fit")}>
                 <div className="flex flex-col justify-between grow gap-4">
                     <div className="flex grow">
@@ -284,7 +284,7 @@ export const LoginPage: FC = () => {
                         </div>
                         {
                             (showAdvanced && advancedForm != null) &&
-                            <div className="transition-all h-full overflow-hidden mt-[56px] w-[350px] ml-4">
+                            <div className="transition-all h-full overflow-hidden mt-[56px] w-[350px] ml-4 flex flex-col gap-1">
                                 {entries(advancedForm).map(([key, value]) => (
                                     <InputWithlabel label={key} value={value} setValue={(newValue) => handleAdvancedForm(key, newValue)} />
                                 ))}
@@ -310,6 +310,6 @@ export const LoginPage: FC = () => {
                     </div>
                 }
             </div>
-        </Page>
+        </Container>
     )
 }

@@ -157,6 +157,7 @@ export type Query = {
   Schema: Array<Scalars['String']['output']>;
   SettingsConfig: SettingsConfig;
   StorageUnit: Array<StorageUnit>;
+  Version: Scalars['String']['output'];
 };
 
 
@@ -239,12 +240,17 @@ export type StorageUnit = {
 export type GetProfilesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetProfilesQuery = { __typename?: 'Query', Profiles: Array<{ __typename?: 'LoginProfile', Id: string, Type: DatabaseType }> };
+export type GetProfilesQuery = { __typename?: 'Query', Profiles: Array<{ __typename?: 'LoginProfile', Id: string, Type: DatabaseType, Database?: string | null }> };
 
 export type GetSchemaQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetSchemaQuery = { __typename?: 'Query', Schema: Array<string> };
+
+export type GetVersionQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetVersionQuery = { __typename?: 'Query', Version: string };
 
 export type GetDatabaseQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -376,6 +382,7 @@ export const GetProfilesDocument = gql`
   Profiles {
     Id
     Type
+    Database
   }
 }
     `;
@@ -448,6 +455,43 @@ export type GetSchemaQueryHookResult = ReturnType<typeof useGetSchemaQuery>;
 export type GetSchemaLazyQueryHookResult = ReturnType<typeof useGetSchemaLazyQuery>;
 export type GetSchemaSuspenseQueryHookResult = ReturnType<typeof useGetSchemaSuspenseQuery>;
 export type GetSchemaQueryResult = Apollo.QueryResult<GetSchemaQuery, GetSchemaQueryVariables>;
+export const GetVersionDocument = gql`
+    query GetVersion {
+  Version
+}
+    `;
+
+/**
+ * __useGetVersionQuery__
+ *
+ * To run a query within a React component, call `useGetVersionQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetVersionQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetVersionQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetVersionQuery(baseOptions?: Apollo.QueryHookOptions<GetVersionQuery, GetVersionQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetVersionQuery, GetVersionQueryVariables>(GetVersionDocument, options);
+      }
+export function useGetVersionLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetVersionQuery, GetVersionQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetVersionQuery, GetVersionQueryVariables>(GetVersionDocument, options);
+        }
+export function useGetVersionSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetVersionQuery, GetVersionQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetVersionQuery, GetVersionQueryVariables>(GetVersionDocument, options);
+        }
+export type GetVersionQueryHookResult = ReturnType<typeof useGetVersionQuery>;
+export type GetVersionLazyQueryHookResult = ReturnType<typeof useGetVersionLazyQuery>;
+export type GetVersionSuspenseQueryHookResult = ReturnType<typeof useGetVersionSuspenseQuery>;
+export type GetVersionQueryResult = Apollo.QueryResult<GetVersionQuery, GetVersionQueryVariables>;
 export const GetDatabaseDocument = gql`
     query GetDatabase {
   Database

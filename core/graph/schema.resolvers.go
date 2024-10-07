@@ -12,6 +12,7 @@ import (
 	"github.com/clidey/whodb/core/src/auth"
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/llm"
 	"github.com/clidey/whodb/core/src/settings"
 )
@@ -159,14 +160,20 @@ func (r *mutationResolver) DeleteRow(ctx context.Context, schema string, storage
 	}, nil
 }
 
+// Version is the resolver for the Version field.
+func (r *queryResolver) Version(ctx context.Context) (string, error) {
+	return env.GetClideyQuickContainerImage(), nil
+}
+
 // Profiles is the resolver for the Profiles field.
 func (r *queryResolver) Profiles(ctx context.Context) ([]*model.LoginProfile, error) {
 	profiles := []*model.LoginProfile{}
 	for i, profile := range src.GetLoginProfiles() {
 		profileName := src.GetLoginProfileId(i, profile)
 		profiles = append(profiles, &model.LoginProfile{
-			ID:   profileName,
-			Type: model.DatabaseType(profile.Type),
+			ID:       profileName,
+			Type:     model.DatabaseType(profile.Type),
+			Database: &profile.Database,
 		})
 	}
 	return profiles, nil

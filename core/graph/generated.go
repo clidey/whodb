@@ -86,7 +86,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		AIChat         func(childComplexity int, modelType string, token *string, schema string, input model.ChatInput) int
+    AIChat         func(childComplexity int, modelType string, token *string, schema string, input model.ChatInput) int
 		AIModel        func(childComplexity int, modelType string, token *string) int
 		Database       func(childComplexity int) int
 		Graph          func(childComplexity int, schema string) int
@@ -96,6 +96,7 @@ type ComplexityRoot struct {
 		Schema         func(childComplexity int) int
 		SettingsConfig func(childComplexity int) int
 		StorageUnit    func(childComplexity int, schema string) int
+		Version     func(childComplexity int) int
 	}
 
 	Record struct {
@@ -134,6 +135,7 @@ type MutationResolver interface {
 	DeleteRow(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
 }
 type QueryResolver interface {
+	Version(ctx context.Context) (string, error)
 	Profiles(ctx context.Context) ([]*model.LoginProfile, error)
 	Database(ctx context.Context) ([]string, error)
 	Schema(ctx context.Context) ([]string, error)
@@ -439,6 +441,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.StorageUnit(childComplexity, args["schema"].(string)), true
+
+	case "Query.Version":
+		if e.complexity.Query.Version == nil {
+			break
+		}
+
+		return e.complexity.Query.Version(childComplexity), true
 
 	case "Record.Key":
 		if e.complexity.Record.Key == nil {
@@ -2583,6 +2592,50 @@ func (ec *executionContext) fieldContext_Mutation_DeleteRow(ctx context.Context,
 	if fc.Args, err = ec.field_Mutation_DeleteRow_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_Version(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_Version(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Version(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_Version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -6023,6 +6076,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
+		case "Version":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_Version(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "Profiles":
 			field := field
 
