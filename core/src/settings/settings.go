@@ -12,7 +12,7 @@ type ISettingsField interface {
 
 type MetricsEnabledField bool
 
-var currentSettings = Settings{MetricsEnabled: true}
+var currentSettings = Settings{MetricsEnabled: false}
 
 func Get() Settings {
 	return currentSettings
