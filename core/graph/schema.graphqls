@@ -63,6 +63,14 @@ input LoginCredentials {
   Advanced: [RecordInput!]
 }
 
+type SettingsConfig {
+  MetricsEnabled: Boolean
+}
+
+input SettingsConfigInput {
+  MetricsEnabled: String
+}
+
 input LoginProfileInput {
   Id: String!
   Type: DatabaseType!
@@ -103,12 +111,14 @@ type Query {
   Graph(schema: String!): [GraphUnit!]!
   AIModel(modelType: String!, token: String): [String!]!
   AIChat(modelType: String!, token: String, schema: String!, input: ChatInput!): [AIChatMessage!]!
+  SettingsConfig: SettingsConfig!
 }
 
 type Mutation {
   Login(credentials: LoginCredentials!): StatusResponse!
   LoginWithProfile(profile: LoginProfileInput!): StatusResponse!
   Logout: StatusResponse!
+  UpdateSettings(newSettings: SettingsConfigInput!): StatusResponse!
 
   AddStorageUnit(schema: String!, storageUnit: String!, fields: [RecordInput!]!): StatusResponse!
   UpdateStorageUnit(schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!

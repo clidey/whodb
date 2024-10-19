@@ -81,19 +81,21 @@ type ComplexityRoot struct {
 		Login             func(childComplexity int, credentials model.LoginCredentials) int
 		LoginWithProfile  func(childComplexity int, profile model.LoginProfileInput) int
 		Logout            func(childComplexity int) int
+		UpdateSettings    func(childComplexity int, newSettings model.SettingsConfigInput) int
 		UpdateStorageUnit func(childComplexity int, schema string, storageUnit string, values []*model.RecordInput) int
 	}
 
 	Query struct {
-		AIChat      func(childComplexity int, modelType string, token *string, schema string, input model.ChatInput) int
-		AIModel     func(childComplexity int, modelType string, token *string) int
-		Database    func(childComplexity int) int
-		Graph       func(childComplexity int, schema string) int
-		Profiles    func(childComplexity int) int
-		RawExecute  func(childComplexity int, query string) int
-		Row         func(childComplexity int, schema string, storageUnit string, where string, pageSize int, pageOffset int) int
-		Schema      func(childComplexity int) int
-		StorageUnit func(childComplexity int, schema string) int
+    AIChat         func(childComplexity int, modelType string, token *string, schema string, input model.ChatInput) int
+		AIModel        func(childComplexity int, modelType string, token *string) int
+		Database       func(childComplexity int) int
+		Graph          func(childComplexity int, schema string) int
+		Profiles       func(childComplexity int) int
+		RawExecute     func(childComplexity int, query string) int
+		Row            func(childComplexity int, schema string, storageUnit string, where string, pageSize int, pageOffset int) int
+		Schema         func(childComplexity int) int
+		SettingsConfig func(childComplexity int) int
+		StorageUnit    func(childComplexity int, schema string) int
 		Version     func(childComplexity int) int
 	}
 
@@ -106,6 +108,10 @@ type ComplexityRoot struct {
 		Columns       func(childComplexity int) int
 		DisableUpdate func(childComplexity int) int
 		Rows          func(childComplexity int) int
+	}
+
+	SettingsConfig struct {
+		MetricsEnabled func(childComplexity int) int
 	}
 
 	StatusResponse struct {
@@ -122,6 +128,7 @@ type MutationResolver interface {
 	Login(ctx context.Context, credentials model.LoginCredentials) (*model.StatusResponse, error)
 	LoginWithProfile(ctx context.Context, profile model.LoginProfileInput) (*model.StatusResponse, error)
 	Logout(ctx context.Context) (*model.StatusResponse, error)
+	UpdateSettings(ctx context.Context, newSettings model.SettingsConfigInput) (*model.StatusResponse, error)
 	AddStorageUnit(ctx context.Context, schema string, storageUnit string, fields []*model.RecordInput) (*model.StatusResponse, error)
 	UpdateStorageUnit(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
 	AddRow(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
@@ -138,6 +145,7 @@ type QueryResolver interface {
 	Graph(ctx context.Context, schema string) ([]*model.GraphUnit, error)
 	AIModel(ctx context.Context, modelType string, token *string) ([]string, error)
 	AIChat(ctx context.Context, modelType string, token *string, schema string, input model.ChatInput) ([]*model.AIChatMessage, error)
+	SettingsConfig(ctx context.Context) (*model.SettingsConfig, error)
 }
 
 type executableSchema struct {
@@ -310,6 +318,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.Logout(childComplexity), true
 
+	case "Mutation.UpdateSettings":
+		if e.complexity.Mutation.UpdateSettings == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_UpdateSettings_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateSettings(childComplexity, args["newSettings"].(model.SettingsConfigInput)), true
+
 	case "Mutation.UpdateStorageUnit":
 		if e.complexity.Mutation.UpdateStorageUnit == nil {
 			break
@@ -403,6 +423,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Schema(childComplexity), true
 
+	case "Query.SettingsConfig":
+		if e.complexity.Query.SettingsConfig == nil {
+			break
+		}
+
+		return e.complexity.Query.SettingsConfig(childComplexity), true
+
 	case "Query.StorageUnit":
 		if e.complexity.Query.StorageUnit == nil {
 			break
@@ -457,6 +484,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.RowsResult.Rows(childComplexity), true
 
+	case "SettingsConfig.MetricsEnabled":
+		if e.complexity.SettingsConfig.MetricsEnabled == nil {
+			break
+		}
+
+		return e.complexity.SettingsConfig.MetricsEnabled(childComplexity), true
+
 	case "StatusResponse.Status":
 		if e.complexity.StatusResponse.Status == nil {
 			break
@@ -490,6 +524,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputLoginCredentials,
 		ec.unmarshalInputLoginProfileInput,
 		ec.unmarshalInputRecordInput,
+		ec.unmarshalInputSettingsConfigInput,
 	)
 	first := true
 
@@ -925,6 +960,38 @@ func (ec *executionContext) field_Mutation_Login_argsCredentials(
 	}
 
 	var zeroVal model.LoginCredentials
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_UpdateSettings_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_UpdateSettings_argsNewSettings(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["newSettings"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_UpdateSettings_argsNewSettings(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.SettingsConfigInput, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["newSettings"]
+	if !ok {
+		var zeroVal model.SettingsConfigInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("newSettings"))
+	if tmp, ok := rawArgs["newSettings"]; ok {
+		return ec.unmarshalNSettingsConfigInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSettingsConfigInput(ctx, tmp)
+	}
+
+	var zeroVal model.SettingsConfigInput
 	return zeroVal, nil
 }
 
@@ -2234,6 +2301,65 @@ func (ec *executionContext) fieldContext_Mutation_Logout(_ context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_UpdateSettings(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_UpdateSettings(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateSettings(rctx, fc.Args["newSettings"].(model.SettingsConfigInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.StatusResponse)
+	fc.Result = res
+	return ec.marshalNStatusResponse2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐStatusResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_UpdateSettings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "Status":
+				return ec.fieldContext_StatusResponse_Status(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type StatusResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_UpdateSettings_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_AddStorageUnit(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_AddStorageUnit(ctx, field)
 	if err != nil {
@@ -3020,6 +3146,54 @@ func (ec *executionContext) fieldContext_Query_AIChat(ctx context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_SettingsConfig(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_SettingsConfig(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().SettingsConfig(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.SettingsConfig)
+	fc.Result = res
+	return ec.marshalNSettingsConfig2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSettingsConfig(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_SettingsConfig(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "MetricsEnabled":
+				return ec.fieldContext_SettingsConfig_MetricsEnabled(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SettingsConfig", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query___type(ctx, field)
 	if err != nil {
@@ -3365,6 +3539,47 @@ func (ec *executionContext) _RowsResult_DisableUpdate(ctx context.Context, field
 func (ec *executionContext) fieldContext_RowsResult_DisableUpdate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "RowsResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SettingsConfig_MetricsEnabled(ctx context.Context, field graphql.CollectedField, obj *model.SettingsConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SettingsConfig_MetricsEnabled(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MetricsEnabled, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SettingsConfig_MetricsEnabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SettingsConfig",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -5485,6 +5700,33 @@ func (ec *executionContext) unmarshalInputRecordInput(ctx context.Context, obj i
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputSettingsConfigInput(ctx context.Context, obj interface{}) (model.SettingsConfigInput, error) {
+	var it model.SettingsConfigInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"MetricsEnabled"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "MetricsEnabled":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("MetricsEnabled"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MetricsEnabled = data
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -5753,6 +5995,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "Logout":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_Logout(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "UpdateSettings":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_UpdateSettings(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -6047,6 +6296,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "SettingsConfig":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_SettingsConfig(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -6148,6 +6419,42 @@ func (ec *executionContext) _RowsResult(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var settingsConfigImplementors = []string{"SettingsConfig"}
+
+func (ec *executionContext) _SettingsConfig(ctx context.Context, sel ast.SelectionSet, obj *model.SettingsConfig) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, settingsConfigImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SettingsConfig")
+		case "MetricsEnabled":
+			out.Values[i] = ec._SettingsConfig_MetricsEnabled(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7003,6 +7310,25 @@ func (ec *executionContext) marshalNRowsResult2ᚖgithubᚗcomᚋclideyᚋwhodb�
 		return graphql.Null
 	}
 	return ec._RowsResult(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSettingsConfig2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSettingsConfig(ctx context.Context, sel ast.SelectionSet, v model.SettingsConfig) graphql.Marshaler {
+	return ec._SettingsConfig(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSettingsConfig2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSettingsConfig(ctx context.Context, sel ast.SelectionSet, v *model.SettingsConfig) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SettingsConfig(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNSettingsConfigInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSettingsConfigInput(ctx context.Context, v interface{}) (model.SettingsConfigInput, error) {
+	res, err := ec.unmarshalInputSettingsConfigInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNStatusResponse2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐStatusResponse(ctx context.Context, sel ast.SelectionSet, v model.StatusResponse) graphql.Marshaler {
