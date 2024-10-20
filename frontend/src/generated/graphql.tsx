@@ -44,7 +44,8 @@ export enum DatabaseType {
   MySql = 'MySQL',
   Postgres = 'Postgres',
   Redis = 'Redis',
-  Sqlite3 = 'Sqlite3'
+  Sqlite3 = 'Sqlite3',
+  ClickHouse = 'ClickHouse'
 }
 
 export type GraphUnit = {

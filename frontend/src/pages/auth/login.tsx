@@ -59,6 +59,12 @@ const databaseTypeDropdownItems: IDropdownItem<Record<string, string>>[] = [
         icon: Icons.Logos.ElasticSearch,
         extra: {"Port": "9200", "SSL Mode": "disable"},
     },
+    {
+        id: "ClickHouse",
+        label: "ClickHouse",
+        icon: Icons.Logos.ClickHouse,
+        extra: {"Port": "9000"}
+    }
 ]
 
 export const LoginPage: FC = () => {
