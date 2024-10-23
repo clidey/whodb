@@ -15,16 +15,69 @@ func (p *ClickHousePlugin) AddStorageUnit(config *engine.PluginConfig, schema st
 	}
 	defer conn.Close()
 
+	// Extract engine settings from advanced configuration
+	var engineSettings struct {
+		engine      string
+		orderBy     string
+		partitionBy string
+		settings    map[string]string
+	}
+
+	engineSettings.engine = "MergeTree" // default engine
+	engineSettings.orderBy = "tuple()"  // default order
+	engineSettings.settings = make(map[string]string)
+
+	for _, record := range config.Credentials.Advanced {
+		switch record.Key {
+		case "Engine":
+			engineSettings.engine = record.Value
+		case "OrderBy":
+			engineSettings.orderBy = record.Value
+		case "PartitionBy":
+			engineSettings.partitionBy = record.Value
+		default:
+			if strings.HasPrefix(record.Key, "Setting_") {
+				key := strings.TrimPrefix(record.Key, "Setting_")
+				engineSettings.settings[key] = record.Value
+			}
+		}
+	}
+
+	// Prepare columns
 	var columns []string
 	for field, fieldType := range fields {
 		columns = append(columns, fmt.Sprintf("%s %s", field, fieldType))
 	}
 
-	query := fmt.Sprintf("CREATE TABLE %s.%s (%s) ENGINE = MergeTree() ORDER BY tuple()",
-		schema, storageUnit, strings.Join(columns, ", "))
+	// Build the CREATE TABLE query
+	query := fmt.Sprintf("CREATE TABLE %s.%s (\n\t%s\n) ENGINE = %s",
+		schema, storageUnit, strings.Join(columns, ",\n\t"), engineSettings.engine)
+
+	// Add ORDER BY clause
+	if engineSettings.orderBy != "" {
+		query += fmt.Sprintf("\nORDER BY %s", engineSettings.orderBy)
+	}
+
+	// Add PARTITION BY clause if specified
+	if engineSettings.partitionBy != "" {
+		query += fmt.Sprintf("\nPARTITION BY %s", engineSettings.partitionBy)
+	}
+
+	// Add engine settings if any
+	if len(engineSettings.settings) > 0 {
+		var settingsClauses []string
+		for key, value := range engineSettings.settings {
+			settingsClauses = append(settingsClauses, fmt.Sprintf("%s=%s", key, value))
+		}
+		query += fmt.Sprintf("\nSETTINGS %s", strings.Join(settingsClauses, ", "))
+	}
 
 	err = conn.Exec(context.Background(), query)
-	return err == nil, err
+	if err != nil {
+		return false, fmt.Errorf("failed to create table: %w (query: %s)", err, query)
+	}
+
+	return true, nil
 }
 
 func (p *ClickHousePlugin) AddRow(config *engine.PluginConfig, schema string, storageUnit string, values []engine.Record) (bool, error) {
