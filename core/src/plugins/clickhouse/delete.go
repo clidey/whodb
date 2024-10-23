@@ -15,38 +15,63 @@ func (p *ClickHousePlugin) DeleteRow(config *engine.PluginConfig, schema string,
 	}
 	defer conn.Close()
 
-	// Get the primary key columns
+	// Get column types and primary keys
+	columnTypes, err := getColumnTypes(conn, schema, storageUnit)
+	if err != nil {
+		return false, err
+	}
+
 	primaryKeys, err := getPrimaryKeyColumns(conn, schema, storageUnit)
 	if err != nil {
 		return false, err
 	}
 
-	// Prepare the DELETE query
+	if len(primaryKeys) == 0 {
+		return false, fmt.Errorf("no primary keys found for table %s", storageUnit)
+	}
+
+	// Build WHERE clause using primary keys
 	var whereClauses []string
 	var args []interface{}
 
-	for column, value := range values {
-		if isPrimaryKey(column, primaryKeys) {
-			whereClauses = append(whereClauses, fmt.Sprintf("%s = ?", column))
-			args = append(args, value)
+	// Ensure all primary keys are provided and build WHERE clause
+	for _, pk := range primaryKeys {
+		value, exists := values[pk]
+		if !exists {
+			return false, fmt.Errorf("primary key %s value not provided", pk)
 		}
+
+		colType, exists := columnTypes[pk]
+		if !exists {
+			return false, fmt.Errorf("column %s does not exist", pk)
+		}
+
+		convertedValue, err := convertStringValue(value, colType)
+		if err != nil {
+			return false, fmt.Errorf("error converting value for primary key %s: %w", pk, err)
+		}
+
+		whereClauses = append(whereClauses, fmt.Sprintf("%s = ?", pk))
+		args = append(args, convertedValue)
 	}
 
 	if len(whereClauses) == 0 {
 		return false, fmt.Errorf("no primary key columns specified for deletion")
 	}
 
-	// Construct the final query
+	// Construct the DELETE query
 	query := fmt.Sprintf(`
 		ALTER TABLE %s.%s
-		DELETE WHERE %s
-	`,
+		DELETE WHERE %s`,
 		schema,
 		storageUnit,
-		strings.Join(whereClauses, " AND "),
-	)
+		strings.Join(whereClauses, " AND "))
 
 	// Execute the query
 	err = conn.Exec(context.Background(), query, args...)
-	return err == nil, err
+	if err != nil {
+		return false, fmt.Errorf("delete failed: %w (query: %s, args: %+v)", err, query, args)
+	}
+
+	return true, nil
 }

@@ -2,9 +2,9 @@ package clickhouse
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
-	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/clidey/whodb/core/src/engine"
 )
 
@@ -42,36 +42,35 @@ func (p *ClickHousePlugin) executeQuery(config *engine.PluginConfig, query strin
 	}
 
 	for i, ct := range columnTypes {
-		result.Columns[i] = engine.Column{Name: ct.Name(), Type: ct.DatabaseTypeName()}
+		result.Columns[i] = engine.Column{
+			Name: ct.Name(),
+			Type: ct.DatabaseTypeName(),
+		}
 	}
 
 	for rows.Next() {
-		row, err := scanRow(rows)
-		if err != nil {
-			return nil, err
+		// Create scan destinations based on column types
+		scanDest := make([]sql.NullString, len(columnTypes))
+		scanArgs := make([]interface{}, len(columnTypes))
+		for i := range scanDest {
+			scanArgs[i] = &scanDest[i]
+		}
+
+		if err := rows.Scan(scanArgs...); err != nil {
+			return nil, fmt.Errorf("scan error: %w", err)
+		}
+
+		// Convert to strings
+		row := make([]string, len(columnTypes))
+		for i := range scanDest {
+			if scanDest[i].Valid {
+				row[i] = scanDest[i].String
+			} else {
+				row[i] = ""
+			}
 		}
 		result.Rows = append(result.Rows, row)
 	}
 
 	return result, nil
-}
-
-func scanRow(rows driver.Rows) ([]string, error) {
-	columnTypes := rows.ColumnTypes()
-	values := make([]interface{}, len(columnTypes))
-	for i := range values {
-		values[i] = new(interface{})
-	}
-
-	err := rows.Scan(values...)
-	if err != nil {
-		return nil, err
-	}
-
-	row := make([]string, len(columnTypes))
-	for i, v := range values {
-		row[i] = fmt.Sprintf("%v", *(v.(*interface{})))
-	}
-
-	return row, nil
 }
