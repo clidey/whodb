@@ -7,8 +7,10 @@ import (
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/env"
+	"github.com/clidey/whodb/core/src/highlight"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/router"
+	"github.com/clidey/whodb/core/src/settings"
 	"github.com/pkg/errors"
 	"net/http"
 	"os"
@@ -24,6 +26,12 @@ const defaultPort = "8080"
 
 func main() {
 	log.Logger.Info("Starting WhoDB...")
+
+	settingsCfg := settings.Get()
+	if settingsCfg.MetricsEnabled {
+		highlight.InitializeHighlight()
+		defer highlight.StopHighlight()
+	}
 	src.InitializeEngine()
 	r := router.InitializeRouter(staticFiles)
 

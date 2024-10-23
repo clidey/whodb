@@ -5,6 +5,7 @@ import (
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
+	"github.com/clidey/whodb/core/src/plugins/clickhouse"
 	"github.com/clidey/whodb/core/src/plugins/elasticsearch"
 	"github.com/clidey/whodb/core/src/plugins/mongodb"
 	"github.com/clidey/whodb/core/src/plugins/mysql"
@@ -24,6 +25,7 @@ func InitializeEngine() *engine.Engine {
 	MainEngine.RegistryPlugin(mongodb.NewMongoDBPlugin())
 	MainEngine.RegistryPlugin(redis.NewRedisPlugin())
 	MainEngine.RegistryPlugin(elasticsearch.NewElasticSearchPlugin())
+	MainEngine.RegistryPlugin(clickhouse.NewClickHousePlugin())
 	return MainEngine
 }
 
