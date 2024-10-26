@@ -12,6 +12,7 @@ const (
 	DatabaseType_MongoDB       = "MongoDB"
 	DatabaseType_Redis         = "Redis"
 	DatabaseType_ElasticSearch = "ElasticSearch"
+	DatabaseType_ClickHouse    = "ClickHouse"
 )
 
 type Engine struct {

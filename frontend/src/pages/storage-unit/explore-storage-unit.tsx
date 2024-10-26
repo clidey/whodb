@@ -224,20 +224,34 @@ export const ExploreStorageUnit: FC = () => {
     
         const databaseType = current.Type;
         let whereClause = "";
-    
+
+        // First group filters by field
+        const groupedFilters = filters.reduce((acc, filter) => {
+            if (!acc[filter.field]) {
+                acc[filter.field] = [];
+            }
+            acc[filter.field].push(filter);
+            return acc;
+        }, {} as Record<string, IExploreStorageUnitWhereConditionFilter[]>);
+
         switch (databaseType) {
             case DatabaseType.Postgres:
             case DatabaseType.MySql:
             case DatabaseType.Sqlite3:
             case DatabaseType.MariaDb:
-                whereClause = filters.map(filter => `"${filter.field}" ${filter.operator} '${filter.value}'`).join(' AND ');
+            case DatabaseType.ClickHouse:
+                whereClause = Object.entries(groupedFilters)
+                    .map(([field, fieldFilters]) => {
+                        const conditions = fieldFilters.map(f => `"${field}" ${f.operator} '${f.value}'`);
+                        return fieldFilters.length > 1 ? `(${conditions.join(' OR ')})` : conditions[0];
+                    })
+                    .join(' AND ');
                 break;
             case DatabaseType.ElasticSearch:
                 const elasticSearchConditions: Record<string, Record<string, any>> = {};
                 filters.forEach(filter => {
                     elasticSearchConditions[filter.operator] = { [filter.field]: filter.value };
                 });
-                whereClause = JSON.stringify({ query: { bool: { must: Object.entries(elasticSearchConditions).map(([field, condition]) => ({ [field]: condition })) } } });
                 break;
             case DatabaseType.MongoDb:
                 const mongoDbConditions: Record<string, Record<string, any>> = {};
@@ -249,7 +263,7 @@ export const ExploreStorageUnit: FC = () => {
             default:
                 throw new Error(`Unsupported database type: ${databaseType}`);
         }
-        
+        console.log(whereClause)
         setWhereCondition(whereClause);
     }, [current?.Type]);
 
@@ -280,6 +294,15 @@ export const ExploreStorageUnit: FC = () => {
                         "not", "nor", "exists", "type", "regex", "expr", "mod", "all", 
                         "elemMatch", "size", "bitsAllClear", "bitsAllSet", "bitsAnyClear", 
                         "bitsAnySet", "geoIntersects", "geoWithin", "near", "nearSphere"];
+            case DatabaseType.ClickHouse:
+                return [
+                    "=", ">=", ">", "<=", "<", "!=", "<>", "==",
+                    "LIKE", "NOT LIKE", "ILIKE",  // ILIKE is handled specially for ClickHouse
+                    "IN", "NOT IN", "GLOBAL IN", "GLOBAL NOT IN",
+                    "BETWEEN", "NOT BETWEEN",
+                    "IS NULL", "IS NOT NULL",
+                    "AND", "OR", "NOT"
+                ];
         }
         return [];
     }, [current?.Type]);

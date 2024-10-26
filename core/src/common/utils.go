@@ -111,3 +111,11 @@ func OpenBrowser(url string) {
 		log.Logger.Warnf("Failed to open browser: %v\n", err)
 	}
 }
+
+func StrPtrToBool(s *string) bool {
+	if s == nil {
+		return false
+	}
+	value := strings.ToLower(*s)
+	return value == "true"
+}
