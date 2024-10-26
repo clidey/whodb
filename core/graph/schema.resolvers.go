@@ -7,13 +7,14 @@ package graph
 import (
 	"context"
 	"errors"
-
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/auth"
+	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/llm"
+	"github.com/clidey/whodb/core/src/settings"
 )
 
 // Login is the resolver for the Login field.
@@ -66,6 +67,20 @@ func (r *mutationResolver) LoginWithProfile(ctx context.Context, profile model.L
 // Logout is the resolver for the Logout field.
 func (r *mutationResolver) Logout(ctx context.Context) (*model.StatusResponse, error) {
 	return auth.Logout(ctx)
+}
+
+// UpdateSettings is the resolver for the UpdateSettings field.
+func (r *mutationResolver) UpdateSettings(ctx context.Context, newSettings model.SettingsConfigInput) (*model.StatusResponse, error) {
+	var fields []settings.ISettingsField
+
+	if newSettings.MetricsEnabled != nil {
+		fields = append(fields, settings.MetricsEnabledField(common.StrPtrToBool(newSettings.MetricsEnabled)))
+	}
+
+	updated := settings.UpdateSettings(fields...)
+	return &model.StatusResponse{
+		Status: updated,
+	}, nil
 }
 
 // AddStorageUnit is the resolver for the AddStorageUnit field.
@@ -318,6 +333,12 @@ func (r *queryResolver) AIChat(ctx context.Context, modelType string, token *str
 	}
 
 	return chatResponse, nil
+}
+
+// SettingsConfig is the resolver for the SettingsConfig field.
+func (r *queryResolver) SettingsConfig(ctx context.Context) (*model.SettingsConfig, error) {
+	currentSettings := settings.Get()
+	return &model.SettingsConfig{MetricsEnabled: &currentSettings.MetricsEnabled}, nil
 }
 
 // Mutation returns MutationResolver implementation.
