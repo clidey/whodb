@@ -1,9 +1,9 @@
-import {FC, useCallback} from "react";
-import {InternalPage} from "../../components/page";
-import {InternalRoutes} from "../../config/routes";
-import {Text, ToggleInput} from "../../components/input";
-import {useAppDispatch, useAppSelector} from "../../store/hooks";
-import {SettingsActions} from "../../store/settings";
+import { FC, useCallback } from "react";
+import { Text, ToggleInput } from "../../components/input";
+import { InternalPage } from "../../components/page";
+import { InternalRoutes } from "../../config/routes";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { SettingsActions } from "../../store/settings";
 
 export const SettingsPage: FC = () => {
     const dispatch = useAppDispatch();
@@ -16,8 +16,8 @@ export const SettingsPage: FC = () => {
     return <InternalPage routes={[InternalRoutes.Settings]}>
         <div className="flex justify-center items-center w-full">
             <div className="w-full max-w-[1000px] flex flex-col gap-4">
-                <h2 className={"text-2xl text-black dark:text-white"}>Telemetry and Performance Metrics</h2>
-                <h3 className={"text-base text-black dark:text-white"}>
+                <h2 className="text-2xl text-neutral-700 dark:text-neutral-300">Telemetry and Performance Metrics</h2>
+                <h3 className="text-base text-neutral-700 dark:text-neutral-300">
                     We use this information solely to enhance the performance of WhoDB.
                     For details on what data we collect, how it's collected, stored, and used, please refer to our <a
                     href={"https://whodb.clidey.com/privacy-policy"} target={"_blank"}

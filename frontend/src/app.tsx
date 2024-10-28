@@ -11,16 +11,18 @@ import {useCallback, useEffect} from "react";
 import {useUpdateSettingsMutation} from "./generated/graphql";
 
 export const App = () => {
-  const [updateSettings, ] = useUpdateSettingsMutation()
+  const [updateSettings, ] = useUpdateSettingsMutation();
   const darkModeEnabled = useAppSelector(state => state.global.theme === "dark");
-  const metricsEnabled = useAppSelector(state => state.settings.metricsEnabled)
+  const metricsEnabled = useAppSelector(state => state.settings.metricsEnabled);
 
-  if (metricsEnabled) {
-    initHighlight(isDevelopment() ? "development" : "production")
-    startHighlight()
-  } else {
-    stopHighlight()
-  }
+  useEffect(() => {
+      if (metricsEnabled) {
+        initHighlight(isDevelopment() ? "development" : "production")
+        startHighlight()
+      } else {
+        stopHighlight()
+      }
+  }, [metricsEnabled]);
 
   const updateBackendWithSettings = useCallback(() => {
     updateSettings({
@@ -29,7 +31,7 @@ export const App = () => {
           MetricsEnabled: String(metricsEnabled)
         }
       }
-    })
+    });
   }, [updateSettings, metricsEnabled])
 
   useEffect(() => {

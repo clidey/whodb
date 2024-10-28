@@ -130,7 +130,11 @@ func isAllowed(r *http.Request, body []byte) bool {
 		return query.Variables["type"] == string(engine.DatabaseType_Sqlite3)
 	}
 
-	return strings.HasPrefix(query.OperationName, "Login") || query.OperationName == "Logout" || query.OperationName == "GetProfiles"
+	switch query.OperationName {
+	case "Login", "Logout", "GetProfiles", "UpdateSettings", "SettingsConfig":
+		return true
+	}
+	return false
 }
 
 func isTokenValid(token string) bool {

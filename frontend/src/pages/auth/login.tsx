@@ -159,7 +159,11 @@ export const LoginPage: FC = () => {
 
     const handleDatabaseTypeChange = useCallback((item: IDropdownItem) => {
         if (item.id === DatabaseType.Sqlite3) {
-            getDatabases();
+            getDatabases({
+                variables: {
+                    type: DatabaseType.Sqlite3,
+                },
+            });
         }
         setHostName("");
         setUsername("");
