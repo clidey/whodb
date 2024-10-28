@@ -152,6 +152,9 @@ export const Sidebar: FC = () => {
     const current = useAppSelector(state => state.auth.current);
     const profiles = useAppSelector(state => state.auth.profiles);
     const { data: availableDatabases, loading: availableDatabasesLoading } = useGetDatabaseQuery({
+        variables: {
+            type: current?.Type as DatabaseType,
+        },
         skip: current == null || (current.Type !== DatabaseType.Redis && isNoSQL(current?.Type as DatabaseType)),
     });
     const { data: availableSchemas, loading: availableSchemasLoading, refetch: getSchemas } = useGetSchemaQuery({
@@ -450,10 +453,10 @@ export const Sidebar: FC = () => {
                             <SideMenu collapse={collapsed} title="Contact Us" icon={Icons.QuestionMark}
                                       path={InternalRoutes.ContactUs.path}/>
                         </div>
-                        {/*<div className="flex flex-col gap-8">*/}
-                        {/*    <SideMenu collapse={collapsed} title="Settings" icon={Icons.Settings}*/}
-                        {/*              path={InternalRoutes.Settings.path}/>*/}
-                        {/*</div>*/}
+                        <div className="flex flex-col gap-8">
+                            <SideMenu collapse={collapsed} title="Settings" icon={Icons.Settings}
+                                      path={InternalRoutes.Settings.path}/>
+                        </div>
                         <div className="flex flex-col gap-8">
                             <SideMenu collapse={collapsed} title="Logout" icon={Icons.Logout}
                                       path={InternalRoutes.Logout.path}/>

@@ -98,6 +98,7 @@ export type Mutation = {
   Login: StatusResponse;
   LoginWithProfile: StatusResponse;
   Logout: StatusResponse;
+  UpdateSettings: StatusResponse;
   UpdateStorageUnit: StatusResponse;
 };
 
@@ -133,6 +134,11 @@ export type MutationLoginWithProfileArgs = {
 };
 
 
+export type MutationUpdateSettingsArgs = {
+  newSettings: SettingsConfigInput;
+};
+
+
 export type MutationUpdateStorageUnitArgs = {
   schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
@@ -149,6 +155,7 @@ export type Query = {
   RawExecute: RowsResult;
   Row: RowsResult;
   Schema: Array<Scalars['String']['output']>;
+  SettingsConfig: SettingsConfig;
   StorageUnit: Array<StorageUnit>;
   Version: Scalars['String']['output'];
 };
@@ -165,6 +172,11 @@ export type QueryAiChatArgs = {
 export type QueryAiModelArgs = {
   modelType: Scalars['String']['input'];
   token?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryDatabaseArgs = {
+  type: Scalars['String']['input'];
 };
 
 
@@ -210,6 +222,15 @@ export type RowsResult = {
   Rows: Array<Array<Scalars['String']['output']>>;
 };
 
+export type SettingsConfig = {
+  __typename?: 'SettingsConfig';
+  MetricsEnabled?: Maybe<Scalars['Boolean']['output']>;
+};
+
+export type SettingsConfigInput = {
+  MetricsEnabled?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type StatusResponse = {
   __typename?: 'StatusResponse';
   Status: Scalars['Boolean']['output'];
@@ -236,7 +257,9 @@ export type GetVersionQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type GetVersionQuery = { __typename?: 'Query', Version: string };
 
-export type GetDatabaseQueryVariables = Exact<{ [key: string]: never; }>;
+export type GetDatabaseQueryVariables = Exact<{
+  type: Scalars['String']['input'];
+}>;
 
 
 export type GetDatabaseQuery = { __typename?: 'Query', Database: Array<string> };
@@ -293,6 +316,18 @@ export type RawExecuteQueryVariables = Exact<{
 
 
 export type RawExecuteQuery = { __typename?: 'Query', RawExecute: { __typename?: 'RowsResult', Rows: Array<Array<string>>, Columns: Array<{ __typename?: 'Column', Type: string, Name: string }> } };
+
+export type SettingsConfigQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type SettingsConfigQuery = { __typename?: 'Query', SettingsConfig: { __typename?: 'SettingsConfig', MetricsEnabled?: boolean | null } };
+
+export type UpdateSettingsMutationVariables = Exact<{
+  newSettings: SettingsConfigInput;
+}>;
+
+
+export type UpdateSettingsMutation = { __typename?: 'Mutation', UpdateSettings: { __typename?: 'StatusResponse', Status: boolean } };
 
 export type AddRowMutationVariables = Exact<{
   schema: Scalars['String']['input'];
@@ -382,8 +417,8 @@ export function useGetProfilesLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetProfilesQuery, GetProfilesQueryVariables>(GetProfilesDocument, options);
         }
-export function useGetProfilesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetProfilesQuery, GetProfilesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetProfilesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetProfilesQuery, GetProfilesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetProfilesQuery, GetProfilesQueryVariables>(GetProfilesDocument, options);
         }
 export type GetProfilesQueryHookResult = ReturnType<typeof useGetProfilesQuery>;
@@ -419,8 +454,8 @@ export function useGetSchemaLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetSchemaQuery, GetSchemaQueryVariables>(GetSchemaDocument, options);
         }
-export function useGetSchemaSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetSchemaQuery, GetSchemaQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetSchemaSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSchemaQuery, GetSchemaQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetSchemaQuery, GetSchemaQueryVariables>(GetSchemaDocument, options);
         }
 export type GetSchemaQueryHookResult = ReturnType<typeof useGetSchemaQuery>;
@@ -456,8 +491,8 @@ export function useGetVersionLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetVersionQuery, GetVersionQueryVariables>(GetVersionDocument, options);
         }
-export function useGetVersionSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetVersionQuery, GetVersionQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetVersionSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetVersionQuery, GetVersionQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetVersionQuery, GetVersionQueryVariables>(GetVersionDocument, options);
         }
 export type GetVersionQueryHookResult = ReturnType<typeof useGetVersionQuery>;
@@ -465,8 +500,8 @@ export type GetVersionLazyQueryHookResult = ReturnType<typeof useGetVersionLazyQ
 export type GetVersionSuspenseQueryHookResult = ReturnType<typeof useGetVersionSuspenseQuery>;
 export type GetVersionQueryResult = Apollo.QueryResult<GetVersionQuery, GetVersionQueryVariables>;
 export const GetDatabaseDocument = gql`
-    query GetDatabase {
-  Database
+    query GetDatabase($type: String!) {
+  Database(type: $type)
 }
     `;
 
@@ -482,10 +517,11 @@ export const GetDatabaseDocument = gql`
  * @example
  * const { data, loading, error } = useGetDatabaseQuery({
  *   variables: {
+ *      type: // value for 'type'
  *   },
  * });
  */
-export function useGetDatabaseQuery(baseOptions?: Apollo.QueryHookOptions<GetDatabaseQuery, GetDatabaseQueryVariables>) {
+export function useGetDatabaseQuery(baseOptions: Apollo.QueryHookOptions<GetDatabaseQuery, GetDatabaseQueryVariables> & ({ variables: GetDatabaseQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetDatabaseQuery, GetDatabaseQueryVariables>(GetDatabaseDocument, options);
       }
@@ -493,8 +529,8 @@ export function useGetDatabaseLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetDatabaseQuery, GetDatabaseQueryVariables>(GetDatabaseDocument, options);
         }
-export function useGetDatabaseSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetDatabaseQuery, GetDatabaseQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetDatabaseSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetDatabaseQuery, GetDatabaseQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetDatabaseQuery, GetDatabaseQueryVariables>(GetDatabaseDocument, options);
         }
 export type GetDatabaseQueryHookResult = ReturnType<typeof useGetDatabaseQuery>;
@@ -649,8 +685,8 @@ export function useGetAiChatLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetAiChatQuery, GetAiChatQueryVariables>(GetAiChatDocument, options);
         }
-export function useGetAiChatSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetAiChatQuery, GetAiChatQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetAiChatSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAiChatQuery, GetAiChatQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetAiChatQuery, GetAiChatQueryVariables>(GetAiChatDocument, options);
         }
 export type GetAiChatQueryHookResult = ReturnType<typeof useGetAiChatQuery>;
@@ -688,8 +724,8 @@ export function useGetAiModelsLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetAiModelsQuery, GetAiModelsQueryVariables>(GetAiModelsDocument, options);
         }
-export function useGetAiModelsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetAiModelsQuery, GetAiModelsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetAiModelsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAiModelsQuery, GetAiModelsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetAiModelsQuery, GetAiModelsQueryVariables>(GetAiModelsDocument, options);
         }
 export type GetAiModelsQueryHookResult = ReturnType<typeof useGetAiModelsQuery>;
@@ -738,8 +774,8 @@ export function useGetGraphLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<G
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetGraphQuery, GetGraphQueryVariables>(GetGraphDocument, options);
         }
-export function useGetGraphSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetGraphQuery, GetGraphQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetGraphSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetGraphQuery, GetGraphQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetGraphQuery, GetGraphQueryVariables>(GetGraphDocument, options);
         }
 export type GetGraphQueryHookResult = ReturnType<typeof useGetGraphQuery>;
@@ -782,14 +818,86 @@ export function useRawExecuteLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<RawExecuteQuery, RawExecuteQueryVariables>(RawExecuteDocument, options);
         }
-export function useRawExecuteSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<RawExecuteQuery, RawExecuteQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useRawExecuteSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<RawExecuteQuery, RawExecuteQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<RawExecuteQuery, RawExecuteQueryVariables>(RawExecuteDocument, options);
         }
 export type RawExecuteQueryHookResult = ReturnType<typeof useRawExecuteQuery>;
 export type RawExecuteLazyQueryHookResult = ReturnType<typeof useRawExecuteLazyQuery>;
 export type RawExecuteSuspenseQueryHookResult = ReturnType<typeof useRawExecuteSuspenseQuery>;
 export type RawExecuteQueryResult = Apollo.QueryResult<RawExecuteQuery, RawExecuteQueryVariables>;
+export const SettingsConfigDocument = gql`
+    query SettingsConfig {
+  SettingsConfig {
+    MetricsEnabled
+  }
+}
+    `;
+
+/**
+ * __useSettingsConfigQuery__
+ *
+ * To run a query within a React component, call `useSettingsConfigQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSettingsConfigQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSettingsConfigQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useSettingsConfigQuery(baseOptions?: Apollo.QueryHookOptions<SettingsConfigQuery, SettingsConfigQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<SettingsConfigQuery, SettingsConfigQueryVariables>(SettingsConfigDocument, options);
+      }
+export function useSettingsConfigLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<SettingsConfigQuery, SettingsConfigQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<SettingsConfigQuery, SettingsConfigQueryVariables>(SettingsConfigDocument, options);
+        }
+export function useSettingsConfigSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SettingsConfigQuery, SettingsConfigQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<SettingsConfigQuery, SettingsConfigQueryVariables>(SettingsConfigDocument, options);
+        }
+export type SettingsConfigQueryHookResult = ReturnType<typeof useSettingsConfigQuery>;
+export type SettingsConfigLazyQueryHookResult = ReturnType<typeof useSettingsConfigLazyQuery>;
+export type SettingsConfigSuspenseQueryHookResult = ReturnType<typeof useSettingsConfigSuspenseQuery>;
+export type SettingsConfigQueryResult = Apollo.QueryResult<SettingsConfigQuery, SettingsConfigQueryVariables>;
+export const UpdateSettingsDocument = gql`
+    mutation UpdateSettings($newSettings: SettingsConfigInput!) {
+  UpdateSettings(newSettings: $newSettings) {
+    Status
+  }
+}
+    `;
+export type UpdateSettingsMutationFn = Apollo.MutationFunction<UpdateSettingsMutation, UpdateSettingsMutationVariables>;
+
+/**
+ * __useUpdateSettingsMutation__
+ *
+ * To run a mutation, you first call `useUpdateSettingsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateSettingsMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateSettingsMutation, { data, loading, error }] = useUpdateSettingsMutation({
+ *   variables: {
+ *      newSettings: // value for 'newSettings'
+ *   },
+ * });
+ */
+export function useUpdateSettingsMutation(baseOptions?: Apollo.MutationHookOptions<UpdateSettingsMutation, UpdateSettingsMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateSettingsMutation, UpdateSettingsMutationVariables>(UpdateSettingsDocument, options);
+      }
+export type UpdateSettingsMutationHookResult = ReturnType<typeof useUpdateSettingsMutation>;
+export type UpdateSettingsMutationResult = Apollo.MutationResult<UpdateSettingsMutation>;
+export type UpdateSettingsMutationOptions = Apollo.BaseMutationOptions<UpdateSettingsMutation, UpdateSettingsMutationVariables>;
 export const AddRowDocument = gql`
     mutation AddRow($schema: String!, $storageUnit: String!, $values: [RecordInput!]!) {
   AddRow(schema: $schema, storageUnit: $storageUnit, values: $values) {
@@ -942,8 +1050,8 @@ export function useGetStorageUnitRowsLazyQuery(baseOptions?: Apollo.LazyQueryHoo
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetStorageUnitRowsQuery, GetStorageUnitRowsQueryVariables>(GetStorageUnitRowsDocument, options);
         }
-export function useGetStorageUnitRowsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetStorageUnitRowsQuery, GetStorageUnitRowsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetStorageUnitRowsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetStorageUnitRowsQuery, GetStorageUnitRowsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetStorageUnitRowsQuery, GetStorageUnitRowsQueryVariables>(GetStorageUnitRowsDocument, options);
         }
 export type GetStorageUnitRowsQueryHookResult = ReturnType<typeof useGetStorageUnitRowsQuery>;
@@ -986,8 +1094,8 @@ export function useGetStorageUnitsLazyQuery(baseOptions?: Apollo.LazyQueryHookOp
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetStorageUnitsQuery, GetStorageUnitsQueryVariables>(GetStorageUnitsDocument, options);
         }
-export function useGetStorageUnitsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetStorageUnitsQuery, GetStorageUnitsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetStorageUnitsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetStorageUnitsQuery, GetStorageUnitsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetStorageUnitsQuery, GetStorageUnitsQueryVariables>(GetStorageUnitsDocument, options);
         }
 export type GetStorageUnitsQueryHookResult = ReturnType<typeof useGetStorageUnitsQuery>;
