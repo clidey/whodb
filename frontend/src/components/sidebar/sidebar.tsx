@@ -450,10 +450,10 @@ export const Sidebar: FC = () => {
                             <SideMenu collapse={collapsed} title="Contact Us" icon={Icons.QuestionMark}
                                       path={InternalRoutes.ContactUs.path}/>
                         </div>
-                        {/*<div className="flex flex-col gap-8">*/}
-                        {/*    <SideMenu collapse={collapsed} title="Settings" icon={Icons.Settings}*/}
-                        {/*              path={InternalRoutes.Settings.path}/>*/}
-                        {/*</div>*/}
+                        <div className="flex flex-col gap-8">
+                            <SideMenu collapse={collapsed} title="Settings" icon={Icons.Settings}
+                                      path={InternalRoutes.Settings.path}/>
+                        </div>
                         <div className="flex flex-col gap-8">
                             <SideMenu collapse={collapsed} title="Logout" icon={Icons.Logout}
                                       path={InternalRoutes.Logout.path}/>

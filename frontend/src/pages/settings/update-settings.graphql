@@ -1,0 +1,5 @@
+mutation UpdateSettings($newSettings: SettingsConfigInput!) {
+    UpdateSettings(newSettings: $newSettings) {
+        Status
+    }
+}

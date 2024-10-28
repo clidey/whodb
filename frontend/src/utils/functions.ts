@@ -13,6 +13,10 @@ export function toTitleCase(str: string) {
     return startCase(toLower(str));
 }
 
+export function isDevelopment() {
+    return process.env.NODE_ENV === "development"
+}
+
 export function isMarkdown(text: string): boolean {
     const markdownPatterns = [
         /^#{1,6}\s+/,

@@ -14,6 +14,9 @@ importers:
       '@dagrejs/dagre':
         specifier: ^1.1.4
         version: 1.1.4
+      '@highlight-run/react':
+        specifier: ^6.0.3
+        version: 6.0.3(highlight.run@9.4.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@monaco-editor/react':
         specifier: ^4.6.0
         version: 4.6.0(monaco-editor@0.52.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -56,6 +59,9 @@ importers:
       graphql:
         specifier: ^16.9.0
         version: 16.9.0
+      highlight.run:
+        specifier: ^9.4.3
+        version: 9.4.3
       html-to-image:
         specifier: ^1.11.11
         version: 1.11.11
@@ -1292,6 +1298,13 @@ packages:
     resolution: {integrity: sha512-mB9oAsNCm9aM3/SOv4YtBMqZbYj10R7dkq8byBqxGY/ncFwhf2oQzMV+LCRlWoDSEBJ3COiR1yeDvMtsoOsuFQ==}
     peerDependencies:
       graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
+
+  '@highlight-run/react@6.0.3':
+    resolution: {integrity: sha512-+MnCTZwBrrL/X3ZL/UTxT+ZLoav64VWAmotQWTBshWvl8za4I9K+RFfse1gUsxUMcQz/xKauGIkr+2aE+goCFw==}
+    peerDependencies:
+      highlight.run: 9.4.3
+      react: '>=16'
+      react-dom: '>=16'
 
   '@humanwhocodes/config-array@0.11.14':
     resolution: {integrity: sha512-3T8LkOmg45BV5FICb15QQMsyUSWrQ8AygVfC7ZG32zOalnqrilm018ZVCw0eapXux8FtA33q8PSRSstjee3jSg==}
@@ -3927,6 +3940,9 @@ packages:
 
   header-case@2.0.4:
     resolution: {integrity: sha512-H/vuk5TEEVZwrR0lp2zed9OCo1uAILMlx0JEMgC26rzyJJ3N1v6XkwHHXJQdR2doSjcGPM6OKPYoJgf0plJ11Q==}
+
+  highlight.run@9.4.3:
+    resolution: {integrity: sha512-LqQQ7cUErzj7ARfj6of1j74DUeP0LO3ZC6ftYxpizmgqqQmUsA3jOw6skDFYKnQg9BrF2AWpq7pQNZcwBTPJYw==}
 
   hoist-non-react-statics@3.3.2:
     resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
@@ -9011,6 +9027,12 @@ snapshots:
     dependencies:
       graphql: 16.9.0
 
+  '@highlight-run/react@6.0.3(highlight.run@9.4.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      highlight.run: 9.4.3
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+
   '@humanwhocodes/config-array@0.11.14':
     dependencies:
       '@humanwhocodes/object-schema': 2.0.3
@@ -12335,6 +12357,8 @@ snapshots:
     dependencies:
       capital-case: 1.0.4
       tslib: 2.6.3
+
+  highlight.run@9.4.3: {}
 
   hoist-non-react-statics@3.3.2:
     dependencies:
