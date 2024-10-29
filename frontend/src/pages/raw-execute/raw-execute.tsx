@@ -20,9 +20,11 @@ type IRawExecuteCellProps = {
 
 const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, showTools }) => {
     const [code, setCode] = useState("");
+    const [submittedCode, setSubmittedCode] = useState("");
     const [rawExecute, { data: rows, loading, error }] = useRawExecuteLazyQuery();
 
     const handleRawExecute = useCallback(() => {
+        setSubmittedCode(code);
         rawExecute({
             variables: {
                 query: code,
@@ -40,9 +42,9 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     }, [cellId, onDelete]);
 
 
-    const codeWithoutComments = useMemo(() => {
-        return code.split("\n").filter(text => !text.startsWith("--")).join("\n");
-    }, [code]);
+    const isCodeAQuery = useMemo(() => {
+        return submittedCode.split("\n").filter(text => !text.startsWith("--")).join("\n").trim().toLowerCase().startsWith("select");
+    }, [submittedCode]);
 
     return <div className="flex flex-col grow group/cell">
             <div className="relative">
@@ -73,8 +75,8 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                 </div>
             }
             {
-                rows != null && 
-                (codeWithoutComments.trim().startsWith("SELECT")
+                rows != null && submittedCode.length > 0 && 
+                (isCodeAQuery
                     ?
                         <div className="flex flex-col w-full h-[250px] mt-4">
                             <Table columns={rows.RawExecute.Columns.map(c => c.Name)} columnTags={rows.RawExecute.Columns.map(c => c.Type)}

@@ -264,7 +264,7 @@ export const LoginPage: FC = () => {
 
     return (
         <Container className="justify-center items-center">
-            <div className={twMerge(BASE_CARD_CLASS, "w-fit h-fit")}>
+            <div className="w-fit h-fit">
                 <div className="flex flex-col justify-between grow gap-4">
                     <div className="flex grow">
                         <div className="flex flex-col gap-4 grow w-[350px]">
