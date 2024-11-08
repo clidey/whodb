@@ -22,7 +22,7 @@ type IExploreStorageUnitWhereConditionProps = {
 
 export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereConditionProps> = ({ defaultFilters, options, onChange, operators }) => {
     const [currentFilter, setCurrentFilter] = useState<IExploreStorageUnitWhereConditionFilter>({ field: options[0], operator: operators[0], value: "" });
-    const [filters, setFitlers] = useState<IExploreStorageUnitWhereConditionFilter[]>([]);
+    const [filters, setFilters] = useState<IExploreStorageUnitWhereConditionFilter[]>([]);
     const [newFilter, setNewFilter] = useState(false);
     const [editingFilter, setEditingFilter] = useState(-1);
 
@@ -62,7 +62,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
 
     const handleAddFilter = useCallback(() => {
         const newFilters = [...filters, currentFilter];
-        setFitlers(newFilters);
+        setFilters(newFilters);
         setCurrentFilter({ field: currentFilter.field, operator: operators[0], value: "" });
         onChange?.(newFilters);
     }, [filters, currentFilter, onChange, operators]);
@@ -70,7 +70,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
     const handleRemove = useCallback((index: number) => {
         setEditingFilter(-1);
         const newFilters = filters.filter((_, i) => i !== index)
-        setFitlers(newFilters);
+        setFilters(newFilters);
         onChange?.(newFilters);
     }, [filters, onChange]);
 
@@ -88,7 +88,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
     const handleSaveFilter = useCallback((index: number) => {
         const newFilters = [...filters];
         newFilters[index] = {...currentFilter};
-        setFitlers(newFilters);
+        setFilters(newFilters);
         setEditingFilter(-1);
         setCurrentFilter({ field: currentFilter.field, operator: operators[0], value: "" });
         onChange?.(newFilters);
@@ -106,7 +106,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
     }, [operators]);
 
     useEffect(() => {
-        setFitlers(defaultFilters ?? []);
+        setFilters(defaultFilters ?? []);
     }, [defaultFilters]);
 
     return <div className="flex flex-col gap-1 h-full relative">

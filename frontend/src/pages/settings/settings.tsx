@@ -27,7 +27,7 @@ export const SettingsPage: FC = () => {
                     WhoDB uses <a href={"https://www.highlight.io/"} target={"_blank"} rel="noreferrer"
                                   className={"underline text-blue-500"}>Highlight.io</a> to collect and manage this
                     data. It is an open source tool and all of its source code can be found on GitHub.
-                    We have taken measures to redact as much sensitive information as we can and will continously
+                    We have taken measures to redact as much sensitive information as we can and will continuously
                     evaluate to make sure that it fits yours and our needs without sacrificing anything.
                     <br/>
                     <br/>
