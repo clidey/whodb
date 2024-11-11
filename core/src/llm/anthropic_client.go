@@ -42,10 +42,20 @@ func getAnthropicModels(_ string) ([]string, error) {
 	}
 	return models, nil
 }
+
 func parseAnthropicResponse(body io.ReadCloser, receiverChan *chan string, responseBuilder *strings.Builder) (*string, error) {
-	scanner := bufio.NewScanner(body)
-	for scanner.Scan() {
-		line := scanner.Text()
+	defer body.Close()
+	reader := bufio.NewReader(body)
+
+	for {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, err
+		}
+
 		var anthropicResponse struct {
 			Content []struct {
 				Text string `json:"text"`
@@ -62,10 +72,11 @@ func parseAnthropicResponse(body io.ReadCloser, receiverChan *chan string, respo
 			Type         string  `json:"type"`
 			StopSequence *string `json:"stop_sequence,omitempty"`
 		}
-		err := json.Unmarshal([]byte(line), &anthropicResponse)
-		if err != nil {
+
+		if err := json.Unmarshal([]byte(line), &anthropicResponse); err != nil {
 			return nil, err
 		}
+
 		for _, content := range anthropicResponse.Content {
 			if receiverChan != nil {
 				*receiverChan <- content.Text
@@ -74,10 +85,12 @@ func parseAnthropicResponse(body io.ReadCloser, receiverChan *chan string, respo
 				return nil, err
 			}
 		}
+
 		if anthropicResponse.StopReason == "end_turn" {
 			response := responseBuilder.String()
 			return &response, nil
 		}
 	}
-	return nil, scanner.Err()
+
+	return nil, nil
 }

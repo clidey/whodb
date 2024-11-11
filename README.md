@@ -26,7 +26,7 @@ Build Status: &nbsp; <img src="https://hello.clidey.com/api/flows/status?id=b322
 8. [Backend](#backend-setup)
 9. [FAQs](#faqs)
 10. [Contributing](#contributing)
-11. [Infrastrucutre](#infrastrucutre)
+11. [Infrastructure](#infrastructure)
 12. [Contact details](#contact)
 
 
@@ -144,7 +144,7 @@ While WhoDB is lightweight and efficient, we recommend evaluating its suitabilit
 We welcome contributions from the community! Feel free to open issues or submit pull requests to help improve WhoDB. 
 We have a contribution guide [here](https://github.com/clidey/whodb/blob/main/CONTRIBUTING.md).
 
-## Infrastrucutre
+## Infrastructure
 
 WhoDB's deployment and CI/CD are managed by Clidey, a no-code DevOps platform. For more information, visit https://clidey.com
 
