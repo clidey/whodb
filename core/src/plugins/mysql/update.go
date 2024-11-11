@@ -53,7 +53,7 @@ func (p *MySQLPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema stri
 	tableName := fmt.Sprintf("%s.%s", schema, storageUnit)
 	dbConditions := db.Table(tableName)
 	for key, value := range conditions {
-		dbConditions = dbConditions.Where(fmt.Sprintf("\"%s\" = ?", key), value)
+		dbConditions = dbConditions.Where(fmt.Sprintf("`%s` = ?", key), value)
 	}
 
 	result := dbConditions.Table(tableName).Updates(convertedValues)
