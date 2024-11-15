@@ -152,6 +152,9 @@ export const Sidebar: FC = () => {
     const current = useAppSelector(state => state.auth.current);
     const profiles = useAppSelector(state => state.auth.profiles);
     const { data: availableDatabases, loading: availableDatabasesLoading } = useGetDatabaseQuery({
+        variables: {
+            type: current?.Type as DatabaseType,
+        },
         skip: current == null || (current.Type !== DatabaseType.Redis && isNoSQL(current?.Type as DatabaseType)),
     });
     const { data: availableSchemas, loading: availableSchemasLoading, refetch: getSchemas } = useGetSchemaQuery({

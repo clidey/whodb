@@ -26,32 +26,46 @@ func prepareOllamaModelsRequest() (string, map[string]string) {
 }
 
 func parseOllamaResponse(body io.ReadCloser, receiverChan *chan string, responseBuilder *strings.Builder) (*string, error) {
-	scanner := bufio.NewScanner(body)
-	for scanner.Scan() {
-		line := scanner.Text()
+	defer body.Close()
+	reader := bufio.NewReader(body)
+
+	for {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, err
+		}
+
 		var completionResponse struct {
 			Response string `json:"response"`
 			Done     bool   `json:"done"`
 		}
-		err := json.Unmarshal([]byte(line), &completionResponse)
-		if err != nil {
+		if err := json.Unmarshal([]byte(line), &completionResponse); err != nil {
 			return nil, err
 		}
+
 		if receiverChan != nil {
 			*receiverChan <- completionResponse.Response
 		}
+
 		if _, err := responseBuilder.WriteString(completionResponse.Response); err != nil {
 			return nil, err
 		}
+
 		if completionResponse.Done {
 			response := responseBuilder.String()
 			return &response, nil
 		}
 	}
-	return nil, scanner.Err()
+
+	return nil, nil
 }
 
 func parseOllamaModelsResponse(body io.ReadCloser) ([]string, error) {
+	defer body.Close()
+
 	var modelsResp struct {
 		Models []struct {
 			Name string `json:"model"`

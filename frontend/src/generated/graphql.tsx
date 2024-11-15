@@ -176,6 +176,11 @@ export type QueryAiModelArgs = {
 };
 
 
+export type QueryDatabaseArgs = {
+  type: Scalars['String']['input'];
+};
+
+
 export type QueryGraphArgs = {
   schema: Scalars['String']['input'];
 };
@@ -253,7 +258,9 @@ export type GetVersionQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type GetVersionQuery = { __typename?: 'Query', Version: string };
 
-export type GetDatabaseQueryVariables = Exact<{ [key: string]: never; }>;
+export type GetDatabaseQueryVariables = Exact<{
+  type: Scalars['String']['input'];
+}>;
 
 
 export type GetDatabaseQuery = { __typename?: 'Query', Database: Array<string> };
@@ -485,8 +492,8 @@ export function useGetVersionLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetVersionQuery, GetVersionQueryVariables>(GetVersionDocument, options);
         }
-export function useGetVersionSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetVersionQuery, GetVersionQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetVersionSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetVersionQuery, GetVersionQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetVersionQuery, GetVersionQueryVariables>(GetVersionDocument, options);
         }
 export type GetVersionQueryHookResult = ReturnType<typeof useGetVersionQuery>;
@@ -494,8 +501,8 @@ export type GetVersionLazyQueryHookResult = ReturnType<typeof useGetVersionLazyQ
 export type GetVersionSuspenseQueryHookResult = ReturnType<typeof useGetVersionSuspenseQuery>;
 export type GetVersionQueryResult = Apollo.QueryResult<GetVersionQuery, GetVersionQueryVariables>;
 export const GetDatabaseDocument = gql`
-    query GetDatabase {
-  Database
+    query GetDatabase($type: String!) {
+  Database(type: $type)
 }
     `;
 
@@ -511,10 +518,11 @@ export const GetDatabaseDocument = gql`
  * @example
  * const { data, loading, error } = useGetDatabaseQuery({
  *   variables: {
+ *      type: // value for 'type'
  *   },
  * });
  */
-export function useGetDatabaseQuery(baseOptions?: Apollo.QueryHookOptions<GetDatabaseQuery, GetDatabaseQueryVariables>) {
+export function useGetDatabaseQuery(baseOptions: Apollo.QueryHookOptions<GetDatabaseQuery, GetDatabaseQueryVariables> & ({ variables: GetDatabaseQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetDatabaseQuery, GetDatabaseQueryVariables>(GetDatabaseDocument, options);
       }

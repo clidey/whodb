@@ -5,12 +5,14 @@ import (
 	"github.com/highlight/highlight/sdk/highlight-go"
 )
 
+const highlightProjectId = "4d7z8oqe"
+
 func InitializeHighlight() {
 	environment := "production"
 	if env.IsDevelopment {
 		environment = "development"
 	}
-	highlight.SetProjectID("")
+	highlight.SetProjectID(highlightProjectId)
 	highlight.Start(
 		highlight.WithServiceName("WhoDB-backend"),
 		highlight.WithEnvironment(environment))

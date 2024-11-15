@@ -103,7 +103,7 @@ type AIChatMessage {
 type Query {
   Version: String!
   Profiles: [LoginProfile!]!
-  Database: [String!]!
+  Database(type: String!): [String!]!
   Schema: [String!]!
   StorageUnit(schema: String!): [StorageUnit!]!
   Row(schema: String!, storageUnit: String!, where: String!, pageSize: Int!, pageOffset: Int!): RowsResult!

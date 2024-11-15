@@ -37,7 +37,8 @@ func getProfilesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getDatabasesHandler(w http.ResponseWriter, r *http.Request) {
-	databases, err := resolver.Query().Database(r.Context())
+	typeArg := r.URL.Query().Get("type")
+	databases, err := resolver.Query().Database(r.Context(), typeArg)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

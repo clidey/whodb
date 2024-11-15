@@ -38,11 +38,20 @@ func prepareChatGPTModelsRequest(apiKey string) (string, map[string]string) {
 }
 
 func parseChatGPTResponse(body io.ReadCloser, receiverChan *chan string, responseBuilder *strings.Builder) (*string, error) {
+	defer body.Close()
+
 	if receiverChan != nil {
-		scanner := bufio.NewScanner(body)
-		for scanner.Scan() {
-			line := scanner.Text()
-			if line == "" {
+		reader := bufio.NewReader(body)
+		for {
+			line, err := reader.ReadString('\n')
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				return nil, err
+			}
+
+			if strings.TrimSpace(line) == "" {
 				continue
 			}
 
@@ -55,8 +64,7 @@ func parseChatGPTResponse(body io.ReadCloser, receiverChan *chan string, respons
 				FinishReason string `json:"finish_reason"`
 			}
 
-			err := json.Unmarshal([]byte(line), &completionResponse)
-			if err != nil {
+			if err := json.Unmarshal([]byte(line), &completionResponse); err != nil {
 				return nil, err
 			}
 
@@ -72,7 +80,6 @@ func parseChatGPTResponse(body io.ReadCloser, receiverChan *chan string, respons
 				}
 			}
 		}
-		return nil, scanner.Err()
 	} else {
 		var completionResponse struct {
 			Choices []struct {
@@ -93,9 +100,13 @@ func parseChatGPTResponse(body io.ReadCloser, receiverChan *chan string, respons
 
 		return nil, errors.New("no completion response received")
 	}
+
+	return nil, nil
 }
 
 func parseChatGPTModelsResponse(body io.ReadCloser) ([]string, error) {
+	defer body.Close()
+
 	var modelsResp struct {
 		Models []struct {
 			Name string `json:"id"`

@@ -86,9 +86,9 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-    AIChat         func(childComplexity int, modelType string, token *string, schema string, input model.ChatInput) int
+		AIChat         func(childComplexity int, modelType string, token *string, schema string, input model.ChatInput) int
 		AIModel        func(childComplexity int, modelType string, token *string) int
-		Database       func(childComplexity int) int
+		Database       func(childComplexity int, typeArg string) int
 		Graph          func(childComplexity int, schema string) int
 		Profiles       func(childComplexity int) int
 		RawExecute     func(childComplexity int, query string) int
@@ -96,7 +96,7 @@ type ComplexityRoot struct {
 		Schema         func(childComplexity int) int
 		SettingsConfig func(childComplexity int) int
 		StorageUnit    func(childComplexity int, schema string) int
-		Version     func(childComplexity int) int
+		Version        func(childComplexity int) int
 	}
 
 	Record struct {
@@ -137,7 +137,7 @@ type MutationResolver interface {
 type QueryResolver interface {
 	Version(ctx context.Context) (string, error)
 	Profiles(ctx context.Context) ([]*model.LoginProfile, error)
-	Database(ctx context.Context) ([]string, error)
+	Database(ctx context.Context, typeArg string) ([]string, error)
 	Schema(ctx context.Context) ([]string, error)
 	StorageUnit(ctx context.Context, schema string) ([]*model.StorageUnit, error)
 	Row(ctx context.Context, schema string, storageUnit string, where string, pageSize int, pageOffset int) (*model.RowsResult, error)
@@ -371,7 +371,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Query.Database(childComplexity), true
+		args, err := ec.field_Query_Database_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Database(childComplexity, args["type"].(string)), true
 
 	case "Query.Graph":
 		if e.complexity.Query.Graph == nil {
@@ -1250,6 +1255,38 @@ func (ec *executionContext) field_Query_AIModel_argsToken(
 	}
 
 	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_Database_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Query_Database_argsType(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["type"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Query_Database_argsType(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["type"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+	if tmp, ok := rawArgs["type"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
 	return zeroVal, nil
 }
 
@@ -2706,7 +2743,7 @@ func (ec *executionContext) _Query_Database(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Database(rctx)
+		return ec.resolvers.Query().Database(rctx, fc.Args["type"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2723,7 +2760,7 @@ func (ec *executionContext) _Query_Database(ctx context.Context, field graphql.C
 	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_Database(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_Database(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -2732,6 +2769,17 @@ func (ec *executionContext) fieldContext_Query_Database(_ context.Context, field
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_Database_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }

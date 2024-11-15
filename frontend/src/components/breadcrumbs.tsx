@@ -28,7 +28,7 @@ export const Breadcrumb: FC<IBreadcrumbProps> = ({ routes, active }) => {
                                 }))}>
                                     {
                                         i === 0 &&
-                                        <div className="inline-flex items-center text-sm font-medium text-gray-700 dark:text-neutral-300">
+                                        <div className="inline-flex items-center text-sm font-medium text-neutral-700 dark:text-neutral-300">
                                             {cloneElement(Icons.Home, {
                                                 className: classNames("w-3 h-3 group-hover/breadcrumb:fill-[#ca6f1e]", {
                                                         "fill-[#ca6f1e] dark:fill-[#ca6f1e]": active === route,
