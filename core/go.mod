@@ -6,7 +6,7 @@ toolchain go1.22.7
 
 require (
 	github.com/99designs/gqlgen v0.17.55
-	github.com/elastic/go-elasticsearch/v8 v8.15.0
+	github.com/elastic/go-elasticsearch/v8 v8.16.0
 	github.com/go-chi/chi/v5 v5.1.0
 	github.com/go-chi/cors v1.2.1
 	github.com/go-redis/redis/v8 v8.11.5
