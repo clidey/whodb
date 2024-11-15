@@ -5,7 +5,7 @@
   "dependencies": {
     "@apollo/client": "^3.11.8",
     "@dagrejs/dagre": "^1.1.4",
-    "@highlight-run/react": "^6.0.3",
+    "@highlight-run/react": "^7.0.3",
     "@monaco-editor/react": "^4.6.0",
     "@reduxjs/toolkit": "^2.3.0",
     "@testing-library/jest-dom": "^6.6.2",
