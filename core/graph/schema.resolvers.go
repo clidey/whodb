@@ -7,7 +7,6 @@ package graph
 import (
 	"context"
 	"errors"
-
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/auth"
