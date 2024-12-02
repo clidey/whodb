@@ -15,7 +15,7 @@ require (
 	github.com/highlight/highlight/sdk/highlight-go v0.11.0
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
-	github.com/vektah/gqlparser/v2 v2.5.19
+	github.com/vektah/gqlparser/v2 v2.5.20
 	go.mongodb.org/mongo-driver v1.17.1
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/driver/postgres v1.5.9
@@ -25,7 +25,7 @@ require (
 
 require (
 	github.com/ClickHouse/ch-go v0.61.5 // indirect
-	github.com/agnivade/levenshtein v1.1.1 // indirect
+	github.com/agnivade/levenshtein v1.2.0 // indirect
 	github.com/andybalholm/brotli v1.1.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
