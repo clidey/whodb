@@ -68,6 +68,11 @@ Get up and running with WhoDB quickly using Docker:
 docker run -it -p 8080:8080 clidey/whodb
 ```
 
+To run WhoDB with an OpenAI compatible service, you should assign some environments.
+```sh
+docker run -it -e USE_CUSTOM_MODELS=1 -e CUSTOM_MODELS=gpt-4o,gpt-3.5,others -e OPENAI_BASE_URL=http://your_base_url/v1 -p 8080:8080 clidey/whodb
+```
+
 Or, use Docker Compose:
 ```sh
 version: "3.8"
