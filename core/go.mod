@@ -5,7 +5,7 @@ go 1.22.5
 toolchain go1.22.7
 
 require (
-	github.com/99designs/gqlgen v0.17.56
+	github.com/99designs/gqlgen v0.17.57
 	github.com/ClickHouse/clickhouse-go/v2 v2.30.0
 	github.com/elastic/go-elasticsearch/v8 v8.16.0
 	github.com/go-chi/chi/v5 v5.1.0
@@ -82,6 +82,6 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20240930140551-af27646dc61f // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240930140551-af27646dc61f // indirect
 	google.golang.org/grpc v1.67.1 // indirect
-	google.golang.org/protobuf v1.35.1 // indirect
+	google.golang.org/protobuf v1.35.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
