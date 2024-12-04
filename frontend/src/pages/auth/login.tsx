@@ -214,20 +214,33 @@ export const LoginPage: FC = () => {
 
     const handleHostNameChange = useCallback((newHostName: string) => {
         if (databaseType.id !== DatabaseType.MongoDb || !newHostName.startsWith("mongodb+srv://")) {
-            return setHostName(newHostName);
+            if (databaseType.id === DatabaseType.Postgres && newHostName.startsWith("postgres://")) {
+                const url = new URL(newHostName);
+                setHostName(url.hostname);
+                setUsername(url.username);
+                setPassword(url.password);
+                setDatabase(url.pathname.substring(1));
+            } else {
+                return setHostName(newHostName);
+            }
+        } else {
+            const url = new URL(newHostName);
+            setHostName(url.hostname);
+            setUsername(url.username);
+            setPassword(url.password);
+            setDatabase(url.pathname.substring(1));
+            const advancedForm = {
+                "Port": "27017",
+                "URL Params": `?${url.searchParams.toString()}`,
+                "DNS Enabled": "false"
+            };
+            if (url.port.length === 0) {
+                advancedForm["Port"] = "";
+                advancedForm["DNS Enabled"] = "true";
+            }
+            setAdvancedForm(advancedForm);
+            setShowAdvanced(true);
         }
-        const url = new URL(newHostName);
-        setHostName(url.hostname);
-        setUsername(url.username);
-        setPassword(url.password);
-        setDatabase(url.pathname.substring(1));
-        const advancedForm = { "Port": "27017", "URL Params": `?${url.searchParams.toString()}`, "DNS Enabled": "false" };
-        if (url.port.length === 0) {
-            advancedForm["Port"] = "";
-            advancedForm["DNS Enabled"] = "true";
-        }
-        setAdvancedForm(advancedForm);
-        setShowAdvanced(true);
     }, [databaseType.id]);
 
     const fields = useMemo(() => {
@@ -245,7 +258,7 @@ export const LoginPage: FC = () => {
             </>
         }
         return <>
-            <InputWithlabel label={databaseType.id === DatabaseType.MongoDb ? "Host Name (or paste Connection URL)" : "Host Name"} value={hostName} setValue={handleHostNameChange} />
+            <InputWithlabel label={databaseType.id === DatabaseType.MongoDb || DatabaseType.Postgres ? "Host Name (or paste Connection URL)" : "Host Name"} value={hostName} setValue={handleHostNameChange} />
             { databaseType.id !== DatabaseType.Redis && <InputWithlabel label="Username" value={username} setValue={setUsername} /> }
             <InputWithlabel label="Password" value={password} setValue={setPassword} type="password" />
             { (databaseType.id !== DatabaseType.MongoDb && databaseType.id !== DatabaseType.Redis && databaseType.id !== DatabaseType.ElasticSearch)  && <InputWithlabel label="Database" value={database} setValue={setDatabase} /> }
