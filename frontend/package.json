@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@apollo/client": "^3.11.8",
+    "@apollo/client": "^3.12.1",
     "@dagrejs/dagre": "^1.1.4",
     "@highlight-run/react": "^7.0.3",
     "@monaco-editor/react": "^4.6.0",
