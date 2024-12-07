@@ -66,6 +66,9 @@ func (c *LLMClient) GetSupportedModels() ([]string, error) {
 		url, headers = prepareOllamaModelsRequest()
 	case ChatGPT_LLMType:
 		url, headers = prepareChatGPTModelsRequest(c.APIKey)
+		if ShouldUseCustomModels() {
+		    return getCustomModels()
+		}
 	case Anthropic_LLMType:
 		return getAnthropicModels(c.APIKey)
 	default:
