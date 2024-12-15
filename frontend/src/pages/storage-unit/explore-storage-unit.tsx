@@ -224,20 +224,34 @@ export const ExploreStorageUnit: FC = () => {
     
         const databaseType = current.Type;
         let whereClause = "";
-    
+
+        // First group filters by field
+        const groupedFilters = filters.reduce((acc, filter) => {
+            if (!acc[filter.field]) {
+                acc[filter.field] = [];
+            }
+            acc[filter.field].push(filter);
+            return acc;
+        }, {} as Record<string, IExploreStorageUnitWhereConditionFilter[]>);
+
         switch (databaseType) {
             case DatabaseType.Postgres:
             case DatabaseType.MySql:
             case DatabaseType.Sqlite3:
             case DatabaseType.MariaDb:
-                whereClause = filters.map(filter => `"${filter.field}" ${filter.operator} '${filter.value}'`).join(' AND ');
+            case DatabaseType.ClickHouse:
+                whereClause = Object.entries(groupedFilters)
+                    .map(([field, fieldFilters]) => {
+                        const conditions = fieldFilters.map(f => `"${field}" ${f.operator} '${f.value}'`);
+                        return fieldFilters.length > 1 ? `(${conditions.join(' OR ')})` : conditions[0];
+                    })
+                    .join(' AND ');
                 break;
             case DatabaseType.ElasticSearch:
                 const elasticSearchConditions: Record<string, Record<string, any>> = {};
                 filters.forEach(filter => {
                     elasticSearchConditions[filter.operator] = { [filter.field]: filter.value };
                 });
-                whereClause = JSON.stringify({ query: { bool: { must: Object.entries(elasticSearchConditions).map(([field, condition]) => ({ [field]: condition })) } } });
                 break;
             case DatabaseType.MongoDb:
                 const mongoDbConditions: Record<string, Record<string, any>> = {};
@@ -249,7 +263,6 @@ export const ExploreStorageUnit: FC = () => {
             default:
                 throw new Error(`Unsupported database type: ${databaseType}`);
         }
-        
         setWhereCondition(whereClause);
     }, [current?.Type]);
 
@@ -280,6 +293,15 @@ export const ExploreStorageUnit: FC = () => {
                         "not", "nor", "exists", "type", "regex", "expr", "mod", "all", 
                         "elemMatch", "size", "bitsAllClear", "bitsAllSet", "bitsAnyClear", 
                         "bitsAnySet", "geoIntersects", "geoWithin", "near", "nearSphere"];
+            case DatabaseType.ClickHouse:
+                return [
+                    "=", ">=", ">", "<=", "<", "!=", "<>", "==",
+                    "LIKE", "NOT LIKE", "ILIKE",  // ILIKE is handled specially for ClickHouse
+                    "IN", "NOT IN", "GLOBAL IN", "GLOBAL NOT IN",
+                    "BETWEEN", "NOT BETWEEN",
+                    "IS NULL", "IS NOT NULL",
+                    "AND", "OR", "NOT"
+                ];
         }
         return [];
     }, [current?.Type]);
@@ -420,25 +442,31 @@ export const ExploreStorageUnit: FC = () => {
                         "hidden": !showAdd,
                     })}>
                         <div className="flex justify-between gap-4">
-                            <div className="text-lg text-neutral-800 dark:text-neutral-300 w-full border-b border-white/10 pb-2 mb-2">
-                                New row
+                            <div
+                                className="text-lg text-neutral-800 dark:text-neutral-300 w-full border-b border-white/10 pb-2 mb-2">
+                                Add new row
                             </div>
-                            <AnimatedButton type="lg" icon={Icons.CheckCircle} label="Submit" onClick={handleAddSubmitRequest} />
                         </div>
                         {newRowForm.map((col, i) => <>
                             <div key={`add-row-${col.Key}`} className="flex gap-2 items-center">
-                                <div className="text-xs text-neutral-800 dark:text-neutral-300 w-[150px]">{col.Key} [{col.Extra?.at(1)?.Value}]</div>
+                                <div
+                                    className="text-xs text-neutral-800 dark:text-neutral-300 w-[150px]">{col.Key} [{col.Extra?.at(1)?.Value}]
+                                </div>
                                 <Dropdown className={classNames({
                                     "hidden": isNoSQL(current?.Type as DatabaseType),
                                 })} value={configDropdown.find(item => item.id === col.Extra?.at(0)?.Value)}
-                                    onChange={item => handleNewFormChange("config", i, item.id)}
-                                    items={configDropdown}
-                                    showIconOnly={true} />
+                                          onChange={item => handleNewFormChange("config", i, item.id)}
+                                          items={configDropdown}
+                                          showIconOnly={true}/>
                                 <Input value={col.Value} inputProps={{
                                     placeholder: `Enter value for ${col.Key}`,
-                                }} setValue={(value) => handleNewFormChange("value", i, value)} />
+                                }} setValue={(value) => handleNewFormChange("value", i, value)}/>
                             </div>
                         </>)}
+                        <div className="flex justify-end gap-4 mt-2">
+                            <AnimatedButton type="lg" icon={Icons.CheckCircle} label="Submit"
+                                            onClick={handleAddSubmitRequest}/>
+                        </div>
                     </div>
                 </motion.div>
             </div>
@@ -446,8 +474,9 @@ export const ExploreStorageUnit: FC = () => {
                 {
                     rows != null &&
                     <Table columns={rows.Columns.map(c => c.Name)} columnTags={rows.Columns.map(c => c.Type)}
-                        rows={rows.Rows} totalPages={totalPages} currentPage={currentPage+1} onPageChange={handlePageChange}
-                        onRowUpdate={handleRowUpdate} disableEdit={rows.DisableUpdate} onRowDelete={handleRowDelete}
+                           rows={rows.Rows} totalPages={totalPages} currentPage={currentPage + 1}
+                           onPageChange={handlePageChange}
+                           onRowUpdate={handleRowUpdate} disableEdit={rows.DisableUpdate} onRowDelete={handleRowDelete}
                         checkedRows={checkedRows} setCheckedRows={setCheckedRows} />
                 }
             </div>
