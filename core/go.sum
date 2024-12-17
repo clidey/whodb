@@ -1,5 +1,5 @@
-github.com/99designs/gqlgen v0.17.57 h1:Ak4p60BRq6QibxY0lEc0JnQhDurfhxA67sp02lMjmPc=
-github.com/99designs/gqlgen v0.17.57/go.mod h1:Jx61hzOSTcR4VJy/HFIgXiQ5rJ0Ypw8DxWLjbYDAUw0=
+github.com/99designs/gqlgen v0.17.60 h1:xxl7kQDCNw79itzWQtCUSXgkovCyq9r+ogSXfZpKPYM=
+github.com/99designs/gqlgen v0.17.60/go.mod h1:vQJzWXyGya2TYL7cig1G4OaCQzyck031MgYBlUwaI9I=
 github.com/ClickHouse/ch-go v0.61.5 h1:zwR8QbYI0tsMiEcze/uIMK+Tz1D3XZXLdNrlaOpeEI4=
 github.com/ClickHouse/ch-go v0.61.5/go.mod h1:s1LJW/F/LcFs5HJnuogFMta50kKDO0lf9zzfrbl0RQg=
 github.com/ClickHouse/clickhouse-go/v2 v2.30.0 h1:AG4D/hW39qa58+JHQIFOSnxyL46H6h2lrmGGk17dhFo=
