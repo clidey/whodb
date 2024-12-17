@@ -15,8 +15,8 @@ importers:
         specifier: ^1.1.4
         version: 1.1.4
       '@highlight-run/react':
-        specifier: ^7.0.3
-        version: 7.0.3(highlight.run@9.5.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^8.0.2
+        version: 8.0.2(highlight.run@9.5.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@monaco-editor/react':
         specifier: ^4.6.0
         version: 4.6.0(monaco-editor@0.52.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -1307,10 +1307,10 @@ packages:
     peerDependencies:
       graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
 
-  '@highlight-run/react@7.0.3':
-    resolution: {integrity: sha512-gJd3oaDC59cPSkTkNVFVeB9NEpnZzIk5nj5hVuxg4gRUYW2R6S+4Sho01u1oBTpN3WGf4KdMDq4IIoB5EFEnPw==}
+  '@highlight-run/react@8.0.2':
+    resolution: {integrity: sha512-f37923EcQ8mqUzzWpbGyM8fbgZy8Y2n6+DWrcynawzZiPyXfcRqjl3I0F2ukXs/2PMP6uYFrLGvnVAWMbQqHrw==}
     peerDependencies:
-      highlight.run: 9.5.3
+      highlight.run: 9.7.2
       react: '>=16'
       react-dom: '>=16'
 
@@ -9013,7 +9013,7 @@ snapshots:
     dependencies:
       graphql: 16.9.0
 
-  '@highlight-run/react@7.0.3(highlight.run@9.5.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@highlight-run/react@8.0.2(highlight.run@9.5.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       highlight.run: 9.5.1
       react: 18.3.1
