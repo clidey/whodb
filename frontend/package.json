@@ -31,7 +31,7 @@
     "react-router-dom": "^7.0.2",
     "react-scripts": "5.0.1",
     "react-table": "^7.8.0",
-    "react-window": "^1.8.10",
+    "react-window": "^1.8.11",
     "reactflow": "^11.11.4",
     "redux-persist": "^6.0.0",
     "tailwind-merge": "^2.5.5",
