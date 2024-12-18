@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -20,6 +19,8 @@ const (
 	AuthKey_Token       AuthKey = "Token"
 	AuthKey_Credentials AuthKey = "Credentials"
 )
+
+const maxRequestBodySize = 10 * 1024 * 1024 // Limit request body size to 10 MB
 
 func GetCredentials(ctx context.Context) *engine.Credentials {
 	credentials := ctx.Value(AuthKey_Credentials)
@@ -40,20 +41,24 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		body, err := io.ReadAll(r.Body)
+		r.Body = http.MaxBytesReader(w, r.Body, maxRequestBodySize)
+
+		body, err := readRequestBody(r)
 		if err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			if err.Error() == "http: request body too large" {
+				http.Error(w, "Request body too large", http.StatusRequestEntityTooLarge)
+			} else {
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			}
 			return
 		}
 
-		r.Body = io.NopCloser(bytes.NewReader(body))
 		if isAllowed(r, body) {
 			next.ServeHTTP(w, r)
 			return
 		}
 
 		var token string
-
 		if env.IsAPIGatewayEnabled {
 			authHeader := r.Header.Get("Authorization")
 			if strings.HasPrefix(authHeader, "Bearer ") {
@@ -67,25 +72,25 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		if token == "" {
-			w.WriteHeader(http.StatusUnauthorized)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
 		decodedValue, err := base64.StdEncoding.DecodeString(token)
 		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
 		credentials := &engine.Credentials{}
 		err = json.Unmarshal(decodedValue, credentials)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+			http.Error(w, "Bad Request", http.StatusBadRequest)
 			return
 		}
 
 		if env.IsAPIGatewayEnabled && (credentials.AccessToken == nil || (credentials.AccessToken != nil && !isTokenValid(*credentials.AccessToken))) {
-			w.WriteHeader(http.StatusBadRequest)
+			http.Error(w, "Bad Request", http.StatusBadRequest)
 			return
 		}
 
@@ -110,6 +115,15 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func readRequestBody(r *http.Request) ([]byte, error) {
+	buf := &strings.Builder{}
+	_, err := io.Copy(buf, r.Body)
+	if err != nil {
+		return nil, err
+	}
+	return []byte(buf.String()), nil
+}
+
 type GraphQLRequest struct {
 	OperationName string                 `json:"operationName"`
 	Variables     map[string]interface{} `json:"variables"`
@@ -121,7 +135,6 @@ func isAllowed(r *http.Request, body []byte) bool {
 	}
 
 	query := GraphQLRequest{}
-
 	if err := json.Unmarshal(body, &query); err != nil {
 		return false
 	}

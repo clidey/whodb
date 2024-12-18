@@ -17,6 +17,9 @@ var Tokens = common.FilterList(strings.Split(os.Getenv("WHODB_TOKENS"), ","), fu
 var IsAPIGatewayEnabled = len(Tokens) > 0
 var OllamaHost = os.Getenv("WHODB_OLLAMA_HOST")
 var OllamaPort = os.Getenv("WHODB_OLLAMA_PORT")
+var AllowedOrigins = common.FilterList(strings.Split(os.Getenv("WHODB_ALLOWED_ORIGINS"), ","), func(item string) bool {
+	return item != ""
+})
 
 func GetClideyQuickContainerImage() string {
 	image := os.Getenv("CLIDEY_QUICK_CONTAINER_IMAGE")
