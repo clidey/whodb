@@ -257,15 +257,16 @@ export const LoginPage: FC = () => {
     }, [profiles?.Profiles])
 
     if (loading || profilesLoading)  {
-        return (
-            <Page className="justify-center items-center">
-                <div className={twMerge(BASE_CARD_CLASS, "w-[350px] h-fit flex-col gap-4 justify-center py-16")}>
-                    <Loading hideText={true} />
-                    <div className="text-neutral-800 text-center dark:text-neutral-300">
+        return <Container>
+                <div className="flex flex-col justify-center items-center gap-4 w-full">
+                    <div>
+                        <Loading hideText={true} />
+                    </div>
+                    <div className="text-neutral-800 dark:text-neutral-300">
                         Logging in
                     </div>
                 </div>
-            </Page>)
+        </Container>
     }
 
     return (
