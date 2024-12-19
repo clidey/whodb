@@ -30,22 +30,31 @@ func setupServer(router *chi.Mux, staticFiles embed.FS) {
 }
 
 func setupMiddlewares(router *chi.Mux) {
+	allowedOrigins := env.AllowedOrigins
+	if len(allowedOrigins) == 0 {
+		allowedOrigins = append(allowedOrigins, "https://*", "http://*")
+	}
+
 	router.Use(
-		middleware.ThrottleBacklog(10000, 1000, time.Second*5),
+		middleware.ThrottleBacklog(100, 50, time.Second*5),
+
 		middleware.RequestID,
 		middleware.RealIP,
 		middleware.Logger,
+
 		middleware.RedirectSlashes,
 		middleware.Recoverer,
-		middleware.Timeout(10*time.Minute),
+		middleware.Timeout(30*time.Second),
+
 		cors.Handler(cors.Options{
-			AllowedOrigins:   []string{"https://*", "http://*"},
+			AllowedOrigins:   allowedOrigins,
 			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 			AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 			ExposedHeaders:   []string{},
 			AllowCredentials: true,
 			MaxAge:           300,
 		}),
+
 		contextMiddleware,
 		auth.AuthMiddleware,
 	)
