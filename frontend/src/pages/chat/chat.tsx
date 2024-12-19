@@ -18,6 +18,7 @@ import { notify } from "../../store/function";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { chooseRandomItems } from "../../utils/functions";
 import { chatExamples } from "./examples";
+import logoImage from "../../../public/images/logo.png";
 
 type TableData = GetAiChatQuery["AIChat"][0]["Result"];
 
@@ -378,7 +379,7 @@ export const ChatPage: FC = () => {
                                                     "self-end": chat.isUserInput,
                                                     "self-start": !chat.isUserInput,
                                                 })}>
-                                                    {!chat.isUserInput && chats[i-1]?.isUserInput && <img src="/images/logo.png" alt="clidey logo" className="w-auto h-6" />}
+                                                    {!chat.isUserInput && chats[i-1]?.isUserInput && <img src={logoImage} alt="clidey logo" className="w-auto h-6" />}
                                                     <div className={classNames("text-neutral-800 dark:text-neutral-300 px-4 py-2 rounded-lg", {
                                                         "bg-white/10": chat.isUserInput,
                                                     })}>
