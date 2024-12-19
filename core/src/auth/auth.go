@@ -20,7 +20,7 @@ const (
 	AuthKey_Credentials AuthKey = "Credentials"
 )
 
-const maxRequestBodySize = 10 * 1024 * 1024 // Limit request body size to 10 MB
+const maxRequestBodySize = 1024 * 1024 // Limit request body size to 1MB
 
 func GetCredentials(ctx context.Context) *engine.Credentials {
 	credentials := ctx.Value(AuthKey_Credentials)
