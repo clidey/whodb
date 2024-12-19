@@ -225,7 +225,7 @@ export const LoginPage: FC = () => {
 
                     // gives warning
                     if (!hostname || !username || !password || !database) {
-                        return notify("We could not extract all required details (host, username, password, or database) from this URL. Please enter the information manually.", "warning");
+                        notify("We could not extract all required details (host, username, password, or database) from this URL. Please enter the information manually.", "warning");
                     }
                     setHostName(hostname);
                     setUsername(username);
