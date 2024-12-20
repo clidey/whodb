@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-
 	"github.com/clidey/whodb/core/src/engine"
 )
 
@@ -22,14 +21,14 @@ func (p *ClickHousePlugin) RawExecute(config *engine.PluginConfig, query string)
 	return p.executeQuery(config, query)
 }
 
-func (p *ClickHousePlugin) executeQuery(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error) {
+func (p *ClickHousePlugin) executeQuery(config *engine.PluginConfig, query string, params ...interface{}) (*engine.GetRowsResult, error) {
 	conn, err := DB(config)
 	if err != nil {
 		return nil, err
 	}
 	defer conn.Close()
 
-	rows, err := conn.Query(context.Background(), query)
+	rows, err := conn.Query(context.Background(), query, params)
 	if err != nil {
 		return nil, err
 	}

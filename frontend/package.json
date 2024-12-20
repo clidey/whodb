@@ -3,24 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@apollo/client": "^3.11.8",
+    "@apollo/client": "^3.12.3",
     "@dagrejs/dagre": "^1.1.4",
-    "@highlight-run/react": "^7.0.3",
     "@monaco-editor/react": "^4.6.0",
     "@reduxjs/toolkit": "^2.3.0",
-    "@testing-library/jest-dom": "^6.6.2",
-    "@testing-library/react": "^16.0.1",
-    "@testing-library/user-event": "^14.5.2",
-    "@types/jest": "^29.5.14",
-    "@types/node": "^22.8.1",
     "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.0",
+    "@types/react-dom": "^18.3.5",
     "@types/react-table": "^7.7.20",
     "@uiw/react-markdown-preview": "^5.1.3",
     "classnames": "^2.5.1",
-    "framer-motion": "^11.11.10",
+    "framer-motion": "^11.15.0",
     "graphql": "^16.9.0",
-    "highlight.run": "^9.4.3",
+    "highlight.run": "^9.7.2",
     "html-to-image": "^1.11.11",
     "lodash": "^4.17.21",
     "monaco-editor": "^0.52.0",
@@ -28,29 +22,19 @@
     "react-dom": "^18.3.1",
     "react-json-view": "^1.21.3",
     "react-redux": "^9.1.2",
-    "react-router-dom": "^6.26.2",
-    "react-scripts": "5.0.1",
+    "react-router-dom": "^7.0.2",
     "react-table": "^7.8.0",
     "react-window": "^1.8.10",
     "reactflow": "^11.11.4",
     "redux-persist": "^6.0.0",
-    "tailwind-merge": "^2.5.4",
-    "typescript": "^4.9.5",
-    "uuid": "^11.0.3",
-    "web-vitals": "^4.2.4"
+    "tailwind-merge": "^2.5.5",
+    "uuid": "^11.0.3"
   },
   "scripts": {
-    "start": "GENERATE_SOURCEMAP=false react-scripts start",
-    "build": "GENERATE_SOURCEMAP=false react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
+    "start": "parcel public/index.html --open --port=3000",
+    "build": "parcel build public/index.html",
+    "test": "echo \"Error: no test specified\" && exit 1",
     "generate": "npx graphql-codegen"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
   },
   "browserslist": {
     "production": [
@@ -66,13 +50,23 @@
   },
   "devDependencies": {
     "@graphql-codegen/cli": "^5.0.3",
-    "@graphql-codegen/typescript": "^4.1.0",
-    "@graphql-codegen/typescript-operations": "^4.3.1",
+    "@graphql-codegen/typescript": "^4.1.2",
+    "@graphql-codegen/typescript-operations": "^4.4.0",
     "@graphql-codegen/typescript-react-apollo": "^4.3.2",
-    "@types/lodash": "^4.17.12",
+    "@parcel/packager-raw-url": "2.13.3",
+    "@parcel/transformer-webmanifest": "2.13.3",
+    "@types/lodash": "^4.17.13",
     "@types/react-window": "^1.8.8",
     "@types/uuid": "^10.0.0",
-    "eslint-config-react-app": "^7.0.1",
-    "tailwindcss": "^3.4.13"
-  }
+    "autoprefixer": "^10.4.20",
+    "buffer": "^6.0.3",
+    "parcel": "^2.13.3",
+    "postcss": "^8.4.49",
+    "process": "^0.11.10",
+    "tailwindcss": "^3.4.17"
+  },
+  "@parcel/resolver-default": {
+    "packageExports": true
+  },
+  "packageManager": "pnpm@9.14.4+sha512.c8180b3fbe4e4bca02c94234717896b5529740a6cbadf19fa78254270403ea2f27d4e1d46a08a0f56c89b63dc8ebfd3ee53326da720273794e6200fcf0d184ab"
 }

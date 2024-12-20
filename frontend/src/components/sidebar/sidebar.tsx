@@ -18,6 +18,7 @@ import { BRAND_COLOR, BRAND_COLOR_BG } from "../classes";
 import { createDropdownItem, Dropdown, IDropdownItem } from "../dropdown";
 import { Icons } from "../icons";
 import { Loading } from "../loading";
+import logoImage from "../../../public/images/logo.png";
 
 
 type IRoute = {
@@ -378,7 +379,7 @@ export const Sidebar: FC = () => {
                     }
                 }} animate={animate}>
                 <div className="flex gap-2">
-                    <img src="/images/logo.png" alt="clidey logo" className="w-auto h-8" />
+                    <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
                     <span className={classNames(BRAND_COLOR, "text-2xl")}>WhoDB</span>
                 </div>
             </motion.div>

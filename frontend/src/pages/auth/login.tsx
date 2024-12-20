@@ -214,20 +214,56 @@ export const LoginPage: FC = () => {
 
     const handleHostNameChange = useCallback((newHostName: string) => {
         if (databaseType.id !== DatabaseType.MongoDb || !newHostName.startsWith("mongodb+srv://")) {
-            return setHostName(newHostName);
+            // Checks the valid postgres URL
+            if (databaseType.id === DatabaseType.Postgres && (newHostName.startsWith("postgres://") || newHostName.startsWith("postgresql://"))) {
+                try {
+                    const url = new URL(newHostName); 
+                    const hostname = url.hostname;
+                    const username = url.username;
+                    const password = url.password;
+                    const database = url.pathname.substring(1);
+
+                    // gives warning
+                    if (!hostname || !username || !password || !database) {
+                        notify("We could not extract all required details (host, username, password, or database) from this URL. Please enter the information manually.", "warning");
+                    }
+                    setHostName(hostname);
+                    setUsername(username);
+                    setPassword(password);
+                    setDatabase(database);
+
+                    if (url.port) {
+                        const advancedForm = {
+                            "Port": url.port,
+                            "SSL Mode": "disable"
+                        };
+                        setAdvancedForm(advancedForm);
+                        setShowAdvanced(true);
+                    }
+                } catch (error) {
+                    notify("We could not extract all required details (host, username, password, or database) from this URL. Please enter the information manually.", "warning");
+                }
+            } else {
+                return setHostName(newHostName);
+            }
+        } else {
+            const url = new URL(newHostName);
+            setHostName(url.hostname);
+            setUsername(url.username);
+            setPassword(url.password);
+            setDatabase(url.pathname.substring(1));
+            const advancedForm = {
+                "Port": "27017",
+                "URL Params": `?${url.searchParams.toString()}`,
+                "DNS Enabled": "false"
+            };
+            if (url.port.length === 0) {
+                advancedForm["Port"] = "";
+                advancedForm["DNS Enabled"] = "true";
+            }
+            setAdvancedForm(advancedForm);
+            setShowAdvanced(true);
         }
-        const url = new URL(newHostName);
-        setHostName(url.hostname);
-        setUsername(url.username);
-        setPassword(url.password);
-        setDatabase(url.pathname.substring(1));
-        const advancedForm = { "Port": "27017", "URL Params": `?${url.searchParams.toString()}`, "DNS Enabled": "false" };
-        if (url.port.length === 0) {
-            advancedForm["Port"] = "";
-            advancedForm["DNS Enabled"] = "true";
-        }
-        setAdvancedForm(advancedForm);
-        setShowAdvanced(true);
     }, [databaseType.id]);
 
     const fields = useMemo(() => {
@@ -245,7 +281,7 @@ export const LoginPage: FC = () => {
             </>
         }
         return <>
-            <InputWithlabel label={databaseType.id === DatabaseType.MongoDb ? "Host Name (or paste Connection URL)" : "Host Name"} value={hostName} setValue={handleHostNameChange} />
+            <InputWithlabel label={databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Postgres ? "Host Name (or paste Connection URL)" : "Host Name"} value={hostName} setValue={handleHostNameChange} />
             { databaseType.id !== DatabaseType.Redis && <InputWithlabel label="Username" value={username} setValue={setUsername} /> }
             <InputWithlabel label="Password" value={password} setValue={setPassword} type="password" />
             { (databaseType.id !== DatabaseType.MongoDb && databaseType.id !== DatabaseType.Redis && databaseType.id !== DatabaseType.ElasticSearch)  && <InputWithlabel label="Database" value={database} setValue={setDatabase} /> }
@@ -257,15 +293,16 @@ export const LoginPage: FC = () => {
     }, [profiles?.Profiles])
 
     if (loading || profilesLoading)  {
-        return (
-            <Page className="justify-center items-center">
-                <div className={twMerge(BASE_CARD_CLASS, "w-[350px] h-fit flex-col gap-4 justify-center py-16")}>
-                    <Loading hideText={true} />
-                    <div className="text-neutral-800 text-center dark:text-neutral-300">
+        return <Container>
+                <div className="flex flex-col justify-center items-center gap-4 w-full">
+                    <div>
+                        <Loading hideText={true} />
+                    </div>
+                    <div className="text-neutral-800 dark:text-neutral-300">
                         Logging in
                     </div>
                 </div>
-            </Page>)
+        </Container>
     }
 
     return (
