@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -42,7 +43,6 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		r.Body = http.MaxBytesReader(w, r.Body, maxRequestBodySize)
-
 		body, err := readRequestBody(r)
 		if err != nil {
 			if err.Error() == "http: request body too large" {
@@ -53,6 +53,8 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		// this is to ensure that it can be re-read by the GraphQL layer
+		r.Body = io.NopCloser(bytes.NewBuffer(body))
 		if isAllowed(r, body) {
 			next.ServeHTTP(w, r)
 			return
