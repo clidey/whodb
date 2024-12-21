@@ -3,12 +3,17 @@ package clickhouse
 import (
 	"context"
 	"fmt"
+	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"strings"
 	"time"
 )
 
 func (p *ClickHousePlugin) UpdateStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
+	readOnly := common.GetRecordValueOrDefault(config.Credentials.Advanced, readOnlyKey, "disable")
+	if readOnly != "disable" {
+		return false, fmt.Errorf("readonly mode don't allow UpdateStorageUnit")
+	}
 	conn, err := DB(config)
 	if err != nil {
 		return false, err
@@ -99,7 +104,7 @@ func (p *ClickHousePlugin) UpdateStorageUnit(config *engine.PluginConfig, schema
 		strings.Join(setClauses, ", "),
 		strings.Join(whereClauses, " AND "))
 
-	err = conn.Exec(context.Background(), query, args...)
+	_, err = conn.ExecContext(context.Background(), query, args...)
 	if err != nil {
 		return false, fmt.Errorf("update failed: %w", err)
 	}

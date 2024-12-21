@@ -2,8 +2,8 @@ package clickhouse
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
-	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"strconv"
 
 	"github.com/clidey/whodb/core/src/engine"
@@ -17,7 +17,7 @@ func (p *ClickHousePlugin) IsAvailable(config *engine.PluginConfig) bool {
 		return false
 	}
 	defer conn.Close()
-	return conn.Ping(context.Background()) == nil
+	return conn.PingContext(context.Background()) == nil
 }
 
 func (p *ClickHousePlugin) GetDatabases(config *engine.PluginConfig) ([]string, error) {
@@ -27,7 +27,7 @@ func (p *ClickHousePlugin) GetDatabases(config *engine.PluginConfig) ([]string, 
 	}
 	defer conn.Close()
 
-	rows, err := conn.Query(context.Background(), "SHOW DATABASES")
+	rows, err := conn.QueryContext(context.Background(), "SHOW DATABASES")
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func (p *ClickHousePlugin) GetStorageUnits(config *engine.PluginConfig, schema s
 		WHERE database = '%s'
 	`, schema)
 
-	rows, err := conn.Query(context.Background(), query)
+	rows, err := conn.QueryContext(context.Background(), query)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +102,7 @@ func (p *ClickHousePlugin) GetStorageUnits(config *engine.PluginConfig, schema s
 	return storageUnits, nil
 }
 
-func getTableSchema(conn driver.Conn, schema string, tableName string) ([]engine.Record, error) {
+func getTableSchema(conn *sql.DB, schema string, tableName string) ([]engine.Record, error) {
 	query := fmt.Sprintf(`
 		SELECT 
 			name,
@@ -112,7 +112,7 @@ func getTableSchema(conn driver.Conn, schema string, tableName string) ([]engine
 		ORDER BY position
 	`, schema, tableName)
 
-	rows, err := conn.Query(context.Background(), query)
+	rows, err := conn.QueryContext(context.Background(), query)
 	if err != nil {
 		return nil, err
 	}
