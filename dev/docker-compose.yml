@@ -89,6 +89,15 @@ services:
       - redis:/bitnami
     networks:
       - db
+  clickhouse:
+    image: clickhouse/clickhouse-server
+    ports:
+      - '8123:8123'
+      - '9000:9000'
+    volumes:
+      - clickhouse:/var/lib/clickhouse
+    networks:
+      - db
 networks:
   db:
     driver: bridge
@@ -100,3 +109,4 @@ volumes:
   mongo:
   redis:
   elasticsearch:
+  clickhouse:

@@ -3,12 +3,17 @@ package clickhouse
 import (
 	"context"
 	"fmt"
+	"github.com/clidey/whodb/core/src/common"
 	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
 )
 
 func (p *ClickHousePlugin) DeleteRow(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
+	readOnly := common.GetRecordValueOrDefault(config.Credentials.Advanced, readOnlyKey, "disable")
+	if readOnly != "disable" {
+		return false, fmt.Errorf("readonly mode don't allow DeleteRow")
+	}
 	conn, err := DB(config)
 	if err != nil {
 		return false, err
@@ -68,7 +73,7 @@ func (p *ClickHousePlugin) DeleteRow(config *engine.PluginConfig, schema string,
 		strings.Join(whereClauses, " AND "))
 
 	// Execute the query
-	err = conn.Exec(context.Background(), query, args...)
+	_, err = conn.ExecContext(context.Background(), query, args...)
 	if err != nil {
 		return false, fmt.Errorf("delete failed: %w (query: %s, args: %+v)", err, query, args)
 	}
