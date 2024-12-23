@@ -27,7 +27,7 @@
     "react-window": "^1.8.10",
     "reactflow": "^11.11.4",
     "redux-persist": "^6.0.0",
-    "tailwind-merge": "^2.5.5",
+    "tailwind-merge": "^2.6.0",
     "uuid": "^11.0.3"
   },
   "scripts": {
