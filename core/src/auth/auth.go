@@ -146,7 +146,7 @@ func isAllowed(r *http.Request, body []byte) bool {
 	}
 
 	switch query.OperationName {
-	case "Login", "Logout", "GetProfiles", "UpdateSettings", "SettingsConfig":
+	case "Login", "LoginWithProfile", "Logout", "GetProfiles", "UpdateSettings", "SettingsConfig":
 		return true
 	}
 	return false

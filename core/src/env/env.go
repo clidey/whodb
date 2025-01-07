@@ -56,7 +56,7 @@ func GetDefaultDatabaseCredentials(databaseType string) []DatabaseCredentials {
 	var creds []DatabaseCredentials
 	err := json.Unmarshal([]byte(credEnvValue), &creds)
 	if err != nil {
-		log.Logger.Warn("Unable to parse database credentials from environment variable: ", err)
+		log.Logger.Warn("🔴 [Database Error] Failed to parse database credentials from environment variable! Error: ", err)
 		return nil
 	}
 

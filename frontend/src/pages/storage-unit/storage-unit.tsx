@@ -217,7 +217,8 @@ export const StorageUnitPage: FC = () => {
 
     const filterStorageUnits = useMemo(() => {
         const lowerCaseFilterValue = filterValue.toLowerCase();
-        return filter(data?.StorageUnit ?? [], unit => unit.Name.toLowerCase().includes(lowerCaseFilterValue));
+        return filter(data?.StorageUnit ?? [], unit => unit.Name.toLowerCase().includes(lowerCaseFilterValue))
+            .sort((a, b) => a.Name.localeCompare(b.Name));
     }, [data?.StorageUnit, filterValue]);
 
     if (loading) {
