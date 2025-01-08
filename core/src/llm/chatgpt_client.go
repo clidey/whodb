@@ -9,7 +9,6 @@ import (
 	"strings"
 )
 
-const chatGPTEndpoint = "https://api.openai.com/v1"
 
 func prepareChatGPTRequest(c *LLMClient, prompt string, model LLMModel, receiverChan *chan string) (string, []byte, map[string]string, error) {
 	requestBody, err := json.Marshal(map[string]interface{}{
@@ -20,7 +19,7 @@ func prepareChatGPTRequest(c *LLMClient, prompt string, model LLMModel, receiver
 	if err != nil {
 		return "", nil, nil, err
 	}
-	url := fmt.Sprintf("%v/chat/completions", chatGPTEndpoint)
+	url := fmt.Sprintf("%v/chat/completions", getOpenAICompatibleBaseURL())
 	headers := map[string]string{
 		"Authorization": fmt.Sprintf("Bearer %s", c.APIKey),
 		"Content-Type":  "application/json",
@@ -29,7 +28,7 @@ func prepareChatGPTRequest(c *LLMClient, prompt string, model LLMModel, receiver
 }
 
 func prepareChatGPTModelsRequest(apiKey string) (string, map[string]string) {
-	url := fmt.Sprintf("%v/models", chatGPTEndpoint)
+	url := fmt.Sprintf("%v/models", getOpenAICompatibleBaseURL())
 	headers := map[string]string{
 		"Authorization": fmt.Sprintf("Bearer %s", apiKey),
 		"Content-Type":  "application/json",
