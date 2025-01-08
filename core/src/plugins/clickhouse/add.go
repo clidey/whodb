@@ -72,7 +72,7 @@ func (p *ClickHousePlugin) AddStorageUnit(config *engine.PluginConfig, schema st
 		query += fmt.Sprintf("\nSETTINGS %s", strings.Join(settingsClauses, ", "))
 	}
 
-	err = conn.Exec(context.Background(), query)
+	_, err = conn.ExecContext(context.Background(), query)
 	if err != nil {
 		return false, fmt.Errorf("failed to create table: %w (query: %s)", err, query)
 	}
@@ -100,6 +100,6 @@ func (p *ClickHousePlugin) AddRow(config *engine.PluginConfig, schema string, st
 	query := fmt.Sprintf("INSERT INTO %s.%s (%s) VALUES (%s)",
 		schema, storageUnit, strings.Join(columns, ", "), strings.Join(placeholders, ", "))
 
-	err = conn.Exec(context.Background(), query, args...)
+	_, err = conn.ExecContext(context.Background(), query, args...)
 	return err == nil, err
 }

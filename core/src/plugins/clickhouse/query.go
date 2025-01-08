@@ -28,13 +28,16 @@ func (p *ClickHousePlugin) executeQuery(config *engine.PluginConfig, query strin
 	}
 	defer conn.Close()
 
-	rows, err := conn.Query(context.Background(), query, params)
+	rows, err := conn.QueryContext(context.Background(), query, params)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	columnTypes := rows.ColumnTypes()
+	columnTypes, err := rows.ColumnTypes()
+	if err != nil {
+		return nil, err
+	}
 	result := &engine.GetRowsResult{
 		Columns: make([]engine.Column, len(columnTypes)),
 		Rows:    [][]string{},

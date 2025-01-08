@@ -2,7 +2,11 @@ package clickhouse
 
 import (
 	"context"
+	"crypto/tls"
+	"database/sql"
 	"fmt"
+	"github.com/clidey/whodb/core/src/log"
+	"strings"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -11,8 +15,20 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 )
 
-func DB(config *engine.PluginConfig) (driver.Conn, error) {
-	port := common.GetRecordValueOrDefault(config.Credentials.Advanced, "Port", "9000")
+const (
+	portKey         = "Port"
+	sslModeKey      = "SSL Mode"
+	httpProtocolKey = "HTTP Protocol"
+	readOnlyKey     = "Readonly"
+	debugKey        = "Debug"
+)
+
+func DB(config *engine.PluginConfig) (*sql.DB, error) {
+	port := common.GetRecordValueOrDefault(config.Credentials.Advanced, portKey, "9000")
+	sslMode := common.GetRecordValueOrDefault(config.Credentials.Advanced, sslModeKey, "disable")
+	httpProtocol := common.GetRecordValueOrDefault(config.Credentials.Advanced, httpProtocolKey, "disable")
+	readOnly := common.GetRecordValueOrDefault(config.Credentials.Advanced, readOnlyKey, "disable")
+	debug := common.GetRecordValueOrDefault(config.Credentials.Advanced, debugKey, "disable")
 	options := &clickhouse.Options{
 		Addr: []string{fmt.Sprintf("%s:%s", config.Credentials.Hostname, port)},
 		Auth: clickhouse.Auth{
@@ -20,20 +36,40 @@ func DB(config *engine.PluginConfig) (driver.Conn, error) {
 			Username: config.Credentials.Username,
 			Password: config.Credentials.Password,
 		},
-		Settings: clickhouse.Settings{
-			"max_execution_time": 60,
-		},
 		DialTimeout:      time.Second * 30,
-		MaxOpenConns:     5,
-		MaxIdleConns:     5,
-		ConnMaxLifetime:  time.Hour,
 		ConnOpenStrategy: clickhouse.ConnOpenInOrder,
-		Compression: &clickhouse.Compression{
+	}
+	if debug != "disable" {
+		options.Debug = true
+	}
+	if readOnly == "disable" {
+		options.Settings = clickhouse.Settings{
+			"max_execution_time": 60,
+		}
+	}
+	if strings.HasPrefix(port, "8") || httpProtocol != "disable" {
+		options.Protocol = clickhouse.HTTP
+		options.Compression = &clickhouse.Compression{
+			Method: clickhouse.CompressionGZIP,
+		}
+	} else {
+		options.Compression = &clickhouse.Compression{
 			Method: clickhouse.CompressionLZ4,
-		},
+		}
+		options.MaxOpenConns = 5
+		options.MaxIdleConns = 5
+		options.ConnMaxLifetime = time.Hour
+	}
+	if sslMode != "disable" {
+		options.TLS = &tls.Config{InsecureSkipVerify: sslMode == "relaxed" || sslMode == "none"}
 	}
 
-	return clickhouse.Open(options)
+	conn := clickhouse.OpenDB(options)
+	err := conn.PingContext(context.Background())
+	if err != nil {
+		log.Logger.Warnf("clickhouse.Ping() error: %v", err)
+	}
+	return conn, err
 }
 
 func getTableColumns(conn driver.Conn, schema, table string) ([]engine.Record, error) {
