@@ -12,11 +12,11 @@ import (
 
 func GetLoginProfiles() ([]env.DatabaseCredentials, error) {
 	profiles := []env.DatabaseCredentials{}
-	if len(env.KeeperToken) == 0 {
+	if len(env.KeeperConfig) == 0 {
 		return profiles, nil
 	}
 
-	configBytes, err := base64.StdEncoding.DecodeString(env.KeeperToken)
+	configBytes, err := base64.StdEncoding.DecodeString(env.KeeperConfig)
 	if err != nil {
 		log.Logger.Fatalf("Failed to decode Base64 configuration: %v", err)
 	}

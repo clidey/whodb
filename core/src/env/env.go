@@ -21,7 +21,7 @@ var AllowedOrigins = common.FilterList(strings.Split(os.Getenv("WHODB_ALLOWED_OR
 	return item != ""
 })
 
-var KeeperToken = os.Getenv("WHODB_KEEPER_TOKEN")
+var KeeperConfig = os.Getenv("WHODB_KEEPER_CONFIG")
 
 func GetClideyQuickContainerImage() string {
 	image := os.Getenv("CLIDEY_QUICK_CONTAINER_IMAGE")
