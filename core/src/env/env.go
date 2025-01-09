@@ -35,6 +35,12 @@ func GetClideyQuickContainerImage() string {
 	return splitImage[1]
 }
 
+type Source string
+
+const (
+	Keeper_Source Source = "Keeper"
+)
+
 type DatabaseCredentials struct {
 	Alias    string            `json:"alias"`
 	Hostname string            `json:"host"`
@@ -44,6 +50,9 @@ type DatabaseCredentials struct {
 	Port     string            `json:"port"`
 	Config   map[string]string `json:"config"`
 	Type     string            `json:"type"`
+
+	CustomId string
+	Source   Source
 }
 
 func GetDefaultDatabaseCredentials(databaseType string) []DatabaseCredentials {

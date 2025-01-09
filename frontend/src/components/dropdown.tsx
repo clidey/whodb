@@ -16,6 +16,7 @@ export type IDropdownItem<T extends unknown = any> = {
     id: string;
     label: string;
     icon?: ReactElement;
+    rightIcon?: ReactElement;
     extra?: T;
 };
 
@@ -68,6 +69,9 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
                                 {props.value.icon}
                             </div>}
                             {!props.showIconOnly && props.value?.label}
+                            {props.value.rightIcon != null && <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                {props.value.rightIcon}
+                            </div>}
                         </div>
                     }
                     {cloneElement(Icons.DownCaret, {
@@ -95,6 +99,9 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
                                             e.stopPropagation();
                                         },
                                     })}
+                                    {item.rightIcon != null && <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                                        {item.rightIcon}
+                                    </div>}
                                 </li>
                             ))
                         }

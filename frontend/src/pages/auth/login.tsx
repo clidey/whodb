@@ -2,14 +2,13 @@ import classNames from "classnames";
 import { entries } from "lodash";
 import { cloneElement, FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { twMerge } from "tailwind-merge";
 import { AnimatedButton } from "../../components/button";
-import { BASE_CARD_CLASS, BRAND_COLOR } from "../../components/classes";
-import { createDropdownItem, DropdownWithLabel, IDropdownItem } from "../../components/dropdown";
+import { BRAND_COLOR } from "../../components/classes";
+import { DropdownWithLabel, IDropdownItem } from "../../components/dropdown";
 import { Icons } from "../../components/icons";
 import { InputWithlabel } from "../../components/input";
 import { Loading } from "../../components/loading";
-import { Container, Page } from "../../components/page";
+import { Container } from "../../components/page";
 import { InternalRoutes } from "../../config/routes";
 import { DatabaseType, LoginCredentials, useGetDatabaseLazyQuery, useGetProfilesQuery, useLoginMutation, useLoginWithProfileMutation } from '../../generated/graphql';
 import { AuthActions } from "../../store/auth";
@@ -126,18 +125,22 @@ export const LoginPage: FC = () => {
         });
     }, [databaseType.id, hostName, database, username, password, advancedForm, login, dispatch, navigate]);
 
-    const handleLoginWithProfileSubmit = useCallback(() => {
-        if (selectedAvailableProfile == null) {
+    const handleLoginWithProfileSubmit = useCallback((dropdownItem?: IDropdownItem) => {
+        if (selectedAvailableProfile == null && dropdownItem == null) {
             return setError("Select a profile");
         }
-        setError(undefined);
+        
+        const profile = profiles?.Profiles.find(p => p.Id === (selectedAvailableProfile?.id ?? dropdownItem?.id));
+        if (profile == null) {
+            return setError("Profile not found");
+        }
 
-        const profile = profiles?.Profiles.find(p => p.Id === selectedAvailableProfile.id);
+        setError(undefined);
 
         loginWithProfile({
             variables: {
                 profile: {
-                    Id:  selectedAvailableProfile.id,
+                    Id:  profile.Id,
                     Type: profile?.Type as DatabaseType,
                 },
             },
@@ -145,7 +148,7 @@ export const LoginPage: FC = () => {
                 if (data.LoginWithProfile.Status) {
                     dispatch(AuthActions.login({
                         Type: profile?.Type as DatabaseType,
-                        Id: selectedAvailableProfile.id,
+                        Id: profile.Id,
                         Database: profile?.Database ?? "",
                         Hostname: "",
                         Password: "",
@@ -198,19 +201,6 @@ export const LoginPage: FC = () => {
     useEffect(() => {
         dispatch(DatabaseActions.setSchema(""));
     }, [dispatch]);
-
-    useEffect(() => {
-        if (searchParams.size > 0) {
-            if (searchParams.has("type")) {
-                const databaseType = searchParams.get("type")!;
-                setDatabaseType(databaseTypeDropdownItems.find(item => item.id === databaseType) ?? databaseTypeDropdownItems[0]);
-            }
-            if (searchParams.has("host")) setHostName(searchParams.get("host")!);
-            if (searchParams.has("username")) setUsername(searchParams.get("username")!);
-            if (searchParams.has("password")) setPassword(searchParams.get("password")!);
-            if (searchParams.has("database")) setDatabase(searchParams.get("database")!);
-        }
-    }, [searchParams]);
 
     const handleHostNameChange = useCallback((newHostName: string) => {
         if (databaseType.id !== DatabaseType.MongoDb || !newHostName.startsWith("mongodb+srv://")) {
@@ -289,8 +279,27 @@ export const LoginPage: FC = () => {
     }, [database, databaseType.id, databasesLoading, foundDatabases?.Database, handleHostNameChange, hostName, password, username]);
 
     const availableProfiles = useMemo(() => {
-        return profiles?.Profiles.map(profile => ({ id: profile.Id, icon: (Icons.Logos as Record<string, ReactElement>)[profile.Type], label: profile.Alias ?? profile.Id } as IDropdownItem)) ?? [];
-    }, [profiles?.Profiles])
+        return profiles?.Profiles.map(profile => ({ id: profile.Id, icon: (Icons.Logos as Record<string, ReactElement>)[profile.Type], label: profile.Alias ?? profile.Id, rightIcon: profile.Source === "Keeper" ? Icons.Logos.Keeper : undefined } as IDropdownItem)) ?? [];
+    }, [profiles?.Profiles]);
+
+    useEffect(() => {
+        if (searchParams.size > 0) {
+            if (searchParams.has("type")) {
+                const databaseType = searchParams.get("type")!;
+                setDatabaseType(databaseTypeDropdownItems.find(item => item.id === databaseType) ?? databaseTypeDropdownItems[0]);
+            }
+            if (searchParams.has("host")) setHostName(searchParams.get("host")!);
+            if (searchParams.has("username")) setUsername(searchParams.get("username")!);
+            if (searchParams.has("password")) setPassword(searchParams.get("password")!);
+            if (searchParams.has("database")) setDatabase(searchParams.get("database")!);
+
+            if (searchParams.has("loginId")) {
+                const selectedProfile = availableProfiles.find(profile => profile.id === searchParams.get("loginId"))
+                setSelectedAvailableProfile(selectedProfile);
+                handleLoginWithProfileSubmit(selectedProfile);
+            }
+        }
+    }, [searchParams, availableProfiles]);
 
     if (loading || profilesLoading)  {
         return <Container>
@@ -353,7 +362,7 @@ export const LoginPage: FC = () => {
                     <div className="mt-4 pt-2 border-t border-t-neutral-100/10 flex flex-col gap-2">
                         <DropdownWithLabel placeholder="Choose a login profile" fullWidth label="Available profiles" value={selectedAvailableProfile} onChange={handleAvailableProfileChange}
                             items={availableProfiles} noItemsLabel="No available profiles" />
-                        <AnimatedButton className="self-end" icon={Icons.CheckCircle} label="Login" onClick={handleLoginWithProfileSubmit} />
+                        <AnimatedButton className="self-end" icon={Icons.CheckCircle} label="Login" onClick={() => handleLoginWithProfileSubmit()} />
                     </div>
                 }
             </div>

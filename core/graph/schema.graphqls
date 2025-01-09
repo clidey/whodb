@@ -83,6 +83,7 @@ type LoginProfile {
   Id: String!
   Type: DatabaseType!
   Database: String
+  Source: String!
 }
 
 type StatusResponse {

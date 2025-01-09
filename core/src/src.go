@@ -58,6 +58,9 @@ func GetLoginProfiles() []env.DatabaseCredentials {
 }
 
 func GetLoginProfileId(index int, profile env.DatabaseCredentials) string {
+	if len(profile.CustomId) > 0 {
+		return profile.CustomId
+	}
 	return fmt.Sprintf("#%v - %v@%v [%v]", index+1, profile.Username, profile.Hostname, profile.Database)
 }
 

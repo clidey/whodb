@@ -51,6 +51,7 @@ type LoginProfile struct {
 	ID       string       `json:"Id"`
 	Type     DatabaseType `json:"Type"`
 	Database *string      `json:"Database,omitempty"`
+	Source   string       `json:"Source"`
 }
 
 type LoginProfileInput struct {

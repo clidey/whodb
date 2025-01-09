@@ -12,6 +12,9 @@ import (
 
 func GetLoginProfiles() ([]env.DatabaseCredentials, error) {
 	profiles := []env.DatabaseCredentials{}
+	if len(env.KeeperToken) == 0 {
+		return profiles, nil
+	}
 
 	configBytes, err := base64.StdEncoding.DecodeString(env.KeeperToken)
 	if err != nil {
@@ -81,6 +84,7 @@ func GetLoginProfiles() ([]env.DatabaseCredentials, error) {
 	}
 
 	for _, secret := range secrets {
+		recordUid := secret.Uid
 		recordTitle := secret.RecordDict["title"].(string)
 		recordType := secret.RecordDict["type"].(string)
 		if recordType != "pamDatabase" {
@@ -93,7 +97,9 @@ func GetLoginProfiles() ([]env.DatabaseCredentials, error) {
 			continue
 		}
 		credentials := env.DatabaseCredentials{
-			Alias: recordTitle,
+			CustomId: recordUid,
+			Alias:    recordTitle,
+			Source:   env.Keeper_Source,
 		}
 		for _, field := range fields {
 			fieldMap, ok := field.(map[string]interface{})

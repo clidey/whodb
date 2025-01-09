@@ -83,6 +83,7 @@ export type LoginProfile = {
   Alias?: Maybe<Scalars['String']['output']>;
   Database?: Maybe<Scalars['String']['output']>;
   Id: Scalars['String']['output'];
+  Source: Scalars['String']['output'];
   Type: DatabaseType;
 };
 
@@ -247,7 +248,7 @@ export type StorageUnit = {
 export type GetProfilesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetProfilesQuery = { __typename?: 'Query', Profiles: Array<{ __typename?: 'LoginProfile', Alias?: string | null, Id: string, Type: DatabaseType, Database?: string | null }> };
+export type GetProfilesQuery = { __typename?: 'Query', Profiles: Array<{ __typename?: 'LoginProfile', Alias?: string | null, Id: string, Type: DatabaseType, Database?: string | null, Source: string }> };
 
 export type GetSchemaQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -393,6 +394,7 @@ export const GetProfilesDocument = gql`
     Id
     Type
     Database
+    Source
   }
 }
     `;

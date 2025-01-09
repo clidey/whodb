@@ -175,6 +175,7 @@ func (r *queryResolver) Profiles(ctx context.Context) ([]*model.LoginProfile, er
 			ID:       profileName,
 			Type:     model.DatabaseType(profile.Type),
 			Database: &profile.Database,
+			Source:   string(profile.Source),
 		}
 		if len(profile.Alias) > 0 {
 			loginProfile.Alias = &profile.Alias
