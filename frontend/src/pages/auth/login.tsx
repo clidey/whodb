@@ -289,7 +289,7 @@ export const LoginPage: FC = () => {
     }, [database, databaseType.id, databasesLoading, foundDatabases?.Database, handleHostNameChange, hostName, password, username]);
 
     const availableProfiles = useMemo(() => {
-        return profiles?.Profiles.map(profile => createDropdownItem(profile.Id, (Icons.Logos as Record<string, ReactElement>)[profile.Type])) ?? [];
+        return profiles?.Profiles.map(profile => ({ id: profile.Id, icon: (Icons.Logos as Record<string, ReactElement>)[profile.Type], label: profile.Alias ?? profile.Id } as IDropdownItem)) ?? [];
     }, [profiles?.Profiles])
 
     if (loading || profilesLoading)  {
@@ -351,7 +351,7 @@ export const LoginPage: FC = () => {
                 {
                     availableProfiles.length > 0 &&
                     <div className="mt-4 pt-2 border-t border-t-neutral-100/10 flex flex-col gap-2">
-                        <DropdownWithLabel fullWidth label="Available profiles" value={selectedAvailableProfile} onChange={handleAvailableProfileChange}
+                        <DropdownWithLabel placeholder="Choose a login profile" fullWidth label="Available profiles" value={selectedAvailableProfile} onChange={handleAvailableProfileChange}
                             items={availableProfiles} noItemsLabel="No available profiles" />
                         <AnimatedButton className="self-end" icon={Icons.CheckCircle} label="Login" onClick={handleLoginWithProfileSubmit} />
                     </div>

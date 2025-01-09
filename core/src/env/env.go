@@ -36,6 +36,7 @@ func GetClideyQuickContainerImage() string {
 }
 
 type DatabaseCredentials struct {
+	Alias    string            `json:"alias"`
 	Hostname string            `json:"host"`
 	Username string            `json:"user"`
 	Password string            `json:"password"`
