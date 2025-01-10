@@ -31,12 +31,8 @@ func InitializeEngine() *engine.Engine {
 	return MainEngine
 }
 
-var profiles []env.DatabaseCredentials
-
 func GetLoginProfiles() []env.DatabaseCredentials {
-	if profiles != nil {
-		return profiles
-	}
+	profiles := []env.DatabaseCredentials{}
 
 	keeperLoginProfiles, err := keeper_integration.GetLoginProfiles()
 	if err != nil {
