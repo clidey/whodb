@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@apollo/client": "^3.12.3",
+    "@apollo/client": "^3.12.6",
     "@dagrejs/dagre": "^1.1.4",
     "@monaco-editor/react": "^4.6.0",
     "@reduxjs/toolkit": "^2.3.0",
