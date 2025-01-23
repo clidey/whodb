@@ -21,6 +21,8 @@ var AllowedOrigins = common.FilterList(strings.Split(os.Getenv("WHODB_ALLOWED_OR
 	return item != ""
 })
 
+var KeeperConfig = os.Getenv("WHODB_KEEPER_CONFIG")
+
 func GetClideyQuickContainerImage() string {
 	image := os.Getenv("CLIDEY_QUICK_CONTAINER_IMAGE")
 	if len(image) == 0 {
@@ -33,15 +35,24 @@ func GetClideyQuickContainerImage() string {
 	return splitImage[1]
 }
 
+type Source string
+
+const (
+	Keeper_Source Source = "Keeper"
+)
+
 type DatabaseCredentials struct {
+	Alias    string            `json:"alias"`
 	Hostname string            `json:"host"`
 	Username string            `json:"user"`
 	Password string            `json:"password"`
 	Database string            `json:"database"`
 	Port     string            `json:"port"`
 	Config   map[string]string `json:"config"`
+	Type     string            `json:"type"`
 
-	Type string
+	CustomId string
+	Source   Source
 }
 
 func GetDefaultDatabaseCredentials(databaseType string) []DatabaseCredentials {

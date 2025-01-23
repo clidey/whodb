@@ -13,6 +13,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/google/uuid v1.6.0
 	github.com/highlight/highlight/sdk/highlight-go v0.11.0
+	github.com/keeper-security/secrets-manager-go/core v1.6.4
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/vektah/gqlparser/v2 v2.5.20

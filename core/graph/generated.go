@@ -69,8 +69,10 @@ type ComplexityRoot struct {
 	}
 
 	LoginProfile struct {
+		Alias    func(childComplexity int) int
 		Database func(childComplexity int) int
 		ID       func(childComplexity int) int
+		Source   func(childComplexity int) int
 		Type     func(childComplexity int) int
 	}
 
@@ -230,6 +232,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.GraphUnitRelationship.Relationship(childComplexity), true
 
+	case "LoginProfile.Alias":
+		if e.complexity.LoginProfile.Alias == nil {
+			break
+		}
+
+		return e.complexity.LoginProfile.Alias(childComplexity), true
+
 	case "LoginProfile.Database":
 		if e.complexity.LoginProfile.Database == nil {
 			break
@@ -243,6 +252,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.LoginProfile.ID(childComplexity), true
+
+	case "LoginProfile.Source":
+		if e.complexity.LoginProfile.Source == nil {
+			break
+		}
+
+		return e.complexity.LoginProfile.Source(childComplexity), true
 
 	case "LoginProfile.Type":
 		if e.complexity.LoginProfile.Type == nil {
@@ -522,8 +538,8 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 }
 
 func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
-	rc := graphql.GetOperationContext(ctx)
-	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
+	opCtx := graphql.GetOperationContext(ctx)
+	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputChatInput,
 		ec.unmarshalInputLoginCredentials,
@@ -533,7 +549,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	)
 	first := true
 
-	switch rc.Operation.Operation {
+	switch opCtx.Operation.Operation {
 	case ast.Query:
 		return func(ctx context.Context) *graphql.Response {
 			var response graphql.Response
@@ -541,7 +557,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			if first {
 				first = false
 				ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
-				data = ec._Query(ctx, rc.Operation.SelectionSet)
+				data = ec._Query(ctx, opCtx.Operation.SelectionSet)
 			} else {
 				if atomic.LoadInt32(&ec.pendingDeferred) > 0 {
 					result := <-ec.deferredResults
@@ -571,7 +587,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			}
 			first = false
 			ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
-			data := ec._Mutation(ctx, rc.Operation.SelectionSet)
+			data := ec._Mutation(ctx, opCtx.Operation.SelectionSet)
 			var buf bytes.Buffer
 			data.MarshalGQL(&buf)
 
@@ -2043,6 +2059,47 @@ func (ec *executionContext) fieldContext_GraphUnitRelationship_Relationship(_ co
 	return fc, nil
 }
 
+func (ec *executionContext) _LoginProfile_Alias(ctx context.Context, field graphql.CollectedField, obj *model.LoginProfile) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LoginProfile_Alias(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Alias, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LoginProfile_Alias(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LoginProfile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _LoginProfile_Id(ctx context.Context, field graphql.CollectedField, obj *model.LoginProfile) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_LoginProfile_Id(ctx, field)
 	if err != nil {
@@ -2160,6 +2217,50 @@ func (ec *executionContext) _LoginProfile_Database(ctx context.Context, field gr
 }
 
 func (ec *executionContext) fieldContext_LoginProfile_Database(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LoginProfile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LoginProfile_Source(ctx context.Context, field graphql.CollectedField, obj *model.LoginProfile) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LoginProfile_Source(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Source, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LoginProfile_Source(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "LoginProfile",
 		Field:      field,
@@ -2716,12 +2817,16 @@ func (ec *executionContext) fieldContext_Query_Profiles(_ context.Context, field
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "Alias":
+				return ec.fieldContext_LoginProfile_Alias(ctx, field)
 			case "Id":
 				return ec.fieldContext_LoginProfile_Id(ctx, field)
 			case "Type":
 				return ec.fieldContext_LoginProfile_Type(ctx, field)
 			case "Database":
 				return ec.fieldContext_LoginProfile_Database(ctx, field)
+			case "Source":
+				return ec.fieldContext_LoginProfile_Source(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type LoginProfile", field.Name)
 		},
@@ -5972,6 +6077,8 @@ func (ec *executionContext) _LoginProfile(ctx context.Context, sel ast.Selection
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("LoginProfile")
+		case "Alias":
+			out.Values[i] = ec._LoginProfile_Alias(ctx, field, obj)
 		case "Id":
 			out.Values[i] = ec._LoginProfile_Id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -5984,6 +6091,11 @@ func (ec *executionContext) _LoginProfile(ctx context.Context, sel ast.Selection
 			}
 		case "Database":
 			out.Values[i] = ec._LoginProfile_Database(ctx, field, obj)
+		case "Source":
+			out.Values[i] = ec._LoginProfile_Source(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

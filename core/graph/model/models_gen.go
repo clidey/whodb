@@ -47,9 +47,11 @@ type LoginCredentials struct {
 }
 
 type LoginProfile struct {
+	Alias    *string      `json:"Alias,omitempty"`
 	ID       string       `json:"Id"`
 	Type     DatabaseType `json:"Type"`
 	Database *string      `json:"Database,omitempty"`
+	Source   string       `json:"Source"`
 }
 
 type LoginProfileInput struct {
@@ -108,6 +110,7 @@ const (
 	DatabaseTypeRedis         DatabaseType = "Redis"
 	DatabaseTypeElasticSearch DatabaseType = "ElasticSearch"
 	DatabaseTypeMariaDb       DatabaseType = "MariaDB"
+	DatabaseTypeClickHouse    DatabaseType = "ClickHouse"
 )
 
 var AllDatabaseType = []DatabaseType{
@@ -118,11 +121,12 @@ var AllDatabaseType = []DatabaseType{
 	DatabaseTypeRedis,
 	DatabaseTypeElasticSearch,
 	DatabaseTypeMariaDb,
+	DatabaseTypeClickHouse,
 }
 
 func (e DatabaseType) IsValid() bool {
 	switch e {
-	case DatabaseTypePostgres, DatabaseTypeMySQL, DatabaseTypeSqlite3, DatabaseTypeMongoDb, DatabaseTypeRedis, DatabaseTypeElasticSearch, DatabaseTypeMariaDb:
+	case DatabaseTypePostgres, DatabaseTypeMySQL, DatabaseTypeSqlite3, DatabaseTypeMongoDb, DatabaseTypeRedis, DatabaseTypeElasticSearch, DatabaseTypeMariaDb, DatabaseTypeClickHouse:
 		return true
 	}
 	return false

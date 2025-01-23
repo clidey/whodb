@@ -16,6 +16,7 @@ export type IDropdownItem<T extends unknown = any> = {
     id: string;
     label: string;
     icon?: ReactElement;
+    rightIcon?: ReactElement;
     extra?: T;
 };
 
@@ -33,6 +34,7 @@ export type IDropdownProps = {
     enableAction?: (index: number) => boolean;
     noItemsLabel?: string;
     showIconOnly?: boolean;
+    placeholder?: string;
 }
 
 const ITEM_CLASS = "group/item flex items-center gap-1 transition-all cursor-pointer relative hover:bg-black/10 py-1 mx-2 px-4 rounded-lg pl-1 dark:text-neutral-300/100";
@@ -59,12 +61,19 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
                 <Loading hideText={true} containerClassName="w-4 h-4" />
             </div> :
             <>  <div className="group/dropdown flex gap-1 justify-between items-center border border-gray-200 rounded-lg w-full p-1 h-[34px] px-2 dark:bg-white/10 dark:border-white/20">
-                    <div className="flex gap-1 text-gray-700 text-sm truncate items-center dark:text-neutral-300">
-                        {props.value?.icon != null && <div className="flex items-center w-6">
-                            {props.value.icon}
-                        </div>}
-                        {!props.showIconOnly && props.value?.label}
-                    </div>
+                    {
+                        props.value == null
+                        ? <div className="flex gap-1 text-gray-700/80 text-sm truncate items-center dark:text-neutral-300/80">{props.placeholder ?? "Choose from the dropdown"}</div>
+                        : <div className="flex gap-1 text-gray-700 text-sm truncate items-center dark:text-neutral-300">
+                            {props.value?.icon != null && <div className="flex items-center w-6">
+                                {props.value.icon}
+                            </div>}
+                            {!props.showIconOnly && props.value?.label}
+                            {props.value.rightIcon != null && <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                {props.value.rightIcon}
+                            </div>}
+                        </div>
+                    }
                     {cloneElement(Icons.DownCaret, {
                         className: "absolute right-2 top-1/2 -translate-y-1/2 p-1 w-5 h-5 stroke-neutral-600 dark:stroke-neutral-400 group-hover/dropdown:backdrop-blur-sm rounded-full",
                     })}
@@ -90,6 +99,9 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
                                             e.stopPropagation();
                                         },
                                     })}
+                                    {item.rightIcon != null && <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                                        {item.rightIcon}
+                                    </div>}
                                 </li>
                             ))
                         }

@@ -6,6 +6,7 @@ enum DatabaseType {
   Redis,
   ElasticSearch,
   MariaDB,
+  ClickHouse,
 }
 
 type Column {
@@ -78,9 +79,11 @@ input LoginProfileInput {
 }
 
 type LoginProfile {
+  Alias: String
   Id: String!
   Type: DatabaseType!
   Database: String
+  Source: String!
 }
 
 type StatusResponse {

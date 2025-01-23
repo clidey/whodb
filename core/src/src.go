@@ -5,6 +5,8 @@ import (
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
+	keeper_integration "github.com/clidey/whodb/core/src/integrations/keeper"
+	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins/clickhouse"
 	"github.com/clidey/whodb/core/src/plugins/elasticsearch"
 	"github.com/clidey/whodb/core/src/plugins/mongodb"
@@ -29,12 +31,17 @@ func InitializeEngine() *engine.Engine {
 	return MainEngine
 }
 
-var profiles []env.DatabaseCredentials
-
 func GetLoginProfiles() []env.DatabaseCredentials {
-	if profiles != nil {
-		return profiles
+	profiles := []env.DatabaseCredentials{}
+
+	keeperLoginProfiles, err := keeper_integration.GetLoginProfiles()
+	if err != nil {
+		log.Logger.Warn("keeper integration failed with: ", err)
+		keeperLoginProfiles = []env.DatabaseCredentials{}
 	}
+
+	profiles = append(profiles, keeperLoginProfiles...)
+
 	for _, plugin := range MainEngine.Plugins {
 		databaseProfiles := env.GetDefaultDatabaseCredentials(string(plugin.Type))
 		for _, databaseProfile := range databaseProfiles {
@@ -47,6 +54,9 @@ func GetLoginProfiles() []env.DatabaseCredentials {
 }
 
 func GetLoginProfileId(index int, profile env.DatabaseCredentials) string {
+	if len(profile.CustomId) > 0 {
+		return profile.CustomId
+	}
 	return fmt.Sprintf("#%v - %v@%v [%v]", index+1, profile.Username, profile.Hostname, profile.Database)
 }
 
