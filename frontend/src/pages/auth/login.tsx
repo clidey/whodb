@@ -27,7 +27,7 @@ const databaseTypeDropdownItems: IDropdownItem<Record<string, string>>[] = [
         id: "MySQL",
         label: "MySQL",
         icon: Icons.Logos.MySQL,
-        extra: {"Port": "3306", "Collation": "utf8mb4_general_ci", "Parse Time": "True", "Loc": "Local", "Allow clear text passwords": "0", "Host path": ""},
+        extra: {"Port": "3306", "Collation": "utf8mb4_general_ci", "Parse Time": "True", "Loc": "Local", "Allow clear text passwords": "0"},
     },
     {
         id: "MariaDB",

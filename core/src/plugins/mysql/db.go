@@ -18,7 +18,7 @@ const (
 	parseTimeKey               = "Parse Time"
 	locKey                     = "Loc"
 	allowClearTextPasswordsKey = "Allow clear text passwords"
-	hostPathKey                = "Host path"
+	//hostPathKey                = "Host path"
 )
 
 // todo: https://github.com/go-playground/validator
@@ -33,7 +33,9 @@ func DB(config *engine.PluginConfig) (*gorm.DB, error) {
 		return nil, err
 	}
 	allowClearTextPasswords := common.GetRecordValueOrDefault(config.Credentials.Advanced, allowClearTextPasswordsKey, "0")
-	hostPath := common.GetRecordValueOrDefault(config.Credentials.Advanced, hostPathKey, "")
+
+	// collation cannot contain & characters by default, so we remove them
+	collation = strings.ReplaceAll(collation, "&", "")
 
 	mysqlConfig := mysqldriver.Config{
 		User:                    config.Credentials.Username,
@@ -41,18 +43,10 @@ func DB(config *engine.PluginConfig) (*gorm.DB, error) {
 		Net:                     "tcp",
 		Addr:                    net.JoinHostPort(config.Credentials.Hostname, port),
 		DBName:                  config.Credentials.Database,
-		Params:                  make(map[string]string),
 		AllowCleartextPasswords: allowClearTextPasswords == "1",
-		ParseTime:               parseTime == "True",
+		ParseTime:               strings.ToLower(parseTime) == "true",
 		Loc:                     loc,
 		Collation:               collation,
-	}
-
-	// if there is a hostPath present, it takes priority over the Hostname
-	// todo: reflect this in the ui with a popup or something
-	if strings.HasPrefix(hostPath, "/") && len(hostPath) > 1 {
-		mysqlConfig.Net = "unix"
-		mysqlConfig.Addr = hostPath
 	}
 
 	db, err := gorm.Open(mysql.Open(mysqlConfig.FormatDSN()), &gorm.Config{})
