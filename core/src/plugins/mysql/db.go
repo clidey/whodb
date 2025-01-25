@@ -49,6 +49,20 @@ func DB(config *engine.PluginConfig) (*gorm.DB, error) {
 		Collation:               collation,
 	}
 
+	// if this config is a pre-configured profile, then allow reading of additional params
+	if config.Credentials.IsProfile {
+		params := make(map[string]string)
+		for _, record := range config.Credentials.Advanced {
+			switch record.Key {
+			case portKey, collationKey, parseTimeKey, locKey, allowClearTextPasswordsKey:
+				continue
+			default:
+				params[record.Key] = record.Value
+			}
+		}
+		mysqlConfig.Params = params
+	}
+
 	db, err := gorm.Open(mysql.Open(mysqlConfig.FormatDSN()), &gorm.Config{})
 	if err != nil {
 		return nil, err

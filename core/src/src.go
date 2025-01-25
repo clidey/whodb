@@ -39,6 +39,7 @@ func GetLoginProfiles() []env.DatabaseCredentials {
 		databaseProfiles := env.GetDefaultDatabaseCredentials(string(plugin.Type))
 		for _, databaseProfile := range databaseProfiles {
 			databaseProfile.Type = string(plugin.Type)
+			databaseProfile.IsProfile = true
 			profiles = append(profiles, databaseProfile)
 		}
 	}
@@ -66,11 +67,12 @@ func GetLoginCredentials(profile env.DatabaseCredentials) *engine.Credentials {
 	}
 
 	return &engine.Credentials{
-		Type:     profile.Type,
-		Hostname: profile.Hostname,
-		Username: profile.Username,
-		Password: profile.Password,
-		Database: profile.Database,
-		Advanced: advanced,
+		Type:      profile.Type,
+		Hostname:  profile.Hostname,
+		Username:  profile.Username,
+		Password:  profile.Password,
+		Database:  profile.Database,
+		Advanced:  advanced,
+		IsProfile: profile.IsProfile,
 	}
 }
