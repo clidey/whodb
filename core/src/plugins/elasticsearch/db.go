@@ -2,6 +2,7 @@ package elasticsearch
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
@@ -24,8 +25,8 @@ func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 
 	cfg := elasticsearch.Config{
 		Addresses: addresses,
-		Username:  config.Credentials.Username,
-		Password:  config.Credentials.Password,
+		Username:  url.QueryEscape(config.Credentials.Username),
+		Password:  url.QueryEscape(config.Credentials.Password),
 	}
 
 	client, err := elasticsearch.NewClient(cfg)
