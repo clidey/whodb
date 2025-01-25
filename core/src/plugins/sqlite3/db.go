@@ -12,9 +12,9 @@ import (
 )
 
 func getDefaultDirectory() string {
-	directory := "/db"
+	directory := "/db/"
 	if env.IsDevelopment {
-		directory = "./tmp"
+		directory = "./tmp/"
 	}
 	return directory
 }
