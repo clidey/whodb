@@ -3,11 +3,12 @@ package mongodb
 import (
 	"context"
 	"fmt"
-
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"net/url"
+	"strings"
 )
 
 func DB(config *engine.PluginConfig) (*mongo.Client, error) {
@@ -15,25 +16,28 @@ func DB(config *engine.PluginConfig) (*mongo.Client, error) {
 	port := common.GetRecordValueOrDefault(config.Credentials.Advanced, "Port", "27017")
 	queryParams := common.GetRecordValueOrDefault(config.Credentials.Advanced, "URL Params", "")
 	dnsEnabled := common.GetRecordValueOrDefault(config.Credentials.Advanced, "DNS Enabled", "false")
-	var connectionString string
-	if dnsEnabled == "false" {
-		connectionString = fmt.Sprintf("mongodb://%s:%s@%s:%s/%s%s",
-			config.Credentials.Username,
-			config.Credentials.Password,
-			config.Credentials.Hostname,
-			port,
-			config.Credentials.Database,
-			queryParams)
+
+	connectionURI := strings.Builder{}
+	clientOptions := options.Client()
+
+	if strings.ToLower(dnsEnabled) == "true" {
+		connectionURI.WriteString("mongodb+srv://")
+		connectionURI.WriteString(fmt.Sprintf("%s/", config.Credentials.Hostname))
+		connectionURI.WriteString(config.Credentials.Database)
+		connectionURI.WriteString(queryParams)
 	} else {
-		connectionString = fmt.Sprintf("mongodb+srv://%s:%s@%s/%s%s",
-			config.Credentials.Username,
-			config.Credentials.Password,
-			config.Credentials.Hostname,
-			config.Credentials.Database,
-			queryParams)
+		connectionURI.WriteString("mongodb://")
+		connectionURI.WriteString(fmt.Sprintf("%s:%s/", config.Credentials.Hostname, port))
+		connectionURI.WriteString(config.Credentials.Database)
+		connectionURI.WriteString(queryParams)
 	}
 
-	clientOptions := options.Client().ApplyURI(connectionString)
+	clientOptions.ApplyURI(connectionURI.String())
+	clientOptions.SetAuth(options.Credential{
+		Username: url.QueryEscape(config.Credentials.Username),
+		Password: url.QueryEscape(config.Credentials.Password),
+	})
+
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		return nil, err
