@@ -20,17 +20,24 @@ func DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	sslMode := common.GetRecordValueOrDefault(config.Credentials.Advanced, sslModeKey, "disable")
 
 	params := strings.Builder{}
-
-	for _, record := range config.Credentials.Advanced {
-		switch record.Key {
-		case portKey, sslModeKey:
-			continue
-		default:
-			params.WriteString(fmt.Sprintf("%v=%v ", record.Key, record.Value))
+	if config.Credentials.IsProfile {
+		for _, record := range config.Credentials.Advanced {
+			switch record.Key {
+			case portKey, sslModeKey:
+				continue
+			default:
+				params.WriteString(fmt.Sprintf("%v='%v' ", record.Key, record.Value))
+			}
 		}
 	}
 
-	dsn := fmt.Sprintf("host=%v user=%v password=%v dbname=%v port=%v sslmode=%v %v", config.Credentials.Hostname, config.Credentials.Username, config.Credentials.Password, config.Credentials.Database, port, sslMode, params.String())
+	dsn := fmt.Sprintf("host='%v' user='%v' password='%v' dbname='%v' port='%v' sslmode='%v'",
+		config.Credentials.Hostname, config.Credentials.Username, config.Credentials.Password, config.Credentials.Database, port, sslMode)
+
+	if params.Len() > 0 {
+		dsn = fmt.Sprintf("%v %v", dsn, params.String())
+	}
+
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, err
