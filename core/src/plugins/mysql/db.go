@@ -1,45 +1,61 @@
 package mysql
 
 import (
-	"fmt"
-	"net/url"
+	"net"
+	"strings"
+	"time"
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
+	mysqldriver "github.com/go-sql-driver/mysql"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
 const (
 	portKey                    = "Port"
-	charsetKey                 = "Charset"
+	collationKey               = "Collation"
 	parseTimeKey               = "Parse Time"
 	locKey                     = "Loc"
 	allowClearTextPasswordsKey = "Allow clear text passwords"
 	hostPathKey                = "Host path"
 )
 
+// todo: https://github.com/go-playground/validator
+// todo: convert below to their respective types before passing into the configuration. check if it can be done before coming here
+
 func DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	port := common.GetRecordValueOrDefault(config.Credentials.Advanced, portKey, "3306")
-	charset := common.GetRecordValueOrDefault(config.Credentials.Advanced, charsetKey, "utf8mb4")
+	collation := common.GetRecordValueOrDefault(config.Credentials.Advanced, collationKey, "utf8mb4_general_ci")
 	parseTime := common.GetRecordValueOrDefault(config.Credentials.Advanced, parseTimeKey, "True")
-	loc := common.GetRecordValueOrDefault(config.Credentials.Advanced, locKey, "Local")
+	loc, err := time.LoadLocation(common.GetRecordValueOrDefault(config.Credentials.Advanced, locKey, "Local"))
+	if err != nil {
+		return nil, err
+	}
 	allowClearTextPasswords := common.GetRecordValueOrDefault(config.Credentials.Advanced, allowClearTextPasswordsKey, "0")
-	hostPath := common.GetRecordValueOrDefault(config.Credentials.Advanced, hostPathKey, "/")
+	hostPath := common.GetRecordValueOrDefault(config.Credentials.Advanced, hostPathKey, "")
 
-	params := url.Values{}
-
-	for _, record := range config.Credentials.Advanced {
-		switch record.Key {
-		case portKey, charsetKey, parseTimeKey, locKey, allowClearTextPasswordsKey, hostPathKey:
-			continue
-		default:
-			params.Add(record.Key, fmt.Sprintf("%v", record.Value))
-		}
+	mysqlConfig := mysqldriver.Config{
+		User:                    config.Credentials.Username,
+		Passwd:                  config.Credentials.Password,
+		Net:                     "tcp",
+		Addr:                    net.JoinHostPort(config.Credentials.Hostname, port),
+		DBName:                  config.Credentials.Database,
+		Params:                  make(map[string]string),
+		AllowCleartextPasswords: allowClearTextPasswords == "1",
+		ParseTime:               parseTime == "True",
+		Loc:                     loc,
+		Collation:               collation,
 	}
 
-	dsn := fmt.Sprintf("%v:%v@tcp(%v:%v)%v%v?charset=%v&parseTime=%v&loc=%v&allowCleartextPasswords=%v&%v", config.Credentials.Username, config.Credentials.Password, config.Credentials.Hostname, port, hostPath, config.Credentials.Database, charset, parseTime, loc, allowClearTextPasswords, params.Encode())
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	// if there is a hostPath presented, it takes priority over the Hostname
+	// todo: reflect this in the ui with a popup or something
+	if strings.HasPrefix(hostPath, "/") {
+		mysqlConfig.Net = "unix"
+		mysqlConfig.Addr = hostPath
+	}
+
+	db, err := gorm.Open(mysql.Open(mysqlConfig.FormatDSN()), &gorm.Config{})
 	if err != nil {
 		return nil, err
 	}
