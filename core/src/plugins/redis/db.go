@@ -2,7 +2,7 @@ package redis
 
 import (
 	"context"
-	"fmt"
+	"net"
 	"strconv"
 
 	"github.com/clidey/whodb/core/src/common"
@@ -21,7 +21,7 @@ func DB(config *engine.PluginConfig) (*redis.Client, error) {
 			return nil, err
 		}
 	}
-	addr := fmt.Sprintf("%s:%s", config.Credentials.Hostname, port)
+	addr := net.JoinHostPort(config.Credentials.Hostname, port)
 	client := redis.NewClient(&redis.Options{
 		Addr:     addr,
 		Password: config.Credentials.Password,
