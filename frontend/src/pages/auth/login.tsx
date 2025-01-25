@@ -8,7 +8,7 @@ import { createDropdownItem, DropdownWithLabel, IDropdownItem } from "../../comp
 import { Icons } from "../../components/icons";
 import { InputWithlabel } from "../../components/input";
 import { Loading } from "../../components/loading";
-import { Container, Page } from "../../components/page";
+import { Container } from "../../components/page";
 import { InternalRoutes } from "../../config/routes";
 import { DatabaseType, LoginCredentials, useGetDatabaseLazyQuery, useGetProfilesQuery, useLoginMutation, useLoginWithProfileMutation } from '../../generated/graphql';
 import { AuthActions } from "../../store/auth";
@@ -64,7 +64,6 @@ const databaseTypeDropdownItems: IDropdownItem<Record<string, string>>[] = [
         icon: Icons.Logos.ClickHouse,
         extra: {
             "Port": "9000",
-            "SSL mode": "disable",
             "HTTP protocol": "disable",
             "Readonly": "disable",
             "Debug": "disable"

@@ -2,11 +2,9 @@ package clickhouse
 
 import (
 	"context"
-	"crypto/tls"
 	"database/sql"
 	"fmt"
-	"github.com/clidey/whodb/core/src/log"
-	"strings"
+	"net/url"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -16,8 +14,8 @@ import (
 )
 
 const (
-	portKey         = "Port"
-	sslModeKey      = "SSL Mode"
+	portKey = "Port"
+	//sslModeKey      = "SSL Mode"
 	httpProtocolKey = "HTTP Protocol"
 	readOnlyKey     = "Readonly"
 	debugKey        = "Debug"
@@ -25,12 +23,13 @@ const (
 
 func DB(config *engine.PluginConfig) (*sql.DB, error) {
 	port := common.GetRecordValueOrDefault(config.Credentials.Advanced, portKey, "9000")
-	sslMode := common.GetRecordValueOrDefault(config.Credentials.Advanced, sslModeKey, "disable")
+	//sslMode := common.GetRecordValueOrDefault(config.Credentials.Advanced, sslModeKey, "disable")
 	httpProtocol := common.GetRecordValueOrDefault(config.Credentials.Advanced, httpProtocolKey, "disable")
 	readOnly := common.GetRecordValueOrDefault(config.Credentials.Advanced, readOnlyKey, "disable")
 	debug := common.GetRecordValueOrDefault(config.Credentials.Advanced, debugKey, "disable")
+
 	options := &clickhouse.Options{
-		Addr: []string{fmt.Sprintf("%s:%s", config.Credentials.Hostname, port)},
+		Addr: []string{fmt.Sprintf("%s:%s", url.QueryEscape(config.Credentials.Hostname), port)},
 		Auth: clickhouse.Auth{
 			Database: config.Credentials.Database,
 			Username: config.Credentials.Username,
@@ -47,7 +46,7 @@ func DB(config *engine.PluginConfig) (*sql.DB, error) {
 			"max_execution_time": 60,
 		}
 	}
-	if strings.HasPrefix(port, "8") || httpProtocol != "disable" {
+	if httpProtocol != "disable" {
 		options.Protocol = clickhouse.HTTP
 		options.Compression = &clickhouse.Compression{
 			Method: clickhouse.CompressionGZIP,
@@ -60,14 +59,14 @@ func DB(config *engine.PluginConfig) (*sql.DB, error) {
 		options.MaxIdleConns = 5
 		options.ConnMaxLifetime = time.Hour
 	}
-	if sslMode != "disable" {
-		options.TLS = &tls.Config{InsecureSkipVerify: sslMode == "relaxed" || sslMode == "none"}
-	}
+	//if sslMode != "disable" {
+	//	options.TLS = &tls.Config{InsecureSkipVerify: sslMode == "relaxed" || sslMode == "none"}
+	//}
 
 	conn := clickhouse.OpenDB(options)
 	err := conn.PingContext(context.Background())
 	if err != nil {
-		log.Logger.Warnf("clickhouse.Ping() error: %v", err)
+		return nil, err
 	}
 	return conn, err
 }

@@ -2,6 +2,7 @@ package elasticsearch
 
 import (
 	"fmt"
+	"net"
 	"net/url"
 
 	"github.com/clidey/whodb/core/src/common"
@@ -13,14 +14,22 @@ func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 	var addresses []string
 	port := common.GetRecordValueOrDefault(config.Credentials.Advanced, "Port", "9200")
 	sslMode := common.GetRecordValueOrDefault(config.Credentials.Advanced, "SSL Mode", "disable")
-	if sslMode == "enable" {
-		addresses = []string{
-			fmt.Sprintf("https://%s:%s", config.Credentials.Hostname, port),
-		}
-	} else {
-		addresses = []string{
-			fmt.Sprintf("http://%s:%s", config.Credentials.Hostname, port),
-		}
+
+	hostName := url.QueryEscape(config.Credentials.Hostname)
+	port = url.QueryEscape(port)
+
+	scheme := "https"
+	if sslMode == "disable" {
+		scheme = "http"
+	}
+
+	addressUrl := url.URL{
+		Scheme: scheme,
+		Host:   net.JoinHostPort(hostName, port),
+	}
+
+	addresses = []string{
+		addressUrl.String(),
 	}
 
 	cfg := elasticsearch.Config{
