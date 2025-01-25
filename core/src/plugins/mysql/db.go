@@ -48,9 +48,9 @@ func DB(config *engine.PluginConfig) (*gorm.DB, error) {
 		Collation:               collation,
 	}
 
-	// if there is a hostPath presented, it takes priority over the Hostname
+	// if there is a hostPath present, it takes priority over the Hostname
 	// todo: reflect this in the ui with a popup or something
-	if strings.HasPrefix(hostPath, "/") {
+	if strings.HasPrefix(hostPath, "/") && len(hostPath) > 1 {
 		mysqlConfig.Net = "unix"
 		mysqlConfig.Addr = hostPath
 	}
