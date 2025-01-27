@@ -2,6 +2,7 @@ package clickhouse
 
 import (
 	"context"
+	"crypto/tls"
 	"database/sql"
 	"fmt"
 	"net/url"
@@ -15,8 +16,8 @@ import (
 )
 
 const (
-	portKey = "Port"
-	//sslModeKey      = "SSL Mode"
+	portKey         = "Port"
+	sslModeKey      = "SSL Mode"
 	httpProtocolKey = "HTTP Protocol"
 	readOnlyKey     = "Readonly"
 	debugKey        = "Debug"
@@ -27,7 +28,7 @@ func DB(config *engine.PluginConfig) (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	//sslMode := common.GetRecordValueOrDefault(config.Credentials.Advanced, sslModeKey, "disable")
+	sslMode := common.GetRecordValueOrDefault(config.Credentials.Advanced, sslModeKey, "disable")
 	httpProtocol := common.GetRecordValueOrDefault(config.Credentials.Advanced, httpProtocolKey, "disable")
 	readOnly := common.GetRecordValueOrDefault(config.Credentials.Advanced, readOnlyKey, "disable")
 	debug := common.GetRecordValueOrDefault(config.Credentials.Advanced, debugKey, "disable")
@@ -42,14 +43,18 @@ func DB(config *engine.PluginConfig) (*sql.DB, error) {
 		DialTimeout:      time.Second * 30,
 		ConnOpenStrategy: clickhouse.ConnOpenInOrder,
 	}
-	if debug != "disable" {
+	if debug == "enable" {
 		options.Debug = true
+	} else {
+		options.Debug = false
 	}
+
 	if readOnly == "disable" {
 		options.Settings = clickhouse.Settings{
 			"max_execution_time": 60,
 		}
 	}
+
 	if httpProtocol != "disable" {
 		options.Protocol = clickhouse.HTTP
 		options.Compression = &clickhouse.Compression{
@@ -63,9 +68,10 @@ func DB(config *engine.PluginConfig) (*sql.DB, error) {
 		options.MaxIdleConns = 5
 		options.ConnMaxLifetime = time.Hour
 	}
-	//if sslMode != "disable" {
-	//	options.TLS = &tls.Config{InsecureSkipVerify: sslMode == "relaxed" || sslMode == "none"}
-	//}
+	//todo: figure out how ssl works in clickhouse
+	if sslMode != "disable" {
+		options.TLS = &tls.Config{InsecureSkipVerify: sslMode == "relaxed" || sslMode == "none"}
+	}
 
 	conn := clickhouse.OpenDB(options)
 	err = conn.PingContext(context.Background())
