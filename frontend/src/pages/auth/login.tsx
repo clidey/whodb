@@ -2,14 +2,13 @@ import classNames from "classnames";
 import { entries } from "lodash";
 import { cloneElement, FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { twMerge } from "tailwind-merge";
 import { AnimatedButton } from "../../components/button";
-import { BASE_CARD_CLASS, BRAND_COLOR } from "../../components/classes";
+import { BRAND_COLOR } from "../../components/classes";
 import { createDropdownItem, DropdownWithLabel, IDropdownItem } from "../../components/dropdown";
 import { Icons } from "../../components/icons";
 import { InputWithlabel } from "../../components/input";
 import { Loading } from "../../components/loading";
-import { Container, Page } from "../../components/page";
+import { Container } from "../../components/page";
 import { InternalRoutes } from "../../config/routes";
 import { DatabaseType, LoginCredentials, useGetDatabaseLazyQuery, useGetProfilesQuery, useLoginMutation, useLoginWithProfileMutation } from '../../generated/graphql';
 import { AuthActions } from "../../store/auth";
@@ -22,19 +21,19 @@ const databaseTypeDropdownItems: IDropdownItem<Record<string, string>>[] = [
         id: "Postgres",
         label: "Postgres",
         icon: Icons.Logos.Postgres,
-        extra: {"Port": "5432", "SSL Mode": "disable",},
+        extra: {"Port": "5432"},
     },
     {
         id: "MySQL",
         label: "MySQL",
         icon: Icons.Logos.MySQL,
-        extra: {"Port": "3306", "Charset": "utf8mb4", "Parse Time": "True", "Loc": "Local", "Allow clear text passwords": "0", "Host path": "/"},
+        extra: {"Port": "3306", "Parse Time": "True", "Loc": "Local", "Allow clear text passwords": "0"},
     },
     {
         id: "MariaDB",
         label: "MariaDB",
         icon: Icons.Logos.MariaDB,
-        extra: {"Port": "3306", "Charset": "utf8mb4", "Parse Time": "True", "Loc": "Local", "Allow clear text passwords": "0"},
+        extra: {"Port": "3306", "Parse Time": "True", "Loc": "Local", "Allow clear text passwords": "0"},
     },
     {
         id: "Sqlite3",
@@ -66,7 +65,7 @@ const databaseTypeDropdownItems: IDropdownItem<Record<string, string>>[] = [
         extra: {
             "Port": "9000",
             "SSL mode": "disable",
-            "HTTP protocol": "disable",
+            "HTTP Protocol": "disable",
             "Readonly": "disable",
             "Debug": "disable"
         }

@@ -2,6 +2,9 @@ package elasticsearch
 
 import (
 	"fmt"
+	"net"
+	"net/url"
+	"strconv"
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
@@ -10,22 +13,32 @@ import (
 
 func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 	var addresses []string
-	port := common.GetRecordValueOrDefault(config.Credentials.Advanced, "Port", "9200")
+	port, err := strconv.Atoi(common.GetRecordValueOrDefault(config.Credentials.Advanced, "Port", "9200"))
+	if err != nil {
+		return nil, err
+	}
 	sslMode := common.GetRecordValueOrDefault(config.Credentials.Advanced, "SSL Mode", "disable")
-	if sslMode == "enable" {
-		addresses = []string{
-			fmt.Sprintf("https://%s:%s", config.Credentials.Hostname, port),
-		}
-	} else {
-		addresses = []string{
-			fmt.Sprintf("http://%s:%s", config.Credentials.Hostname, port),
-		}
+
+	hostName := url.QueryEscape(config.Credentials.Hostname)
+
+	scheme := "https"
+	if sslMode == "disable" {
+		scheme = "http"
+	}
+
+	addressUrl := url.URL{
+		Scheme: scheme,
+		Host:   net.JoinHostPort(hostName, strconv.Itoa(port)),
+	}
+
+	addresses = []string{
+		addressUrl.String(),
 	}
 
 	cfg := elasticsearch.Config{
 		Addresses: addresses,
-		Username:  config.Credentials.Username,
-		Password:  config.Credentials.Password,
+		Username:  url.QueryEscape(config.Credentials.Username),
+		Password:  url.QueryEscape(config.Credentials.Password),
 	}
 
 	client, err := elasticsearch.NewClient(cfg)

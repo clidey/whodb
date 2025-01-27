@@ -41,7 +41,8 @@ type DatabaseCredentials struct {
 	Port     string            `json:"port"`
 	Config   map[string]string `json:"config"`
 
-	Type string
+	IsProfile bool
+	Type      string
 }
 
 func GetDefaultDatabaseCredentials(databaseType string) []DatabaseCredentials {
