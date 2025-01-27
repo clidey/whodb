@@ -2,6 +2,8 @@ package mysql
 
 import (
 	"net"
+	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,19 +16,19 @@ import (
 
 const (
 	portKey                    = "Port"
-	collationKey               = "Collation"
 	parseTimeKey               = "Parse Time"
 	locKey                     = "Loc"
 	allowClearTextPasswordsKey = "Allow clear text passwords"
-	//hostPathKey                = "Host path"
 )
 
 // todo: https://github.com/go-playground/validator
 // todo: convert below to their respective types before passing into the configuration. check if it can be done before coming here
 
 func DB(config *engine.PluginConfig) (*gorm.DB, error) {
-	port := common.GetRecordValueOrDefault(config.Credentials.Advanced, portKey, "3306")
-	collation := common.GetRecordValueOrDefault(config.Credentials.Advanced, collationKey, "utf8mb4_general_ci")
+	port, err := strconv.Atoi(common.GetRecordValueOrDefault(config.Credentials.Advanced, portKey, "3306"))
+	if err != nil {
+		return nil, err
+	}
 	parseTime := common.GetRecordValueOrDefault(config.Credentials.Advanced, parseTimeKey, "True")
 	loc, err := time.LoadLocation(common.GetRecordValueOrDefault(config.Credentials.Advanced, locKey, "Local"))
 	if err != nil {
@@ -34,19 +36,15 @@ func DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	}
 	allowClearTextPasswords := common.GetRecordValueOrDefault(config.Credentials.Advanced, allowClearTextPasswordsKey, "0")
 
-	// collation cannot contain & characters by default, so we remove them
-	collation = strings.ReplaceAll(collation, "&", "")
-
 	mysqlConfig := mysqldriver.Config{
 		User:                    config.Credentials.Username,
 		Passwd:                  config.Credentials.Password,
 		Net:                     "tcp",
-		Addr:                    net.JoinHostPort(config.Credentials.Hostname, port),
+		Addr:                    net.JoinHostPort(config.Credentials.Hostname, strconv.Itoa(port)),
 		DBName:                  config.Credentials.Database,
 		AllowCleartextPasswords: allowClearTextPasswords == "1",
 		ParseTime:               strings.ToLower(parseTime) == "true",
 		Loc:                     loc,
-		Collation:               collation,
 	}
 
 	// if this config is a pre-configured profile, then allow reading of additional params
@@ -54,10 +52,10 @@ func DB(config *engine.PluginConfig) (*gorm.DB, error) {
 		params := make(map[string]string)
 		for _, record := range config.Credentials.Advanced {
 			switch record.Key {
-			case portKey, collationKey, parseTimeKey, locKey, allowClearTextPasswordsKey:
+			case portKey, parseTimeKey, locKey, allowClearTextPasswordsKey:
 				continue
 			default:
-				params[record.Key] = record.Value
+				params[record.Key] = url.QueryEscape(record.Value)
 			}
 		}
 		mysqlConfig.Params = params

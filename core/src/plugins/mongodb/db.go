@@ -8,12 +8,16 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
 func DB(config *engine.PluginConfig) (*mongo.Client, error) {
 	ctx := context.Background()
-	port := common.GetRecordValueOrDefault(config.Credentials.Advanced, "Port", "27017")
+	port, err := strconv.Atoi(common.GetRecordValueOrDefault(config.Credentials.Advanced, "Port", "27017"))
+	if err != nil {
+		return nil, err
+	}
 	queryParams := common.GetRecordValueOrDefault(config.Credentials.Advanced, "URL Params", "")
 	dnsEnabled := common.GetRecordValueOrDefault(config.Credentials.Advanced, "DNS Enabled", "false")
 
@@ -27,7 +31,7 @@ func DB(config *engine.PluginConfig) (*mongo.Client, error) {
 		connectionURI.WriteString(queryParams)
 	} else {
 		connectionURI.WriteString("mongodb://")
-		connectionURI.WriteString(fmt.Sprintf("%s:%s/", config.Credentials.Hostname, port))
+		connectionURI.WriteString(fmt.Sprintf("%s:%d/", config.Credentials.Hostname, port))
 		connectionURI.WriteString(config.Credentials.Database)
 		connectionURI.WriteString(queryParams)
 	}

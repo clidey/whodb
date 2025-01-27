@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -22,14 +23,17 @@ const (
 )
 
 func DB(config *engine.PluginConfig) (*sql.DB, error) {
-	port := common.GetRecordValueOrDefault(config.Credentials.Advanced, portKey, "9000")
+	port, err := strconv.Atoi(common.GetRecordValueOrDefault(config.Credentials.Advanced, portKey, "9000"))
+	if err != nil {
+		return nil, err
+	}
 	//sslMode := common.GetRecordValueOrDefault(config.Credentials.Advanced, sslModeKey, "disable")
 	httpProtocol := common.GetRecordValueOrDefault(config.Credentials.Advanced, httpProtocolKey, "disable")
 	readOnly := common.GetRecordValueOrDefault(config.Credentials.Advanced, readOnlyKey, "disable")
 	debug := common.GetRecordValueOrDefault(config.Credentials.Advanced, debugKey, "disable")
 
 	options := &clickhouse.Options{
-		Addr: []string{fmt.Sprintf("%s:%s", url.QueryEscape(config.Credentials.Hostname), port)},
+		Addr: []string{fmt.Sprintf("%s:%d", url.QueryEscape(config.Credentials.Hostname), port)},
 		Auth: clickhouse.Auth{
 			Database: config.Credentials.Database,
 			Username: config.Credentials.Username,
@@ -64,7 +68,7 @@ func DB(config *engine.PluginConfig) (*sql.DB, error) {
 	//}
 
 	conn := clickhouse.OpenDB(options)
-	err := conn.PingContext(context.Background())
+	err = conn.PingContext(context.Background())
 	if err != nil {
 		return nil, err
 	}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"strconv"
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
@@ -12,11 +13,13 @@ import (
 
 func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 	var addresses []string
-	port := common.GetRecordValueOrDefault(config.Credentials.Advanced, "Port", "9200")
+	port, err := strconv.Atoi(common.GetRecordValueOrDefault(config.Credentials.Advanced, "Port", "9200"))
+	if err != nil {
+		return nil, err
+	}
 	sslMode := common.GetRecordValueOrDefault(config.Credentials.Advanced, "SSL Mode", "disable")
 
 	hostName := url.QueryEscape(config.Credentials.Hostname)
-	port = url.QueryEscape(port)
 
 	scheme := "https"
 	if sslMode == "disable" {
@@ -25,7 +28,7 @@ func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 
 	addressUrl := url.URL{
 		Scheme: scheme,
-		Host:   net.JoinHostPort(hostName, port),
+		Host:   net.JoinHostPort(hostName, strconv.Itoa(port)),
 	}
 
 	addresses = []string{
