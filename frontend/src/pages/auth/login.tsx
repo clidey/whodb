@@ -64,7 +64,8 @@ const databaseTypeDropdownItems: IDropdownItem<Record<string, string>>[] = [
         icon: Icons.Logos.ClickHouse,
         extra: {
             "Port": "9000",
-            "HTTP protocol": "disable",
+            "SSL mode": "disable",
+            "HTTP Protocol": "disable",
             "Readonly": "disable",
             "Debug": "disable"
         }

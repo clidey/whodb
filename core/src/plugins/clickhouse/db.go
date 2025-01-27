@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"database/sql"
 	"fmt"
-	"net/url"
+	"net"
 	"strconv"
 	"time"
 
@@ -33,26 +33,20 @@ func DB(config *engine.PluginConfig) (*sql.DB, error) {
 	readOnly := common.GetRecordValueOrDefault(config.Credentials.Advanced, readOnlyKey, "disable")
 	debug := common.GetRecordValueOrDefault(config.Credentials.Advanced, debugKey, "disable")
 
+	auth := clickhouse.Auth{
+		Database: config.Credentials.Database,
+		Username: config.Credentials.Username,
+		Password: config.Credentials.Password,
+	}
+	address := []string{net.JoinHostPort(config.Credentials.Hostname, strconv.Itoa(port))}
 	options := &clickhouse.Options{
-		Addr: []string{fmt.Sprintf("%s:%d", url.QueryEscape(config.Credentials.Hostname), port)},
-		Auth: clickhouse.Auth{
-			Database: config.Credentials.Database,
-			Username: config.Credentials.Username,
-			Password: config.Credentials.Password,
-		},
+		Addr:             address,
+		Auth:             auth,
 		DialTimeout:      time.Second * 30,
 		ConnOpenStrategy: clickhouse.ConnOpenInOrder,
-	}
-	if debug == "enable" {
-		options.Debug = true
-	} else {
-		options.Debug = false
-	}
-
-	if readOnly == "disable" {
-		options.Settings = clickhouse.Settings{
-			"max_execution_time": 60,
-		}
+		Compression: &clickhouse.Compression{
+			Method: clickhouse.CompressionLZ4,
+		},
 	}
 
 	if httpProtocol != "disable" {
@@ -60,20 +54,26 @@ func DB(config *engine.PluginConfig) (*sql.DB, error) {
 		options.Compression = &clickhouse.Compression{
 			Method: clickhouse.CompressionGZIP,
 		}
-	} else {
-		options.Compression = &clickhouse.Compression{
-			Method: clickhouse.CompressionLZ4,
-		}
-		options.MaxOpenConns = 5
-		options.MaxIdleConns = 5
-		options.ConnMaxLifetime = time.Hour
 	}
-	//todo: figure out how ssl works in clickhouse
+
+	if debug != "disable" {
+		options.Debug = true
+	}
+	if readOnly == "disable" {
+		options.Settings = clickhouse.Settings{
+			"max_execution_time": 60,
+		}
+	}
 	if sslMode != "disable" {
 		options.TLS = &tls.Config{InsecureSkipVerify: sslMode == "relaxed" || sslMode == "none"}
 	}
 
 	conn := clickhouse.OpenDB(options)
+
+	conn.SetMaxOpenConns(5)
+	conn.SetMaxOpenConns(5)
+	conn.SetConnMaxLifetime(time.Hour)
+
 	err = conn.PingContext(context.Background())
 	if err != nil {
 		return nil, err
