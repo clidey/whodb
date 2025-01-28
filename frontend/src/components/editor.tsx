@@ -70,7 +70,10 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
           }),
             basicSetup,
             languageExtension,
-            darkModeEnabled ? oneDark : [],
+            darkModeEnabled ? [oneDark, EditorView.theme({
+              ".cm-activeLine": { backgroundColor: "rgba(0,0,0,0.05) !important" },
+              ".cm-activeLineGutter": { backgroundColor: "rgba(0,0,0,0.05) !important" },
+            })] : [],
             EditorView.updateListener.of((update) => {
                 if (update.changes && setValue != null) {
                     setValue(update.state.doc.toString());
