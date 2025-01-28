@@ -167,17 +167,35 @@ func (p *PostgresPlugin) GetRows(config *engine.PluginConfig, schema string, sto
 	if err != nil {
 		return nil, err
 	}
-	query := fmt.Sprintf("SELECT * FROM \"%v\".\"%s\"", schema, storageUnit)
+
+	baseQuery := fmt.Sprintf("FROM \"%v\".\"%s\"", schema, storageUnit)
 	if len(where) > 0 {
-		query = fmt.Sprintf("%v WHERE %v", query, where)
+		baseQuery = fmt.Sprintf("%v WHERE %v", baseQuery, where)
 	}
+
+	countQuery := fmt.Sprintf("SELECT COUNT(*) %v", baseQuery)
+	var totalCount int
+	err = db.Raw(countQuery).Scan(&totalCount).Error
+	if err != nil {
+		return nil, err
+	}
+
+	query := fmt.Sprintf("SELECT * %v", baseQuery)
 	sortKeyRes, err := getPrimaryKeyColumns(db, schema, storageUnit)
 	if err == nil {
 		quotedKeys := common.JoinWithQuotes(sortKeyRes)
 		query = fmt.Sprintf("%v ORDER BY %v ASC", query, quotedKeys)
 	}
+
 	query = fmt.Sprintf("%v LIMIT ? OFFSET ?", query)
-	return p.executeRawSQL(config, query, pageSize, pageOffset)
+
+	result, err := p.executeRawSQL(config, query, pageSize, pageOffset)
+	if err != nil {
+		return nil, err
+	}
+
+	result.TotalCount = totalCount
+	return result, nil
 }
 
 func (p *PostgresPlugin) executeRawSQL(config *engine.PluginConfig, query string, params ...interface{}) (*engine.GetRowsResult, error) {

@@ -4,17 +4,23 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+
 	"github.com/clidey/whodb/core/src/engine"
 )
 
 func (p *ClickHousePlugin) GetRows(config *engine.PluginConfig, schema string, storageUnit string, where string, pageSize int, pageOffset int) (*engine.GetRowsResult, error) {
-	query := fmt.Sprintf("SELECT * FROM %s.%s", schema, storageUnit)
+	baseQuery := fmt.Sprintf("FROM %s.%s", schema, storageUnit)
 	if where != "" {
-		query += " WHERE " + where
+		baseQuery += " WHERE " + where
 	}
-	query += fmt.Sprintf(" LIMIT %d OFFSET %d", pageSize, pageOffset)
+	query := fmt.Sprintf("SELECT * %s LIMIT %d OFFSET %d", baseQuery, pageSize, pageOffset)
 
-	return p.executeQuery(config, query)
+	result, err := p.executeQuery(config, query)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (p *ClickHousePlugin) RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error) {

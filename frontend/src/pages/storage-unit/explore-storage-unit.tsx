@@ -14,7 +14,7 @@ import { Table } from "../../components/table";
 import { graphqlClient } from "../../config/graphql-client";
 import { InternalRoutes } from "../../config/routes";
 import {
-    Column, DatabaseType, DeleteRowDocument, DeleteRowMutationResult, RecordInput, RowsResult, StorageUnit,
+    Column, DatabaseType, DeleteRowDocument, DeleteRowMutationResult, GetStorageUnitRowsQuery, GetStorageUnitsQuery, GetStorageUnitsQueryResult, RecordInput, RowsResult, StorageUnit,
     UpdateStorageUnitDocument, UpdateStorageUnitMutationResult, useAddRowMutation, useGetStorageUnitRowsLazyQuery
 } from "../../generated/graphql";
 import { notify } from "../../store/function";
@@ -32,7 +32,7 @@ export const ExploreStorageUnit: FC = () => {
     const schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
     const navigate = useNavigate();
-    const [rows, setRows] = useState<RowsResult>();
+    const [rows, setRows] = useState<GetStorageUnitRowsQuery["Row"]>();
     const [showAdd, setShowAdd] = useState(false);
     const [newRowForm, setNewRowForm] = useState<RecordInput[]>([]);
     const [checkedRows, setCheckedRows] = useState<Set<number>>(new Set());
@@ -172,8 +172,8 @@ export const ExploreStorageUnit: FC = () => {
     }, [checkedRows, current, rows, schema, unitName]);
 
     const totalCount = useMemo(() => {
-        return unit?.Attributes.find(attribute => attribute.Key === "Count")?.Value ?? "unknown";
-    }, [unit]);
+        return rows?.TotalCount?.toString() ?? unit?.Attributes.find(attribute => attribute.Key === "Count")?.Value ?? "unknown";
+    }, [rows, unit]);
 
     const totalPages = useMemo(() => {
         if (!isNumeric(totalCount) || !isNumeric(pageSize)) {

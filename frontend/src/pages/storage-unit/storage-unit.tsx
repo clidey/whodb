@@ -168,7 +168,7 @@ export const StorageUnitPage: FC = () => {
             return [];
         }
         let items: string[] = [];
-    
+        
         switch(current.Type) {
             case DatabaseType.MariaDb:
                 items = [
@@ -180,6 +180,7 @@ export const StorageUnitPage: FC = () => {
                 ];
                 break;
             case DatabaseType.MySql:
+            case DatabaseType.ClickHouse:
                 items = [
                     "TINYINT", "SMALLINT", "MEDIUMINT", "INT", "INTEGER", "BIGINT", "FLOAT", "DOUBLE", "DECIMAL",
                     "DATE", "DATETIME", "TIMESTAMP", "TIME", "YEAR",

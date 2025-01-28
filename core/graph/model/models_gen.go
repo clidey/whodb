@@ -79,6 +79,7 @@ type RecordInput struct {
 type RowsResult struct {
 	Columns       []*Column  `json:"Columns"`
 	Rows          [][]string `json:"Rows"`
+	TotalCount    int        `json:"TotalCount"`
 	DisableUpdate bool       `json:"DisableUpdate"`
 }
 
