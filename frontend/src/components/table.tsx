@@ -387,7 +387,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
         const colWidth = Math.max(((width - indexWidth)/actualColumns.length), 150);
         const headerCount: Record<string, number> = {};
         const cols = actualColumns.map((col) => {
-            if (headerCount[col] === undefined) {
+            if (headerCount[col] == null) {
                 headerCount[col] = 0;
             } else {
                 headerCount[col] += 1;
