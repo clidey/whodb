@@ -36,13 +36,14 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
         onAdd(cellId);
     }, [cellId, onAdd]);
 
-
     const handleDelete = useCallback(() => {
         onDelete?.(cellId);
     }, [cellId, onDelete]);
 
-
     const isCodeAQuery = useMemo(() => {
+        if (submittedCode == null) {
+            return true;
+        }
         return submittedCode.split("\n").filter(text => !text.startsWith("--")).join("\n").trim().toLowerCase().startsWith("select");
     }, [submittedCode]);
 
@@ -113,11 +114,11 @@ export const RawExecutePage: FC = () => {
                 <div className="w-full max-w-[1000px] flex flex-col gap-4">
                     {
                         cellIds.map((cellId, index) => (
-                            <>
+                            <div key={cellId}>
                                 {index > 0 && <div className="border-dashed border-t border-gray-300 my-2 dark:border-neutral-600"></div>}
                                 <RawExecuteCell key={cellId} cellId={cellId} onAdd={handleAdd} onDelete={cellIds.length <= 1 ? undefined : handleDelete}
                                     showTools={cellIds.length === 1} />
-                            </>
+                            </div>
                         ))
                     }
                 </div>
