@@ -385,12 +385,23 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
     const columns = useMemo(() => {
         const indexWidth = 50;
         const colWidth = Math.max(((width - indexWidth)/actualColumns.length), 150);
-        const cols = actualColumns.map(col => ({
-            id: col,
-            Header: col,
-            accessor: col,
-            width: colWidth,
-        }));
+        const headerCount: Record<string, number> = {};
+        const cols = actualColumns.map((col) => {
+            if (headerCount[col] == null) {
+                headerCount[col] = 0;
+            } else {
+                headerCount[col] += 1;
+            }
+
+            const id = headerCount[col] > 0 ? `${col}-${headerCount[col]}` : col;
+
+            return {
+                id,
+                Header: col,
+                accessor: id,
+                width: colWidth,
+            };
+        });
         cols.unshift({
             id: "#",
             Header: "#",
@@ -403,7 +414,11 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
     useEffect(() => {
         setData(actualRows.map((row, rowIndex) => {
             const newRow = row.reduce((all, one, colIndex) => {
-                all[actualColumns[colIndex]] = one;
+                if (actualColumns[colIndex] === "#") {
+                    all[actualColumns[colIndex]] = one;
+                } else {
+                    all[columns[colIndex+1].accessor] = one;
+                }
                 return all;
             }, { "#": (rowIndex+1).toString() } as Record<string, string | number>);
             newRow.originalIndex = rowIndex;
