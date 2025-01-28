@@ -1,4 +1,3 @@
-import MarkdownPreview from "@uiw/react-markdown-preview";
 import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactJson from "react-json-view";
 import { useAppSelector } from "../store/hooks";
@@ -11,6 +10,8 @@ import { EditorState } from "@codemirror/state";
 import { EditorView, lineNumbers } from "@codemirror/view";
 import { oneDark } from "@codemirror/theme-one-dark";
 import classNames from "classnames";
+import MarkdownPreview from 'react-markdown';
+import remarkGfm from "remark-gfm";
 
 type ICodeEditorProps = {
   value: string;
@@ -106,17 +107,9 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
     if (showPreview) {
       if (language === "markdown") {
         return (
-          <div className="overflow-y-auto h-full bg-white p-4 pl-8 dark:bg-[#252526] dark:backdrop-blur-md">
-            <MarkdownPreview
-              className="pointer-events-none"
-              source={value}
-              wrapperElement={{
-                "data-color-mode": darkModeEnabled ? "dark" : "light",
-              }}
-              style={{
-                backgroundColor: "unset",
-              }}
-            />
+          <div className="overflow-y-auto h-full bg-white p-4 pl-8 dark:bg-[#252526] dark:backdrop-blur-md markdown-preview dark:[&>*]:text-neutral-300">
+            {/* todo: there seems to be an issue with links in markdown with the library */}
+            <MarkdownPreview remarkPlugins={[remarkGfm]}>{value}</MarkdownPreview>
           </div>
         );
       }
@@ -132,7 +125,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
         );
       }
     }
-    return <div ref={editorRef} className="h-full w-full [&>.cm-editor]:h-full [&>.cm-editor]:p-2 dark:[&>.cm-editor]:bg-[#252526] dark:[&_.cm-gutter]:bg-[#252526]"></div>;
+    return null;
   }, [darkModeEnabled, showPreview, value, language]);
 
   const actionButtons = useMemo(() => {
@@ -153,6 +146,9 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
         "opacity-50 pointer-events-none": disabled,
     })}>
       {children}
+      <div ref={editorRef} className={classNames("h-full w-full [&>.cm-editor]:h-full [&>.cm-editor]:p-2 dark:[&>.cm-editor]:bg-[#252526] dark:[&_.cm-gutter]:bg-[#252526] transition-all opacity-100", {
+        "opacity-0 pointer-events-none": hidePreview,
+      })}></div>
       <div
         className={classNames("absolute right-6 bottom-2 z-20", {
           hidden: hidePreview,
