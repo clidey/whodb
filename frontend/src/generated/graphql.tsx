@@ -38,14 +38,14 @@ export type Column = {
 };
 
 export enum DatabaseType {
+  ClickHouse = 'ClickHouse',
   ElasticSearch = 'ElasticSearch',
   MariaDb = 'MariaDB',
   MongoDb = 'MongoDB',
   MySql = 'MySQL',
   Postgres = 'Postgres',
   Redis = 'Redis',
-  Sqlite3 = 'Sqlite3',
-  ClickHouse = 'ClickHouse'
+  Sqlite3 = 'Sqlite3'
 }
 
 export type GraphUnit = {
@@ -80,6 +80,7 @@ export type LoginCredentials = {
 
 export type LoginProfile = {
   __typename?: 'LoginProfile';
+  Alias?: Maybe<Scalars['String']['output']>;
   Database?: Maybe<Scalars['String']['output']>;
   Id: Scalars['String']['output'];
   Type: DatabaseType;
@@ -246,7 +247,7 @@ export type StorageUnit = {
 export type GetProfilesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetProfilesQuery = { __typename?: 'Query', Profiles: Array<{ __typename?: 'LoginProfile', Id: string, Type: DatabaseType, Database?: string | null }> };
+export type GetProfilesQuery = { __typename?: 'Query', Profiles: Array<{ __typename?: 'LoginProfile', Alias?: string | null, Id: string, Type: DatabaseType, Database?: string | null }> };
 
 export type GetSchemaQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -388,6 +389,7 @@ export type UpdateStorageUnitMutation = { __typename?: 'Mutation', UpdateStorage
 export const GetProfilesDocument = gql`
     query GetProfiles {
   Profiles {
+    Alias
     Id
     Type
     Database

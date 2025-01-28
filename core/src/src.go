@@ -29,12 +29,8 @@ func InitializeEngine() *engine.Engine {
 	return MainEngine
 }
 
-var profiles []env.DatabaseCredentials
-
 func GetLoginProfiles() []env.DatabaseCredentials {
-	if profiles != nil {
-		return profiles
-	}
+	profiles := []env.DatabaseCredentials{}
 	for _, plugin := range MainEngine.Plugins {
 		databaseProfiles := env.GetDefaultDatabaseCredentials(string(plugin.Type))
 		for _, databaseProfile := range databaseProfiles {
@@ -43,11 +39,13 @@ func GetLoginProfiles() []env.DatabaseCredentials {
 			profiles = append(profiles, databaseProfile)
 		}
 	}
-
 	return profiles
 }
 
 func GetLoginProfileId(index int, profile env.DatabaseCredentials) string {
+	if len(profile.Alias) > 0 {
+		return profile.Alias
+	}
 	return fmt.Sprintf("#%v - %v@%v [%v]", index+1, profile.Username, profile.Hostname, profile.Database)
 }
 
