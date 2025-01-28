@@ -374,7 +374,7 @@ export const ExploreStorageUnit: FC = () => {
                 notify(`Unable to add the data row: ${e.message}`, "error");
             },
         });
-    }, [addRow, current?.Type, handleSubmitRequest, newRowForm, rows?.Rows, schema, unit.Name]);
+    }, [addRow, current?.Type, handleSubmitRequest, newRowForm, rows?.Rows, schema, unit?.Name]);
 
     const handleNewFormChange = useCallback((type: "value" | "config", index: number, value: string) => {
         setNewRowForm(rowForm => {

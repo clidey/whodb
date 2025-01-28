@@ -1,125 +1,161 @@
-import MonacoEditor, { EditorProps, OnMount } from "@monaco-editor/react";
-import MarkdownPreview from "@uiw/react-markdown-preview";
-import classNames from "classnames";
-import { KeyCode, editor, languages } from "monaco-editor";
-import { FC, cloneElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import ReactJson from 'react-json-view';
+import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import ReactJson from "react-json-view";
 import { useAppSelector } from "../store/hooks";
 import { Icons } from "./icons";
-import { Loading } from "./loading";
-
-languages.register({ id: 'markdown' });
-languages.register({ id: 'json' });
-languages.register({ id: 'sql' });
+import {basicSetup} from "codemirror";
+import { json } from "@codemirror/lang-json";
+import { markdown } from "@codemirror/lang-markdown";
+import { sql } from "@codemirror/lang-sql";
+import { EditorState } from "@codemirror/state";
+import { EditorView, lineNumbers } from "@codemirror/view";
+import { oneDark } from "@codemirror/theme-one-dark";
+import classNames from "classnames";
+import MarkdownPreview from 'react-markdown';
+import remarkGfm from "remark-gfm";
 
 type ICodeEditorProps = {
-    value: string;
-    setValue?: (value: string) => void;
-    language?: "sql" | "markdown" | "json";
-    options?: EditorProps["options"];
-    onRun?: () => void;
-    defaultShowPreview?: boolean;
-    disabled?: boolean;
-}
+  value: string;
+  setValue?: (value: string) => void;
+  language?: "sql" | "markdown" | "json";
+  onRun?: () => void;
+  defaultShowPreview?: boolean;
+  disabled?: boolean;
+};
 
-export const CodeEditor: FC<ICodeEditorProps> = ({ value, setValue, language, options = {}, onRun, defaultShowPreview, disabled }) => {
-    const [showPreview, setShowPreview] = useState(defaultShowPreview);
-    const editorRef = useRef<editor.IStandaloneCodeEditor>();
-    const darkModeEnabled = useAppSelector(state => state.global.theme === "dark");
+export const CodeEditor: FC<ICodeEditorProps> = ({
+  value,
+  setValue,
+  language = "sql",
+  onRun,
+  defaultShowPreview = false,
+  disabled,
+}) => {
+  const [showPreview, setShowPreview] = useState(defaultShowPreview);
+  const editorRef = useRef<HTMLDivElement>(null);
+  const darkModeEnabled = useAppSelector((state) => state.global.theme === "dark");
+  const onRunReference = useRef<Function>();
 
-    const handleEditorDidMount: OnMount = useCallback(editor => {
-        editorRef.current = editor;
-        editor.setSelection({ startLineNumber: 1, startColumn: value.length+1, endLineNumber: 1, endColumn: value.length+1 });
-        editor.focus();
-    }, [value.length]);
+  useEffect(() => {
+    onRunReference.current = onRun;
+  }, [onRun]);
 
-    const handlePreviewToggle = useCallback(async () => {
-        setShowPreview(p => !p);
-    }, []);
+  useEffect(() => {
+    if (editorRef.current == null) {
+        return;
+    }
 
-    useEffect(() => {
-        if (editorRef.current == null) {
-            return;
-        }
-        const disposable = editorRef.current.onKeyDown(e => {
-            if (e.metaKey && e.keyCode === KeyCode.Enter) {
-                onRun?.();
-            }
-        });
-        return () => {
-            disposable.dispose();
-        }
-    }, [editorRef, onRun]);
+    const languageExtension = (() => {
+      switch (language) {
+        case "json":
+          return json();
+        case "markdown":
+          return markdown();
+        case "sql":
+          return sql();
+        default:
+          return sql();
+      }
+    })();
 
-    const hidePreview = useMemo(() => {
-        return language !== "markdown" && language !== "json";
-    }, [language]);
+    const state = EditorState.create({
+        doc: value,
+        extensions: [
+          EditorView.domEventHandlers({
+              keydown(event) {
+                  if (event.metaKey && event.key === "Enter" && onRunReference.current != null) {
+                      onRunReference.current();
+                      event.preventDefault();
+                      event.stopPropagation();
+                  }
+              },
+          }),
+            basicSetup,
+            languageExtension,
+            darkModeEnabled ? [oneDark, EditorView.theme({
+              ".cm-activeLine": { backgroundColor: "rgba(0,0,0,0.05) !important" },
+              ".cm-activeLineGutter": { backgroundColor: "rgba(0,0,0,0.05) !important" },
+            })] : [],
+            EditorView.updateListener.of((update) => {
+                if (update.changes && setValue != null) {
+                    setValue(update.state.doc.toString());
+                }
+            }),
+            lineNumbers(),
+            EditorView.lineWrapping,
+        ],
+    });
+ 
+    const view = new EditorView({
+        state,
+        parent: editorRef.current,
+    });
 
-    const handleChange = useCallback((newValue: string | undefined) => {
-        if (newValue != null) {
-            setValue?.(newValue);
-        }
-    }, [setValue]);
+    return () => {
+      view.destroy();
+    };
+  }, [darkModeEnabled]);
 
-    const children = useMemo(() => {
-        if (showPreview) {
-            if (language === "markdown") {
-                return <div className="overflow-y-auto h-full bg-white p-4 pl-8 dark:bg-[#252526] dark:backdrop-blur-md">
-                    <MarkdownPreview className="pointer-events-none" source={value} wrapperElement={{
-                        "data-color-mode": darkModeEnabled ? "dark" : "light",
-                    }} style={{
-                        backgroundColor: "unset",
-                    }} />
-                </div>
-            }
-            if (language === "json") {
-                return <div className="overflow-y-auto h-full bg-white p-4 pl-8 dark:bg-[#252526] dark:backdrop-blur-md">
-                    <ReactJson src={JSON.parse(value)} theme={darkModeEnabled ? "bright" : undefined} style={{height: "100%", backgroundColor: "unset"}} />
-                </div>
-            }
-        }
-        return <MonacoEditor
-            className={classNames({
-                "pointer-events-none": showPreview || disabled,
-                "pointer-events-auto": !showPreview && !disabled,
-            })}
-            height="100%"
-            width="100%"
-            language={language}
-            value={value}
-            theme={darkModeEnabled ? "vs-dark" : "light"}
-            onChange={handleChange}
-            loading={<div className="flex justify-center items-center h-full w-full p-2 rounded-md">
-                <Loading hideText={true} />
-            </div>}
-            options={{
-                fontSize: 12,
-                glyphMargin: false,
-                automaticLayout: true,
-                selectOnLineNumbers: true,
-                wordWrap: "on",
-                ...options,
-            }}
-            onMount={handleEditorDidMount}
-        />;
-    }, [darkModeEnabled, disabled, handleChange, handleEditorDidMount, language, options, showPreview, value]);
+  const handlePreviewToggle = useCallback(() => {
+    setShowPreview((prev) => !prev);
+  }, []);
 
-    const actionButtons = useMemo(() => {
-        return <button className="transition-all cursor-pointer hover:scale-110 hover:bg-gray-100/50 rounded-full p-1" onClick={handlePreviewToggle}>
-            {cloneElement(showPreview ? Icons.Hide : Icons.Show, {
-                className: "stroke-teal-500 w-8 h-8",
-            })}
-        </button>
-    }, [handlePreviewToggle, showPreview]);
+  const hidePreview = useMemo(() => {
+    return language !== "markdown" && language !== "json";
+  }, [language]);
 
+  const children = useMemo(() => {
+    if (showPreview) {
+      if (language === "markdown") {
+        return (
+          <div className="overflow-y-auto h-full bg-white p-4 pl-8 dark:bg-[#252526] dark:backdrop-blur-md markdown-preview dark:[&>*]:text-neutral-300">
+            {/* todo: there seems to be an issue with links in markdown with the library */}
+            <MarkdownPreview remarkPlugins={[remarkGfm]}>{value}</MarkdownPreview>
+          </div>
+        );
+      }
+      if (language === "json") {
+        return (
+          <div className="overflow-y-auto h-full bg-white p-4 pl-8 dark:bg-[#252526] dark:backdrop-blur-md">
+            <ReactJson
+              src={JSON.parse(value)}
+              theme={darkModeEnabled ? "bright" : undefined}
+              style={{ height: "100%", backgroundColor: "unset" }}
+            />
+          </div>
+        );
+      }
+    }
+    return null;
+  }, [darkModeEnabled, showPreview, value, language]);
+
+  const actionButtons = useMemo(() => {
     return (
-        <div className="relative h-full w-full">
-            {children}
-            <div className={classNames("absolute right-6 bottom-2 z-20", {
-                "hidden": hidePreview,
-            })}>
-                {actionButtons}
-            </div>
-        </div>
+      <button
+        className="transition-all cursor-pointer hover:scale-110 hover:bg-gray-100/50 rounded-full p-1"
+        onClick={handlePreviewToggle}
+      >
+        {React.cloneElement(showPreview ? Icons.Hide : Icons.Show, {
+          className: "stroke-teal-500 w-8 h-8",
+        })}
+      </button>
     );
-}
+  }, [handlePreviewToggle, showPreview]);
+
+  return (
+    <div className={classNames("relative h-full w-full", {
+        "opacity-50 pointer-events-none": disabled,
+    })}>
+      {children}
+      <div ref={editorRef} className={classNames("h-full w-full [&>.cm-editor]:h-full [&>.cm-editor]:p-2 dark:[&>.cm-editor]:bg-[#252526] dark:[&_.cm-gutter]:bg-[#252526] transition-all opacity-100", {
+        "opacity-0 pointer-events-none": hidePreview,
+      })}></div>
+      <div
+        className={classNames("absolute right-6 bottom-2 z-20", {
+          hidden: hidePreview,
+        })}
+      >
+        {actionButtons}
+      </div>
+    </div>
+  );
+};
