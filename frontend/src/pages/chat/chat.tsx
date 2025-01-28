@@ -391,7 +391,7 @@ export const ChatPage: FC = () => {
                                         })
                                     }
                                     { loading &&  <div className="flex w-full justify-end mt-4">
-                                        <Loading containerClassName="flex-row w-fit ml-8" loadingText="Waiting for response" textClassName="text-sm text-neutral-800 dark:text-neutral-300" className="w-4 h-4" />
+                                        <Loading loadingText="Waiting for response" size="sm" />
                                     </div> }
                                 </div>
                             </div>

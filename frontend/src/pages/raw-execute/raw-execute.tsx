@@ -5,7 +5,7 @@ import { v4 } from "uuid";
 import { AnimatedButton } from "../../components/button";
 import { CodeEditor } from "../../components/editor";
 import { Icons } from "../../components/icons";
-import { Loading } from "../../components/loading";
+import { Loading, LoadingPage } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { Table } from "../../components/table";
 import { InternalRoutes } from "../../config/routes";
@@ -50,11 +50,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     return <div className="flex flex-col grow group/cell">
             <div className="relative">
                 <div className="flex grow h-[150px] border border-gray-200 rounded-md overflow-hidden dark:bg-white/10 dark:border-white/5">
-                    {
-                        loading
-                        ? <Loading hideText={true} />
-                        : <CodeEditor language="sql" value={code} setValue={setCode} onRun={handleRawExecute} />
-                    }
+                    <CodeEditor language="sql" value={code} setValue={setCode} onRun={handleRawExecute} />
                 </div>
                 <div className={classNames("absolute -bottom-3 z-20 flex justify-between px-3 pr-8 w-full opacity-0 transition-all duration-500 group-hover/cell:opacity-100", {
                     "opacity-100": showTools,
@@ -66,7 +62,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                             <AnimatedButton className="bg-red-100/80 hover:bg-red-200 dark:hover:bg-red-900" iconClassName="stroke-red-800" labelClassName="text-red-800"  icon={Icons.Delete} label="Delete" onClick={handleDelete} />
                         }
                     </div>
-                    <AnimatedButton className="bg-green-200 hover:bg-green-400 dark:hover:bg-green-900" iconClassName="stroke-green-800" labelClassName="text-green-800" icon={Icons.CheckCircle} label="Submit query" onClick={handleRawExecute} />
+                    <AnimatedButton className="bg-green-200 hover:bg-green-400 dark:hover:bg-green-900" iconClassName="stroke-green-800" labelClassName="text-green-800" icon={Icons.CheckCircle} label="Submit query" onClick={handleRawExecute} disabled={loading} />
                 </div>
             </div>
             {
@@ -76,12 +72,16 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                 </div>
             }
             {
-                rows != null && submittedCode.length > 0 && 
+                loading
+                ? <div className="flex justify-center items-center h-[250px]">
+                    <Loading />
+                </div>
+                : rows != null && submittedCode.length > 0 && 
                 (isCodeAQuery
                     ?
                         <div className="flex flex-col w-full h-[250px] mt-4">
                             <Table columns={rows.RawExecute.Columns.map(c => c.Name)} columnTags={rows.RawExecute.Columns.map(c => c.Type)}
-                            rows={rows.RawExecute.Rows} totalPages={1} currentPage={1} disableEdit={true} />
+                                rows={rows.RawExecute.Rows} totalPages={1} currentPage={1} disableEdit={true} />
                         </div>
                 :   <div className="bg-white/10 text-neutral-800 dark:text-neutral-300 rounded-lg p-2 flex gap-2 self-start items-center my-4">
                         Action Executed
