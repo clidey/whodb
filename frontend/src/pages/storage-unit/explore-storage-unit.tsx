@@ -8,7 +8,7 @@ import { AnimatedButton } from "../../components/button";
 import { Dropdown } from "../../components/dropdown";
 import { Icons } from "../../components/icons";
 import { Input, InputWithlabel } from "../../components/input";
-import { Loading, LoadingPage } from "../../components/loading";
+import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { Table } from "../../components/table";
 import { graphqlClient } from "../../config/graphql-client";
@@ -36,7 +36,6 @@ export const ExploreStorageUnit: FC = () => {
     const [showAdd, setShowAdd] = useState(false);
     const [newRowForm, setNewRowForm] = useState<RecordInput[]>([]);
     const [checkedRows, setCheckedRows] = useState<Set<number>>(new Set());
-    const [deleting, setDeleting] = useState(false);
 
     const [getStorageUnitRows, { loading }] = useGetStorageUnitRowsLazyQuery({
         onCompleted(data) {
@@ -45,7 +44,7 @@ export const ExploreStorageUnit: FC = () => {
         },
         fetchPolicy: "no-cache",
     });
-    const [addRow, { loading: adding }] = useAddRowMutation();
+    const [addRow,] = useAddRowMutation();
 
     const unitName = useMemo(() => {
         return unit?.Name;
@@ -118,9 +117,7 @@ export const ExploreStorageUnit: FC = () => {
         if (current == null || rows == null || checkedRows.size === 0) {
             return;
         }
-        let unableToDeleteAll = false;
         const deletedIndexes = [];
-        setDeleting(true);
         for (const index of [...checkedRows].sort()) {
             const row = rows.Rows[index];
             if (row == null) {
@@ -140,7 +137,7 @@ export const ExploreStorageUnit: FC = () => {
                                 storageUnit: unitName,
                                 type: current.Type as DatabaseType,
                                 values,
-                            },
+                            }
                         });
                         if (data?.DeleteRow.Status) {
                             return res();
@@ -157,8 +154,6 @@ export const ExploreStorageUnit: FC = () => {
                 } else {
                     notify(`Unable to delete the row: ${e}`, "error");
                 }
-                setDeleting(false);
-                unableToDeleteAll=true;
                 break;
             }
         }
@@ -173,10 +168,7 @@ export const ExploreStorageUnit: FC = () => {
             Rows: newRows,
         });
         setCheckedRows(newCheckedRows);
-        if (!unableToDeleteAll) {
-            notify("Row deleted successfully!", "success");
-        }
-        setDeleting(false);
+        notify("Row deleted successfully!", "success");
     }, [checkedRows, current, rows, schema, unitName]);
 
     const totalCount = useMemo(() => {
@@ -411,7 +403,7 @@ export const ExploreStorageUnit: FC = () => {
 
     if (loading) {
         return <InternalPage routes={routes}>
-            <LoadingPage />
+            <Loading />
         </InternalPage>
     }
 
@@ -442,9 +434,8 @@ export const ExploreStorageUnit: FC = () => {
                     },
                 }} animate={showAdd ? "open" : "close"}>
                     <div className="flex w-full justify-end gap-2">
-                        {adding || deleting && <Loading />}
-                        {checkedRows.size > 0 && <AnimatedButton type="lg" icon={Icons.Delete} label={checkedRows.size > 1 ? "Delete rows" : "Delete row"} iconClassName="stroke-red-500 dark:stroke-red-500" labelClassName="text-red-500 dark:text-red-500" onClick={handleRowDelete} disabled={deleting} /> }
-                        <AnimatedButton type="lg" icon={Icons.Add} label={showAdd ? "Cancel" : "Add Row"} onClick={handleToggleShowAdd} disabled={adding} />
+                        {checkedRows.size > 0 && <AnimatedButton type="lg" icon={Icons.Delete} label={checkedRows.size > 1 ? "Delete rows" : "Delete row"} iconClassName="stroke-red-500 dark:stroke-red-500" labelClassName="text-red-500 dark:text-red-500" onClick={handleRowDelete} /> }
+                        <AnimatedButton type="lg" icon={Icons.Add} label={showAdd ? "Cancel" : "Add Row"} onClick={handleToggleShowAdd} />
                     </div>
                     <div className={classNames("flex flex-col gap-2 overflow-y-auto h-full p-8 mt-2", {
                         "flex border border-white/5 rounded-lg": showAdd,

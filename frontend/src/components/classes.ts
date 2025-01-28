@@ -1,7 +1,3 @@
-export const ClassNames = {
-    Text: "text-neutral-600 dark:text-neutral-300",
-}
-
 export const BASE_CARD_CLASS = "bg-white h-[200px] w-[200px] rounded-3xl shadow-sm border p-4 flex flex-col justify-between dark:bg-white/10 dark:border-white/5";
 export const BRAND_COLOR = "text-[#ca6f1e] dark:text-[#ca6f1e]";
 export const BRAND_COLOR_BG = "bg-[#ca6f1e] dark:bg-[#ca6f1e]";
