@@ -6,7 +6,7 @@ import { GraphElements } from "../../components/graph/constants";
 import { Graph, IGraphInstance } from "../../components/graph/graph";
 import { createEdge, createNode } from "../../components/graph/utils";
 import { Icons } from "../../components/icons";
-import { Loading } from "../../components/loading";
+import { LoadingPage } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { InternalRoutes } from "../../config/routes";
 import { GetGraphDocument, GetGraphQuery, GetGraphQueryVariables } from "../../generated/graphql";
@@ -62,7 +62,7 @@ export const GraphPage: FC = () => {
 
     if (loading) {
         return <InternalPage routes={[InternalRoutes.Graph]}>
-            <Loading />
+            <LoadingPage />
         </InternalPage>
     }
 
