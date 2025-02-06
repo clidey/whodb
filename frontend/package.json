@@ -61,7 +61,7 @@
     "@graphql-codegen/typescript-react-apollo": "^4.3.2",
     "@parcel/packager-raw-url": "2.13.3",
     "@parcel/transformer-webmanifest": "2.13.3",
-    "@types/lodash": "^4.17.13",
+    "@types/lodash": "^4.17.15",
     "@types/react-window": "^1.8.8",
     "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.20",
