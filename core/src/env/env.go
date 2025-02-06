@@ -34,6 +34,7 @@ func GetClideyQuickContainerImage() string {
 }
 
 type DatabaseCredentials struct {
+	Alias    string            `json:"alias"`
 	Hostname string            `json:"host"`
 	Username string            `json:"user"`
 	Password string            `json:"password"`
@@ -41,7 +42,8 @@ type DatabaseCredentials struct {
 	Port     string            `json:"port"`
 	Config   map[string]string `json:"config"`
 
-	Type string
+	IsProfile bool
+	Type      string
 }
 
 func GetDefaultDatabaseCredentials(databaseType string) []DatabaseCredentials {

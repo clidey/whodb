@@ -9,6 +9,7 @@ type Credentials struct {
 	Database    string
 	Advanced    []Record
 	AccessToken *string
+	IsProfile   bool
 }
 
 type ExternalModel struct {

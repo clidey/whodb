@@ -2,14 +2,14 @@ package clickhouse
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
-	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"strconv"
 	"strings"
 	"time"
 )
 
-func getColumnTypes(conn driver.Conn, schema string, table string) (map[string]string, error) {
+func getColumnTypes(conn *sql.DB, schema string, table string) (map[string]string, error) {
 	query := fmt.Sprintf(`
 		SELECT 
 			name,
@@ -18,7 +18,7 @@ func getColumnTypes(conn driver.Conn, schema string, table string) (map[string]s
 		WHERE database = '%s' AND table = '%s'`,
 		schema, table)
 
-	rows, err := conn.Query(context.Background(), query)
+	rows, err := conn.QueryContext(context.Background(), query)
 	if err != nil {
 		return nil, err
 	}
@@ -224,14 +224,14 @@ func convertArrayValue(value string, columnType string) (interface{}, error) {
 	return result, nil
 }
 
-func getPrimaryKeyColumns(conn driver.Conn, schema, table string) ([]string, error) {
+func getPrimaryKeyColumns(conn *sql.DB, schema, table string) ([]string, error) {
 	query := `
 		SELECT name
 		FROM system.columns
 		WHERE database = ? AND table = ? AND is_in_primary_key = 1
 	`
 
-	rows, err := conn.Query(context.Background(), query, schema, table)
+	rows, err := conn.QueryContext(context.Background(), query, schema, table)
 	if err != nil {
 		return nil, err
 	}

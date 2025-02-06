@@ -1,5 +1,6 @@
 query GetProfiles {
   Profiles {
+    Alias
     Id
     Type
     Database

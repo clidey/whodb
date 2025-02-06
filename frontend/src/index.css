@@ -2,6 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+
+@layer utilities {
+  .loader {
+    --g1: conic-gradient(from 90deg at top 3px left 3px, transparent 90deg, #666666 0);
+    --g2: conic-gradient(from -90deg at bottom 3px right 3px, transparent 90deg, #666666 0);
+    background: var(--g1), var(--g1), var(--g1), var(--g1), var(--g2), var(--g2), var(--g2), var(--g2);
+    background-position: 0 0, 100% 0, 100% 100%, 0 100%;
+    background-repeat: no-repeat;
+    animation: boxy 1.5s infinite;
+  }
+
+  .dark .loader {
+    --g1: conic-gradient(from 90deg at top 3px left 3px, transparent 90deg, #bbb 0);
+    --g2: conic-gradient(from -90deg at bottom 3px right 3px, transparent 90deg, #bbb 0);
+    background: var(--g1), var(--g1), var(--g1), var(--g1), var(--g2), var(--g2), var(--g2), var(--g2);
+    background-position: 0 0, 100% 0, 100% 100%, 0 100%;
+    background-repeat: no-repeat;
+    animation: boxy 1.5s infinite;
+  }
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -68,4 +89,8 @@ body {
 .dark .react-flow__controls-button:hover {
   background-color: rgb(255 255 255 / 0.2);
   border-color:  rgb(255 255 255 / 0.2);
+}
+
+.markdown-preview > * {
+  all: revert;
 }

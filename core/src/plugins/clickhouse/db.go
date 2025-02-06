@@ -2,7 +2,11 @@ package clickhouse
 
 import (
 	"context"
+	"crypto/tls"
+	"database/sql"
 	"fmt"
+	"net"
+	"strconv"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -11,29 +15,70 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 )
 
-func DB(config *engine.PluginConfig) (driver.Conn, error) {
-	port := common.GetRecordValueOrDefault(config.Credentials.Advanced, "Port", "9000")
+const (
+	portKey         = "Port"
+	sslModeKey      = "SSL Mode"
+	httpProtocolKey = "HTTP Protocol"
+	readOnlyKey     = "Readonly"
+	debugKey        = "Debug"
+)
+
+func DB(config *engine.PluginConfig) (*sql.DB, error) {
+	port, err := strconv.Atoi(common.GetRecordValueOrDefault(config.Credentials.Advanced, portKey, "9000"))
+	if err != nil {
+		return nil, err
+	}
+	sslMode := common.GetRecordValueOrDefault(config.Credentials.Advanced, sslModeKey, "disable")
+	httpProtocol := common.GetRecordValueOrDefault(config.Credentials.Advanced, httpProtocolKey, "disable")
+	readOnly := common.GetRecordValueOrDefault(config.Credentials.Advanced, readOnlyKey, "disable")
+	debug := common.GetRecordValueOrDefault(config.Credentials.Advanced, debugKey, "disable")
+
+	auth := clickhouse.Auth{
+		Database: config.Credentials.Database,
+		Username: config.Credentials.Username,
+		Password: config.Credentials.Password,
+	}
+	address := []string{net.JoinHostPort(config.Credentials.Hostname, strconv.Itoa(port))}
 	options := &clickhouse.Options{
-		Addr: []string{fmt.Sprintf("%s:%s", config.Credentials.Hostname, port)},
-		Auth: clickhouse.Auth{
-			Database: config.Credentials.Database,
-			Username: config.Credentials.Username,
-			Password: config.Credentials.Password,
-		},
-		Settings: clickhouse.Settings{
-			"max_execution_time": 60,
-		},
+		Addr:             address,
+		Auth:             auth,
 		DialTimeout:      time.Second * 30,
-		MaxOpenConns:     5,
-		MaxIdleConns:     5,
-		ConnMaxLifetime:  time.Hour,
 		ConnOpenStrategy: clickhouse.ConnOpenInOrder,
 		Compression: &clickhouse.Compression{
 			Method: clickhouse.CompressionLZ4,
 		},
 	}
 
-	return clickhouse.Open(options)
+	if httpProtocol != "disable" {
+		options.Protocol = clickhouse.HTTP
+		options.Compression = &clickhouse.Compression{
+			Method: clickhouse.CompressionGZIP,
+		}
+	}
+
+	if debug != "disable" {
+		options.Debug = true
+	}
+	if readOnly == "disable" {
+		options.Settings = clickhouse.Settings{
+			"max_execution_time": 60,
+		}
+	}
+	if sslMode != "disable" {
+		options.TLS = &tls.Config{InsecureSkipVerify: sslMode == "relaxed" || sslMode == "none"}
+	}
+
+	conn := clickhouse.OpenDB(options)
+
+	conn.SetMaxOpenConns(5)
+	conn.SetMaxOpenConns(5)
+	conn.SetConnMaxLifetime(time.Hour)
+
+	err = conn.PingContext(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	return conn, err
 }
 
 func getTableColumns(conn driver.Conn, schema, table string) ([]engine.Record, error) {

@@ -60,6 +60,7 @@ export function getDatabaseStorageUnitLabel(databaseType: string | undefined, si
             return singular ? "Key" : "Keys";
         case DatabaseType.MySql:
         case DatabaseType.Postgres:
+        case DatabaseType.ClickHouse:
         case DatabaseType.Sqlite3:
             return singular ? "Table" : "Tables";
     }

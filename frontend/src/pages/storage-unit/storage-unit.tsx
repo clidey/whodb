@@ -9,7 +9,7 @@ import { createDropdownItem, Dropdown } from "../../components/dropdown";
 import { IGraphCardProps } from "../../components/graph/graph";
 import { Icons } from "../../components/icons";
 import { Input, InputWithlabel, Label } from "../../components/input";
-import { Loading } from "../../components/loading";
+import { Loading, LoadingPage } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { SearchInput } from "../../components/search";
 import { DATABASES_THAT_DONT_SUPPORT_SCRATCH_PAD } from "../../components/sidebar/sidebar";
@@ -179,6 +179,7 @@ export const StorageUnitPage: FC = () => {
                     "ENUM", "SET", "JSON", "BOOLEAN"
                 ];
                 break;
+            case DatabaseType.ClickHouse: // todo: optimize these
             case DatabaseType.MySql:
                 items = [
                     "TINYINT", "SMALLINT", "MEDIUMINT", "INT", "INTEGER", "BIGINT", "FLOAT", "DOUBLE", "DECIMAL",
@@ -223,7 +224,7 @@ export const StorageUnitPage: FC = () => {
 
     if (loading) {
         return <InternalPage routes={routes}>
-            <Loading />
+            <LoadingPage />
         </InternalPage>
     }
 
