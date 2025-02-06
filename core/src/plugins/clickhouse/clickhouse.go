@@ -102,6 +102,35 @@ func (p *ClickHousePlugin) GetStorageUnits(config *engine.PluginConfig, schema s
 	return storageUnits, nil
 }
 
+func getAllTableSchema(conn *sql.DB, schema string) (map[string][]engine.Record, error) {
+	query := fmt.Sprintf(`
+		SELECT 
+			table,
+			name,
+			type
+		FROM system.columns
+		WHERE database = '%s'
+		ORDER BY table, position
+	`, schema)
+
+	rows, err := conn.QueryContext(context.Background(), query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	tableColumnsMap := make(map[string][]engine.Record)
+	for rows.Next() {
+		var tableName, columnName, dataType string
+		if err := rows.Scan(&tableName, &columnName, &dataType); err != nil {
+			return nil, err
+		}
+		tableColumnsMap[tableName] = append(tableColumnsMap[tableName], engine.Record{Key: columnName, Value: dataType})
+	}
+
+	return tableColumnsMap, nil
+}
+
 func getTableSchema(conn *sql.DB, schema string, tableName string) ([]engine.Record, error) {
 	query := fmt.Sprintf(`
 		SELECT 
@@ -128,12 +157,6 @@ func getTableSchema(conn *sql.DB, schema string, tableName string) ([]engine.Rec
 	}
 
 	return result, nil
-}
-
-func (p *ClickHousePlugin) Chat(config *engine.PluginConfig, schema string, model string, previousConversation string, query string) ([]*engine.ChatMessage, error) {
-	// Implement chat functionality similar to MySQL implementation
-	// You may need to adapt this based on ClickHouse specifics
-	return nil, fmt.Errorf("chat functionality not implemented for ClickHouse")
 }
 
 func NewClickHousePlugin() *engine.Plugin {

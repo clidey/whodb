@@ -222,6 +222,7 @@ export type RowsResult = {
   Columns: Array<Column>;
   DisableUpdate: Scalars['Boolean']['output'];
   Rows: Array<Array<Scalars['String']['output']>>;
+  TotalCount: Scalars['Int']['output'];
 };
 
 export type SettingsConfig = {
@@ -367,7 +368,7 @@ export type GetStorageUnitRowsQueryVariables = Exact<{
 }>;
 
 
-export type GetStorageUnitRowsQuery = { __typename?: 'Query', Row: { __typename?: 'RowsResult', Rows: Array<Array<string>>, DisableUpdate: boolean, Columns: Array<{ __typename?: 'Column', Type: string, Name: string }> } };
+export type GetStorageUnitRowsQuery = { __typename?: 'Query', Row: { __typename?: 'RowsResult', Rows: Array<Array<string>>, DisableUpdate: boolean, TotalCount: number, Columns: Array<{ __typename?: 'Column', Type: string, Name: string }> } };
 
 export type GetStorageUnitsQueryVariables = Exact<{
   schema: Scalars['String']['input'];
@@ -1021,6 +1022,7 @@ export const GetStorageUnitRowsDocument = gql`
     }
     Rows
     DisableUpdate
+    TotalCount
   }
 }
     `;

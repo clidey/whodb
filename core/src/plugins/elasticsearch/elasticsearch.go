@@ -97,15 +97,15 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 		query[key] = value
 	}
 
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(query); err != nil {
+	var searchBuf bytes.Buffer
+	if err := json.NewEncoder(&searchBuf).Encode(query); err != nil {
 		return nil, err
 	}
 
 	res, err := client.Search(
 		client.Search.WithContext(context.Background()),
 		client.Search.WithIndex(collection),
-		client.Search.WithBody(&buf),
+		client.Search.WithBody(&searchBuf),
 		client.Search.WithTrackTotalHits(true),
 	)
 	if err != nil {
@@ -122,7 +122,10 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 		return nil, err
 	}
 
-	hits := searchResult["hits"].(map[string]interface{})["hits"].([]interface{})
+	hitsInfo := searchResult["hits"].(map[string]interface{})
+	totalHits := int(hitsInfo["total"].(map[string]interface{})["value"].(float64))
+
+	hits := hitsInfo["hits"].([]interface{})
 	result := &engine.GetRowsResult{
 		Columns: []engine.Column{
 			{Name: "document", Type: "Document"},
@@ -142,6 +145,7 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 		result.Rows = append(result.Rows, []string{string(jsonBytes)})
 	}
 
+	result.TotalCount = totalHits
 	return result, nil
 }
 

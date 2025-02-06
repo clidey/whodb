@@ -137,12 +137,32 @@ func getTableSchema(db *gorm.DB, schema string) (map[string][]engine.Record, err
 }
 
 func (p *MySQLPlugin) GetRows(config *engine.PluginConfig, schema string, storageUnit string, where string, pageSize int, pageOffset int) (*engine.GetRowsResult, error) {
-	query := fmt.Sprintf("SELECT * FROM `%v`.`%s`", schema, storageUnit)
-	if len(where) > 0 {
-		query = fmt.Sprintf("%v WHERE %v", query, where)
+	db, err := DB(config)
+	if err != nil {
+		return nil, err
 	}
-	query = fmt.Sprintf("%v LIMIT ? OFFSET ?", query)
-	return p.executeRawSQL(config, query, pageSize, pageOffset)
+
+	baseQuery := fmt.Sprintf("FROM `%v`.`%s`", schema, storageUnit)
+	if len(where) > 0 {
+		baseQuery = fmt.Sprintf("%v WHERE %v", baseQuery, where)
+	}
+
+	countQuery := fmt.Sprintf("SELECT COUNT(*) %v", baseQuery)
+	var totalCount int
+	err = db.Raw(countQuery).Scan(&totalCount).Error
+	if err != nil {
+		return nil, err
+	}
+
+	query := fmt.Sprintf("SELECT * %v LIMIT ? OFFSET ?", baseQuery)
+
+	result, err := p.executeRawSQL(config, query, pageSize, pageOffset)
+	if err != nil {
+		return nil, err
+	}
+
+	result.TotalCount = totalCount
+	return result, nil
 }
 
 func (p *MySQLPlugin) executeRawSQL(config *engine.PluginConfig, query string, params ...interface{}) (*engine.GetRowsResult, error) {

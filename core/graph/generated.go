@@ -109,6 +109,7 @@ type ComplexityRoot struct {
 		Columns       func(childComplexity int) int
 		DisableUpdate func(childComplexity int) int
 		Rows          func(childComplexity int) int
+		TotalCount    func(childComplexity int) int
 	}
 
 	SettingsConfig struct {
@@ -496,6 +497,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.RowsResult.Rows(childComplexity), true
+
+	case "RowsResult.TotalCount":
+		if e.complexity.RowsResult.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.RowsResult.TotalCount(childComplexity), true
 
 	case "SettingsConfig.MetricsEnabled":
 		if e.complexity.SettingsConfig.MetricsEnabled == nil {
@@ -1722,6 +1730,8 @@ func (ec *executionContext) fieldContext_AIChatMessage_Result(_ context.Context,
 				return ec.fieldContext_RowsResult_Columns(ctx, field)
 			case "Rows":
 				return ec.fieldContext_RowsResult_Rows(ctx, field)
+			case "TotalCount":
+				return ec.fieldContext_RowsResult_TotalCount(ctx, field)
 			case "DisableUpdate":
 				return ec.fieldContext_RowsResult_DisableUpdate(ctx, field)
 			}
@@ -2983,6 +2993,8 @@ func (ec *executionContext) fieldContext_Query_Row(ctx context.Context, field gr
 				return ec.fieldContext_RowsResult_Columns(ctx, field)
 			case "Rows":
 				return ec.fieldContext_RowsResult_Rows(ctx, field)
+			case "TotalCount":
+				return ec.fieldContext_RowsResult_TotalCount(ctx, field)
 			case "DisableUpdate":
 				return ec.fieldContext_RowsResult_DisableUpdate(ctx, field)
 			}
@@ -3046,6 +3058,8 @@ func (ec *executionContext) fieldContext_Query_RawExecute(ctx context.Context, f
 				return ec.fieldContext_RowsResult_Columns(ctx, field)
 			case "Rows":
 				return ec.fieldContext_RowsResult_Rows(ctx, field)
+			case "TotalCount":
+				return ec.fieldContext_RowsResult_TotalCount(ctx, field)
 			case "DisableUpdate":
 				return ec.fieldContext_RowsResult_DisableUpdate(ctx, field)
 			}
@@ -3599,6 +3613,50 @@ func (ec *executionContext) fieldContext_RowsResult_Rows(_ context.Context, fiel
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RowsResult_TotalCount(ctx context.Context, field graphql.CollectedField, obj *model.RowsResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RowsResult_TotalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RowsResult_TotalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RowsResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6512,6 +6570,11 @@ func (ec *executionContext) _RowsResult(ctx context.Context, sel ast.SelectionSe
 			}
 		case "Rows":
 			out.Values[i] = ec._RowsResult_Rows(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "TotalCount":
+			out.Values[i] = ec._RowsResult_TotalCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

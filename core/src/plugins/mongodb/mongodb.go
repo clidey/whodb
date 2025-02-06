@@ -89,6 +89,11 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 		}
 	}
 
+	totalCount, err := coll.CountDocuments(context.TODO(), bsonFilter)
+	if err != nil {
+		return nil, err
+	}
+
 	findOptions := options.Find()
 	findOptions.SetLimit(int64(pageSize))
 	findOptions.SetSkip(int64(pageOffset))
@@ -124,6 +129,7 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 		})
 	}
 
+	result.TotalCount = int(totalCount)
 	return result, nil
 }
 

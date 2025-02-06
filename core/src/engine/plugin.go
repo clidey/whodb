@@ -41,6 +41,7 @@ type Column struct {
 type GetRowsResult struct {
 	Columns       []Column
 	Rows          [][]string
+	TotalCount    int
 	DisableUpdate bool
 }
 
