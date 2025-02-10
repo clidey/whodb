@@ -30,22 +30,21 @@ func DB(config *engine.PluginConfig) (*gorm.DB, error) {
 		return nil, err
 	}
 	parseTime := common.GetRecordValueOrDefault(config.Credentials.Advanced, parseTimeKey, "True")
-	loc, err := time.LoadLocation(common.GetRecordValueOrDefault(config.Credentials.Advanced, locKey, "Local"))
+	loc, err := time.LoadLocation(common.GetRecordValueOrDefault(config.Credentials.Advanced, locKey, "UTC"))
 	if err != nil {
 		return nil, err
 	}
 	allowClearTextPasswords := common.GetRecordValueOrDefault(config.Credentials.Advanced, allowClearTextPasswordsKey, "0")
 
-	mysqlConfig := mysqldriver.Config{
-		User:                    config.Credentials.Username,
-		Passwd:                  config.Credentials.Password,
-		Net:                     "tcp",
-		Addr:                    net.JoinHostPort(config.Credentials.Hostname, strconv.Itoa(port)),
-		DBName:                  config.Credentials.Database,
-		AllowCleartextPasswords: allowClearTextPasswords == "1",
-		ParseTime:               strings.ToLower(parseTime) == "true",
-		Loc:                     loc,
-	}
+	mysqlConfig := mysqldriver.NewConfig()
+	mysqlConfig.User = config.Credentials.Username
+	mysqlConfig.Passwd = config.Credentials.Password
+	mysqlConfig.Net = "tcp"
+	mysqlConfig.Addr = net.JoinHostPort(config.Credentials.Hostname, strconv.Itoa(port))
+	mysqlConfig.DBName = config.Credentials.Database
+	mysqlConfig.AllowCleartextPasswords = allowClearTextPasswords == "1"
+	mysqlConfig.ParseTime = strings.ToLower(parseTime) == "true"
+	mysqlConfig.Loc = loc
 
 	// if this config is a pre-configured profile, then allow reading of additional params
 	if config.Credentials.IsProfile {

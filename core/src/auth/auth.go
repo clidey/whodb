@@ -32,6 +32,27 @@ func GetCredentials(ctx context.Context) *engine.Credentials {
 }
 
 func isPublicRoute(r *http.Request) bool {
+	if env.IsDevelopment {
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			return false
+		}
+
+		r.Body = io.NopCloser(bytes.NewReader(body))
+		if r.Method != http.MethodPost {
+			return false
+		}
+
+		var query map[string]interface{}
+		if err := json.Unmarshal(body, &query); err != nil {
+			return false
+		}
+
+		if q, ok := query["query"].(string); ok && strings.Contains(q, "IntrospectionQuery") {
+			return true
+		}
+	}
+
 	return (!strings.HasPrefix(r.URL.Path, "/api/") && r.URL.Path != "/api")
 }
 
