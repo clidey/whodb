@@ -196,6 +196,7 @@ export const StorageUnitPage: FC = () => {
                     "ENUM", "SET", "JSON", "BOOLEAN"
                 ];
                 break;
+            case DatabaseType.ClickHouse: // todo: optimize these
             case DatabaseType.MySql:
                 items = [
                     "TINYINT", "SMALLINT", "MEDIUMINT", "INT", "INTEGER", "BIGINT", "FLOAT", "DOUBLE", "DECIMAL",

@@ -437,11 +437,11 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                     all[columns[colIndex+1].accessor] = one;
                 }
                 return all;
-            }, { "#": (rowIndex+1).toString() } as Record<string, string | number>);
+            }, { "#": (rowIndex+1+(currentPage-1)*actualRows.length).toString() } as Record<string, string | number>);
             newRow.originalIndex = rowIndex;
             return newRow;
         }));
-    }, [actualColumns, actualRows]);
+    }, [actualColumns, actualRows, currentPage]);
 
     const sortedRows = useMemo(() => {
         if (!sortedColumn) {

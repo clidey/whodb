@@ -42,7 +42,7 @@ type ICodeEditorProps = {
 export const CodeEditor: FC<ICodeEditorProps> = ({
   value,
   setValue,
-  language = "sql",
+  language,
   onRun,
   defaultShowPreview = false,
   disabled,
@@ -69,8 +69,6 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
           return markdown();
         case "sql":
           return sql();
-        default:
-          return sql();
       }
     })();
 
@@ -87,7 +85,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
               },
           }),
             basicSetup,
-            languageExtension,
+            languageExtension != null ? languageExtension : [],
             darkModeEnabled ? [oneDark, EditorView.theme({
               ".cm-activeLine": { backgroundColor: "rgba(0,0,0,0.05) !important" },
               ".cm-activeLineGutter": { backgroundColor: "rgba(0,0,0,0.05) !important" },
@@ -160,7 +158,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
 
   return (
     <div className={classNames("relative h-full w-full", {
-        "opacity-50 pointer-events-none": disabled,
+      "pointer-events-none": disabled,
     })}>
       {children}
       <div ref={editorRef} className={classNames("h-full w-full [&>.cm-editor]:h-full [&>.cm-editor]:p-2 dark:[&>.cm-editor]:bg-[#252526] dark:[&_.cm-gutter]:bg-[#252526] transition-all opacity-100", {
