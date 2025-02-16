@@ -1,6 +1,8 @@
 # <img src="./docs/images/logo.png" width="30px" height="auto" />  WhoDB
 Build Status: &nbsp; <img src="https://hello.clidey.com/api/flows/status?id=b32257fa-1415-4847-a0f3-e684f5f76608&secret=cd74dbd5-36ec-42f9-b4f0-12ce9fcc762b" alt="Clidey build status" height="20px" />
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/clidey/whodb/core)](https://goreportcard.com/report/github.com/clidey/whodb/core)
+
 ### *"Is it magic? Is it sorcery? No, it's just WhoDB!"*
 <p align="center"><img src="./docs/images/trailer.png" alt="Trailer" width="100%" height="auto" /></p>
 
