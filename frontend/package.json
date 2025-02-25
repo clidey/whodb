@@ -33,7 +33,7 @@
     "reactflow": "^11.11.4",
     "redux-persist": "^6.0.0",
     "remark-gfm": "^4.0.0",
-    "tailwind-merge": "^2.5.5",
+    "tailwind-merge": "^3.0.2",
     "uuid": "^11.0.3"
   },
   "scripts": {
