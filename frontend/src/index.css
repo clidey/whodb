@@ -1,23 +1,149 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
+@custom-variant dark (&:where(.dark, .dark *));
 
-@layer utilities {
-  .loader {
-    --g1: conic-gradient(from 90deg at top 3px left 3px, transparent 90deg, #666666 0);
-    --g2: conic-gradient(from -90deg at bottom 3px right 3px, transparent 90deg, #666666 0);
-    background: var(--g1), var(--g1), var(--g1), var(--g1), var(--g2), var(--g2), var(--g2), var(--g2);
-    background-position: 0 0, 100% 0, 100% 100%, 0 100%;
+@theme {
+  --font-title:
+    'Megrim', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+
+  --color-brand: #bf853e;
+
+  --animate-fade: fadeOut 300ms ease-in-out;
+  --animate-boxy: boxy 1.5s infinite;
+
+  @keyframes fadeOut {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 100;
+    }
+  }
+  @keyframes boxy {
+    0% {
+      background-size:
+        35px 15px,
+        15px 15px,
+        15px 35px,
+        35px 35px;
+    }
+    25% {
+      background-size:
+        35px 35px,
+        15px 35px,
+        15px 15px,
+        35px 15px;
+    }
+    50% {
+      background-size:
+        15px 35px,
+        35px 35px,
+        35px 15px,
+        15px 15px;
+    }
+    75% {
+      background-size:
+        15px 15px,
+        35px 15px,
+        35px 35px,
+        15px 35px;
+    }
+    100% {
+      background-size:
+        35px 15px,
+        15px 15px,
+        15px 35px,
+        35px 35px;
+    }
+  }
+}
+
+/*
+  The default border color has changed to `currentColor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+}
+
+@utility loader {
+  --g1: conic-gradient(
+    from 90deg at top 3px left 3px,
+    transparent 90deg,
+    #666666 0
+  );
+  --g2: conic-gradient(
+    from -90deg at bottom 3px right 3px,
+    transparent 90deg,
+    #666666 0
+  );
+  background:
+    var(--g1), var(--g1), var(--g1), var(--g1), var(--g2), var(--g2), var(--g2),
+    var(--g2);
+  background-position:
+    0 0,
+    100% 0,
+    100% 100%,
+    0 100%;
+  background-repeat: no-repeat;
+  animation: boxy 1.5s infinite;
+
+  .dark & {
+    --g1: conic-gradient(
+      from 90deg at top 3px left 3px,
+      transparent 90deg,
+      #bbb 0
+    );
+    --g2: conic-gradient(
+      from -90deg at bottom 3px right 3px,
+      transparent 90deg,
+      #bbb 0
+    );
+    background:
+      var(--g1), var(--g1), var(--g1), var(--g1), var(--g2), var(--g2),
+      var(--g2), var(--g2);
+    background-position:
+      0 0,
+      100% 0,
+      100% 100%,
+      0 100%;
     background-repeat: no-repeat;
     animation: boxy 1.5s infinite;
   }
+}
 
-  .dark .loader {
-    --g1: conic-gradient(from 90deg at top 3px left 3px, transparent 90deg, #bbb 0);
-    --g2: conic-gradient(from -90deg at bottom 3px right 3px, transparent 90deg, #bbb 0);
-    background: var(--g1), var(--g1), var(--g1), var(--g1), var(--g2), var(--g2), var(--g2), var(--g2);
-    background-position: 0 0, 100% 0, 100% 100%, 0 100%;
+@utility dark {
+  & .loader {
+    --g1: conic-gradient(
+      from 90deg at top 3px left 3px,
+      transparent 90deg,
+      #bbb 0
+    );
+    --g2: conic-gradient(
+      from -90deg at bottom 3px right 3px,
+      transparent 90deg,
+      #bbb 0
+    );
+    background:
+      var(--g1), var(--g1), var(--g1), var(--g1), var(--g2), var(--g2),
+      var(--g2), var(--g2);
+    background-position:
+      0 0,
+      100% 0,
+      100% 100%,
+      0 100%;
     background-repeat: no-repeat;
     animation: boxy 1.5s infinite;
   }

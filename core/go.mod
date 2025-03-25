@@ -1,7 +1,6 @@
 module github.com/clidey/whodb/core
 
-go 1.22.5
-toolchain go1.24.1
+go 1.24.1
 
 require (
 	github.com/99designs/gqlgen v0.17.68

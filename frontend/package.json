@@ -33,7 +33,7 @@
     "reactflow": "^11.11.4",
     "redux-persist": "^6.0.0",
     "remark-gfm": "^4.0.0",
-    "tailwind-merge": "^2.5.5",
+    "tailwind-merge": "^3.0.2",
     "uuid": "^11.0.3"
   },
   "scripts": {
@@ -61,6 +61,7 @@
     "@graphql-codegen/typescript-react-apollo": "^4.3.2",
     "@parcel/packager-raw-url": "2.13.3",
     "@parcel/transformer-webmanifest": "2.13.3",
+    "@tailwindcss/postcss": "^4.0.16",
     "@types/lodash": "^4.17.16",
     "@types/react-window": "^1.8.8",
     "@types/uuid": "^10.0.0",
@@ -69,7 +70,7 @@
     "parcel": "^2.13.3",
     "postcss": "^8.4.49",
     "process": "^0.11.10",
-    "tailwindcss": "^3.4.17"
+    "tailwindcss": "^4.0.16"
   },
   "@parcel/resolver-default": {
     "packageExports": true

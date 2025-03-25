@@ -34,7 +34,7 @@ const TablePreview: FC<{ data: TableData, text: string }> = ({ data, text }) => 
     }, [text]);
 
     return <div className="flex flex-col w-full group/table-preview gap-2 relative">
-        <div className="absolute -top-3 -left-3 opacity-0 group-hover/table-preview:opacity-100 transition-all z-[1]">
+        <div className="absolute -top-3 -left-3 opacity-0 group-hover/table-preview:opacity-100 transition-all z-1">
             <ActionButton containerClassName="w-8 h-8" className="w-5 h-5" icon={cloneElement(showSQL ? Icons.Tables : Icons.Code, {
                 className: "w-6 h-6 stroke-white",
             })} onClick={handleCodeToggle} />

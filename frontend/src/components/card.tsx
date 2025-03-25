@@ -31,7 +31,7 @@ type ICardProps = {
 
 export const Icon: FC<ICardIcon> = memo((propsIcon) => (<div
   className={twMerge(classNames(
-    "h-[40px] w-[40px] rounded-lg flex justify-center items-center shadow border dark:border-white/5",
+    "h-[40px] w-[40px] rounded-lg flex justify-center items-center shadow-sm border dark:border-white/5",
     propsIcon.bgClassName
   ))}
 >
@@ -73,7 +73,7 @@ export const Card: FC<ICardProps> = ({
     <motion.div
       className={twMerge(
         classNames(
-          "bg-white h-[200px] w-[200px] rounded-3xl shadow-sm border p-4 flex flex-col justify-between relative transition-all duration-300 overflow-y-auto dark:bg-white/10 dark:border-white/5",
+          "bg-white h-[200px] w-[200px] rounded-3xl shadow-xs border p-4 flex flex-col justify-between relative transition-all duration-300 overflow-y-auto dark:bg-white/10 dark:border-white/5",
           {
             "shadow-2xl z-10": highlightStatus,
           },

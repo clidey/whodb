@@ -105,7 +105,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
     if (showPreview) {
       if (language === "markdown") {
         return (
-          <div className="overflow-y-auto h-full bg-white p-4 pl-8 dark:bg-[#252526] dark:backdrop-blur-md markdown-preview dark:[&>*]:text-neutral-300">
+          <div className="overflow-y-auto h-full bg-white p-4 pl-8 dark:bg-[#252526] dark:backdrop-blur-md markdown-preview dark:*:text-neutral-300">
             {/* todo: there seems to be an issue with links in markdown with the library */}
             <MarkdownPreview remarkPlugins={[remarkGfm]}>{value}</MarkdownPreview>
           </div>

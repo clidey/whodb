@@ -202,17 +202,17 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, checked, onRowCheck, disab
     }, [cell]);
 
     return <div ref={cellRef} {...props} key={props.key}
-        className={classNames("relative group/data cursor-pointer transition-all text-xs table-cell border-t border-l last:border-r group-last/row:border-b group-last/row:first:rounded-bl-lg group-last/row:last:rounded-br-lg border-gray-200 dark:border-white/5 p-0", {
+        className={classNames("relative group/data cursor-pointer transition-all text-xs table-cell border-t border-l last:border-r group-last/row:border-b first:group-last/row:rounded-bl-lg last:group-last/row:rounded-br-lg border-gray-200 dark:border-white/5 p-0", {
             "bg-gray-200 dark:bg-white/10 blur-[2px]": editable || preview,
         })}
     >
         <span className="cell-data hidden">{editedData}</span>
         <div 
-            className={classNames("w-full h-full p-2 leading-tight focus:outline-none focus:shadow-outline appearance-none transition-all duration-300 border-solid border-gray-200 dark:border-white/5 overflow-hidden whitespace-nowrap select-none text-gray-600 dark:text-neutral-300", {
-                "group-even/row:bg-gray-100 hover:bg-gray-300 group-even/row:hover:bg-gray-300 dark:group-even/row:bg-white/10 dark:group-odd/row:bg-white/5 dark:group-even/row:hover:bg-white/15 dark:group-odd/row:hover:bg-white/15": !editable,
+            className={classNames("w-full h-full p-2 leading-tight focus:outline-hidden focus:shadow-outline appearance-none transition-all duration-300 border-solid border-gray-200 dark:border-white/5 overflow-hidden whitespace-nowrap select-none text-gray-600 dark:text-neutral-300", {
+                "group-even/row:bg-gray-100 hover:bg-gray-300 hover:group-even/row:bg-gray-300 dark:group-even/row:bg-white/10 dark:group-odd/row:bg-white/5 dark:hover:group-even/row:bg-white/15 dark:hover:group-odd/row:bg-white/15": !editable,
                 "bg-transparent": editable,
             })}>
-            <div className={classNames("absolute top-0 left-0 h-full w-full justify-center items-center bg-transparent z-[1] hover:scale-110 transition-all", {
+            <div className={classNames("absolute top-0 left-0 h-full w-full justify-center items-center bg-transparent z-1 hover:scale-110 transition-all", {
                 "group-hover/row:flex": checked != null && cell.column.id === "#",
                 "flex": cell.column.id === "#" && checked === true,
                 "hidden": checked == null || cell.column.id !== "#" || checked === false,
@@ -499,9 +499,9 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                         if (isNumeric(text)) {
                             const id = parseInt(text);
                             if (id === originalIndex) {
-                                currentVisibleRow.classList.add("!bg-yellow-100", "dark:!bg-yellow-800");
+                                currentVisibleRow.classList.add("bg-yellow-100!", "dark:bg-yellow-800!");
                                 interval = setTimeout(() => {
-                                    currentVisibleRow.classList.remove("!bg-yellow-100", "dark:!bg-yellow-800");
+                                    currentVisibleRow.classList.remove("bg-yellow-100!", "dark:bg-yellow-800!");
                                 }, 3000);
                             }
                         }
@@ -632,7 +632,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                                             })} onClick={() => handleSort(column.id)}>
                                                 {column.render('Header')} {i > 0 && columnTags?.[i-1] != null && columnTags?.[i-1].length > 0 && <span className="text-[11px]">[{columnTags?.[i-1]}]</span>}
                                             </div>
-                                            <div className={classNames("absolute top-0 left-0 h-full w-full justify-center items-center bg-transparent z-[1] hover:scale-110 transition-all", {
+                                            <div className={classNames("absolute top-0 left-0 h-full w-full justify-center items-center bg-transparent z-1 hover:scale-110 transition-all", {
                                                 "group-hover/header-row:flex": checkedRows != null && column.id === "#",
                                                 "flex": column.id === "#" && allChecked,
                                                 "hidden": checkedRows == null || column.id !== "#" || !allChecked,

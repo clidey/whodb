@@ -45,7 +45,7 @@ export type IActionButtonProps = {
 export const ActionButton: FC<IActionButtonProps> = ({ onClick, icon, className, containerClassName, disabled, children }) => {
   return (
   <div className="group relative">
-    <motion.button className={twMerge(classNames("rounded-full bg-white border-gray-200 dark:bg-white/10 dark:border-white/5 dark:backdrop-blur-sm h-12 w-12 transition-all border shadow-sm flex items-center justify-center", containerClassName, {
+    <motion.button className={twMerge(classNames("rounded-full bg-white border-gray-200 dark:bg-white/10 dark:border-white/5 dark:backdrop-blur-xs h-12 w-12 transition-all border shadow-xs flex items-center justify-center", containerClassName, {
       "cursor-not-allowed": disabled,
       "hover:shadow-lg hover:cursor-pointer hover:scale-110": !disabled,
     }))} onClick={disabled ? undefined : onClick} whileTap={{ scale: 0.6, transition: { duration: 0.05 }, }}>

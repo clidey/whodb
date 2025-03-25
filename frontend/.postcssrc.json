@@ -1,6 +1,5 @@
 {
-    "plugins": {
-        "tailwindcss": {}
-    }
+  "plugins": {
+    "@tailwindcss/postcss": {}
   }
-  
+}
