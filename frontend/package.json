@@ -20,7 +20,7 @@
     "framer-motion": "^11.15.0",
     "graphql": "^16.9.0",
     "highlight.run": "^9.14.0",
-    "html-to-image": "^1.11.11",
+    "html-to-image": "^1.11.13",
     "lodash": "^4.17.21",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
