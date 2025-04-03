@@ -24,6 +24,13 @@ export type AiChatMessage = {
   Type: Scalars['String']['output'];
 };
 
+export type AtomicWhereCondition = {
+  ColumnType: Scalars['String']['input'];
+  Key: Scalars['String']['input'];
+  Operator: Scalars['String']['input'];
+  Value: Scalars['String']['input'];
+};
+
 export type ChatInput = {
   Model: Scalars['String']['input'];
   PreviousConversation: Scalars['String']['input'];
@@ -147,6 +154,10 @@ export type MutationUpdateStorageUnitArgs = {
   values: Array<RecordInput>;
 };
 
+export type OperationWhereCondition = {
+  Children: Array<WhereCondition>;
+};
+
 export type Query = {
   __typename?: 'Query';
   AIChat: Array<AiChatMessage>;
@@ -197,7 +208,7 @@ export type QueryRowArgs = {
   pageSize: Scalars['Int']['input'];
   schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
-  where: Scalars['String']['input'];
+  where?: InputMaybe<WhereCondition>;
 };
 
 
@@ -243,6 +254,19 @@ export type StorageUnit = {
   Attributes: Array<Record>;
   Name: Scalars['String']['output'];
 };
+
+export type WhereCondition = {
+  And?: InputMaybe<OperationWhereCondition>;
+  Atomic?: InputMaybe<AtomicWhereCondition>;
+  Or?: InputMaybe<OperationWhereCondition>;
+  Type: WhereConditionType;
+};
+
+export enum WhereConditionType {
+  And = 'And',
+  Atomic = 'Atomic',
+  Or = 'Or'
+}
 
 export type GetProfilesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -361,7 +385,7 @@ export type DeleteRowMutation = { __typename?: 'Mutation', DeleteRow: { __typena
 export type GetStorageUnitRowsQueryVariables = Exact<{
   schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
-  where: Scalars['String']['input'];
+  where: WhereCondition;
   pageSize: Scalars['Int']['input'];
   pageOffset: Scalars['Int']['input'];
 }>;
@@ -1007,7 +1031,7 @@ export type DeleteRowMutationHookResult = ReturnType<typeof useDeleteRowMutation
 export type DeleteRowMutationResult = Apollo.MutationResult<DeleteRowMutation>;
 export type DeleteRowMutationOptions = Apollo.BaseMutationOptions<DeleteRowMutation, DeleteRowMutationVariables>;
 export const GetStorageUnitRowsDocument = gql`
-    query GetStorageUnitRows($schema: String!, $storageUnit: String!, $where: String!, $pageSize: Int!, $pageOffset: Int!) {
+    query GetStorageUnitRows($schema: String!, $storageUnit: String!, $where: WhereCondition!, $pageSize: Int!, $pageOffset: Int!) {
   Row(
     schema: $schema
     storageUnit: $storageUnit

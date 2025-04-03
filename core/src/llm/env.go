@@ -2,10 +2,10 @@ package llm
 
 import (
 	"fmt"
-    "strings"
-    "os"
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/env"
+	"os"
+	"strings"
 )
 
 func getOllamaEndpoint() string {
@@ -36,7 +36,7 @@ func getOpenAICompatibleBaseURL() string {
 }
 
 func getCustomModels() ([]string, error) {
-    modelsStr := os.Getenv("CUSTOM_MODELS")
+	modelsStr := os.Getenv("CUSTOM_MODELS")
 	if modelsStr == "" {
 		return []string{}, nil
 	}
@@ -46,7 +46,7 @@ func getCustomModels() ([]string, error) {
 	for i := range models {
 		models[i] = strings.TrimSpace(models[i])
 	}
-    return models, nil
+	return models, nil
 }
 
 func ShouldUseCustomModels() bool {
