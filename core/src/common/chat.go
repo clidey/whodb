@@ -2,6 +2,7 @@ package common
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -59,6 +60,9 @@ type RawExecutePlugin interface {
 }
 
 func SQLChat(response string, config *engine.PluginConfig, plugin RawExecutePlugin) ([]*engine.ChatMessage, error) {
+	if !strings.Contains(response, "```json") {
+		return nil, errors.New("please try again as there was a problem in processing")
+	}
 	response = strings.Split(response, "```json")[1]
 	response = strings.Split(response, "```")[0]
 

@@ -20,6 +20,34 @@ import { chooseRandomItems } from "../../utils/functions";
 import { chatExamples } from "./examples";
 import logoImage from "../../../public/images/logo.png";
 
+const thinkingPhrases = [
+    "Thinking",
+    "Pondering life’s mysteries",
+    "Consulting the cloud oracles",
+    "Googling furiously (just kidding)",
+    "Aligning the neural networks",
+    "Making it up as I go (shh)",
+    "Counting virtual sheep",
+    "Channeling Einstein",
+    "Tuning my algorithms",
+    "Drinking a byte of coffee",
+    "Running in circles virtually.",
+    "Pretending to be busy",
+    "Loading witty comeback",
+    "Downloading some wisdom",
+    "Cooking up some data stew",
+    "Doing AI things™",
+    "Hacking the mainframe (for fun)",
+    "Staring into the digital abyss",
+    "Flipping a quantum coin",
+    "Reading your mind (ethically)",
+    "Sharpening my sarcasm",
+    "Checking my vibes",
+    "Simulating deep thought",
+    "Rewiring my circuits",
+    "Polishing my crystal processor"
+  ];
+  
 
 type TableData = GetAiChatQuery["AIChat"][0]["Result"];
 
@@ -43,7 +71,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
                     <CodeEditor value={text} />
                 </div>
                 :  (data != null && data.Rows.length > 0) || type === "sql:get"
-                    ? <Table className="h-[150px]" columns={data?.Columns.map(c => c.Name) ?? []} columnTags={data?.Columns.map(c => c.Type)}
+                    ? <Table className="h-[250px]" columns={data?.Columns.map(c => c.Name) ?? []} columnTags={data?.Columns.map(c => c.Type)}
                         rows={data?.Rows ?? []} totalPages={1} currentPage={1} disableEdit={true} />
                     : <div className="bg-white/10 text-neutral-800 dark:text-neutral-300 rounded-lg p-2 flex gap-2">
                         Action Executed ({type.toUpperCase()})
@@ -365,7 +393,7 @@ export const ChatPage: FC = () => {
                                     {
                                         chats.map((chat, i) => {
                                             if (chat.Type === "message") {
-                                                return <div key={`chat-${i}`} className={classNames("flex items-center gap-4 overflow-hidden break-words leading-6 shrink-0", {
+                                                return <div key={`chat-${i}`} className={classNames("flex items-center gap-4 overflow-hidden break-words leading-6 shrink-0 relative", {
                                                     "self-end": chat.isUserInput,
                                                     "self-start": !chat.isUserInput,
                                                 })}>
@@ -384,11 +412,14 @@ export const ChatPage: FC = () => {
                                                     </div>
                                                 </div>
                                             }
-                                            return <TablePreview type={chat.Type} text={chat.Text} data={chat.Result} />
+                                            return <div key={`chat-${i}`} className="flex gap-4 w-full">
+                                                {!chat.isUserInput && chats[i-1]?.isUserInput && <img src={logoImage} alt="clidey logo" className="w-auto h-6" />}
+                                                <TablePreview type={chat.Type} text={chat.Text} data={chat.Result} />
+                                            </div>
                                         })
                                     }
                                     { loading &&  <div className="flex w-full mt-4">
-                                        <Loading loadingText="Thinking" size="sm" />
+                                        <Loading loadingText={chooseRandomItems(thinkingPhrases)[0]} size="sm" />
                                     </div> }
                                 </div>
                             </div>

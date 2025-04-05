@@ -76,7 +76,7 @@ type IContainerProps = {
 }
 
 export const Container: FC<IContainerProps> = ({ className, children }) => {
-    return  <div className={classNames(className, "flex grow h-full w-full bg-white dark:bg-[#121212]")}>
+    return  <div className={classNames(className, "flex grow h-full w-full bg-[#fbfaf8] dark:bg-[#121212]")}>
         {children}
     </div>
 }

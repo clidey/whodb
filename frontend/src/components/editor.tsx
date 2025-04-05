@@ -72,7 +72,10 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
             darkModeEnabled ? [oneDark, EditorView.theme({
               ".cm-activeLine": { backgroundColor: "rgba(0,0,0,0.05) !important" },
               ".cm-activeLineGutter": { backgroundColor: "rgba(0,0,0,0.05) !important" },
-            })] : [],
+            })] : [EditorView.theme({
+              ".cm-activeLine": { backgroundColor: "rgba(0,0,0,0.05) !important" },
+              ".cm-activeLineGutter": { backgroundColor: "rgba(0,0,0,0.05) !important" },
+            })],
             EditorView.updateListener.of((update) => {
                 if (update.changes && setValue != null) {
                     setValue(update.state.doc.toString());
@@ -150,8 +153,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
       <div
         className={classNames("absolute right-6 bottom-2 z-20", {
           hidden: hidePreview,
-        })}
-      >
+        })}>
         {actionButtons}
       </div>
     </div>
