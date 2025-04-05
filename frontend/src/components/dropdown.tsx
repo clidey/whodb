@@ -59,7 +59,7 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
             {props.loading ? <div className="flex h-full w-full items-center justify-center">
                 <Loading hideText={true} size="sm"  />
             </div> :
-            <>  <div className="group/dropdown flex gap-1 justify-between items-center border border-gray-200 rounded-lg w-full p-1 h-[34px] px-2 dark:bg-[#2C2F33] dark:border-white/5">
+            <>  <div className="group/dropdown flex gap-1 justify-between items-center border border-neutral-600/5 rounded-lg w-full p-1 h-[34px] px-2 dark:bg-[#2C2F33] dark:border-white/5">
                     <div className={classNames(ClassNames.Text, "flex gap-1 text-sm truncate items-center")}>
                         {props.value?.icon != null && <div className="flex items-center w-6">
                             {props.value.icon}

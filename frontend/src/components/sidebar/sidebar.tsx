@@ -59,11 +59,11 @@ export const SideMenu: FC<IRouteProps> = (props) => {
         "justify-center": props.collapse,
     })}  onMouseEnter={handleMouseEnter} onMouseOver={handleMouseEnter} onMouseLeave={handleMouseLeave}>
         <AnimatePresence mode="sync">
-            <div className={twMerge(classNames("cursor-default text-md inline-flex gap-2 transition-all hover:gap-2 relative w-full py-4 rounded-md hover:bg-gray-100 dark:border-white/5 dark:hover:bg-white/15", {
+            <div className={twMerge(classNames("cursor-default text-md inline-flex gap-2 transition-all hover:gap-2 relative w-full py-4 rounded-md dark:border-white/5", {
                 "cursor-pointer": props.path != null,
                 "pl-4": !props.collapse,
                 "pl-2": props.collapse,
-            }))} onClick={handleClick}>
+            }, ClassNames.Hover))} onClick={handleClick}>
                 {pathname === props.path && <motion.div layoutId="indicator" className={classNames("w-[5px] h-full absolute top-0 right-0 rounded-3xl", BRAND_COLOR_BG)} />}
                 {cloneElement(props.icon, {
                     className: classNames("transition-all dark:stroke-white", {
