@@ -14,6 +14,30 @@ type Column {
   Name: String!
 }
 
+enum WhereConditionType {
+  Atomic
+  And
+  Or
+}
+
+input AtomicWhereCondition {
+  ColumnType: String!
+  Key: String!
+  Operator: String!
+  Value: String!
+}
+
+input OperationWhereCondition {
+  Children: [WhereCondition!]!
+}
+
+input WhereCondition {
+  Type: WhereConditionType!
+  Atomic: AtomicWhereCondition
+  And: OperationWhereCondition
+  Or: OperationWhereCondition
+}
+
 type RowsResult {
   Columns: [Column!]!
   Rows: [[String!]!]!
@@ -108,7 +132,7 @@ type Query {
   Database(type: String!): [String!]!
   Schema: [String!]!
   StorageUnit(schema: String!): [StorageUnit!]!
-  Row(schema: String!, storageUnit: String!, where: String!, pageSize: Int!, pageOffset: Int!): RowsResult!
+  Row(schema: String!, storageUnit: String!, where: WhereCondition, pageSize: Int!, pageOffset: Int!): RowsResult!
   RawExecute(query: String!): RowsResult!
   Graph(schema: String!): [GraphUnit!]!
   AIModel(modelType: String!, token: String): [String!]!

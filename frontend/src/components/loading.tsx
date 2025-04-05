@@ -20,7 +20,7 @@ export const Loading: FC<ILoadingProps> = ({ className, hideText, loadingText, s
       </div>
       {
         !hideText &&
-        <div className="text-neutral-600 dark:text-neutral-300 text-sm">{loadingText}</div>
+        <div className={classNames(ClassNames.Text, "text-sm")}>{loadingText}</div>
       }
     </div>
   }
@@ -33,7 +33,7 @@ export const Loading: FC<ILoadingProps> = ({ className, hideText, loadingText, s
       </div>
       {
         !hideText &&
-        <div className="text-neutral-600 dark:text-neutral-300 text-sm">{loadingText}</div>
+        <div className={classNames(ClassNames.Text, "text-sm")}>{loadingText}</div>
       }
     </div>
   }

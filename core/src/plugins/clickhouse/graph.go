@@ -1,24 +1,31 @@
 package clickhouse
 
-import (
-	"github.com/clidey/whodb/core/src/engine"
+import "gorm.io/gorm"
+
+const graphQuery = `
+WITH dependencies AS (
+    SELECT 
+        table AS Table1,
+        referenced_table AS Table2,
+        CASE
+            WHEN constraint_type IN ('PRIMARY KEY', 'UNIQUE') 
+            AND referenced_constraint_type IN ('PRIMARY KEY', 'UNIQUE') 
+            THEN 'OneToOne'
+            WHEN constraint_type IN ('PRIMARY KEY', 'UNIQUE') 
+            THEN 'OneToMany'
+            WHEN referenced_constraint_type IN ('PRIMARY KEY', 'UNIQUE') 
+            THEN 'ManyToOne'
+            ELSE 'ManyToMany'
+        END AS Relation
+    FROM system.tables t
+    JOIN system.columns c ON t.database = c.database AND t.name = c.table
+    WHERE c.type LIKE '%Nullable%'
+    AND t.database = ?
 )
+SELECT DISTINCT * FROM dependencies
+WHERE Table1 != Table2;
+`
 
-func (p *ClickHousePlugin) GetGraph(config *engine.PluginConfig, schema string) ([]engine.GraphUnit, error) {
-	// ClickHouse doesn't have built-in support for relationships
-	// We'll return a simple graph representation based on table structure
-	storageUnits, err := p.GetStorageUnits(config, schema)
-	if err != nil {
-		return nil, err
-	}
-
-	var graphUnits []engine.GraphUnit
-	for _, unit := range storageUnits {
-		graphUnits = append(graphUnits, engine.GraphUnit{
-			Unit:      unit,
-			Relations: []engine.GraphUnitRelationship{},
-		})
-	}
-
-	return graphUnits, nil
+func (p *ClickHousePlugin) GetGraphQueryDB(db *gorm.DB, schema string) *gorm.DB {
+	return db.Raw(graphQuery, schema)
 }

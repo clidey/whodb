@@ -2,6 +2,7 @@ import classNames from "classnames";
 import { motion } from "framer-motion";
 import { FC, MouseEvent, ReactElement, ReactNode, cloneElement } from "react";
 import { twMerge } from "tailwind-merge";
+import { ClassNames } from "./classes";
 
 export type IButtonProps = {
   className?: string;
@@ -12,24 +13,25 @@ export type IButtonProps = {
   onClick?: (e: MouseEvent<HTMLButtonElement>, ...args: any) => void;
   disabled?: boolean;
   type?: "lg" | "sm";
+  testId?: string;
 }
 
 export const Button: FC<IButtonProps> = (props) => {
-  return <motion.button className={twMerge(classNames("rounded-lg border flex justify-center items-center text-xs px-2 py-1 cursor-pointer gap-1 bg-white hover:bg-gray-100 dark:bg-white/10 dark:hover:bg-white/15 dark:border-white/20 dark:backdrop-blur-md", props.className, {
+  return <motion.button className={twMerge(classNames(ClassNames.Button, ClassNames.Hover, props.className, {
     "cursor-not-allowed opacity-75": props.disabled,
-    "h-[35px] rounded-[4px] gap-2 hover:gap-3": props.type === "lg",
-  }))} onClick={props.onClick} disabled={props.disabled} whileTap={{ scale: 0.8 }}>
-    <div className={classNames("text-xs text-gray-600 dark:text-neutral-100", props.labelClassName)}>
+    "h-[35px] rounded-xl gap-2": props.type === "lg",
+  }, ClassNames.Text))} onClick={props.onClick} disabled={props.disabled} whileTap={{ scale: 0.8 }} data-testid={props.testId}>
+    <div className={classNames("text-xs", props.labelClassName)}>
       {props.label}
     </div>
     {cloneElement(props.icon, {
-      className: twMerge(classNames("w-4 h-4 stroke-gray-600 dark:stroke-white", props.iconClassName)),
+      className: twMerge(classNames("w-4 h-4", props.iconClassName)),
     })}
   </motion.button>
 }
 
 export const AnimatedButton: FC<IButtonProps> = (props) => {
-  return <Button {...props} className={twMerge(classNames("transition-all hover:gap-2", props.className))} />
+  return <Button {...props} className={props.className} />
 }
 
 
@@ -40,11 +42,12 @@ export type IActionButtonProps = {
   onClick?: () => void;
   disabled?: boolean;
   children?: ReactNode;
+  testId?: string;
 }
 
-export const ActionButton: FC<IActionButtonProps> = ({ onClick, icon, className, containerClassName, disabled, children }) => {
+export const ActionButton: FC<IActionButtonProps> = ({ onClick, icon, className, containerClassName, disabled, children, testId }) => {
   return (
-  <div className="group relative">
+  <div className="group relative" data-testid={testId}>
     <motion.button className={twMerge(classNames("rounded-full bg-white border-gray-200 dark:bg-white/10 dark:border-white/5 dark:backdrop-blur-xs h-12 w-12 transition-all border shadow-xs flex items-center justify-center", containerClassName, {
       "cursor-not-allowed": disabled,
       "hover:shadow-lg hover:cursor-pointer hover:scale-110": !disabled,

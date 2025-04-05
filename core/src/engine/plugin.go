@@ -1,5 +1,7 @@
 package engine
 
+import "github.com/clidey/whodb/core/graph/model"
+
 type Credentials struct {
 	Id          *string
 	Type        string
@@ -73,13 +75,13 @@ type ChatMessage struct {
 type PluginFunctions interface {
 	GetDatabases(config *PluginConfig) ([]string, error)
 	IsAvailable(config *PluginConfig) bool
-	GetSchema(config *PluginConfig) ([]string, error)
+	GetAllSchemas(config *PluginConfig) ([]string, error)
 	GetStorageUnits(config *PluginConfig, schema string) ([]StorageUnit, error)
 	AddStorageUnit(config *PluginConfig, schema string, storageUnit string, fields map[string]string) (bool, error)
 	UpdateStorageUnit(config *PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error)
 	AddRow(config *PluginConfig, schema string, storageUnit string, values []Record) (bool, error)
 	DeleteRow(config *PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error)
-	GetRows(config *PluginConfig, schema string, storageUnit string, where string, pageSize int, pageOffset int) (*GetRowsResult, error)
+	GetRows(config *PluginConfig, schema string, storageUnit string, where *model.WhereCondition, pageSize int, pageOffset int) (*GetRowsResult, error)
 	GetGraph(config *PluginConfig, schema string) ([]GraphUnit, error)
 	RawExecute(config *PluginConfig, query string) (*GetRowsResult, error)
 	Chat(config *PluginConfig, schema string, model string, previousConversation string, query string) ([]*ChatMessage, error)

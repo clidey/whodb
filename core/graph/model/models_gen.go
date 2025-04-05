@@ -14,6 +14,13 @@ type AIChatMessage struct {
 	Text   string      `json:"Text"`
 }
 
+type AtomicWhereCondition struct {
+	ColumnType string `json:"ColumnType"`
+	Key        string `json:"Key"`
+	Operator   string `json:"Operator"`
+	Value      string `json:"Value"`
+}
+
 type ChatInput struct {
 	PreviousConversation string  `json:"PreviousConversation"`
 	Query                string  `json:"Query"`
@@ -62,6 +69,10 @@ type LoginProfileInput struct {
 type Mutation struct {
 }
 
+type OperationWhereCondition struct {
+	Children []*WhereCondition `json:"Children"`
+}
+
 type Query struct {
 }
 
@@ -97,6 +108,13 @@ type StatusResponse struct {
 type StorageUnit struct {
 	Name       string    `json:"Name"`
 	Attributes []*Record `json:"Attributes"`
+}
+
+type WhereCondition struct {
+	Type   WhereConditionType       `json:"Type"`
+	Atomic *AtomicWhereCondition    `json:"Atomic,omitempty"`
+	And    *OperationWhereCondition `json:"And,omitempty"`
+	Or     *OperationWhereCondition `json:"Or,omitempty"`
 }
 
 type DatabaseType string
@@ -135,7 +153,7 @@ func (e DatabaseType) String() string {
 	return string(e)
 }
 
-func (e *DatabaseType) UnmarshalGQL(v interface{}) error {
+func (e *DatabaseType) UnmarshalGQL(v any) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
@@ -182,7 +200,7 @@ func (e GraphUnitRelationshipType) String() string {
 	return string(e)
 }
 
-func (e *GraphUnitRelationshipType) UnmarshalGQL(v interface{}) error {
+func (e *GraphUnitRelationshipType) UnmarshalGQL(v any) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
@@ -196,5 +214,48 @@ func (e *GraphUnitRelationshipType) UnmarshalGQL(v interface{}) error {
 }
 
 func (e GraphUnitRelationshipType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type WhereConditionType string
+
+const (
+	WhereConditionTypeAtomic WhereConditionType = "Atomic"
+	WhereConditionTypeAnd    WhereConditionType = "And"
+	WhereConditionTypeOr     WhereConditionType = "Or"
+)
+
+var AllWhereConditionType = []WhereConditionType{
+	WhereConditionTypeAtomic,
+	WhereConditionTypeAnd,
+	WhereConditionTypeOr,
+}
+
+func (e WhereConditionType) IsValid() bool {
+	switch e {
+	case WhereConditionTypeAtomic, WhereConditionTypeAnd, WhereConditionTypeOr:
+		return true
+	}
+	return false
+}
+
+func (e WhereConditionType) String() string {
+	return string(e)
+}
+
+func (e *WhereConditionType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = WhereConditionType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid WhereConditionType", str)
+	}
+	return nil
+}
+
+func (e WhereConditionType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

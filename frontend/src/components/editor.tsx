@@ -144,8 +144,8 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
       "pointer-events-none": disabled,
     })}>
       {children}
-      <div ref={editorRef} className={classNames("h-full w-full [&>.cm-editor]:h-full [&>.cm-editor]:p-2 dark:[&>.cm-editor]:bg-[#252526] dark:[&_.cm-gutter]:bg-[#252526] transition-all opacity-100", {
-        "opacity-0 pointer-events-none": hidePreview,
+      <div ref={editorRef} className={classNames("h-full w-full [&>.cm-editor]:h-full [&>.cm-editor]:p-2 [&>.cm-editor]:!bg-neutral-100 [&_.cm-gutters]:!bg-neutral-100 dark:[&>.cm-editor]:!bg-[#252526] dark:[&_.cm-gutters]:!bg-[#252526] transition-all opacity-100", {
+        "opacity-0 pointer-events-none": hidePreview && disabled,
       })}></div>
       <div
         className={classNames("absolute right-6 bottom-2 z-20", {

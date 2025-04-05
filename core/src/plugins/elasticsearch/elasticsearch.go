@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/engine"
 )
 
@@ -28,7 +29,7 @@ func (p *ElasticSearchPlugin) GetDatabases(config *engine.PluginConfig) ([]strin
 	return nil, errors.ErrUnsupported
 }
 
-func (p *ElasticSearchPlugin) GetSchema(config *engine.PluginConfig) ([]string, error) {
+func (p *ElasticSearchPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, error) {
 	return nil, errors.ErrUnsupported
 }
 
@@ -75,26 +76,29 @@ func (p *ElasticSearchPlugin) GetStorageUnits(config *engine.PluginConfig, datab
 	return storageUnits, nil
 }
 
-func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, collection, filter string, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+func (p *ElasticSearchPlugin) GetRows(
+	config *engine.PluginConfig,
+	database, collection string,
+	where *model.WhereCondition,
+	pageSize, pageOffset int,
+) (*engine.GetRowsResult, error) {
 	client, err := DB(config)
 	if err != nil {
 		return nil, err
 	}
 
-	var elasticSearchConditions map[string]interface{}
-	if len(filter) > 0 {
-		if err := json.Unmarshal([]byte(filter), &elasticSearchConditions); err != nil {
-			return nil, fmt.Errorf("invalid filter format: %v", err)
-		}
+	// Convert the where condition to an Elasticsearch filter
+	elasticSearchConditions, err := convertWhereConditionToES(where)
+	if err != nil {
+		return nil, fmt.Errorf("error converting where condition: %v", err)
 	}
 
 	query := map[string]interface{}{
 		"from": pageOffset,
 		"size": pageSize,
-	}
-
-	for key, value := range elasticSearchConditions {
-		query[key] = value
+		"query": map[string]interface{}{
+			"bool": elasticSearchConditions,
+		},
 	}
 
 	var buf bytes.Buffer
@@ -122,7 +126,11 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 		return nil, err
 	}
 
-	hits := searchResult["hits"].(map[string]interface{})["hits"].([]interface{})
+	hits, ok := searchResult["hits"].(map[string]interface{})["hits"].([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("invalid response structure")
+	}
+
 	result := &engine.GetRowsResult{
 		Columns: []engine.Column{
 			{Name: "document", Type: "Document"},
@@ -143,6 +151,62 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 	}
 
 	return result, nil
+}
+
+func convertWhereConditionToES(where *model.WhereCondition) (map[string]interface{}, error) {
+	if where == nil {
+		return map[string]interface{}{}, nil
+	}
+
+	switch where.Type {
+	case model.WhereConditionTypeAtomic:
+		if where.Atomic == nil {
+			return nil, fmt.Errorf("atomic condition must have an atomicwherecondition")
+		}
+		return map[string]interface{}{
+			"must": []map[string]interface{}{
+				{
+					"match": map[string]interface{}{
+						where.Atomic.Key: where.Atomic.Value,
+					},
+				},
+			},
+		}, nil
+
+	case model.WhereConditionTypeAnd:
+		if where.And == nil || len(where.And.Children) == 0 {
+			return nil, fmt.Errorf("and condition must have children")
+		}
+		mustClauses := []map[string]interface{}{}
+		for _, child := range where.And.Children {
+			childCondition, err := convertWhereConditionToES(child)
+			if err != nil {
+				return nil, err
+			}
+			mustClauses = append(mustClauses, childCondition)
+		}
+		return map[string]interface{}{"must": mustClauses}, nil
+
+	case model.WhereConditionTypeOr:
+		if where.Or == nil || len(where.Or.Children) == 0 {
+			return nil, fmt.Errorf("or condition must have children")
+		}
+		shouldClauses := []map[string]interface{}{}
+		for _, child := range where.Or.Children {
+			childCondition, err := convertWhereConditionToES(child)
+			if err != nil {
+				return nil, err
+			}
+			shouldClauses = append(shouldClauses, childCondition)
+		}
+		return map[string]interface{}{
+			"should":               shouldClauses,
+			"minimum_should_match": 1, // Ensures at least one condition matches
+		}, nil
+
+	default:
+		return nil, fmt.Errorf("unknown whereconditiontype: %v", where.Type)
+	}
 }
 
 func (p *ElasticSearchPlugin) RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error) {

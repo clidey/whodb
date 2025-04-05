@@ -12,7 +12,6 @@ export const initHighlight = (env: 'development' | 'staging' | 'production') => 
         },
         environment: env,
         privacySetting: "strict",
-        // enableOtelTracing: true,
         enablePerformanceRecording: true,
         manualStart: true
     });

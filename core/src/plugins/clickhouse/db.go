@@ -3,42 +3,29 @@ package clickhouse
 import (
 	"context"
 	"crypto/tls"
-	"database/sql"
-	"fmt"
+	"github.com/ClickHouse/clickhouse-go/v2"
+	"gorm.io/gorm"
 	"net"
 	"strconv"
 	"time"
 
-	"github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
-	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
+	gorm_clickhouse "gorm.io/driver/clickhouse"
 )
 
-const (
-	portKey         = "Port"
-	sslModeKey      = "SSL Mode"
-	httpProtocolKey = "HTTP Protocol"
-	readOnlyKey     = "Readonly"
-	debugKey        = "Debug"
-)
-
-func DB(config *engine.PluginConfig) (*sql.DB, error) {
-	port, err := strconv.Atoi(common.GetRecordValueOrDefault(config.Credentials.Advanced, portKey, "9000"))
+func (p *ClickHousePlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
+	connectionInput, err := p.ParseConnectionConfig(config)
 	if err != nil {
 		return nil, err
 	}
-	sslMode := common.GetRecordValueOrDefault(config.Credentials.Advanced, sslModeKey, "disable")
-	httpProtocol := common.GetRecordValueOrDefault(config.Credentials.Advanced, httpProtocolKey, "disable")
-	readOnly := common.GetRecordValueOrDefault(config.Credentials.Advanced, readOnlyKey, "disable")
-	debug := common.GetRecordValueOrDefault(config.Credentials.Advanced, debugKey, "disable")
 
 	auth := clickhouse.Auth{
-		Database: config.Credentials.Database,
-		Username: config.Credentials.Username,
-		Password: config.Credentials.Password,
+		Database: connectionInput.Database,
+		Username: connectionInput.Username,
+		Password: connectionInput.Password,
 	}
-	address := []string{net.JoinHostPort(config.Credentials.Hostname, strconv.Itoa(port))}
+
+	address := []string{net.JoinHostPort(connectionInput.Hostname, strconv.Itoa(connectionInput.Port))}
 	options := &clickhouse.Options{
 		Addr:             address,
 		Auth:             auth,
@@ -49,23 +36,23 @@ func DB(config *engine.PluginConfig) (*sql.DB, error) {
 		},
 	}
 
-	if httpProtocol != "disable" {
+	if connectionInput.HTTPProtocol != "disable" {
 		options.Protocol = clickhouse.HTTP
 		options.Compression = &clickhouse.Compression{
 			Method: clickhouse.CompressionGZIP,
 		}
 	}
 
-	if debug != "disable" {
+	if connectionInput.Debug != "disable" {
 		options.Debug = true
 	}
-	if readOnly == "disable" {
+	if connectionInput.ReadOnly == "disable" {
 		options.Settings = clickhouse.Settings{
 			"max_execution_time": 60,
 		}
 	}
-	if sslMode != "disable" {
-		options.TLS = &tls.Config{InsecureSkipVerify: sslMode == "relaxed" || sslMode == "none"}
+	if connectionInput.SSLMode != "disable" {
+		options.TLS = &tls.Config{InsecureSkipVerify: connectionInput.SSLMode == "relaxed" || connectionInput.SSLMode == "none"}
 	}
 
 	conn := clickhouse.OpenDB(options)
@@ -78,26 +65,8 @@ func DB(config *engine.PluginConfig) (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	return conn, err
-}
 
-func getTableColumns(conn driver.Conn, schema, table string) ([]engine.Record, error) {
-	query := fmt.Sprintf("DESCRIBE TABLE %s.%s", schema, table)
-	rows, err := conn.Query(context.Background(), query)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var columns []engine.Record
-	for rows.Next() {
-		var name, typ, defaultType, defaultExpression string
-		var comment *string
-		if err := rows.Scan(&name, &typ, &defaultType, &defaultExpression, &comment); err != nil {
-			return nil, err
-		}
-		columns = append(columns, engine.Record{Key: name, Value: typ})
-	}
-
-	return columns, nil
+	return gorm.Open(gorm_clickhouse.New(gorm_clickhouse.Config{
+		Conn: conn,
+	}))
 }

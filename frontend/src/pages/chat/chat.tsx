@@ -12,7 +12,7 @@ import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { Table } from "../../components/table";
 import { InternalRoutes } from "../../config/routes";
-import { GetAiChatQuery, useGetAiChatLazyQuery, useGetAiModelsLazyQuery } from "../../generated/graphql";
+import { AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery, useGetAiModelsLazyQuery } from "../../generated/graphql";
 import { availableExternalModelTypes, DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
@@ -20,21 +20,18 @@ import { chooseRandomItems } from "../../utils/functions";
 import { chatExamples } from "./examples";
 import logoImage from "../../../public/images/logo.png";
 
+
 type TableData = GetAiChatQuery["AIChat"][0]["Result"];
 
-const TablePreview: FC<{ data: TableData, text: string }> = ({ data, text }) => {
+const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ type, data, text }) => {
     const [showSQL, setShowSQL] = useState(false);
 
     const handleCodeToggle = useCallback(() => {
         setShowSQL(status => !status);
     }, []);
 
-    const textWithoutComments = useMemo(() => {
-        return text.split("\n").filter(text => !text.startsWith("--")).join("\n");
-    }, [text]);
-
     return <div className="flex flex-col w-full group/table-preview gap-2 relative">
-        <div className="absolute -top-3 -left-3 opacity-0 group-hover/table-preview:opacity-100 transition-all z-1">
+        <div className="absolute -top-3 -left-3 opacity-0 group-hover/table-preview:opacity-100 transition-all z-[1]">
             <ActionButton containerClassName="w-8 h-8" className="w-5 h-5" icon={cloneElement(showSQL ? Icons.Tables : Icons.Code, {
                 className: "w-6 h-6 stroke-white",
             })} onClick={handleCodeToggle} />
@@ -45,11 +42,11 @@ const TablePreview: FC<{ data: TableData, text: string }> = ({ data, text }) => 
                 ? <div className="h-[150px] w-full">
                     <CodeEditor value={text} />
                 </div>
-                :  (data != null && data.Rows.length > 0) || textWithoutComments.trim().startsWith("SELECT")
+                :  (data != null && data.Rows.length > 0) || type === "sql:get"
                     ? <Table className="h-[150px]" columns={data?.Columns.map(c => c.Name) ?? []} columnTags={data?.Columns.map(c => c.Type)}
                         rows={data?.Rows ?? []} totalPages={1} currentPage={1} disableEdit={true} />
                     : <div className="bg-white/10 text-neutral-800 dark:text-neutral-300 rounded-lg p-2 flex gap-2">
-                        Action Executed
+                        Action Executed ({type.toUpperCase()})
                         {Icons.CheckCircle}
                     </div>
             }
@@ -57,16 +54,9 @@ const TablePreview: FC<{ data: TableData, text: string }> = ({ data, text }) => 
     </div>
 }
 
-type IChatMessage = {
-    type: "message";
-    text: string;
+type IChatMessage = AiChatMessage & {
     isUserInput?: boolean;
-} | {
-    type: "sql";
-    data: TableData;
-    text: string;
-    isUserInput?: true;
-}
+};
 
 
 export const externalModelTypes = map(availableExternalModelTypes, (model) => createDropdownItem(model, (Icons.Logos as Record<string, ReactElement>)[model]));
@@ -135,7 +125,7 @@ export const ChatPage: FC = () => {
         if (modelType == null) {
             return;
         }
-        setChats(chats => [...chats, { type: "message", text: query, isUserInput: true, }]);
+        setChats(chats => [...chats, { Type: "message", Text: query, isUserInput: true, }]);
         setTimeout(() => {
             if (scrollContainerRef.current != null) {
                 scrollContainerRef.current.scroll({
@@ -150,21 +140,21 @@ export const ChatPage: FC = () => {
                 token: modelType.token,
                 query,
                 model: currentModel,
-                previousConversation: chats.map(chat => `${chat.isUserInput ? "User" : "System"}: ${chat.text}`).join("\n"),
+                previousConversation: chats.map(chat => `${chat.isUserInput ? "User" : "System"}: ${chat.Text}`).join("\n"),
                 schema,
             },
             onCompleted(data) {
                 const systemChats: IChatMessage[] = data.AIChat.map(chat => {
-                    if (chat.Type === "sql") {
+                    if (chat.Type.startsWith("sql")) {
                         return {
-                            type: "sql",
-                            text: chat.Text,
-                            data: chat.Result,
+                            Type: chat.Type,
+                            Text: chat.Text,
+                            Result: chat.Result as AiChatMessage["Result"],
                         }
                     }
                     return {
-                        type: "message",
-                        text: chat.Text,
+                        Type: "message",
+                        Text: chat.Text,
                     }
                 });
                 setChats(chats => [...chats, ...systemChats]);
@@ -192,7 +182,7 @@ export const ChatPage: FC = () => {
           while (searchIndex >= 0) {
             if (chats[searchIndex].isUserInput) {
               setCurrentSearchIndex(searchIndex);
-              setQuery(chats[searchIndex].text);
+              setQuery(chats[searchIndex].Text);
               return;
             }
             searchIndex--;
@@ -203,7 +193,7 @@ export const ChatPage: FC = () => {
             while (searchIndex > foundSearchIndex) {
               if (chats[searchIndex].isUserInput) {
                 setCurrentSearchIndex(searchIndex);
-                setQuery(chats[searchIndex].text);
+                setQuery(chats[searchIndex].Text);
                 return;
               }
               searchIndex--;
@@ -350,7 +340,7 @@ export const ChatPage: FC = () => {
                         </div>
                     }
                 </div>
-                <div className={classNames("flex bg-white/5 grow w-full rounded-xl overflow-hidden", {
+                <div className={classNames("flex grow w-full rounded-xl overflow-hidden", {
                     "opacity-[4%] pointer-events-none": disableAll,
                 })}>
                     {
@@ -374,24 +364,31 @@ export const ChatPage: FC = () => {
                                 <div className="flex w-[max(65%,450px)] flex-col gap-2">
                                     {
                                         chats.map((chat, i) => {
-                                            if (chat.type === "message") {
+                                            if (chat.Type === "message") {
                                                 return <div key={`chat-${i}`} className={classNames("flex items-center gap-4 overflow-hidden break-words leading-6 shrink-0", {
                                                     "self-end": chat.isUserInput,
                                                     "self-start": !chat.isUserInput,
                                                 })}>
                                                     {!chat.isUserInput && chats[i-1]?.isUserInput && <img src={logoImage} alt="clidey logo" className="w-auto h-6" />}
-                                                    <div className={classNames("text-neutral-800 dark:text-neutral-300 px-4 py-2 rounded-lg", {
-                                                        "bg-white/10": chat.isUserInput,
+                                                    <div className={classNames("text-neutral-800 dark:text-neutral-300 px-4 py-2 rounded-xl", {
+                                                        "bg-neutral-600/5 dark:bg-[#2C2F33]": chat.isUserInput,
                                                     })}>
-                                                        {chat.text}
+                                                        {chat.Text}
+                                                    </div>
+                                                </div>
+                                            } else if (chat.Type === "error") {
+                                                return <div key={`chat-${i}`} className="flex items-center gap-4 overflow-hidden break-words leading-6 shrink-0 self-start">
+                                                    {!chat.isUserInput && chats[i-1]?.isUserInput && <img src={logoImage} alt="clidey logo" className="w-auto h-6" />}
+                                                    <div className="text-red-800 dark:text-red-300 px-4 py-2 rounded-lg">
+                                                        {chat.Text}
                                                     </div>
                                                 </div>
                                             }
-                                            return <TablePreview text={chat.text} data={chat.data} />
+                                            return <TablePreview type={chat.Type} text={chat.Text} data={chat.Result} />
                                         })
                                     }
-                                    { loading &&  <div className="flex w-full justify-end mt-4">
-                                        <Loading loadingText="Waiting for response" size="sm" />
+                                    { loading &&  <div className="flex w-full mt-4">
+                                        <Loading loadingText="Thinking" size="sm" />
                                     </div> }
                                 </div>
                             </div>
