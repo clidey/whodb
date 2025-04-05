@@ -625,7 +625,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                             <div className="group/header-row" {...headerGroup.getHeaderGroupProps()} key={headerGroup.getHeaderGroupProps().key}>
                                 {headerGroup.headers.map((column, i) => (
                                     <>
-                                        <div {...column.getHeaderProps()} key={column.getHeaderProps().key} className="text-xs border-t border-l last:border-r border-gray-200 dark:border-white/5 p-2 text-left bg-gray-500 dark:bg-white/20 text-white first:rounded-tl-lg last:rounded-tr-lg relative group/header cursor-pointer select-none">
+                                        <div {...column.getHeaderProps()} key={column.getHeaderProps().key} className="text-xs border-t border-l last:border-r border-gray-200 dark:border-white/5 p-2 text-left bg-gray-500 dark:bg-[#2C2F33] text-white first:rounded-tl-lg last:rounded-tr-lg relative group/header cursor-pointer select-none">
                                             <div className={classNames({
                                                 "group-hover/header-row:hidden": checkedRows != null && column.id === "#",
                                                 "hidden": column.id === "#" && allChecked,

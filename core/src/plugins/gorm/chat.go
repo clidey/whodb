@@ -2,16 +2,17 @@ package gorm_plugin
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/llm"
 	"github.com/clidey/whodb/core/src/plugins"
 	"gorm.io/gorm"
-	"strings"
 )
 
 func (p *GormPlugin) Chat(config *engine.PluginConfig, schema string, model string, previousConversation string, query string) ([]*engine.ChatMessage, error) {
-	return plugins.WithConnection[[]*engine.ChatMessage](config, p.DB, func(db *gorm.DB) ([]*engine.ChatMessage, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]*engine.ChatMessage, error) {
 		tableFields, err := p.GetTableSchema(db, schema)
 		if err != nil {
 			return nil, err

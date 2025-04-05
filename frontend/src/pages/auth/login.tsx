@@ -1,9 +1,10 @@
 import classNames from "classnames";
 import { entries } from "lodash";
-import { cloneElement, FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
+import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import logoImage from "../../../public/images/logo.png";
 import { AnimatedButton } from "../../components/button";
-import { BRAND_COLOR } from "../../components/classes";
+import { ClassNames } from "../../components/classes";
 import { createDropdownItem, DropdownWithLabel, IDropdownItem } from "../../components/dropdown";
 import { Icons } from "../../components/icons";
 import { InputWithlabel } from "../../components/input";
@@ -303,7 +304,7 @@ export const LoginPage: FC = () => {
                     <div>
                         <Loading hideText={true} />
                     </div>
-                    <div className="text-neutral-800 dark:text-neutral-300">
+                    <div className={ClassNames.Text}>
                         Logging in
                     </div>
                 </div>
@@ -318,12 +319,9 @@ export const LoginPage: FC = () => {
                         <div className="flex flex-col gap-4 grow w-[350px]">
                             <div className="flex justify-between">
                                 <div className="text-lg text-gray-600 flex gap-2 items-center">
-                                    <div className="h-[40px] w-[40px] rounded-xl flex justify-center items-center bg-teal-500">
-                                        {cloneElement(Icons.Lock, {
-                                            className: "w-6 h-6 stroke-white",
-                                        })}
-                                    </div>
-                                    <span className={BRAND_COLOR}>WhoDB</span> <span className="dark:text-neutral-300">Login</span>
+                                    <img src={logoImage} alt="clidey logo" className="w-auto h-6" />
+                                    <span className={ClassNames.BrandText}>WhoDB</span>
+                                    <span className={ClassNames.Text}>Login</span>
                                 </div>
                                 <div className="text-red-500 text-xs flex items-center">
                                     {error}

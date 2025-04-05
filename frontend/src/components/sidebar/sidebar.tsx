@@ -14,7 +14,7 @@ import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
 import { createStub, getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
 import { AnimatedButton } from "../button";
-import { BRAND_COLOR, BRAND_COLOR_BG } from "../classes";
+import { BRAND_COLOR, BRAND_COLOR_BG, ClassNames } from "../classes";
 import { createDropdownItem, Dropdown, IDropdownItem } from "../dropdown";
 import { Icons } from "../icons";
 import { Loading } from "../loading";
@@ -71,7 +71,7 @@ export const SideMenu: FC<IRouteProps> = (props) => {
                         "w-6 h-6 hover:scale-110 ml-1": props.collapse,
                     })
                 })}
-                <span className="dark:text-neutral-300">
+                <span className={ClassNames.Text}>
                     {!props.collapse  && props.title}
                 </span>
                 {
@@ -360,7 +360,7 @@ export const Sidebar: FC = () => {
 
     return (
         <div className={
-            classNames("h-[100vh] flex flex-col gap-4 shadow-md relative transition-all duration-500 dark:bg-white/10 dark:shadow-neutral-100/5", {
+            classNames("h-[100vh] flex flex-col gap-4 shadow-md relative transition-all duration-500 dark:bg-[#1E1E1E] dark:shadow-neutral-100/5", {
                 "w-[50px] py-20": collapsed,
                 "w-[300px] px-10 py-20": !collapsed,
             })}>
@@ -407,7 +407,7 @@ export const Sidebar: FC = () => {
                                 <div className={classNames("flex gap-2 items-center", {
                                     "hidden": collapsed,
                                 })}>
-                                    <div className="text-sm text-gray-600 dark:text-neutral-300 mr-2.5">Profile:</div>
+                                    <div className={classNames(ClassNames.Text, "text-sm mr-2.5")}>Profile:</div>
                                     {
                                         currentProfile != null &&
                                         <Dropdown className="w-[140px]" items={loginItems} value={currentProfile}
@@ -428,7 +428,7 @@ export const Sidebar: FC = () => {
                                     <div className={classNames("flex gap-2 items-center w-full", {
                                         "opacity-0 pointer-events-none": collapsed || (current.Type !== DatabaseType.Redis && isNoSQL(current?.Type as DatabaseType)),
                                     })}>
-                                        <div className="text-sm text-gray-600 dark:text-neutral-300">Database:</div>
+                                        <div className={classNames(ClassNames.Text, "text-sm")}>Database:</div>
                                         <Dropdown className="w-[140px]" value={createDropdownItem(current!.Database)}
                                                   items={availableDatabases.Database.map(database => createDropdownItem(database))}
                                                   onChange={handleDatabaseChange}
@@ -440,7 +440,7 @@ export const Sidebar: FC = () => {
                                     <div className={classNames("flex gap-2 items-center w-full", {
                                         "opacity-0 pointer-events-none": pathname === InternalRoutes.RawExecute.path || collapsed || DATABASES_THAT_DONT_SUPPORT_SCHEMA.includes(current?.Type as DatabaseType),
                                     })}>
-                                        <div className="text-sm text-gray-600 dark:text-neutral-300">Schema:</div>
+                                        <div className={classNames(ClassNames.Text, "text-sm")}>Schema:</div>
                                         <Dropdown className="w-[140px]" value={createDropdownItem(schema)}
                                                   items={schemasDropdownItems} onChange={handleSchemaChange}
                                                   noItemsLabel="No schema found"/>
@@ -464,7 +464,7 @@ export const Sidebar: FC = () => {
                         </div>
                     </div>
             }
-            <div className="absolute right-8 bottom-8 text-sm text-gray-300 hover:text-gray-600 dark:text-neutral-600 self-end dark:hover:text-neutral-300 transition-all">{version?.Version}</div>
+            <div className={classNames(ClassNames.Text, "absolute right-8 bottom-8 text-sm text-gray-300 hover:text-gray-600 self-end dark:hover:text-neutral-300 transition-all")}>{version?.Version}</div>
         </div>
     )
 }

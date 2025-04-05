@@ -385,7 +385,7 @@ export type DeleteRowMutation = { __typename?: 'Mutation', DeleteRow: { __typena
 export type GetStorageUnitRowsQueryVariables = Exact<{
   schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
-  where: WhereCondition;
+  where?: InputMaybe<WhereCondition>;
   pageSize: Scalars['Int']['input'];
   pageOffset: Scalars['Int']['input'];
 }>;
@@ -1031,7 +1031,7 @@ export type DeleteRowMutationHookResult = ReturnType<typeof useDeleteRowMutation
 export type DeleteRowMutationResult = Apollo.MutationResult<DeleteRowMutation>;
 export type DeleteRowMutationOptions = Apollo.BaseMutationOptions<DeleteRowMutation, DeleteRowMutationVariables>;
 export const GetStorageUnitRowsDocument = gql`
-    query GetStorageUnitRows($schema: String!, $storageUnit: String!, $where: WhereCondition!, $pageSize: Int!, $pageOffset: Int!) {
+    query GetStorageUnitRows($schema: String!, $storageUnit: String!, $where: WhereCondition, $pageSize: Int!, $pageOffset: Int!) {
   Row(
     schema: $schema
     storageUnit: $storageUnit

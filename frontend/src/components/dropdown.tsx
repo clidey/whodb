@@ -3,6 +3,7 @@ import { FC, ReactElement, cloneElement, useCallback, useState } from "react";
 import { Icons } from "./icons";
 import { Label } from "./input";
 import { Loading } from "./loading";
+import { ClassNames } from "./classes";
 
 export function createDropdownItem(option: string, icon?: ReactElement): IDropdownItem {
     return {
@@ -58,24 +59,24 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
             {props.loading ? <div className="flex h-full w-full items-center justify-center">
                 <Loading hideText={true} size="sm"  />
             </div> :
-            <>  <div className="group/dropdown flex gap-1 justify-between items-center border border-gray-200 rounded-lg w-full p-1 h-[34px] px-2 dark:bg-white/10 dark:border-white/20">
-                    <div className="flex gap-1 text-gray-700 text-sm truncate items-center dark:text-neutral-300">
+            <>  <div className="group/dropdown flex gap-1 justify-between items-center border border-gray-200 rounded-lg w-full p-1 h-[34px] px-2 dark:bg-[#2C2F33] dark:border-white/5">
+                    <div className={classNames(ClassNames.Text, "flex gap-1 text-sm truncate items-center")}>
                         {props.value?.icon != null && <div className="flex items-center w-6">
                             {props.value.icon}
                         </div>}
                         {!props.showIconOnly && props.value?.label}
                     </div>
                     {cloneElement(Icons.DownCaret, {
-                        className: "absolute right-2 top-1/2 -translate-y-1/2 p-1 w-5 h-5 stroke-neutral-600 dark:stroke-neutral-400 group-hover/dropdown:backdrop-blur-xs rounded-full",
+                        className: "absolute right-2 top-1/2 -translate-y-1/2 p-1 w-5 h-5 stroke-neutral-700 dark:stroke-neutral-400 group-hover/dropdown:backdrop-blur-xs rounded-full",
                     })}
                 </div>
-                <div className={classNames("absolute z-10 divide-y rounded-lg shadow-sm bg-white py-1 border border-gray-200 overflow-y-auto max-h-40 dark:bg-white/10 dark:backdrop-blur-md dark:border-white/20", {
+                <div className={classNames("absolute z-10 divide-y rounded-lg shadow-sm bg-white py-1 border border-gray-200 overflow-y-auto max-h-40 dark:bg-[#2C2F33] dark:border-white/20", {
                     "hidden": !hover,
                     "block animate-fade": hover,
                     "w-fit min-w-[200px]": !props.fullWidth,
                     "w-full": props.fullWidth,
                 })}>
-                    <ul className="py-1 text-sm text-gray-700 nowheel flex flex-col">
+                    <ul className={classNames(ClassNames.Text, "py-1 text-sm nowheel flex flex-col")}>
                         {
                             props.items.map((item, i) => (
                                 <li key={`dropdown-item-${i}`} className={classNames(ITEM_CLASS, {

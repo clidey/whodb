@@ -2,14 +2,15 @@ import classNames from "classnames";
 import { ChangeEvent, ChangeEventHandler, DetailedHTMLProps, FC, InputHTMLAttributes, KeyboardEventHandler, cloneElement, useCallback, useState } from "react";
 import { twMerge } from "tailwind-merge";
 import { Icons } from "./icons";
+import { ClassNames } from "./classes";
 
 
 export const Text: FC<{ label: string }> = ({ label }) => {
-    return <span className="text-xs text-gray-600 dark:text-gray-300">{label}</span>
+    return <span className={classNames(ClassNames.Text, "text-xs")}>{label}</span>
 }
 
 export const Label: FC<{ label: string }> = ({ label }) => {
-    return <strong><label className="text-xs text-gray-600 mt-2 dark:text-gray-300">{label}</label></strong>
+    return <strong><label className={classNames(ClassNames.Text, "text-xs mt-2")}>{label}</label></strong>
 }
 
 type InputProps = {
@@ -36,7 +37,7 @@ export const Input: FC<InputProps> = ({ value, setValue, type, placeholder, onSu
 
     return <input type={type} placeholder={placeholder}
         {...inputProps} onChange={handleChange} value={value} onKeyUp={handleHandleKeyUp}
-        className={twMerge(classNames("appearance-none border border-gray-200 rounded-md w-full p-1 text-gray-700 leading-tight focus:outline-hidden focus:shadow-outline text-sm h-[34px] px-2 dark:text-neutral-300/100 dark:bg-white/10 dark:border-white/20", inputProps.className))} />
+        className={twMerge(classNames("appearance-none border border-gray-200 rounded-md w-full p-1 text-gray-700 leading-tight focus:outline-hidden focus:shadow-outline text-sm h-[34px] px-2 dark:text-neutral-300/100 dark:bg-[#2C2F33] dark:border-white/5", inputProps.className))} />
 }
 
 type InputWithLabelProps = {

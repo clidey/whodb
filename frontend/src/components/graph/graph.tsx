@@ -106,7 +106,7 @@ export const Graph: FC<IGraphProps> = (props) => {
 
     return <ReactFlow
         ref={reactFlowWrapper}
-        className={classNames("group bg-white dark:bg-white/5 rounded-lg", {
+        className={classNames("group bg-white dark:bg-transparent rounded-lg", {
             "laying-out": isLayingOut,
         })}
         {...props}
@@ -125,7 +125,7 @@ export const Graph: FC<IGraphProps> = (props) => {
         onInit={handleInit}
         connectionLineComponent={GraphEdgeConnectionLine}
     >
-        <Background />
+        <Background className="opacity-50" />
         {
             !downloading && <Controls />
         }
