@@ -474,6 +474,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
         if (tableRef.current == null || search.length === 0) {
             return;
         }
+        // @ts-ignore
         let interval: NodeJS.Timeout;
         if (e.key === "Enter") {
             const searchText = search.toLowerCase();
