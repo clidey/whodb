@@ -103,14 +103,14 @@ func (r *mutationResolver) AddStorageUnit(ctx context.Context, schema string, st
 }
 
 // UpdateStorageUnit is the resolver for the UpdateStorageUnit field.
-func (r *mutationResolver) UpdateStorageUnit(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error) {
+func (r *mutationResolver) UpdateStorageUnit(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput, updatedColumns []string) (*model.StatusResponse, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
 	typeArg := config.Credentials.Type
 	valuesMap := map[string]string{}
 	for _, value := range values {
 		valuesMap[value.Key] = value.Value
 	}
-	status, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).UpdateStorageUnit(config, schema, storageUnit, valuesMap)
+	status, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).UpdateStorageUnit(config, schema, storageUnit, valuesMap, updatedColumns)
 	if err != nil {
 		return nil, err
 	}

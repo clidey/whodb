@@ -87,7 +87,7 @@ export const ExploreStorageUnit: FC = () => {
         setCurrentPage(0);
     }, [handleSubmitRequest]);
 
-    const handleRowUpdate = useCallback((row: Record<string, string | number>) => {
+    const handleRowUpdate = useCallback((row: Record<string, string | number>, updatedColumn: string) => {
         if (current == null) {
             return Promise.reject();
         }
@@ -95,6 +95,7 @@ export const ExploreStorageUnit: FC = () => {
             Key,
             Value,
         }));
+        const updatedColumns = [updatedColumn]
         return new Promise<void>(async (res, rej) => {
             // this method ensures that the component is not rerendered
             // hence, the edited cache in the table would stay intact & performant
@@ -106,6 +107,7 @@ export const ExploreStorageUnit: FC = () => {
                         storageUnit: unitName,
                         type: current.Type as DatabaseType,
                         values,
+                        updatedColumns,
                     },
                 });
                 if (data?.UpdateStorageUnit.Status) {

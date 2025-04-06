@@ -147,7 +147,7 @@ type Mutation {
   UpdateSettings(newSettings: SettingsConfigInput!): StatusResponse!
 
   AddStorageUnit(schema: String!, storageUnit: String!, fields: [RecordInput!]!): StatusResponse!
-  UpdateStorageUnit(schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
+  UpdateStorageUnit(schema: String!, storageUnit: String!, values: [RecordInput!]!, updatedColumns: [String!]!): StatusResponse!
   AddRow(schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
   DeleteRow(schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
 }

@@ -83,7 +83,7 @@ type ComplexityRoot struct {
 		LoginWithProfile  func(childComplexity int, profile model.LoginProfileInput) int
 		Logout            func(childComplexity int) int
 		UpdateSettings    func(childComplexity int, newSettings model.SettingsConfigInput) int
-		UpdateStorageUnit func(childComplexity int, schema string, storageUnit string, values []*model.RecordInput) int
+		UpdateStorageUnit func(childComplexity int, schema string, storageUnit string, values []*model.RecordInput, updatedColumns []string) int
 	}
 
 	Query struct {
@@ -131,7 +131,7 @@ type MutationResolver interface {
 	Logout(ctx context.Context) (*model.StatusResponse, error)
 	UpdateSettings(ctx context.Context, newSettings model.SettingsConfigInput) (*model.StatusResponse, error)
 	AddStorageUnit(ctx context.Context, schema string, storageUnit string, fields []*model.RecordInput) (*model.StatusResponse, error)
-	UpdateStorageUnit(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
+	UpdateStorageUnit(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput, updatedColumns []string) (*model.StatusResponse, error)
 	AddRow(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
 	DeleteRow(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
 }
@@ -348,7 +348,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateStorageUnit(childComplexity, args["schema"].(string), args["storageUnit"].(string), args["values"].([]*model.RecordInput)), true
+		return e.complexity.Mutation.UpdateStorageUnit(childComplexity, args["schema"].(string), args["storageUnit"].(string), args["values"].([]*model.RecordInput), args["updatedColumns"].([]string)), true
 
 	case "Query.AIChat":
 		if e.complexity.Query.AIChat == nil {
@@ -981,6 +981,11 @@ func (ec *executionContext) field_Mutation_UpdateStorageUnit_args(ctx context.Co
 		return nil, err
 	}
 	args["values"] = arg2
+	arg3, err := ec.field_Mutation_UpdateStorageUnit_argsUpdatedColumns(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["updatedColumns"] = arg3
 	return args, nil
 }
 func (ec *executionContext) field_Mutation_UpdateStorageUnit_argsSchema(
@@ -1034,6 +1039,24 @@ func (ec *executionContext) field_Mutation_UpdateStorageUnit_argsValues(
 	}
 
 	var zeroVal []*model.RecordInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_UpdateStorageUnit_argsUpdatedColumns(
+	ctx context.Context,
+	rawArgs map[string]any,
+) ([]string, error) {
+	if _, ok := rawArgs["updatedColumns"]; !ok {
+		var zeroVal []string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedColumns"))
+	if tmp, ok := rawArgs["updatedColumns"]; ok {
+		return ec.unmarshalNString2ᚕstringᚄ(ctx, tmp)
+	}
+
+	var zeroVal []string
 	return zeroVal, nil
 }
 
@@ -2446,7 +2469,7 @@ func (ec *executionContext) _Mutation_UpdateStorageUnit(ctx context.Context, fie
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateStorageUnit(rctx, fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["values"].([]*model.RecordInput))
+		return ec.resolvers.Mutation().UpdateStorageUnit(rctx, fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["values"].([]*model.RecordInput), fc.Args["updatedColumns"].([]string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

@@ -2,6 +2,7 @@ package router
 
 import (
 	"embed"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -29,6 +30,12 @@ func NewGraphQLServer(es graphql.ExecutableSchema) *handler.Server {
 	srv.AddTransport(&transport.GET{})
 	srv.AddTransport(&transport.POST{})
 	srv.AddTransport(&transport.MultipartForm{})
+
+	srv.Use(extension.FixedComplexityLimit(100))
+
+	if env.IsDevelopment {
+		srv.Use(extension.Introspection{})
+	}
 
 	return srv
 }

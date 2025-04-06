@@ -316,7 +316,7 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, checked, onRowCheck, disab
 type ITableRow = {
     row: Row<Record<string, string | number>>;
     style: CSSProperties;
-    onRowUpdate?: (row: Record<string, string | number>) => Promise<void>;
+    onRowUpdate?: (row: Record<string, string | number>, updatedColumn: string) => Promise<void>;
     checked?: boolean;
     onRowCheck?: (value: boolean) => void;
     disableEdit?: boolean;
@@ -332,7 +332,7 @@ const TableRow: FC<ITableRow> = ({ row, style, onRowUpdate, checked, onRowCheck,
             return all;
         }, {} as Record<string, string | number>);
         updatedRow[cell.column.id] = cell.value;
-        return onRowUpdate?.(updatedRow);
+        return onRowUpdate?.(updatedRow, cell.column.id);
     }, [onRowUpdate, row.cells]);
 
     const props = useMemo(() => {
@@ -361,7 +361,7 @@ type ITableProps = {
     totalPages: number;
     currentPage: number;
     onPageChange?: (page: number) => void;
-    onRowUpdate?: (row: Record<string, string | number>) => Promise<void>;
+    onRowUpdate?: (row: Record<string, string | number>, updatedColumn: string) => Promise<void>;
     onRowDelete?: (row: Record<string, string | number>) => Promise<void>;
     disableEdit?: boolean;
     checkedRows?: Set<number>;
@@ -539,12 +539,12 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
         setDirection("dsc");
     }, [sortedColumn, direction]);
 
-    const handleRowUpdate = useCallback((index: number, row: Record<string, string | number>) => {
+    const handleRowUpdate = useCallback((index: number, row: Record<string, string | number>, updatedColumn: string) => {
         if (onRowUpdate == null) {
             return Promise.resolve();
         }
         delete row["#"];
-        return onRowUpdate(row).then(() => {
+        return onRowUpdate(row, updatedColumn).then(() => {
             setData(value => {
                 const newValue = clone(value);
                 newValue[index] = clone(row);
@@ -568,7 +568,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
         prepareRow(row);
         const originalIndex = row.original.originalIndex as number;
         return <TableRow key={`row-${row.values[actualColumns[0]]}`} row={row} style={style}
-            onRowUpdate={(row) => handleRowUpdate(index, row)}
+            onRowUpdate={(row, updatedColumn) => handleRowUpdate(index, row, updatedColumn)}
             checked={checkedRows?.has(originalIndex)}
             onRowCheck={(value) => handleRowCheck(originalIndex, value)}
             disableEdit={disableEdit} />;

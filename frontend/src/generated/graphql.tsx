@@ -151,6 +151,7 @@ export type MutationUpdateSettingsArgs = {
 export type MutationUpdateStorageUnitArgs = {
   schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
+  updatedColumns: Array<Scalars['String']['input']>;
   values: Array<RecordInput>;
 };
 
@@ -404,6 +405,7 @@ export type UpdateStorageUnitMutationVariables = Exact<{
   schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
   values: Array<RecordInput> | RecordInput;
+  updatedColumns: Array<Scalars['String']['input']> | Scalars['String']['input'];
 }>;
 
 
@@ -1130,8 +1132,13 @@ export type GetStorageUnitsLazyQueryHookResult = ReturnType<typeof useGetStorage
 export type GetStorageUnitsSuspenseQueryHookResult = ReturnType<typeof useGetStorageUnitsSuspenseQuery>;
 export type GetStorageUnitsQueryResult = Apollo.QueryResult<GetStorageUnitsQuery, GetStorageUnitsQueryVariables>;
 export const UpdateStorageUnitDocument = gql`
-    mutation UpdateStorageUnit($schema: String!, $storageUnit: String!, $values: [RecordInput!]!) {
-  UpdateStorageUnit(schema: $schema, storageUnit: $storageUnit, values: $values) {
+    mutation UpdateStorageUnit($schema: String!, $storageUnit: String!, $values: [RecordInput!]!, $updatedColumns: [String!]!) {
+  UpdateStorageUnit(
+    schema: $schema
+    storageUnit: $storageUnit
+    values: $values
+    updatedColumns: $updatedColumns
+  ) {
     Status
   }
 }
@@ -1154,6 +1161,7 @@ export type UpdateStorageUnitMutationFn = Apollo.MutationFunction<UpdateStorageU
  *      schema: // value for 'schema'
  *      storageUnit: // value for 'storageUnit'
  *      values: // value for 'values'
+ *      updatedColumns: // value for 'updatedColumns'
  *   },
  * });
  */
