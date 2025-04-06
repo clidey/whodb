@@ -109,7 +109,7 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, checked, onRowCheck, disab
         setEditedData(value);
         if (!changed) setChanged(true);
     }, [changed]);
-    
+
     const handleCancel = useCallback(() => {
         setEditedData(cell.value);
         setEditable(false);
@@ -231,7 +231,7 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, checked, onRowCheck, disab
         })} onClick={handleEdit} data-testid="edit-button">
             {Icons.Edit}
         </div>
-         <AnimatePresence>
+         <AnimatePresence mode="wait">
             {cellRect != null && (
                 <Portal>
                     <motion.div
@@ -362,14 +362,13 @@ type ITableProps = {
     currentPage: number;
     onPageChange?: (page: number) => void;
     onRowUpdate?: (row: Record<string, string | number>, updatedColumn: string) => Promise<void>;
-    onRowDelete?: (row: Record<string, string | number>) => Promise<void>;
     disableEdit?: boolean;
     checkedRows?: Set<number>;
     setCheckedRows?: (checkedRows: Set<number>) => void;
     hideActions?: boolean;
 }
 
-export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows: actualRows, columnTags, totalPages, currentPage, onPageChange, onRowUpdate, onRowDelete, disableEdit, checkedRows, setCheckedRows, hideActions }) => {
+export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows: actualRows, columnTags, totalPages, currentPage, onPageChange, onRowUpdate, disableEdit, checkedRows, setCheckedRows, hideActions }) => {
     const fixedTableRef = useRef<FixedSizeList>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const operationsRef = useRef<HTMLDivElement>(null);
@@ -503,9 +502,9 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                         if (isNumeric(text)) {
                             const id = parseInt(text);
                             if (id === originalIndex) {
-                                currentVisibleRow.classList.add("bg-yellow-100!", "dark:bg-yellow-800!");
+                                currentVisibleRow.classList.add("!bg-yellow-100", "dark:!bg-yellow-800");
                                 interval = setTimeout(() => {
-                                    currentVisibleRow.classList.remove("bg-yellow-100!", "dark:bg-yellow-800!");
+                                    currentVisibleRow.classList.remove("!bg-yellow-100", "dark:!bg-yellow-800");
                                 }, 3000);
                             }
                         }
@@ -629,14 +628,14 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                             <div className="group/header-row" {...headerGroup.getHeaderGroupProps()} key={headerGroup.getHeaderGroupProps().key}>
                                 {headerGroup.headers.map((column, i) => (
                                     <>
-                                        <div {...column.getHeaderProps()} key={column.getHeaderProps().key} className="text-xs border-t border-l last:border-r border-gray-200 dark:border-white/5 p-2 text-left bg-gray-500 dark:bg-[#2C2F33] text-white first:rounded-tl-lg last:rounded-tr-lg relative group/header cursor-pointer select-none">
+                                        <div {...column.getHeaderProps()} key={column.getHeaderProps().key} className="text-xs border-t border-l last:border-r border-gray-200 dark:border-white/5 p-2 text-left bg-gray-500 dark:bg-white/20 text-white first:rounded-tl-lg last:rounded-tr-lg relative group/header cursor-pointer select-none">
                                             <div className={classNames({
                                                 "group-hover/header-row:hidden": checkedRows != null && column.id === "#",
                                                 "hidden": column.id === "#" && allChecked,
                                             })} onClick={() => handleSort(column.id)} data-testid="table-header">
                                                 {column.render('Header')} {i > 0 && columnTags?.[i-1] != null && columnTags?.[i-1].length > 0 && <span className="text-[11px]">[{columnTags?.[i-1]}]</span>}
                                             </div>
-                                            <div className={classNames("absolute top-0 left-0 h-full w-full justify-center items-center bg-transparent z-1 hover:scale-110 transition-all", {
+                                            <div className={classNames("absolute top-0 left-0 h-full w-full justify-center items-center bg-transparent z-[1] hover:scale-110 transition-all", {
                                                 "group-hover/header-row:flex": checkedRows != null && column.id === "#",
                                                 "flex": column.id === "#" && allChecked,
                                                 "hidden": checkedRows == null || column.id !== "#" || !allChecked,

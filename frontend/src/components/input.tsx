@@ -55,7 +55,7 @@ export const InputWithlabel: FC<InputWithLabelProps> = ({ value, setValue, label
 
     const inputType = type === "password" ? hide ? "password" : "text" : type;
 
-    return <div className="flex flex-col gap-1"  data-testid={testId}>
+    return <div className="flex flex-col gap-1" data-testid={testId}>
         <Label label={label} />
         <div className="relative">
             <Input type={inputType} value={value} setValue={setValue} inputProps={inputProps} placeholder={placeholder} />

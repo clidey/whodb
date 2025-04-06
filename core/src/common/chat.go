@@ -26,6 +26,7 @@ Based on the user's input, generate a structured response in JSON array format i
   - ` + "`\"update\"`" + ` for UPDATE queries.
   - ` + "`\"delete\"`" + ` for DELETE queries.
   - ` + "`\"text\"`" + ` for general text responses.
+
 - **text**: The actual SQL query or response text (response should not contain data - always return a query for data).
 
 ### Query Categorization:

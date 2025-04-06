@@ -1,4 +1,3 @@
-import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import { FC, ReactNode, useCallback } from "react";
 import { twMerge } from "tailwind-merge";
@@ -10,6 +9,7 @@ import { ClassNames } from "./classes";
 import { Icons } from "./icons";
 import { Loading } from "./loading";
 import { Sidebar } from "./sidebar/sidebar";
+import classNames from "classnames";
 
 type IPageProps = {
     wrapperClassName?: string;

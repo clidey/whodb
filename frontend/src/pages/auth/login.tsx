@@ -28,13 +28,13 @@ const databaseTypeDropdownItems: IDropdownItem<Record<string, string>>[] = [
         id: "MySQL",
         label: "MySQL",
         icon: Icons.Logos.MySQL,
-        extra: {"Port": "3306", "Parse Time": "True", "Loc": "UTC", "Allow clear text passwords": "0"},
+        extra: {"Port": "3306", "Parse Time": "True", "Loc": "Local", "Allow clear text passwords": "0"},
     },
     {
         id: "MariaDB",
         label: "MariaDB",
         icon: Icons.Logos.MariaDB,
-        extra: {"Port": "3306", "Parse Time": "True", "Loc": "UTC", "Allow clear text passwords": "0"},
+        extra: {"Port": "3306", "Parse Time": "True", "Loc": "Local", "Allow clear text passwords": "0"},
     },
     {
         id: "Sqlite3",
@@ -70,7 +70,7 @@ const databaseTypeDropdownItems: IDropdownItem<Record<string, string>>[] = [
             "Readonly": "disable",
             "Debug": "disable"
         }
-    }
+    },
 ]
 
 export const LoginPage: FC = () => {
@@ -288,7 +288,7 @@ export const LoginPage: FC = () => {
         }
         return <>
             <InputWithlabel label={databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Postgres ? "Host Name (or paste Connection URL)" : "Host Name"} value={hostName} setValue={handleHostNameChange} testId="hostname" />
-            { databaseType.id !== DatabaseType.Redis && <InputWithlabel label="Username" value={username} setValue={setUsername}  testId="username" /> }
+            { databaseType.id !== DatabaseType.Redis && <InputWithlabel label="Username" value={username} setValue={setUsername} testId="username" /> }
             <InputWithlabel label="Password" value={password} setValue={setPassword} type="password" testId="password" />
             { (databaseType.id !== DatabaseType.MongoDb && databaseType.id !== DatabaseType.Redis && databaseType.id !== DatabaseType.ElasticSearch)  && <InputWithlabel label="Database" value={database} setValue={setDatabase} testId="database" /> }
         </>

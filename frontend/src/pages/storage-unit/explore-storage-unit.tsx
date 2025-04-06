@@ -327,6 +327,7 @@ export const ExploreStorageUnit: FC = () => {
 
     const handleAddSubmitRequest = useCallback(() => {
         let values = newRowForm;
+        values = values.filter(item => item.Value != '')  // remove empty fields
         if (isNoSQL(current?.Type as DatabaseType) && rows?.Rows != null && rows.Rows.length === 0) {
             try {
                 values = entries(JSON.parse(newRowForm[0].Value)).map(([Key, Value]) => ({ Key, Value } as RecordInput));

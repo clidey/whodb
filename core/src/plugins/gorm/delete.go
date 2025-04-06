@@ -13,7 +13,7 @@ func (p *GormPlugin) DeleteRow(config *engine.PluginConfig, schema string, stora
 	return plugins.WithConnection[bool](config, p.DB, func(db *gorm.DB) (bool, error) {
 		pkColumns, err := p.GetPrimaryKeyColumns(db, schema, storageUnit)
 		if err != nil {
-			return false, err
+			pkColumns = []string{}
 		}
 
 		columnTypes, err := p.GetColumnTypes(db, schema, storageUnit)
@@ -41,9 +41,16 @@ func (p *GormPlugin) DeleteRow(config *engine.PluginConfig, schema string, stora
 			}
 		}
 
+		schema = p.EscapeIdentifier(schema)
+		storageUnit = p.EscapeIdentifier(storageUnit)
 		tableName := p.FormTableName(schema, storageUnit)
 
-		result := db.Table(tableName).Where(conditions).Delete(convertedValues)
+		var result *gorm.DB
+		if len(conditions) == 0 {
+			result = db.Table(tableName).Where(convertedValues).Delete(convertedValues)
+		} else {
+			result = db.Table(tableName).Where(conditions).Delete(conditions)
+		}
 
 		if result.Error != nil {
 			return false, result.Error

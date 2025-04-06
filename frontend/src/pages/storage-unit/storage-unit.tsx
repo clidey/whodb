@@ -89,9 +89,15 @@ export const StorageUnitPage: FC = () => {
     const [storageUnitName, setStorageUnitName] = useState("");
     const [fields, setFields] = useState<RecordInput[]>([ {Key: "", Value: "" }]);
     const [error, setError] = useState<string>();
-    const schema = useAppSelector(state => state.database.schema);
+    let schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
     const [addStorageUnit,] = useAddStorageUnitMutation();
+
+    // todo: is there a different way to do this? clickhouse doesn't have schemas as a table is considered a schema. people mainly switch between DB
+    if (current?.Type === DatabaseType.ClickHouse) {
+        schema = current.Database
+    }
+
     const { loading, data, refetch } = useGetStorageUnitsQuery({
         variables: {
             schema,
@@ -179,8 +185,8 @@ export const StorageUnitPage: FC = () => {
                     "ENUM", "SET", "JSON", "BOOLEAN"
                 ];
                 break;
-            case DatabaseType.ClickHouse: // todo: optimize these
             case DatabaseType.MySql:
+            case DatabaseType.ClickHouse:
                 items = [
                     "TINYINT", "SMALLINT", "MEDIUMINT", "INT", "INTEGER", "BIGINT", "FLOAT", "DOUBLE", "DECIMAL",
                     "DATE", "DATETIME", "TIMESTAMP", "TIME", "YEAR",

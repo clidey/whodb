@@ -2,6 +2,7 @@ package gorm_plugin
 
 import (
 	"database/sql"
+	"encoding/hex"
 	"fmt"
 
 	"github.com/clidey/whodb/core/graph/model"
@@ -192,13 +193,22 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 		return nil, err
 	}
 
-	result := &engine.GetRowsResult{}
+	// Create a map for faster column type lookup
+	typeMap := make(map[string]*sql.ColumnType, len(columnTypes))
+	for _, colType := range columnTypes {
+		typeMap[colType.Name()] = colType
+	}
+
+	result := &engine.GetRowsResult{
+		Columns: make([]engine.Column, 0, len(columns)),
+		Rows:    make([][]string, 0, 100),
+	}
+
+	// Build columns with type information
 	for _, col := range columns {
-		for _, colType := range columnTypes {
-			if col == colType.Name() {
-				result.Columns = append(result.Columns, engine.Column{Name: col, Type: colType.DatabaseTypeName()})
-				break
-			}
+		if colType, exists := typeMap[col]; exists {
+			colTypeName := colType.DatabaseTypeName()
+			result.Columns = append(result.Columns, engine.Column{Name: col, Type: colTypeName})
 		}
 	}
 
@@ -206,8 +216,16 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 		columnPointers := make([]interface{}, len(columns))
 		row := make([]string, len(columns))
 
-		for i, _ := range columnTypes {
-			columnPointers[i] = new(sql.NullString)
+		for i, col := range columns {
+			colType := typeMap[col]
+			typeName := colType.DatabaseTypeName()
+
+			switch typeName {
+			case "VARBINARY", "BINARY", "IMAGE":
+				columnPointers[i] = new(sql.RawBytes)
+			default:
+				columnPointers[i] = new(sql.NullString)
+			}
 		}
 
 		if err := rows.Scan(columnPointers...); err != nil {
@@ -215,11 +233,24 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 		}
 
 		for i, colPtr := range columnPointers {
-			val := colPtr.(*sql.NullString)
-			if val.Valid {
-				row[i] = val.String
-			} else {
-				row[i] = ""
+			colType := typeMap[columns[i]]
+			typeName := colType.DatabaseTypeName()
+
+			switch typeName {
+			case "VARBINARY", "BINARY", "IMAGE":
+				rawBytes := colPtr.(*sql.RawBytes)
+				if rawBytes == nil || len(*rawBytes) == 0 {
+					row[i] = ""
+				} else {
+					row[i] = "0x" + hex.EncodeToString(*rawBytes)
+				}
+			default:
+				val := colPtr.(*sql.NullString)
+				if val.Valid {
+					row[i] = val.String
+				} else {
+					row[i] = ""
+				}
 			}
 		}
 
