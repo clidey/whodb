@@ -77,9 +77,9 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
               ".cm-activeLineGutter": { backgroundColor: "rgba(0,0,0,0.05) !important" },
             })],
             EditorView.updateListener.of((update) => {
-                if (update.changes && setValue != null) {
-                    setValue(update.state.doc.toString());
-                }
+              if (update.docChanged && update.changes && setValue != null) {
+                  setValue(update.state.doc.toString());
+              }
             }),
             lineNumbers(),
             EditorView.lineWrapping,

@@ -40,6 +40,7 @@
     "start": "parcel public/index.html --open --port=3000",
     "build": "parcel build public/index.html --dist-dir build",
     "test": "pnpm cypress open",
+    "test:headless": "npx cypress run --browser chrome",
     "generate": "npx graphql-codegen"
   },
   "browserslist": {

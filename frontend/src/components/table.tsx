@@ -424,7 +424,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
             newRow.originalIndex = rowIndex;
             return newRow;
         }));
-    }, [actualColumns, actualRows, currentPage]);
+    }, [actualColumns, actualRows]);
 
     const sortedRows = useMemo(() => {
         if (!sortedColumn) {

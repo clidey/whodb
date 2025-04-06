@@ -2,7 +2,7 @@ const dbHost = 'localhost';
 const dbUser = 'user';
 const dbPassword = 'password';
 
-describe('Postgres E2E test', () => {
+describe('Clickhouse E2E test', () => {
   it('should login correctly', () => {
     // login and setup
     cy.login('ClickHouse', 'localhost', 'user', 'password', 'test_db');

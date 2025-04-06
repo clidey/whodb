@@ -334,7 +334,7 @@ export const LoginPage: FC = () => {
                         </div>
                         {
                             (showAdvanced && advancedForm != null) &&
-                            <div className="transition-all h-full overflow-hidden mt-[56px] w-[350px] ml-4 flex flex-col gap-1">
+                            <div className="transition-all h-full overflow-hidden mt-[43px] w-[350px] ml-4 flex flex-col gap-1">
                                 {entries(advancedForm).map(([key, value]) => (
                                     <InputWithlabel label={key} value={value} setValue={(newValue) => handleAdvancedForm(key, newValue)} testId={`${key}-input`} />
                                 ))}
