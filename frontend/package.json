@@ -39,7 +39,7 @@
   "scripts": {
     "start": "parcel public/index.html --open --port=3000",
     "build": "parcel build public/index.html --dist-dir build",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "pnpm cypress open",
     "generate": "npx graphql-codegen"
   },
   "browserslist": {
