@@ -41,6 +41,8 @@ func (p *GormPlugin) AddRow(config *engine.PluginConfig, schema string, storageU
 			return false, errors.New("no values provided to insert into the table")
 		}
 
+		schema = p.EscapeIdentifier(schema)
+		storageUnit = p.EscapeIdentifier(storageUnit)
 		fullTableName := p.FormTableName(schema, storageUnit)
 
 		valuesToAdd, err := p.ConvertRecordValuesToMap(values)

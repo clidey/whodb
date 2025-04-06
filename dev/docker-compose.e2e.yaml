@@ -118,3 +118,4 @@ volumes:
   e2e_mariadb:
   e2e_mongo:
   e2e_clickhouse:
+  e2e_elasticsearch:
