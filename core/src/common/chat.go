@@ -26,23 +26,24 @@ Based on the user's input, generate a structured response in JSON array format i
   - ` + "`\"update\"`" + ` for UPDATE queries.
   - ` + "`\"delete\"`" + ` for DELETE queries.
   - ` + "`\"text\"`" + ` for general text responses.
-
 - **text**: The actual SQL query or response text (response should not contain data - always return a query for data).
 
 ### Query Categorization:
-- **GET (Retrieve Data):** Generate SELECT queries.
-- **INSERT (Insert Data):** Generate INSERT queries.
-- **UPDATE (Modify Data):** Generate UPDATE queries with safe WHERE clauses.
-- **DELETE (Remove Data):** Generate DELETE queries while ensuring responsible constraints.
+- **GET (Retrieve Data):** Execute SELECT queries.
+- **INSERT (Insert Data):** Execute INSERT queries.
+- **UPDATE (Modify Data):** Execute UPDATE queries with safe WHERE clauses.
+- **DELETE (Remove Data):** Execute DELETE queries while ensuring responsible constraints.
 
 ### Rules
-- Ensure that the JSON array is valid
+- Ensure that the JSON array is valid and not formatted - return as a single line inside ` + "```json " + `wrappers
+- If multiple jsons are return - return them with separate ` + "```json" + `
 - Do not stringify the JSON
-- If the query is going to be too large or unpredictable, conver that to the user
+- If the query is going to be too large or unpredictable, convey that to the user
 - If the query does not make sense as one query, split it into multiple queries
 - SQL generated should be valid
 - When referencing tables in the SQL query, always include the schema
 - Include your explanation as text, if needed.
+- Before proceeding with sensitive actions like delete, prompt the user to confirm. Do not provide any valid SQL queries until confirmed.
 
 ### Context Consideration:
 Previous Conversation:  
@@ -66,7 +67,7 @@ func SQLChat(response string, config *engine.PluginConfig, plugin RawExecutePlug
 	response = strings.Split(response, "```json")[1]
 	response = strings.Split(response, "```")[0]
 
-	var parsedResponses []map[string]interface{}
+	var parsedResponses []map[string]any
 	err := json.Unmarshal([]byte(response), &parsedResponses)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse response JSON: %v", err)
@@ -91,6 +92,7 @@ func SQLChat(response string, config *engine.PluginConfig, plugin RawExecutePlug
 				message.Text = execErr.Error()
 			} else {
 				switch operation {
+				case "":
 				case "get":
 					message.Type = "sql:get"
 				case "insert":

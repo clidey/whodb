@@ -20,9 +20,10 @@ type InputProps = {
     setValue?: (value: string) => void;
     type?: "text" | "password";
     onSubmit?: () => void;
+    testId?: string;
 }
 
-export const Input: FC<InputProps> = ({ value, setValue, type, placeholder, onSubmit, inputProps = {} }) => {
+export const Input: FC<InputProps> = ({ value, setValue, type, placeholder, onSubmit, inputProps = {}, testId }) => {
     const handleChange: ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
         setValue?.(e.target.value);
         inputProps.onChange?.(e);
@@ -37,14 +38,15 @@ export const Input: FC<InputProps> = ({ value, setValue, type, placeholder, onSu
 
     return <input type={type} placeholder={placeholder}
         {...inputProps} onChange={handleChange} value={value} onKeyUp={handleHandleKeyUp}
-        className={twMerge(classNames("appearance-none border border-neutral-600/20 rounded-md w-full p-1 text-gray-700 leading-tight focus:outline-hidden focus:shadow-outline text-sm h-[34px] px-2 dark:text-neutral-300/100 dark:bg-[#2C2F33] dark:border-white/5", inputProps.className))} />
+        className={twMerge(classNames("appearance-none border border-neutral-600/20 rounded-md w-full p-1 text-gray-700 leading-tight focus:outline-hidden focus:shadow-outline text-sm h-[34px] px-2 dark:text-neutral-300/100 dark:bg-[#2C2F33] dark:border-white/5", inputProps.className))}  data-testid={testId} />
 }
 
 type InputWithLabelProps = {
     label: string;
+    testId?: string;
 } & InputProps;
 
-export const InputWithlabel: FC<InputWithLabelProps> = ({ value, setValue, label, type = "text", placeholder = `Enter ${label.toLowerCase()}`, inputProps }) => {
+export const InputWithlabel: FC<InputWithLabelProps> = ({ value, setValue, label, type = "text", placeholder = `Enter ${label.toLowerCase()}`, inputProps, testId }) => {
     const [hide, setHide] = useState(true);
 
     const handleShow = useCallback(() => {
@@ -53,7 +55,7 @@ export const InputWithlabel: FC<InputWithLabelProps> = ({ value, setValue, label
 
     const inputType = type === "password" ? hide ? "password" : "text" : type;
 
-    return <div className="flex flex-col gap-1">
+    return <div className="flex flex-col gap-1"  data-testid={testId}>
         <Label label={label} />
         <div className="relative">
             <Input type={inputType} value={value} setValue={setValue} inputProps={inputProps} placeholder={placeholder} />

@@ -45,7 +45,7 @@ const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
     }}>
         <div className="flex flex-col grow mt-2">
             <div className="flex flex-col grow mb-2">
-                <div className="text-sm font-semibold mb-2 break-words dark:text-neutral-100">{unit.Name}</div>
+                <div className="text-sm font-semibold mb-2 break-words dark:text-neutral-100" data-testid="storage-unit-name">{unit.Name}</div>
                 {
                     introAttributes.slice(0,2).map(attribute => (
                         <div key={attribute.Key} className="text-xs dark:text-neutral-300">{attribute.Key}: {attribute.Value}</div>
@@ -53,12 +53,12 @@ const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
                 }
             </div>
             <div className="flex flex-row justify-end gap-1">
-                <AnimatedButton icon={Icons.DocumentMagnify} label="Explore" onClick={handleExpand} />
-                <AnimatedButton icon={Icons.Database} label="Data" onClick={handleNavigateToDatabase} />
+                <AnimatedButton icon={Icons.DocumentMagnify} label="Explore" onClick={handleExpand} testId="explore-button" />
+                <AnimatedButton icon={Icons.Database} label="Data" onClick={handleNavigateToDatabase} testId="data-button" />
             </div>
         </div>
         <div className="flex flex-col grow mt-2 gap-4">
-            <div className="flex flex-row grow">
+            <div className="flex flex-row grow" data-testid="explore-fields">
                 <div className="flex flex-col grow">
                     <div className="text-md font-semibold mb-2 dark:text-neutral-100">{unit.Name}</div>
                     {
@@ -285,7 +285,7 @@ export const StorageUnitPage: FC = () => {
                     <AnimatedButton icon={Icons.Cancel} label="Cancel" onClick={handleCreate} />
                     <AnimatedButton labelClassName="text-green-600 dark:text-green-300"
                         iconClassName="stroke-green-600 dark:stroke-green-300" icon={Icons.Add}
-                        label="Submit" onClick={handleSubmit} />
+                        label="Submit" onClick={handleSubmit} testId="submit-button" />
                 </div>
             </div>
         </ExpandableCard>

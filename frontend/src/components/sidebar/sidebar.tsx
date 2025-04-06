@@ -33,6 +33,7 @@ type IRouteProps = {
     path?: string;
     routes?: IRoute[];
     collapse?: boolean;
+    testId?: string;
 };
 
 export const SideMenu: FC<IRouteProps> = (props) => {
@@ -57,13 +58,13 @@ export const SideMenu: FC<IRouteProps> = (props) => {
 
     return <div className={classNames("flex items-center", {
         "justify-center": props.collapse,
-    })}  onMouseEnter={handleMouseEnter} onMouseOver={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+    })}  onMouseEnter={handleMouseEnter} onMouseOver={handleMouseEnter} onMouseLeave={handleMouseLeave} data-testid={props.testId}>
         <AnimatePresence mode="sync">
             <div className={twMerge(classNames("cursor-default text-md inline-flex gap-2 transition-all hover:gap-2 relative w-full py-4 rounded-md dark:border-white/5", {
                 "cursor-pointer": props.path != null,
                 "pl-4": !props.collapse,
                 "pl-2": props.collapse,
-            }, ClassNames.Hover))} onClick={handleClick}>
+            }, ClassNames.Hover))} onClick={handleClick} data-testid="sidebar-button">
                 {pathname === props.path && <motion.div layoutId="indicator" className={classNames("w-[5px] h-full absolute top-0 right-0 rounded-3xl", BRAND_COLOR_BG)} />}
                 {cloneElement(props.icon, {
                     className: classNames("transition-all dark:stroke-white", {
@@ -432,7 +433,8 @@ export const Sidebar: FC = () => {
                                         <Dropdown className="w-[140px]" value={createDropdownItem(current!.Database)}
                                                   items={availableDatabases.Database.map(database => createDropdownItem(database))}
                                                   onChange={handleDatabaseChange}
-                                                  noItemsLabel="No available database found"/>
+                                                  noItemsLabel="No available database found"
+                                                  testId="sidebar-database" />
                                     </div>
                                 }
                                 {
@@ -443,7 +445,8 @@ export const Sidebar: FC = () => {
                                         <div className={classNames(ClassNames.Text, "text-sm")}>Schema:</div>
                                         <Dropdown className="w-[140px]" value={createDropdownItem(schema)}
                                                   items={schemasDropdownItems} onChange={handleSchemaChange}
-                                                  noItemsLabel="No schema found"/>
+                                                  noItemsLabel="No schema found"
+                                                  testId="sidebar-schema" />
                                     </div>
                                 }
                             </div>
@@ -460,7 +463,7 @@ export const Sidebar: FC = () => {
                         </div>
                         <div className="flex flex-col gap-8">
                             <SideMenu collapse={collapsed} title="Logout" icon={Icons.Logout}
-                                      path={InternalRoutes.Logout.path}/>
+                                      path={InternalRoutes.Logout.path} testId="logout" />
                         </div>
                     </div>
             }

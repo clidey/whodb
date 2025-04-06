@@ -283,14 +283,14 @@ export const LoginPage: FC = () => {
                     id: database,
                     label: database,
                     icon: Icons.Database,
-                }} onChange={(item) => setDatabase(item.id)} />
+                }} onChange={(item) => setDatabase(item.id)} testId="database" />
             </>
         }
         return <>
-            <InputWithlabel label={databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Postgres ? "Host Name (or paste Connection URL)" : "Host Name"} value={hostName} setValue={handleHostNameChange} />
-            { databaseType.id !== DatabaseType.Redis && <InputWithlabel label="Username" value={username} setValue={setUsername} /> }
-            <InputWithlabel label="Password" value={password} setValue={setPassword} type="password" />
-            { (databaseType.id !== DatabaseType.MongoDb && databaseType.id !== DatabaseType.Redis && databaseType.id !== DatabaseType.ElasticSearch)  && <InputWithlabel label="Database" value={database} setValue={setDatabase} /> }
+            <InputWithlabel label={databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Postgres ? "Host Name (or paste Connection URL)" : "Host Name"} value={hostName} setValue={handleHostNameChange} testId="hostname" />
+            { databaseType.id !== DatabaseType.Redis && <InputWithlabel label="Username" value={username} setValue={setUsername}  testId="username" /> }
+            <InputWithlabel label="Password" value={password} setValue={setPassword} type="password" testId="password" />
+            { (databaseType.id !== DatabaseType.MongoDb && databaseType.id !== DatabaseType.Redis && databaseType.id !== DatabaseType.ElasticSearch)  && <InputWithlabel label="Database" value={database} setValue={setDatabase} testId="database" /> }
         </>
     }, [database, databaseType.id, databasesLoading, foundDatabases?.Database, handleHostNameChange, hostName, password, username]);
 
@@ -328,7 +328,7 @@ export const LoginPage: FC = () => {
                                 </div>
                             </div>
                             <div className="flex flex-col grow justify-center gap-1">
-                                <DropdownWithLabel fullWidth label="Database Type" value={databaseType} onChange={handleDatabaseTypeChange} items={databaseTypeDropdownItems} />
+                                <DropdownWithLabel fullWidth label="Database Type" value={databaseType} onChange={handleDatabaseTypeChange} items={databaseTypeDropdownItems} testId="database-type" />
                                 {fields}
                             </div>
                         </div>
@@ -336,7 +336,7 @@ export const LoginPage: FC = () => {
                             (showAdvanced && advancedForm != null) &&
                             <div className="transition-all h-full overflow-hidden mt-[56px] w-[350px] ml-4 flex flex-col gap-1">
                                 {entries(advancedForm).map(([key, value]) => (
-                                    <InputWithlabel label={key} value={value} setValue={(newValue) => handleAdvancedForm(key, newValue)} />
+                                    <InputWithlabel label={key} value={value} setValue={(newValue) => handleAdvancedForm(key, newValue)} testId={`${key}-input`} />
                                 ))}
                             </div>
                         }
@@ -347,8 +347,8 @@ export const LoginPage: FC = () => {
                     })}>
                         <AnimatedButton className={classNames({
                             "hidden": advancedForm == null,
-                        })} icon={Icons.Adjustments} label={showAdvanced ? "Less Advanced" : "Advanced"} onClick={handleAdvancedToggle} />
-                        <AnimatedButton icon={Icons.CheckCircle} label="Submit" onClick={handleSubmit} />
+                        })} icon={Icons.Adjustments} label={showAdvanced ? "Less Advanced" : "Advanced"} onClick={handleAdvancedToggle} testId="advanced-button" />
+                        <AnimatedButton icon={Icons.CheckCircle} label="Submit" onClick={handleSubmit} testId="submit-button" />
                     </div>
                 </div>
                 {

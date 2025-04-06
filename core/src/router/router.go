@@ -4,6 +4,7 @@ import (
 	"embed"
 	"time"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/clidey/whodb/core/graph"
@@ -18,12 +19,26 @@ type OAuthLoginUrl struct {
 	Url string `json:"url"`
 }
 
+func NewGraphQLServer(es graphql.ExecutableSchema) *handler.Server {
+	srv := handler.New(es)
+
+	srv.AddTransport(&transport.Websocket{
+		KeepAlivePingInterval: 10 * time.Second,
+	})
+	srv.AddTransport(&transport.Options{})
+	srv.AddTransport(&transport.GET{})
+	srv.AddTransport(&transport.POST{})
+	srv.AddTransport(&transport.MultipartForm{})
+
+	return srv
+}
+
 func setupServer(router *chi.Mux, staticFiles embed.FS) {
 	if !env.IsAPIGatewayEnabled {
 		fileServer(router, staticFiles)
 	}
 
-	server := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
+	server := NewGraphQLServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
 	server.AddTransport(&transport.Websocket{})
 	graph.SetupHTTPServer(router)
 	setupPlaygroundHandler(router, server)

@@ -34,6 +34,7 @@ export type IDropdownProps = {
     enableAction?: (index: number) => boolean;
     noItemsLabel?: string;
     showIconOnly?: boolean;
+    testId?: string;
 }
 
 const ITEM_CLASS = "group/item flex items-center gap-1 transition-all cursor-pointer relative hover:bg-black/10 py-1 mx-2 px-4 rounded-lg pl-1 dark:text-neutral-300/100";
@@ -55,7 +56,7 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
     }, []);
 
     return (
-        <div className={classNames("relative", props.className)} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+        <div className={classNames("relative", props.className)} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} data-testid={props.testId}>
             {props.loading ? <div className="flex h-full w-full items-center justify-center">
                 <Loading hideText={true} size="sm"  />
             </div> :
@@ -81,7 +82,7 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
                             props.items.map((item, i) => (
                                 <li key={`dropdown-item-${i}`} className={classNames(ITEM_CLASS, {
                                     "hover:gap-2": item.icon != null,
-                                })} onClick={() => handleClick(item)}>
+                                })} onClick={() => handleClick(item)} value={item.id}>
                                     <div>{props.value?.id === item.id ? Icons.CheckCircle : item.icon}</div>
                                     <div className="whitespace-nowrap">{item.label}</div>
                                     {(props.enableAction?.(i) ?? true) && props.action != null && cloneElement(props.action, {
@@ -117,8 +118,8 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
     )
 }
 
-export const DropdownWithLabel: FC<IDropdownProps & { label: string }> = ({ label, ...props }) => {
-    return <div className="flex flex-col gap-1">
+export const DropdownWithLabel: FC<IDropdownProps & { label: string, testId?: string }> = ({ label, testId, ...props }) => {
+    return <div className="flex flex-col gap-1" data-testid={testId}>
         <Label label={label} />
         <Dropdown {...props} />
     </div>

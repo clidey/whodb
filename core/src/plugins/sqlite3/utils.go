@@ -10,9 +10,7 @@ func (p *Sqlite3Plugin) ConvertStringValueDuringMap(value, columnType string) (i
 
 func (p *Sqlite3Plugin) GetPrimaryKeyColQuery() string {
 	return `
-		SELECT m.name AS table_name,
-			   p.name AS pk_column,
-			   p.pk AS key_order
+		SELECT p.name AS pk_column
 		FROM sqlite_master m,
 			 pragma_table_info(m.name) p
 		WHERE m.type = 'table'

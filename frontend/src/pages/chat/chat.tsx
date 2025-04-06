@@ -19,6 +19,7 @@ import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { chooseRandomItems } from "../../utils/functions";
 import { chatExamples } from "./examples";
 import logoImage from "../../../public/images/logo.png";
+import { HoudiniActions } from "../../store/chat";
 
 const thinkingPhrases = [
     "Thinking",
@@ -74,7 +75,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
                     ? <Table className="h-[250px]" columns={data?.Columns.map(c => c.Name) ?? []} columnTags={data?.Columns.map(c => c.Type)}
                         rows={data?.Rows ?? []} totalPages={1} currentPage={1} disableEdit={true} />
                     : <div className="bg-white/10 text-neutral-800 dark:text-neutral-300 rounded-lg p-2 flex gap-2">
-                        Action Executed ({type.toUpperCase()})
+                        Action Executed ({type.toUpperCase().split(":")?.[1]})
                         {Icons.CheckCircle}
                     </div>
             }
@@ -90,7 +91,6 @@ type IChatMessage = AiChatMessage & {
 export const externalModelTypes = map(availableExternalModelTypes, (model) => createDropdownItem(model, (Icons.Logos as Record<string, ReactElement>)[model]));
 
 export const ChatPage: FC = () => {
-    const [chats, setChats] = useState<IChatMessage[]>([]);
     const [currentModel, setCurrentModel] = useState("");
     const [query, setQuery] = useState("");
     const [addExternalModel, setAddExternalModel] = useState(false);
@@ -98,6 +98,7 @@ export const ChatPage: FC = () => {
     const [externalModelToken, setExternalModelToken] = useState<string>();
     const modelType = useAppSelector(state => state.database.current);
     const modelTypes = useAppSelector(state => state.database.modelTypes);
+    const chats = useAppSelector(state => state.houdini.chats);
     const [modelAvailable, setModelAvailable] = useState(true);
     const [ models, setModels ] = useState<IDropdownItem[]>([]);
     const [getAIModels, { loading: getAIModelsLoading }] = useGetAiModelsLazyQuery({
@@ -150,10 +151,12 @@ export const ChatPage: FC = () => {
     }, []);
 
     const handleSubmitQuery = useCallback(() => {
-        if (modelType == null) {
+        const sanitizedQuery = query.trim();
+        if (modelType == null || sanitizedQuery.length === 0) {
             return;
         }
-        setChats(chats => [...chats, { Type: "message", Text: query, isUserInput: true, }]);
+
+        dispatch(HoudiniActions.addChatMessage({ Type: "message", Text: sanitizedQuery, isUserInput: true, }));
         setTimeout(() => {
             if (scrollContainerRef.current != null) {
                 scrollContainerRef.current.scroll({
@@ -166,9 +169,9 @@ export const ChatPage: FC = () => {
             variables: {
                 modelType: modelType.modelType,
                 token: modelType.token,
-                query,
+                query: sanitizedQuery,
                 model: currentModel,
-                previousConversation: chats.map(chat => `${chat.isUserInput ? "User" : "System"}: ${chat.Text}`).join("\n"),
+                previousConversation: chats.map(chat => `${chat.isUserInput ? "<User>" : "<System>"}${chat.Text}${chat.isUserInput ? "</User>" : "</System>"}`).join("\n"),
                 schema,
             },
             onCompleted(data) {
@@ -181,11 +184,13 @@ export const ChatPage: FC = () => {
                         }
                     }
                     return {
-                        Type: "message",
+                        Type: chat.Type,
                         Text: chat.Text,
                     }
                 });
-                setChats(chats => [...chats, ...systemChats]);
+                for (const systemChat of systemChats) {
+                    dispatch(HoudiniActions.addChatMessage(systemChat));
+                }
                 setTimeout(() => {
                     if (scrollContainerRef.current != null) {
                         scrollContainerRef.current.scroll({
@@ -310,6 +315,10 @@ export const ChatPage: FC = () => {
         return loading || models.length === 0 || !modelAvailable;
     }, [loading, modelAvailable, models.length]);
 
+    const handleClear = useCallback(() => {
+        dispatch(HoudiniActions.clear());
+    }, []);
+
     return (
         <InternalPage routes={[InternalRoutes.Chat]}>
             <AnimatePresence mode="wait">
@@ -341,32 +350,37 @@ export const ChatPage: FC = () => {
                 }
             </AnimatePresence>
             <div className="flex flex-col justify-center items-center w-full h-full gap-2">
-                <div className={classNames("flex justify-end w-full gap-2", {
-                    "opacity-50 pointer-events-none": addExternalModel,
-                })}>
-                    <Dropdown className="w-[200px]" value={modelType && {
-                            id: modelType.id,
-                            label: modelType.modelType,
-                            icon: (Icons.Logos as Record<string, ReactElement>)[modelType.modelType],
-                        }}
-                        items={modelTypesDropdownItems}
-                        onChange={handleAIModelTypeChange}
-                        action={<div onClick={handleAIModelRemove}>{cloneElement(Icons.Delete, {
-                            className: "w-6 h-6 stroke-red-500"
-                        })}</div>}
-                        defaultItem={{ label: "Add External Model", icon: Icons.Add }}
-                        onDefaultItemClick={handleAddExternalModel}
-                        enableAction={(index) => index !== 0} />
-                    {
-                        modelAvailable
-                        ? <Dropdown className="w-[200px]" value={createDropdownItem(currentModel)}
-                                items={models}
-                                onChange={handleAIModelChange} 
-                                loading={getAIModelsLoading} />
-                        : <div className="text-neutral-500 w-[200px] rounded-lg bg-white/5 flex items-center pl-4">
-                            Unavailable
-                        </div>
-                    }
+                <div className="flex w-full justify-between">
+                    <div className={classNames("flex gap-2", {
+                        "opacity-50 pointer-events-none": addExternalModel,
+                    })}>
+                        <Dropdown className="w-[200px]" value={modelType && {
+                                id: modelType.id,
+                                label: modelType.modelType,
+                                icon: (Icons.Logos as Record<string, ReactElement>)[modelType.modelType],
+                            }}
+                            items={modelTypesDropdownItems}
+                            onChange={handleAIModelTypeChange}
+                            action={<div onClick={handleAIModelRemove}>{cloneElement(Icons.Delete, {
+                                className: "w-6 h-6 stroke-red-500"
+                            })}</div>}
+                            defaultItem={{ label: "Add External Model", icon: Icons.Add }}
+                            onDefaultItemClick={handleAddExternalModel}
+                            enableAction={(index) => index !== 0} />
+                        {
+                            modelAvailable
+                            ? <Dropdown className="w-[200px]" value={createDropdownItem(currentModel)}
+                                    items={models}
+                                    onChange={handleAIModelChange} 
+                                    loading={getAIModelsLoading} />
+                            : <div className="text-neutral-500 w-[200px] rounded-lg bg-white/5 flex items-center pl-4">
+                                Unavailable
+                            </div>
+                        }
+                    </div>
+                    <div className="flex gap-2">
+                        <AnimatedButton label="New Chat" icon={Icons.Refresh} onClick={handleClear} />
+                    </div>
                 </div>
                 <div className={classNames("flex grow w-full rounded-xl overflow-hidden", {
                     "opacity-[4%] pointer-events-none": disableAll,
@@ -397,7 +411,9 @@ export const ChatPage: FC = () => {
                                                     "self-end": chat.isUserInput,
                                                     "self-start": !chat.isUserInput,
                                                 })}>
-                                                    {!chat.isUserInput && chats[i-1]?.isUserInput && <img src={logoImage} alt="clidey logo" className="w-auto h-6" />}
+                                                    {!chat.isUserInput && chats[i-1]?.isUserInput 
+                                                        ? <img src={logoImage} alt="clidey logo" className="w-auto h-6" />
+                                                        : <div className="pl-4" />}
                                                     <div className={classNames("text-neutral-800 dark:text-neutral-300 px-4 py-2 rounded-xl", {
                                                         "bg-neutral-600/5 dark:bg-[#2C2F33]": chat.isUserInput,
                                                     })}>
@@ -406,14 +422,18 @@ export const ChatPage: FC = () => {
                                                 </div>
                                             } else if (chat.Type === "error") {
                                                 return <div key={`chat-${i}`} className="flex items-center gap-4 overflow-hidden break-words leading-6 shrink-0 self-start">
-                                                    {!chat.isUserInput && chats[i-1]?.isUserInput && <img src={logoImage} alt="clidey logo" className="w-auto h-6" />}
+                                                    {!chat.isUserInput && chats[i-1]?.isUserInput 
+                                                        ? <img src={logoImage} alt="clidey logo" className="w-auto h-6" />
+                                                        : <div className="pl-4" />}
                                                     <div className="text-red-800 dark:text-red-300 px-4 py-2 rounded-lg">
                                                         {chat.Text}
                                                     </div>
                                                 </div>
                                             }
-                                            return <div key={`chat-${i}`} className="flex gap-4 w-full">
-                                                {!chat.isUserInput && chats[i-1]?.isUserInput && <img src={logoImage} alt="clidey logo" className="w-auto h-6" />}
+                                            return <div key={`chat-${i}`} className="flex gap-4 w-full overflow-hidden pt-4 pr-9">
+                                                {!chat.isUserInput && chats[i-1]?.isUserInput 
+                                                    ? <img src={logoImage} alt="clidey logo" className="w-auto h-6" />
+                                                    : <div className="pl-4" />}
                                                 <TablePreview type={chat.Type} text={chat.Text} data={chat.Result} />
                                             </div>
                                         })

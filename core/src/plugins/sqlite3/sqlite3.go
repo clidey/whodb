@@ -103,7 +103,7 @@ func (p *Sqlite3Plugin) GetSchemaTableQuery() string {
 }
 
 func (p *Sqlite3Plugin) executeRawSQL(config *engine.PluginConfig, query string, params ...interface{}) (*engine.GetRowsResult, error) {
-	return plugins.WithConnection[*engine.GetRowsResult](config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
 		rows, err := db.Raw(query, params...).Rows()
 		if err != nil {
 			return nil, err

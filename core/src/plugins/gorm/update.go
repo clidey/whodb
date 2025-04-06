@@ -3,6 +3,7 @@ package gorm_plugin
 import (
 	"errors"
 	"fmt"
+
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
@@ -10,7 +11,7 @@ import (
 )
 
 func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
-	return plugins.WithConnection[bool](config, p.DB, func(db *gorm.DB) (bool, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
 		pkColumns, err := p.GetPrimaryKeyColumns(db, schema, storageUnit)
 		if err != nil {
 			return false, err
@@ -21,8 +22,8 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 			return false, err
 		}
 
-		conditions := make(map[string]interface{})
-		convertedValues := make(map[string]interface{})
+		conditions := make(map[string]any)
+		convertedValues := make(map[string]any)
 		for column, strValue := range values {
 			columnType, exists := columnTypes[column]
 			if !exists {

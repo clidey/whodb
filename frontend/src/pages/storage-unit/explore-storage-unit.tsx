@@ -392,7 +392,7 @@ export const ExploreStorageUnit: FC = () => {
             </div>
             <div className="flex w-full relative">
                 <div className="flex gap-2">
-                    <InputWithlabel label="Page Size" value={bufferPageSize} setValue={setBufferPageSize} />
+                    <InputWithlabel label="Page Size" value={bufferPageSize} setValue={setBufferPageSize} testId="table-page-size" />
                     { current?.Type !== DatabaseType.Redis && <ExploreStorageUnitWhereCondition defaultWhere={whereCondition} columns={columns} operators={validOperators} onChange={handleFilterChange} columnTypes={columnTypes ?? []} /> }
                     <AnimatedButton className="mt-5" type="lg" icon={Icons.CheckCircle} label="Query" onClick={handleQuery} testId="submit-button" />
                 </div>

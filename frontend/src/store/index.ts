@@ -6,13 +6,15 @@ import { commonReducers } from './common';
 import { databaseReducers } from './database';
 import { globalReducers } from './global';
 import { settingsReducers } from "./settings";
+import { houdiniReducers } from './chat';
 
 const persistedReducer = combineReducers({
   auth: persistReducer({ key: "auth", storage, }, authReducers),
   database: persistReducer({ key: "database", storage, }, databaseReducers),
   common: commonReducers,
   global: persistReducer({ key: "global", storage, }, globalReducers),
-  settings: persistReducer({key: "settings", storage}, settingsReducers)
+  settings: persistReducer({ key: "settings", storage }, settingsReducers),
+  houdini: persistReducer({ key: "houdini", storage }, houdiniReducers),
 });
 
 export const reduxStore = configureStore({

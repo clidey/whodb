@@ -149,13 +149,13 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                         initial={{ y: -10, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         exit={{ y: -10, opacity: 0 }}>
-                        <Dropdown className="min-w-[100px]" value={createDropdownItem(currentFilter.Key)} items={fieldsDropdownItems} onChange={handleFieldSelect} />
-                        <Dropdown noItemsLabel="No operators found" className="min-w-20" value={createDropdownItem(currentFilter.Operator)} items={validOperators} onChange={handleOperatorSelector} />
+                        <Dropdown className="min-w-[100px]" value={createDropdownItem(currentFilter.Key)} items={fieldsDropdownItems} onChange={handleFieldSelect} testId="field-key" />
+                        <Dropdown noItemsLabel="No operators found" className="min-w-20" value={createDropdownItem(currentFilter.Operator)} items={validOperators} onChange={handleOperatorSelector} testId="field-operator" />
                         <Input inputProps={{
                             className: "min-w-[150px]",
-                        }} placeholder="Enter filter value" value={currentFilter.Value} setValue={handleInputChange} />
-                        <AnimatedButton className="dark:bg-white/5" icon={Icons.Cancel} label="Cancel" onClick={handleClick} />
-                        <AnimatedButton className="dark:bg-white/5" icon={Icons.CheckCircle} label="Add" onClick={handleAddFilter} />
+                        }} placeholder="Enter filter value" value={currentFilter.Value} setValue={handleInputChange} testId="field-value" />
+                        <AnimatedButton className="dark:bg-white/5" icon={Icons.Cancel} label="Cancel" onClick={handleClick} testId="cancel-button" />
+                        <AnimatedButton className="dark:bg-white/5" icon={Icons.CheckCircle} label="Add" onClick={handleAddFilter} testId="add-button" />
                     </motion.div>
                 )}
             </AnimatePresence>

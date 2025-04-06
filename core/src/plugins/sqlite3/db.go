@@ -2,19 +2,20 @@ package sqlite3
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
 func getDefaultDirectory() string {
 	directory := "/db/"
 	if env.IsDevelopment {
-		directory = "./tmp/"
+		directory = "tmp/"
 	}
 	return directory
 }
