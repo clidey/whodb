@@ -51,7 +51,7 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 
 		tableName := p.FormTableName(schema, storageUnit)
 
-		result := db.Table(tableName).Where(conditions).Updates(convertedValues)
+		result := db.Table(tableName).Where(conditions, nil).Updates(convertedValues)
 
 		if result.Error != nil {
 			return false, result.Error
