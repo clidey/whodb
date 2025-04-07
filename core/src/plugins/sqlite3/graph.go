@@ -1,14 +1,22 @@
+// Copyright 2025 Clidey, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package sqlite3
 
 import (
-	"github.com/clidey/whodb/core/src/engine"
+	"gorm.io/gorm"
 )
-
-type tableRelations struct {
-	Table1   string
-	Table2   string
-	Relation string
-}
 
 const graphQuery = `
 WITH fk_constraints AS (
@@ -81,47 +89,6 @@ UNION ALL
 SELECT * FROM many_to_many_constraints;
 `
 
-func (p *Sqlite3Plugin) GetGraph(config *engine.PluginConfig, schema string) ([]engine.GraphUnit, error) {
-	db, err := DB(config)
-	if err != nil {
-		return nil, err
-	}
-	sqlDb, err := db.DB()
-	if err != nil {
-		return nil, err
-	}
-	defer sqlDb.Close()
-
-	tableRelations := []tableRelations{}
-
-	if err := db.Raw(graphQuery).Scan(&tableRelations).Error; err != nil {
-		return nil, err
-	}
-
-	tableMap := make(map[string][]engine.GraphUnitRelationship)
-	for _, tr := range tableRelations {
-		tableMap[tr.Table1] = append(tableMap[tr.Table1], engine.GraphUnitRelationship{Name: tr.Table2, RelationshipType: engine.GraphUnitRelationshipType(tr.Relation)})
-	}
-
-	storageUnits, err := p.GetStorageUnits(config, schema)
-	if err != nil {
-		return nil, err
-	}
-
-	storageUnitsMap := map[string]engine.StorageUnit{}
-	for _, storageUnit := range storageUnits {
-		storageUnitsMap[storageUnit.Name] = storageUnit
-	}
-
-	tables := []engine.GraphUnit{}
-	for _, storageUnit := range storageUnits {
-		foundTable, ok := tableMap[storageUnit.Name]
-		var relations []engine.GraphUnitRelationship
-		if ok {
-			relations = foundTable
-		}
-		tables = append(tables, engine.GraphUnit{Unit: storageUnit, Relations: relations})
-	}
-
-	return tables, nil
+func (p *Sqlite3Plugin) GetGraphQueryDB(db *gorm.DB, schema string) *gorm.DB {
+	return db.Raw(graphQuery)
 }

@@ -1,8 +1,25 @@
+/**
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import classNames from "classnames";
 import { FC, ReactElement, cloneElement, useCallback, useState } from "react";
 import { Icons } from "./icons";
 import { Label } from "./input";
 import { Loading } from "./loading";
+import { ClassNames } from "./classes";
 
 export function createDropdownItem(option: string, icon?: ReactElement): IDropdownItem {
     return {
@@ -33,6 +50,7 @@ export type IDropdownProps = {
     enableAction?: (index: number) => boolean;
     noItemsLabel?: string;
     showIconOnly?: boolean;
+    testId?: string;
 }
 
 const ITEM_CLASS = "group/item flex items-center gap-1 transition-all cursor-pointer relative hover:bg-black/10 py-1 mx-2 px-4 rounded-lg pl-1 dark:text-neutral-300/100";
@@ -54,33 +72,33 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
     }, []);
 
     return (
-        <div className={classNames("relative", props.className)} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+        <div className={classNames("relative", props.className)} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} data-testid={props.testId}>
             {props.loading ? <div className="flex h-full w-full items-center justify-center">
-                <Loading hideText={true} size="sm"  />
+                <Loading hideText={true} size="sm" />
             </div> :
-            <>  <div className="group/dropdown flex gap-1 justify-between items-center border border-gray-200 rounded-lg w-full p-1 h-[34px] px-2 dark:bg-white/10 dark:border-white/20">
-                    <div className="flex gap-1 text-gray-700 text-sm truncate items-center dark:text-neutral-300">
+            <>  <div className="group/dropdown flex gap-1 justify-between items-center border border-neutral-600/20 rounded-lg w-full p-1 h-[34px] px-2 dark:bg-[#2C2F33] dark:border-white/5">
+                    <div className={classNames(ClassNames.Text, "flex gap-1 text-sm truncate items-center")}>
                         {props.value?.icon != null && <div className="flex items-center w-6">
                             {props.value.icon}
                         </div>}
                         {!props.showIconOnly && props.value?.label}
                     </div>
                     {cloneElement(Icons.DownCaret, {
-                        className: "absolute right-2 top-1/2 -translate-y-1/2 p-1 w-5 h-5 stroke-neutral-600 dark:stroke-neutral-400 group-hover/dropdown:backdrop-blur-sm rounded-full",
+                        className: "absolute right-2 top-1/2 -translate-y-1/2 p-1 w-5 h-5 stroke-neutral-700 dark:stroke-neutral-400 group-hover/dropdown:backdrop-blur-xs rounded-full",
                     })}
                 </div>
-                <div className={classNames("absolute z-10 divide-y rounded-lg shadow bg-white py-1 border border-gray-200 overflow-y-auto max-h-40 dark:bg-white/10 dark:backdrop-blur-md dark:border-white/20", {
+                <div className={classNames("absolute z-10 divide-y rounded-lg shadow-sm bg-white py-1 border border-gray-200 overflow-y-auto max-h-40 dark:bg-[#2C2F33] dark:border-white/20", {
                     "hidden": !hover,
                     "block animate-fade": hover,
                     "w-fit min-w-[200px]": !props.fullWidth,
                     "w-full": props.fullWidth,
                 })}>
-                    <ul className="py-1 text-sm text-gray-700 nowheel flex flex-col">
+                    <ul className={classNames(ClassNames.Text, "py-1 text-sm nowheel flex flex-col")}>
                         {
                             props.items.map((item, i) => (
                                 <li key={`dropdown-item-${i}`} className={classNames(ITEM_CLASS, {
                                     "hover:gap-2": item.icon != null,
-                                })} onClick={() => handleClick(item)}>
+                                })} onClick={() => handleClick(item)} value={item.id}>
                                     <div>{props.value?.id === item.id ? Icons.CheckCircle : item.icon}</div>
                                     <div className="whitespace-nowrap">{item.label}</div>
                                     {(props.enableAction?.(i) ?? true) && props.action != null && cloneElement(props.action, {
@@ -116,8 +134,8 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
     )
 }
 
-export const DropdownWithLabel: FC<IDropdownProps & { label: string }> = ({ label, ...props }) => {
-    return <div className="flex flex-col gap-1">
+export const DropdownWithLabel: FC<IDropdownProps & { label: string, testId?: string }> = ({ label, testId, ...props }) => {
+    return <div className="flex flex-col gap-1" data-testid={testId}>
         <Label label={label} />
         <Dropdown {...props} />
     </div>

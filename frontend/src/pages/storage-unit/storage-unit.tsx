@@ -1,3 +1,19 @@
+/**
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import classNames from "classnames";
 import { clone, filter } from "lodash";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
@@ -45,7 +61,7 @@ const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
     }}>
         <div className="flex flex-col grow mt-2">
             <div className="flex flex-col grow mb-2">
-                <div className="text-sm font-semibold mb-2 break-words dark:text-neutral-100">{unit.Name}</div>
+                <div className="text-sm font-semibold mb-2 break-words dark:text-neutral-100" data-testid="storage-unit-name">{unit.Name}</div>
                 {
                     introAttributes.slice(0,2).map(attribute => (
                         <div key={attribute.Key} className="text-xs dark:text-neutral-300">{attribute.Key}: {attribute.Value}</div>
@@ -53,12 +69,12 @@ const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
                 }
             </div>
             <div className="flex flex-row justify-end gap-1">
-                <AnimatedButton icon={Icons.DocumentMagnify} label="Explore" onClick={handleExpand} />
-                <AnimatedButton icon={Icons.Database} label="Data" onClick={handleNavigateToDatabase} />
+                <AnimatedButton icon={Icons.DocumentMagnify} label="Explore" onClick={handleExpand} testId="explore-button" />
+                <AnimatedButton icon={Icons.Database} label="Data" onClick={handleNavigateToDatabase} testId="data-button" />
             </div>
         </div>
         <div className="flex flex-col grow mt-2 gap-4">
-            <div className="flex flex-row grow">
+            <div className="flex flex-row grow" data-testid="explore-fields">
                 <div className="flex flex-col grow">
                     <div className="text-md font-semibold mb-2 dark:text-neutral-100">{unit.Name}</div>
                     {
@@ -89,9 +105,15 @@ export const StorageUnitPage: FC = () => {
     const [storageUnitName, setStorageUnitName] = useState("");
     const [fields, setFields] = useState<RecordInput[]>([ {Key: "", Value: "" }]);
     const [error, setError] = useState<string>();
-    const schema = useAppSelector(state => state.database.schema);
+    let schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
     const [addStorageUnit,] = useAddStorageUnitMutation();
+
+    // todo: is there a different way to do this? clickhouse doesn't have schemas as a table is considered a schema. people mainly switch between DB
+    if (current?.Type === DatabaseType.ClickHouse) {
+        schema = current.Database
+    }
+
     const { loading, data, refetch } = useGetStorageUnitsQuery({
         variables: {
             schema,
@@ -179,8 +201,8 @@ export const StorageUnitPage: FC = () => {
                     "ENUM", "SET", "JSON", "BOOLEAN"
                 ];
                 break;
-            case DatabaseType.ClickHouse: // todo: optimize these
             case DatabaseType.MySql:
+            case DatabaseType.ClickHouse:
                 items = [
                     "TINYINT", "SMALLINT", "MEDIUMINT", "INT", "INTEGER", "BIGINT", "FLOAT", "DOUBLE", "DECIMAL",
                     "DATE", "DATETIME", "TIMESTAMP", "TIME", "YEAR",
@@ -285,7 +307,7 @@ export const StorageUnitPage: FC = () => {
                     <AnimatedButton icon={Icons.Cancel} label="Cancel" onClick={handleCreate} />
                     <AnimatedButton labelClassName="text-green-600 dark:text-green-300"
                         iconClassName="stroke-green-600 dark:stroke-green-300" icon={Icons.Add}
-                        label="Submit" onClick={handleSubmit} />
+                        label="Submit" onClick={handleSubmit} testId="submit-button" />
                 </div>
             </div>
         </ExpandableCard>

@@ -1,3 +1,19 @@
+/**
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { useQuery } from "@apollo/client";
 import { FC, useCallback, useMemo, useRef } from "react";
 import { Edge, Node, ReactFlowProvider, useEdgesState, useNodesState } from "reactflow";
@@ -36,12 +52,28 @@ export const GraphPage: FC = () => {
                     data: node.Unit,
                 }));
                 for (const edge of node.Relations) {
-                    const newEdge = createEdge(node.Unit.Name, edge.Name);
-                    if (newEdgesSet.has(newEdge.id)) {
-                        continue;
+                    const tempNewEdges: Edge[] = [];
+                    if (edge.Relationship === "ManyToMany") {
+                        const newEdge1 = createEdge(node.Unit.Name, edge.Name);
+                        const newEdge2 = createEdge(edge.Name, node.Unit.Name);
+                        if (!newEdgesSet.has(newEdge1.id)) tempNewEdges.push(createEdge(node.Unit.Name, edge.Name));
+                        if (!newEdgesSet.has(newEdge2.id)) tempNewEdges.push(createEdge(edge.Name, node.Unit.Name));
+                    } else {
+                        let [source, sink] = [node.Unit.Name, edge.Name];
+                        if (edge.Relationship === "ManyToOne") {
+                            source = edge.Name
+                            sink = node.Unit.Name
+                        }
+                        const newEdge = createEdge(source, sink);
+                        if (newEdgesSet.has(newEdge.id)) {
+                            continue;
+                        }
+                        tempNewEdges.push(newEdge);
                     }
-                    newEdgesSet.add(newEdge.id);
-                    newEdges.push(newEdge);
+                    tempNewEdges.forEach(newEdge => {
+                        newEdgesSet.add(newEdge.id);
+                        newEdges.push(newEdge);
+                    });
                 }
             }
             setNodes(newNodes);

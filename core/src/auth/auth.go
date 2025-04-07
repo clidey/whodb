@@ -1,3 +1,17 @@
+// Copyright 2025 Clidey, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package auth
 
 import (
@@ -32,6 +46,27 @@ func GetCredentials(ctx context.Context) *engine.Credentials {
 }
 
 func isPublicRoute(r *http.Request) bool {
+	if env.IsDevelopment {
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			return false
+		}
+
+		r.Body = io.NopCloser(bytes.NewReader(body))
+		if r.Method != http.MethodPost {
+			return false
+		}
+
+		var query map[string]interface{}
+		if err := json.Unmarshal(body, &query); err != nil {
+			return false
+		}
+
+		if q, ok := query["query"].(string); ok && strings.Contains(q, "IntrospectionQuery") {
+			return true
+		}
+	}
+
 	return (!strings.HasPrefix(r.URL.Path, "/api/") && r.URL.Path != "/api")
 }
 

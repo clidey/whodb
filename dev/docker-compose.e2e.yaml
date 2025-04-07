@@ -1,0 +1,135 @@
+# Copyright 2025 Clidey, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+version: "3.8"
+
+services:
+  e2e_sqlite3:
+    image: nouchka/sqlite3:latest
+    container_name: e2e_sqlite3
+    volumes:
+      - e2e_sqlite3:/root/db
+      - ./sample-data/sqlite3/data.sql:/docker-entrypoint-initdb.d/init.sql
+    entrypoint: >
+      sh -c "
+      sqlite3 /root/db/e2e_test.db < /docker-entrypoint-initdb.d/init.sql &&
+      echo 'SQLite3 Started...' &&
+      tail -f /dev/null
+      "
+
+  e2e_postgres:
+    image: postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      PGDATA: /var/lib/postgresql/data
+      POSTGRES_DB: test_db
+    volumes:
+      - e2e_postgres:/data/postgres
+      - ./sample-data/postgres/data.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - db
+
+  e2e_mysql:
+    image: mysql
+    environment:
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: test_db
+      MYSQL_ROOT_PASSWORD: password
+    volumes:
+      - e2e_mysql:/var/lib/mysql
+      - ./sample-data/mysql/data.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3306:3306"
+    networks:
+      - db
+
+  e2e_mariadb:
+    image: mariadb
+    environment:
+      MARIADB_USER: user
+      MARIADB_PASSWORD: password
+      MARIADB_DATABASE: test_db
+      MARIADB_ROOT_PASSWORD: password
+    volumes:
+      - e2e_mariadb:/var/lib/mysql
+      - ./sample-data/mariadb/data.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3307:3306"
+    networks:
+      - db
+
+  e2e_mongo:
+    image: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: user
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - e2e_mongo:/data/db
+      - ./sample-data/mongo/data.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    ports:
+      - "27017:27017"
+    networks:
+      - db
+    command: mongod --bind_ip_all --auth
+
+  e2e_clickhouse:
+    image: clickhouse/clickhouse-server
+    user: clickhouse:clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    environment:
+      CLICKHOUSE_USER: user
+      CLICKHOUSE_PASSWORD: password
+      CLICKHOUSE_DB: test_db
+    volumes:
+      - e2e_clickhouse:/var/lib/clickhouse
+    networks:
+      - db
+
+  clickhouse-init:
+    image: clickhouse/clickhouse-client
+    depends_on: 
+      - e2e_clickhouse
+    entrypoint: >
+      sh -c "
+        set -e &&
+        echo 'Waiting for ClickHouse to be ready...' &&
+        until clickhouse-client --host e2e_clickhouse --user user --password password --query 'SELECT 1'; do
+          sleep 1
+        done &&
+        echo 'ClickHouse is up, running init script...' &&
+        clickhouse-client --host e2e_clickhouse --user user --password password --multiquery < /docker-entrypoint-initdb.d/init.sql
+      "
+    volumes:
+      - ./sample-data/clickhouse/data.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - db
+
+networks:
+  db:
+    driver: bridge
+
+volumes:
+  e2e_sqlite3:
+  e2e_postgres:
+  e2e_mysql:
+  e2e_mariadb:
+  e2e_mongo:
+  e2e_clickhouse:
+  e2e_elasticsearch:

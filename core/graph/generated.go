@@ -83,7 +83,7 @@ type ComplexityRoot struct {
 		LoginWithProfile  func(childComplexity int, profile model.LoginProfileInput) int
 		Logout            func(childComplexity int) int
 		UpdateSettings    func(childComplexity int, newSettings model.SettingsConfigInput) int
-		UpdateStorageUnit func(childComplexity int, schema string, storageUnit string, values []*model.RecordInput) int
+		UpdateStorageUnit func(childComplexity int, schema string, storageUnit string, values []*model.RecordInput, updatedColumns []string) int
 	}
 
 	Query struct {
@@ -93,7 +93,7 @@ type ComplexityRoot struct {
 		Graph          func(childComplexity int, schema string) int
 		Profiles       func(childComplexity int) int
 		RawExecute     func(childComplexity int, query string) int
-		Row            func(childComplexity int, schema string, storageUnit string, where string, pageSize int, pageOffset int) int
+		Row            func(childComplexity int, schema string, storageUnit string, where *model.WhereCondition, pageSize int, pageOffset int) int
 		Schema         func(childComplexity int) int
 		SettingsConfig func(childComplexity int) int
 		StorageUnit    func(childComplexity int, schema string) int
@@ -131,7 +131,7 @@ type MutationResolver interface {
 	Logout(ctx context.Context) (*model.StatusResponse, error)
 	UpdateSettings(ctx context.Context, newSettings model.SettingsConfigInput) (*model.StatusResponse, error)
 	AddStorageUnit(ctx context.Context, schema string, storageUnit string, fields []*model.RecordInput) (*model.StatusResponse, error)
-	UpdateStorageUnit(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
+	UpdateStorageUnit(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput, updatedColumns []string) (*model.StatusResponse, error)
 	AddRow(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
 	DeleteRow(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
 }
@@ -141,7 +141,7 @@ type QueryResolver interface {
 	Database(ctx context.Context, typeArg string) ([]string, error)
 	Schema(ctx context.Context) ([]string, error)
 	StorageUnit(ctx context.Context, schema string) ([]*model.StorageUnit, error)
-	Row(ctx context.Context, schema string, storageUnit string, where string, pageSize int, pageOffset int) (*model.RowsResult, error)
+	Row(ctx context.Context, schema string, storageUnit string, where *model.WhereCondition, pageSize int, pageOffset int) (*model.RowsResult, error)
 	RawExecute(ctx context.Context, query string) (*model.RowsResult, error)
 	Graph(ctx context.Context, schema string) ([]*model.GraphUnit, error)
 	AIModel(ctx context.Context, modelType string, token *string) ([]string, error)
@@ -163,7 +163,7 @@ func (e *executableSchema) Schema() *ast.Schema {
 	return parsedSchema
 }
 
-func (e *executableSchema) Complexity(typeName, field string, childComplexity int, rawArgs map[string]interface{}) (int, bool) {
+func (e *executableSchema) Complexity(typeName, field string, childComplexity int, rawArgs map[string]any) (int, bool) {
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
@@ -348,7 +348,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateStorageUnit(childComplexity, args["schema"].(string), args["storageUnit"].(string), args["values"].([]*model.RecordInput)), true
+		return e.complexity.Mutation.UpdateStorageUnit(childComplexity, args["schema"].(string), args["storageUnit"].(string), args["values"].([]*model.RecordInput), args["updatedColumns"].([]string)), true
 
 	case "Query.AIChat":
 		if e.complexity.Query.AIChat == nil {
@@ -427,7 +427,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Row(childComplexity, args["schema"].(string), args["storageUnit"].(string), args["where"].(string), args["pageSize"].(int), args["pageOffset"].(int)), true
+		return e.complexity.Query.Row(childComplexity, args["schema"].(string), args["storageUnit"].(string), args["where"].(*model.WhereCondition), args["pageSize"].(int), args["pageOffset"].(int)), true
 
 	case "Query.Schema":
 		if e.complexity.Query.Schema == nil {
@@ -533,11 +533,14 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputAtomicWhereCondition,
 		ec.unmarshalInputChatInput,
 		ec.unmarshalInputLoginCredentials,
 		ec.unmarshalInputLoginProfileInput,
+		ec.unmarshalInputOperationWhereCondition,
 		ec.unmarshalInputRecordInput,
 		ec.unmarshalInputSettingsConfigInput,
+		ec.unmarshalInputWhereCondition,
 	)
 	first := true
 
@@ -654,9 +657,9 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
-func (ec *executionContext) field_Mutation_AddRow_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_AddRow_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
-	args := map[string]interface{}{}
+	args := map[string]any{}
 	arg0, err := ec.field_Mutation_AddRow_argsSchema(ctx, rawArgs)
 	if err != nil {
 		return nil, err
@@ -676,13 +679,9 @@ func (ec *executionContext) field_Mutation_AddRow_args(ctx context.Context, rawA
 }
 func (ec *executionContext) field_Mutation_AddRow_argsSchema(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["schema"]
-	if !ok {
+	if _, ok := rawArgs["schema"]; !ok {
 		var zeroVal string
 		return zeroVal, nil
 	}
@@ -698,13 +697,9 @@ func (ec *executionContext) field_Mutation_AddRow_argsSchema(
 
 func (ec *executionContext) field_Mutation_AddRow_argsStorageUnit(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["storageUnit"]
-	if !ok {
+	if _, ok := rawArgs["storageUnit"]; !ok {
 		var zeroVal string
 		return zeroVal, nil
 	}
@@ -720,13 +715,9 @@ func (ec *executionContext) field_Mutation_AddRow_argsStorageUnit(
 
 func (ec *executionContext) field_Mutation_AddRow_argsValues(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) ([]*model.RecordInput, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["values"]
-	if !ok {
+	if _, ok := rawArgs["values"]; !ok {
 		var zeroVal []*model.RecordInput
 		return zeroVal, nil
 	}
@@ -740,9 +731,9 @@ func (ec *executionContext) field_Mutation_AddRow_argsValues(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_AddStorageUnit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_AddStorageUnit_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
-	args := map[string]interface{}{}
+	args := map[string]any{}
 	arg0, err := ec.field_Mutation_AddStorageUnit_argsSchema(ctx, rawArgs)
 	if err != nil {
 		return nil, err
@@ -762,13 +753,9 @@ func (ec *executionContext) field_Mutation_AddStorageUnit_args(ctx context.Conte
 }
 func (ec *executionContext) field_Mutation_AddStorageUnit_argsSchema(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["schema"]
-	if !ok {
+	if _, ok := rawArgs["schema"]; !ok {
 		var zeroVal string
 		return zeroVal, nil
 	}
@@ -784,13 +771,9 @@ func (ec *executionContext) field_Mutation_AddStorageUnit_argsSchema(
 
 func (ec *executionContext) field_Mutation_AddStorageUnit_argsStorageUnit(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["storageUnit"]
-	if !ok {
+	if _, ok := rawArgs["storageUnit"]; !ok {
 		var zeroVal string
 		return zeroVal, nil
 	}
@@ -806,13 +789,9 @@ func (ec *executionContext) field_Mutation_AddStorageUnit_argsStorageUnit(
 
 func (ec *executionContext) field_Mutation_AddStorageUnit_argsFields(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) ([]*model.RecordInput, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["fields"]
-	if !ok {
+	if _, ok := rawArgs["fields"]; !ok {
 		var zeroVal []*model.RecordInput
 		return zeroVal, nil
 	}
@@ -826,9 +805,9 @@ func (ec *executionContext) field_Mutation_AddStorageUnit_argsFields(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_DeleteRow_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_DeleteRow_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
-	args := map[string]interface{}{}
+	args := map[string]any{}
 	arg0, err := ec.field_Mutation_DeleteRow_argsSchema(ctx, rawArgs)
 	if err != nil {
 		return nil, err
@@ -848,13 +827,9 @@ func (ec *executionContext) field_Mutation_DeleteRow_args(ctx context.Context, r
 }
 func (ec *executionContext) field_Mutation_DeleteRow_argsSchema(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["schema"]
-	if !ok {
+	if _, ok := rawArgs["schema"]; !ok {
 		var zeroVal string
 		return zeroVal, nil
 	}
@@ -870,13 +845,9 @@ func (ec *executionContext) field_Mutation_DeleteRow_argsSchema(
 
 func (ec *executionContext) field_Mutation_DeleteRow_argsStorageUnit(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["storageUnit"]
-	if !ok {
+	if _, ok := rawArgs["storageUnit"]; !ok {
 		var zeroVal string
 		return zeroVal, nil
 	}
@@ -892,13 +863,9 @@ func (ec *executionContext) field_Mutation_DeleteRow_argsStorageUnit(
 
 func (ec *executionContext) field_Mutation_DeleteRow_argsValues(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) ([]*model.RecordInput, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["values"]
-	if !ok {
+	if _, ok := rawArgs["values"]; !ok {
 		var zeroVal []*model.RecordInput
 		return zeroVal, nil
 	}
@@ -912,9 +879,9 @@ func (ec *executionContext) field_Mutation_DeleteRow_argsValues(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_LoginWithProfile_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_LoginWithProfile_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
-	args := map[string]interface{}{}
+	args := map[string]any{}
 	arg0, err := ec.field_Mutation_LoginWithProfile_argsProfile(ctx, rawArgs)
 	if err != nil {
 		return nil, err
@@ -924,13 +891,9 @@ func (ec *executionContext) field_Mutation_LoginWithProfile_args(ctx context.Con
 }
 func (ec *executionContext) field_Mutation_LoginWithProfile_argsProfile(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) (model.LoginProfileInput, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["profile"]
-	if !ok {
+	if _, ok := rawArgs["profile"]; !ok {
 		var zeroVal model.LoginProfileInput
 		return zeroVal, nil
 	}
@@ -944,9 +907,9 @@ func (ec *executionContext) field_Mutation_LoginWithProfile_argsProfile(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_Login_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_Login_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
-	args := map[string]interface{}{}
+	args := map[string]any{}
 	arg0, err := ec.field_Mutation_Login_argsCredentials(ctx, rawArgs)
 	if err != nil {
 		return nil, err
@@ -956,13 +919,9 @@ func (ec *executionContext) field_Mutation_Login_args(ctx context.Context, rawAr
 }
 func (ec *executionContext) field_Mutation_Login_argsCredentials(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) (model.LoginCredentials, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["credentials"]
-	if !ok {
+	if _, ok := rawArgs["credentials"]; !ok {
 		var zeroVal model.LoginCredentials
 		return zeroVal, nil
 	}
@@ -976,9 +935,9 @@ func (ec *executionContext) field_Mutation_Login_argsCredentials(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_UpdateSettings_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_UpdateSettings_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
-	args := map[string]interface{}{}
+	args := map[string]any{}
 	arg0, err := ec.field_Mutation_UpdateSettings_argsNewSettings(ctx, rawArgs)
 	if err != nil {
 		return nil, err
@@ -988,13 +947,9 @@ func (ec *executionContext) field_Mutation_UpdateSettings_args(ctx context.Conte
 }
 func (ec *executionContext) field_Mutation_UpdateSettings_argsNewSettings(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) (model.SettingsConfigInput, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["newSettings"]
-	if !ok {
+	if _, ok := rawArgs["newSettings"]; !ok {
 		var zeroVal model.SettingsConfigInput
 		return zeroVal, nil
 	}
@@ -1008,9 +963,9 @@ func (ec *executionContext) field_Mutation_UpdateSettings_argsNewSettings(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_UpdateStorageUnit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_UpdateStorageUnit_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
-	args := map[string]interface{}{}
+	args := map[string]any{}
 	arg0, err := ec.field_Mutation_UpdateStorageUnit_argsSchema(ctx, rawArgs)
 	if err != nil {
 		return nil, err
@@ -1026,17 +981,18 @@ func (ec *executionContext) field_Mutation_UpdateStorageUnit_args(ctx context.Co
 		return nil, err
 	}
 	args["values"] = arg2
+	arg3, err := ec.field_Mutation_UpdateStorageUnit_argsUpdatedColumns(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["updatedColumns"] = arg3
 	return args, nil
 }
 func (ec *executionContext) field_Mutation_UpdateStorageUnit_argsSchema(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["schema"]
-	if !ok {
+	if _, ok := rawArgs["schema"]; !ok {
 		var zeroVal string
 		return zeroVal, nil
 	}
@@ -1052,13 +1008,9 @@ func (ec *executionContext) field_Mutation_UpdateStorageUnit_argsSchema(
 
 func (ec *executionContext) field_Mutation_UpdateStorageUnit_argsStorageUnit(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["storageUnit"]
-	if !ok {
+	if _, ok := rawArgs["storageUnit"]; !ok {
 		var zeroVal string
 		return zeroVal, nil
 	}
@@ -1074,13 +1026,9 @@ func (ec *executionContext) field_Mutation_UpdateStorageUnit_argsStorageUnit(
 
 func (ec *executionContext) field_Mutation_UpdateStorageUnit_argsValues(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) ([]*model.RecordInput, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["values"]
-	if !ok {
+	if _, ok := rawArgs["values"]; !ok {
 		var zeroVal []*model.RecordInput
 		return zeroVal, nil
 	}
@@ -1094,9 +1042,27 @@ func (ec *executionContext) field_Mutation_UpdateStorageUnit_argsValues(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Query_AIChat_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_UpdateStorageUnit_argsUpdatedColumns(
+	ctx context.Context,
+	rawArgs map[string]any,
+) ([]string, error) {
+	if _, ok := rawArgs["updatedColumns"]; !ok {
+		var zeroVal []string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedColumns"))
+	if tmp, ok := rawArgs["updatedColumns"]; ok {
+		return ec.unmarshalNString2ᚕstringᚄ(ctx, tmp)
+	}
+
+	var zeroVal []string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_AIChat_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
-	args := map[string]interface{}{}
+	args := map[string]any{}
 	arg0, err := ec.field_Query_AIChat_argsModelType(ctx, rawArgs)
 	if err != nil {
 		return nil, err
@@ -1121,13 +1087,9 @@ func (ec *executionContext) field_Query_AIChat_args(ctx context.Context, rawArgs
 }
 func (ec *executionContext) field_Query_AIChat_argsModelType(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["modelType"]
-	if !ok {
+	if _, ok := rawArgs["modelType"]; !ok {
 		var zeroVal string
 		return zeroVal, nil
 	}
@@ -1143,13 +1105,9 @@ func (ec *executionContext) field_Query_AIChat_argsModelType(
 
 func (ec *executionContext) field_Query_AIChat_argsToken(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) (*string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["token"]
-	if !ok {
+	if _, ok := rawArgs["token"]; !ok {
 		var zeroVal *string
 		return zeroVal, nil
 	}
@@ -1165,13 +1123,9 @@ func (ec *executionContext) field_Query_AIChat_argsToken(
 
 func (ec *executionContext) field_Query_AIChat_argsSchema(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["schema"]
-	if !ok {
+	if _, ok := rawArgs["schema"]; !ok {
 		var zeroVal string
 		return zeroVal, nil
 	}
@@ -1187,13 +1141,9 @@ func (ec *executionContext) field_Query_AIChat_argsSchema(
 
 func (ec *executionContext) field_Query_AIChat_argsInput(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) (model.ChatInput, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["input"]
-	if !ok {
+	if _, ok := rawArgs["input"]; !ok {
 		var zeroVal model.ChatInput
 		return zeroVal, nil
 	}
@@ -1207,9 +1157,9 @@ func (ec *executionContext) field_Query_AIChat_argsInput(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Query_AIModel_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_AIModel_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
-	args := map[string]interface{}{}
+	args := map[string]any{}
 	arg0, err := ec.field_Query_AIModel_argsModelType(ctx, rawArgs)
 	if err != nil {
 		return nil, err
@@ -1224,13 +1174,9 @@ func (ec *executionContext) field_Query_AIModel_args(ctx context.Context, rawArg
 }
 func (ec *executionContext) field_Query_AIModel_argsModelType(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["modelType"]
-	if !ok {
+	if _, ok := rawArgs["modelType"]; !ok {
 		var zeroVal string
 		return zeroVal, nil
 	}
@@ -1246,13 +1192,9 @@ func (ec *executionContext) field_Query_AIModel_argsModelType(
 
 func (ec *executionContext) field_Query_AIModel_argsToken(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) (*string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["token"]
-	if !ok {
+	if _, ok := rawArgs["token"]; !ok {
 		var zeroVal *string
 		return zeroVal, nil
 	}
@@ -1266,9 +1208,9 @@ func (ec *executionContext) field_Query_AIModel_argsToken(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Query_Database_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_Database_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
-	args := map[string]interface{}{}
+	args := map[string]any{}
 	arg0, err := ec.field_Query_Database_argsType(ctx, rawArgs)
 	if err != nil {
 		return nil, err
@@ -1278,13 +1220,9 @@ func (ec *executionContext) field_Query_Database_args(ctx context.Context, rawAr
 }
 func (ec *executionContext) field_Query_Database_argsType(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["type"]
-	if !ok {
+	if _, ok := rawArgs["type"]; !ok {
 		var zeroVal string
 		return zeroVal, nil
 	}
@@ -1298,9 +1236,9 @@ func (ec *executionContext) field_Query_Database_argsType(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Query_Graph_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_Graph_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
-	args := map[string]interface{}{}
+	args := map[string]any{}
 	arg0, err := ec.field_Query_Graph_argsSchema(ctx, rawArgs)
 	if err != nil {
 		return nil, err
@@ -1310,13 +1248,9 @@ func (ec *executionContext) field_Query_Graph_args(ctx context.Context, rawArgs 
 }
 func (ec *executionContext) field_Query_Graph_argsSchema(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["schema"]
-	if !ok {
+	if _, ok := rawArgs["schema"]; !ok {
 		var zeroVal string
 		return zeroVal, nil
 	}
@@ -1330,9 +1264,9 @@ func (ec *executionContext) field_Query_Graph_argsSchema(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Query_RawExecute_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_RawExecute_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
-	args := map[string]interface{}{}
+	args := map[string]any{}
 	arg0, err := ec.field_Query_RawExecute_argsQuery(ctx, rawArgs)
 	if err != nil {
 		return nil, err
@@ -1342,13 +1276,9 @@ func (ec *executionContext) field_Query_RawExecute_args(ctx context.Context, raw
 }
 func (ec *executionContext) field_Query_RawExecute_argsQuery(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["query"]
-	if !ok {
+	if _, ok := rawArgs["query"]; !ok {
 		var zeroVal string
 		return zeroVal, nil
 	}
@@ -1362,9 +1292,9 @@ func (ec *executionContext) field_Query_RawExecute_argsQuery(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Query_Row_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_Row_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
-	args := map[string]interface{}{}
+	args := map[string]any{}
 	arg0, err := ec.field_Query_Row_argsSchema(ctx, rawArgs)
 	if err != nil {
 		return nil, err
@@ -1394,13 +1324,9 @@ func (ec *executionContext) field_Query_Row_args(ctx context.Context, rawArgs ma
 }
 func (ec *executionContext) field_Query_Row_argsSchema(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["schema"]
-	if !ok {
+	if _, ok := rawArgs["schema"]; !ok {
 		var zeroVal string
 		return zeroVal, nil
 	}
@@ -1416,13 +1342,9 @@ func (ec *executionContext) field_Query_Row_argsSchema(
 
 func (ec *executionContext) field_Query_Row_argsStorageUnit(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["storageUnit"]
-	if !ok {
+	if _, ok := rawArgs["storageUnit"]; !ok {
 		var zeroVal string
 		return zeroVal, nil
 	}
@@ -1438,35 +1360,27 @@ func (ec *executionContext) field_Query_Row_argsStorageUnit(
 
 func (ec *executionContext) field_Query_Row_argsWhere(
 	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["where"]
-	if !ok {
-		var zeroVal string
+	rawArgs map[string]any,
+) (*model.WhereCondition, error) {
+	if _, ok := rawArgs["where"]; !ok {
+		var zeroVal *model.WhereCondition
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("where"))
 	if tmp, ok := rawArgs["where"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
+		return ec.unmarshalOWhereCondition2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐWhereCondition(ctx, tmp)
 	}
 
-	var zeroVal string
+	var zeroVal *model.WhereCondition
 	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_Row_argsPageSize(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) (int, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["pageSize"]
-	if !ok {
+	if _, ok := rawArgs["pageSize"]; !ok {
 		var zeroVal int
 		return zeroVal, nil
 	}
@@ -1482,13 +1396,9 @@ func (ec *executionContext) field_Query_Row_argsPageSize(
 
 func (ec *executionContext) field_Query_Row_argsPageOffset(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) (int, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["pageOffset"]
-	if !ok {
+	if _, ok := rawArgs["pageOffset"]; !ok {
 		var zeroVal int
 		return zeroVal, nil
 	}
@@ -1502,9 +1412,9 @@ func (ec *executionContext) field_Query_Row_argsPageOffset(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Query_StorageUnit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_StorageUnit_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
-	args := map[string]interface{}{}
+	args := map[string]any{}
 	arg0, err := ec.field_Query_StorageUnit_argsSchema(ctx, rawArgs)
 	if err != nil {
 		return nil, err
@@ -1514,13 +1424,9 @@ func (ec *executionContext) field_Query_StorageUnit_args(ctx context.Context, ra
 }
 func (ec *executionContext) field_Query_StorageUnit_argsSchema(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["schema"]
-	if !ok {
+	if _, ok := rawArgs["schema"]; !ok {
 		var zeroVal string
 		return zeroVal, nil
 	}
@@ -1534,9 +1440,9 @@ func (ec *executionContext) field_Query_StorageUnit_argsSchema(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
-	args := map[string]interface{}{}
+	args := map[string]any{}
 	arg0, err := ec.field_Query___type_argsName(ctx, rawArgs)
 	if err != nil {
 		return nil, err
@@ -1546,13 +1452,9 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 }
 func (ec *executionContext) field_Query___type_argsName(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["name"]
-	if !ok {
+	if _, ok := rawArgs["name"]; !ok {
 		var zeroVal string
 		return zeroVal, nil
 	}
@@ -1566,9 +1468,65 @@ func (ec *executionContext) field_Query___type_argsName(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field___Type_enumValues_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field___Directive_args_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
-	args := map[string]interface{}{}
+	args := map[string]any{}
+	arg0, err := ec.field___Directive_args_argsIncludeDeprecated(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["includeDeprecated"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field___Directive_args_argsIncludeDeprecated(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*bool, error) {
+	if _, ok := rawArgs["includeDeprecated"]; !ok {
+		var zeroVal *bool
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("includeDeprecated"))
+	if tmp, ok := rawArgs["includeDeprecated"]; ok {
+		return ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
+	}
+
+	var zeroVal *bool
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field___Field_args_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field___Field_args_argsIncludeDeprecated(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["includeDeprecated"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field___Field_args_argsIncludeDeprecated(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*bool, error) {
+	if _, ok := rawArgs["includeDeprecated"]; !ok {
+		var zeroVal *bool
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("includeDeprecated"))
+	if tmp, ok := rawArgs["includeDeprecated"]; ok {
+		return ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
+	}
+
+	var zeroVal *bool
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field___Type_enumValues_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
 	arg0, err := ec.field___Type_enumValues_argsIncludeDeprecated(ctx, rawArgs)
 	if err != nil {
 		return nil, err
@@ -1578,13 +1536,9 @@ func (ec *executionContext) field___Type_enumValues_args(ctx context.Context, ra
 }
 func (ec *executionContext) field___Type_enumValues_argsIncludeDeprecated(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) (bool, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["includeDeprecated"]
-	if !ok {
+	if _, ok := rawArgs["includeDeprecated"]; !ok {
 		var zeroVal bool
 		return zeroVal, nil
 	}
@@ -1598,9 +1552,9 @@ func (ec *executionContext) field___Type_enumValues_argsIncludeDeprecated(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
-	args := map[string]interface{}{}
+	args := map[string]any{}
 	arg0, err := ec.field___Type_fields_argsIncludeDeprecated(ctx, rawArgs)
 	if err != nil {
 		return nil, err
@@ -1610,13 +1564,9 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 }
 func (ec *executionContext) field___Type_fields_argsIncludeDeprecated(
 	ctx context.Context,
-	rawArgs map[string]interface{},
+	rawArgs map[string]any,
 ) (bool, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["includeDeprecated"]
-	if !ok {
+	if _, ok := rawArgs["includeDeprecated"]; !ok {
 		var zeroVal bool
 		return zeroVal, nil
 	}
@@ -1650,7 +1600,7 @@ func (ec *executionContext) _AIChatMessage_Type(ctx context.Context, field graph
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Type, nil
 	})
@@ -1694,7 +1644,7 @@ func (ec *executionContext) _AIChatMessage_Result(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Result, nil
 	})
@@ -1743,7 +1693,7 @@ func (ec *executionContext) _AIChatMessage_Text(ctx context.Context, field graph
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Text, nil
 	})
@@ -1787,7 +1737,7 @@ func (ec *executionContext) _Column_Type(ctx context.Context, field graphql.Coll
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Type, nil
 	})
@@ -1831,7 +1781,7 @@ func (ec *executionContext) _Column_Name(ctx context.Context, field graphql.Coll
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Name, nil
 	})
@@ -1875,7 +1825,7 @@ func (ec *executionContext) _GraphUnit_Unit(ctx context.Context, field graphql.C
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Unit, nil
 	})
@@ -1925,7 +1875,7 @@ func (ec *executionContext) _GraphUnit_Relations(ctx context.Context, field grap
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Relations, nil
 	})
@@ -1975,7 +1925,7 @@ func (ec *executionContext) _GraphUnitRelationship_Name(ctx context.Context, fie
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Name, nil
 	})
@@ -2019,7 +1969,7 @@ func (ec *executionContext) _GraphUnitRelationship_Relationship(ctx context.Cont
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Relationship, nil
 	})
@@ -2063,7 +2013,7 @@ func (ec *executionContext) _LoginProfile_Alias(ctx context.Context, field graph
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Alias, nil
 	})
@@ -2104,7 +2054,7 @@ func (ec *executionContext) _LoginProfile_Id(ctx context.Context, field graphql.
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ID, nil
 	})
@@ -2148,7 +2098,7 @@ func (ec *executionContext) _LoginProfile_Type(ctx context.Context, field graphq
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Type, nil
 	})
@@ -2192,7 +2142,7 @@ func (ec *executionContext) _LoginProfile_Database(ctx context.Context, field gr
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Database, nil
 	})
@@ -2233,7 +2183,7 @@ func (ec *executionContext) _Mutation_Login(ctx context.Context, field graphql.C
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().Login(rctx, fc.Args["credentials"].(model.LoginCredentials))
 	})
@@ -2292,7 +2242,7 @@ func (ec *executionContext) _Mutation_LoginWithProfile(ctx context.Context, fiel
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().LoginWithProfile(rctx, fc.Args["profile"].(model.LoginProfileInput))
 	})
@@ -2351,7 +2301,7 @@ func (ec *executionContext) _Mutation_Logout(ctx context.Context, field graphql.
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().Logout(rctx)
 	})
@@ -2399,7 +2349,7 @@ func (ec *executionContext) _Mutation_UpdateSettings(ctx context.Context, field 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().UpdateSettings(rctx, fc.Args["newSettings"].(model.SettingsConfigInput))
 	})
@@ -2458,7 +2408,7 @@ func (ec *executionContext) _Mutation_AddStorageUnit(ctx context.Context, field 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().AddStorageUnit(rctx, fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["fields"].([]*model.RecordInput))
 	})
@@ -2517,9 +2467,9 @@ func (ec *executionContext) _Mutation_UpdateStorageUnit(ctx context.Context, fie
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateStorageUnit(rctx, fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["values"].([]*model.RecordInput))
+		return ec.resolvers.Mutation().UpdateStorageUnit(rctx, fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["values"].([]*model.RecordInput), fc.Args["updatedColumns"].([]string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2576,7 +2526,7 @@ func (ec *executionContext) _Mutation_AddRow(ctx context.Context, field graphql.
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().AddRow(rctx, fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["values"].([]*model.RecordInput))
 	})
@@ -2635,7 +2585,7 @@ func (ec *executionContext) _Mutation_DeleteRow(ctx context.Context, field graph
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().DeleteRow(rctx, fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["values"].([]*model.RecordInput))
 	})
@@ -2694,7 +2644,7 @@ func (ec *executionContext) _Query_Version(ctx context.Context, field graphql.Co
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().Version(rctx)
 	})
@@ -2738,7 +2688,7 @@ func (ec *executionContext) _Query_Profiles(ctx context.Context, field graphql.C
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().Profiles(rctx)
 	})
@@ -2792,7 +2742,7 @@ func (ec *executionContext) _Query_Database(ctx context.Context, field graphql.C
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().Database(rctx, fc.Args["type"].(string))
 	})
@@ -2847,7 +2797,7 @@ func (ec *executionContext) _Query_Schema(ctx context.Context, field graphql.Col
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().Schema(rctx)
 	})
@@ -2891,7 +2841,7 @@ func (ec *executionContext) _Query_StorageUnit(ctx context.Context, field graphq
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().StorageUnit(rctx, fc.Args["schema"].(string))
 	})
@@ -2952,9 +2902,9 @@ func (ec *executionContext) _Query_Row(ctx context.Context, field graphql.Collec
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Row(rctx, fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["where"].(string), fc.Args["pageSize"].(int), fc.Args["pageOffset"].(int))
+		return ec.resolvers.Query().Row(rctx, fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["where"].(*model.WhereCondition), fc.Args["pageSize"].(int), fc.Args["pageOffset"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3015,7 +2965,7 @@ func (ec *executionContext) _Query_RawExecute(ctx context.Context, field graphql
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().RawExecute(rctx, fc.Args["query"].(string))
 	})
@@ -3078,7 +3028,7 @@ func (ec *executionContext) _Query_Graph(ctx context.Context, field graphql.Coll
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().Graph(rctx, fc.Args["schema"].(string))
 	})
@@ -3139,7 +3089,7 @@ func (ec *executionContext) _Query_AIModel(ctx context.Context, field graphql.Co
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().AIModel(rctx, fc.Args["modelType"].(string), fc.Args["token"].(*string))
 	})
@@ -3194,7 +3144,7 @@ func (ec *executionContext) _Query_AIChat(ctx context.Context, field graphql.Col
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().AIChat(rctx, fc.Args["modelType"].(string), fc.Args["token"].(*string), fc.Args["schema"].(string), fc.Args["input"].(model.ChatInput))
 	})
@@ -3257,7 +3207,7 @@ func (ec *executionContext) _Query_SettingsConfig(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().SettingsConfig(rctx)
 	})
@@ -3305,7 +3255,7 @@ func (ec *executionContext) _Query___type(ctx context.Context, field graphql.Col
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.introspectType(fc.Args["name"].(string))
 	})
@@ -3335,6 +3285,8 @@ func (ec *executionContext) fieldContext_Query___type(ctx context.Context, field
 				return ec.fieldContext___Type_name(ctx, field)
 			case "description":
 				return ec.fieldContext___Type_description(ctx, field)
+			case "specifiedByURL":
+				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "fields":
 				return ec.fieldContext___Type_fields(ctx, field)
 			case "interfaces":
@@ -3347,8 +3299,8 @@ func (ec *executionContext) fieldContext_Query___type(ctx context.Context, field
 				return ec.fieldContext___Type_inputFields(ctx, field)
 			case "ofType":
 				return ec.fieldContext___Type_ofType(ctx, field)
-			case "specifiedByURL":
-				return ec.fieldContext___Type_specifiedByURL(ctx, field)
+			case "isOneOf":
+				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Type", field.Name)
 		},
@@ -3379,7 +3331,7 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.introspectSchema()
 	})
@@ -3434,7 +3386,7 @@ func (ec *executionContext) _Record_Key(ctx context.Context, field graphql.Colle
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Key, nil
 	})
@@ -3478,7 +3430,7 @@ func (ec *executionContext) _Record_Value(ctx context.Context, field graphql.Col
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Value, nil
 	})
@@ -3522,7 +3474,7 @@ func (ec *executionContext) _RowsResult_Columns(ctx context.Context, field graph
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Columns, nil
 	})
@@ -3572,7 +3524,7 @@ func (ec *executionContext) _RowsResult_Rows(ctx context.Context, field graphql.
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Rows, nil
 	})
@@ -3616,7 +3568,7 @@ func (ec *executionContext) _RowsResult_DisableUpdate(ctx context.Context, field
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.DisableUpdate, nil
 	})
@@ -3660,7 +3612,7 @@ func (ec *executionContext) _SettingsConfig_MetricsEnabled(ctx context.Context, 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.MetricsEnabled, nil
 	})
@@ -3701,7 +3653,7 @@ func (ec *executionContext) _StatusResponse_Status(ctx context.Context, field gr
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Status, nil
 	})
@@ -3745,7 +3697,7 @@ func (ec *executionContext) _StorageUnit_Name(ctx context.Context, field graphql
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Name, nil
 	})
@@ -3789,7 +3741,7 @@ func (ec *executionContext) _StorageUnit_Attributes(ctx context.Context, field g
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Attributes, nil
 	})
@@ -3839,7 +3791,7 @@ func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Name, nil
 	})
@@ -3883,7 +3835,7 @@ func (ec *executionContext) ___Directive_description(ctx context.Context, field 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Description(), nil
 	})
@@ -3912,6 +3864,50 @@ func (ec *executionContext) fieldContext___Directive_description(_ context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) ___Directive_isRepeatable(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext___Directive_isRepeatable(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsRepeatable, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext___Directive_isRepeatable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "__Directive",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) ___Directive_locations(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext___Directive_locations(ctx, field)
 	if err != nil {
@@ -3924,7 +3920,7 @@ func (ec *executionContext) ___Directive_locations(ctx context.Context, field gr
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Locations, nil
 	})
@@ -3968,7 +3964,7 @@ func (ec *executionContext) ___Directive_args(ctx context.Context, field graphql
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Args, nil
 	})
@@ -3987,7 +3983,7 @@ func (ec *executionContext) ___Directive_args(ctx context.Context, field graphql
 	return ec.marshalN__InputValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValueᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Directive_args(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Directive_args(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Directive",
 		Field:      field,
@@ -4003,53 +3999,24 @@ func (ec *executionContext) fieldContext___Directive_args(_ context.Context, fie
 				return ec.fieldContext___InputValue_type(ctx, field)
 			case "defaultValue":
 				return ec.fieldContext___InputValue_defaultValue(ctx, field)
+			case "isDeprecated":
+				return ec.fieldContext___InputValue_isDeprecated(ctx, field)
+			case "deprecationReason":
+				return ec.fieldContext___InputValue_deprecationReason(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __InputValue", field.Name)
 		},
 	}
-	return fc, nil
-}
-
-func (ec *executionContext) ___Directive_isRepeatable(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext___Directive_isRepeatable(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
 	defer func() {
 		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.IsRepeatable, nil
-	})
-	if err != nil {
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field___Directive_args_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext___Directive_isRepeatable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "__Directive",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
+		return fc, err
 	}
 	return fc, nil
 }
@@ -4066,7 +4033,7 @@ func (ec *executionContext) ___EnumValue_name(ctx context.Context, field graphql
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Name, nil
 	})
@@ -4110,7 +4077,7 @@ func (ec *executionContext) ___EnumValue_description(ctx context.Context, field 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Description(), nil
 	})
@@ -4151,7 +4118,7 @@ func (ec *executionContext) ___EnumValue_isDeprecated(ctx context.Context, field
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.IsDeprecated(), nil
 	})
@@ -4195,7 +4162,7 @@ func (ec *executionContext) ___EnumValue_deprecationReason(ctx context.Context, 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.DeprecationReason(), nil
 	})
@@ -4236,7 +4203,7 @@ func (ec *executionContext) ___Field_name(ctx context.Context, field graphql.Col
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Name, nil
 	})
@@ -4280,7 +4247,7 @@ func (ec *executionContext) ___Field_description(ctx context.Context, field grap
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Description(), nil
 	})
@@ -4321,7 +4288,7 @@ func (ec *executionContext) ___Field_args(ctx context.Context, field graphql.Col
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Args, nil
 	})
@@ -4340,7 +4307,7 @@ func (ec *executionContext) ___Field_args(ctx context.Context, field graphql.Col
 	return ec.marshalN__InputValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValueᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Field_args(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Field_args(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Field",
 		Field:      field,
@@ -4356,9 +4323,24 @@ func (ec *executionContext) fieldContext___Field_args(_ context.Context, field g
 				return ec.fieldContext___InputValue_type(ctx, field)
 			case "defaultValue":
 				return ec.fieldContext___InputValue_defaultValue(ctx, field)
+			case "isDeprecated":
+				return ec.fieldContext___InputValue_isDeprecated(ctx, field)
+			case "deprecationReason":
+				return ec.fieldContext___InputValue_deprecationReason(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __InputValue", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field___Field_args_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -4375,7 +4357,7 @@ func (ec *executionContext) ___Field_type(ctx context.Context, field graphql.Col
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Type, nil
 	})
@@ -4408,6 +4390,8 @@ func (ec *executionContext) fieldContext___Field_type(_ context.Context, field g
 				return ec.fieldContext___Type_name(ctx, field)
 			case "description":
 				return ec.fieldContext___Type_description(ctx, field)
+			case "specifiedByURL":
+				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "fields":
 				return ec.fieldContext___Type_fields(ctx, field)
 			case "interfaces":
@@ -4420,8 +4404,8 @@ func (ec *executionContext) fieldContext___Field_type(_ context.Context, field g
 				return ec.fieldContext___Type_inputFields(ctx, field)
 			case "ofType":
 				return ec.fieldContext___Type_ofType(ctx, field)
-			case "specifiedByURL":
-				return ec.fieldContext___Type_specifiedByURL(ctx, field)
+			case "isOneOf":
+				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Type", field.Name)
 		},
@@ -4441,7 +4425,7 @@ func (ec *executionContext) ___Field_isDeprecated(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.IsDeprecated(), nil
 	})
@@ -4485,7 +4469,7 @@ func (ec *executionContext) ___Field_deprecationReason(ctx context.Context, fiel
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.DeprecationReason(), nil
 	})
@@ -4526,7 +4510,7 @@ func (ec *executionContext) ___InputValue_name(ctx context.Context, field graphq
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Name, nil
 	})
@@ -4570,7 +4554,7 @@ func (ec *executionContext) ___InputValue_description(ctx context.Context, field
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Description(), nil
 	})
@@ -4611,7 +4595,7 @@ func (ec *executionContext) ___InputValue_type(ctx context.Context, field graphq
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Type, nil
 	})
@@ -4644,6 +4628,8 @@ func (ec *executionContext) fieldContext___InputValue_type(_ context.Context, fi
 				return ec.fieldContext___Type_name(ctx, field)
 			case "description":
 				return ec.fieldContext___Type_description(ctx, field)
+			case "specifiedByURL":
+				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "fields":
 				return ec.fieldContext___Type_fields(ctx, field)
 			case "interfaces":
@@ -4656,8 +4642,8 @@ func (ec *executionContext) fieldContext___InputValue_type(_ context.Context, fi
 				return ec.fieldContext___Type_inputFields(ctx, field)
 			case "ofType":
 				return ec.fieldContext___Type_ofType(ctx, field)
-			case "specifiedByURL":
-				return ec.fieldContext___Type_specifiedByURL(ctx, field)
+			case "isOneOf":
+				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Type", field.Name)
 		},
@@ -4677,7 +4663,7 @@ func (ec *executionContext) ___InputValue_defaultValue(ctx context.Context, fiel
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.DefaultValue, nil
 	})
@@ -4706,6 +4692,91 @@ func (ec *executionContext) fieldContext___InputValue_defaultValue(_ context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) ___InputValue_isDeprecated(ctx context.Context, field graphql.CollectedField, obj *introspection.InputValue) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext___InputValue_isDeprecated(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsDeprecated(), nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext___InputValue_isDeprecated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "__InputValue",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) ___InputValue_deprecationReason(ctx context.Context, field graphql.CollectedField, obj *introspection.InputValue) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext___InputValue_deprecationReason(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DeprecationReason(), nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext___InputValue_deprecationReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "__InputValue",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) ___Schema_description(ctx context.Context, field graphql.CollectedField, obj *introspection.Schema) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext___Schema_description(ctx, field)
 	if err != nil {
@@ -4718,7 +4789,7 @@ func (ec *executionContext) ___Schema_description(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Description(), nil
 	})
@@ -4759,7 +4830,7 @@ func (ec *executionContext) ___Schema_types(ctx context.Context, field graphql.C
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Types(), nil
 	})
@@ -4792,6 +4863,8 @@ func (ec *executionContext) fieldContext___Schema_types(_ context.Context, field
 				return ec.fieldContext___Type_name(ctx, field)
 			case "description":
 				return ec.fieldContext___Type_description(ctx, field)
+			case "specifiedByURL":
+				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "fields":
 				return ec.fieldContext___Type_fields(ctx, field)
 			case "interfaces":
@@ -4804,8 +4877,8 @@ func (ec *executionContext) fieldContext___Schema_types(_ context.Context, field
 				return ec.fieldContext___Type_inputFields(ctx, field)
 			case "ofType":
 				return ec.fieldContext___Type_ofType(ctx, field)
-			case "specifiedByURL":
-				return ec.fieldContext___Type_specifiedByURL(ctx, field)
+			case "isOneOf":
+				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Type", field.Name)
 		},
@@ -4825,7 +4898,7 @@ func (ec *executionContext) ___Schema_queryType(ctx context.Context, field graph
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.QueryType(), nil
 	})
@@ -4858,6 +4931,8 @@ func (ec *executionContext) fieldContext___Schema_queryType(_ context.Context, f
 				return ec.fieldContext___Type_name(ctx, field)
 			case "description":
 				return ec.fieldContext___Type_description(ctx, field)
+			case "specifiedByURL":
+				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "fields":
 				return ec.fieldContext___Type_fields(ctx, field)
 			case "interfaces":
@@ -4870,8 +4945,8 @@ func (ec *executionContext) fieldContext___Schema_queryType(_ context.Context, f
 				return ec.fieldContext___Type_inputFields(ctx, field)
 			case "ofType":
 				return ec.fieldContext___Type_ofType(ctx, field)
-			case "specifiedByURL":
-				return ec.fieldContext___Type_specifiedByURL(ctx, field)
+			case "isOneOf":
+				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Type", field.Name)
 		},
@@ -4891,7 +4966,7 @@ func (ec *executionContext) ___Schema_mutationType(ctx context.Context, field gr
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.MutationType(), nil
 	})
@@ -4921,6 +4996,8 @@ func (ec *executionContext) fieldContext___Schema_mutationType(_ context.Context
 				return ec.fieldContext___Type_name(ctx, field)
 			case "description":
 				return ec.fieldContext___Type_description(ctx, field)
+			case "specifiedByURL":
+				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "fields":
 				return ec.fieldContext___Type_fields(ctx, field)
 			case "interfaces":
@@ -4933,8 +5010,8 @@ func (ec *executionContext) fieldContext___Schema_mutationType(_ context.Context
 				return ec.fieldContext___Type_inputFields(ctx, field)
 			case "ofType":
 				return ec.fieldContext___Type_ofType(ctx, field)
-			case "specifiedByURL":
-				return ec.fieldContext___Type_specifiedByURL(ctx, field)
+			case "isOneOf":
+				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Type", field.Name)
 		},
@@ -4954,7 +5031,7 @@ func (ec *executionContext) ___Schema_subscriptionType(ctx context.Context, fiel
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.SubscriptionType(), nil
 	})
@@ -4984,6 +5061,8 @@ func (ec *executionContext) fieldContext___Schema_subscriptionType(_ context.Con
 				return ec.fieldContext___Type_name(ctx, field)
 			case "description":
 				return ec.fieldContext___Type_description(ctx, field)
+			case "specifiedByURL":
+				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "fields":
 				return ec.fieldContext___Type_fields(ctx, field)
 			case "interfaces":
@@ -4996,8 +5075,8 @@ func (ec *executionContext) fieldContext___Schema_subscriptionType(_ context.Con
 				return ec.fieldContext___Type_inputFields(ctx, field)
 			case "ofType":
 				return ec.fieldContext___Type_ofType(ctx, field)
-			case "specifiedByURL":
-				return ec.fieldContext___Type_specifiedByURL(ctx, field)
+			case "isOneOf":
+				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Type", field.Name)
 		},
@@ -5017,7 +5096,7 @@ func (ec *executionContext) ___Schema_directives(ctx context.Context, field grap
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Directives(), nil
 	})
@@ -5048,12 +5127,12 @@ func (ec *executionContext) fieldContext___Schema_directives(_ context.Context, 
 				return ec.fieldContext___Directive_name(ctx, field)
 			case "description":
 				return ec.fieldContext___Directive_description(ctx, field)
+			case "isRepeatable":
+				return ec.fieldContext___Directive_isRepeatable(ctx, field)
 			case "locations":
 				return ec.fieldContext___Directive_locations(ctx, field)
 			case "args":
 				return ec.fieldContext___Directive_args(ctx, field)
-			case "isRepeatable":
-				return ec.fieldContext___Directive_isRepeatable(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Directive", field.Name)
 		},
@@ -5073,7 +5152,7 @@ func (ec *executionContext) ___Type_kind(ctx context.Context, field graphql.Coll
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Kind(), nil
 	})
@@ -5117,7 +5196,7 @@ func (ec *executionContext) ___Type_name(ctx context.Context, field graphql.Coll
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Name(), nil
 	})
@@ -5158,7 +5237,7 @@ func (ec *executionContext) ___Type_description(ctx context.Context, field graph
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Description(), nil
 	})
@@ -5187,6 +5266,47 @@ func (ec *executionContext) fieldContext___Type_description(_ context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) ___Type_specifiedByURL(ctx context.Context, field graphql.CollectedField, obj *introspection.Type) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext___Type_specifiedByURL(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SpecifiedByURL(), nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext___Type_specifiedByURL(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "__Type",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) ___Type_fields(ctx context.Context, field graphql.CollectedField, obj *introspection.Type) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext___Type_fields(ctx, field)
 	if err != nil {
@@ -5199,7 +5319,7 @@ func (ec *executionContext) ___Type_fields(ctx context.Context, field graphql.Co
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Fields(fc.Args["includeDeprecated"].(bool)), nil
 	})
@@ -5265,7 +5385,7 @@ func (ec *executionContext) ___Type_interfaces(ctx context.Context, field graphq
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Interfaces(), nil
 	})
@@ -5295,6 +5415,8 @@ func (ec *executionContext) fieldContext___Type_interfaces(_ context.Context, fi
 				return ec.fieldContext___Type_name(ctx, field)
 			case "description":
 				return ec.fieldContext___Type_description(ctx, field)
+			case "specifiedByURL":
+				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "fields":
 				return ec.fieldContext___Type_fields(ctx, field)
 			case "interfaces":
@@ -5307,8 +5429,8 @@ func (ec *executionContext) fieldContext___Type_interfaces(_ context.Context, fi
 				return ec.fieldContext___Type_inputFields(ctx, field)
 			case "ofType":
 				return ec.fieldContext___Type_ofType(ctx, field)
-			case "specifiedByURL":
-				return ec.fieldContext___Type_specifiedByURL(ctx, field)
+			case "isOneOf":
+				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Type", field.Name)
 		},
@@ -5328,7 +5450,7 @@ func (ec *executionContext) ___Type_possibleTypes(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.PossibleTypes(), nil
 	})
@@ -5358,6 +5480,8 @@ func (ec *executionContext) fieldContext___Type_possibleTypes(_ context.Context,
 				return ec.fieldContext___Type_name(ctx, field)
 			case "description":
 				return ec.fieldContext___Type_description(ctx, field)
+			case "specifiedByURL":
+				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "fields":
 				return ec.fieldContext___Type_fields(ctx, field)
 			case "interfaces":
@@ -5370,8 +5494,8 @@ func (ec *executionContext) fieldContext___Type_possibleTypes(_ context.Context,
 				return ec.fieldContext___Type_inputFields(ctx, field)
 			case "ofType":
 				return ec.fieldContext___Type_ofType(ctx, field)
-			case "specifiedByURL":
-				return ec.fieldContext___Type_specifiedByURL(ctx, field)
+			case "isOneOf":
+				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Type", field.Name)
 		},
@@ -5391,7 +5515,7 @@ func (ec *executionContext) ___Type_enumValues(ctx context.Context, field graphq
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.EnumValues(fc.Args["includeDeprecated"].(bool)), nil
 	})
@@ -5453,7 +5577,7 @@ func (ec *executionContext) ___Type_inputFields(ctx context.Context, field graph
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.InputFields(), nil
 	})
@@ -5485,6 +5609,10 @@ func (ec *executionContext) fieldContext___Type_inputFields(_ context.Context, f
 				return ec.fieldContext___InputValue_type(ctx, field)
 			case "defaultValue":
 				return ec.fieldContext___InputValue_defaultValue(ctx, field)
+			case "isDeprecated":
+				return ec.fieldContext___InputValue_isDeprecated(ctx, field)
+			case "deprecationReason":
+				return ec.fieldContext___InputValue_deprecationReason(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __InputValue", field.Name)
 		},
@@ -5504,7 +5632,7 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.OfType(), nil
 	})
@@ -5534,6 +5662,8 @@ func (ec *executionContext) fieldContext___Type_ofType(_ context.Context, field 
 				return ec.fieldContext___Type_name(ctx, field)
 			case "description":
 				return ec.fieldContext___Type_description(ctx, field)
+			case "specifiedByURL":
+				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "fields":
 				return ec.fieldContext___Type_fields(ctx, field)
 			case "interfaces":
@@ -5546,8 +5676,8 @@ func (ec *executionContext) fieldContext___Type_ofType(_ context.Context, field 
 				return ec.fieldContext___Type_inputFields(ctx, field)
 			case "ofType":
 				return ec.fieldContext___Type_ofType(ctx, field)
-			case "specifiedByURL":
-				return ec.fieldContext___Type_specifiedByURL(ctx, field)
+			case "isOneOf":
+				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Type", field.Name)
 		},
@@ -5555,8 +5685,8 @@ func (ec *executionContext) fieldContext___Type_ofType(_ context.Context, field 
 	return fc, nil
 }
 
-func (ec *executionContext) ___Type_specifiedByURL(ctx context.Context, field graphql.CollectedField, obj *introspection.Type) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext___Type_specifiedByURL(ctx, field)
+func (ec *executionContext) ___Type_isOneOf(ctx context.Context, field graphql.CollectedField, obj *introspection.Type) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext___Type_isOneOf(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -5567,9 +5697,9 @@ func (ec *executionContext) ___Type_specifiedByURL(ctx context.Context, field gr
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.SpecifiedByURL(), nil
+		return obj.IsOneOf(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5578,19 +5708,19 @@ func (ec *executionContext) ___Type_specifiedByURL(ctx context.Context, field gr
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Type_specifiedByURL(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Type",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -5600,10 +5730,58 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(_ context.Context
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputChatInput(ctx context.Context, obj interface{}) (model.ChatInput, error) {
+func (ec *executionContext) unmarshalInputAtomicWhereCondition(ctx context.Context, obj any) (model.AtomicWhereCondition, error) {
+	var it model.AtomicWhereCondition
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"ColumnType", "Key", "Operator", "Value"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "ColumnType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ColumnType"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ColumnType = data
+		case "Key":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Key"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Key = data
+		case "Operator":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Operator"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Operator = data
+		case "Value":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Value"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Value = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputChatInput(ctx context.Context, obj any) (model.ChatInput, error) {
 	var it model.ChatInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
@@ -5648,10 +5826,10 @@ func (ec *executionContext) unmarshalInputChatInput(ctx context.Context, obj int
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputLoginCredentials(ctx context.Context, obj interface{}) (model.LoginCredentials, error) {
+func (ec *executionContext) unmarshalInputLoginCredentials(ctx context.Context, obj any) (model.LoginCredentials, error) {
 	var it model.LoginCredentials
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
@@ -5717,10 +5895,10 @@ func (ec *executionContext) unmarshalInputLoginCredentials(ctx context.Context, 
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputLoginProfileInput(ctx context.Context, obj interface{}) (model.LoginProfileInput, error) {
+func (ec *executionContext) unmarshalInputLoginProfileInput(ctx context.Context, obj any) (model.LoginProfileInput, error) {
 	var it model.LoginProfileInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
@@ -5758,10 +5936,37 @@ func (ec *executionContext) unmarshalInputLoginProfileInput(ctx context.Context,
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputRecordInput(ctx context.Context, obj interface{}) (model.RecordInput, error) {
+func (ec *executionContext) unmarshalInputOperationWhereCondition(ctx context.Context, obj any) (model.OperationWhereCondition, error) {
+	var it model.OperationWhereCondition
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"Children"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "Children":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Children"))
+			data, err := ec.unmarshalNWhereCondition2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐWhereConditionᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Children = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputRecordInput(ctx context.Context, obj any) (model.RecordInput, error) {
 	var it model.RecordInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
@@ -5799,10 +6004,10 @@ func (ec *executionContext) unmarshalInputRecordInput(ctx context.Context, obj i
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputSettingsConfigInput(ctx context.Context, obj interface{}) (model.SettingsConfigInput, error) {
+func (ec *executionContext) unmarshalInputSettingsConfigInput(ctx context.Context, obj any) (model.SettingsConfigInput, error) {
 	var it model.SettingsConfigInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
@@ -5820,6 +6025,54 @@ func (ec *executionContext) unmarshalInputSettingsConfigInput(ctx context.Contex
 				return it, err
 			}
 			it.MetricsEnabled = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputWhereCondition(ctx context.Context, obj any) (model.WhereCondition, error) {
+	var it model.WhereCondition
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"Type", "Atomic", "And", "Or"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "Type":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Type"))
+			data, err := ec.unmarshalNWhereConditionType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐWhereConditionType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Type = data
+		case "Atomic":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Atomic"))
+			data, err := ec.unmarshalOAtomicWhereCondition2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAtomicWhereCondition(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Atomic = data
+		case "And":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("And"))
+			data, err := ec.unmarshalOOperationWhereCondition2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐOperationWhereCondition(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.And = data
+		case "Or":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Or"))
+			data, err := ec.unmarshalOOperationWhereCondition2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐOperationWhereCondition(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Or = data
 		}
 	}
 
@@ -6680,6 +6933,11 @@ func (ec *executionContext) ___Directive(ctx context.Context, sel ast.SelectionS
 			}
 		case "description":
 			out.Values[i] = ec.___Directive_description(ctx, field, obj)
+		case "isRepeatable":
+			out.Values[i] = ec.___Directive_isRepeatable(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "locations":
 			out.Values[i] = ec.___Directive_locations(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -6687,11 +6945,6 @@ func (ec *executionContext) ___Directive(ctx context.Context, sel ast.SelectionS
 			}
 		case "args":
 			out.Values[i] = ec.___Directive_args(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "isRepeatable":
-			out.Values[i] = ec.___Directive_isRepeatable(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -6849,6 +7102,13 @@ func (ec *executionContext) ___InputValue(ctx context.Context, sel ast.Selection
 			}
 		case "defaultValue":
 			out.Values[i] = ec.___InputValue_defaultValue(ctx, field, obj)
+		case "isDeprecated":
+			out.Values[i] = ec.___InputValue_isDeprecated(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deprecationReason":
+			out.Values[i] = ec.___InputValue_deprecationReason(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6947,6 +7207,8 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = ec.___Type_name(ctx, field, obj)
 		case "description":
 			out.Values[i] = ec.___Type_description(ctx, field, obj)
+		case "specifiedByURL":
+			out.Values[i] = ec.___Type_specifiedByURL(ctx, field, obj)
 		case "fields":
 			out.Values[i] = ec.___Type_fields(ctx, field, obj)
 		case "interfaces":
@@ -6959,8 +7221,8 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = ec.___Type_inputFields(ctx, field, obj)
 		case "ofType":
 			out.Values[i] = ec.___Type_ofType(ctx, field, obj)
-		case "specifiedByURL":
-			out.Values[i] = ec.___Type_specifiedByURL(ctx, field, obj)
+		case "isOneOf":
+			out.Values[i] = ec.___Type_isOneOf(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7042,7 +7304,7 @@ func (ec *executionContext) marshalNAIChatMessage2ᚖgithubᚗcomᚋclideyᚋwho
 	return ec._AIChatMessage(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
+func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v any) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -7057,7 +7319,7 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalNChatInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐChatInput(ctx context.Context, v interface{}) (model.ChatInput, error) {
+func (ec *executionContext) unmarshalNChatInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐChatInput(ctx context.Context, v any) (model.ChatInput, error) {
 	res, err := ec.unmarshalInputChatInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -7116,7 +7378,7 @@ func (ec *executionContext) marshalNColumn2ᚖgithubᚗcomᚋclideyᚋwhodbᚋco
 	return ec._Column(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNDatabaseType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDatabaseType(ctx context.Context, v interface{}) (model.DatabaseType, error) {
+func (ec *executionContext) unmarshalNDatabaseType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDatabaseType(ctx context.Context, v any) (model.DatabaseType, error) {
 	var res model.DatabaseType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -7234,7 +7496,7 @@ func (ec *executionContext) marshalNGraphUnitRelationship2ᚖgithubᚗcomᚋclid
 	return ec._GraphUnitRelationship(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNGraphUnitRelationshipType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐGraphUnitRelationshipType(ctx context.Context, v interface{}) (model.GraphUnitRelationshipType, error) {
+func (ec *executionContext) unmarshalNGraphUnitRelationshipType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐGraphUnitRelationshipType(ctx context.Context, v any) (model.GraphUnitRelationshipType, error) {
 	var res model.GraphUnitRelationshipType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -7244,7 +7506,7 @@ func (ec *executionContext) marshalNGraphUnitRelationshipType2githubᚗcomᚋcli
 	return v
 }
 
-func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
+func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v any) (int, error) {
 	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -7259,7 +7521,7 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) unmarshalNLoginCredentials2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐLoginCredentials(ctx context.Context, v interface{}) (model.LoginCredentials, error) {
+func (ec *executionContext) unmarshalNLoginCredentials2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐLoginCredentials(ctx context.Context, v any) (model.LoginCredentials, error) {
 	res, err := ec.unmarshalInputLoginCredentials(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -7318,7 +7580,7 @@ func (ec *executionContext) marshalNLoginProfile2ᚖgithubᚗcomᚋclideyᚋwhod
 	return ec._LoginProfile(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNLoginProfileInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐLoginProfileInput(ctx context.Context, v interface{}) (model.LoginProfileInput, error) {
+func (ec *executionContext) unmarshalNLoginProfileInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐLoginProfileInput(ctx context.Context, v any) (model.LoginProfileInput, error) {
 	res, err := ec.unmarshalInputLoginProfileInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -7377,11 +7639,9 @@ func (ec *executionContext) marshalNRecord2ᚖgithubᚗcomᚋclideyᚋwhodbᚋco
 	return ec._Record(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNRecordInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordInputᚄ(ctx context.Context, v interface{}) ([]*model.RecordInput, error) {
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
+func (ec *executionContext) unmarshalNRecordInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordInputᚄ(ctx context.Context, v any) ([]*model.RecordInput, error) {
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]*model.RecordInput, len(vSlice))
 	for i := range vSlice {
@@ -7394,7 +7654,7 @@ func (ec *executionContext) unmarshalNRecordInput2ᚕᚖgithubᚗcomᚋclideyᚋ
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalNRecordInput2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordInput(ctx context.Context, v interface{}) (*model.RecordInput, error) {
+func (ec *executionContext) unmarshalNRecordInput2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordInput(ctx context.Context, v any) (*model.RecordInput, error) {
 	res, err := ec.unmarshalInputRecordInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
@@ -7427,7 +7687,7 @@ func (ec *executionContext) marshalNSettingsConfig2ᚖgithubᚗcomᚋclideyᚋwh
 	return ec._SettingsConfig(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNSettingsConfigInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSettingsConfigInput(ctx context.Context, v interface{}) (model.SettingsConfigInput, error) {
+func (ec *executionContext) unmarshalNSettingsConfigInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSettingsConfigInput(ctx context.Context, v any) (model.SettingsConfigInput, error) {
 	res, err := ec.unmarshalInputSettingsConfigInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -7500,7 +7760,7 @@ func (ec *executionContext) marshalNStorageUnit2ᚖgithubᚗcomᚋclideyᚋwhodb
 	return ec._StorageUnit(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
+func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -7515,11 +7775,9 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) unmarshalNString2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
+func (ec *executionContext) unmarshalNString2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]string, len(vSlice))
 	for i := range vSlice {
@@ -7547,11 +7805,9 @@ func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel
 	return ret
 }
 
-func (ec *executionContext) unmarshalNString2ᚕᚕstringᚄ(ctx context.Context, v interface{}) ([][]string, error) {
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
+func (ec *executionContext) unmarshalNString2ᚕᚕstringᚄ(ctx context.Context, v any) ([][]string, error) {
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([][]string, len(vSlice))
 	for i := range vSlice {
@@ -7577,6 +7833,36 @@ func (ec *executionContext) marshalNString2ᚕᚕstringᚄ(ctx context.Context, 
 	}
 
 	return ret
+}
+
+func (ec *executionContext) unmarshalNWhereCondition2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐWhereConditionᚄ(ctx context.Context, v any) ([]*model.WhereCondition, error) {
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]*model.WhereCondition, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNWhereCondition2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐWhereCondition(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNWhereCondition2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐWhereCondition(ctx context.Context, v any) (*model.WhereCondition, error) {
+	res, err := ec.unmarshalInputWhereCondition(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNWhereConditionType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐWhereConditionType(ctx context.Context, v any) (model.WhereConditionType, error) {
+	var res model.WhereConditionType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNWhereConditionType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐWhereConditionType(ctx context.Context, sel ast.SelectionSet, v model.WhereConditionType) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
@@ -7627,7 +7913,7 @@ func (ec *executionContext) marshalN__Directive2ᚕgithubᚗcomᚋ99designsᚋgq
 	return ret
 }
 
-func (ec *executionContext) unmarshalN__DirectiveLocation2string(ctx context.Context, v interface{}) (string, error) {
+func (ec *executionContext) unmarshalN__DirectiveLocation2string(ctx context.Context, v any) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -7642,11 +7928,9 @@ func (ec *executionContext) marshalN__DirectiveLocation2string(ctx context.Conte
 	return res
 }
 
-func (ec *executionContext) unmarshalN__DirectiveLocation2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
+func (ec *executionContext) unmarshalN__DirectiveLocation2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]string, len(vSlice))
 	for i := range vSlice {
@@ -7817,7 +8101,7 @@ func (ec *executionContext) marshalN__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgen�
 	return ec.___Type(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalN__TypeKind2string(ctx context.Context, v interface{}) (string, error) {
+func (ec *executionContext) unmarshalN__TypeKind2string(ctx context.Context, v any) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -7832,7 +8116,15 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
+func (ec *executionContext) unmarshalOAtomicWhereCondition2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAtomicWhereCondition(ctx context.Context, v any) (*model.AtomicWhereCondition, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputAtomicWhereCondition(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v any) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -7842,7 +8134,7 @@ func (ec *executionContext) marshalOBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalOBoolean2ᚖbool(ctx context.Context, v interface{}) (*bool, error) {
+func (ec *executionContext) unmarshalOBoolean2ᚖbool(ctx context.Context, v any) (*bool, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7858,14 +8150,20 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) unmarshalORecordInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordInputᚄ(ctx context.Context, v interface{}) ([]*model.RecordInput, error) {
+func (ec *executionContext) unmarshalOOperationWhereCondition2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐOperationWhereCondition(ctx context.Context, v any) (*model.OperationWhereCondition, error) {
 	if v == nil {
 		return nil, nil
 	}
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
+	res, err := ec.unmarshalInputOperationWhereCondition(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalORecordInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordInputᚄ(ctx context.Context, v any) ([]*model.RecordInput, error) {
+	if v == nil {
+		return nil, nil
 	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]*model.RecordInput, len(vSlice))
 	for i := range vSlice {
@@ -7885,7 +8183,7 @@ func (ec *executionContext) marshalORowsResult2ᚖgithubᚗcomᚋclideyᚋwhodb�
 	return ec._RowsResult(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
+func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v any) (*string, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7899,6 +8197,14 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	}
 	res := graphql.MarshalString(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOWhereCondition2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐWhereCondition(ctx context.Context, v any) (*model.WhereCondition, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputWhereCondition(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

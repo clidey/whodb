@@ -1,3 +1,17 @@
+// Copyright 2025 Clidey, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package redis
 
 import (
@@ -6,6 +20,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/go-redis/redis/v8"
 )
@@ -43,7 +58,7 @@ func (p *RedisPlugin) GetDatabases(config *engine.PluginConfig) ([]string, error
 	return availableDatabases, nil
 }
 
-func (p *RedisPlugin) GetSchema(config *engine.PluginConfig) ([]string, error) {
+func (p *RedisPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, error) {
 	return nil, errors.ErrUnsupported
 }
 
@@ -149,7 +164,12 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 	return storageUnits, nil
 }
 
-func (p *RedisPlugin) GetRows(config *engine.PluginConfig, schema string, storageUnit string, where string, pageSize int, pageOffset int) (*engine.GetRowsResult, error) {
+func (p *RedisPlugin) GetRows(
+	config *engine.PluginConfig,
+	schema, storageUnit string,
+	where *model.WhereCondition,
+	pageSize, pageOffset int,
+) (*engine.GetRowsResult, error) {
 	ctx := context.Background()
 
 	client, err := DB(config)
@@ -180,9 +200,11 @@ func (p *RedisPlugin) GetRows(config *engine.PluginConfig, schema string, storag
 		if err != nil {
 			return nil, err
 		}
-		rows := make([][]string, 0, len(hashValues))
+		rows := [][]string{}
 		for field, value := range hashValues {
-			rows = append(rows, []string{field, value})
+			if where == nil || filterRedisHash(field, value, where) {
+				rows = append(rows, []string{field, value})
+			}
 		}
 		result = &engine.GetRowsResult{
 			Columns: []engine.Column{{Name: "field", Type: "string"}, {Name: "value", Type: "string"}},
@@ -193,9 +215,11 @@ func (p *RedisPlugin) GetRows(config *engine.PluginConfig, schema string, storag
 		if err != nil {
 			return nil, err
 		}
-		rows := make([][]string, 0, len(listValues))
+		rows := [][]string{}
 		for i, value := range listValues {
-			rows = append(rows, []string{strconv.Itoa(i), value})
+			if where == nil || filterRedisList(value, where) {
+				rows = append(rows, []string{strconv.Itoa(i), value})
+			}
 		}
 		result = &engine.GetRowsResult{
 			Columns: []engine.Column{{Name: "index", Type: "string"}, {Name: "value", Type: "string"}},
@@ -206,7 +230,7 @@ func (p *RedisPlugin) GetRows(config *engine.PluginConfig, schema string, storag
 		if err != nil {
 			return nil, err
 		}
-		rows := make([][]string, 0, len(setValues))
+		rows := [][]string{}
 		for i, value := range setValues {
 			rows = append(rows, []string{strconv.Itoa(i), value})
 		}
@@ -220,6 +244,85 @@ func (p *RedisPlugin) GetRows(config *engine.PluginConfig, schema string, storag
 	}
 
 	return result, nil
+}
+
+func filterRedisHash(field, value string, where *model.WhereCondition) bool {
+	condition, err := convertWhereConditionToRedisFilter(where)
+	if err != nil {
+		return true // Ignore filtering on error
+	}
+
+	for key, op := range condition {
+		if key == "field" {
+			if !evaluateRedisCondition(field, op.Operator, op.Value) {
+				return false
+			}
+		} else if key == "value" {
+			if !evaluateRedisCondition(value, op.Operator, op.Value) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func filterRedisList(value string, where *model.WhereCondition) bool {
+	condition, err := convertWhereConditionToRedisFilter(where)
+	if err != nil {
+		return true // Ignore filtering on error
+	}
+
+	for key, op := range condition {
+		if key == "value" {
+			if !evaluateRedisCondition(value, op.Operator, op.Value) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+type redisFilter struct {
+	Operator string
+	Value    string
+}
+
+func convertWhereConditionToRedisFilter(where *model.WhereCondition) (map[string]redisFilter, error) {
+	if where == nil {
+		return nil, nil
+	}
+
+	switch where.Type {
+	case model.WhereConditionTypeAtomic:
+		if where.Atomic == nil {
+			return nil, fmt.Errorf("atomic condition must have an atomicwherecondition")
+		}
+
+		return map[string]redisFilter{
+			where.Atomic.Key: {
+				Operator: where.Atomic.Operator,
+				Value:    where.Atomic.Value,
+			},
+		}, nil
+
+	default:
+		return nil, fmt.Errorf("unsupported Redis filtering condition type: %v", where.Type)
+	}
+}
+
+func evaluateRedisCondition(value, operator, target string) bool {
+	switch operator {
+	case "=":
+		return value == target
+	case "!=":
+		return value != target
+	case ">":
+		return value > target
+	case "<":
+		return value < target
+	default:
+		return false
+	}
 }
 
 func (p *RedisPlugin) GetGraph(config *engine.PluginConfig, schema string) ([]engine.GraphUnit, error) {

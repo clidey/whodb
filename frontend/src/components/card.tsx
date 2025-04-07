@@ -1,3 +1,19 @@
+/**
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -31,7 +47,7 @@ type ICardProps = {
 
 export const Icon: FC<ICardIcon> = memo((propsIcon) => (<div
   className={twMerge(classNames(
-    "h-[40px] w-[40px] rounded-lg flex justify-center items-center shadow border dark:border-white/5",
+    "h-[40px] w-[40px] rounded-lg flex justify-center items-center shadow-sm border dark:border-white/5",
     propsIcon.bgClassName
   ))}
 >
@@ -73,7 +89,7 @@ export const Card: FC<ICardProps> = ({
     <motion.div
       className={twMerge(
         classNames(
-          "bg-white h-[200px] w-[200px] rounded-3xl shadow-sm border p-4 flex flex-col justify-between relative transition-all duration-300 overflow-y-auto dark:bg-white/10 dark:border-white/5",
+          "bg-[#fbfaf8] h-[200px] w-[200px] rounded-3xl shadow-xs border border-neutral-600/5 p-4 flex flex-col justify-between relative transition-all duration-300 overflow-y-auto dark:bg-[#252525] dark:border-white/5",
           {
             "shadow-2xl z-10": highlightStatus,
           },

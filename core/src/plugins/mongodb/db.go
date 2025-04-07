@@ -1,15 +1,30 @@
+// Copyright 2025 Clidey, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package mongodb
 
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"strconv"
+	"strings"
+
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"net/url"
-	"strconv"
-	"strings"
 )
 
 func DB(config *engine.PluginConfig) (*mongo.Client, error) {
@@ -19,22 +34,24 @@ func DB(config *engine.PluginConfig) (*mongo.Client, error) {
 		return nil, err
 	}
 	queryParams := common.GetRecordValueOrDefault(config.Credentials.Advanced, "URL Params", "")
-	dnsEnabled := common.GetRecordValueOrDefault(config.Credentials.Advanced, "DNS Enabled", "false")
+	dnsEnabled, err := strconv.ParseBool(common.GetRecordValueOrDefault(config.Credentials.Advanced, "DNS Enabled", "false"))
+	if err != nil {
+		return nil, err
+	}
 
 	connectionURI := strings.Builder{}
 	clientOptions := options.Client()
 
-	if strings.ToLower(dnsEnabled) == "true" {
+	if dnsEnabled {
 		connectionURI.WriteString("mongodb+srv://")
 		connectionURI.WriteString(fmt.Sprintf("%s/", config.Credentials.Hostname))
-		connectionURI.WriteString(config.Credentials.Database)
-		connectionURI.WriteString(queryParams)
 	} else {
 		connectionURI.WriteString("mongodb://")
 		connectionURI.WriteString(fmt.Sprintf("%s:%d/", config.Credentials.Hostname, port))
-		connectionURI.WriteString(config.Credentials.Database)
-		connectionURI.WriteString(queryParams)
 	}
+
+	connectionURI.WriteString(config.Credentials.Database)
+	connectionURI.WriteString(queryParams)
 
 	clientOptions.ApplyURI(connectionURI.String())
 	clientOptions.SetAuth(options.Credential{
