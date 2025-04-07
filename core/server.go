@@ -58,8 +58,8 @@ func main() {
 		Addr:              fmt.Sprintf(":%s", port),
 		Handler:           r,
 		ReadHeaderTimeout: 5 * time.Second,
-		ReadTimeout:       5 * time.Second,
-		WriteTimeout:      10 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      1 * time.Minute,
 		IdleTimeout:       30 * time.Second,
 	}
 
