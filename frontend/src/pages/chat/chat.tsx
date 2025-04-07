@@ -12,29 +12,55 @@ import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { Table } from "../../components/table";
 import { InternalRoutes } from "../../config/routes";
-import { GetAiChatQuery, useGetAiChatLazyQuery, useGetAiModelsLazyQuery } from "../../generated/graphql";
+import { AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery, useGetAiModelsLazyQuery } from "../../generated/graphql";
 import { availableExternalModelTypes, DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { chooseRandomItems } from "../../utils/functions";
 import { chatExamples } from "./examples";
 import logoImage from "../../../public/images/logo.png";
+import { HoudiniActions } from "../../store/chat";
+
+const thinkingPhrases = [
+    "Thinking",
+    "Pondering life’s mysteries",
+    "Consulting the cloud oracles",
+    "Googling furiously (just kidding)",
+    "Aligning the neural networks",
+    "Making it up as I go (shh)",
+    "Counting virtual sheep",
+    "Channeling Einstein",
+    "Tuning my algorithms",
+    "Drinking a byte of coffee",
+    "Running in circles virtually.",
+    "Pretending to be busy",
+    "Loading witty comeback",
+    "Downloading some wisdom",
+    "Cooking up some data stew",
+    "Doing AI things™",
+    "Hacking the mainframe (for fun)",
+    "Staring into the digital abyss",
+    "Flipping a quantum coin",
+    "Reading your mind (ethically)",
+    "Sharpening my sarcasm",
+    "Checking my vibes",
+    "Simulating deep thought",
+    "Rewiring my circuits",
+    "Polishing my crystal processor"
+  ];
+  
 
 type TableData = GetAiChatQuery["AIChat"][0]["Result"];
 
-const TablePreview: FC<{ data: TableData, text: string }> = ({ data, text }) => {
+const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ type, data, text }) => {
     const [showSQL, setShowSQL] = useState(false);
 
     const handleCodeToggle = useCallback(() => {
         setShowSQL(status => !status);
     }, []);
 
-    const textWithoutComments = useMemo(() => {
-        return text.split("\n").filter(text => !text.startsWith("--")).join("\n");
-    }, [text]);
-
     return <div className="flex flex-col w-full group/table-preview gap-2 relative">
-        <div className="absolute -top-3 -left-3 opacity-0 group-hover/table-preview:opacity-100 transition-all z-1">
+        <div className="absolute -top-3 -left-3 opacity-0 group-hover/table-preview:opacity-100 transition-all z-[1]">
             <ActionButton containerClassName="w-8 h-8" className="w-5 h-5" icon={cloneElement(showSQL ? Icons.Tables : Icons.Code, {
                 className: "w-6 h-6 stroke-white",
             })} onClick={handleCodeToggle} />
@@ -45,11 +71,11 @@ const TablePreview: FC<{ data: TableData, text: string }> = ({ data, text }) => 
                 ? <div className="h-[150px] w-full">
                     <CodeEditor value={text} />
                 </div>
-                :  (data != null && data.Rows.length > 0) || textWithoutComments.trim().startsWith("SELECT")
-                    ? <Table className="h-[150px]" columns={data?.Columns.map(c => c.Name) ?? []} columnTags={data?.Columns.map(c => c.Type)}
+                :  (data != null && data.Rows.length > 0) || type === "sql:get"
+                    ? <Table className="h-[250px]" columns={data?.Columns.map(c => c.Name) ?? []} columnTags={data?.Columns.map(c => c.Type)}
                         rows={data?.Rows ?? []} totalPages={1} currentPage={1} disableEdit={true} />
                     : <div className="bg-white/10 text-neutral-800 dark:text-neutral-300 rounded-lg p-2 flex gap-2">
-                        Action Executed
+                        Action Executed ({type.toUpperCase().split(":")?.[1]})
                         {Icons.CheckCircle}
                     </div>
             }
@@ -57,22 +83,14 @@ const TablePreview: FC<{ data: TableData, text: string }> = ({ data, text }) => 
     </div>
 }
 
-type IChatMessage = {
-    type: "message";
-    text: string;
+type IChatMessage = AiChatMessage & {
     isUserInput?: boolean;
-} | {
-    type: "sql";
-    data: TableData;
-    text: string;
-    isUserInput?: true;
-}
+};
 
 
 export const externalModelTypes = map(availableExternalModelTypes, (model) => createDropdownItem(model, (Icons.Logos as Record<string, ReactElement>)[model]));
 
 export const ChatPage: FC = () => {
-    const [chats, setChats] = useState<IChatMessage[]>([]);
     const [currentModel, setCurrentModel] = useState("");
     const [query, setQuery] = useState("");
     const [addExternalModel, setAddExternalModel] = useState(false);
@@ -80,6 +98,7 @@ export const ChatPage: FC = () => {
     const [externalModelToken, setExternalModelToken] = useState<string>();
     const modelType = useAppSelector(state => state.database.current);
     const modelTypes = useAppSelector(state => state.database.modelTypes);
+    const chats = useAppSelector(state => state.houdini.chats);
     const [modelAvailable, setModelAvailable] = useState(true);
     const [ models, setModels ] = useState<IDropdownItem[]>([]);
     const [getAIModels, { loading: getAIModelsLoading }] = useGetAiModelsLazyQuery({
@@ -132,10 +151,12 @@ export const ChatPage: FC = () => {
     }, []);
 
     const handleSubmitQuery = useCallback(() => {
-        if (modelType == null) {
+        const sanitizedQuery = query.trim();
+        if (modelType == null || sanitizedQuery.length === 0) {
             return;
         }
-        setChats(chats => [...chats, { type: "message", text: query, isUserInput: true, }]);
+
+        dispatch(HoudiniActions.addChatMessage({ Type: "message", Text: sanitizedQuery, isUserInput: true, }));
         setTimeout(() => {
             if (scrollContainerRef.current != null) {
                 scrollContainerRef.current.scroll({
@@ -148,26 +169,28 @@ export const ChatPage: FC = () => {
             variables: {
                 modelType: modelType.modelType,
                 token: modelType.token,
-                query,
+                query: sanitizedQuery,
                 model: currentModel,
-                previousConversation: chats.map(chat => `${chat.isUserInput ? "User" : "System"}: ${chat.text}`).join("\n"),
+                previousConversation: chats.map(chat => `${chat.isUserInput ? "<User>" : "<System>"}${chat.Text}${chat.isUserInput ? "</User>" : "</System>"}`).join("\n"),
                 schema,
             },
             onCompleted(data) {
                 const systemChats: IChatMessage[] = data.AIChat.map(chat => {
-                    if (chat.Type === "sql") {
+                    if (chat.Type.startsWith("sql")) {
                         return {
-                            type: "sql",
-                            text: chat.Text,
-                            data: chat.Result,
+                            Type: chat.Type,
+                            Text: chat.Text,
+                            Result: chat.Result as AiChatMessage["Result"],
                         }
                     }
                     return {
-                        type: "message",
-                        text: chat.Text,
+                        Type: chat.Type,
+                        Text: chat.Text,
                     }
                 });
-                setChats(chats => [...chats, ...systemChats]);
+                for (const systemChat of systemChats) {
+                    dispatch(HoudiniActions.addChatMessage(systemChat));
+                }
                 setTimeout(() => {
                     if (scrollContainerRef.current != null) {
                         scrollContainerRef.current.scroll({
@@ -192,7 +215,7 @@ export const ChatPage: FC = () => {
           while (searchIndex >= 0) {
             if (chats[searchIndex].isUserInput) {
               setCurrentSearchIndex(searchIndex);
-              setQuery(chats[searchIndex].text);
+              setQuery(chats[searchIndex].Text);
               return;
             }
             searchIndex--;
@@ -203,7 +226,7 @@ export const ChatPage: FC = () => {
             while (searchIndex > foundSearchIndex) {
               if (chats[searchIndex].isUserInput) {
                 setCurrentSearchIndex(searchIndex);
-                setQuery(chats[searchIndex].text);
+                setQuery(chats[searchIndex].Text);
                 return;
               }
               searchIndex--;
@@ -292,6 +315,10 @@ export const ChatPage: FC = () => {
         return loading || models.length === 0 || !modelAvailable;
     }, [loading, modelAvailable, models.length]);
 
+    const handleClear = useCallback(() => {
+        dispatch(HoudiniActions.clear());
+    }, []);
+
     return (
         <InternalPage routes={[InternalRoutes.Chat]}>
             <AnimatePresence mode="wait">
@@ -323,34 +350,39 @@ export const ChatPage: FC = () => {
                 }
             </AnimatePresence>
             <div className="flex flex-col justify-center items-center w-full h-full gap-2">
-                <div className={classNames("flex justify-end w-full gap-2", {
-                    "opacity-50 pointer-events-none": addExternalModel,
-                })}>
-                    <Dropdown className="w-[200px]" value={modelType && {
-                            id: modelType.id,
-                            label: modelType.modelType,
-                            icon: (Icons.Logos as Record<string, ReactElement>)[modelType.modelType],
-                        }}
-                        items={modelTypesDropdownItems}
-                        onChange={handleAIModelTypeChange}
-                        action={<div onClick={handleAIModelRemove}>{cloneElement(Icons.Delete, {
-                            className: "w-6 h-6 stroke-red-500"
-                        })}</div>}
-                        defaultItem={{ label: "Add External Model", icon: Icons.Add }}
-                        onDefaultItemClick={handleAddExternalModel}
-                        enableAction={(index) => index !== 0} />
-                    {
-                        modelAvailable
-                        ? <Dropdown className="w-[200px]" value={createDropdownItem(currentModel)}
-                                items={models}
-                                onChange={handleAIModelChange} 
-                                loading={getAIModelsLoading} />
-                        : <div className="text-neutral-500 w-[200px] rounded-lg bg-white/5 flex items-center pl-4">
-                            Unavailable
-                        </div>
-                    }
+                <div className="flex w-full justify-between">
+                    <div className={classNames("flex gap-2", {
+                        "opacity-50 pointer-events-none": addExternalModel,
+                    })}>
+                        <Dropdown className="w-[200px]" value={modelType && {
+                                id: modelType.id,
+                                label: modelType.modelType,
+                                icon: (Icons.Logos as Record<string, ReactElement>)[modelType.modelType],
+                            }}
+                            items={modelTypesDropdownItems}
+                            onChange={handleAIModelTypeChange}
+                            action={<div onClick={handleAIModelRemove}>{cloneElement(Icons.Delete, {
+                                className: "w-6 h-6 stroke-red-500"
+                            })}</div>}
+                            defaultItem={{ label: "Add External Model", icon: Icons.Add }}
+                            onDefaultItemClick={handleAddExternalModel}
+                            enableAction={(index) => index !== 0} />
+                        {
+                            modelAvailable
+                            ? <Dropdown className="w-[200px]" value={createDropdownItem(currentModel)}
+                                    items={models}
+                                    onChange={handleAIModelChange} 
+                                    loading={getAIModelsLoading} />
+                            : <div className="text-neutral-500 w-[200px] rounded-lg bg-white/5 flex items-center pl-4">
+                                Unavailable
+                            </div>
+                        }
+                    </div>
+                    <div className="flex gap-2">
+                        <AnimatedButton label="New Chat" icon={Icons.Refresh} onClick={handleClear} />
+                    </div>
                 </div>
-                <div className={classNames("flex bg-white/5 grow w-full rounded-xl overflow-hidden", {
+                <div className={classNames("flex grow w-full rounded-xl overflow-hidden", {
                     "opacity-[4%] pointer-events-none": disableAll,
                 })}>
                     {
@@ -374,24 +406,40 @@ export const ChatPage: FC = () => {
                                 <div className="flex w-[max(65%,450px)] flex-col gap-2">
                                     {
                                         chats.map((chat, i) => {
-                                            if (chat.type === "message") {
-                                                return <div key={`chat-${i}`} className={classNames("flex items-center gap-4 overflow-hidden break-words leading-6 shrink-0", {
+                                            if (chat.Type === "message") {
+                                                return <div key={`chat-${i}`} className={classNames("flex items-center gap-4 overflow-hidden break-words leading-6 shrink-0 relative", {
                                                     "self-end": chat.isUserInput,
                                                     "self-start": !chat.isUserInput,
                                                 })}>
-                                                    {!chat.isUserInput && chats[i-1]?.isUserInput && <img src={logoImage} alt="clidey logo" className="w-auto h-6" />}
-                                                    <div className={classNames("text-neutral-800 dark:text-neutral-300 px-4 py-2 rounded-lg", {
-                                                        "bg-white/10": chat.isUserInput,
+                                                    {!chat.isUserInput && chats[i-1]?.isUserInput 
+                                                        ? <img src={logoImage} alt="clidey logo" className="w-auto h-6" />
+                                                        : <div className="pl-4" />}
+                                                    <div className={classNames("text-neutral-800 dark:text-neutral-300 px-4 py-2 rounded-xl", {
+                                                        "bg-neutral-600/5 dark:bg-[#2C2F33]": chat.isUserInput,
                                                     })}>
-                                                        {chat.text}
+                                                        {chat.Text}
+                                                    </div>
+                                                </div>
+                                            } else if (chat.Type === "error") {
+                                                return <div key={`chat-${i}`} className="flex items-center gap-4 overflow-hidden break-words leading-6 shrink-0 self-start">
+                                                    {!chat.isUserInput && chats[i-1]?.isUserInput 
+                                                        ? <img src={logoImage} alt="clidey logo" className="w-auto h-6" />
+                                                        : <div className="pl-4" />}
+                                                    <div className="text-red-800 dark:text-red-300 px-4 py-2 rounded-lg">
+                                                        {chat.Text}
                                                     </div>
                                                 </div>
                                             }
-                                            return <TablePreview text={chat.text} data={chat.data} />
+                                            return <div key={`chat-${i}`} className="flex gap-4 w-full overflow-hidden pt-4 pr-9">
+                                                {!chat.isUserInput && chats[i-1]?.isUserInput 
+                                                    ? <img src={logoImage} alt="clidey logo" className="w-auto h-6" />
+                                                    : <div className="pl-4" />}
+                                                <TablePreview type={chat.Type} text={chat.Text} data={chat.Result} />
+                                            </div>
                                         })
                                     }
-                                    { loading &&  <div className="flex w-full justify-end mt-4">
-                                        <Loading loadingText="Waiting for response" size="sm" />
+                                    { loading &&  <div className="flex w-full mt-4">
+                                        <Loading loadingText={chooseRandomItems(thinkingPhrases)[0]} size="sm" />
                                     </div> }
                                 </div>
                             </div>

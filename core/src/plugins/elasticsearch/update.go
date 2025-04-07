@@ -21,7 +21,7 @@ for (key in ctx._source.keySet().toArray()) {
 }
 `
 
-func (p *ElasticSearchPlugin) UpdateStorageUnit(config *engine.PluginConfig, database string, storageUnit string, values map[string]string) (bool, error) {
+func (p *ElasticSearchPlugin) UpdateStorageUnit(config *engine.PluginConfig, database string, storageUnit string, values map[string]string, updatedColumns []string) (bool, error) {
 	client, err := DB(config)
 	if err != nil {
 		return false, err

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/engine"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -26,7 +27,7 @@ func (p *MongoDBPlugin) GetDatabases(config *engine.PluginConfig) ([]string, err
 	return nil, errors.ErrUnsupported
 }
 
-func (p *MongoDBPlugin) GetSchema(config *engine.PluginConfig) ([]string, error) {
+func (p *MongoDBPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, error) {
 	client, err := DB(config)
 	if err != nil {
 		return nil, err
@@ -48,31 +49,61 @@ func (p *MongoDBPlugin) GetStorageUnits(config *engine.PluginConfig, database st
 	defer client.Disconnect(context.TODO())
 
 	db := client.Database(database)
-	collections, err := db.ListCollectionNames(context.TODO(), bson.M{})
+	cursor, err := db.ListCollections(context.TODO(), bson.M{})
 	if err != nil {
 		return nil, err
 	}
+	defer cursor.Close(context.TODO())
 
 	storageUnits := []engine.StorageUnit{}
-	for _, collectionName := range collections {
-		stats := bson.M{}
-		err := db.RunCommand(context.TODO(), bson.D{{Key: "collStats", Value: collectionName}}).Decode(&stats)
-		if err != nil {
+	for cursor.Next(context.TODO()) {
+		var collectionInfo bson.M
+		if err := cursor.Decode(&collectionInfo); err != nil {
 			return nil, err
 		}
 
-		storageUnits = append(storageUnits, engine.StorageUnit{
-			Name: collectionName,
-			Attributes: []engine.Record{
+		collectionName, _ := collectionInfo["name"].(string)
+		collectionType, _ := collectionInfo["type"].(string)
+
+		storageUnit := engine.StorageUnit{Name: collectionName}
+
+		if collectionType == "view" {
+			viewOn, _ := collectionInfo["options"].(bson.M)["viewOn"].(string)
+
+			storageUnit.Attributes = []engine.Record{
+				{Key: "Type", Value: "View"},
+				{Key: "View On", Value: viewOn},
+			}
+		} else {
+			stats := bson.M{}
+			err := db.RunCommand(context.TODO(), bson.D{{Key: "collStats", Value: collectionName}}).Decode(&stats)
+			if err != nil {
+				return nil, err
+			}
+
+			storageUnit.Attributes = []engine.Record{
+				{Key: "Type", Value: "Collection"},
 				{Key: "Storage Size", Value: fmt.Sprintf("%v", stats["storageSize"])},
 				{Key: "Count", Value: fmt.Sprintf("%v", stats["count"])},
-			},
-		})
+			}
+		}
+
+		storageUnits = append(storageUnits, storageUnit)
 	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
 	return storageUnits, nil
 }
 
-func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collection, filter string, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+func (p *MongoDBPlugin) GetRows(
+	config *engine.PluginConfig,
+	database, collection string,
+	where *model.WhereCondition,
+	pageSize, pageOffset int,
+) (*engine.GetRowsResult, error) {
 	client, err := DB(config)
 	if err != nil {
 		return nil, err
@@ -82,11 +113,9 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 	db := client.Database(database)
 	coll := db.Collection(collection)
 
-	var bsonFilter bson.M
-	if len(filter) > 0 {
-		if err := bson.UnmarshalExtJSON([]byte(filter), true, &bsonFilter); err != nil {
-			return nil, fmt.Errorf("invalid filter format: %v", err)
-		}
+	bsonFilter, err := convertWhereConditionToMongoDB(where)
+	if err != nil {
+		return nil, fmt.Errorf("error converting where condition: %v", err)
 	}
 
 	findOptions := options.Find()
@@ -106,10 +135,7 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 
 	result := &engine.GetRowsResult{
 		Columns: []engine.Column{
-			{
-				Name: "document",
-				Type: "Document",
-			},
+			{Name: "document", Type: "Document"},
 		},
 		Rows: [][]string{},
 	}
@@ -119,12 +145,74 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 		if err != nil {
 			return nil, err
 		}
-		result.Rows = append(result.Rows, []string{
-			string(jsonBytes),
-		})
+		result.Rows = append(result.Rows, []string{string(jsonBytes)})
 	}
 
 	return result, nil
+}
+
+func convertWhereConditionToMongoDB(where *model.WhereCondition) (bson.M, error) {
+	if where == nil {
+		return bson.M{}, nil
+	}
+
+	switch where.Type {
+	case model.WhereConditionTypeAtomic:
+		if where.Atomic == nil {
+			return nil, fmt.Errorf("atomic condition must have an atomicwherecondition")
+		}
+
+		operatorMap := map[string]string{
+			"eq":  "$eq",
+			"ne":  "$ne",
+			"gt":  "$gt",
+			"gte": "$gte",
+			"lt":  "$lt",
+			"lte": "$lte",
+		}
+
+		mongoOperator, exists := operatorMap[where.Atomic.Operator]
+		if !exists {
+			return nil, fmt.Errorf("unsupported operator: %s", where.Atomic.Operator)
+		}
+
+		return bson.M{where.Atomic.Key: bson.M{mongoOperator: where.Atomic.Value}}, nil
+
+	case model.WhereConditionTypeAnd:
+		if where.And == nil || len(where.And.Children) == 0 {
+			return bson.M{}, nil
+		}
+
+		andConditions := []bson.M{}
+		for _, child := range where.And.Children {
+			childCondition, err := convertWhereConditionToMongoDB(child)
+			if err != nil {
+				return nil, err
+			}
+			andConditions = append(andConditions, childCondition)
+		}
+
+		return bson.M{"$and": andConditions}, nil
+
+	case model.WhereConditionTypeOr:
+		if where.Or == nil || len(where.Or.Children) == 0 {
+			return bson.M{}, nil
+		}
+
+		orConditions := []bson.M{}
+		for _, child := range where.Or.Children {
+			childCondition, err := convertWhereConditionToMongoDB(child)
+			if err != nil {
+				return nil, err
+			}
+			orConditions = append(orConditions, childCondition)
+		}
+
+		return bson.M{"$or": orConditions}, nil
+
+	default:
+		return nil, fmt.Errorf("unknown whereconditiontype: %v", where.Type)
+	}
 }
 
 func (p *MongoDBPlugin) RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error) {

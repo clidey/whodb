@@ -9,7 +9,7 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 )
 
-func (p *RedisPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
+func (p *RedisPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string, updatedColumns []string) (bool, error) {
 	client, err := DB(config)
 	if err != nil {
 		return false, err

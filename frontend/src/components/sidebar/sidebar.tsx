@@ -14,7 +14,7 @@ import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
 import { createStub, getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
 import { AnimatedButton } from "../button";
-import { BRAND_COLOR, BRAND_COLOR_BG } from "../classes";
+import { BRAND_COLOR, BRAND_COLOR_BG, ClassNames } from "../classes";
 import { createDropdownItem, Dropdown, IDropdownItem } from "../dropdown";
 import { Icons } from "../icons";
 import { Loading } from "../loading";
@@ -33,6 +33,7 @@ type IRouteProps = {
     path?: string;
     routes?: IRoute[];
     collapse?: boolean;
+    testId?: string;
 };
 
 export const SideMenu: FC<IRouteProps> = (props) => {
@@ -57,13 +58,13 @@ export const SideMenu: FC<IRouteProps> = (props) => {
 
     return <div className={classNames("flex items-center", {
         "justify-center": props.collapse,
-    })}  onMouseEnter={handleMouseEnter} onMouseOver={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+    })}  onMouseEnter={handleMouseEnter} onMouseOver={handleMouseEnter} onMouseLeave={handleMouseLeave} data-testid={props.testId}>
         <AnimatePresence mode="sync">
-            <div className={twMerge(classNames("cursor-default text-md inline-flex gap-2 transition-all hover:gap-2 relative w-full py-4 rounded-md hover:bg-gray-100 dark:border-white/5 dark:hover:bg-white/15", {
+            <div className={twMerge(classNames("cursor-default text-md inline-flex gap-2 transition-all hover:gap-2 relative w-full py-4 rounded-md dark:border-white/5", {
                 "cursor-pointer": props.path != null,
                 "pl-4": !props.collapse,
                 "pl-2": props.collapse,
-            }))} onClick={handleClick}>
+            }, ClassNames.Hover))} onClick={handleClick} data-testid="sidebar-button">
                 {pathname === props.path && <motion.div layoutId="indicator" className={classNames("w-[5px] h-full absolute top-0 right-0 rounded-3xl", BRAND_COLOR_BG)} />}
                 {cloneElement(props.icon, {
                     className: classNames("transition-all dark:stroke-white", {
@@ -71,7 +72,7 @@ export const SideMenu: FC<IRouteProps> = (props) => {
                         "w-6 h-6 hover:scale-110 ml-1": props.collapse,
                     })
                 })}
-                <span className="dark:text-neutral-300">
+                <span className={ClassNames.Text}>
                     {!props.collapse  && props.title}
                 </span>
                 {
@@ -360,7 +361,7 @@ export const Sidebar: FC = () => {
 
     return (
         <div className={
-            classNames("h-[100vh] flex flex-col gap-4 shadow-md relative transition-all duration-500 dark:bg-white/10 dark:shadow-neutral-100/5", {
+            classNames("h-[100vh] flex flex-col gap-4 shadow-md relative transition-all duration-500 dark:bg-[#1E1E1E] dark:shadow-neutral-100/5", {
                 "w-[50px] py-20": collapsed,
                 "w-[300px] px-10 py-20": !collapsed,
             })}>
@@ -407,7 +408,7 @@ export const Sidebar: FC = () => {
                                 <div className={classNames("flex gap-2 items-center", {
                                     "hidden": collapsed,
                                 })}>
-                                    <div className="text-sm text-gray-600 dark:text-neutral-300 mr-2.5">Profile:</div>
+                                    <div className={classNames(ClassNames.Text, "text-sm mr-2.5")}>Profile:</div>
                                     {
                                         currentProfile != null &&
                                         <Dropdown className="w-[140px]" items={loginItems} value={currentProfile}
@@ -428,11 +429,12 @@ export const Sidebar: FC = () => {
                                     <div className={classNames("flex gap-2 items-center w-full", {
                                         "opacity-0 pointer-events-none": collapsed || (current.Type !== DatabaseType.Redis && isNoSQL(current?.Type as DatabaseType)),
                                     })}>
-                                        <div className="text-sm text-gray-600 dark:text-neutral-300">Database:</div>
+                                        <div className={classNames(ClassNames.Text, "text-sm")}>Database:</div>
                                         <Dropdown className="w-[140px]" value={createDropdownItem(current!.Database)}
                                                   items={availableDatabases.Database.map(database => createDropdownItem(database))}
                                                   onChange={handleDatabaseChange}
-                                                  noItemsLabel="No available database found"/>
+                                                  noItemsLabel="No available database found"
+                                                  testId="sidebar-database" />
                                     </div>
                                 }
                                 {
@@ -440,10 +442,11 @@ export const Sidebar: FC = () => {
                                     <div className={classNames("flex gap-2 items-center w-full", {
                                         "opacity-0 pointer-events-none": pathname === InternalRoutes.RawExecute.path || collapsed || DATABASES_THAT_DONT_SUPPORT_SCHEMA.includes(current?.Type as DatabaseType),
                                     })}>
-                                        <div className="text-sm text-gray-600 dark:text-neutral-300">Schema:</div>
+                                        <div className={classNames(ClassNames.Text, "text-sm")}>Schema:</div>
                                         <Dropdown className="w-[140px]" value={createDropdownItem(schema)}
                                                   items={schemasDropdownItems} onChange={handleSchemaChange}
-                                                  noItemsLabel="No schema found"/>
+                                                  noItemsLabel="No schema found"
+                                                  testId="sidebar-schema" />
                                     </div>
                                 }
                             </div>
@@ -460,11 +463,11 @@ export const Sidebar: FC = () => {
                         </div>
                         <div className="flex flex-col gap-8">
                             <SideMenu collapse={collapsed} title="Logout" icon={Icons.Logout}
-                                      path={InternalRoutes.Logout.path}/>
+                                      path={InternalRoutes.Logout.path} testId="logout" />
                         </div>
                     </div>
             }
-            <div className="absolute right-8 bottom-8 text-sm text-gray-300 hover:text-gray-600 dark:text-neutral-600 self-end dark:hover:text-neutral-300 transition-all">{version?.Version}</div>
+            <div className={classNames(ClassNames.Text, "absolute right-8 bottom-8 text-sm text-gray-300 hover:text-gray-600 self-end dark:hover:text-neutral-300 transition-all")}>{version?.Version}</div>
         </div>
     )
 }

@@ -2,27 +2,32 @@ package sqlite3
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
 func getDefaultDirectory() string {
 	directory := "/db/"
 	if env.IsDevelopment {
-		directory = "./tmp/"
+		directory = "tmp/"
 	}
 	return directory
 }
 
 var errDoesNotExist = errors.New("unauthorized or the database doesn't exist")
 
-func DB(config *engine.PluginConfig) (*gorm.DB, error) {
-	database := config.Credentials.Database
+func (p *Sqlite3Plugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
+	connectionInput, err := p.ParseConnectionConfig(config)
+	if err != nil {
+		return nil, err
+	}
+	database := connectionInput.Database
 	fileNameDatabase := filepath.Join(getDefaultDirectory(), database)
 	if !strings.HasPrefix(fileNameDatabase, getDefaultDirectory()) {
 		return nil, errDoesNotExist

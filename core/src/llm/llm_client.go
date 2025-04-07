@@ -50,7 +50,10 @@ func (c *LLMClient) Complete(prompt string, model LLMModel, receiverChan *chan s
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
 		return nil, errors.New(string(body))
 	}
 
@@ -67,7 +70,7 @@ func (c *LLMClient) GetSupportedModels() ([]string, error) {
 	case ChatGPT_LLMType:
 		url, headers = prepareChatGPTModelsRequest(c.APIKey)
 		if ShouldUseCustomModels() {
-		    return getCustomModels()
+			return getCustomModels()
 		}
 	case Anthropic_LLMType:
 		return getAnthropicModels(c.APIKey)
@@ -82,7 +85,10 @@ func (c *LLMClient) GetSupportedModels() ([]string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
 		return nil, errors.New(string(body))
 	}
 

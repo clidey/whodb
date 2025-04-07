@@ -34,7 +34,7 @@ const Pagination: FC<IPaginationProps> = ({ pageCount, currentPage, onPageChange
                         key={i}
                         className={`cursor-pointer p-2 text-sm hover:scale-110 hover:bg-gray-200 rounded-md text-gray-600 ${currentPage === i ? 'bg-gray-300' : ''}`}
                         onClick={() => onPageChange?.(i)}
-                    >
+                        data-testid="table-page-number">
                         {i}
                     </div>
                 );
@@ -47,7 +47,7 @@ const Pagination: FC<IPaginationProps> = ({ pageCount, currentPage, onPageChange
                         "bg-gray-300 dark:bg-white/10": currentPage === i,
                     })}
                     onClick={() => onPageChange?.(i)}
-                >
+                    data-testid="table-page-number">
                     {i}
                 </div>
             );
@@ -109,7 +109,7 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, checked, onRowCheck, disab
         setEditedData(value);
         if (!changed) setChanged(true);
     }, [changed]);
-    
+
     const handleCancel = useCallback(() => {
         setEditedData(cell.value);
         setEditable(false);
@@ -204,8 +204,7 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, checked, onRowCheck, disab
     return <div ref={cellRef} {...props} key={props.key}
         className={classNames("relative group/data cursor-pointer transition-all text-xs table-cell border-t border-l last:border-r group-last/row:border-b first:group-last/row:rounded-bl-lg last:group-last/row:rounded-br-lg border-gray-200 dark:border-white/5 p-0", {
             "bg-gray-200 dark:bg-white/10 blur-[2px]": editable || preview,
-        })}
-    >
+        })} data-testid="table-row-data">
         <span className="cell-data hidden">{editedData}</span>
         <div 
             className={classNames("w-full h-full p-2 leading-tight focus:outline-hidden focus:shadow-outline appearance-none transition-all duration-300 border-solid border-gray-200 dark:border-white/5 overflow-hidden whitespace-nowrap select-none text-gray-600 dark:text-neutral-300", {
@@ -229,10 +228,10 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, checked, onRowCheck, disab
         <div className={classNames("transition-all hidden absolute right-2 top-1/2 -translate-y-1/2 hover:scale-125 p-1", {
             "hidden": copied || disableEdit,
             "group-hover/data:flex": !copied && !disableEdit,
-        })} onClick={handleEdit}>
+        })} onClick={handleEdit} data-testid="edit-button">
             {Icons.Edit}
         </div>
-         <AnimatePresence>
+         <AnimatePresence mode="wait">
             {cellRect != null && (
                 <Portal>
                     <motion.div
@@ -243,7 +242,8 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, checked, onRowCheck, disab
                         className={classNames("fixed top-0 left-0 w-screen h-screen flex items-center justify-center z-50 bg-gray-500/40", {
                             "select-none": preview,
                         })}
-                        onMouseUp={preview ? longPressProps.onMouseUp : undefined} onTouchEnd={preview ? longPressProps.onTouchEnd : undefined}>
+                        onMouseUp={preview ? longPressProps.onMouseUp : undefined} onTouchEnd={preview ? longPressProps.onTouchEnd : undefined}
+                        data-testid="edit-dialog">
                         <motion.div
                             initial={{
                                 top: cellRect.top,
@@ -284,11 +284,11 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, checked, onRowCheck, disab
                                 className={classNames("flex gap-2 justify-center w-full", {
                                     "hidden": preview,
                                 })}>
-                                <ActionButton icon={Icons.Cancel} onClick={handleCancel} disabled={updating} />
+                                <ActionButton icon={Icons.Cancel} onClick={handleCancel} disabled={updating} testId="cancel-update-button" />
                                 {
                                     updating
                                     ? <div className="bg-white rounded-full p-2"><Loading hideText={true} /></div>
-                                    : <ActionButton icon={Icons.CheckCircle} className={changed ? "stroke-green-500" : undefined} onClick={handleUpdate} disabled={!changed} />
+                                    : <ActionButton icon={Icons.CheckCircle} className={changed ? "stroke-green-500" : undefined} onClick={handleUpdate} disabled={!changed} testId="update-button" />
                                 }
                             </motion.div>
                         </motion.div>
@@ -316,7 +316,7 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, checked, onRowCheck, disab
 type ITableRow = {
     row: Row<Record<string, string | number>>;
     style: CSSProperties;
-    onRowUpdate?: (row: Record<string, string | number>) => Promise<void>;
+    onRowUpdate?: (row: Record<string, string | number>, updatedColumn: string) => Promise<void>;
     checked?: boolean;
     onRowCheck?: (value: boolean) => void;
     disableEdit?: boolean;
@@ -332,7 +332,7 @@ const TableRow: FC<ITableRow> = ({ row, style, onRowUpdate, checked, onRowCheck,
             return all;
         }, {} as Record<string, string | number>);
         updatedRow[cell.column.id] = cell.value;
-        return onRowUpdate?.(updatedRow);
+        return onRowUpdate?.(updatedRow, cell.column.id);
     }, [onRowUpdate, row.cells]);
 
     const props = useMemo(() => {
@@ -340,7 +340,7 @@ const TableRow: FC<ITableRow> = ({ row, style, onRowUpdate, checked, onRowCheck,
     }, [row, style]);
 
     return (
-        <div className="table-row-group text-xs group/row" {...props} key={props.key}>
+        <div className="table-row-group text-xs group/row" {...props} key={props.key} data-testid="table-row">
             {
                 row.cells.map((cell) => (
                     <TData key={cell.getCellProps().key} cell={cell} onCellUpdate={handleCellUpdate}
@@ -361,15 +361,14 @@ type ITableProps = {
     totalPages: number;
     currentPage: number;
     onPageChange?: (page: number) => void;
-    onRowUpdate?: (row: Record<string, string | number>) => Promise<void>;
-    onRowDelete?: (row: Record<string, string | number>) => Promise<void>;
+    onRowUpdate?: (row: Record<string, string | number>, updatedColumn: string) => Promise<void>;
     disableEdit?: boolean;
     checkedRows?: Set<number>;
     setCheckedRows?: (checkedRows: Set<number>) => void;
     hideActions?: boolean;
 }
 
-export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows: actualRows, columnTags, totalPages, currentPage, onPageChange, onRowUpdate, onRowDelete, disableEdit, checkedRows, setCheckedRows, hideActions }) => {
+export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows: actualRows, columnTags, totalPages, currentPage, onPageChange, onRowUpdate, disableEdit, checkedRows, setCheckedRows, hideActions }) => {
     const fixedTableRef = useRef<FixedSizeList>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const operationsRef = useRef<HTMLDivElement>(null);
@@ -424,7 +423,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
             newRow.originalIndex = rowIndex;
             return newRow;
         }));
-    }, [actualColumns, actualRows, currentPage]);
+    }, [actualColumns, actualRows]);
 
     const sortedRows = useMemo(() => {
         if (!sortedColumn) {
@@ -474,12 +473,16 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
         if (tableRef.current == null || search.length === 0) {
             return;
         }
+        // @ts-ignore
         let interval: NodeJS.Timeout;
         if (e.key === "Enter") {
             const searchText = search.toLowerCase();
             const filteredToOriginalIndex = [];
             for (const [index, row] of rows.entries()) {
                 for (const value of values(row.values)) {
+                    if (value == null) {
+                        continue;
+                    }
                     const text = value.toLowerCase();
                     if (text != null && searchText != null && text.includes(searchText)) {
                         filteredToOriginalIndex.push(index);
@@ -499,9 +502,9 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                         if (isNumeric(text)) {
                             const id = parseInt(text);
                             if (id === originalIndex) {
-                                currentVisibleRow.classList.add("bg-yellow-100!", "dark:bg-yellow-800!");
+                                currentVisibleRow.classList.add("!bg-yellow-100", "dark:!bg-yellow-800");
                                 interval = setTimeout(() => {
-                                    currentVisibleRow.classList.remove("bg-yellow-100!", "dark:bg-yellow-800!");
+                                    currentVisibleRow.classList.remove("!bg-yellow-100", "dark:!bg-yellow-800");
                                 }, 3000);
                             }
                         }
@@ -535,12 +538,12 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
         setDirection("dsc");
     }, [sortedColumn, direction]);
 
-    const handleRowUpdate = useCallback((index: number, row: Record<string, string | number>) => {
+    const handleRowUpdate = useCallback((index: number, row: Record<string, string | number>, updatedColumn: string) => {
         if (onRowUpdate == null) {
             return Promise.resolve();
         }
         delete row["#"];
-        return onRowUpdate(row).then(() => {
+        return onRowUpdate(row, updatedColumn).then(() => {
             setData(value => {
                 const newValue = clone(value);
                 newValue[index] = clone(row);
@@ -564,7 +567,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
         prepareRow(row);
         const originalIndex = row.original.originalIndex as number;
         return <TableRow key={`row-${row.values[actualColumns[0]]}`} row={row} style={style}
-            onRowUpdate={(row) => handleRowUpdate(index, row)}
+            onRowUpdate={(row, updatedColumn) => handleRowUpdate(index, row, updatedColumn)}
             checked={checkedRows?.has(originalIndex)}
             onRowCheck={(value) => handleRowCheck(originalIndex, value)}
             disableEdit={disableEdit} />;
@@ -609,7 +612,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                     <SearchInput search={search} setSearch={handleSearchChange} placeholder="Search through rows     [Press Enter]" inputProps={{
                         className: "w-[300px]",
                         onKeyUp: handleKeyUp,
-                    }} />
+                    }} testId="table-search" />
                 </div>
                 <div className="flex gap-4 items-center">
                     <div className="text-sm text-gray-600 dark:text-neutral-300"><span className="font-semibold">Count:</span> {rowCount}</div>
@@ -618,7 +621,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
             </div>
             <div className={twMerge(classNames("flex overflow-x-auto h-full", className))} style={{
                 width,
-            }}>
+            }} data-testid="table">
                 <div className="border-separate border-spacing-0 h-fit" ref={tableRef} {...getTableProps()}>
                     <div>
                         {headerGroups.map(headerGroup => (
@@ -629,10 +632,10 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                                             <div className={classNames({
                                                 "group-hover/header-row:hidden": checkedRows != null && column.id === "#",
                                                 "hidden": column.id === "#" && allChecked,
-                                            })} onClick={() => handleSort(column.id)}>
+                                            })} onClick={() => handleSort(column.id)} data-testid="table-header">
                                                 {column.render('Header')} {i > 0 && columnTags?.[i-1] != null && columnTags?.[i-1].length > 0 && <span className="text-[11px]">[{columnTags?.[i-1]}]</span>}
                                             </div>
-                                            <div className={classNames("absolute top-0 left-0 h-full w-full justify-center items-center bg-transparent z-1 hover:scale-110 transition-all", {
+                                            <div className={classNames("absolute top-0 left-0 h-full w-full justify-center items-center bg-transparent z-[1] hover:scale-110 transition-all", {
                                                 "group-hover/header-row:flex": checkedRows != null && column.id === "#",
                                                 "flex": column.id === "#" && allChecked,
                                                 "hidden": checkedRows == null || column.id !== "#" || !allChecked,

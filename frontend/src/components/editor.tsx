@@ -60,7 +60,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
         extensions: [
           EditorView.domEventHandlers({
               keydown(event) {
-                  if (event.metaKey && event.key === "Enter" && onRunReference.current != null) {
+                if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && onRunReference.current != null) {
                       onRunReference.current();
                       event.preventDefault();
                       event.stopPropagation();
@@ -72,11 +72,14 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
             darkModeEnabled ? [oneDark, EditorView.theme({
               ".cm-activeLine": { backgroundColor: "rgba(0,0,0,0.05) !important" },
               ".cm-activeLineGutter": { backgroundColor: "rgba(0,0,0,0.05) !important" },
-            })] : [],
+            })] : [EditorView.theme({
+              ".cm-activeLine": { backgroundColor: "rgba(0,0,0,0.05) !important" },
+              ".cm-activeLineGutter": { backgroundColor: "rgba(0,0,0,0.05) !important" },
+            })],
             EditorView.updateListener.of((update) => {
-                if (update.changes && setValue != null) {
-                    setValue(update.state.doc.toString());
-                }
+              if (update.docChanged && update.changes && setValue != null) {
+                  setValue(update.state.doc.toString());
+              }
             }),
             lineNumbers(),
             EditorView.lineWrapping,
@@ -144,14 +147,14 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
       "pointer-events-none": disabled,
     })}>
       {children}
-      <div ref={editorRef} className={classNames("h-full w-full [&>.cm-editor]:h-full [&>.cm-editor]:p-2 dark:[&>.cm-editor]:bg-[#252526] dark:[&_.cm-gutter]:bg-[#252526] transition-all opacity-100", {
-        "opacity-0 pointer-events-none": hidePreview,
-      })}></div>
+      <div ref={editorRef} className={classNames("h-full w-full [&>.cm-editor]:h-full [&>.cm-editor]:p-2 [&>.cm-editor]:!bg-neutral-100 [&_.cm-gutters]:!bg-neutral-100 dark:[&>.cm-editor]:!bg-[#252526] dark:[&_.cm-gutters]:!bg-[#252526] transition-all opacity-100", {
+        "opacity-0 pointer-events-none": hidePreview && disabled,
+        }
+      )} data-testid="code-editor"></div>
       <div
         className={classNames("absolute right-6 bottom-2 z-20", {
           hidden: hidePreview,
-        })}
-      >
+        })}>
         {actionButtons}
       </div>
     </div>

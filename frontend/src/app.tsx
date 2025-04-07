@@ -36,7 +36,7 @@ export const App = () => {
 
   useEffect(() => {
     updateBackendWithSettings()
-  }, [updateBackendWithSettings])
+  }, [updateBackendWithSettings]);
 
   return (
     <div className={classNames("h-[100vh] w-[100vw]", {

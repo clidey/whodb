@@ -5,7 +5,8 @@ import { IInternalRoute } from "../config/routes";
 import { GlobalActions } from "../store/global";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { Breadcrumb } from "./breadcrumbs";
-import { Text, ToggleInput } from "./input";
+import { ClassNames } from "./classes";
+import { Icons } from "./icons";
 import { Loading } from "./loading";
 import { Sidebar } from "./sidebar/sidebar";
 import classNames from "classnames";
@@ -39,9 +40,9 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
     const darkModeEnabled = useAppSelector(state => state.global.theme === "dark");
     const dispatch = useAppDispatch();
 
-    const handleDarkModeToggle = useCallback((enabled: boolean) => {
-        dispatch(GlobalActions.setTheme(enabled ? "dark" : "light"));
-    }, [dispatch]);
+    const handleDarkModeToggle = useCallback(() => {
+        dispatch(GlobalActions.setTheme(darkModeEnabled ? "light" : "dark"));
+    }, [dispatch, darkModeEnabled]);
 
     return (
         <Container>
@@ -49,12 +50,11 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
             <Page wrapperClassName="p-0" {...props}>
                 <div className="flex flex-col grow py-6">
                     <div className="flex justify-between items-center">
-                        <div className="px-4 sticky z-10 top-2 left-4 bg-white dark:bg-white/5 w-fit rounded-xl py-2 transition-all">
+                        <div className="sticky z-10 top-2 left-4 w-fit rounded-xl transition-all">
                             <Breadcrumb routes={props.routes ?? []} active={props.routes?.at(-1)} />
                         </div>
-                        <div className="flex gap-2 items-center mr-8">
-                            <Text label={darkModeEnabled ? "Dark Mode" : "Light Mode"} />
-                            <ToggleInput value={darkModeEnabled} setValue={handleDarkModeToggle} />
+                        <div className={classNames("flex gap-2 items-center mr-8 cursor-pointer rounded-full", ClassNames.Text, ClassNames.Hover)} onClick={handleDarkModeToggle}>
+                            {darkModeEnabled ? Icons.Sun : Icons.Moon }
                         </div>
                     </div>
                     {
@@ -76,7 +76,7 @@ type IContainerProps = {
 }
 
 export const Container: FC<IContainerProps> = ({ className, children }) => {
-    return  <div className={classNames(className, "flex grow h-full w-full bg-white dark:bg-black/90")}>
+    return  <div className={classNames(className, "flex grow h-full w-full bg-[#fbfaf8] dark:bg-[#121212]")}>
         {children}
     </div>
 }
