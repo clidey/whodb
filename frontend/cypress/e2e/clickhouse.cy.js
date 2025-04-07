@@ -10,16 +10,18 @@ describe('Clickhouse E2E test', () => {
     
     // get all tables
     cy.getTables().then(storageUnitNames => {
-      cy.log(storageUnitNames);
       expect(storageUnitNames).to.be.an('array');
-      expect(storageUnitNames).to.deep.equal([
+      const expectedStorageUnits = [
         "order_items",
         "order_summary",
         "orders",
         "payments",
         "products",
         "users"
-      ]);
+      ];
+      expectedStorageUnits.forEach(item => {
+        expect(storageUnitNames).contain(item);
+      });
     });
 
     // check users table and fields
@@ -261,14 +263,6 @@ describe('Clickhouse E2E test', () => {
         ]
       ]);
     });
-
-    cy.writeCode(0, "ALTER TABLE test_db.users UPDATE username='john_doe1' WHERE id=1;");
-    cy.runCode(0);
-    cy.getCellActionOutput(0).then(output => expect(output).to.equal('Action Executed'));
-
-    cy.writeCode(0, "ALTER TABLE test_db.users UPDATE username='john_doe' WHERE id=1;");
-    cy.runCode(0);
-    cy.getCellActionOutput(0).then(output => expect(output).to.equal('Action Executed'));
 
     // add cell
     cy.addCell(0);

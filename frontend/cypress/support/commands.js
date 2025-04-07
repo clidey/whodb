@@ -189,6 +189,8 @@ Cypress.Commands.add("removeCell", (index) => {
 
 Cypress.Commands.add("writeCode", (index, text) => {
     cy.get(`[data-testid="cell-${index}"] [data-testid="code-editor"]`)
+        .should('exist') // Wait for the code editor to exist in the DOM
+        .should('be.visible') // Ensure it is visible before interacting
         .then(($editor) => {
             $editor.click();
             const editorElement = $editor[0].querySelector('.cm-content');
