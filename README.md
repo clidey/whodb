@@ -70,17 +70,6 @@ Get up and running with WhoDB quickly using Docker:
 docker run -it -p 8080:8080 clidey/whodb
 ```
 
-
-To run WhoDB with an OpenAI compatible service, you should assign some environments.
-```sh
-docker run -it -e USE_CUSTOM_MODELS=1 -e CUSTOM_MODELS=gpt-4o,gpt-3.5,others -e OPENAI_BASE_URL=http://your_base_url/v1 -p 8080:8080 clidey/whodb
-```
-
-If you are using a remote Ollama server, please start Docker with Ollama Environments like this:
-```sh
-docker run -it -e WHODB_OLLAMA_HOST=YOUR_OLLAMA_HOST -e WHODB_OLLAMA_PORT=YOUR_OLLAMA_PORT -p 8080:8080 clidey/whodb
-```
-
 Or, use Docker Compose:
 ```sh
 version: "3.8"
@@ -89,9 +78,6 @@ services:
     image: clidey/whodb
     # volumes: # (optional for sqlite) 
     #   - ./sample.db:/db/sample.db
-    # environment:
-    #   WHODB_OLLAMA_HOST:YOUR_OLLAMA_HOST
-    #   WHODB_OLLAMA_PORT:YOUR_OLLAMA_PORT
     ports:
       - "8080:8080"
 ```
