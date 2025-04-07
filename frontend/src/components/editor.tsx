@@ -60,7 +60,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
         extensions: [
           EditorView.domEventHandlers({
               keydown(event) {
-                  if (event.metaKey && event.key === "Enter" && onRunReference.current != null) {
+                if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && onRunReference.current != null) {
                       onRunReference.current();
                       event.preventDefault();
                       event.stopPropagation();
