@@ -32,7 +32,7 @@
     "react-window": "^1.8.10",
     "reactflow": "^11.11.4",
     "redux-persist": "^6.0.0",
-    "remark-gfm": "^4.0.0",
+    "remark-gfm": "^4.0.1",
     "tailwind-merge": "^3.0.2",
     "uuid": "^11.0.3"
   },
