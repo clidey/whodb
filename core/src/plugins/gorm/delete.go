@@ -47,9 +47,9 @@ func (p *GormPlugin) DeleteRow(config *engine.PluginConfig, schema string, stora
 
 		var result *gorm.DB
 		if len(conditions) == 0 {
-			result = db.Table(tableName).Where(convertedValues).Delete(convertedValues)
+			result = db.Table(tableName).Where(convertedValues).Delete(nil)
 		} else {
-			result = db.Table(tableName).Where(conditions).Delete(conditions)
+			result = db.Table(tableName).Where(conditions).Delete(nil)
 		}
 
 		if result.Error != nil {
