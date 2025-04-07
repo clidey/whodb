@@ -12,9 +12,7 @@ import { InternalPage } from "../../components/page";
 import { Table } from "../../components/table";
 import { InternalRoutes } from "../../config/routes";
 import { DatabaseType, useRawExecuteLazyQuery } from "../../generated/graphql";
-import { LocalLoginProfile } from "../../store/auth";
 import { useAppSelector } from "../../store/hooks";
-import { AnalyzeGraph } from "./analyze-view";
 
 type IRawExecuteCellProps = {
     cellId: string;
@@ -25,25 +23,13 @@ type IRawExecuteCellProps = {
 
 enum ActionOptions {
     Query="Query",
-    Analyze="Analyze",
 }
 
 export const ActionOptionIcons: Record<string, ReactElement> = {
     [ActionOptions.Query]: Icons.Database,
-    [ActionOptions.Analyze]: Icons.Code,
 }
 
 const actionOptions = values(ActionOptions);
-
-function getModeCommand(mode: ActionOptions, current?: LocalLoginProfile) {
-    if (current == null || mode !== ActionOptions.Analyze) {
-         return "";
-    }
-    if (current.Type === DatabaseType.Postgres) {
-        return "EXPLAIN (ANALYZE, FORMAT JSON)"
-    }
-    return "";
-}
 
 const CopyButton: FC<{ text: string }> = (props) => {
     const [copied, setCopied] = useState(false);
@@ -76,7 +62,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
         setSubmittedCode(currentCode);
         rawExecute({
             variables: {
-                query: getModeCommand(mode, current) + currentCode,
+                query: currentCode,
             },
             onCompleted() {
                 historyItem.status = true;
@@ -104,17 +90,6 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     const output = useMemo(() => {
         if (rows == null) {
             return null;
-        }
-        if (mode === ActionOptions.Analyze) {
-            let data;
-            try {
-                data = JSON.parse(rows.RawExecute.Rows[0][0])[0];
-            } catch {
-                return <div className="text-red-500 mt-4">Unable to analyze the query</div>
-            }
-            return <div className="flex mt-4 h-[350px] w-full">
-                <AnalyzeGraph data={data} />;
-            </div>
         }
         if (isCodeAQuery || rows.RawExecute.Rows.length > 0) {
             return <div className="flex flex-col w-full h-[250px] mt-4" data-testid="cell-query-output">
