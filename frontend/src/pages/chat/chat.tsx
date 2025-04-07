@@ -278,7 +278,7 @@ export const ChatPage: FC = () => {
     }, [getAIModels, externalModelType.id, externalModelToken, dispatch]);
 
     const handleOpenDocs = useCallback(() => {
-        window.open("https://whodb.clidey.com/docs/usage-houdini/what-is-houdini", "_blank");
+        window.open("https://whodb.com/docs/usage-houdini/what-is-houdini", "_blank");
     }, []);
 
     useEffect(() => {

@@ -52,14 +52,14 @@ This feature allows you to perform queries and manage your data through conversa
 <div style="width:100%;border-bottom:0.5px solid white;margin:50px 0px;"></div>
 
 ## Try the demo
-Experience WhoDB firsthand with our [live demo](https://whodb.clidey.com/demo/login?host=quick-container-491288b0-3138-48fa-93b4-1e730296c0b7.hello.svc.cluster.local&username=user&password=password&database=Adventureworks).  
+Experience WhoDB firsthand with our [live demo](https://whodb.com/demo/login?host=quick-container-491288b0-3138-48fa-93b4-1e730296c0b7.hello.svc.cluster.local&username=user&password=password&database=Adventureworks).  
 *Note: This demo is populated with a sample database from postgresDBSamples, with credentials pre-filled.*
 
 Or checkout our [demo video](https://youtu.be/hnAQcYYzcLo)
 
 ## Documentation
 
-For more detailed information, check out our [Documentation.](https://whodb.clidey.com/docs/)
+For more detailed information, check out our [Documentation.](https://whodb.com/docs/)
 
 <div style="width:100%;border-bottom:0.5px solid white;margin:50px 0px;"></div>
 

@@ -20,7 +20,7 @@ export const SettingsPage: FC = () => {
                 <h3 className="text-base text-neutral-700 dark:text-neutral-300">
                     We use this information solely to enhance the performance of WhoDB.
                     For details on what data we collect, how it's collected, stored, and used, please refer to our <a
-                    href={"https://whodb.clidey.com/privacy-policy"} target={"_blank"}
+                    href={"https://clidey.com/privacy-policy"} target={"_blank"}
                     rel="noreferrer" className={"underline text-blue-500"}>Privacy Policy.</a>
                     <br/>
                     <br/>
