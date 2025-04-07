@@ -56,9 +56,9 @@
     ]
   },
   "devDependencies": {
-    "@graphql-codegen/cli": "^5.0.3",
-    "@graphql-codegen/typescript": "^4.1.2",
-    "@graphql-codegen/typescript-operations": "^4.4.0",
+    "@graphql-codegen/cli": "^5.0.5",
+    "@graphql-codegen/typescript": "^4.1.6",
+    "@graphql-codegen/typescript-operations": "^4.6.0",
     "@graphql-codegen/typescript-react-apollo": "^4.3.2",
     "@parcel/packager-raw-url": "2.13.3",
     "@parcel/transformer-webmanifest": "2.13.3",
