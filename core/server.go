@@ -5,8 +5,6 @@ import (
 	"embed"
 	"fmt"
 	"github.com/clidey/whodb/core/src"
-	"github.com/clidey/whodb/core/src/common"
-	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/highlight"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/router"
@@ -70,9 +68,9 @@ func main() {
 		log.Logger.Infof("Get started by visiting:")
 		log.Logger.Infof("http://0.0.0.0:%s", port)
 		log.Logger.Info("Explore and enjoy working with your databases!")
-		if !env.IsAPIGatewayEnabled && !common.IsRunningInsideDocker() {
-			common.OpenBrowser(fmt.Sprintf("http://localhost:%v", port))
-		}
+		//if !env.IsAPIGatewayEnabled && !common.IsRunningInsideDocker() {
+		//common.OpenBrowser(fmt.Sprintf("http://localhost:%v", port))
+		//}
 	}
 
 	quit := make(chan os.Signal, 1)
