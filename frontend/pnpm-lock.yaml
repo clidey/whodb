@@ -57,8 +57,8 @@ importers:
         specifier: ^16.9.0
         version: 16.10.0
       highlight.run:
-        specifier: ^9.14.0
-        version: 9.14.0
+        specifier: ^9.15.0
+        version: 9.15.0
       html-to-image:
         specifier: ^1.11.11
         version: 1.11.11
@@ -2478,8 +2478,8 @@ packages:
   header-case@2.0.4:
     resolution: {integrity: sha512-H/vuk5TEEVZwrR0lp2zed9OCo1uAILMlx0JEMgC26rzyJJ3N1v6XkwHHXJQdR2doSjcGPM6OKPYoJgf0plJ11Q==}
 
-  highlight.run@9.14.0:
-    resolution: {integrity: sha512-ZR+ZLHlVU8lXqsuto0ZEMAOuvptaTBBf1jradnKDIn9OfAXupcYFbkASDlbsZtyBh2SYJSK50xwrucXujhksRg==}
+  highlight.run@9.15.0:
+    resolution: {integrity: sha512-BXpksT8ZPz+9bK8rcVsW0K6u5R/r/fyJwz+whNUeI8hA2sPghvM3gCvbI2a5UwVcNk2OKfBhOpVTD5pLupAOGw==}
 
   hoist-non-react-statics@3.3.2:
     resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
@@ -7242,7 +7242,7 @@ snapshots:
       capital-case: 1.0.4
       tslib: 2.8.1
 
-  highlight.run@9.14.0: {}
+  highlight.run@9.15.0: {}
 
   hoist-non-react-statics@3.3.2:
     dependencies:
