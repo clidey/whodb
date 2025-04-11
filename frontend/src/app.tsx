@@ -21,7 +21,6 @@ import { Notifications } from './components/notifications';
 import { PrivateRoute, PublicRoutes, getRoutes } from './config/routes';
 import { NavigateToDefault } from "./pages/chat/default-chat-route";
 import { useAppSelector } from "./store/hooks";
-import {initHighlight, startHighlight, stopHighlight} from "./config/highlight";
 import {isDevelopment} from "./utils/functions";
 import {useCallback, useEffect} from "react";
 import {useUpdateSettingsMutation} from "./generated/graphql";
@@ -33,10 +32,10 @@ export const App = () => {
 
   useEffect(() => {
       if (metricsEnabled) {
-        initHighlight(isDevelopment() ? "development" : "production")
-        startHighlight()
+        // initHighlight(isDevelopment() ? "development" : "production")
+        // startHighlight()
       } else {
-        stopHighlight()
+        // stopHighlight()
       }
   }, [metricsEnabled]);
 
