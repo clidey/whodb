@@ -39,10 +39,12 @@ type IRawExecuteCellProps = {
 
 enum ActionOptions {
     Query="Query",
+    // Smart="Smart",
 }
 
 export const ActionOptionIcons: Record<string, ReactElement> = {
     [ActionOptions.Query]: Icons.Database,
+    // [ActionOptions.Smart]: Icons.Sparkles,
 }
 
 const actionOptions = values(ActionOptions);

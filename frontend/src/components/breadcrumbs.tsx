@@ -17,10 +17,10 @@
 import classNames from "classnames";
 import { FC, cloneElement } from "react";
 import { useNavigate } from "react-router-dom";
-import { IInternalRoute } from "../config/routes";
-import { Icons } from "./icons";
-import { BRAND_COLOR, ClassNames } from "./classes";
 import { twMerge } from "tailwind-merge";
+import { IInternalRoute } from "../config/routes";
+import { ClassNames } from "./classes";
+import { Icons } from "./icons";
 
 export type IBreadcrumbRoute = Omit<IInternalRoute, "component">;
 
@@ -43,7 +43,7 @@ export const Breadcrumb: FC<IBreadcrumbProps> = ({ routes, active }) => {
                             })}>
                                 {i > 0 && Icons.RightChevron}
                                 <div onClick={() => handleNavigate(route.path)} className={twMerge(classNames("cursor-pointer text-sm font-medium text-neutral-800 hover:text-[#ca6f1e] flex items-center gap-2 dark:text-neutral-300", {
-                                    [BRAND_COLOR]: active === route,
+                                    [ClassNames.BrandText]: active === route,
                                 }))}>
                                     {
                                         i === 0 &&
