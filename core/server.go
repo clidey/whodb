@@ -21,7 +21,6 @@ import (
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/env"
-	"github.com/clidey/whodb/core/src/highlight"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/router"
 	"github.com/clidey/whodb/core/src/settings"
@@ -43,8 +42,6 @@ func main() {
 
 	settingsCfg := settings.Get()
 	if settingsCfg.MetricsEnabled {
-		highlight.InitializeHighlight()
-		defer highlight.StopHighlight()
 	}
 	src.InitializeEngine()
 	r := router.InitializeRouter(staticFiles)
