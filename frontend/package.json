@@ -34,7 +34,7 @@
     "redux-persist": "^6.0.0",
     "remark-gfm": "^4.0.1",
     "tailwind-merge": "^3.0.2",
-    "uuid": "^11.0.3"
+    "uuid": "^11.1.0"
   },
   "scripts": {
     "start": "parcel public/index.html --open --port=3000",
