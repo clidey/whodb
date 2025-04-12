@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +24,7 @@ import { useAppSelector } from "./store/hooks";
 import {isDevelopment} from "./utils/functions";
 import {useCallback, useEffect} from "react";
 import {useUpdateSettingsMutation} from "./generated/graphql";
+import {optInUser, optOutUser} from "./config/posthog";
 
 export const App = () => {
   const [updateSettings, ] = useUpdateSettingsMutation();
@@ -32,10 +33,9 @@ export const App = () => {
 
   useEffect(() => {
       if (metricsEnabled) {
-        // initHighlight(isDevelopment() ? "development" : "production")
-        // startHighlight()
+        optInUser();
       } else {
-        // stopHighlight()
+        optOutUser();
       }
   }, [metricsEnabled]);
 
