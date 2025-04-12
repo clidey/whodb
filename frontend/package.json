@@ -19,7 +19,7 @@
     "codemirror": "^6.0.1",
     "framer-motion": "^12.6.3",
     "graphql": "^16.9.0",
-    "html-to-image": "^1.11.11",
+    "html-to-image": "^1.11.13",
     "lodash": "^4.17.21",
     "posthog-js": "^1.235.6",
     "react": "^18.3.1",
