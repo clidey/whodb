@@ -21,7 +21,6 @@ import { Notifications } from './components/notifications';
 import { PrivateRoute, PublicRoutes, getRoutes } from './config/routes';
 import { NavigateToDefault } from "./pages/chat/default-chat-route";
 import { useAppSelector } from "./store/hooks";
-import {isDevelopment} from "./utils/functions";
 import {useCallback, useEffect} from "react";
 import {useUpdateSettingsMutation} from "./generated/graphql";
 import {optInUser, optOutUser} from "./config/posthog";
