@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,9 +40,9 @@ export const SettingsPage: FC = () => {
                     rel="noreferrer" className={"underline text-blue-500"}>Privacy Policy.</a>
                     <br/>
                     <br/>
-                    WhoDB uses <a href={"https://www.highlight.io/"} target={"_blank"} rel="noreferrer"
-                                  className={"underline text-blue-500"}>Highlight.io</a> to collect and manage this
-                    data. It is an open source tool and all of its source code can be found on GitHub.
+                    WhoDB uses <a href={"https://posthog.com/"} target={"_blank"} rel="noreferrer"
+                                  className={"underline text-blue-500"}>Posthog</a> to collect and manage this
+                    data. More information about this tool can be found on its <a href={"https://github.com/PostHog/posthog"} target={"_blank"} rel="noreferrer" className={"underline text-blue-500"}>Github</a>.
                     We have taken measures to redact as much sensitive information as we can and will continuously
                     evaluate to make sure that it fits yours and our needs without sacrificing anything.
                     <br/>
