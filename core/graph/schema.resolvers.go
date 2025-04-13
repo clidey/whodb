@@ -1,16 +1,18 @@
-// Copyright 2025 Clidey, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package graph
 
@@ -103,9 +105,17 @@ func (r *mutationResolver) UpdateSettings(ctx context.Context, newSettings model
 func (r *mutationResolver) AddStorageUnit(ctx context.Context, schema string, storageUnit string, fields []*model.RecordInput) (*model.StatusResponse, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
 	typeArg := config.Credentials.Type
-	fieldsMap := map[string]string{}
+	fieldsMap := []engine.Record{}
 	for _, field := range fields {
-		fieldsMap[field.Key] = field.Value
+		extraFields := map[string]string{}
+		for _, extraField := range field.Extra {
+			extraFields[extraField.Key] = extraField.Value
+		}
+		fieldsMap = append(fieldsMap, engine.Record{
+			Key:   field.Key,
+			Value: field.Value,
+			Extra: extraFields,
+		})
 	}
 	status, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).AddStorageUnit(config, schema, storageUnit, fieldsMap)
 	if err != nil {

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -135,9 +135,9 @@ export const ExpandableCard: FC<IExpandableCardProps> = (props) => {
     <AnimatePresence mode="sync">
       <Card
         {...props}
-        className={classNames(props.className, {
-          "w-[400px] h-fit": expand,
-        })}
+        className={twMerge(classNames({
+          "w-full max-w-[400px] h-fit": expand,
+        }, props.className))}
         tag={expand ? props.tag : props.collapsedTag}
       >
         <AnimatePresence mode="sync">
