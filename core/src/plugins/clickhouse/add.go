@@ -36,7 +36,7 @@ func (p *ClickHousePlugin) GetCreateTableQuery(schema string, storageUnit string
 		columnDefs = append(columnDefs, strings.Join(parts, " "))
 
 		if primary, ok := column.Extra["primary"]; ok && primary == "true" {
-			primaryKeys = append(primaryKeys, fmt.Sprintf("%s", column.Key))
+			primaryKeys = append(primaryKeys, column.Key)
 		}
 	}
 

@@ -37,7 +37,7 @@ func (p *GormPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, 
 		columns := []engine.Record{}
 		for _, fieldType := range fields {
 			if !p.GetSupportedColumnDataTypes().Contains(fieldType.Value) {
-				return false, fmt.Errorf("data type: %s not supported by: %s", fieldType, p.Plugin.Type)
+				return false, fmt.Errorf("data type: %s not supported by: %s", fieldType.Value, p.Plugin.Type)
 			}
 
 			fieldName := p.EscapeIdentifier(fieldType.Key)
