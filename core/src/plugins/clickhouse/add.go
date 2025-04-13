@@ -27,7 +27,7 @@ func (p *ClickHousePlugin) GetCreateTableQuery(schema string, storageUnit string
 	var primaryKeys []string
 
 	for _, column := range columns {
-		parts := []string{fmt.Sprintf("%s", column.Key), column.Value}
+		parts := []string{column.Key, column.Value}
 
 		if nullable, ok := column.Extra["nullable"]; ok && nullable == "false" {
 			parts = append(parts, "NOT NULL")
