@@ -33,7 +33,6 @@ func getDefaultDirectory() string {
 	if env.IsDevelopment {
 		directory = "tmp/"
 	}
-	directory = "/home/bigduke/Documents/"
 	return directory
 }
 
