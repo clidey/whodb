@@ -56,27 +56,28 @@ export type IDropdownProps = {
 const ITEM_CLASS = "group/item flex items-center gap-1 transition-all cursor-pointer relative hover:bg-black/10 py-1 mx-2 px-4 rounded-lg pl-1 dark:text-neutral-300/100";
 
 export const Dropdown: FC<IDropdownProps> = (props) => {
-    const [hover, setHover] = useState(false);
+    const [open, setOpen] = useState(false);
 
     const handleClick = useCallback((item: IDropdownItem) => {
-        setHover(false);
+        setOpen(false);
         props.onChange?.(item);
     }, [props]);
-
-    const handleMouseEnter = useCallback(() => {
-        setHover(true);
+    
+    const handleToggleOpen = useCallback(() => {
+        setOpen(o => !o);
     }, []);
 
-    const handleMouseLeave = useCallback(() => {
-        setHover(false);
+    const handleClose = useCallback(() => {
+        setOpen(false);
     }, []);
 
     return (
-        <div className={classNames("relative", props.className)} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} data-testid={props.testId}>
+        <div className={classNames("relative", props.className)}>
+            {open && <div className="fixed inset-0" onClick={handleClose} />}
             {props.loading ? <div className="flex h-full w-full items-center justify-center">
                 <Loading hideText={true} size="sm" />
             </div> :
-            <>  <div className="group/dropdown flex gap-1 justify-between items-center border border-neutral-600/20 rounded-lg w-full p-1 h-[34px] px-2 dark:bg-[#2C2F33] dark:border-white/5">
+            <>  <button className="group/dropdown flex gap-1 justify-between items-center border border-neutral-600/20 rounded-lg w-full p-1 h-[34px] px-2 dark:bg-[#2C2F33] dark:border-white/5" onClick={handleToggleOpen} data-testid={props.testId}>
                     <div className={classNames(ClassNames.Text, "flex gap-1 text-sm truncate items-center")}>
                         {props.value?.icon != null && <div className="flex items-center w-6">
                             {props.value.icon}
@@ -86,17 +87,17 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
                     {cloneElement(Icons.DownCaret, {
                         className: "absolute right-2 top-1/2 -translate-y-1/2 p-1 w-5 h-5 stroke-neutral-700 dark:stroke-neutral-400 group-hover/dropdown:backdrop-blur-xs rounded-full",
                     })}
-                </div>
+                </button>
                 <div className={classNames("absolute z-10 divide-y rounded-lg shadow-sm bg-white py-1 border border-gray-200 overflow-y-auto max-h-40 dark:bg-[#2C2F33] dark:border-white/20", {
-                    "hidden": !hover,
-                    "block animate-fade": hover,
+                    "hidden": !open,
+                    "block animate-fade": open,
                     "w-fit min-w-[200px]": !props.fullWidth,
                     "w-full": props.fullWidth,
                 })}>
                     <ul className={classNames(ClassNames.Text, "py-1 text-sm nowheel flex flex-col")}>
                         {
                             props.items.map((item, i) => (
-                                <li key={`dropdown-item-${i}`} className={classNames(ITEM_CLASS, {
+                                <button key={`dropdown-item-${i}`} className={classNames(ITEM_CLASS, {
                                     "hover:gap-2": item.icon != null,
                                 })} onClick={() => handleClick(item)} value={item.id}>
                                     <div>{props.value?.id === item.id ? Icons.CheckCircle : item.icon}</div>
@@ -108,24 +109,24 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
                                             e.stopPropagation();
                                         },
                                     })}
-                                </li>
+                                </button>
                             ))
                         }
                         {
                             props.defaultItem != null &&
-                            <li className={classNames(ITEM_CLASS, {
+                            <button className={classNames(ITEM_CLASS, {
                                 "hover:scale-105": props.defaultItem.icon == null,
                             }, props.defaultItemClassName)} onClick={props.onDefaultItemClick}>
                                 <div>{props.defaultItem.icon}</div>
                                 <div>{props.defaultItem.label}</div>
-                            </li>
+                            </button>
                         }
                         {
                             props.items.length === 0 && props.defaultItem == null &&
-                            <li className="flex items-center gap-1 px-2 dark:text-neutral-300" onClick={props.onDefaultItemClick}>
+                            <button className="flex items-center gap-1 px-2 dark:text-neutral-300" onClick={props.onDefaultItemClick}>
                                 <div>{Icons.SadSmile}</div>
                                 <div>{props.noItemsLabel}</div>
-                            </li>
+                            </button>
                         }
                     </ul>
                 </div>
