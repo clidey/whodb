@@ -24,33 +24,28 @@ import (
 
 func (p *Sqlite3Plugin) GetCreateTableQuery(schema string, storageUnit string, columns []engine.Record) string {
 	var columnDefs []string
-	for _, column := range columns {
-		columnDef := fmt.Sprintf("%s %s", column.Key, column.Value)
 
+	for _, column := range columns {
+		parts := []string{column.Key}
+
+		// Handle primary key with INTEGER type for auto-increment
 		if primary, ok := column.Extra["primary"]; ok && primary == "true" {
-			lowerType := strings.ToLower(column.Value)
-			if strings.Contains(lowerType, "int") {
-				// Convert to INTEGER type for proper primary key behavior in SQLite
-				// SQLite's "INTEGER PRIMARY KEY" automatically creates an auto-incrementing column
-				// without needing the explicit AUTOINCREMENT keyword
-				if !strings.Contains(lowerType, "integer") {
-					columnDef = fmt.Sprintf("\"%s\" INTEGER", column.Key)
-				}
-				columnDef = fmt.Sprintf("%s PRIMARY KEY", columnDef)
+			if strings.Contains(strings.ToLower(column.Value), "int") {
+				parts = append(parts, "INTEGER PRIMARY KEY")
 			} else {
-				columnDef = fmt.Sprintf("%s PRIMARY KEY", columnDef)
+				parts = append(parts, column.Value, "PRIMARY KEY")
 			}
 		} else {
+			parts = append(parts, column.Value)
+
+			// Add NOT NULL constraint if specified
 			if nullable, ok := column.Extra["nullable"]; ok && nullable == "false" {
-				columnDef = fmt.Sprintf("%s NOT NULL", columnDef)
+				parts = append(parts, "NOT NULL")
 			}
 		}
 
-		columnDefs = append(columnDefs, columnDef)
+		columnDefs = append(columnDefs, strings.Join(parts, " "))
 	}
 
-	columnDefsStr := strings.Join(columnDefs, ", ")
-
-	createTableQuery := "CREATE TABLE %s (%s)"
-	return fmt.Sprintf(createTableQuery, storageUnit, columnDefsStr)
+	return fmt.Sprintf("CREATE TABLE %s (%s)", storageUnit, strings.Join(columnDefs, ", "))
 }

@@ -163,7 +163,7 @@ export const StorageUnitPage: FC = () => {
     }, [addStorageUnit, current?.Type, fields, refetch, schema, storageUnitName]);
 
     const handleAddField = useCallback(() => {
-        setFields(f => [...f, { Key: "", Value: "" }]);
+        setFields(f => [...f, { Key: "", Value: "", Extra: [] }]);
     }, []);
 
     const handleFieldValueChange = useCallback((type: string, index: number, value: string | boolean) => {
