@@ -84,7 +84,7 @@ func main() {
 		log.Logger.Infof("http://0.0.0.0:%s", port)
 		log.Logger.Info("Explore and enjoy working with your databases!")
 		if !env.IsAPIGatewayEnabled && !common.IsRunningInsideDocker() {
-			//common.OpenBrowser(fmt.Sprintf("http://localhost:%v", port))
+			common.OpenBrowser(fmt.Sprintf("http://localhost:%v", port))
 		}
 	}
 
