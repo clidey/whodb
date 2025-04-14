@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,10 +21,9 @@ import { Notifications } from './components/notifications';
 import { PrivateRoute, PublicRoutes, getRoutes } from './config/routes';
 import { NavigateToDefault } from "./pages/chat/default-chat-route";
 import { useAppSelector } from "./store/hooks";
-import {initHighlight, startHighlight, stopHighlight} from "./config/highlight";
-import {isDevelopment} from "./utils/functions";
 import {useCallback, useEffect} from "react";
 import {useUpdateSettingsMutation} from "./generated/graphql";
+import {optInUser, optOutUser} from "./config/posthog";
 
 export const App = () => {
   const [updateSettings, ] = useUpdateSettingsMutation();
@@ -33,10 +32,9 @@ export const App = () => {
 
   useEffect(() => {
       if (metricsEnabled) {
-        initHighlight(isDevelopment() ? "development" : "production")
-        startHighlight()
+        optInUser();
       } else {
-        stopHighlight()
+        optOutUser();
       }
   }, [metricsEnabled]);
 

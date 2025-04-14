@@ -14,8 +14,6 @@
 
 package settings
 
-import "github.com/clidey/whodb/core/src/highlight"
-
 type Settings struct {
 	MetricsEnabled bool `json:"metricsEnabled"`
 }
@@ -36,9 +34,7 @@ func (m MetricsEnabledField) Apply(s *Settings) bool {
 	if s.MetricsEnabled != bool(m) {
 		s.MetricsEnabled = bool(m)
 		if s.MetricsEnabled {
-			highlight.InitializeHighlight()
 		} else {
-			highlight.StopHighlight()
 		}
 		return true
 	}

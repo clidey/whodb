@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,21 +25,27 @@ import { App } from './app';
 import { BrowserRouter } from "react-router-dom";
 import 'reactflow/dist/style.css';
 import { PersistGate } from 'redux-persist/integration/react';
+import { PostHogProvider } from 'posthog-js/react';
+import {initPosthog} from "./config/posthog";
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
+
+const posthogClient = initPosthog()
+
 root.render(
   <React.StrictMode>
     <BrowserRouter>
       <ApolloProvider client={graphqlClient}>
         <Provider store={reduxStore}>
           <PersistGate loading={null} persistor={reduxStorePersistor}>
-            <App />
+            <PostHogProvider client={posthogClient}>
+              <App />
+            </PostHogProvider>
           </PersistGate>
         </Provider>
       </ApolloProvider>
     </BrowserRouter>
   </React.StrictMode>
 );
-
