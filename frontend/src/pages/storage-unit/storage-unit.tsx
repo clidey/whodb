@@ -228,7 +228,7 @@ export const StorageUnitPage: FC = () => {
                     "SMALLINT", "INTEGER", "BIGINT", "DECIMAL", "NUMERIC", "REAL", "DOUBLE PRECISION", "SMALLSERIAL", 
                     "SERIAL", "BIGSERIAL", "MONEY",
                     "CHAR", "VARCHAR", "TEXT", "BYTEA",
-                    "TIMESTAMP", "TIMESTAMPTZ", "DATE", "TIME", "TIMETZ", "INTERVAL",
+                    "TIMESTAMP", "TIMESTAMPTZ", "DATE", "TIME", "TIMETZ",
                     "BOOLEAN", "POINT", "LINE", "LSEG", "BOX", "PATH", "POLYGON", "CIRCLE",
                     "CIDR", "INET", "MACADDR", "UUID", "XML", "JSON", "JSONB", "ARRAY", "HSTORE"
                 ];
