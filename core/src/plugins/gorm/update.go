@@ -43,18 +43,23 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 				return false, fmt.Errorf("column '%s' does not exist in table %s", column, storageUnit)
 			}
 
+			targetColumn := column
+			if p.Type == engine.DatabaseType_Oracle {
+				targetColumn = fmt.Sprintf("\"%s\"", column)
+			}
+
 			if common.ContainsString(pkColumns, column) {
 				convertedValue, err := p.ConvertStringValue(strValue, columnType)
 				if err != nil {
 					return false, fmt.Errorf("failed to convert value for column '%s': %v", column, err)
 				}
-				conditions[column] = convertedValue
+				conditions[targetColumn] = convertedValue
 			} else if common.ContainsString(updatedColumns, column) {
 				convertedValue, err := p.ConvertStringValue(strValue, columnType)
 				if err != nil {
 					return false, fmt.Errorf("failed to convert value for column '%s': %v", column, err)
 				}
-				convertedValues[column] = convertedValue
+				convertedValues[targetColumn] = convertedValue
 			}
 		}
 
@@ -63,9 +68,16 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 			return true, nil
 		}
 
+		schema = p.EscapeIdentifier(schema)
+		storageUnit = p.EscapeIdentifier(storageUnit)
 		tableName := p.FormTableName(schema, storageUnit)
 
-		result := db.Table(tableName).Where(conditions, nil).Updates(convertedValues)
+		var result *gorm.DB
+		if len(conditions) == 0 {
+			result = db.Table(tableName).Updates(convertedValues)
+		} else {
+			result = db.Table(tableName).Where(conditions).Updates(convertedValues)
+		}
 
 		if result.Error != nil {
 			return false, result.Error
