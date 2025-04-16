@@ -1,16 +1,18 @@
-// Copyright 2025 Clidey, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package gorm_plugin
 
@@ -27,7 +29,7 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
 		pkColumns, err := p.GetPrimaryKeyColumns(db, schema, storageUnit)
 		if err != nil {
-			return false, err
+			pkColumns = []string{}
 		}
 
 		columnTypes, err := p.GetColumnTypes(db, schema, storageUnit)
@@ -37,6 +39,8 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 
 		conditions := make(map[string]interface{})
 		convertedValues := make(map[string]interface{})
+		unchangedValues := make(map[string]interface{})
+
 		for column, strValue := range values {
 			columnType, exists := columnTypes[column]
 			if !exists {
@@ -56,6 +60,13 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 					return false, fmt.Errorf("failed to convert value for column '%s': %v", column, err)
 				}
 				convertedValues[targetColumn] = convertedValue
+			} else {
+				// Store unchanged values for WHERE clause if no PKs
+				convertedValue, err := p.ConvertStringValue(strValue, columnType)
+				if err != nil {
+					return false, fmt.Errorf("failed to convert value for column '%s': %v", column, err)
+				}
+				unchangedValues[targetColumn] = convertedValue
 			}
 		}
 
@@ -70,7 +81,7 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 
 		var result *gorm.DB
 		if len(conditions) == 0 {
-			result = db.Table(tableName).Updates(convertedValues)
+			result = db.Table(tableName).Where(unchangedValues).Updates(convertedValues)
 		} else {
 			result = db.Table(tableName).Where(conditions).Updates(convertedValues)
 		}
