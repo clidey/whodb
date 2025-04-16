@@ -11,7 +11,7 @@
     "@codemirror/theme-one-dark": "^6.1.2",
     "@codemirror/view": "^6.36.5",
     "@dagrejs/dagre": "^1.1.4",
-    "@reduxjs/toolkit": "^2.3.0",
+    "@reduxjs/toolkit": "^2.7.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.5",
     "@types/react-table": "^7.7.20",
