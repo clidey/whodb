@@ -61,7 +61,7 @@
     "@graphql-codegen/typescript-operations": "^4.6.0",
     "@graphql-codegen/typescript-react-apollo": "^4.3.2",
     "@parcel/packager-raw-url": "2.13.3",
-    "@parcel/transformer-webmanifest": "2.14.4",
+    "@parcel/transformer-webmanifest": "2.13.3",
     "@tailwindcss/postcss": "^4.1.4",
     "@types/lodash": "^4.17.16",
     "@types/react-window": "^1.8.8",
@@ -69,7 +69,7 @@
     "autoprefixer": "^10.4.21",
     "buffer": "^6.0.3",
     "cypress": "^14.0.1",
-    "parcel": "^2.14.4",
+    "parcel": "^2.13.3",
     "postcss": "^8.4.49",
     "process": "^0.11.10",
     "tailwindcss": "^4.1.3"
