@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -428,7 +428,7 @@ export const Sidebar: FC = () => {
                                     {
                                         currentProfile != null &&
                                         <Dropdown className="w-[140px]" items={loginItems} value={currentProfile}
-                                                  onChange={handleProfileChange}
+                                                  onChange={handleProfileChange} dropdownContainerHeight="max-h-[200px]"
                                                   defaultItem={{
                                                       label: "Add another profile",
                                                       icon: cloneElement(Icons.Add, {
@@ -449,7 +449,7 @@ export const Sidebar: FC = () => {
                                         <Dropdown className="w-[140px]" value={createDropdownItem(current!.Database)}
                                                   items={availableDatabases.Database.map(database => createDropdownItem(database))}
                                                   onChange={handleDatabaseChange}
-                                                  noItemsLabel="No available database found"
+                                                  noItemsLabel="No available database found" dropdownContainerHeight="max-h-[300px]"
                                                   testId="sidebar-database" />
                                     </div>
                                 }

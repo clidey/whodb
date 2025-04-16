@@ -315,7 +315,7 @@ export const StorageUnitPage: FC = () => {
                                            setValue={(value) => handleFieldValueChange("Key", index, value)}
                                            placeholder="Enter field name"/>
                                     <Dropdown className="w-1/3" items={storageUnitTypesDropdownItems}
-                                              value={createDropdownItem(field.Value)}
+                                              value={createDropdownItem(field.Value)} dropdownContainerHeight="max-h-[400px]"
                                               onChange={(item) => handleFieldValueChange("Value", index, item.id)}/>
 
                                     {showModifiers && (
