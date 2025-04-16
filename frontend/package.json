@@ -62,7 +62,7 @@
     "@graphql-codegen/typescript-react-apollo": "^4.3.2",
     "@parcel/packager-raw-url": "2.13.3",
     "@parcel/transformer-webmanifest": "2.14.4",
-    "@tailwindcss/postcss": "^4.0.16",
+    "@tailwindcss/postcss": "^4.1.4",
     "@types/lodash": "^4.17.16",
     "@types/react-window": "^1.8.8",
     "@types/uuid": "^10.0.0",
