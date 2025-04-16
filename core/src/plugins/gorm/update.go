@@ -44,10 +44,6 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 			}
 
 			targetColumn := column
-			if p.Type == engine.DatabaseType_Oracle {
-				targetColumn = fmt.Sprintf("\"%s\"", column)
-			}
-
 			if common.ContainsString(pkColumns, column) {
 				convertedValue, err := p.ConvertStringValue(strValue, columnType)
 				if err != nil {
