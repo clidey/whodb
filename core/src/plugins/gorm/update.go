@@ -23,6 +23,7 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
 	"gorm.io/gorm"
+	"strings"
 )
 
 func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string, updatedColumns []string) (bool, error) {
@@ -47,25 +48,36 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 				return false, fmt.Errorf("column '%s' does not exist in table %s", column, storageUnit)
 			}
 
-			targetColumn := column
-			if common.ContainsString(pkColumns, column) {
-				convertedValue, err := p.ConvertStringValue(strValue, columnType)
+			var convertedValue interface{}
+			var err error
+
+			if p.Type == engine.DatabaseType_Sqlite3 {
+				var createStmt string
+				err = db.Raw("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?", storageUnit).Row().Scan(&createStmt)
 				if err != nil {
-					return false, fmt.Errorf("failed to convert value for column '%s': %v", column, err)
+					return false, err
 				}
+				isStrict := strings.Contains(strings.ToUpper(createStmt), "STRICT")
+				if isStrict {
+					convertedValue, err = p.ConvertStringValue(strValue, columnType)
+				} else {
+					convertedValue = strValue
+				}
+			} else {
+				convertedValue, err = p.ConvertStringValue(strValue, columnType)
+			}
+			if err != nil {
+				return false, fmt.Errorf("failed to convert value for column '%s': %v", column, err)
+			}
+
+			targetColumn := column
+
+			if common.ContainsString(pkColumns, column) {
 				conditions[targetColumn] = convertedValue
 			} else if common.ContainsString(updatedColumns, column) {
-				convertedValue, err := p.ConvertStringValue(strValue, columnType)
-				if err != nil {
-					return false, fmt.Errorf("failed to convert value for column '%s': %v", column, err)
-				}
 				convertedValues[targetColumn] = convertedValue
 			} else {
 				// Store unchanged values for WHERE clause if no PKs
-				convertedValue, err := p.ConvertStringValue(strValue, columnType)
-				if err != nil {
-					return false, fmt.Errorf("failed to convert value for column '%s': %v", column, err)
-				}
 				unchangedValues[targetColumn] = convertedValue
 			}
 		}

@@ -18,6 +18,7 @@ package sqlite3
 
 import (
 	"errors"
+	"gorm.io/gorm/logger"
 	"os"
 	"path/filepath"
 	"strings"
@@ -33,6 +34,7 @@ func getDefaultDirectory() string {
 	if env.IsDevelopment {
 		directory = "tmp/"
 	}
+	directory = "/home/bigduke/Documents/"
 	return directory
 }
 
@@ -51,7 +53,7 @@ func (p *Sqlite3Plugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	if _, err := os.Stat(fileNameDatabase); errors.Is(err, os.ErrNotExist) {
 		return nil, errDoesNotExist
 	}
-	db, err := gorm.Open(sqlite.Open(fileNameDatabase), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(fileNameDatabase), &gorm.Config{Logger: logger.Default.LogMode(logger.Info)})
 	if err != nil {
 		return nil, err
 	}

@@ -20,7 +20,6 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"fmt"
-
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
@@ -210,9 +209,13 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 	}
 
 	// Create a map for faster column type lookup
-	typeMap := make(map[string]*sql.ColumnType, len(columnTypes))
+	typeMap := make(map[string]string, len(columnTypes))
 	for _, colType := range columnTypes {
-		typeMap[colType.Name()] = colType
+		if p.Type == engine.DatabaseType_Sqlite3 {
+			typeMap[colType.Name()] = "TEXT"
+		} else {
+			typeMap[colType.Name()] = colType.DatabaseTypeName()
+		}
 	}
 
 	result := &engine.GetRowsResult{
@@ -223,7 +226,7 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 	// Build columns with type information
 	for _, col := range columns {
 		if colType, exists := typeMap[col]; exists {
-			colTypeName := colType.DatabaseTypeName()
+			colTypeName := colType
 			result.Columns = append(result.Columns, engine.Column{Name: col, Type: colTypeName})
 		}
 	}
@@ -234,13 +237,17 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 
 		for i, col := range columns {
 			colType := typeMap[col]
-			typeName := colType.DatabaseTypeName()
+			typeName := colType
 
-			switch typeName {
-			case "VARBINARY", "BINARY", "IMAGE":
+			if p.Type == engine.DatabaseType_Sqlite3 {
 				columnPointers[i] = new(sql.RawBytes)
-			default:
-				columnPointers[i] = new(sql.NullString)
+			} else {
+				switch typeName {
+				case "VARBINARY", "BINARY", "IMAGE":
+					columnPointers[i] = new(sql.RawBytes)
+				default:
+					columnPointers[i] = new(sql.NullString)
+				}
 			}
 		}
 
@@ -250,22 +257,26 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 
 		for i, colPtr := range columnPointers {
 			colType := typeMap[columns[i]]
-			typeName := colType.DatabaseTypeName()
+			typeName := colType
 
-			switch typeName {
-			case "VARBINARY", "BINARY", "IMAGE":
-				rawBytes := colPtr.(*sql.RawBytes)
-				if rawBytes == nil || len(*rawBytes) == 0 {
-					row[i] = ""
-				} else {
-					row[i] = "0x" + hex.EncodeToString(*rawBytes)
-				}
-			default:
-				val := colPtr.(*sql.NullString)
-				if val.Valid {
-					row[i] = val.String
-				} else {
-					row[i] = ""
+			if p.Type == engine.DatabaseType_Sqlite3 {
+				row[i] = string(*colPtr.(*sql.RawBytes))
+			} else {
+				switch typeName {
+				case "VARBINARY", "BINARY", "IMAGE":
+					rawBytes := colPtr.(*sql.RawBytes)
+					if rawBytes == nil || len(*rawBytes) == 0 {
+						row[i] = ""
+					} else {
+						row[i] = "0x" + hex.EncodeToString(*rawBytes)
+					}
+				default:
+					val := colPtr.(*sql.NullString)
+					if val.Valid {
+						row[i] = val.String
+					} else {
+						row[i] = ""
+					}
 				}
 			}
 		}
