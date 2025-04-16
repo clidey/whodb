@@ -48,10 +48,11 @@ func (p *GormPlugin) DeleteRow(config *engine.PluginConfig, schema string, stora
 				return false, fmt.Errorf("failed to convert value for column '%s': %v", column, err)
 			}
 
+			targetColumn := column
 			if common.ContainsString(pkColumns, column) {
-				conditions[column] = convertedValue
+				conditions[targetColumn] = convertedValue
 			} else {
-				convertedValues[column] = convertedValue
+				convertedValues[targetColumn] = convertedValue
 			}
 		}
 
