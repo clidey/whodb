@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,6 +51,7 @@ export type IDropdownProps = {
     noItemsLabel?: string;
     showIconOnly?: boolean;
     testId?: string;
+    dropdownContainerHeight?: string;
 }
 
 const ITEM_CLASS = "group/item flex items-center gap-1 transition-all cursor-pointer relative hover:bg-black/10 py-1 mx-2 px-4 rounded-lg pl-1 dark:text-neutral-300/100";
@@ -93,7 +94,7 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
                     "block animate-fade": open,
                     "w-fit min-w-[200px]": !props.fullWidth,
                     "w-full": props.fullWidth,
-                })}>
+                }, props.dropdownContainerHeight)}>
                     <ul className={classNames(ClassNames.Text, "py-1 text-sm nowheel flex flex-col")}>
                         {
                             props.items.map((item, i) => (

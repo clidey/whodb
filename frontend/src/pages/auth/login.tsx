@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -344,7 +344,7 @@ export const LoginPage: FC = () => {
                                 </div>
                             </div>
                             <div className="flex flex-col grow justify-center gap-1">
-                                <DropdownWithLabel fullWidth label="Database Type" value={databaseType} onChange={handleDatabaseTypeChange} items={databaseTypeDropdownItems} testId="database-type" />
+                                <DropdownWithLabel fullWidth dropdownContainerHeight="max-h-[300px]" label="Database Type" value={databaseType} onChange={handleDatabaseTypeChange} items={databaseTypeDropdownItems} testId="database-type" />
                                 {fields}
                             </div>
                         </div>
@@ -370,7 +370,7 @@ export const LoginPage: FC = () => {
                 {
                     availableProfiles.length > 0 &&
                     <div className="mt-4 pt-2 border-t border-t-neutral-100/10 flex flex-col gap-2">
-                        <DropdownWithLabel fullWidth label="Available profiles" value={selectedAvailableProfile} onChange={handleAvailableProfileChange}
+                        <DropdownWithLabel dropdownContainerHeight="max-h-[300px]" fullWidth label="Available profiles" value={selectedAvailableProfile} onChange={handleAvailableProfileChange}
                             items={availableProfiles} noItemsLabel="No available profiles" />
                         <AnimatedButton className="self-end" icon={Icons.CheckCircle} label="Login" onClick={handleLoginWithProfileSubmit} />
                     </div>

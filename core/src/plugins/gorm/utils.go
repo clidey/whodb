@@ -32,7 +32,7 @@ var (
 	floatTypes    = mapset.NewSet("REAL", "NUMERIC", "DOUBLE PRECISION", "FLOAT", "NUMBER", "DOUBLE", "DECIMAL")
 	boolTypes     = mapset.NewSet("BOOLEAN", "BIT", "BOOL")
 	dateTypes     = mapset.NewSet("DATE")
-	dateTimeTypes = mapset.NewSet("DATETIME", "TIMESTAMP", "TIMESTAMP WITH TIME ZONE", "TIMESTAMP WITHOUT TIME ZONE", "DATETIME2", "SMALLDATETIME")
+	dateTimeTypes = mapset.NewSet("DATETIME", "TIMESTAMP", "TIMESTAMP WITH TIME ZONE", "TIMESTAMP WITHOUT TIME ZONE", "DATETIME2", "SMALLDATETIME", "TIMETZ", "TIMESTAMPTZ")
 	uuidTypes     = mapset.NewSet("UUID", "UNIQUEIDENTIFIER")
 	binaryTypes   = mapset.NewSet("BLOB")
 )
