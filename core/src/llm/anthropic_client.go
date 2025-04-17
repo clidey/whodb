@@ -27,9 +27,21 @@ import (
 const anthropicEndpoint = "https://api.anthropic.com/v1"
 
 func prepareAnthropicRequest(c *LLMClient, prompt string, model LLMModel) (string, []byte, map[string]string, error) {
+	maxTokens := 64000 // this is for claude-3-7-sonnet-20250219
+	modelName := string(model)
+
+	switch modelName {
+	case "claude-3-5-sonnet-20241022", "claude-3-5-sonnet-20240620", "claude-3-5-haiku-20241022":
+		maxTokens = 8192
+	case "claude-3-opus-20240229", "claude-3-haiku-20240307":
+		maxTokens = 4096
+	default:
+		maxTokens = 8192
+	}
+
 	requestBody, err := json.Marshal(map[string]interface{}{
-		"model":      string(model),
-		"max_tokens": 8192,
+		"model":      modelName,
+		"max_tokens": maxTokens,
 		"messages": []map[string]string{
 			{"role": "user", "content": prompt},
 		},
@@ -51,17 +63,16 @@ func prepareAnthropicRequest(c *LLMClient, prompt string, model LLMModel) (strin
 
 func getAnthropicModels(_ string) ([]string, error) {
 	models := []string{
-		"claude-3-7-sonnet-latest",
-		"claude-3-5-haiku-latest",
-		"claude-3-5-sonnet-latest",
-		"claude-3-opus-latest",
+		//"claude-3-7-sonnet-latest",
+		//"claude-3-5-haiku-latest",
+		//"claude-3-5-sonnet-latest",
+		//"claude-3-opus-latest",
 		"claude-3-7-sonnet-20250219",
-		"claude-3-5-haiku-20241022",
 		"claude-3-5-sonnet-20241022",
 		"claude-3-5-sonnet-20240620",
-		"claude-3-opus-20240229",
-		"claude-3-sonnet-20240229",
+		"claude-3-5-haiku-20241022",
 		"claude-3-haiku-20240307",
+		"claude-3-opus-20240229",
 	}
 	return models, nil
 }
