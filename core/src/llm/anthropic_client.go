@@ -35,8 +35,6 @@ func prepareAnthropicRequest(c *LLMClient, prompt string, model LLMModel) (strin
 		maxTokens = 8192
 	case "claude-3-opus-20240229", "claude-3-haiku-20240307":
 		maxTokens = 4096
-	default:
-		maxTokens = 8192
 	}
 
 	requestBody, err := json.Marshal(map[string]interface{}{
