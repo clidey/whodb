@@ -47,25 +47,18 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 				return false, fmt.Errorf("column '%s' does not exist in table %s", column, storageUnit)
 			}
 
+			convertedValue, err := p.ConvertStringValue(strValue, columnType)
+			if err != nil {
+				return false, fmt.Errorf("failed to convert value for column '%s': %v", column, err)
+			}
+
 			targetColumn := column
 			if common.ContainsString(pkColumns, column) {
-				convertedValue, err := p.ConvertStringValue(strValue, columnType)
-				if err != nil {
-					return false, fmt.Errorf("failed to convert value for column '%s': %v", column, err)
-				}
 				conditions[targetColumn] = convertedValue
 			} else if common.ContainsString(updatedColumns, column) {
-				convertedValue, err := p.ConvertStringValue(strValue, columnType)
-				if err != nil {
-					return false, fmt.Errorf("failed to convert value for column '%s': %v", column, err)
-				}
 				convertedValues[targetColumn] = convertedValue
 			} else {
 				// Store unchanged values for WHERE clause if no PKs
-				convertedValue, err := p.ConvertStringValue(strValue, columnType)
-				if err != nil {
-					return false, fmt.Errorf("failed to convert value for column '%s': %v", column, err)
-				}
 				unchangedValues[targetColumn] = convertedValue
 			}
 		}
