@@ -1,144 +1,148 @@
+// Copyright 2025 Clidey, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package clickhouse
 
 import (
-	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"log"
 	"strconv"
 
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/plugins"
+	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
+	mapset "github.com/deckarep/golang-set/v2"
+	"gorm.io/gorm"
 )
 
-type ClickHousePlugin struct{}
+var (
+	supportedColumnDataTypes = mapset.NewSet(
+		"TINYINT", "SMALLINT", "MEDIUMINT", "INT", "INTEGER", "BIGINT", "FLOAT", "DOUBLE", "DECIMAL",
+		"DATE", "DATETIME", "TIMESTAMP", "TIME", "YEAR",
+		"CHAR", "VARCHAR(255)", "BINARY", "VARBINARY", "TINYBLOB", "BLOB", "MEDIUMBLOB", "LONGBLOB",
+		"TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT",
+		"ENUM", "SET", "JSON", "BOOLEAN", "VARCHAR(100)", "VARCHAR(1000)",
+	)
+)
 
-func (p *ClickHousePlugin) IsAvailable(config *engine.PluginConfig) bool {
-	conn, err := DB(config)
-	if err != nil {
-		return false
-	}
-	defer conn.Close()
-	return conn.PingContext(context.Background()) == nil
+type ClickHousePlugin struct {
+	gorm_plugin.GormPlugin
 }
 
 func (p *ClickHousePlugin) GetDatabases(config *engine.PluginConfig) ([]string, error) {
-	conn, err := DB(config)
-	if err != nil {
-		return nil, err
-	}
-	defer conn.Close()
-
-	rows, err := conn.QueryContext(context.Background(), "SHOW DATABASES")
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var databases []string
-	for rows.Next() {
-		var dbName string
-		if err := rows.Scan(&dbName); err != nil {
+	return plugins.WithConnection[[]string](config, p.DB, func(db *gorm.DB) ([]string, error) {
+		var databases []struct {
+			Datname string `gorm:"column:datname"`
+		}
+		if err := db.Raw("SELECT name AS datname FROM system.databases").Scan(&databases).Error; err != nil {
 			return nil, err
 		}
-		databases = append(databases, dbName)
-	}
-
-	return databases, nil
+		databaseNames := []string{}
+		for _, database := range databases {
+			databaseNames = append(databaseNames, database.Datname)
+		}
+		return databaseNames, nil
+	})
 }
 
-func (p *ClickHousePlugin) GetSchema(config *engine.PluginConfig) ([]string, error) {
-	return []string{config.Credentials.Database}, nil
+func (p *ClickHousePlugin) FormTableName(schema string, storageUnit string) string {
+	return fmt.Sprintf("%s.%s", schema, storageUnit)
 }
 
-func (p *ClickHousePlugin) GetStorageUnits(config *engine.PluginConfig, schema string) ([]engine.StorageUnit, error) {
-	conn, err := DB(config)
-	if err != nil {
-		return nil, err
-	}
-	defer conn.Close()
+func (p *ClickHousePlugin) GetSupportedColumnDataTypes() mapset.Set[string] {
+	return supportedColumnDataTypes
+}
 
-	query := fmt.Sprintf(`
+func (p *ClickHousePlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, error) {
+	// technically a table is considered a schema in clickhouse
+	return nil, errors.ErrUnsupported
+}
+
+func (p *ClickHousePlugin) GetTableInfoQuery() string {
+	return `
 		SELECT 
 			name,
 			engine,
 			total_rows,
 			formatReadableSize(total_bytes) as total_size
 		FROM system.tables 
-		WHERE database = '%s'
-	`, schema)
+		WHERE database = ?
+	`
+}
 
-	rows, err := conn.QueryContext(context.Background(), query)
-	if err != nil {
-		return nil, err
+func (p *ClickHousePlugin) GetTableNameAndAttributes(rows *sql.Rows, db *gorm.DB) (string, []engine.Record) {
+	var tableName, tableType string
+	var totalRows *uint64
+	var totalSize *string
+
+	if err := rows.Scan(&tableName, &tableType, &totalRows, &totalSize); err != nil {
+		log.Fatal(err)
 	}
-	defer rows.Close()
 
-	var storageUnits []engine.StorageUnit
-	for rows.Next() {
-		var name, tableType string
-		var totalRows uint64
-		var totalSize string
-		if err := rows.Scan(&name, &tableType, &totalRows, &totalSize); err != nil {
-			return nil, err
-		}
+	rowCount := "0"
+	if totalRows != nil {
+		rowCount = strconv.FormatUint(*totalRows, 10)
+	}
 
-		attributes := []engine.Record{
-			{Key: "Table Type", Value: tableType},
-			{Key: "Total Size", Value: totalSize},
-			{Key: "Count", Value: strconv.FormatUint(totalRows, 10)},
-		}
+	size := "unknown"
+	if totalSize != nil {
+		size = *totalSize
+	}
 
-		columns, err := getTableSchema(conn, schema, name)
+	attributes := []engine.Record{
+		{Key: "Type", Value: tableType},
+		{Key: "Total Size", Value: size},
+		{Key: "Count", Value: rowCount},
+	}
+
+	return tableName, attributes
+}
+
+func (p *ClickHousePlugin) GetSchemaTableQuery() string {
+	return `
+		SELECT 
+		    table AS TABLE_NAME,
+			name AS COLUMN_NAME,
+			type AS DATA_TYPE
+		FROM system.columns
+		WHERE database = ?
+		ORDER BY TABLE_NAME, position
+	`
+}
+
+func (p *ClickHousePlugin) RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error) {
+	return p.executeRawSQL(config, query)
+}
+
+func (p *ClickHousePlugin) executeRawSQL(config *engine.PluginConfig, query string, params ...interface{}) (*engine.GetRowsResult, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
+		rows, err := db.Raw(query, params...).Rows()
 		if err != nil {
 			return nil, err
 		}
-		attributes = append(attributes, columns...)
+		defer rows.Close()
 
-		storageUnits = append(storageUnits, engine.StorageUnit{
-			Name:       name,
-			Attributes: attributes,
-		})
-	}
-
-	return storageUnits, nil
-}
-
-func getTableSchema(conn *sql.DB, schema string, tableName string) ([]engine.Record, error) {
-	query := fmt.Sprintf(`
-		SELECT 
-			name,
-			type
-		FROM system.columns
-		WHERE database = '%s' AND table = '%s'
-		ORDER BY position
-	`, schema, tableName)
-
-	rows, err := conn.QueryContext(context.Background(), query)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var result []engine.Record
-	for rows.Next() {
-		var name, dataType string
-		if err := rows.Scan(&name, &dataType); err != nil {
-			return nil, err
-		}
-		result = append(result, engine.Record{Key: name, Value: dataType})
-	}
-
-	return result, nil
-}
-
-func (p *ClickHousePlugin) Chat(config *engine.PluginConfig, schema string, model string, previousConversation string, query string) ([]*engine.ChatMessage, error) {
-	// Implement chat functionality similar to MySQL implementation
-	// You may need to adapt this based on ClickHouse specifics
-	return nil, fmt.Errorf("chat functionality not implemented for ClickHouse")
+		return p.ConvertRawToRows(rows)
+	})
 }
 
 func NewClickHousePlugin() *engine.Plugin {
-	return &engine.Plugin{
-		Type:            engine.DatabaseType_ClickHouse,
-		PluginFunctions: &ClickHousePlugin{},
-	}
+	clickhousePlugin := &ClickHousePlugin{}
+	clickhousePlugin.Type = engine.DatabaseType_ClickHouse
+	clickhousePlugin.PluginFunctions = clickhousePlugin
+	clickhousePlugin.GormPluginFunctions = clickhousePlugin
+	return &clickhousePlugin.Plugin
 }

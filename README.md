@@ -1,6 +1,8 @@
 # <img src="./docs/images/logo.png" width="30px" height="auto" />  WhoDB
 Build Status: &nbsp; <img src="https://hello.clidey.com/api/flows/status?id=b32257fa-1415-4847-a0f3-e684f5f76608&secret=cd74dbd5-36ec-42f9-b4f0-12ce9fcc762b" alt="Clidey build status" height="20px" />
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/clidey/whodb/core)](https://goreportcard.com/report/github.com/clidey/whodb/core)
+
 ### *"Is it magic? Is it sorcery? No, it's just WhoDB!"*
 <p align="center"><img src="./docs/images/trailer.png" alt="Trailer" width="100%" height="auto" /></p>
 
@@ -50,14 +52,14 @@ This feature allows you to perform queries and manage your data through conversa
 <div style="width:100%;border-bottom:0.5px solid white;margin:50px 0px;"></div>
 
 ## Try the demo
-Experience WhoDB firsthand with our [live demo](https://whodb.clidey.com/demo/login?host=quick-container-491288b0-3138-48fa-93b4-1e730296c0b7.hello.svc.cluster.local&username=user&password=password&database=Adventureworks).  
+Experience WhoDB firsthand with our [live demo](https://whodb.com/demo/login?host=quick-container-491288b0-3138-48fa-93b4-1e730296c0b7.hello.svc.cluster.local&username=user&password=password&database=Adventureworks).  
 *Note: This demo is populated with a sample database from postgresDBSamples, with credentials pre-filled.*
 
 Or checkout our [demo video](https://youtu.be/hnAQcYYzcLo)
 
 ## Documentation
 
-For more detailed information, check out our [Documentation.](https://whodb.clidey.com/docs/)
+For more detailed information, check out our [Documentation.](https://whodb.com/docs/)
 
 <div style="width:100%;border-bottom:0.5px solid white;margin:50px 0px;"></div>
 
@@ -68,17 +70,6 @@ Get up and running with WhoDB quickly using Docker:
 docker run -it -p 8080:8080 clidey/whodb
 ```
 
-
-To run WhoDB with an OpenAI compatible service, you should assign some environments.
-```sh
-docker run -it -e USE_CUSTOM_MODELS=1 -e CUSTOM_MODELS=gpt-4o,gpt-3.5,others -e OPENAI_BASE_URL=http://your_base_url/v1 -p 8080:8080 clidey/whodb
-```
-
-If you are using a remote Ollama server, please start Docker with Ollama Environments like this:
-```sh
-docker run -it -e WHODB_OLLAMA_HOST=YOUR_OLLAMA_HOST -e WHODB_OLLAMA_PORT=YOUR_OLLAMA_PORT -p 8080:8080 clidey/whodb
-```
-
 Or, use Docker Compose:
 ```sh
 version: "3.8"
@@ -87,9 +78,6 @@ services:
     image: clidey/whodb
     # volumes: # (optional for sqlite) 
     #   - ./sample.db:/db/sample.db
-    # environment:
-    #   WHODB_OLLAMA_HOST:YOUR_OLLAMA_HOST
-    #   WHODB_OLLAMA_PORT:YOUR_OLLAMA_PORT
     ports:
       - "8080:8080"
 ```

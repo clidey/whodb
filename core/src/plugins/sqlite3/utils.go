@@ -1,73 +1,53 @@
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package sqlite3
 
 import (
-	"fmt"
-	"strconv"
-	"time"
-
-	"gorm.io/gorm"
+	"strings"
 )
 
-func getTableInfo(db *gorm.DB, tableName string) ([]string, map[string]string, error) {
-	var primaryKeys []string
-	columnTypes := make(map[string]string)
-	pragmaQuery := fmt.Sprintf("PRAGMA table_info(%s)", tableName)
-	rows, err := db.Raw(pragmaQuery, tableName).Rows()
-	if err != nil {
-		return nil, nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var (
-			cid       int
-			name      string
-			type_     string
-			notnull   int
-			dfltValue interface{}
-			pk        int
-		)
-		if err := rows.Scan(&cid, &name, &type_, &notnull, &dfltValue, &pk); err != nil {
-			return nil, nil, err
-		}
-		columnTypes[name] = type_
-		if pk == 1 {
-			primaryKeys = append(primaryKeys, name)
-		}
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, nil, err
-	}
-
-	if len(primaryKeys) == 0 {
-		return nil, nil, fmt.Errorf("no primary key found for table %s", tableName)
-	}
-
-	return primaryKeys, columnTypes, nil
+func (p *Sqlite3Plugin) ConvertStringValueDuringMap(value, columnType string) (interface{}, error) {
+	return value, nil
 }
 
-func convertStringValue(value, columnType string) (interface{}, error) {
-	switch columnType {
-	case "INTEGER":
-		return strconv.ParseInt(value, 10, 64)
-	case "REAL":
-		return strconv.ParseFloat(value, 64)
-	case "BOOLEAN":
-		return strconv.ParseBool(value)
-	case "DATE":
-		_, err := time.Parse("2006-01-02", value)
-		if err != nil {
-			return nil, fmt.Errorf("invalid date format: %v", err)
-		}
-		return value, nil
-	case "DATETIME":
-		_, err := time.Parse(time.RFC3339, value)
-		if err != nil {
-			return nil, fmt.Errorf("invalid datetime format: %v", err)
-		}
-		return value, nil
-	default:
-		return value, nil
-	}
+func (p *Sqlite3Plugin) GetPrimaryKeyColQuery() string {
+	return `
+		SELECT p.name AS pk_column
+		FROM sqlite_master m,
+			 pragma_table_info(m.name) p
+		WHERE m.type = 'table'
+		  AND m.name = ?
+		  AND m.name NOT LIKE 'sqlite_%'
+		  AND p.pk > 0
+		ORDER BY m.name, p.pk;`
+}
+
+func (p *Sqlite3Plugin) GetColTypeQuery() string {
+	return `
+		SELECT p.name AS column_name,
+			   p.type AS data_type
+		FROM sqlite_master m,
+			 pragma_table_info(m.name) p
+		WHERE m.type = 'table'
+		  AND m.name NOT LIKE 'sqlite_%';
+	`
+}
+
+func (p *Sqlite3Plugin) EscapeSpecificIdentifier(identifier string) string {
+	identifier = strings.Replace(identifier, "\"", "\"\"", -1)
+	return identifier
 }

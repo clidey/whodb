@@ -1,9 +1,26 @@
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import classNames from "classnames";
 import { entries } from "lodash";
-import { cloneElement, FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
+import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import logoImage from "../../../public/images/logo.png";
 import { AnimatedButton } from "../../components/button";
-import { BRAND_COLOR } from "../../components/classes";
+import { ClassNames } from "../../components/classes";
 import { createDropdownItem, DropdownWithLabel, IDropdownItem } from "../../components/dropdown";
 import { Icons } from "../../components/icons";
 import { InputWithlabel } from "../../components/input";
@@ -27,13 +44,13 @@ const databaseTypeDropdownItems: IDropdownItem<Record<string, string>>[] = [
         id: "MySQL",
         label: "MySQL",
         icon: Icons.Logos.MySQL,
-        extra: {"Port": "3306", "Parse Time": "True", "Loc": "UTC", "Allow clear text passwords": "0"},
+        extra: {"Port": "3306", "Parse Time": "True", "Loc": "Local", "Allow clear text passwords": "0"},
     },
     {
         id: "MariaDB",
         label: "MariaDB",
         icon: Icons.Logos.MariaDB,
-        extra: {"Port": "3306", "Parse Time": "True", "Loc": "UTC", "Allow clear text passwords": "0"},
+        extra: {"Port": "3306", "Parse Time": "True", "Loc": "Local", "Allow clear text passwords": "0"},
     },
     {
         id: "Sqlite3",
@@ -69,7 +86,7 @@ const databaseTypeDropdownItems: IDropdownItem<Record<string, string>>[] = [
             "Readonly": "disable",
             "Debug": "disable"
         }
-    }
+    },
 ]
 
 export const LoginPage: FC = () => {
@@ -282,14 +299,14 @@ export const LoginPage: FC = () => {
                     id: database,
                     label: database,
                     icon: Icons.Database,
-                }} onChange={(item) => setDatabase(item.id)} />
+                }} onChange={(item) => setDatabase(item.id)} testId="database" />
             </>
         }
         return <>
-            <InputWithlabel label={databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Postgres ? "Host Name (or paste Connection URL)" : "Host Name"} value={hostName} setValue={handleHostNameChange} />
-            { databaseType.id !== DatabaseType.Redis && <InputWithlabel label="Username" value={username} setValue={setUsername} /> }
-            <InputWithlabel label="Password" value={password} setValue={setPassword} type="password" />
-            { (databaseType.id !== DatabaseType.MongoDb && databaseType.id !== DatabaseType.Redis && databaseType.id !== DatabaseType.ElasticSearch)  && <InputWithlabel label="Database" value={database} setValue={setDatabase} /> }
+            <InputWithlabel label={databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Postgres ? "Host Name (or paste Connection URL)" : "Host Name"} value={hostName} setValue={handleHostNameChange} testId="hostname" />
+            { databaseType.id !== DatabaseType.Redis && <InputWithlabel label="Username" value={username} setValue={setUsername} testId="username" /> }
+            <InputWithlabel label="Password" value={password} setValue={setPassword} type="password" testId="password" />
+            { (databaseType.id !== DatabaseType.MongoDb && databaseType.id !== DatabaseType.Redis && databaseType.id !== DatabaseType.ElasticSearch)  && <InputWithlabel label="Database" value={database} setValue={setDatabase} testId="database" /> }
         </>
     }, [database, databaseType.id, databasesLoading, foundDatabases?.Database, handleHostNameChange, hostName, password, username]);
 
@@ -303,7 +320,7 @@ export const LoginPage: FC = () => {
                     <div>
                         <Loading hideText={true} />
                     </div>
-                    <div className="text-neutral-800 dark:text-neutral-300">
+                    <div className={ClassNames.Text}>
                         Logging in
                     </div>
                 </div>
@@ -318,27 +335,24 @@ export const LoginPage: FC = () => {
                         <div className="flex flex-col gap-4 grow w-[350px]">
                             <div className="flex justify-between">
                                 <div className="text-lg text-gray-600 flex gap-2 items-center">
-                                    <div className="h-[40px] w-[40px] rounded-xl flex justify-center items-center bg-teal-500">
-                                        {cloneElement(Icons.Lock, {
-                                            className: "w-6 h-6 stroke-white",
-                                        })}
-                                    </div>
-                                    <span className={BRAND_COLOR}>WhoDB</span> <span className="dark:text-neutral-300">Login</span>
+                                    <img src={logoImage} alt="clidey logo" className="w-auto h-6" />
+                                    <span className={ClassNames.BrandText}>WhoDB</span>
+                                    <span className={ClassNames.Text}>Login</span>
                                 </div>
                                 <div className="text-red-500 text-xs flex items-center">
                                     {error}
                                 </div>
                             </div>
                             <div className="flex flex-col grow justify-center gap-1">
-                                <DropdownWithLabel fullWidth label="Database Type" value={databaseType} onChange={handleDatabaseTypeChange} items={databaseTypeDropdownItems} />
+                                <DropdownWithLabel fullWidth dropdownContainerHeight="max-h-[300px]" label="Database Type" value={databaseType} onChange={handleDatabaseTypeChange} items={databaseTypeDropdownItems} testId="database-type" />
                                 {fields}
                             </div>
                         </div>
                         {
                             (showAdvanced && advancedForm != null) &&
-                            <div className="transition-all h-full overflow-hidden mt-[56px] w-[350px] ml-4 flex flex-col gap-1">
+                            <div className="transition-all h-full overflow-hidden mt-[43px] w-[350px] ml-4 flex flex-col gap-1">
                                 {entries(advancedForm).map(([key, value]) => (
-                                    <InputWithlabel label={key} value={value} setValue={(newValue) => handleAdvancedForm(key, newValue)} />
+                                    <InputWithlabel label={key} value={value} setValue={(newValue) => handleAdvancedForm(key, newValue)} testId={`${key}-input`} />
                                 ))}
                             </div>
                         }
@@ -349,14 +363,14 @@ export const LoginPage: FC = () => {
                     })}>
                         <AnimatedButton className={classNames({
                             "hidden": advancedForm == null,
-                        })} icon={Icons.Adjustments} label={showAdvanced ? "Less Advanced" : "Advanced"} onClick={handleAdvancedToggle} />
-                        <AnimatedButton icon={Icons.CheckCircle} label="Submit" onClick={handleSubmit} />
+                        })} icon={Icons.Adjustments} label={showAdvanced ? "Less Advanced" : "Advanced"} onClick={handleAdvancedToggle} testId="advanced-button" />
+                        <AnimatedButton icon={Icons.CheckCircle} label="Submit" onClick={handleSubmit} testId="submit-button" />
                     </div>
                 </div>
                 {
                     availableProfiles.length > 0 &&
                     <div className="mt-4 pt-2 border-t border-t-neutral-100/10 flex flex-col gap-2">
-                        <DropdownWithLabel fullWidth label="Available profiles" value={selectedAvailableProfile} onChange={handleAvailableProfileChange}
+                        <DropdownWithLabel dropdownContainerHeight="max-h-[300px]" fullWidth label="Available profiles" value={selectedAvailableProfile} onChange={handleAvailableProfileChange}
                             items={availableProfiles} noItemsLabel="No available profiles" />
                         <AnimatedButton className="self-end" icon={Icons.CheckCircle} label="Login" onClick={handleLoginWithProfileSubmit} />
                     </div>

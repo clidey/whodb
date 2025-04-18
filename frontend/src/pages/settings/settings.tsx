@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { FC, useCallback } from "react";
 import { Text, ToggleInput } from "../../components/input";
 import { InternalPage } from "../../components/page";
@@ -20,13 +36,13 @@ export const SettingsPage: FC = () => {
                 <h3 className="text-base text-neutral-700 dark:text-neutral-300">
                     We use this information solely to enhance the performance of WhoDB.
                     For details on what data we collect, how it's collected, stored, and used, please refer to our <a
-                    href={"https://whodb.clidey.com/privacy-policy"} target={"_blank"}
+                    href={"https://clidey.com/privacy-policy"} target={"_blank"}
                     rel="noreferrer" className={"underline text-blue-500"}>Privacy Policy.</a>
                     <br/>
                     <br/>
-                    WhoDB uses <a href={"https://www.highlight.io/"} target={"_blank"} rel="noreferrer"
-                                  className={"underline text-blue-500"}>Highlight.io</a> to collect and manage this
-                    data. It is an open source tool and all of its source code can be found on GitHub.
+                    WhoDB uses <a href={"https://posthog.com/"} target={"_blank"} rel="noreferrer"
+                                  className={"underline text-blue-500"}>Posthog</a> to collect and manage this
+                    data. More information about this tool can be found on its <a href={"https://github.com/PostHog/posthog"} target={"_blank"} rel="noreferrer" className={"underline text-blue-500"}>Github</a>.
                     We have taken measures to redact as much sensitive information as we can and will continuously
                     evaluate to make sure that it fits yours and our needs without sacrificing anything.
                     <br/>

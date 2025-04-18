@@ -1,3 +1,19 @@
+/**
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { FetchResult } from "@apollo/client";
 import classNames from "classnames";
 import { motion } from "framer-motion";
@@ -15,21 +31,22 @@ import { graphqlClient } from "../../config/graphql-client";
 import { InternalRoutes } from "../../config/routes";
 import {
     Column, DatabaseType, DeleteRowDocument, DeleteRowMutationResult, RecordInput, RowsResult, StorageUnit,
-    UpdateStorageUnitDocument, UpdateStorageUnitMutationResult, useAddRowMutation, useGetStorageUnitRowsLazyQuery
+    UpdateStorageUnitDocument, UpdateStorageUnitMutationResult, useAddRowMutation, useGetStorageUnitRowsLazyQuery,
+    WhereCondition
 } from "../../generated/graphql";
 import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
 import { getDatabaseStorageUnitLabel, isNoSQL, isNumeric } from "../../utils/functions";
-import { ExploreStorageUnitWhereCondition, IExploreStorageUnitWhereConditionFilter } from "./explore-storage-unit-where-condition";
+import { ExploreStorageUnitWhereCondition } from "./explore-storage-unit-where-condition";
+
 
 export const ExploreStorageUnit: FC = () => {
     const [bufferPageSize, setBufferPageSize] = useState("100");
     const [currentPage, setCurrentPage] = useState(0);
-    const [whereCondition, setWhereCondition] = useState("");
-    const [currentFilters, setCurrentFilters] = useState<IExploreStorageUnitWhereConditionFilter[]>([]);
+    const [whereCondition, setWhereCondition] = useState<WhereCondition>();
     const [pageSize, setPageSize] = useState("");
     const unit: StorageUnit = useLocation().state?.unit;
-    const schema = useAppSelector(state => state.database.schema);
+    let schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
     const navigate = useNavigate();
     const [rows, setRows] = useState<RowsResult>();
@@ -37,6 +54,11 @@ export const ExploreStorageUnit: FC = () => {
     const [newRowForm, setNewRowForm] = useState<RecordInput[]>([]);
     const [checkedRows, setCheckedRows] = useState<Set<number>>(new Set());
     const [deleting, setDeleting] = useState(false);
+
+    // todo: is there a different way to do this? clickhouse doesn't have schemas as a table is considered a schema. people mainly switch between DB
+    if (current?.Type === DatabaseType.ClickHouse) {
+        schema = current.Database
+    }
 
     const [getStorageUnitRows, { loading }] = useGetStorageUnitRowsLazyQuery({
         onCompleted(data) {
@@ -81,7 +103,7 @@ export const ExploreStorageUnit: FC = () => {
         setCurrentPage(0);
     }, [handleSubmitRequest]);
 
-    const handleRowUpdate = useCallback((row: Record<string, string | number>) => {
+    const handleRowUpdate = useCallback((row: Record<string, string | number>, updatedColumn: string) => {
         if (current == null) {
             return Promise.reject();
         }
@@ -89,6 +111,7 @@ export const ExploreStorageUnit: FC = () => {
             Key,
             Value,
         }));
+        const updatedColumns = [updatedColumn]
         return new Promise<void>(async (res, rej) => {
             // this method ensures that the component is not rerendered
             // hence, the edited cache in the table would stay intact & performant
@@ -100,6 +123,7 @@ export const ExploreStorageUnit: FC = () => {
                         storageUnit: unitName,
                         type: current.Type as DatabaseType,
                         values,
+                        updatedColumns,
                     },
                 });
                 if (data?.UpdateStorageUnit.Status) {
@@ -119,8 +143,8 @@ export const ExploreStorageUnit: FC = () => {
             return;
         }
         let unableToDeleteAll = false;
-        const deletedIndexes = [];
         setDeleting(true);
+        const deletedIndexes = [];
         for (const index of [...checkedRows].sort()) {
             const row = rows.Rows[index];
             if (row == null) {
@@ -140,7 +164,7 @@ export const ExploreStorageUnit: FC = () => {
                                 storageUnit: unitName,
                                 type: current.Type as DatabaseType,
                                 values,
-                            },
+                            }
                         });
                         if (data?.DeleteRow.Status) {
                             return res();
@@ -180,7 +204,14 @@ export const ExploreStorageUnit: FC = () => {
     }, [checkedRows, current, rows, schema, unitName]);
 
     const totalCount = useMemo(() => {
-        return unit?.Attributes.find(attribute => attribute.Key === "Count")?.Value ?? "unknown";
+        const count = unit?.Attributes.find(attribute => attribute.Key === "Count")?.Value;
+        if (count == null) {
+            return "<50";
+        }
+        if (count == "unknown") {
+            return rows?.Rows.length?.toString() ?? "unknown";
+        }
+        return count;
     }, [unit]);
 
     const totalPages = useMemo(() => {
@@ -206,16 +237,16 @@ export const ExploreStorageUnit: FC = () => {
         ];
     }, [current]);
     
-    const columns = useMemo(() => {
+    const {columns, columnTypes} = useMemo(() => {
         const dataColumns = rows?.Columns.map(c => c.Name) ?? [];
         if (dataColumns.length !== 1 || dataColumns[0] !== "document") {
-            return dataColumns;
+            return {columns: dataColumns, columnTypes: rows?.Columns.map(column => column.Type)};
         }
         const firstRow = rows?.Rows?.[0];
         if (firstRow == null) {
-            return [];
+            return {columns: [], columnTypes: []}
         }
-        return keys(JSON.parse(firstRow[0]));
+        return  { columns: keys(JSON.parse(firstRow[0])), columnTypes: []}
     }, [rows?.Columns, rows?.Rows]);
 
     useEffect(() => {
@@ -224,55 +255,9 @@ export const ExploreStorageUnit: FC = () => {
         }
     }, [navigate, unitName]);
 
-    const handleFilterChange = useCallback((filters: IExploreStorageUnitWhereConditionFilter[]) => {
-        setCurrentFilters(filters);
-        if (!current?.Type) {
-            return;
-        }
-    
-        const databaseType = current.Type;
-        let whereClause = "";
-
-        // First group filters by field
-        const groupedFilters = filters.reduce((acc, filter) => {
-            if (!acc[filter.field]) {
-                acc[filter.field] = [];
-            }
-            acc[filter.field].push(filter);
-            return acc;
-        }, {} as Record<string, IExploreStorageUnitWhereConditionFilter[]>);
-
-        switch (databaseType) {
-            case DatabaseType.Postgres:
-            case DatabaseType.MySql:
-            case DatabaseType.Sqlite3:
-            case DatabaseType.MariaDb:
-            case DatabaseType.ClickHouse:
-                whereClause = Object.entries(groupedFilters)
-                    .map(([field, fieldFilters]) => {
-                        const conditions = fieldFilters.map(f => `"${field}" ${f.operator} '${f.value}'`);
-                        return fieldFilters.length > 1 ? `(${conditions.join(' OR ')})` : conditions[0];
-                    })
-                    .join(' AND ');
-                break;
-            case DatabaseType.ElasticSearch:
-                const elasticSearchConditions: Record<string, Record<string, any>> = {};
-                filters.forEach(filter => {
-                    elasticSearchConditions[filter.operator] = { [filter.field]: filter.value };
-                });
-                break;
-            case DatabaseType.MongoDb:
-                const mongoDbConditions: Record<string, Record<string, any>> = {};
-                filters.forEach(filter => {
-                    mongoDbConditions[filter.field] = { [filter.operator]: filter.value };
-                });
-                whereClause = JSON.stringify(mongoDbConditions);
-                break;
-            default:
-                throw new Error(`Unsupported database type: ${databaseType}`);
-        }
-        setWhereCondition(whereClause);
-    }, [current?.Type]);
+    const handleFilterChange = useCallback((filters: WhereCondition) => {
+        setWhereCondition(filters);
+    }, []);
 
     const validOperators = useMemo(() => {
         if (!current?.Type) {
@@ -358,6 +343,7 @@ export const ExploreStorageUnit: FC = () => {
 
     const handleAddSubmitRequest = useCallback(() => {
         let values = newRowForm;
+        values = values.filter(item => item.Value != '')  // remove empty fields
         if (isNoSQL(current?.Type as DatabaseType) && rows?.Rows != null && rows.Rows.length === 0) {
             try {
                 values = entries(JSON.parse(newRowForm[0].Value)).map(([Key, Value]) => ({ Key, Value } as RecordInput));
@@ -425,9 +411,9 @@ export const ExploreStorageUnit: FC = () => {
             </div>
             <div className="flex w-full relative">
                 <div className="flex gap-2">
-                    <InputWithlabel label="Page Size" value={bufferPageSize} setValue={setBufferPageSize} />
-                    { current?.Type !== DatabaseType.Redis && <ExploreStorageUnitWhereCondition defaultFilters={currentFilters} options={columns} operators={validOperators} onChange={handleFilterChange} /> }
-                    <AnimatedButton className="mt-5" type="lg" icon={Icons.CheckCircle} label="Query" onClick={handleQuery} />
+                    <InputWithlabel label="Page Size" value={bufferPageSize} setValue={setBufferPageSize} testId="table-page-size" />
+                    { current?.Type !== DatabaseType.Redis && <ExploreStorageUnitWhereCondition defaultWhere={whereCondition} columns={columns} operators={validOperators} onChange={handleFilterChange} columnTypes={columnTypes ?? []} /> }
+                    <AnimatedButton className="mt-5" type="lg" icon={Icons.CheckCircle} label="Query" onClick={handleQuery} testId="submit-button" />
                 </div>
                 <motion.div className={classNames("flex flex-col absolute z-10 right-0 top-0 backdrop-blur-xl", {
                         "hidden": current?.Type === DatabaseType.Redis,
@@ -473,7 +459,7 @@ export const ExploreStorageUnit: FC = () => {
                             </div>
                         </>)}
                         <div className="flex justify-end gap-4 mt-2">
-                            <AnimatedButton type="lg" icon={Icons.CheckCircle} label="Submit"
+                            <AnimatedButton className="px-3" type="lg" icon={Icons.CheckCircle} label="Submit"
                                             onClick={handleAddSubmitRequest}/>
                         </div>
                     </div>
@@ -485,7 +471,7 @@ export const ExploreStorageUnit: FC = () => {
                     <Table columns={rows.Columns.map(c => c.Name)} columnTags={rows.Columns.map(c => c.Type)}
                            rows={rows.Rows} totalPages={totalPages} currentPage={currentPage + 1}
                            onPageChange={handlePageChange}
-                           onRowUpdate={handleRowUpdate} disableEdit={rows.DisableUpdate} onRowDelete={handleRowDelete}
+                           onRowUpdate={handleRowUpdate} disableEdit={rows.DisableUpdate}
                         checkedRows={checkedRows} setCheckedRows={setCheckedRows} />
                 }
             </div>

@@ -1,3 +1,19 @@
+/**
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { FC, useCallback } from 'react';
 import { ConnectionLineComponentProps, EdgeProps, Node, getBezierPath, useStore } from 'reactflow';
 import { getEdgeParams } from './utils';
@@ -30,15 +46,15 @@ export const GraphEdgeConnectionLine: FC<ConnectionLineComponentProps> = ({ toX,
       <g>
         <path
             fill="none"
-            className="stroke-neutral-800 dark:stroke-neutral-300 animated"
             strokeWidth={1.5}
+            className="stroke-neutral-600 dark:stroke-neutral-300 animated"
             d={edgePath}
         />
         <circle
-            className="fill-white stroke-neutral-800 dark:stroke-neutral-300"
             cx={toX}
             cy={toY}
             r={3}
+            className="fill-white dark:fill-white/10 stroke-neutral-600 dark:stroke-neutral-300"
             strokeWidth={1.5}
         />
       </g>

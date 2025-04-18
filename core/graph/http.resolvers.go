@@ -1,3 +1,17 @@
+// Copyright 2025 Clidey, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package graph
 
 import (
@@ -33,7 +47,10 @@ func getProfilesHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(profiles)
+	err = json.NewEncoder(w).Encode(profiles)
+	if err != nil {
+		return
+	}
 }
 
 func getDatabasesHandler(w http.ResponseWriter, r *http.Request) {
@@ -43,7 +60,10 @@ func getDatabasesHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(databases)
+	err = json.NewEncoder(w).Encode(databases)
+	if err != nil {
+		return
+	}
 }
 
 func getSchemaHandler(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +72,10 @@ func getSchemaHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(schemas)
+	err = json.NewEncoder(w).Encode(schemas)
+	if err != nil {
+		return
+	}
 }
 
 func getStorageUnitsHandler(w http.ResponseWriter, r *http.Request) {
@@ -62,22 +85,29 @@ func getStorageUnitsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(storageUnits)
+	err = json.NewEncoder(w).Encode(storageUnits)
+	if err != nil {
+		return
+	}
 }
 
 func getRowsHandler(w http.ResponseWriter, r *http.Request) {
 	schema := r.URL.Query().Get("schema")
 	storageUnit := r.URL.Query().Get("storageUnit")
-	where := r.URL.Query().Get("where")
+	// where := r.URL.Query().Get("where")
 	pageSize := parseQueryParamToInt(r.URL.Query().Get("pageSize"))
 	pageOffset := parseQueryParamToInt(r.URL.Query().Get("pageOffset"))
 
-	rowsResult, err := resolver.Query().Row(r.Context(), schema, storageUnit, where, pageSize, pageOffset)
+	// todo: add where condition if necessary
+	rowsResult, err := resolver.Query().Row(r.Context(), schema, storageUnit, &model.WhereCondition{}, pageSize, pageOffset)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(rowsResult)
+	err = json.NewEncoder(w).Encode(rowsResult)
+	if err != nil {
+		return
+	}
 }
 
 func rawExecuteHandler(w http.ResponseWriter, r *http.Request) {
@@ -95,7 +125,10 @@ func rawExecuteHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(rowsResult)
+	err = json.NewEncoder(w).Encode(rowsResult)
+	if err != nil {
+		return
+	}
 }
 
 func getGraphHandler(w http.ResponseWriter, r *http.Request) {
@@ -105,7 +138,10 @@ func getGraphHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(graphUnits)
+	err = json.NewEncoder(w).Encode(graphUnits)
+	if err != nil {
+		return
+	}
 }
 
 func getAIModelsHandler(w http.ResponseWriter, r *http.Request) {
@@ -116,7 +152,10 @@ func getAIModelsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(models)
+	err = json.NewEncoder(w).Encode(models)
+	if err != nil {
+		return
+	}
 }
 
 func aiChatHandler(w http.ResponseWriter, r *http.Request) {
@@ -137,7 +176,10 @@ func aiChatHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(messages)
+	err = json.NewEncoder(w).Encode(messages)
+	if err != nil {
+		return
+	}
 }
 
 func addStorageUnitHandler(w http.ResponseWriter, r *http.Request) {
@@ -157,7 +199,10 @@ func addStorageUnitHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(status)
+	err = json.NewEncoder(w).Encode(status)
+	if err != nil {
+		return
+	}
 }
 
 func addRowHandler(w http.ResponseWriter, r *http.Request) {
@@ -177,7 +222,10 @@ func addRowHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(status)
+	err = json.NewEncoder(w).Encode(status)
+	if err != nil {
+		return
+	}
 }
 
 func deleteRowHandler(w http.ResponseWriter, r *http.Request) {
@@ -197,7 +245,10 @@ func deleteRowHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(status)
+	err = json.NewEncoder(w).Encode(status)
+	if err != nil {
+		return
+	}
 }
 
 func parseQueryParamToInt(queryParam string) int {

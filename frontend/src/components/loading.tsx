@@ -1,7 +1,24 @@
+/**
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import classNames from "classnames";
 import { FC } from "react";
 import { twMerge } from "tailwind-merge";
 import { ClassNames } from "./classes";
+import { Container } from "./page";
 
 type ILoadingProps = {
   className?: string;
@@ -20,7 +37,7 @@ export const Loading: FC<ILoadingProps> = ({ className, hideText, loadingText, s
       </div>
       {
         !hideText &&
-        <div className="text-neutral-600 dark:text-neutral-300 text-sm">{loadingText}</div>
+        <div className={classNames(ClassNames.Text, "text-sm")}>{loadingText}</div>
       }
     </div>
   }
@@ -33,7 +50,7 @@ export const Loading: FC<ILoadingProps> = ({ className, hideText, loadingText, s
       </div>
       {
         !hideText &&
-        <div className="text-neutral-600 dark:text-neutral-300 text-sm">{loadingText}</div>
+        <div className={classNames(ClassNames.Text, "text-sm")}>{loadingText}</div>
       }
     </div>
   }
@@ -42,7 +59,7 @@ export const Loading: FC<ILoadingProps> = ({ className, hideText, loadingText, s
 
 
 export const LoadingPage: FC = () => {
-  return <div className="flex justify-center items-center h-full w-full">
+  return <Container className="flex justify-center items-center h-full w-full">
     <Loading size="lg" />
-  </div>
+  </Container>
 }

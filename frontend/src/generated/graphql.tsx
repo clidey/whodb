@@ -1,3 +1,19 @@
+/**
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
 export type Maybe<T> = T | null;
@@ -22,6 +38,13 @@ export type AiChatMessage = {
   Result?: Maybe<RowsResult>;
   Text: Scalars['String']['output'];
   Type: Scalars['String']['output'];
+};
+
+export type AtomicWhereCondition = {
+  ColumnType: Scalars['String']['input'];
+  Key: Scalars['String']['input'];
+  Operator: Scalars['String']['input'];
+  Value: Scalars['String']['input'];
 };
 
 export type ChatInput = {
@@ -144,7 +167,12 @@ export type MutationUpdateSettingsArgs = {
 export type MutationUpdateStorageUnitArgs = {
   schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
+  updatedColumns: Array<Scalars['String']['input']>;
   values: Array<RecordInput>;
+};
+
+export type OperationWhereCondition = {
+  Children: Array<WhereCondition>;
 };
 
 export type Query = {
@@ -197,7 +225,7 @@ export type QueryRowArgs = {
   pageSize: Scalars['Int']['input'];
   schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
-  where: Scalars['String']['input'];
+  where?: InputMaybe<WhereCondition>;
 };
 
 
@@ -243,6 +271,19 @@ export type StorageUnit = {
   Attributes: Array<Record>;
   Name: Scalars['String']['output'];
 };
+
+export type WhereCondition = {
+  And?: InputMaybe<OperationWhereCondition>;
+  Atomic?: InputMaybe<AtomicWhereCondition>;
+  Or?: InputMaybe<OperationWhereCondition>;
+  Type: WhereConditionType;
+};
+
+export enum WhereConditionType {
+  And = 'And',
+  Atomic = 'Atomic',
+  Or = 'Or'
+}
 
 export type GetProfilesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -361,7 +402,7 @@ export type DeleteRowMutation = { __typename?: 'Mutation', DeleteRow: { __typena
 export type GetStorageUnitRowsQueryVariables = Exact<{
   schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
-  where: Scalars['String']['input'];
+  where?: InputMaybe<WhereCondition>;
   pageSize: Scalars['Int']['input'];
   pageOffset: Scalars['Int']['input'];
 }>;
@@ -380,6 +421,7 @@ export type UpdateStorageUnitMutationVariables = Exact<{
   schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
   values: Array<RecordInput> | RecordInput;
+  updatedColumns: Array<Scalars['String']['input']> | Scalars['String']['input'];
 }>;
 
 
@@ -1007,7 +1049,7 @@ export type DeleteRowMutationHookResult = ReturnType<typeof useDeleteRowMutation
 export type DeleteRowMutationResult = Apollo.MutationResult<DeleteRowMutation>;
 export type DeleteRowMutationOptions = Apollo.BaseMutationOptions<DeleteRowMutation, DeleteRowMutationVariables>;
 export const GetStorageUnitRowsDocument = gql`
-    query GetStorageUnitRows($schema: String!, $storageUnit: String!, $where: String!, $pageSize: Int!, $pageOffset: Int!) {
+    query GetStorageUnitRows($schema: String!, $storageUnit: String!, $where: WhereCondition, $pageSize: Int!, $pageOffset: Int!) {
   Row(
     schema: $schema
     storageUnit: $storageUnit
@@ -1106,8 +1148,13 @@ export type GetStorageUnitsLazyQueryHookResult = ReturnType<typeof useGetStorage
 export type GetStorageUnitsSuspenseQueryHookResult = ReturnType<typeof useGetStorageUnitsSuspenseQuery>;
 export type GetStorageUnitsQueryResult = Apollo.QueryResult<GetStorageUnitsQuery, GetStorageUnitsQueryVariables>;
 export const UpdateStorageUnitDocument = gql`
-    mutation UpdateStorageUnit($schema: String!, $storageUnit: String!, $values: [RecordInput!]!) {
-  UpdateStorageUnit(schema: $schema, storageUnit: $storageUnit, values: $values) {
+    mutation UpdateStorageUnit($schema: String!, $storageUnit: String!, $values: [RecordInput!]!, $updatedColumns: [String!]!) {
+  UpdateStorageUnit(
+    schema: $schema
+    storageUnit: $storageUnit
+    values: $values
+    updatedColumns: $updatedColumns
+  ) {
     Status
   }
 }
@@ -1130,6 +1177,7 @@ export type UpdateStorageUnitMutationFn = Apollo.MutationFunction<UpdateStorageU
  *      schema: // value for 'schema'
  *      storageUnit: // value for 'storageUnit'
  *      values: // value for 'values'
+ *      updatedColumns: // value for 'updatedColumns'
  *   },
  * });
  */

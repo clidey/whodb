@@ -1,5 +1,21 @@
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import classNames from "classnames";
-import { clone, filter } from "lodash";
+import {clone, cloneDeep, filter} from "lodash";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Handle, Position } from "reactflow";
@@ -8,7 +24,7 @@ import { Card, ExpandableCard } from "../../components/card";
 import { createDropdownItem, Dropdown } from "../../components/dropdown";
 import { IGraphCardProps } from "../../components/graph/graph";
 import { Icons } from "../../components/icons";
-import { Input, InputWithlabel, Label } from "../../components/input";
+import {CheckBoxInput, Input, InputWithlabel, Label} from "../../components/input";
 import { Loading, LoadingPage } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { SearchInput } from "../../components/search";
@@ -45,7 +61,7 @@ const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
     }}>
         <div className="flex flex-col grow mt-2">
             <div className="flex flex-col grow mb-2">
-                <div className="text-sm font-semibold mb-2 break-words dark:text-neutral-100">{unit.Name}</div>
+                <div className="text-sm font-semibold mb-2 break-words dark:text-neutral-100" data-testid="storage-unit-name">{unit.Name}</div>
                 {
                     introAttributes.slice(0,2).map(attribute => (
                         <div key={attribute.Key} className="text-xs dark:text-neutral-300">{attribute.Key}: {attribute.Value}</div>
@@ -53,12 +69,12 @@ const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
                 }
             </div>
             <div className="flex flex-row justify-end gap-1">
-                <AnimatedButton icon={Icons.DocumentMagnify} label="Explore" onClick={handleExpand} />
-                <AnimatedButton icon={Icons.Database} label="Data" onClick={handleNavigateToDatabase} />
+                <AnimatedButton icon={Icons.DocumentMagnify} label="Explore" onClick={handleExpand} testId="explore-button" />
+                <AnimatedButton icon={Icons.Database} label="Data" onClick={handleNavigateToDatabase} testId="data-button" />
             </div>
         </div>
         <div className="flex flex-col grow mt-2 gap-4">
-            <div className="flex flex-row grow">
+            <div className="flex flex-row grow" data-testid="explore-fields">
                 <div className="flex flex-col grow">
                     <div className="text-md font-semibold mb-2 dark:text-neutral-100">{unit.Name}</div>
                     {
@@ -87,11 +103,17 @@ export const StorageUnitPage: FC = () => {
     const navigate = useNavigate();
     const [create, setCreate] = useState(false);
     const [storageUnitName, setStorageUnitName] = useState("");
-    const [fields, setFields] = useState<RecordInput[]>([ {Key: "", Value: "" }]);
+    const [fields, setFields] = useState<RecordInput[]>([ {Key: "", Value: "", Extra: [] }]);
     const [error, setError] = useState<string>();
-    const schema = useAppSelector(state => state.database.schema);
+    let schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
     const [addStorageUnit,] = useAddStorageUnitMutation();
+
+    // todo: is there a different way to do this? clickhouse doesn't have schemas as a table is considered a schema. people mainly switch between DB
+    if (current?.Type === DatabaseType.ClickHouse) {
+        schema = current.Database
+    }
+
     const { loading, data, refetch } = useGetStorageUnitsQuery({
         variables: {
             schema,
@@ -141,13 +163,25 @@ export const StorageUnitPage: FC = () => {
     }, [addStorageUnit, current?.Type, fields, refetch, schema, storageUnitName]);
 
     const handleAddField = useCallback(() => {
-        setFields(f => [...f, { Key: "", Value: "" }]);
+        setFields(f => [...f, { Key: "", Value: "", Extra: [] }]);
     }, []);
 
-    const handleFieldValueChange = useCallback((type: "Key" | "Value", index: number, value: string) => {
+    const handleFieldValueChange = useCallback((type: string, index: number, value: string | boolean) => {
         setFields(f => {
-            const newF = clone(f);
-            newF[index][type] = value;
+            const newF = cloneDeep(f);
+            if (type === "Key" || type === "Value") {
+                newF[index][type] = value as string;
+            } else {
+                if (newF[index].Extra == null) {
+                    newF[index].Extra = [];
+                }
+                const extraIndex = newF[index].Extra.findIndex(extra => extra.Key === type);
+                if (value && extraIndex === -1) {
+                    newF[index].Extra = [...newF[index].Extra, { Key: type, Value: "true" }];
+                } else {
+                    newF[index].Extra = newF[index].Extra.filter((_, i) => i !== extraIndex);
+                }
+            }
             return newF;
         });
     }, []);
@@ -179,8 +213,8 @@ export const StorageUnitPage: FC = () => {
                     "ENUM", "SET", "JSON", "BOOLEAN"
                 ];
                 break;
-            case DatabaseType.ClickHouse: // todo: optimize these
             case DatabaseType.MySql:
+            case DatabaseType.ClickHouse:
                 items = [
                     "TINYINT", "SMALLINT", "MEDIUMINT", "INT", "INTEGER", "BIGINT", "FLOAT", "DOUBLE", "DECIMAL",
                     "DATE", "DATETIME", "TIMESTAMP", "TIME", "YEAR",
@@ -194,7 +228,7 @@ export const StorageUnitPage: FC = () => {
                     "SMALLINT", "INTEGER", "BIGINT", "DECIMAL", "NUMERIC", "REAL", "DOUBLE PRECISION", "SMALLSERIAL", 
                     "SERIAL", "BIGSERIAL", "MONEY",
                     "CHAR", "VARCHAR", "TEXT", "BYTEA",
-                    "TIMESTAMP", "TIMESTAMPTZ", "DATE", "TIME", "TIMETZ", "INTERVAL",
+                    "TIMESTAMP", "TIMESTAMPTZ", "DATE", "TIME", "TIMETZ",
                     "BOOLEAN", "POINT", "LINE", "LSEG", "BOX", "PATH", "POLYGON", "CIRCLE",
                     "CIDR", "INET", "MACADDR", "UUID", "XML", "JSON", "JSONB", "ARRAY", "HSTORE"
                 ];
@@ -222,6 +256,10 @@ export const StorageUnitPage: FC = () => {
             .sort((a, b) => a.Name.localeCompare(b.Name));
     }, [data?.StorageUnit, filterValue]);
 
+    const showModifiers = useMemo(() => {
+        return [DatabaseType.MySql, DatabaseType.MariaDb, DatabaseType.Postgres, DatabaseType.Sqlite3, DatabaseType.ClickHouse].includes(current?.Type as DatabaseType);
+    }, [current]);
+
     if (loading) {
         return <InternalPage routes={routes}>
             <LoadingPage />
@@ -240,7 +278,7 @@ export const StorageUnitPage: FC = () => {
                 <SearchInput search={filterValue} setSearch={setFilterValue} placeholder="Enter filter value..." />
             </div>
         </div>
-        <ExpandableCard className={classNames("overflow-visible", {
+        <ExpandableCard className={classNames("overflow-visible max-w-[700px]", {
             "hidden": current?.Type === DatabaseType.Redis,
         })} icon={{
             bgClassName: "bg-teal-500",
@@ -261,19 +299,41 @@ export const StorageUnitPage: FC = () => {
                         <div className="flex gap-2 justify-between">
                             <Label label="Field Name" />
                             <Label label="Value" />
+
+                            {showModifiers && (
+                                <div className="ml-18">
+                                    <Label label="Modifiers" />
+                                </div>
+                            )}
+                            
                             <div className="w-14" />
                         </div>
                         {
                             fields.map((field, index) => (
                                 <div className="flex gap-2" key={`field-${index}`}>
-                                    <Input inputProps={{ className: "w-1/2" }} value={field.Key} setValue={(value) => handleFieldValueChange("Key", index, value)} placeholder="Enter field name" />
-                                    <Dropdown className="w-1/2" items={storageUnitTypesDropdownItems} value={createDropdownItem(field.Value)}
-                                        onChange={(item) => handleFieldValueChange("Value", index, item.id)} />
+                                    <Input inputProps={{className: "w-1/3"}} value={field.Key}
+                                           setValue={(value) => handleFieldValueChange("Key", index, value)}
+                                           placeholder="Enter field name"/>
+                                    <Dropdown className="w-1/3" items={storageUnitTypesDropdownItems}
+                                              value={createDropdownItem(field.Value)} dropdownContainerHeight="max-h-[400px]"
+                                              onChange={(item) => handleFieldValueChange("Value", index, item.id)}/>
+
+                                    {showModifiers && (
+                                        <div className="flex items-center w-1/3 justify-start gap-2">
+                                            <CheckBoxInput value={field.Extra?.find(extra => extra.Key === "Primary") != null} setValue={value => handleFieldValueChange("Primary", index, value)}/>
+                                            <Label label="Primary" />
+
+                                            <CheckBoxInput value={field.Extra?.find(extra => extra.Key === "Nullable") != null} setValue={value => handleFieldValueChange("Nullable", index, value)}/>
+                                            <Label label="Nullable" />
+                                        </div>
+                                    )}
+
                                     <div className="flex items-end mb-2">
-                                        <ActionButton disabled={fields.length === 1} containerClassName="w-6 h-6" icon={Icons.Delete} className={classNames({
+                                        <ActionButton disabled={fields.length === 1} containerClassName="w-6 h-6"
+                                                      icon={Icons.Delete} className={classNames({
                                             "stroke-red-500 dark:stroke-red-400": fields.length > 1,
                                             "stroke-neutral-300 dark:stroke-neutral-600": fields.length === 1,
-                                        })} onClick={() => handleRemove(index)} />
+                                        })} onClick={() => handleRemove(index)}/>
                                     </div>
                                 </div>
                             ))
@@ -285,7 +345,7 @@ export const StorageUnitPage: FC = () => {
                     <AnimatedButton icon={Icons.Cancel} label="Cancel" onClick={handleCreate} />
                     <AnimatedButton labelClassName="text-green-600 dark:text-green-300"
                         iconClassName="stroke-green-600 dark:stroke-green-300" icon={Icons.Add}
-                        label="Submit" onClick={handleSubmit} />
+                        label="Submit" onClick={handleSubmit} testId="submit-button" />
                 </div>
             </div>
         </ExpandableCard>

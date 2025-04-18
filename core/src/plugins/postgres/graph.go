@@ -1,16 +1,20 @@
+// Copyright 2025 Clidey, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package postgres
 
-import (
-	"fmt"
-
-	"github.com/clidey/whodb/core/src/engine"
-)
-
-type tableRelations struct {
-	Table1   string
-	Table2   string
-	Relation string
-}
+import "gorm.io/gorm"
 
 const graphQuery = `
 WITH fk_constraints AS (
@@ -30,8 +34,8 @@ WITH fk_constraints AS (
         ccu.constraint_name = tc.constraint_name
     WHERE 
         tc.constraint_type = 'FOREIGN KEY'
-        AND tc.table_schema = '%v'
-        AND ccu.table_schema = '%v'
+        AND tc.table_schema = ?
+        AND ccu.table_schema = ?
 ),
 pk_constraints AS (
     SELECT DISTINCT
@@ -50,8 +54,8 @@ pk_constraints AS (
         ccu.constraint_name = tc.constraint_name
     WHERE 
         tc.constraint_type = 'PRIMARY KEY'
-        AND tc.table_schema = '%v'
-        AND ccu.table_schema = '%v'
+        AND tc.table_schema = ?
+        AND ccu.table_schema = ?
         AND tc.table_name != ccu.table_name
 ),
 unique_constraints AS (
@@ -71,8 +75,8 @@ unique_constraints AS (
         ccu.constraint_name = tc.constraint_name
     WHERE 
         tc.constraint_type = 'UNIQUE'
-        AND tc.table_schema = '%v'
-        AND ccu.table_schema = '%v'
+        AND tc.table_schema = ?
+        AND ccu.table_schema = ?
         AND tc.table_name != ccu.table_name
 ),
 many_to_many_constraints AS (
@@ -92,8 +96,8 @@ many_to_many_constraints AS (
         kcu2.constraint_name = rc.unique_constraint_name
     WHERE
         kcu1.ordinal_position = 1 AND kcu2.ordinal_position = 2
-        AND kcu1.table_schema = '%v'
-        AND kcu2.table_schema = '%v'
+        AND kcu1.table_schema = ?
+        AND kcu2.table_schema = ?
 )
 SELECT * FROM fk_constraints
 UNION
@@ -104,48 +108,6 @@ UNION
 SELECT * FROM many_to_many_constraints
 `
 
-func (p *PostgresPlugin) GetGraph(config *engine.PluginConfig, schema string) ([]engine.GraphUnit, error) {
-	db, err := DB(config)
-	if err != nil {
-		return nil, err
-	}
-	sqlDb, err := db.DB()
-	if err != nil {
-		return nil, err
-	}
-	defer sqlDb.Close()
-
-	tableRelations := []tableRelations{}
-
-	query := fmt.Sprintf(graphQuery, schema, schema, schema, schema, schema, schema, schema, schema)
-	if err := db.Raw(query).Scan(&tableRelations).Error; err != nil {
-		return nil, err
-	}
-
-	tableMap := make(map[string][]engine.GraphUnitRelationship)
-	for _, tr := range tableRelations {
-		tableMap[tr.Table1] = append(tableMap[tr.Table1], engine.GraphUnitRelationship{Name: tr.Table2, RelationshipType: engine.GraphUnitRelationshipType(tr.Relation)})
-	}
-
-	storageUnits, err := p.GetStorageUnits(config, schema)
-	if err != nil {
-		return nil, err
-	}
-
-	storageUnitsMap := map[string]engine.StorageUnit{}
-	for _, storageUnit := range storageUnits {
-		storageUnitsMap[storageUnit.Name] = storageUnit
-	}
-
-	tables := []engine.GraphUnit{}
-	for _, storageUnit := range storageUnits {
-		foundTable, ok := tableMap[storageUnit.Name]
-		var relations []engine.GraphUnitRelationship
-		if ok {
-			relations = foundTable
-		}
-		tables = append(tables, engine.GraphUnit{Unit: storageUnit, Relations: relations})
-	}
-
-	return tables, nil
+func (p *PostgresPlugin) GetGraphQueryDB(db *gorm.DB, schema string) *gorm.DB {
+	return db.Raw(graphQuery, schema, schema, schema, schema, schema, schema, schema, schema)
 }

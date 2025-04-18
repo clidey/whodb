@@ -1,0 +1,227 @@
+Clidey WhoDB
+Copyright 2025 Clidey, Inc.
+
+This product includes software developed at
+Clidey, Inc. (https://clidey.com/).
+
+
+The following components are included in this product:
+
+gqlgen
+https://github.com/99designs/gqlgen
+Copyright (c) 2025 gqlgen authors
+Licensed under the MIT License
+
+clickhouse-go
+https://github.com/ClickHouse/clickhouse-go/
+Copyright 2016-2023 ClickHouse, Inc.
+Licensed under the Apache-2.0 license
+
+go-elasticsearch
+github.com/elastic/go-elasticsearch
+Copyright 2018 Elasticsearch BV
+Licensed under the Apache-2.0 license
+
+chi
+https://github.com/go-chi/chi
+Copyright (c) 2015-present Peter Kieltyka (https://github.com/pkieltyka), Google Inc.
+Licensed under the MIT License
+
+cors
+https://github.com/go-chi/cors
+Copyright (c) 2014 Olivier Poitrey <rs@dailymotion.com>
+Copyright (c) 2016-Present https://github.com/go-chi authors
+Licensed under the MIT License
+
+go-redis
+https://github.com/redis/go-redis
+Copyright (c) 2013 The github.com/redis/go-redis Authors
+Licensed under the BSD-2-Clause License
+
+uuid
+https://github.com/google/uuid
+Copyright (c) 2009,2014 Google Inc. All rights reserved.
+Licensed under the BSD-2-Clause License
+
+highlight-go
+github.com/highlight/highlight/sdk/highlight-go
+Copyright (c) 2021- Highlight Inc
+Licensed under the Apache-2.0 license
+
+errors
+https://github.com/pkg/errors
+Copyright (c) 2015, Dave Cheney <dave@cheney.net>
+Licensed under the BSD-2-Clause License
+
+logrus
+https://github.com/sirupsen/logrus
+Copyright (c) 2014 Simon Eskildsen
+Licensed under the MIT License
+
+gqlparser0
+https://github.com/vektah/gqlparser
+Copyright (c) 2018 Adam Scarr
+Licensed under the MIT License
+
+golang-set
+https://github.com/deckarep/golang-set/
+Licensed under the MIT License
+
+mongo-driver
+go.mongodb.org/mongo-driver
+Licensed under the Apache-2.0 license
+
+mysql
+gorm.io/driver/mysql
+Copyright (c) 2013-NOW  Jinzhu <wosmvp@gmail.com>
+Licensed under the MIT License
+
+postgres
+gorm.io/driver/postgres
+Copyright (c) 2013-NOW  Jinzhu <wosmvp@gmail.com>
+Licensed under the MIT License
+
+sqlite
+gorm.io/driver/sqlite
+Copyright (c) 2013-NOW  Jinzhu <wosmvp@gmail.com>
+Licensed under the MIT License
+
+gorm
+https://github.com/go-gorm/gorm
+Copyright (c) 2013-present  Jinzhu <wosmvp@gmail.com>
+Licensed under the MIT License
+
+apollo-client
+https://github.com/apollographql/apollo-client
+Copyright (c) 2022 Apollo Graph, Inc. (Formerly Meteor Development Group, Inc.)
+Licensed under the MIT License
+
+codemirror
+https://github.com/codemirror
+Copyright (C) 2018-2021 by Marijn Haverbeke <marijn@haverbeke.berlin> and others
+Licensed under the MIT License
+
+codemirror/lang-json
+https://github.com/codemirror/lang-json
+Copyright (C) 2018-2021 by Marijn Haverbeke <marijn@haverbeke.berlin> and others
+Licensed under the MIT License
+
+codemirror/lang-markdown
+https://github.com/codemirror/lang-markdown
+Copyright (C) 2018-2021 by Marijn Haverbeke <marijn@haverbeke.berlin> and others
+Licensed under the MIT License
+
+codemirror/lang-sql
+https://github.com/codemirror/lang-sql
+Copyright (C) 2018-2021 by Marijn Haverbeke <marijn@haverbeke.berlin> and others
+Licensed under the MIT License
+
+codemirror/state
+https://github.com/codemirror/state
+Copyright (C) 2018-2021 by Marijn Haverbeke <marijn@haverbeke.berlin> and others
+Licensed under the MIT License
+
+codemirror/theme-one-dark
+https://github.com/codemirror/theme-one-dark
+Copyright (C) 2018-2021 by Marijn Haverbeke <marijn@haverbeke.berlin> and others
+Licensed under the MIT License
+
+codemirror/view
+https://github.com/codemirror/view
+Copyright (C) 2018-2021 by Marijn Haverbeke <marijn@haverbeke.berlin> and others
+Licensed under the MIT License
+
+dagre
+https://github.com/dagrejs/dagre
+Copyright (c) 2012-2014 Chris Pettitt
+Licensed under the MIT License
+
+redux-toolkit
+https://github.com/reduxjs/redux-toolkit
+Copyright (c) 2018 Mark Erikson
+Licensed under the MIT License
+
+DefinitelyTyped
+https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master
+Copyrights are respective of each contributor listed at the beginning of each definition file.
+This project is licensed under the MIT license
+
+classnames
+https://github.com/JedWatson/classnames
+Copyright (c) 2018 Jed Watson
+This project is licensed under the MIT license
+
+graphql-js
+https://github.com/graphql/graphql-js
+Copyright (c) GraphQL Contributors
+This project is licensed under the MIT license
+
+html-to-image
+https://github.com/bubkoo/html-to-image
+Copyright (c) 2017-2023 W.Y.
+This project is licensed under the MIT license
+
+lodash
+https://github.com/lodash/lodash
+Copyright OpenJS Foundation and other contributors <https://openjsf.org/>
+https://github.com/lodash/lodash/blob/main/LICENSE
+
+react
+https://github.com/facebook/react
+Copyright (c) Meta Platforms, Inc. and affiliates.
+This project is licensed under the MIT license
+
+react-json-view
+https://github.com/mac-s-g/react-json-view
+Copyright (c) 2015 Mac Gainor
+This project is licensed under the MIT license
+
+react-markdown
+https://github.com/remarkjs/react-markdown
+Copyright (c) Espen Hovlandsdal
+This project is licensed under the MIT license
+
+react-redux
+https://github.com/reduxjs/react-redux
+Copyright (c) 2015-present Dan Abramov
+This project is licensed under the MIT license
+
+react-router
+https://github.com/remix-run/react-router
+Copyright (c) React Training LLC 2015-2019 Copyright (c) Remix Software Inc. 2020-2021 Copyright (c) Shopify Inc. 2022-2023
+This project is licensed under the MIT license
+
+table
+https://github.com/TanStack/table
+Copyright (c) 2016 Tanner Linsley
+This project is licensed under the MIT license
+
+react-window
+https://github.com/bvaughn/react-window
+Copyright (c) 2018 Brian Vaughn
+This project is licensed under the MIT license
+
+xyflow
+https://github.com/xyflow/xyflow
+Copyright (c) 2019-2024 webkid GmbH
+This project is licensed under the MIT license
+
+redux-persist
+https://github.com/rt2zz/redux-persist
+Copyright (c) 2017 Zack Story
+This project is licensed under the MIT license
+
+remark-gfm
+https://github.com/remarkjs/remark-gfm
+Copyright (c) Titus Wormer <tituswormer@gmail.com>
+This project is licensed under the MIT license
+
+tailwind-merge
+https://github.com/dcastil/tailwind-merge
+Copyright (c) 2021 Dany Castillo
+This project is licensed under the MIT license
+
+uuid
+https://github.com/uuidjs/uuid
+Copyright (c) 2010-2020 Robert Kieffer and other contributors
+This project is licensed under the MIT license

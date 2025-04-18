@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import classNames from "classnames";
 import { map } from "lodash";
 import { Route, Routes } from "react-router-dom";
@@ -5,10 +21,9 @@ import { Notifications } from './components/notifications';
 import { PrivateRoute, PublicRoutes, getRoutes } from './config/routes';
 import { NavigateToDefault } from "./pages/chat/default-chat-route";
 import { useAppSelector } from "./store/hooks";
-import {initHighlight, startHighlight, stopHighlight} from "./config/highlight";
-import {isDevelopment} from "./utils/functions";
 import {useCallback, useEffect} from "react";
 import {useUpdateSettingsMutation} from "./generated/graphql";
+import {optInUser, optOutUser} from "./config/posthog";
 
 export const App = () => {
   const [updateSettings, ] = useUpdateSettingsMutation();
@@ -17,10 +32,9 @@ export const App = () => {
 
   useEffect(() => {
       if (metricsEnabled) {
-        initHighlight(isDevelopment() ? "development" : "production")
-        startHighlight()
+        optInUser();
       } else {
-        stopHighlight()
+        optOutUser();
       }
   }, [metricsEnabled]);
 
@@ -36,7 +50,7 @@ export const App = () => {
 
   useEffect(() => {
     updateBackendWithSettings()
-  }, [updateBackendWithSettings])
+  }, [updateBackendWithSettings]);
 
   return (
     <div className={classNames("h-[100vh] w-[100vw]", {
