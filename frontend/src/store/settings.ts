@@ -21,7 +21,7 @@ type ISettingsState = {
 }
 
 const initialState: ISettingsState = {
-    metricsEnabled: false,
+    metricsEnabled: true,
 }
 
 export const settingsSlice = createSlice({
