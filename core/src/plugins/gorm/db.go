@@ -76,7 +76,11 @@ type ConnectionInput struct {
 
 func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*ConnectionInput, error) {
 	//common
-	port, err := strconv.Atoi(common.GetRecordValueOrDefault(config.Credentials.Advanced, portKey, defaultDatabasePorts[p.Type]))
+	defaultPort, ok := defaultDatabasePorts[p.Type]
+	if !ok {
+		return nil, fmt.Errorf("unsupported database type: %v", p.Type)
+	}
+	port, err := strconv.Atoi(common.GetRecordValueOrDefault(config.Credentials.Advanced, portKey, defaultPort))
 	if err != nil {
 		return nil, err
 	}
