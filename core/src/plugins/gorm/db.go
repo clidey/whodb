@@ -17,6 +17,7 @@
 package gorm_plugin
 
 import (
+	"fmt"
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
