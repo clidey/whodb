@@ -3,7 +3,7 @@ module github.com/clidey/whodb/core
 go 1.24.1
 
 require (
-	github.com/99designs/gqlgen v0.17.71
+	github.com/99designs/gqlgen v0.17.72
 	github.com/ClickHouse/clickhouse-go/v2 v2.34.0
 	github.com/deckarep/golang-set/v2 v2.8.0
 	github.com/elastic/go-elasticsearch/v8 v8.18.0
