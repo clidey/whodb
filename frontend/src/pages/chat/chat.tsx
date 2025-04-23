@@ -34,7 +34,7 @@ import { notify } from "../../store/function";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { chooseRandomItems } from "../../utils/functions";
 import { chatExamples } from "./examples";
-import logoImage from "../../../public/images/logo.png";
+import logoImage from "url:../../../public/images/logo.png";
 import { HoudiniActions } from "../../store/chat";
 
 const thinkingPhrases = [
