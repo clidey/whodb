@@ -22,9 +22,9 @@ import (
 	"fmt"
 	"io"
 	"strings"
-)
 
-const anthropicEndpoint = "https://api.anthropic.com/v1"
+	"github.com/clidey/whodb/core/src/env"
+)
 
 func prepareAnthropicRequest(c *LLMClient, prompt string, model LLMModel) (string, []byte, map[string]string, error) {
 	maxTokens := 64000 // this is for claude-3-7-sonnet-20250219
@@ -48,7 +48,7 @@ func prepareAnthropicRequest(c *LLMClient, prompt string, model LLMModel) (strin
 		return "", nil, nil, err
 	}
 
-	url := fmt.Sprintf("%v/messages", anthropicEndpoint)
+	url := fmt.Sprintf("%v/messages", env.GetAnthropicEndpoint())
 
 	headers := map[string]string{
 		"x-api-key":         c.APIKey,
@@ -61,10 +61,6 @@ func prepareAnthropicRequest(c *LLMClient, prompt string, model LLMModel) (strin
 
 func getAnthropicModels(_ string) ([]string, error) {
 	models := []string{
-		//"claude-3-7-sonnet-latest",
-		//"claude-3-5-haiku-latest",
-		//"claude-3-5-sonnet-latest",
-		//"claude-3-opus-latest",
 		"claude-3-7-sonnet-20250219",
 		"claude-3-5-sonnet-20241022",
 		"claude-3-5-sonnet-20240620",

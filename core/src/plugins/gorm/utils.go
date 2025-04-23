@@ -1,16 +1,18 @@
-// Copyright 2025 Clidey, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package gorm_plugin
 
@@ -33,8 +35,9 @@ var (
 	boolTypes     = mapset.NewSet("BOOLEAN", "BIT", "BOOL")
 	dateTypes     = mapset.NewSet("DATE")
 	dateTimeTypes = mapset.NewSet("DATETIME", "TIMESTAMP", "TIMESTAMP WITH TIME ZONE", "TIMESTAMP WITHOUT TIME ZONE", "DATETIME2", "SMALLDATETIME", "TIMETZ", "TIMESTAMPTZ")
-	uuidTypes     = mapset.NewSet("UUID", "UNIQUEIDENTIFIER")
-	binaryTypes   = mapset.NewSet("BLOB")
+	uuidTypes     = mapset.NewSet("UUID")
+	binaryTypes   = mapset.NewSet("BLOB", "BYTEA", "VARBINARY", "BINARY", "IMAGE", "BLOB", "TINYBLOB", "MEDIUMBLOB", "LONGBLOB")
+	// geometryTypes = mapset.NewSet("GEOMETRY", "POINT", "LINESTRING", "POLYGON", "MULTIPOINT", "MULTILINESTRING", "MULTIPOLYGON")
 )
 
 func (p *GormPlugin) EscapeIdentifier(identifier string) string {
@@ -233,12 +236,19 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (interface{}, 
 			return sql.NullTime{Time: datetime, Valid: true}, nil
 		}
 		return datetime, nil
-	case binaryTypes.Contains(columnType): // for sqlite only?
+	case binaryTypes.Contains(columnType):
 		blobData := []byte(value)
 		if isNullable && len(blobData) == 0 {
 			return sql.NullString{Valid: false}, nil
 		}
 		return blobData, nil
+	// todo: geometry types need to be sorted out more thoughtfully
+	// case geometryTypes.Contains(columnType):
+	// 	geom, err := wkt.Unmarshal(value)
+	// 	if err != nil {
+	// 		return nil, fmt.Errorf("invalid geometry format: %v", err)
+	// 	}
+	// 	return geom, nil
 	case uuidTypes.Contains(columnType):
 		_, err := uuid.Parse(value)
 		if err != nil {

@@ -31,6 +31,11 @@ type AIChatMessage struct {
 	Text   string      `json:"Text"`
 }
 
+type AIProvider struct {
+	Type       string `json:"Type"`
+	ProviderID string `json:"ProviderId"`
+}
+
 type AtomicWhereCondition struct {
 	ColumnType string `json:"ColumnType"`
 	Key        string `json:"Key"`

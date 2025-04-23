@@ -1,0 +1,6 @@
+query GetAIProviders {
+  AIProviders {
+    Type
+    ProviderId
+  }
+}
