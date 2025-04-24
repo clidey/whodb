@@ -20,15 +20,55 @@ import { Route, Routes } from "react-router-dom";
 import { Notifications } from './components/notifications';
 import { PrivateRoute, PublicRoutes, getRoutes } from './config/routes';
 import { NavigateToDefault } from "./pages/chat/default-chat-route";
-import { useAppSelector } from "./store/hooks";
+import { useAppDispatch, useAppSelector } from "./store/hooks";
 import {useCallback, useEffect} from "react";
-import {useUpdateSettingsMutation} from "./generated/graphql";
+import {useUpdateSettingsMutation, useGetAiProvidersLazyQuery} from "./generated/graphql";
 import {optInUser, optOutUser} from "./config/posthog";
+import { DatabaseActions } from "./store/database";
+import { reduxStore } from "./store";
 
 export const App = () => {
   const [updateSettings, ] = useUpdateSettingsMutation();
   const darkModeEnabled = useAppSelector(state => state.global.theme === "dark");
   const metricsEnabled = useAppSelector(state => state.settings.metricsEnabled);
+  const [getAiProviders, ] = useGetAiProvidersLazyQuery();
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    getAiProviders({
+      fetchPolicy: "network-only",
+      onCompleted(data) {
+        const aiProviders = data.AIProviders || [];
+        const initialModelTypes = reduxStore.getState().database.modelTypes.filter(model => {
+          const existingModel = aiProviders.find(provider => provider.ProviderId === model.id);
+          return existingModel != null || (model.token != null && model.token !== "");
+        });
+
+        // Filter out providers that already exist in modelTypes
+        const newProviders = aiProviders.filter(provider =>
+            !initialModelTypes.some(model => model.id === provider.ProviderId)
+        );
+
+        const finalModelTypes = [
+          ...newProviders.map(provider => ({
+            id: provider.ProviderId,
+            modelType: provider.Type,
+          })),
+          ...initialModelTypes
+        ];
+
+        // Check if current model type exists in final model types
+        const currentModelType = reduxStore.getState().database.current;
+        if (currentModelType && !finalModelTypes.some(model => model.id === currentModelType.id)) {
+          dispatch(DatabaseActions.setCurrentModelType({ id: "" }));
+          dispatch(DatabaseActions.setModels([]));
+          dispatch(DatabaseActions.setCurrentModel(undefined));
+        }
+
+        dispatch(DatabaseActions.setModelTypes(finalModelTypes));
+      },
+    });
+  }, []);
 
   useEffect(() => {
       if (metricsEnabled) {

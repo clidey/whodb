@@ -18,7 +18,7 @@
     "@types/react-table": "^7.7.20",
     "classnames": "^2.5.1",
     "codemirror": "^6.0.1",
-    "framer-motion": "^12.8.0",
+    "framer-motion": "12.7.4",
     "graphql": "^16.9.0",
     "html-to-image": "^1.11.13",
     "lodash": "^4.17.21",
@@ -70,7 +70,7 @@
     "autoprefixer": "^10.4.21",
     "buffer": "^6.0.3",
     "cypress": "^14.3.2",
-    "parcel": "^2.13.3",
+    "parcel": "2.13.3",
     "postcss": "^8.5.3",
     "process": "^0.11.10",
     "tailwindcss": "^4.1.4"

@@ -126,6 +126,11 @@ type AIChatMessage {
   Text: String!
 }
 
+type AIProvider {
+  Type: String!
+  ProviderId: String!
+}
+
 type Query {
   Version: String!
   Profiles: [LoginProfile!]!
@@ -135,8 +140,9 @@ type Query {
   Row(schema: String!, storageUnit: String!, where: WhereCondition, pageSize: Int!, pageOffset: Int!): RowsResult!
   RawExecute(query: String!): RowsResult!
   Graph(schema: String!): [GraphUnit!]!
-  AIModel(modelType: String!, token: String): [String!]!
-  AIChat(modelType: String!, token: String, schema: String!, input: ChatInput!): [AIChatMessage!]!
+  AIProviders: [AIProvider!]!
+  AIModel(providerId: String, modelType: String!, token: String): [String!]!
+  AIChat(providerId: String, modelType: String!, token: String, schema: String!, input: ChatInput!): [AIChatMessage!]!
   SettingsConfig: SettingsConfig!
 }
 

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,6 +37,12 @@ export type AiChatMessage = {
   __typename?: 'AIChatMessage';
   Result?: Maybe<RowsResult>;
   Text: Scalars['String']['output'];
+  Type: Scalars['String']['output'];
+};
+
+export type AiProvider = {
+  __typename?: 'AIProvider';
+  ProviderId: Scalars['String']['output'];
   Type: Scalars['String']['output'];
 };
 
@@ -179,6 +185,7 @@ export type Query = {
   __typename?: 'Query';
   AIChat: Array<AiChatMessage>;
   AIModel: Array<Scalars['String']['output']>;
+  AIProviders: Array<AiProvider>;
   Database: Array<Scalars['String']['output']>;
   Graph: Array<GraphUnit>;
   Profiles: Array<LoginProfile>;
@@ -194,6 +201,7 @@ export type Query = {
 export type QueryAiChatArgs = {
   input: ChatInput;
   modelType: Scalars['String']['input'];
+  providerId?: InputMaybe<Scalars['String']['input']>;
   schema: Scalars['String']['input'];
   token?: InputMaybe<Scalars['String']['input']>;
 };
@@ -201,6 +209,7 @@ export type QueryAiChatArgs = {
 
 export type QueryAiModelArgs = {
   modelType: Scalars['String']['input'];
+  providerId?: InputMaybe<Scalars['String']['input']>;
   token?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -326,7 +335,13 @@ export type LogoutMutationVariables = Exact<{ [key: string]: never; }>;
 
 export type LogoutMutation = { __typename?: 'Mutation', Logout: { __typename?: 'StatusResponse', Status: boolean } };
 
+export type GetAiProvidersQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetAiProvidersQuery = { __typename?: 'Query', AIProviders: Array<{ __typename?: 'AIProvider', Type: string, ProviderId: string }> };
+
 export type GetAiChatQueryVariables = Exact<{
+  providerId?: InputMaybe<Scalars['String']['input']>;
   modelType: Scalars['String']['input'];
   token?: InputMaybe<Scalars['String']['input']>;
   schema: Scalars['String']['input'];
@@ -339,6 +354,7 @@ export type GetAiChatQueryVariables = Exact<{
 export type GetAiChatQuery = { __typename?: 'Query', AIChat: Array<{ __typename?: 'AIChatMessage', Type: string, Text: string, Result?: { __typename?: 'RowsResult', Rows: Array<Array<string>>, Columns: Array<{ __typename?: 'Column', Type: string, Name: string }> } | null }> };
 
 export type GetAiModelsQueryVariables = Exact<{
+  providerId?: InputMaybe<Scalars['String']['input']>;
   modelType: Scalars['String']['input'];
   token?: InputMaybe<Scalars['String']['input']>;
 }>;
@@ -680,9 +696,50 @@ export function useLogoutMutation(baseOptions?: Apollo.MutationHookOptions<Logou
 export type LogoutMutationHookResult = ReturnType<typeof useLogoutMutation>;
 export type LogoutMutationResult = Apollo.MutationResult<LogoutMutation>;
 export type LogoutMutationOptions = Apollo.BaseMutationOptions<LogoutMutation, LogoutMutationVariables>;
+export const GetAiProvidersDocument = gql`
+    query GetAIProviders {
+  AIProviders {
+    Type
+    ProviderId
+  }
+}
+    `;
+
+/**
+ * __useGetAiProvidersQuery__
+ *
+ * To run a query within a React component, call `useGetAiProvidersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetAiProvidersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetAiProvidersQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetAiProvidersQuery(baseOptions?: Apollo.QueryHookOptions<GetAiProvidersQuery, GetAiProvidersQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetAiProvidersQuery, GetAiProvidersQueryVariables>(GetAiProvidersDocument, options);
+      }
+export function useGetAiProvidersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetAiProvidersQuery, GetAiProvidersQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetAiProvidersQuery, GetAiProvidersQueryVariables>(GetAiProvidersDocument, options);
+        }
+export function useGetAiProvidersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAiProvidersQuery, GetAiProvidersQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetAiProvidersQuery, GetAiProvidersQueryVariables>(GetAiProvidersDocument, options);
+        }
+export type GetAiProvidersQueryHookResult = ReturnType<typeof useGetAiProvidersQuery>;
+export type GetAiProvidersLazyQueryHookResult = ReturnType<typeof useGetAiProvidersLazyQuery>;
+export type GetAiProvidersSuspenseQueryHookResult = ReturnType<typeof useGetAiProvidersSuspenseQuery>;
+export type GetAiProvidersQueryResult = Apollo.QueryResult<GetAiProvidersQuery, GetAiProvidersQueryVariables>;
 export const GetAiChatDocument = gql`
-    query GetAIChat($modelType: String!, $token: String, $schema: String!, $previousConversation: String!, $query: String!, $model: String!) {
+    query GetAIChat($providerId: String, $modelType: String!, $token: String, $schema: String!, $previousConversation: String!, $query: String!, $model: String!) {
   AIChat(
+    providerId: $providerId
     modelType: $modelType
     token: $token
     schema: $schema
@@ -713,6 +770,7 @@ export const GetAiChatDocument = gql`
  * @example
  * const { data, loading, error } = useGetAiChatQuery({
  *   variables: {
+ *      providerId: // value for 'providerId'
  *      modelType: // value for 'modelType'
  *      token: // value for 'token'
  *      schema: // value for 'schema'
@@ -739,8 +797,8 @@ export type GetAiChatLazyQueryHookResult = ReturnType<typeof useGetAiChatLazyQue
 export type GetAiChatSuspenseQueryHookResult = ReturnType<typeof useGetAiChatSuspenseQuery>;
 export type GetAiChatQueryResult = Apollo.QueryResult<GetAiChatQuery, GetAiChatQueryVariables>;
 export const GetAiModelsDocument = gql`
-    query GetAIModels($modelType: String!, $token: String) {
-  AIModel(modelType: $modelType, token: $token)
+    query GetAIModels($providerId: String, $modelType: String!, $token: String) {
+  AIModel(providerId: $providerId, modelType: $modelType, token: $token)
 }
     `;
 
@@ -756,6 +814,7 @@ export const GetAiModelsDocument = gql`
  * @example
  * const { data, loading, error } = useGetAiModelsQuery({
  *   variables: {
+ *      providerId: // value for 'providerId'
  *      modelType: // value for 'modelType'
  *      token: // value for 'token'
  *   },
