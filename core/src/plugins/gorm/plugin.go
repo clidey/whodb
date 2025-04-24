@@ -20,6 +20,8 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/engine"
@@ -151,7 +153,18 @@ func (p *GormPlugin) GetRows(config *engine.PluginConfig, schema string, storage
 		}
 		defer rows.Close()
 
-		return p.ConvertRawToRows(rows)
+		result, err := p.ConvertRawToRows(rows)
+		if err != nil {
+			return nil, err
+		}
+
+		// postprocess to add any missing data types
+		for i, col := range result.Columns {
+			if _, err := strconv.Atoi(col.Type); err == nil {
+				result.Columns[i].Type = p.FindMissingDataType(db, col.Type)
+			}
+		}
+		return result, nil
 	})
 }
 
@@ -220,10 +233,14 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 		Rows:    make([][]string, 0, 100),
 	}
 
+	// todo: might have to extract some of this stuff into db specific functions
 	// Build columns with type information
 	for _, col := range columns {
 		if colType, exists := typeMap[col]; exists {
 			colTypeName := colType.DatabaseTypeName()
+			if p.Type == engine.DatabaseType_Postgres && strings.HasPrefix(colTypeName, "_") {
+				colTypeName = strings.Replace(colTypeName, "_", "[]", 1)
+			}
 			result.Columns = append(result.Columns, engine.Column{Name: col, Type: colTypeName})
 		}
 	}
@@ -237,7 +254,10 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 			typeName := colType.DatabaseTypeName()
 
 			switch typeName {
-			case "VARBINARY", "BINARY", "IMAGE":
+			case "VARBINARY", "BINARY", "IMAGE", "BYTEA", "BLOB", "HIERARCHYID":
+				columnPointers[i] = new(sql.RawBytes)
+			case "GEOMETRY", "POINT", "LINESTRING", "POLYGON", "GEOGRAPHY",
+				"MULTIPOINT", "MULTILINESTRING", "MULTIPOLYGON":
 				columnPointers[i] = new(sql.RawBytes)
 			default:
 				columnPointers[i] = new(sql.NullString)
@@ -253,7 +273,7 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 			typeName := colType.DatabaseTypeName()
 
 			switch typeName {
-			case "VARBINARY", "BINARY", "IMAGE":
+			case "VARBINARY", "BINARY", "IMAGE", "BYTEA", "BLOB":
 				rawBytes := colPtr.(*sql.RawBytes)
 				if rawBytes == nil || len(*rawBytes) == 0 {
 					row[i] = ""
@@ -274,4 +294,16 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 	}
 
 	return result, nil
+}
+
+// todo: extract this into a gormplugin default if needed for other plugins
+func (p *GormPlugin) FindMissingDataType(db *gorm.DB, columnType string) string {
+	if p.Type == engine.DatabaseType_Postgres {
+		var typname string
+		if err := db.Raw("SELECT typname FROM pg_type WHERE oid = ?", columnType).Scan(&typname).Error; err != nil {
+			typname = columnType
+		}
+		return strings.ToUpper(typname)
+	}
+	return columnType
 }

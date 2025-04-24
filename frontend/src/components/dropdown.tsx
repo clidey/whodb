@@ -78,7 +78,7 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
             {props.loading ? <div className="flex h-full w-full items-center justify-center">
                 <Loading hideText={true} size="sm" />
             </div> :
-            <>  <button className="group/dropdown flex gap-1 justify-between items-center border border-neutral-600/20 rounded-lg w-full p-1 h-[34px] px-2 dark:bg-[#2C2F33] dark:border-white/5" onClick={handleToggleOpen} data-testid={props.testId}>
+            <>  <button tabIndex={0} className="group/dropdown flex gap-1 justify-between items-center border border-neutral-600/20 rounded-lg w-full p-1 h-[34px] px-2 dark:bg-[#2C2F33] dark:border-white/5" onClick={handleToggleOpen} data-testid={props.testId}>
                     <div className={classNames(ClassNames.Text, "flex gap-1 text-sm truncate items-center")}>
                         {props.value?.icon != null && <div className="flex items-center w-6">
                             {props.value.icon}
@@ -98,9 +98,9 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
                     <ul className={classNames(ClassNames.Text, "py-1 text-sm nowheel flex flex-col")}>
                         {
                             props.items.map((item, i) => (
-                                <button key={`dropdown-item-${i}`} className={classNames(ITEM_CLASS, {
+                                <div role="button" tabIndex={0} key={`dropdown-item-${i}`} className={classNames(ITEM_CLASS, {
                                     "hover:gap-2": item.icon != null,
-                                })} onClick={() => handleClick(item)} value={item.id}>
+                                })} onClick={() => handleClick(item)} data-value={item.id}>
                                     <div>{props.value?.id === item.id ? Icons.CheckCircle : item.icon}</div>
                                     <div className="whitespace-nowrap">{item.label}</div>
                                     {(props.enableAction?.(i) ?? true) && props.action != null && cloneElement(props.action, {
@@ -110,24 +110,24 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
                                             e.stopPropagation();
                                         },
                                     })}
-                                </button>
+                                </div>
                             ))
                         }
                         {
                             props.defaultItem != null &&
-                            <button className={classNames(ITEM_CLASS, {
+                            <div role="button" tabIndex={0} className={classNames(ITEM_CLASS, {
                                 "hover:scale-105": props.defaultItem.icon == null,
                             }, props.defaultItemClassName)} onClick={props.onDefaultItemClick}>
                                 <div>{props.defaultItem.icon}</div>
                                 <div>{props.defaultItem.label}</div>
-                            </button>
+                            </div>
                         }
                         {
                             props.items.length === 0 && props.defaultItem == null &&
-                            <button className="flex items-center gap-1 px-2 dark:text-neutral-300" onClick={props.onDefaultItemClick}>
+                            <div role="button" tabIndex={0} className="flex items-center gap-1 px-2 dark:text-neutral-300" onClick={props.onDefaultItemClick}>
                                 <div>{Icons.SadSmile}</div>
                                 <div>{props.noItemsLabel}</div>
-                            </button>
+                            </div>
                         }
                     </ul>
                 </div>

@@ -33,7 +33,7 @@ Build Status: &nbsp; <img src="https://hello.clidey.com/api/flows/status?id=b322
 
 
 ## Description
-**WhoDB** is a lightweight (~20MB), powerful, and user-friendly database management tool designed to streamline your database administration tasks.
+**WhoDB** is a lightweight (<50MB), powerful, and user-friendly database management tool designed to streamline your database administration tasks.
 Combining the simplicity of Adminer with enhanced UX and performance, WhoDB is built with GoLang to deliver optimal speed and efficiency.
 With features like interactive schema visualization and inline editing, WhoDB caters to both small projects and complex enterprise systems.
 
@@ -78,6 +78,18 @@ services:
     image: clidey/whodb
     # volumes: # (optional for sqlite) 
     #   - ./sample.db:/db/sample.db
+    environment:
+#      optional if you have ollama configured elsewhere. will use these defaults otherwise
+#      - WHODB_OLLAMA_HOST=localhost
+#      - WHODB_OLLAMA_PORT=11434
+
+#      use this to preconfigure your Anthropic connection. endpoint will default to below
+      - WHODB_ANTHROPIC_API_KEY=...
+#      - WHODB_ANTHROPIC_ENDPOINT=https://api.anthropic.com/v1
+
+#     use this to preconfigure your OpenAI connection. endpoint will default to below
+      - WHODB_OPENAI_API_KEY=...
+#      - WHODB_OPENAI_ENDPOINT=https://api.openai.com/v1
     ports:
       - "8080:8080"
 ```

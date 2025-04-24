@@ -49,7 +49,7 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 
 			convertedValue, err := p.ConvertStringValue(strValue, columnType)
 			if err != nil {
-				return false, fmt.Errorf("failed to convert value for column '%s': %v", column, err)
+				convertedValue = strValue // use the original value if conversion fails?
 			}
 
 			targetColumn := column
@@ -76,7 +76,7 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 		if len(conditions) == 0 {
 			result = db.Table(tableName).Where(unchangedValues).Updates(convertedValues)
 		} else {
-			result = db.Table(tableName).Where(conditions).Updates(convertedValues)
+			result = db.Table(tableName).Where(conditions, nil).Updates(convertedValues)
 		}
 
 		if result.Error != nil {

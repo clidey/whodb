@@ -306,14 +306,39 @@ func (r *queryResolver) Graph(ctx context.Context, schema string) ([]*model.Grap
 	return graphUnitsModel, nil
 }
 
-// AIModel is the resolver for the AIModel field.
-func (r *queryResolver) AIModel(ctx context.Context, modelType string, token *string) ([]string, error) {
-	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
-	config.ExternalModel = &engine.ExternalModel{
-		Type: modelType,
+// AIProviders is the resolver for the AIProviders field.
+func (r *queryResolver) AIProviders(ctx context.Context) ([]*model.AIProvider, error) {
+	providers := env.GetConfiguredChatProviders()
+	aiProviders := []*model.AIProvider{}
+	for _, provider := range providers {
+		aiProviders = append(aiProviders, &model.AIProvider{
+			Type:       provider.Type,
+			ProviderID: provider.ProviderId,
+		})
 	}
-	if token != nil {
-		config.ExternalModel.Token = *token
+	return aiProviders, nil
+}
+
+// AIModel is the resolver for the AIModel field.
+func (r *queryResolver) AIModel(ctx context.Context, providerID *string, modelType string, token *string) ([]string, error) {
+	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	if providerID != nil {
+		providers := env.GetConfiguredChatProviders()
+		for _, provider := range providers {
+			if provider.ProviderId == *providerID {
+				config.ExternalModel = &engine.ExternalModel{
+					Type:  modelType,
+					Token: provider.APIKey,
+				}
+			}
+		}
+	} else {
+		config.ExternalModel = &engine.ExternalModel{
+			Type: modelType,
+		}
+		if token != nil {
+			config.ExternalModel.Token = *token
+		}
 	}
 	models, err := llm.Instance(config).GetSupportedModels()
 	if err != nil {
@@ -323,14 +348,26 @@ func (r *queryResolver) AIModel(ctx context.Context, modelType string, token *st
 }
 
 // AIChat is the resolver for the AIChat field.
-func (r *queryResolver) AIChat(ctx context.Context, modelType string, token *string, schema string, input model.ChatInput) ([]*model.AIChatMessage, error) {
+func (r *queryResolver) AIChat(ctx context.Context, providerID *string, modelType string, token *string, schema string, input model.ChatInput) ([]*model.AIChatMessage, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
 	typeArg := config.Credentials.Type
-	config.ExternalModel = &engine.ExternalModel{
-		Type: modelType,
-	}
-	if token != nil {
-		config.ExternalModel.Token = *token
+	if providerID != nil {
+		providers := env.GetConfiguredChatProviders()
+		for _, provider := range providers {
+			if provider.ProviderId == *providerID {
+				config.ExternalModel = &engine.ExternalModel{
+					Type:  modelType,
+					Token: provider.APIKey,
+				}
+			}
+		}
+	} else {
+		config.ExternalModel = &engine.ExternalModel{
+			Type: modelType,
+		}
+		if token != nil {
+			config.ExternalModel.Token = *token
+		}
 	}
 	messages, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).Chat(config, schema, input.Model, input.PreviousConversation, input.Query)
 

@@ -69,6 +69,11 @@ type ComplexityRoot struct {
 		Type   func(childComplexity int) int
 	}
 
+	AIProvider struct {
+		ProviderID func(childComplexity int) int
+		Type       func(childComplexity int) int
+	}
+
 	Column struct {
 		Name func(childComplexity int) int
 		Type func(childComplexity int) int
@@ -103,8 +108,9 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		AIChat         func(childComplexity int, modelType string, token *string, schema string, input model.ChatInput) int
-		AIModel        func(childComplexity int, modelType string, token *string) int
+		AIChat         func(childComplexity int, providerID *string, modelType string, token *string, schema string, input model.ChatInput) int
+		AIModel        func(childComplexity int, providerID *string, modelType string, token *string) int
+		AIProviders    func(childComplexity int) int
 		Database       func(childComplexity int, typeArg string) int
 		Graph          func(childComplexity int, schema string) int
 		Profiles       func(childComplexity int) int
@@ -160,8 +166,9 @@ type QueryResolver interface {
 	Row(ctx context.Context, schema string, storageUnit string, where *model.WhereCondition, pageSize int, pageOffset int) (*model.RowsResult, error)
 	RawExecute(ctx context.Context, query string) (*model.RowsResult, error)
 	Graph(ctx context.Context, schema string) ([]*model.GraphUnit, error)
-	AIModel(ctx context.Context, modelType string, token *string) ([]string, error)
-	AIChat(ctx context.Context, modelType string, token *string, schema string, input model.ChatInput) ([]*model.AIChatMessage, error)
+	AIProviders(ctx context.Context) ([]*model.AIProvider, error)
+	AIModel(ctx context.Context, providerID *string, modelType string, token *string) ([]string, error)
+	AIChat(ctx context.Context, providerID *string, modelType string, token *string, schema string, input model.ChatInput) ([]*model.AIChatMessage, error)
 	SettingsConfig(ctx context.Context) (*model.SettingsConfig, error)
 }
 
@@ -204,6 +211,20 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.AIChatMessage.Type(childComplexity), true
+
+	case "AIProvider.ProviderId":
+		if e.complexity.AIProvider.ProviderID == nil {
+			break
+		}
+
+		return e.complexity.AIProvider.ProviderID(childComplexity), true
+
+	case "AIProvider.Type":
+		if e.complexity.AIProvider.Type == nil {
+			break
+		}
+
+		return e.complexity.AIProvider.Type(childComplexity), true
 
 	case "Column.Name":
 		if e.complexity.Column.Name == nil {
@@ -376,7 +397,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.AIChat(childComplexity, args["modelType"].(string), args["token"].(*string), args["schema"].(string), args["input"].(model.ChatInput)), true
+		return e.complexity.Query.AIChat(childComplexity, args["providerId"].(*string), args["modelType"].(string), args["token"].(*string), args["schema"].(string), args["input"].(model.ChatInput)), true
 
 	case "Query.AIModel":
 		if e.complexity.Query.AIModel == nil {
@@ -388,7 +409,14 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.AIModel(childComplexity, args["modelType"].(string), args["token"].(*string)), true
+		return e.complexity.Query.AIModel(childComplexity, args["providerId"].(*string), args["modelType"].(string), args["token"].(*string)), true
+
+	case "Query.AIProviders":
+		if e.complexity.Query.AIProviders == nil {
+			break
+		}
+
+		return e.complexity.Query.AIProviders(childComplexity), true
 
 	case "Query.Database":
 		if e.complexity.Query.Database == nil {
@@ -1079,28 +1107,51 @@ func (ec *executionContext) field_Mutation_UpdateStorageUnit_argsUpdatedColumns(
 func (ec *executionContext) field_Query_AIChat_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Query_AIChat_argsModelType(ctx, rawArgs)
+	arg0, err := ec.field_Query_AIChat_argsProviderID(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["modelType"] = arg0
-	arg1, err := ec.field_Query_AIChat_argsToken(ctx, rawArgs)
+	args["providerId"] = arg0
+	arg1, err := ec.field_Query_AIChat_argsModelType(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["token"] = arg1
-	arg2, err := ec.field_Query_AIChat_argsSchema(ctx, rawArgs)
+	args["modelType"] = arg1
+	arg2, err := ec.field_Query_AIChat_argsToken(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["schema"] = arg2
-	arg3, err := ec.field_Query_AIChat_argsInput(ctx, rawArgs)
+	args["token"] = arg2
+	arg3, err := ec.field_Query_AIChat_argsSchema(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["input"] = arg3
+	args["schema"] = arg3
+	arg4, err := ec.field_Query_AIChat_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg4
 	return args, nil
 }
+func (ec *executionContext) field_Query_AIChat_argsProviderID(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*string, error) {
+	if _, ok := rawArgs["providerId"]; !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("providerId"))
+	if tmp, ok := rawArgs["providerId"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Query_AIChat_argsModelType(
 	ctx context.Context,
 	rawArgs map[string]any,
@@ -1176,18 +1227,41 @@ func (ec *executionContext) field_Query_AIChat_argsInput(
 func (ec *executionContext) field_Query_AIModel_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Query_AIModel_argsModelType(ctx, rawArgs)
+	arg0, err := ec.field_Query_AIModel_argsProviderID(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["modelType"] = arg0
-	arg1, err := ec.field_Query_AIModel_argsToken(ctx, rawArgs)
+	args["providerId"] = arg0
+	arg1, err := ec.field_Query_AIModel_argsModelType(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["token"] = arg1
+	args["modelType"] = arg1
+	arg2, err := ec.field_Query_AIModel_argsToken(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["token"] = arg2
 	return args, nil
 }
+func (ec *executionContext) field_Query_AIModel_argsProviderID(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*string, error) {
+	if _, ok := rawArgs["providerId"]; !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("providerId"))
+	if tmp, ok := rawArgs["providerId"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Query_AIModel_argsModelType(
 	ctx context.Context,
 	rawArgs map[string]any,
@@ -1731,6 +1805,94 @@ func (ec *executionContext) _AIChatMessage_Text(ctx context.Context, field graph
 func (ec *executionContext) fieldContext_AIChatMessage_Text(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AIChatMessage",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AIProvider_Type(ctx context.Context, field graphql.CollectedField, obj *model.AIProvider) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AIProvider_Type(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Type, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AIProvider_Type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AIProvider",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AIProvider_ProviderId(ctx context.Context, field graphql.CollectedField, obj *model.AIProvider) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AIProvider_ProviderId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ProviderID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AIProvider_ProviderId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AIProvider",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -3093,6 +3255,56 @@ func (ec *executionContext) fieldContext_Query_Graph(ctx context.Context, field 
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_AIProviders(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_AIProviders(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().AIProviders(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.AIProvider)
+	fc.Result = res
+	return ec.marshalNAIProvider2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIProviderᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_AIProviders(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "Type":
+				return ec.fieldContext_AIProvider_Type(ctx, field)
+			case "ProviderId":
+				return ec.fieldContext_AIProvider_ProviderId(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AIProvider", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_AIModel(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_AIModel(ctx, field)
 	if err != nil {
@@ -3107,7 +3319,7 @@ func (ec *executionContext) _Query_AIModel(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().AIModel(rctx, fc.Args["modelType"].(string), fc.Args["token"].(*string))
+		return ec.resolvers.Query().AIModel(rctx, fc.Args["providerId"].(*string), fc.Args["modelType"].(string), fc.Args["token"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3162,7 +3374,7 @@ func (ec *executionContext) _Query_AIChat(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().AIChat(rctx, fc.Args["modelType"].(string), fc.Args["token"].(*string), fc.Args["schema"].(string), fc.Args["input"].(model.ChatInput))
+		return ec.resolvers.Query().AIChat(rctx, fc.Args["providerId"].(*string), fc.Args["modelType"].(string), fc.Args["token"].(*string), fc.Args["schema"].(string), fc.Args["input"].(model.ChatInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6149,6 +6361,50 @@ func (ec *executionContext) _AIChatMessage(ctx context.Context, sel ast.Selectio
 	return out
 }
 
+var aIProviderImplementors = []string{"AIProvider"}
+
+func (ec *executionContext) _AIProvider(ctx context.Context, sel ast.SelectionSet, obj *model.AIProvider) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, aIProviderImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AIProvider")
+		case "Type":
+			out.Values[i] = ec._AIProvider_Type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ProviderId":
+			out.Values[i] = ec._AIProvider_ProviderId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var columnImplementors = []string{"Column"}
 
 func (ec *executionContext) _Column(ctx context.Context, sel ast.SelectionSet, obj *model.Column) graphql.Marshaler {
@@ -6610,6 +6866,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_Graph(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "AIProviders":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_AIProviders(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -7318,6 +7596,60 @@ func (ec *executionContext) marshalNAIChatMessage2ᚖgithubᚗcomᚋclideyᚋwho
 		return graphql.Null
 	}
 	return ec._AIChatMessage(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNAIProvider2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIProviderᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AIProvider) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNAIProvider2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIProvider(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNAIProvider2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIProvider(ctx context.Context, sel ast.SelectionSet, v *model.AIProvider) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AIProvider(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v any) (bool, error) {

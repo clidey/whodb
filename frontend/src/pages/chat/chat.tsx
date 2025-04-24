@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,7 +34,7 @@ import { notify } from "../../store/function";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { chooseRandomItems } from "../../utils/functions";
 import { chatExamples } from "./examples";
-import logoImage from "../../../public/images/logo.png";
+import logoImage from "url:../../../public/images/logo.png";
 import { HoudiniActions } from "../../store/chat";
 
 const thinkingPhrases = [
@@ -107,19 +107,21 @@ type IChatMessage = AiChatMessage & {
 export const externalModelTypes = map(availableExternalModelTypes, (model) => createDropdownItem(model, (Icons.Logos as Record<string, ReactElement>)[model]));
 
 export const ChatPage: FC = () => {
-    const [currentModel, setCurrentModel] = useState("");
     const [query, setQuery] = useState("");
     const [addExternalModel, setAddExternalModel] = useState(false);
     const [externalModelType, setExternalModel] = useState(externalModelTypes[0]);
     const [externalModelToken, setExternalModelToken] = useState<string>();
     const modelType = useAppSelector(state => state.database.current);
     const modelTypes = useAppSelector(state => state.database.modelTypes);
+    const currentModel = useAppSelector(state => state.database.currentModel);
+    const models = useAppSelector(state => state.database.models);
     const chats = useAppSelector(state => state.houdini.chats);
     const [modelAvailable, setModelAvailable] = useState(true);
-    const [ models, setModels ] = useState<IDropdownItem[]>([]);
     const [getAIModels, { loading: getAIModelsLoading }] = useGetAiModelsLazyQuery({
         onError() {
             setModelAvailable(false);
+            dispatch(DatabaseActions.setModels([]));
+            dispatch(DatabaseActions.setCurrentModel(undefined));
         },
         fetchPolicy: "network-only",
     });
@@ -135,29 +137,29 @@ export const ChatPage: FC = () => {
 
     const handleAIModelTypeChange = useCallback((item: IDropdownItem) => {
         setModelAvailable(true);
-        dispatch(DatabaseActions.setCurrentModelType({ id: item.id }));
         getAIModels({
             variables: {
+                providerId: item.id,
                 modelType: item.label,
                 token: item.extra?.token,
             },
             onCompleted(data) {
-                setModels(data?.AIModel.map(model => createDropdownItem(model)) ?? []);
+                dispatch(DatabaseActions.setModels(data.AIModel));
                 if (data.AIModel.length > 0) {
-                    setCurrentModel(data.AIModel[0]);
+                    dispatch(DatabaseActions.setCurrentModel(data.AIModel[0]));
                 }
             },
         });
     }, [dispatch, getAIModels]);
 
     const handleAIModelChange = useCallback((item: IDropdownItem) => {
-        setCurrentModel(item.id);
-    }, []);
+        dispatch(DatabaseActions.setCurrentModel(item.id));
+    }, [dispatch]);
 
     const handleAIModelRemove = useCallback((_: MouseEvent<HTMLDivElement>, item?: IDropdownItem) => {
         if (modelType?.id === item!.id) {
-            setModels([]);
-            setCurrentModel("");
+            dispatch(DatabaseActions.setModels([]));
+            dispatch(DatabaseActions.setCurrentModel(undefined));
         }
         dispatch(DatabaseActions.removeAIModelType({ id: item!.id }));
     }, [dispatch, modelType?.id]);
@@ -186,7 +188,7 @@ export const ChatPage: FC = () => {
                 modelType: modelType.modelType,
                 token: modelType.token,
                 query: sanitizedQuery,
-                model: currentModel,
+                model: currentModel ?? "",
                 previousConversation: chats.map(chat => `${chat.isUserInput ? "<User>" : "<System>"}${chat.Text}${chat.isUserInput ? "</User>" : "</System>"}`).join("\n"),
                 schema,
             },
@@ -227,7 +229,7 @@ export const ChatPage: FC = () => {
         if (e.key === "ArrowUp") {
           const foundSearchIndex = currentSearchIndex != null ? currentSearchIndex - 1 : chats.length - 1;
           let searchIndex = foundSearchIndex;
-    
+
           while (searchIndex >= 0) {
             if (chats[searchIndex].isUserInput) {
               setCurrentSearchIndex(searchIndex);
@@ -236,7 +238,7 @@ export const ChatPage: FC = () => {
             }
             searchIndex--;
           }
-    
+
           if (currentSearchIndex !== chats.length - 1) {
             searchIndex = chats.length - 1;
             while (searchIndex > foundSearchIndex) {
@@ -264,15 +266,15 @@ export const ChatPage: FC = () => {
     }, []);
 
     const handleExternalModelSubmit = useCallback(() => {
-        setCurrentModel("");
-        setModels([]);
+        dispatch(DatabaseActions.setCurrentModel(undefined));
+        dispatch(DatabaseActions.setModels([]));
         getAIModels({
             variables: {
                 modelType: externalModelType.id,
                 token: externalModelToken,
             },
             onCompleted(data) {
-                setModels(data?.AIModel.map(model => createDropdownItem(model)) ?? []);
+                dispatch(DatabaseActions.setModels(data.AIModel));
                 const id = v4();
                 dispatch(DatabaseActions.addAIModelType({
                     id,
@@ -284,7 +286,7 @@ export const ChatPage: FC = () => {
                 setExternalModelToken("");
                 setAddExternalModel(false);
                 if (data.AIModel.length > 0) {
-                    setCurrentModel(data.AIModel[0]);
+                    dispatch(DatabaseActions.setCurrentModel(data.AIModel[0]));
                 }
             },
             onError(error) {
@@ -299,7 +301,7 @@ export const ChatPage: FC = () => {
 
     useEffect(() => {
         const modelType = modelTypes[0];
-        if (modelType == null) {
+        if (modelType == null || models.length > 0) {
             return;
         }
         handleAIModelTypeChange({
@@ -313,7 +315,7 @@ export const ChatPage: FC = () => {
     }, []);
 
     const modelTypesDropdownItems = useMemo(() => {
-        return modelTypes.map(modelType => ({
+        return modelTypes.filter(modelType => modelType != null).map(modelType => ({
             id: modelType.id,
             label: modelType.modelType,
             icon: (Icons.Logos as Record<string, ReactElement>)[modelType.modelType],
@@ -326,7 +328,7 @@ export const ChatPage: FC = () => {
     const disableAll = useMemo(() => {
         return models.length === 0 || !modelAvailable;
     }, [modelAvailable, models.length]);
-    
+
     const disableChat = useMemo(() => {
         return loading || models.length === 0 || !modelAvailable;
     }, [loading, modelAvailable, models.length]);
@@ -335,11 +337,20 @@ export const ChatPage: FC = () => {
         dispatch(HoudiniActions.clear());
     }, []);
 
+    const handleAIProviderChange = useCallback((item: IDropdownItem) => {
+        dispatch(DatabaseActions.setCurrentModelType({ id: item.id }));
+        handleAIModelTypeChange(item);
+    }, [handleAIModelTypeChange]);
+
+    const modelDropdownItems = useMemo(() => {
+        return models.map(model => createDropdownItem(model));
+    }, [models]);
+
     return (
         <InternalPage routes={[InternalRoutes.Chat]}>
             <AnimatePresence mode="wait">
                 {
-                    addExternalModel && 
+                    addExternalModel &&
                     <div className="absolute inset-0 flex justify-center items-center">
                         <motion.div className="w-[min(450px,calc(100vw-20px))] shadow-2xl z-10 rounded-xl px-8 py-12 flex flex-col gap-2 relative overflow-hidden"
                             initial={{ y: 50, opacity: 0 }}
@@ -350,7 +361,7 @@ export const ChatPage: FC = () => {
                                 Run Ollama locally <Button icon={Icons.RightArrowUp} label="Docs" onClick={handleOpenDocs} />
                             </div>
                             <div className="text-neutral-800 dark:text-neutral-300 my-4 w-full flex items-center gap-2">
-                                <div className="border-t-[1px] border-t-white/5 rounded-lg grow border-dashed" /> or <div className="border-t-[1px] border-t-white/5 rounded-lg grow border-dashed" /> 
+                                <div className="border-t-[1px] border-t-white/5 rounded-lg grow border-dashed" /> or <div className="border-t-[1px] border-t-white/5 rounded-lg grow border-dashed" />
                             </div>
                             <div className="text-neutral-800 dark:text-neutral-300 self-center">
                                 Add External Model
@@ -375,19 +386,20 @@ export const ChatPage: FC = () => {
                                 label: modelType.modelType,
                                 icon: (Icons.Logos as Record<string, ReactElement>)[modelType.modelType],
                             }}
+                            dropdownContainerHeight="max-h-[400px]"
                             items={modelTypesDropdownItems}
-                            onChange={handleAIModelTypeChange}
+                            onChange={handleAIProviderChange}
                             action={<div onClick={handleAIModelRemove}>{cloneElement(Icons.Delete, {
                                 className: "w-6 h-6 stroke-red-500"
                             })}</div>}
                             defaultItem={{ label: "Add External Model", icon: Icons.Add }}
                             onDefaultItemClick={handleAddExternalModel}
-                            enableAction={(index) => index !== 0} />
+                            enableAction={(index) => modelTypes.at(index)?.token != null} />
                         {
                             modelAvailable
-                            ? <Dropdown className="w-[200px]" value={createDropdownItem(currentModel)}
-                                    items={models}
-                                    onChange={handleAIModelChange} 
+                            ? <Dropdown className="w-[200px]" value={currentModel ? createDropdownItem(currentModel) : undefined}
+                                    items={modelDropdownItems} dropdownContainerHeight="max-h-[400px]"
+                                    onChange={handleAIModelChange}
                                     loading={getAIModelsLoading} />
                             : <div className="text-neutral-500 w-[200px] rounded-lg bg-white/5 flex items-center pl-4">
                                 Unavailable
@@ -395,7 +407,7 @@ export const ChatPage: FC = () => {
                         }
                     </div>
                     <div className="flex gap-2">
-                        <AnimatedButton label="New Chat" icon={Icons.Refresh} onClick={handleClear} />
+                        <AnimatedButton label="New Chat" icon={Icons.Refresh} onClick={handleClear} disabled={loading} />
                     </div>
                 </div>
                 <div className={classNames("flex grow w-full rounded-xl overflow-hidden", {
@@ -422,15 +434,15 @@ export const ChatPage: FC = () => {
                                 <div className="flex w-[max(65%,450px)] flex-col gap-2">
                                     {
                                         chats.map((chat, i) => {
-                                            if (chat.Type === "message") {
-                                                return <div key={`chat-${i}`} className={classNames("flex items-center gap-4 overflow-hidden break-words leading-6 shrink-0 relative", {
+                                            if (chat.Type === "message" || chat.Type === "text") {
+                                                return <div key={`chat-${i}`} className={classNames("flex gap-4 overflow-hidden break-words leading-6 shrink-0 relative", {
                                                     "self-end": chat.isUserInput,
                                                     "self-start": !chat.isUserInput,
                                                 })}>
-                                                    {!chat.isUserInput && chats[i-1]?.isUserInput 
-                                                        ? <img src={logoImage} alt="clidey logo" className="w-auto h-6" />
+                                                    {!chat.isUserInput && chats[i-1]?.isUserInput
+                                                        ? <img src={logoImage} alt="clidey logo" className="w-auto h-6 mt-2" />
                                                         : <div className="pl-4" />}
-                                                    <div className={classNames("text-neutral-800 dark:text-neutral-300 px-4 py-2 rounded-xl", {
+                                                    <div className={classNames("text-neutral-800 dark:text-neutral-300 px-4 py-2 rounded-xl whitespace-pre-wrap", {
                                                         "bg-neutral-600/5 dark:bg-[#2C2F33]": chat.isUserInput,
                                                     })}>
                                                         {chat.Text}
@@ -438,7 +450,7 @@ export const ChatPage: FC = () => {
                                                 </div>
                                             } else if (chat.Type === "error") {
                                                 return <div key={`chat-${i}`} className="flex items-center gap-4 overflow-hidden break-words leading-6 shrink-0 self-start">
-                                                    {!chat.isUserInput && chats[i-1]?.isUserInput 
+                                                    {!chat.isUserInput && chats[i-1]?.isUserInput
                                                         ? <img src={logoImage} alt="clidey logo" className="w-auto h-6" />
                                                         : <div className="pl-4" />}
                                                     <div className="text-red-800 dark:text-red-300 px-4 py-2 rounded-lg">
@@ -447,7 +459,7 @@ export const ChatPage: FC = () => {
                                                 </div>
                                             }
                                             return <div key={`chat-${i}`} className="flex gap-4 w-full overflow-hidden pt-4 pr-9">
-                                                {!chat.isUserInput && chats[i-1]?.isUserInput 
+                                                {!chat.isUserInput && chats[i-1]?.isUserInput
                                                     ? <img src={logoImage} alt="clidey logo" className="w-auto h-6" />
                                                     : <div className="pl-4" />}
                                                 <TablePreview type={chat.Type} text={chat.Text} data={chat.Result} />
@@ -476,6 +488,7 @@ export const ChatPage: FC = () => {
                     <Input value={query} setValue={setQuery} placeholder="Talk to me..." onSubmit={handleSubmitQuery} inputProps={{
                         disabled: disableChat,
                         onKeyUp: handleKeyUp,
+                        autoFocus: true,
                     }} />
                 </div>
                 {
@@ -487,4 +500,4 @@ export const ChatPage: FC = () => {
             </div>
         </InternalPage>
     )
-}   
+}

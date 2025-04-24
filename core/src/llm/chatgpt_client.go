@@ -1,16 +1,18 @@
-// Copyright 2025 Clidey, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package llm
 
@@ -21,9 +23,9 @@ import (
 	"fmt"
 	"io"
 	"strings"
-)
 
-const chatGPTEndpoint = "https://api.openai.com/v1"
+	"github.com/clidey/whodb/core/src/env"
+)
 
 func prepareChatGPTRequest(c *LLMClient, prompt string, model LLMModel, receiverChan *chan string) (string, []byte, map[string]string, error) {
 	requestBody, err := json.Marshal(map[string]interface{}{
@@ -34,7 +36,7 @@ func prepareChatGPTRequest(c *LLMClient, prompt string, model LLMModel, receiver
 	if err != nil {
 		return "", nil, nil, err
 	}
-	url := fmt.Sprintf("%v/chat/completions", chatGPTEndpoint)
+	url := fmt.Sprintf("%v/chat/completions", env.GetOpenAIEndpoint())
 	headers := map[string]string{
 		"Authorization": fmt.Sprintf("Bearer %s", c.APIKey),
 		"Content-Type":  "application/json",
@@ -43,7 +45,7 @@ func prepareChatGPTRequest(c *LLMClient, prompt string, model LLMModel, receiver
 }
 
 func prepareChatGPTModelsRequest(apiKey string) (string, map[string]string) {
-	url := fmt.Sprintf("%v/models", chatGPTEndpoint)
+	url := fmt.Sprintf("%v/models", env.GetOpenAIEndpoint())
 	headers := map[string]string{
 		"Authorization": fmt.Sprintf("Bearer %s", apiKey),
 		"Content-Type":  "application/json",
