@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,7 @@ import { FetchResult } from "@apollo/client";
 import classNames from "classnames";
 import { motion } from "framer-motion";
 import { clone, entries, keys, map } from "lodash";
-import { cloneElement, FC, useCallback, useEffect, useMemo, useState } from "react";
+import {cloneElement, FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { AnimatedButton } from "../../components/button";
 import { Dropdown } from "../../components/dropdown";
@@ -54,6 +54,57 @@ export const ExploreStorageUnit: FC = () => {
     const [newRowForm, setNewRowForm] = useState<RecordInput[]>([]);
     const [checkedRows, setCheckedRows] = useState<Set<number>>(new Set());
     const [deleting, setDeleting] = useState(false);
+    const addRowRef = useRef<HTMLDivElement>(null);
+
+    const hasFormContent = useCallback(() => {
+        // Check if any form field has been modified from default values
+        return newRowForm.some(field => {
+            // If it's an ID or date field with default values, don't count it
+            const isDefault =
+                (field.Key.toLowerCase() === "id" && field.Value === "gen_random_uuid()") ||
+                (field.Extra?.at(1)?.Value === "TIMESTAMPTZ" && field.Value === "now()") ||
+                (field.Extra?.at(1)?.Value === "NUMERIC" && field.Value === "0") ||
+                field.Value === "";
+
+            return !isDefault;
+        });
+    }, [newRowForm]);
+
+    const handleKeyDown = useCallback((e: KeyboardEvent) => {
+        if (e.key === 'Escape' && showAdd) {
+            // Only close if no content has been entered
+            if (!hasFormContent()) {
+                setShowAdd(false);
+            }
+        }
+    }, [showAdd, hasFormContent]);
+
+    useEffect(() => {
+        if (showAdd) {
+            document.addEventListener('keydown', handleKeyDown);
+            return () => {
+                document.removeEventListener('keydown', handleKeyDown);
+            };
+        }
+    }, [showAdd, handleKeyDown]);
+
+    const handleClickOutside = useCallback((e: MouseEvent) => {
+        if (showAdd && addRowRef.current && !addRowRef.current.contains(e.target as Node)) {
+            // Only close if no content has been entered
+            if (!hasFormContent()) {
+                setShowAdd(false);
+            }
+        }
+    }, [showAdd, hasFormContent]);
+
+    useEffect(() => {
+        if (showAdd) {
+            document.addEventListener('mousedown', handleClickOutside);
+            return () => {
+                document.removeEventListener('mousedown', handleClickOutside);
+            };
+        }
+    }, [showAdd, handleClickOutside]);
 
     // todo: is there a different way to do this? clickhouse doesn't have schemas as a table is considered a schema. people mainly switch between DB
     if (current?.Type === DatabaseType.ClickHouse) {
@@ -415,7 +466,7 @@ export const ExploreStorageUnit: FC = () => {
                     { current?.Type !== DatabaseType.Redis && <ExploreStorageUnitWhereCondition defaultWhere={whereCondition} columns={columns} operators={validOperators} onChange={handleFilterChange} columnTypes={columnTypes ?? []} /> }
                     <AnimatedButton className="mt-5" type="lg" icon={Icons.CheckCircle} label="Query" onClick={handleQuery} testId="submit-button" />
                 </div>
-                <motion.div className={classNames("flex flex-col absolute z-10 right-0 top-0 backdrop-blur-xl", {
+                <motion.div tabIndex={0} ref={addRowRef} className={classNames("flex flex-col absolute z-10 right-0 top-0 backdrop-blur-xl", {
                         "hidden": current?.Type === DatabaseType.Redis,
                     })} variants={{
                     "open": {

@@ -488,6 +488,7 @@ export const ChatPage: FC = () => {
                     <Input value={query} setValue={setQuery} placeholder="Talk to me..." onSubmit={handleSubmitQuery} inputProps={{
                         disabled: disableChat,
                         onKeyUp: handleKeyUp,
+                        autoFocus: true,
                     }} />
                 </div>
                 {

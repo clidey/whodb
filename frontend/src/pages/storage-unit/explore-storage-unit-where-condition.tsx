@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
 
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
-import { FC, useCallback, useEffect, useMemo, useState } from "react";
+import {FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import { twMerge } from "tailwind-merge";
 import { ActionButton, AnimatedButton } from "../../components/button";
 import { createDropdownItem, Dropdown, IDropdownItem } from "../../components/dropdown";
@@ -40,6 +40,8 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
     });
     const [newFilter, setNewFilter] = useState(false);
     const [editingFilter, setEditingFilter] = useState(-1);
+    const newFilterRef = useRef<HTMLDivElement>(null);
+    const editFilterRef = useRef<HTMLDivElement>(null);
 
     const handleClick = useCallback(() => {
         const shouldShow = !newFilter;
@@ -100,8 +102,9 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
             return;
         }
         setNewFilter(false);
-        if (filters.And?.Children?.at(index) != null && filters.And?.Children?.at(index)?.Type === WhereConditionType.Atomic) {
-            setCurrentFilter((filters.And?.Children?.at(index) ?? { ColumnType: "string", Key: "", Operator: "", Value: "" }) as AtomicWhereCondition);
+        const filter = filters.And?.Children?.[index];
+        if (filter?.Type === WhereConditionType.Atomic) {
+            setCurrentFilter(filter.Atomic ?? { ColumnType: "string", Key: "", Operator: "", Value: "" });
         }
         setEditingFilter(index);
     }, [editingFilter, filters]);
@@ -127,6 +130,58 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
         setFilters(defaultWhere);
     }, [defaultWhere]);
 
+    const hasFilterContent = useCallback(() => {
+        return currentFilter.Key !== "" || currentFilter.Operator !== "" || currentFilter.Value !== "";
+    }, [currentFilter]);
+
+    const handleKeyDown = useCallback((e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+            // Only close popups if no content has been entered
+            if (!hasFilterContent()) {
+                if (newFilter) {
+                    setNewFilter(false);
+                }
+                if (editingFilter !== -1) {
+                    setEditingFilter(-1);
+                    setCurrentFilter({ ColumnType: "string", Key: "", Operator: "", Value: "" });
+                }
+            }
+        }
+    }, [newFilter, editingFilter, hasFilterContent]);
+
+    const handleClickOutside = useCallback((e: MouseEvent) => {
+        // For new filter popup
+        if (newFilter && newFilterRef.current && !newFilterRef.current.contains(e.target as Node)) {
+            // Only close if no content has been entered
+            if (!hasFilterContent()) {
+                setNewFilter(false);
+            }
+        }
+
+        // For edit filter popup
+        if (editingFilter !== -1 && editFilterRef.current && !editFilterRef.current.contains(e.target as Node)) {
+            // Only close if no content has been modified
+            if (!hasFilterContent()) {
+                setEditingFilter(-1);
+                setCurrentFilter({ ColumnType: "string", Key: "", Operator: "", Value: "" });
+            }
+        }
+    }, [newFilter, editingFilter, hasFilterContent]);
+
+    useEffect(() => {
+        // Only add event listeners if a popup is open
+        if (newFilter || editingFilter !== -1) {
+            document.addEventListener('keydown', handleKeyDown);
+            document.addEventListener('mousedown', handleClickOutside);
+
+            // Clean up event listeners
+            return () => {
+                document.removeEventListener('keydown', handleKeyDown);
+                document.removeEventListener('mousedown', handleClickOutside);
+            };
+        }
+    }, [newFilter, editingFilter, handleKeyDown, handleClickOutside]);
+
     return (
         <div className="flex flex-col gap-1 h-full relative">
             <Label label="Where condition" />
@@ -146,12 +201,14 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                                 <motion.div className="flex gap-1 z-[5] py-2 px-4 absolute left-0 top-2 mt-2 rounded-lg shadow-md border border-neutral-100 dark:border-[#23272A] dark:bg-neutral-700 dark:backdrop-blur-xl translate-y-full bg-white"
                                     initial={{ y: -10, opacity: 0 }}
                                     animate={{ y: 0, opacity: 1 }}
-                                    exit={{ y: -10, opacity: 0 }}>
+                                    exit={{ y: -10, opacity: 0 }}
+                                    ref={editFilterRef}
+                                    tabIndex={0}>
                                     <Dropdown className="min-w-[100px]" value={createDropdownItem(currentFilter.Key)} items={fieldsDropdownItems} onChange={handleFieldSelect} />
                                     <Dropdown noItemsLabel="No operators found" className="min-w-20" value={createDropdownItem(currentFilter.Operator)} items={validOperators} onChange={handleOperatorSelector} />
                                     <Input inputProps={{ className: "min-w-[150px]" }} placeholder="Enter filter value" value={currentFilter.Value} setValue={handleInputChange} />
                                     <AnimatedButton className="dark:bg-white/5" icon={Icons.Cancel} label="Cancel" onClick={() => handleEdit(i)} />
-                                    <AnimatedButton className="dark:bg-white/5" icon={Icons.CheckCircle} label="Save" onClick={() => handleSaveFilter(i)} />
+                                    <AnimatedButton className="dark:bg-white/5" icon={Icons.CheckCircle} label="Save" onClick={() => handleSaveFilter(i)} disabled={!currentFilter.Key || !currentFilter.Operator || !currentFilter.Value} />
                                 </motion.div>
                             )}
                         </AnimatePresence>
@@ -164,14 +221,16 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                     <motion.div className="flex gap-1 z-[5] py-2 px-4 absolute top-2 mt-1 rounded-lg shadow-md border border-neutral-100 dark:border-white/5 dark:bg-[#23272A] translate-y-full bg-white dark:backdrop-blur-xl"
                         initial={{ y: -10, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
-                        exit={{ y: -10, opacity: 0 }}>
+                        exit={{ y: -10, opacity: 0 }}
+                        ref={newFilterRef}
+                        tabIndex={0}>
                         <Dropdown className="min-w-[100px]" value={createDropdownItem(currentFilter.Key)} items={fieldsDropdownItems} onChange={handleFieldSelect} testId="field-key" />
                         <Dropdown noItemsLabel="No operators found" className="min-w-20" value={createDropdownItem(currentFilter.Operator)} items={validOperators} onChange={handleOperatorSelector} testId="field-operator" />
                         <Input inputProps={{
                             className: "min-w-[150px]",
                         }} placeholder="Enter filter value" value={currentFilter.Value} setValue={handleInputChange} testId="field-value" />
                         <AnimatedButton className="dark:bg-white/5" icon={Icons.Cancel} label="Cancel" onClick={handleClick} testId="cancel-button" />
-                        <AnimatedButton className="dark:bg-white/5" icon={Icons.CheckCircle} label="Add" onClick={handleAddFilter} testId="add-button" />
+                        <AnimatedButton className="dark:bg-white/5" icon={Icons.CheckCircle} label="Add" onClick={handleAddFilter} testId="add-button" disabled={!currentFilter.Key || !currentFilter.Operator || !currentFilter.Value} />
                     </motion.div>
                 )}
             </AnimatePresence>
