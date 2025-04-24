@@ -18,7 +18,7 @@ import classNames from "classnames";
 import { entries } from "lodash";
 import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import logoImage from "../../../public/images/logo.png";
+import logoImage from "url:../../../public/images/logo.png";
 import { AnimatedButton } from "../../components/button";
 import { ClassNames } from "../../components/classes";
 import { createDropdownItem, DropdownWithLabel, IDropdownItem } from "../../components/dropdown";
