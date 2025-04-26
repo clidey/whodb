@@ -20,8 +20,8 @@ import { Route, Routes } from "react-router-dom";
 import { Notifications } from './components/notifications';
 import { PrivateRoute, PublicRoutes, getRoutes } from './config/routes';
 import { NavigateToDefault } from "./pages/chat/default-chat-route";
-import { useAppDispatch, useAppSelector } from "./store/hooks";
-import { useCallback } from "react";
+import { useAppSelector } from "./store/hooks";
+import { useCallback, useEffect } from "react";
 import { useUpdateSettingsMutation } from "./generated/graphql";
 import { optInUser, optOutUser } from "./config/posthog";
 

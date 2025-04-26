@@ -76,7 +76,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
         setShowSQL(status => !status);
     }, []);
 
-    return <div className="flex flex-col w-full group/table-preview gap-2 relative">
+    return <div className="flex flex-col w-[calc(100%-50px)] group/table-preview gap-2 relative">
         <div className="absolute -top-3 -left-3 opacity-0 group-hover/table-preview:opacity-100 transition-all z-[1]">
             <ActionButton containerClassName="w-8 h-8" className="w-5 h-5" icon={cloneElement(showSQL ? Icons.Tables : Icons.Code, {
                 className: "w-6 h-6 stroke-white",
@@ -132,7 +132,6 @@ export const ChatPage: FC = () => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const schema = useAppSelector(state => state.database.schema);
     const [currentSearchIndex, setCurrentSearchIndex] = useState<number>();
-    const dispatch = useAppDispatch();
 
     const loading = useMemo(() => {
         return getAIChatLoading || getAIModelsLoading;
@@ -487,6 +486,7 @@ export const ChatPage: FC = () => {
                                                         : <div className="pl-4" />}
                                                     <div className={classNames("text-neutral-800 dark:text-neutral-300 px-4 py-2 rounded-xl whitespace-pre-wrap", {
                                                         "bg-neutral-600/5 dark:bg-[#2C2F33]": chat.isUserInput,
+                                                        "-ml-2": !chat.isUserInput && chats[i-1]?.isUserInput,
                                                     })}>
                                                         {chat.Text}
                                                     </div>
@@ -531,7 +531,7 @@ export const ChatPage: FC = () => {
                     <Input value={query} setValue={setQuery} placeholder="Talk to me..." onSubmit={handleSubmitQuery} inputProps={{
                         disabled: disableChat,
                         onKeyUp: handleKeyUp,
-                        autoFocus: true,
+                        ref: (input) => input?.focus()
                     }} />
                 </div>
                 {
