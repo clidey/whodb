@@ -28,7 +28,7 @@ import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { Table } from "../../components/table";
 import { InternalRoutes } from "../../config/routes";
-import { AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery, useGetAiModelsLazyQuery } from "../../generated/graphql";
+import { AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery, useGetAiModelsLazyQuery, useGetAiProvidersLazyQuery } from "../../generated/graphql";
 import { availableExternalModelTypes, DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
@@ -36,6 +36,7 @@ import { chooseRandomItems } from "../../utils/functions";
 import { chatExamples } from "./examples";
 import logoImage from "url:../../../public/images/logo.png";
 import { HoudiniActions } from "../../store/chat";
+import { reduxStore } from "../../store";
 
 const thinkingPhrases = [
     "Thinking",
@@ -75,7 +76,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
         setShowSQL(status => !status);
     }, []);
 
-    return <div className="flex flex-col w-full group/table-preview gap-2 relative">
+    return <div className="flex flex-col w-[calc(100%-50px)] group/table-preview gap-2 relative">
         <div className="absolute -top-3 -left-3 opacity-0 group-hover/table-preview:opacity-100 transition-all z-[1]">
             <ActionButton containerClassName="w-8 h-8" className="w-5 h-5" icon={cloneElement(showSQL ? Icons.Tables : Icons.Code, {
                 className: "w-6 h-6 stroke-white",
@@ -117,6 +118,8 @@ export const ChatPage: FC = () => {
     const models = useAppSelector(state => state.database.models);
     const chats = useAppSelector(state => state.houdini.chats);
     const [modelAvailable, setModelAvailable] = useState(true);
+    const [getAiProviders, ] = useGetAiProvidersLazyQuery();
+    const dispatch = useAppDispatch();
     const [getAIModels, { loading: getAIModelsLoading }] = useGetAiModelsLazyQuery({
         onError() {
             setModelAvailable(false);
@@ -129,7 +132,6 @@ export const ChatPage: FC = () => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const schema = useAppSelector(state => state.database.schema);
     const [currentSearchIndex, setCurrentSearchIndex] = useState<number>();
-    const dispatch = useAppDispatch();
 
     const loading = useMemo(() => {
         return getAIChatLoading || getAIModelsLoading;
@@ -300,6 +302,46 @@ export const ChatPage: FC = () => {
     }, []);
 
     useEffect(() => {
+        getAiProviders({
+            onCompleted(data) {
+                const aiProviders = data.AIProviders || [];
+                const initialModelTypes = reduxStore.getState().database.modelTypes.filter(model => {
+                const existingModel = aiProviders.find(provider => provider.ProviderId === model.id);
+                return existingModel != null || (model.token != null && model.token !== "");
+                });
+
+                // Filter out providers that already exist in modelTypes
+                const newProviders = aiProviders.filter(provider =>
+                !initialModelTypes.some(model => model.id === provider.ProviderId)
+                );
+
+                const finalModelTypes = [
+                ...newProviders.map(provider => ({
+                    id: provider.ProviderId,
+                    modelType: provider.Type,
+                })),
+                ...initialModelTypes
+                ];
+
+                // Check if current model type exists in final model types
+                const currentModelType = reduxStore.getState().database.current;
+                if (currentModelType && !finalModelTypes.some(model => model.id === currentModelType.id)) {
+                dispatch(DatabaseActions.setCurrentModelType({ id: "" }));
+                dispatch(DatabaseActions.setModels([]));
+                dispatch(DatabaseActions.setCurrentModel(undefined));
+                }
+
+                dispatch(DatabaseActions.setModelTypes(finalModelTypes));
+                getAIModels({
+                    variables: {
+                        providerId: currentModelType?.id,
+                        modelType: currentModelType?.modelType ?? "",
+                        token: currentModelType?.token ?? "",
+                    },
+                });
+            },
+        });
+
         const modelType = modelTypes[0];
         if (modelType == null || models.length > 0) {
             return;
@@ -444,6 +486,7 @@ export const ChatPage: FC = () => {
                                                         : <div className="pl-4" />}
                                                     <div className={classNames("text-neutral-800 dark:text-neutral-300 px-4 py-2 rounded-xl whitespace-pre-wrap", {
                                                         "bg-neutral-600/5 dark:bg-[#2C2F33]": chat.isUserInput,
+                                                        "-ml-2": !chat.isUserInput && chats[i-1]?.isUserInput,
                                                     })}>
                                                         {chat.Text}
                                                     </div>
@@ -488,7 +531,7 @@ export const ChatPage: FC = () => {
                     <Input value={query} setValue={setQuery} placeholder="Talk to me..." onSubmit={handleSubmitQuery} inputProps={{
                         disabled: disableChat,
                         onKeyUp: handleKeyUp,
-                        autoFocus: true,
+                        ref: (input) => input?.focus()
                     }} />
                 </div>
                 {
