@@ -28,7 +28,7 @@ import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { Table } from "../../components/table";
 import { InternalRoutes } from "../../config/routes";
-import { AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery, useGetAiModelsLazyQuery } from "../../generated/graphql";
+import { AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery, useGetAiModelsLazyQuery, useGetAiProvidersLazyQuery } from "../../generated/graphql";
 import { availableExternalModelTypes, DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
@@ -36,6 +36,7 @@ import { chooseRandomItems } from "../../utils/functions";
 import { chatExamples } from "./examples";
 import logoImage from "url:../../../public/images/logo.png";
 import { HoudiniActions } from "../../store/chat";
+import { reduxStore } from "../../store";
 
 const thinkingPhrases = [
     "Thinking",
@@ -117,6 +118,8 @@ export const ChatPage: FC = () => {
     const models = useAppSelector(state => state.database.models);
     const chats = useAppSelector(state => state.houdini.chats);
     const [modelAvailable, setModelAvailable] = useState(true);
+    const [getAiProviders, ] = useGetAiProvidersLazyQuery();
+    const dispatch = useAppDispatch();
     const [getAIModels, { loading: getAIModelsLoading }] = useGetAiModelsLazyQuery({
         onError() {
             setModelAvailable(false);
@@ -300,6 +303,46 @@ export const ChatPage: FC = () => {
     }, []);
 
     useEffect(() => {
+        getAiProviders({
+            onCompleted(data) {
+                const aiProviders = data.AIProviders || [];
+                const initialModelTypes = reduxStore.getState().database.modelTypes.filter(model => {
+                const existingModel = aiProviders.find(provider => provider.ProviderId === model.id);
+                return existingModel != null || (model.token != null && model.token !== "");
+                });
+
+                // Filter out providers that already exist in modelTypes
+                const newProviders = aiProviders.filter(provider =>
+                !initialModelTypes.some(model => model.id === provider.ProviderId)
+                );
+
+                const finalModelTypes = [
+                ...newProviders.map(provider => ({
+                    id: provider.ProviderId,
+                    modelType: provider.Type,
+                })),
+                ...initialModelTypes
+                ];
+
+                // Check if current model type exists in final model types
+                const currentModelType = reduxStore.getState().database.current;
+                if (currentModelType && !finalModelTypes.some(model => model.id === currentModelType.id)) {
+                dispatch(DatabaseActions.setCurrentModelType({ id: "" }));
+                dispatch(DatabaseActions.setModels([]));
+                dispatch(DatabaseActions.setCurrentModel(undefined));
+                }
+
+                dispatch(DatabaseActions.setModelTypes(finalModelTypes));
+                getAIModels({
+                    variables: {
+                        providerId: currentModelType?.id,
+                        modelType: currentModelType?.modelType ?? "",
+                        token: currentModelType?.token ?? "",
+                    },
+                });
+            },
+        });
+
         const modelType = modelTypes[0];
         if (modelType == null || models.length > 0) {
             return;
