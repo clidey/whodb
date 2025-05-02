@@ -3,7 +3,7 @@ module github.com/clidey/whodb/core
 go 1.24.1
 
 require (
-	github.com/99designs/gqlgen v0.17.71
+	github.com/99designs/gqlgen v0.17.73
 	github.com/ClickHouse/clickhouse-go/v2 v2.34.0
 	github.com/deckarep/golang-set/v2 v2.8.0
 	github.com/elastic/go-elasticsearch/v8 v8.18.0
@@ -14,7 +14,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
-	github.com/vektah/gqlparser/v2 v2.5.25
+	github.com/vektah/gqlparser/v2 v2.5.26
 	go.mongodb.org/mongo-driver v1.17.3
 	gorm.io/driver/clickhouse v0.6.1
 	gorm.io/driver/mysql v1.5.7
