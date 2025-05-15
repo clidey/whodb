@@ -73,7 +73,7 @@
     "parcel": "^2.14.4",
     "postcss": "^8.5.3",
     "process": "^0.11.10",
-    "tailwindcss": "^4.1.4"
+    "tailwindcss": "^4.1.7"
   },
   "@parcel/resolver-default": {
     "packageExports": true

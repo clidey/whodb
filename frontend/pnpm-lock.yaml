@@ -157,8 +157,8 @@ importers:
         specifier: ^0.11.10
         version: 0.11.10
       tailwindcss:
-        specifier: ^4.1.4
-        version: 4.1.4
+        specifier: ^4.1.7
+        version: 4.1.7
 
 packages:
 
@@ -3760,6 +3760,9 @@ packages:
 
   tailwindcss@4.1.4:
     resolution: {integrity: sha512-1ZIUqtPITFbv/DxRmDr5/agPqJwF69d24m9qmM1939TJehgY539CtzeZRjbLt5G6fSy/7YqqYsfvoTEw9xUI2A==}
+
+  tailwindcss@4.1.7:
+    resolution: {integrity: sha512-kr1o/ErIdNhTz8uzAYL7TpaUuzKIE6QPQ4qmSdxnoX/lo+5wmUHQA6h3L5yIqEImSRnAAURDirLu/BgiXGPAhg==}
 
   tapable@2.2.1:
     resolution: {integrity: sha512-GNzQvQTOIP6RyTfE2Qxb8ZVlNmw0n88vp1szwWRimP02mnTsx3Wtn5qRdqY9w2XduFNUgvOwhNnQsjwCp+kqaQ==}
@@ -8769,6 +8772,8 @@ snapshots:
   tailwind-merge@3.2.0: {}
 
   tailwindcss@4.1.4: {}
+
+  tailwindcss@4.1.7: {}
 
   tapable@2.2.1: {}
 
