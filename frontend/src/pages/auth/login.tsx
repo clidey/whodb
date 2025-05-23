@@ -16,7 +16,7 @@
 
 import classNames from "classnames";
 import { entries } from "lodash";
-import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
+import { FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import logoImage from "url:../../../public/images/logo.png";
 import { AnimatedButton } from "../../components/button";
@@ -31,7 +31,7 @@ import { DatabaseType, LoginCredentials, useGetDatabaseLazyQuery, useGetProfiles
 import { AuthActions } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";
-import { useAppDispatch } from "../../store/hooks";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { updateProfileLastAccessed } from "../../components/profile-info-tooltip";
 
 const databaseTypeDropdownItems: IDropdownItem<Record<string, string>>[] = [
@@ -93,6 +93,8 @@ const databaseTypeDropdownItems: IDropdownItem<Record<string, string>>[] = [
 export const LoginPage: FC = () => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    const currentProfile = useAppSelector(state => state.auth.current);
+    const shouldUpdateLastAccessed = useRef(false);
     
     const [login, { loading: loginLoading }] = useLoginMutation();
     const [loginWithProfile, { loading: loginWithProfileLoading }] = useLoginWithProfileMutation();
@@ -138,14 +140,8 @@ export const LoginPage: FC = () => {
             onCompleted(data) {
                 if (data.Login.Status) {
                     const profileData = { ...credentials };
+                    shouldUpdateLastAccessed.current = true;
                     dispatch(AuthActions.login(profileData));
-                    // Update last accessed time for the newly created profile
-                    setTimeout(() => {
-                        const newProfile = { ...profileData };
-                        if (newProfile.Id) {
-                            updateProfileLastAccessed(newProfile.Id);
-                        }
-                    }, 100);
                     navigate(InternalRoutes.Dashboard.StorageUnit.path);
                     return notify("Login successfully", "success");
                 }
@@ -230,6 +226,14 @@ export const LoginPage: FC = () => {
     useEffect(() => {
         dispatch(DatabaseActions.setSchema(""));
     }, [dispatch]);
+
+    // Update last accessed time when a new profile is created during login
+    useEffect(() => {
+        if (shouldUpdateLastAccessed.current && currentProfile?.Id) {
+            updateProfileLastAccessed(currentProfile.Id);
+            shouldUpdateLastAccessed.current = false;
+        }
+    }, [currentProfile]);
 
     useEffect(() => {
         if (searchParams.size > 0) {
