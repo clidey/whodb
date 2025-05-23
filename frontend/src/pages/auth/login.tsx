@@ -32,6 +32,7 @@ import { AuthActions } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";
 import { useAppDispatch } from "../../store/hooks";
+import { updateProfileLastAccessed } from "../../components/profile-info-tooltip";
 
 const databaseTypeDropdownItems: IDropdownItem<Record<string, string>>[] = [
     {
@@ -136,7 +137,15 @@ export const LoginPage: FC = () => {
             },
             onCompleted(data) {
                 if (data.Login.Status) {
-                    dispatch(AuthActions.login(credentials));
+                    const profileData = { ...credentials };
+                    dispatch(AuthActions.login(profileData));
+                    // Update last accessed time for the newly created profile
+                    setTimeout(() => {
+                        const newProfile = { ...profileData };
+                        if (newProfile.Id) {
+                            updateProfileLastAccessed(newProfile.Id);
+                        }
+                    }, 100);
                     navigate(InternalRoutes.Dashboard.StorageUnit.path);
                     return notify("Login successfully", "success");
                 }
@@ -165,6 +174,7 @@ export const LoginPage: FC = () => {
             },
             onCompleted(data) {
                 if (data.LoginWithProfile.Status) {
+                    updateProfileLastAccessed(selectedAvailableProfile.id);
                     dispatch(AuthActions.login({
                         Type: profile?.Type as DatabaseType,
                         Id: selectedAvailableProfile.id,
