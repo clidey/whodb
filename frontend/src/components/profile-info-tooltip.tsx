@@ -109,7 +109,7 @@ export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, class
               <span className={ClassNames.Text}>{port}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">Last Accessed:</span>
+              <span className="text-gray-600 dark:text-gray-400">Last Accessed:&nbsp;</span>
               <span className={ClassNames.Text}>{lastAccessed}</span>
             </div>
           </div>
