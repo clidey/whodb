@@ -1,40 +1,26 @@
-/*
- * Copyright 2025 Clidey, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import classNames from "classnames";
-import { FC, useState, useCallback, useRef, useEffect } from "react";
+import { FC, useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Icons } from "./icons";
 import { ClassNames } from "./classes";
 import { LocalLoginProfile } from "../store/auth";
+import { databaseTypeDropdownItems } from "../pages/auth/login";
 
 interface ProfileInfoTooltipProps {
   profile: LocalLoginProfile;
   className?: string;
 }
 
-function extractPortFromHostname(hostname: string): string {
-  const parts = hostname.split(':');
-  if (parts.length > 1) {
-    const port = parts[parts.length - 1];
-    // Check if the last part is numeric (a port)
-    if (/^\d+$/.test(port)) {
-      return port;
-    }
+function getPortFromAdvanced(profile: LocalLoginProfile): string {
+  const dbType = profile.Type;
+  const defaultPort = databaseTypeDropdownItems.find(item => item.id === dbType)!.extra!.Port;
+
+  if (profile.Advanced) {
+    const portObj = profile.Advanced.find(item => item.Key === 'Port');
+    return portObj?.Value || defaultPort;
   }
-  return 'Default';
+
+  return defaultPort;
 }
 
 function getLastAccessedTime(profileId: string): string {
@@ -52,92 +38,70 @@ function getLastAccessedTime(profileId: string): string {
 
 export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, className }) => {
   const [isVisible, setIsVisible] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number } | null>(null);
+  const btnRef = useRef<HTMLButtonElement | null>(null);
 
-  const port = extractPortFromHostname(profile.Hostname);
+  const port = getPortFromAdvanced(profile);
   const lastAccessed = getLastAccessedTime(profile.Id);
 
+  // Show tooltip to the right of the icon
   const showTooltip = useCallback(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
+    if (btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setTooltipPos({
+        top: rect.top + rect.height / 2,
+        left: rect.right + 12, // 12px gap to the right
+      });
     }
     setIsVisible(true);
   }, []);
 
+  // Hide tooltip
   const hideTooltip = useCallback(() => {
-    timeoutRef.current = setTimeout(() => {
-      if (!isHovered) {
-        setIsVisible(false);
-      }
-    }, 100);
-  }, [isHovered]);
-
-  const handleMouseEnter = useCallback(() => {
-    setIsHovered(true);
-    showTooltip();
-  }, [showTooltip]);
-
-  const handleMouseLeave = useCallback(() => {
-    setIsHovered(false);
-    hideTooltip();
-  }, [hideTooltip]);
-
-  const handleFocus = useCallback(() => {
-    showTooltip();
-  }, [showTooltip]);
-
-  const handleBlur = useCallback(() => {
     setIsVisible(false);
   }, []);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      setIsVisible(!isVisible);
-    } else if (e.key === 'Escape') {
-      setIsVisible(false);
+  // Click-away logic
+  useEffect(() => {
+    if (!isVisible) return;
+    function handleClick(event: MouseEvent) {
+      if (
+        btnRef.current &&
+        !btnRef.current.contains(event.target as Node)
+      ) {
+        setIsVisible(false);
+      }
     }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
   }, [isVisible]);
 
+  // Keyboard accessibility: close on Escape
   useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
+    if (!isVisible) return;
+    function handleKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setIsVisible(false);
+    }
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [isVisible]);
 
-  return (
-    <div className={classNames("relative inline-block", className)}>
-      <button
-        className="flex items-center justify-center w-4 h-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded-full transition-colors"
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        onKeyDown={handleKeyDown}
-        aria-label={`Profile information for ${profile.Id}`}
-        aria-describedby={`tooltip-${profile.Id}`}
-        tabIndex={0}
-      >
-        <div className="w-4 h-4">
-          {Icons.Information}
-        </div>
-      </button>
-      
-      {isVisible && (
+  const tooltip = isVisible && tooltipPos
+    ? createPortal(
         <div
           id={`tooltip-${profile.Id}`}
           role="tooltip"
           className={classNames(
-            "absolute z-50 px-3 py-2 text-xs font-medium bg-white border border-gray-200 rounded-lg shadow-lg",
+            "fixed z-[9999] px-3 py-2 text-xs font-medium bg-white border border-gray-200 rounded-lg shadow-lg",
             "dark:bg-[#2C2F33] dark:border-white/20 dark:text-gray-200",
-            "min-w-[180px] right-0 bottom-full mb-2",
+            "min-w-[180px]",
             "animate-fade"
           )}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
+          style={{
+            top: tooltipPos.top,
+            left: tooltipPos.left,
+            transform: "translateY(-50%)",
+          }}
         >
           <div className="space-y-1">
             <div className="flex justify-between">
@@ -149,10 +113,31 @@ export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, class
               <span className={ClassNames.Text}>{lastAccessed}</span>
             </div>
           </div>
-          {/* Tooltip arrow */}
-          <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-200 dark:border-t-white/20"></div>
-        </div>
-      )}
+          <div
+            className="absolute top-1/2 left-0 -translate-x-full -translate-y-1/2"
+            style={{}}
+          >
+            <div className="w-0 h-0 border-t-4 border-b-4 border-r-4 border-t-transparent border-b-transparent border-r-gray-200 dark:border-r-white/20"></div>
+          </div>
+        </div>,
+        document.body
+      )
+    : null;
+
+  return (
+    <div className={classNames("relative", className)}>
+      <button
+        ref={btnRef}
+        className="flex items-center justify-center w-4 h-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-gray-900 rounded-full transition-colors"
+        onClick={isVisible ? hideTooltip : showTooltip}
+        aria-label={`Profile information for ${profile.Id}`}
+        aria-describedby={`tooltip-${profile.Id}`}
+        tabIndex={0}
+        type="button"
+      >
+        <div className="w-4 h-4">{Icons.Information}</div>
+      </button>
+      {tooltip}
     </div>
   );
 };

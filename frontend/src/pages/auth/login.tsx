@@ -34,7 +34,7 @@ import { notify } from "../../store/function";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { updateProfileLastAccessed } from "../../components/profile-info-tooltip";
 
-const databaseTypeDropdownItems: IDropdownItem<Record<string, string>>[] = [
+export const databaseTypeDropdownItems: IDropdownItem<Record<string, string>>[] = [
     {
         id: "Postgres",
         label: "Postgres",
