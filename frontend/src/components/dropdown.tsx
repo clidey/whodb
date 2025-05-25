@@ -34,6 +34,7 @@ export type IDropdownItem<T extends unknown = any> = {
     label: string;
     icon?: ReactElement;
     extra?: T;
+    info?: ReactElement;
 };
 
 export type IDropdownProps = {
@@ -102,9 +103,20 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
                                     "hover:gap-2": item.icon != null,
                                 })} onClick={() => handleClick(item)} data-value={item.id}>
                                     <div>{props.value?.id === item.id ? Icons.CheckCircle : item.icon}</div>
-                                    <div className="whitespace-nowrap">{item.label}</div>
+                                    <div className="whitespace-nowrap flex-1">{item.label}</div>
+                                    {item.info && (
+                                        <div 
+                                            className="ml-8"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            {item.info}
+                                        </div>
+                                    )}
                                     {(props.enableAction?.(i) ?? true) && props.action != null && cloneElement(props.action, {
-                                        className: "absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer transition-all opacity-0 group-hover/item:opacity-100",
+                                        className: classNames("cursor-pointer transition-all opacity-0 group-hover/item:opacity-100", {
+                                            "absolute right-4 top-1/2 -translate-y-1/2": !item.info,
+                                            "absolute right-10 top-1/2 -translate-y-1/2": item.info,
+                                        }),
                                         onClick: (e: MouseEvent) => {
                                             props.action?.props?.onClick?.(e, item);
                                             e.stopPropagation();
