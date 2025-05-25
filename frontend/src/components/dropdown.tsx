@@ -114,8 +114,8 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
                                     )}
                                     {(props.enableAction?.(i) ?? true) && props.action != null && cloneElement(props.action, {
                                         className: classNames("cursor-pointer transition-all opacity-0 group-hover/item:opacity-100", {
-                                            "absolute right-2 top-1/2 -translate-y-1/2": !item.info,
-                                            "absolute right-8 top-1/2 -translate-y-1/2": item.info,
+                                            "absolute right-4 top-1/2 -translate-y-1/2": !item.info,
+                                            "absolute right-10 top-1/2 -translate-y-1/2": item.info,
                                         }),
                                         onClick: (e: MouseEvent) => {
                                             props.action?.props?.onClick?.(e, item);
