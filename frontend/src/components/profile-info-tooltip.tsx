@@ -19,28 +19,6 @@ function isValidProfileId(profileId: string): boolean {
          /^[a-zA-Z0-9_-]+$/.test(profileId);
 }
 
-// IPv6-safe hostname/port extraction
-function extractPortFromHostname(hostname: string): string {
-  if (!hostname || typeof hostname !== 'string') {
-    return 'Default';
-  }
-  
-  // Handle IPv6 addresses by checking for square brackets
-  if (hostname.includes('[')) {
-    const match = hostname.match(/\]:(\d+)$/);
-    return match ? match[1] : 'Default';
-  }
-  
-  const parts = hostname.split(':');
-  if (parts.length > 1) {
-    const port = parts[parts.length - 1];
-    // Check if the last part is numeric (a port)
-    if (/^\d+$/.test(port)) {
-      return port;
-    }
-  }
-  return 'Default';
-}
 
 function getPortFromAdvanced(profile: LocalLoginProfile): string | null {
   const dbType = profile.Type;
@@ -55,14 +33,6 @@ function getPortFromAdvanced(profile: LocalLoginProfile): string | null {
   if (profile.Advanced) {
     const portObj = profile.Advanced.find(item => item.Key === 'Port');
     return portObj?.Value || defaultPort;
-  }
-
-  // Check if hostname contains port info
-  if (profile.Host) {
-    const extractedPort = extractPortFromHostname(profile.Host);
-    if (extractedPort !== 'Default') {
-      return extractedPort;
-    }
   }
 
   return defaultPort;
