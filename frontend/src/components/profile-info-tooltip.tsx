@@ -133,7 +133,7 @@ export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, class
           className={classNames(
             "absolute z-50 px-3 py-2 text-xs font-medium bg-white border border-gray-200 rounded-lg shadow-lg",
             "dark:bg-[#2C2F33] dark:border-white/20 dark:text-gray-200",
-            "min-w-[180px] -translate-x-1/2 left-1/2 bottom-full mb-2",
+            "min-w-[180px] right-0 bottom-full mb-2",
             "animate-fade"
           )}
           onMouseEnter={() => setIsHovered(true)}
@@ -150,7 +150,7 @@ export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, class
             </div>
           </div>
           {/* Tooltip arrow */}
-          <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-200 dark:border-t-white/20"></div>
+          <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-200 dark:border-t-white/20"></div>
         </div>
       )}
     </div>
