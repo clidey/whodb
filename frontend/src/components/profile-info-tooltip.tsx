@@ -11,12 +11,11 @@ interface ProfileInfoTooltipProps {
   className?: string;
 }
 
-// Profile ID validation: only allow alphanumeric, hyphens, underscores, max 64 chars
 function isValidProfileId(profileId: string): boolean {
   return typeof profileId === 'string' && 
          profileId.length > 0 && 
          profileId.length <= 64 && 
-         /^[a-zA-Z0-9_-]+$/.test(profileId);
+         /^[a-zA-Z0-9_\- ]+$/.test(profileId);
 }
 
 
@@ -25,7 +24,7 @@ function getPortFromAdvanced(profile: LocalLoginProfile): string | null {
   const defaultPortItem = databaseTypeDropdownItems.find(item => item.id === dbType);
   
   if (!defaultPortItem?.extra?.Port) {
-    return null; // No default port found, hide this info
+    return null;
   }
   
   const defaultPort = defaultPortItem.extra.Port;
@@ -40,7 +39,7 @@ function getPortFromAdvanced(profile: LocalLoginProfile): string | null {
 
 function getLastAccessedTime(profileId: string): string | null {
   if (!isValidProfileId(profileId)) {
-    return null; // Invalid profile ID, hide this info
+    return null;
   }
   
   try {
@@ -48,19 +47,18 @@ function getLastAccessedTime(profileId: string): string | null {
     if (lastAccessed) {
       const date = new Date(lastAccessed);
       if (isNaN(date.getTime())) {
-        return null; // Invalid date, hide this info
+        return null;
       }
       const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const formattedTimeZone = timeZone.replace(/_/g, ' ').split('/').join(' / ');
       return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (${formattedTimeZone})`;
     }
   } catch (error) {
-    // Silently fail - return null to hide this info
+    return null;
   }
   return null;
 }
 
-// Portal container reuse - create once and reuse
 let tooltipPortalContainer: HTMLDivElement | null = null;
 
 function getTooltipPortalContainer(): HTMLDivElement {
@@ -80,30 +78,26 @@ export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, class
   const port = getPortFromAdvanced(profile);
   const lastAccessed = getLastAccessedTime(profile.Id);
 
-  // If no information is available, don't render the component
   const hasInfo = port !== null || lastAccessed !== null;
   if (!hasInfo) {
     return null;
   }
 
-  // Show tooltip to the right of the icon
   const showTooltip = useCallback(() => {
     if (btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect();
       setTooltipPos({
         top: rect.top + rect.height / 2,
-        left: rect.right + 12, // 12px gap to the right
+        left: rect.right + 12,
       });
     }
     setIsVisible(true);
   }, []);
 
-  // Hide tooltip
   const hideTooltip = useCallback(() => {
     setIsVisible(false);
   }, []);
 
-  // Memoized event handlers to prevent recreation
   const handleClickAway = useCallback((event: MouseEvent) => {
     if (
       btnRef.current &&
@@ -117,7 +111,6 @@ export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, class
     if (event.key === "Escape") setIsVisible(false);
   }, []);
 
-  // Optimized event listeners - only add when visible, use stable handlers
   useEffect(() => {
     if (!isVisible) return;
     
@@ -130,7 +123,6 @@ export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, class
     };
   }, [isVisible, handleClickAway, handleKeyDown]);
 
-  // Memoize portal container to prevent recreation
   const portalContainer = useMemo(() => getTooltipPortalContainer(), []);
 
   const tooltip = isVisible && tooltipPos
@@ -193,15 +185,14 @@ export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, class
   );
 };
 
-// Utility function to update last accessed time with validation
 export function updateProfileLastAccessed(profileId: string): void {
   if (!isValidProfileId(profileId)) {
-    return; // Silently fail for invalid profile IDs
+    return;
   }
   
   try {
     localStorage.setItem(`whodb_profile_last_accessed_${profileId}`, new Date().toISOString());
   } catch (error) {
-    // Silently fail - localStorage may be full or disabled
+    
   }
 }
