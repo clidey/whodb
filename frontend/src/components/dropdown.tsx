@@ -106,7 +106,7 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
                                     <div className="whitespace-nowrap flex-1">{item.label}</div>
                                     {item.info && (
                                         <div 
-                                            className="ml-auto"
+                                            className="ml-8"
                                             onClick={(e) => e.stopPropagation()}
                                         >
                                             {item.info}
