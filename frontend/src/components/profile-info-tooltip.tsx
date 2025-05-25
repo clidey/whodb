@@ -28,7 +28,9 @@ function getLastAccessedTime(profileId: string): string {
     const lastAccessed = localStorage.getItem(`whodb_profile_last_accessed_${profileId}`);
     if (lastAccessed) {
       const date = new Date(lastAccessed);
-      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const formattedTimeZone = timeZone.replace(/_/g, ' ').split('/').join(' / ');
+      return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (${formattedTimeZone})`;
     }
   } catch (error) {
     console.warn('Failed to get last accessed time:', error);
@@ -109,7 +111,7 @@ export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, class
               <span className={ClassNames.Text}>{port}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">Last Accessed:&nbsp;</span>
+              <span className="text-gray-600 dark:text-gray-400">Last Logged In:&nbsp;</span>
               <span className={ClassNames.Text}>{lastAccessed}</span>
             </div>
           </div>
