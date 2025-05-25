@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import { FC, useState, useRef, useEffect, useCallback } from "react";
+import { FC, useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Icons } from "./icons";
 import { ClassNames } from "./classes";
@@ -11,31 +11,95 @@ interface ProfileInfoTooltipProps {
   className?: string;
 }
 
-function getPortFromAdvanced(profile: LocalLoginProfile): string {
+// Profile ID validation: only allow alphanumeric, hyphens, underscores, max 64 chars
+function isValidProfileId(profileId: string): boolean {
+  return typeof profileId === 'string' && 
+         profileId.length > 0 && 
+         profileId.length <= 64 && 
+         /^[a-zA-Z0-9_-]+$/.test(profileId);
+}
+
+// IPv6-safe hostname/port extraction
+function extractPortFromHostname(hostname: string): string {
+  if (!hostname || typeof hostname !== 'string') {
+    return 'Default';
+  }
+  
+  // Handle IPv6 addresses by checking for square brackets
+  if (hostname.includes('[')) {
+    const match = hostname.match(/\]:(\d+)$/);
+    return match ? match[1] : 'Default';
+  }
+  
+  const parts = hostname.split(':');
+  if (parts.length > 1) {
+    const port = parts[parts.length - 1];
+    // Check if the last part is numeric (a port)
+    if (/^\d+$/.test(port)) {
+      return port;
+    }
+  }
+  return 'Default';
+}
+
+function getPortFromAdvanced(profile: LocalLoginProfile): string | null {
   const dbType = profile.Type;
-  const defaultPort = databaseTypeDropdownItems.find(item => item.id === dbType)!.extra!.Port;
+  const defaultPortItem = databaseTypeDropdownItems.find(item => item.id === dbType);
+  
+  if (!defaultPortItem?.extra?.Port) {
+    return null; // No default port found, hide this info
+  }
+  
+  const defaultPort = defaultPortItem.extra.Port;
 
   if (profile.Advanced) {
     const portObj = profile.Advanced.find(item => item.Key === 'Port');
     return portObj?.Value || defaultPort;
   }
 
+  // Check if hostname contains port info
+  if (profile.Host) {
+    const extractedPort = extractPortFromHostname(profile.Host);
+    if (extractedPort !== 'Default') {
+      return extractedPort;
+    }
+  }
+
   return defaultPort;
 }
 
-function getLastAccessedTime(profileId: string): string {
+function getLastAccessedTime(profileId: string): string | null {
+  if (!isValidProfileId(profileId)) {
+    return null; // Invalid profile ID, hide this info
+  }
+  
   try {
     const lastAccessed = localStorage.getItem(`whodb_profile_last_accessed_${profileId}`);
     if (lastAccessed) {
       const date = new Date(lastAccessed);
+      if (isNaN(date.getTime())) {
+        return null; // Invalid date, hide this info
+      }
       const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const formattedTimeZone = timeZone.replace(/_/g, ' ').split('/').join(' / ');
       return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (${formattedTimeZone})`;
     }
   } catch (error) {
-    console.warn('Failed to get last accessed time:', error);
+    // Silently fail - return null to hide this info
   }
-  return 'Never';
+  return null;
+}
+
+// Portal container reuse - create once and reuse
+let tooltipPortalContainer: HTMLDivElement | null = null;
+
+function getTooltipPortalContainer(): HTMLDivElement {
+  if (!tooltipPortalContainer) {
+    tooltipPortalContainer = document.createElement('div');
+    tooltipPortalContainer.id = 'whodb-tooltip-portal';
+    document.body.appendChild(tooltipPortalContainer);
+  }
+  return tooltipPortalContainer;
 }
 
 export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, className }) => {
@@ -45,6 +109,12 @@ export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, class
 
   const port = getPortFromAdvanced(profile);
   const lastAccessed = getLastAccessedTime(profile.Id);
+
+  // If no information is available, don't render the component
+  const hasInfo = port !== null || lastAccessed !== null;
+  if (!hasInfo) {
+    return null;
+  }
 
   // Show tooltip to the right of the icon
   const showTooltip = useCallback(() => {
@@ -63,30 +133,35 @@ export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, class
     setIsVisible(false);
   }, []);
 
-  // Click-away logic
-  useEffect(() => {
-    if (!isVisible) return;
-    function handleClick(event: MouseEvent) {
-      if (
-        btnRef.current &&
-        !btnRef.current.contains(event.target as Node)
-      ) {
-        setIsVisible(false);
-      }
+  // Memoized event handlers to prevent recreation
+  const handleClickAway = useCallback((event: MouseEvent) => {
+    if (
+      btnRef.current &&
+      !btnRef.current.contains(event.target as Node)
+    ) {
+      setIsVisible(false);
     }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [isVisible]);
+  }, []);
 
-  // Keyboard accessibility: close on Escape
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    if (event.key === "Escape") setIsVisible(false);
+  }, []);
+
+  // Optimized event listeners - only add when visible, use stable handlers
   useEffect(() => {
     if (!isVisible) return;
-    function handleKey(event: KeyboardEvent) {
-      if (event.key === "Escape") setIsVisible(false);
-    }
-    document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
-  }, [isVisible]);
+    
+    document.addEventListener("mousedown", handleClickAway);
+    document.addEventListener("keydown", handleKeyDown);
+    
+    return () => {
+      document.removeEventListener("mousedown", handleClickAway);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isVisible, handleClickAway, handleKeyDown]);
+
+  // Memoize portal container to prevent recreation
+  const portalContainer = useMemo(() => getTooltipPortalContainer(), []);
 
   const tooltip = isVisible && tooltipPos
     ? createPortal(
@@ -106,14 +181,18 @@ export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, class
           }}
         >
           <div className="space-y-1">
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">Port:</span>
-              <span className={ClassNames.Text}>{port}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">Last Logged In:&nbsp;</span>
-              <span className={ClassNames.Text}>{lastAccessed}</span>
-            </div>
+            {port !== null && (
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Port:</span>
+                <span className={ClassNames.Text}>{port}</span>
+              </div>
+            )}
+            {lastAccessed !== null && (
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Last Logged In:&nbsp;</span>
+                <span className={ClassNames.Text}>{lastAccessed}</span>
+              </div>
+            )}
           </div>
           <div
             className="absolute top-1/2 left-0 -translate-x-full -translate-y-1/2"
@@ -122,7 +201,7 @@ export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, class
             <div className="w-0 h-0 border-t-4 border-b-4 border-r-4 border-t-transparent border-b-transparent border-r-gray-200 dark:border-r-white/20"></div>
           </div>
         </div>,
-        document.body
+        portalContainer
       )
     : null;
 
@@ -144,11 +223,15 @@ export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, class
   );
 };
 
-// Utility function to update last accessed time
+// Utility function to update last accessed time with validation
 export function updateProfileLastAccessed(profileId: string): void {
+  if (!isValidProfileId(profileId)) {
+    return; // Silently fail for invalid profile IDs
+  }
+  
   try {
     localStorage.setItem(`whodb_profile_last_accessed_${profileId}`, new Date().toISOString());
   } catch (error) {
-    console.warn('Failed to update last accessed time:', error);
+    // Silently fail - localStorage may be full or disabled
   }
 }
