@@ -35,6 +35,7 @@ import { BRAND_COLOR_BG, ClassNames } from "../classes";
 import { createDropdownItem, Dropdown, IDropdownItem } from "../dropdown";
 import { Icons } from "../icons";
 import { Loading } from "../loading";
+import { ProfileInfoTooltip, updateProfileLastAccessed } from "../profile-info-tooltip";
 
 
 type IRoute = {
@@ -131,11 +132,14 @@ export const SideMenu: FC<IRouteProps> = (props) => {
 
 function getDropdownLoginProfileItem(profile: LocalLoginProfile): IDropdownItem {
     const icon = (Icons.Logos as Record<string, ReactElement>)[profile.Type];
+    const info = <ProfileInfoTooltip profile={profile} />;
+    
     if (profile.Saved) {
         return {
             id: profile.Id,
             label: profile.Id,
             icon,
+            info,
         }
     }
     if (profile.Type === DatabaseType.MongoDb) {
@@ -143,6 +147,7 @@ function getDropdownLoginProfileItem(profile: LocalLoginProfile): IDropdownItem 
             id: profile.Id,
             label: `${profile.Hostname} - ${profile.Username} [${profile.Type}]`,
             icon,
+            info,
         }
     }
     if (profile.Type === DatabaseType.Sqlite3) {
@@ -150,12 +155,14 @@ function getDropdownLoginProfileItem(profile: LocalLoginProfile): IDropdownItem 
             id: profile.Id,
             label: `${profile.Database} [${profile.Type}]`,
             icon,
+            info,
         }
     }
     return {
         id: profile.Id,
         label: `${profile.Hostname} - ${profile.Database} [${profile.Type}]`,
         icon,
+        info,
     };
 }
 
@@ -211,6 +218,7 @@ export const Sidebar: FC = () => {
                 },
                 onCompleted(status) {
                     if (status.LoginWithProfile.Status) {
+                        updateProfileLastAccessed(item.id);
                         dispatch(DatabaseActions.setSchema(""));
                         dispatch(AuthActions.switch({ id: item.id }));
                         navigate(InternalRoutes.Dashboard.StorageUnit.path);
@@ -237,6 +245,7 @@ export const Sidebar: FC = () => {
             },
             onCompleted(status) {
                 if (status.Login.Status) {
+                    updateProfileLastAccessed(selectedProfile.Id);
                     dispatch(DatabaseActions.setSchema(""));
                     dispatch(AuthActions.switch({ id: selectedProfile.Id }));
                     navigate(InternalRoutes.Dashboard.StorageUnit.path);
