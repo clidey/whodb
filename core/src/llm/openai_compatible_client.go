@@ -68,8 +68,13 @@ func parseOpenAICompatibleResponse(body io.ReadCloser, receiverChan *chan string
 				line = strings.TrimPrefix(line, "data: ")
 			}
 
-			// Skip SSE control messages
+			// Handle SSE control messages
 			if line == "[DONE]" {
+				// Send final accumulated response before terminating
+				if responseBuilder.Len() > 0 {
+					response := responseBuilder.String()
+					return &response, nil
+				}
 				break
 			}
 
@@ -117,6 +122,12 @@ func parseOpenAICompatibleResponse(body io.ReadCloser, receiverChan *chan string
 		}
 
 		return nil, errors.New("no completion response received")
+	}
+
+	// Return accumulated response if available
+	if responseBuilder.Len() > 0 {
+		response := responseBuilder.String()
+		return &response, nil
 	}
 
 	return nil, nil
