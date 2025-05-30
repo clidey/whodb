@@ -58,8 +58,19 @@ func parseOpenAICompatibleResponse(body io.ReadCloser, receiverChan *chan string
 				return nil, err
 			}
 
-			if strings.TrimSpace(line) == "" {
+			line = strings.TrimSpace(line)
+			if line == "" {
 				continue
+			}
+
+			// Handle SSE format: strip "data: " prefix
+			if strings.HasPrefix(line, "data: ") {
+				line = strings.TrimPrefix(line, "data: ")
+			}
+
+			// Skip SSE control messages
+			if line == "[DONE]" {
+				break
 			}
 
 			var completionResponse struct {
