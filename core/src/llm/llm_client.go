@@ -26,9 +26,10 @@ import (
 type LLMType string
 
 const (
-	Ollama_LLMType    LLMType = "Ollama"
-	ChatGPT_LLMType   LLMType = "ChatGPT"
-	Anthropic_LLMType LLMType = "Anthropic"
+	Ollama_LLMType           LLMType = "Ollama"
+	ChatGPT_LLMType          LLMType = "ChatGPT"
+	Anthropic_LLMType        LLMType = "Anthropic"
+	OpenAICompatible_LLMType LLMType = "OpenAI-Compatible"
 )
 
 type LLMModel string
@@ -52,6 +53,8 @@ func (c *LLMClient) Complete(prompt string, model LLMModel, receiverChan *chan s
 		url, requestBody, headers, err = prepareChatGPTRequest(c, prompt, model, receiverChan)
 	case Anthropic_LLMType:
 		url, requestBody, headers, err = prepareAnthropicRequest(c, prompt, model)
+	case OpenAICompatible_LLMType:
+		url, requestBody, headers, err = prepareOpenAICompatibleRequest(c, prompt, model, receiverChan)
 	default:
 		return nil, errors.New("unsupported LLM type")
 	}
@@ -88,6 +91,8 @@ func (c *LLMClient) GetSupportedModels() ([]string, error) {
 		url, headers = prepareChatGPTModelsRequest(c.APIKey)
 	case Anthropic_LLMType:
 		return getAnthropicModels(c.APIKey)
+	case OpenAICompatible_LLMType:
+		return getOpenAICompatibleModels(c.APIKey)
 	default:
 		return nil, errors.New("unsupported LLM type")
 	}
@@ -118,6 +123,8 @@ func (c *LLMClient) parseResponse(body io.ReadCloser, receiverChan *chan string)
 		return parseChatGPTResponse(body, receiverChan, &responseBuilder)
 	case Anthropic_LLMType:
 		return parseAnthropicResponse(body, receiverChan, &responseBuilder)
+	case OpenAICompatible_LLMType:
+		return parseOpenAICompatibleResponse(body, receiverChan, &responseBuilder)
 	default:
 		return nil, errors.New("unsupported LLM type")
 	}
