@@ -36,7 +36,7 @@ func prepareOpenAICompatibleRequest(c *LLMClient, prompt string, model LLMModel,
 	if err != nil {
 		return "", nil, nil, err
 	}
-	url := fmt.Sprintf("%v/chat/completions", env.OpenAICompatibleEndpoint)
+	url := fmt.Sprintf("%v/chat/completions", env.GetOpenAICompatibleEndpoint())
 	headers := map[string]string{
 		"Authorization": fmt.Sprintf("Bearer %s", c.APIKey),
 		"Content-Type":  "application/json",
@@ -64,9 +64,7 @@ func parseOpenAICompatibleResponse(body io.ReadCloser, receiverChan *chan string
 			}
 
 			// Handle SSE format: strip "data: " prefix
-			if strings.HasPrefix(line, "data: ") {
-				line = strings.TrimPrefix(line, "data: ")
-			}
+			line = strings.TrimPrefix(line, "data: ")
 
 			// Handle SSE control messages
 			if line == "[DONE]" {

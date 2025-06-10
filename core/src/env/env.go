@@ -129,12 +129,15 @@ func GetAnthropicEndpoint() string {
 }
 
 func GetOpenAIEndpoint() string {
-	// If the OpenAI compatible endpoint is set, use it. Otherwise, use the OpenAI endpoint.
-	if OpenAICompatibleEndpoint != "" {
-		return OpenAICompatibleEndpoint
-	}
 	if OpenAIEndpoint != "" {
 		return OpenAIEndpoint
+	}
+	return "https://api.openai.com/v1"
+}
+
+func GetOpenAICompatibleEndpoint() string {
+	if OpenAICompatibleEndpoint != "" && OpenAICompatibleAPIKey != "" {
+		return OpenAICompatibleEndpoint
 	}
 	return "https://api.openai.com/v1"
 }
