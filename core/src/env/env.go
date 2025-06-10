@@ -42,6 +42,7 @@ var OpenAIEndpoint = os.Getenv("WHODB_OPENAI_ENDPOINT")
 
 var OpenAICompatibleEndpoint = os.Getenv("WHODB_OPENAI_COMPATIBLE_ENDPOINT")
 var OpenAICompatibleAPIKey = os.Getenv("WHODB_OPENAI_COMPATIBLE_API_KEY")
+var OpenAICompatibleLabel = os.Getenv("WHODB_OPENAI_COMPATIBLE_LABEL")
 
 var CustomModels = common.FilterList(strings.Split(os.Getenv("WHODB_CUSTOM_MODELS"), ","), func(item string) bool {
 	return strings.TrimSpace(item) != ""
@@ -58,6 +59,7 @@ type ChatProvider struct {
 	ProviderId string
 }
 
+// TODO: need to make this more dynamic so users can configure more than one key for each provider
 func GetConfiguredChatProviders() []ChatProvider {
 	providers := []ChatProvider{}
 
@@ -76,6 +78,19 @@ func GetConfiguredChatProviders() []ChatProvider {
 			APIKey:     AnthropicAPIKey,
 			Endpoint:   GetAnthropicEndpoint(),
 			ProviderId: "anthropic-1",
+		})
+	}
+
+	if len(OpenAICompatibleAPIKey) > 0 && len(OpenAICompatibleEndpoint) > 0 {
+		label := OpenAICompatibleLabel
+		if label == "" {
+			label = "OpenAI-Compatible API"
+		}
+		providers = append(providers, ChatProvider{
+			Type:       "OpenAI-Compatible",
+			APIKey:     OpenAICompatibleAPIKey,
+			Endpoint:   GetOpenAICompatibleEndpoint(),
+			ProviderId: "openai-compatible-1",
 		})
 	}
 
@@ -115,12 +130,15 @@ func GetAnthropicEndpoint() string {
 }
 
 func GetOpenAIEndpoint() string {
-	// If the OpenAI compatible endpoint is set, use it. Otherwise, use the OpenAI endpoint.
-	if OpenAICompatibleEndpoint != "" {
-		return OpenAICompatibleEndpoint
-	}
 	if OpenAIEndpoint != "" {
 		return OpenAIEndpoint
+	}
+	return "https://api.openai.com/v1"
+}
+
+func GetOpenAICompatibleEndpoint() string {
+	if OpenAICompatibleEndpoint != "" && OpenAICompatibleAPIKey != "" {
+		return OpenAICompatibleEndpoint
 	}
 	return "https://api.openai.com/v1"
 }

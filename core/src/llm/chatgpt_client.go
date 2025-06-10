@@ -27,7 +27,7 @@ import (
 	"github.com/clidey/whodb/core/src/env"
 )
 
-func prepareChatGPTRequest(c *LLMClient, prompt string, model LLMModel, receiverChan *chan string) (string, []byte, map[string]string, error) {
+func prepareChatGPTRequest(c *LLMClient, prompt string, model LLMModel, receiverChan *chan string, isOpenAICompatible bool) (string, []byte, map[string]string, error) {
 	requestBody, err := json.Marshal(map[string]interface{}{
 		"model":    string(model),
 		"messages": []map[string]string{{"role": "user", "content": prompt}},
@@ -37,6 +37,9 @@ func prepareChatGPTRequest(c *LLMClient, prompt string, model LLMModel, receiver
 		return "", nil, nil, err
 	}
 	url := fmt.Sprintf("%v/chat/completions", env.GetOpenAIEndpoint())
+	if isOpenAICompatible {
+		url = fmt.Sprintf("%v/chat/completions", env.GetOpenAICompatibleEndpoint())
+	}
 	headers := map[string]string{
 		"Authorization": fmt.Sprintf("Bearer %s", c.APIKey),
 		"Content-Type":  "application/json",
