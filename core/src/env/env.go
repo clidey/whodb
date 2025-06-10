@@ -59,6 +59,7 @@ type ChatProvider struct {
 	ProviderId string
 }
 
+// TODO: need to make this more dynamic so users can configure more than one key for each provider
 func GetConfiguredChatProviders() []ChatProvider {
 	providers := []ChatProvider{}
 
@@ -88,7 +89,7 @@ func GetConfiguredChatProviders() []ChatProvider {
 		providers = append(providers, ChatProvider{
 			Type:       "OpenAI-Compatible",
 			APIKey:     OpenAICompatibleAPIKey,
-			Endpoint:   OpenAICompatibleEndpoint,
+			Endpoint:   GetOpenAICompatibleEndpoint(),
 			ProviderId: "openai-compatible-1",
 		})
 	}
