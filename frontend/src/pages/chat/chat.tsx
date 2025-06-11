@@ -360,7 +360,7 @@ export const ChatPage: FC = () => {
         return modelTypes.filter(modelType => modelType != null).map(modelType => ({
             id: modelType.id,
             label: modelType.modelType,
-            icon: (Icons.Logos as Record<string, ReactElement>)[modelType.modelType],
+            icon: (Icons.Logos as Record<string, ReactElement>)[modelType.modelType.replace("-", "")],
             extra: {
                 token: modelType.token,
             }
@@ -426,7 +426,7 @@ export const ChatPage: FC = () => {
                         <Dropdown className="w-[200px]" value={modelType && {
                                 id: modelType.id,
                                 label: modelType.modelType,
-                                icon: (Icons.Logos as Record<string, ReactElement>)[modelType.modelType],
+                                icon: (Icons.Logos as Record<string, ReactElement>)[modelType.modelType.replace("-", "")],
                             }}
                             dropdownContainerHeight="max-h-[400px]"
                             items={modelTypesDropdownItems}

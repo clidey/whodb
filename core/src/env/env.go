@@ -42,7 +42,8 @@ var OpenAIEndpoint = os.Getenv("WHODB_OPENAI_ENDPOINT")
 
 var OpenAICompatibleEndpoint = os.Getenv("WHODB_OPENAI_COMPATIBLE_ENDPOINT")
 var OpenAICompatibleAPIKey = os.Getenv("WHODB_OPENAI_COMPATIBLE_API_KEY")
-var OpenAICompatibleLabel = os.Getenv("WHODB_OPENAI_COMPATIBLE_LABEL")
+
+// var OpenAICompatibleLabel = os.Getenv("WHODB_OPENAI_COMPATIBLE_LABEL")
 
 var CustomModels = common.FilterList(strings.Split(os.Getenv("WHODB_CUSTOM_MODELS"), ","), func(item string) bool {
 	return strings.TrimSpace(item) != ""
@@ -82,10 +83,6 @@ func GetConfiguredChatProviders() []ChatProvider {
 	}
 
 	if len(OpenAICompatibleAPIKey) > 0 && len(OpenAICompatibleEndpoint) > 0 {
-		label := OpenAICompatibleLabel
-		if label == "" {
-			label = "OpenAI-Compatible API"
-		}
 		providers = append(providers, ChatProvider{
 			Type:       "OpenAI-Compatible",
 			APIKey:     OpenAICompatibleAPIKey,
