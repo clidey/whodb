@@ -82,7 +82,7 @@ func GetConfiguredChatProviders() []ChatProvider {
 		})
 	}
 
-	if len(OpenAICompatibleAPIKey) > 0 && len(OpenAICompatibleEndpoint) > 0 {
+	if len(OpenAICompatibleAPIKey) > 0 && len(OpenAICompatibleEndpoint) > 0 && len(CustomModels) > 0 {
 		providers = append(providers, ChatProvider{
 			Type:       "OpenAI-Compatible",
 			APIKey:     OpenAICompatibleAPIKey,
@@ -134,7 +134,7 @@ func GetOpenAIEndpoint() string {
 }
 
 func GetOpenAICompatibleEndpoint() string {
-	if OpenAICompatibleEndpoint != "" && OpenAICompatibleAPIKey != "" {
+	if OpenAICompatibleEndpoint != "" && OpenAICompatibleAPIKey != "" && len(CustomModels) > 0 {
 		return OpenAICompatibleEndpoint
 	}
 	return "https://api.openai.com/v1"
