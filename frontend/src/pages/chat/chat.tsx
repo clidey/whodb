@@ -319,6 +319,7 @@ export const ChatPage: FC = () => {
                 ...newProviders.map(provider => ({
                     id: provider.ProviderId,
                     modelType: provider.Type,
+                    isEnvironmentDefined: provider.IsEnvironmentDefined,
                 })),
                 ...initialModelTypes
                 ];
@@ -436,7 +437,10 @@ export const ChatPage: FC = () => {
                             })}</div>}
                             defaultItem={{ label: "Add External Model", icon: Icons.Add }}
                             onDefaultItemClick={handleAddExternalModel}
-                            enableAction={(index) => modelTypes.at(index)?.token != null} />
+                            enableAction={(index) => {
+                                const modelType = modelTypes.at(index);
+                                return modelType?.token != null && !modelType?.isEnvironmentDefined;
+                            }} />
                         {
                             modelAvailable
                             ? <Dropdown className="w-[200px]" value={currentModel ? createDropdownItem(currentModel) : undefined}

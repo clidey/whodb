@@ -32,8 +32,9 @@ type AIChatMessage struct {
 }
 
 type AIProvider struct {
-	Type       string `json:"Type"`
-	ProviderID string `json:"ProviderId"`
+	Type                 string `json:"Type"`
+	ProviderID           string `json:"ProviderId"`
+	IsEnvironmentDefined bool   `json:"IsEnvironmentDefined"`
 }
 
 type AtomicWhereCondition struct {
@@ -76,10 +77,11 @@ type LoginCredentials struct {
 }
 
 type LoginProfile struct {
-	Alias    *string      `json:"Alias,omitempty"`
-	ID       string       `json:"Id"`
-	Type     DatabaseType `json:"Type"`
-	Database *string      `json:"Database,omitempty"`
+	Alias                *string      `json:"Alias,omitempty"`
+	ID                   string       `json:"Id"`
+	Type                 DatabaseType `json:"Type"`
+	Database             *string      `json:"Database,omitempty"`
+	IsEnvironmentDefined bool         `json:"IsEnvironmentDefined"`
 }
 
 type LoginProfileInput struct {
