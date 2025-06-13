@@ -90,7 +90,8 @@ func (p *Sqlite3Plugin) GetTableNameAndAttributes(rows *sql.Rows, db *gorm.DB) (
 	}
 
 	var rowCount int64
-	rowCountRow := db.Raw(fmt.Sprintf("SELECT COUNT(*) FROM '%s'", tableName)).Row()
+	escapedTableName := p.EscapeIdentifier(tableName)
+	rowCountRow := db.Raw(fmt.Sprintf("SELECT COUNT(*) FROM %s", escapedTableName)).Row()
 	err := rowCountRow.Scan(&rowCount)
 	if err != nil {
 		return "", nil

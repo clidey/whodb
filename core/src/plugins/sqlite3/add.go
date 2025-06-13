@@ -26,7 +26,7 @@ func (p *Sqlite3Plugin) GetCreateTableQuery(schema string, storageUnit string, c
 	var columnDefs []string
 
 	for _, column := range columns {
-		parts := []string{column.Key}
+		parts := []string{p.EscapeIdentifier(column.Key)}
 
 		// Handle primary key with INTEGER type for auto-increment
 		if primary, ok := column.Extra["primary"]; ok && primary == "true" {
@@ -47,5 +47,5 @@ func (p *Sqlite3Plugin) GetCreateTableQuery(schema string, storageUnit string, c
 		columnDefs = append(columnDefs, strings.Join(parts, " "))
 	}
 
-	return fmt.Sprintf("CREATE TABLE %s (%s)", storageUnit, strings.Join(columnDefs, ", "))
+	return fmt.Sprintf("CREATE TABLE %s (%s)", p.EscapeIdentifier(storageUnit), strings.Join(columnDefs, ", "))
 }
