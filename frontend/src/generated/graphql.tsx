@@ -42,6 +42,7 @@ export type AiChatMessage = {
 
 export type AiProvider = {
   __typename?: 'AIProvider';
+  IsEnvironmentDefined: Scalars['Boolean']['output'];
   ProviderId: Scalars['String']['output'];
   Type: Scalars['String']['output'];
 };
@@ -112,6 +113,7 @@ export type LoginProfile = {
   Alias?: Maybe<Scalars['String']['output']>;
   Database?: Maybe<Scalars['String']['output']>;
   Id: Scalars['String']['output'];
+  IsEnvironmentDefined: Scalars['Boolean']['output'];
   Type: DatabaseType;
 };
 

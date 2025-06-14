@@ -18,7 +18,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { v4 } from 'uuid';
 import { LoginCredentials } from '../generated/graphql';
 
-export type LocalLoginProfile = (LoginCredentials & {Id: string, Saved?: boolean});
+export type LocalLoginProfile = (LoginCredentials & {Id: string, Saved?: boolean, IsEnvironmentDefined?: boolean});
 
 export type IAuthState = {
   status: "logged-in" | "unauthorized";

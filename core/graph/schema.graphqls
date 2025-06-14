@@ -107,6 +107,7 @@ type LoginProfile {
   Id: String!
   Type: DatabaseType!
   Database: String
+  IsEnvironmentDefined: Boolean!
 }
 
 type StatusResponse {
@@ -129,6 +130,7 @@ type AIChatMessage {
 type AIProvider {
   Type: String!
   ProviderId: String!
+  IsEnvironmentDefined: Boolean!
 }
 
 type Query {

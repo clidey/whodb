@@ -23,6 +23,7 @@ export type IAIModelType = {
   id: string;
   modelType: string;
   token?: string;
+  isEnvironmentDefined?: boolean;
 }
 
 type IDatabaseState = {
