@@ -65,9 +65,10 @@ export type IActionButtonProps = {
   disabled?: boolean;
   children?: ReactNode;
   testId?: string;
+  ariaLabel?: string;
 }
 
-export const ActionButton: FC<IActionButtonProps> = ({ onClick, icon, className, containerClassName, disabled, children, testId }) => {
+export const ActionButton: FC<IActionButtonProps> = ({ onClick, icon, className, containerClassName, disabled, children, testId, ariaLabel }) => {
   return (
   <div className="group relative" data-testid={testId}>
     <motion.button 
@@ -77,7 +78,7 @@ export const ActionButton: FC<IActionButtonProps> = ({ onClick, icon, className,
       }))} 
       onClick={disabled ? undefined : onClick} 
       whileTap={{ scale: 0.6, transition: { duration: 0.05 }, }}
-      aria-label="Action button"
+      aria-label={ariaLabel || "Action button"}
       disabled={disabled}>
       {cloneElement(icon, {
           className: twMerge(classNames("w-8 h-8 stroke-neutral-500 cursor-pointer dark:stroke-neutral-300", className))
