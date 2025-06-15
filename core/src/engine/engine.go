@@ -23,6 +23,7 @@ const (
 	DatabaseType_MySQL         = "MySQL"
 	DatabaseType_MariaDB       = "MariaDB"
 	DatabaseType_Sqlite3       = "Sqlite3"
+	DatabaseType_DuckDB        = "DuckDB"
 	DatabaseType_MongoDB       = "MongoDB"
 	DatabaseType_Redis         = "Redis"
 	DatabaseType_ElasticSearch = "ElasticSearch"

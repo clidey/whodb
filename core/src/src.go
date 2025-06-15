@@ -19,6 +19,7 @@ package src
 import (
 	"fmt"
 	"github.com/clidey/whodb/core/src/plugins/clickhouse"
+	"github.com/clidey/whodb/core/src/plugins/duckdb"
 	"github.com/clidey/whodb/core/src/plugins/elasticsearch"
 	"github.com/clidey/whodb/core/src/plugins/mongodb"
 	"github.com/clidey/whodb/core/src/plugins/mysql"
@@ -38,6 +39,7 @@ func InitializeEngine() *engine.Engine {
 	MainEngine.RegistryPlugin(mysql.NewMySQLPlugin())
 	MainEngine.RegistryPlugin(mysql.NewMyMariaDBPlugin())
 	MainEngine.RegistryPlugin(sqlite3.NewSqlite3Plugin())
+	MainEngine.RegistryPlugin(duckdb.NewDuckDBPlugin())
 	MainEngine.RegistryPlugin(mongodb.NewMongoDBPlugin())
 	MainEngine.RegistryPlugin(redis.NewRedisPlugin())
 	MainEngine.RegistryPlugin(elasticsearch.NewElasticSearchPlugin())
