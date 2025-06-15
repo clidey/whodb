@@ -15,7 +15,7 @@
  */
 
 import classNames from "classnames";
-import { FC, ReactElement, cloneElement, useCallback, useState } from "react";
+import { FC, ReactElement, cloneElement, useCallback, useState, useRef, useEffect, KeyboardEvent } from "react";
 import { Icons } from "./icons";
 import { Label } from "./input";
 import { Loading } from "./loading";
@@ -59,6 +59,10 @@ const ITEM_CLASS = "group/item flex items-center gap-1 transition-all cursor-poi
 
 export const Dropdown: FC<IDropdownProps> = (props) => {
     const [open, setOpen] = useState(false);
+    const [focusedIndex, setFocusedIndex] = useState(-1);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    const triggerRef = useRef<HTMLButtonElement>(null);
+    const itemsRef = useRef<HTMLDivElement[]>([]);
 
     const handleClick = useCallback((item: IDropdownItem) => {
         setOpen(false);
@@ -71,15 +75,92 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
 
     const handleClose = useCallback(() => {
         setOpen(false);
+        setFocusedIndex(-1);
+        triggerRef.current?.focus();
     }, []);
 
+    const handleKeyDown = useCallback((event: KeyboardEvent<HTMLButtonElement>) => {
+        switch (event.key) {
+            case 'Enter':
+            case ' ':
+            case 'ArrowDown':
+                event.preventDefault();
+                setOpen(true);
+                setFocusedIndex(0);
+                break;
+            case 'ArrowUp':
+                event.preventDefault();
+                setOpen(true);
+                setFocusedIndex(props.items.length - 1);
+                break;
+            case 'Escape':
+                handleClose();
+                break;
+        }
+    }, [props.items.length, handleClose]);
+
+    const handleItemKeyDown = useCallback((event: KeyboardEvent<HTMLDivElement>, item: IDropdownItem, index: number) => {
+        switch (event.key) {
+            case 'Enter':
+            case ' ':
+                event.preventDefault();
+                handleClick(item);
+                break;
+            case 'ArrowDown':
+                event.preventDefault();
+                const nextIndex = Math.min(index + 1, props.items.length - 1);
+                setFocusedIndex(nextIndex);
+                break;
+            case 'ArrowUp':
+                event.preventDefault();
+                const prevIndex = Math.max(index - 1, 0);
+                setFocusedIndex(prevIndex);
+                break;
+            case 'Escape':
+                event.preventDefault();
+                handleClose();
+                break;
+            case 'Tab':
+                handleClose();
+                break;
+        }
+    }, [handleClick, props.items.length, handleClose]);
+
+    useEffect(() => {
+        if (open && focusedIndex >= 0 && itemsRef.current[focusedIndex]) {
+            itemsRef.current[focusedIndex].focus();
+        }
+    }, [open, focusedIndex]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                handleClose();
+            }
+        };
+
+        if (open) {
+            document.addEventListener('mousedown', handleClickOutside);
+            return () => document.removeEventListener('mousedown', handleClickOutside);
+        }
+    }, [open, handleClose]);
+
     return (
-        <div className={classNames("relative", props.className)}>
+        <div ref={dropdownRef} className={classNames("relative", props.className)}>
             {open && <div className="fixed inset-0" onClick={handleClose} />}
             {props.loading ? <div className="flex h-full w-full items-center justify-center">
                 <Loading hideText={true} size="sm" />
             </div> :
-            <>  <button tabIndex={0} className="group/dropdown flex gap-1 justify-between items-center border border-neutral-600/20 rounded-lg w-full p-1 h-[34px] px-2 dark:bg-[#2C2F33] dark:border-white/5" onClick={handleToggleOpen} data-testid={props.testId}>
+            <>  <button 
+                    ref={triggerRef}
+                    tabIndex={0} 
+                    className="group/dropdown flex gap-1 justify-between items-center border border-neutral-600/20 rounded-lg w-full p-1 h-[34px] px-2 dark:bg-[#2C2F33] dark:border-white/5" 
+                    onClick={handleToggleOpen} 
+                    onKeyDown={handleKeyDown}
+                    aria-haspopup="listbox"
+                    aria-expanded={open}
+                    aria-labelledby={props.testId ? `${props.testId}-label` : undefined}
+                    data-testid={props.testId}>
                     <div className={classNames(ClassNames.Text, "flex gap-1 text-sm truncate items-center")}>
                         {props.value?.icon != null && <div className="flex items-center w-6">
                             {props.value.icon}
@@ -95,13 +176,27 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
                     "block animate-fade": open,
                     "w-fit min-w-[200px]": !props.fullWidth,
                     "w-full": props.fullWidth,
-                }, props.dropdownContainerHeight)}>
+                }, props.dropdownContainerHeight)}
+                     role="listbox"
+                     aria-labelledby={props.testId ? `${props.testId}-label` : undefined}>
                     <ul className={classNames(ClassNames.Text, "py-1 text-sm nowheel flex flex-col")}>
                         {
                             props.items.map((item, i) => (
-                                <div role="button" tabIndex={0} key={`dropdown-item-${i}`} className={classNames(ITEM_CLASS, {
-                                    "hover:gap-2": item.icon != null,
-                                })} onClick={() => handleClick(item)} data-value={item.id}>
+                                <div 
+                                    role="option" 
+                                    tabIndex={-1}
+                                    key={`dropdown-item-${i}`} 
+                                    ref={el => {
+                                        if (el) itemsRef.current[i] = el;
+                                    }}
+                                    className={classNames(ITEM_CLASS, {
+                                        "hover:gap-2": item.icon != null,
+                                        "bg-blue-100 dark:bg-blue-900/30": focusedIndex === i,
+                                    })} 
+                                    onClick={() => handleClick(item)}
+                                    onKeyDown={(e) => handleItemKeyDown(e, item, i)}
+                                    aria-selected={props.value?.id === item.id}
+                                    data-value={item.id}>
                                     <div>{props.value?.id === item.id ? Icons.CheckCircle : item.icon}</div>
                                     <div className="whitespace-nowrap flex-1">{item.label}</div>
                                     {item.info && (
@@ -127,16 +222,36 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
                         }
                         {
                             props.defaultItem != null &&
-                            <div role="button" tabIndex={0} className={classNames(ITEM_CLASS, {
-                                "hover:scale-105": props.defaultItem.icon == null,
-                            }, props.defaultItemClassName)} onClick={props.onDefaultItemClick}>
+                            <div 
+                                role="option" 
+                                tabIndex={-1} 
+                                className={classNames(ITEM_CLASS, {
+                                    "hover:scale-105": props.defaultItem.icon == null,
+                                }, props.defaultItemClassName)} 
+                                onClick={props.onDefaultItemClick}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        props.onDefaultItemClick?.();
+                                    }
+                                }}>
                                 <div>{props.defaultItem.icon}</div>
                                 <div>{props.defaultItem.label}</div>
                             </div>
                         }
                         {
                             props.items.length === 0 && props.defaultItem == null &&
-                            <div role="button" tabIndex={0} className="flex items-center gap-1 px-2 dark:text-neutral-300" onClick={props.onDefaultItemClick}>
+                            <div 
+                                role="option" 
+                                tabIndex={-1} 
+                                className="flex items-center gap-1 px-2 dark:text-neutral-300" 
+                                onClick={props.onDefaultItemClick}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        props.onDefaultItemClick?.();
+                                    }
+                                }}>
                                 <div>{Icons.SadSmile}</div>
                                 <div>{props.noItemsLabel}</div>
                             </div>
@@ -149,8 +264,9 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
 }
 
 export const DropdownWithLabel: FC<IDropdownProps & { label: string, testId?: string }> = ({ label, testId, ...props }) => {
+    const dropdownId = testId ? `${testId}-dropdown` : `dropdown-${label.toLowerCase().replace(/\s+/g, '-')}`;
     return <div className="flex flex-col gap-1" data-testid={testId}>
-        <Label label={label} />
-        <Dropdown {...props} />
+        <Label label={label} htmlFor={dropdownId} />
+        <Dropdown {...props} testId={dropdownId} />
     </div>
 }
