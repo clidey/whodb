@@ -143,7 +143,7 @@ func (p *DuckDBPlugin) setupFileAccess(db *gorm.DB, dbFilePath string) error {
 func (p *DuckDBPlugin) ValidateFileAccess(dbFilePath, requestedFilePath string) error {
 	dbDir := filepath.Dir(dbFilePath)
 	
-	// Clean and resolve the requested file path
+	// Clean the requested file path
 	cleanPath := filepath.Clean(requestedFilePath)
 	
 	// If it's not an absolute path, make it relative to the database directory
@@ -151,23 +151,26 @@ func (p *DuckDBPlugin) ValidateFileAccess(dbFilePath, requestedFilePath string) 
 		cleanPath = filepath.Join(dbDir, cleanPath)
 	}
 	
-	// Resolve any symlinks or relative path components
-	resolvedPath, err := filepath.Abs(cleanPath)
-	if err != nil {
-		return fmt.Errorf("cannot resolve file path: %w", err)
-	}
-	
-	// Ensure the resolved path is within the database directory
+	// Get absolute path of the database directory for comparison
 	dbDirAbs, err := filepath.Abs(dbDir)
 	if err != nil {
 		return fmt.Errorf("cannot resolve database directory: %w", err)
 	}
 	
-	if !strings.HasPrefix(resolvedPath, dbDirAbs) {
+	// SECURITY FIX: Resolve symlinks BEFORE checking directory containment
+	// This prevents symlink-based directory traversal attacks
+	resolvedPath, err := filepath.EvalSymlinks(cleanPath)
+	if err != nil {
+		// If symlink resolution fails, the file might not exist or be inaccessible
+		return fmt.Errorf("cannot resolve file path (file may not exist or be inaccessible): %w", err)
+	}
+	
+	// Ensure the resolved path is within the database directory
+	if !strings.HasPrefix(resolvedPath, dbDirAbs+string(filepath.Separator)) && resolvedPath != dbDirAbs {
 		return fmt.Errorf("file access denied: file must be in the same directory as the database")
 	}
 	
-	// Check if the file exists
+	// Check if the file exists (should exist since EvalSymlinks succeeded, but double-check)
 	if _, err := os.Stat(resolvedPath); os.IsNotExist(err) {
 		return fmt.Errorf("file does not exist: %s", resolvedPath)
 	}
