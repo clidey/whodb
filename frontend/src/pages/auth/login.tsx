@@ -88,6 +88,17 @@ export const databaseTypeDropdownItems: IDropdownItem<Record<string, string>>[] 
             "Debug": "disable"
         }
     },
+    {
+        id: DatabaseType.DuckDB,
+        label: "DuckDB",
+        icon: Icons.Logos.DuckDB,
+        extra: {
+            "Access Mode": "read_write",
+            "Threads": "4",
+            "Max Memory": "75%",
+            "Temp Directory": ""
+        }
+    },
 ]
 
 export const LoginPage: FC = () => {
@@ -118,7 +129,7 @@ export const LoginPage: FC = () => {
 
     const handleSubmit = useCallback(() => {
         if (([DatabaseType.MySql, DatabaseType.Postgres].includes(databaseType.id as DatabaseType) && (hostName.length === 0 || database.length === 0 || username.length === 0))
-            || (databaseType.id === DatabaseType.Sqlite3 && database.length === 0)
+            || ((databaseType.id === DatabaseType.Sqlite3 || databaseType.id === DatabaseType.DuckDB) && database.length === 0)
             || ((databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Redis) && (hostName.length === 0))) {
             return setError("All fields are required");
         }
@@ -196,6 +207,13 @@ export const LoginPage: FC = () => {
             getDatabases({
                 variables: {
                     type: DatabaseType.Sqlite3,
+                },
+            });
+        }
+        if (item.id === DatabaseType.DuckDB) {
+            getDatabases({
+                variables: {
+                    type: DatabaseType.DuckDB,
                 },
             });
         }
@@ -303,13 +321,13 @@ export const LoginPage: FC = () => {
     }, [databaseType.id]);
 
     const fields = useMemo(() => {
-        if (databaseType.id === DatabaseType.Sqlite3) {
+        if (databaseType.id === DatabaseType.Sqlite3 || databaseType.id === DatabaseType.DuckDB) {
             return <>
                 <DropdownWithLabel label="Database" items={foundDatabases?.Database?.map(database => ({
                     id: database,
                     label: database,
                     icon: Icons.Database,
-                })) ?? []} loading={databasesLoading} noItemsLabel="Not available. Mount SQLite file in /db/" fullWidth={true} value={{
+                })) ?? []} loading={databasesLoading} noItemsLabel="Not available. Mount database file in /db/" fullWidth={true} value={{
                     id: database,
                     label: database,
                     icon: Icons.Database,
