@@ -219,27 +219,15 @@ func (p *DuckDBPlugin) normalizeColumnType(columnType string) string {
 	// First sanitize the input to prevent SQL injection through column types
 	columnType = strings.TrimSpace(columnType)
 	
-	// Check for dangerous patterns in column type
-	suspiciousPatterns := []string{
-		"--", "/*", "*/", ";", "DROP", "DELETE", "INSERT", "UPDATE", 
-		"EXEC", "EXECUTE", "SCRIPT", "XP_", "SP_", "@@",
-	}
-	upperType := strings.ToUpper(columnType)
-	for _, pattern := range suspiciousPatterns {
-		if strings.Contains(upperType, pattern) {
-			// If suspicious content detected, return safe default
-			return "VARCHAR"
-		}
-	}
-	
-	// Validate that column type only contains allowed characters
-	// Allow letters, numbers, parentheses, spaces, and common punctuation for types like VARCHAR(255)
-	allowedChars := regexp.MustCompile(`^[a-zA-Z0-9()\s,_-]+$`)
-	if !allowedChars.MatchString(columnType) {
+	// Enhanced security validation with comprehensive pattern detection
+	if err := p.validateColumnType(columnType); err != nil {
+		// If validation fails, return safe default and log the attempt
 		return "VARCHAR"
 	}
 	
-	// Map common SQL types to DuckDB equivalents
+	upperType := strings.ToUpper(columnType)
+	
+	// Map common SQL types to DuckDB equivalents (simple types first)
 	switch upperType {
 	case "INT", "INT4":
 		return "INTEGER"
@@ -259,40 +247,158 @@ func (p *DuckDBPlugin) normalizeColumnType(columnType string) string {
 		return "VARCHAR"
 	default:
 		// Check if it's a valid DuckDB type with parameters (e.g., VARCHAR(255))
-		if p.isValidDuckDBType(upperType) {
+		validatedType := p.parseAndValidateParameterizedType(upperType)
+		if validatedType != "" {
+			return validatedType
+		}
+		
+		// Check simple types without parameters
+		if p.isValidSimpleDuckDBType(upperType) {
 			return upperType
 		}
+		
 		// Default to VARCHAR for unknown types
 		return "VARCHAR"
 	}
 }
 
-// isValidDuckDBType checks if a type string is a valid DuckDB type
-func (p *DuckDBPlugin) isValidDuckDBType(typeStr string) bool {
-	// List of valid DuckDB base types
-	validTypes := []string{
-		"BOOLEAN", "TINYINT", "SMALLINT", "INTEGER", "BIGINT", "HUGEINT", "UTINYINT", 
-		"USMALLINT", "UINTEGER", "UBIGINT", "REAL", "DOUBLE", "DECIMAL", "NUMERIC",
-		"VARCHAR", "CHAR", "TEXT", "STRING", "BLOB", "BYTEA", "DATE", "TIME", 
-		"TIMESTAMP", "TIMESTAMPTZ", "INTERVAL", "UUID", "JSON", "ARRAY", "LIST",
-		"STRUCT", "MAP", "UNION", "ENUM",
+// validateColumnType performs comprehensive security validation on column types
+func (p *DuckDBPlugin) validateColumnType(columnType string) error {
+	// Check length limits
+	if len(columnType) == 0 {
+		return fmt.Errorf("column type cannot be empty")
+	}
+	if len(columnType) > 100 {
+		return fmt.Errorf("column type exceeds maximum length")
 	}
 	
-	// Check for exact match first
-	for _, validType := range validTypes {
-		if typeStr == validType {
-			return true
+	// Check for null bytes and dangerous control characters
+	if strings.Contains(columnType, "\x00") {
+		return fmt.Errorf("column type contains null byte")
+	}
+	
+	// Check for dangerous characters that could enable injection
+	for _, char := range columnType {
+		if char < 32 && char != 9 && char != 10 && char != 13 {
+			return fmt.Errorf("column type contains invalid control character")
 		}
 	}
 	
-	// Check for types with parameters (e.g., VARCHAR(255), DECIMAL(10,2))
-	for _, validType := range validTypes {
-		pattern := fmt.Sprintf(`^%s\s*\(\s*\d+(\s*,\s*\d+)?\s*\)$`, validType)
-		matched, _ := regexp.MatchString(pattern, typeStr)
-		if matched {
-			return true
+	// Enhanced suspicious pattern detection
+	suspiciousPatterns := []string{
+		"--", "/*", "*/", ";", "DROP", "DELETE", "INSERT", "UPDATE", "CREATE", "ALTER",
+		"EXEC", "EXECUTE", "SCRIPT", "XP_", "SP_", "@@", "UNION", "SELECT", "FROM",
+		"WHERE", "ORDER", "GROUP", "HAVING", "DECLARE", "SET", "GRANT", "REVOKE",
+		"TRUNCATE", "MERGE", "CALL", "RETURN", "THROW", "TRY", "CATCH", "BEGIN",
+		"END", "IF", "ELSE", "WHILE", "FOR", "CURSOR", "PROCEDURE", "FUNCTION",
+		"TRIGGER", "VIEW", "SCHEMA", "DATABASE", "BACKUP", "RESTORE", "SHUTDOWN",
+	}
+	
+	upperType := strings.ToUpper(columnType)
+	for _, pattern := range suspiciousPatterns {
+		if strings.Contains(upperType, pattern) {
+			return fmt.Errorf("column type contains suspicious pattern: %s", pattern)
 		}
 	}
 	
-	return false
+	// Validate that column type only contains strictly allowed characters
+	// More restrictive: only letters, numbers, parentheses, spaces, comma, underscore
+	allowedChars := regexp.MustCompile(`^[a-zA-Z0-9()\s,_]+$`)
+	if !allowedChars.MatchString(columnType) {
+		return fmt.Errorf("column type contains invalid characters")
+	}
+	
+	return nil
 }
+
+// parseAndValidateParameterizedType handles types with parameters like VARCHAR(255) or DECIMAL(10,2)
+func (p *DuckDBPlugin) parseAndValidateParameterizedType(typeStr string) string {
+	// Match pattern: TYPE(param1) or TYPE(param1,param2)
+	paramPattern := regexp.MustCompile(`^([A-Z]+)\s*\(\s*(\d+)(?:\s*,\s*(\d+))?\s*\)$`)
+	matches := paramPattern.FindStringSubmatch(typeStr)
+	
+	if len(matches) == 0 {
+		return "" // Not a parameterized type
+	}
+	
+	baseType := matches[1]
+	param1 := matches[2]
+	param2 := ""
+	if len(matches) > 3 && matches[3] != "" {
+		param2 = matches[3]
+	}
+	
+	// Validate base type is allowed
+	if !p.isValidSimpleDuckDBType(baseType) {
+		return ""
+	}
+	
+	// Validate parameters are within reasonable bounds
+	if !p.validateTypeParameters(baseType, param1, param2) {
+		return ""
+	}
+	
+	// Reconstruct the validated type
+	if param2 != "" {
+		return fmt.Sprintf("%s(%s,%s)", baseType, param1, param2)
+	} else {
+		return fmt.Sprintf("%s(%s)", baseType, param1)
+	}
+}
+
+// validateTypeParameters ensures type parameters are within valid ranges
+func (p *DuckDBPlugin) validateTypeParameters(baseType, param1, param2 string) bool {
+	// Convert parameters to integers for validation
+	p1, err1 := fmt.Atoi(param1)
+	if err1 != nil {
+		return false
+	}
+	
+	var p2 int
+	var err2 error
+	if param2 != "" {
+		p2, err2 = fmt.Atoi(param2)
+		if err2 != nil {
+			return false
+		}
+	}
+	
+	// Validate parameter ranges based on type
+	switch baseType {
+	case "VARCHAR", "CHAR", "TEXT":
+		// Length parameter should be reasonable (1 to 65535)
+		return p1 > 0 && p1 <= 65535 && param2 == ""
+	case "DECIMAL", "NUMERIC":
+		// Precision and scale parameters
+		if param2 == "" {
+			// Only precision specified
+			return p1 > 0 && p1 <= 38
+		} else {
+			// Both precision and scale
+			return p1 > 0 && p1 <= 38 && p2 >= 0 && p2 <= p1
+		}
+	case "FLOAT", "DOUBLE", "REAL":
+		// Precision parameter for float types
+		return p1 > 0 && p1 <= 53 && param2 == ""
+	default:
+		// For other types, be conservative and don't allow parameters
+		return false
+	}
+}
+
+// isValidSimpleDuckDBType checks if a type string is a valid simple DuckDB type (no parameters)
+func (p *DuckDBPlugin) isValidSimpleDuckDBType(typeStr string) bool {
+	// Comprehensive list of valid DuckDB base types
+	validTypes := map[string]bool{
+		"BOOLEAN": true, "TINYINT": true, "SMALLINT": true, "INTEGER": true, "BIGINT": true, 
+		"HUGEINT": true, "UTINYINT": true, "USMALLINT": true, "UINTEGER": true, "UBIGINT": true, 
+		"REAL": true, "DOUBLE": true, "DECIMAL": true, "NUMERIC": true, "VARCHAR": true, 
+		"CHAR": true, "TEXT": true, "STRING": true, "BLOB": true, "BYTEA": true, 
+		"DATE": true, "TIME": true, "TIMESTAMP": true, "TIMESTAMPTZ": true, "INTERVAL": true, 
+		"UUID": true, "JSON": true, "ARRAY": true, "LIST": true, "STRUCT": true, "MAP": true, 
+		"UNION": true, "ENUM": true,
+	}
+	
+	return validTypes[typeStr]
+}
+
