@@ -29,8 +29,9 @@ func escapeConnectionParam(x string) string {
 	// PostgreSQL libpq connection string escaping rules:
 	// 1. Single quotes must be doubled: ' -> ''
 	// 2. Backslashes must be doubled: \ -> \\
-	x = strings.ReplaceAll(x, "\\", "\\\\")
+	// IMPORTANT: Escape single quotes first, then backslashes to avoid double-escaping
 	x = strings.ReplaceAll(x, "'", "''")
+	x = strings.ReplaceAll(x, "\\", "\\\\")
 	return x
 }
 
