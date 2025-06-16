@@ -70,8 +70,9 @@ type ComplexityRoot struct {
 	}
 
 	AIProvider struct {
-		ProviderID func(childComplexity int) int
-		Type       func(childComplexity int) int
+		IsEnvironmentDefined func(childComplexity int) int
+		ProviderID           func(childComplexity int) int
+		Type                 func(childComplexity int) int
 	}
 
 	Column struct {
@@ -90,10 +91,11 @@ type ComplexityRoot struct {
 	}
 
 	LoginProfile struct {
-		Alias    func(childComplexity int) int
-		Database func(childComplexity int) int
-		ID       func(childComplexity int) int
-		Type     func(childComplexity int) int
+		Alias                func(childComplexity int) int
+		Database             func(childComplexity int) int
+		ID                   func(childComplexity int) int
+		IsEnvironmentDefined func(childComplexity int) int
+		Type                 func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -212,6 +214,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.AIChatMessage.Type(childComplexity), true
 
+	case "AIProvider.IsEnvironmentDefined":
+		if e.complexity.AIProvider.IsEnvironmentDefined == nil {
+			break
+		}
+
+		return e.complexity.AIProvider.IsEnvironmentDefined(childComplexity), true
+
 	case "AIProvider.ProviderId":
 		if e.complexity.AIProvider.ProviderID == nil {
 			break
@@ -288,6 +297,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.LoginProfile.ID(childComplexity), true
+
+	case "LoginProfile.IsEnvironmentDefined":
+		if e.complexity.LoginProfile.IsEnvironmentDefined == nil {
+			break
+		}
+
+		return e.complexity.LoginProfile.IsEnvironmentDefined(childComplexity), true
 
 	case "LoginProfile.Type":
 		if e.complexity.LoginProfile.Type == nil {
@@ -1903,6 +1919,50 @@ func (ec *executionContext) fieldContext_AIProvider_ProviderId(_ context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _AIProvider_IsEnvironmentDefined(ctx context.Context, field graphql.CollectedField, obj *model.AIProvider) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AIProvider_IsEnvironmentDefined(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsEnvironmentDefined, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AIProvider_IsEnvironmentDefined(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AIProvider",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Column_Type(ctx context.Context, field graphql.CollectedField, obj *model.Column) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Column_Type(ctx, field)
 	if err != nil {
@@ -2344,6 +2404,50 @@ func (ec *executionContext) fieldContext_LoginProfile_Database(_ context.Context
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LoginProfile_IsEnvironmentDefined(ctx context.Context, field graphql.CollectedField, obj *model.LoginProfile) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LoginProfile_IsEnvironmentDefined(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsEnvironmentDefined, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LoginProfile_IsEnvironmentDefined(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LoginProfile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2901,6 +3005,8 @@ func (ec *executionContext) fieldContext_Query_Profiles(_ context.Context, field
 				return ec.fieldContext_LoginProfile_Type(ctx, field)
 			case "Database":
 				return ec.fieldContext_LoginProfile_Database(ctx, field)
+			case "IsEnvironmentDefined":
+				return ec.fieldContext_LoginProfile_IsEnvironmentDefined(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type LoginProfile", field.Name)
 		},
@@ -3298,6 +3404,8 @@ func (ec *executionContext) fieldContext_Query_AIProviders(_ context.Context, fi
 				return ec.fieldContext_AIProvider_Type(ctx, field)
 			case "ProviderId":
 				return ec.fieldContext_AIProvider_ProviderId(ctx, field)
+			case "IsEnvironmentDefined":
+				return ec.fieldContext_AIProvider_IsEnvironmentDefined(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type AIProvider", field.Name)
 		},
@@ -6382,6 +6490,11 @@ func (ec *executionContext) _AIProvider(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "IsEnvironmentDefined":
+			out.Values[i] = ec._AIProvider_IsEnvironmentDefined(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6562,6 +6675,11 @@ func (ec *executionContext) _LoginProfile(ctx context.Context, sel ast.Selection
 			}
 		case "Database":
 			out.Values[i] = ec._LoginProfile_Database(ctx, field, obj)
+		case "IsEnvironmentDefined":
+			out.Values[i] = ec._LoginProfile_IsEnvironmentDefined(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7658,6 +7776,7 @@ func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v any) (
 }
 
 func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.SelectionSet, v bool) graphql.Marshaler {
+	_ = sel
 	res := graphql.MarshalBoolean(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -7860,6 +7979,7 @@ func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v any) (int, 
 }
 
 func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	_ = sel
 	res := graphql.MarshalInt(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -8114,6 +8234,7 @@ func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) 
 }
 
 func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
+	_ = sel
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -8267,6 +8388,7 @@ func (ec *executionContext) unmarshalN__DirectiveLocation2string(ctx context.Con
 }
 
 func (ec *executionContext) marshalN__DirectiveLocation2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
+	_ = sel
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -8455,6 +8577,7 @@ func (ec *executionContext) unmarshalN__TypeKind2string(ctx context.Context, v a
 }
 
 func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
+	_ = sel
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -8478,6 +8601,8 @@ func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v any) (
 }
 
 func (ec *executionContext) marshalOBoolean2bool(ctx context.Context, sel ast.SelectionSet, v bool) graphql.Marshaler {
+	_ = sel
+	_ = ctx
 	res := graphql.MarshalBoolean(v)
 	return res
 }
@@ -8494,6 +8619,8 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	if v == nil {
 		return graphql.Null
 	}
+	_ = sel
+	_ = ctx
 	res := graphql.MarshalBoolean(*v)
 	return res
 }
@@ -8543,6 +8670,8 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	if v == nil {
 		return graphql.Null
 	}
+	_ = sel
+	_ = ctx
 	res := graphql.MarshalString(*v)
 	return res
 }

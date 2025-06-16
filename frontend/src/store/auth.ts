@@ -18,7 +18,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { v4 } from 'uuid';
 import { LoginCredentials } from '../generated/graphql';
 
-export type LocalLoginProfile = (LoginCredentials & {Id: string, Saved?: boolean});
+export type LocalLoginProfile = (LoginCredentials & {Id: string, Saved?: boolean, IsEnvironmentDefined?: boolean});
 
 export type IAuthState = {
   status: "logged-in" | "unauthorized";
@@ -41,7 +41,17 @@ export const authSlice = createSlice({
         ...(action.payload as LoginCredentials),
       }
       state.current = profile as LocalLoginProfile;
-      state.profiles.push(profile as LocalLoginProfile);
+      
+      // Check if profile already exists to prevent duplicates
+      const existingProfileIndex = state.profiles.findIndex(p => p.Id === profile.Id);
+      if (existingProfileIndex >= 0) {
+        // Update existing profile instead of adding duplicate
+        state.profiles[existingProfileIndex] = profile as LocalLoginProfile;
+      } else {
+        // Add new profile
+        state.profiles.push(profile as LocalLoginProfile);
+      }
+      
       state.status = "logged-in";
     },
     switch: (state, action: PayloadAction<{id: string}>) => {
