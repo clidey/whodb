@@ -341,7 +341,7 @@ export const Sidebar: FC = () => {
             return;
         }
         if (selectedProfile.IsEnvironmentDefined) {
-            notify("Cannot remove environment-defined profiles", "error");
+            notify("Cannot remove predefined profiles", "error");
             return;
         }
         if (selectedProfile.Id === current?.Id) {
