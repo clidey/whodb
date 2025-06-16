@@ -179,6 +179,7 @@ export const LoginPage: FC = () => {
                         Password: "",
                         Username: "",
                         Saved: true,
+                        IsEnvironmentDefined: profile?.IsEnvironmentDefined ?? false,
                     }));
                     navigate(InternalRoutes.Dashboard.StorageUnit.path);
                     return notify("Login successfully", "success");

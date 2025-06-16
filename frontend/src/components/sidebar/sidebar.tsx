@@ -133,11 +133,12 @@ export const SideMenu: FC<IRouteProps> = (props) => {
 function getDropdownLoginProfileItem(profile: LocalLoginProfile): IDropdownItem {
     const icon = (Icons.Logos as Record<string, ReactElement>)[profile.Type];
     const info = <ProfileInfoTooltip profile={profile} />;
+    const envLabel = profile.IsEnvironmentDefined ? " 🔒" : "";
     
     if (profile.Saved) {
         return {
             id: profile.Id,
-            label: profile.Id,
+            label: profile.Id + envLabel,
             icon,
             info,
         }
@@ -145,7 +146,7 @@ function getDropdownLoginProfileItem(profile: LocalLoginProfile): IDropdownItem 
     if (profile.Type === DatabaseType.MongoDb) {
         return {
             id: profile.Id,
-            label: `${profile.Hostname} - ${profile.Username} [${profile.Type}]`,
+            label: `${profile.Hostname} - ${profile.Username} [${profile.Type}]${envLabel}`,
             icon,
             info,
         }
@@ -153,14 +154,14 @@ function getDropdownLoginProfileItem(profile: LocalLoginProfile): IDropdownItem 
     if (profile.Type === DatabaseType.Sqlite3) {
         return {
             id: profile.Id,
-            label: `${profile.Database} [${profile.Type}]`,
+            label: `${profile.Database} [${profile.Type}]${envLabel}`,
             icon,
             info,
         }
     }
     return {
         id: profile.Id,
-        label: `${profile.Hostname} - ${profile.Database} [${profile.Type}]`,
+        label: `${profile.Hostname} - ${profile.Database} [${profile.Type}]${envLabel}`,
         icon,
         info,
     };
@@ -337,6 +338,10 @@ export const Sidebar: FC = () => {
         e.stopPropagation();
         const selectedProfile = profiles.find(profile => profile.Id === item.id);
         if (selectedProfile == null) {
+            return;
+        }
+        if (selectedProfile.IsEnvironmentDefined) {
+            notify("Cannot remove predefined profiles", "error");
             return;
         }
         if (selectedProfile.Id === current?.Id) {
