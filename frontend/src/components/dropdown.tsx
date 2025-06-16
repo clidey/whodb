@@ -221,7 +221,7 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
                             props.items.map((item, i) => (
                                 <div 
                                     role="option" 
-                                    tabIndex={-1}
+                                    tabIndex={focusedIndex === i ? 0 : -1}
                                     key={`dropdown-item-${i}`} 
                                     ref={el => {
                                         if (el) itemsRef.current[i] = el;
@@ -261,7 +261,7 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
                             props.defaultItem != null &&
                             <div 
                                 role="option" 
-                                tabIndex={-1} 
+                                tabIndex={0} 
                                 className={classNames(ITEM_CLASS, {
                                     "hover:scale-105": props.defaultItem.icon == null,
                                 }, props.defaultItemClassName)} 
@@ -280,7 +280,7 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
                             props.items.length === 0 && props.defaultItem == null &&
                             <div 
                                 role="option" 
-                                tabIndex={-1} 
+                                tabIndex={0} 
                                 className="flex items-center gap-1 px-2 dark:text-neutral-300" 
                                 onClick={props.onDefaultItemClick}
                                 onKeyDown={(e) => {
