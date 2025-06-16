@@ -2,3 +2,6 @@
 /.vscode
 /dev/elasticsearch
 DS_Store
+.DS_Store
+__debug*
+*.db
