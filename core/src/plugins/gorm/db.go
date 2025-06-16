@@ -148,7 +148,12 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 			case portKey, parseTimeKey, locKey, allowClearTextPasswordsKey, sslModeKey, httpProtocolKey, readOnlyKey, debugKey, connectionTimeoutKey:
 				continue
 			default:
-				params[record.Key] = url.QueryEscape(record.Value) // todo: this may break for postgres
+				// PostgreSQL uses libpq connection string format, not URL query parameters
+				if p.Type == engine.DatabaseType_Postgres {
+					params[record.Key] = record.Value // Raw value, PostgreSQL plugin will handle escaping
+				} else {
+					params[record.Key] = url.QueryEscape(record.Value)
+				}
 			}
 		}
 		input.ExtraOptions = params
