@@ -63,6 +63,7 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
     const dropdownRef = useRef<HTMLDivElement>(null);
     const triggerRef = useRef<HTMLButtonElement>(null);
     const itemsRef = useRef<HTMLDivElement[]>([]);
+    const blurTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const handleClick = useCallback((item: IDropdownItem) => {
         setOpen(false);
@@ -76,7 +77,38 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
     const handleClose = useCallback(() => {
         setOpen(false);
         setFocusedIndex(-1);
-        triggerRef.current?.focus();
+        // Clear any pending blur timeout
+        if (blurTimeoutRef.current) {
+            clearTimeout(blurTimeoutRef.current);
+            blurTimeoutRef.current = null;
+        }
+        // Ensure focus returns to trigger button
+        setTimeout(() => {
+            triggerRef.current?.focus();
+        }, 0);
+    }, []);
+
+    const handleDropdownBlur = useCallback((event: React.FocusEvent<HTMLDivElement>) => {
+        // Clear any existing timeout
+        if (blurTimeoutRef.current) {
+            clearTimeout(blurTimeoutRef.current);
+        }
+        
+        // Set a timeout to check if focus moved outside the dropdown
+        blurTimeoutRef.current = setTimeout(() => {
+            if (dropdownRef.current && !dropdownRef.current.contains(document.activeElement)) {
+                setOpen(false);
+                setFocusedIndex(-1);
+            }
+        }, 100);
+    }, []);
+
+    const handleDropdownFocus = useCallback(() => {
+        // Clear the blur timeout if focus returns to dropdown
+        if (blurTimeoutRef.current) {
+            clearTimeout(blurTimeoutRef.current);
+            blurTimeoutRef.current = null;
+        }
     }, []);
 
     const handleKeyDown = useCallback((event: KeyboardEvent<HTMLButtonElement>) => {
@@ -146,7 +178,12 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
     }, [open, handleClose]);
 
     return (
-        <div ref={dropdownRef} className={classNames("relative", props.className)}>
+        <div 
+            ref={dropdownRef} 
+            className={classNames("relative", props.className)}
+            onBlur={handleDropdownBlur}
+            onFocus={handleDropdownFocus}
+        >
             {open && <div className="fixed inset-0" onClick={handleClose} />}
             {props.loading ? <div className="flex h-full w-full items-center justify-center">
                 <Loading hideText={true} size="sm" />

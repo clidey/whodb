@@ -57,6 +57,8 @@ export const SideMenu: FC<IRouteProps> = (props) => {
     const navigate = useNavigate();
     const [hover, setHover] = useState(false);
     const [focused, setFocused] = useState(false);
+    const blurTimeoutIdRef = useRef<NodeJS.Timeout | null>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
     const status = (hover || focused) ? "show" : "hide";
     const pathname = useLocation().pathname;
 
@@ -84,7 +86,16 @@ export const SideMenu: FC<IRouteProps> = (props) => {
             setFocused(true);
         }
         if (e.key === 'Escape') {
+            // Clear any pending timeout and properly close submenu
+            if (blurTimeoutIdRef.current) {
+                clearTimeout(blurTimeoutIdRef.current);
+                blurTimeoutIdRef.current = null;
+            }
             setFocused(false);
+            // Ensure focus remains on the trigger element
+            setTimeout(() => {
+                (e.target as HTMLElement)?.focus();
+            }, 0);
         }
     }, [handleClick, props.routes]);
 
@@ -94,14 +105,39 @@ export const SideMenu: FC<IRouteProps> = (props) => {
         }
     }, [props.routes]);
 
-    const handleBlur = useCallback(() => {
-        // Delay hiding to allow focus to move to submenu items
-        setTimeout(() => setFocused(false), 100);
+    const handleBlur = useCallback((event: React.FocusEvent<HTMLDivElement>) => {
+        // Clear any existing timeout
+        if (blurTimeoutIdRef.current) {
+            clearTimeout(blurTimeoutIdRef.current);
+        }
+        
+        // Set a timeout to check if focus moved outside the menu
+        blurTimeoutIdRef.current = setTimeout(() => {
+            if (menuRef.current && !menuRef.current.contains(document.activeElement)) {
+                setFocused(false);
+            }
+        }, 100);
     }, []);
 
-    return <div className={classNames("flex items-center", {
-        "justify-center": props.collapse,
-    })}  onMouseEnter={handleMouseEnter} onMouseOver={handleMouseEnter} onMouseLeave={handleMouseLeave} data-testid={props.testId}>
+    const handleMenuFocus = useCallback(() => {
+        // Clear the blur timeout if focus returns to menu
+        if (blurTimeoutIdRef.current) {
+            clearTimeout(blurTimeoutIdRef.current);
+            blurTimeoutIdRef.current = null;
+        }
+    }, []);
+
+    return <div 
+        ref={menuRef}
+        className={classNames("flex items-center", {
+            "justify-center": props.collapse,
+        })}  
+        onMouseEnter={handleMouseEnter} 
+        onMouseOver={handleMouseEnter} 
+        onMouseLeave={handleMouseLeave} 
+        onFocus={handleMenuFocus}
+        onBlur={handleBlur}
+        data-testid={props.testId}>
         <AnimatePresence mode="sync">
             <div className={twMerge(classNames("cursor-default text-md inline-flex gap-2 transition-all hover:gap-2 relative w-full py-4 rounded-md dark:border-white/5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800", {
                 "cursor-pointer": props.path != null,
