@@ -18,7 +18,7 @@
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import { debounce } from "lodash";
-import { cloneElement, FC, MouseEvent, ReactElement, useCallback, useMemo, useState } from "react";
+import { cloneElement, FC, MouseEvent, ReactElement, useCallback, useMemo, useState, KeyboardEvent, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
@@ -56,7 +56,10 @@ type IRouteProps = {
 export const SideMenu: FC<IRouteProps> = (props) => {
     const navigate = useNavigate();
     const [hover, setHover] = useState(false);
-    const status = hover ? "show" : "hide";
+    const [focused, setFocused] = useState(false);
+    const blurTimeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
+    const status = (hover || focused) ? "show" : "hide";
     const pathname = useLocation().pathname;
 
     const handleMouseEnter = useMemo(() => {
@@ -73,15 +76,83 @@ export const SideMenu: FC<IRouteProps> = (props) => {
         }
     }, [navigate, props.path]);
 
-    return <div className={classNames("flex items-center", {
-        "justify-center": props.collapse,
-    })}  onMouseEnter={handleMouseEnter} onMouseOver={handleMouseEnter} onMouseLeave={handleMouseLeave} data-testid={props.testId}>
+    const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleClick();
+        }
+        if (e.key === 'ArrowRight' && props.routes != null) {
+            e.preventDefault();
+            setFocused(true);
+        }
+        if (e.key === 'Escape') {
+            // Clear any pending timeout and properly close submenu
+            if (blurTimeoutIdRef.current) {
+                clearTimeout(blurTimeoutIdRef.current);
+                blurTimeoutIdRef.current = null;
+            }
+            setFocused(false);
+            // Ensure focus remains on the trigger element
+            setTimeout(() => {
+                (e.target as HTMLElement)?.focus();
+            }, 0);
+        }
+    }, [handleClick, props.routes]);
+
+    const handleFocus = useCallback(() => {
+        if (props.routes != null) {
+            setFocused(true);
+        }
+    }, [props.routes]);
+
+    const handleBlur = useCallback((event: React.FocusEvent<HTMLDivElement>) => {
+        // Clear any existing timeout
+        if (blurTimeoutIdRef.current) {
+            clearTimeout(blurTimeoutIdRef.current);
+        }
+        
+        // Set a timeout to check if focus moved outside the menu
+        blurTimeoutIdRef.current = setTimeout(() => {
+            if (menuRef.current && !menuRef.current.contains(document.activeElement)) {
+                setFocused(false);
+            }
+        }, 100);
+    }, []);
+
+    const handleMenuFocus = useCallback(() => {
+        // Clear the blur timeout if focus returns to menu
+        if (blurTimeoutIdRef.current) {
+            clearTimeout(blurTimeoutIdRef.current);
+            blurTimeoutIdRef.current = null;
+        }
+    }, []);
+
+    return <div 
+        ref={menuRef}
+        className={classNames("flex items-center", {
+            "justify-center": props.collapse,
+        })}  
+        onMouseEnter={handleMouseEnter} 
+        onMouseOver={handleMouseEnter} 
+        onMouseLeave={handleMouseLeave} 
+        onFocus={handleMenuFocus}
+        onBlur={handleBlur}
+        data-testid={props.testId}>
         <AnimatePresence mode="sync">
-            <div className={twMerge(classNames("cursor-default text-md inline-flex gap-2 transition-all hover:gap-2 relative w-full py-4 rounded-md dark:border-white/5", {
+            <div className={twMerge(classNames("cursor-default text-md inline-flex gap-2 transition-all hover:gap-2 relative w-full py-4 rounded-md dark:border-white/5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800", {
                 "cursor-pointer": props.path != null,
                 "pl-4": !props.collapse,
                 "pl-2": props.collapse,
-            }, ClassNames.Hover))} onClick={handleClick} data-testid="sidebar-button">
+            }, ClassNames.Hover))} 
+            onClick={handleClick} 
+            onKeyDown={handleKeyDown}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            tabIndex={0}
+            role="menuitem"
+            aria-haspopup={props.routes != null ? "menu" : undefined}
+            aria-expanded={props.routes != null ? status === "show" : undefined}
+            data-testid="sidebar-button">
                 {pathname === props.path && <motion.div layoutId="indicator" className={classNames("w-[5px] h-full absolute top-0 right-0 rounded-3xl", BRAND_COLOR_BG)} />}
                 {cloneElement(props.icon, {
                     className: classNames("transition-all dark:stroke-white", {
@@ -113,9 +184,9 @@ export const SideMenu: FC<IRouteProps> = (props) => {
                             display: "flex",
                         }
                     }} initial={status} animate={status}>
-                        <ul className="py-2 px-2 text-sm flex flex-col justify-center w-full">
+                        <ul className="py-2 px-2 text-sm flex flex-col justify-center w-full" role="menu">
                             {props.routes.map(route => (
-                                <Link key={route.name} className="flex items-center gap-1 transition-all hover:gap-2 hover:bg-gray-100 w-full rounded-md pl-2 py-2" to={route.path}>
+                                <Link key={route.name} className="flex items-center gap-1 transition-all hover:gap-2 hover:bg-gray-100 dark:hover:bg-white/10 w-full rounded-md pl-2 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800" to={route.path} role="menuitem">
                                     {route.icon && cloneElement(route.icon, {
                                         className: "w-4 h-4"
                                     })}
@@ -390,11 +461,16 @@ export const Sidebar: FC = () => {
     const animate = collapsed ? "hide" : "show";
 
     return (
-        <div className={
-            classNames("h-[100vh] flex flex-col gap-4 shadow-md relative transition-all duration-500 dark:bg-[#1E1E1E] dark:shadow-neutral-100/5", {
-                "w-[50px] py-20": collapsed,
-                "w-[300px] px-10 py-20": !collapsed,
-            })}>
+        <nav 
+            className={
+                classNames("h-[100vh] flex flex-col gap-4 shadow-md relative transition-all duration-500 dark:bg-[#1E1E1E] dark:shadow-neutral-100/5", {
+                    "w-[50px] py-20": collapsed,
+                    "w-[300px] px-10 py-20": !collapsed,
+                })
+            }
+            role="navigation"
+            aria-label="Main navigation"
+        >
                 <motion.div className="flex flex-col gap-4" variants={{
                     show: {
                         opacity: 1,
@@ -498,6 +574,6 @@ export const Sidebar: FC = () => {
                     </div>
             }
             <div className={classNames(ClassNames.Text, "absolute right-8 bottom-8 text-sm text-gray-300 hover:text-gray-600 self-end dark:hover:text-neutral-300 transition-all")}>{version?.Version}</div>
-        </div>
+        </nav>
     )
 }

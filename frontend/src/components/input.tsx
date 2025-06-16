@@ -25,8 +25,8 @@ export const Text: FC<{ label: string }> = ({ label }) => {
     return <span className={classNames(ClassNames.Text, "text-xs")}>{label}</span>
 }
 
-export const Label: FC<{ label: string }> = ({ label }) => {
-    return <strong><label className={classNames(ClassNames.Text, "text-xs mt-2")}>{label}</label></strong>
+export const Label: FC<{ label: string; htmlFor?: string }> = ({ label, htmlFor }) => {
+    return <strong><label htmlFor={htmlFor} className={classNames(ClassNames.Text, "text-xs mt-2")}>{label}</label></strong>
 }
 
 type InputProps = {
@@ -64,6 +64,7 @@ type InputWithLabelProps = {
 
 export const InputWithlabel: FC<InputWithLabelProps> = ({ value, setValue, label, type = "text", placeholder = `Enter ${label.toLowerCase()}`, inputProps, testId }) => {
     const [hide, setHide] = useState(true);
+    const inputId = testId ? `${testId}-input` : `input-${label.toLowerCase().replace(/\s+/g, '-')}`;
 
     const handleShow = useCallback(() => {
         setHide(status => !status);
@@ -72,12 +73,21 @@ export const InputWithlabel: FC<InputWithLabelProps> = ({ value, setValue, label
     const inputType = type === "password" ? hide ? "password" : "text" : type;
 
     return <div className="flex flex-col gap-1" data-testid={testId}>
-        <Label label={label} />
+        <Label label={label} htmlFor={inputId} />
         <div className="relative">
-            <Input type={inputType} value={value} setValue={setValue} inputProps={inputProps} placeholder={placeholder} />
+            <Input type={inputType} value={value} setValue={setValue} inputProps={{...inputProps, id: inputId}} placeholder={placeholder} />
             {type === "password" && cloneElement(hide ? Icons.Show : Icons.Hide, {
                 className: "w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer transition-all hover:scale-110 dark:stroke-neutral-300",
                 onClick: handleShow,
+                "aria-label": hide ? "Show password" : "Hide password",
+                role: "button",
+                tabIndex: 0,
+                onKeyDown: (e: any) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleShow();
+                    }
+                }
             })}
         </div>
     </div>
@@ -95,8 +105,18 @@ export const ToggleInput: FC<IToggleInputProps> = ({ value, setValue }) => {
 
     return (
         <label className="inline-flex items-center cursor-pointer scale-75">
-            <input type="checkbox" checked={value} className="sr-only peer" onChange={handleChange} />
-            <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-hidden peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:rtl:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#ca6f1e]"></div>
+            <input 
+                type="checkbox" 
+                checked={value} 
+                className="sr-only peer" 
+                onChange={handleChange}
+                aria-describedby="toggle-description" 
+            />
+            <div 
+                className="relative w-11 h-6 bg-gray-200 peer-focus:outline-hidden peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:rtl:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#ca6f1e]"
+                role="switch"
+                aria-checked={value}
+            ></div>
         </label>
     );
 }
@@ -113,6 +133,12 @@ export const CheckBoxInput: FC<ICheckBoxInputProps> = ({ value, setValue }) => {
     }, [setValue]);
 
     return (
-        <input className="hover:cursor-pointer accent-[#ca6f1e] dark:accent-[#ca6f1e]" type="checkbox" checked={value} onChange={handleChange} />
+        <input 
+            className="hover:cursor-pointer accent-[#ca6f1e] dark:accent-[#ca6f1e]" 
+            type="checkbox" 
+            checked={value} 
+            onChange={handleChange}
+            aria-checked={value} 
+        />
     );
 }

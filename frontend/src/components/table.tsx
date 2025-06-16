@@ -39,6 +39,28 @@ type IPaginationProps = {
 }
 
 const Pagination: FC<IPaginationProps> = ({ pageCount, currentPage, onPageChange }) => {
+    const paginationRef = useRef<HTMLDivElement>(null);
+    const [focusedPage, setFocusedPage] = useState<number | null>(null);
+
+    const handlePageChange = useCallback((page: number) => {
+        setFocusedPage(page);
+        onPageChange?.(page);
+        
+        // Set focus to the new current page button after page change
+        setTimeout(() => {
+            if (paginationRef.current) {
+                const pageButton = paginationRef.current.querySelector(`button[aria-current="page"]`) as HTMLButtonElement;
+                if (pageButton) {
+                    pageButton.focus();
+                } else {
+                    // Fallback: focus first available page button
+                    const firstButton = paginationRef.current.querySelector('button') as HTMLButtonElement;
+                    firstButton?.focus();
+                }
+            }
+        }, 100);
+    }, [onPageChange]);
+
     const renderPageNumbers = () => {
         const pageNumbers = [];
         const maxVisiblePages = 5;
@@ -46,26 +68,42 @@ const Pagination: FC<IPaginationProps> = ({ pageCount, currentPage, onPageChange
         if (pageCount <= maxVisiblePages) {
             for (let i = 1; i <= pageCount; i++) {
                 pageNumbers.push(
-                    <div
+                    <button
                         key={i}
-                        className={`cursor-pointer p-2 text-sm hover:scale-110 hover:bg-gray-200 rounded-md text-gray-600 ${currentPage === i ? 'bg-gray-300' : ''}`}
-                        onClick={() => onPageChange?.(i)}
+                        className={`cursor-pointer p-2 text-sm hover:scale-110 hover:bg-gray-200 rounded-md text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 ${currentPage === i ? 'bg-gray-300' : ''}`}
+                        onClick={() => handlePageChange(i)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                handlePageChange(i);
+                            }
+                        }}
+                        aria-label={`Go to page ${i}`}
+                        aria-current={currentPage === i ? 'page' : undefined}
                         data-testid="table-page-number">
                         {i}
-                    </div>
+                    </button>
                 );
             }
         } else {
             const createPageItem = (i: number) => (
-                <div
+                <button
                     key={i}
-                    className={classNames("cursor-pointer p-2 text-sm hover:scale-110 hover:bg-gray-200 dark:hover:bg-white/15 rounded-md text-gray-600 dark:text-neutral-300", {
+                    className={classNames("cursor-pointer p-2 text-sm hover:scale-110 hover:bg-gray-200 dark:hover:bg-white/15 rounded-md text-gray-600 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-blue-500", {
                         "bg-gray-300 dark:bg-white/10": currentPage === i,
                     })}
-                    onClick={() => onPageChange?.(i)}
+                    onClick={() => handlePageChange(i)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handlePageChange(i);
+                        }
+                    }}
+                    aria-label={`Go to page ${i}`}
+                    aria-current={currentPage === i ? 'page' : undefined}
                     data-testid="table-page-number">
                     {i}
-                </div>
+                </button>
             );
 
             pageNumbers.push(createPageItem(1));
@@ -96,9 +134,11 @@ const Pagination: FC<IPaginationProps> = ({ pageCount, currentPage, onPageChange
     };
 
     return (
-        <div className="flex space-x-2">
-            {renderPageNumbers()}
-        </div>
+        <nav aria-label="Table pagination" role="navigation">
+            <div ref={paginationRef} className="flex space-x-2">
+                {renderPageNumbers()}
+            </div>
+        </nav>
     );
 };
 
