@@ -37,6 +37,12 @@ const (
 	readOnlyKey                = "Readonly"
 	debugKey                   = "Debug"
 	connectionTimeoutKey       = "Connection Timeout"
+	
+	// DuckDB specific connection options
+	duckdbAccessModeKey        = "Access Mode"       // read_only, read_write
+	duckdbThreadsKey           = "Threads"           // number of threads for parallel execution
+	duckdbMaxMemoryKey         = "Max Memory"        // maximum memory usage (e.g., "1GB")
+	duckdbTempDirectoryKey     = "Temp Directory"    // temporary directory for intermediate results
 )
 
 // DefaultDatabasePorts maps database systems to their standard default ports
@@ -45,6 +51,7 @@ var defaultDatabasePorts = map[engine.DatabaseType]string{
 	engine.DatabaseType_MariaDB:       "3306",
 	engine.DatabaseType_Postgres:      "5432",
 	engine.DatabaseType_Sqlite3:       "0",    // SQLite is file-based, no port
+	engine.DatabaseType_DuckDB:        "0",    // DuckDB is file-based, no port
 	engine.DatabaseType_ClickHouse:    "9000", // TCP port (HTTP port is 8123)
 	engine.DatabaseType_MongoDB:       "27017",
 	engine.DatabaseType_ElasticSearch: "9200", // HTTP port (Transport port is 9300)
@@ -71,6 +78,12 @@ type ConnectionInput struct {
 	Debug        string
 
 	ConnectionTimeout int
+
+	//duckdb
+	DuckDBAccessMode   string
+	DuckDBThreads      string
+	DuckDBMaxMemory    string
+	DuckDBTempDirectory string
 
 	ExtraOptions map[string]string `validate:"omitnil"`
 }
@@ -111,6 +124,12 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 		return nil, err
 	}
 
+	//duckdb specific
+	duckdbAccessMode := common.GetRecordValueOrDefault(config.Credentials.Advanced, duckdbAccessModeKey, "read_write")
+	duckdbThreads := common.GetRecordValueOrDefault(config.Credentials.Advanced, duckdbThreadsKey, "")
+	duckdbMaxMemory := common.GetRecordValueOrDefault(config.Credentials.Advanced, duckdbMaxMemoryKey, "")
+	duckdbTempDirectory := common.GetRecordValueOrDefault(config.Credentials.Advanced, duckdbTempDirectoryKey, "")
+
 	input := &ConnectionInput{
 		Username:                url.PathEscape(config.Credentials.Username),
 		Password:                url.PathEscape(config.Credentials.Password),
@@ -125,6 +144,10 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 		ReadOnly:                readOnly,
 		Debug:                   debug,
 		ConnectionTimeout:       connectionTimeout,
+		DuckDBAccessMode:        duckdbAccessMode,
+		DuckDBThreads:           duckdbThreads,
+		DuckDBMaxMemory:         duckdbMaxMemory,
+		DuckDBTempDirectory:     duckdbTempDirectory,
 	}
 
 	// if this config is a pre-configured profile, then allow reading of additional params
@@ -132,7 +155,7 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 		params := make(map[string]string)
 		for _, record := range config.Credentials.Advanced {
 			switch record.Key {
-			case portKey, parseTimeKey, locKey, allowClearTextPasswordsKey, sslModeKey, httpProtocolKey, readOnlyKey, debugKey, connectionTimeoutKey:
+			case portKey, parseTimeKey, locKey, allowClearTextPasswordsKey, sslModeKey, httpProtocolKey, readOnlyKey, debugKey, connectionTimeoutKey, duckdbAccessModeKey, duckdbThreadsKey, duckdbMaxMemoryKey, duckdbTempDirectoryKey:
 				continue
 			default:
 				params[record.Key] = url.QueryEscape(record.Value) // todo: this may break for postgres

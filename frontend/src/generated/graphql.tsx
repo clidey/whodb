@@ -68,6 +68,7 @@ export type Column = {
 
 export enum DatabaseType {
   ClickHouse = 'ClickHouse',
+  DuckDB = 'DuckDB',
   ElasticSearch = 'ElasticSearch',
   MariaDb = 'MariaDB',
   MongoDb = 'MongoDB',
