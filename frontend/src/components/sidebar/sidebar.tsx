@@ -18,7 +18,7 @@
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import { debounce } from "lodash";
-import { cloneElement, FC, MouseEvent, ReactElement, useCallback, useMemo, useState, KeyboardEvent } from "react";
+import { cloneElement, FC, MouseEvent, ReactElement, useCallback, useMemo, useState, KeyboardEvent, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
@@ -57,7 +57,7 @@ export const SideMenu: FC<IRouteProps> = (props) => {
     const navigate = useNavigate();
     const [hover, setHover] = useState(false);
     const [focused, setFocused] = useState(false);
-    const blurTimeoutIdRef = useRef<NodeJS.Timeout | null>(null);
+    const blurTimeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const menuRef = useRef<HTMLDivElement>(null);
     const status = (hover || focused) ? "show" : "hide";
     const pathname = useLocation().pathname;
