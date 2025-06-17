@@ -60,13 +60,21 @@ func (p *ClickHousePlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	if connectionInput.Debug != "disable" {
 		options.Debug = true
 	}
+	// Configure settings based on ReadOnly mode
 	if connectionInput.ReadOnly == "disable" {
 		options.Settings = clickhouse.Settings{
 			"max_execution_time": 60,
 		}
+	} else if connectionInput.ReadOnly == "enable" {
+		options.Settings = clickhouse.Settings{
+			"readonly": 1,
+			"max_execution_time": 60,
+		}
 	}
-	if connectionInput.SSLMode != "disable" {
-		options.TLS = &tls.Config{InsecureSkipVerify: connectionInput.SSLMode == "relaxed" || connectionInput.SSLMode == "none"}
+
+	// Configure TLS - only enable when SSLMode is not "none" and not "disable"
+	if connectionInput.SSLMode != "disable" && connectionInput.SSLMode != "none" {
+		options.TLS = &tls.Config{InsecureSkipVerify: connectionInput.SSLMode == "relaxed"}
 	}
 
 	conn := clickhouse.OpenDB(options)
