@@ -45,6 +45,10 @@ func (p *Sqlite3Plugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	}
 	database := connectionInput.Database
 	fileNameDatabase := filepath.Join(getDefaultDirectory(), database)
+	fileNameDatabase, err = filepath.EvalSymlinks(fileNameDatabase)
+	if err != nil {
+		return nil, err
+	}
 	if !strings.HasPrefix(fileNameDatabase, getDefaultDirectory()) {
 		return nil, errDoesNotExist
 	}

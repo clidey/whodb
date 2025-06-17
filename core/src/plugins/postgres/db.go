@@ -18,6 +18,7 @@ package postgres
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
@@ -25,33 +26,25 @@ import (
 	"gorm.io/gorm"
 )
 
-func escape(x string) string {
-	return strings.ReplaceAll(x, "'", "\\'")
-}
-
 func (p *PostgresPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	connectionInput, err := p.ParseConnectionConfig(config)
 	if err != nil {
 		return nil, err
 	}
 
-	host := escape(connectionInput.Hostname)
-	username := escape(connectionInput.Username)
-	password := escape(connectionInput.Password)
-	database := escape(connectionInput.Database)
+	dsn := fmt.Sprintf("postgresql://%s:%s@%s:%v/%s",
+		url.QueryEscape(connectionInput.Username),
+		url.QueryEscape(connectionInput.Password),
+		url.QueryEscape(connectionInput.Hostname),
+		connectionInput.Port,
+		url.QueryEscape(connectionInput.Database))
 
-	params := strings.Builder{}
 	if connectionInput.ExtraOptions != nil {
+		params := url.Values{}
 		for key, value := range connectionInput.ExtraOptions {
-			params.WriteString(fmt.Sprintf("%v='%v' ", strings.ToLower(key), escape(value)))
+			params.Add(strings.ToLower(key), value)
 		}
-	}
-
-	dsn := fmt.Sprintf("host='%v' user='%v' password='%v' dbname='%v' port='%v'",
-		host, username, password, database, connectionInput.Port)
-
-	if params.Len() > 0 {
-		dsn = fmt.Sprintf("%v %v", dsn, params.String())
+		dsn += "?" + params.Encode()
 	}
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
