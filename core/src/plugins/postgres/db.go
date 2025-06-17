@@ -18,6 +18,7 @@ package postgres
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
@@ -25,88 +26,25 @@ import (
 	"gorm.io/gorm"
 )
 
-func escapeConnectionParam(x string) string {
-	// PostgreSQL libpq connection string escaping rules:
-	// 1. Single quotes must be doubled: ' -> ''
-	// 2. Backslashes must be doubled: \ -> \\
-	// IMPORTANT: Escape single quotes first, then backslashes to avoid double-escaping
-	x = strings.ReplaceAll(x, "'", "''")
-	x = strings.ReplaceAll(x, "\\", "\\\\")
-	return x
-}
-
-func validateConnectionParam(param, paramName string) error {
-	// Check for null bytes which can terminate the connection string
-	if strings.Contains(param, "\x00") {
-		return fmt.Errorf("invalid %s: contains null byte", paramName)
-	}
-	
-	// Check for potentially dangerous control characters
-	for _, char := range param {
-		if char < 32 && char != '\t' && char != '\n' && char != '\r' {
-			return fmt.Errorf("invalid %s: contains control character", paramName)
-		}
-	}
-	
-	return nil
-}
-
-func isValidConnectionParamKey(key string) bool {
-	// Connection parameter keys should only contain alphanumeric characters and underscores
-	for _, char := range key {
-		if !((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || 
-			 (char >= '0' && char <= '9') || char == '_') {
-			return false
-		}
-	}
-	return len(key) > 0
-}
-
 func (p *PostgresPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	connectionInput, err := p.ParseConnectionConfig(config)
 	if err != nil {
 		return nil, err
 	}
 
-	// Validate connection parameters for security
-	if err := validateConnectionParam(connectionInput.Hostname, "hostname"); err != nil {
-		return nil, err
-	}
-	if err := validateConnectionParam(connectionInput.Username, "username"); err != nil {
-		return nil, err
-	}
-	if err := validateConnectionParam(connectionInput.Password, "password"); err != nil {
-		return nil, err
-	}
-	if err := validateConnectionParam(connectionInput.Database, "database"); err != nil {
-		return nil, err
-	}
+	dsn := fmt.Sprintf("postgresql://%s:%s@%s:%v/%s",
+		url.QueryEscape(connectionInput.Username),
+		url.QueryEscape(connectionInput.Password),
+		url.QueryEscape(connectionInput.Hostname),
+		connectionInput.Port,
+		url.QueryEscape(connectionInput.Database))
 
-	host := escapeConnectionParam(connectionInput.Hostname)
-	username := escapeConnectionParam(connectionInput.Username)
-	password := escapeConnectionParam(connectionInput.Password)
-	database := escapeConnectionParam(connectionInput.Database)
-
-	params := strings.Builder{}
 	if connectionInput.ExtraOptions != nil {
+		params := url.Values{}
 		for key, value := range connectionInput.ExtraOptions {
-			// Validate extra option values
-			if err := validateConnectionParam(value, fmt.Sprintf("extra option '%s'", key)); err != nil {
-				return nil, err
-			}
-			// Validate key names (should only contain alphanumeric characters and underscores)
-			if !isValidConnectionParamKey(key) {
-				return nil, fmt.Errorf("invalid extra option key '%s': only alphanumeric characters and underscores allowed", key)
-			}
-			params.WriteString(fmt.Sprintf("%v='%v' ", strings.ToLower(key), escapeConnectionParam(value)))
+			params.Add(strings.ToLower(key), value)
 		}
-	}
-
-	dsn := fmt.Sprintf("host='%v' user='%v' password='%v' dbname='%v' port='%v'",
-		host, username, password, database, connectionInput.Port)
-
-	if params.Len() > 0 {
-		dsn = fmt.Sprintf("%v %v", dsn, params.String())
+		dsn += "?" + params.Encode()
 	}
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
