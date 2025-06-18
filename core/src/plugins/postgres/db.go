@@ -49,8 +49,9 @@ func validateDatabase(database string) error {
 		return fmt.Errorf("invalid database name: contains URL-encoded forward slash")
 	}
 	
-	// Check for literal path traversal patterns
-	if strings.Contains(database, "../") || strings.Contains(database, "..\\") {
+	// Check for literal path traversal patterns (both Unix and Windows)
+	if strings.Contains(database, "../") || strings.Contains(database, "..\\") ||
+		strings.Contains(database, "./") || strings.Contains(database, ".\\") {
 		return fmt.Errorf("invalid database name: contains path traversal pattern")
 	}
 	
