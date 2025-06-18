@@ -218,6 +218,7 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, checked, onRowCheck, disab
         }).catch(() => {
             // Revert value on error
             setEditedData(cell.getValue() as string);
+            notify("Failed to update cell value", "error");
         }).finally(() => {
             setUpdating(false); 
         });
@@ -569,13 +570,18 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
     const handleSort = useCallback((columnId: string) => {
         setSorting((old) => {
             const existingSort = old.find(d => d.id === columnId);
+            const otherSorts = old.filter(d => d.id !== columnId);
+            
             if (!existingSort) {
-                return [{ id: columnId, desc: false }];
+                // Add new sort column
+                return [...otherSorts, { id: columnId, desc: false }];
             }
             if (!existingSort.desc) {
-                return [{ id: columnId, desc: true }];
+                // Toggle to descending
+                return [...otherSorts, { id: columnId, desc: true }];
             }
-            return [];
+            // Remove this column from sorting
+            return otherSorts;
         });
     }, []);
 
@@ -583,15 +589,26 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
         if (onRowUpdate == null) {
             return Promise.resolve();
         }
-        delete row["#"];
-        return onRowUpdate(row, updatedColumn).then(() => {
+        const rowCopy = clone(row);
+        delete rowCopy["#"];
+        
+        // Get the original row index from the sorted row
+        const sortedRow = rows[index];
+        const originalIndex = sortedRow.original.originalIndex as number;
+        
+        return onRowUpdate(rowCopy, updatedColumn).then(() => {
+            // Only update data if the promise resolves successfully
             setData(value => {
                 const newValue = clone(value);
-                newValue[index] = clone(row);
+                // Update using the original index, not the sorted index
+                const dataIndex = newValue.findIndex(item => item.originalIndex === originalIndex);
+                if (dataIndex !== -1) {
+                    newValue[dataIndex] = { ...newValue[dataIndex], ...rowCopy };
+                }
                 return newValue;
             });
         });
-    }, [onRowUpdate]);
+    }, [onRowUpdate, rows]);
 
     const handleRowCheck = useCallback((index: number, value: boolean) => {
         const newCheckedRows = new Set(checkedRows);
@@ -641,7 +658,36 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
         return  [...checkedRows ?? []];
     }, [checkedRows]);
 
-    const exportToCSV = useExportToCSV(actualColumns, rows.map(r => r.original), specificIndexes);
+    // Export original data in original order, not sorted/filtered data
+    const exportData = useMemo(() => {
+        // If specific rows are selected, export only those in their original order
+        if (specificIndexes.length > 0) {
+            return specificIndexes
+                .sort((a, b) => a - b) // Sort indexes to maintain original order
+                .map(index => {
+                    const row = data.find(d => d.originalIndex === index);
+                    if (row) {
+                        const exportRow = clone(row);
+                        delete exportRow["#"];
+                        delete exportRow.originalIndex;
+                        return values(exportRow);
+                    }
+                    return [];
+                })
+                .filter(row => row.length > 0);
+        }
+        // Otherwise export all data in original order
+        return data
+            .sort((a, b) => (a.originalIndex as number) - (b.originalIndex as number))
+            .map(row => {
+                const exportRow = clone(row);
+                delete exportRow["#"];
+                delete exportRow.originalIndex;
+                return values(exportRow);
+            });
+    }, [data, specificIndexes]);
+    
+    const exportToCSV = useExportToCSV(actualColumns, exportData, specificIndexes);
 
     return (
         <div className="flex flex-col grow gap-4 items-center w-full h-full" ref={containerRef}>
