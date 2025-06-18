@@ -18,10 +18,35 @@ package sqlite3
 
 import (
 	"strings"
+	
+	mapset "github.com/deckarep/golang-set/v2"
 )
 
+var (
+	// SQLite datetime-related types that should be preserved as strings
+	dateTimeTypes = mapset.NewSet("DATE", "DATETIME", "TIMESTAMP")
+)
+
+// ConvertStringValueDuringMap preserves datetime strings since SQLite stores them as TEXT
 func (p *Sqlite3Plugin) ConvertStringValueDuringMap(value, columnType string) (interface{}, error) {
-	return value, nil
+	// For consistency with ConvertStringValue, we preserve datetime strings
+	// and delegate to ConvertStringValue for all type handling
+	return p.ConvertStringValue(value, columnType)
+}
+
+// ConvertStringValue overrides the base implementation to preserve datetime strings
+// Since SQLite stores DATETIME as TEXT, we should not parse and reformat datetime values
+func (p *Sqlite3Plugin) ConvertStringValue(value, columnType string) (interface{}, error) {
+	// Normalize column type to uppercase for comparison
+	normalizedType := strings.ToUpper(columnType)
+	
+	// For datetime-related types, preserve the original string value
+	if dateTimeTypes.Contains(normalizedType) {
+		return value, nil
+	}
+	
+	// For all other types, delegate to the base GORM implementation
+	return p.GormPlugin.ConvertStringValue(value, columnType)
 }
 
 func (p *Sqlite3Plugin) GetPrimaryKeyColQuery() string {
