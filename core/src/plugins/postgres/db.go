@@ -17,18 +17,38 @@
 package postgres
 
 import (
+	"fmt"
 	"net"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
+// validateHostname ensures the hostname doesn't contain URL-reserved characters
+// that could lead to injection attacks
+func validateHostname(hostname string) error {
+	// Check for URL-reserved characters that could enable injection
+	invalidChars := []string{"@", "?", "#", "/", "\\"}
+	for _, char := range invalidChars {
+		if strings.Contains(hostname, char) {
+			return fmt.Errorf("invalid hostname: contains URL-reserved character '%s'", char)
+		}
+	}
+	return nil
+}
+
 func (p *PostgresPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	connectionInput, err := p.ParseConnectionConfig(config)
 	if err != nil {
+		return nil, err
+	}
+
+	// Validate hostname to prevent injection attacks
+	if err := validateHostname(connectionInput.Hostname); err != nil {
 		return nil, err
 	}
 
