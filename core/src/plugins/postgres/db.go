@@ -17,8 +17,9 @@
 package postgres
 
 import (
-	"fmt"
+	"net"
 	"net/url"
+	"strconv"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"gorm.io/driver/postgres"
@@ -31,24 +32,27 @@ func (p *PostgresPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	// Use URL format for PostgreSQL connection
-	dsn := fmt.Sprintf("postgresql://%s:%s@%s:%v/%s?sslmode=prefer",
-		url.QueryEscape(connectionInput.Username),
-		url.QueryEscape(connectionInput.Password),
-		url.QueryEscape(connectionInput.Hostname),
-		connectionInput.Port,
-		url.QueryEscape(connectionInput.Database))
+	// Construct PostgreSQL URL securely using url.URL struct
+	u := &url.URL{
+		Scheme: "postgresql",
+		User:   url.UserPassword(connectionInput.Username, connectionInput.Password),
+		Host:   net.JoinHostPort(connectionInput.Hostname, strconv.Itoa(connectionInput.Port)),
+		Path:   "/" + connectionInput.Database,
+	}
 
-	// Add extra options as URL parameters
+	// Add query parameters securely
+	q := u.Query()
+	q.Set("sslmode", "prefer")
+	
+	// Add extra options as query parameters
 	if connectionInput.ExtraOptions != nil {
-		params := url.Values{}
 		for key, value := range connectionInput.ExtraOptions {
-			params.Add(key, value)
-		}
-		if len(params) > 0 {
-			dsn += "&" + params.Encode()
+			q.Set(key, value)
 		}
 	}
+	
+	u.RawQuery = q.Encode()
+	dsn := u.String()
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
