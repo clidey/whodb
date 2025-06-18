@@ -50,8 +50,14 @@ func validateDatabase(database string) error {
 	}
 	
 	// Check for literal path traversal patterns (both Unix and Windows)
-	if strings.Contains(database, "../") || strings.Contains(database, "..\\") ||
-		strings.Contains(database, "./") || strings.Contains(database, ".\\") {
+	// Normalize the database name to check for all path separator variations
+	normalizedDB := strings.ReplaceAll(database, "\\", "/")
+	normalizedDB = strings.ReplaceAll(normalizedDB, "//", "/") // Handle double slashes
+	
+	if strings.Contains(normalizedDB, "../") || strings.Contains(normalizedDB, "./") ||
+		strings.Contains(database, "../") || strings.Contains(database, "..\\") ||
+		strings.Contains(database, "./") || strings.Contains(database, ".\\") ||
+		strings.Contains(database, "..//") || strings.Contains(database, ".//") {
 		return fmt.Errorf("invalid database name: contains path traversal pattern")
 	}
 	
