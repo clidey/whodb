@@ -18,7 +18,7 @@ import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import { clone, isString, values } from "lodash";
 import { CSSProperties, FC, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Cell, Row, useBlockLayout, useTable } from 'react-table';
+import { flexRender, getCoreRowModel, getSortedRowModel, SortingState, useReactTable, ColumnDef, Row, Cell } from '@tanstack/react-table';
 import { FixedSizeList, ListChildComponentProps } from "react-window";
 import { twMerge } from "tailwind-merge";
 import { notify } from "../store/function";
@@ -143,8 +143,8 @@ const Pagination: FC<IPaginationProps> = ({ pageCount, currentPage, onPageChange
 };
 
 type ITDataProps = {
-    cell: Cell<Record<string, string | number>>;
-    onCellUpdate?: (row: Cell<Record<string, string | number>>) => Promise<void>;
+    cell: Cell<Record<string, string | number>, unknown>;
+    onCellUpdate?: (cell: Cell<Record<string, string | number>, unknown>) => Promise<void>;
     disableEdit?: boolean;
     checked?: boolean;
     onRowCheck?: (value: boolean) => void;
@@ -152,7 +152,7 @@ type ITDataProps = {
 
 const TData: FC<ITDataProps> = ({ cell, onCellUpdate, checked, onRowCheck, disableEdit }) => {
     const [changed, setChanged] = useState(false);
-    const [editedData, setEditedData] = useState<string>(cell.value);
+    const [editedData, setEditedData] = useState<string>(cell.getValue() as string);
     const [editable, setEditable] = useState(false);
     const [preview, setPreview] = useState(false);
     const [cellRect, setCellRect] = useState<DOMRect | null>(null);
@@ -167,7 +167,7 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, checked, onRowCheck, disab
     }, [changed]);
 
     const handleCancel = useCallback(() => {
-        setEditedData(cell.value);
+        setEditedData(cell.getValue() as string);
         setEditable(false);
         setCellRect(null);
     }, [cell]);
@@ -209,14 +209,15 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, checked, onRowCheck, disab
     });
 
     const handleUpdate = useCallback(() => {
-        let previousValue = cell.value;
-        cell.value = editedData;
         setUpdating(true);
-        onCellUpdate?.(cell).then(() => {
+        // Create a cell context with the edited data
+        const cellWithData = { ...cell, editedData };
+        onCellUpdate?.(cellWithData as any).then(() => {
             setEditable(false);
             setCellRect(null);
         }).catch(() => {
-            cell.value = previousValue;
+            // Revert value on error
+            setEditedData(cell.getValue() as string);
         }).finally(() => {
             setUpdating(false); 
         });
@@ -250,14 +251,12 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, checked, onRowCheck, disab
     }, [editedData]);
 
     useEffect(() => {
-        setEditedData(cell.value);
-    }, [cell.value]);
-
-    const props = useMemo(() => {
-        return cell.getCellProps();
+        setEditedData(cell.getValue() as string);
     }, [cell]);
 
-    return <div ref={cellRef} {...props} key={props.key}
+    const columnId = cell.column.id;
+
+    return <div ref={cellRef}
         className={classNames("relative group/data cursor-pointer transition-all text-xs table-cell border-t border-l last:border-r group-last/row:border-b first:group-last/row:rounded-bl-lg last:group-last/row:rounded-br-lg border-gray-200 dark:border-white/5 p-0", {
             "bg-gray-200 dark:bg-white/10 blur-[2px]": editable || preview,
         })} data-testid="table-row-data">
@@ -268,15 +267,15 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, checked, onRowCheck, disab
                 "bg-transparent": editable,
             })}>
             <div className={classNames("absolute top-0 left-0 h-full w-full justify-center items-center bg-transparent z-1 hover:scale-110 transition-all", {
-                "group-hover/row:flex": checked != null && cell.column.id === "#",
-                "flex": cell.column.id === "#" && checked === true,
-                "hidden": checked == null || cell.column.id !== "#" || checked === false,
+                "group-hover/row:flex": checked != null && columnId === "#",
+                "flex": columnId === "#" && checked === true,
+                "hidden": checked == null || columnId !== "#" || checked === false,
             })}>
                 <CheckBoxInput value={checked ?? false} setValue={onRowCheck} />
             </div>
             <div className={classNames({
-                "group-hover/row:hidden": checked != null && cell.column.id === "#",
-                "hidden": cell.column.id === "#" && checked === true,
+                "group-hover/row:hidden": checked != null && columnId === "#",
+                "hidden": columnId === "#" && checked === true,
             })} {...longPressProps}>
                 {editedData}
             </div>
@@ -379,27 +378,25 @@ type ITableRow = {
 }
 
 const TableRow: FC<ITableRow> = ({ row, style, onRowUpdate, checked, onRowCheck, disableEdit }) => {
-    const handleCellUpdate = useCallback((cell: Cell<Record<string, string | number>>) => {
+    const handleCellUpdate = useCallback((cell: Cell<Record<string, string | number>, unknown> & { editedData?: string }) => {
         if (onRowUpdate == null) {
             return Promise.reject();
         }
-        const updatedRow = row.cells.reduce((all, one) => {
-            all[one.column.id] = one.value;
+        const updatedRow = row.getAllCells().reduce((all, one) => {
+            all[one.column.id] = one.getValue() as string | number;
             return all;
         }, {} as Record<string, string | number>);
-        updatedRow[cell.column.id] = cell.value;
+        if (cell.editedData !== undefined) {
+            updatedRow[cell.column.id] = cell.editedData;
+        }
         return onRowUpdate?.(updatedRow, cell.column.id);
-    }, [onRowUpdate, row.cells]);
-
-    const props = useMemo(() => {
-        return row.getRowProps({ style });
-    }, [row, style]);
+    }, [onRowUpdate, row]);
 
     return (
-        <div className="table-row-group text-xs group/row" {...props} key={props.key} data-testid="table-row">
+        <div className="table-row-group text-xs group/row" style={style} data-testid="table-row">
             {
-                row.cells.map((cell) => (
-                    <TData key={cell.getCellProps().key} cell={cell} onCellUpdate={handleCellUpdate}
+                row.getVisibleCells().map((cell) => (
+                    <TData key={cell.id} cell={cell} onCellUpdate={handleCellUpdate}
                         disableEdit={disableEdit || cell.column.id === "#"}
                         checked={checked}
                         onRowCheck={onRowCheck} />
@@ -429,19 +426,18 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
     const containerRef = useRef<HTMLDivElement>(null);
     const operationsRef = useRef<HTMLDivElement>(null);
     const tableRef = useRef<HTMLTableElement>(null);
-    const [direction, setDirection] = useState<"asc" | "dsc">();
-    const [sortedColumn, setSortedColumn] = useState<string>();
+    const [sorting, setSorting] = useState<SortingState>([]);
     const [search, setSearch] = useState("");
     const [searchIndex, setSearchIndex] = useState(0);
     const [height, setHeight] = useState(0);
     const [width, setWidth] = useState(0);
     const [data, setData] = useState<Record<string, string | number>[]>([]);
 
-    const columns = useMemo(() => {
+    const columns = useMemo<ColumnDef<Record<string, string | number>>[]>(() => {
         const indexWidth = 50;
         const colWidth = Math.max(((width - indexWidth)/actualColumns.length), 150);
         const headerCount: Record<string, number> = {};
-        const cols = actualColumns.map((col) => {
+        const cols: ColumnDef<Record<string, string | number>>[] = actualColumns.map((col) => {
             if (headerCount[col] == null) {
                 headerCount[col] = 0;
             } else {
@@ -452,16 +448,16 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
 
             return {
                 id,
-                Header: col,
-                accessor: id,
-                width: colWidth,
+                header: col,
+                accessorKey: id,
+                size: colWidth,
             };
         });
         cols.unshift({
             id: "#",
-            Header: "#",
-            accessor: "#",
-            width: indexWidth + 10,
+            header: "#",
+            accessorKey: "#",
+            size: indexWidth + 10,
         });
         return cols;
     }, [actualColumns, width]);
@@ -471,55 +467,42 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
             const newRow = row.reduce((all, one, colIndex) => {
                 if (actualColumns[colIndex] === "#") {
                     all[actualColumns[colIndex]] = one;
-                } else {
-                    all[columns[colIndex+1].accessor] = one;
+                } else if (columns[colIndex+1]) {
+                    all[columns[colIndex+1].id || columns[colIndex+1].accessorKey as string] = one;
                 }
                 return all;
             }, { "#": (rowIndex+1+(currentPage-1)*actualRows.length).toString() } as Record<string, string | number>);
             newRow.originalIndex = rowIndex;
             return newRow;
         }));
-    }, [actualColumns, actualRows]);
+    }, [actualColumns, actualRows, currentPage, columns]);
 
-    const sortedRows = useMemo(() => {
-        if (!sortedColumn) {
-            return data;
-        }
-        const newRows = [...data];
-        newRows.sort((a, b) => {
-            const aValue = a[sortedColumn];
-            const bValue = b[sortedColumn];
-            if (isString(aValue) && isString(bValue) && isNumeric(aValue) && isNumeric(bValue)) {
-                const aValueNumber = Number.parseFloat(aValue);
-                const bValueNumber = Number.parseFloat(bValue);
-                return direction === 'asc' ? aValueNumber - bValueNumber : bValueNumber - aValueNumber;
-            }
-
-            if (aValue < bValue) {
-                return direction === 'asc' ? -1 : 1;
-            }
-            
-            if (aValue > bValue) {
-                return direction === 'asc' ? 1 : -1;
-            }
-            return 0;
-        });
-        return newRows;
-    }, [sortedColumn, direction, data]);
-
-    const {
-        getTableProps,
-        getTableBodyProps,
-        headerGroups,
-        rows,
-        prepareRow,
-    } = useTable(
-        {
-            columns,
-            data: sortedRows,
+    const table = useReactTable({
+        columns,
+        data,
+        state: {
+            sorting,
         },
-        useBlockLayout,
-    );
+        onSortingChange: setSorting,
+        getCoreRowModel: getCoreRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        sortingFns: {
+            auto: (rowA, rowB, columnId) => {
+                const aValue = rowA.getValue<string | number>(columnId);
+                const bValue = rowB.getValue<string | number>(columnId);
+                if (isString(aValue) && isString(bValue) && isNumeric(aValue) && isNumeric(bValue)) {
+                    const aValueNumber = Number.parseFloat(aValue);
+                    const bValueNumber = Number.parseFloat(bValue);
+                    return aValueNumber - bValueNumber;
+                }
+                if (aValue < bValue) return -1;
+                if (aValue > bValue) return 1;
+                return 0;
+            },
+        },
+    });
+
+    const rows = table.getRowModel().rows;
 
     const rowCount = useMemo(() => {
         return rows.length ?? 0;
@@ -535,13 +518,15 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
             const searchText = search.toLowerCase();
             const filteredToOriginalIndex = [];
             for (const [index, row] of rows.entries()) {
-                for (const value of values(row.values)) {
+                const rowValues = row.getAllCells().map(cell => cell.getValue());
+                for (const value of rowValues) {
                     if (value == null) {
                         continue;
                     }
-                    const text = value.toLowerCase();
+                    const text = String(value).toLowerCase();
                     if (text != null && searchText != null && text.includes(searchText)) {
                         filteredToOriginalIndex.push(index);
+                        break;
                     }
                 }
             }
@@ -581,18 +566,18 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
         setSearch(newValue);
     }, []);
 
-    const handleSort = useCallback((columnToSort: string) => {
-        const columnSelectedIsDifferent = columnToSort !== sortedColumn;
-        if (!columnSelectedIsDifferent && direction === "dsc") {
-            setDirection(undefined);
-            return setSortedColumn(undefined);
-        }
-        setSortedColumn(columnToSort);
-        if (direction == null || columnSelectedIsDifferent) {
-            return setDirection("asc");
-        }
-        setDirection("dsc");
-    }, [sortedColumn, direction]);
+    const handleSort = useCallback((columnId: string) => {
+        setSorting((old) => {
+            const existingSort = old.find(d => d.id === columnId);
+            if (!existingSort) {
+                return [{ id: columnId, desc: false }];
+            }
+            if (!existingSort.desc) {
+                return [{ id: columnId, desc: true }];
+            }
+            return [];
+        });
+    }, []);
 
     const handleRowUpdate = useCallback((index: number, row: Record<string, string | number>, updatedColumn: string) => {
         if (onRowUpdate == null) {
@@ -620,14 +605,13 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
 
     const handleRenderRow = useCallback(({ index, style }: ListChildComponentProps) => {
         const row = rows[index];
-        prepareRow(row);
         const originalIndex = row.original.originalIndex as number;
-        return <TableRow key={`row-${row.values[actualColumns[0]]}`} row={row} style={style}
+        return <TableRow key={`row-${row.id}`} row={row} style={style}
             onRowUpdate={(row, updatedColumn) => handleRowUpdate(index, row, updatedColumn)}
             checked={checkedRows?.has(originalIndex)}
             onRowCheck={(value) => handleRowCheck(originalIndex, value)}
             disableEdit={disableEdit} />;
-    }, [rows, prepareRow, actualColumns, checkedRows, disableEdit, handleRowUpdate, handleRowCheck]);
+    }, [rows, checkedRows, disableEdit, handleRowUpdate, handleRowCheck]);
 
     useEffect(() => {
         if (containerRef.current == null || operationsRef.current == null) {
@@ -657,7 +641,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
         return  [...checkedRows ?? []];
     }, [checkedRows]);
 
-    const exportToCSV = useExportToCSV(actualColumns, sortedRows, specificIndexes);
+    const exportToCSV = useExportToCSV(actualColumns, rows.map(r => r.original), specificIndexes);
 
     return (
         <div className="flex flex-col grow gap-4 items-center w-full h-full" ref={containerRef}>
@@ -678,43 +662,47 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
             <div className={twMerge(classNames("flex overflow-x-auto h-full", className))} style={{
                 width,
             }} data-testid="table">
-                <div className="border-separate border-spacing-0 h-fit" ref={tableRef} {...getTableProps()}>
+                <div className="border-separate border-spacing-0 h-fit" ref={tableRef}>
                     <div>
-                        {headerGroups.map(headerGroup => (
-                            <div className="group/header-row" {...headerGroup.getHeaderGroupProps()} key={headerGroup.getHeaderGroupProps().key}>
-                                {headerGroup.headers.map((column, i) => (
-                                    <>
-                                        <div {...column.getHeaderProps()} key={column.getHeaderProps().key} className="text-xs border-t border-l last:border-r border-gray-200 dark:border-white/5 p-2 text-left bg-gray-500 dark:bg-white/20 text-white first:rounded-tl-lg last:rounded-tr-lg relative group/header cursor-pointer select-none">
+                        {table.getHeaderGroups().map(headerGroup => (
+                            <div className="group/header-row" key={headerGroup.id}>
+                                {headerGroup.headers.map((header, i) => {
+                                    const sortingState = sorting.find(s => s.id === header.column.id);
+                                    return (
+                                        <div key={header.id} 
+                                            style={{ width: header.column.getSize() }}
+                                            className="inline-block text-xs border-t border-l last:border-r border-gray-200 dark:border-white/5 p-2 text-left bg-gray-500 dark:bg-white/20 text-white first:rounded-tl-lg last:rounded-tr-lg relative group/header cursor-pointer select-none">
                                             <div className={classNames({
-                                                "group-hover/header-row:hidden": checkedRows != null && column.id === "#",
-                                                "hidden": column.id === "#" && allChecked,
-                                            })} onClick={() => handleSort(column.id)} data-testid="table-header">
-                                                {column.render('Header')} {i > 0 && columnTags?.[i-1] != null && columnTags?.[i-1].length > 0 && <span className="text-[11px]">[{columnTags?.[i-1]}]</span>}
+                                                "group-hover/header-row:hidden": checkedRows != null && header.column.id === "#",
+                                                "hidden": header.column.id === "#" && allChecked,
+                                            })} onClick={() => handleSort(header.column.id)} data-testid="table-header">
+                                                {flexRender(header.column.columnDef.header, header.getContext())} 
+                                                {i > 0 && columnTags?.[i-1] != null && columnTags?.[i-1].length > 0 && <span className="text-[11px]">[{columnTags?.[i-1]}]</span>}
                                             </div>
                                             <div className={classNames("absolute top-0 left-0 h-full w-full justify-center items-center bg-transparent z-[1] hover:scale-110 transition-all", {
-                                                "group-hover/header-row:flex": checkedRows != null && column.id === "#",
-                                                "flex": column.id === "#" && allChecked,
-                                                "hidden": checkedRows == null || column.id !== "#" || !allChecked,
+                                                "group-hover/header-row:flex": checkedRows != null && header.column.id === "#",
+                                                "flex": header.column.id === "#" && allChecked,
+                                                "hidden": checkedRows == null || header.column.id !== "#" || !allChecked,
                                             })}>
                                                 <CheckBoxInput value={allChecked} setValue={handleCheckAll} />
                                             </div>
                                             <div className={twMerge(classNames("transition-all absolute top-2 right-2 opacity-0", {
-                                                "opacity-100": sortedColumn === column.id,
-                                                "rotate-180": direction === "dsc",
+                                                "opacity-100": sortingState !== undefined,
+                                                "rotate-180": sortingState?.desc,
                                             }))}>
                                                 {Icons.ArrowUp}
                                             </div>
                                         </div>
-                                    </>
-                                ))}
+                                    );
+                                })}
                             </div>
                         ))}
                     </div>
-                    <div className="tbody" {...getTableBodyProps()}>
+                    <div className="tbody">
                         <FixedSizeList
                             ref={fixedTableRef}
                             height={height}
-                            itemCount={sortedRows.length}
+                            itemCount={rows.length}
                             itemSize={31}
                             width="100%"
                         >
