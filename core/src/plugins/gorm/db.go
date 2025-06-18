@@ -18,13 +18,14 @@ package gorm_plugin
 
 import (
 	"fmt"
+	"net/url"
+	"strconv"
+	"time"
+
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
 	"gorm.io/gorm"
-	"net/url"
-	"strconv"
-	"time"
 )
 
 const (
@@ -111,11 +112,23 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 		return nil, err
 	}
 
+	database := config.Credentials.Database
+	username := config.Credentials.Username
+	password := config.Credentials.Password
+	hostname := config.Credentials.Hostname
+
+	if p.Type != engine.DatabaseType_Sqlite3 && p.Type != engine.DatabaseType_Postgres {
+		database = url.PathEscape(database)
+		username = url.PathEscape(username)
+		password = url.PathEscape(password)
+		hostname = url.PathEscape(hostname)
+	}
+
 	input := &ConnectionInput{
-		Username:                url.PathEscape(config.Credentials.Username),
-		Password:                url.PathEscape(config.Credentials.Password),
-		Database:                url.PathEscape(config.Credentials.Database),
-		Hostname:                url.PathEscape(config.Credentials.Hostname),
+		Username:                username,
+		Password:                password,
+		Database:                database,
+		Hostname:                hostname,
 		Port:                    port,
 		ParseTime:               parseTime,
 		Loc:                     loc,
@@ -135,7 +148,12 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 			case portKey, parseTimeKey, locKey, allowClearTextPasswordsKey, sslModeKey, httpProtocolKey, readOnlyKey, debugKey, connectionTimeoutKey:
 				continue
 			default:
-				params[record.Key] = url.QueryEscape(record.Value) // todo: this may break for postgres
+				// PostgreSQL uses libpq connection string format, not URL query parameters
+				if p.Type == engine.DatabaseType_Postgres {
+					params[record.Key] = record.Value // Raw value, PostgreSQL plugin will handle escaping
+				} else {
+					params[record.Key] = url.QueryEscape(record.Value)
+				}
 			}
 		}
 		input.ExtraOptions = params
