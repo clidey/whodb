@@ -55,6 +55,11 @@ func validateDatabase(database string) error {
 		return fmt.Errorf("invalid database name: contains path traversal pattern")
 	}
 	
+	// Check for backticks that could enable SQL injection
+	if strings.Contains(database, "`") {
+		return fmt.Errorf("invalid database name: contains backtick character")
+	}
+	
 	// Check for other URL-encoded characters that could be problematic
 	problematicEncoded := []string{"%00", "%20", "%22", "%27", "%3B", "%3C", "%3E"}
 	for _, encoded := range problematicEncoded {
