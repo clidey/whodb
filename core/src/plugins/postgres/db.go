@@ -20,58 +20,50 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"regexp"
 	"strconv"
-	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-// validateHostname ensures the hostname doesn't contain URL-reserved characters
-// that could lead to injection attacks
-func validateHostname(hostname string) error {
-	// Check for URL-reserved characters that could enable injection
-	invalidChars := []string{"@", "?", "#", "/", "\\"}
-	for _, char := range invalidChars {
-		if strings.Contains(hostname, char) {
-			return fmt.Errorf("invalid hostname: contains URL-reserved character '%s'", char)
-		}
-	}
-	return nil
-}
-
-// validateDatabase ensures the database name doesn't contain URL-encoded characters
-// or patterns that could lead to path traversal attacks
-func validateDatabase(database string) error {
-	// Check for URL-encoded forward slashes that could enable path traversal
-	if strings.Contains(database, "%2f") || strings.Contains(database, "%2F") {
-		return fmt.Errorf("invalid database name: contains URL-encoded forward slash")
+// validateInput uses allowlist validation to ensure only safe characters are used
+// This prevents all forms of injection and path traversal attacks
+func validateInput(input, inputType string) error {
+	if len(input) == 0 {
+		return fmt.Errorf("%s cannot be empty", inputType)
 	}
 	
-	// Check for literal path traversal patterns (both Unix and Windows)
-	// Normalize the database name to check for all path separator variations
-	normalizedDB := strings.ReplaceAll(database, "\\", "/")
-	normalizedDB = strings.ReplaceAll(normalizedDB, "//", "/") // Handle double slashes
+	// Define allowlist patterns for different input types
+	var allowedPattern *regexp.Regexp
+	var maxLength int
 	
-	if strings.Contains(normalizedDB, "../") || strings.Contains(normalizedDB, "./") ||
-		strings.Contains(database, "../") || strings.Contains(database, "..\\") ||
-		strings.Contains(database, "./") || strings.Contains(database, ".\\") ||
-		strings.Contains(database, "..//") || strings.Contains(database, ".//") {
-		return fmt.Errorf("invalid database name: contains path traversal pattern")
+	switch inputType {
+	case "database":
+		// Database names: only alphanumeric, underscore, hyphen (no dots to prevent traversal)
+		allowedPattern = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
+		maxLength = 63 // PostgreSQL database name limit
+	case "hostname":
+		// Hostnames: alphanumeric, dots, hyphens (standard hostname characters)
+		allowedPattern = regexp.MustCompile(`^[a-zA-Z0-9.-]+$`)
+		maxLength = 253 // RFC hostname limit
+	case "username":
+		// Usernames: alphanumeric and underscore only
+		allowedPattern = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
+		maxLength = 63 // PostgreSQL username limit
+	default:
+		return fmt.Errorf("unknown input type: %s", inputType)
 	}
 	
-	// Check for backticks that could enable SQL injection
-	if strings.Contains(database, "`") {
-		return fmt.Errorf("invalid database name: contains backtick character")
+	// Check length
+	if len(input) > maxLength {
+		return fmt.Errorf("%s too long: maximum %d characters", inputType, maxLength)
 	}
 	
-	// Check for other URL-encoded characters that could be problematic
-	problematicEncoded := []string{"%00", "%20", "%22", "%27", "%3B", "%3C", "%3E"}
-	for _, encoded := range problematicEncoded {
-		if strings.Contains(strings.ToLower(database), encoded) {
-			return fmt.Errorf("invalid database name: contains URL-encoded character '%s'", encoded)
-		}
+	// Check against allowlist pattern
+	if !allowedPattern.MatchString(input) {
+		return fmt.Errorf("invalid %s: contains disallowed characters (only alphanumeric, underscore, hyphen allowed)", inputType)
 	}
 	
 	return nil
@@ -83,14 +75,17 @@ func (p *PostgresPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	// Validate hostname to prevent injection attacks
-	if err := validateHostname(connectionInput.Hostname); err != nil {
-		return nil, err
+	// Validate all connection parameters using allowlist validation
+	if err := validateInput(connectionInput.Hostname, "hostname"); err != nil {
+		return nil, fmt.Errorf("hostname validation failed: %w", err)
 	}
 
-	// Validate database name to prevent path traversal attacks
-	if err := validateDatabase(connectionInput.Database); err != nil {
-		return nil, err
+	if err := validateInput(connectionInput.Database, "database"); err != nil {
+		return nil, fmt.Errorf("database validation failed: %w", err)
+	}
+
+	if err := validateInput(connectionInput.Username, "username"); err != nil {
+		return nil, fmt.Errorf("username validation failed: %w", err)
 	}
 
 	// Construct PostgreSQL URL securely using url.URL struct
@@ -105,9 +100,28 @@ func (p *PostgresPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	q := u.Query()
 	q.Set("sslmode", "prefer")
 	
-	// Add extra options as query parameters
+	// Validate and add extra options as query parameters (allowlist approach)
 	if connectionInput.ExtraOptions != nil {
+		allowedOptions := map[string]bool{
+			"sslmode":     true,
+			"sslcert":     true,
+			"sslkey":      true,
+			"sslrootcert": true,
+			"connect_timeout": true,
+			"application_name": true,
+		}
+		
 		for key, value := range connectionInput.ExtraOptions {
+			// Only allow predefined safe options
+			if !allowedOptions[key] {
+				return nil, fmt.Errorf("extra option '%s' is not allowed for security reasons", key)
+			}
+			
+			// Validate option values using basic allowlist (no special characters)
+			if !regexp.MustCompile(`^[a-zA-Z0-9._/-]+$`).MatchString(value) {
+				return nil, fmt.Errorf("extra option value for '%s' contains invalid characters", key)
+			}
+			
 			q.Set(key, value)
 		}
 	}
