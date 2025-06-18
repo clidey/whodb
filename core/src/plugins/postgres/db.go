@@ -41,6 +41,30 @@ func validateHostname(hostname string) error {
 	return nil
 }
 
+// validateDatabase ensures the database name doesn't contain URL-encoded characters
+// or patterns that could lead to path traversal attacks
+func validateDatabase(database string) error {
+	// Check for URL-encoded forward slashes that could enable path traversal
+	if strings.Contains(database, "%2f") || strings.Contains(database, "%2F") {
+		return fmt.Errorf("invalid database name: contains URL-encoded forward slash")
+	}
+	
+	// Check for literal path traversal patterns
+	if strings.Contains(database, "../") || strings.Contains(database, "..\\") {
+		return fmt.Errorf("invalid database name: contains path traversal pattern")
+	}
+	
+	// Check for other URL-encoded characters that could be problematic
+	problematicEncoded := []string{"%00", "%20", "%22", "%27", "%3B", "%3C", "%3E"}
+	for _, encoded := range problematicEncoded {
+		if strings.Contains(strings.ToLower(database), encoded) {
+			return fmt.Errorf("invalid database name: contains URL-encoded character '%s'", encoded)
+		}
+	}
+	
+	return nil
+}
+
 func (p *PostgresPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	connectionInput, err := p.ParseConnectionConfig(config)
 	if err != nil {
@@ -49,6 +73,11 @@ func (p *PostgresPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 
 	// Validate hostname to prevent injection attacks
 	if err := validateHostname(connectionInput.Hostname); err != nil {
+		return nil, err
+	}
+
+	// Validate database name to prevent path traversal attacks
+	if err := validateDatabase(connectionInput.Database); err != nil {
 		return nil, err
 	}
 
