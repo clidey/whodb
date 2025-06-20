@@ -749,7 +749,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                             ref={fixedTableRef}
                             height={height}
                             itemCount={rows.length}
-                            itemSize={31}
+                            itemSize={48}
                             width="100%"
                         >
                             {handleRenderRow}
