@@ -35,6 +35,76 @@ import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
 import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
 
+const StorageUnitListItem: FC<{ unit: StorageUnit }> = ({ unit }) => {
+    const [expanded, setExpanded] = useState(false);
+    const navigate = useNavigate();
+
+    const handleNavigateToDatabase = useCallback(() => {
+        navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
+            state: {
+                unit,
+            },
+        })
+    }, [navigate, unit]);
+
+    const handleExpand = useCallback(() => {
+        setExpanded(s => !s);
+    }, []);
+
+    const [introAttributes, expandedAttributes] = useMemo(() => {
+        return [ unit.Attributes.slice(0,5), unit.Attributes.slice(5) ];
+    }, [unit.Attributes]);
+
+    return (
+        <div className="border border-gray-200 dark:border-white/10 rounded-lg p-4 mb-2 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4 flex-1">
+                    <div className="flex items-center justify-center w-10 h-10 bg-teal-500 rounded-lg flex-shrink-0">
+                        {Icons.Tables}
+                    </div>
+                    <div className="flex-1">
+                        <div className="text-sm font-semibold dark:text-neutral-100" data-testid="storage-unit-name">{unit.Name}</div>
+                        <div className="text-xs dark:text-neutral-300 mt-1">
+                            {introAttributes.slice(0, 2).map((attr, idx) => (
+                                <span key={attr.Key}>
+                                    {attr.Key}: {attr.Value}
+                                    {idx < 1 && introAttributes.length > 1 && " • "}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+                <div className="flex gap-1">
+                    <AnimatedButton icon={Icons.DocumentMagnify} label="Describe" onClick={handleExpand} testId="explore-button" />
+                    <AnimatedButton icon={Icons.Database} label="Data" onClick={handleNavigateToDatabase} testId="data-button" />
+                </div>
+            </div>
+            {expanded && (
+                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-white/10">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            {introAttributes.map(attribute => (
+                                <div key={attribute.Key} className="text-xs dark:text-neutral-300 mb-1">
+                                    <span className="font-semibold">{attribute.Key}:</span> {attribute.Value}
+                                </div>
+                            ))}
+                        </div>
+                        {expandedAttributes.length > 0 && (
+                            <div>
+                                {expandedAttributes.map(attribute => (
+                                    <div key={attribute.Key} className="text-xs dark:text-neutral-300 mb-1">
+                                        <span className="font-semibold">{attribute.Key}:</span> {attribute.Value}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
 const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
     const [expanded, setExpanded] = useState(false);
     const navigate = useNavigate();
@@ -69,7 +139,7 @@ const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
                 }
             </div>
             <div className="flex flex-row justify-end gap-1">
-                <AnimatedButton icon={Icons.DocumentMagnify} label="Explore" onClick={handleExpand} testId="explore-button" />
+                <AnimatedButton icon={Icons.DocumentMagnify} label="Describe" onClick={handleExpand} testId="explore-button" />
                 <AnimatedButton icon={Icons.Database} label="Data" onClick={handleNavigateToDatabase} testId="data-button" />
             </div>
         </div>
@@ -92,7 +162,7 @@ const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
                 </div>
             </div>
             <div className="flex flex-row justify-end gap-1">
-                <AnimatedButton icon={Icons.DocumentMagnify} label={expanded ? "Hide" : "Explore"} onClick={handleExpand} />
+                <AnimatedButton icon={Icons.DocumentMagnify} label={expanded ? "Hide" : "Describe"} onClick={handleExpand} />
                 <AnimatedButton icon={Icons.Database} label="Data" onClick={handleNavigateToDatabase} />
             </div>
         </div>
@@ -105,6 +175,7 @@ export const StorageUnitPage: FC = () => {
     const [storageUnitName, setStorageUnitName] = useState("");
     const [fields, setFields] = useState<RecordInput[]>([ {Key: "", Value: "", Extra: [] }]);
     const [error, setError] = useState<string>();
+    const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
     let schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
     const [addStorageUnit,] = useAddStorageUnitMutation();
@@ -274,7 +345,29 @@ export const StorageUnitPage: FC = () => {
                     <AnimatedButton icon={Icons.Console} label="Scratchpad" onClick={() => navigate(InternalRoutes.RawExecute.path)} type="lg" />
                 }
             </div>
-            <div>
+            <div className="flex gap-2 items-center">
+                <div className="flex gap-1 bg-gray-100 dark:bg-neutral-800 rounded-lg p-1">
+                    <button
+                        className={classNames("p-2 rounded transition-all", {
+                            "bg-white dark:bg-neutral-700 shadow-sm": viewMode === "grid",
+                            "hover:bg-gray-200 dark:hover:bg-neutral-700": viewMode !== "grid",
+                        })}
+                        onClick={() => setViewMode("grid")}
+                        title="Grid view"
+                    >
+                        {Icons.Grid}
+                    </button>
+                    <button
+                        className={classNames("p-2 rounded transition-all", {
+                            "bg-white dark:bg-neutral-700 shadow-sm": viewMode === "list",
+                            "hover:bg-gray-200 dark:hover:bg-neutral-700": viewMode !== "list",
+                        })}
+                        onClick={() => setViewMode("list")}
+                        title="List view"
+                    >
+                        {Icons.List}
+                    </button>
+                </div>
                 <SearchInput search={filterValue} setSearch={setFilterValue} placeholder="Enter filter value..." />
             </div>
         </div>
@@ -349,11 +442,17 @@ export const StorageUnitPage: FC = () => {
                 </div>
             </div>
         </ExpandableCard>
-        {
+        {viewMode === "grid" ? (
             data != null && data.StorageUnit.length > 0 && filterStorageUnits.map(unit => (
                 <StorageUnitCard key={unit.Name} unit={unit} />
             ))
-        }
+        ) : (
+            <div className="max-w-full">
+                {data != null && data.StorageUnit.length > 0 && filterStorageUnits.map(unit => (
+                    <StorageUnitListItem key={unit.Name} unit={unit} />
+                ))}
+            </div>
+        )}
     </InternalPage>
 }
 

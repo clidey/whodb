@@ -32,7 +32,7 @@ import { useAppSelector } from "../../store/hooks";
 import { createStub, getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
 import { AnimatedButton } from "../button";
 import { BRAND_COLOR_BG, ClassNames } from "../classes";
-import { createDropdownItem, Dropdown, IDropdownItem } from "../dropdown";
+import { createDropdownItem, Dropdown, SearchableDropdown, IDropdownItem } from "../dropdown";
 import { Icons } from "../icons";
 import { Loading } from "../loading";
 import { ProfileInfoTooltip, updateProfileLastAccessed } from "../profile-info-tooltip";
@@ -536,10 +536,12 @@ export const Sidebar: FC = () => {
                                         "opacity-0 pointer-events-none": collapsed || (current.Type !== DatabaseType.Redis && isNoSQL(current?.Type as DatabaseType)),
                                     })}>
                                         <div className={classNames(ClassNames.Text, "text-sm")}>Database:</div>
-                                        <Dropdown className="w-[140px]" value={createDropdownItem(current!.Database)}
+                                        <SearchableDropdown className="w-[140px]" value={createDropdownItem(current!.Database)}
                                                   items={availableDatabases.Database.map(database => createDropdownItem(database))}
                                                   onChange={handleDatabaseChange}
-                                                  noItemsLabel="No available database found" dropdownContainerHeight="max-h-[300px]"
+                                                  noItemsLabel="No available database found" dropdownContainerHeight="max-h-[400px]"
+                                                  searchable={true}
+                                                  searchPlaceholder="Search databases..."
                                                   testId="sidebar-database" />
                                     </div>
                                 }
@@ -549,9 +551,11 @@ export const Sidebar: FC = () => {
                                         "opacity-0 pointer-events-none": pathname === InternalRoutes.RawExecute.path || collapsed || DATABASES_THAT_DONT_SUPPORT_SCHEMA.includes(current?.Type as DatabaseType),
                                     })}>
                                         <div className={classNames(ClassNames.Text, "text-sm")}>Schema:</div>
-                                        <Dropdown className="w-[140px]" value={createDropdownItem(schema)}
+                                        <SearchableDropdown className="w-[140px]" value={createDropdownItem(schema)}
                                                   items={schemasDropdownItems} onChange={handleSchemaChange}
-                                                  noItemsLabel="No schema found"
+                                                  noItemsLabel="No schema found" dropdownContainerHeight="max-h-[400px]"
+                                                  searchable={true}
+                                                  searchPlaceholder="Search schemas..."
                                                   testId="sidebar-schema" />
                                     </div>
                                 }
