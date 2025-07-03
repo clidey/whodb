@@ -17,12 +17,9 @@
 package postgres
 
 import (
-	"fmt"
-	"net"
-	"net/url"
-	"strconv"
-
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/stdlib"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -33,39 +30,28 @@ func (p *PostgresPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	u := &url.URL{
-		Scheme: "postgresql",
-		User:   url.UserPassword(connectionInput.Username, connectionInput.Password),
-		Host:   net.JoinHostPort(connectionInput.Hostname, strconv.Itoa(connectionInput.Port)),
-		Path:   "/" + connectionInput.Database,
+	pgxConfig, err := pgx.ParseConfig("")
+	if err != nil {
+		return nil, err
 	}
 
-	q := u.Query()
-	q.Set("sslmode", "prefer")
+	pgxConfig.Host = connectionInput.Hostname
+	pgxConfig.Port = uint16(connectionInput.Port)
+	pgxConfig.User = connectionInput.Username
+	pgxConfig.Password = connectionInput.Password
+	pgxConfig.Database = connectionInput.Database
 
 	if connectionInput.ExtraOptions != nil {
-		allowedOptions := map[string]bool{
-			"sslmode":          true,
-			"sslcert":          true,
-			"sslkey":           true,
-			"sslrootcert":      true,
-			"connect_timeout":  true,
-			"application_name": true,
+		if pgxConfig.RuntimeParams == nil {
+			pgxConfig.RuntimeParams = make(map[string]string)
 		}
-
 		for key, value := range connectionInput.ExtraOptions {
-			if !allowedOptions[key] {
-				return nil, fmt.Errorf("extra option '%s' is not allowed for security reasons", key)
-			}
-
-			q.Set(key, value)
+			pgxConfig.RuntimeParams[key] = value
 		}
 	}
 
-	u.RawQuery = q.Encode()
-	dsn := u.String()
+	db, err := gorm.Open(postgres.New(postgres.Config{Conn: stdlib.OpenDB(*pgxConfig)}), &gorm.Config{})
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, err
 	}

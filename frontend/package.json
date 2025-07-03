@@ -43,6 +43,7 @@
     "build": "parcel build public/index.html --dist-dir build",
     "test": "npm run test:setup && NODE_ENV=test pnpm cypress open; npm run test:cleanup",
     "test:headless": "npm run test:setup && NODE_ENV=test npx cypress run --browser chrome; npm run test:cleanup",
+    "test:headless:chromium": "npm run test:setup && NODE_ENV=test npx cypress run --browser chromium; npm run test:cleanup",
     "test:sqlite": "npm run test:setup && NODE_ENV=test npx cypress run --browser chrome --spec 'cypress/e2e/sqlite.cy.js'; npm run test:cleanup",
     "test:setup": "bash ../dev/setup-e2e.sh",
     "test:cleanup": "bash ../dev/cleanup-e2e.sh",

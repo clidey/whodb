@@ -30,7 +30,7 @@ services:
     image: postgres
     environment:
       POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: jio53$*(@nfe)
       PGDATA: /var/lib/postgresql/data
       POSTGRES_DB: test_db
     volumes:
