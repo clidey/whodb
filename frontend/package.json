@@ -39,9 +39,14 @@
   },
   "scripts": {
     "start": "parcel public/index.html --open --port=3000",
+    "start:test": "NODE_ENV=test parcel public/index.html --open --port=3000 --no-cache",
     "build": "parcel build public/index.html --dist-dir build",
-    "test": "pnpm cypress open",
-    "test:headless": "npx cypress run --browser chrome",
+    "test": "npm run test:setup && NODE_ENV=test pnpm cypress open; npm run test:cleanup",
+    "test:headless": "npm run test:setup && NODE_ENV=test npx cypress run --browser chrome; npm run test:cleanup",
+    "test:sqlite": "npm run test:setup && NODE_ENV=test npx cypress run --browser chrome --spec 'cypress/e2e/sqlite.cy.js'; npm run test:cleanup",
+    "test:setup": "bash ../dev/setup-e2e.sh",
+    "test:cleanup": "bash ../dev/cleanup-e2e.sh",
+    "view:coverage": "npx nyc report --reporter=text-summary",
     "generate": "npx graphql-codegen"
   },
   "browserslist": {
@@ -57,6 +62,8 @@
     ]
   },
   "devDependencies": {
+    "@babel/core": "^7.12.0",
+    "@cypress/code-coverage": "^3.14.5",
     "@graphql-codegen/cli": "^5.0.5",
     "@graphql-codegen/typescript": "^4.1.6",
     "@graphql-codegen/typescript-operations": "^4.6.0",
@@ -68,8 +75,10 @@
     "@types/react-window": "^1.8.8",
     "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.21",
+    "babel-plugin-istanbul": "^7.0.0",
     "buffer": "^6.0.3",
-    "cypress": "^14.3.2",
+    "cypress": "^14.5.1",
+    "nyc": "^17.1.0",
     "parcel": "^2.14.4",
     "postcss": "^8.5.3",
     "process": "^0.11.10",

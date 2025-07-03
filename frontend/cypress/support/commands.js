@@ -30,12 +30,12 @@ Cypress.Commands.add("goto", (route) => {
 
 Cypress.Commands.add('login', (databaseType, hostname, username, password, database, advanced={}) => {
     cy.visit('http://localhost:3000/login');
-    if (databaseType) cy.get('[data-testid="database-type"]').click().get(`[value="${databaseType}"]`).click();
+    if (databaseType) cy.get('[data-testid="database-type"]').click().get(`[data-value="${databaseType}"]`).click();
     if (hostname) cy.get('[data-testid="hostname"] input').clear().type(hostname);
     if (username) cy.get('[data-testid="username"] input').clear().type(username);
     if (password) cy.get('[data-testid="password"] input').clear().type(password, { log: false });
     if (databaseType !== "Sqlite3" && database) cy.get('[data-testid="database"] input').clear().type(database);
-    if (databaseType === "Sqlite3" && database) cy.get('[data-testid="database"]').click().get(`[value="${database}"]`).click();
+    if (databaseType === "Sqlite3" && database) cy.get('[data-testid="database"]').click().get(`[data-value="${database}"]`).click();
 
     if (Object.keys(advanced).length > 0) {
         cy.get('[data-testid="advanced-button"]').click();
@@ -51,11 +51,11 @@ Cypress.Commands.add('setAdvanced', (type, value) => {
 });
 
 Cypress.Commands.add("selectDatabase", (value) => {
-    cy.get('[data-testid="sidebar-database"]').click().get(`[value="${value}"]`).click();
+    cy.get('[data-testid="sidebar-database"]').click().get(`[data-value="${value}"]`).click();
 });
 
 Cypress.Commands.add("selectSchema", (value) => {
-    cy.get('[data-testid="sidebar-schema"]').click().get(`[value="${value}"]`).click();
+    cy.get('[data-testid="sidebar-schema"]').click().get(`[data-value="${value}"]`).click();
 });
 
 Cypress.Commands.add('explore', (tableName) => {
@@ -105,8 +105,8 @@ Cypress.Commands.add("submitTable", (pageSize) => {
 Cypress.Commands.add("whereTable", (fieldArray) => {
     cy.get('[data-testid="where-button"]').click();
     for (const [key, operator, value] of fieldArray) {
-        cy.get('[data-testid="field-key"]').click().get(`[value="${key}"]`).click();
-        cy.get('[data-testid="field-operator"]').click().get(`[value="${operator}"]`).click();
+        cy.get('[data-testid="field-key"]').click().get(`[data-value="${key}"]`).click();
+        cy.get('[data-testid="field-operator"]').click().get(`[data-value="${operator}"]`).click();
         cy.get('[data-testid="field-value"]').clear().type(value);
         cy.get('[data-testid="add-button"]').click();
     }

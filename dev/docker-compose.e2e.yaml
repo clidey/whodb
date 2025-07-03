@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-version: "3.8"
-
 services:
   e2e_sqlite3:
     image: nouchka/sqlite3:latest
