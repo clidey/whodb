@@ -72,7 +72,10 @@ Cypress.Commands.add('getExploreFields', () => {
 Cypress.Commands.add('data', (tableName) => {
     return cy.getTables().then(elements => {
         const index = elements.findIndex(name => name === tableName);
-        return cy.get('[data-testid="data-button"]').eq(index).click();
+        return cy.get('[data-testid="data-button"]').eq(index).click().then(() => {
+            // Wait for the table to be present after clicking data button
+            return cy.get('[data-testid="table"]', { timeout: 10000 }).should('exist');
+        });
     });
 });
 
@@ -81,16 +84,33 @@ Cypress.Commands.add('sortBy', (index) => {
 });
 
 Cypress.Commands.add('getTableData', () => {
-    return cy.get('[data-testid="table"]').then($table => {
-        const columns = Cypress.$.makeArray($table.find('[data-testid="table-header"]'))
-            .map(el => el.innerText.trim());
+    // First wait for the table to exist
+    return cy.get('[data-testid="table"]', { timeout: 10000 }).should('exist').then(() => {
+        // Wait for at least one table row to be present with proper scoping
+        return cy.get('[data-testid="table"] [data-testid="table-row"]', { timeout: 10000 })
+            .should('have.length.greaterThan', 0)
+            .then(() => {
+                // Additional wait to ensure data is fully rendered
+                cy.wait(100);
+                
+                // Now get the table and extract data
+                return cy.get('[data-testid="table"]').then($table => {
+                    const columns = Cypress.$.makeArray($table.find('[data-testid="table-header"]'))
+                        .map(el => el.innerText.trim());
 
-        const rows = Cypress.$.makeArray($table.find('[data-testid="table-row"]')).map(row => {
-            return Cypress.$.makeArray(Cypress.$(row).find('[data-testid="table-row-data"] .cell-data'))
-                .map(cell => cell.innerText.trim());
-        });
+                    const rows = Cypress.$.makeArray($table.find('[data-testid="table-row"]')).map(row => {
+                        const cells = Cypress.$(row).find('[data-testid="table-row-data"] .cell-data');
+                        if (cells.length === 0) {
+                            // Fallback: try without .cell-data class
+                            return Cypress.$.makeArray(Cypress.$(row).find('[data-testid="table-row-data"]'))
+                                .map(cell => cell.innerText.trim());
+                        }
+                        return Cypress.$.makeArray(cells).map(cell => cell.innerText.trim());
+                    });
 
-        return { columns, rows };
+                    return { columns, rows };
+                });
+            });
     });
 });
 
@@ -99,7 +119,10 @@ Cypress.Commands.add("setTablePageSize", (pageSize) => {
 });
 
 Cypress.Commands.add("submitTable", (pageSize) => {
-    cy.get('[data-testid="submit-button"]').click();
+    cy.get('[data-testid="submit-button"]').click().then(() => {
+        // Wait a bit for the request to complete
+        cy.wait(500);
+    });
 });
 
 Cypress.Commands.add("whereTable", (fieldArray) => {

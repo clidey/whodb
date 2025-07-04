@@ -21,7 +21,7 @@ const dbPassword = 'password';
 describe('MariaDB E2E test', () => {
   it('should login correctly', () => {
     // login and setup
-    cy.login('MariaDB', 'localhost', 'user', 'password', 'test_db', {
+    cy.login('MariaDB', dbHost, dbUser, dbPassword, 'test_db', {
         "Port": 3307,
     });
     cy.selectSchema("test_db");
