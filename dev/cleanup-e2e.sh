@@ -35,6 +35,24 @@ echo "🐳 Stopping database services..."
 cd "$SCRIPT_DIR"
 docker-compose -f docker-compose.e2e.yaml down
 
+# Stop the test server if it's running
+echo "🛑 Stopping test server..."
+if [ -n "$TEST_SERVER_PID" ] && ps -p $TEST_SERVER_PID > /dev/null 2>&1; then
+    kill $TEST_SERVER_PID
+    echo "✅ Test server stopped (PID: $TEST_SERVER_PID)"
+else
+    # Try to find and kill any running server.test processes
+    PIDS=$(pgrep -f "server.test" 2>/dev/null || true)
+    if [ -n "$PIDS" ]; then
+        echo "🔄 Found running server.test processes, stopping them..."
+        echo $PIDS | xargs kill
+        echo "✅ All server.test processes stopped"
+    else
+        echo "ℹ️ No test server processes found"
+    fi
+fi
+
+
 # Run the existing cleanup script if it exists
 if [ -f "$SCRIPT_DIR/cleanup.sh" ]; then
     echo "🗑️ Running Docker cleanup..."

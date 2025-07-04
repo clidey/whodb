@@ -15,13 +15,28 @@
 
 set -e
 
-echo "🚀 Setting up complete E2E environment..."
-
 # Get the script directory (so it works from any location)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 echo "📁 Working from project root: $PROJECT_ROOT"
+
+# Run cleanup first to ensure clean state
+echo "🧹 Running cleanup first..."
+if [ -f "$SCRIPT_DIR/cleanup-e2e.sh" ]; then
+    bash "$SCRIPT_DIR/cleanup-e2e.sh"
+else
+    echo "⚠️ cleanup-e2e.sh not found, continuing without cleanup"
+fi
+
+echo "🚀 Setting up complete E2E environment..."
+
+# Build test binary with coverage
+echo "🔧 Building test binary with coverage..."
+cd "$PROJECT_ROOT/core"
+go test -coverpkg=./... -c -o server.test
+echo "✅ Test binary built successfully"
+
 
 # Setup SQLite
 echo "🔧 Setting up SQLite E2E database..."
@@ -55,5 +70,23 @@ for service in e2e_postgres e2e_mysql e2e_mariadb e2e_mongo e2e_clickhouse; do
         echo "❌ $service failed to start"
     fi
 done
+
+# Start the test server with coverage
+echo "🚀 Starting test server with coverage..."
+cd "$PROJECT_ROOT/core"
+ENVIRONMENT=dev ./server.test -test.run=^TestMain$ -test.coverprofile=coverage.out &
+TEST_SERVER_PID=$!
+
+# Wait for server to start
+echo "⏳ Waiting for test server to start..."
+sleep 5
+
+# Check if server is running
+if ps -p $TEST_SERVER_PID > /dev/null; then
+    echo "✅ Test server started successfully (PID: $TEST_SERVER_PID)"
+else
+    echo "❌ Test server failed to start"
+    exit 1
+fi
 
 echo "🎉 E2E environment setup complete!"

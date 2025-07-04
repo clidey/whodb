@@ -48,6 +48,8 @@
     "test:setup": "bash ../dev/setup-e2e.sh",
     "test:cleanup": "bash ../dev/cleanup-e2e.sh",
     "view:coverage": "npx nyc report --reporter=text-summary",
+    "view:coverage:frontend": "npx nyc report --reporter=html",
+    "view:coverage:backend": "cd ../core && go tool cover -html=coverage.out",
     "generate": "npx graphql-codegen"
   },
   "browserslist": {
