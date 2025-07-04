@@ -23,8 +23,8 @@ echo "📁 Working from project root: $PROJECT_ROOT"
 
 # Cleanup SQLite
 echo "🧹 Cleaning up tmp directory..."
-if [ -d "$PROJECT_ROOT/tmp" ]; then
-    rm -rf "$PROJECT_ROOT/tmp"
+if [ -d "$PROJECT_ROOT/core/tmp" ]; then
+    rm -rf "$PROJECT_ROOT/core/tmp"
     echo "✅ tmp directory cleaned up"
 else
     echo "ℹ️ No tmp directory to clean up"
