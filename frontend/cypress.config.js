@@ -20,6 +20,7 @@ const { execSync } = require("child_process");
 module.exports = defineConfig({
   e2e: {
     setupNodeEvents(on, config) {
+      require('@cypress/code-coverage/task')(on, config)
       on('task', {
         execCommand(command) {
           try {
@@ -30,6 +31,7 @@ module.exports = defineConfig({
           }
         }
       });
+      return config
     },
   },
 });

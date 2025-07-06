@@ -80,9 +80,10 @@ func (p *PostgresPlugin) GetTableInfoQuery() string {
 		LEFT JOIN
 			pg_stat_user_tables s ON t.table_name = s.relname
 		WHERE
-			t.table_schema = ?
-			AND t.table_type = 'BASE TABLE';
+			t.table_schema = ?;
 	`
+
+	// AND t.table_type = 'BASE TABLE' this removes the view tables
 }
 
 func (p *PostgresPlugin) GetTableNameAndAttributes(rows *sql.Rows, db *gorm.DB) (string, []engine.Record) {

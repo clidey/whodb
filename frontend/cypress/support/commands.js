@@ -30,12 +30,12 @@ Cypress.Commands.add("goto", (route) => {
 
 Cypress.Commands.add('login', (databaseType, hostname, username, password, database, advanced={}) => {
     cy.visit('http://localhost:3000/login');
-    if (databaseType) cy.get('[data-testid="database-type"]').click().get(`[value="${databaseType}"]`).click();
+    if (databaseType) cy.get('[data-testid="database-type"]').click().get(`[data-value="${databaseType}"]`).click();
     if (hostname) cy.get('[data-testid="hostname"] input').clear().type(hostname);
     if (username) cy.get('[data-testid="username"] input').clear().type(username);
     if (password) cy.get('[data-testid="password"] input').clear().type(password, { log: false });
     if (databaseType !== "Sqlite3" && database) cy.get('[data-testid="database"] input').clear().type(database);
-    if (databaseType === "Sqlite3" && database) cy.get('[data-testid="database"]').click().get(`[value="${database}"]`).click();
+    if (databaseType === "Sqlite3" && database) cy.get('[data-testid="database"]').click().get(`[data-value="${database}"]`).click();
 
     if (Object.keys(advanced).length > 0) {
         cy.get('[data-testid="advanced-button"]').click();
@@ -51,11 +51,11 @@ Cypress.Commands.add('setAdvanced', (type, value) => {
 });
 
 Cypress.Commands.add("selectDatabase", (value) => {
-    cy.get('[data-testid="sidebar-database"]').click().get(`[value="${value}"]`).click();
+    cy.get('[data-testid="sidebar-database"]').click().get(`[data-value="${value}"]`).click();
 });
 
 Cypress.Commands.add("selectSchema", (value) => {
-    cy.get('[data-testid="sidebar-schema"]').click().get(`[value="${value}"]`).click();
+    cy.get('[data-testid="sidebar-schema"]').click().get(`[data-value="${value}"]`).click();
 });
 
 Cypress.Commands.add('explore', (tableName) => {
@@ -72,7 +72,10 @@ Cypress.Commands.add('getExploreFields', () => {
 Cypress.Commands.add('data', (tableName) => {
     return cy.getTables().then(elements => {
         const index = elements.findIndex(name => name === tableName);
-        return cy.get('[data-testid="data-button"]').eq(index).click();
+        return cy.get('[data-testid="data-button"]').eq(index).click().then(() => {
+            // Wait for the table to be present after clicking data button
+            return cy.get('[data-testid="table"]', { timeout: 10000 }).should('exist');
+        });
     });
 });
 
@@ -81,16 +84,33 @@ Cypress.Commands.add('sortBy', (index) => {
 });
 
 Cypress.Commands.add('getTableData', () => {
-    return cy.get('[data-testid="table"]').then($table => {
-        const columns = Cypress.$.makeArray($table.find('[data-testid="table-header"]'))
-            .map(el => el.innerText.trim());
+    // First wait for the table to exist
+    return cy.get('[data-testid="table"]', { timeout: 10000 }).should('exist').then(() => {
+        // Wait for at least one table row to be present with proper scoping
+        return cy.get('[data-testid="table"] [data-testid="table-row"]', { timeout: 10000 })
+            .should('have.length.greaterThan', 0)
+            .then(() => {
+                // Additional wait to ensure data is fully rendered
+                cy.wait(100);
+                
+                // Now get the table and extract data
+                return cy.get('[data-testid="table"]').then($table => {
+                    const columns = Cypress.$.makeArray($table.find('[data-testid="table-header"]'))
+                        .map(el => el.innerText.trim());
 
-        const rows = Cypress.$.makeArray($table.find('[data-testid="table-row"]')).map(row => {
-            return Cypress.$.makeArray(Cypress.$(row).find('[data-testid="table-row-data"] .cell-data'))
-                .map(cell => cell.innerText.trim());
-        });
+                    const rows = Cypress.$.makeArray($table.find('[data-testid="table-row"]')).map(row => {
+                        const cells = Cypress.$(row).find('[data-testid="table-row-data"] .cell-data');
+                        if (cells.length === 0) {
+                            // Fallback: try without .cell-data class
+                            return Cypress.$.makeArray(Cypress.$(row).find('[data-testid="table-row-data"]'))
+                                .map(cell => cell.innerText.trim());
+                        }
+                        return Cypress.$.makeArray(cells).map(cell => cell.innerText.trim());
+                    });
 
-        return { columns, rows };
+                    return { columns, rows };
+                });
+            });
     });
 });
 
@@ -99,14 +119,17 @@ Cypress.Commands.add("setTablePageSize", (pageSize) => {
 });
 
 Cypress.Commands.add("submitTable", (pageSize) => {
-    cy.get('[data-testid="submit-button"]').click();
+    cy.get('[data-testid="submit-button"]').click().then(() => {
+        // Wait a bit for the request to complete
+        cy.wait(500);
+    });
 });
 
 Cypress.Commands.add("whereTable", (fieldArray) => {
     cy.get('[data-testid="where-button"]').click();
     for (const [key, operator, value] of fieldArray) {
-        cy.get('[data-testid="field-key"]').click().get(`[value="${key}"]`).click();
-        cy.get('[data-testid="field-operator"]').click().get(`[value="${operator}"]`).click();
+        cy.get('[data-testid="field-key"]').click().get(`[data-value="${key}"]`).click();
+        cy.get('[data-testid="field-operator"]').click().get(`[data-value="${operator}"]`).click();
         cy.get('[data-testid="field-value"]').clear().type(value);
         cy.get('[data-testid="add-button"]').click();
     }

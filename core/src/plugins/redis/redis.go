@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 
 	"github.com/clidey/whodb/core/graph/model"
@@ -149,6 +150,19 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 				{Key: "Type", Value: "set"},
 				{Key: "Size", Value: fmt.Sprintf("%d", size)},
 			}
+		case "zset":
+			sizeCmd := pipe.ZCard(ctx, key)
+			if _, err := pipe.Exec(ctx); err != nil {
+				return nil, err
+			}
+			size, err := sizeCmd.Result()
+			if err != nil {
+				return nil, err
+			}
+			attributes = []engine.Record{
+				{Key: "Type", Value: "zset"},
+				{Key: "Size", Value: fmt.Sprintf("%d", size)},
+			}
 		default:
 			attributes = []engine.Record{
 				{Key: "Type", Value: "unknown"},
@@ -206,6 +220,10 @@ func (p *RedisPlugin) GetRows(
 				rows = append(rows, []string{field, value})
 			}
 		}
+		// Sort rows by field name (first column) alphabetically
+		sort.Slice(rows, func(i, j int) bool {
+			return rows[i][0] < rows[j][0]
+		})
 		result = &engine.GetRowsResult{
 			Columns: []engine.Column{{Name: "field", Type: "string"}, {Name: "value", Type: "string"}},
 			Rows:    rows,
@@ -238,6 +256,19 @@ func (p *RedisPlugin) GetRows(
 			Columns:       []engine.Column{{Name: "index", Type: "string"}, {Name: "value", Type: "string"}},
 			Rows:          rows,
 			DisableUpdate: true,
+		}
+	case "zset":
+		zsetValues, err := client.ZRangeWithScores(ctx, storageUnit, 0, -1).Result()
+		if err != nil {
+			return nil, err
+		}
+		rows := [][]string{}
+		for i, member := range zsetValues {
+			rows = append(rows, []string{strconv.Itoa(i), member.Member.(string), fmt.Sprintf("%.2f", member.Score)})
+		}
+		result = &engine.GetRowsResult{
+			Columns: []engine.Column{{Name: "index", Type: "string"}, {Name: "member", Type: "string"}, {Name: "score", Type: "string"}},
+			Rows:    rows,
 		}
 	default:
 		return nil, errors.New("unsupported Redis data type")
