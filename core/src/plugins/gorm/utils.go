@@ -110,7 +110,16 @@ func (p *GormPlugin) GetPrimaryKeyColumns(db *gorm.DB, schema string, tableName 
 func (p *GormPlugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[string]string, error) {
 	columnTypes := make(map[string]string)
 	query := p.GetColTypeQuery()
-	rows, err := db.Raw(query, schema, tableName).Rows()
+	
+	var rows *sql.Rows
+	var err error
+	
+	if p.Type == engine.DatabaseType_Sqlite3 {
+		rows, err = db.Raw(query, tableName).Rows()
+	} else {
+		rows, err = db.Raw(query, schema, tableName).Rows()
+	}
+	
 	if err != nil {
 		return nil, err
 	}

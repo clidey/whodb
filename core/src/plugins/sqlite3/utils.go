@@ -65,10 +65,7 @@ func (p *Sqlite3Plugin) GetColTypeQuery() string {
 	return `
 		SELECT p.name AS column_name,
 			   p.type AS data_type
-		FROM sqlite_master m,
-			 pragma_table_info(m.name) p
-		WHERE m.type = 'table'
-		  AND m.name NOT LIKE 'sqlite_%';
+		FROM pragma_table_info(?) p;
 	`
 }
 
