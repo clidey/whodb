@@ -60,7 +60,7 @@ func (p *GormPlugin) EscapeIdentifier(identifier string) string {
 func (p *GormPlugin) ConvertRecordValuesToMap(values []engine.Record) (map[string]interface{}, error) {
 	data := make(map[string]interface{}, len(values))
 	for _, value := range values {
-		val, err := p.ConvertStringValueDuringMap(value.Value, value.Extra["Type"])
+		val, err := p.GormPluginFunctions.ConvertStringValueDuringMap(value.Value, value.Extra["Type"])
 		if err != nil {
 			return nil, err
 		}
