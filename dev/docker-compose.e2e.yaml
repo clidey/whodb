@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-version: "3.8"
-
 services:
   e2e_sqlite3:
     image: nouchka/sqlite3:latest
@@ -32,7 +30,7 @@ services:
     image: postgres
     environment:
       POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: jio53$*(@nfe)
       PGDATA: /var/lib/postgresql/data
       POSTGRES_DB: test_db
     volumes:
@@ -121,6 +119,69 @@ services:
     networks:
       - db
 
+  e2e_redis:
+    image: redis:latest
+    container_name: e2e_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - e2e_redis:/data
+    networks:
+      - db
+    command: redis-server --requirepass password
+
+  redis-init:
+    image: redis:latest
+    depends_on:
+      - e2e_redis
+    volumes:
+      - ./sample-data/redis/init.sh:/init.sh
+    entrypoint: >
+      sh -c "
+        chmod +x /init.sh &&
+        /init.sh
+      "
+    networks:
+      - db
+
+# todo: this version is old, need to look into upgrading to a newer
+  e2e_elasticsearch:
+    image: elasticsearch:8.11.1
+    container_name: e2e_elasticsearch
+    platform: linux/amd64
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - bootstrap.memory_lock=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - e2e_elasticsearch:/usr/share/elasticsearch/data
+    networks:
+      - db
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  elasticsearch-init:
+    image: curlimages/curl:latest
+    depends_on:
+      e2e_elasticsearch:
+        condition: service_healthy
+    volumes:
+      - ./sample-data/elasticsearch/upload.sh:/upload.sh:ro
+    entrypoint: ["/bin/sh", "-c", "sh /upload.sh"]
+    networks:
+      - db
+
 networks:
   db:
     driver: bridge
@@ -132,4 +193,5 @@ volumes:
   e2e_mariadb:
   e2e_mongo:
   e2e_clickhouse:
+  e2e_redis:
   e2e_elasticsearch:

@@ -21,7 +21,7 @@ const dbPassword = 'password';
 describe('MongoDB E2E test', () => {
   it('should login correctly', () => {
     // login and setup
-    cy.login('MongoDB', 'localhost', 'user', 'password');
+    cy.login('MongoDB', dbHost, dbUser, dbPassword);
     cy.selectSchema("test_db");
     
     // get all çollections

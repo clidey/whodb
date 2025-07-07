@@ -21,7 +21,7 @@ const dbPassword = 'password';
 describe('Clickhouse E2E test', () => {
   it('should login correctly', () => {
     // login and setup
-    cy.login('ClickHouse', 'localhost', 'user', 'password', 'test_db');
+    cy.login('ClickHouse', dbHost, dbUser, dbPassword, 'test_db');
     cy.selectDatabase("test_db");
     
     // get all tables
