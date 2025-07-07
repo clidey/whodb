@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-const dbHost = 'localhost';
-const dbUser = 'user';
-const dbPassword = 'password';
-
 describe('Sqlite3 E2E test', () => {
   it('should login correctly', () => {
     // login and setup

@@ -21,7 +21,7 @@ const dbPassword = 'password';
 describe('MySQL E2E test', () => {
   it('should login correctly', () => {
     // login and setup
-    cy.login('MySQL', 'localhost', 'user', 'password', 'test_db');
+    cy.login('MySQL', dbHost, dbUser, dbPassword, 'test_db');
     cy.selectSchema("test_db");
     
     // get all tables

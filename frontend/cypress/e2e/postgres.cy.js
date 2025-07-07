@@ -16,12 +16,12 @@
 
 const dbHost = 'localhost';
 const dbUser = 'user';
-const dbPassword = 'password';
+const dbPassword = 'jio53$*(@nfe)';
 
 describe('Postgres E2E test', () => {
   it('should login correctly', () => {
     // login and setup
-    cy.login('Postgres', 'localhost', 'user', 'password', 'postgres');
+    cy.login('Postgres', dbHost, dbUser, dbPassword, 'postgres');
     cy.selectDatabase("test_db");
     cy.selectSchema("test_schema");
     

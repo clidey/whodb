@@ -19,6 +19,7 @@ package gorm_plugin
 import (
 	"errors"
 	"fmt"
+
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
@@ -74,9 +75,17 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 
 		var result *gorm.DB
 		if len(conditions) == 0 {
-			result = db.Table(tableName).Where(unchangedValues).Updates(convertedValues)
+			if p.Type == engine.DatabaseType_MySQL || p.Type == engine.DatabaseType_MariaDB {
+				result = p.executeUpdateWithWhereMap(db, tableName, unchangedValues, convertedValues)
+			} else {
+				result = db.Table(tableName).Where(unchangedValues).Updates(convertedValues)
+			}
 		} else {
-			result = db.Table(tableName).Where(conditions, nil).Updates(convertedValues)
+			if p.Type == engine.DatabaseType_MySQL || p.Type == engine.DatabaseType_MariaDB {
+				result = p.executeUpdateWithWhereMap(db, tableName, conditions, convertedValues)
+			} else {
+				result = db.Table(tableName).Where(conditions, nil).Updates(convertedValues)
+			}
 		}
 
 		if result.Error != nil {
@@ -90,4 +99,18 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 
 		return true, nil
 	})
+}
+
+// weird bug for mysql/mariadb driver where the where clause is not properly escaped, so have to do it manually below
+// should be fine as it still uses the query builder
+// todo: need to investigate underlying driver to see what's going on
+func (p *GormPlugin) executeUpdateWithWhereMap(db *gorm.DB, tableName string, whereConditions map[string]interface{}, updateValues map[string]interface{}) *gorm.DB {
+	query := db.Table(tableName)
+
+	for column, value := range whereConditions {
+		escapedColumn := p.EscapeIdentifier(column)
+		query = query.Where(fmt.Sprintf("%s = ?", escapedColumn), value)
+	}
+
+	return query.Updates(updateValues)
 }

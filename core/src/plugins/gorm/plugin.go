@@ -180,7 +180,7 @@ func (p *GormPlugin) applyWhereConditions(query *gorm.DB, condition *model.Where
 			if err != nil {
 				return nil, err
 			}
-			query = query.Where(fmt.Sprintf("%s = ?", condition.Atomic.Key), value)
+			query = query.Where(fmt.Sprintf("%s = ?", p.EscapeIdentifier(condition.Atomic.Key)), value)
 		}
 
 	case model.WhereConditionTypeAnd:
