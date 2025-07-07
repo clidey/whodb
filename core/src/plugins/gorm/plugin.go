@@ -176,7 +176,7 @@ func (p *GormPlugin) applyWhereConditions(query *gorm.DB, condition *model.Where
 	switch condition.Type {
 	case model.WhereConditionTypeAtomic:
 		if condition.Atomic != nil {
-			value, err := p.ConvertStringValue(condition.Atomic.Value, condition.Atomic.ColumnType)
+			value, err := p.GormPluginFunctions.ConvertStringValue(condition.Atomic.Value, condition.Atomic.ColumnType)
 			if err != nil {
 				return nil, err
 			}

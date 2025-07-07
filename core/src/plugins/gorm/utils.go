@@ -326,7 +326,7 @@ func (p *GormPlugin) convertArrayValue(value string, columnType string) (interfa
 			continue
 		}
 
-		converted, err := p.ConvertStringValue(element, elementType)
+		converted, err := p.GormPluginFunctions.ConvertStringValue(element, elementType)
 		if err != nil {
 			return nil, fmt.Errorf("converting array element: %w", err)
 		}
