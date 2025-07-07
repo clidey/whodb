@@ -16,10 +16,12 @@ package sqlite3
 
 import (
 	"database/sql"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
@@ -131,6 +133,92 @@ func (p *Sqlite3Plugin) executeRawSQL(config *engine.PluginConfig, query string,
 
 func (p *Sqlite3Plugin) RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error) {
 	return p.executeRawSQL(config, query)
+}
+
+// ConvertRawToRows converts raw SQL rows to structured result with custom datetime handling
+func (p *Sqlite3Plugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, error) {
+	columns, err := rows.Columns()
+	if err != nil {
+		return nil, err
+	}
+
+	columnTypes, err := rows.ColumnTypes()
+	if err != nil {
+		return nil, err
+	}
+
+	// Create a map for faster column type lookup
+	typeMap := make(map[string]*sql.ColumnType, len(columnTypes))
+	for _, colType := range columnTypes {
+		typeMap[colType.Name()] = colType
+	}
+
+	result := &engine.GetRowsResult{
+		Columns: make([]engine.Column, 0, len(columns)),
+		Rows:    make([][]string, 0, 100),
+	}
+
+	// Build columns with type information
+	for _, col := range columns {
+		if colType, exists := typeMap[col]; exists {
+			colTypeName := colType.DatabaseTypeName()
+			result.Columns = append(result.Columns, engine.Column{Name: col, Type: colTypeName})
+		}
+	}
+
+	for rows.Next() {
+		columnPointers := make([]interface{}, len(columns))
+		row := make([]string, len(columns))
+
+		for i, col := range columns {
+			colType := typeMap[col]
+			typeName := strings.ToUpper(colType.DatabaseTypeName())
+
+			// Use custom DateTimeString type for datetime columns to prevent parsing
+			switch typeName {
+			case "DATE", "DATETIME", "TIMESTAMP":
+				columnPointers[i] = new(DateTimeString)
+			case "BLOB":
+				columnPointers[i] = new(sql.RawBytes)
+			default:
+				columnPointers[i] = new(sql.NullString)
+			}
+		}
+
+		if err := rows.Scan(columnPointers...); err != nil {
+			return nil, err
+		}
+
+		for i, colPtr := range columnPointers {
+			colType := typeMap[columns[i]]
+			typeName := strings.ToUpper(colType.DatabaseTypeName())
+
+			switch typeName {
+			case "DATE", "DATETIME", "TIMESTAMP":
+				// Get the string value from our custom type
+				dateStr := colPtr.(*DateTimeString)
+				row[i] = string(*dateStr)
+			case "BLOB":
+				rawBytes := colPtr.(*sql.RawBytes)
+				if rawBytes == nil || len(*rawBytes) == 0 {
+					row[i] = ""
+				} else {
+					row[i] = "0x" + hex.EncodeToString(*rawBytes)
+				}
+			default:
+				val := colPtr.(*sql.NullString)
+				if val.Valid {
+					row[i] = val.String
+				} else {
+					row[i] = ""
+				}
+			}
+		}
+
+		result.Rows = append(result.Rows, row)
+	}
+
+	return result, nil
 }
 
 func NewSqlite3Plugin() *engine.Plugin {

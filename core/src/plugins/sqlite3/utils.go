@@ -17,36 +17,56 @@
 package sqlite3
 
 import (
+	"database/sql/driver"
+	"fmt"
 	"strings"
-	
-	mapset "github.com/deckarep/golang-set/v2"
 )
 
-var (
-	// SQLite datetime-related types that should be preserved as strings
-	dateTimeTypes = mapset.NewSet("DATE", "DATETIME", "TIMESTAMP")
-)
+// DateTimeString is a custom type that stores datetime values as plain strings
+// without any parsing or formatting. This is needed because SQLite stores
+// datetime values as TEXT and we want to preserve the exact format.
+type DateTimeString string
 
-// ConvertStringValueDuringMap preserves datetime strings since SQLite stores them as TEXT
-func (p *Sqlite3Plugin) ConvertStringValueDuringMap(value, columnType string) (interface{}, error) {
-	// For consistency with ConvertStringValue, we preserve datetime strings
-	// and delegate to ConvertStringValue for all type handling
-	return p.ConvertStringValue(value, columnType)
+// Scan implements sql.Scanner interface to read datetime values as strings
+func (ds *DateTimeString) Scan(value interface{}) error {
+	if value == nil {
+		*ds = ""
+		return nil
+	}
+
+	switch v := value.(type) {
+	case string:
+		*ds = DateTimeString(v)
+	case []byte:
+		*ds = DateTimeString(v)
+	default:
+		return fmt.Errorf("cannot scan type %T into DateTimeString", value)
+	}
+	return nil
 }
 
-// ConvertStringValue overrides the base implementation to preserve datetime strings
-// Since SQLite stores DATETIME as TEXT, we should not parse and reformat datetime values
+// Value implements driver.Valuer interface to write datetime values as strings
+func (ds DateTimeString) Value() (driver.Value, error) {
+	return string(ds), nil
+}
+
+func (p *Sqlite3Plugin) ConvertStringValueDuringMap(value, columnType string) (interface{}, error) {
+	return value, nil
+}
+
+// ConvertStringValue overrides the base GORM implementation to preserve datetime strings
 func (p *Sqlite3Plugin) ConvertStringValue(value, columnType string) (interface{}, error) {
 	// Normalize column type to uppercase for comparison
 	normalizedType := strings.ToUpper(columnType)
 	
 	// For datetime-related types, preserve the original string value
-	if dateTimeTypes.Contains(normalizedType) {
+	switch normalizedType {
+	case "DATE", "DATETIME", "TIMESTAMP":
 		return value, nil
+	default:
+		// For non-datetime types, delegate to the base GORM implementation
+		return p.GormPlugin.ConvertStringValue(value, columnType)
 	}
-	
-	// For all other types, delegate to the base GORM implementation
-	return p.GormPlugin.ConvertStringValue(value, columnType)
 }
 
 func (p *Sqlite3Plugin) GetPrimaryKeyColQuery() string {
@@ -65,7 +85,10 @@ func (p *Sqlite3Plugin) GetColTypeQuery() string {
 	return `
 		SELECT p.name AS column_name,
 			   p.type AS data_type
-		FROM pragma_table_info(?) p;
+		FROM sqlite_master m,
+			 pragma_table_info(m.name) p
+		WHERE m.type = 'table'
+		  AND m.name NOT LIKE 'sqlite_%';
 	`
 }
 
