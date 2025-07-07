@@ -28,6 +28,7 @@ import (
 	mapset "github.com/deckarep/golang-set/v2"
 
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/model"
 	"gorm.io/gorm"
 )
 
@@ -219,6 +220,126 @@ func (p *Sqlite3Plugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult,
 	}
 
 	return result, nil
+}
+
+// GetRows overrides the base implementation to handle datetime columns specially
+func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, schema string, storageUnit string, where *model.WhereCondition, pageSize int, pageOffset int) (*engine.GetRowsResult, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
+		// First, get column information to identify datetime columns
+		var columnInfo []struct {
+			Name string `gorm:"column:name"`
+			Type string `gorm:"column:type"`
+		}
+		
+		colQuery := `SELECT name, type FROM pragma_table_info(?)`
+		if err := db.Raw(colQuery, storageUnit).Scan(&columnInfo).Error; err != nil {
+			// Fall back to base implementation if we can't get column info
+			return p.GormPlugin.GetRows(config, schema, storageUnit, where, pageSize, pageOffset)
+		}
+		
+		// Build a SELECT query that casts datetime columns as TEXT
+		selectParts := make([]string, 0, len(columnInfo))
+		for _, col := range columnInfo {
+			colType := strings.ToUpper(col.Type)
+			escapedName := p.EscapeIdentifier(col.Name)
+			
+			// For datetime columns, explicitly cast to TEXT to prevent driver parsing
+			if colType == "DATE" || colType == "DATETIME" || colType == "TIMESTAMP" {
+				selectParts = append(selectParts, fmt.Sprintf("CAST(%s AS TEXT) AS %s", escapedName, escapedName))
+			} else {
+				selectParts = append(selectParts, escapedName)
+			}
+		}
+		
+		// If no columns found, fall back to base implementation
+		if len(selectParts) == 0 {
+			return p.GormPlugin.GetRows(config, schema, storageUnit, where, pageSize, pageOffset)
+		}
+		
+		// Build the full query
+		escapedTable := p.EscapeIdentifier(storageUnit)
+		selectClause := strings.Join(selectParts, ", ")
+		query := fmt.Sprintf("SELECT %s FROM %s", selectClause, escapedTable)
+		
+		// Apply WHERE conditions if any
+		var args []interface{}
+		if where != nil {
+			whereClause, whereArgs, err := p.buildWhereClause(where)
+			if err != nil {
+				return nil, err
+			}
+			if whereClause != "" {
+				query += " WHERE " + whereClause
+				args = whereArgs
+			}
+		}
+		
+		// Apply pagination
+		query += fmt.Sprintf(" LIMIT %d OFFSET %d", pageSize, pageOffset)
+		
+		// Execute the query
+		rows, err := db.Raw(query, args...).Rows()
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+		
+		return p.ConvertRawToRows(rows)
+	})
+}
+
+// buildWhereClause converts WhereCondition to SQL WHERE clause
+func (p *Sqlite3Plugin) buildWhereClause(condition *model.WhereCondition) (string, []interface{}, error) {
+	if condition == nil {
+		return "", nil, nil
+	}
+	
+	var clauses []string
+	var args []interface{}
+	
+	switch condition.Type {
+	case model.WhereConditionTypeAtomic:
+		if condition.Atomic != nil {
+			value, err := p.ConvertStringValue(condition.Atomic.Value, condition.Atomic.ColumnType)
+			if err != nil {
+				return "", nil, err
+			}
+			clauses = append(clauses, fmt.Sprintf("%s = ?", p.EscapeIdentifier(condition.Atomic.Key)))
+			args = append(args, value)
+		}
+		
+	case model.WhereConditionTypeAnd:
+		if condition.And != nil {
+			for _, child := range condition.And.Children {
+				childClause, childArgs, err := p.buildWhereClause(child)
+				if err != nil {
+					return "", nil, err
+				}
+				if childClause != "" {
+					clauses = append(clauses, "("+childClause+")")
+					args = append(args, childArgs...)
+				}
+			}
+			return strings.Join(clauses, " AND "), args, nil
+		}
+		
+	case model.WhereConditionTypeOr:
+		if condition.Or != nil {
+			for _, child := range condition.Or.Children {
+				childClause, childArgs, err := p.buildWhereClause(child)
+				if err != nil {
+					return "", nil, err
+				}
+				if childClause != "" {
+					clauses = append(clauses, "("+childClause+")")
+					args = append(args, childArgs...)
+				}
+			}
+			return strings.Join(clauses, " OR "), args, nil
+		}
+	}
+	
+	return strings.Join(clauses, " AND "), args, nil
 }
 
 func NewSqlite3Plugin() *engine.Plugin {

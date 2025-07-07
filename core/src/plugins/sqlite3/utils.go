@@ -39,8 +39,15 @@ func (ds *DateTimeString) Scan(value interface{}) error {
 		*ds = DateTimeString(v)
 	case []byte:
 		*ds = DateTimeString(v)
+	case driver.Value:
+		// Handle case where the driver returns a driver.Value
+		str := fmt.Sprintf("%v", v)
+		*ds = DateTimeString(str)
 	default:
-		return fmt.Errorf("cannot scan type %T into DateTimeString", value)
+		// For any other type (including time.Time), convert to string
+		// This handles the case where the SQLite driver has already parsed the datetime
+		str := fmt.Sprintf("%v", value)
+		*ds = DateTimeString(str)
 	}
 	return nil
 }
