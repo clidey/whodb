@@ -134,13 +134,19 @@ func (p *GormPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, error
 
 func (p *GormPlugin) GetRows(config *engine.PluginConfig, schema string, storageUnit string, where *model.WhereCondition, pageSize int, pageOffset int) (*engine.GetRowsResult, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
+		// Get column types before escaping identifiers
+		var columnTypes map[string]string
+		if where != nil {
+			columnTypes, _ = p.GetColumnTypes(db, schema, storageUnit)
+		}
+
 		schema = p.EscapeIdentifier(schema)
 		storageUnit = p.EscapeIdentifier(storageUnit)
 		fullTableName := p.FormTableName(schema, storageUnit)
 
 		query := db.Table(fullTableName)
 
-		query, err := p.applyWhereConditions(query, where)
+		query, err := p.applyWhereConditionsWithTypes(query, where, columnTypes)
 		if err != nil {
 			return nil, err
 		}
@@ -169,6 +175,10 @@ func (p *GormPlugin) GetRows(config *engine.PluginConfig, schema string, storage
 }
 
 func (p *GormPlugin) applyWhereConditions(query *gorm.DB, condition *model.WhereCondition) (*gorm.DB, error) {
+	return p.applyWhereConditionsWithTypes(query, condition, nil)
+}
+
+func (p *GormPlugin) applyWhereConditionsWithTypes(query *gorm.DB, condition *model.WhereCondition, columnTypes map[string]string) (*gorm.DB, error) {
 	if condition == nil {
 		return query, nil
 	}
@@ -176,7 +186,15 @@ func (p *GormPlugin) applyWhereConditions(query *gorm.DB, condition *model.Where
 	switch condition.Type {
 	case model.WhereConditionTypeAtomic:
 		if condition.Atomic != nil {
-			value, err := p.GormPluginFunctions.ConvertStringValue(condition.Atomic.Value, condition.Atomic.ColumnType)
+			// Use actual column type from database if available
+			columnType := condition.Atomic.ColumnType
+			if columnTypes != nil {
+				if dbType, exists := columnTypes[condition.Atomic.Key]; exists && dbType != "" {
+					columnType = dbType
+				}
+			}
+			
+			value, err := p.GormPluginFunctions.ConvertStringValue(condition.Atomic.Value, columnType)
 			if err != nil {
 				return nil, err
 			}
@@ -187,7 +205,7 @@ func (p *GormPlugin) applyWhereConditions(query *gorm.DB, condition *model.Where
 		if condition.And != nil {
 			for _, child := range condition.And.Children {
 				var err error
-				query, err = p.applyWhereConditions(query, child)
+				query, err = p.applyWhereConditionsWithTypes(query, child, columnTypes)
 				if err != nil {
 					return nil, err
 				}
@@ -198,7 +216,7 @@ func (p *GormPlugin) applyWhereConditions(query *gorm.DB, condition *model.Where
 		if condition.Or != nil {
 			orQueries := query
 			for _, child := range condition.Or.Children {
-				childQuery, err := p.applyWhereConditions(query, child)
+				childQuery, err := p.applyWhereConditionsWithTypes(query, child, columnTypes)
 				if err != nil {
 					return nil, err
 				}
