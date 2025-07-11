@@ -28,7 +28,6 @@ import (
 	mapset "github.com/deckarep/golang-set/v2"
 
 	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/model"
 	"gorm.io/gorm"
 )
 
@@ -209,18 +208,18 @@ func (p *Sqlite3Plugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult,
 			colType := typeMap[columns[i]]
 			typeName := strings.ToUpper(colType.DatabaseTypeName())
 
-			if typeName == "DATE" || typeName == "DATETIME" || typeName == "TIMESTAMP" {
-				// Get the string value from our custom type
+			switch typeName {
+			case "DATE", "DATETIME", "TIMESTAMP":
 				dateStr := colPtr.(*DateTimeString)
 				row[i] = string(*dateStr)
-			} else if typeName == "BLOB" {
+			case "BLOB":
 				rawBytes := colPtr.(*sql.RawBytes)
 				if rawBytes == nil || len(*rawBytes) == 0 {
 					row[i] = ""
 				} else {
 					row[i] = "0x" + hex.EncodeToString(*rawBytes)
 				}
-			} else {
+			default:
 				val := colPtr.(*sql.NullString)
 				if val.Valid {
 					row[i] = val.String
@@ -235,7 +234,6 @@ func (p *Sqlite3Plugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult,
 
 	return result, nil
 }
-
 
 func NewSqlite3Plugin() *engine.Plugin {
 	plugin := &Sqlite3Plugin{}

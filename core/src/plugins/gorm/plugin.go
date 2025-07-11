@@ -118,7 +118,7 @@ func (p *GormPlugin) GetTableSchema(db *gorm.DB, schema string) (map[string][]en
 }
 
 func (p *GormPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, error) {
-	return plugins.WithConnection[[]string](config, p.DB, func(db *gorm.DB) ([]string, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]string, error) {
 		var schemas []interface{}
 		query := p.GetAllSchemasQuery()
 		if err := db.Raw(query).Scan(&schemas).Error; err != nil {
@@ -159,7 +159,7 @@ func (p *GormPlugin) GetRows(config *engine.PluginConfig, schema string, storage
 		}
 		defer rows.Close()
 
-		result, err := p.ConvertRawToRows(rows)
+		result, err := p.GormPluginFunctions.ConvertRawToRows(rows)
 		if err != nil {
 			return nil, err
 		}
@@ -193,12 +193,12 @@ func (p *GormPlugin) applyWhereConditionsWithTypes(query *gorm.DB, condition *mo
 					columnType = dbType
 				}
 			}
-			
+
 			value, err := p.GormPluginFunctions.ConvertStringValue(condition.Atomic.Value, columnType)
 			if err != nil {
 				return nil, err
 			}
-			query = query.Where(fmt.Sprintf("%s = ?", p.EscapeIdentifier(condition.Atomic.Key)), value)
+			query = query.Where(fmt.Sprintf("%s %s ?", p.EscapeIdentifier(condition.Atomic.Key), condition.Atomic.Operator), value)
 		}
 
 	case model.WhereConditionTypeAnd:
