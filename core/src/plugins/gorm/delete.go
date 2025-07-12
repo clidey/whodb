@@ -45,7 +45,7 @@ func (p *GormPlugin) DeleteRow(config *engine.PluginConfig, schema string, stora
 				return false, fmt.Errorf("column '%s' does not exist in table %s", column, storageUnit)
 			}
 
-			convertedValue, err := p.ConvertStringValue(strValue, columnType)
+			convertedValue, err := p.GormPluginFunctions.ConvertStringValue(strValue, columnType)
 			if err != nil {
 				convertedValue = strValue // use string value if conversion fails?
 			}

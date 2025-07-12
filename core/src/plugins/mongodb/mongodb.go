@@ -26,6 +26,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+var (
+	supportedOperators = map[string]string{
+		"eq": "eq", "ne": "ne", "gt": "gt", "gte": "gte", "lt": "lt", "lte": "lte", "in": "in", "nin": "nin", "and": "and", "or": "or", "not": "not", "nor": "nor", "exists": "exists", "type": "type", "regex": "regex", "expr": "expr", "mod": "mod", "all": "all", "elemMatch": "elemMatch", "size": "size", "bitsAllClear": "bitsAllClear", "bitsAllSet": "bitsAllSet", "bitsAnyClear": "bitsAnyClear", "bitsAnySet": "bitsAnySet", "geoIntersects": "geoIntersects", "geoWithin": "geoWithin", "near": "near", "nearSphere": "nearSphere",
+	}
+)
+
 type MongoDBPlugin struct{}
 
 func (p *MongoDBPlugin) IsAvailable(config *engine.PluginConfig) bool {
@@ -235,6 +241,10 @@ func (p *MongoDBPlugin) RawExecute(config *engine.PluginConfig, query string) (*
 
 func (p *MongoDBPlugin) Chat(config *engine.PluginConfig, schema string, model string, previousConversation string, query string) ([]*engine.ChatMessage, error) {
 	return nil, errors.ErrUnsupported
+}
+
+func (p *MongoDBPlugin) GetSupportedOperators() map[string]string {
+	return supportedOperators
 }
 
 func NewMongoDBPlugin() *engine.Plugin {

@@ -48,9 +48,12 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 				return false, fmt.Errorf("column '%s' does not exist in table %s", column, storageUnit)
 			}
 
-			convertedValue, err := p.ConvertStringValue(strValue, columnType)
+			convertedValue, err := p.GormPluginFunctions.ConvertStringValue(strValue, columnType)
 			if err != nil {
-				convertedValue = strValue // use the original value if conversion fails?
+				// For SQLite, preserve the original string value when conversion fails
+				// This ensures invalid timestamps like "2025-07-07T20f" are stored as-is
+				// rather than being converted to zero dates
+				convertedValue = strValue
 			}
 
 			targetColumn := column

@@ -60,7 +60,7 @@ func (p *GormPlugin) EscapeIdentifier(identifier string) string {
 func (p *GormPlugin) ConvertRecordValuesToMap(values []engine.Record) (map[string]interface{}, error) {
 	data := make(map[string]interface{}, len(values))
 	for _, value := range values {
-		val, err := p.ConvertStringValueDuringMap(value.Value, value.Extra["Type"])
+		val, err := p.GormPluginFunctions.ConvertStringValueDuringMap(value.Value, value.Extra["Type"])
 		if err != nil {
 			return nil, err
 		}
@@ -110,7 +110,16 @@ func (p *GormPlugin) GetPrimaryKeyColumns(db *gorm.DB, schema string, tableName 
 func (p *GormPlugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[string]string, error) {
 	columnTypes := make(map[string]string)
 	query := p.GetColTypeQuery()
-	rows, err := db.Raw(query, schema, tableName).Rows()
+	
+	var rows *sql.Rows
+	var err error
+	
+	if p.Type == engine.DatabaseType_Sqlite3 {
+		rows, err = db.Raw(query, tableName).Rows()
+	} else {
+		rows, err = db.Raw(query, schema, tableName).Rows()
+	}
+	
 	if err != nil {
 		return nil, err
 	}
@@ -326,7 +335,7 @@ func (p *GormPlugin) convertArrayValue(value string, columnType string) (interfa
 			continue
 		}
 
-		converted, err := p.ConvertStringValue(element, elementType)
+		converted, err := p.GormPluginFunctions.ConvertStringValue(element, elementType)
 		if err != nil {
 			return nil, fmt.Errorf("converting array element: %w", err)
 		}

@@ -16,10 +16,12 @@ package sqlite3
 
 import (
 	"database/sql"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
@@ -34,6 +36,11 @@ var (
 		"NULL", "INTEGER", "REAL", "TEXT", "BLOB",
 		"NUMERIC", "BOOLEAN", "DATE", "DATETIME",
 	)
+
+	supportedOperators = map[string]string{
+		"=": "=", ">=": ">=", ">": ">", "<=": "<=", "<": "<", "<>": "<>", "!=": "!=", "!>": "!>", "!<": "!<", "BETWEEN": "BETWEEN", "NOT BETWEEN": "NOT BETWEEN",
+		"LIKE": "LIKE", "NOT LIKE": "NOT LIKE", "IN": "IN", "NOT IN": "NOT IN", "IS NULL": "IS NULL", "IS NOT NULL": "IS NOT NULL", "AND": "AND", "OR": "OR", "NOT": "NOT",
+	}
 )
 
 type Sqlite3Plugin struct {
@@ -42,6 +49,10 @@ type Sqlite3Plugin struct {
 
 func (p *Sqlite3Plugin) GetSupportedColumnDataTypes() mapset.Set[string] {
 	return supportedColumnDataTypes
+}
+
+func (p *Sqlite3Plugin) GetSupportedOperators() map[string]string {
+	return supportedOperators
 }
 
 func (p *Sqlite3Plugin) GetAllSchemasQuery() string {
@@ -131,6 +142,107 @@ func (p *Sqlite3Plugin) executeRawSQL(config *engine.PluginConfig, query string,
 
 func (p *Sqlite3Plugin) RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error) {
 	return p.executeRawSQL(config, query)
+}
+
+// ConvertRawToRows overrides the parent to handle SQLite datetime columns specially
+func (p *Sqlite3Plugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, error) {
+	// Use parent implementation but with custom scanning for datetime columns
+	columns, err := rows.Columns()
+	if err != nil {
+		return nil, err
+	}
+
+	columnTypes, err := rows.ColumnTypes()
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if we have any datetime columns
+	hasDateTimeColumns := false
+	for _, colType := range columnTypes {
+		typeName := strings.ToUpper(colType.DatabaseTypeName())
+		if typeName == "DATE" || typeName == "DATETIME" || typeName == "TIMESTAMP" {
+			hasDateTimeColumns = true
+			break
+		}
+	}
+
+	// If no datetime columns, use parent implementation
+	if !hasDateTimeColumns {
+		return p.GormPlugin.ConvertRawToRows(rows)
+	}
+
+	// Custom implementation for datetime preservation
+	typeMap := make(map[string]*sql.ColumnType, len(columnTypes))
+	for _, colType := range columnTypes {
+		typeMap[colType.Name()] = colType
+	}
+
+	result := &engine.GetRowsResult{
+		Columns: make([]engine.Column, 0, len(columns)),
+		Rows:    make([][]string, 0, 100),
+	}
+
+	// Build columns with type information
+	for _, col := range columns {
+		if colType, exists := typeMap[col]; exists {
+			colTypeName := colType.DatabaseTypeName()
+			result.Columns = append(result.Columns, engine.Column{Name: col, Type: colTypeName})
+		}
+	}
+
+	for rows.Next() {
+		columnPointers := make([]interface{}, len(columns))
+		row := make([]string, len(columns))
+
+		for i, col := range columns {
+			colType := typeMap[col]
+			typeName := strings.ToUpper(colType.DatabaseTypeName())
+
+			// Use custom DateTimeString type for datetime columns to prevent parsing
+			switch typeName {
+			case "DATE", "DATETIME", "TIMESTAMP":
+				columnPointers[i] = new(DateTimeString)
+			case "BLOB":
+				columnPointers[i] = new(sql.RawBytes)
+			default:
+				columnPointers[i] = new(sql.NullString)
+			}
+		}
+
+		if err := rows.Scan(columnPointers...); err != nil {
+			return nil, err
+		}
+
+		for i, colPtr := range columnPointers {
+			colType := typeMap[columns[i]]
+			typeName := strings.ToUpper(colType.DatabaseTypeName())
+
+			switch typeName {
+			case "DATE", "DATETIME", "TIMESTAMP":
+				dateStr := colPtr.(*DateTimeString)
+				row[i] = string(*dateStr)
+			case "BLOB":
+				rawBytes := colPtr.(*sql.RawBytes)
+				if rawBytes == nil || len(*rawBytes) == 0 {
+					row[i] = ""
+				} else {
+					row[i] = "0x" + hex.EncodeToString(*rawBytes)
+				}
+			default:
+				val := colPtr.(*sql.NullString)
+				if val.Valid {
+					row[i] = val.String
+				} else {
+					row[i] = ""
+				}
+			}
+		}
+
+		result.Rows = append(result.Rows, row)
+	}
+
+	return result, nil
 }
 
 func NewSqlite3Plugin() *engine.Plugin {
