@@ -224,20 +224,7 @@ func (p *GormPlugin) applyWhereConditionsWithTypes(query *gorm.DB, condition *mo
 			if err != nil {
 				return nil, err
 			}
-
-			// For LIKE operators, escape wildcard characters and add ESCAPE clause
-			upperOp := strings.ToUpper(condition.Atomic.Operator)
-			if upperOp == "LIKE" || upperOp == "NOT LIKE" {
-				// Convert value to string for escaping
-				strValue := fmt.Sprintf("%v", value)
-				// Escape SQL wildcard characters using backslash as escape character
-				strValue = strings.ReplaceAll(strValue, "\\", "\\\\") // Escape backslashes first
-				strValue = strings.ReplaceAll(strValue, "%", "\\%")   // Escape percent
-				strValue = strings.ReplaceAll(strValue, "_", "\\_")   // Escape underscore
-				query = query.Where(fmt.Sprintf("%s %s ? ESCAPE '\\'", p.EscapeIdentifier(condition.Atomic.Key), condition.Atomic.Operator), strValue)
-			} else {
-				query = query.Where(fmt.Sprintf("%s %s ?", p.EscapeIdentifier(condition.Atomic.Key), condition.Atomic.Operator), value)
-			}
+			query = query.Where(fmt.Sprintf("%s %s ?", p.EscapeIdentifier(condition.Atomic.Key), condition.Atomic.Operator), value)
 		}
 
 	case model.WhereConditionTypeAnd:
