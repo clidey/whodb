@@ -200,11 +200,12 @@ func (p *Sqlite3Plugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult,
 			typeName := strings.ToUpper(colType.DatabaseTypeName())
 
 			// Use custom DateTimeString type for datetime columns to prevent parsing
-			if typeName == "DATE" || typeName == "DATETIME" || typeName == "TIMESTAMP" {
+			switch typeName {
+			case "DATE", "DATETIME", "TIMESTAMP":
 				columnPointers[i] = new(DateTimeString)
-			} else if typeName == "BLOB" {
+			case "BLOB":
 				columnPointers[i] = new(sql.RawBytes)
-			} else {
+			default:
 				columnPointers[i] = new(sql.NullString)
 			}
 		}

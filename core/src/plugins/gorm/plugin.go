@@ -134,46 +134,87 @@ func (p *GormPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, error
 	})
 }
 
-func (p *GormPlugin) GetRows(config *engine.PluginConfig, schema string, storageUnit string, where *model.WhereCondition, pageSize int, pageOffset int) (*engine.GetRowsResult, error) {
+func (p *GormPlugin) GetRows(config *engine.PluginConfig, schema string, storageUnit string, where *model.WhereCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
-		// Get column types before escaping identifiers
-		var columnTypes map[string]string
-		if where != nil {
-			columnTypes, _ = p.GetColumnTypes(db, schema, storageUnit)
+		// Handle SQLite separately due to text conversion of date/time columns
+		if p.Type == engine.DatabaseType_Sqlite3 {
+			return p.getSQLiteRows(db, schema, storageUnit, pageSize, pageOffset)
 		}
 
-		schema = p.EscapeIdentifier(schema)
-		storageUnit = p.EscapeIdentifier(storageUnit)
-		fullTableName := p.FormTableName(schema, storageUnit)
-
-		query := db.Table(fullTableName)
-
-		query, err := p.applyWhereConditions(query, where, columnTypes)
-		if err != nil {
-			return nil, err
-		}
-
-		query = query.Limit(pageSize).Offset(pageOffset)
-
-		rows, err := query.Rows()
-		if err != nil {
-			return nil, err
-		}
-		defer rows.Close()
-
-		result, err := p.GormPluginFunctions.ConvertRawToRows(rows)
-		if err != nil {
-			return nil, err
-		}
-
-		// postprocess to add any missing data types
-		for i, col := range result.Columns {
-			if _, err := strconv.Atoi(col.Type); err == nil {
-				result.Columns[i].Type = p.FindMissingDataType(db, col.Type)
-			}
-		}
-		return result, nil
+		// General case for other databases
+		return p.getGenericRows(db, schema, storageUnit, where, pageSize, pageOffset)
 	})
+}
+
+func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+	columnInfo, err := p.GetColumnTypes(db, schema, storageUnit)
+	if err != nil {
+		return nil, err
+	}
+
+	selects := make([]string, 0, len(columnInfo))
+	for col, colType := range columnInfo {
+		colType = strings.ToUpper(colType)
+		if colType == "DATE" || colType == "DATETIME" || colType == "TIMESTAMP" {
+			selects = append(selects, fmt.Sprintf("CAST(%s AS TEXT) AS %s", col, col))
+		} else {
+			selects = append(selects, col)
+		}
+	}
+
+	query := fmt.Sprintf(
+		"SELECT %s FROM %s LIMIT %d OFFSET %d",
+		strings.Join(selects, ", "),
+		p.EscapeIdentifier(storageUnit),
+		pageSize, pageOffset,
+	)
+
+	rows, err := db.Raw(query).Rows()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	return p.ConvertRawToRows(rows)
+}
+
+func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, where *model.WhereCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+	var columnTypes map[string]string
+	if where != nil {
+		columnTypes, _ = p.GetColumnTypes(db, schema, storageUnit)
+	}
+
+	schema = p.EscapeIdentifier(schema)
+	storageUnit = p.EscapeIdentifier(storageUnit)
+	fullTable := p.FormTableName(schema, storageUnit)
+
+	query := db.Table(fullTable)
+	query, err := p.applyWhereConditions(query, where, columnTypes)
+	if err != nil {
+		return nil, err
+	}
+
+	query = query.Limit(pageSize).Offset(pageOffset)
+
+	rows, err := query.Rows()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	result, err := p.GormPluginFunctions.ConvertRawToRows(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fix any missing column type metadata
+	for i, col := range result.Columns {
+		if _, err := strconv.Atoi(col.Type); err == nil {
+			result.Columns[i].Type = p.FindMissingDataType(db, col.Type)
+		}
+	}
+
+	return result, nil
 }
 
 func (p *GormPlugin) applyWhereConditions(query *gorm.DB, condition *model.WhereCondition, columnTypes map[string]string) (*gorm.DB, error) {
