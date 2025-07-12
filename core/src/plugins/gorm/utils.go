@@ -52,8 +52,6 @@ func (p *GormPlugin) EscapeIdentifier(identifier string) string {
 		"/*", "", // SQL multi-line comment start
 		"*/", "", // SQL multi-line comment end
 		"#", "", // MySQL comment
-		"'", "", // Single quote
-		";", "", // Semicolon
 	).Replace(identifier)
 
 	return p.EscapeSpecificIdentifier(identifier)

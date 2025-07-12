@@ -186,32 +186,6 @@ func (p *GormPlugin) applyWhereConditionsWithTypes(query *gorm.DB, condition *mo
 	switch condition.Type {
 	case model.WhereConditionTypeAtomic:
 		if condition.Atomic != nil {
-			// Validate operator to prevent SQL injection
-			validOperators := map[string]bool{
-				"=":    true,
-				"!=":   true,
-				"<>":   true,
-				"<":    true,
-				">":    true,
-				"<=":   true,
-				">=":   true,
-				"LIKE": true,
-				"like": true,
-				"NOT LIKE": true,
-				"not like": true,
-				"IN": true,
-				"in": true,
-				"NOT IN": true,
-				"not in": true,
-				"IS": true,
-				"is": true,
-				"IS NOT": true,
-				"is not": true,
-			}
-			if !validOperators[condition.Atomic.Operator] {
-				return nil, fmt.Errorf("invalid SQL operator: %s", condition.Atomic.Operator)
-			}
-
 			// Use actual column type from database if available
 			columnType := condition.Atomic.ColumnType
 			if columnTypes != nil {

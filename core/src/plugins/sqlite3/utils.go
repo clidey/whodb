@@ -90,5 +90,5 @@ func (p *Sqlite3Plugin) GetColTypeQuery() string {
 
 func (p *Sqlite3Plugin) EscapeSpecificIdentifier(identifier string) string {
 	identifier = strings.Replace(identifier, "\"", "\"\"", -1)
-	return fmt.Sprintf("\"%s\"", identifier)
+	return identifier
 }
