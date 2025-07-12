@@ -36,6 +36,11 @@ var (
 		"NULL", "INTEGER", "REAL", "TEXT", "BLOB",
 		"NUMERIC", "BOOLEAN", "DATE", "DATETIME",
 	)
+
+	supportedOperators = map[string]string{
+		"=": "=", ">=": ">=", ">": ">", "<=": "<=", "<": "<", "<>": "<>", "!=": "!=", "!>": "!>", "!<": "!<", "BETWEEN": "BETWEEN", "NOT BETWEEN": "NOT BETWEEN",
+		"LIKE": "LIKE", "NOT LIKE": "NOT LIKE", "IN": "IN", "NOT IN": "NOT IN", "IS NULL": "IS NULL", "IS NOT NULL": "IS NOT NULL", "AND": "AND", "OR": "OR", "NOT": "NOT",
+	}
 )
 
 type Sqlite3Plugin struct {
@@ -44,6 +49,10 @@ type Sqlite3Plugin struct {
 
 func (p *Sqlite3Plugin) GetSupportedColumnDataTypes() mapset.Set[string] {
 	return supportedColumnDataTypes
+}
+
+func (p *Sqlite3Plugin) GetSupportedOperators() map[string]string {
+	return supportedOperators
 }
 
 func (p *Sqlite3Plugin) GetAllSchemasQuery() string {
