@@ -16,7 +16,7 @@
 
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
-import { clone, isString, values } from "lodash";
+import { clone, debounce, isString, values } from "lodash";
 import { CSSProperties, FC, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Cell, Row, useBlockLayout, useTable } from 'react-table';
 import { FixedSizeList, ListChildComponentProps } from "react-window";
@@ -160,6 +160,7 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, checked, onRowCheck, disab
     const [copied, setCopied] = useState(false);
     const [updating, setUpdating] = useState(false);
     const [escapeAttempted, setEscapeAttempted] = useState(false);
+    const [visibleText, setVisibleText] = useState<string>("");
 
     const handleChange = useCallback((value: string) => {
         setEditedData(value);
@@ -253,6 +254,38 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, checked, onRowCheck, disab
         setEditedData(cell.value);
     }, [cell.value]);
 
+    useEffect(() => {
+        const calculateVisibleText = () => {
+            if (cellRef.current && editedData != null) {
+                const cellWidth = cellRef.current.offsetWidth || cell.column.width;
+                const padding = 16; // 8px padding on each side
+                const editIconWidth = disableEdit ? 0 : 20; // Space for edit icon
+                const availableWidth = cellWidth - padding - editIconWidth;
+                const charWidth = 7; // Approximate width per character for text-xs monospace
+                const maxChars = Math.floor(availableWidth / charWidth);
+                
+                if (editedData.length > maxChars && maxChars > 3) {
+                    setVisibleText(editedData.substring(0, maxChars - 3) + '...');
+                } else {
+                    setVisibleText(editedData);
+                }
+            }
+        };
+
+        calculateVisibleText();
+        
+        // Recalculate on window resize with debounce
+        const handleResize = debounce(() => {
+            calculateVisibleText();
+        }, 150);
+        
+        window.addEventListener('resize', handleResize);
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            handleResize.cancel();
+        };
+    }, [editedData, cell.column.width, disableEdit]);
+
     const props = useMemo(() => {
         return cell.getCellProps();
     }, [cell]);
@@ -263,7 +296,7 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, checked, onRowCheck, disab
         })} data-testid="table-row-data">
         <span className="cell-data hidden">{editedData}</span>
         <div 
-            className={classNames("w-full h-full p-2 leading-tight focus:outline-hidden focus:shadow-outline appearance-none transition-all duration-300 border-solid border-gray-200 dark:border-white/5 overflow-hidden whitespace-nowrap select-none text-gray-600 dark:text-neutral-300", {
+            className={classNames("w-full h-full p-2 leading-tight focus:outline-hidden focus:shadow-outline appearance-none transition-all duration-300 border-solid border-gray-200 dark:border-white/5 overflow-hidden select-none text-gray-600 dark:text-neutral-300", {
                 "group-even/row:bg-gray-100 hover:bg-gray-300 hover:group-even/row:bg-gray-300 dark:group-even/row:bg-white/10 dark:group-odd/row:bg-white/5 dark:hover:group-even/row:bg-white/15 dark:hover:group-odd/row:bg-white/15": !editable,
                 "bg-transparent": editable,
             })}>
@@ -277,8 +310,8 @@ const TData: FC<ITDataProps> = ({ cell, onCellUpdate, checked, onRowCheck, disab
             <div className={classNames({
                 "group-hover/row:hidden": checked != null && cell.column.id === "#",
                 "hidden": cell.column.id === "#" && checked === true,
-            })} {...longPressProps}>
-                {editedData}
+            })} {...longPressProps} title={editedData !== visibleText ? editedData : undefined}>
+                {visibleText}
             </div>
         </div>
         <div className={classNames("transition-all hidden absolute right-2 top-1/2 -translate-y-1/2 hover:scale-125 p-1", {
