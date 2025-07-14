@@ -86,7 +86,7 @@ func parseOllamaModelsResponse(body io.ReadCloser) ([]string, error) {
 
 	var modelsResp struct {
 		Models []struct {
-			Name string `json:"model"`
+			Name string `json:"name"`
 		} `json:"models"`
 	}
 	if err := json.NewDecoder(body).Decode(&modelsResp); err != nil {
