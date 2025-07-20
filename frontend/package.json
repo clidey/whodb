@@ -38,9 +38,11 @@
     "uuid": "^11.1.0"
   },
   "scripts": {
-    "start": "parcel public/index.html --open --port=3000",
-    "start:test": "NODE_ENV=test parcel public/index.html --open --port=3000 --no-cache",
-    "build": "parcel build public/index.html --dist-dir build",
+    "start": "vite --port 3000 --open",
+    "start:ee": "VITE_BUILD_EDITION=ee vite --port 3000 --open",
+    "start:test": "NODE_ENV=test vite --port 3000 --open",
+    "build": "tsc && vite build",
+    "build:ee": "VITE_BUILD_EDITION=ee tsc && vite build",
     "test": "npm run test:setup && NODE_ENV=test pnpm cypress open; npm run test:cleanup",
     "test:headless": "npm run test:setup && NODE_ENV=test npx cypress run --browser chrome; npm run test:cleanup",
     "test:headless:chromium": "npm run test:setup && NODE_ENV=test npx cypress run --browser chromium; npm run test:cleanup",
@@ -71,24 +73,21 @@
     "@graphql-codegen/typescript": "^4.1.6",
     "@graphql-codegen/typescript-operations": "^4.6.0",
     "@graphql-codegen/typescript-react-apollo": "^4.3.2",
-    "@parcel/packager-raw-url": "2.14.4",
-    "@parcel/transformer-webmanifest": "2.14.4",
     "@tailwindcss/postcss": "^4.1.4",
     "@types/lodash": "^4.17.16",
     "@types/react-window": "^1.8.8",
     "@types/uuid": "^10.0.0",
+    "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.21",
     "babel-plugin-istanbul": "^7.0.0",
     "buffer": "^6.0.3",
     "cypress": "^14.5.1",
     "nyc": "^17.1.0",
-    "parcel": "^2.14.4",
     "postcss": "^8.5.3",
     "process": "^0.11.10",
-    "tailwindcss": "^4.1.4"
-  },
-  "@parcel/resolver-default": {
-    "packageExports": true
+    "tailwindcss": "^4.1.4",
+    "typescript": "^5.5.0",
+    "vite": "^5.1.0"
   },
   "packageManager": "pnpm@9.14.4+sha512.c8180b3fbe4e4bca02c94234717896b5529740a6cbadf19fa78254270403ea2f27d4e1d46a08a0f56c89b63dc8ebfd3ee53326da720273794e6200fcf0d184ab"
 }

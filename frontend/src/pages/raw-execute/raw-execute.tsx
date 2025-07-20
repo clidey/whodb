@@ -17,7 +17,7 @@
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import { indexOf, values } from "lodash";
-import { ChangeEvent, cloneElement, FC, ReactElement, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, cloneElement, FC, ReactElement, ReactNode, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { v4 } from "uuid";
 import { AnimatedButton } from "../../components/button";
 import { ClassNames } from "../../components/classes";
@@ -29,6 +29,15 @@ import { Table } from "../../components/table";
 import { InternalRoutes } from "../../config/routes";
 import { DatabaseType, useRawExecuteLazyQuery } from "../../generated/graphql";
 import { useAppSelector } from "../../store/hooks";
+import { loadEEComponent, isEEFeatureEnabled } from "../../utils/ee-loader";
+import { LocalLoginProfile } from "../../store/auth";
+import { AnalyzeGraphFallback } from "../../components/ee-fallbacks";
+
+// Conditionally load the AnalyzeGraph component from EE
+const AnalyzeGraph = loadEEComponent(
+    () => import('@ee/pages/raw-execute/analyze-view').then(m => ({ default: m.AnalyzeGraph })),
+    AnalyzeGraphFallback
+);
 
 type IRawExecuteCellProps = {
     cellId: string;
@@ -39,15 +48,34 @@ type IRawExecuteCellProps = {
 
 enum ActionOptions {
     Query="Query",
-    // Smart="Smart",
+    Analyze="Analyze",
 }
+
+// Only include Analyze option if EE is available
+const getActionOptions = (): ActionOptions[] => {
+    const options = [ActionOptions.Query];
+    if (isEEFeatureEnabled('analyzeView')) {
+        options.push(ActionOptions.Analyze);
+    }
+    return options;
+};
 
 export const ActionOptionIcons: Record<string, ReactElement> = {
     [ActionOptions.Query]: Icons.Database,
-    // [ActionOptions.Smart]: Icons.Sparkles,
+    [ActionOptions.Analyze]: Icons.Code,
 }
 
-const actionOptions = values(ActionOptions);
+const actionOptions = getActionOptions();
+
+function getModeCommand(mode: ActionOptions, current?: LocalLoginProfile) {
+    if (current == null || mode !== ActionOptions.Analyze) {
+         return "";
+    }
+    if (current.Type === DatabaseType.Postgres) {
+        return "EXPLAIN (ANALYZE, FORMAT JSON)"
+    }
+    return "";
+}
 
 const CopyButton: FC<{ text: string }> = (props) => {
     const [copied, setCopied] = useState(false);
@@ -80,7 +108,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
         setSubmittedCode(currentCode);
         rawExecute({
             variables: {
-                query: currentCode,
+                query: getModeCommand(mode, current) + currentCode,
             },
             onCompleted() {
                 historyItem.status = true;
@@ -109,6 +137,19 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
         if (rows == null) {
             return null;
         }
+        if (mode === ActionOptions.Analyze && isEEFeatureEnabled('analyzeView') && AnalyzeGraph) {
+            let data;
+            try {
+                data = JSON.parse(rows.RawExecute.Rows[0][0])[0];
+            } catch {
+                return <div className="text-red-500 mt-4">Unable to analyze the query</div>
+            }
+            return <div className="flex mt-4 h-[350px] w-full">
+                <Suspense fallback={<Loading />}>
+                    <AnalyzeGraph data={data} />
+                </Suspense>
+            </div>
+        }
         if (isCodeAQuery || rows.RawExecute.Rows.length > 0) {
             return <div className="flex flex-col w-full h-[250px] mt-4" data-testid="cell-query-output">
                 <Table columns={rows.RawExecute.Columns.map(c => c.Name)} columnTags={rows.RawExecute.Columns.map(c => c.Type)}
@@ -122,12 +163,15 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     }, [rows, isCodeAQuery, mode]);
 
     const isAnalyzeAvailable = useMemo(() => {
+        if (!isEEFeatureEnabled('analyzeView')) {
+            return false;
+        }
         switch(current?.Type) {
             case DatabaseType.Postgres:
                 return true;
         }
         return false;
-    }, []);
+    }, [current?.Type]);
 
     const rowLength = useMemo(() => rows?.RawExecute.Rows.length ?? 0, []);
 
@@ -141,7 +185,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                             ClassNames.Text,
                             "relative text-sm px-2 py-1 rounded-lg rounded-r-none cursor-pointer transition-all w-[150px] whitespace-nowrap text-ellipsis hover:brightness-125 flex gap-1 items-center",
                             {
-                                "hidden": !isAnalyzeAvailable,
+                                "hidden": !isAnalyzeAvailable || item === ActionOptions.Analyze && !isEEFeatureEnabled('analyzeView'),
                             }
                         )}
                         title={item}

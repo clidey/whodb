@@ -27,6 +27,7 @@ import 'reactflow/dist/style.css';
 import { PersistGate } from 'redux-persist/integration/react';
 import { PostHogProvider } from 'posthog-js/react';
 import {initPosthog} from "./config/posthog";
+import { ThemeProvider } from './theme/theme-provider';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -34,15 +35,29 @@ const root = ReactDOM.createRoot(
 
 const posthogClient = initPosthog()
 
+// Conditionally wrap with PostHogProvider only for CE builds
+const AppWithProviders = () => {
+  const app = (
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>
+  );
+
+  // Only wrap with PostHogProvider if we have a client (CE builds)
+  if (posthogClient) {
+    return <PostHogProvider client={posthogClient}>{app}</PostHogProvider>;
+  }
+  
+  return app;
+};
+
 root.render(
   <React.StrictMode>
     <BrowserRouter>
       <ApolloProvider client={graphqlClient}>
         <Provider store={reduxStore}>
           <PersistGate loading={null} persistor={reduxStorePersistor}>
-            <PostHogProvider client={posthogClient}>
-              <App />
-            </PostHogProvider>
+            <AppWithProviders />
           </PersistGate>
         </Provider>
       </ApolloProvider>

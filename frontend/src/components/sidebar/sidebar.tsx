@@ -22,7 +22,7 @@ import { cloneElement, FC, MouseEvent, ReactElement, useCallback, useMemo, useSt
 import { useDispatch } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
-import logoImage from "url:../../../public/images/logo.png";
+const logoImage = "/images/logo.png";
 import { InternalRoutes, PublicRoutes } from "../../config/routes";
 import { DatabaseType, useGetDatabaseQuery, useGetSchemaQuery, useGetVersionQuery, useLoginMutation, useLoginWithProfileMutation } from "../../generated/graphql";
 import { AuthActions, LocalLoginProfile } from "../../store/auth";

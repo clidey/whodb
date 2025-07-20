@@ -32,8 +32,21 @@ import (
 
 var MainEngine *engine.Engine
 
+// InitEEFunc is a function type for initializing Enterprise Edition features
+type InitEEFunc func(*engine.Engine)
+
+// initEE is a variable that will be set by the EE build to initialize EE features
+var initEE InitEEFunc
+
+// SetEEInitializer allows external packages to register the EE initialization function
+func SetEEInitializer(fn InitEEFunc) {
+	initEE = fn
+}
+
 func InitializeEngine() *engine.Engine {
 	MainEngine = &engine.Engine{}
+	
+	// Register community edition plugins
 	MainEngine.RegistryPlugin(postgres.NewPostgresPlugin())
 	MainEngine.RegistryPlugin(mysql.NewMySQLPlugin())
 	MainEngine.RegistryPlugin(mysql.NewMyMariaDBPlugin())
@@ -42,6 +55,12 @@ func InitializeEngine() *engine.Engine {
 	MainEngine.RegistryPlugin(redis.NewRedisPlugin())
 	MainEngine.RegistryPlugin(elasticsearch.NewElasticSearchPlugin())
 	MainEngine.RegistryPlugin(clickhouse.NewClickHousePlugin())
+	
+	// Initialize Enterprise Edition plugins if available
+	if initEE != nil {
+		initEE(MainEngine)
+	}
+	
 	return MainEngine
 }
 
