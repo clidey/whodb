@@ -41,6 +41,7 @@
     "start": "vite --port 3000 --open",
     "start:ee": "VITE_BUILD_EDITION=ee vite --port 3000 --open",
     "start:test": "NODE_ENV=test vite --port 3000 --open",
+    "start:test:ee": "VITE_BUILD_EDITION=ee NODE_ENV=test vite --port 3000 --open",
     "build": "tsc && vite build",
     "build:ee": "VITE_BUILD_EDITION=ee tsc && vite build",
     "test": "npm run test:setup && NODE_ENV=test pnpm cypress open; npm run test:cleanup",

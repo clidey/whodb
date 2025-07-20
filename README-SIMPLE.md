@@ -32,10 +32,10 @@
 ### Frontend Only (for development)
 ```bash
 # Community Edition
-cd frontend && ./run.sh
+cd frontend && pnpm run start
 
 # Enterprise Edition
-cd frontend && ./run.sh --ee
+cd frontend && pnpm run start:ee
 ```
 
 ## 📝 That's it!

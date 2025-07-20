@@ -27,6 +27,7 @@ import (
 )
 
 var IsDevelopment = os.Getenv("ENVIRONMENT") == "dev"
+var IsEnterpriseEdition = false // Set to true by EE build
 var Tokens = common.FilterList(strings.Split(os.Getenv("WHODB_TOKENS"), ","), func(item string) bool {
 	return item != ""
 })
