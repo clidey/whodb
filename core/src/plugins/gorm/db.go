@@ -40,17 +40,6 @@ const (
 	connectionTimeoutKey       = "Connection Timeout"
 )
 
-// DefaultDatabasePorts maps database systems to their standard default ports
-var defaultDatabasePorts = map[engine.DatabaseType]string{
-	engine.DatabaseType_MySQL:         "3306",
-	engine.DatabaseType_MariaDB:       "3306",
-	engine.DatabaseType_Postgres:      "5432",
-	engine.DatabaseType_Sqlite3:       "0",    // SQLite is file-based, no port
-	engine.DatabaseType_ClickHouse:    "9000", // TCP port (HTTP port is 8123)
-	engine.DatabaseType_MongoDB:       "27017",
-	engine.DatabaseType_ElasticSearch: "9200", // HTTP port (Transport port is 9300)
-	engine.DatabaseType_Redis:         "6379",
-}
 
 type ConnectionInput struct {
 	//common
@@ -78,7 +67,7 @@ type ConnectionInput struct {
 
 func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*ConnectionInput, error) {
 	//common
-	defaultPort, ok := defaultDatabasePorts[p.Type]
+	defaultPort, ok := plugins.GetDefaultPort(p.Type)
 	if !ok {
 		return nil, fmt.Errorf("unsupported database type: %v", p.Type)
 	}
