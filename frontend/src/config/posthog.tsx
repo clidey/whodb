@@ -22,15 +22,26 @@ const options = {
 
 const posthogKey = "phc_hbXcCoPTdxm5ADL8PmLSYTIUvS6oRWFM2JAK8SMbfnH"
 
+// Only initialize PostHog in Community Edition
+const isEE = import.meta.env.VITE_BUILD_EDITION === 'ee';
+
 export const initPosthog = () => {
-    posthog.init(posthogKey, options);
-    return posthog;
+    if (!isEE) {
+        posthog.init(posthogKey, options);
+        return posthog;
+    }
+    // Return a dummy client for EE that does nothing
+    return null;
 }
 
 export const optOutUser = () => {
-    posthog.opt_out_capturing()
+    if (!isEE) {
+        posthog.opt_out_capturing()
+    }
 }
 
 export const optInUser = () => {
-    posthog.opt_in_capturing()
+    if (!isEE) {
+        posthog.opt_in_capturing()
+    }
 }

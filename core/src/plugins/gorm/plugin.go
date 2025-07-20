@@ -153,7 +153,7 @@ func (p *GormPlugin) GetRows(config *engine.PluginConfig, schema string, storage
 		}
 		defer rows.Close()
 
-		result, err := p.ConvertRawToRows(rows)
+		result, err := p.GormPluginFunctions.ConvertRawToRows(rows)
 		if err != nil {
 			return nil, err
 		}
