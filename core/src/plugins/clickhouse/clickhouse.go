@@ -36,6 +36,15 @@ var (
 		"TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT",
 		"ENUM", "SET", "JSON", "BOOLEAN", "VARCHAR(100)", "VARCHAR(1000)",
 	)
+
+	supportedOperators = map[string]string{
+		"=": "=", ">=": ">=", ">": ">", "<=": "<=", "<": "<", "!=": "!=", "<>": "<>", "==": "==",
+		"LIKE": "LIKE", "NOT LIKE": "NOT LIKE", "ILIKE": "ILIKE",
+		"IN": "IN", "NOT IN": "NOT IN", "GLOBAL IN": "GLOBAL IN", "GLOBAL NOT IN": "GLOBAL NOT IN",
+		"BETWEEN": "BETWEEN", "NOT BETWEEN": "NOT BETWEEN",
+		"IS NULL": "IS NULL", "IS NOT NULL": "IS NOT NULL",
+		"AND": "AND", "OR": "OR", "NOT": "NOT",
+	}
 )
 
 type ClickHousePlugin struct {
@@ -64,6 +73,10 @@ func (p *ClickHousePlugin) FormTableName(schema string, storageUnit string) stri
 
 func (p *ClickHousePlugin) GetSupportedColumnDataTypes() mapset.Set[string] {
 	return supportedColumnDataTypes
+}
+
+func (p *ClickHousePlugin) GetSupportedOperators() map[string]string {
+	return supportedOperators
 }
 
 func (p *ClickHousePlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, error) {

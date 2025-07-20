@@ -25,6 +25,12 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 )
 
+var (
+	supportedOperators = map[string]string{
+		"match": "match", "match_phrase": "match_phrase", "match_phrase_prefix": "match_phrase_prefix", "multi_match": "multi_match", "bool": "bool", "term": "term", "terms": "terms", "range": "range", "exists": "exists", "prefix": "prefix", "wildcard": "wildcard", "regexp": "regexp", "fuzzy": "fuzzy", "ids": "ids", "constant_score": "constant_score", "function_score": "function_score", "dis_max": "dis_max", "nested": "nested", "has_child": "has_child", "has_parent": "has_parent",
+	}
+)
+
 type ElasticSearchPlugin struct{}
 
 func (p *ElasticSearchPlugin) IsAvailable(config *engine.PluginConfig) bool {
@@ -229,6 +235,10 @@ func (p *ElasticSearchPlugin) RawExecute(config *engine.PluginConfig, query stri
 
 func (p *ElasticSearchPlugin) Chat(config *engine.PluginConfig, schema string, model string, previousConversation string, query string) ([]*engine.ChatMessage, error) {
 	return nil, errors.ErrUnsupported
+}
+
+func (p *ElasticSearchPlugin) GetSupportedOperators() map[string]string {
+	return supportedOperators
 }
 
 func NewElasticSearchPlugin() *engine.Plugin {

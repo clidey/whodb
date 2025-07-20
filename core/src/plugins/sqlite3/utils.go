@@ -63,17 +63,13 @@ func (p *Sqlite3Plugin) ConvertStringValueDuringMap(value, columnType string) (i
 
 // ConvertStringValue overrides the base GORM implementation to preserve datetime strings
 func (p *Sqlite3Plugin) ConvertStringValue(value, columnType string) (interface{}, error) {
-	// Normalize column type to uppercase for comparison
+	// For datetime types, preserve the original string value
 	normalizedType := strings.ToUpper(columnType)
-	
-	// For datetime-related types, preserve the original string value
-	switch normalizedType {
-	case "DATE", "DATETIME", "TIMESTAMP":
+	if normalizedType == "DATE" || normalizedType == "DATETIME" || normalizedType == "TIMESTAMP" {
 		return value, nil
-	default:
-		// For non-datetime types, delegate to the base GORM implementation
-		return p.GormPlugin.ConvertStringValue(value, columnType)
 	}
+	// For non-datetime types, delegate to the base GORM implementation
+	return p.GormPlugin.ConvertStringValue(value, columnType)
 }
 
 func (p *Sqlite3Plugin) GetPrimaryKeyColQuery() string {
@@ -89,14 +85,7 @@ func (p *Sqlite3Plugin) GetPrimaryKeyColQuery() string {
 }
 
 func (p *Sqlite3Plugin) GetColTypeQuery() string {
-	return `
-		SELECT p.name AS column_name,
-			   p.type AS data_type
-		FROM sqlite_master m,
-			 pragma_table_info(m.name) p
-		WHERE m.type = 'table'
-		  AND m.name NOT LIKE 'sqlite_%';
-	`
+	return `SELECT name AS column_name, type AS data_type FROM pragma_table_info(?)`
 }
 
 func (p *Sqlite3Plugin) EscapeSpecificIdentifier(identifier string) string {
