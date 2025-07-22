@@ -90,6 +90,10 @@ type GormPluginFunctions interface {
 	// FormatGeometryValue formats geometry data for display
 	// Return empty string to use default hex formatting
 	FormatGeometryValue(rawBytes []byte, columnType string) string
+	
+	// HandleCustomDataType allows plugins to handle their own data type conversions
+	// Return (value, true) if handled, or (nil, false) to use default handling
+	HandleCustomDataType(value string, columnType string, isNullable bool) (interface{}, bool, error)
 }
 
 func (p *GormPlugin) GetStorageUnits(config *engine.PluginConfig, schema string) ([]engine.StorageUnit, error) {
@@ -480,4 +484,9 @@ func (p *GormPlugin) IsGeometryType(columnType string) bool {
 // FormatGeometryValue returns empty string by default (use hex formatting)
 func (p *GormPlugin) FormatGeometryValue(rawBytes []byte, columnType string) string {
 	return ""
+}
+
+// HandleCustomDataType returns false by default (no custom handling)
+func (p *GormPlugin) HandleCustomDataType(value string, columnType string, isNullable bool) (interface{}, bool, error) {
+	return nil, false, nil
 }
