@@ -17,6 +17,8 @@
 package postgres
 
 import (
+	"maps"
+
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/stdlib"
@@ -45,9 +47,7 @@ func (p *PostgresPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 		if pgxConfig.RuntimeParams == nil {
 			pgxConfig.RuntimeParams = make(map[string]string)
 		}
-		for key, value := range connectionInput.ExtraOptions {
-			pgxConfig.RuntimeParams[key] = value
-		}
+		maps.Copy(pgxConfig.RuntimeParams, connectionInput.ExtraOptions)
 	}
 
 	db, err := gorm.Open(postgres.New(postgres.Config{Conn: stdlib.OpenDB(*pgxConfig)}), &gorm.Config{})
