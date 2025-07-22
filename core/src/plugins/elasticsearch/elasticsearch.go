@@ -27,7 +27,10 @@ import (
 
 var (
 	supportedOperators = map[string]string{
-		"match": "match", "match_phrase": "match_phrase", "match_phrase_prefix": "match_phrase_prefix", "multi_match": "multi_match", "bool": "bool", "term": "term", "terms": "terms", "range": "range", "exists": "exists", "prefix": "prefix", "wildcard": "wildcard", "regexp": "regexp", "fuzzy": "fuzzy", "ids": "ids", "constant_score": "constant_score", "function_score": "function_score", "dis_max": "dis_max", "nested": "nested", "has_child": "has_child", "has_parent": "has_parent",
+		"match": "match", "match_phrase": "match_phrase", "match_phrase_prefix": "match_phrase_prefix", "multi_match": "multi_match",
+		"bool": "bool", "term": "term", "terms": "terms", "range": "range", "exists": "exists", "prefix": "prefix", "wildcard": "wildcard",
+		"regexp": "regexp", "fuzzy": "fuzzy", "ids": "ids", "constant_score": "constant_score", "function_score": "function_score",
+		"dis_max": "dis_max", "nested": "nested", "has_child": "has_child", "has_parent": "has_parent",
 	}
 )
 
@@ -96,12 +99,7 @@ func (p *ElasticSearchPlugin) GetStorageUnits(config *engine.PluginConfig, datab
 	return storageUnits, nil
 }
 
-func (p *ElasticSearchPlugin) GetRows(
-	config *engine.PluginConfig,
-	database, collection string,
-	where *model.WhereCondition,
-	pageSize, pageOffset int,
-) (*engine.GetRowsResult, error) {
+func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, collection string, where *model.WhereCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	client, err := DB(config)
 	if err != nil {
 		return nil, err

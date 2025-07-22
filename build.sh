@@ -18,10 +18,17 @@ if [[ "$1" == "--ee" ]]; then
         fi
     fi
     
+    # Generate GraphQL code for EE
+    ./scripts/generate-graphql.sh ee
+    
     cd core && go build -tags ee -o whodb-ee
     echo "✅ Built: core/whodb-ee"
 else
     echo "🚀 Building WhoDB Community Edition..."
+    
+    # Generate GraphQL code for Community
+    ./scripts/generate-graphql.sh community
+    
     cd core && go build -o whodb
     echo "✅ Built: core/whodb"
 fi

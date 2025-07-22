@@ -184,7 +184,7 @@ func (r *queryResolver) Profiles(ctx context.Context) ([]*model.LoginProfile, er
 			ID:                   profileName,
 			Type:                 model.DatabaseType(profile.Type),
 			Database:             &profile.Database,
-			IsEnvironmentDefined: true, // All profiles from GetLoginProfiles are environment-defined
+			IsEnvironmentDefined: true,
 		}
 
 		if len(profile.Alias) > 0 {
@@ -299,7 +299,7 @@ func (r *queryResolver) AIProviders(ctx context.Context) ([]*model.AIProvider, e
 		aiProviders = append(aiProviders, &model.AIProvider{
 			Type:                 provider.Type,
 			ProviderID:           provider.ProviderId,
-			IsEnvironmentDefined: true, // All providers from GetConfiguredChatProviders are environment-defined
+			IsEnvironmentDefined: true,
 		})
 	}
 	return aiProviders, nil

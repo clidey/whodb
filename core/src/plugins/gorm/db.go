@@ -40,7 +40,6 @@ const (
 	connectionTimeoutKey       = "Connection Timeout"
 )
 
-
 type ConnectionInput struct {
 	//common
 	Username string `validate:"required"`
@@ -137,9 +136,8 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 			case portKey, parseTimeKey, locKey, allowClearTextPasswordsKey, sslModeKey, httpProtocolKey, readOnlyKey, debugKey, connectionTimeoutKey:
 				continue
 			default:
-				// PostgreSQL uses libpq connection string format, not URL query parameters
 				if p.Type == engine.DatabaseType_Postgres {
-					params[record.Key] = record.Value // Raw value, PostgreSQL plugin will handle escaping
+					params[record.Key] = record.Value
 				} else {
 					params[record.Key] = url.QueryEscape(record.Value)
 				}
@@ -152,7 +150,7 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 }
 
 func (p *GormPlugin) IsAvailable(config *engine.PluginConfig) bool {
-	available, err := plugins.WithConnection[bool](config, p.DB, func(db *gorm.DB) (bool, error) {
+	available, err := plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
 		sqlDb, err := db.DB()
 		if err != nil {
 			return false, err
