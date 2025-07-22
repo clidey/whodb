@@ -51,6 +51,10 @@ func (p *GormPlugin) DeleteRow(config *engine.PluginConfig, schema string, stora
 			}
 
 			targetColumn := column
+			if p.GormPluginFunctions.ShouldQuoteIdentifiers() {
+				targetColumn = fmt.Sprintf("\"%s\"", column)
+			}
+			
 			if common.ContainsString(pkColumns, column) {
 				conditions[targetColumn] = convertedValue
 			} else {
