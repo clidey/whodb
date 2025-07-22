@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import posthog from "posthog-js";
-
 const options = {
     api_host: "https://us.i.posthog.com",
 }
@@ -25,23 +23,35 @@ const posthogKey = "phc_hbXcCoPTdxm5ADL8PmLSYTIUvS6oRWFM2JAK8SMbfnH"
 // Only initialize PostHog in Community Edition
 const isEE = import.meta.env.VITE_BUILD_EDITION === 'ee';
 
-export const initPosthog = () => {
+let posthogPromise: Promise<any> | null = null;
+
+const getPosthog = () => {
+    if (!posthogPromise) {
+        posthogPromise = import("posthog-js");
+    }
+    return posthogPromise;
+};
+
+
+export const initPosthog = async () => {
     if (!isEE) {
+        const posthog = (await getPosthog()).default;
         posthog.init(posthogKey, options);
         return posthog;
     }
-    // Return a dummy client for EE that does nothing
     return null;
-}
+};
 
-export const optOutUser = () => {
+export const optOutUser = async () => {
     if (!isEE) {
-        posthog.opt_out_capturing()
+        const posthog = (await getPosthog()).default;
+        posthog.opt_out_capturing();
     }
-}
+};
 
-export const optInUser = () => {
+export const optInUser = async () => {
     if (!isEE) {
-        posthog.opt_in_capturing()
+        const posthog = (await getPosthog()).default;
+        posthog.opt_in_capturing();
     }
-}
+};
