@@ -23,7 +23,7 @@ const posthogKey = "phc_hbXcCoPTdxm5ADL8PmLSYTIUvS6oRWFM2JAK8SMbfnH"
 // Only initialize PostHog in Community Edition
 const isEE = import.meta.env.VITE_BUILD_EDITION === 'ee';
 
-let posthogPromise: Promise<any> | null = null;
+let posthogPromise: Promise<typeof import("posthog-js")> | null = null;
 
 const getPosthog = () => {
     if (!posthogPromise) {

@@ -45,6 +45,7 @@ const AppWithProviders = () => {
 
   // Only wrap with PostHogProvider if we have a client (CE builds)
   if (posthogClient) {
+    // @ts-ignore
     return <PostHogProvider client={posthogClient}>{app}</PostHogProvider>;
   }
   
