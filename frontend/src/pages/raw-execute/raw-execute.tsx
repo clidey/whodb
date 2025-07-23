@@ -146,6 +146,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
             }
             return <div className="flex mt-4 h-[350px] w-full">
                 <Suspense fallback={<Loading />}>
+                {/* @ts-ignore */}
                     <AnalyzeGraph data={data} />
                 </Suspense>
             </div>

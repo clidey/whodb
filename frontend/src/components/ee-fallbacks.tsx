@@ -22,7 +22,7 @@ export const EEFeatureCard: React.FC<{ feature: string; description?: string }> 
     return (
         <Card className="p-8 text-center">
             <div className="flex flex-col items-center space-y-4">
-                <Icons.Star className="h-12 w-12 text-yellow-500" />
+                {Icons.Star}
                 <h3 className="text-xl font-semibold">{feature}</h3>
                 <p className="text-gray-600 dark:text-gray-400">
                     {description || 'This feature is available in WhoDB Enterprise Edition'}
