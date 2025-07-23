@@ -34,6 +34,7 @@ import { DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useG
 import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
 import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
+import { getDatabaseDataTypes, databaseSupportsModifiers } from "../../utils/database-data-types";
 
 const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
     const [expanded, setExpanded] = useState(false);
@@ -201,49 +202,9 @@ export const StorageUnitPage: FC = () => {
         if (current?.Type == null || isNoSQL(current.Type)) {
             return [];
         }
-        let items: string[] = [];
-    
-        switch(current.Type) {
-            case DatabaseType.MariaDb:
-                items = [
-                    "TINYINT", "SMALLINT", "MEDIUMINT", "INT", "INTEGER", "BIGINT", "FLOAT", "DOUBLE", "DECIMAL",
-                    "DATE", "DATETIME", "TIMESTAMP", "TIME", "YEAR",
-                    "CHAR", "VARCHAR", "BINARY", "VARBINARY", "TINYBLOB", "BLOB", "MEDIUMBLOB", "LONGBLOB", 
-                    "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT",
-                    "ENUM", "SET", "JSON", "BOOLEAN"
-                ];
-                break;
-            case DatabaseType.MySql:
-            case DatabaseType.ClickHouse:
-                items = [
-                    "TINYINT", "SMALLINT", "MEDIUMINT", "INT", "INTEGER", "BIGINT", "FLOAT", "DOUBLE", "DECIMAL",
-                    "DATE", "DATETIME", "TIMESTAMP", "TIME", "YEAR",
-                    "CHAR", "VARCHAR(255)", "BINARY", "VARBINARY", "TINYBLOB", "BLOB", "MEDIUMBLOB", "LONGBLOB", 
-                    "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT",
-                    "ENUM", "SET", "JSON", "BOOLEAN", "VARCHAR(100)", "VARCHAR(1000)"
-                ];
-                break;
-            case DatabaseType.Postgres:
-                items = [
-                    "SMALLINT", "INTEGER", "BIGINT", "DECIMAL", "NUMERIC", "REAL", "DOUBLE PRECISION", "SMALLSERIAL", 
-                    "SERIAL", "BIGSERIAL", "MONEY",
-                    "CHAR", "VARCHAR", "TEXT", "BYTEA",
-                    "TIMESTAMP", "TIMESTAMPTZ", "DATE", "TIME", "TIMETZ",
-                    "BOOLEAN", "POINT", "LINE", "LSEG", "BOX", "PATH", "POLYGON", "CIRCLE",
-                    "CIDR", "INET", "MACADDR", "UUID", "XML", "JSON", "JSONB", "ARRAY", "HSTORE"
-                ];
-                break;
-            case DatabaseType.Sqlite3:
-                items = [
-                    "NULL", "INTEGER", "REAL", "TEXT", "BLOB",
-                    "NUMERIC", "BOOLEAN", "DATE", "DATETIME"
-                ];
-                break;
-            default:
-                items = [];
-                break;
-        }
-        return items.map(item => createDropdownItem(item));
+        
+        const dataTypes = getDatabaseDataTypes(current.Type);
+        return dataTypes.map(item => createDropdownItem(item));
     }, [current?.Type]);
     
     useEffect(() => {
@@ -257,8 +218,11 @@ export const StorageUnitPage: FC = () => {
     }, [data?.StorageUnit, filterValue]);
 
     const showModifiers = useMemo(() => {
-        return [DatabaseType.MySql, DatabaseType.MariaDb, DatabaseType.Postgres, DatabaseType.Sqlite3, DatabaseType.ClickHouse].includes(current?.Type as DatabaseType);
-    }, [current]);
+        if (!current?.Type) {
+            return false;
+        }
+        return databaseSupportsModifiers(current.Type);
+    }, [current?.Type]);
 
     if (loading) {
         return <InternalPage routes={routes}>

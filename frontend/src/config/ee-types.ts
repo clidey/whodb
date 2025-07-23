@@ -107,4 +107,6 @@ export interface EEDatabaseType {
         database?: boolean;
     };
     operators?: string[]; // Valid SQL operators for this database type
+    dataTypes?: string[]; // Valid data types for creating tables/collections
+    supportsModifiers?: boolean; // Whether this database supports field modifiers (primary, nullable)
 }

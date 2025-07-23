@@ -14,6 +14,10 @@ export interface IDatabaseDropdownItem extends IDropdownItem<Record<string, stri
     };
     // Valid operators for this database type
     operators?: string[];
+    // Valid data types for creating tables/collections
+    dataTypes?: string[];
+    // Whether this database supports field modifiers (primary, nullable)
+    supportsModifiers?: boolean;
 }
 
 export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
@@ -144,6 +148,8 @@ if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
                 extra: dbType.extra,
                 fields: dbType.fields,
                 operators: dbType.operators,
+                dataTypes: dbType.dataTypes,
+                supportsModifiers: dbType.supportsModifiers,
             }));
             
             console.log('EE database types loaded:', eeDatabaseTypes);
