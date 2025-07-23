@@ -28,7 +28,7 @@ import {CheckBoxInput, Input, InputWithlabel, Label} from "../../components/inpu
 import { Loading, LoadingPage } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { SearchInput } from "../../components/search";
-import { DATABASES_THAT_DONT_SUPPORT_SCRATCH_PAD } from "../../components/sidebar/sidebar";
+import { databaseSupportsScratchpad } from "../../utils/database-features";
 import { InternalRoutes } from "../../config/routes";
 import { DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useGetStorageUnitsQuery } from "../../generated/graphql";
 import { notify } from "../../store/function";
@@ -234,7 +234,7 @@ export const StorageUnitPage: FC = () => {
         <div className="flex w-full h-fit my-2 gap-2 justify-between">
             <div>
                 {
-                    !DATABASES_THAT_DONT_SUPPORT_SCRATCH_PAD.includes(current?.Type as DatabaseType) &&
+                    databaseSupportsScratchpad(current?.Type) &&
                     <AnimatedButton icon={Icons.Console} label="Scratchpad" onClick={() => navigate(InternalRoutes.RawExecute.path)} type="lg" />
                 }
             </div>

@@ -18,6 +18,10 @@ export interface IDatabaseDropdownItem extends IDropdownItem<Record<string, stri
     dataTypes?: string[];
     // Whether this database supports field modifiers (primary, nullable)
     supportsModifiers?: boolean;
+    // Whether this database supports scratchpad/raw query execution
+    supportsScratchpad?: boolean;
+    // Whether this database supports schemas
+    supportsSchema?: boolean;
 }
 
 export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
@@ -32,6 +36,8 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
             password: true,
             database: true,
         },
+        supportsScratchpad: true,
+        supportsSchema: true,
     },
     {
         id: "MySQL",
@@ -44,6 +50,8 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
             password: true,
             database: true,
         },
+        supportsScratchpad: true,
+        supportsSchema: true,
     },
     {
         id: "MariaDB",
@@ -56,6 +64,8 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
             password: true,
             database: true,
         },
+        supportsScratchpad: true,
+        supportsSchema: true,
     },
     {
         id: "Sqlite3",
@@ -65,6 +75,8 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         fields: {
             database: true,  // SQLite only needs database field
         },
+        supportsScratchpad: true,
+        supportsSchema: false,  // SQLite doesn't support schemas
     },
     {
         id: "MongoDB",
@@ -77,6 +89,8 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
             password: true,
             // database: false - MongoDB doesn't use database field
         },
+        supportsScratchpad: false,  // MongoDB doesn't support SQL scratchpad
+        supportsSchema: false,  // MongoDB doesn't have traditional schemas
     },
     {
         id: "Redis",
@@ -89,6 +103,8 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
             password: true,
             // database: false - Redis doesn't use database field
         },
+        supportsScratchpad: false,  // Redis doesn't support SQL scratchpad
+        supportsSchema: false,  // Redis doesn't have schemas
     },
     {
         id: "ElasticSearch",
@@ -101,6 +117,8 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
             password: true,
             // database: false - ElasticSearch doesn't use database field
         },
+        supportsScratchpad: false,  // ElasticSearch doesn't support SQL scratchpad
+        supportsSchema: false,  // ElasticSearch doesn't have schemas
     },
     {
         id: "ClickHouse",
@@ -119,6 +137,8 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
             password: true,
             database: true,
         },
+        supportsScratchpad: true,
+        supportsSchema: true,
     },
 ];
 
@@ -150,6 +170,8 @@ if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
                 operators: dbType.operators,
                 dataTypes: dbType.dataTypes,
                 supportsModifiers: dbType.supportsModifiers,
+                supportsScratchpad: dbType.supportsScratchpad,
+                supportsSchema: dbType.supportsSchema,
             }));
             
             console.log('EE database types loaded:', eeDatabaseTypes);

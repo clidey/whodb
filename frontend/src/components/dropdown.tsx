@@ -191,7 +191,7 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
             <>  <button 
                     ref={triggerRef}
                     tabIndex={0} 
-                    className="group/dropdown flex gap-1 justify-between items-center border border-neutral-600/20 rounded-lg w-full p-1 h-[34px] px-2 dark:bg-[#2C2F33] dark:border-white/5" 
+                    className={ClassNames.Dropdown} 
                     onClick={handleToggleOpen} 
                     onKeyDown={handleKeyDown}
                     aria-haspopup="listbox"
@@ -208,7 +208,7 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
                         className: "absolute right-2 top-1/2 -translate-y-1/2 p-1 w-5 h-5 stroke-neutral-700 dark:stroke-neutral-400 group-hover/dropdown:backdrop-blur-xs rounded-full",
                     })}
                 </button>
-                <div className={classNames("absolute z-10 divide-y rounded-lg shadow-sm bg-white py-1 border border-gray-200 overflow-y-auto max-h-40 dark:bg-[#2C2F33] dark:border-white/20", {
+                <div className={classNames(ClassNames.DropdownPanel, {
                     "hidden": !open,
                     "block animate-fade": open,
                     "w-fit min-w-[200px]": !props.fullWidth,
