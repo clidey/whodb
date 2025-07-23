@@ -37,6 +37,18 @@ import { chatExamples } from "./examples";
 const logoImage = "/images/logo.png";
 import { HoudiniActions } from "../../store/chat";
 import { reduxStore } from "../../store";
+import { loadEEComponent, isEEFeatureEnabled } from "../../utils/ee-loader";
+
+// Lazy load chart components if EE is enabled
+const LineChart = isEEFeatureEnabled('dataVisualization') ? loadEEComponent(
+    () => import('@ee/components/charts/line-chart').then(m => ({ default: m.LineChart })),
+    () => null
+) : () => null;
+
+const PieChart = isEEFeatureEnabled('dataVisualization') ? loadEEComponent(
+    () => import('@ee/components/charts/pie-chart').then(m => ({ default: m.PieChart })),
+    () => null
+) : () => null;
 
 const thinkingPhrases = [
     "Thinking",
@@ -503,6 +515,12 @@ export const ChatPage: FC = () => {
                                                     <div className="text-red-800 dark:text-red-300 px-4 py-2 rounded-lg">
                                                         {chat.Text}
                                                     </div>
+                                                </div>
+                                            } else if (isEEFeatureEnabled('dataVisualization') && (chat.Type === "sql:pie-chart" || chat.Type === "sql:line-chart")) {
+                                                return <div key={`chat-${i}`} className="flex items-center self-start">
+                                                    {!chat.isUserInput && chats[i-1]?.isUserInput && <img src={logoImage} alt="clidey logo" className="w-auto h-6" />}
+                                                    {chat.Type === "sql:pie-chart" && PieChart && <PieChart columns={chat.Result?.Columns.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} />}
+                                                    {chat.Type === "sql:line-chart" && LineChart && <LineChart columns={chat.Result?.Columns.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} />}
                                                 </div>
                                             }
                                             return <div key={`chat-${i}`} className="flex gap-4 w-full overflow-hidden pt-4 pr-9">

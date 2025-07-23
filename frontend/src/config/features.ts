@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-// Feature flags for Enterprise Edition features
-export interface FeatureFlags {
-    analyzeView: boolean;
-    customTheme: boolean;
-    // Add more EE features as needed
-}
+import { FeatureFlags } from './ee-types';
 
 // Default feature flags (all disabled for open source version)
 const defaultFeatures: FeatureFlags = {
     analyzeView: false,
     customTheme: false,
+    dataVisualization: false,
+    aiChat: false,
+    multiProfile: false,
+    advancedDatabases: false,
 };
 
 // Check if EE modules are available
@@ -37,6 +36,9 @@ const checkEEAvailability = (): boolean => {
     }
 };
 
+// Store the loaded EE feature flags
+let loadedEEFeatures: FeatureFlags | null = null;
+
 // Get feature flags based on environment and EE availability
 export const getFeatureFlags = (): FeatureFlags => {
     const isEEAvailable = checkEEAvailability();
@@ -45,10 +47,30 @@ export const getFeatureFlags = (): FeatureFlags => {
         return defaultFeatures;
     }
     
-    // When EE is available, enable EE features
+    // If we've already loaded EE features, return them
+    if (loadedEEFeatures) {
+        return loadedEEFeatures;
+    }
+    
+    // Try to load EE features asynchronously
+    if (isEEAvailable) {
+        import('@ee/config').then(eeConfig => {
+            if (eeConfig?.eeFeatures) {
+                loadedEEFeatures = eeConfig.eeFeatures;
+            }
+        }).catch(() => {
+            console.warn('Could not load EE feature flags');
+        });
+    }
+    
+    // Return default enabled features for EE mode until async load completes
     return {
         analyzeView: true,
         customTheme: true,
+        dataVisualization: true,
+        aiChat: true,
+        multiProfile: true,
+        advancedDatabases: true,
     };
 };
 

@@ -1,6 +1,7 @@
 import { DatabaseType } from "../generated/graphql";
 import { Icons } from "../components/icons";
 import { IDropdownItem } from "../components/dropdown";
+import { EEDatabaseType } from "./ee-types";
 
 export const baseDatabaseTypes: IDropdownItem<Record<string, string>>[] = [
     {
@@ -59,32 +60,38 @@ export const baseDatabaseTypes: IDropdownItem<Record<string, string>>[] = [
     },
 ];
 
-export const eeDatabaseTypes: IDropdownItem<Record<string, string>>[] = [
-    {
-        id: "MSSQL",
-        label: "Microsoft SQL Server",
-        icon: Icons.Logos.MSSQL,
-        extra: {"Port": "1433"},
-    },
-    {
-        id: "Oracle",
-        label: "Oracle",
-        icon: Icons.Logos.Oracle,
-        extra: {"Port": "1521"},
-    },
-    {
-        id: "DynamoDB",
-        label: "AWS DynamoDB",
-        icon: Icons.Logos.DynamoDB,
-        extra: {"Region": "us-east-1"},
-    },
-];
+// This will be populated if EE is loaded
+let eeDatabaseTypes: IDropdownItem<Record<string, string>>[] = [];
+
+// Load EE database types if in EE mode
+if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
+    // Load EE config asynchronously
+    Promise.all([
+        import('@ee/config'),
+        import('@ee/icons')
+    ]).then(([eeConfig, eeIcons]) => {
+        if (eeConfig?.eeDatabaseTypes && eeIcons?.EEIcons?.Logos) {
+            // First merge the icons
+            Object.assign(Icons.Logos, eeIcons.EEIcons.Logos);
+            
+            // Then map EE database types to the correct format with resolved icons
+            eeDatabaseTypes = eeConfig.eeDatabaseTypes.map(dbType => ({
+                id: dbType.id,
+                label: dbType.label,
+                icon: Icons.Logos[dbType.iconName as keyof typeof Icons.Logos],
+                extra: dbType.extra,
+            }));
+        }
+    }).catch(() => {
+        console.warn('Could not load EE database types');
+    });
+}
 
 // Get all database types based on whether EE is enabled
 export const getDatabaseTypeDropdownItems = (): IDropdownItem<Record<string, string>>[] => {
-    const isEE = process.env.BUILD_EDITION === 'ee';
+    const isEE = import.meta.env.VITE_BUILD_EDITION === 'ee';
     
-    if (isEE) {
+    if (isEE && eeDatabaseTypes.length > 0) {
         return [...baseDatabaseTypes, ...eeDatabaseTypes];
     }
     

@@ -1,50 +1,101 @@
 /**
- * Copyright 2025 Clidey, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Enterprise Edition Type Definitions
+ * 
+ * These types define the interfaces for EE features but don't expose any implementation.
+ * The actual implementations remain in the EE module.
  */
 
 import { ComponentType } from 'react';
 
-// Define proper types for EE components
+// Types from analyze-view component
+type IPlanNode = {
+    "Node Type": string;
+    "Hash Cond"?: string;
+    "Join Type"?: string;
+    "Relation Name"?: string;
+    "Actual Rows"?: number;
+    "Actual Total Time"?: number;
+    Plans?: IPlanNode[];
+}
+
+type IExplainAnalyzeResult = {
+    Plan: IPlanNode;
+    "Execution Time": number;
+}
+
+// Component prop types
 export interface AnalyzeGraphProps {
-    graph: any; // Replace with actual graph type
+    data: IExplainAnalyzeResult;
 }
 
 export interface LineChartProps {
-    data: any[];
-    xKey: string;
-    yKey: string;
-    width?: number;
-    height?: number;
+    data: string[][];
+    columns: string[];
 }
 
 export interface PieChartProps {
-    data: any[];
-    dataKey: string;
-    nameKey: string;
-    width?: number;
-    height?: number;
+    data: string[][];
+    columns: string[];
 }
 
-export interface ThemeConfigProps {
-    children?: React.ReactNode;
+// ThemeConfig is not a component but a configuration object
+export interface ThemeConfigType {
+    name?: string;
+    logo: string;
+    layout: {
+        background: string;
+        sidebar: string;
+        sidebarItem: string;
+        chat: {
+            background: string;
+            user: string;
+            houdini: string;
+        };
+        graph: string;
+    };
+    components: {
+        card: string;
+        text: string;
+        brandText: string;
+        icon: string;
+        input: string;
+        button: string;
+        actionButton: string;
+        dropdown: string;
+        dropdownPanel: string;
+        toggle: string;
+        graphCard: string;
+        breadcrumb: string;
+        table: {
+            header: string;
+            evenRow: string;
+            oddRow: string;
+        };
+    };
 }
 
-// Type-safe EE component definitions
+// Type-safe EE component registry
 export type EEComponentTypes = {
     AnalyzeGraph: ComponentType<AnalyzeGraphProps> | null;
     LineChart: ComponentType<LineChartProps> | null;
     PieChart: ComponentType<PieChartProps> | null;
-    ThemeConfig: ComponentType<ThemeConfigProps> | null;
+    ThemeConfig: ThemeConfigType | null;
 };
+
+// Feature flags for Enterprise Edition
+export interface FeatureFlags {
+    analyzeView: boolean;
+    customTheme: boolean;
+    dataVisualization: boolean; // For charts (line, pie)
+    aiChat: boolean; // For Houdini AI assistant
+    multiProfile: boolean; // For saving multiple connection profiles
+    advancedDatabases: boolean; // For MSSQL, Oracle, DynamoDB
+}
+
+// EE Database type definition
+export interface EEDatabaseType {
+    id: string;
+    label: string;
+    iconName: string; // Name of icon to resolve from Icons.Logos
+    extra: Record<string, string>;
+}

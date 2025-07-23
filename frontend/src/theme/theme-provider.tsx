@@ -17,42 +17,10 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { loadEEModule, isEEFeatureEnabled } from '../utils/ee-loader';
 import { updateThemeClasses } from '../components/classes';
+import { ThemeConfigType } from '../config/ee-types';
 
-// Default theme configuration (matches current ClassNames)
-export interface ThemeConfig {
-    name?: string;
-    logo?: string;
-    layout?: {
-        background?: string;
-        sidebar?: string;
-        sidebarItem?: string;
-        chat?: {
-            background?: string;
-            user?: string;
-            houdini?: string;
-        };
-        graph?: string;
-    };
-    components?: {
-        card?: string;
-        text?: string;
-        brandText?: string;
-        icon?: string;
-        input?: string;
-        button?: string;
-        actionButton?: string;
-        dropdown?: string;
-        dropdownPanel?: string;
-        toggle?: string;
-        graphCard?: string;
-        breadcrumb?: string;
-        table?: {
-            header?: string;
-            evenRow?: string;
-            oddRow?: string;
-        };
-    };
-}
+// Use a partial version of ThemeConfigType for the default theme
+export type ThemeConfig = Partial<ThemeConfigType>;
 
 // Default theme values
 const defaultTheme: ThemeConfig = {
@@ -91,8 +59,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         const loadEETheme = async () => {
             if (isEEFeatureEnabled('customTheme')) {
                 try {
-                    // TODO: Enable this when EE folder is properly set up
-                    const eeTheme = null as any;
+                    const eeTheme = await loadEEModule(
+                        () => import('@ee/components/theme/theme')
+                    );
                     
                     if (eeTheme?.ThemeConfig) {
                         // Merge EE theme with default theme

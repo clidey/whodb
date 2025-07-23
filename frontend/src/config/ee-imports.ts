@@ -21,26 +21,16 @@ if (isEEMode) {
     // Dynamic imports for EE components
     const loadEEComponents = async () => {
         try {
-            // Load analyze view
-            const analyzeModule = await import('@ee/pages/raw-execute/analyze-view').catch(() => null);
-            if (analyzeModule?.AnalyzeGraph) {
-                EEComponents.AnalyzeGraph = analyzeModule.AnalyzeGraph;
-            }
-
-            // Load theme config
-            const themeModule = await import('@ee/components/theme/theme').catch(() => null);
-            if (themeModule?.ThemeConfig) {
-                EEComponents.ThemeConfig = themeModule.ThemeConfig;
-            }
-
-            // Load charts
-            const chartsModule = await import('@ee/components/charts').catch(() => null);
-            if (chartsModule) {
-                if (chartsModule.LineChart) EEComponents.LineChart = chartsModule.LineChart;
-                if (chartsModule.PieChart) EEComponents.PieChart = chartsModule.PieChart;
+            // Load all EE exports at once
+            const eeModule = await import('@ee/index').catch(() => null);
+            if (eeModule) {
+                if (eeModule.AnalyzeGraph) EEComponents.AnalyzeGraph = eeModule.AnalyzeGraph;
+                if (eeModule.LineChart) EEComponents.LineChart = eeModule.LineChart;
+                if (eeModule.PieChart) EEComponents.PieChart = eeModule.PieChart;
+                if (eeModule.ThemeConfig) EEComponents.ThemeConfig = eeModule.ThemeConfig;
             }
         } catch (error) {
-            console.warn('Some EE components could not be loaded:', error);
+            console.warn('EE components could not be loaded:', error);
         }
     };
 
