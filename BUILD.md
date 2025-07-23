@@ -101,6 +101,87 @@ docker build -f core/Dockerfile -t whodb:latest .
 docker build -f core/Dockerfile.ee -t whodb:ee .
 ```
 
+## GraphQL Generation
+
+### Schema Structure
+
+- **Core schema**: `core/graph/schema.graphqls` - Contains base types
+- **EE extension**: `ee/core/graph/schema.extension.graphqls` - Extends enums and types
+- **Merged schema**: `core/graph/schema.merged.graphqls` - Combined schema (generated)
+
+### Backend GraphQL Generation
+
+#### Community Edition
+```bash
+# Generate GraphQL code for CE
+./scripts/generate-graphql.sh community
+
+# Or manually:
+cd core
+go run github.com/99designs/gqlgen generate
+```
+
+#### Enterprise Edition
+```bash
+# Generate GraphQL code for EE (includes schema merging)
+./scripts/generate-graphql.sh ee
+
+# Or manually:
+./scripts/merge-schema.sh ee
+cd core
+go run github.com/99designs/gqlgen generate --config gqlgen.ee.yml
+```
+
+The EE generation process:
+1. Merges `schema.graphqls` with `schema.extension.graphqls`
+2. Adds enterprise database types (MSSQL, Oracle, DynamoDB) to the DatabaseType enum
+3. Generates Go code using the merged schema
+
+### Frontend GraphQL Generation
+
+The frontend generates TypeScript types from the running backend's GraphQL endpoint.
+
+#### Prerequisites
+- Backend must be running on `http://localhost:8080`
+- The backend version (CE or EE) determines the generated types
+
+#### Generate Frontend Types
+
+```bash
+cd frontend
+
+# For CE types: Run CE backend first
+npm run generate
+
+# For EE types: Run EE backend first
+npm run generate
+```
+
+The `codegen.yml` configuration fetches the schema from the running backend.
+
+### Complete EE Workflow
+
+To generate both backend and frontend with EE extensions:
+
+```bash
+# 1. Generate and build EE backend
+./build.sh --ee
+
+# 2. Start the EE backend
+cd core
+./whodb-ee &
+
+# 3. Wait for backend to start
+sleep 5
+
+# 4. Generate frontend types with EE schema
+cd ../frontend
+npm run generate
+
+# 5. Build frontend with EE support
+VITE_BUILD_EDITION=ee npm run build
+```
+
 ## Build Validation
 
 Before building EE, you can validate that all required modules are present:

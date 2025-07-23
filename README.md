@@ -56,7 +56,7 @@ WhoDB is available in two editions:
 - **Community Edition (CE)**: Open source with all core features
 - **Enterprise Edition (EE)**: Additional database support and advanced features
 
-See [BUILD.md](./BUILD.md) for detailed build instructions for both editions.
+See [BUILD.md](./BUILD.md) for detailed build instructions for both editions, including GraphQL schema generation for EE databases.
 
 <div style="width:100%;border-bottom:0.5px solid white;margin:50px 0px;"></div>
 

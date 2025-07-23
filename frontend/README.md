@@ -286,6 +286,52 @@ interface EEFeatureStore {
 
 ## Building and Development
 
+### GraphQL Type Generation
+
+The frontend uses GraphQL Code Generator to create TypeScript types from the backend schema.
+
+#### Prerequisites
+- Backend must be running on `http://localhost:8080`
+- The schema fetched depends on which backend version is running (CE or EE)
+
+#### Generate Types
+
+```bash
+# Generate types from running backend
+pnpm generate
+
+# Or npm/yarn equivalent:
+npm run generate
+```
+
+#### CE vs EE Types
+
+1. **For Community Edition types**:
+   ```bash
+   # Terminal 1: Start CE backend
+   cd ../core
+   go run .
+   
+   # Terminal 2: Generate frontend types
+   cd frontend
+   pnpm generate
+   ```
+
+2. **For Enterprise Edition types**:
+   ```bash
+   # Terminal 1: Start EE backend
+   cd ../core
+   go run -tags ee .
+   
+   # Terminal 2: Generate frontend types
+   cd frontend
+   pnpm generate
+   ```
+
+The generated file `src/generated/graphql.tsx` will include:
+- CE: Standard database types (MySQL, PostgreSQL, MongoDB, etc.)
+- EE: Additional types (MSSQL, Oracle, DynamoDB)
+
 ### Development Mode
 
 ```bash
@@ -293,7 +339,7 @@ interface EEFeatureStore {
 pnpm dev
 
 # With EE features
-VITE_ENABLE_EE=true pnpm dev
+VITE_BUILD_EDITION=ee pnpm dev
 ```
 
 ### Production Build
@@ -303,8 +349,10 @@ VITE_ENABLE_EE=true pnpm dev
 pnpm build
 
 # EE build
-VITE_ENABLE_EE=true pnpm build
+VITE_BUILD_EDITION=ee pnpm build
 ```
+
+Note: For EE builds, ensure you've generated types from an EE backend first.
 
 ### Theme-Specific Builds
 
