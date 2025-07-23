@@ -29,7 +29,6 @@ import { InternalPage } from "../../components/page";
 import { Table } from "../../components/table";
 import { InternalRoutes } from "../../config/routes";
 import { AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery, useGetAiModelsLazyQuery, useGetAiProvidersLazyQuery } from "../../generated/graphql";
-import { DatabaseActions } from "../../store/database";
 import { availableExternalModelTypes, AIModelsActions } from "../../store/ai-models";
 import { ensureModelTypesArray, ensureModelsArray } from "../../utils/ai-models-helper";
 import { notify } from "../../store/function";
@@ -40,6 +39,7 @@ const logoImage = "/images/logo.png";
 import { HoudiniActions } from "../../store/chat";
 import { reduxStore } from "../../store";
 import { loadEEComponent, isEEFeatureEnabled } from "../../utils/ee-loader";
+import { isEEMode } from "@/config/ee-imports";
 
 // Lazy load chart components if EE is enabled
 const LineChart = isEEFeatureEnabled('dataVisualization') ? loadEEComponent(
@@ -52,7 +52,9 @@ const PieChart = isEEFeatureEnabled('dataVisualization') ? loadEEComponent(
     () => null
 ) : () => null;
 
-const thinkingPhrases = [
+const thinkingPhrases = isEEMode ? [
+    "Thinking"
+] : [
     "Thinking",
     "Pondering life’s mysteries",
     "Consulting the cloud oracles",

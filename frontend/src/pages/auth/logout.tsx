@@ -17,8 +17,7 @@
 import { useMutation } from "@apollo/client";
 import { FC, useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { Icons } from "../../components/icons";
-import { Container, Page } from "../../components/page";
+import { Container } from "../../components/page";
 import { LogoutDocument, LogoutMutation, LogoutMutationVariables } from "../../generated/graphql";
 import { AuthActions } from "../../store/auth";
 import { notify } from "../../store/function";
