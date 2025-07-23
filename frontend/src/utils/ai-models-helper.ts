@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,25 +14,30 @@
  * limitations under the License.
  */
 
-import { PayloadAction, createSlice } from '@reduxjs/toolkit';
+import { IAIModelType } from '../store/ai-models';
 
-type IDatabaseState = {
-  schema: string;
+/**
+ * Ensures modelTypes is always an array with at least default values
+ */
+export function ensureModelTypesArray(modelTypes: any): IAIModelType[] {
+  if (Array.isArray(modelTypes)) {
+    return modelTypes;
+  }
+  
+  // Return default Ollama model type
+  return [{
+    id: "Ollama",
+    modelType: "Ollama",
+  }];
 }
 
-const initialState: IDatabaseState = {
-  schema: "",
+/**
+ * Ensures models is always an array
+ */
+export function ensureModelsArray(models: any): string[] {
+  if (Array.isArray(models)) {
+    return models;
+  }
+  
+  return [];
 }
-
-export const databaseSlice = createSlice({
-  name: 'database',
-  initialState,
-  reducers: {
-    setSchema: (state, action: PayloadAction<string>) => {
-      state.schema = action.payload;
-    },
-  },
-});
-
-export const DatabaseActions = databaseSlice.actions;
-export const databaseReducers = databaseSlice.reducer;

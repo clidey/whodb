@@ -22,7 +22,7 @@ import { InternalRoutes } from "../../config/routes";
 import { InternalPage } from "../../components/page";
 import { useAppSelector } from "../../store/hooks";
 import { isNoSQL } from "../../utils/functions";
-import { availableInternalModelTypes } from "../../store/database";
+import { availableInternalModelTypes } from "../../store/ai-models";
 
 export const NavigateToDefault: FC = () => {
     const current = useAppSelector(state => state.auth.current);
