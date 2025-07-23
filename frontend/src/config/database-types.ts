@@ -12,6 +12,8 @@ export interface IDatabaseDropdownItem extends IDropdownItem<Record<string, stri
         password?: boolean;
         database?: boolean;
     };
+    // Valid operators for this database type
+    operators?: string[];
 }
 
 export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
@@ -141,6 +143,7 @@ if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
                 icon: Icons.Logos[dbType.iconName as keyof typeof Icons.Logos],
                 extra: dbType.extra,
                 fields: dbType.fields,
+                operators: dbType.operators,
             }));
             
             console.log('EE database types loaded:', eeDatabaseTypes);

@@ -106,4 +106,5 @@ export interface EEDatabaseType {
         password?: boolean;
         database?: boolean;
     };
+    operators?: string[]; // Valid SQL operators for this database type
 }

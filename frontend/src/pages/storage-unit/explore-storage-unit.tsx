@@ -37,6 +37,7 @@ import {
 import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
 import { getDatabaseStorageUnitLabel, isNoSQL, isNumeric } from "../../utils/functions";
+import { getDatabaseOperators } from "../../utils/database-operators";
 import { ExploreStorageUnitWhereCondition } from "./explore-storage-unit-where-condition";
 
 
@@ -314,40 +315,8 @@ export const ExploreStorageUnit: FC = () => {
         if (!current?.Type) {
             return [];
         }
-    
-        switch (current.Type) {
-            case DatabaseType.Postgres:
-            case DatabaseType.MySql:
-            case DatabaseType.Sqlite3:
-            case DatabaseType.MariaDb:
-                return [
-                    "=", ">=", ">", "<=", "<", "<>", "!=", "!>", "!<", "BETWEEN", "NOT BETWEEN", 
-                    "LIKE", "NOT LIKE", "IN", "NOT IN", "IS NULL", "IS NOT NULL", "AND", "OR", 
-                    "NOT"
-                ];
-            case DatabaseType.ElasticSearch:
-                return [
-                    "match", "match_phrase", "match_phrase_prefix", "multi_match", "bool", 
-                    "term", "terms", "range", "exists", "prefix", "wildcard", "regexp", 
-                    "fuzzy", "ids", "constant_score", "function_score", "dis_max", "nested", 
-                    "has_child", "has_parent"
-                ];
-            case DatabaseType.MongoDb:
-                return ["eq", "ne", "gt", "gte", "lt", "lte", "in", "nin", "and", "or", 
-                        "not", "nor", "exists", "type", "regex", "expr", "mod", "all", 
-                        "elemMatch", "size", "bitsAllClear", "bitsAllSet", "bitsAnyClear", 
-                        "bitsAnySet", "geoIntersects", "geoWithin", "near", "nearSphere"];
-            case DatabaseType.ClickHouse:
-                return [
-                    "=", ">=", ">", "<=", "<", "!=", "<>", "==",
-                    "LIKE", "NOT LIKE", "ILIKE",  // ILIKE is handled specially for ClickHouse
-                    "IN", "NOT IN", "GLOBAL IN", "GLOBAL NOT IN",
-                    "BETWEEN", "NOT BETWEEN",
-                    "IS NULL", "IS NOT NULL",
-                    "AND", "OR", "NOT"
-                ];
-        }
-        return [];
+        
+        return getDatabaseOperators(current.Type);
     }, [current?.Type]);
 
     const handleToggleShowAdd = useCallback(() => {

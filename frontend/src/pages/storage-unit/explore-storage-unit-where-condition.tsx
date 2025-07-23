@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
 
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
-import {FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
 import { ActionButton, AnimatedButton } from "../../components/button";
 import { createDropdownItem, Dropdown, IDropdownItem } from "../../components/dropdown";
