@@ -62,14 +62,18 @@ export const baseDatabaseTypes: IDropdownItem<Record<string, string>>[] = [
 
 // This will be populated if EE is loaded
 let eeDatabaseTypes: IDropdownItem<Record<string, string>>[] = [];
+let eeLoadPromise: Promise<void> | null = null;
 
 // Load EE database types if in EE mode
 if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
-    // Load EE config asynchronously
-    Promise.all([
+    // Store the promise so we can await it later
+    eeLoadPromise = Promise.all([
         import('@ee/config'),
         import('@ee/icons')
     ]).then(([eeConfig, eeIcons]) => {
+        console.log('Loading EE config:', eeConfig);
+        console.log('Loading EE icons:', eeIcons);
+        
         if (eeConfig?.eeDatabaseTypes && eeIcons?.EEIcons?.Logos) {
             // First merge the icons
             Object.assign(Icons.Logos, eeIcons.EEIcons.Logos);
@@ -81,14 +85,37 @@ if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
                 icon: Icons.Logos[dbType.iconName as keyof typeof Icons.Logos],
                 extra: dbType.extra,
             }));
+            
+            console.log('EE database types loaded:', eeDatabaseTypes);
+        } else {
+            console.warn('EE modules loaded but missing expected exports', {
+                hasDatabaseTypes: !!eeConfig?.eeDatabaseTypes,
+                hasIcons: !!eeIcons?.EEIcons?.Logos
+            });
         }
-    }).catch(() => {
-        console.warn('Could not load EE database types');
+    }).catch((error) => {
+        console.error('Could not load EE database types:', error);
     });
 }
 
-// Get all database types based on whether EE is enabled
-export const getDatabaseTypeDropdownItems = (): IDropdownItem<Record<string, string>>[] => {
+// Get all database types - now returns a promise if EE is loading
+export const getDatabaseTypeDropdownItems = async (): Promise<IDropdownItem<Record<string, string>>[]> => {
+    const isEE = import.meta.env.VITE_BUILD_EDITION === 'ee';
+    
+    if (isEE && eeLoadPromise) {
+        // Wait for EE to load
+        await eeLoadPromise;
+        
+        if (eeDatabaseTypes.length > 0) {
+            return [...baseDatabaseTypes, ...eeDatabaseTypes];
+        }
+    }
+    
+    return baseDatabaseTypes;
+};
+
+// For backward compatibility, provide a synchronous version that only returns base types initially
+export const getDatabaseTypeDropdownItemsSync = (): IDropdownItem<Record<string, string>>[] => {
     const isEE = import.meta.env.VITE_BUILD_EDITION === 'ee';
     
     if (isEE && eeDatabaseTypes.length > 0) {
@@ -98,4 +125,14 @@ export const getDatabaseTypeDropdownItems = (): IDropdownItem<Record<string, str
     return baseDatabaseTypes;
 };
 
-export const databaseTypeDropdownItems = getDatabaseTypeDropdownItems();
+// Export this for components that need immediate access (will be updated when EE loads)
+export let databaseTypeDropdownItems = baseDatabaseTypes;
+
+// Update the exported items when EE loads
+if (import.meta.env.VITE_BUILD_EDITION === 'ee' && eeLoadPromise) {
+    eeLoadPromise.then(() => {
+        if (eeDatabaseTypes.length > 0) {
+            databaseTypeDropdownItems = [...baseDatabaseTypes, ...eeDatabaseTypes];
+        }
+    });
+}

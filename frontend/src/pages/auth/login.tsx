@@ -33,7 +33,7 @@ import { DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { updateProfileLastAccessed } from "../../components/profile-info-tooltip";
-import { databaseTypeDropdownItems } from "../../config/database-types";
+import { getDatabaseTypeDropdownItems, baseDatabaseTypes } from "../../config/database-types";
 
 export const LoginPage: FC = () => {
     const dispatch = useAppDispatch();
@@ -47,7 +47,8 @@ export const LoginPage: FC = () => {
     const { loading: profilesLoading, data: profiles } = useGetProfilesQuery();
     const [searchParams, ] = useSearchParams();
     
-    const [databaseType, setDatabaseType] = useState<IDropdownItem>(databaseTypeDropdownItems[0]);
+    const [databaseTypeItems, setDatabaseTypeItems] = useState<IDropdownItem<Record<string, string>>[]>(baseDatabaseTypes);
+    const [databaseType, setDatabaseType] = useState<IDropdownItem>(baseDatabaseTypes[0]);
     const [hostName, setHostName] = useState("");
     const [database, setDatabase] = useState("");
     const [username, setUsername] = useState("");
@@ -173,6 +174,13 @@ export const LoginPage: FC = () => {
         dispatch(DatabaseActions.setSchema(""));
     }, [dispatch]);
 
+    // Load EE database types if available
+    useEffect(() => {
+        getDatabaseTypeDropdownItems().then(items => {
+            setDatabaseTypeItems(items);
+        });
+    }, []);
+
     // Update last accessed time when a new profile is created during login
     useEffect(() => {
         if (shouldUpdateLastAccessed.current && currentProfile?.Id) {
@@ -185,14 +193,14 @@ export const LoginPage: FC = () => {
         if (searchParams.size > 0) {
             if (searchParams.has("type")) {
                 const databaseType = searchParams.get("type")!;
-                setDatabaseType(databaseTypeDropdownItems.find(item => item.id === databaseType) ?? databaseTypeDropdownItems[0]);
+                setDatabaseType(databaseTypeItems.find(item => item.id === databaseType) ?? databaseTypeItems[0]);
             }
             if (searchParams.has("host")) setHostName(searchParams.get("host")!);
             if (searchParams.has("username")) setUsername(searchParams.get("username")!);
             if (searchParams.has("password")) setPassword(searchParams.get("password")!);
             if (searchParams.has("database")) setDatabase(searchParams.get("database")!);
         }
-    }, [searchParams]);
+    }, [searchParams, databaseTypeItems]);
 
     const handleHostNameChange = useCallback((newHostName: string) => {
         if (databaseType.id !== DatabaseType.MongoDb || !newHostName.startsWith("mongodb+srv://")) {
@@ -304,7 +312,7 @@ export const LoginPage: FC = () => {
                                 </div>
                             </div>
                             <div className="flex flex-col grow justify-center gap-1">
-                                <DropdownWithLabel fullWidth dropdownContainerHeight="max-h-[300px]" label="Database Type" value={databaseType} onChange={handleDatabaseTypeChange} items={databaseTypeDropdownItems} testId="database-type" />
+                                <DropdownWithLabel fullWidth dropdownContainerHeight="max-h-[300px]" label="Database Type" value={databaseType} onChange={handleDatabaseTypeChange} items={databaseTypeItems} testId="database-type" />
                                 {fields}
                             </div>
                         </div>

@@ -24,6 +24,7 @@ export type ThemeConfig = Partial<ThemeConfigType>;
 
 // Default theme values
 const defaultTheme: ThemeConfig = {
+    //@ts-ignore
     components: {
         text: "text-[#333333] dark:text-[#E0E0E0]",
         brandText: "text-[#ca6f1e] dark:text-[#ca6f1e]",
