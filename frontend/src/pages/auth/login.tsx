@@ -54,7 +54,9 @@ export const LoginPage: FC = () => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string>();
-    const [advancedForm, setAdvancedForm] = useState<Record<string, string>>(databaseType.extra);
+    const [advancedForm, setAdvancedForm] = useState<Record<string, string>>(
+        databaseType.extra ?? {}
+    );
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [selectedAvailableProfile, setSelectedAvailableProfile] = useState<IDropdownItem>();
 
@@ -151,7 +153,7 @@ export const LoginPage: FC = () => {
         setPassword("");
         setDatabase("");
         setDatabaseType(item);
-        setAdvancedForm(item.extra);
+        setAdvancedForm(item.extra ?? {});
     }, [getDatabases]);
 
     const handleAdvancedToggle = useCallback(() => {
@@ -271,16 +273,16 @@ export const LoginPage: FC = () => {
             </>
         }
         return <>
-            { databaseType.fields?.hostname !== false && (
+            { databaseType.fields?.hostname && (
                 <InputWithlabel label={databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Postgres ? "Host Name (or paste Connection URL)" : "Host Name"} value={hostName} setValue={handleHostNameChange} testId="hostname" />
             )}
-            { databaseType.fields?.username !== false && (
+            { databaseType.fields?.username && (
                 <InputWithlabel label="Username" value={username} setValue={setUsername} testId="username" />
             )}
-            { databaseType.fields?.password !== false && (
+            { databaseType.fields?.password && (
                 <InputWithlabel label="Password" value={password} setValue={setPassword} type="password" testId="password" />
             )}
-            { databaseType.fields?.database !== false && (
+            { databaseType.fields?.database && (
                 <InputWithlabel label="Database" value={database} setValue={setDatabase} testId="database" />
             )}
         </>

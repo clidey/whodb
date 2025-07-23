@@ -63,7 +63,7 @@ export const Dropdown: FC<IDropdownProps> = (props) => {
     const dropdownRef = useRef<HTMLDivElement>(null);
     const triggerRef = useRef<HTMLButtonElement>(null);
     const itemsRef = useRef<HTMLDivElement[]>([]);
-    const blurTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const handleClick = useCallback((item: IDropdownItem) => {
         setOpen(false);
