@@ -90,6 +90,8 @@ export interface FeatureFlags {
     aiChat: boolean; // For Houdini AI assistant
     multiProfile: boolean; // For saving multiple connection profiles
     advancedDatabases: boolean; // For MSSQL, Oracle, DynamoDB
+    contactUsPage: boolean; // Show Contact Us page (disabled in EE)
+    settingsPage: boolean; // Show Settings page (disabled in EE)
 }
 
 // EE Database type definition

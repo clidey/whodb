@@ -36,6 +36,7 @@ import { createDropdownItem, Dropdown, IDropdownItem } from "../dropdown";
 import { Icons } from "../icons";
 import { Loading } from "../loading";
 import { ProfileInfoTooltip, updateProfileLastAccessed } from "../profile-info-tooltip";
+import { isEEFeatureEnabled } from "../../utils/ee-loader";
 
 
 type IRoute = {
@@ -559,14 +560,18 @@ export const Sidebar: FC = () => {
                             {routes}
                         </div>
                         <div className="grow"/>
-                        <div className="flex flex-col">
-                            <SideMenu collapse={collapsed} title="Contact Us" icon={Icons.QuestionMark}
-                                      path={InternalRoutes.ContactUs.path}/>
-                        </div>
-                        <div className="flex flex-col gap-8">
-                            <SideMenu collapse={collapsed} title="Settings" icon={Icons.Settings}
-                                      path={InternalRoutes.Settings.path}/>
-                        </div>
+                        {isEEFeatureEnabled('contactUsPage') && InternalRoutes.ContactUs && (
+                            <div className="flex flex-col">
+                                <SideMenu collapse={collapsed} title="Contact Us" icon={Icons.QuestionMark}
+                                          path={InternalRoutes.ContactUs.path}/>
+                            </div>
+                        )}
+                        {isEEFeatureEnabled('settingsPage') && InternalRoutes.Settings && (
+                            <div className="flex flex-col gap-8">
+                                <SideMenu collapse={collapsed} title="Settings" icon={Icons.Settings}
+                                          path={InternalRoutes.Settings.path}/>
+                            </div>
+                        )}
                         <div className="flex flex-col gap-8">
                             <SideMenu collapse={collapsed} title="Logout" icon={Icons.Logout}
                                       path={InternalRoutes.Logout.path} testId="logout" />

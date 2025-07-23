@@ -24,6 +24,8 @@ const defaultFeatures: FeatureFlags = {
     aiChat: false,
     multiProfile: false,
     advancedDatabases: false,
+    contactUsPage: true, // Enabled in CE
+    settingsPage: true, // Enabled in CE
 };
 
 // Check if EE modules are available
@@ -71,6 +73,8 @@ export const getFeatureFlags = (): FeatureFlags => {
         aiChat: true,
         multiProfile: true,
         advancedDatabases: true,
+        contactUsPage: false, // Disabled in EE
+        settingsPage: false, // Disabled in EE
     };
 };
 
