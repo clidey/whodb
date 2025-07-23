@@ -3,48 +3,98 @@ import { Icons } from "../components/icons";
 import { IDropdownItem } from "../components/dropdown";
 import { EEDatabaseType } from "./ee-types";
 
-export const baseDatabaseTypes: IDropdownItem<Record<string, string>>[] = [
+// Extended dropdown item type with UI field configuration
+export interface IDatabaseDropdownItem extends IDropdownItem<Record<string, string>> {
+    // UI field configuration
+    fields?: {
+        hostname?: boolean;
+        username?: boolean;
+        password?: boolean;
+        database?: boolean;
+    };
+}
+
+export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
     {
         id: "Postgres",
         label: "Postgres",
         icon: Icons.Logos.Postgres,
         extra: {"Port": "5432"},
+        fields: {
+            hostname: true,
+            username: true,
+            password: true,
+            database: true,
+        },
     },
     {
         id: "MySQL",
         label: "MySQL",
         icon: Icons.Logos.MySQL,
         extra: {"Port": "3306", "Parse Time": "True", "Loc": "Local", "Allow clear text passwords": "0"},
+        fields: {
+            hostname: true,
+            username: true,
+            password: true,
+            database: true,
+        },
     },
     {
         id: "MariaDB",
         label: "MariaDB",
         icon: Icons.Logos.MariaDB,
         extra: {"Port": "3306", "Parse Time": "True", "Loc": "Local", "Allow clear text passwords": "0"},
+        fields: {
+            hostname: true,
+            username: true,
+            password: true,
+            database: true,
+        },
     },
     {
         id: "Sqlite3",
         label: "Sqlite3",
         icon: Icons.Logos.Sqlite3,
         extra: {},
+        fields: {
+            database: true,  // SQLite only needs database field
+        },
     },
     {
         id: "MongoDB",
         label: "MongoDB",
         icon: Icons.Logos.MongoDB,
         extra: {"Port": "27017", "URL Params": "?", "DNS Enabled": "false"},
+        fields: {
+            hostname: true,
+            username: true,
+            password: true,
+            // database: false - MongoDB doesn't use database field
+        },
     },
     {
         id: "Redis",
         label: "Redis",
         icon: Icons.Logos.Redis,
         extra: {"Port": "6379"},
+        fields: {
+            hostname: true,
+            // username: false - Redis doesn't use username
+            password: true,
+            // database: false - Redis doesn't use database field
+        },
     },
     {
         id: "ElasticSearch",
         label: "ElasticSearch",
         icon: Icons.Logos.ElasticSearch,
         extra: {"Port": "9200", "SSL Mode": "disable"},
+        fields: {
+            hostname: true,
+            username: true,
+            password: true,
+            // database: false - ElasticSearch doesn't use database field
+        },
     },
     {
         id: "ClickHouse",
@@ -56,12 +106,18 @@ export const baseDatabaseTypes: IDropdownItem<Record<string, string>>[] = [
             "HTTP Protocol": "disable",
             "Readonly": "disable",
             "Debug": "disable"
-        }
+        },
+        fields: {
+            hostname: true,
+            username: true,
+            password: true,
+            database: true,
+        },
     },
 ];
 
 // This will be populated if EE is loaded
-let eeDatabaseTypes: IDropdownItem<Record<string, string>>[] = [];
+let eeDatabaseTypes: IDatabaseDropdownItem[] = [];
 let eeLoadPromise: Promise<void> | null = null;
 
 // Load EE database types if in EE mode
@@ -84,6 +140,7 @@ if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
                 label: dbType.label,
                 icon: Icons.Logos[dbType.iconName as keyof typeof Icons.Logos],
                 extra: dbType.extra,
+                fields: dbType.fields,
             }));
             
             console.log('EE database types loaded:', eeDatabaseTypes);
@@ -99,7 +156,7 @@ if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
 }
 
 // Get all database types - now returns a promise if EE is loading
-export const getDatabaseTypeDropdownItems = async (): Promise<IDropdownItem<Record<string, string>>[]> => {
+export const getDatabaseTypeDropdownItems = async (): Promise<IDatabaseDropdownItem[]> => {
     const isEE = import.meta.env.VITE_BUILD_EDITION === 'ee';
     
     if (isEE && eeLoadPromise) {
@@ -115,7 +172,7 @@ export const getDatabaseTypeDropdownItems = async (): Promise<IDropdownItem<Reco
 };
 
 // For backward compatibility, provide a synchronous version that only returns base types initially
-export const getDatabaseTypeDropdownItemsSync = (): IDropdownItem<Record<string, string>>[] => {
+export const getDatabaseTypeDropdownItemsSync = (): IDatabaseDropdownItem[] => {
     const isEE = import.meta.env.VITE_BUILD_EDITION === 'ee';
     
     if (isEE && eeDatabaseTypes.length > 0) {

@@ -33,7 +33,7 @@ import { DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { updateProfileLastAccessed } from "../../components/profile-info-tooltip";
-import { getDatabaseTypeDropdownItems, baseDatabaseTypes } from "../../config/database-types";
+import { getDatabaseTypeDropdownItems, baseDatabaseTypes, IDatabaseDropdownItem } from "../../config/database-types";
 
 export const LoginPage: FC = () => {
     const dispatch = useAppDispatch();
@@ -47,8 +47,8 @@ export const LoginPage: FC = () => {
     const { loading: profilesLoading, data: profiles } = useGetProfilesQuery();
     const [searchParams, ] = useSearchParams();
     
-    const [databaseTypeItems, setDatabaseTypeItems] = useState<IDropdownItem<Record<string, string>>[]>(baseDatabaseTypes);
-    const [databaseType, setDatabaseType] = useState<IDropdownItem>(baseDatabaseTypes[0]);
+    const [databaseTypeItems, setDatabaseTypeItems] = useState<IDatabaseDropdownItem[]>(baseDatabaseTypes);
+    const [databaseType, setDatabaseType] = useState<IDatabaseDropdownItem>(baseDatabaseTypes[0]);
     const [hostName, setHostName] = useState("");
     const [database, setDatabase] = useState("");
     const [username, setUsername] = useState("");
@@ -138,7 +138,7 @@ export const LoginPage: FC = () => {
         });
     }, [dispatch, loginWithProfile, navigate, profiles?.Profiles, selectedAvailableProfile]);
 
-    const handleDatabaseTypeChange = useCallback((item: IDropdownItem) => {
+    const handleDatabaseTypeChange = useCallback((item: IDatabaseDropdownItem) => {
         if (item.id === DatabaseType.Sqlite3) {
             getDatabases({
                 variables: {
@@ -271,12 +271,20 @@ export const LoginPage: FC = () => {
             </>
         }
         return <>
-            <InputWithlabel label={databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Postgres ? "Host Name (or paste Connection URL)" : "Host Name"} value={hostName} setValue={handleHostNameChange} testId="hostname" />
-            { databaseType.id !== DatabaseType.Redis && <InputWithlabel label="Username" value={username} setValue={setUsername} testId="username" /> }
-            <InputWithlabel label="Password" value={password} setValue={setPassword} type="password" testId="password" />
-            { (databaseType.id !== DatabaseType.MongoDb && databaseType.id !== DatabaseType.Redis && databaseType.id !== DatabaseType.ElasticSearch)  && <InputWithlabel label="Database" value={database} setValue={setDatabase} testId="database" /> }
+            { databaseType.fields?.hostname !== false && (
+                <InputWithlabel label={databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Postgres ? "Host Name (or paste Connection URL)" : "Host Name"} value={hostName} setValue={handleHostNameChange} testId="hostname" />
+            )}
+            { databaseType.fields?.username !== false && (
+                <InputWithlabel label="Username" value={username} setValue={setUsername} testId="username" />
+            )}
+            { databaseType.fields?.password !== false && (
+                <InputWithlabel label="Password" value={password} setValue={setPassword} type="password" testId="password" />
+            )}
+            { databaseType.fields?.database !== false && (
+                <InputWithlabel label="Database" value={database} setValue={setDatabase} testId="database" />
+            )}
         </>
-    }, [database, databaseType.id, databasesLoading, foundDatabases?.Database, handleHostNameChange, hostName, password, username]);
+    }, [database, databaseType.id, databaseType.fields, databasesLoading, foundDatabases?.Database, handleHostNameChange, hostName, password, username]);
 
     const availableProfiles = useMemo(() => {
         return profiles?.Profiles.map(profile => createDropdownItem(profile.Alias ?? profile.Id, (Icons.Logos as Record<string, ReactElement>)[profile.Type])) ?? [];

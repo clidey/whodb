@@ -100,4 +100,10 @@ export interface EEDatabaseType {
     label: string;
     iconName: string; // Name of icon to resolve from Icons.Logos
     extra: Record<string, string>;
+    fields?: {
+        hostname?: boolean;
+        username?: boolean;
+        password?: boolean;
+        database?: boolean;
+    };
 }
