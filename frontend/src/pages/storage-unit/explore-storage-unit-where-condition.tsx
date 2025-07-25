@@ -22,7 +22,7 @@ import { ActionButton, AnimatedButton } from "../../components/button";
 import { createDropdownItem, Dropdown, IDropdownItem } from "../../components/dropdown";
 import { Icons } from "../../components/icons";
 import { Input, Label } from "../../components/input";
-import { AtomicWhereCondition, WhereCondition, WhereConditionType } from "../../generated/graphql";
+import { AtomicWhereCondition, WhereCondition, WhereConditionType } from '@graphql';
 
 type IExploreStorageUnitWhereConditionProps = {
     defaultWhere?: WhereCondition;

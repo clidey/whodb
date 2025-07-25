@@ -12,19 +12,28 @@ cd "$PROJECT_ROOT"
 echo "Generating GraphQL code for $EDITION edition..."
 
 if [ "$EDITION" = "ee" ]; then
-    # Merge schemas for EE build
-    ./scripts/merge-schema.sh ee
+    # For EE, first run the merge-schema.sh script to prepare the merged schema
+    echo "Merging schema for EE mode..."
+    "$SCRIPT_DIR/merge-schema.sh" "ee"
+    if [ $? -ne 0 ]; then
+        echo "Schema merge failed"
+        exit 1
+    fi
     
-    # Generate code using EE configuration
-    cd core
+    # Generate EE code in ee directory using the merged schema
+    cd ee
+    echo "Generating EE GraphQL code using merged schema..."
     go run github.com/99designs/gqlgen generate --config gqlgen.ee.yml
     RESULT=$?
     
-    # Clean up merged schema after generation (optional)
-    # rm -f graph/schema.merged.graphqls
+    # Clean up the merged schema file after generation
+    rm -f "$PROJECT_ROOT/core/graph/schema.merged.graphqls"
 else
-    # Generate code using standard configuration
+    # For CE, just use the standard generation with the original schema
     cd core
+    echo "Generating CE GraphQL code..."
+    # Make sure no merged schema file exists to avoid conflicts
+    rm -f graph/schema.merged.graphqls
     go run github.com/99designs/gqlgen generate
     RESULT=$?
 fi

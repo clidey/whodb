@@ -15,7 +15,7 @@
  */
 
 import { FC } from "react";
-import { DatabaseType, useGetAiModelsQuery } from "../../generated/graphql";
+import { DatabaseType, useGetAiModelsQuery } from '@graphql';
 import { Loading } from "../../components/loading";
 import { Navigate } from "react-router-dom";
 import { InternalRoutes } from "../../config/routes";

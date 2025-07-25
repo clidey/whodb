@@ -28,7 +28,7 @@ import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { Table } from "../../components/table";
 import { InternalRoutes } from "../../config/routes";
-import { AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery, useGetAiModelsLazyQuery, useGetAiProvidersLazyQuery } from "../../generated/graphql";
+import { AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery, useGetAiModelsLazyQuery, useGetAiProvidersLazyQuery } from '@graphql';
 import { availableExternalModelTypes, AIModelsActions } from "../../store/ai-models";
 import { ensureModelTypesArray, ensureModelsArray } from "../../utils/ai-models-helper";
 import { notify } from "../../store/function";
@@ -52,9 +52,7 @@ const PieChart = isEEFeatureEnabled('dataVisualization') ? loadEEComponent(
     () => null
 ) : () => null;
 
-const thinkingPhrases = isEEMode ? [
-    "Thinking"
-] : [
+const thinkingPhrases = [
     "Thinking",
     "Pondering life’s mysteries",
     "Consulting the cloud oracles",
@@ -541,7 +539,7 @@ export const ChatPage: FC = () => {
                                         })
                                     }
                                     { loading &&  <div className="flex w-full mt-4">
-                                        <Loading loadingText={chooseRandomItems(thinkingPhrases)[0]} size="sm" />
+                                        <Loading loadingText={isEEMode ? thinkingPhrases[0] : chooseRandomItems(thinkingPhrases)[0]} size="sm" />
                                     </div> }
                                 </div>
                             </div>

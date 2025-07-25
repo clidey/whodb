@@ -42,18 +42,20 @@
     "start:ee": "VITE_BUILD_EDITION=ee vite --port 3000 --open",
     "start:test": "NODE_ENV=test vite --port 3000 --open",
     "start:test:ee": "VITE_BUILD_EDITION=ee NODE_ENV=test vite --port 3000 --open",
-    "build": "tsc && vite build",
-    "build:ee": "VITE_BUILD_EDITION=ee tsc && vite build",
-    "test": "npm run test:setup && NODE_ENV=test pnpm cypress open; npm run test:cleanup",
-    "test:headless": "npm run test:setup && NODE_ENV=test npx cypress run --browser chrome; npm run test:cleanup",
-    "test:headless:chromium": "npm run test:setup && NODE_ENV=test npx cypress run --browser chromium; npm run test:cleanup",
-    "test:sqlite": "npm run test:setup && NODE_ENV=test npx cypress run --browser chrome --spec 'cypress/e2e/sqlite.cy.js'; npm run test:cleanup",
+    "build": "tsc -p tsconfig.ce.json && vite build",
+    "build:ce": "tsc -p tsconfig.ce.json && vite build",
+    "build:ee": "VITE_BUILD_EDITION=ee vite build",
+    "test": "pnpm run test:setup && NODE_ENV=test pnpm cypress open; pnpm run test:cleanup",
+    "test:headless": "pnpm run test:setup && NODE_ENV=test npx cypress run --browser chrome; pnpm run test:cleanup",
+    "test:headless:chromium": "pnpm run test:setup && NODE_ENV=test npx cypress run --browser chromium; pnpm run test:cleanup",
     "test:setup": "bash ../dev/setup-e2e.sh",
     "test:cleanup": "bash ../dev/cleanup-e2e.sh",
     "view:coverage": "npx nyc report --reporter=text-summary",
     "view:coverage:frontend": "npx nyc report --reporter=html",
     "view:coverage:backend": "cd ../core && go tool cover -html=coverage.out",
-    "generate": "npx graphql-codegen"
+    "generate": "npx graphql-codegen",
+    "generate:ce": "npx graphql-codegen --config codegen.ce.yml",
+    "generate:ee": "npx graphql-codegen --config codegen.ee.yml"
   },
   "browserslist": {
     "production": [
@@ -90,5 +92,5 @@
     "typescript": "^5.8.3",
     "vite": "^7.0.5"
   },
-  "packageManager": "pnpm@9.14.4+sha512.c8180b3fbe4e4bca02c94234717896b5529740a6cbadf19fa78254270403ea2f27d4e1d46a08a0f56c89b63dc8ebfd3ee53326da720273794e6200fcf0d184ab"
+  "packageManager": "pnpm@10.13.1+sha512.37ebf1a5c7a30d5fabe0c5df44ee8da4c965ca0c5af3dbab28c3a1681b70a256218d05c81c9c0dcf767ef6b8551eb5b960042b9ed4300c59242336377e01cfad"
 }

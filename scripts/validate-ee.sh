@@ -5,73 +5,66 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
 echo "🔍 Validating Enterprise Edition build requirements..."
 
 # Check if EE directory exists
-if [ ! -d "./ee" ]; then
-    echo "❌ Error: Enterprise Edition directory './ee' not found"
+if [ ! -d "$PROJECT_ROOT/ee" ]; then
+    echo "❌ Error: Enterprise Edition directory 'ee' not found"
     echo ""
     echo "The Enterprise Edition requires additional modules that are not included"
     echo "in the open-source distribution. To build the Enterprise Edition:"
     echo ""
     echo "1. Ensure you have access to the EE modules"
-    echo "2. Place the 'ee' directory in the project root"
+    echo "2. Place the 'ee' directory in the project root: $PROJECT_ROOT/ee"
     echo "3. Run this script again"
     echo ""
     echo "For more information, see: https://github.com/clidey/whodb/blob/main/ee/README.md"
     exit 1
 fi
 
-# Check if EE backend modules exist
-if [ ! -d "./ee/core/src/plugins" ]; then
-    echo "❌ Error: EE backend plugins not found at './ee/core/src/plugins'"
-    echo "   The EE directory structure appears to be incomplete"
+# Generic check that EE directory has content
+if [ -z "$(ls -A "$PROJECT_ROOT/ee" 2>/dev/null)" ]; then
+    echo "❌ Error: Enterprise Edition directory is empty"
     exit 1
 fi
-
-# Check if EE frontend modules exist
-if [ ! -d "./ee/frontend/src" ]; then
-    echo "❌ Error: EE frontend modules not found at './ee/frontend/src'"
-    echo "   The EE directory structure appears to be incomplete"
-    exit 1
-fi
-
-# Check for required EE plugins
-echo "✓ Checking for EE database plugins..."
-required_plugins=("dynamodb" "mssql" "oracle")
-for plugin in "${required_plugins[@]}"; do
-    if [ ! -d "./ee/core/src/plugins/$plugin" ]; then
-        echo "❌ Error: Required EE plugin '$plugin' not found"
-        exit 1
-    fi
-    echo "  ✓ Found $plugin plugin"
-done
 
 # Check for EE go.mod
-if [ ! -f "./ee/go.mod" ]; then
-    echo "❌ Error: EE go.mod not found at './ee/go.mod'"
+if [ ! -f "$PROJECT_ROOT/ee/go.mod" ]; then
+    echo "❌ Error: Enterprise Edition appears to be incomplete"
+    echo "   Missing required module files"
     exit 1
 fi
 
-echo "✓ EE go.mod found"
+echo "✓ Enterprise Edition modules found"
 
-# Check for EE frontend components
-echo "✓ Checking for EE frontend components..."
-if [ ! -d "./ee/frontend/src/components/charts" ]; then
-    echo "❌ Error: EE charts components not found"
+# Check for required tools
+echo "✓ Checking for required build tools..."
+if ! command -v go &> /dev/null; then
+    echo "❌ Error: Go is not installed"
+    echo "   Install Go from: https://golang.org/dl/"
     exit 1
 fi
-echo "  ✓ Found charts components"
+echo "  ✓ Go $(go version | awk '{print $3}')"
 
-if [ ! -d "./ee/frontend/src/components/theme" ]; then
-    echo "❌ Error: EE theme components not found"
+if ! command -v pnpm &> /dev/null; then
+    echo "❌ Error: pnpm is not installed"
+    echo "   Install pnpm with: npm install -g pnpm"
     exit 1
 fi
-echo "  ✓ Found theme components"
+echo "  ✓ pnpm $(pnpm --version)"
+
+if ! command -v node &> /dev/null; then
+    echo "❌ Error: Node.js is not installed"
+    echo "   Install Node.js from: https://nodejs.org/"
+    exit 1
+fi
+echo "  ✓ Node.js $(node --version)"
 
 echo ""
 echo "✅ All Enterprise Edition requirements validated!"
 echo "   You can now build the Enterprise Edition with:"
-echo "   - make build-ee"
 echo "   - ./build.sh --ee"
 echo ""

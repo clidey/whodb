@@ -27,7 +27,7 @@ import { InputWithlabel } from "../../components/input";
 import { Loading } from "../../components/loading";
 import { Container } from "../../components/page";
 import { InternalRoutes } from "../../config/routes";
-import { DatabaseType, LoginCredentials, useGetDatabaseLazyQuery, useGetProfilesQuery, useLoginMutation, useLoginWithProfileMutation } from '../../generated/graphql';
+import { DatabaseType, LoginCredentials, useGetDatabaseLazyQuery, useGetProfilesQuery, useLoginMutation, useLoginWithProfileMutation } from '@graphql';
 import { AuthActions } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";

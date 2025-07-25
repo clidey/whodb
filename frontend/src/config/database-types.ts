@@ -1,4 +1,4 @@
-import { DatabaseType } from "../generated/graphql";
+import { DatabaseType } from "@graphql";
 import { Icons } from "../components/icons";
 import { IDropdownItem } from "../components/dropdown";
 import { EEDatabaseType } from "./ee-types";
@@ -161,6 +161,7 @@ if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
             Object.assign(Icons.Logos, eeIcons.EEIcons.Logos);
             
             // Then map EE database types to the correct format with resolved icons
+            // @ts-ignore - TODO: fix this
             eeDatabaseTypes = eeConfig.eeDatabaseTypes.map(dbType => ({
                 id: dbType.id,
                 label: dbType.label,

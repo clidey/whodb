@@ -89,7 +89,7 @@ export interface FeatureFlags {
     dataVisualization: boolean; // For charts (line, pie)
     aiChat: boolean; // For Houdini AI assistant
     multiProfile: boolean; // For saving multiple connection profiles
-    advancedDatabases: boolean; // For MSSQL, Oracle, DynamoDB
+    advancedDatabases: boolean; // For additional enterprise databases
     contactUsPage: boolean; // Show Contact Us page (disabled in EE)
     settingsPage: boolean; // Show Settings page (disabled in EE)
 }

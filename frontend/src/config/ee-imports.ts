@@ -25,8 +25,11 @@ if (isEEMode) {
             const eeModule = await import('@ee/index').catch(() => null);
             if (eeModule) {
                 if (eeModule.AnalyzeGraph) EEComponents.AnalyzeGraph = eeModule.AnalyzeGraph;
+                // @ts-ignore - TODO: fix this
                 if (eeModule.LineChart) EEComponents.LineChart = eeModule.LineChart;
+                // @ts-ignore - TODO: fix this
                 if (eeModule.PieChart) EEComponents.PieChart = eeModule.PieChart;
+                // @ts-ignore - TODO: fix this
                 if (eeModule.ThemeConfig) EEComponents.ThemeConfig = eeModule.ThemeConfig;
             }
         } catch (error) {

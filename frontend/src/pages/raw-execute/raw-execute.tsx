@@ -27,7 +27,7 @@ import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { Table } from "../../components/table";
 import { InternalRoutes } from "../../config/routes";
-import { DatabaseType, useRawExecuteLazyQuery } from "../../generated/graphql";
+import { DatabaseType, useRawExecuteLazyQuery } from '@graphql';
 import { useAppSelector } from "../../store/hooks";
 import { loadEEComponent, isEEFeatureEnabled } from "../../utils/ee-loader";
 import { LocalLoginProfile } from "../../store/auth";

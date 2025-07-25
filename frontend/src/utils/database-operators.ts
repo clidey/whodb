@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { DatabaseType } from '../generated/graphql';
+import { DatabaseType } from '@graphql';
 import { databaseTypeDropdownItems, getDatabaseTypeDropdownItemsSync } from '../config/database-types';
 
 /**

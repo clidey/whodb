@@ -9,6 +9,13 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
       '@ee': path.resolve(__dirname, '../ee/frontend/src'),
+      // Dynamic GraphQL import based on build edition
+      '@graphql': process.env.VITE_BUILD_EDITION === 'ee' 
+        ? path.resolve(__dirname, '../ee/frontend/src/generated/graphql.tsx')
+        : path.resolve(__dirname, './src/generated/graphql.tsx'),
+      // Handle relative imports from EE to frontend
+      '../../../../../frontend/src': path.resolve(__dirname, './src'),
+      '../../../frontend/src': path.resolve(__dirname, './src'),
     },
   },
   server: {

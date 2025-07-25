@@ -30,7 +30,7 @@ import { InternalPage } from "../../components/page";
 import { SearchInput } from "../../components/search";
 import { databaseSupportsScratchpad } from "../../utils/database-features";
 import { InternalRoutes } from "../../config/routes";
-import { DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useGetStorageUnitsQuery } from "../../generated/graphql";
+import { DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useGetStorageUnitsQuery } from '@graphql';
 import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
 import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";

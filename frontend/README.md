@@ -308,9 +308,9 @@ npm run generate
 
 1. **For Community Edition types**:
    ```bash
-   # Terminal 1: Start CE backend
+   # Terminal 1: Start CE backend in development mode
    cd ../core
-   go run .
+   ENVIRONMENT=dev go run .
    
    # Terminal 2: Generate frontend types
    cd frontend
@@ -319,18 +319,20 @@ npm run generate
 
 2. **For Enterprise Edition types**:
    ```bash
-   # Terminal 1: Start EE backend
+   # Terminal 1: Start EE backend in development mode
    cd ../core
-   go run -tags ee .
+   ENVIRONMENT=dev go run -tags ee .
    
    # Terminal 2: Generate frontend types
    cd frontend
    pnpm generate
    ```
 
+**Note**: The `ENVIRONMENT=dev` flag is required to allow GraphQL introspection queries needed by the code generator.
+
 The generated file `src/generated/graphql.tsx` will include:
 - CE: Standard database types (MySQL, PostgreSQL, MongoDB, etc.)
-- EE: Additional types (MSSQL, Oracle, DynamoDB)
+- EE: Additional database types and features
 
 ### Development Mode
 

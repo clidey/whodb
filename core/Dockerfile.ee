@@ -12,42 +12,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# WhoDB Enterprise Edition Dockerfile
+# Build from project root: docker build -f ee/Dockerfile -t whodb:ee .
+
 # Build frontend with EE modules
-FROM node:18.12.1-alpine AS build-stage
+FROM node:lts-alpine AS build-stage
 RUN npm i -g pnpm
 WORKDIR /app
 
-# Copy and install frontend dependencies
+# Copy frontend package files
 COPY ./frontend/package.json ./frontend/pnpm-lock.yaml ./
 RUN pnpm install
 
-# Copy and install EE frontend dependencies
-COPY ./ee/frontend/package.json ./ee/frontend/
-WORKDIR /app/ee/frontend
-RUN pnpm install
-
-# Copy all frontend code
-WORKDIR /app
+# Copy all frontend source including EE components
 COPY ./frontend/ ./
-COPY ./ee/frontend/ ./ee/frontend/
+# Copy EE frontend files to the correct location relative to frontend build context
+COPY ./ee/ ../ee/
 
-# Build frontend with EE modules
-RUN pnpm run build
+# Build frontend with EE support
+RUN pnpm run build:ee
 
 # Build backend with EE modules
-FROM golang:1.22.5-alpine3.19 AS backend-stage
-RUN apk update && apk add --no-cache gcc musl-dev
+FROM golang:1.24.1-alpine AS backend-stage
+RUN apk update && apk add --no-cache gcc musl-dev git bash
 WORKDIR /app
 
-# Copy go.work for workspace setup
-COPY ./go.work ./
+# Copy scripts first as they're needed for GraphQL generation
+COPY ./scripts/ ./scripts/
 
-# Copy core module
+# Copy core module files
 COPY ./core/go.mod ./core/go.sum ./core/
 WORKDIR /app/core
 RUN go mod download
 
-# Copy EE module
+# Copy EE module files
 WORKDIR /app
 COPY ./ee/go.mod ./ee/go.sum ./ee/
 WORKDIR /app/ee
@@ -57,14 +55,25 @@ RUN go mod download
 WORKDIR /app
 COPY ./core/ ./core/
 COPY ./ee/ ./ee/
+
+# Copy frontend build to be embedded
 COPY --from=build-stage /app/build/ ./core/build/
 
-# Build with EE features enabled
+# Generate GraphQL code for EE
+# First ensure we have all the dependencies for gqlgen
+WORKDIR /app/ee
+RUN go mod download
+WORKDIR /app
+
+# Build backend with EE features
 WORKDIR /app/core
-RUN CGO_ENABLED=1 GOOS=linux go build -tags ee -o /core
+# Add replace directive for EE module
+RUN go mod edit -replace github.com/clidey/whodb/ee=/app/ee && \
+    go mod tidy && \
+    CGO_ENABLED=1 GOOS=linux go build -tags ee -o /core
 
 # Final stage
-FROM alpine:3.19
+FROM alpine:3.22.1
 RUN apk update && apk add --no-cache ca-certificates
 WORKDIR /app
 COPY --from=backend-stage /core /core

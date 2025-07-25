@@ -15,7 +15,7 @@
  */
 
 import { isNaN } from "lodash";
-import { DatabaseType } from "../generated/graphql";
+import { DatabaseType } from '@graphql';
 
 export function isNumeric(str: string) {
     return !isNaN(Number(str));
