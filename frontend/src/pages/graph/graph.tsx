@@ -25,7 +25,7 @@ import { Icons } from "../../components/icons";
 import { LoadingPage } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { InternalRoutes } from "../../config/routes";
-import { GetGraphDocument, GetGraphQuery, GetGraphQueryVariables } from "../../generated/graphql";
+import { GetGraphDocument, GetGraphQuery, GetGraphQueryVariables } from '@graphql';
 import { useAppSelector } from "../../store/hooks";
 import { getDatabaseStorageUnitLabel } from "../../utils/functions";
 import { StorageUnitGraphCard } from "../storage-unit/storage-unit";

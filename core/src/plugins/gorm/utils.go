@@ -19,13 +19,14 @@ package gorm_plugin
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/clidey/whodb/core/src/engine"
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"strconv"
-	"strings"
-	"time"
 )
 
 var (
@@ -110,16 +111,16 @@ func (p *GormPlugin) GetPrimaryKeyColumns(db *gorm.DB, schema string, tableName 
 func (p *GormPlugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[string]string, error) {
 	columnTypes := make(map[string]string)
 	query := p.GetColTypeQuery()
-	
+
 	var rows *sql.Rows
 	var err error
-	
+
 	if p.Type == engine.DatabaseType_Sqlite3 {
 		rows, err = db.Raw(query, tableName).Rows()
 	} else {
 		rows, err = db.Raw(query, schema, tableName).Rows()
 	}
-	
+
 	if err != nil {
 		return nil, err
 	}
@@ -152,6 +153,11 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (interface{}, 
 	}
 
 	columnType = strings.ToUpper(columnType)
+
+	// Check if plugin wants to handle this data type
+	if customValue, handled, err := p.GormPluginFunctions.HandleCustomDataType(value, columnType, isNullable); handled {
+		return customValue, err
+	}
 
 	// Handle NULL values
 	if isNullable && (value == "" || strings.EqualFold(value, "NULL")) {

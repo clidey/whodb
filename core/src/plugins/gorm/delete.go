@@ -19,6 +19,7 @@ package gorm_plugin
 import (
 	"errors"
 	"fmt"
+
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
@@ -26,7 +27,7 @@ import (
 )
 
 func (p *GormPlugin) DeleteRow(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
-	return plugins.WithConnection[bool](config, p.DB, func(db *gorm.DB) (bool, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
 		pkColumns, err := p.GetPrimaryKeyColumns(db, schema, storageUnit)
 		if err != nil {
 			pkColumns = []string{}
@@ -51,6 +52,10 @@ func (p *GormPlugin) DeleteRow(config *engine.PluginConfig, schema string, stora
 			}
 
 			targetColumn := column
+			if p.GormPluginFunctions.ShouldQuoteIdentifiers() {
+				targetColumn = fmt.Sprintf("\"%s\"", column)
+			}
+
 			if common.ContainsString(pkColumns, column) {
 				conditions[targetColumn] = convertedValue
 			} else {

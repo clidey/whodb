@@ -79,7 +79,11 @@ func main() {
 			os.Exit(1)
 		}
 	case <-time.After(2 * time.Second):
-		log.Logger.Infof("🎉 Welcome to WhoDB! 🎉")
+		if env.IsEnterpriseEdition {
+			log.Logger.Infof("🎉 Welcome to WhoDB Enterprise! 🎉")
+		} else {
+			log.Logger.Infof("🎉 Welcome to WhoDB! 🎉")
+		}
 		log.Logger.Infof("Get started by visiting:")
 		log.Logger.Infof("http://0.0.0.0:%s", port)
 		log.Logger.Info("Explore and enjoy working with your databases!")

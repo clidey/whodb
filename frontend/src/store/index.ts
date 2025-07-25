@@ -23,6 +23,11 @@ import { databaseReducers } from './database';
 import { globalReducers } from './global';
 import { settingsReducers } from "./settings";
 import { houdiniReducers } from './chat';
+import { aiModelsReducers } from './ai-models';
+import { runMigrations } from './migrations';
+
+// Run migrations before initializing the store
+runMigrations();
 
 const persistedReducer = combineReducers({
   auth: persistReducer({ key: "auth", storage, }, authReducers),
@@ -31,6 +36,7 @@ const persistedReducer = combineReducers({
   global: persistReducer({ key: "global", storage, }, globalReducers),
   settings: persistReducer({ key: "settings", storage }, settingsReducers),
   houdini: persistReducer({ key: "houdini", storage }, houdiniReducers),
+  aiModels: persistReducer({ key: "aiModels", storage }, aiModelsReducers),
 });
 
 export const reduxStore = configureStore({

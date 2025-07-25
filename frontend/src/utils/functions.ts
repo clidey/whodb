@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { isNaN, startCase, toLower } from "lodash";
-import { DatabaseType } from "../generated/graphql";
+import { isNaN } from "lodash";
+import { DatabaseType } from '@graphql';
 
 export function isNumeric(str: string) {
     return !isNaN(Number(str));
@@ -23,14 +23,6 @@ export function isNumeric(str: string) {
 
 export function createStub(name: string) {
     return name.split(" ").map(word => word.toLowerCase()).join("-");
-}
-
-export function toTitleCase(str: string) {
-    return startCase(toLower(str));
-}
-
-export function isDevelopment() {
-    return process.env.NODE_ENV === "development"
 }
 
 export function isMarkdown(text: string): boolean {
@@ -56,7 +48,26 @@ export function isValidJSON(str: string): boolean {
     return str.startsWith("{");
 }
 
+// Initialize EE NoSQL check function
+let isEENoSQLDatabase: ((databaseType: string) => boolean) | null = null;
+
+// Load EE NoSQL check if available
+if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
+    import('@ee/index').then((eeModule) => {
+        if (eeModule?.isEENoSQLDatabase) {
+            isEENoSQLDatabase = eeModule.isEENoSQLDatabase;
+        }
+    }).catch(() => {
+        // EE module not available, continue with CE functionality
+    });
+}
+
 export function isNoSQL(databaseType: string) {
+    // Check EE databases first if EE is enabled
+    if (isEENoSQLDatabase && isEENoSQLDatabase(databaseType)) {
+        return true;
+    }
+    
     switch (databaseType) {
         case DatabaseType.MongoDb:
         case DatabaseType.Redis:
@@ -66,7 +77,29 @@ export function isNoSQL(databaseType: string) {
     return false;
 }
 
+// Initialize EE storage label function
+let getEEDatabaseStorageUnitLabel: ((databaseType: string | undefined, singular: boolean) => string | null) | null = null;
+
+// Load EE function if available
+if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
+    import('@ee/index').then((eeModule) => {
+        if (eeModule?.getEEDatabaseStorageUnitLabel) {
+            getEEDatabaseStorageUnitLabel = eeModule.getEEDatabaseStorageUnitLabel;
+        }
+    }).catch(() => {
+        // EE module not available, continue with CE functionality
+    });
+}
+
 export function getDatabaseStorageUnitLabel(databaseType: string | undefined, singular: boolean = false) {
+    // Check EE databases first if EE is enabled
+    if (getEEDatabaseStorageUnitLabel) {
+        const eeLabel = getEEDatabaseStorageUnitLabel(databaseType, singular);
+        if (eeLabel !== null) {
+            return eeLabel;
+        }
+    }
+    
     switch(databaseType) {
         case DatabaseType.ElasticSearch:
             return singular ? "Index" : "Indices";

@@ -19,14 +19,15 @@ package gorm_plugin
 import (
 	"errors"
 	"fmt"
+	"strconv"
+
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
 	"gorm.io/gorm"
-	"strconv"
 )
 
 func (p *GormPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, fields []engine.Record) (bool, error) {
-	return plugins.WithConnection[bool](config, p.DB, func(db *gorm.DB) (bool, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
 		if len(fields) == 0 {
 			return false, errors.New("no fields provided for table creation")
 		}
@@ -70,7 +71,7 @@ func (p *GormPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, 
 }
 
 func (p *GormPlugin) AddRow(config *engine.PluginConfig, schema string, storageUnit string, values []engine.Record) (bool, error) {
-	return plugins.WithConnection[bool](config, p.DB, func(db *gorm.DB) (bool, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
 		if len(values) == 0 {
 			return false, errors.New("no values provided to insert into the table")
 		}

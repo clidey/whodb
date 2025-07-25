@@ -48,6 +48,7 @@ type GormPluginFunctions interface {
 	// these below are meant to be implemented by the specific database plugins
 	DB(config *engine.PluginConfig) (*gorm.DB, error)
 	GetSupportedColumnDataTypes() mapset.Set[string]
+	ShouldQuoteIdentifiers() bool
 
 	GetTableInfoQuery() string
 	GetSchemaTableQuery() string
@@ -64,6 +65,35 @@ type GormPluginFunctions interface {
 
 	GetGraphQueryDB(db *gorm.DB, schema string) *gorm.DB
 	GetTableNameAndAttributes(rows *sql.Rows, db *gorm.DB) (string, []engine.Record)
+
+	// GetRowsOrderBy returns the ORDER BY clause for pagination queries
+	GetRowsOrderBy(db *gorm.DB, schema string, storageUnit string) string
+
+	// ShouldHandleColumnType returns true if the plugin wants to handle a specific column type
+	ShouldHandleColumnType(columnType string) bool
+
+	// GetColumnScanner returns a scanner for a specific column type
+	// This is called when ShouldHandleColumnType returns true
+	GetColumnScanner(columnType string) interface{}
+
+	// FormatColumnValue formats a scanned value for a specific column type
+	// This is called when ShouldHandleColumnType returns true
+	FormatColumnValue(columnType string, scanner interface{}) (string, error)
+
+	// GetCustomColumnTypeName returns a custom column type name for display
+	// Return empty string to use the default type name
+	GetCustomColumnTypeName(columnName string, defaultTypeName string) string
+
+	// IsGeometryType returns true if the column type represents spatial/geometry data
+	IsGeometryType(columnType string) bool
+
+	// FormatGeometryValue formats geometry data for display
+	// Return empty string to use default hex formatting
+	FormatGeometryValue(rawBytes []byte, columnType string) string
+	
+	// HandleCustomDataType allows plugins to handle their own data type conversions
+	// Return (value, true) if handled, or (nil, false) to use default handling
+	HandleCustomDataType(value string, columnType string, isNullable bool) (interface{}, bool, error)
 }
 
 func (p *GormPlugin) GetStorageUnits(config *engine.PluginConfig, schema string) ([]engine.StorageUnit, error) {
@@ -121,7 +151,7 @@ func (p *GormPlugin) GetTableSchema(db *gorm.DB, schema string) (map[string][]en
 
 func (p *GormPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]string, error) {
-		var schemas []interface{}
+		var schemas []any
 		query := p.GetAllSchemasQuery()
 		if err := db.Raw(query).Scan(&schemas).Error; err != nil {
 			return nil, err
@@ -192,6 +222,11 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 	query, err := p.applyWhereConditions(query, where, columnTypes)
 	if err != nil {
 		return nil, err
+	}
+
+	// Apply custom ordering if specified by the database plugin
+	if orderBy := p.GormPluginFunctions.GetRowsOrderBy(db, schema, storageUnit); orderBy != "" {
+		query = query.Order(orderBy)
 	}
 
 	query = query.Limit(pageSize).Offset(pageOffset)
@@ -302,6 +337,9 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 			if p.Type == engine.DatabaseType_Postgres && strings.HasPrefix(colTypeName, "_") {
 				colTypeName = strings.Replace(colTypeName, "_", "[]", 1)
 			}
+			if customName := p.GormPluginFunctions.GetCustomColumnTypeName(col, colTypeName); customName != "" {
+				colTypeName = customName
+			}
 			result.Columns = append(result.Columns, engine.Column{Name: col, Type: colTypeName})
 		}
 	}
@@ -314,14 +352,19 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 			colType := typeMap[col]
 			typeName := colType.DatabaseTypeName()
 
-			switch typeName {
-			case "VARBINARY", "BINARY", "IMAGE", "BYTEA", "BLOB", "HIERARCHYID":
-				columnPointers[i] = new(sql.RawBytes)
-			case "GEOMETRY", "POINT", "LINESTRING", "POLYGON", "GEOGRAPHY",
-				"MULTIPOINT", "MULTILINESTRING", "MULTIPOLYGON":
-				columnPointers[i] = new(sql.RawBytes)
-			default:
-				columnPointers[i] = new(sql.NullString)
+			// Check if the plugin wants to handle this column type
+			if p.GormPluginFunctions.ShouldHandleColumnType(typeName) {
+				columnPointers[i] = p.GormPluginFunctions.GetColumnScanner(typeName)
+			} else {
+				// Default handling
+				switch typeName {
+				case "VARBINARY", "BINARY", "IMAGE", "BYTEA", "BLOB", "HIERARCHYID",
+					"GEOMETRY", "POINT", "LINESTRING", "POLYGON", "GEOGRAPHY",
+					"MULTIPOINT", "MULTILINESTRING", "MULTIPOLYGON":
+					columnPointers[i] = new(sql.RawBytes)
+				default:
+					columnPointers[i] = new(sql.NullString)
+				}
 			}
 		}
 
@@ -333,20 +376,46 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 			colType := typeMap[columns[i]]
 			typeName := colType.DatabaseTypeName()
 
-			switch typeName {
-			case "VARBINARY", "BINARY", "IMAGE", "BYTEA", "BLOB":
-				rawBytes := colPtr.(*sql.RawBytes)
-				if rawBytes == nil || len(*rawBytes) == 0 {
-					row[i] = ""
+			// Check if the plugin wants to handle this column type
+			if p.GormPluginFunctions.ShouldHandleColumnType(typeName) {
+				value, err := p.GormPluginFunctions.FormatColumnValue(typeName, colPtr)
+				if err != nil {
+					row[i] = "ERROR: " + err.Error()
 				} else {
-					row[i] = "0x" + hex.EncodeToString(*rawBytes)
+					row[i] = value
 				}
-			default:
-				val := colPtr.(*sql.NullString)
-				if val.Valid {
-					row[i] = val.String
-				} else {
-					row[i] = ""
+			} else {
+				// Default handling
+				switch typeName {
+				case "VARBINARY", "BINARY", "IMAGE", "BYTEA", "BLOB":
+					rawBytes := colPtr.(*sql.RawBytes)
+					if rawBytes == nil || len(*rawBytes) == 0 {
+						row[i] = ""
+					} else {
+						row[i] = "0x" + hex.EncodeToString(*rawBytes)
+					}
+				// todo: geometry types are not yet ready for production. please do not use them.
+				case "GEOMETRY", "POINT", "LINESTRING", "POLYGON", "GEOGRAPHY",
+					"MULTIPOINT", "MULTILINESTRING", "MULTIPOLYGON":
+					rawBytes := colPtr.(*sql.RawBytes)
+					if rawBytes == nil || len(*rawBytes) == 0 {
+						row[i] = ""
+					} else {
+						// Try custom geometry formatting first
+						if formatted := p.GormPluginFunctions.FormatGeometryValue(*rawBytes, typeName); formatted != "" {
+							row[i] = formatted
+						} else {
+							// Fallback to hex
+							row[i] = "0x" + hex.EncodeToString(*rawBytes)
+						}
+					}
+				default:
+					val := colPtr.(*sql.NullString)
+					if val.Valid {
+						row[i] = val.String
+					} else {
+						row[i] = ""
+					}
 				}
 			}
 		}
@@ -367,4 +436,57 @@ func (p *GormPlugin) FindMissingDataType(db *gorm.DB, columnType string) string 
 		return strings.ToUpper(typname)
 	}
 	return columnType
+}
+
+// ShouldQuoteIdentifiers returns whether column identifiers should be quoted in queries
+// Default implementation returns false; specific database plugins can override
+func (p *GormPlugin) ShouldQuoteIdentifiers() bool {
+	return false
+}
+
+// GetRowsOrderBy returns the ORDER BY clause for pagination queries
+// Default implementation returns empty string (no ordering)
+func (p *GormPlugin) GetRowsOrderBy(db *gorm.DB, schema string, storageUnit string) string {
+	return ""
+}
+
+// ShouldHandleColumnType returns false by default
+func (p *GormPlugin) ShouldHandleColumnType(columnType string) bool {
+	return false
+}
+
+// GetColumnScanner returns nil by default
+func (p *GormPlugin) GetColumnScanner(columnType string) interface{} {
+	return nil
+}
+
+// FormatColumnValue returns empty string by default
+func (p *GormPlugin) FormatColumnValue(columnType string, scanner interface{}) (string, error) {
+	return "", nil
+}
+
+// GetCustomColumnTypeName returns empty string by default
+func (p *GormPlugin) GetCustomColumnTypeName(columnName string, defaultTypeName string) string {
+	return ""
+}
+
+// IsGeometryType returns true for common geometry type names
+func (p *GormPlugin) IsGeometryType(columnType string) bool {
+	switch columnType {
+	case "GEOMETRY", "POINT", "LINESTRING", "POLYGON", "GEOGRAPHY",
+		"MULTIPOINT", "MULTILINESTRING", "MULTIPOLYGON", "GEOMETRYCOLLECTION":
+		return true
+	default:
+		return false
+	}
+}
+
+// FormatGeometryValue returns empty string by default (use hex formatting)
+func (p *GormPlugin) FormatGeometryValue(rawBytes []byte, columnType string) string {
+	return ""
+}
+
+// HandleCustomDataType returns false by default (no custom handling)
+func (p *GormPlugin) HandleCustomDataType(value string, columnType string, isNullable bool) (interface{}, bool, error) {
+	return nil, false, nil
 }

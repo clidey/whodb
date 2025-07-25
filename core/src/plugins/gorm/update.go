@@ -50,13 +50,14 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 
 			convertedValue, err := p.GormPluginFunctions.ConvertStringValue(strValue, columnType)
 			if err != nil {
-				// For SQLite, preserve the original string value when conversion fails
-				// This ensures invalid timestamps like "2025-07-07T20f" are stored as-is
-				// rather than being converted to zero dates
 				convertedValue = strValue
 			}
 
 			targetColumn := column
+			if p.GormPluginFunctions.ShouldQuoteIdentifiers() {
+				targetColumn = fmt.Sprintf("\"%s\"", column)
+			}
+
 			if common.ContainsString(pkColumns, column) {
 				conditions[targetColumn] = convertedValue
 			} else if common.ContainsString(updatedColumns, column) {

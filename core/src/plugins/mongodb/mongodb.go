@@ -28,7 +28,12 @@ import (
 
 var (
 	supportedOperators = map[string]string{
-		"eq": "eq", "ne": "ne", "gt": "gt", "gte": "gte", "lt": "lt", "lte": "lte", "in": "in", "nin": "nin", "and": "and", "or": "or", "not": "not", "nor": "nor", "exists": "exists", "type": "type", "regex": "regex", "expr": "expr", "mod": "mod", "all": "all", "elemMatch": "elemMatch", "size": "size", "bitsAllClear": "bitsAllClear", "bitsAllSet": "bitsAllSet", "bitsAnyClear": "bitsAnyClear", "bitsAnySet": "bitsAnySet", "geoIntersects": "geoIntersects", "geoWithin": "geoWithin", "near": "near", "nearSphere": "nearSphere",
+		"eq": "eq", "ne": "ne", "gt": "gt", "gte": "gte", "lt": "lt", "lte": "lte",
+		"in": "in", "nin": "nin", "and": "and", "or": "or", "not": "not", "nor": "nor",
+		"exists": "exists", "type": "type", "regex": "regex", "expr": "expr", "mod": "mod",
+		"all": "all", "elemMatch": "elemMatch", "size": "size", "bitsAllClear": "bitsAllClear",
+		"bitsAllSet": "bitsAllSet", "bitsAnyClear": "bitsAnyClear", "bitsAnySet": "bitsAnySet",
+		"geoIntersects": "geoIntersects", "geoWithin": "geoWithin", "near": "near", "nearSphere": "nearSphere",
 	}
 )
 
@@ -118,12 +123,7 @@ func (p *MongoDBPlugin) GetStorageUnits(config *engine.PluginConfig, database st
 	return storageUnits, nil
 }
 
-func (p *MongoDBPlugin) GetRows(
-	config *engine.PluginConfig,
-	database, collection string,
-	where *model.WhereCondition,
-	pageSize, pageOffset int,
-) (*engine.GetRowsResult, error) {
+func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collection string, where *model.WhereCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	client, err := DB(config)
 	if err != nil {
 		return nil, err

@@ -22,20 +22,22 @@ import { cloneElement, FC, MouseEvent, ReactElement, useCallback, useMemo, useSt
 import { useDispatch } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
-import logoImage from "url:../../../public/images/logo.png";
+const logoImage = "/images/logo.png";
 import { InternalRoutes, PublicRoutes } from "../../config/routes";
-import { DatabaseType, useGetDatabaseQuery, useGetSchemaQuery, useGetVersionQuery, useLoginMutation, useLoginWithProfileMutation } from "../../generated/graphql";
+import { DatabaseType, useGetDatabaseQuery, useGetSchemaQuery, useGetVersionQuery, useLoginMutation, useLoginWithProfileMutation } from '@graphql';
 import { AuthActions, LocalLoginProfile } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
 import { createStub, getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
+import { databaseSupportsScratchpad, databaseSupportsSchema } from "../../utils/database-features";
 import { AnimatedButton } from "../button";
 import { BRAND_COLOR_BG, ClassNames } from "../classes";
 import { createDropdownItem, Dropdown, IDropdownItem } from "../dropdown";
 import { Icons } from "../icons";
 import { Loading } from "../loading";
 import { ProfileInfoTooltip, updateProfileLastAccessed } from "../profile-info-tooltip";
+import { isEEFeatureEnabled } from "../../utils/ee-loader";
 
 
 type IRoute = {
@@ -139,7 +141,7 @@ export const SideMenu: FC<IRouteProps> = (props) => {
         onBlur={handleBlur}
         data-testid={props.testId}>
         <AnimatePresence mode="sync">
-            <div className={twMerge(classNames("cursor-default text-md inline-flex gap-2 transition-all hover:gap-2 relative w-full py-4 rounded-md dark:border-white/5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800", {
+            <div className={twMerge(classNames(ClassNames.SidebarItem, "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800", {
                 "cursor-pointer": props.path != null,
                 "pl-4": !props.collapse,
                 "pl-2": props.collapse,
@@ -238,8 +240,8 @@ function getDropdownLoginProfileItem(profile: LocalLoginProfile): IDropdownItem 
     };
 }
 
+// Legacy exports for backward compatibility - use database feature functions instead
 export const DATABASES_THAT_DONT_SUPPORT_SCRATCH_PAD = [DatabaseType.MongoDb, DatabaseType.Redis, DatabaseType.ElasticSearch];
-const DATABASES_THAT_DONT_SUPPORT_SCHEMA = [DatabaseType.Sqlite3, DatabaseType.Redis, DatabaseType.ElasticSearch];
 
 export const Sidebar: FC = () => {
     const [collapsed, setCollapsed] = useState(false);
@@ -267,7 +269,7 @@ export const Sidebar: FC = () => {
                 dispatch(DatabaseActions.setSchema(data.Schema[0] ?? ""));
             }
         },
-        skip: current == null || DATABASES_THAT_DONT_SUPPORT_SCHEMA.includes(current?.Type as DatabaseType),
+        skip: current == null || !databaseSupportsSchema(current?.Type),
     });
     const { data: version } = useGetVersionQuery();
     const [login, ] = useLoginMutation();
@@ -294,7 +296,7 @@ export const Sidebar: FC = () => {
                         dispatch(DatabaseActions.setSchema(""));
                         dispatch(AuthActions.switch({ id: item.id }));
                         navigate(InternalRoutes.Dashboard.StorageUnit.path);
-                        if (!DATABASES_THAT_DONT_SUPPORT_SCHEMA.includes(current?.Type as DatabaseType)) {
+                        if (databaseSupportsSchema(current?.Type)) {
                             getSchemas();
                         }
                     }
@@ -376,7 +378,7 @@ export const Sidebar: FC = () => {
                 path: InternalRoutes.Chat.path,
             });
         }
-        if (!DATABASES_THAT_DONT_SUPPORT_SCRATCH_PAD.includes(current.Type as DatabaseType)) {
+        if (databaseSupportsScratchpad(current.Type)) {
             routes.push({
                 title: "Scratchpad",
                 icon: Icons.Console,
@@ -546,7 +548,7 @@ export const Sidebar: FC = () => {
                                 {
                                     schemasDropdownItems.length > 0 &&
                                     <div className={classNames("flex gap-2 items-center w-full", {
-                                        "opacity-0 pointer-events-none": pathname === InternalRoutes.RawExecute.path || collapsed || DATABASES_THAT_DONT_SUPPORT_SCHEMA.includes(current?.Type as DatabaseType),
+                                        "opacity-0 pointer-events-none": pathname === InternalRoutes.RawExecute.path || collapsed || !databaseSupportsSchema(current?.Type),
                                     })}>
                                         <div className={classNames(ClassNames.Text, "text-sm")}>Schema:</div>
                                         <Dropdown className="w-[140px]" value={createDropdownItem(schema)}
@@ -559,14 +561,18 @@ export const Sidebar: FC = () => {
                             {routes}
                         </div>
                         <div className="grow"/>
-                        <div className="flex flex-col">
-                            <SideMenu collapse={collapsed} title="Contact Us" icon={Icons.QuestionMark}
-                                      path={InternalRoutes.ContactUs.path}/>
-                        </div>
-                        <div className="flex flex-col gap-8">
-                            <SideMenu collapse={collapsed} title="Settings" icon={Icons.Settings}
-                                      path={InternalRoutes.Settings.path}/>
-                        </div>
+                        {isEEFeatureEnabled('contactUsPage') && InternalRoutes.ContactUs && (
+                            <div className="flex flex-col">
+                                <SideMenu collapse={collapsed} title="Contact Us" icon={Icons.QuestionMark}
+                                          path={InternalRoutes.ContactUs.path}/>
+                            </div>
+                        )}
+                        {isEEFeatureEnabled('settingsPage') && InternalRoutes.Settings && (
+                            <div className="flex flex-col gap-8">
+                                <SideMenu collapse={collapsed} title="Settings" icon={Icons.Settings}
+                                          path={InternalRoutes.Settings.path}/>
+                            </div>
+                        )}
                         <div className="flex flex-col gap-8">
                             <SideMenu collapse={collapsed} title="Logout" icon={Icons.Logout}
                                       path={InternalRoutes.Logout.path} testId="logout" />

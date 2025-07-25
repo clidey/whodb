@@ -9,3 +9,4 @@ frontend/coverage
 frontend/.nyc_output
 tmp/
 core/tmp/
+ee/frontend/node_modules/

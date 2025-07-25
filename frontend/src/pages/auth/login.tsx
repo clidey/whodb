@@ -18,7 +18,7 @@ import classNames from "classnames";
 import { entries } from "lodash";
 import { FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import logoImage from "url:../../../public/images/logo.png";
+const logoImage = "/images/logo.png";
 import { AnimatedButton } from "../../components/button";
 import { ClassNames } from "../../components/classes";
 import { createDropdownItem, DropdownWithLabel, IDropdownItem } from "../../components/dropdown";
@@ -27,68 +27,13 @@ import { InputWithlabel } from "../../components/input";
 import { Loading } from "../../components/loading";
 import { Container } from "../../components/page";
 import { InternalRoutes } from "../../config/routes";
-import { DatabaseType, LoginCredentials, useGetDatabaseLazyQuery, useGetProfilesQuery, useLoginMutation, useLoginWithProfileMutation } from '../../generated/graphql';
+import { DatabaseType, LoginCredentials, useGetDatabaseLazyQuery, useGetProfilesQuery, useLoginMutation, useLoginWithProfileMutation } from '@graphql';
 import { AuthActions } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
 import { notify } from "../../store/function";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { updateProfileLastAccessed } from "../../components/profile-info-tooltip";
-
-export const databaseTypeDropdownItems: IDropdownItem<Record<string, string>>[] = [
-    {
-        id: "Postgres",
-        label: "Postgres",
-        icon: Icons.Logos.Postgres,
-        extra: {"Port": "5432"},
-    },
-    {
-        id: "MySQL",
-        label: "MySQL",
-        icon: Icons.Logos.MySQL,
-        extra: {"Port": "3306", "Parse Time": "True", "Loc": "Local", "Allow clear text passwords": "0"},
-    },
-    {
-        id: "MariaDB",
-        label: "MariaDB",
-        icon: Icons.Logos.MariaDB,
-        extra: {"Port": "3306", "Parse Time": "True", "Loc": "Local", "Allow clear text passwords": "0"},
-    },
-    {
-        id: "Sqlite3",
-        label: "Sqlite3",
-        icon: Icons.Logos.Sqlite3,
-    },
-    {
-        id: "MongoDB",
-        label: "MongoDB",
-        icon: Icons.Logos.MongoDB,
-        extra: {"Port": "27017", "URL Params": "?", "DNS Enabled": "false"},
-    },
-    {
-        id: "Redis",
-        label: "Redis",
-        icon: Icons.Logos.Redis,
-        extra: {"Port": "6379"},
-    },
-    {
-        id: "ElasticSearch",
-        label: "ElasticSearch",
-        icon: Icons.Logos.ElasticSearch,
-        extra: {"Port": "9200", "SSL Mode": "disable"},
-    },
-    {
-        id: "ClickHouse",
-        label: "ClickHouse",
-        icon: Icons.Logos.ClickHouse,
-        extra: {
-            "Port": "9000",
-            "SSL mode": "disable",
-            "HTTP Protocol": "disable",
-            "Readonly": "disable",
-            "Debug": "disable"
-        }
-    },
-]
+import { getDatabaseTypeDropdownItems, baseDatabaseTypes, IDatabaseDropdownItem } from "../../config/database-types";
 
 export const LoginPage: FC = () => {
     const dispatch = useAppDispatch();
@@ -102,13 +47,16 @@ export const LoginPage: FC = () => {
     const { loading: profilesLoading, data: profiles } = useGetProfilesQuery();
     const [searchParams, ] = useSearchParams();
     
-    const [databaseType, setDatabaseType] = useState<IDropdownItem>(databaseTypeDropdownItems[0]);
+    const [databaseTypeItems, setDatabaseTypeItems] = useState<IDatabaseDropdownItem[]>(baseDatabaseTypes);
+    const [databaseType, setDatabaseType] = useState<IDatabaseDropdownItem>(baseDatabaseTypes[0]);
     const [hostName, setHostName] = useState("");
     const [database, setDatabase] = useState("");
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string>();
-    const [advancedForm, setAdvancedForm] = useState<Record<string, string>>(databaseType.extra);
+    const [advancedForm, setAdvancedForm] = useState<Record<string, string>>(
+        databaseType.extra ?? {}
+    );
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [selectedAvailableProfile, setSelectedAvailableProfile] = useState<IDropdownItem>();
 
@@ -192,7 +140,7 @@ export const LoginPage: FC = () => {
         });
     }, [dispatch, loginWithProfile, navigate, profiles?.Profiles, selectedAvailableProfile]);
 
-    const handleDatabaseTypeChange = useCallback((item: IDropdownItem) => {
+    const handleDatabaseTypeChange = useCallback((item: IDatabaseDropdownItem) => {
         if (item.id === DatabaseType.Sqlite3) {
             getDatabases({
                 variables: {
@@ -205,7 +153,7 @@ export const LoginPage: FC = () => {
         setPassword("");
         setDatabase("");
         setDatabaseType(item);
-        setAdvancedForm(item.extra);
+        setAdvancedForm(item.extra ?? {});
     }, [getDatabases]);
 
     const handleAdvancedToggle = useCallback(() => {
@@ -228,6 +176,13 @@ export const LoginPage: FC = () => {
         dispatch(DatabaseActions.setSchema(""));
     }, [dispatch]);
 
+    // Load EE database types if available
+    useEffect(() => {
+        getDatabaseTypeDropdownItems().then(items => {
+            setDatabaseTypeItems(items);
+        });
+    }, []);
+
     // Update last accessed time when a new profile is created during login
     useEffect(() => {
         if (shouldUpdateLastAccessed.current && currentProfile?.Id) {
@@ -240,14 +195,14 @@ export const LoginPage: FC = () => {
         if (searchParams.size > 0) {
             if (searchParams.has("type")) {
                 const databaseType = searchParams.get("type")!;
-                setDatabaseType(databaseTypeDropdownItems.find(item => item.id === databaseType) ?? databaseTypeDropdownItems[0]);
+                setDatabaseType(databaseTypeItems.find(item => item.id === databaseType) ?? databaseTypeItems[0]);
             }
             if (searchParams.has("host")) setHostName(searchParams.get("host")!);
             if (searchParams.has("username")) setUsername(searchParams.get("username")!);
             if (searchParams.has("password")) setPassword(searchParams.get("password")!);
             if (searchParams.has("database")) setDatabase(searchParams.get("database")!);
         }
-    }, [searchParams]);
+    }, [searchParams, databaseTypeItems]);
 
     const handleHostNameChange = useCallback((newHostName: string) => {
         if (databaseType.id !== DatabaseType.MongoDb || !newHostName.startsWith("mongodb+srv://")) {
@@ -318,12 +273,20 @@ export const LoginPage: FC = () => {
             </>
         }
         return <>
-            <InputWithlabel label={databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Postgres ? "Host Name (or paste Connection URL)" : "Host Name"} value={hostName} setValue={handleHostNameChange} testId="hostname" />
-            { databaseType.id !== DatabaseType.Redis && <InputWithlabel label="Username" value={username} setValue={setUsername} testId="username" /> }
-            <InputWithlabel label="Password" value={password} setValue={setPassword} type="password" testId="password" />
-            { (databaseType.id !== DatabaseType.MongoDb && databaseType.id !== DatabaseType.Redis && databaseType.id !== DatabaseType.ElasticSearch)  && <InputWithlabel label="Database" value={database} setValue={setDatabase} testId="database" /> }
+            { databaseType.fields?.hostname && (
+                <InputWithlabel label={databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Postgres ? "Host Name (or paste Connection URL)" : "Host Name"} value={hostName} setValue={handleHostNameChange} testId="hostname" />
+            )}
+            { databaseType.fields?.username && (
+                <InputWithlabel label="Username" value={username} setValue={setUsername} testId="username" />
+            )}
+            { databaseType.fields?.password && (
+                <InputWithlabel label="Password" value={password} setValue={setPassword} type="password" testId="password" />
+            )}
+            { databaseType.fields?.database && (
+                <InputWithlabel label="Database" value={database} setValue={setDatabase} testId="database" />
+            )}
         </>
-    }, [database, databaseType.id, databasesLoading, foundDatabases?.Database, handleHostNameChange, hostName, password, username]);
+    }, [database, databaseType.id, databaseType.fields, databasesLoading, foundDatabases?.Database, handleHostNameChange, hostName, password, username]);
 
     const availableProfiles = useMemo(() => {
         return profiles?.Profiles.map(profile => createDropdownItem(profile.Alias ?? profile.Id, (Icons.Logos as Record<string, ReactElement>)[profile.Type])) ?? [];
@@ -359,7 +322,7 @@ export const LoginPage: FC = () => {
                                 </div>
                             </div>
                             <div className="flex flex-col grow justify-center gap-1">
-                                <DropdownWithLabel fullWidth dropdownContainerHeight="max-h-[300px]" label="Database Type" value={databaseType} onChange={handleDatabaseTypeChange} items={databaseTypeDropdownItems} testId="database-type" />
+                                <DropdownWithLabel fullWidth dropdownContainerHeight="max-h-[300px]" label="Database Type" value={databaseType} onChange={handleDatabaseTypeChange} items={databaseTypeItems} testId="database-type" />
                                 {fields}
                             </div>
                         </div>

@@ -28,15 +28,29 @@ import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { Table } from "../../components/table";
 import { InternalRoutes } from "../../config/routes";
-import { AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery, useGetAiModelsLazyQuery, useGetAiProvidersLazyQuery } from "../../generated/graphql";
-import { availableExternalModelTypes, DatabaseActions } from "../../store/database";
+import { AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery, useGetAiModelsLazyQuery, useGetAiProvidersLazyQuery } from '@graphql';
+import { availableExternalModelTypes, AIModelsActions } from "../../store/ai-models";
+import { ensureModelTypesArray, ensureModelsArray } from "../../utils/ai-models-helper";
 import { notify } from "../../store/function";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { chooseRandomItems } from "../../utils/functions";
 import { chatExamples } from "./examples";
-import logoImage from "url:../../../public/images/logo.png";
+const logoImage = "/images/logo.png";
 import { HoudiniActions } from "../../store/chat";
 import { reduxStore } from "../../store";
+import { loadEEComponent, isEEFeatureEnabled } from "../../utils/ee-loader";
+import { isEEMode } from "@/config/ee-imports";
+
+// Lazy load chart components if EE is enabled
+const LineChart = isEEFeatureEnabled('dataVisualization') ? loadEEComponent(
+    () => import('@ee/components/charts/line-chart').then(m => ({ default: m.LineChart })),
+    () => null
+) : () => null;
+
+const PieChart = isEEFeatureEnabled('dataVisualization') ? loadEEComponent(
+    () => import('@ee/components/charts/pie-chart').then(m => ({ default: m.PieChart })),
+    () => null
+) : () => null;
 
 const thinkingPhrases = [
     "Thinking",
@@ -112,10 +126,12 @@ export const ChatPage: FC = () => {
     const [addExternalModel, setAddExternalModel] = useState(false);
     const [externalModelType, setExternalModel] = useState(externalModelTypes[0]);
     const [externalModelToken, setExternalModelToken] = useState<string>();
-    const modelType = useAppSelector(state => state.database.current);
-    const modelTypes = useAppSelector(state => state.database.modelTypes);
-    const currentModel = useAppSelector(state => state.database.currentModel);
-    const models = useAppSelector(state => state.database.models);
+    const modelType = useAppSelector(state => state.aiModels.current);
+    const modelTypesRaw = useAppSelector(state => state.aiModels.modelTypes);
+    const modelTypes = ensureModelTypesArray(modelTypesRaw);
+    const currentModel = useAppSelector(state => state.aiModels.currentModel);
+    const modelsRaw = useAppSelector(state => state.aiModels.models);
+    const models = ensureModelsArray(modelsRaw);
     const chats = useAppSelector(state => state.houdini.chats);
     const [modelAvailable, setModelAvailable] = useState(true);
     const [getAiProviders, ] = useGetAiProvidersLazyQuery();
@@ -123,8 +139,8 @@ export const ChatPage: FC = () => {
     const [getAIModels, { loading: getAIModelsLoading }] = useGetAiModelsLazyQuery({
         onError() {
             setModelAvailable(false);
-            dispatch(DatabaseActions.setModels([]));
-            dispatch(DatabaseActions.setCurrentModel(undefined));
+            dispatch(AIModelsActions.setModels([]));
+            dispatch(AIModelsActions.setCurrentModel(undefined));
         },
         fetchPolicy: "network-only",
     });
@@ -146,24 +162,24 @@ export const ChatPage: FC = () => {
                 token: item.extra?.token,
             },
             onCompleted(data) {
-                dispatch(DatabaseActions.setModels(data.AIModel));
+                dispatch(AIModelsActions.setModels(data.AIModel));
                 if (data.AIModel.length > 0) {
-                    dispatch(DatabaseActions.setCurrentModel(data.AIModel[0]));
+                    dispatch(AIModelsActions.setCurrentModel(data.AIModel[0]));
                 }
             },
         });
     }, [dispatch, getAIModels]);
 
     const handleAIModelChange = useCallback((item: IDropdownItem) => {
-        dispatch(DatabaseActions.setCurrentModel(item.id));
+        dispatch(AIModelsActions.setCurrentModel(item.id));
     }, [dispatch]);
 
     const handleAIModelRemove = useCallback((_: MouseEvent<HTMLDivElement>, item?: IDropdownItem) => {
         if (modelType?.id === item!.id) {
-            dispatch(DatabaseActions.setModels([]));
-            dispatch(DatabaseActions.setCurrentModel(undefined));
+            dispatch(AIModelsActions.setModels([]));
+            dispatch(AIModelsActions.setCurrentModel(undefined));
         }
-        dispatch(DatabaseActions.removeAIModelType({ id: item!.id }));
+        dispatch(AIModelsActions.removeAIModelType({ id: item!.id }));
     }, [dispatch, modelType?.id]);
 
     const examples = useMemo(() => {
@@ -268,27 +284,27 @@ export const ChatPage: FC = () => {
     }, []);
 
     const handleExternalModelSubmit = useCallback(() => {
-        dispatch(DatabaseActions.setCurrentModel(undefined));
-        dispatch(DatabaseActions.setModels([]));
+        dispatch(AIModelsActions.setCurrentModel(undefined));
+        dispatch(AIModelsActions.setModels([]));
         getAIModels({
             variables: {
                 modelType: externalModelType.id,
                 token: externalModelToken,
             },
             onCompleted(data) {
-                dispatch(DatabaseActions.setModels(data.AIModel));
+                dispatch(AIModelsActions.setModels(data.AIModel));
                 const id = v4();
-                dispatch(DatabaseActions.addAIModelType({
+                dispatch(AIModelsActions.addAIModelType({
                     id,
                     modelType: externalModelType.id,
                     token: externalModelToken,
                 }));
-                dispatch(DatabaseActions.setCurrentModelType({ id }));
+                dispatch(AIModelsActions.setCurrentModelType({ id }));
                 setExternalModel(externalModelTypes[0]);
                 setExternalModelToken("");
                 setAddExternalModel(false);
                 if (data.AIModel.length > 0) {
-                    dispatch(DatabaseActions.setCurrentModel(data.AIModel[0]));
+                    dispatch(AIModelsActions.setCurrentModel(data.AIModel[0]));
                 }
             },
             onError(error) {
@@ -305,7 +321,8 @@ export const ChatPage: FC = () => {
         getAiProviders({
             onCompleted(data) {
                 const aiProviders = data.AIProviders || [];
-                const initialModelTypes = reduxStore.getState().database.modelTypes.filter(model => {
+                const modelTypesState = ensureModelTypesArray(reduxStore.getState().aiModels.modelTypes);
+                const initialModelTypes = modelTypesState.filter(model => {
                 const existingModel = aiProviders.find(provider => provider.ProviderId === model.id);
                 return existingModel != null || (model.token != null && model.token !== "");
                 });
@@ -325,14 +342,14 @@ export const ChatPage: FC = () => {
                 ];
 
                 // Check if current model type exists in final model types
-                const currentModelType = reduxStore.getState().database.current;
+                const currentModelType = reduxStore.getState().aiModels.current;
                 if (currentModelType && !finalModelTypes.some(model => model.id === currentModelType.id)) {
-                dispatch(DatabaseActions.setCurrentModelType({ id: "" }));
-                dispatch(DatabaseActions.setModels([]));
-                dispatch(DatabaseActions.setCurrentModel(undefined));
+                dispatch(AIModelsActions.setCurrentModelType({ id: "" }));
+                dispatch(AIModelsActions.setModels([]));
+                dispatch(AIModelsActions.setCurrentModel(undefined));
                 }
 
-                dispatch(DatabaseActions.setModelTypes(finalModelTypes));
+                dispatch(AIModelsActions.setModelTypes(finalModelTypes));
                 getAIModels({
                     variables: {
                         providerId: currentModelType?.id,
@@ -358,7 +375,7 @@ export const ChatPage: FC = () => {
     }, []);
 
     const modelTypesDropdownItems = useMemo(() => {
-        return modelTypes.filter(modelType => modelType != null).map(modelType => ({
+        return modelTypes.filter(modelType => modelType != null && modelType.modelType != null).map(modelType => ({
             id: modelType.id,
             label: modelType.modelType,
             icon: (Icons.Logos as Record<string, ReactElement>)[modelType.modelType.replace("-", "")],
@@ -381,7 +398,7 @@ export const ChatPage: FC = () => {
     }, []);
 
     const handleAIProviderChange = useCallback((item: IDropdownItem) => {
-        dispatch(DatabaseActions.setCurrentModelType({ id: item.id }));
+        dispatch(AIModelsActions.setCurrentModelType({ id: item.id }));
         handleAIModelTypeChange(item);
     }, [handleAIModelTypeChange]);
 
@@ -426,8 +443,8 @@ export const ChatPage: FC = () => {
                     })}>
                         <Dropdown className="w-[200px]" value={modelType && {
                                 id: modelType.id,
-                                label: modelType.modelType,
-                                icon: (Icons.Logos as Record<string, ReactElement>)[modelType.modelType.replace("-", "")],
+                                label: modelType.modelType || "",
+                                icon: modelType.modelType ? (Icons.Logos as Record<string, ReactElement>)[modelType.modelType.replace("-", "")] : undefined,
                             }}
                             dropdownContainerHeight="max-h-[400px]"
                             items={modelTypesDropdownItems}
@@ -504,6 +521,14 @@ export const ChatPage: FC = () => {
                                                         {chat.Text}
                                                     </div>
                                                 </div>
+                                            } else if (isEEFeatureEnabled('dataVisualization') && (chat.Type === "sql:pie-chart" || chat.Type === "sql:line-chart")) {
+                                                return <div key={`chat-${i}`} className="flex items-center self-start">
+                                                    {!chat.isUserInput && chats[i-1]?.isUserInput && <img src={logoImage} alt="clidey logo" className="w-auto h-6" />}
+                                                    {/* @ts-ignore */}
+                                                    {chat.Type === "sql:pie-chart" && PieChart && <PieChart columns={chat.Result?.Columns.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} />}
+                                                    {/* @ts-ignore */}
+                                                    {chat.Type === "sql:line-chart" && LineChart && <LineChart columns={chat.Result?.Columns.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} />}
+                                                </div>
                                             }
                                             return <div key={`chat-${i}`} className="flex gap-4 w-full overflow-hidden pt-4 pr-9">
                                                 {!chat.isUserInput && chats[i-1]?.isUserInput
@@ -514,7 +539,7 @@ export const ChatPage: FC = () => {
                                         })
                                     }
                                     { loading &&  <div className="flex w-full mt-4">
-                                        <Loading loadingText={chooseRandomItems(thinkingPhrases)[0]} size="sm" />
+                                        <Loading loadingText={isEEMode ? thinkingPhrases[0] : chooseRandomItems(thinkingPhrases)[0]} size="sm" />
                                     </div> }
                                 </div>
                             </div>

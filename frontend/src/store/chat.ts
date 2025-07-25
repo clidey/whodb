@@ -15,7 +15,7 @@
  */
 
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
-import { AiChatMessage } from '../generated/graphql';
+import { AiChatMessage } from '@graphql';
 
 
 type IChatMessage = AiChatMessage & {

@@ -17,11 +17,12 @@ package clickhouse
 import (
 	"context"
 	"crypto/tls"
-	"github.com/ClickHouse/clickhouse-go/v2"
-	"gorm.io/gorm"
 	"net"
 	"strconv"
 	"time"
+
+	"github.com/ClickHouse/clickhouse-go/v2"
+	"gorm.io/gorm"
 
 	"github.com/clidey/whodb/core/src/engine"
 	gorm_clickhouse "gorm.io/driver/clickhouse"
@@ -60,19 +61,19 @@ func (p *ClickHousePlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	if connectionInput.Debug != "disable" {
 		options.Debug = true
 	}
-	// Configure settings based on ReadOnly mode
-	if connectionInput.ReadOnly == "disable" {
+
+	switch connectionInput.ReadOnly {
+	case "disable":
 		options.Settings = clickhouse.Settings{
 			"max_execution_time": 60,
 		}
-	} else if connectionInput.ReadOnly == "enable" {
+	case "enable":
 		options.Settings = clickhouse.Settings{
-			"readonly": 1,
+			"readonly":           1,
 			"max_execution_time": 60,
 		}
 	}
 
-	// Configure TLS - only enable when SSLMode is not "none" and not "disable"
 	if connectionInput.SSLMode != "disable" && connectionInput.SSLMode != "none" {
 		options.TLS = &tls.Config{InsecureSkipVerify: connectionInput.SSLMode == "relaxed"}
 	}

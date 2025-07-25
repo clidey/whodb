@@ -15,12 +15,13 @@
 package mysql
 
 import (
+	"net"
+	"strconv"
+
 	"github.com/clidey/whodb/core/src/engine"
 	mysqldriver "github.com/go-sql-driver/mysql"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"net"
-	"strconv"
 )
 
 func (p *MySQLPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {

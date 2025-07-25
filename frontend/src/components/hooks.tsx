@@ -60,7 +60,7 @@ export const useLongPress = ({
   const cleanUpFunction = useRef<() => void | void>();
 
   useEffect(() => {
-    let timerId: NodeJS.Timeout | undefined;
+    let timerId: ReturnType<typeof setTimeout> | undefined;
     if (startLongPress) {
       timerId = setTimeout(() => {
         cleanUpFunction.current = onLongPress();

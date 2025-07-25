@@ -18,8 +18,9 @@ package postgres
 
 import (
 	"fmt"
-	"github.com/clidey/whodb/core/src/engine"
 	"strings"
+
+	"github.com/clidey/whodb/core/src/engine"
 )
 
 func (p *PostgresPlugin) GetCreateTableQuery(schema string, storageUnit string, columns []engine.Record) string {

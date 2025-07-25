@@ -22,7 +22,7 @@ import { PrivateRoute, PublicRoutes, getRoutes } from './config/routes';
 import { NavigateToDefault } from "./pages/chat/default-chat-route";
 import { useAppSelector } from "./store/hooks";
 import { useCallback, useEffect } from "react";
-import { useUpdateSettingsMutation } from "./generated/graphql";
+import { useUpdateSettingsMutation } from '@graphql';
 import { optInUser, optOutUser } from "./config/posthog";
 
 export const App = () => {

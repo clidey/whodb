@@ -24,8 +24,7 @@ func (p *MySQLPlugin) ConvertStringValueDuringMap(value, columnType string) (int
 }
 
 func (p *MySQLPlugin) EscapeSpecificIdentifier(identifier string) string {
-	identifier = strings.Replace(identifier, "`", "``", -1)
-	return fmt.Sprintf("`%s`", identifier)
+	return fmt.Sprintf("`%s`", strings.ReplaceAll(identifier, "`", "``"))
 }
 
 func (p *MySQLPlugin) GetPrimaryKeyColQuery() string {

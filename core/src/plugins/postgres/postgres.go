@@ -39,8 +39,10 @@ var (
 	)
 
 	supportedOperators = map[string]string{
-		"=": "=", ">=": ">=", ">": ">", "<=": "<=", "<": "<", "<>": "<>", "!=": "!=", "!>": "!>", "!<": "!<", "BETWEEN": "BETWEEN", "NOT BETWEEN": "NOT BETWEEN",
-		"LIKE": "LIKE", "NOT LIKE": "NOT LIKE", "IN": "IN", "NOT IN": "NOT IN", "IS NULL": "IS NULL", "IS NOT NULL": "IS NOT NULL", "AND": "AND", "OR": "OR", "NOT": "NOT",
+		"=": "=", ">=": ">=", ">": ">", "<=": "<=", "<": "<", "<>": "<>",
+		"!=": "!=", "!>": "!>", "!<": "!<", "BETWEEN": "BETWEEN", "NOT BETWEEN": "NOT BETWEEN",
+		"LIKE": "LIKE", "NOT LIKE": "NOT LIKE", "IN": "IN", "NOT IN": "NOT IN",
+		"IS NULL": "IS NULL", "IS NOT NULL": "IS NOT NULL", "AND": "AND", "OR": "OR", "NOT": "NOT",
 	}
 )
 
@@ -118,7 +120,7 @@ func (p *PostgresPlugin) GetTableNameAndAttributes(rows *sql.Rows, db *gorm.DB) 
 }
 
 func (p *PostgresPlugin) GetDatabases(config *engine.PluginConfig) ([]string, error) {
-	return plugins.WithConnection[[]string](config, p.DB, func(db *gorm.DB) ([]string, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]string, error) {
 		var databases []struct {
 			Datname string `gorm:"column:datname"`
 		}
@@ -134,7 +136,7 @@ func (p *PostgresPlugin) GetDatabases(config *engine.PluginConfig) ([]string, er
 }
 
 func (p *PostgresPlugin) executeRawSQL(config *engine.PluginConfig, query string, params ...interface{}) (*engine.GetRowsResult, error) {
-	return plugins.WithConnection[*engine.GetRowsResult](config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
 		rows, err := db.Raw(query, params...).Rows()
 		if err != nil {
 			return nil, err

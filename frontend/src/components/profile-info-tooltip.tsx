@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { Icons } from "./icons";
 import { ClassNames } from "./classes";
 import { LocalLoginProfile } from "../store/auth";
-import { databaseTypeDropdownItems } from "../pages/auth/login";
+import { databaseTypeDropdownItems } from "../config/database-types";
 
 interface ProfileInfoTooltipProps {
   profile: LocalLoginProfile;
