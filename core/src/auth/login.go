@@ -39,6 +39,7 @@ func Login(ctx context.Context, input *model.LoginCredentials) (*model.StatusRes
 		Path:     "/",
 		HttpOnly: true,
 		Expires:  time.Now().Add(24 * time.Hour),
+		SameSite: http.SameSiteStrictMode,
 	}
 
 	http.SetCookie(ctx.Value(common.RouterKey_ResponseWriter).(http.ResponseWriter), cookie)

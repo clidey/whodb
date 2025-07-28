@@ -28,6 +28,7 @@ import {
 } from "react";
 import { twMerge } from "tailwind-merge";
 import { Loading } from "./loading";
+import { ClassNames } from "./classes";
 
 type ICardIcon = {
   component: ReactElement;
@@ -89,7 +90,7 @@ export const Card: FC<ICardProps> = ({
     <motion.div
       className={twMerge(
         classNames(
-          "bg-[#fbfaf8] h-[200px] w-[200px] rounded-3xl shadow-xs border border-neutral-600/5 p-4 flex flex-col justify-between relative transition-all duration-300 overflow-y-auto dark:bg-[#252525] dark:border-white/5",
+          ClassNames.Card,
           {
             "shadow-2xl z-10": highlightStatus,
           },

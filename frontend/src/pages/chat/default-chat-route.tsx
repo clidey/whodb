@@ -15,14 +15,14 @@
  */
 
 import { FC } from "react";
-import { DatabaseType, useGetAiModelsQuery } from "../../generated/graphql";
+import { DatabaseType, useGetAiModelsQuery } from '@graphql';
 import { Loading } from "../../components/loading";
 import { Navigate } from "react-router-dom";
 import { InternalRoutes } from "../../config/routes";
 import { InternalPage } from "../../components/page";
 import { useAppSelector } from "../../store/hooks";
 import { isNoSQL } from "../../utils/functions";
-import { availableInternalModelTypes } from "../../store/database";
+import { availableInternalModelTypes } from "../../store/ai-models";
 
 export const NavigateToDefault: FC = () => {
     const current = useAppSelector(state => state.auth.current);
