@@ -28,7 +28,7 @@
     "react-json-view": "^1.21.3",
     "react-markdown": "^10.1.0",
     "react-redux": "^9.2.0",
-    "react-router-dom": "^7.7.0",
+    "react-router-dom": "^7.7.1",
     "react-table": "^7.8.0",
     "react-window": "^1.8.11",
     "reactflow": "^11.11.4",
