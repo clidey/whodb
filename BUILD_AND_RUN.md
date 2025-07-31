@@ -60,8 +60,12 @@ go run .
 
 #### Enterprise Edition
 ```bash
+# From core directory
 cd core
-go run -tags ee .
+GOWORK=$PWD/../go.work.ee go run -tags ee .
+
+# Or from project root
+GOWORK=$PWD/go.work.ee go -C core run -tags ee .
 ```
 
 ### Manual Frontend Setup

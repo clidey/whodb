@@ -19,6 +19,7 @@ fi
 echo -e "${GREEN}Starting WhoDB in $MODE Edition (Development Mode)${NC}"
 echo
 
+
 # Function to kill processes on exit
 cleanup() {
     echo -e "\n${BLUE}Stopping all services...${NC}"
@@ -30,7 +31,11 @@ trap cleanup EXIT INT TERM
 
 # Start backend
 echo -e "${BLUE}Starting backend...${NC}"
-(cd core && go run ${EE_FLAG:+-tags ee} .) &
+if [[ "$1" == "--ee" ]]; then
+    (cd core && GOWORK="$PWD/go.work.ee" go run -tags ee .) &
+else
+    (cd core && go run .) &
+fi
 
 # Give backend a moment to start
 sleep 2

@@ -1,6 +1,3 @@
 go 1.24.1
 
-use (
-	./core
-	./ee
-)
+use ./core

@@ -23,7 +23,8 @@ if [ "$EDITION" = "ee" ]; then
     # Generate EE code in ee directory using the merged schema
     cd ee
     echo "Generating EE GraphQL code using merged schema..."
-    go run github.com/99designs/gqlgen generate --config gqlgen.ee.yml
+    # Use go.work.ee for EE generation
+    GOWORK="$PROJECT_ROOT/go.work.ee" go run github.com/99designs/gqlgen generate --config gqlgen.ee.yml
     RESULT=$?
     
     # Clean up the merged schema file after generation
