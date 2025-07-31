@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
+import { Button } from "@clidey/ux";
+import { AtomicWhereCondition, WhereCondition, WhereConditionType } from '@graphql';
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
-import { ActionButton, AnimatedButton } from "../../components/button";
 import { createDropdownItem, Dropdown, IDropdownItem } from "../../components/dropdown";
 import { Icons } from "../../components/icons";
 import { Input, Label } from "../../components/input";
-import { AtomicWhereCondition, WhereCondition, WhereConditionType } from '@graphql';
 
 type IExploreStorageUnitWhereConditionProps = {
     defaultWhere?: WhereCondition;
@@ -194,8 +194,10 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                         }))} onClick={() => handleEdit(i)}>
                             {filter.Atomic?.Key} {filter.Atomic?.Operator} {filter.Atomic?.Value}
                         </div>
-                        <ActionButton icon={Icons.Cancel} containerClassName="hover:scale-125 absolute right-2 top-1/2 -translate-y-1/2 z-10 h-4 w-4 opacity-0 group-hover/filter-item:opacity-100"
-                            onClick={() => handleRemove(i)} testId="remove-where-condition-button" />
+                        <Button containerClassName="hover:scale-125 absolute right-2 top-1/2 -translate-y-1/2 z-10 h-4 w-4 opacity-0 group-hover/filter-item:opacity-100"
+                            onClick={() => handleRemove(i)} data-testid="remove-where-condition-button">
+                            {Icons.Cancel}
+                        </Button>
                         <AnimatePresence mode="wait">
                             {editingFilter === i && (
                                 <motion.div className="flex gap-1 z-[5] py-2 px-4 absolute left-0 top-2 mt-2 rounded-lg shadow-md border border-neutral-100 dark:border-[#23272A] dark:bg-neutral-700 dark:backdrop-blur-xl translate-y-full bg-white"
@@ -207,14 +209,20 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                                     <Dropdown className="min-w-[100px]" value={createDropdownItem(currentFilter.Key)} items={fieldsDropdownItems} onChange={handleFieldSelect} />
                                     <Dropdown noItemsLabel="No operators found" className="min-w-20" value={createDropdownItem(currentFilter.Operator)} items={validOperators} onChange={handleOperatorSelector} />
                                     <Input inputProps={{ className: "min-w-[150px]" }} placeholder="Enter filter value" value={currentFilter.Value} setValue={handleInputChange} />
-                                    <AnimatedButton className="dark:bg-white/5" icon={Icons.Cancel} label="Cancel" onClick={() => handleEdit(i)} />
-                                    <AnimatedButton className="dark:bg-white/5" icon={Icons.CheckCircle} label="Save" onClick={() => handleSaveFilter(i)} disabled={!currentFilter.Key || !currentFilter.Operator || !currentFilter.Value} />
+                                    <Button className="dark:bg-white/5" onClick={() => handleEdit(i)} data-testid="cancel-button">
+                                        {Icons.Cancel} Cancel
+                                    </Button>
+                                    <Button className="dark:bg-white/5" onClick={() => handleSaveFilter(i)} disabled={!currentFilter.Key || !currentFilter.Operator || !currentFilter.Value} data-testid="save-button">
+                                        {Icons.CheckCircle} Save
+                                    </Button>
                                 </motion.div>
                             )}
                         </AnimatePresence>
                     </div>
                 ))}
-                <ActionButton className={classNames("transition-all", { "rotate-45": newFilter })} icon={Icons.Add} containerClassName="h-8 w-8" onClick={handleClick} testId="where-button" />
+                <Button className={classNames("transition-all", { "rotate-45": newFilter })} onClick={handleClick} data-testid="where-button" variant="ghost">
+                    {Icons.Add}
+                </Button>
             </div>
             <AnimatePresence mode="wait">
                 {newFilter && (
@@ -229,8 +237,12 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                         <Input inputProps={{
                             className: "min-w-[150px]",
                         }} placeholder="Enter filter value" value={currentFilter.Value} setValue={handleInputChange} testId="field-value" />
-                        <AnimatedButton className="dark:bg-white/5" icon={Icons.Cancel} label="Cancel" onClick={handleClick} testId="cancel-button" />
-                        <AnimatedButton className="dark:bg-white/5" icon={Icons.CheckCircle} label="Add" onClick={handleAddFilter} testId="add-button" disabled={!currentFilter.Key || !currentFilter.Operator || !currentFilter.Value} />
+                        <Button className="dark:bg-white/5" onClick={handleClick} data-testid="cancel-button">
+                            {Icons.Cancel} Cancel
+                        </Button>
+                        <Button className="dark:bg-white/5" onClick={handleAddFilter} disabled={!currentFilter.Key || !currentFilter.Operator || !currentFilter.Value} data-testid="add-button">
+                            {Icons.CheckCircle} Add
+                        </Button>
                     </motion.div>
                 )}
             </AnimatePresence>

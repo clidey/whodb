@@ -24,6 +24,7 @@ import { useAppSelector } from "./store/hooks";
 import { useCallback, useEffect } from "react";
 import { useUpdateSettingsMutation } from '@graphql';
 import { optInUser, optOutUser } from "./config/posthog";
+import { Toaster } from "@clidey/ux";
 
 export const App = () => {
   const [updateSettings, ] = useUpdateSettingsMutation();
@@ -56,7 +57,7 @@ export const App = () => {
     <div className={classNames("h-[100vh] w-[100vw]", {
       "dark": darkModeEnabled,
     })} id="whodb-app-container">
-      <Notifications />
+      <Toaster />
       <Routes>
         <Route path="/" element={<PrivateRoute />}>
           {map(getRoutes(), route => (

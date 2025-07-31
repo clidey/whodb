@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
+import { Button } from "@clidey/ux";
+import { DatabaseType, useRawExecuteLazyQuery } from '@graphql';
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
-import { indexOf, values } from "lodash";
+import { indexOf } from "lodash";
 import { ChangeEvent, cloneElement, FC, ReactElement, ReactNode, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { v4 } from "uuid";
-import { AnimatedButton } from "../../components/button";
 import { ClassNames } from "../../components/classes";
 import { CodeEditor } from "../../components/editor";
+import { AnalyzeGraphFallback } from "../../components/ee-fallbacks";
 import { Icons } from "../../components/icons";
 import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
-import { Table } from "../../components/table";
+import { StorageUnitTable } from "../../components/table";
 import { InternalRoutes } from "../../config/routes";
-import { DatabaseType, useRawExecuteLazyQuery } from '@graphql';
-import { useAppSelector } from "../../store/hooks";
-import { loadEEComponent, isEEFeatureEnabled } from "../../utils/ee-loader";
 import { LocalLoginProfile } from "../../store/auth";
-import { AnalyzeGraphFallback } from "../../components/ee-fallbacks";
+import { useAppSelector } from "../../store/hooks";
+import { isEEFeatureEnabled, loadEEComponent } from "../../utils/ee-loader";
 
 // Conditionally load the AnalyzeGraph component from EE
 const AnalyzeGraph = loadEEComponent(
@@ -153,7 +153,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
         }
         if (isCodeAQuery || rows.RawExecute.Rows.length > 0) {
             return <div className="flex flex-col w-full h-[250px] mt-4" data-testid="cell-query-output">
-                <Table columns={rows.RawExecute.Columns.map(c => c.Name)} columnTags={rows.RawExecute.Columns.map(c => c.Type)}
+                <StorageUnitTable columns={rows.RawExecute.Columns.map(c => c.Name)} columnTags={rows.RawExecute.Columns.map(c => c.Type)}
                 rows={rows.RawExecute.Rows} totalPages={1} currentPage={1} disableEdit={true} />
             </div>
         }
@@ -251,14 +251,22 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                         "opacity-100": showTools,
                     })}>
                         <div className="flex gap-2">
-                            <AnimatedButton icon={Icons.PlusCircle} label="Add" onClick={handleAdd} testId="add-button" />
-                            <AnimatedButton icon={Icons.Refresh} label="Clear" onClick={() => setCode("")} testId="clear-button" />
+                            <Button onClick={handleAdd} data-testid="add-button">
+                                {Icons.PlusCircle} Add
+                            </Button>
+                            <Button onClick={() => setCode("")} data-testid="clear-button">
+                                {Icons.Refresh} Clear
+                            </Button>
                             {
                                 onDelete != null &&
-                                <AnimatedButton  iconClassName="stroke-red-800 dark:stroke-red-500" labelClassName="text-red-800 dark:text-red-500"  icon={Icons.Delete} label="Delete" onClick={handleDelete} disabled={loading} testId="delete-button" />
+                                <Button variant="destructive" onClick={handleDelete} disabled={loading} data-testid="delete-button">
+                                    {Icons.Delete} Delete
+                                </Button>
                             }
                         </div>
-                        <AnimatedButton iconClassName="stroke-green-800 dark:stroke-green-500" labelClassName="text-green-800 dark:text-green-500" icon={Icons.CheckCircle} label={mode} onClick={() => handleRawExecute()} testId="submit-button" />
+                        <Button onClick={() => handleRawExecute()} data-testid="submit-button">
+                            {Icons.CheckCircle} {mode}
+                        </Button>
                     </div>
                 </div>
             }

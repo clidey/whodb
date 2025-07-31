@@ -26,6 +26,7 @@ import { Icons } from "./icons";
 import { Loading } from "./loading";
 import { Sidebar } from "./sidebar/sidebar";
 import classNames from "classnames";
+import { ModeToggle } from "@clidey/ux";
 
 type IPageProps = {
     wrapperClassName?: string;
@@ -65,13 +66,11 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
             <Sidebar />
             <Page wrapperClassName="p-0" {...props}>
                 <div className="flex flex-col grow py-6">
-                    <div className="flex justify-between items-center">
-                        <div className="sticky z-10 top-2 left-4 w-fit rounded-xl transition-all">
+                    <div className="flex justify-between items-center mx-8">
+                        <div className="sticky z-10 top-4 w-fit rounded-xl transition-all">
                             <Breadcrumb routes={props.routes ?? []} active={props.routes?.at(-1)} />
                         </div>
-                        <div className={classNames("flex gap-2 items-center mr-8 cursor-pointer rounded-full", ClassNames.Text, ClassNames.Hover)} onClick={handleDarkModeToggle}>
-                            {darkModeEnabled ? Icons.Sun : Icons.Moon }
-                        </div>
+                        <ModeToggle />
                     </div>
                     {
                         current == null
@@ -92,7 +91,7 @@ type IContainerProps = {
 }
 
 export const Container: FC<IContainerProps> = ({ className, children }) => {
-    return  <div className={classNames(className, "flex grow h-full w-full", ClassNames.Background)}>
+    return  <div className={classNames(className, "flex grow h-full w-full")}>
         {children}
     </div>
 }

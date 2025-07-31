@@ -15,30 +15,30 @@
  */
 
 import { FetchResult } from "@apollo/client";
-import classNames from "classnames";
-import { motion } from "framer-motion";
-import { clone, entries, keys, map } from "lodash";
-import {cloneElement, FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
-import { AnimatedButton } from "../../components/button";
-import { Dropdown } from "../../components/dropdown";
-import { Icons } from "../../components/icons";
-import { Input, InputWithlabel } from "../../components/input";
-import { Loading, LoadingPage } from "../../components/loading";
-import { InternalPage } from "../../components/page";
-import { Table } from "../../components/table";
-import { graphqlClient } from "../../config/graphql-client";
-import { InternalRoutes } from "../../config/routes";
+import { Button } from "@clidey/ux";
 import {
     Column, DatabaseType, DeleteRowDocument, DeleteRowMutationResult, RecordInput, RowsResult, StorageUnit,
     UpdateStorageUnitDocument, UpdateStorageUnitMutationResult, useAddRowMutation, useGetStorageUnitRowsLazyQuery,
     WhereCondition
 } from '@graphql';
+import classNames from "classnames";
+import { motion } from "framer-motion";
+import { clone, entries, keys, map } from "lodash";
+import { cloneElement, FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Dropdown } from "../../components/dropdown";
+import { Icons } from "../../components/icons";
+import { Input, InputWithlabel } from "../../components/input";
+import { Loading, LoadingPage } from "../../components/loading";
+import { InternalPage } from "../../components/page";
+import { graphqlClient } from "../../config/graphql-client";
+import { InternalRoutes } from "../../config/routes";
 import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
-import { getDatabaseStorageUnitLabel, isNoSQL, isNumeric } from "../../utils/functions";
 import { getDatabaseOperators } from "../../utils/database-operators";
+import { getDatabaseStorageUnitLabel, isNoSQL, isNumeric } from "../../utils/functions";
 import { ExploreStorageUnitWhereCondition } from "./explore-storage-unit-where-condition";
+import { StorageUnitTable } from "../../components/table";
 
 
 export const ExploreStorageUnit: FC = () => {
@@ -179,14 +179,12 @@ export const ExploreStorageUnit: FC = () => {
                     },
                 });
                 if (data?.UpdateStorageUnit.Status) {
-                    notify("Row updated successfully!", "success");
                     return res();
                 }
-                notify("Unable to update the row!", "error");
+                return rej();
             } catch (err) {
-                notify(`Unable to update the row: ${err}`, "error");
+                return rej(err);
             }
-            return rej();
         });
     }, [current, schema, unitName]);
 
@@ -433,7 +431,9 @@ export const ExploreStorageUnit: FC = () => {
                 <div className="flex gap-2">
                     <InputWithlabel label="Page Size" value={bufferPageSize} setValue={setBufferPageSize} testId="table-page-size" />
                     { current?.Type !== DatabaseType.Redis && <ExploreStorageUnitWhereCondition defaultWhere={whereCondition} columns={columns} operators={validOperators} onChange={handleFilterChange} columnTypes={columnTypes ?? []} /> }
-                    <AnimatedButton className="mt-5" type="lg" icon={Icons.CheckCircle} label="Query" onClick={handleQuery} testId="submit-button" />
+                    <Button className="mt-5" size="lg" onClick={handleQuery} testId="submit-button" variant="secondary">
+                        {Icons.CheckCircle} Query
+                    </Button>
                 </div>
                 <motion.div tabIndex={0} ref={addRowRef} className={classNames("flex flex-col absolute z-10 right-0 top-0 backdrop-blur-xl", {
                         "hidden": current?.Type === DatabaseType.Redis,
@@ -449,8 +449,12 @@ export const ExploreStorageUnit: FC = () => {
                 }} animate={showAdd ? "open" : "close"}>
                     <div className="flex w-full justify-end gap-2">
                         {adding || deleting && <Loading />}
-                        {checkedRows.size > 0 && <AnimatedButton type="lg" icon={Icons.Delete} label={checkedRows.size > 1 ? "Delete rows" : "Delete row"} iconClassName="stroke-red-500 dark:stroke-red-500" labelClassName="text-red-500 dark:text-red-500" onClick={handleRowDelete} disabled={deleting} /> }
-                        <AnimatedButton type="lg" icon={Icons.Add} label={showAdd ? "Cancel" : "Add Row"} onClick={handleToggleShowAdd} disabled={adding} />
+                        {checkedRows.size > 0 && <Button variant="destructive" onClick={handleRowDelete} disabled={deleting} data-testid="delete-button">
+                            {Icons.Delete} {checkedRows.size > 1 ? "Delete rows" : "Delete row"}
+                        </Button> }
+                        <Button onClick={handleToggleShowAdd} disabled={adding} data-testid="add-button" variant="secondary">
+                            {Icons.Add} {showAdd ? "Cancel" : "Add Row"}
+                        </Button>
                     </div>
                     <div className={classNames("flex flex-col gap-2 overflow-y-auto h-full p-8 mt-2", {
                         "flex border border-white/5 rounded-lg": showAdd,
@@ -479,8 +483,9 @@ export const ExploreStorageUnit: FC = () => {
                             </div>
                         </>)}
                         <div className="flex justify-end gap-4 mt-2">
-                            <AnimatedButton className="px-3" type="lg" icon={Icons.CheckCircle} label="Submit"
-                                            onClick={handleAddSubmitRequest}/>
+                            <Button className="px-3" size="lg" onClick={handleAddSubmitRequest} data-testid="submit-button">
+                                {Icons.CheckCircle} Submit
+                            </Button>
                         </div>
                     </div>
                 </motion.div>
@@ -488,11 +493,7 @@ export const ExploreStorageUnit: FC = () => {
             <div className="grow">
                 {
                     rows != null &&
-                    <Table columns={rows.Columns.map(c => c.Name)} columnTags={rows.Columns.map(c => c.Type)}
-                           rows={rows.Rows} totalPages={totalPages} currentPage={currentPage + 1}
-                           onPageChange={handlePageChange}
-                           onRowUpdate={handleRowUpdate} disableEdit={rows.DisableUpdate}
-                        checkedRows={checkedRows} setCheckedRows={setCheckedRows} />
+                    <StorageUnitTable columns={columns} rows={rows.Rows} onRowUpdate={handleRowUpdate} />
                 }
             </div>
         </div>

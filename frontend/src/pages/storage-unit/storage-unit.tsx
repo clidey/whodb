@@ -14,29 +14,28 @@
  * limitations under the License.
  */
 
+import { Badge, Button, cn, SearchSelect, Separator, StackList, StackListItem } from '@clidey/ux';
+import { DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useGetStorageUnitsQuery } from '@graphql';
 import classNames from "classnames";
-import {clone, cloneDeep, filter} from "lodash";
+import { clone, cloneDeep, filter } from "lodash";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Handle, Position } from "reactflow";
-import { ActionButton, AnimatedButton } from "../../components/button";
 import { Card, ExpandableCard } from "../../components/card";
-import { createDropdownItem, Dropdown } from "../../components/dropdown";
 import { IGraphCardProps } from "../../components/graph/graph";
 import { Icons } from "../../components/icons";
-import {CheckBoxInput, Input, InputWithlabel, Label} from "../../components/input";
+import { CheckBoxInput, Input, Label } from "../../components/input";
 import { Loading, LoadingPage } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { SearchInput } from "../../components/search";
-import { databaseSupportsScratchpad } from "../../utils/database-features";
 import { InternalRoutes } from "../../config/routes";
-import { DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useGetStorageUnitsQuery } from '@graphql';
 import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
+import { databaseSupportsModifiers, getDatabaseDataTypes } from "../../utils/database-data-types";
+import { databaseSupportsScratchpad } from "../../utils/database-features";
 import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
-import { getDatabaseDataTypes, databaseSupportsModifiers } from "../../utils/database-data-types";
 
-const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
+const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = ({ unit, allTableNames }) => {
     const [expanded, setExpanded] = useState(false);
     const navigate = useNavigate();
 
@@ -53,13 +52,24 @@ const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
     }, []);
 
     const [introAttributes, expandedAttributes] = useMemo(() => {
-        return [ unit.Attributes.slice(0,5), unit.Attributes.slice(5) ];
+        return [ unit.Attributes.slice(0,4), unit.Attributes.slice(4) ];
     }, [unit.Attributes]);
 
-    return (<ExpandableCard key={unit.Name} isExpanded={expanded} icon={{
+    const isValidForeignKey = useCallback((key: string) => {
+        // Check for both singular and plural table names
+        if (key.endsWith("_id")) {
+            const base = key.slice(0, -3);
+            return allTableNames.has(base) || allTableNames.has(base + "s");
+        }
+        return false;
+    }, [allTableNames]);
+
+    return (<ExpandableCard key={unit.Name} isExpanded={expanded} setExpanded={setExpanded} icon={{
         bgClassName: "bg-teal-500",
         component: Icons.Tables,
-    }}>
+    }} className={cn({
+        "shadow-2xl": expanded,
+    })}>
         <div className="flex flex-col grow mt-2">
             <div className="flex flex-col grow mb-2">
                 <div className="text-sm font-semibold mb-2 break-words dark:text-neutral-100" data-testid="storage-unit-name">{unit.Name}</div>
@@ -70,31 +80,40 @@ const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
                 }
             </div>
             <div className="flex flex-row justify-end gap-1">
-                <AnimatedButton icon={Icons.DocumentMagnify} label="Explore" onClick={handleExpand} testId="explore-button" />
-                <AnimatedButton icon={Icons.Database} label="Data" onClick={handleNavigateToDatabase} testId="data-button" />
+                <Button onClick={handleExpand} data-testid="explore-button" variant="secondary">
+                    {Icons.DocumentMagnify} Explore
+                </Button>
+                <Button onClick={handleNavigateToDatabase} data-testid="data-button" variant="secondary">
+                    {Icons.Database} Data
+                </Button>
             </div>
         </div>
-        <div className="flex flex-col grow mt-2 gap-4">
-            <div className="flex flex-row grow" data-testid="explore-fields">
-                <div className="flex flex-col grow">
-                    <div className="text-md font-semibold mb-2 dark:text-neutral-100">{unit.Name}</div>
-                    {
-                        introAttributes.map(attribute => (
-                            <div key={attribute.Key} className="text-xs dark:text-neutral-300"><span className="font-semibold">{attribute.Key}:</span> {attribute.Value}</div>
-                        ))
-                    }
-                </div>
-                <div className="flex flex-col grow mt-6">
-                    {
-                        expandedAttributes.map(attribute => (
-                            <div key={attribute.Key} className="text-xs dark:text-neutral-300"><span className="font-semibold">{attribute.Key}:</span> {attribute.Value}</div>
-                        ))
-                    }
+        <div className="flex flex-col grow gap-4 justify-between h-full">
+            <div className="w-full" data-testid="explore-fields">
+                <div className="flex flex-col gap-12">
+                    <h1 className="text-2xl font-bold mb-4">{unit.Name}</h1>
+                    <StackList>
+                        {
+                            introAttributes.map(attribute => (
+                                <StackListItem key={attribute.Key} item={attribute.Key}>
+                                    {attribute.Value}
+                                </StackListItem>
+                            ))
+                        }
+                        {
+                            expandedAttributes.map(attribute => (
+                                <StackListItem key={attribute.Key} item={isValidForeignKey(attribute.Key) ? <Badge className="text-lg">{attribute.Key}</Badge> : attribute.Key}>
+                                    {attribute.Value}
+                                </StackListItem>
+                            ))
+                        }
+                    </StackList>
                 </div>
             </div>
-            <div className="flex flex-row justify-end gap-1">
-                <AnimatedButton icon={Icons.DocumentMagnify} label={expanded ? "Hide" : "Explore"} onClick={handleExpand} />
-                <AnimatedButton icon={Icons.Database} label="Data" onClick={handleNavigateToDatabase} />
+            <div className="flex items-end grow">
+                <Button icon={Icons.Database} onClick={handleNavigateToDatabase} data-testid="data-button" variant="secondary" className="w-full">
+                    {Icons.Database} Data
+                </Button>
             </div>
         </div>
     </ExpandableCard>);
@@ -204,7 +223,10 @@ export const StorageUnitPage: FC = () => {
         }
         
         const dataTypes = getDatabaseDataTypes(current.Type);
-        return dataTypes.map(item => createDropdownItem(item));
+        return dataTypes.map(item => ({
+            id: item,
+            label: item,
+        }));
     }, [current?.Type]);
     
     useEffect(() => {
@@ -224,6 +246,10 @@ export const StorageUnitPage: FC = () => {
         return databaseSupportsModifiers(current.Type);
     }, [current?.Type]);
 
+    const allTableNames = useMemo(() => {
+        return new Set(Array.isArray(data?.StorageUnit) ? data.StorageUnit.map(unit => unit.Name) : []);
+    }, [data?.StorageUnit]);
+
     if (loading) {
         return <InternalPage routes={routes}>
             <LoadingPage />
@@ -231,93 +257,99 @@ export const StorageUnitPage: FC = () => {
     }
 
     return <InternalPage routes={routes}>
-        <div className="flex w-full h-fit my-2 gap-2 justify-between">
+        <div className="flex w-full h-fit my-2 gap-4 justify-between">
             <div>
                 {
                     databaseSupportsScratchpad(current?.Type) &&
-                    <AnimatedButton icon={Icons.Console} label="Scratchpad" onClick={() => navigate(InternalRoutes.RawExecute.path)} type="lg" />
+                    <Button onClick={() => navigate(InternalRoutes.RawExecute.path)} data-testid="scratchpad-button" variant="secondary">
+                        {Icons.Console} Scratchpad
+                    </Button>
                 }
             </div>
             <div>
                 <SearchInput search={filterValue} setSearch={setFilterValue} placeholder="Enter filter value..." />
             </div>
         </div>
-        <ExpandableCard className={classNames("overflow-visible max-w-[700px]", {
-            "hidden": current?.Type === DatabaseType.Redis,
-        })} icon={{
-            bgClassName: "bg-teal-500",
-            component: Icons.Add,
-        }} isExpanded={create} tag={<div className="text-red-700 dark:text-red-400 text-xs">
-            {error}
-        </div>}>
-            <div className="flex grow flex-col justify-between mt-3 text-neutral-800 dark:text-neutral-100">
-                Create a {getDatabaseStorageUnitLabel(current?.Type, true)}
-                <AnimatedButton className="self-end" icon={Icons.Add} label="Create" onClick={handleCreate} />
-            </div>
-            <div className="flex grow flex-col justify-between my-2 gap-4">
-                <div className="flex flex-col gap-2">
-                    <InputWithlabel label="Name" value={storageUnitName} setValue={setStorageUnitName} />
-                    <div className={classNames("flex flex-col gap-2", {
-                        "hidden": isNoSQL(current?.Type as DatabaseType),
-                    })}>
-                        <div className="flex gap-2 justify-between">
-                            <Label label="Field Name" />
-                            <Label label="Value" />
-
-                            {showModifiers && (
-                                <div className="ml-18">
-                                    <Label label="Modifiers" />
-                                </div>
-                            )}
-                            
-                            <div className="w-14" />
+        <div className="flex flex-wrap gap-4">
+            <ExpandableCard className={classNames("overflow-visible min-w-[200px] max-w-[700px] h-full", {
+                "hidden": current?.Type === DatabaseType.Redis,
+            })} icon={{
+                bgClassName: "bg-teal-500",
+                component: Icons.Add,
+            }} isExpanded={create} setExpanded={setCreate} tag={<Badge variant="destructive">{error}</Badge>}>
+                <div className="flex flex-col grow h-full justify-between">
+                    <h2 className="text-lg">Create a {getDatabaseStorageUnitLabel(current?.Type, true)}</h2>
+                    <Button className="self-end" onClick={handleCreate}>
+                        {Icons.Add} Create
+                    </Button>
+                </div>
+                <div className="flex grow flex-col my-2 gap-4">
+                    <div className="flex flex-col gap-2">
+                        <h1 className="text-2xl font-bold mb-4">Create a {getDatabaseStorageUnitLabel(current?.Type, true)}</h1>
+                        <div className="flex flex-col gap-2">
+                            <Label label="Name" />
+                            <Input value={storageUnitName} setValue={setStorageUnitName} />
                         </div>
-                        {
-                            fields.map((field, index) => (
-                                <div className="flex gap-2" key={`field-${index}`}>
-                                    <Input inputProps={{className: "w-1/3"}} value={field.Key}
-                                           setValue={(value) => handleFieldValueChange("Key", index, value)}
-                                           placeholder="Enter field name"/>
-                                    <Dropdown className="w-1/3" items={storageUnitTypesDropdownItems}
-                                              value={createDropdownItem(field.Value)} dropdownContainerHeight="max-h-[400px]"
-                                              onChange={(item) => handleFieldValueChange("Value", index, item.id)}/>
+                        <div className={classNames("flex flex-col gap-2 overflow-y-auto max-h-[75vh]", {
+                            "hidden": isNoSQL(current?.Type as DatabaseType),
+                        })}>
+                            <div className="flex flex-col gap-4">
+                                {
+                                    fields.map((field, index) => (
+                                        <div className="flex flex-col gap-2" key={`field-${index}`}>
+                                            <Label label="Field Name" />
+                                            <Input value={field.Key} setValue={(value) => handleFieldValueChange("Key", index, value)} placeholder="Enter field name"/>
+                                            <Label label="Field Type" />
+                                            <SearchSelect
+                                                options={storageUnitTypesDropdownItems.map(item => ({
+                                                    value: item.id,
+                                                    label: item.label,
+                                                }))}
+                                                value={field.Value}
+                                                onChange={value => handleFieldValueChange("Value", index, value)}
+                                                placeholder="Select type"
+                                                searchPlaceholder="Search type..."
+                                            />
 
-                                    {showModifiers && (
-                                        <div className="flex items-center w-1/3 justify-start gap-2">
-                                            <CheckBoxInput value={field.Extra?.find(extra => extra.Key === "Primary") != null} setValue={value => handleFieldValueChange("Primary", index, value)}/>
-                                            <Label label="Primary" />
-
-                                            <CheckBoxInput value={field.Extra?.find(extra => extra.Key === "Nullable") != null} setValue={value => handleFieldValueChange("Nullable", index, value)}/>
-                                            <Label label="Nullable" />
+                                            {showModifiers && (
+                                                <>
+                                                    <Label label="Modifiers" />
+                                                    <div className="flex items-center w-1/3 justify-start gap-2">
+                                                        <CheckBoxInput value={field.Extra?.find(extra => extra.Key === "Primary") != null} setValue={value => handleFieldValueChange("Primary", index, value)}/>
+                                                        <Label label="Primary" />
+                                                        <CheckBoxInput value={field.Extra?.find(extra => extra.Key === "Nullable") != null} setValue={value => handleFieldValueChange("Nullable", index, value)}/>
+                                                        <Label label="Nullable" />
+                                                    </div>
+                                                </>
+                                            )}
+                                            {
+                                                fields.length > 1 &&
+                                                <Button variant="destructive" onClick={() => handleRemove(index)} data-testid="remove-field-button" className="w-full">
+                                                    {Icons.Delete} Remove
+                                                </Button>
+                                            }
+                                            {index !== fields.length - 1 && <Separator className="mt-2" />}
                                         </div>
-                                    )}
-
-                                    <div className="flex items-end mb-2">
-                                        <ActionButton disabled={fields.length === 1} containerClassName="w-6 h-6"
-                                                      icon={Icons.Delete} className={classNames({
-                                            "stroke-red-500 dark:stroke-red-400": fields.length > 1,
-                                            "stroke-neutral-300 dark:stroke-neutral-600": fields.length === 1,
-                                        })} onClick={() => handleRemove(index)}/>
-                                    </div>
-                                </div>
-                            ))
-                        }
-                        <AnimatedButton className="self-end" icon={Icons.Add} label="Add field" onClick={handleAddField} />
+                                    ))
+                                } 
+                            </div>
+                            <Button className="self-end" onClick={handleAddField} data-testid="add-field-button" variant="secondary">
+                                {Icons.Add} Add field
+                            </Button>
+                        </div>
                     </div>
+                    <div className="flex grow" />
+                    <Button icon={Icons.CheckCircle} onClick={handleSubmit} data-testid="submit-button" className="w-full">
+                        {Icons.CheckCircle} Submit
+                    </Button>
                 </div>
-                <div className="flex items-center justify-between">
-                    <AnimatedButton icon={Icons.Cancel} label="Cancel" onClick={handleCreate} />
-                    <AnimatedButton labelClassName="text-green-600 dark:text-green-300"
-                        iconClassName="stroke-green-600 dark:stroke-green-300" icon={Icons.Add}
-                        label="Submit" onClick={handleSubmit} testId="submit-button" />
-                </div>
-            </div>
-        </ExpandableCard>
-        {
-            data != null && data.StorageUnit.length > 0 && filterStorageUnits.map(unit => (
-                <StorageUnitCard key={unit.Name} unit={unit} />
-            ))
-        }
+            </ExpandableCard>
+            {
+                data != null && data.StorageUnit.length > 0 && filterStorageUnits.map(unit => (
+                    <StorageUnitCard key={unit.Name} unit={unit} allTableNames={allTableNames} />
+                ))
+            }
+        </div>
     </InternalPage>
 }
 
@@ -358,7 +390,9 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data })
                         }
                     </div>
                     <div className="flex flex-row justify-end gap-1">
-                        <AnimatedButton icon={Icons.RightArrowUp} label="Data" onClick={handleNavigateTo} />
+                        <Button icon={Icons.RightArrowUp} onClick={handleNavigateTo} data-testid="data-button">
+                            {Icons.RightArrowUp} Data
+                        </Button>
                     </div>
                 </div>
             </Card>

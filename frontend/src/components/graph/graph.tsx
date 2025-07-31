@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
+import { Button } from '@clidey/ux';
 import classNames from 'classnames';
+import { toPng } from 'html-to-image';
 import { Dispatch, FC, ReactNode, SetStateAction, useCallback, useMemo, useRef, useState } from "react";
 import ReactFlow, { Background, Controls, Edge, Node, NodeProps, NodeTypes, OnInit, ReactFlowInstance, ReactFlowProps, useReactFlow } from 'reactflow';
-import { ActionButton } from '../button';
 import { Icons } from '../icons';
 import { GraphElements } from './constants';
 import { FloatingGraphEdge, GraphEdgeConnectionLine } from './edge';
 import { getDagreLayoutedElements } from './layouts';
-import { toPng } from 'html-to-image';
 
 
 export type IGraphCardProps<T extends unknown = any> = NodeProps<(T & {}) | undefined>;
@@ -149,8 +149,12 @@ export const Graph: FC<IGraphProps> = (props) => {
             "hidden": downloading,
         })}>
             <div className="flex flex-col gap-2">
-                <ActionButton icon={Icons.Download} onClick={handleDownloadImage} />
-                <ActionButton icon={Icons.GraphLayout} onClick={() => onLayout("dagre")} />
+                <Button onClick={handleDownloadImage} data-testid="graph-download">
+                    {Icons.Download}
+                </Button>
+                <Button onClick={() => onLayout("dagre")} data-testid="graph-layout">
+                    {Icons.GraphLayout}
+                </Button>
             </div>
         </div>
         {props.children}

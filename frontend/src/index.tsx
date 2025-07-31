@@ -23,11 +23,10 @@ import { Provider } from "react-redux";
 import { reduxStore, reduxStorePersistor } from './store';
 import { App } from './app';
 import { BrowserRouter } from "react-router-dom";
-import 'reactflow/dist/style.css';
 import { PersistGate } from 'redux-persist/integration/react';
 import { PostHogProvider } from 'posthog-js/react';
 import {initPosthog} from "./config/posthog";
-import { ThemeProvider } from './theme/theme-provider';
+import { SidebarProvider, ThemeProvider } from '@clidey/ux'
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -38,8 +37,10 @@ const posthogClient = initPosthog()
 // Conditionally wrap with PostHogProvider only for CE builds
 const AppWithProviders = () => {
   const app = (
-    <ThemeProvider>
-      <App />
+    <ThemeProvider defaultTheme="light" storageKey="@clidey/whodb/ux">
+      <SidebarProvider>
+        <App />
+      </SidebarProvider>
     </ThemeProvider>
   );
 
@@ -54,6 +55,7 @@ const AppWithProviders = () => {
 
 root.render(
   <React.StrictMode>
+
     <BrowserRouter>
       <ApolloProvider client={graphqlClient}>
         <Provider store={reduxStore}>

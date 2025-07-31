@@ -14,8 +14,16 @@
  * limitations under the License.
  */
 
-import classNames from "classnames";
-import { AnimatePresence, motion } from "framer-motion";
+import {
+  Card as UxCard,
+  CardHeader,
+  CardContent,
+  Badge,
+  cn,
+  Sheet,
+  SheetTrigger,
+  SheetContent,
+} from "@clidey/ux";
 import {
   FC,
   ReactElement,
@@ -24,11 +32,11 @@ import {
   memo,
   useEffect,
   useMemo,
-  useState
+  useRef,
+  useState,
 } from "react";
-import { twMerge } from "tailwind-merge";
 import { Loading } from "./loading";
-import { ClassNames } from "./classes";
+
 
 type ICardIcon = {
   component: ReactElement;
@@ -46,16 +54,22 @@ type ICardProps = {
   loadingText?: string;
 };
 
-export const Icon: FC<ICardIcon> = memo((propsIcon) => (<div
-  className={twMerge(classNames(
-    "h-[40px] w-[40px] rounded-lg flex justify-center items-center shadow-sm border dark:border-white/5",
-    propsIcon.bgClassName
-  ))}
->
-  {cloneElement(propsIcon.component, {
-    className: twMerge(classNames("w-6 h-6 stroke-white", propsIcon.className)),
-  })}
-</div>));
+export const Icon: FC<ICardIcon> = memo((propsIcon) => (
+  <div
+    className={[
+      "h-[40px] w-[40px] rounded-lg flex justify-center items-center",
+      propsIcon.bgClassName,
+    ]
+      .filter(Boolean)
+      .join(" ")}
+  >
+    {cloneElement(propsIcon.component, {
+      className: ["w-6 h-6 stroke-white", propsIcon.className]
+        .filter(Boolean)
+        .join(" "),
+    })}
+  </div>
+));
 
 export const Card: FC<ICardProps> = ({
   children,
@@ -70,95 +84,96 @@ export const Card: FC<ICardProps> = ({
 
   useEffect(() => {
     if (highlight) {
-      setTimeout(() => {
+      setHighlightStatus(true);
+      const timeout = setTimeout(() => {
         setHighlightStatus(false);
       }, 3000);
+      return () => clearTimeout(timeout);
     }
   }, [highlight]);
 
   const icon = useMemo(() => {
-      if (propsIcon == null) {
-        return null;
-      }
-      if ("component" in propsIcon) {
-        return <Icon {...propsIcon} />
-      }
-      return propsIcon;
+    if (propsIcon == null) {
+      return null;
+    }
+    if (typeof propsIcon === "object" && "component" in propsIcon) {
+      return <Icon {...propsIcon} />;
+    }
+    return propsIcon;
   }, [propsIcon]);
 
   return (
-    <motion.div
-      className={twMerge(
-        classNames(
-          ClassNames.Card,
-          {
-            "shadow-2xl z-10": highlightStatus,
-          },
-          className
-        )
+    <UxCard
+      className={cn(
+        "py-4 gap-2",
+        {
+          "shadow-2xl z-10": highlightStatus,
+        },
+        className,
       )}
     >
       {loading ? (
         <Loading loadingText={loadingText} />
       ) : (
         <>
-          <div className="flex justify-between items-start dark:text-neutral-300">
-            {icon}
-            {tag}
-          </div>
-          {children}
+          {(icon || tag) && (
+            <CardHeader className="flex flex-row justify-between items-start px-4">
+              {icon}
+              {tag && <Badge variant="secondary">{tag}</Badge>}
+            </CardHeader>
+          )}
+          <CardContent className="px-4 grow">{children}</CardContent>
         </>
       )}
-    </motion.div>
+    </UxCard>
   );
 };
-
 
 type IExpandableCardProps = {
   isExpanded?: boolean;
   children: [ReactElement, ReactElement];
-  setToggleCallback?: (callback: (status: boolean) => void) => void;
+  setExpanded?: (status: boolean) => void;
   collapsedTag?: ReactElement;
 } & ICardProps;
 
 export const ExpandableCard: FC<IExpandableCardProps> = (props) => {
-  const [expand, setExpand] = useState(props.isExpanded);
+  const [expand, setExpand] = useState(props.isExpanded ?? false);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
-    props.setToggleCallback?.(setExpand);
-  }, [props]);
-
-  useEffect(() => {
-    setExpand(props.isExpanded);
+    setExpand(props.isExpanded ?? false);
   }, [props.isExpanded]);
 
+  // Sheet expects controlled open/close
+  const handleOpenChange = (open: boolean) => {
+    setExpand(open);
+    props.setExpanded?.(open);
+  };
+
+  // The collapsed card is always visible; clicking it opens the sheet
   return (
-    <AnimatePresence mode="sync">
-      <Card
-        {...props}
-        className={twMerge(classNames({
-          "w-full max-w-[400px] h-fit": expand,
-        }, props.className))}
-        tag={expand ? props.tag : props.collapsedTag}
-      >
-        <AnimatePresence mode="sync">
-          <motion.div
-            key={props.loading ? "loading" : expand ? "expand" : "collapse"}
-            className="flex flex-col grow"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 100, transition: { duration: 0.5 } }}
-            exit={{ opacity: 0, transition: { duration: 0.02 } }}
-          >
-            {props.loading ? (
-              <Loading />
-            ) : expand ? (
-              props.children[1]
-            ) : (
-              props.children[0]
-            )}
-          </motion.div>
-        </AnimatePresence>
-      </Card>
-    </AnimatePresence>
+    <>
+      <Sheet open={expand} onOpenChange={handleOpenChange}>
+        <SheetTrigger asChild>
+          <div>
+            <Card
+              {...props}
+              tag={props.collapsedTag}
+              className={cn(
+                "min-h-[200px] w-full max-w-[400px] cursor-pointer",
+                props.className,
+              )}
+              loading={props.loading}>
+              {props.loading ? null : props.children[0]}
+            </Card>
+          </div>
+        </SheetTrigger>
+        <SheetContent side="right" className="p-0">
+          <div className="flex flex-col w-full justify-center p-8 h-full">
+            {props.loading ? null : props.children[1]}
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 };
