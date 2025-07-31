@@ -15,31 +15,26 @@
  */
 
 import { FetchResult } from "@apollo/client";
-import { Button } from "@clidey/ux";
+import { Button, Input, Label, Sheet, SheetContent, SheetFooter } from "@clidey/ux";
 import {
-    Column, DatabaseType, DeleteRowDocument, DeleteRowMutationResult, RecordInput, RowsResult, StorageUnit,
+    DatabaseType, DeleteRowDocument, DeleteRowMutationResult, RecordInput, RowsResult, StorageUnit,
     UpdateStorageUnitDocument, UpdateStorageUnitMutationResult, useAddRowMutation, useGetStorageUnitRowsLazyQuery,
     WhereCondition
 } from '@graphql';
-import classNames from "classnames";
-import { motion } from "framer-motion";
 import { clone, entries, keys, map } from "lodash";
-import { cloneElement, FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
-import { Dropdown } from "../../components/dropdown";
 import { Icons } from "../../components/icons";
-import { Input, InputWithlabel } from "../../components/input";
 import { Loading, LoadingPage } from "../../components/loading";
 import { InternalPage } from "../../components/page";
+import { StorageUnitTable } from "../../components/table";
 import { graphqlClient } from "../../config/graphql-client";
 import { InternalRoutes } from "../../config/routes";
 import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
 import { getDatabaseOperators } from "../../utils/database-operators";
-import { getDatabaseStorageUnitLabel, isNoSQL, isNumeric } from "../../utils/functions";
+import { getDatabaseStorageUnitLabel, isNumeric } from "../../utils/functions";
 import { ExploreStorageUnitWhereCondition } from "./explore-storage-unit-where-condition";
-import { StorageUnitTable } from "../../components/table";
-
 
 export const ExploreStorageUnit: FC = () => {
     const [bufferPageSize, setBufferPageSize] = useState("100");
@@ -52,60 +47,13 @@ export const ExploreStorageUnit: FC = () => {
     const navigate = useNavigate();
     const [rows, setRows] = useState<RowsResult>();
     const [showAdd, setShowAdd] = useState(false);
-    const [newRowForm, setNewRowForm] = useState<RecordInput[]>([]);
     const [checkedRows, setCheckedRows] = useState<Set<number>>(new Set());
     const [deleting, setDeleting] = useState(false);
     const addRowRef = useRef<HTMLDivElement>(null);
 
-    const hasFormContent = useCallback(() => {
-        // Check if any form field has been modified from default values
-        return newRowForm.some(field => {
-            // If it's an ID or date field with default values, don't count it
-            const isDefault =
-                (field.Key.toLowerCase() === "id" && field.Value === "gen_random_uuid()") ||
-                (field.Extra?.at(1)?.Value === "TIMESTAMPTZ" && field.Value === "now()") ||
-                (field.Extra?.at(1)?.Value === "NUMERIC" && field.Value === "0") ||
-                field.Value === "";
-
-            return !isDefault;
-        });
-    }, [newRowForm]);
-
-    const handleKeyDown = useCallback((e: KeyboardEvent) => {
-        if (e.key === 'Escape' && showAdd) {
-            // Only close if no content has been entered
-            if (!hasFormContent()) {
-                setShowAdd(false);
-            }
-        }
-    }, [showAdd, hasFormContent]);
-
-    useEffect(() => {
-        if (showAdd) {
-            document.addEventListener('keydown', handleKeyDown);
-            return () => {
-                document.removeEventListener('keydown', handleKeyDown);
-            };
-        }
-    }, [showAdd, handleKeyDown]);
-
-    const handleClickOutside = useCallback((e: MouseEvent) => {
-        if (showAdd && addRowRef.current && !addRowRef.current.contains(e.target as Node)) {
-            // Only close if no content has been entered
-            if (!hasFormContent()) {
-                setShowAdd(false);
-            }
-        }
-    }, [showAdd, hasFormContent]);
-
-    useEffect(() => {
-        if (showAdd) {
-            document.addEventListener('mousedown', handleClickOutside);
-            return () => {
-                document.removeEventListener('mousedown', handleClickOutside);
-            };
-        }
-    }, [showAdd, handleClickOutside]);
+    // For add row sheet logic
+    const [addRowData, setAddRowData] = useState<Record<string, any>>({});
+    const [addRowError, setAddRowError] = useState<string | null>(null);
 
     // todo: is there a different way to do this? clickhouse doesn't have schemas as a table is considered a schema. people mainly switch between DB
     if (current?.Type === DatabaseType.ClickHouse) {
@@ -165,8 +113,6 @@ export const ExploreStorageUnit: FC = () => {
         }));
         const updatedColumns = [updatedColumn]
         return new Promise<void>(async (res, rej) => {
-            // this method ensures that the component is not rerendered
-            // hence, the edited cache in the table would stay intact & performant
             try {
                 const { data }: FetchResult<UpdateStorageUnitMutationResult["data"]> = await graphqlClient.mutate({
                     mutation: UpdateStorageUnitDocument,
@@ -313,61 +259,58 @@ export const ExploreStorageUnit: FC = () => {
         if (!current?.Type) {
             return [];
         }
-        
         return getDatabaseOperators(current.Type);
     }, [current?.Type]);
 
-    const handleToggleShowAdd = useCallback(() => {
-        const showAddStatus = !showAdd;
-        if (showAddStatus) {
-            if (newRowForm.length === 0) {
-                let columns: Column[] = [];
-                if (isNoSQL(current?.Type as DatabaseType)) {
-                    if (rows?.Rows != null && rows.Rows.length > 0) {
-                        columns = entries(JSON.parse(rows.Rows[0][0])).filter(([col,]) => col !== "_id").map(([col, value]) => ({
-                            Name: col,
-                            Type: typeof value,
-                        }));
-                    }
+    // Sheet logic for Add Row (like table.tsx)
+    const handleOpenAddSheet = useCallback(() => {
+        // Prepare default values for addRowData
+        let initialData: Record<string, any> = {};
+        if (rows?.Columns) {
+            for (const col of rows.Columns) {
+                if (col.Name.toLowerCase() === "id" && col.Type === "UUID") {
+                    initialData[col.Name] = "gen_random_uuid()";
+                } else if (col.Type === "TIMESTAMPTZ") {
+                    initialData[col.Name] = "now()";
+                } else if (col.Type === "NUMERIC") {
+                    initialData[col.Name] = "0";
+                } else {
+                    initialData[col.Name] = "";
                 }
-                if (columns.length === 0) {
-                    columns = rows?.Columns ?? [];
-                }
-                setNewRowForm((columns.map(col => {
-                    const colName = col.Name.toLowerCase();
-                    const isId = colName === "id" && col.Type === "UUID";
-                    const isDate = col.Type === "TIMESTAMPTZ";
-                    const isNumeric = col.Type === "NUMERIC";
-                    const isCode = isId || isDate;
-                    return {
-                        Key: col.Name,
-                        Value: isId ? "gen_random_uuid()" : isDate ? "now()" : isNumeric ? "0" : "",
-                        Extra: [
-                            {
-                                Key: "Config",
-                                Value: isCode ? "sql" : "text",
-                            },
-                            {
-                                Key: "Type",
-                                Value: col.Type,
-                            },
-                        ],
-                    }
-                })));
             }
         }
-        setShowAdd(showAddStatus);
-    }, [current?.Type, newRowForm.length, rows?.Columns, rows?.Rows, showAdd]);
+        setAddRowData(initialData);
+        setAddRowError(null);
+        setShowAdd(true);
+    }, [rows?.Columns]);
 
-    const handleAddSubmitRequest = useCallback(() => {
-        let values = newRowForm;
-        values = values.filter(item => item.Value != '')  // remove empty fields
-        if (isNoSQL(current?.Type as DatabaseType) && rows?.Rows != null && rows.Rows.length === 0) {
-            try {
-                values = entries(JSON.parse(newRowForm[0].Value)).map(([Key, Value]) => ({ Key, Value } as RecordInput));
-            } catch {
-                values = [];
+    const handleCloseAddSheet = useCallback(() => {
+        setShowAdd(false);
+        setAddRowError(null);
+    }, []);
+
+    const handleAddRowFieldChange = useCallback((key: string, value: string) => {
+        setAddRowData(prev => ({
+            ...prev,
+            [key]: value,
+        }));
+    }, []);
+
+    const handleAddRowSubmit = useCallback(() => {
+        if (!rows?.Columns) return;
+        // Prepare values as RecordInput[]
+        let values: RecordInput[] = [];
+        for (const col of rows.Columns) {
+            if (addRowData[col.Name] !== undefined && addRowData[col.Name] !== "") {
+                values.push({
+                    Key: col.Name,
+                    Value: addRowData[col.Name],
+                });
             }
+        }
+        if (values.length === 0) {
+            setAddRowError("Please fill at least one value.");
+            return;
         }
         addRow({
             variables: {
@@ -383,31 +326,11 @@ export const ExploreStorageUnit: FC = () => {
                 }, 500);
             },
             onError(e) {
+                setAddRowError(e.message);
                 notify(`Unable to add the data row: ${e.message}`, "error");
             },
         });
-    }, [addRow, current?.Type, handleSubmitRequest, newRowForm, rows?.Rows, schema, unit?.Name]);
-
-    const handleNewFormChange = useCallback((type: "value" | "config", index: number, value: string) => {
-        setNewRowForm(rowForm => {
-            const newFormClone = clone(rowForm);
-            if (type === "value") {
-                newFormClone[index].Value = value;
-            } else {
-                newFormClone[index].Extra![0].Value = value;
-            }
-                
-            return newFormClone;
-        });
-    }, []);
-
-    const configDropdown = useMemo(() => {
-        return [{id: "text", label: "Text", icon: cloneElement(Icons.Text, {
-            className: "w-4 h-4",
-        })}, { id: "sql", label: "SQL", icon: cloneElement(Icons.Code, {
-            className: "w-4 h-4",
-        })}];
-    }, []);
+    }, [addRow, addRowData, handleSubmitRequest, rows?.Columns, schema, unit?.Name]);
 
     if (unit == null) {
         return <Navigate to={InternalRoutes.Dashboard.StorageUnit.path} />
@@ -429,66 +352,55 @@ export const ExploreStorageUnit: FC = () => {
             </div>
             <div className="flex w-full relative">
                 <div className="flex gap-2">
-                    <InputWithlabel label="Page Size" value={bufferPageSize} setValue={setBufferPageSize} testId="table-page-size" />
+                    <div className="flex flex-col gap-2">
+                        <Label>Page Size</Label>
+                        <Input value={bufferPageSize} onChange={e => setBufferPageSize(e.target.value)} data-testid="table-page-size" />
+                    </div>
                     { current?.Type !== DatabaseType.Redis && <ExploreStorageUnitWhereCondition defaultWhere={whereCondition} columns={columns} operators={validOperators} onChange={handleFilterChange} columnTypes={columnTypes ?? []} /> }
-                    <Button className="mt-5" size="lg" onClick={handleQuery} testId="submit-button" variant="secondary">
+                    <Button className="ml-6 mt-5" onClick={handleQuery} data-testid="submit-button">
                         {Icons.CheckCircle} Query
                     </Button>
                 </div>
-                <motion.div tabIndex={0} ref={addRowRef} className={classNames("flex flex-col absolute z-10 right-0 top-0 backdrop-blur-xl", {
-                        "hidden": current?.Type === DatabaseType.Redis,
-                    })} variants={{
-                    "open": {
-                        height: "500px",
-                        width: "800px",
-                    },
-                    "close": {
-                        height: "35px",
-                        width: "fit-content",
-                    },
-                }} animate={showAdd ? "open" : "close"}>
+                <div className="flex flex-col absolute z-10 right-0 top-0">
                     <div className="flex w-full justify-end gap-2">
-                        {adding || deleting && <Loading />}
+                        {adding || deleting ? <Loading /> : null}
                         {checkedRows.size > 0 && <Button variant="destructive" onClick={handleRowDelete} disabled={deleting} data-testid="delete-button">
                             {Icons.Delete} {checkedRows.size > 1 ? "Delete rows" : "Delete row"}
                         </Button> }
-                        <Button onClick={handleToggleShowAdd} disabled={adding} data-testid="add-button" variant="secondary">
-                            {Icons.Add} {showAdd ? "Cancel" : "Add Row"}
+                        <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-button" variant="secondary">
+                            {Icons.Add} Add Row
                         </Button>
                     </div>
-                    <div className={classNames("flex flex-col gap-2 overflow-y-auto h-full p-8 mt-2", {
-                        "flex border border-white/5 rounded-lg": showAdd,
-                        "hidden": !showAdd,
-                    })}>
-                        <div className="flex justify-between gap-4">
-                            <div
-                                className="text-lg text-neutral-800 dark:text-neutral-300 w-full border-b border-white/10 pb-2 mb-2">
-                                Add new row
+                </div>
+                <Sheet open={showAdd} onOpenChange={setShowAdd}>
+                    <SheetContent side="right" className="p-8">
+                        <div className="flex flex-col gap-4 h-full">
+                            <div className="text-lg font-semibold mb-2">Add new row</div>
+                            <div className="flex flex-col gap-4">
+                                {rows?.Columns?.map((col) => (
+                                    <div key={col.Name} className="flex flex-col gap-2">
+                                        <Label>
+                                            {col.Name} <span className="italic">[{col.Type}]</span>
+                                        </Label>
+                                        <Input
+                                            value={addRowData[col.Name] ?? ""}
+                                            onChange={e => handleAddRowFieldChange(col.Name, e.target.value)}
+                                            placeholder={`Enter value for ${col.Name}`}
+                                        />
+                                    </div>
+                                ))}
                             </div>
+                            {addRowError && (
+                                <div className="text-red-500 text-xs">{addRowError}</div>
+                            )}
                         </div>
-                        {newRowForm.map((col, i) => <>
-                            <div key={`add-row-${col.Key}`} className="flex gap-2 items-center">
-                                <div
-                                    className="text-xs text-neutral-800 dark:text-neutral-300 w-[150px]">{col.Key} [{col.Extra?.at(1)?.Value}]
-                                </div>
-                                <Dropdown className={classNames({
-                                    "hidden": isNoSQL(current?.Type as DatabaseType),
-                                })} value={configDropdown.find(item => item.id === col.Extra?.at(0)?.Value)}
-                                          onChange={item => handleNewFormChange("config", i, item.id)}
-                                          items={configDropdown}
-                                          showIconOnly={true}/>
-                                <Input value={col.Value} inputProps={{
-                                    placeholder: `Enter value for ${col.Key}`,
-                                }} setValue={(value) => handleNewFormChange("value", i, value)}/>
-                            </div>
-                        </>)}
-                        <div className="flex justify-end gap-4 mt-2">
-                            <Button className="px-3" size="lg" onClick={handleAddSubmitRequest} data-testid="submit-button">
+                        <SheetFooter>
+                            <Button onClick={handleAddRowSubmit} data-testid="submit-button" disabled={adding}>
                                 {Icons.CheckCircle} Submit
                             </Button>
-                        </div>
-                    </div>
-                </motion.div>
+                        </SheetFooter>
+                    </SheetContent>
+                </Sheet>
             </div>
             <div className="grow">
                 {

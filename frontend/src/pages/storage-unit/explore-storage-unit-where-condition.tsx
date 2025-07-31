@@ -14,15 +14,97 @@
  * limitations under the License.
  */
 
-import { Button } from "@clidey/ux";
+import { Badge, Button, Input, Label, Popover, PopoverContent, PopoverTrigger, SearchSelect } from "@clidey/ux";
 import { AtomicWhereCondition, WhereCondition, WhereConditionType } from '@graphql';
+import { XCircleIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
-import { AnimatePresence, motion } from "framer-motion";
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
-import { createDropdownItem, Dropdown, IDropdownItem } from "../../components/dropdown";
 import { Icons } from "../../components/icons";
-import { Input, Label } from "../../components/input";
+
+type IPopoverCardProps = {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    currentFilter: AtomicWhereCondition;
+    fieldsDropdownItems: { value: string, label: string }[];
+    validOperators: { value: string, label: string }[];
+    handleFieldSelect: (item: string) => void;
+    handleOperatorSelector: (item: string) => void;
+    handleInputChange: (newValue: string) => void;
+    handleAddFilter: () => void;
+    handleClick: () => void;
+}
+
+const PopoverCard: FC<IPopoverCardProps> = ({ open, onOpenChange, currentFilter, fieldsDropdownItems, validOperators, handleFieldSelect, handleOperatorSelector, handleInputChange, handleAddFilter, handleClick }) => {
+    return  <Popover open={open} onOpenChange={onOpenChange}>
+        <PopoverTrigger asChild>
+            <div />
+        </PopoverTrigger>
+        <PopoverContent
+            className="flex flex-col gap-3 z-[5] py-4 px-6 mt-1 rounded-lg shadow-md border border-neutral-100 dark:border-white/5 dark:bg-[#23272A] bg-white dark:backdrop-blur-xl min-w-[260px]"
+            side="bottom"
+            align="center"
+            tabIndex={0}
+        >
+            <div className="flex flex-col gap-2 w-full">
+                <Label className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                    Field
+                </Label>
+                <SearchSelect
+                    value={currentFilter.Key}
+                    options={fieldsDropdownItems}
+                    onChange={handleFieldSelect}
+                    data-testid="field-key"
+                />
+            </div>
+            <div className="flex flex-col gap-2 w-full">
+                <Label className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                    Operator
+                </Label>
+                <SearchSelect
+                    value={currentFilter.Operator}
+                    options={validOperators}
+                    onChange={handleOperatorSelector}
+                    data-testid="field-operator"
+                />
+            </div>
+            <div className="flex flex-col gap-2 w-full">
+                <Label className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                    Value
+                </Label>
+                <Input
+                    className="min-w-[150px] w-full"
+                    placeholder="Enter filter value"
+                    value={currentFilter.Value}
+                    onChange={e => handleInputChange(e.target.value)}
+                    data-testid="field-value"
+                />
+            </div>
+            <div className="flex gap-2 mt-2">
+                <Button
+                    className="dark:bg-white/5 flex-1"
+                    onClick={handleClick}
+                    data-testid="cancel-button"
+                    variant="secondary"
+                >
+                    {Icons.Cancel} Cancel
+                </Button>
+                <Button
+                    className="dark:bg-white/5 flex-1"
+                    onClick={handleAddFilter}
+                    disabled={
+                        !currentFilter.Key ||
+                        !currentFilter.Operator ||
+                        !currentFilter.Value
+                    }
+                    data-testid="add-button"
+                >
+                    {Icons.CheckCircle} Add
+                </Button>
+            </div>
+        </PopoverContent>
+    </Popover>
+}
 
 type IExploreStorageUnitWhereConditionProps = {
     defaultWhere?: WhereCondition;
@@ -52,16 +134,16 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
         setNewFilter(!newFilter);
     }, [newFilter]);
 
-    const fieldsDropdownItems = useMemo(() => columns.map(column => createDropdownItem(column)), [columns]);
+    const fieldsDropdownItems = useMemo(() => columns.map(column => ({ value: column, label: column })), [columns]);
 
-    const handleFieldSelect = useCallback((item: IDropdownItem) => {
-        setCurrentFilter(val => ({ ...val, Key: item.id, ColumnType: columnTypes[columns.findIndex(col => col === item.id)] }));
+    const handleFieldSelect = useCallback((item: string) => {
+        setCurrentFilter(val => ({ ...val, Key: item, ColumnType: columnTypes[columns.findIndex(col => col === item)] }));
     }, [columnTypes, columns]);
 
-    const handleOperatorSelector = useCallback((item: IDropdownItem) => {
+    const handleOperatorSelector = useCallback((item: string) => {
         setCurrentFilter(val => ({
             ...val,
-            Operator: item.id,
+            Operator: item,
         }));
     }, []);
 
@@ -120,7 +202,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
     }, [filters, currentFilter, onChange]);
 
     const validOperators = useMemo(() => {
-        return operators.map(operator => createDropdownItem(operator));
+        return operators.map(operator => ({ value: operator, label: operator }));
     }, [operators]);
 
     useEffect(() => {
@@ -184,68 +266,68 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
 
     return (
         <div className="flex flex-col gap-1 h-full relative">
-            <Label label="Where condition" />
+            <Label className="mb-1">Where condition</Label>
             <div className="flex gap-1 items-center max-w-[min(500px,calc(100vw-20px))] flex-wrap">
                 {filters.And?.Children?.map((filter, i) => (
-                    <div key={`explore-storage-unit-filter-${i}`} className="group/filter-item flex gap-1 items-center text-xs rounded-2xl dark:bg-white/5 cursor-pointer relative shadow-sm border border-neutral-100 dark:border-neutral-800"
-                        data-testid="where-condition">
-                        <div className={twMerge(classNames("px-2 py-1 h-full max-w-[350px] truncate dark:text-neutral-300 rounded-2xl", {
-                            "dark:bg-white/10": editingFilter === i,
-                        }))} onClick={() => handleEdit(i)}>
-                            {filter.Atomic?.Key} {filter.Atomic?.Operator} {filter.Atomic?.Value}
+                    <div
+                        key={`explore-storage-unit-filter-${i}`}
+                        className="group/filter-item flex gap-1 items-center text-xs rounded-2xl dark:bg-white/5 cursor-pointer"
+                        data-testid="where-condition"
+                    >
+                        <div className="flex items-center">
+                            <Badge
+                                className={twMerge(
+                                    classNames(
+                                        "flex items-center gap-1 pl-4 pr-2 h-full max-w-[350px] truncate cursor-pointer",
+                                        { "ring-2 ring-primary-500 dark:ring-primary-400": editingFilter === i }
+                                    )
+                                )}
+                                onClick={() => handleEdit(i)}
+                                data-testid="where-condition-badge"
+                                variant="secondary"
+                            >
+                                <div className="flex items-center gap-1">
+                                    {filter.Atomic?.Key} {filter.Atomic?.Operator} {filter.Atomic?.Value}
+                                    <Button onClick={() => handleRemove(i)} data-testid="remove-where-condition-button" variant="ghost" size="icon">
+                                        <XCircleIcon />
+                                    </Button>
+                                </div>
+                            </Badge>
                         </div>
-                        <Button containerClassName="hover:scale-125 absolute right-2 top-1/2 -translate-y-1/2 z-10 h-4 w-4 opacity-0 group-hover/filter-item:opacity-100"
-                            onClick={() => handleRemove(i)} data-testid="remove-where-condition-button">
-                            {Icons.Cancel}
-                        </Button>
-                        <AnimatePresence mode="wait">
-                            {editingFilter === i && (
-                                <motion.div className="flex gap-1 z-[5] py-2 px-4 absolute left-0 top-2 mt-2 rounded-lg shadow-md border border-neutral-100 dark:border-[#23272A] dark:bg-neutral-700 dark:backdrop-blur-xl translate-y-full bg-white"
-                                    initial={{ y: -10, opacity: 0 }}
-                                    animate={{ y: 0, opacity: 1 }}
-                                    exit={{ y: -10, opacity: 0 }}
-                                    ref={editFilterRef}
-                                    tabIndex={0}>
-                                    <Dropdown className="min-w-[100px]" value={createDropdownItem(currentFilter.Key)} items={fieldsDropdownItems} onChange={handleFieldSelect} />
-                                    <Dropdown noItemsLabel="No operators found" className="min-w-20" value={createDropdownItem(currentFilter.Operator)} items={validOperators} onChange={handleOperatorSelector} />
-                                    <Input inputProps={{ className: "min-w-[150px]" }} placeholder="Enter filter value" value={currentFilter.Value} setValue={handleInputChange} />
-                                    <Button className="dark:bg-white/5" onClick={() => handleEdit(i)} data-testid="cancel-button">
-                                        {Icons.Cancel} Cancel
-                                    </Button>
-                                    <Button className="dark:bg-white/5" onClick={() => handleSaveFilter(i)} disabled={!currentFilter.Key || !currentFilter.Operator || !currentFilter.Value} data-testid="save-button">
-                                        {Icons.CheckCircle} Save
-                                    </Button>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                        <PopoverCard
+                            open={editingFilter === i}
+                            onOpenChange={() => {
+                                setEditingFilter(editingFilter === i ? -1 : i);
+                                setCurrentFilter({ ColumnType: "string", Key: "", Operator: "", Value: "" });
+                                setNewFilter(false);
+                            }}
+                            currentFilter={currentFilter}
+                            fieldsDropdownItems={fieldsDropdownItems}
+                            validOperators={validOperators}
+                            handleFieldSelect={handleFieldSelect}
+                            handleOperatorSelector={handleOperatorSelector}
+                            handleInputChange={handleInputChange}
+                            handleAddFilter={handleAddFilter}
+                            handleClick={handleClick}
+                        />
                     </div>
                 ))}
-                <Button className={classNames("transition-all", { "rotate-45": newFilter })} onClick={handleClick} data-testid="where-button" variant="ghost">
-                    {Icons.Add}
+                <Button onClick={handleClick} data-testid="where-button" variant="secondary">
+                    {Icons.Add} Add
                 </Button>
             </div>
-            <AnimatePresence mode="wait">
-                {newFilter && (
-                    <motion.div className="flex gap-1 z-[5] py-2 px-4 absolute top-2 mt-1 rounded-lg shadow-md border border-neutral-100 dark:border-white/5 dark:bg-[#23272A] translate-y-full bg-white dark:backdrop-blur-xl"
-                        initial={{ y: -10, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        exit={{ y: -10, opacity: 0 }}
-                        ref={newFilterRef}
-                        tabIndex={0}>
-                        <Dropdown className="min-w-[100px]" value={createDropdownItem(currentFilter.Key)} items={fieldsDropdownItems} onChange={handleFieldSelect} testId="field-key" />
-                        <Dropdown noItemsLabel="No operators found" className="min-w-20" value={createDropdownItem(currentFilter.Operator)} items={validOperators} onChange={handleOperatorSelector} testId="field-operator" />
-                        <Input inputProps={{
-                            className: "min-w-[150px]",
-                        }} placeholder="Enter filter value" value={currentFilter.Value} setValue={handleInputChange} testId="field-value" />
-                        <Button className="dark:bg-white/5" onClick={handleClick} data-testid="cancel-button">
-                            {Icons.Cancel} Cancel
-                        </Button>
-                        <Button className="dark:bg-white/5" onClick={handleAddFilter} disabled={!currentFilter.Key || !currentFilter.Operator || !currentFilter.Value} data-testid="add-button">
-                            {Icons.CheckCircle} Add
-                        </Button>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            <PopoverCard
+                open={newFilter}
+                onOpenChange={setNewFilter}
+                currentFilter={currentFilter}
+                fieldsDropdownItems={fieldsDropdownItems}
+                validOperators={validOperators}
+                handleFieldSelect={handleFieldSelect}
+                handleOperatorSelector={handleOperatorSelector}
+                handleInputChange={handleInputChange}
+                handleAddFilter={handleAddFilter}
+                handleClick={handleClick}
+            />
         </div>
     );
 };
