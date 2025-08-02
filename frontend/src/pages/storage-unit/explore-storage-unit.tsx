@@ -492,7 +492,8 @@ export const ExploreStorageUnit: FC = () => {
                            rows={rows.Rows} totalPages={totalPages} currentPage={currentPage + 1}
                            onPageChange={handlePageChange}
                            onRowUpdate={handleRowUpdate} disableEdit={rows.DisableUpdate}
-                        checkedRows={checkedRows} setCheckedRows={setCheckedRows} />
+                        checkedRows={checkedRows} setCheckedRows={setCheckedRows}
+                        schema={schema} storageUnit={unitName} />
                 }
             </div>
         </div>

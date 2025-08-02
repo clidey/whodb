@@ -133,6 +133,18 @@ type AIProvider {
   IsEnvironmentDefined: Boolean!
 }
 
+enum ImportMode {
+  Append
+  Override
+}
+
+type ImportProgress {
+  totalRows: Int!
+  processedRows: Int!
+  status: String!
+  error: String
+}
+
 type Query {
   Version: String!
   Profiles: [LoginProfile!]!
@@ -146,6 +158,7 @@ type Query {
   AIModel(providerId: String, modelType: String!, token: String): [String!]!
   AIChat(providerId: String, modelType: String!, token: String, schema: String!, input: ChatInput!): [AIChatMessage!]!
   SettingsConfig: SettingsConfig!
+  ExportCSV(schema: String!, storageUnit: String!): String!
 }
 
 type Mutation {
@@ -158,4 +171,5 @@ type Mutation {
   UpdateStorageUnit(schema: String!, storageUnit: String!, values: [RecordInput!]!, updatedColumns: [String!]!): StatusResponse!
   AddRow(schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
   DeleteRow(schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
+  ImportCSV(schema: String!, storageUnit: String!, csvData: String!, mode: ImportMode!): ImportProgress!
 }

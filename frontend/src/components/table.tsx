@@ -422,9 +422,11 @@ type ITableProps = {
     checkedRows?: Set<number>;
     setCheckedRows?: (checkedRows: Set<number>) => void;
     hideActions?: boolean;
+    schema?: string;
+    storageUnit?: string;
 }
 
-export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows: actualRows, columnTags, totalPages, currentPage, onPageChange, onRowUpdate, disableEdit, checkedRows, setCheckedRows, hideActions }) => {
+export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows: actualRows, columnTags, totalPages, currentPage, onPageChange, onRowUpdate, disableEdit, checkedRows, setCheckedRows, hideActions, schema, storageUnit }) => {
     const fixedTableRef = useRef<FixedSizeList>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const operationsRef = useRef<HTMLDivElement>(null);
@@ -436,6 +438,12 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
     const [height, setHeight] = useState(0);
     const [width, setWidth] = useState(0);
     const [data, setData] = useState<Record<string, string | number>[]>([]);
+    const [showImportModal, setShowImportModal] = useState(false);
+    const [importMode, setImportMode] = useState<'append' | 'override'>('append');
+    const [importFile, setImportFile] = useState<File | null>(null);
+    const [importing, setImporting] = useState(false);
+    const [showExportConfirm, setShowExportConfirm] = useState(false);
+    const [importProgress, setImportProgress] = useState<{processedRows: number; status: string} | null>(null);
 
     const columns = useMemo(() => {
         const indexWidth = 50;
@@ -653,13 +661,120 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
         setCheckedRows(new Set(rows.map((_, i) => i)));
     }, [allChecked, rows, setCheckedRows]);
 
-    const specificIndexes = useMemo(() => {
-        return  [...checkedRows ?? []];
-    }, [checkedRows]);
+    const hasSelectedRows = (checkedRows?.size ?? 0) > 0;
 
-    const exportToCSV = useExportToCSV(actualColumns, sortedRows, specificIndexes);
+    // Always call the hook, but use conditional logic inside
+    const backendExport = useExportToCSV(schema || '', storageUnit || '', hasSelectedRows);
+
+    const handleExportConfirm = useCallback(() => {
+        if (!schema || !storageUnit) {
+            // Fallback to client-side export if schema/storageUnit not provided
+            const selectedRows = hasSelectedRows 
+                ? [...checkedRows!].map(index => sortedRows[index])
+                : sortedRows;
+            
+            const csvContent = [
+                actualColumns.join('|'), 
+                ...selectedRows.map(row => actualColumns.map(col => row[col] || '').join("|"))
+            ].join('\n'); 
+        
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        
+            const link = document.createElement('a');
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `${storageUnit || 'data'}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        } else {
+            // Use backend export for full data
+            backendExport();
+        }
+        setShowExportConfirm(false);
+    }, [schema, storageUnit, hasSelectedRows, actualColumns, sortedRows, checkedRows, backendExport]);
+
+    const handleImport = useCallback(async () => {
+        if (!importFile || !schema || !storageUnit) {
+            notify("Missing file or table information", "error");
+            return;
+        }
+
+        setImporting(true);
+        
+        try {
+            // Read file content
+            const text = await importFile.text();
+            
+            // Convert to base64 for GraphQL transport
+            const base64Data = btoa(text);
+            
+            // Call import mutation
+            const response = await fetch('/graphql', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    query: `
+                        mutation ImportCSV($schema: String!, $storageUnit: String!, $csvData: String!, $mode: ImportMode!) {
+                            ImportCSV(schema: $schema, storageUnit: $storageUnit, csvData: $csvData, mode: $mode) {
+                                totalRows
+                                processedRows
+                                status
+                                error
+                            }
+                        }
+                    `,
+                    variables: {
+                        schema,
+                        storageUnit,
+                        csvData: base64Data,
+                        mode: importMode === 'append' ? 'Append' : 'Override'
+                    }
+                })
+            });
+
+            const result = await response.json();
+            
+            if (result.errors) {
+                throw new Error(result.errors[0].message);
+            }
+            
+            const importResult = result.data.ImportCSV;
+            
+            if (importResult.error) {
+                throw new Error(importResult.error);
+            }
+            
+            notify(`Successfully imported ${importResult.processedRows} rows`, "success");
+            setShowImportModal(false);
+            setImportFile(null);
+            setImportProgress(null);
+            
+            // Refresh the table
+            window.location.reload();
+        } catch (error) {
+            notify(`Import failed: ${error}`, "error");
+        } finally {
+            setImporting(false);
+        }
+    }, [importFile, schema, storageUnit, importMode]);
+
+    const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file && file.type === 'text/csv') {
+            setImportFile(file);
+        } else {
+            notify("Please select a CSV file", "error");
+        }
+    }, []);
 
     return (
+        <>
         <div className="flex flex-col grow gap-4 items-center w-full h-full" ref={containerRef}>
             <div className={classNames("flex justify-between items-center w-full", {
                 "hidden": hideActions,
@@ -672,7 +787,10 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                 </div>
                 <div className="flex gap-4 items-center">
                     <div className="text-sm text-gray-600 dark:text-neutral-300"><span className="font-semibold">Count:</span> {rowCount}</div>
-                    <AnimatedButton icon={Icons.Download} label={checkedRows != null && checkedRows?.size > 0 ? "Export selected" : "Export"} type="lg" onClick={exportToCSV} />
+                    {schema && storageUnit && (
+                        <AnimatedButton icon={Icons.Upload} label="Import" type="lg" onClick={() => setShowImportModal(true)} />
+                    )}
+                    <AnimatedButton icon={Icons.Download} label={hasSelectedRows ? `Export ${checkedRows?.size} selected` : "Export all"} type="lg" onClick={() => setShowExportConfirm(true)} />
                 </div>
             </div>
             <div className={twMerge(classNames("flex overflow-x-auto h-full", className))} style={{
@@ -730,5 +848,174 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                 </div>
             }
         </div>
+        <AnimatePresence>
+            {showImportModal && (
+                <Portal>
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+                        onClick={() => setShowImportModal(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9 }}
+                            animate={{ scale: 1 }}
+                            exit={{ scale: 0.9 }}
+                            className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <h2 className="text-xl font-semibold mb-4 dark:text-white">Import CSV</h2>
+                            
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium mb-2 dark:text-gray-300">
+                                        Select CSV File
+                                    </label>
+                                    <input
+                                        type="file"
+                                        accept=".csv"
+                                        onChange={handleFileSelect}
+                                        className="block w-full text-sm text-gray-900 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-700 focus:outline-none"
+                                    />
+                                    {importFile && (
+                                        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                                            Selected: {importFile.name}
+                                        </p>
+                                    )}
+                                </div>
+                                
+                                <div>
+                                    <label className="block text-sm font-medium mb-2 dark:text-gray-300">
+                                        Import Mode
+                                    </label>
+                                    <div className="space-y-2">
+                                        <label className="flex items-center">
+                                            <input
+                                                type="radio"
+                                                value="append"
+                                                checked={importMode === 'append'}
+                                                onChange={(e) => setImportMode(e.target.value as 'append')}
+                                                className="mr-2"
+                                            />
+                                            <span className="text-sm dark:text-gray-300">Append to existing data</span>
+                                        </label>
+                                        <label className="flex items-center">
+                                            <input
+                                                type="radio"
+                                                value="override"
+                                                checked={importMode === 'override'}
+                                                onChange={(e) => setImportMode(e.target.value as 'override')}
+                                                className="mr-2"
+                                            />
+                                            <span className="text-sm dark:text-gray-300">Override existing data</span>
+                                        </label>
+                                    </div>
+                                    {importMode === 'override' && (
+                                        <p className="mt-2 text-sm text-yellow-600 dark:text-yellow-400">
+                                            ⚠️ Warning: This will delete all existing data in the table
+                                        </p>
+                                    )}
+                                </div>
+                                
+                                <div className="text-sm text-gray-600 dark:text-gray-400">
+                                    <p className="font-medium mb-1">CSV Format Requirements:</p>
+                                    <ul className="list-disc list-inside space-y-1">
+                                        <li>First row must contain column headers with format: column_name:data_type</li>
+                                        <li>Use pipe (|) as delimiter</li>
+                                        <li>All required columns must be present</li>
+                                    </ul>
+                                </div>
+                                
+                                {importing && (
+                                    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                                        <div className="flex items-center gap-2">
+                                            <Loading hideText={true} />
+                                            <span className="text-sm text-blue-700 dark:text-blue-300">
+                                                Importing data...
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <div className="flex justify-end gap-2 mt-6">
+                                <AnimatedButton
+                                    icon={Icons.Cancel}
+                                    label="Cancel"
+                                    onClick={() => {
+                                        setShowImportModal(false);
+                                        setImportFile(null);
+                                    }}
+                                    disabled={importing}
+                                />
+                                <AnimatedButton
+                                    icon={Icons.Upload}
+                                    label={importing ? "Importing..." : "Import"}
+                                    onClick={handleImport}
+                                    disabled={!importFile || importing}
+                                    className="bg-blue-500 text-white hover:bg-blue-600"
+                                />
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                </Portal>
+            )}
+        </AnimatePresence>
+        <AnimatePresence>
+            {showExportConfirm && (
+                <Portal>
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+                        onClick={() => setShowExportConfirm(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9 }}
+                            animate={{ scale: 1 }}
+                            exit={{ scale: 0.9 }}
+                            className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <h2 className="text-xl font-semibold mb-4 dark:text-white">Export CSV</h2>
+                            
+                            <div className="space-y-4">
+                                <p className="text-gray-600 dark:text-gray-300">
+                                    {hasSelectedRows 
+                                        ? `You are about to export ${checkedRows?.size} selected rows.`
+                                        : `You are about to export all data from the table. This may take some time for large tables.`}
+                                </p>
+                                
+                                <div className="text-sm text-gray-600 dark:text-gray-400">
+                                    <p className="font-medium mb-1">Export Format:</p>
+                                    <ul className="list-disc list-inside space-y-1">
+                                        <li>CSV format with pipe (|) delimiter</li>
+                                        <li>Headers include column names and data types</li>
+                                        <li>UTF-8 encoding with BOM for Excel compatibility</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div className="flex justify-end gap-2 mt-6">
+                                <AnimatedButton
+                                    icon={Icons.Cancel}
+                                    label="Cancel"
+                                    onClick={() => setShowExportConfirm(false)}
+                                />
+                                <AnimatedButton
+                                    icon={Icons.Download}
+                                    label="Export"
+                                    onClick={handleExportConfirm}
+                                    className="bg-blue-500 text-white hover:bg-blue-600"
+                                />
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                </Portal>
+            )}
+        </AnimatePresence>
+    </>
     )
 }

@@ -17,32 +17,24 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 
-export const useExportToCSV = (columns: string[], rows: Record<string, string | number>[], specificIndexes: number[] = []) => {
+export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly: boolean = false) => {
     return useCallback(() => {
-      let selectedRows: Record<string, string | number>[];
-      if (specificIndexes.length === 0) {
-        selectedRows = rows;
-      } else {
-        selectedRows = specificIndexes.map(index => rows[index]);
-      }
-      const csvContent = [
-        columns.join(','), 
-        ...selectedRows.map(row => columns.map(col => row[col]).join(","))
-      ].join('\n'); 
-  
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  
+      // Use backend export endpoint for full data export
+      const params = new URLSearchParams({
+        schema,
+        storageUnit,
+      });
+      
+      const url = `/api/export-csv?${params}`;
+      
+      // Create link and trigger download
       const link = document.createElement('a');
-      if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', 'data.csv');
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-    }, [columns, rows, specificIndexes]);
+      link.href = url;
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }, [schema, storageUnit, selectedOnly]);
 };
 
 type ILongPressProps = {
