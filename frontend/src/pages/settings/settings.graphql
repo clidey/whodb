@@ -1,5 +1,18 @@
 query SettingsConfig {
     SettingsConfig {
         MetricsEnabled
+        PerformanceMonitoringEnabled
+        PerformanceMetricsConfig {
+            query_latency
+            query_count
+            connection_count
+            error_count
+            cpu_usage
+            memory_usage
+            disk_io
+            cache_hit_ratio
+            transaction_count
+            lock_wait_time
+        }
     }
 }

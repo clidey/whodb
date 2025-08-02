@@ -5,6 +5,7 @@ go 1.24.1
 require (
 	github.com/99designs/gqlgen v0.17.74
 	github.com/ClickHouse/clickhouse-go/v2 v2.36.0
+	github.com/XSAM/otelsql v0.27.0
 	github.com/deckarep/golang-set/v2 v2.8.0
 	github.com/elastic/go-elasticsearch/v8 v8.18.0
 	github.com/go-chi/chi/v5 v5.2.1
@@ -13,10 +14,15 @@ require (
 	github.com/go-sql-driver/mysql v1.9.2
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.5.5
+	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/vektah/gqlparser/v2 v2.5.28
 	go.mongodb.org/mongo-driver v1.17.3
+	go.opentelemetry.io/otel v1.24.0
+	go.opentelemetry.io/otel/metric v1.24.0
+	go.opentelemetry.io/otel/sdk v1.24.0
+	go.opentelemetry.io/otel/sdk/metric v1.24.0
 	gorm.io/driver/clickhouse v0.7.0
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/driver/postgres v1.5.11

@@ -354,6 +354,8 @@ export const Sidebar: FC = () => {
         return availableDatabasesLoading || availableSchemasLoading;
     }, [availableDatabasesLoading, availableSchemasLoading]);
 
+    const performanceMonitoringEnabled = useAppSelector(state => state.settings.performanceMonitoringEnabled);
+    
     const sidebarRoutes: IRouteProps[] = useMemo(() => {
         if (current == null) {
             return [];
@@ -385,8 +387,15 @@ export const Sidebar: FC = () => {
                 path: InternalRoutes.RawExecute.path,
             });
         }
+        if (performanceMonitoringEnabled) {
+            routes.push({
+                title: "Performance",
+                icon: Icons.Chart,
+                path: InternalRoutes.PerformanceMonitoring.path,
+            });
+        }
         return routes;
-    }, [current]);
+    }, [current, performanceMonitoringEnabled]);
 
     const handleCollapseToggle = useCallback(() => {
         setCollapsed(c => !c);

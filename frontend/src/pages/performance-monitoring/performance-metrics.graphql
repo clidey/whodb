@@ -1,0 +1,22 @@
+query PerformanceMetrics($query: PerformanceMetricsQuery!) {
+    PerformanceMetrics(query: $query) {
+        metricType
+        database
+        schema
+        labels {
+            Key
+            Value
+        }
+        values {
+            timestamp
+            value
+            count
+            min
+            max
+            avg
+            p50
+            p95
+            p99
+        }
+    }
+}

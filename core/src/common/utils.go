@@ -92,3 +92,14 @@ func StrPtrToBool(s *string) bool {
 	value := strings.ToLower(*s)
 	return value == "true"
 }
+
+func StrPtrToStr(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
+func IntToIntPtr(i int) *int {
+	return &i
+}

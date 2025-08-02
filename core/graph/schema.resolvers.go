@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src"
@@ -16,6 +17,7 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/llm"
+	"github.com/clidey/whodb/core/src/monitoring"
 	"github.com/clidey/whodb/core/src/settings"
 )
 
@@ -392,6 +394,91 @@ func (r *queryResolver) AIChat(ctx context.Context, providerID *string, modelTyp
 func (r *queryResolver) SettingsConfig(ctx context.Context) (*model.SettingsConfig, error) {
 	currentSettings := settings.Get()
 	return &model.SettingsConfig{MetricsEnabled: &currentSettings.MetricsEnabled}, nil
+}
+
+// PerformanceMetrics is the resolver for the PerformanceMetrics field.
+func (r *queryResolver) PerformanceMetrics(ctx context.Context, query model.PerformanceMetricsQuery) ([]*model.PerformanceMetric, error) {
+	// Check if performance monitoring is enabled
+	if !settings.Get().PerformanceMonitoringEnabled {
+		return []*model.PerformanceMetric{}, nil
+	}
+	
+	// Get the global monitor
+	monitor := monitoring.GetGlobalMonitor()
+	if monitor == nil || monitor.GetCollector() == nil {
+		return []*model.PerformanceMetric{}, nil
+	}
+	
+	// Parse time strings
+	startTime, err := time.Parse(time.RFC3339, query.StartTime)
+	if err != nil {
+		return nil, err
+	}
+	
+	endTime, err := time.Parse(time.RFC3339, query.EndTime)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Build metrics query
+	metricsQuery := monitoring.MetricsQuery{
+		StartTime: startTime,
+		EndTime:   endTime,
+		Database:  common.StrPtrToStr(query.Database),
+		Schema:    common.StrPtrToStr(query.Schema),
+		Interval:  common.StrPtrToStr(query.Interval),
+	}
+	
+	// Convert metric types
+	if query.MetricTypes != nil && len(query.MetricTypes) > 0 {
+		metricsQuery.MetricTypes = make([]monitoring.MetricType, len(query.MetricTypes))
+		for i, mt := range query.MetricTypes {
+			metricsQuery.MetricTypes[i] = monitoring.MetricType(mt)
+		}
+	}
+	
+	// Query metrics
+	aggregatedMetrics, err := monitor.GetCollector().QueryMetrics(ctx, metricsQuery)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Convert to GraphQL model
+	result := make([]*model.PerformanceMetric, len(aggregatedMetrics))
+	for i, am := range aggregatedMetrics {
+		labels := make([]*model.KeyValue, 0, len(am.Labels))
+		for k, v := range am.Labels {
+			labels = append(labels, &model.KeyValue{
+				Key:   k,
+				Value: v,
+			})
+		}
+		
+		values := make([]*model.TimeSeriesPoint, len(am.Values))
+		for j, v := range am.Values {
+			values[j] = &model.TimeSeriesPoint{
+				Timestamp: v.Timestamp.Format(time.RFC3339),
+				Value:     v.Value,
+				Count:     common.IntToIntPtr(int(v.Count)),
+				Min:       &v.Min,
+				Max:       &v.Max,
+				Avg:       &v.Avg,
+				P50:       &v.P50,
+				P95:       &v.P95,
+				P99:       &v.P99,
+			}
+		}
+		
+		result[i] = &model.PerformanceMetric{
+			MetricType: string(am.MetricType),
+			Database:   am.Database,
+			Schema:     &am.Schema,
+			Labels:     labels,
+			Values:     values,
+		}
+	}
+	
+	return result, nil
 }
 
 // Mutation returns MutationResolver implementation.

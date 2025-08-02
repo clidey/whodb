@@ -27,6 +27,7 @@ import { LogoutPage } from "../pages/auth/logout";
 import { ChatPage } from "../pages/chat/chat";
 import {SettingsPage} from "../pages/settings/settings";
 import {ContactUsPage} from "../pages/contact-us/contact-us";
+import { PerformanceMonitoringPage } from "../pages/performance-monitoring/performance-monitoring";
 import { isEEFeatureEnabled } from "../utils/ee-loader";
 
 export type IInternalRoute = {
@@ -71,6 +72,11 @@ export const InternalRoutes = {
         name: "Chat",
         path: "/chat",
         component: <ChatPage />,
+    },
+    PerformanceMonitoring: {
+        name: "Performance",
+        path: "/performance",
+        component: <PerformanceMonitoringPage />,
     },
     Logout: {
         name: "Logout",

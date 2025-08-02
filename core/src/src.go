@@ -27,6 +27,7 @@ import (
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
+	"github.com/clidey/whodb/core/src/monitoring"
 	"github.com/clidey/whodb/core/src/plugins/postgres"
 )
 
@@ -46,15 +47,15 @@ func SetEEInitializer(fn InitEEFunc) {
 func InitializeEngine() *engine.Engine {
 	MainEngine = &engine.Engine{}
 	
-	// Register community edition plugins
-	MainEngine.RegistryPlugin(postgres.NewPostgresPlugin())
-	MainEngine.RegistryPlugin(mysql.NewMySQLPlugin())
-	MainEngine.RegistryPlugin(mysql.NewMyMariaDBPlugin())
-	MainEngine.RegistryPlugin(sqlite3.NewSqlite3Plugin())
-	MainEngine.RegistryPlugin(mongodb.NewMongoDBPlugin())
-	MainEngine.RegistryPlugin(redis.NewRedisPlugin())
-	MainEngine.RegistryPlugin(elasticsearch.NewElasticSearchPlugin())
-	MainEngine.RegistryPlugin(clickhouse.NewClickHousePlugin())
+	// Register community edition plugins with monitoring wrapper
+	MainEngine.RegistryPlugin(monitoring.NewMonitoredPlugin(postgres.NewPostgresPlugin()))
+	MainEngine.RegistryPlugin(monitoring.NewMonitoredPlugin(mysql.NewMySQLPlugin()))
+	MainEngine.RegistryPlugin(monitoring.NewMonitoredPlugin(mysql.NewMyMariaDBPlugin()))
+	MainEngine.RegistryPlugin(monitoring.NewMonitoredPlugin(sqlite3.NewSqlite3Plugin()))
+	MainEngine.RegistryPlugin(monitoring.NewMonitoredPlugin(mongodb.NewMongoDBPlugin()))
+	MainEngine.RegistryPlugin(monitoring.NewMonitoredPlugin(redis.NewRedisPlugin()))
+	MainEngine.RegistryPlugin(monitoring.NewMonitoredPlugin(elasticsearch.NewElasticSearchPlugin()))
+	MainEngine.RegistryPlugin(monitoring.NewMonitoredPlugin(clickhouse.NewClickHousePlugin()))
 	
 	// Initialize Enterprise Edition plugins if available
 	if initEE != nil {

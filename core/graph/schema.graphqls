@@ -90,10 +90,40 @@ input LoginCredentials {
 
 type SettingsConfig {
   MetricsEnabled: Boolean
+  PerformanceMonitoringEnabled: Boolean
+  PerformanceMetricsConfig: PerformanceMetricsConfig
+}
+
+type PerformanceMetricsConfig {
+  query_latency: Boolean
+  query_count: Boolean
+  connection_count: Boolean
+  error_count: Boolean
+  cpu_usage: Boolean
+  memory_usage: Boolean
+  disk_io: Boolean
+  cache_hit_ratio: Boolean
+  transaction_count: Boolean
+  lock_wait_time: Boolean
 }
 
 input SettingsConfigInput {
   MetricsEnabled: String
+  PerformanceMonitoringEnabled: String
+  PerformanceMetricsConfig: PerformanceMetricsConfigInput
+}
+
+input PerformanceMetricsConfigInput {
+  query_latency: String
+  query_count: String
+  connection_count: String
+  error_count: String
+  cpu_usage: String
+  memory_usage: String
+  disk_io: String
+  cache_hit_ratio: String
+  transaction_count: String
+  lock_wait_time: String
 }
 
 input LoginProfileInput {
@@ -146,6 +176,7 @@ type Query {
   AIModel(providerId: String, modelType: String!, token: String): [String!]!
   AIChat(providerId: String, modelType: String!, token: String, schema: String!, input: ChatInput!): [AIChatMessage!]!
   SettingsConfig: SettingsConfig!
+  PerformanceMetrics(query: PerformanceMetricsQuery!): [PerformanceMetric!]!
 }
 
 type Mutation {
@@ -158,4 +189,33 @@ type Mutation {
   UpdateStorageUnit(schema: String!, storageUnit: String!, values: [RecordInput!]!, updatedColumns: [String!]!): StatusResponse!
   AddRow(schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
   DeleteRow(schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
+}
+
+input PerformanceMetricsQuery {
+  startTime: String!
+  endTime: String!
+  metricTypes: [String!]
+  database: String
+  schema: String
+  interval: String
+}
+
+type PerformanceMetric {
+  metricType: String!
+  database: String!
+  schema: String
+  labels: [KeyValue!]
+  values: [TimeSeriesPoint!]!
+}
+
+type TimeSeriesPoint {
+  timestamp: String!
+  value: Float!
+  count: Int
+  min: Float
+  max: Float
+  avg: Float
+  p50: Float
+  p95: Float
+  p99: Float
 }
