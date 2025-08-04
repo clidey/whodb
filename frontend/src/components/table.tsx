@@ -445,6 +445,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
     const [showExportConfirm, setShowExportConfirm] = useState(false);
     const [importProgress, setImportProgress] = useState<{processedRows: number; status: string} | null>(null);
     const [exportDelimiter, setExportDelimiter] = useState(',');
+    const [exportFormat, setExportFormat] = useState<'csv' | 'excel'>('csv');
 
     const columns = useMemo(() => {
         const indexWidth = 50;
@@ -673,7 +674,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
     }, [hasSelectedRows, checkedRows, sortedRows]);
     
     // Always call the hook, but use conditional logic inside
-    const backendExport = useExportToCSV(schema || '', storageUnit || '', hasSelectedRows, exportDelimiter, selectedRowsData);
+    const backendExport = useExportToCSV(schema || '', storageUnit || '', hasSelectedRows, exportDelimiter, selectedRowsData, exportFormat);
 
     const handleExportConfirm = useCallback(async () => {
         try {
@@ -993,7 +994,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                             className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <h2 className="text-xl font-semibold mb-4 dark:text-white">Export CSV</h2>
+                            <h2 className="text-xl font-semibold mb-4 dark:text-white">Export Data</h2>
                             
                             <div className="space-y-4">
                                 <p className="text-gray-600 dark:text-gray-300">
@@ -1004,28 +1005,55 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                                 
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                        Delimiter
+                                        Format
                                     </label>
                                     <select
-                                        value={exportDelimiter}
-                                        onChange={(e) => setExportDelimiter(e.target.value)}
+                                        value={exportFormat}
+                                        onChange={(e) => setExportFormat(e.target.value as 'csv' | 'excel')}
                                         className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                     >
-                                        <option value=",">Comma (,) - Standard CSV</option>
-                                        <option value=";">Semicolon (;) - Excel in some locales</option>
-                                        <option value="|">Pipe (|) - Less common in data</option>
-                                        <option value={"\t"}>Tab - TSV format</option>
+                                        <option value="csv">CSV - Comma Separated Values</option>
+                                        <option value="excel">Excel - XLSX Format</option>
                                     </select>
-                                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                                        Choose a delimiter that doesn't appear in your data
-                                    </p>
                                 </div>
                                 
+                                {exportFormat === 'csv' && (
+                                    <div className="mb-4">
+                                        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                            Delimiter
+                                        </label>
+                                        <select
+                                            value={exportDelimiter}
+                                            onChange={(e) => setExportDelimiter(e.target.value)}
+                                            className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                        >
+                                            <option value=",">Comma (,) - Standard CSV</option>
+                                            <option value=";">Semicolon (;) - Excel in some locales</option>
+                                            <option value="|">Pipe (|) - Less common in data</option>
+                                            <option value={"\t"}>Tab - TSV format</option>
+                                        </select>
+                                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                            Choose a delimiter that doesn't appear in your data
+                                        </p>
+                                    </div>
+                                )}
+                                
                                 <div className="text-sm text-gray-600 dark:text-gray-400">
-                                    <p className="font-medium mb-1">Export Format:</p>
+                                    <p className="font-medium mb-1">Export Details:</p>
                                     <ul className="list-disc list-inside space-y-1">
-                                        <li>Headers include column names and data types</li>
-                                        <li>UTF-8 encoding</li>
+                                        {exportFormat === 'csv' ? (
+                                            <>
+                                                <li>Headers include column names and data types</li>
+                                                <li>UTF-8 encoding</li>
+                                                <li>Customizable delimiter</li>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <li>Excel XLSX format</li>
+                                                <li>Formatted headers with styling</li>
+                                                <li>Auto-sized columns</li>
+                                            </>
+                                        )}
                                     </ul>
                                 </div>
                             </div>

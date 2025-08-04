@@ -21,6 +21,7 @@ export const CSVOperations: React.FC<CSVOperationsProps> = ({
   const [showExportConfirm, setShowExportConfirm] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [delimiter, setDelimiter] = useState(',');
+  const [exportFormat, setExportFormat] = useState<'csv' | 'excel'>('csv');
 
   // Export handler using HTTP streaming endpoint
   const handleExport = useCallback(async (e?: React.MouseEvent) => {
@@ -42,6 +43,7 @@ export const CSVOperations: React.FC<CSVOperationsProps> = ({
           schema,
           storageUnit,
           delimiter,
+          format: exportFormat,
           ...(selectedRows && selectedRows.length > 0 ? { selectedRows } : {}),
         }),
       });
@@ -53,7 +55,7 @@ export const CSVOperations: React.FC<CSVOperationsProps> = ({
 
       // Get filename from Content-Disposition header
       const contentDisposition = response.headers.get('Content-Disposition');
-      let filename = `${schema}_${storageUnit}.csv`;
+      let filename = `${schema}_${storageUnit}.${exportFormat === 'excel' ? 'xlsx' : 'csv'}`;
       if (contentDisposition) {
         const filenameMatch = contentDisposition.match(/filename="(.+)"/);
         if (filenameMatch) {
@@ -115,28 +117,44 @@ export const CSVOperations: React.FC<CSVOperationsProps> = ({
       {showExportConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md">
-            <h3 className="text-lg font-semibold mb-4">Export CSV</h3>
+            <h3 className="text-lg font-semibold mb-4">Export Data</h3>
             <p className="mb-4">
               Export {selectedRowCount > 0 ? `${selectedRowCount} selected rows` : 'all rows'} 
               from {schema}.{storageUnit}?
             </p>
             <div className="mb-4">
               <label className="block text-sm font-medium mb-2">
-                Delimiter
+                Format
               </label>
               <select
-                value={delimiter}
-                onChange={(e) => setDelimiter(e.target.value)}
-                className="w-full p-2 border rounded"
+                value={exportFormat}
+                onChange={(e) => setExportFormat(e.target.value as 'csv' | 'excel')}
+                className="w-full p-2 border rounded mb-3"
               >
-                <option value=",">Comma (,) - Standard CSV</option>
-                <option value=";">Semicolon (;) - Excel in some locales</option>
-                <option value="|">Pipe (|) - Less common in data</option>
-                <option value="\t">Tab - TSV format</option>
+                <option value="csv">CSV - Comma Separated Values</option>
+                <option value="excel">Excel - XLSX Format</option>
               </select>
-              <p className="text-xs text-gray-600 mt-1">
-                Choose a delimiter that doesn't appear in your data
-              </p>
+              
+              {exportFormat === 'csv' && (
+                <>
+                  <label className="block text-sm font-medium mb-2">
+                    Delimiter
+                  </label>
+                  <select
+                    value={delimiter}
+                    onChange={(e) => setDelimiter(e.target.value)}
+                    className="w-full p-2 border rounded"
+                  >
+                    <option value=",">Comma (,) - Standard CSV</option>
+                    <option value=";">Semicolon (;) - Excel in some locales</option>
+                    <option value="|">Pipe (|) - Less common in data</option>
+                    <option value="\t">Tab - TSV format</option>
+                  </select>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Choose a delimiter that doesn't appear in your data
+                  </p>
+                </>
+              )}
             </div>
             <div className="bg-gray-100 p-3 rounded mb-4">
               <p className="text-sm">

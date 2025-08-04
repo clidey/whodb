@@ -17,7 +17,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 
-export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly: boolean = false, delimiter: string = ',', selectedRows?: Record<string, any>[]) => {
+export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly: boolean = false, delimiter: string = ',', selectedRows?: Record<string, any>[], format: 'csv' | 'excel' = 'csv') => {
     return useCallback(async () => {
       try {
         // Prepare request body
@@ -25,6 +25,7 @@ export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly
           schema,
           storageUnit,
           delimiter,
+          format,
         };
         
         // Add selected rows if provided
@@ -43,7 +44,7 @@ export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly
           method: 'POST',
           credentials: 'include',
           headers: {
-            'Accept': 'text/csv',
+            'Accept': format === 'excel' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'text/csv',
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(requestBody),
@@ -55,7 +56,7 @@ export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly
 
         // Get filename from Content-Disposition header
         const contentDisposition = response.headers.get('Content-Disposition');
-        let filename = `${schema}_${storageUnit}.csv`;
+        let filename = `${schema}_${storageUnit}.${format === 'excel' ? 'xlsx' : 'csv'}`;
         if (contentDisposition) {
           const filenameMatch = contentDisposition.match(/filename="(.+)"/);
           if (filenameMatch) {
@@ -86,7 +87,7 @@ export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly
         console.error('Export failed:', error);
         throw error;
       }
-    }, [schema, storageUnit, selectedOnly, delimiter, selectedRows]);
+    }, [schema, storageUnit, selectedOnly, delimiter, selectedRows, format]);
 };
 
 type ILongPressProps = {
