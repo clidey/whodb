@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Badge, Button, Input, Label, Popover, PopoverContent, PopoverTrigger, SearchSelect } from "@clidey/ux";
+import { Badge, Button, cn, Input, Label, Popover, PopoverContent, PopoverTrigger, SearchSelect } from "@clidey/ux";
 import { AtomicWhereCondition, WhereCondition, WhereConditionType } from '@graphql';
 import { XCircleIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
@@ -33,21 +33,22 @@ type IPopoverCardProps = {
     handleInputChange: (newValue: string) => void;
     handleAddFilter: () => void;
     handleClick: () => void;
+    className?: string;
 }
 
-const PopoverCard: FC<IPopoverCardProps> = ({ open, onOpenChange, currentFilter, fieldsDropdownItems, validOperators, handleFieldSelect, handleOperatorSelector, handleInputChange, handleAddFilter, handleClick }) => {
+const PopoverCard: FC<IPopoverCardProps> = ({ open, onOpenChange, currentFilter, fieldsDropdownItems, validOperators, handleFieldSelect, handleOperatorSelector, handleInputChange, handleAddFilter, handleClick, className }) => {
     return  <Popover open={open} onOpenChange={onOpenChange}>
         <PopoverTrigger asChild>
             <div />
         </PopoverTrigger>
         <PopoverContent
-            className="flex flex-col gap-3 z-[5] py-4 px-6 mt-1 rounded-lg shadow-md border border-neutral-100 dark:border-white/5 dark:bg-[#23272A] bg-white dark:backdrop-blur-xl min-w-[260px]"
+            className={cn("flex flex-col gap-3 z-[5] py-4 px-6 mt-1 rounded-lg shadow-md min-w-[260px]", className)}
             side="bottom"
             align="center"
             tabIndex={0}
         >
             <div className="flex flex-col gap-2 w-full">
-                <Label className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                <Label className="text-xs">
                     Field
                 </Label>
                 <SearchSelect
@@ -58,7 +59,7 @@ const PopoverCard: FC<IPopoverCardProps> = ({ open, onOpenChange, currentFilter,
                 />
             </div>
             <div className="flex flex-col gap-2 w-full">
-                <Label className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                <Label className="text-xs">
                     Operator
                 </Label>
                 <SearchSelect
@@ -69,7 +70,7 @@ const PopoverCard: FC<IPopoverCardProps> = ({ open, onOpenChange, currentFilter,
                 />
             </div>
             <div className="flex flex-col gap-2 w-full">
-                <Label className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                <Label className="text-xs">
                     Value
                 </Label>
                 <Input
@@ -295,6 +296,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                             </Badge>
                         </div>
                         <PopoverCard
+                            className="mt-8"
                             open={editingFilter === i}
                             onOpenChange={() => {
                                 setEditingFilter(editingFilter === i ? -1 : i);

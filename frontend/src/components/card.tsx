@@ -110,8 +110,7 @@ export const Card: FC<ICardProps> = ({
           "shadow-2xl z-10": highlightStatus,
         },
         className,
-      )}
-    >
+      )}>
       {loading ? (
         <Loading loadingText={loadingText} />
       ) : (
@@ -160,7 +159,7 @@ export const ExpandableCard: FC<IExpandableCardProps> = (props) => {
               {...props}
               tag={props.collapsedTag}
               className={cn(
-                "min-h-[200px] w-full max-w-[400px] cursor-pointer",
+                "min-h-[200px] w-[220px] cursor-pointer",
                 props.className,
               )}
               loading={props.loading}>

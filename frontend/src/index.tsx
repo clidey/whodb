@@ -37,7 +37,7 @@ const posthogClient = initPosthog()
 // Conditionally wrap with PostHogProvider only for CE builds
 const AppWithProviders = () => {
   const app = (
-    <ThemeProvider defaultTheme="light" storageKey="@clidey/whodb/ux">
+    <ThemeProvider>
       <SidebarProvider>
         <App />
       </SidebarProvider>
@@ -55,7 +55,6 @@ const AppWithProviders = () => {
 
 root.render(
   <React.StrictMode>
-
     <BrowserRouter>
       <ApolloProvider client={graphqlClient}>
         <Provider store={reduxStore}>

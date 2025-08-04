@@ -17,7 +17,6 @@
 import classNames from "classnames";
 import { map } from "lodash";
 import { Route, Routes } from "react-router-dom";
-import { Notifications } from './components/notifications';
 import { PrivateRoute, PublicRoutes, getRoutes } from './config/routes';
 import { NavigateToDefault } from "./pages/chat/default-chat-route";
 import { useAppSelector } from "./store/hooks";
@@ -28,7 +27,6 @@ import { Toaster } from "@clidey/ux";
 
 export const App = () => {
   const [updateSettings, ] = useUpdateSettingsMutation();
-  const darkModeEnabled = useAppSelector(state => state.global.theme === "dark");
   const metricsEnabled = useAppSelector(state => state.settings.metricsEnabled);
 
   useEffect(() => {
@@ -54,9 +52,7 @@ export const App = () => {
   }, [updateBackendWithSettings]);
 
   return (
-    <div className={classNames("h-[100vh] w-[100vw]", {
-      "dark": darkModeEnabled,
-    })} id="whodb-app-container">
+    <div className="h-[100vh] w-[100vw]" id="whodb-app-container">
       <Toaster />
       <Routes>
         <Route path="/" element={<PrivateRoute />}>

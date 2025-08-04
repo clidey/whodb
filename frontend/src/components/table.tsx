@@ -47,7 +47,7 @@ import {
     toast,
     VirtualizedTableBody
 } from "@clidey/ux";
-import { FC, useMemo, useState } from "react";
+import { FC, useCallback, useMemo, useState } from "react";
 
 // For delete logic, we need to accept a prop for deleting a row
 interface TableProps {
@@ -174,8 +174,12 @@ export const StorageUnitTable: FC<TableProps> = ({
         return links;
     };
 
+    const handleSelectRow = useCallback((rowIndex: number) => {
+        setChecked(checked.includes(rowIndex) ? checked.filter(i => i !== rowIndex) : [...checked, rowIndex]);
+    }, [checked]);
+
     return (
-        <>
+        <div className="flex flex-col grow h-full">
             <TableComponent>
                 <TableHeader>
                     <TableRow>
@@ -213,6 +217,9 @@ export const StorageUnitTable: FC<TableProps> = ({
                                     </tr>
                                 </ContextMenuTrigger>
                                 <ContextMenuContent className="w-52">
+                                    <ContextMenuItem onSelect={() => handleSelectRow(globalIndex)}>
+                                        {checked.includes(globalIndex) ? "Deselect Row" : "Select Row"}
+                                    </ContextMenuItem>
                                     <ContextMenuItem onSelect={() => handleEdit(globalIndex)} disabled={checked.length > 0}>
                                         Edit Row
                                         <ContextMenuShortcut>⌘E</ContextMenuShortcut>
@@ -293,6 +300,6 @@ export const StorageUnitTable: FC<TableProps> = ({
                     </SheetFooter>
                 </SheetContent>
             </Sheet>
-        </>
+        </div>
     );
 };

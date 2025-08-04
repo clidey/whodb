@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Button } from '@clidey/ux';
+import { Tabs, TabsList, TabsTrigger } from '@clidey/ux';
 import classNames from 'classnames';
 import { toPng } from 'html-to-image';
 import { Dispatch, FC, ReactNode, SetStateAction, useCallback, useMemo, useRef, useState } from "react";
@@ -122,7 +122,7 @@ export const Graph: FC<IGraphProps> = (props) => {
 
     return <ReactFlow
         ref={reactFlowWrapper}
-        className={classNames("group bg-transparent rounded-lg", {
+        className={classNames("group rounded-lg", {
             "laying-out": isLayingOut,
         })}
         {...props}
@@ -145,16 +145,20 @@ export const Graph: FC<IGraphProps> = (props) => {
         {
             !downloading && <Controls />
         }
-        <div className={classNames("flex flex-row gap-2 absolute bottom-8 right-5 z-10", {
+        <div className={classNames("flex flex-row gap-2 absolute bottom-0 right-0 z-10", {
             "hidden": downloading,
         })}>
             <div className="flex flex-col gap-2">
-                <Button onClick={handleDownloadImage} data-testid="graph-download">
-                    {Icons.Download}
-                </Button>
-                <Button onClick={() => onLayout("dagre")} data-testid="graph-layout">
-                    {Icons.GraphLayout}
-                </Button>
+                <Tabs value={undefined} onValueChange={() => {}}>
+                    <TabsList dir="column">
+                        <TabsTrigger value="download" onClick={handleDownloadImage}>
+                            {Icons.Download}
+                        </TabsTrigger>
+                        <TabsTrigger value="layout" onClick={() => onLayout("dagre")}>
+                            {Icons.GraphLayout}
+                        </TabsTrigger>
+                    </TabsList>
+                </Tabs>
             </div>
         </div>
         {props.children}

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Button } from "@clidey/ux";
+import { Button, Tabs, TabsContent, TabsList, TabsTrigger } from "@clidey/ux";
 import { DatabaseType, useRawExecuteLazyQuery } from '@graphql';
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
@@ -153,8 +153,11 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
         }
         if (isCodeAQuery || rows.RawExecute.Rows.length > 0) {
             return <div className="flex flex-col w-full h-[250px] mt-4" data-testid="cell-query-output">
-                <StorageUnitTable columns={rows.RawExecute.Columns.map(c => c.Name)} columnTags={rows.RawExecute.Columns.map(c => c.Type)}
-                rows={rows.RawExecute.Rows} totalPages={1} currentPage={1} disableEdit={true} />
+                <StorageUnitTable
+                    columns={rows.RawExecute.Columns.map(c => c.Name)}
+                    rows={rows.RawExecute.Rows}
+                    disableEdit={true}
+                />
             </div>
         }
         return <div className="bg-white/10 text-neutral-800 dark:text-neutral-300 rounded-lg p-2 flex gap-2 self-start items-center my-4" data-testid="cell-action-output">
@@ -382,7 +385,7 @@ const EditableInput: FC<{ page: Page; setValue: (value: string) => void }> = ({ 
             onChange={handleChange}
             onBlur={handleBlur}
             autoFocus
-            className="w-full bg-transparent border-b border-gray-400 focus:outline-none focus:border-blue-500 transition-colors text-inherit"
+            className="w-full border-b border-gray-400 focus:outline-none focus:border-blue-500 transition-colors text-inherit"
           />
         ) : (
           <span className={classNames(ClassNames.Text, "text-sm text-nowrap")}>
@@ -392,7 +395,7 @@ const EditableInput: FC<{ page: Page; setValue: (value: string) => void }> = ({ 
       </div>
     );
 };
-  
+
 
 type Page = {
     id: string;
@@ -471,66 +474,45 @@ export const RawExecutePage: FC = () => {
         <InternalPage routes={[InternalRoutes.RawExecute]}>
             <div className="flex justify-center items-center w-full">
                 <div className="w-full max-w-[1000px] flex flex-col gap-4">
-                    <div className="flex justify-start items-center gap-2">
-                        <div className="flex justify-start max-w-[calc(50vw+48px)] items-center gap-2 overflow-x-auto">
-                            {pages.map((page, index) => (
-                                <div
-                                    key={page.id}
-                                    data-testid={`page-${index}`}
-                                    className={classNames(
-                                        ClassNames.Text,
-                                        "pl-4 py-1 text-sm rounded-3xl flex items-center gap-1 cursor-pointer transition-all group/page-button",
-                                        {
-                                            "bg-neutral-300/5 dark:bg-neutral-800": activePage !== page.id,
-                                            "bg-neutral-800/5 dark:bg-neutral-700 shadow": activePage === page.id,
-                                        }
-                                    )}
-                                    onClick={() => handleSelect(page.id)}
-                                >
-                                    <div className="flex items-center gap-1">
-                                        {cloneElement(Icons.Console, { className: "w-4 h-4" })}
-                                        <EditableInput page={page} setValue={(newName) => handleUpdatePageName(page, newName)} />
-                                    </div>
-                                    <div className={classNames("ml-1 group-hover/page-button:flex pr-2 opacity-10 group-hover/page-button:opacity-100", {
-                                        "opacity-0": pages.length <= 1,
-                                    })} onClick={(e) => {
-                                        handleDelete(page.id);
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                    }}>
-                                        {cloneElement(Icons.Cancel, {
-                                            className: "w-4 h-4",
-                                        })}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                        <div
-                            className={classNames(
-                                ClassNames.Text,
-                                "p-1 rounded-full bg-black/5 dark:bg-white/5 transition-all hover:scale-105 cursor-pointer"
-                            )}
-                            onClick={handleAdd}
-                        >
-                            {Icons.Add}
-                        </div>
+                    <div className="flex justify-between items-center">
+                        <Tabs defaultValue="buttons" className="w-full h-full" value={activePage}>
+                            <div className="flex gap-2 w-full justify-between">
+                                <TabsList className="grid" style={{
+                                    gridTemplateColumns: `repeat(${pages.length+1}, minmax(0, 1fr))`
+                                }} defaultValue={activePage}>
+                                    {
+                                        pages.map(page => (
+                                            <TabsTrigger value={page.id} key={page.id} onClick={() => handleSelect(page.id)}>
+                                                <EditableInput page={page} setValue={(newName) => handleUpdatePageName(page, newName)} />
+                                            </TabsTrigger>
+                                        ))
+                                    }
+                                    <TabsTrigger value="add" onClick={handleAdd}>
+                                        {Icons.Add}
+                                    </TabsTrigger>
+                                </TabsList>
+                                <Button variant="destructive" onClick={() => handleDelete(activePage)}>{Icons.Delete} Delete page</Button>
+                            </div>
+                            <TabsContent value={activePage} className="h-full w-full mt-4">
+                                <AnimatePresence mode="wait">
+                                    {Object.entries(pageStates).map(([id, component]) => (
+                                        <motion.div
+                                            key={id}
+                                            className={classNames({
+                                                "hidden": id !== activePage,
+                                            })}
+                                            // todo this animation
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -10 }}
+                                        >
+                                            {component}
+                                        </motion.div>
+                                    ))}
+                                </AnimatePresence>
+                            </TabsContent>
+                        </Tabs>
                     </div>
-                    <AnimatePresence mode="wait">
-                        {Object.entries(pageStates).map(([id, component]) => (
-                            <motion.div
-                                key={id}
-                                className={classNames({
-                                    "hidden": id !== activePage,
-                                })}
-                                // todo this animation
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                            >
-                                {component}
-                            </motion.div>
-                        ))}
-                    </AnimatePresence>
                 </div>
             </div>
         </InternalPage>

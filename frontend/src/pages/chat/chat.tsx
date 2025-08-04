@@ -15,7 +15,7 @@
  */
 
 import { isEEMode } from "@/config/ee-imports";
-import { Button } from "@clidey/ux";
+import { Button, Card, EmptyState, Input, Label, SearchSelect, toast } from "@clidey/ux";
 import { AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery, useGetAiModelsLazyQuery, useGetAiProvidersLazyQuery } from '@graphql';
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
@@ -25,7 +25,6 @@ import { v4 } from "uuid";
 import { createDropdownItem, Dropdown, DropdownWithLabel, IDropdownItem } from "../../components/dropdown";
 import { CodeEditor } from "../../components/editor";
 import { Icons } from "../../components/icons";
-import { Input, InputWithlabel } from "../../components/input";
 import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { StorageUnitTable } from "../../components/table";
@@ -33,7 +32,6 @@ import { InternalRoutes } from "../../config/routes";
 import { reduxStore } from "../../store";
 import { AIModelsActions, availableExternalModelTypes } from "../../store/ai-models";
 import { HoudiniActions } from "../../store/chat";
-import { notify } from "../../store/function";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { ensureModelsArray, ensureModelTypesArray } from "../../utils/ai-models-helper";
 import { isEEFeatureEnabled, loadEEComponent } from "../../utils/ee-loader";
@@ -105,8 +103,13 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
                     <CodeEditor value={text} />
                 </div>
                 :  (data != null && data.Rows.length > 0) || type === "sql:get"
-                    ? <StorageUnitTable className="h-[250px]" columns={data?.Columns.map(c => c.Name) ?? []} columnTags={data?.Columns.map(c => c.Type)}
-                        rows={data?.Rows ?? []} totalPages={1} currentPage={1} disableEdit={true} />
+                    ? <div className="h-[250px]">
+                        <StorageUnitTable
+                            columns={data?.Columns.map(c => c.Name) ?? []}
+                            rows={data?.Rows ?? []}
+                            disableEdit={true}
+                        />
+                    </div>
                     : <div className="bg-white/10 text-neutral-800 dark:text-neutral-300 rounded-lg p-2 flex gap-2">
                         Action Executed ({type.toUpperCase().split(":")?.[1]})
                         {Icons.CheckCircle}
@@ -239,7 +242,7 @@ export const ChatPage: FC = () => {
                 }, 250);
             },
             onError(error) {
-                notify("Unable to query. Try again. "+error.message, "error");
+                toast.error("Unable to query. Try again. "+error.message);
             },
         });
         setQuery("");
@@ -310,7 +313,7 @@ export const ChatPage: FC = () => {
                 }
             },
             onError(error) {
-                notify(`Unable to connect to the model: ${error.message}`, "error");
+                toast.error(`Unable to connect to the model: ${error.message}`);
             },
         });
     }, [getAIModels, externalModelType.id, externalModelToken, dispatch]);
@@ -429,7 +432,10 @@ export const ChatPage: FC = () => {
                                 Add External Model
                             </div>
                             <DropdownWithLabel label="Model Type" items={externalModelTypes} fullWidth={true} value={externalModelType} onChange={handleExternalModelChange} />
-                            <InputWithlabel label="Token" value={externalModelToken ?? ""} setValue={setExternalModelToken} type="password" />
+                            <div className="flex flex-col gap-2">
+                                <Label>Token</Label>
+                                <Input value={externalModelToken ?? ""} onChange={e => setExternalModelToken(e.target.value)} type="password" />
+                            </div>
                             <div className="flex items-center justify-between">
                                 <Button onClick={handleAddExternalModel} data-testid="external-model-cancel">
                                     {Icons.Cancel} Cancel
@@ -447,32 +453,37 @@ export const ChatPage: FC = () => {
                     <div className={classNames("flex gap-2", {
                         "opacity-50 pointer-events-none": addExternalModel,
                     })}>
-                        <Dropdown className="w-[200px]" value={modelType && {
-                                id: modelType.id,
-                                label: modelType.modelType || "",
-                                icon: modelType.modelType ? (Icons.Logos as Record<string, ReactElement>)[modelType.modelType.replace("-", "")] : undefined,
+                        <SearchSelect
+                            options={modelTypesDropdownItems.map(item => ({
+                                value: item.id,
+                                label: item.label,
+                                icon: item.icon,
+                            }))}
+                            value={modelType?.id}
+                            onChange={id => {
+                                const item = modelTypesDropdownItems.find(i => i.id === id);
+                                if (item) handleAIProviderChange(item);
                             }}
-                            dropdownContainerHeight="max-h-[400px]"
-                            items={modelTypesDropdownItems}
-                            onChange={handleAIProviderChange}
-                            action={<div onClick={handleAIModelRemove}>{cloneElement(Icons.Delete, {
-                                className: "w-6 h-6 stroke-red-500"
-                            })}</div>}
-                            defaultItem={{ label: "Add External Model", icon: Icons.Add }}
-                            onDefaultItemClick={handleAddExternalModel}
-                            enableAction={(index) => {
-                                const modelType = modelTypes.at(index);
-                                return modelType?.token != null && !modelType?.isEnvironmentDefined;
-                            }} />
+                            placeholder="Select Model Type"
+                            side="right"
+                            align="start"
+                        />
                         {
-                            modelAvailable
-                            ? <Dropdown className="w-[200px]" value={currentModel ? createDropdownItem(currentModel) : undefined}
-                                    items={modelDropdownItems} dropdownContainerHeight="max-h-[400px]"
-                                    onChange={handleAIModelChange}
-                                    loading={getAIModelsLoading} />
-                            : <div className="text-neutral-500 w-[200px] rounded-lg bg-white/5 flex items-center pl-4">
-                                Unavailable
-                            </div>
+                            modelType && <SearchSelect
+                                options={modelDropdownItems.map(item => ({
+                                    value: item.id,
+                                    label: item.label,
+                                    icon: item.icon,
+                                }))}
+                                value={currentModel ? currentModel : undefined}
+                                onChange={id => {
+                                    const item = modelDropdownItems.find(i => i.id === id);
+                                    if (item) handleAIModelChange(item);
+                                }}
+                                placeholder="Select Model"
+                                side="right"
+                                align="start"
+                            />
                         }
                     </div>
                     <div className="flex gap-2">
@@ -482,7 +493,7 @@ export const ChatPage: FC = () => {
                     </div>
                 </div>
                 <div className={classNames("flex grow w-full rounded-xl overflow-hidden", {
-                    "opacity-[4%] pointer-events-none": disableAll,
+                    "hidden": disableAll,
                 })}>
                     {
                         chats.length === 0
@@ -491,11 +502,11 @@ export const ChatPage: FC = () => {
                             <div className="flex flex-wrap justify-center items-center gap-4">
                                 {
                                     examples.map((example, i) => (
-                                        <div key={`chat-${i}`} className="flex flex-col gap-2 w-[150px] h-[200px] border border-white/10 rounded-3xl p-4 text-sm text-neutral-800 dark:text-neutral-300 cursor-pointer hover:scale-105 transition-all"
+                                        <Card key={`chat-${i}`} className="flex flex-col gap-2 w-[150px] h-[200px] rounded-3xl p-4 text-sm cursor-pointer hover:opacity-80 transition-all"
                                             onClick={() => handleSelectExample(example.description)}>
                                             {example.icon}
                                             {example.description}
-                                        </div>
+                                        </Card>
                                     ))
                                 }
                             </div>
@@ -554,6 +565,10 @@ export const ChatPage: FC = () => {
                         </div>
                     }
                 </div>
+                {
+                    (!modelAvailable || models.length === 0) &&
+                    <EmptyState title="No Model Available" description="Please choose an available model to start chatting with your data." icon={Icons.Sparkles} />
+                }
                 <div className={classNames("relative w-full", {
                     "opacity-80": disableChat,
                     "opacity-10": disableAll,
@@ -565,18 +580,9 @@ export const ChatPage: FC = () => {
                             className: "w-5 h-5 stroke-neutral-800 dark:stroke-neutral-300",
                         })}
                     </div>
-                    <Input value={query} setValue={setQuery} placeholder="Talk to me..." onSubmit={handleSubmitQuery} inputProps={{
-                        disabled: disableChat,
-                        onKeyUp: handleKeyUp,
-                        ref: (input) => input?.focus()
-                    }} />
+                    <Input value={query} onChange={e => setQuery(e.target.value)} placeholder="Talk to me..." onSubmit={handleSubmitQuery}
+                        disabled={disableChat} onKeyUp={handleKeyUp} />
                 </div>
-                {
-                    (!modelAvailable || models.length === 0) &&
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-neutral-800 dark:text-neutral-300">
-                        Please choose an available model
-                    </div>
-                }
             </div>
         </InternalPage>
     )

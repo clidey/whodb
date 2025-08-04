@@ -15,7 +15,7 @@
  */
 
 import { FetchResult } from "@apollo/client";
-import { Button, Input, Label, Sheet, SheetContent, SheetFooter } from "@clidey/ux";
+import { Button, Input, Label, Sheet, SheetContent, SheetFooter, toast } from "@clidey/ux";
 import {
     DatabaseType, DeleteRowDocument, DeleteRowMutationResult, RecordInput, RowsResult, StorageUnit,
     UpdateStorageUnitDocument, UpdateStorageUnitMutationResult, useAddRowMutation, useGetStorageUnitRowsLazyQuery,
@@ -30,7 +30,6 @@ import { InternalPage } from "../../components/page";
 import { StorageUnitTable } from "../../components/table";
 import { graphqlClient } from "../../config/graphql-client";
 import { InternalRoutes } from "../../config/routes";
-import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
 import { getDatabaseOperators } from "../../utils/database-operators";
 import { getDatabaseStorageUnitLabel, isNumeric } from "../../utils/functions";
@@ -173,9 +172,9 @@ export const ExploreStorageUnit: FC = () => {
                 deletedIndexes.push(index);
             } catch (e) {
                 if ((checkedRows.size-1) > index) {
-                    notify(`Unable to delete the row: ${e}. Stopping deleting other selected rows.`, "error");
+                    toast.error(`Unable to delete the row: ${e}. Stopping deleting other selected rows.`);
                 } else {
-                    notify(`Unable to delete the row: ${e}`, "error");
+                    toast.error(`Unable to delete the row: ${e}`);
                 }
                 setDeleting(false);
                 unableToDeleteAll=true;
@@ -194,7 +193,7 @@ export const ExploreStorageUnit: FC = () => {
         });
         setCheckedRows(newCheckedRows);
         if (!unableToDeleteAll) {
-            notify("Row deleted successfully!", "success");
+            toast.success("Row deleted successfully!");
         }
         setDeleting(false);
     }, [checkedRows, current, rows, schema, unitName]);
@@ -319,7 +318,7 @@ export const ExploreStorageUnit: FC = () => {
                 values,
             },
             onCompleted() {
-                notify("Added data row successfully!", "success");
+                toast.success("Added data row successfully!");
                 setShowAdd(false);
                 setTimeout(() => {
                     handleSubmitRequest();
@@ -327,7 +326,7 @@ export const ExploreStorageUnit: FC = () => {
             },
             onError(e) {
                 setAddRowError(e.message);
-                notify(`Unable to add the data row: ${e.message}`, "error");
+                toast.error(`Unable to add the data row: ${e.message}`);
             },
         });
     }, [addRow, addRowData, handleSubmitRequest, rows?.Columns, schema, unit?.Name]);

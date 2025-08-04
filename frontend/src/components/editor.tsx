@@ -16,7 +16,6 @@
 
 import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactJson from "react-json-view";
-import { useAppSelector } from "../store/hooks";
 import { Icons } from "./icons";
 import {basicSetup} from "codemirror";
 import { json } from "@codemirror/lang-json";
@@ -28,6 +27,7 @@ import { oneDark } from "@codemirror/theme-one-dark";
 import classNames from "classnames";
 import MarkdownPreview from 'react-markdown';
 import remarkGfm from "remark-gfm";
+import { useTheme } from "@clidey/ux";
 
 type ICodeEditorProps = {
   value: string;
@@ -48,8 +48,8 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
 }) => {
   const [showPreview, setShowPreview] = useState(defaultShowPreview);
   const editorRef = useRef<HTMLDivElement>(null);
-  const darkModeEnabled = useAppSelector((state) => state.global.theme === "dark");
   const onRunReference = useRef<Function>();
+  const darkModeEnabled = useTheme().theme === "dark";
 
   useEffect(() => {
     onRunReference.current = onRun;
@@ -110,7 +110,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
     return () => {
       view.destroy();
     };
-  }, [darkModeEnabled]);
+  }, []);
 
   const handlePreviewToggle = useCallback(() => {
     setShowPreview((prev) => !prev);

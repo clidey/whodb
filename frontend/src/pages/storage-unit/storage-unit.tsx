@@ -14,22 +14,20 @@
  * limitations under the License.
  */
 
-import { Badge, Button, cn, SearchSelect, Separator, StackList, StackListItem } from '@clidey/ux';
+import { Badge, Button, cn, SearchInput, SearchSelect, Separator, StackList, StackListItem, toast } from '@clidey/ux';
 import { DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useGetStorageUnitsQuery } from '@graphql';
 import classNames from "classnames";
 import { clone, cloneDeep, filter } from "lodash";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Handle, Position } from "reactflow";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Handle, Node, Position, useReactFlow } from "reactflow";
 import { Card, ExpandableCard } from "../../components/card";
 import { IGraphCardProps } from "../../components/graph/graph";
 import { Icons } from "../../components/icons";
 import { CheckBoxInput, Input, Label } from "../../components/input";
 import { Loading, LoadingPage } from "../../components/loading";
 import { InternalPage } from "../../components/page";
-import { SearchInput } from "../../components/search";
 import { InternalRoutes } from "../../config/routes";
-import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
 import { databaseSupportsModifiers, getDatabaseDataTypes } from "../../utils/database-data-types";
 import { databaseSupportsScratchpad } from "../../utils/database-features";
@@ -121,7 +119,8 @@ const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = (
 
 export const StorageUnitPage: FC = () => {
     const navigate = useNavigate();
-    const [create, setCreate] = useState(false);
+    const [searchParams,] = useSearchParams();
+    const [create, setCreate] = useState(searchParams.get("create") === "true");
     const [storageUnitName, setStorageUnitName] = useState("");
     const [fields, setFields] = useState<RecordInput[]>([ {Key: "", Value: "", Extra: [] }]);
     const [error, setError] = useState<string>();
@@ -170,14 +169,14 @@ export const StorageUnitPage: FC = () => {
                 fields,
             },
             onCompleted() {
-                notify(`${getDatabaseStorageUnitLabel(current?.Type, true)} ${storageUnitName} created successfully!`, "success");
+                toast.success(`${getDatabaseStorageUnitLabel(current?.Type, true)} ${storageUnitName} created successfully!`);
                 setStorageUnitName("");
                 setFields([]);
                 refetch();
                 setCreate(false);
             },
             onError(e) {
-                notify(e.message, "error");
+                toast.error(e.message);
             },
         });
     }, [addStorageUnit, current?.Type, fields, refetch, schema, storageUnitName]);
@@ -267,7 +266,7 @@ export const StorageUnitPage: FC = () => {
                 }
             </div>
             <div>
-                <SearchInput search={filterValue} setSearch={setFilterValue} placeholder="Enter filter value..." />
+                <SearchInput value={filterValue} onChange={e => setFilterValue(e.target.value)} placeholder="Enter filter value..." />
             </div>
         </div>
         <div className="flex flex-wrap gap-4">
@@ -279,7 +278,7 @@ export const StorageUnitPage: FC = () => {
             }} isExpanded={create} setExpanded={setCreate} tag={<Badge variant="destructive">{error}</Badge>}>
                 <div className="flex flex-col grow h-full justify-between">
                     <h2 className="text-lg">Create a {getDatabaseStorageUnitLabel(current?.Type, true)}</h2>
-                    <Button className="self-end" onClick={handleCreate}>
+                    <Button className="self-end" onClick={handleCreate} variant="secondary">
                         {Icons.Add} Create
                     </Button>
                 </div>
@@ -354,6 +353,7 @@ export const StorageUnitPage: FC = () => {
 }
 
 export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data }) => {
+    const { getNodes } = useReactFlow();
     const navigate = useNavigate();
 
     const handleNavigateTo = useCallback(() => {
@@ -363,6 +363,17 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data })
             }
         });
     }, [navigate, data]);
+
+    const isValidForeignKey = useCallback((key: string) => {
+        // Use node ids as table names
+        if (key.endsWith("_id")) {
+            const nodes = getNodes();
+            const base = key.slice(0, -3);
+            const nodeIds = new Set(nodes.map((node: Node) => node.id));
+            return nodeIds.has(base) || nodeIds.has(base + "s");
+        }
+        return false;
+    }, [getNodes]);
 
     if (data == null) {
         return (<Card icon={{
@@ -379,21 +390,23 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data })
             <Card icon={{
                 bgClassName: "bg-teal-500",
                 component: Icons.Database,
-            }} className="h-fit backdrop-blur-[2px] bg-transparent">
+            }} className="h-fit backdrop-blur-[2px] w-[400px] px-2 py-6">
                 <div className="flex flex-col grow mt-2 gap-4">
                     <div className="flex flex-col grow">
-                        <div className="text-md font-semibold mb-2 break-words dark:text-neutral-300">{data.Name}</div>
-                        {
-                            data.Attributes.slice(0, 5).map(attribute => (
-                                <div key={attribute.Key} className="text-xs dark:text-neutral-300"><span className="font-semibold">{attribute.Key}:</span> {attribute.Value}</div>
-                            ))
-                        }
+                        <div className="text-3xl font-semibold mb-2 break-words">{data.Name}</div>
+                        <StackList>
+                            {
+                                data.Attributes.map(attribute => (
+                                    <StackListItem key={attribute.Key} item={isValidForeignKey(attribute.Key) ? <Badge className="text-lg">{attribute.Key}</Badge> : attribute.Key}>
+                                        {attribute.Value}
+                                    </StackListItem>
+                                ))
+                            }
+                        </StackList>
                     </div>
-                    <div className="flex flex-row justify-end gap-1">
-                        <Button icon={Icons.RightArrowUp} onClick={handleNavigateTo} data-testid="data-button">
-                            {Icons.RightArrowUp} Data
-                        </Button>
-                    </div>
+                    <Button onClick={handleNavigateTo} data-testid="data-button">
+                        {Icons.Database} Data
+                    </Button>
                 </div>
             </Card>
             <Handle className="dark:border-white/5" type="source" position={Position.Right} />

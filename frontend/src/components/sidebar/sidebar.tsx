@@ -218,7 +218,7 @@ export const Sidebar: FC = () => {
         ];
         if (!isNoSQL(current.Type)) {
             routes.unshift({
-                title: "Houdini",
+                title: "Chat",
                 icon: Icons.Sparkles,
                 path: InternalRoutes.Chat.path,
             });
@@ -325,10 +325,7 @@ export const Sidebar: FC = () => {
                                 })}>
                                     <h2 className={classNames(ClassNames.Text, "text-sm")}>Database</h2>
                                     <SearchSelect
-                                        options={databaseOptions.map(opt => ({
-                                            value: opt.value,
-                                            label: opt.label,
-                                        }))}
+                                        options={databaseOptions}
                                         value={current?.Database}
                                         onChange={handleDatabaseChange}
                                         placeholder="Select database"
@@ -341,10 +338,7 @@ export const Sidebar: FC = () => {
                                 })}>
                                     <h2 className={cn(ClassNames.Text, "text-sm")}>Schema</h2>
                                     <SearchSelect
-                                        options={schemaOptions.map(opt => ({
-                                            value: opt.value,
-                                            label: opt.label,
-                                        }))}
+                                        options={schemaOptions}
                                         value={schema}
                                         onChange={handleSchemaChange}
                                         placeholder="Select schema"
