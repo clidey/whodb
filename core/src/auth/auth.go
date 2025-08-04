@@ -19,6 +19,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -72,6 +73,7 @@ func isPublicRoute(r *http.Request) bool {
 
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("AuthMiddleware", r.URL.Path)
 		if isPublicRoute(r) {
 			next.ServeHTTP(w, r)
 			return
@@ -167,6 +169,7 @@ type GraphQLRequest struct {
 }
 
 func isAllowed(r *http.Request, body []byte) bool {
+	fmt.Println("isAllowed", r.Method)
 	if r.Method != http.MethodPost {
 		return false
 	}

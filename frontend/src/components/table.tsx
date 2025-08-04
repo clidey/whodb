@@ -444,6 +444,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
     const [importing, setImporting] = useState(false);
     const [showExportConfirm, setShowExportConfirm] = useState(false);
     const [importProgress, setImportProgress] = useState<{processedRows: number; status: string} | null>(null);
+    const [exportDelimiter, setExportDelimiter] = useState(',');
 
     const columns = useMemo(() => {
         const indexWidth = 50;
@@ -664,37 +665,42 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
     const hasSelectedRows = (checkedRows?.size ?? 0) > 0;
 
     // Always call the hook, but use conditional logic inside
-    const backendExport = useExportToCSV(schema || '', storageUnit || '', hasSelectedRows);
+    const backendExport = useExportToCSV(schema || '', storageUnit || '', hasSelectedRows, exportDelimiter);
 
-    const handleExportConfirm = useCallback(() => {
-        if (!schema || !storageUnit) {
-            // Fallback to client-side export if schema/storageUnit not provided
-            const selectedRows = hasSelectedRows 
-                ? [...checkedRows!].map(index => sortedRows[index])
-                : sortedRows;
+    const handleExportConfirm = useCallback(async () => {
+        try {
+            if (!schema || !storageUnit) {
+                // Fallback to client-side export if schema/storageUnit not provided
+                const selectedRows = hasSelectedRows 
+                    ? [...checkedRows!].map(index => sortedRows[index])
+                    : sortedRows;
+                
+                const csvContent = [
+                    actualColumns.join('|'), 
+                    ...selectedRows.map(row => actualColumns.map(col => row[col] || '').join("|"))
+                ].join('\n'); 
             
-            const csvContent = [
-                actualColumns.join('|'), 
-                ...selectedRows.map(row => actualColumns.map(col => row[col] || '').join("|"))
-            ].join('\n'); 
-        
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        
-            const link = document.createElement('a');
-            if (link.download !== undefined) {
-                const url = URL.createObjectURL(blob);
-                link.setAttribute('href', url);
-                link.setAttribute('download', `${storageUnit || 'data'}.csv`);
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            
+                const link = document.createElement('a');
+                if (link.download !== undefined) {
+                    const url = URL.createObjectURL(blob);
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', `${storageUnit || 'data'}.csv`);
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            } else {
+                // Use backend export for full data
+                await backendExport();
             }
-        } else {
-            // Use backend export for full data
-            backendExport();
+            setShowExportConfirm(false);
+        } catch (error: any) {
+            console.error('Export failed:', error);
+            notify(error.message || 'Export failed', 'error');
         }
-        setShowExportConfirm(false);
     }, [schema, storageUnit, hasSelectedRows, actualColumns, sortedRows, checkedRows, backendExport]);
 
     const handleImport = useCallback(async () => {
@@ -988,12 +994,30 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                                         : `You are about to export all data from the table. This may take some time for large tables.`}
                                 </p>
                                 
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                        Delimiter
+                                    </label>
+                                    <select
+                                        value={exportDelimiter}
+                                        onChange={(e) => setExportDelimiter(e.target.value)}
+                                        className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    >
+                                        <option value=",">Comma (,) - Standard CSV</option>
+                                        <option value=";">Semicolon (;) - Excel in some locales</option>
+                                        <option value="|">Pipe (|) - Less common in data</option>
+                                        <option value={"\t"}>Tab - TSV format</option>
+                                    </select>
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                        Choose a delimiter that doesn't appear in your data
+                                    </p>
+                                </div>
+                                
                                 <div className="text-sm text-gray-600 dark:text-gray-400">
                                     <p className="font-medium mb-1">Export Format:</p>
                                     <ul className="list-disc list-inside space-y-1">
-                                        <li>CSV format with pipe (|) delimiter</li>
                                         <li>Headers include column names and data types</li>
-                                        <li>UTF-8 encoding with BOM for Excel compatibility</li>
+                                        <li>UTF-8 encoding</li>
                                     </ul>
                                 </div>
                             </div>

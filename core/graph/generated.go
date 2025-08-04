@@ -74,13 +74,6 @@ type ComplexityRoot struct {
 		Relationship func(childComplexity int) int
 	}
 
-	ImportProgress struct {
-		Error         func(childComplexity int) int
-		ProcessedRows func(childComplexity int) int
-		Status        func(childComplexity int) int
-		TotalRows     func(childComplexity int) int
-	}
-
 	LoginProfile struct {
 		Alias                func(childComplexity int) int
 		Database             func(childComplexity int) int
@@ -93,7 +86,6 @@ type ComplexityRoot struct {
 		AddRow            func(childComplexity int, schema string, storageUnit string, values []*model.RecordInput) int
 		AddStorageUnit    func(childComplexity int, schema string, storageUnit string, fields []*model.RecordInput) int
 		DeleteRow         func(childComplexity int, schema string, storageUnit string, values []*model.RecordInput) int
-		ImportCSV         func(childComplexity int, schema string, storageUnit string, csvData string, mode model.ImportMode) int
 		Login             func(childComplexity int, credentials model.LoginCredentials) int
 		LoginWithProfile  func(childComplexity int, profile model.LoginProfileInput) int
 		Logout            func(childComplexity int) int
@@ -106,7 +98,6 @@ type ComplexityRoot struct {
 		AIModel        func(childComplexity int, providerID *string, modelType string, token *string) int
 		AIProviders    func(childComplexity int) int
 		Database       func(childComplexity int, typeArg string) int
-		ExportCSV      func(childComplexity int, schema string, storageUnit string) int
 		Graph          func(childComplexity int, schema string) int
 		Profiles       func(childComplexity int) int
 		RawExecute     func(childComplexity int, query string) int
@@ -151,7 +142,6 @@ type MutationResolver interface {
 	UpdateStorageUnit(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput, updatedColumns []string) (*model.StatusResponse, error)
 	AddRow(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
 	DeleteRow(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
-	ImportCSV(ctx context.Context, schema string, storageUnit string, csvData string, mode model.ImportMode) (*model.ImportProgress, error)
 }
 type QueryResolver interface {
 	Version(ctx context.Context) (string, error)
@@ -166,7 +156,6 @@ type QueryResolver interface {
 	AIModel(ctx context.Context, providerID *string, modelType string, token *string) ([]string, error)
 	AIChat(ctx context.Context, providerID *string, modelType string, token *string, schema string, input model.ChatInput) ([]*model.AIChatMessage, error)
 	SettingsConfig(ctx context.Context) (*model.SettingsConfig, error)
-	ExportCSV(ctx context.Context, schema string, storageUnit string) (string, error)
 }
 
 type executableSchema struct {
@@ -272,34 +261,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.GraphUnitRelationship.Relationship(childComplexity), true
 
-	case "ImportProgress.error":
-		if e.complexity.ImportProgress.Error == nil {
-			break
-		}
-
-		return e.complexity.ImportProgress.Error(childComplexity), true
-
-	case "ImportProgress.processedRows":
-		if e.complexity.ImportProgress.ProcessedRows == nil {
-			break
-		}
-
-		return e.complexity.ImportProgress.ProcessedRows(childComplexity), true
-
-	case "ImportProgress.status":
-		if e.complexity.ImportProgress.Status == nil {
-			break
-		}
-
-		return e.complexity.ImportProgress.Status(childComplexity), true
-
-	case "ImportProgress.totalRows":
-		if e.complexity.ImportProgress.TotalRows == nil {
-			break
-		}
-
-		return e.complexity.ImportProgress.TotalRows(childComplexity), true
-
 	case "LoginProfile.Alias":
 		if e.complexity.LoginProfile.Alias == nil {
 			break
@@ -370,18 +331,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteRow(childComplexity, args["schema"].(string), args["storageUnit"].(string), args["values"].([]*model.RecordInput)), true
-
-	case "Mutation.ImportCSV":
-		if e.complexity.Mutation.ImportCSV == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_ImportCSV_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.ImportCSV(childComplexity, args["schema"].(string), args["storageUnit"].(string), args["csvData"].(string), args["mode"].(model.ImportMode)), true
 
 	case "Mutation.Login":
 		if e.complexity.Mutation.Login == nil {
@@ -480,18 +429,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Database(childComplexity, args["type"].(string)), true
-
-	case "Query.ExportCSV":
-		if e.complexity.Query.ExportCSV == nil {
-			break
-		}
-
-		args, err := ec.field_Query_ExportCSV_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.ExportCSV(childComplexity, args["schema"].(string), args["storageUnit"].(string)), true
 
 	case "Query.Graph":
 		if e.complexity.Query.Graph == nil {
@@ -986,103 +923,6 @@ func (ec *executionContext) field_Mutation_DeleteRow_argsValues(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_ImportCSV_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := ec.field_Mutation_ImportCSV_argsSchema(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["schema"] = arg0
-	arg1, err := ec.field_Mutation_ImportCSV_argsStorageUnit(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["storageUnit"] = arg1
-	arg2, err := ec.field_Mutation_ImportCSV_argsCSVData(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["csvData"] = arg2
-	arg3, err := ec.field_Mutation_ImportCSV_argsMode(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["mode"] = arg3
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_ImportCSV_argsSchema(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (string, error) {
-	if _, ok := rawArgs["schema"]; !ok {
-		var zeroVal string
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schema"))
-	if tmp, ok := rawArgs["schema"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_ImportCSV_argsStorageUnit(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (string, error) {
-	if _, ok := rawArgs["storageUnit"]; !ok {
-		var zeroVal string
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("storageUnit"))
-	if tmp, ok := rawArgs["storageUnit"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_ImportCSV_argsCSVData(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (string, error) {
-	if _, ok := rawArgs["csvData"]; !ok {
-		var zeroVal string
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("csvData"))
-	if tmp, ok := rawArgs["csvData"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_ImportCSV_argsMode(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (model.ImportMode, error) {
-	if _, ok := rawArgs["mode"]; !ok {
-		var zeroVal model.ImportMode
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("mode"))
-	if tmp, ok := rawArgs["mode"]; ok {
-		return ec.unmarshalNImportMode2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐImportMode(ctx, tmp)
-	}
-
-	var zeroVal model.ImportMode
-	return zeroVal, nil
-}
-
 func (ec *executionContext) field_Mutation_LoginWithProfile_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1479,57 +1319,6 @@ func (ec *executionContext) field_Query_Database_argsType(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
 	if tmp, ok := rawArgs["type"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_ExportCSV_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := ec.field_Query_ExportCSV_argsSchema(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["schema"] = arg0
-	arg1, err := ec.field_Query_ExportCSV_argsStorageUnit(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["storageUnit"] = arg1
-	return args, nil
-}
-func (ec *executionContext) field_Query_ExportCSV_argsSchema(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (string, error) {
-	if _, ok := rawArgs["schema"]; !ok {
-		var zeroVal string
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schema"))
-	if tmp, ok := rawArgs["schema"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_ExportCSV_argsStorageUnit(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (string, error) {
-	if _, ok := rawArgs["storageUnit"]; !ok {
-		var zeroVal string
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("storageUnit"))
-	if tmp, ok := rawArgs["storageUnit"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
@@ -2434,179 +2223,6 @@ func (ec *executionContext) fieldContext_GraphUnitRelationship_Relationship(_ co
 	return fc, nil
 }
 
-func (ec *executionContext) _ImportProgress_totalRows(ctx context.Context, field graphql.CollectedField, obj *model.ImportProgress) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ImportProgress_totalRows(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TotalRows, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ImportProgress_totalRows(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ImportProgress",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ImportProgress_processedRows(ctx context.Context, field graphql.CollectedField, obj *model.ImportProgress) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ImportProgress_processedRows(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ProcessedRows, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ImportProgress_processedRows(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ImportProgress",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ImportProgress_status(ctx context.Context, field graphql.CollectedField, obj *model.ImportProgress) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ImportProgress_status(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Status, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ImportProgress_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ImportProgress",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ImportProgress_error(ctx context.Context, field graphql.CollectedField, obj *model.ImportProgress) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ImportProgress_error(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Error, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ImportProgress_error(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ImportProgress",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _LoginProfile_Alias(ctx context.Context, field graphql.CollectedField, obj *model.LoginProfile) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_LoginProfile_Alias(ctx, field)
 	if err != nil {
@@ -3282,71 +2898,6 @@ func (ec *executionContext) fieldContext_Mutation_DeleteRow(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_ImportCSV(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_ImportCSV(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ImportCSV(rctx, fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["csvData"].(string), fc.Args["mode"].(model.ImportMode))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.ImportProgress)
-	fc.Result = res
-	return ec.marshalNImportProgress2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐImportProgress(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_ImportCSV(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "totalRows":
-				return ec.fieldContext_ImportProgress_totalRows(ctx, field)
-			case "processedRows":
-				return ec.fieldContext_ImportProgress_processedRows(ctx, field)
-			case "status":
-				return ec.fieldContext_ImportProgress_status(ctx, field)
-			case "error":
-				return ec.fieldContext_ImportProgress_error(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ImportProgress", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_ImportCSV_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Query_Version(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_Version(ctx, field)
 	if err != nil {
@@ -4008,61 +3559,6 @@ func (ec *executionContext) fieldContext_Query_SettingsConfig(_ context.Context,
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SettingsConfig", field.Name)
 		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_ExportCSV(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_ExportCSV(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().ExportCSV(rctx, fc.Args["schema"].(string), fc.Args["storageUnit"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_ExportCSV(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_ExportCSV_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
 	}
 	return fc, nil
 }
@@ -7138,57 +6634,6 @@ func (ec *executionContext) _GraphUnitRelationship(ctx context.Context, sel ast.
 	return out
 }
 
-var importProgressImplementors = []string{"ImportProgress"}
-
-func (ec *executionContext) _ImportProgress(ctx context.Context, sel ast.SelectionSet, obj *model.ImportProgress) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, importProgressImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ImportProgress")
-		case "totalRows":
-			out.Values[i] = ec._ImportProgress_totalRows(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "processedRows":
-			out.Values[i] = ec._ImportProgress_processedRows(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "status":
-			out.Values[i] = ec._ImportProgress_status(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "error":
-			out.Values[i] = ec._ImportProgress_error(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var loginProfileImplementors = []string{"LoginProfile"}
 
 func (ec *executionContext) _LoginProfile(ctx context.Context, sel ast.SelectionSet, obj *model.LoginProfile) graphql.Marshaler {
@@ -7313,13 +6758,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "DeleteRow":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_DeleteRow(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "ImportCSV":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_ImportCSV(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -7618,28 +7056,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_SettingsConfig(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "ExportCSV":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_ExportCSV(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -8539,30 +7955,6 @@ func (ec *executionContext) unmarshalNGraphUnitRelationshipType2githubᚗcomᚋc
 
 func (ec *executionContext) marshalNGraphUnitRelationshipType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐGraphUnitRelationshipType(ctx context.Context, sel ast.SelectionSet, v model.GraphUnitRelationshipType) graphql.Marshaler {
 	return v
-}
-
-func (ec *executionContext) unmarshalNImportMode2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐImportMode(ctx context.Context, v any) (model.ImportMode, error) {
-	var res model.ImportMode
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNImportMode2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐImportMode(ctx context.Context, sel ast.SelectionSet, v model.ImportMode) graphql.Marshaler {
-	return v
-}
-
-func (ec *executionContext) marshalNImportProgress2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐImportProgress(ctx context.Context, sel ast.SelectionSet, v model.ImportProgress) graphql.Marshaler {
-	return ec._ImportProgress(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNImportProgress2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐImportProgress(ctx context.Context, sel ast.SelectionSet, v *model.ImportProgress) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ImportProgress(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v any) (int, error) {

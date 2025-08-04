@@ -178,7 +178,7 @@ func (p *GormPlugin) ImportCSV(config *engine.PluginConfig, schema string, stora
 		}
 
 		// Map CSV values to table columns
-		values := make([]interface{}, len(existingColumns))
+		values := make([]any, len(existingColumns))
 		for i, col := range existingColumns {
 			csvIndex, exists := columnMap[col]
 			if !exists {

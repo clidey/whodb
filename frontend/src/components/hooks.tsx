@@ -17,24 +17,62 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 
-export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly: boolean = false) => {
-    return useCallback(() => {
-      // Use backend export endpoint for full data export
-      const params = new URLSearchParams({
-        schema,
-        storageUnit,
-      });
-      
-      const url = `/api/export-csv?${params}`;
-      
-      // Create link and trigger download
-      const link = document.createElement('a');
-      link.href = url;
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }, [schema, storageUnit, selectedOnly]);
+export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly: boolean = false, delimiter: string = ',') => {
+    return useCallback(async () => {
+      try {
+        // Use backend export endpoint for full data export
+        const response = await fetch('/api/export', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Accept': 'text/csv',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            schema,
+            storageUnit,
+            delimiter,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Export failed: ${response.statusText}`);
+        }
+
+        // Get filename from Content-Disposition header
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = `${schema}_${storageUnit}.csv`;
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+          if (filenameMatch) {
+            filename = filenameMatch[1];
+          }
+        }
+
+        // Create blob from response
+        const blob = await response.blob();
+        
+        // Create download link
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = filename;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        
+        // Trigger download
+        link.click();
+        
+        // Cleanup
+        setTimeout(() => {
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(downloadUrl);
+        }, 100);
+      } catch (error) {
+        console.error('Export failed:', error);
+        throw error;
+      }
+    }, [schema, storageUnit, selectedOnly, delimiter]);
 };
 
 type ILongPressProps = {

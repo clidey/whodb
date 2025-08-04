@@ -7,7 +7,6 @@ package graph
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/clidey/whodb/core/graph/model"
@@ -169,11 +168,6 @@ func (r *mutationResolver) DeleteRow(ctx context.Context, schema string, storage
 	return &model.StatusResponse{
 		Status: status,
 	}, nil
-}
-
-// ImportCSV is the resolver for the ImportCSV field.
-func (r *mutationResolver) ImportCSV(ctx context.Context, schema string, storageUnit string, csvData string, mode model.ImportMode) (*model.ImportProgress, error) {
-	panic(fmt.Errorf("not implemented: ImportCSV - ImportCSV"))
 }
 
 // Version is the resolver for the Version field.
@@ -398,11 +392,6 @@ func (r *queryResolver) AIChat(ctx context.Context, providerID *string, modelTyp
 func (r *queryResolver) SettingsConfig(ctx context.Context) (*model.SettingsConfig, error) {
 	currentSettings := settings.Get()
 	return &model.SettingsConfig{MetricsEnabled: &currentSettings.MetricsEnabled}, nil
-}
-
-// ExportCSV is the resolver for the ExportCSV field.
-func (r *queryResolver) ExportCSV(ctx context.Context, schema string, storageUnit string) (string, error) {
-	panic(fmt.Errorf("not implemented: ExportCSV - ExportCSV"))
 }
 
 // Mutation returns MutationResolver implementation.

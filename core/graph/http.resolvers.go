@@ -39,6 +39,10 @@ func SetupHTTPServer(router chi.Router) {
 	router.Post("/api/storage-units", addStorageUnitHandler)
 	router.Post("/api/rows", addRowHandler)
 	router.Delete("/api/rows", deleteRowHandler)
+
+	// CSV endpoints with streaming support
+	router.Post("/api/import", HandleCSVImport)
+	router.Post("/api/export", HandleCSVExport)
 }
 
 var resolver = mutationResolver{}

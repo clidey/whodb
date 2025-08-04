@@ -50,13 +50,6 @@ type GraphUnitRelationship struct {
 	Relationship GraphUnitRelationshipType `json:"Relationship"`
 }
 
-type ImportProgress struct {
-	TotalRows     int     `json:"totalRows"`
-	ProcessedRows int     `json:"processedRows"`
-	Status        string  `json:"status"`
-	Error         *string `json:"error,omitempty"`
-}
-
 type LoginCredentials struct {
 	ID       *string        `json:"Id,omitempty"`
 	Type     string         `json:"Type"`
@@ -255,61 +248,6 @@ func (e *GraphUnitRelationshipType) UnmarshalJSON(b []byte) error {
 }
 
 func (e GraphUnitRelationshipType) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-	e.MarshalGQL(&buf)
-	return buf.Bytes(), nil
-}
-
-type ImportMode string
-
-const (
-	ImportModeAppend   ImportMode = "Append"
-	ImportModeOverride ImportMode = "Override"
-)
-
-var AllImportMode = []ImportMode{
-	ImportModeAppend,
-	ImportModeOverride,
-}
-
-func (e ImportMode) IsValid() bool {
-	switch e {
-	case ImportModeAppend, ImportModeOverride:
-		return true
-	}
-	return false
-}
-
-func (e ImportMode) String() string {
-	return string(e)
-}
-
-func (e *ImportMode) UnmarshalGQL(v any) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = ImportMode(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid ImportMode", str)
-	}
-	return nil
-}
-
-func (e ImportMode) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-func (e *ImportMode) UnmarshalJSON(b []byte) error {
-	s, err := strconv.Unquote(string(b))
-	if err != nil {
-		return err
-	}
-	return e.UnmarshalGQL(s)
-}
-
-func (e ImportMode) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil
