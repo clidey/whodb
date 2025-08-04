@@ -40,8 +40,7 @@ func SetupHTTPServer(router chi.Router) {
 	router.Post("/api/rows", addRowHandler)
 	router.Delete("/api/rows", deleteRowHandler)
 
-	// Import/Export endpoints with streaming support
-	router.Post("/api/import", HandleImport)
+	// Export endpoint with streaming support
 	router.Post("/api/export", HandleExport)
 }
 

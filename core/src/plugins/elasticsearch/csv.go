@@ -24,7 +24,6 @@ import (
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
-	"github.com/elastic/go-elasticsearch/v8/esutil"
 )
 
 // ExportData exports ElasticSearch index data to tabular format
@@ -125,107 +124,6 @@ func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema str
 		}
 	}
 
-
-	return nil
-}
-
-// ImportData imports tabular data into ElasticSearch index
-func (p *ElasticSearchPlugin) ImportData(config *engine.PluginConfig, schema string, storageUnit string, reader func() ([]string, error), mode engine.ImportMode, progressCallback func(engine.ImportProgress)) error {
-	db, err := DB(config)
-	if err != nil {
-		return err
-	}
-
-	// Read headers
-	headers, err := reader()
-	if err != nil {
-		return fmt.Errorf("failed to read headers: %v", err)
-	}
-
-	// Parse column names from headers
-	columnNames, _, err := common.ParseCSVHeaders(headers)
-	if err != nil {
-		return err
-	}
-
-	// Handle override mode
-	if mode == engine.ImportModeOverride {
-		res, err := db.DeleteByQuery(
-			[]string{storageUnit},
-			strings.NewReader(`{"query": {"match_all": {}}}`),
-		)
-		if err != nil {
-			return fmt.Errorf("failed to clear index: %v", err)
-		}
-		defer res.Body.Close()
-	}
-
-	// Create bulk indexer
-	bi, err := esutil.NewBulkIndexer(esutil.BulkIndexerConfig{
-		Client: db,
-		Index:  storageUnit,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to create bulk indexer: %v", err)
-	}
-
-	// Process rows
-	rowCount := 0
-	for {
-		row, err := reader()
-		if err != nil {
-			if err.Error() == "EOF" {
-				break
-			}
-			return fmt.Errorf("failed to read row %d: %v", rowCount+1, err)
-		}
-
-		// Create document from row
-		doc := make(map[string]any)
-		for i, colName := range columnNames {
-			if i < len(row) {
-				doc[colName] = p.parseElasticValue(row[i])
-			}
-		}
-
-		data, err := json.Marshal(doc)
-		if err != nil {
-			return fmt.Errorf("failed to marshal document at row %d: %v", rowCount+1, err)
-		}
-
-		// Add to bulk indexer
-		err = bi.Add(
-			context.Background(),
-			esutil.BulkIndexerItem{
-				Action: "index",
-				Body:   strings.NewReader(string(data)),
-			},
-		)
-		if err != nil {
-			return fmt.Errorf("failed to add document to bulk at row %d: %v", rowCount+1, err)
-		}
-
-		rowCount++
-		if progressCallback != nil && rowCount%100 == 0 {
-			progressCallback(engine.ImportProgress{
-				ProcessedRows: rowCount,
-				Status:        "importing",
-			})
-		}
-	}
-
-	// Close bulk indexer
-	if err := bi.Close(context.Background()); err != nil {
-		return fmt.Errorf("failed to close bulk indexer: %v", err)
-	}
-
-	if progressCallback != nil {
-		progressCallback(engine.ImportProgress{
-			ProcessedRows: rowCount,
-			Status:        "completed",
-		})
-	}
-
 	return nil
 }
 
@@ -304,20 +202,4 @@ func (p *ElasticSearchPlugin) formatElasticValue(val any) string {
 	default:
 		return fmt.Sprintf("%v", v)
 	}
-}
-
-func (p *ElasticSearchPlugin) parseElasticValue(val string) any {
-	if val == "" {
-		return nil
-	}
-
-	// Try to parse as JSON
-	if strings.HasPrefix(val, "{") || strings.HasPrefix(val, "[") {
-		var parsed any
-		if err := json.Unmarshal([]byte(val), &parsed); err == nil {
-			return parsed
-		}
-	}
-
-	return val
 }

@@ -1,23 +1,19 @@
 import React, { useState, useCallback } from 'react';
 import { notify } from '../store/function';
-import { ImportModal } from './ImportModal';
 
 interface CSVOperationsProps {
   schema: string;
   storageUnit: string;
   selectedRowCount?: number;
   selectedRows?: Record<string, any>[];
-  onImportComplete?: () => void;
 }
 
 export const CSVOperations: React.FC<CSVOperationsProps> = ({
   schema,
   storageUnit,
   selectedRowCount = 0,
-  selectedRows,
-  onImportComplete
+  selectedRows
 }) => {
-  const [showImportModal, setShowImportModal] = useState(false);
   const [showExportConfirm, setShowExportConfirm] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [delimiter, setDelimiter] = useState(',');
@@ -105,13 +101,6 @@ export const CSVOperations: React.FC<CSVOperationsProps> = ({
         {exporting ? 'Exporting...' : `Export ${selectedRowCount > 0 ? `${selectedRowCount} selected` : 'all'}`}
       </button>
 
-      {/* Import Button - temporarily disabled
-      <button
-        onClick={() => setShowImportModal(true)}
-        className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-      >
-        Import CSV
-      </button> */}
 
       {/* Export Confirmation Dialog */}
       {showExportConfirm && (
@@ -182,17 +171,6 @@ export const CSVOperations: React.FC<CSVOperationsProps> = ({
         </div>
       )}
 
-      {/* Import Modal (uses HTTP endpoint) - temporarily disabled
-      <ImportModal
-        isOpen={showImportModal}
-        onClose={() => setShowImportModal(false)}
-        schema={schema}
-        storageUnit={storageUnit}
-        onImportComplete={() => {
-          setShowImportModal(false);
-          onImportComplete?.();
-        }}
-      /> */}
     </>
   );
 };

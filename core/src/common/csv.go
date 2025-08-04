@@ -35,23 +35,6 @@ func EscapeCSVValue(value string) string {
 	return value
 }
 
-// ParseCSVHeaders parses column headers with type information
-// Format: "column_name:data_type"
-func ParseCSVHeaders(headers []string) ([]string, []string, error) {
-	columnNames := make([]string, len(headers))
-	columnTypes := make([]string, len(headers))
-	
-	for i, header := range headers {
-		parts := strings.Split(header, ":")
-		if len(parts) != 2 {
-			return nil, nil, fmt.Errorf("invalid header format: %s (expected 'column_name:data_type')", header)
-		}
-		columnNames[i] = strings.TrimSpace(parts[0])
-		columnTypes[i] = strings.TrimSpace(parts[1])
-	}
-	
-	return columnNames, columnTypes, nil
-}
 
 // FormatCSVHeader creates a header with column name and type
 func FormatCSVHeader(columnName, dataType string) string {
@@ -65,33 +48,3 @@ func CreateCSVWriter(w io.Writer) *csv.Writer {
 	return writer
 }
 
-// CreateCSVReader creates a CSV reader with our standard configuration
-func CreateCSVReader(r io.Reader) *csv.Reader {
-	reader := csv.NewReader(r)
-	reader.Comma = CSVDelimiter
-	reader.LazyQuotes = true
-	reader.TrimLeadingSpace = true
-	return reader
-}
-
-// ValidateCSVColumns validates that required columns are present
-func ValidateCSVColumns(requiredColumns []string, providedColumns []string) error {
-	requiredSet := make(map[string]bool)
-	for _, col := range requiredColumns {
-		requiredSet[col] = true
-	}
-	
-	for _, col := range providedColumns {
-		delete(requiredSet, col)
-	}
-	
-	if len(requiredSet) > 0 {
-		missing := make([]string, 0, len(requiredSet))
-		for col := range requiredSet {
-			missing = append(missing, col)
-		}
-		return fmt.Errorf("missing required columns: %s", strings.Join(missing, ", "))
-	}
-	
-	return nil
-}

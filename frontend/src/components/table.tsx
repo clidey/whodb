@@ -438,16 +438,9 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
     const [height, setHeight] = useState(0);
     const [width, setWidth] = useState(0);
     const [data, setData] = useState<Record<string, string | number>[]>([]);
-    const [showImportModal, setShowImportModal] = useState(false);
-    const [importMode, setImportMode] = useState<'append' | 'override'>('append');
-    const [importFile, setImportFile] = useState<File | null>(null);
-    const [importing, setImporting] = useState(false);
     const [showExportConfirm, setShowExportConfirm] = useState(false);
-    const [importProgress, setImportProgress] = useState<{processedRows: number; status: string} | null>(null);
     const [exportDelimiter, setExportDelimiter] = useState(',');
     const [exportFormat, setExportFormat] = useState<'csv' | 'excel'>('csv');
-    const [importDelimiter, setImportDelimiter] = useState(',');
-    const [importFormat, setImportFormat] = useState<'csv' | 'excel' | null>(null);
 
     const columns = useMemo(() => {
         const indexWidth = 50;

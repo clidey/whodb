@@ -20,7 +20,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
@@ -42,7 +41,7 @@ func (p *MongoDBPlugin) ExportData(config *engine.PluginConfig, schema string, s
 
 	db := client.Database(schema)
 	collection := db.Collection(storageUnit)
-	
+
 	// First, get all field names from a sample of documents
 	fieldNames, err := p.getCollectionFields(collection)
 	if err != nil {
@@ -91,93 +90,6 @@ func (p *MongoDBPlugin) ExportData(config *engine.PluginConfig, schema string, s
 	return cursor.Err()
 }
 
-// ImportData imports tabular data into MongoDB collection
-func (p *MongoDBPlugin) ImportData(config *engine.PluginConfig, schema string, storageUnit string, reader func() ([]string, error), mode engine.ImportMode, progressCallback func(engine.ImportProgress)) error {
-	client, err := DB(config)
-	if err != nil {
-		return err
-	}
-
-	db := client.Database(schema)
-	collection := db.Collection(storageUnit)
-
-	// Read headers
-	headers, err := reader()
-	if err != nil {
-		return fmt.Errorf("failed to read headers: %v", err)
-	}
-
-	// Parse column names from headers
-	columnNames, _, err := common.ParseCSVHeaders(headers)
-	if err != nil {
-		return err
-	}
-
-	// Handle override mode
-	if mode == engine.ImportModeOverride {
-		if err := collection.Drop(context.Background()); err != nil {
-			return fmt.Errorf("failed to clear collection: %v", err)
-		}
-	}
-
-	// Process rows
-	rowCount := 0
-	var documents []any
-	batchSize := 1000
-
-	for {
-		row, err := reader()
-		if err != nil {
-			if err.Error() == "EOF" {
-				break
-			}
-			return fmt.Errorf("failed to read row %d: %v", rowCount+1, err)
-		}
-
-		// Create document from row
-		doc := bson.M{}
-		for i, colName := range columnNames {
-			if i < len(row) {
-				doc[colName] = p.parseBSONValue(row[i])
-			}
-		}
-
-		documents = append(documents, doc)
-
-		// Insert in batches
-		if len(documents) >= batchSize {
-			if _, err := collection.InsertMany(context.Background(), documents); err != nil {
-				return fmt.Errorf("failed to insert documents at row %d: %v", rowCount+1, err)
-			}
-			documents = documents[:0]
-		}
-
-		rowCount++
-		if progressCallback != nil && rowCount%100 == 0 {
-			progressCallback(engine.ImportProgress{
-				ProcessedRows: rowCount,
-				Status:        "importing",
-			})
-		}
-	}
-
-	// Insert remaining documents
-	if len(documents) > 0 {
-		if _, err := collection.InsertMany(context.Background(), documents); err != nil {
-			return fmt.Errorf("failed to insert final batch: %v", err)
-		}
-	}
-
-	if progressCallback != nil {
-		progressCallback(engine.ImportProgress{
-			ProcessedRows: rowCount,
-			Status:        "completed",
-		})
-	}
-
-	return nil
-}
-
 // Helper functions
 
 func (p *MongoDBPlugin) getCollectionFields(collection *mongo.Collection) ([]string, error) {
@@ -205,7 +117,7 @@ func (p *MongoDBPlugin) getCollectionFields(collection *mongo.Collection) ([]str
 	for field := range fieldSet {
 		fields = append(fields, field)
 	}
-	
+
 	// Ensure _id is first if present
 	for i, field := range fields {
 		if field == "_id" && i != 0 {
@@ -235,21 +147,4 @@ func (p *MongoDBPlugin) formatBSONValue(val any) string {
 	default:
 		return fmt.Sprintf("%v", v)
 	}
-}
-
-func (p *MongoDBPlugin) parseBSONValue(val string) any {
-	if val == "" {
-		return nil
-	}
-
-	// Try to parse as JSON for complex types
-	if strings.HasPrefix(val, "{") || strings.HasPrefix(val, "[") {
-		var parsed any
-		if err := json.Unmarshal([]byte(val), &parsed); err == nil {
-			return parsed
-		}
-	}
-
-	// Return as string by default
-	return val
 }

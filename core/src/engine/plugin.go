@@ -88,19 +88,6 @@ type ChatMessage struct {
 	Text   string
 }
 
-type ImportMode string
-
-const (
-	ImportModeAppend   ImportMode = "append"
-	ImportModeOverride ImportMode = "override"
-)
-
-type ImportProgress struct {
-	TotalRows     int
-	ProcessedRows int
-	Status        string
-	Error         string
-}
 
 type PluginFunctions interface {
 	GetDatabases(config *PluginConfig) ([]string, error)
@@ -116,7 +103,6 @@ type PluginFunctions interface {
 	RawExecute(config *PluginConfig, query string) (*GetRowsResult, error)
 	Chat(config *PluginConfig, schema string, model string, previousConversation string, query string) ([]*ChatMessage, error)
 	ExportData(config *PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error
-	ImportData(config *PluginConfig, schema string, storageUnit string, reader func() ([]string, error), mode ImportMode, progressCallback func(ImportProgress)) error
 	FormatValue(val any) string
 }
 

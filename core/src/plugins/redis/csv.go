@@ -30,8 +30,3 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 	return fmt.Errorf("data export is not supported for Redis databases")
 }
 
-// ImportData imports tabular data into Redis
-func (p *RedisPlugin) ImportData(config *engine.PluginConfig, schema string, storageUnit string, reader func() ([]string, error), mode engine.ImportMode, progressCallback func(engine.ImportProgress)) error {
-	// Redis doesn't support traditional table import
-	return fmt.Errorf("data import is not supported for Redis databases")
-}
