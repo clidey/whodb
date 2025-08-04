@@ -21,9 +21,10 @@ func HandleCSVExport(w http.ResponseWriter, r *http.Request) {
 
 	// Parse JSON body
 	var req struct {
-		Schema      string `json:"schema"`
-		StorageUnit string `json:"storageUnit"`
-		Delimiter   string `json:"delimiter,omitempty"`
+		Schema       string           `json:"schema"`
+		StorageUnit  string           `json:"storageUnit"`
+		Delimiter    string           `json:"delimiter,omitempty"`
+		SelectedRows []map[string]any `json:"selectedRows,omitempty"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -34,18 +35,18 @@ func HandleCSVExport(w http.ResponseWriter, r *http.Request) {
 	schema := req.Schema
 	storageUnit := req.StorageUnit
 	delimiter := req.Delimiter
-	
+
 	// Default to comma if no delimiter specified
 	if delimiter == "" {
 		delimiter = ","
 	}
-	
+
 	// Validate delimiter is a single character
 	if len(delimiter) != 1 {
 		http.Error(w, "Delimiter must be a single character", http.StatusBadRequest)
 		return
 	}
-	
+
 	// Convert delimiter to rune
 	delimRune := rune(delimiter[0])
 
@@ -98,9 +99,8 @@ func HandleCSVExport(w http.ResponseWriter, r *http.Request) {
 		return nil
 	}
 
-	// Stream CSV data directly to response
-	// Note: ExportCSV expects a nil progress callback for now
-	err := plugin.ExportCSV(pluginConfig, schema, storageUnit, writerFunc, nil)
+	// Export rows (all or selected) using the unified method
+	err := plugin.ExportCSV(pluginConfig, schema, storageUnit, writerFunc, req.SelectedRows)
 	if err != nil {
 		// If we haven't written anything yet, we can send an error
 		if rowsWritten == 0 {
@@ -108,7 +108,6 @@ func HandleCSVExport(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		// Otherwise, we've already started streaming, so log the error
-		// The partial data will still be sent
 		fmt.Fprintf(w, "\n# ERROR: %v\n", err)
 	}
 }

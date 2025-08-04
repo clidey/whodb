@@ -6,6 +6,7 @@ interface CSVOperationsProps {
   schema: string;
   storageUnit: string;
   selectedRowCount?: number;
+  selectedRows?: Record<string, any>[];
   onImportComplete?: () => void;
 }
 
@@ -13,6 +14,7 @@ export const CSVOperations: React.FC<CSVOperationsProps> = ({
   schema,
   storageUnit,
   selectedRowCount = 0,
+  selectedRows,
   onImportComplete
 }) => {
   const [showImportModal, setShowImportModal] = useState(false);
@@ -40,6 +42,7 @@ export const CSVOperations: React.FC<CSVOperationsProps> = ({
           schema,
           storageUnit,
           delimiter,
+          ...(selectedRows && selectedRows.length > 0 ? { selectedRows } : {}),
         }),
       });
 

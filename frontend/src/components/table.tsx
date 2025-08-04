@@ -664,8 +664,16 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
 
     const hasSelectedRows = (checkedRows?.size ?? 0) > 0;
 
+    // Get selected rows data for export
+    const selectedRowsData = useMemo(() => {
+        if (hasSelectedRows && checkedRows) {
+            return [...checkedRows].map(index => sortedRows[index]);
+        }
+        return undefined;
+    }, [hasSelectedRows, checkedRows, sortedRows]);
+    
     // Always call the hook, but use conditional logic inside
-    const backendExport = useExportToCSV(schema || '', storageUnit || '', hasSelectedRows, exportDelimiter);
+    const backendExport = useExportToCSV(schema || '', storageUnit || '', hasSelectedRows, exportDelimiter, selectedRowsData);
 
     const handleExportConfirm = useCallback(async () => {
         try {

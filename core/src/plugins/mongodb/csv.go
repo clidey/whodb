@@ -30,7 +30,11 @@ import (
 )
 
 // ExportCSV exports MongoDB collection data to CSV format
-func (p *MongoDBPlugin) ExportCSV(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, progressCallback func(int)) error {
+func (p *MongoDBPlugin) ExportCSV(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]interface{}) error {
+	// MongoDB doesn't support exporting selected rows from frontend
+	if len(selectedRows) > 0 {
+		return fmt.Errorf("exporting selected rows is not supported for MongoDB")
+	}
 	client, err := DB(config)
 	if err != nil {
 		return err
@@ -82,13 +86,6 @@ func (p *MongoDBPlugin) ExportCSV(config *engine.PluginConfig, schema string, st
 		}
 
 		rowCount++
-		if progressCallback != nil && rowCount%1000 == 0 {
-			progressCallback(rowCount)
-		}
-	}
-
-	if progressCallback != nil {
-		progressCallback(rowCount)
 	}
 
 	return cursor.Err()

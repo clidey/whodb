@@ -27,8 +27,40 @@ import (
 
 var exportRowCountThreshold = 1
 
-// ExportCSV exports table data to CSV format
-func (p *GormPlugin) ExportCSV(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, progressCallback func(int)) error {
+// ExportCSV exports data to CSV format. If selectedRows is nil/empty, exports all rows from the table.
+func (p *GormPlugin) ExportCSV(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]interface{}) error {
+	// If selected rows are provided, export only those
+	if len(selectedRows) > 0 {
+		// Extract column names from the first row
+		columns := make([]string, 0, len(selectedRows[0]))
+		for col := range selectedRows[0] {
+			columns = append(columns, col)
+		}
+
+		// Write header row
+		if err := writer(columns); err != nil {
+			return fmt.Errorf("failed to write headers: %v", err)
+		}
+
+		// Write selected rows
+		for i, row := range selectedRows {
+			rowData := make([]string, len(columns))
+			for j, col := range columns {
+				if val, ok := row[col]; ok {
+					rowData[j] = p.FormatValue(val)
+				} else {
+					rowData[j] = ""
+				}
+			}
+			if err := writer(rowData); err != nil {
+				return fmt.Errorf("failed to write row %d: %v", i+1, err)
+			}
+		}
+
+		return nil
+	}
+
+	// Export all rows from the database
 	db, err := p.DB(config)
 	if err != nil {
 		return err
@@ -79,7 +111,7 @@ func (p *GormPlugin) ExportCSV(config *engine.PluginConfig, schema string, stora
 
 		row := make([]string, len(columns))
 		for i, val := range values {
-			row[i] = p.formatValue(val)
+			row[i] = p.FormatValue(val)
 		}
 
 		if err := writer(row); err != nil {
@@ -87,13 +119,6 @@ func (p *GormPlugin) ExportCSV(config *engine.PluginConfig, schema string, stora
 		}
 
 		rowCount++
-		if progressCallback != nil && rowCount > 0 && rowCount%exportRowCountThreshold == 0 {
-			progressCallback(rowCount)
-		}
-	}
-
-	if progressCallback != nil {
-		progressCallback(rowCount)
 	}
 
 	return rows.Err()
@@ -256,7 +281,8 @@ func (p *GormPlugin) getTableColumns(db *gorm.DB, schema string, storageUnit str
 	return columns, types, rows.Err()
 }
 
-func (p *GormPlugin) formatValue(val interface{}) string {
+// FormatValue converts interface{} values to strings appropriately for CSV
+func (p *GormPlugin) FormatValue(val interface{}) string {
 	if val == nil {
 		return ""
 	}

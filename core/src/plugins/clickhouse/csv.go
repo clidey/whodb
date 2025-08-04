@@ -25,7 +25,11 @@ import (
 )
 
 // ExportCSV exports ClickHouse table data to CSV format
-func (p *ClickHousePlugin) ExportCSV(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, progressCallback func(int)) error {
+func (p *ClickHousePlugin) ExportCSV(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]interface{}) error {
+	// If selected rows are provided, delegate to parent GORM implementation
+	if len(selectedRows) > 0 {
+		return p.GormPlugin.ExportCSV(config, schema, storageUnit, writer, selectedRows)
+	}
 	db, err := p.DB(config)
 	if err != nil {
 		return err
@@ -96,14 +100,8 @@ func (p *ClickHousePlugin) ExportCSV(config *engine.PluginConfig, schema string,
 		}
 
 		rowCount++
-		if progressCallback != nil && rowCount%10000 == 0 {
-			progressCallback(rowCount)
-		}
 	}
 
-	if progressCallback != nil {
-		progressCallback(rowCount)
-	}
 
 	return dataRows.Err()
 }

@@ -28,7 +28,11 @@ import (
 )
 
 // ExportCSV exports ElasticSearch index data to CSV format
-func (p *ElasticSearchPlugin) ExportCSV(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, progressCallback func(int)) error {
+func (p *ElasticSearchPlugin) ExportCSV(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]interface{}) error {
+	// ElasticSearch doesn't support exporting selected rows from frontend
+	if len(selectedRows) > 0 {
+		return fmt.Errorf("exporting selected rows is not supported for ElasticSearch")
+	}
 	db, err := DB(config)
 	if err != nil {
 		return err
@@ -103,9 +107,6 @@ func (p *ElasticSearchPlugin) ExportCSV(config *engine.PluginConfig, schema stri
 			}
 
 			rowCount++
-			if progressCallback != nil && rowCount%1000 == 0 {
-				progressCallback(rowCount)
-			}
 		}
 
 		// Get next batch
@@ -124,9 +125,6 @@ func (p *ElasticSearchPlugin) ExportCSV(config *engine.PluginConfig, schema stri
 		}
 	}
 
-	if progressCallback != nil {
-		progressCallback(rowCount)
-	}
 
 	return nil
 }

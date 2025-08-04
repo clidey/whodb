@@ -24,7 +24,7 @@ import (
 
 // ExportCSV exports Redis data to CSV format
 // Redis doesn't have tables, so we export key patterns as "tables"
-func (p *RedisPlugin) ExportCSV(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, progressCallback func(int)) error {
+func (p *RedisPlugin) ExportCSV(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]interface{}) error {
 	// Redis doesn't support traditional table export
 	// Could implement key pattern export, but that would be different from other databases
 	return fmt.Errorf("CSV export is not supported for Redis databases")

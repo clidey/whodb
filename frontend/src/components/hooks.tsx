@@ -17,9 +17,27 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 
-export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly: boolean = false, delimiter: string = ',') => {
+export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly: boolean = false, delimiter: string = ',', selectedRows?: Record<string, any>[]) => {
     return useCallback(async () => {
       try {
+        // Prepare request body
+        const requestBody: any = {
+          schema,
+          storageUnit,
+          delimiter,
+        };
+        
+        // Add selected rows if provided
+        // For now, we'll use the full row data approach for selections
+        // In the future, we can optimize this by detecting primary keys
+        if (selectedOnly && selectedRows && selectedRows.length > 0) {
+          // Threshold: if more than 1000 rows selected, warn the user
+          if (selectedRows.length > 1000) {
+            console.warn(`Exporting ${selectedRows.length} rows. Large selections may be slow.`);
+          }
+          requestBody.selectedRows = selectedRows;
+        }
+        
         // Use backend export endpoint for full data export
         const response = await fetch('/api/export', {
           method: 'POST',
@@ -28,11 +46,7 @@ export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly
             'Accept': 'text/csv',
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            schema,
-            storageUnit,
-            delimiter,
-          }),
+          body: JSON.stringify(requestBody),
         });
 
         if (!response.ok) {
@@ -72,7 +86,7 @@ export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly
         console.error('Export failed:', error);
         throw error;
       }
-    }, [schema, storageUnit, selectedOnly, delimiter]);
+    }, [schema, storageUnit, selectedOnly, delimiter, selectedRows]);
 };
 
 type ILongPressProps = {
