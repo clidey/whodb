@@ -27,8 +27,8 @@ import (
 	"github.com/elastic/go-elasticsearch/v8/esutil"
 )
 
-// ExportCSV exports ElasticSearch index data to CSV format
-func (p *ElasticSearchPlugin) ExportCSV(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]interface{}) error {
+// ExportData exports ElasticSearch index data to tabular format
+func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error {
 	// ElasticSearch doesn't support exporting selected rows from frontend
 	if len(selectedRows) > 0 {
 		return fmt.Errorf("exporting selected rows is not supported for ElasticSearch")
@@ -47,7 +47,7 @@ func (p *ElasticSearchPlugin) ExportCSV(config *engine.PluginConfig, schema stri
 	}
 	defer mapping.Body.Close()
 
-	var mappingResponse map[string]interface{}
+	var mappingResponse map[string]any
 	if err := json.NewDecoder(mapping.Body).Decode(&mappingResponse); err != nil {
 		return fmt.Errorf("failed to decode mapping: %v", err)
 	}
@@ -76,7 +76,7 @@ func (p *ElasticSearchPlugin) ExportCSV(config *engine.PluginConfig, schema stri
 	}
 	defer res.Body.Close()
 
-	var searchResult map[string]interface{}
+	var searchResult map[string]any
 	if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
 		return fmt.Errorf("failed to decode search result: %v", err)
 	}
@@ -85,13 +85,13 @@ func (p *ElasticSearchPlugin) ExportCSV(config *engine.PluginConfig, schema stri
 	rowCount := 0
 
 	for {
-		hits := searchResult["hits"].(map[string]interface{})["hits"].([]interface{})
+		hits := searchResult["hits"].(map[string]any)["hits"].([]any)
 		if len(hits) == 0 {
 			break
 		}
 
 		for _, hit := range hits {
-			doc := hit.(map[string]interface{})["_source"].(map[string]interface{})
+			doc := hit.(map[string]any)["_source"].(map[string]any)
 
 			row := make([]string, len(fieldNames))
 			for i, field := range fieldNames {
@@ -119,7 +119,7 @@ func (p *ElasticSearchPlugin) ExportCSV(config *engine.PluginConfig, schema stri
 		}
 		defer res.Body.Close()
 
-		searchResult = make(map[string]interface{})
+		searchResult = make(map[string]any)
 		if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
 			break
 		}
@@ -129,8 +129,8 @@ func (p *ElasticSearchPlugin) ExportCSV(config *engine.PluginConfig, schema stri
 	return nil
 }
 
-// ImportCSV imports CSV data into ElasticSearch index
-func (p *ElasticSearchPlugin) ImportCSV(config *engine.PluginConfig, schema string, storageUnit string, reader func() ([]string, error), mode engine.ImportMode, progressCallback func(engine.ImportProgress)) error {
+// ImportData imports tabular data into ElasticSearch index
+func (p *ElasticSearchPlugin) ImportData(config *engine.PluginConfig, schema string, storageUnit string, reader func() ([]string, error), mode engine.ImportMode, progressCallback func(engine.ImportProgress)) error {
 	db, err := DB(config)
 	if err != nil {
 		return err
@@ -181,7 +181,7 @@ func (p *ElasticSearchPlugin) ImportCSV(config *engine.PluginConfig, schema stri
 		}
 
 		// Create document from row
-		doc := make(map[string]interface{})
+		doc := make(map[string]any)
 		for i, colName := range columnNames {
 			if i < len(row) {
 				doc[colName] = p.parseElasticValue(row[i])
@@ -231,12 +231,12 @@ func (p *ElasticSearchPlugin) ImportCSV(config *engine.PluginConfig, schema stri
 
 // Helper functions
 
-func (p *ElasticSearchPlugin) extractFieldNames(mapping map[string]interface{}, indexName string) []string {
+func (p *ElasticSearchPlugin) extractFieldNames(mapping map[string]any, indexName string) []string {
 	fields := make(map[string]bool)
 
-	if indexData, ok := mapping[indexName].(map[string]interface{}); ok {
-		if mappings, ok := indexData["mappings"].(map[string]interface{}); ok {
-			if properties, ok := mappings["properties"].(map[string]interface{}); ok {
+	if indexData, ok := mapping[indexName].(map[string]any); ok {
+		if mappings, ok := indexData["mappings"].(map[string]any); ok {
+			if properties, ok := mappings["properties"].(map[string]any); ok {
 				p.extractFieldsRecursive(properties, "", fields)
 			}
 		}
@@ -250,7 +250,7 @@ func (p *ElasticSearchPlugin) extractFieldNames(mapping map[string]interface{}, 
 	return result
 }
 
-func (p *ElasticSearchPlugin) extractFieldsRecursive(properties map[string]interface{}, prefix string, fields map[string]bool) {
+func (p *ElasticSearchPlugin) extractFieldsRecursive(properties map[string]any, prefix string, fields map[string]bool) {
 	for name, prop := range properties {
 		fullName := name
 		if prefix != "" {
@@ -259,15 +259,15 @@ func (p *ElasticSearchPlugin) extractFieldsRecursive(properties map[string]inter
 
 		fields[fullName] = true
 
-		if propMap, ok := prop.(map[string]interface{}); ok {
-			if subProps, ok := propMap["properties"].(map[string]interface{}); ok {
+		if propMap, ok := prop.(map[string]any); ok {
+			if subProps, ok := propMap["properties"].(map[string]any); ok {
 				p.extractFieldsRecursive(subProps, fullName, fields)
 			}
 		}
 	}
 }
 
-func (p *ElasticSearchPlugin) getNestedValue(doc map[string]interface{}, field string) (interface{}, bool) {
+func (p *ElasticSearchPlugin) getNestedValue(doc map[string]any, field string) (any, bool) {
 	parts := strings.Split(field, ".")
 	current := doc
 
@@ -277,7 +277,7 @@ func (p *ElasticSearchPlugin) getNestedValue(doc map[string]interface{}, field s
 			return val, exists
 		}
 
-		if next, ok := current[part].(map[string]interface{}); ok {
+		if next, ok := current[part].(map[string]any); ok {
 			current = next
 		} else {
 			return nil, false
@@ -287,7 +287,7 @@ func (p *ElasticSearchPlugin) getNestedValue(doc map[string]interface{}, field s
 	return nil, false
 }
 
-func (p *ElasticSearchPlugin) formatElasticValue(val interface{}) string {
+func (p *ElasticSearchPlugin) formatElasticValue(val any) string {
 	if val == nil {
 		return ""
 	}
@@ -295,7 +295,7 @@ func (p *ElasticSearchPlugin) formatElasticValue(val interface{}) string {
 	switch v := val.(type) {
 	case string:
 		return v
-	case []interface{}, map[string]interface{}:
+	case []any, map[string]any:
 		data, err := json.Marshal(v)
 		if err != nil {
 			return fmt.Sprintf("%v", v)
@@ -306,14 +306,14 @@ func (p *ElasticSearchPlugin) formatElasticValue(val interface{}) string {
 	}
 }
 
-func (p *ElasticSearchPlugin) parseElasticValue(val string) interface{} {
+func (p *ElasticSearchPlugin) parseElasticValue(val string) any {
 	if val == "" {
 		return nil
 	}
 
 	// Try to parse as JSON
 	if strings.HasPrefix(val, "{") || strings.HasPrefix(val, "[") {
-		var parsed interface{}
+		var parsed any
 		if err := json.Unmarshal([]byte(val), &parsed); err == nil {
 			return parsed
 		}

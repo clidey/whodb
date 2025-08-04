@@ -163,9 +163,9 @@ func HandleImport(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	// Perform import
-	err = plugin.ImportCSV(pluginConfig, schema, storageUnit, readerFunc, importMode, progressCallback)
+	err = plugin.ImportData(pluginConfig, schema, storageUnit, readerFunc, importMode, progressCallback)
 
-	response := map[string]interface{}{
+	response := map[string]any{
 		"totalRows":     lastProgress.ProcessedRows,
 		"processedRows": lastProgress.ProcessedRows,
 	}

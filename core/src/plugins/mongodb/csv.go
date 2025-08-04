@@ -29,8 +29,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// ExportCSV exports MongoDB collection data to CSV format
-func (p *MongoDBPlugin) ExportCSV(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]interface{}) error {
+// ExportData exports MongoDB collection data to tabular format
+func (p *MongoDBPlugin) ExportData(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error {
 	// MongoDB doesn't support exporting selected rows from frontend
 	if len(selectedRows) > 0 {
 		return fmt.Errorf("exporting selected rows is not supported for MongoDB")
@@ -91,8 +91,8 @@ func (p *MongoDBPlugin) ExportCSV(config *engine.PluginConfig, schema string, st
 	return cursor.Err()
 }
 
-// ImportCSV imports CSV data into MongoDB collection
-func (p *MongoDBPlugin) ImportCSV(config *engine.PluginConfig, schema string, storageUnit string, reader func() ([]string, error), mode engine.ImportMode, progressCallback func(engine.ImportProgress)) error {
+// ImportData imports tabular data into MongoDB collection
+func (p *MongoDBPlugin) ImportData(config *engine.PluginConfig, schema string, storageUnit string, reader func() ([]string, error), mode engine.ImportMode, progressCallback func(engine.ImportProgress)) error {
 	client, err := DB(config)
 	if err != nil {
 		return err
@@ -122,7 +122,7 @@ func (p *MongoDBPlugin) ImportCSV(config *engine.PluginConfig, schema string, st
 
 	// Process rows
 	rowCount := 0
-	var documents []interface{}
+	var documents []any
 	batchSize := 1000
 
 	for {
@@ -217,7 +217,7 @@ func (p *MongoDBPlugin) getCollectionFields(collection *mongo.Collection) ([]str
 	return fields, nil
 }
 
-func (p *MongoDBPlugin) formatBSONValue(val interface{}) string {
+func (p *MongoDBPlugin) formatBSONValue(val any) string {
 	if val == nil {
 		return ""
 	}
@@ -225,7 +225,7 @@ func (p *MongoDBPlugin) formatBSONValue(val interface{}) string {
 	switch v := val.(type) {
 	case string:
 		return v
-	case []interface{}, bson.A, bson.M, map[string]interface{}:
+	case []any, bson.A, bson.M, map[string]any:
 		// Convert complex types to JSON
 		data, err := json.Marshal(v)
 		if err != nil {
@@ -237,14 +237,14 @@ func (p *MongoDBPlugin) formatBSONValue(val interface{}) string {
 	}
 }
 
-func (p *MongoDBPlugin) parseBSONValue(val string) interface{} {
+func (p *MongoDBPlugin) parseBSONValue(val string) any {
 	if val == "" {
 		return nil
 	}
 
 	// Try to parse as JSON for complex types
 	if strings.HasPrefix(val, "{") || strings.HasPrefix(val, "[") {
-		var parsed interface{}
+		var parsed any
 		if err := json.Unmarshal([]byte(val), &parsed); err == nil {
 			return parsed
 		}

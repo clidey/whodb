@@ -24,11 +24,11 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 )
 
-// ExportCSV exports ClickHouse table data to CSV format
-func (p *ClickHousePlugin) ExportCSV(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]interface{}) error {
+// ExportData exports ClickHouse table data to tabular format
+func (p *ClickHousePlugin) ExportData(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error {
 	// If selected rows are provided, delegate to parent GORM implementation
 	if len(selectedRows) > 0 {
-		return p.GormPlugin.ExportCSV(config, schema, storageUnit, writer, selectedRows)
+		return p.GormPlugin.ExportData(config, schema, storageUnit, writer, selectedRows)
 	}
 	db, err := p.DB(config)
 	if err != nil {
@@ -79,8 +79,8 @@ func (p *ClickHousePlugin) ExportCSV(config *engine.PluginConfig, schema string,
 	defer dataRows.Close()
 
 	rowCount := 0
-	values := make([]interface{}, len(columns))
-	valuePtrs := make([]interface{}, len(columns))
+	values := make([]any, len(columns))
+	valuePtrs := make([]any, len(columns))
 	for i := range values {
 		valuePtrs[i] = &values[i]
 	}
@@ -106,8 +106,8 @@ func (p *ClickHousePlugin) ExportCSV(config *engine.PluginConfig, schema string,
 	return dataRows.Err()
 }
 
-// ImportCSV imports CSV data into ClickHouse table
-func (p *ClickHousePlugin) ImportCSV(config *engine.PluginConfig, schema string, storageUnit string, reader func() ([]string, error), mode engine.ImportMode, progressCallback func(engine.ImportProgress)) error {
+// ImportData imports tabular data into ClickHouse table
+func (p *ClickHousePlugin) ImportData(config *engine.PluginConfig, schema string, storageUnit string, reader func() ([]string, error), mode engine.ImportMode, progressCallback func(engine.ImportProgress)) error {
 	db, err := p.DB(config)
 	if err != nil {
 		return err
@@ -202,7 +202,7 @@ func (p *ClickHousePlugin) ImportCSV(config *engine.PluginConfig, schema string,
 		}
 
 		// Map CSV values to table columns
-		values := make([]interface{}, len(existingColumns))
+		values := make([]any, len(existingColumns))
 		for i, col := range existingColumns {
 			csvIndex, exists := columnMap[col]
 			if !exists {
@@ -261,7 +261,7 @@ func (p *ClickHousePlugin) ImportCSV(config *engine.PluginConfig, schema string,
 
 // Helper functions
 
-func (p *ClickHousePlugin) formatValue(val interface{}) string {
+func (p *ClickHousePlugin) formatValue(val any) string {
 	if val == nil {
 		return ""
 	}
@@ -276,7 +276,7 @@ func (p *ClickHousePlugin) formatValue(val interface{}) string {
 	}
 }
 
-func (p *ClickHousePlugin) parseClickHouseValue(val string, dataType string) interface{} {
+func (p *ClickHousePlugin) parseClickHouseValue(val string, dataType string) any {
 	if val == "" {
 		return nil
 	}

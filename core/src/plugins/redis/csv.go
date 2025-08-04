@@ -22,16 +22,16 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 )
 
-// ExportCSV exports Redis data to CSV format
+// ExportData exports Redis data to tabular format
 // Redis doesn't have tables, so we export key patterns as "tables"
-func (p *RedisPlugin) ExportCSV(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]interface{}) error {
+func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error {
 	// Redis doesn't support traditional table export
 	// Could implement key pattern export, but that would be different from other databases
-	return fmt.Errorf("CSV export is not supported for Redis databases")
+	return fmt.Errorf("data export is not supported for Redis databases")
 }
 
-// ImportCSV imports CSV data into Redis
-func (p *RedisPlugin) ImportCSV(config *engine.PluginConfig, schema string, storageUnit string, reader func() ([]string, error), mode engine.ImportMode, progressCallback func(engine.ImportProgress)) error {
+// ImportData imports tabular data into Redis
+func (p *RedisPlugin) ImportData(config *engine.PluginConfig, schema string, storageUnit string, reader func() ([]string, error), mode engine.ImportMode, progressCallback func(engine.ImportProgress)) error {
 	// Redis doesn't support traditional table import
-	return fmt.Errorf("CSV import is not supported for Redis databases")
+	return fmt.Errorf("data import is not supported for Redis databases")
 }

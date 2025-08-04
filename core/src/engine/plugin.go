@@ -115,9 +115,9 @@ type PluginFunctions interface {
 	GetGraph(config *PluginConfig, schema string) ([]GraphUnit, error)
 	RawExecute(config *PluginConfig, query string) (*GetRowsResult, error)
 	Chat(config *PluginConfig, schema string, model string, previousConversation string, query string) ([]*ChatMessage, error)
-	ExportCSV(config *PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]interface{}) error
-	ImportCSV(config *PluginConfig, schema string, storageUnit string, reader func() ([]string, error), mode ImportMode, progressCallback func(ImportProgress)) error
-	FormatValue(val interface{}) string
+	ExportData(config *PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error
+	ImportData(config *PluginConfig, schema string, storageUnit string, reader func() ([]string, error), mode ImportMode, progressCallback func(ImportProgress)) error
+	FormatValue(val any) string
 }
 
 type Plugin struct {

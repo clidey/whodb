@@ -27,8 +27,8 @@ import (
 	"gorm.io/gorm"
 )
 
-// ExportCSV exports data to CSV format. If selectedRows is nil/empty, exports all rows from the table.
-func (p *GormPlugin) ExportCSV(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]interface{}) error {
+// ExportData exports data to tabular format (CSV/Excel). If selectedRows is nil/empty, exports all rows from the table.
+func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error {
 	// If selected rows are provided, export only those
 	if len(selectedRows) > 0 {
 		// Extract column names from the first row
@@ -124,8 +124,8 @@ func (p *GormPlugin) ExportCSV(config *engine.PluginConfig, schema string, stora
 	return rows.Err()
 }
 
-// ImportCSV imports CSV data into the table
-func (p *GormPlugin) ImportCSV(config *engine.PluginConfig, schema string, storageUnit string, reader func() ([]string, error), mode engine.ImportMode, progressCallback func(engine.ImportProgress)) error {
+// ImportData imports data from tabular format (CSV/Excel) into the table
+func (p *GormPlugin) ImportData(config *engine.PluginConfig, schema string, storageUnit string, reader func() ([]string, error), mode engine.ImportMode, progressCallback func(engine.ImportProgress)) error {
 	db, err := p.DB(config)
 	if err != nil {
 		return err

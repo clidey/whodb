@@ -31,7 +31,7 @@ func HandleExport(w http.ResponseWriter, r *http.Request) {
 		StorageUnit  string                   `json:"storageUnit"`
 		Delimiter    string                   `json:"delimiter,omitempty"`
 		Format       string                   `json:"format,omitempty"`
-		SelectedRows []map[string]interface{} `json:"selectedRows,omitempty"`
+		SelectedRows []map[string]any `json:"selectedRows,omitempty"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -85,7 +85,7 @@ func HandleExport(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleCSVExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfig *engine.PluginConfig, schema, storageUnit, delimiter string, selectedRows []map[string]interface{}) {
+func handleCSVExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfig *engine.PluginConfig, schema, storageUnit, delimiter string, selectedRows []map[string]any) {
 	// Validate delimiter is a single character
 	if len(delimiter) != 1 {
 		http.Error(w, "Delimiter must be a single character", http.StatusBadRequest)
@@ -129,7 +129,7 @@ func handleCSVExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfig 
 	}
 
 	// Export rows (all or selected) using the unified method
-	err := plugin.ExportCSV(pluginConfig, schema, storageUnit, writerFunc, selectedRows)
+	err := plugin.ExportData(pluginConfig, schema, storageUnit, writerFunc, selectedRows)
 	if err != nil {
 		// If we haven't written anything yet, we can send an error
 		if rowsWritten == 0 {
@@ -141,7 +141,7 @@ func handleCSVExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfig 
 	}
 }
 
-func handleExcelExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfig *engine.PluginConfig, schema, storageUnit string, selectedRows []map[string]interface{}) {
+func handleExcelExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfig *engine.PluginConfig, schema, storageUnit string, selectedRows []map[string]any) {
 	// Create a new Excel file
 	f := excelize.NewFile()
 	defer f.Close()
@@ -173,7 +173,7 @@ func handleExcelExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfi
 	}
 
 	// Export rows using the plugin
-	err := plugin.ExportCSV(pluginConfig, schema, storageUnit, writerFunc, selectedRows)
+	err := plugin.ExportData(pluginConfig, schema, storageUnit, writerFunc, selectedRows)
 	if err != nil {
 		fmt.Printf("Excel export error for %s.%s: %v\n", schema, storageUnit, err)
 		http.Error(w, "Export failed. Please check your permissions and try again.", http.StatusInternalServerError)
