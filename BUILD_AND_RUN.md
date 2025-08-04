@@ -87,13 +87,31 @@ pnpm start:ee
 
 ## GraphQL Generation
 
+### Backend GraphQL Generation
+
+Generate GraphQL resolvers and types for the backend:
+
+#### For Community Edition
+```bash
+cd core
+go generate ./...
+```
+
+#### For Enterprise Edition
+```bash
+cd core
+GOWORK=../go.work.ee go generate ./...
+```
+
+### Frontend GraphQL Generation
+
 GraphQL types must be generated from a running backend before building the frontend.
 
-### Prerequisites
+#### Prerequisites
 - Backend must be running on http://localhost:8080
 - Use development mode for introspection: `ENVIRONMENT=dev go run .`
 
-### Generate Types
+#### Generate Types
 
 #### For Community Edition
 ```bash
@@ -257,7 +275,23 @@ npm install -g pnpm
 - The `ee` directory must be in the project root
 - Run validation: `./scripts/validate-ee.sh`
 
-#### GraphQL Generation Fails
+#### Backend GraphQL Generation Fails
+```bash
+# For CE generation issues
+cd core
+go mod download
+go generate ./...
+
+# If EE imports cause issues in CE:
+# The go.work file should include ee-stub module
+# Check that ee-stub/go.mod exists
+
+# For EE generation
+cd core
+GOWORK=../go.work.ee go generate ./...
+```
+
+#### Frontend GraphQL Generation Fails
 ```bash
 # Ensure backend is running with introspection enabled
 cd core

@@ -41,8 +41,11 @@ npm run cypress:ee            # EE tests
 
 ### GraphQL Code Generation
 ```bash
-# Backend (from core/)
-go run github.com/99designs/gqlgen generate
+# Backend CE (from core/)
+go generate ./...
+
+# Backend EE (from core/) 
+GOWORK=../go.work.ee go generate ./...
 
 # Frontend (from frontend/)
 npm run generate              # Generates TypeScript types from GraphQL
