@@ -12,6 +12,11 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+const (
+	// Maximum rows for Excel export to prevent memory issues
+	MaxExcelRows = 100000 // 100k rows
+)
+
 // HandleExport handles HTTP requests for data export (CSV or Excel)
 func HandleExport(w http.ResponseWriter, r *http.Request) {
 	// Only allow POST requests
@@ -128,11 +133,11 @@ func handleCSVExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfig 
 	if err != nil {
 		// If we haven't written anything yet, we can send an error
 		if rowsWritten == 0 {
-			http.Error(w, fmt.Sprintf("Export failed: %v", err), http.StatusInternalServerError)
+			fmt.Printf("CSV export error for %s.%s: %v\n", schema, storageUnit, err)
+			http.Error(w, "Export failed. Please check your file and try again.", http.StatusInternalServerError)
 			return
 		}
-		// Otherwise, we've already started streaming, so log the error
-		fmt.Fprintf(w, "\n# ERROR: %v\n", err)
+		fmt.Fprintf(w, "\n# ERROR: Export interrupted. Please try again.\n")
 	}
 }
 
@@ -148,9 +153,14 @@ func handleExcelExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfi
 	// Collect all rows in memory (Excel requires full data)
 	var allRows [][]string
 	var headers []string
+	rowCount := 0
 
-	// Create writer function that collects rows
+	// Create writer function that collects rows with limit check
 	writerFunc := func(row []string) error {
+		if rowCount >= MaxExcelRows {
+			return fmt.Errorf("excel export limit exceeded: maximum %d rows allowed", MaxExcelRows)
+		}
+
 		if len(headers) == 0 {
 			// First row is headers
 			headers = row
@@ -158,13 +168,15 @@ func handleExcelExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfi
 		} else {
 			allRows = append(allRows, row)
 		}
+		rowCount++
 		return nil
 	}
 
 	// Export rows using the plugin
 	err := plugin.ExportCSV(pluginConfig, schema, storageUnit, writerFunc, selectedRows)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Export failed: %v", err), http.StatusInternalServerError)
+		fmt.Printf("Excel export error for %s.%s: %v\n", schema, storageUnit, err)
+		http.Error(w, "Export failed. Please check your permissions and try again.", http.StatusInternalServerError)
 		return
 	}
 
@@ -208,7 +220,8 @@ func handleExcelExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfi
 
 	// Write Excel file to response
 	if err := f.Write(w); err != nil {
-		http.Error(w, fmt.Sprintf("Failed to write Excel file: %v", err), http.StatusInternalServerError)
+		fmt.Printf("Excel write error for %s.%s: %v\n", schema, storageUnit, err)
+		http.Error(w, "Failed to generate Excel file. Please try again.", http.StatusInternalServerError)
 		return
 	}
 }
