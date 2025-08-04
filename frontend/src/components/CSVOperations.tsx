@@ -105,13 +105,13 @@ export const CSVOperations: React.FC<CSVOperationsProps> = ({
         {exporting ? 'Exporting...' : `Export ${selectedRowCount > 0 ? `${selectedRowCount} selected` : 'all'}`}
       </button>
 
-      {/* Import Button */}
+      {/* Import Button - temporarily disabled
       <button
         onClick={() => setShowImportModal(true)}
         className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
       >
         Import CSV
-      </button>
+      </button> */}
 
       {/* Export Confirmation Dialog */}
       {showExportConfirm && (
@@ -182,7 +182,7 @@ export const CSVOperations: React.FC<CSVOperationsProps> = ({
         </div>
       )}
 
-      {/* Import Modal (uses HTTP endpoint) */}
+      {/* Import Modal (uses HTTP endpoint) - temporarily disabled
       <ImportModal
         isOpen={showImportModal}
         onClose={() => setShowImportModal(false)}
@@ -192,7 +192,7 @@ export const CSVOperations: React.FC<CSVOperationsProps> = ({
           setShowImportModal(false);
           onImportComplete?.();
         }}
-      />
+      /> */}
     </>
   );
 };

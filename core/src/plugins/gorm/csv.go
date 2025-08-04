@@ -17,15 +17,15 @@
 package gorm_plugin
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"gorm.io/gorm"
 )
-
-var exportRowCountThreshold = 1
 
 // ExportCSV exports data to CSV format. If selectedRows is nil/empty, exports all rows from the table.
 func (p *GormPlugin) ExportCSV(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]interface{}) error {
@@ -282,7 +282,7 @@ func (p *GormPlugin) getTableColumns(db *gorm.DB, schema string, storageUnit str
 }
 
 // FormatValue converts interface{} values to strings appropriately for CSV
-func (p *GormPlugin) FormatValue(val interface{}) string {
+func (p *GormPlugin) FormatValue(val any) string {
 	if val == nil {
 		return ""
 	}
@@ -292,6 +292,36 @@ func (p *GormPlugin) FormatValue(val interface{}) string {
 		return string(v)
 	case string:
 		return v
+	case time.Time:
+		// Format time in ISO 8601 format that can be parsed back
+		if v.Hour() == 0 && v.Minute() == 0 && v.Second() == 0 && v.Nanosecond() == 0 {
+			// Date only
+			return v.Format("2006-01-02")
+		}
+		// Full datetime
+		return v.Format("2006-01-02T15:04:05")
+	case *time.Time:
+		if v == nil {
+			return ""
+		}
+		// Format time in ISO 8601 format that can be parsed back
+		if v.Hour() == 0 && v.Minute() == 0 && v.Second() == 0 && v.Nanosecond() == 0 {
+			// Date only
+			return v.Format("2006-01-02")
+		}
+		// Full datetime
+		return v.Format("2006-01-02T15:04:05")
+	case sql.NullTime:
+		if !v.Valid {
+			return ""
+		}
+		// Format time in ISO 8601 format that can be parsed back
+		if v.Time.Hour() == 0 && v.Time.Minute() == 0 && v.Time.Second() == 0 && v.Time.Nanosecond() == 0 {
+			// Date only
+			return v.Time.Format("2006-01-02")
+		}
+		// Full datetime
+		return v.Time.Format("2006-01-02T15:04:05")
 	default:
 		return fmt.Sprintf("%v", v)
 	}

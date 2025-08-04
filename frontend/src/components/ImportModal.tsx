@@ -20,6 +20,8 @@ export const ImportModal: React.FC<ImportModalProps> = ({
   const [mode, setMode] = useState<'append' | 'override'>('append');
   const [isImporting, setIsImporting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [delimiter, setDelimiter] = useState(',');
+  const [fileFormat, setFileFormat] = useState<'csv' | 'excel' | null>(null);
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -32,12 +34,17 @@ export const ImportModal: React.FC<ImportModalProps> = ({
       return;
     }
 
-    if (selectedFile.type !== 'text/csv' && !selectedFile.name.endsWith('.csv')) {
-      notify('Please select a CSV file', 'error');
+    const filename = selectedFile.name.toLowerCase();
+    const isCSV = selectedFile.type === 'text/csv' || filename.endsWith('.csv');
+    const isExcel = filename.endsWith('.xlsx') || filename.endsWith('.xls');
+
+    if (!isCSV && !isExcel) {
+      notify('Please select a CSV or Excel file', 'error');
       return;
     }
 
     setFile(selectedFile);
+    setFileFormat(isExcel ? 'excel' : 'csv');
   }, []);
 
   const handleImport = useCallback(async () => {
@@ -54,6 +61,9 @@ export const ImportModal: React.FC<ImportModalProps> = ({
     formData.append('schema', schema);
     formData.append('storageUnit', storageUnit);
     formData.append('mode', mode);
+    if (fileFormat === 'csv') {
+      formData.append('delimiter', delimiter);
+    }
 
     try {
       // Create XMLHttpRequest for progress tracking
@@ -128,7 +138,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
           </label>
           <input
             type="file"
-            accept=".csv,text/csv"
+            accept=".csv,text/csv,.xlsx,.xls"
             onChange={handleFileSelect}
             className="w-full p-2 border rounded"
             disabled={isImporting}
@@ -177,12 +187,36 @@ export const ImportModal: React.FC<ImportModalProps> = ({
           </div>
         )}
 
-        {/* CSV Format Info */}
+        {/* Delimiter selection for CSV */}
+        {fileFormat === 'csv' && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-2">
+              Delimiter
+            </label>
+            <select
+              value={delimiter}
+              onChange={(e) => setDelimiter(e.target.value)}
+              className="w-full p-2 border rounded"
+              disabled={isImporting}
+            >
+              <option value=",">Comma (,) - Standard CSV</option>
+              <option value=";">Semicolon (;) - Excel in some locales</option>
+              <option value="|">Pipe (|) - Less common in data</option>
+              <option value="\t">Tab - TSV format</option>
+            </select>
+            <p className="text-xs text-gray-600 mt-1">
+              Choose the delimiter that matches your file
+            </p>
+          </div>
+        )}
+
+        {/* Format Info */}
         <div className="mb-4 p-3 bg-gray-100 rounded text-sm">
-          <p className="font-medium mb-1">CSV Format Requirements:</p>
+          <p className="font-medium mb-1">File Format Requirements:</p>
           <ul className="list-disc list-inside text-gray-600">
-            <li>First row must contain column headers</li>
-            <li>Use pipe (|) as delimiter</li>
+            <li>First row must contain column headers with format: column_name:data_type</li>
+            {fileFormat === 'csv' && <li>Use selected delimiter to separate values</li>}
+            {fileFormat === 'excel' && <li>Data will be imported from the first sheet</li>}
             <li>Maximum file size: 50MB</li>
             <li>Maximum rows: 1,000,000</li>
           </ul>

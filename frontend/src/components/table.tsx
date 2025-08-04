@@ -446,6 +446,8 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
     const [importProgress, setImportProgress] = useState<{processedRows: number; status: string} | null>(null);
     const [exportDelimiter, setExportDelimiter] = useState(',');
     const [exportFormat, setExportFormat] = useState<'csv' | 'excel'>('csv');
+    const [importDelimiter, setImportDelimiter] = useState(',');
+    const [importFormat, setImportFormat] = useState<'csv' | 'excel' | null>(null);
 
     const columns = useMemo(() => {
         const indexWidth = 50;
@@ -720,71 +722,60 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
 
         setImporting(true);
         
+        const formData = new FormData();
+        formData.append('file', importFile);
+        formData.append('schema', schema);
+        formData.append('storageUnit', storageUnit);
+        formData.append('mode', importMode);
+        if (importFormat === 'csv') {
+            formData.append('delimiter', importDelimiter);
+        }
+
         try {
-            // Read file content
-            const text = await importFile.text();
-            
-            // Convert to base64 for GraphQL transport
-            const base64Data = btoa(text);
-            
-            // Call import mutation
-            const response = await fetch('/graphql', {
+            const response = await fetch('/api/import', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    query: `
-                        mutation ImportCSV($schema: String!, $storageUnit: String!, $csvData: String!, $mode: ImportMode!) {
-                            ImportCSV(schema: $schema, storageUnit: $storageUnit, csvData: $csvData, mode: $mode) {
-                                totalRows
-                                processedRows
-                                status
-                                error
-                            }
-                        }
-                    `,
-                    variables: {
-                        schema,
-                        storageUnit,
-                        csvData: base64Data,
-                        mode: importMode === 'append' ? 'Append' : 'Override'
-                    }
-                })
+                credentials: 'include',
+                body: formData
             });
+
+            if (!response.ok) {
+                const errorData = await response.text();
+                throw new Error(errorData || `Import failed: ${response.statusText}`);
+            }
 
             const result = await response.json();
             
-            if (result.errors) {
-                throw new Error(result.errors[0].message);
+            if (result.status === 'failed') {
+                throw new Error(result.error || 'Import failed');
             }
             
-            const importResult = result.data.ImportCSV;
-            
-            if (importResult.error) {
-                throw new Error(importResult.error);
-            }
-            
-            notify(`Successfully imported ${importResult.processedRows} rows`, "success");
+            notify(`Successfully imported ${result.processedRows} rows`, "success");
             setShowImportModal(false);
             setImportFile(null);
             setImportProgress(null);
             
             // Refresh the table
             window.location.reload();
-        } catch (error) {
-            notify(`Import failed: ${error}`, "error");
+        } catch (error: any) {
+            notify(`Import failed: ${error.message}`, "error");
         } finally {
             setImporting(false);
         }
-    }, [importFile, schema, storageUnit, importMode]);
+    }, [importFile, schema, storageUnit, importMode, importFormat, importDelimiter]);
 
     const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file && file.type === 'text/csv') {
+        if (!file) return;
+
+        const filename = file.name.toLowerCase();
+        const isCSV = file.type === 'text/csv' || filename.endsWith('.csv');
+        const isExcel = filename.endsWith('.xlsx') || filename.endsWith('.xls');
+
+        if (isCSV || isExcel) {
             setImportFile(file);
+            setImportFormat(isExcel ? 'excel' : 'csv');
         } else {
-            notify("Please select a CSV file", "error");
+            notify("Please select a CSV or Excel file", "error");
         }
     }, []);
 
@@ -802,9 +793,10 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                 </div>
                 <div className="flex gap-4 items-center">
                     <div className="text-sm text-gray-600 dark:text-neutral-300"><span className="font-semibold">Count:</span> {rowCount}</div>
+                    {/* Import functionality temporarily disabled
                     {schema && storageUnit && (
                         <AnimatedButton icon={Icons.Upload} label="Import" type="lg" onClick={() => setShowImportModal(true)} />
-                    )}
+                    )} */}
                     <AnimatedButton icon={Icons.Download} label={hasSelectedRows ? `Export ${checkedRows?.size} selected` : "Export all"} type="lg" onClick={() => setShowExportConfirm(true)} />
                 </div>
             </div>
@@ -864,6 +856,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
             }
         </div>
         <AnimatePresence>
+            {/* Import modal temporarily disabled
             {showImportModal && (
                 <Portal>
                     <motion.div
@@ -889,7 +882,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                                     </label>
                                     <input
                                         type="file"
-                                        accept=".csv"
+                                        accept=".csv,text/csv,.xlsx,.xls"
                                         onChange={handleFileSelect}
                                         className="block w-full text-sm text-gray-900 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-700 focus:outline-none"
                                     />
@@ -933,12 +926,36 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                                     )}
                                 </div>
                                 
+                                {importFormat === 'csv' && (
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2 dark:text-gray-300">
+                                            Delimiter
+                                        </label>
+                                        <select
+                                            value={importDelimiter}
+                                            onChange={(e) => setImportDelimiter(e.target.value)}
+                                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white"
+                                            disabled={importing}
+                                        >
+                                            <option value=",">Comma (,) - Standard CSV</option>
+                                            <option value=";">Semicolon (;) - Excel in some locales</option>
+                                            <option value="|">Pipe (|) - Less common in data</option>
+                                            <option value="\t">Tab - TSV format</option>
+                                        </select>
+                                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                            Choose the delimiter that matches your file
+                                        </p>
+                                    </div>
+                                )}
+                                
                                 <div className="text-sm text-gray-600 dark:text-gray-400">
-                                    <p className="font-medium mb-1">CSV Format Requirements:</p>
+                                    <p className="font-medium mb-1">File Format Requirements:</p>
                                     <ul className="list-disc list-inside space-y-1">
                                         <li>First row must contain column headers with format: column_name:data_type</li>
-                                        <li>Use pipe (|) as delimiter</li>
-                                        <li>All required columns must be present</li>
+                                        {importFormat === 'csv' && <li>Use selected delimiter to separate values</li>}
+                                        {importFormat === 'excel' && <li>Data will be imported from the first sheet</li>}
+                                        <li>Maximum file size: 50MB</li>
+                                        <li>Maximum rows: 1,000,000</li>
                                     </ul>
                                 </div>
                                 
@@ -975,7 +992,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                         </motion.div>
                     </motion.div>
                 </Portal>
-            )}
+            )} */}
         </AnimatePresence>
         <AnimatePresence>
             {showExportConfirm && (
