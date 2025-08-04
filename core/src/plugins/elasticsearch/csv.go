@@ -24,13 +24,12 @@ import (
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
-	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esutil"
 )
 
 // ExportCSV exports ElasticSearch index data to CSV format
 func (p *ElasticSearchPlugin) ExportCSV(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, progressCallback func(int)) error {
-	db, err := p.DB(config)
+	db, err := DB(config)
 	if err != nil {
 		return err
 	}
@@ -51,7 +50,7 @@ func (p *ElasticSearchPlugin) ExportCSV(config *engine.PluginConfig, schema stri
 
 	// Extract field names from mapping
 	fieldNames := p.extractFieldNames(mappingResponse, storageUnit)
-	
+
 	// Write headers
 	headers := make([]string, len(fieldNames))
 	for i, field := range fieldNames {
@@ -89,7 +88,7 @@ func (p *ElasticSearchPlugin) ExportCSV(config *engine.PluginConfig, schema stri
 
 		for _, hit := range hits {
 			doc := hit.(map[string]interface{})["_source"].(map[string]interface{})
-			
+
 			row := make([]string, len(fieldNames))
 			for i, field := range fieldNames {
 				if val, exists := p.getNestedValue(doc, field); exists {
@@ -134,7 +133,7 @@ func (p *ElasticSearchPlugin) ExportCSV(config *engine.PluginConfig, schema stri
 
 // ImportCSV imports CSV data into ElasticSearch index
 func (p *ElasticSearchPlugin) ImportCSV(config *engine.PluginConfig, schema string, storageUnit string, reader func() ([]string, error), mode engine.ImportMode, progressCallback func(engine.ImportProgress)) error {
-	db, err := p.DB(config)
+	db, err := DB(config)
 	if err != nil {
 		return err
 	}
@@ -236,7 +235,7 @@ func (p *ElasticSearchPlugin) ImportCSV(config *engine.PluginConfig, schema stri
 
 func (p *ElasticSearchPlugin) extractFieldNames(mapping map[string]interface{}, indexName string) []string {
 	fields := make(map[string]bool)
-	
+
 	if indexData, ok := mapping[indexName].(map[string]interface{}); ok {
 		if mappings, ok := indexData["mappings"].(map[string]interface{}); ok {
 			if properties, ok := mappings["properties"].(map[string]interface{}); ok {
@@ -259,9 +258,9 @@ func (p *ElasticSearchPlugin) extractFieldsRecursive(properties map[string]inter
 		if prefix != "" {
 			fullName = prefix + "." + name
 		}
-		
+
 		fields[fullName] = true
-		
+
 		if propMap, ok := prop.(map[string]interface{}); ok {
 			if subProps, ok := propMap["properties"].(map[string]interface{}); ok {
 				p.extractFieldsRecursive(subProps, fullName, fields)
@@ -273,20 +272,20 @@ func (p *ElasticSearchPlugin) extractFieldsRecursive(properties map[string]inter
 func (p *ElasticSearchPlugin) getNestedValue(doc map[string]interface{}, field string) (interface{}, bool) {
 	parts := strings.Split(field, ".")
 	current := doc
-	
+
 	for i, part := range parts {
 		if i == len(parts)-1 {
 			val, exists := current[part]
 			return val, exists
 		}
-		
+
 		if next, ok := current[part].(map[string]interface{}); ok {
 			current = next
 		} else {
 			return nil, false
 		}
 	}
-	
+
 	return nil, false
 }
 

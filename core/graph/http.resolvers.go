@@ -39,9 +39,6 @@ func SetupHTTPServer(router chi.Router) {
 	router.Post("/api/storage-units", addStorageUnitHandler)
 	router.Post("/api/rows", addRowHandler)
 	router.Delete("/api/rows", deleteRowHandler)
-	
-	// CSV export endpoint
-	router.Get("/api/export-csv", HandleCSVExport)
 }
 
 var resolver = mutationResolver{}

@@ -37,8 +37,8 @@ func (p *ClickHousePlugin) ExportCSV(config *engine.PluginConfig, schema string,
 		FROM system.columns 
 		WHERE database = ? AND table = ?
 		ORDER BY position`
-	
-	rows, err := db.Query(query, schema, storageUnit)
+
+	rows, err := db.Raw(query, schema, storageUnit).Rows()
 	if err != nil {
 		return fmt.Errorf("failed to get columns: %v", err)
 	}
@@ -65,10 +65,10 @@ func (p *ClickHousePlugin) ExportCSV(config *engine.PluginConfig, schema string,
 	}
 
 	// Export data
-	selectQuery := fmt.Sprintf("SELECT %s FROM %s.%s", 
+	selectQuery := fmt.Sprintf("SELECT %s FROM %s.%s",
 		strings.Join(columns, ", "), schema, storageUnit)
-	
-	dataRows, err := db.Query(selectQuery)
+
+	dataRows, err := db.Raw(selectQuery).Rows()
 	if err != nil {
 		return fmt.Errorf("failed to query data: %v", err)
 	}
@@ -133,8 +133,8 @@ func (p *ClickHousePlugin) ImportCSV(config *engine.PluginConfig, schema string,
 		FROM system.columns 
 		WHERE database = ? AND table = ?
 		ORDER BY position`
-	
-	rows, err := db.Query(query, schema, storageUnit)
+
+	rows, err := db.Raw(query, schema, storageUnit).Rows()
 	if err != nil {
 		return fmt.Errorf("failed to get columns: %v", err)
 	}
@@ -166,27 +166,27 @@ func (p *ClickHousePlugin) ImportCSV(config *engine.PluginConfig, schema string,
 
 	// Handle override mode
 	if mode == engine.ImportModeOverride {
-		if _, err := db.Exec(fmt.Sprintf("TRUNCATE TABLE %s.%s", schema, storageUnit)); err != nil {
+		if err := db.Exec(fmt.Sprintf("TRUNCATE TABLE %s.%s", schema, storageUnit)).Error; err != nil {
 			return fmt.Errorf("failed to clear table: %v", err)
 		}
 	}
 
 	// Prepare batch insert
-	batch, err := db.Begin()
-	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %v", err)
+	batch := db.Begin()
+	if batch.Error != nil {
+		return fmt.Errorf("failed to begin transaction: %v", batch.Error)
 	}
-	
+
+	// Prepare placeholders for ClickHouse
+	placeholders := make([]string, len(existingColumns))
+	for i := range placeholders {
+		placeholders[i] = "?"
+	}
+
 	insertQuery := fmt.Sprintf("INSERT INTO %s.%s (%s) VALUES (%s)",
 		schema, storageUnit,
 		strings.Join(existingColumns, ", "),
-		strings.Join(make([]string, len(existingColumns)), "?"))
-
-	stmt, err := batch.Prepare(insertQuery)
-	if err != nil {
-		batch.Rollback()
-		return fmt.Errorf("failed to prepare statement: %v", err)
-	}
+		strings.Join(placeholders, ", "))
 
 	// Process rows
 	rowCount := 0
@@ -216,7 +216,7 @@ func (p *ClickHousePlugin) ImportCSV(config *engine.PluginConfig, schema string,
 			}
 		}
 
-		if _, err := stmt.Exec(values...); err != nil {
+		if err := batch.Exec(insertQuery, values...).Error; err != nil {
 			batch.Rollback()
 			return fmt.Errorf("failed to insert row %d: %v", rowCount+1, err)
 		}
@@ -226,21 +226,15 @@ func (p *ClickHousePlugin) ImportCSV(config *engine.PluginConfig, schema string,
 
 		// Commit batch
 		if currentBatch >= batchSize {
-			if err := batch.Commit(); err != nil {
+			if err := batch.Commit().Error; err != nil {
 				return fmt.Errorf("failed to commit batch: %v", err)
 			}
-			
-			batch, err = db.Begin()
-			if err != nil {
-				return fmt.Errorf("failed to begin new transaction: %v", err)
+
+			batch = db.Begin()
+			if batch.Error != nil {
+				return fmt.Errorf("failed to begin new transaction: %v", batch.Error)
 			}
-			
-			stmt, err = batch.Prepare(insertQuery)
-			if err != nil {
-				batch.Rollback()
-				return fmt.Errorf("failed to prepare statement: %v", err)
-			}
-			
+
 			currentBatch = 0
 		}
 
@@ -253,7 +247,7 @@ func (p *ClickHousePlugin) ImportCSV(config *engine.PluginConfig, schema string,
 	}
 
 	// Commit final batch
-	if err := batch.Commit(); err != nil {
+	if err := batch.Commit().Error; err != nil {
 		return fmt.Errorf("failed to commit final batch: %v", err)
 	}
 
@@ -273,7 +267,7 @@ func (p *ClickHousePlugin) formatValue(val interface{}) string {
 	if val == nil {
 		return ""
 	}
-	
+
 	switch v := val.(type) {
 	case []byte:
 		return string(v)
@@ -288,7 +282,7 @@ func (p *ClickHousePlugin) parseClickHouseValue(val string, dataType string) int
 	if val == "" {
 		return nil
 	}
-	
+
 	// ClickHouse will handle type conversion
 	return val
 }

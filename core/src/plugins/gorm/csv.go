@@ -17,7 +17,6 @@
 package gorm_plugin
 
 import (
-	"database/sql"
 	"fmt"
 	"strings"
 
@@ -25,6 +24,8 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 	"gorm.io/gorm"
 )
+
+var exportRowCountThreshold = 1
 
 // ExportCSV exports table data to CSV format
 func (p *GormPlugin) ExportCSV(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, progressCallback func(int)) error {
@@ -65,8 +66,8 @@ func (p *GormPlugin) ExportCSV(config *engine.PluginConfig, schema string, stora
 
 	// Stream results
 	rowCount := 0
-	values := make([]interface{}, len(columns))
-	valuePtrs := make([]interface{}, len(columns))
+	values := make([]any, len(columns))
+	valuePtrs := make([]any, len(columns))
 	for i := range values {
 		valuePtrs[i] = &values[i]
 	}
@@ -86,7 +87,7 @@ func (p *GormPlugin) ExportCSV(config *engine.PluginConfig, schema string, stora
 		}
 
 		rowCount++
-		if progressCallback != nil && rowCount%1000 == 0 {
+		if progressCallback != nil && rowCount > 0 && rowCount%exportRowCountThreshold == 0 {
 			progressCallback(rowCount)
 		}
 	}
@@ -158,7 +159,7 @@ func (p *GormPlugin) ImportCSV(config *engine.PluginConfig, schema string, stora
 	for i := range placeholders {
 		placeholders[i] = p.GetPlaceholder(i + 1)
 	}
-	
+
 	insertSQL := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)",
 		tableName,
 		strings.Join(p.escapeIdentifiers(existingColumns), ", "),
@@ -234,7 +235,7 @@ func (p *GormPlugin) getTableColumns(db *gorm.DB, schema string, storageUnit str
 		FROM information_schema.columns 
 		WHERE table_schema = ? AND table_name = ? 
 		ORDER BY ordinal_position`
-	
+
 	rows, err := db.Raw(query, schema, storageUnit).Rows()
 	if err != nil {
 		return nil, nil, err
@@ -259,7 +260,7 @@ func (p *GormPlugin) formatValue(val interface{}) string {
 	if val == nil {
 		return ""
 	}
-	
+
 	switch v := val.(type) {
 	case []byte:
 		return string(v)

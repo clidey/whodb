@@ -31,11 +31,12 @@ import (
 
 // ExportCSV exports MongoDB collection data to CSV format
 func (p *MongoDBPlugin) ExportCSV(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, progressCallback func(int)) error {
-	db, err := p.DB(config)
+	client, err := DB(config)
 	if err != nil {
 		return err
 	}
 
+	db := client.Database(schema)
 	collection := db.Collection(storageUnit)
 	
 	// First, get all field names from a sample of documents
@@ -95,11 +96,12 @@ func (p *MongoDBPlugin) ExportCSV(config *engine.PluginConfig, schema string, st
 
 // ImportCSV imports CSV data into MongoDB collection
 func (p *MongoDBPlugin) ImportCSV(config *engine.PluginConfig, schema string, storageUnit string, reader func() ([]string, error), mode engine.ImportMode, progressCallback func(engine.ImportProgress)) error {
-	db, err := p.DB(config)
+	client, err := DB(config)
 	if err != nil {
 		return err
 	}
 
+	db := client.Database(schema)
 	collection := db.Collection(storageUnit)
 
 	// Read headers
