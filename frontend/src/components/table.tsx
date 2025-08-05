@@ -22,6 +22,7 @@ import { Cell, Row, useBlockLayout, useTable } from 'react-table';
 import { FixedSizeList, ListChildComponentProps } from "react-window";
 import { twMerge } from "tailwind-merge";
 import { notify } from "../store/function";
+import { useAppSelector } from "../store/hooks";
 import { isMarkdown, isNumeric, isValidJSON } from "../utils/functions";
 import { ActionButton, AnimatedButton } from "./button";
 import { Portal } from "./common";
@@ -427,6 +428,7 @@ type ITableProps = {
 }
 
 export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows: actualRows, columnTags, totalPages, currentPage, onPageChange, onRowUpdate, disableEdit, checkedRows, setCheckedRows, hideActions, schema, storageUnit }) => {
+    const current = useAppSelector(state => state.auth.current);
     const fixedTableRef = useRef<FixedSizeList>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const operationsRef = useRef<HTMLDivElement>(null);
@@ -699,7 +701,9 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                 </div>
                 <div className="flex gap-4 items-center">
                     <div className="text-sm text-gray-600 dark:text-neutral-300"><span className="font-semibold">Count:</span> {rowCount}</div>
-                    <AnimatedButton icon={Icons.Download} label={hasSelectedRows ? `Export ${checkedRows?.size} selected` : "Export all"} type="lg" onClick={() => setShowExportConfirm(true)} />
+                    {current?.Type !== "Redis" && (
+                        <AnimatedButton icon={Icons.Download} label={hasSelectedRows ? `Export ${checkedRows?.size} selected` : "Export all"} type="lg" onClick={() => setShowExportConfirm(true)} />
+                    )}
                 </div>
             </div>
             <div className={twMerge(classNames("flex overflow-x-auto h-full", className))} style={{
