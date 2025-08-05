@@ -190,16 +190,21 @@ func (p *ElasticSearchPlugin) formatElasticValue(val any) string {
 		return ""
 	}
 
+	var strVal string
 	switch v := val.(type) {
 	case string:
-		return v
+		strVal = v
 	case []any, map[string]any:
 		data, err := json.Marshal(v)
 		if err != nil {
-			return fmt.Sprintf("%v", v)
+			strVal = fmt.Sprintf("%v", v)
+		} else {
+			strVal = string(data)
 		}
-		return string(data)
 	default:
-		return fmt.Sprintf("%v", v)
+		strVal = fmt.Sprintf("%v", v)
 	}
+	
+	// Apply formula injection protection
+	return common.EscapeFormula(strVal)
 }

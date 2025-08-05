@@ -82,12 +82,23 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 		return fmt.Errorf("failed to write headers: %v", err)
 	}
 
-	// Build query
+	// Build query with proper escaping
 	columnList := make([]string, len(columns))
 	for i, col := range columns {
 		columnList[i] = p.EscapeIdentifier(col)
 	}
-	query := fmt.Sprintf("SELECT %s FROM %s", strings.Join(columnList, ", "), tableName)
+	// Ensure table name is properly escaped
+	escapedTableName := tableName
+	if !strings.Contains(tableName, ".") {
+		escapedTableName = p.EscapeIdentifier(tableName)
+	} else {
+		// Handle schema.table format
+		parts := strings.Split(tableName, ".")
+		if len(parts) == 2 {
+			escapedTableName = p.EscapeIdentifier(parts[0]) + "." + p.EscapeIdentifier(parts[1])
+		}
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", strings.Join(columnList, ", "), escapedTableName)
 
 	// Execute query
 	rows, err := db.Raw(query).Rows()
@@ -163,17 +174,17 @@ func (p *GormPlugin) FormatValue(val any) string {
 
 	switch v := val.(type) {
 	case []byte:
-		return string(v)
+		return common.EscapeFormula(string(v))
 	case string:
-		return v
+		return common.EscapeFormula(v)
 	case time.Time:
 		// Format time in ISO 8601 format that can be parsed back
 		if v.Hour() == 0 && v.Minute() == 0 && v.Second() == 0 && v.Nanosecond() == 0 {
 			// Date only
-			return v.Format("2006-01-02")
+			return common.EscapeFormula(v.Format("2006-01-02"))
 		}
 		// Full datetime
-		return v.Format("2006-01-02T15:04:05")
+		return common.EscapeFormula(v.Format("2006-01-02T15:04:05"))
 	case *time.Time:
 		if v == nil {
 			return ""
@@ -181,10 +192,10 @@ func (p *GormPlugin) FormatValue(val any) string {
 		// Format time in ISO 8601 format that can be parsed back
 		if v.Hour() == 0 && v.Minute() == 0 && v.Second() == 0 && v.Nanosecond() == 0 {
 			// Date only
-			return v.Format("2006-01-02")
+			return common.EscapeFormula(v.Format("2006-01-02"))
 		}
 		// Full datetime
-		return v.Format("2006-01-02T15:04:05")
+		return common.EscapeFormula(v.Format("2006-01-02T15:04:05"))
 	case sql.NullTime:
 		if !v.Valid {
 			return ""
@@ -192,12 +203,12 @@ func (p *GormPlugin) FormatValue(val any) string {
 		// Format time in ISO 8601 format that can be parsed back
 		if v.Time.Hour() == 0 && v.Time.Minute() == 0 && v.Time.Second() == 0 && v.Time.Nanosecond() == 0 {
 			// Date only
-			return v.Time.Format("2006-01-02")
+			return common.EscapeFormula(v.Time.Format("2006-01-02"))
 		}
 		// Full datetime
-		return v.Time.Format("2006-01-02T15:04:05")
+		return common.EscapeFormula(v.Time.Format("2006-01-02T15:04:05"))
 	default:
-		return fmt.Sprintf("%v", v)
+		return common.EscapeFormula(fmt.Sprintf("%v", v))
 	}
 }
 

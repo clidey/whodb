@@ -134,17 +134,22 @@ func (p *MongoDBPlugin) formatBSONValue(val any) string {
 		return ""
 	}
 
+	var strVal string
 	switch v := val.(type) {
 	case string:
-		return v
+		strVal = v
 	case []any, bson.A, bson.M, map[string]any:
 		// Convert complex types to JSON
 		data, err := json.Marshal(v)
 		if err != nil {
-			return fmt.Sprintf("%v", v)
+			strVal = fmt.Sprintf("%v", v)
+		} else {
+			strVal = string(data)
 		}
-		return string(data)
 	default:
-		return fmt.Sprintf("%v", v)
+		strVal = fmt.Sprintf("%v", v)
 	}
+	
+	// Apply formula injection protection
+	return common.EscapeFormula(strVal)
 }

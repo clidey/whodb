@@ -68,9 +68,14 @@ func (p *ClickHousePlugin) ExportData(config *engine.PluginConfig, schema string
 		return fmt.Errorf("failed to write headers: %v", err)
 	}
 
-	// Export data
+	// Export data with proper identifier escaping
+	// Escape column names
+	escapedColumns := make([]string, len(columns))
+	for i, col := range columns {
+		escapedColumns[i] = EscapeIdentifier(col)
+	}
 	selectQuery := fmt.Sprintf("SELECT %s FROM %s.%s",
-		strings.Join(columns, ", "), schema, storageUnit)
+		strings.Join(escapedColumns, ", "), EscapeIdentifier(schema), EscapeIdentifier(storageUnit))
 
 	dataRows, err := db.Raw(selectQuery).Rows()
 	if err != nil {
@@ -114,13 +119,24 @@ func (p *ClickHousePlugin) formatValue(val any) string {
 		return ""
 	}
 
+	var strVal string
 	switch v := val.(type) {
 	case []byte:
-		return string(v)
+		strVal = string(v)
 	case string:
-		return v
+		strVal = v
 	default:
-		return fmt.Sprintf("%v", v)
+		strVal = fmt.Sprintf("%v", v)
 	}
+	
+	// Apply formula injection protection
+	return common.EscapeFormula(strVal)
+}
+
+// EscapeIdentifier escapes ClickHouse identifiers to prevent SQL injection
+func EscapeIdentifier(identifier string) string {
+	// ClickHouse uses backticks for identifier escaping
+	// Replace any backticks in the identifier with doubled backticks
+	return "`" + strings.ReplaceAll(identifier, "`", "``") + "`"
 }
 

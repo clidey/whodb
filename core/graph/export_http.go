@@ -60,6 +60,15 @@ func HandleExport(w http.ResponseWriter, r *http.Request) {
 		delimiter = ","
 	}
 
+	// Sanitize delimiter to prevent injection attacks
+	if len(delimiter) == 1 {
+		delimChar := delimiter[0]
+		if delimChar == '=' || delimChar == '+' || delimChar == '-' || delimChar == '@' || delimChar == '\t' || delimChar == '\r' {
+			http.Error(w, "Invalid delimiter character", http.StatusBadRequest)
+			return
+		}
+	}
+
 	if schema == "" || storageUnit == "" {
 		http.Error(w, "Missing required parameters", http.StatusBadRequest)
 		return
@@ -113,6 +122,16 @@ func handleCSVExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfig 
 
 	// Create writer function that streams to HTTP response
 	writerFunc := func(row []string) error {
+		// Apply formula injection protection for CSV
+		for i, value := range row {
+			if len(value) > 0 {
+				firstChar := value[0]
+				if firstChar == '=' || firstChar == '+' || firstChar == '-' || firstChar == '@' || firstChar == '\t' || firstChar == '\r' {
+					row[i] = "'" + value
+				}
+			}
+		}
+		
 		if err := csvWriter.Write(row); err != nil {
 			return err
 		}
@@ -148,66 +167,101 @@ func handleExcelExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfi
 
 	// Create a new sheet
 	sheetName := "Data"
-	f.SetSheetName("Sheet1", sheetName)
+	index, err := f.NewSheet(sheetName)
+	if err != nil {
+		http.Error(w, "Failed to create Excel sheet", http.StatusInternalServerError)
+		return
+	}
+	f.SetActiveSheet(index)
+	f.DeleteSheet("Sheet1")
 
-	// Collect all rows in memory (Excel requires full data)
-	var allRows [][]string
+	// Get stream writer for efficient memory usage
+	streamWriter, err := f.NewStreamWriter(sheetName)
+	if err != nil {
+		http.Error(w, "Failed to create Excel stream writer", http.StatusInternalServerError)
+		return
+	}
+
 	var headers []string
 	rowCount := 0
+	currentRow := 1
 
-	// Create writer function that collects rows with limit check
+	// Create writer function that streams rows directly
 	writerFunc := func(row []string) error {
 		if rowCount >= MaxExcelRows {
 			return fmt.Errorf("excel export limit exceeded: maximum %d rows allowed", MaxExcelRows)
 		}
 
+		// Escape formula injection for Excel
+		for i, value := range row {
+			if len(value) > 0 {
+				firstChar := value[0]
+				if firstChar == '=' || firstChar == '+' || firstChar == '-' || firstChar == '@' || firstChar == '\t' || firstChar == '\r' {
+					row[i] = "'" + value
+				}
+			}
+		}
+
 		if len(headers) == 0 {
 			// First row is headers
 			headers = row
-			allRows = append(allRows, row)
+			// Create header style
+			styleID, _ := f.NewStyle(&excelize.Style{
+				Font: &excelize.Font{Bold: true},
+				Fill: excelize.Fill{
+					Type:    "pattern",
+					Color:   []string{"#E0E0E0"},
+					Pattern: 1,
+				},
+			})
+
+			// Write headers with style
+			cells := make([]interface{}, len(row))
+			for i, header := range row {
+				cells[i] = excelize.Cell{StyleID: styleID, Value: header}
+			}
+			
+			cell, _ := excelize.CoordinatesToCellName(1, currentRow)
+			if err := streamWriter.SetRow(cell, cells); err != nil {
+				return err
+			}
 		} else {
-			allRows = append(allRows, row)
+			// Write data row
+			cells := make([]interface{}, len(row))
+			for i, value := range row {
+				cells[i] = value
+			}
+			
+			cell, _ := excelize.CoordinatesToCellName(1, currentRow)
+			if err := streamWriter.SetRow(cell, cells); err != nil {
+				return err
+			}
 		}
+		
 		rowCount++
+		currentRow++
 		return nil
 	}
 
 	// Export rows using the plugin
-	err := plugin.ExportData(pluginConfig, schema, storageUnit, writerFunc, selectedRows)
+	err = plugin.ExportData(pluginConfig, schema, storageUnit, writerFunc, selectedRows)
 	if err != nil {
-		fmt.Printf("Excel export error for %s.%s: %v\n", schema, storageUnit, err)
-		http.Error(w, "Export failed. Please check your permissions and try again.", http.StatusInternalServerError)
+		http.Error(w, "Export failed", http.StatusInternalServerError)
 		return
 	}
 
-	// Write data to Excel
-	for rowIdx, row := range allRows {
-		for colIdx, value := range row {
-			cell, _ := excelize.CoordinatesToCellName(colIdx+1, rowIdx+1)
-			f.SetCellValue(sheetName, cell, value)
+	// Set column widths
+	if len(headers) > 0 {
+		for i := 0; i < len(headers); i++ {
+			col, _ := excelize.ColumnNumberToName(i + 1)
+			streamWriter.SetColWidth(i+1, i+1, 15)
 		}
 	}
 
-	// Format headers (bold, background color)
-	if len(headers) > 0 {
-		headerStyle, _ := f.NewStyle(&excelize.Style{
-			Font: &excelize.Font{Bold: true},
-			Fill: excelize.Fill{
-				Type:    "pattern",
-				Color:   []string{"#E0E0E0"},
-				Pattern: 1,
-			},
-		})
-
-		// Apply style to header row
-		endCell, _ := excelize.CoordinatesToCellName(len(headers), 1)
-		f.SetCellStyle(sheetName, "A1", endCell, headerStyle)
-
-		// Auto-fit columns
-		for i := 0; i < len(headers); i++ {
-			col, _ := excelize.ColumnNumberToName(i + 1)
-			f.SetColWidth(sheetName, col, col, 15)
-		}
+	// Flush the stream writer
+	if err := streamWriter.Flush(); err != nil {
+		http.Error(w, "Failed to flush Excel data", http.StatusInternalServerError)
+		return
 	}
 
 	// Set response headers for Excel download
@@ -220,8 +274,7 @@ func handleExcelExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfi
 
 	// Write Excel file to response
 	if err := f.Write(w); err != nil {
-		fmt.Printf("Excel write error for %s.%s: %v\n", schema, storageUnit, err)
-		http.Error(w, "Failed to generate Excel file. Please try again.", http.StatusInternalServerError)
+		http.Error(w, "Failed to generate Excel file", http.StatusInternalServerError)
 		return
 	}
 }
