@@ -24,7 +24,6 @@ import (
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
-	"gorm.io/gorm"
 )
 
 // ExportData exports data to tabular format (CSV/Excel). If selectedRows is nil/empty, exports all rows from the table.
@@ -66,12 +65,27 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 		return err
 	}
 
-	// Get column information
-	tableName := p.FormTableName(schema, storageUnit)
-	columns, columnTypes, err := p.getTableColumns(db, schema, storageUnit)
+	// Get column information using existing GetTableSchema
+	tableSchema, err := p.GetTableSchema(db, schema)
 	if err != nil {
-		return fmt.Errorf("failed to get table columns: %v", err)
+		return fmt.Errorf("failed to get table schema: %v", err)
 	}
+
+	// Extract columns for the specific table
+	tableColumns, exists := tableSchema[storageUnit]
+	if !exists || len(tableColumns) == 0 {
+		return fmt.Errorf("no columns found for table %s.%s", schema, storageUnit)
+	}
+
+	// Convert to separate arrays for columns and types
+	columns := make([]string, len(tableColumns))
+	columnTypes := make([]string, len(tableColumns))
+	for i, col := range tableColumns {
+		columns[i] = col.Key       // Column name
+		columnTypes[i] = col.Value // Data type
+	}
+
+	tableName := p.FormTableName(schema, storageUnit)
 
 	// Write headers with type information
 	headers := make([]string, len(columns))
@@ -133,36 +147,6 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 	}
 
 	return rows.Err()
-}
-
-// Helper functions
-
-func (p *GormPlugin) getTableColumns(db *gorm.DB, schema string, storageUnit string) ([]string, []string, error) {
-	// Use information schema to get column info
-	query := `
-		SELECT column_name, data_type 
-		FROM information_schema.columns 
-		WHERE table_schema = ? AND table_name = ? 
-		ORDER BY ordinal_position`
-
-	rows, err := db.Raw(query, schema, storageUnit).Rows()
-	if err != nil {
-		return nil, nil, err
-	}
-	defer rows.Close()
-
-	var columns []string
-	var types []string
-	for rows.Next() {
-		var col, typ string
-		if err := rows.Scan(&col, &typ); err != nil {
-			return nil, nil, err
-		}
-		columns = append(columns, col)
-		types = append(types, typ)
-	}
-
-	return columns, types, rows.Err()
 }
 
 // FormatValue converts interface{} values to strings appropriately for CSV
