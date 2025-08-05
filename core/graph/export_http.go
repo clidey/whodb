@@ -69,7 +69,7 @@ func HandleExport(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if schema == "" || storageUnit == "" {
+	if schema == "" && storageUnit == "" {
 		http.Error(w, "Missing required parameters", http.StatusBadRequest)
 		return
 	}

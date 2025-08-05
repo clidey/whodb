@@ -135,7 +135,6 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 	return rows.Err()
 }
 
-
 // Helper functions
 
 func (p *GormPlugin) getTableColumns(db *gorm.DB, schema string, storageUnit string) ([]string, []string, error) {

@@ -100,7 +100,6 @@ func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema str
 					row[i] = ""
 				}
 			}
-
 			if err := writer(row); err != nil {
 				return fmt.Errorf("failed to write row: %v", err)
 			}

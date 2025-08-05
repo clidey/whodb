@@ -673,33 +673,7 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
 
     const handleExportConfirm = useCallback(async () => {
         try {
-            if (!schema || !storageUnit) {
-                // Fallback to client-side export if schema/storageUnit not provided
-                const selectedRows = hasSelectedRows 
-                    ? [...checkedRows!].map(index => sortedRows[index])
-                    : sortedRows;
-                
-                const csvContent = [
-                    actualColumns.join('|'), 
-                    ...selectedRows.map(row => actualColumns.map(col => row[col] || '').join("|"))
-                ].join('\n'); 
-            
-                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            
-                const link = document.createElement('a');
-                if (link.download !== undefined) {
-                    const url = URL.createObjectURL(blob);
-                    link.setAttribute('href', url);
-                    link.setAttribute('download', `${storageUnit || 'data'}.csv`);
-                    link.style.visibility = 'hidden';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                }
-            } else {
-                // Use backend export for full data
-                await backendExport();
-            }
+            await backendExport();
             setShowExportConfirm(false);
         } catch (error: any) {
             console.error('Export failed:', error);
