@@ -195,14 +195,6 @@ func (p *GormPlugin) FormatValue(val any) string {
 	}
 }
 
-func (p *GormPlugin) escapeIdentifiers(identifiers []string) []string {
-	escaped := make([]string, len(identifiers))
-	for i, id := range identifiers {
-		escaped[i] = p.EscapeIdentifier(id)
-	}
-	return escaped
-}
-
 // GetPlaceholder returns the placeholder for prepared statements
 // Override this in database-specific implementations
 func (p *GormPlugin) GetPlaceholder(index int) string {
