@@ -94,6 +94,10 @@ func (p *Sqlite3Plugin) GetTableInfoQuery() string {
 	`
 }
 
+func (p *Sqlite3Plugin) GetPlaceholder(index int) string {
+	return "?"
+}
+
 func (p *Sqlite3Plugin) GetTableNameAndAttributes(rows *sql.Rows, db *gorm.DB) (string, []engine.Record) {
 	var tableName, tableType string
 	if err := rows.Scan(&tableName, &tableType); err != nil {

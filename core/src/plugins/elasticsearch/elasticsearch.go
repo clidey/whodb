@@ -235,6 +235,14 @@ func (p *ElasticSearchPlugin) Chat(config *engine.PluginConfig, schema string, m
 	return nil, errors.ErrUnsupported
 }
 
+
+func (p *ElasticSearchPlugin) FormatValue(val interface{}) string {
+	if val == nil {
+		return ""
+	}
+	return fmt.Sprintf("%v", val)
+}
+
 func (p *ElasticSearchPlugin) GetSupportedOperators() map[string]string {
 	return supportedOperators
 }

@@ -89,6 +89,10 @@ func (p *MySQLPlugin) GetTableInfoQuery() string {
 			TABLE_SCHEMA = ?`
 }
 
+func (p *MySQLPlugin) GetPlaceholder(index int) string {
+	return "?"
+}
+
 func (p *MySQLPlugin) GetTableNameAndAttributes(rows *sql.Rows, db *gorm.DB) (string, []engine.Record) {
 	var tableName, tableType string
 	var totalSize, dataSize float64

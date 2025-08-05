@@ -1,6 +1,6 @@
 # WhoDB Build and Run Guide
 
-This guide consolidates all build and run information for WhoDB Community Edition (CE) and Enterprise Edition (EE).
+This guide provides all build and run instructions for WhoDB Community Edition (CE) and Enterprise Edition (EE).
 
 ## Prerequisites
 
@@ -12,7 +12,6 @@ This guide consolidates all build and run information for WhoDB Community Editio
 
 ### Optional Tools
 - **Docker** (for containerized builds and deployment)
-- **Make** (for Makefile usage)
 - **Ollama** (for AI chat features) - [Download](https://ollama.com/)
 
 ## Quick Start
@@ -48,9 +47,100 @@ docker run -it -p 8080:8080 clidey/whodb
 docker-compose up
 ```
 
+## Building for Production
+
+### Quick Build Commands
+
+```bash
+# Build everything - Community Edition
+./build.sh
+
+# Build everything - Enterprise Edition
+./build.sh --ee
+
+# Build specific components
+./build.sh --backend-only
+./build.sh --frontend-only
+
+# Clean build (removes artifacts first)
+./build.sh --clean
+```
+
+### Build Output Locations
+- **CE Backend**: `whodb` (in project root)
+- **EE Backend**: `whodb-ee` (in project root)
+- **Frontend**: `frontend/build/`
+
+## GraphQL Code Generation
+
+GraphQL code generation is required when modifying GraphQL schemas or queries.
+
+### Backend GraphQL Generation
+
+#### Community Edition
+```bash
+cd core
+go generate ./...
+```
+
+#### Enterprise Edition (Multiple Options)
+
+**Option 1 - Using the dedicated script (Recommended):**
+```bash
+./scripts/generate-graphql.sh ee
+```
+
+**Option 2 - From EE directory:**
+```bash
+cd ee
+GOWORK=$PWD/../go.work.ee go generate ./...
+```
+
+**Option 3 - From root directory:**
+```bash
+GOWORK=$PWD/go.work.ee go generate ./ee/...
+```
+
+### Frontend GraphQL Generation
+
+Frontend GraphQL types must be generated from a running backend.
+
+#### Prerequisites
+1. Backend must be running on http://localhost:8080
+2. Backend must have introspection enabled (development mode)
+
+#### Generate Frontend Types
+
+**Community Edition:**
+```bash
+# Terminal 1: Start backend with introspection
+cd core
+go run .
+
+# Terminal 2: Generate frontend types
+cd frontend
+pnpm run generate
+```
+
+**Enterprise Edition:**
+```bash
+# Terminal 1: Start EE backend with introspection
+cd core
+GOWORK=$PWD/../go.work.ee go run -tags ee .
+
+# Terminal 2: Generate frontend types
+cd frontend
+pnpm run generate:ee
+```
+
+### Important GraphQL Notes
+- Frontend types location: `frontend/src/generated/graphql.tsx` (CE) or `ee/frontend/src/generated/graphql.tsx` (EE)
+- Always use `@graphql` import alias in code
+- Regenerate types after any backend schema changes
+
 ## Development Setup
 
-### Manual Backend Setup
+### Manual Backend Development
 
 #### Community Edition
 ```bash
@@ -60,15 +150,11 @@ go run .
 
 #### Enterprise Edition
 ```bash
-# From core directory
 cd core
 GOWORK=$PWD/../go.work.ee go run -tags ee .
-
-# Or from project root
-GOWORK=$PWD/go.work.ee go -C core run -tags ee .
 ```
 
-### Manual Frontend Setup
+### Manual Frontend Development
 
 #### First Time Setup
 ```bash
@@ -85,111 +171,29 @@ pnpm start
 pnpm start:ee
 ```
 
-## GraphQL Generation
+## Testing
 
-GraphQL types must be generated from a running backend before building the frontend.
-
-### Prerequisites
-- Backend must be running on http://localhost:8080
-- Use development mode for introspection: `ENVIRONMENT=dev go run .`
-
-### Generate Types
-
-#### For Community Edition
-```bash
-# Terminal 1: Start CE backend
-cd core
-ENVIRONMENT=dev go run .
-
-# Terminal 2: Generate types
-cd frontend
-pnpm run generate:ce
-```
-
-#### For Enterprise Edition
-```bash
-# Terminal 1: Start EE backend
-cd core
-ENVIRONMENT=dev go run -tags ee .
-
-# Terminal 2: Generate types
-cd frontend
-pnpm run generate:ee
-```
-
-### Important Notes
-- CE types are tracked in git at `frontend/src/generated/graphql.tsx`
-- EE types are private in `ee/frontend/src/generated/graphql.tsx`
-- Always use `@graphql` import alias, never direct imports
-- Regenerate types after any backend GraphQL schema changes
-
-## Building for Production
-
-### Quick Build Commands
-
-#### Build Everything
-```bash
-# Community Edition
-./build.sh
-
-# Enterprise Edition
-./build.sh --ee
-```
-
-#### Build Specific Components
-```bash
-# Backend only
-./build.sh --backend-only
-./build.sh --ee --backend-only
-
-# Frontend only
-./build.sh --frontend-only
-./build.sh --ee --frontend-only
-
-# Clean build (removes artifacts first)
-./build.sh --clean
-./build.sh --ee --clean
-```
-
-### Build Output Locations
-- **CE Backend**: `core/whodb`
-- **EE Backend**: `core/whodb-ee`
-- **Frontend**: `frontend/dist/`
-
-### Manual Build Process
-
-#### 1. Frontend Build (Must be done first)
-```bash
-# Ensure types are generated first (see GraphQL Generation section)
-
-# Community Edition
-cd frontend
-pnpm run build
-
-# Enterprise Edition
-cd frontend
-pnpm run build:ee
-```
-
-#### 2. Copy Frontend to Backend
-```bash
-# Remove old build and copy new frontend build
-rm -rf ../core/build
-cp -r build ../core/build
-```
-
-#### 3. Backend Build (Embeds the frontend)
+### Backend Tests
 ```bash
 # Community Edition
 cd core
-go build -o whodb
+go test ./... -cover
 
 # Enterprise Edition
 cd core
-go build -tags ee -o whodb-ee
+GOWORK=$PWD/../go.work.ee go test -tags ee ./... -cover
 ```
 
-**Note**: The backend embeds the frontend build, so the frontend must be built and copied first.
+### Frontend E2E Tests
+```bash
+cd frontend
+
+# Community Edition tests
+pnpm run cypress:ce
+
+# Enterprise Edition tests
+pnpm run cypress:ee
+```
 
 ## Docker Builds
 
@@ -204,23 +208,21 @@ docker build -f core/Dockerfile -t whodb:ce .
 docker build -f core/Dockerfile.ee -t whodb:ee .
 ```
 
-#### Multi-Architecture Build with Push
+#### Multi-Architecture Build
 ```bash
-# Community Edition
+# Setup buildx (one time)
+docker buildx create --use
+
+# Build and push CE
 docker buildx build --platform linux/amd64,linux/arm64 \
-  -t whodb-ce-TEST:0.0.0 \
+  -t your-registry/whodb:ce \
   -f core/Dockerfile . --push
 
-# Enterprise Edition
+# Build and push EE
 docker buildx build --platform linux/amd64,linux/arm64 \
-  -t whodb-ee-TEST:0.0.0 \
+  -t your-registry/whodb:ee \
   -f core/Dockerfile.ee . --push
 ```
-
-**Note**: For multi-architecture builds, ensure you have:
-1. Docker buildx enabled
-2. A builder instance created: `docker buildx create --use`
-3. The target registry configured for pushing
 
 ### Docker Compose Configuration
 ```yaml
@@ -229,19 +231,29 @@ services:
   whodb:
     image: clidey/whodb
     environment:
-      # Optional Ollama configuration
-      - WHODB_OLLAMA_HOST=localhost
-      - WHODB_OLLAMA_PORT=11434
-      
-      # Optional AI API keys
-      - WHODB_ANTHROPIC_API_KEY=...
-      - WHODB_OPENAI_API_KEY=...
+      # Optional AI configuration
+      - OLLAMA_URL=http://localhost:11434
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     ports:
       - "8080:8080"
     volumes:
       # Optional for SQLite databases
-      - ./data:/db
+      - ./data:/data
 ```
+
+## Environment Variables
+
+### Backend
+- `PORT=8080` - Change default port
+- `OLLAMA_URL` - Ollama server URL
+- `ANTHROPIC_API_KEY` - Claude API key
+- `OPENAI_API_KEY` - OpenAI API key
+
+### Frontend Build
+- `VITE_API_URL` - Custom API endpoint
+- `VITE_BUILD_EDITION` - Set to 'ee' for Enterprise
+- `VITE_DEFAULT_THEME` - Set default theme
 
 ## Troubleshooting
 
@@ -254,40 +266,41 @@ npm install -g pnpm
 
 #### "EE directory not found"
 - Ensure you have access to EE modules
-- The `ee` directory must be in the project root
-- Run validation: `./scripts/validate-ee.sh`
+- The `ee` directory must exist in the project root
 
 #### GraphQL Generation Fails
 ```bash
-# Ensure backend is running with introspection enabled
-cd core
-ENVIRONMENT=dev go run .
+# Ensure all dependencies are downloaded
+cd core && go mod download
+cd ../ee && go mod download
 
-# Download dependencies
-go mod download
-
-# For EE, also run in ee directory
-cd ee
-go mod download
+# For EE generation, use one of the options above
 ```
 
-#### TypeScript Errors During Build
-```bash
-# Check types without building
-cd frontend
-pnpm exec tsc --noEmit
+#### EE Runtime Error: "nil pointer dereference" on Login
+This happens when EE plugins aren't properly registered. Ensure:
+1. You have the `server_ee.go` file in the core directory with:
+   ```go
+   //go:build ee
+   
+   package main
+   
+   import (
+       _ "github.com/clidey/whodb/ee/core/src/plugins"
+   )
+   ```
+2. You're running with the `-tags ee` flag
+3. The GOWORK environment variable points to `go.work.ee`
 
-# Regenerate GraphQL types
-pnpm run generate:ce  # or generate:ee
-```
-
-#### Frontend Build Missing
-If the backend complains about missing `build/` directory:
+#### Frontend Build Issues
 ```bash
+# Clean and reinstall
 cd frontend
+rm -rf node_modules pnpm-lock.yaml
 pnpm install
-pnpm run build
-cp -r ./dist ../core/build/
+
+# Check TypeScript errors
+pnpm exec tsc --noEmit
 ```
 
 #### Port Already in Use
@@ -301,57 +314,27 @@ kill -9 <PID>
 ### Clean Build
 If experiencing persistent issues:
 ```bash
-# Full clean build for CE
-./build.sh --clean
-
-# Full clean build for EE
+# Full clean build
 ./build.sh --clean --ee
 
 # Manual cleanup
-rm -rf core/build frontend/dist frontend/node_modules
-rm -f core/whodb core/whodb-ee
-```
-
-## Advanced Configuration
-
-### Environment Variables
-
-#### Backend
-- `ENVIRONMENT=dev` - Enable GraphQL introspection
-- `PORT=8080` - Change default port
-
-#### Frontend
-- `VITE_API_URL` - Custom API endpoint
-- `VITE_BUILD_EDITION` - Set to 'ee' for Enterprise
-- `VITE_DEFAULT_THEME` - Set default theme
-
-### Custom Builds
-
-#### Backend with Debug Info
-```bash
-cd core
-go build -tags "ee,debug" -o whodb-debug
-```
-
-#### Frontend with Custom API
-```bash
-cd frontend
-VITE_API_URL=https://api.example.com pnpm run build
+rm -rf frontend/node_modules frontend/build core/build
+rm -f whodb whodb-ee
 ```
 
 ## Version Information
 
-Built binaries include version information:
+Check version of built binaries:
 ```bash
-./core/whodb --version
-./core/whodb-ee --version
+./whodb --version
+./whodb-ee --version
 ```
 
 ## Additional Resources
 
-- [Architecture Documentation](./ARCHITECTURE.md)
-- [Contributing Guide](./CONTRIBUTING.md)
-- [Frontend Development Guide](./frontend/README.md)
-- [Full Documentation](https://whodb.com/docs/)
+- [Architecture Documentation](./docs/ARCHITECTURE.md)
+- [CLAUDE.md](./CLAUDE.md) - AI assistant instructions
+- [Frontend Development](./frontend/README.md)
+- [GraphQL Setup](./frontend/GRAPHQL_SETUP.md)
 
-For support, please reach out to support@clidey.com or file an issue on GitHub.
+For support, please file an issue on GitHub or contact support@clidey.com.

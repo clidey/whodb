@@ -41,8 +41,11 @@ npm run cypress:ee            # EE tests
 
 ### GraphQL Code Generation
 ```bash
-# Backend (from core/)
-go run github.com/99designs/gqlgen generate
+# Backend CE (from core/)
+go generate ./...
+
+# Backend EE (from core/) 
+GOWORK=../go.work.ee go generate ./...
 
 # Frontend (from frontend/)
 npm run generate              # Generates TypeScript types from GraphQL
@@ -118,3 +121,40 @@ WhoDB is a database management tool with a **dual-edition architecture**:
    - Multi-stage build optimizes image size
    - Supports AMD64
    - Uses Alpine Linux for minimal runtime
+
+## GraphQL First Architecture
+
+### Important: GraphQL is the Default API
+- **Always use GraphQL** for new API endpoints unless explicitly instructed otherwise
+- **Do NOT modify or add HTTP resolvers** in `http.resolvers.go` unless specifically requested
+- The codebase follows a GraphQL-first approach for all data operations
+
+### GraphQL Implementation Pattern
+1. **GraphQL queries are NOT created with inline strings**
+2. **Proper GraphQL workflow**:
+   - Create `.graphql` files in the appropriate frontend directory (e.g., `src/pages/[feature]/query-name.graphql`)
+   - Run `pnpm run generate` (with the backend running) to generate TypeScript types and hooks
+   - Import the generated documents from `@graphql` alias
+   - Use the generated hooks with Apollo Client
+
+### Example of Correct GraphQL Usage
+```typescript
+// WRONG - Do not do this:
+const QUERY = gql`query MyQuery { ... }`;
+
+// CORRECT - Do this instead:
+// 1. Create file: src/pages/feature/my-query.graphql
+// 2. Run: pnpm run generate
+// 3. Import and use:
+import { useMyQuery } from '@graphql';
+```
+
+### Backend GraphQL Development
+- Add new queries/mutations to `core/graph/schema.graphqls`
+- Implement resolvers in appropriate resolver files (e.g., `core/graph/model.resolvers.go`)
+- HTTP endpoints should only be used for special cases like file downloads that can't be handled via GraphQL
+
+## Running GraphQL Code Generation
+1. Ensure the backend is running: `cd core && go run .`
+2. Run code generation: `cd frontend && pnpm run generate`
+3. This will update `src/generated/graphql.tsx` with all types and hooks
