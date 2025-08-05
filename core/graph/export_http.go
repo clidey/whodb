@@ -27,10 +27,10 @@ func HandleExport(w http.ResponseWriter, r *http.Request) {
 
 	// Parse JSON body
 	var req struct {
-		Schema       string                   `json:"schema"`
-		StorageUnit  string                   `json:"storageUnit"`
-		Delimiter    string                   `json:"delimiter,omitempty"`
-		Format       string                   `json:"format,omitempty"`
+		Schema       string           `json:"schema"`
+		StorageUnit  string           `json:"storageUnit"`
+		Delimiter    string           `json:"delimiter,omitempty"`
+		Format       string           `json:"format,omitempty"`
 		SelectedRows []map[string]any `json:"selectedRows,omitempty"`
 	}
 
@@ -131,7 +131,7 @@ func handleCSVExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfig 
 				}
 			}
 		}
-		
+
 		if err := csvWriter.Write(row); err != nil {
 			return err
 		}
@@ -220,7 +220,7 @@ func handleExcelExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfi
 			for i, header := range row {
 				cells[i] = excelize.Cell{StyleID: styleID, Value: header}
 			}
-			
+
 			cell, _ := excelize.CoordinatesToCellName(1, currentRow)
 			if err := streamWriter.SetRow(cell, cells); err != nil {
 				return err
@@ -231,13 +231,13 @@ func handleExcelExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfi
 			for i, value := range row {
 				cells[i] = value
 			}
-			
+
 			cell, _ := excelize.CoordinatesToCellName(1, currentRow)
 			if err := streamWriter.SetRow(cell, cells); err != nil {
 				return err
 			}
 		}
-		
+
 		rowCount++
 		currentRow++
 		return nil
@@ -253,7 +253,6 @@ func handleExcelExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfi
 	// Set column widths
 	if len(headers) > 0 {
 		for i := 0; i < len(headers); i++ {
-			col, _ := excelize.ColumnNumberToName(i + 1)
 			streamWriter.SetColWidth(i+1, i+1, 15)
 		}
 	}

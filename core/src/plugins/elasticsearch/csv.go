@@ -204,7 +204,6 @@ func (p *ElasticSearchPlugin) formatElasticValue(val any) string {
 	default:
 		strVal = fmt.Sprintf("%v", v)
 	}
-	
-	// Apply formula injection protection
+
 	return common.EscapeFormula(strVal)
 }
