@@ -85,6 +85,11 @@ func HandleExport(w http.ResponseWriter, r *http.Request) {
 	pluginConfig := engine.NewPluginConfig(credentials)
 	plugin := src.MainEngine.Choose(engine.DatabaseType(credentials.Type))
 
+	if plugin.Type == engine.DatabaseType_Redis {
+		http.Error(w, "Export not supported for Redis databases", http.StatusBadRequest)
+		return
+	}
+
 	if format == "excel" {
 		// Handle Excel export
 		handleExcelExport(w, plugin, pluginConfig, schema, storageUnit, req.SelectedRows)
@@ -150,13 +155,10 @@ func handleCSVExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfig 
 	// Export rows (all or selected) using the unified method
 	err := plugin.ExportData(pluginConfig, schema, storageUnit, writerFunc, selectedRows)
 	if err != nil {
-		// If we haven't written anything yet, we can send an error
 		if rowsWritten == 0 {
-			fmt.Printf("CSV export error for %s.%s: %v\n", schema, storageUnit, err)
 			http.Error(w, "Export failed. Please check your file and try again.", http.StatusInternalServerError)
 			return
 		}
-		fmt.Fprintf(w, "\n# ERROR: Export interrupted. Please try again.\n")
 	}
 }
 

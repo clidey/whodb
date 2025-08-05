@@ -51,7 +51,7 @@ export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly
         });
 
         if (!response.ok) {
-          throw new Error(`Export failed: ${response.statusText}`);
+          throw new Error(await response.text());
         }
 
         // Get filename from Content-Disposition header
@@ -84,7 +84,6 @@ export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly
           window.URL.revokeObjectURL(downloadUrl);
         }, 100);
       } catch (error) {
-        console.error('Export failed:', error);
         throw error;
       }
     }, [schema, storageUnit, selectedOnly, delimiter, selectedRows, format]);

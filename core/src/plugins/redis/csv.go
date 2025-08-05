@@ -23,10 +23,6 @@ import (
 )
 
 // ExportData exports Redis data to tabular format
-// Redis doesn't have tables, so we export key patterns as "tables"
 func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error {
-	// Redis doesn't support traditional table export
-	// Could implement key pattern export, but that would be different from other databases
 	return fmt.Errorf("data export is not supported for Redis databases")
 }
-

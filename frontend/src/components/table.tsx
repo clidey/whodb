@@ -676,7 +676,11 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
             await backendExport();
             setShowExportConfirm(false);
         } catch (error: any) {
-            console.error('Export failed:', error);
+            if (error.message.includes('not supported')) {
+                notify('Export not supported for this database type', 'error');
+                return;
+            }
+            console.error('Export failed, please try again');
             notify(error.message || 'Export failed', 'error');
         }
     }, [schema, storageUnit, hasSelectedRows, actualColumns, sortedRows, checkedRows, backendExport]);
