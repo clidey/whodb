@@ -15,7 +15,36 @@ import (
 const (
 	// Maximum rows for Excel export to prevent memory issues
 	MaxExcelRows = 100000 // 100k rows
+
+	// Default CSV delimiter
+	DefaultCSVDelimiter = ","
 )
+
+// InvalidDelimiters contains characters that cannot be used as CSV delimiters
+var InvalidDelimiters = map[byte]string{
+	'=':  "formula indicator",
+	'+':  "formula indicator",
+	'-':  "formula indicator",
+	'@':  "formula indicator",
+	'\t': "tab character",
+	'\r': "carriage return",
+	'\'': "single quote (used for escaping)",
+	'"':  "double quote (CSV escape character)",
+}
+
+// validateDelimiter checks if a delimiter is valid for CSV export
+func validateDelimiter(delimiter string) error {
+	if len(delimiter) != 1 {
+		return fmt.Errorf("delimiter must be a single character")
+	}
+
+	delimChar := delimiter[0]
+	if reason, invalid := InvalidDelimiters[delimChar]; invalid {
+		return fmt.Errorf("invalid delimiter '%c': %s", delimChar, reason)
+	}
+
+	return nil
+}
 
 // HandleExport handles HTTP requests for data export (CSV or Excel)
 func HandleExport(w http.ResponseWriter, r *http.Request) {
@@ -57,16 +86,13 @@ func HandleExport(w http.ResponseWriter, r *http.Request) {
 
 	// Default to comma if no delimiter specified for CSV
 	if delimiter == "" {
-		delimiter = ","
+		delimiter = DefaultCSVDelimiter
 	}
 
-	// Sanitize delimiter to prevent injection attacks
-	if len(delimiter) == 1 {
-		delimChar := delimiter[0]
-		if delimChar == '=' || delimChar == '+' || delimChar == '-' || delimChar == '@' || delimChar == '\t' || delimChar == '\r' {
-			http.Error(w, "Invalid delimiter character", http.StatusBadRequest)
-			return
-		}
+	// Validate delimiter for security and parsing safety
+	if err := validateDelimiter(delimiter); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	if schema == "" && storageUnit == "" {
@@ -100,12 +126,7 @@ func HandleExport(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleCSVExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfig *engine.PluginConfig, schema, storageUnit, delimiter string, selectedRows []map[string]any) {
-	// Validate delimiter is a single character
-	if len(delimiter) != 1 {
-		http.Error(w, "Delimiter must be a single character", http.StatusBadRequest)
-		return
-	}
-
+	// Delimiter has already been validated in HandleExport
 	// Convert delimiter to rune
 	delimRune := rune(delimiter[0])
 
@@ -127,16 +148,6 @@ func handleCSVExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfig 
 
 	// Create writer function that streams to HTTP response
 	writerFunc := func(row []string) error {
-		// Apply formula injection protection for CSV
-		for i, value := range row {
-			if len(value) > 0 {
-				firstChar := value[0]
-				if firstChar == '=' || firstChar == '+' || firstChar == '-' || firstChar == '@' || firstChar == '\t' || firstChar == '\r' {
-					row[i] = "'" + value
-				}
-			}
-		}
-
 		if err := csvWriter.Write(row); err != nil {
 			return err
 		}
@@ -192,16 +203,6 @@ func handleExcelExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfi
 	writerFunc := func(row []string) error {
 		if rowCount >= MaxExcelRows {
 			return fmt.Errorf("excel export limit exceeded: maximum %d rows allowed", MaxExcelRows)
-		}
-
-		// Escape formula injection for Excel
-		for i, value := range row {
-			if len(value) > 0 {
-				firstChar := value[0]
-				if firstChar == '=' || firstChar == '+' || firstChar == '-' || firstChar == '@' || firstChar == '\t' || firstChar == '\r' {
-					row[i] = "'" + value
-				}
-			}
 		}
 
 		if len(headers) == 0 {

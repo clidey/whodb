@@ -814,7 +814,6 @@ export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows
                                             <option value=",">Comma (,) - Standard CSV</option>
                                             <option value=";">Semicolon (;) - Excel in some locales</option>
                                             <option value="|">Pipe (|) - Less common in data</option>
-                                            <option value={"\t"}>Tab - TSV format</option>
                                         </select>
                                         <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                                             Choose a delimiter that doesn't appear in your data
