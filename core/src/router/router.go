@@ -16,6 +16,7 @@ package router
 
 import (
 	"embed"
+	"net/http"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler/extension"
@@ -72,17 +73,20 @@ func setupMiddlewares(router *chi.Mux) {
 		allowedOrigins = append(allowedOrigins, "https://*", "http://*")
 	}
 
-	router.Use(
+	middlewares := []func(http.Handler) http.Handler{
 		middleware.ThrottleBacklog(100, 50, time.Second*5),
-
 		middleware.RequestID,
 		middleware.RealIP,
-		middleware.Logger,
+	}
 
+	if env.EnableHTTPLogging {
+		middlewares = append(middlewares, middleware.Logger)
+	}
+
+	middlewares = append(middlewares,
 		middleware.RedirectSlashes,
 		middleware.Recoverer,
 		middleware.Timeout(30*time.Second),
-
 		cors.Handler(cors.Options{
 			AllowedOrigins:   allowedOrigins,
 			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -91,10 +95,11 @@ func setupMiddlewares(router *chi.Mux) {
 			AllowCredentials: true,
 			MaxAge:           300,
 		}),
-
 		contextMiddleware,
 		auth.AuthMiddleware,
 	)
+
+	router.Use(middlewares...)
 }
 
 func InitializeRouter(staticFiles embed.FS) *chi.Mux {
