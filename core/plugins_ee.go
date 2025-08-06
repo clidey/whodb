@@ -1,3 +1,5 @@
+//go:build ee
+
 // Copyright 2025 Clidey, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,10 +14,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package graph
+package main
 
-// This file will not be regenerated automatically.
-//
-// It serves as dependency injection for your app, add any dependencies you require here.
-
-type Resolver struct{}
+import (
+	// Import EE package to register EE plugins
+	// This import will only work when using the EE workspace (go.work.ee)
+	// which includes the ee module
+	_ "github.com/clidey/whodb/ee/core/src/plugins"
+)

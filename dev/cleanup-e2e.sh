@@ -37,7 +37,16 @@ docker-compose -f docker-compose.e2e.yaml down
 
 # Stop the test server if it's running
 echo "🛑 Stopping test server..."
-if [ -n "$TEST_SERVER_PID" ] && ps -p $TEST_SERVER_PID > /dev/null 2>&1; then
+
+# Try to read PID from file first
+if [ -f "$PROJECT_ROOT/core/tmp/test-server.pid" ]; then
+    TEST_SERVER_PID=$(cat "$PROJECT_ROOT/core/tmp/test-server.pid")
+    if ps -p $TEST_SERVER_PID > /dev/null 2>&1; then
+        kill $TEST_SERVER_PID
+        echo "✅ Test server stopped (PID: $TEST_SERVER_PID)"
+    fi
+    rm -f "$PROJECT_ROOT/core/tmp/test-server.pid"
+elif [ -n "$TEST_SERVER_PID" ] && ps -p $TEST_SERVER_PID > /dev/null 2>&1; then
     kill $TEST_SERVER_PID
     echo "✅ Test server stopped (PID: $TEST_SERVER_PID)"
 else

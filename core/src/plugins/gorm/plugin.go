@@ -48,6 +48,7 @@ type GormPluginFunctions interface {
 	// these below are meant to be implemented by the specific database plugins
 	DB(config *engine.PluginConfig) (*gorm.DB, error)
 	GetSupportedColumnDataTypes() mapset.Set[string]
+	GetPlaceholder(index int) string
 	ShouldQuoteIdentifiers() bool
 
 	GetTableInfoQuery() string

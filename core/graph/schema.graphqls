@@ -148,6 +148,7 @@ type AIProvider {
   IsEnvironmentDefined: Boolean!
 }
 
+
 type Query {
   Version: String!
   Profiles: [LoginProfile!]!

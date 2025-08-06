@@ -77,16 +77,31 @@ cd "$PROJECT_ROOT/core"
 ENVIRONMENT=dev ./server.test -test.run=^TestMain$ -test.coverprofile=coverage.out &
 TEST_SERVER_PID=$!
 
-# Wait for server to start
-echo "⏳ Waiting for test server to start..."
-sleep 5
+# Save PID for cleanup
+echo $TEST_SERVER_PID > "$PROJECT_ROOT/core/tmp/test-server.pid"
 
-# Check if server is running
-if ps -p $TEST_SERVER_PID > /dev/null; then
-    echo "✅ Test server started successfully (PID: $TEST_SERVER_PID)"
-else
-    echo "❌ Test server failed to start"
+# Wait for server to be ready with health check
+echo "⏳ Waiting for test server to be ready..."
+MAX_WAIT=30
+COUNTER=0
+while [ $COUNTER -lt $MAX_WAIT ]; do
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/graphql 2>/dev/null | grep -q "200\|405\|400"; then
+        echo "✅ Test server is ready and responding (PID: $TEST_SERVER_PID)"
+        break
+    fi
+    echo -n "."
+    sleep 1
+    COUNTER=$((COUNTER + 1))
+done
+
+if [ $COUNTER -eq $MAX_WAIT ]; then
+    echo "❌ Test server failed to become ready within ${MAX_WAIT} seconds"
+    if ps -p $TEST_SERVER_PID > /dev/null; then
+        echo "Server process is running but not responding. Check logs for errors."
+        kill $TEST_SERVER_PID
+    fi
     exit 1
 fi
 
-echo "🎉 E2E environment setup complete!"
+echo "🎉 E2E backend environment setup complete!"
+echo "ℹ️  Frontend will be started by the test script"

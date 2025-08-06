@@ -97,6 +97,10 @@ func (p *PostgresPlugin) GetTableInfoQuery() string {
 	// AND t.table_type = 'BASE TABLE' this removes the view tables
 }
 
+func (p *PostgresPlugin) GetPlaceholder(index int) string {
+	return fmt.Sprintf("$%d", index)
+}
+
 func (p *PostgresPlugin) GetTableNameAndAttributes(rows *sql.Rows, db *gorm.DB) (string, []engine.Record) {
 	var tableName, tableType, totalSize, dataSize string
 	var rowCount int64

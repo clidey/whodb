@@ -243,6 +243,14 @@ func (p *MongoDBPlugin) Chat(config *engine.PluginConfig, schema string, model s
 	return nil, errors.ErrUnsupported
 }
 
+
+func (p *MongoDBPlugin) FormatValue(val interface{}) string {
+	if val == nil {
+		return ""
+	}
+	return fmt.Sprintf("%v", val)
+}
+
 func (p *MongoDBPlugin) GetSupportedOperators() map[string]string {
 	return supportedOperators
 }

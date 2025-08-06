@@ -40,21 +40,28 @@
   "scripts": {
     "start": "vite --port 3000 --open",
     "start:ee": "VITE_BUILD_EDITION=ee vite --port 3000 --open",
-    "start:test": "NODE_ENV=test vite --port 3000 --open",
-    "start:test:ee": "VITE_BUILD_EDITION=ee NODE_ENV=test vite --port 3000 --open",
     "build": "tsc -p tsconfig.ce.json && vite build",
     "build:ce": "tsc -p tsconfig.ce.json && vite build",
     "build:ee": "VITE_BUILD_EDITION=ee vite build",
-    "test": "pnpm run test:setup && NODE_ENV=test pnpm cypress open; pnpm run test:cleanup",
-    "test:headless": "pnpm run test:setup && NODE_ENV=test npx cypress run --browser chrome; pnpm run test:cleanup",
-    "test:headless:chromium": "pnpm run test:setup && NODE_ENV=test npx cypress run --browser chromium; pnpm run test:cleanup",
-    "test:setup": "bash ../dev/setup-e2e.sh",
-    "test:cleanup": "bash ../dev/cleanup-e2e.sh",
-    "test:ee": "pnpm run test:ee:setup && NODE_ENV=test pnpm cypress open; pnpm run test:ee:cleanup",
-    "test:ee:headless": "pnpm run test:ee:setup && NODE_ENV=test npx cypress run --browser chrome; pnpm run test:ee:cleanup",
-    "test:ee:headless:chromium": "pnpm run test:ee:setup && NODE_ENV=test npx cypress run --browser chromium; pnpm run test:ee:cleanup",
-    "test:ee:setup": "bash ../ee/dev/setup-e2e.sh",
-    "test:ee:cleanup": "bash ../ee/dev/cleanup-e2e.sh",
+    
+    "# Primary test commands - use these for running tests": "",
+    "cypress:ce": "pnpm run _test:ce:setup && bash ../dev/wait-for-services.sh && NODE_ENV=test pnpm cypress open; pnpm run _test:ce:cleanup",
+    "cypress:ce:headless": "pnpm run _test:ce:setup && bash ../dev/wait-for-services.sh && NODE_ENV=test npx cypress run --browser chrome; pnpm run _test:ce:cleanup",
+    "cypress:ee": "pnpm run _test:ee:setup && bash ../dev/wait-for-services.sh && NODE_ENV=test pnpm cypress open; pnpm run _test:ee:cleanup",
+    "cypress:ee:headless": "pnpm run _test:ee:setup && bash ../dev/wait-for-services.sh && NODE_ENV=test npx cypress run --browser chrome; pnpm run _test:ee:cleanup",
+    
+    "# Auxiliary test commands - not recommended for individual use": "",
+    "_test:ce:setup": "bash ../dev/setup-e2e.sh && NODE_ENV=test vite --port 3000 &",
+    "_test:ce:cleanup": "pkill -f 'vite --port 3000' || true; bash ../dev/cleanup-e2e.sh",
+    "_test:ee:setup": "bash ../ee/dev/setup-e2e.sh && VITE_BUILD_EDITION=ee NODE_ENV=test vite --port 3000 &",
+    "_test:ee:cleanup": "pkill -f 'vite --port 3000' || true; bash ../ee/dev/cleanup-e2e.sh",
+    "_cypress:ce:open": "NODE_ENV=test pnpm cypress open",
+    "_cypress:ee:open": "NODE_ENV=test pnpm cypress open",
+    "_cypress:ce:run": "NODE_ENV=test npx cypress run --browser chrome",
+    "_cypress:ee:run": "NODE_ENV=test npx cypress run --browser chrome",
+    "_cypress:run:chromium": "NODE_ENV=test npx cypress run --browser chromium",
+    
+    "# Coverage and code generation utilities": "",
     "view:coverage": "npx nyc report --reporter=text-summary",
     "view:coverage:frontend": "npx nyc report --reporter=html",
     "view:coverage:backend": "cd ../core && go tool cover -html=coverage.out",
@@ -95,7 +102,7 @@
     "process": "^0.11.10",
     "tailwindcss": "^4.1.11",
     "typescript": "^5.8.3",
-    "vite": "^7.0.5"
+    "vite": "^7.0.6"
   },
-  "packageManager": "pnpm@10.13.1+sha512.37ebf1a5c7a30d5fabe0c5df44ee8da4c965ca0c5af3dbab28c3a1681b70a256218d05c81c9c0dcf767ef6b8551eb5b960042b9ed4300c59242336377e01cfad"
+  "packageManager": "pnpm@10.14.0+sha512.ad27a79641b49c3e481a16a805baa71817a04bbe06a38d17e60e2eaee83f6a146c6a688125f5792e48dd5ba30e7da52a5cda4c3992b9ccf333f9ce223af84748"
 }
