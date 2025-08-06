@@ -96,6 +96,7 @@ echo "   Frontend: $BUILD_FRONTEND"
 echo "   Backend: $BUILD_BACKEND"
 echo ""
 
+
 # Validate EE requirements if building EE
 if [ "$EDITION" = "ee" ] && [ "$SKIP_VALIDATE" = false ]; then
     if [ -f "$PROJECT_ROOT/scripts/validate-ee.sh" ]; then
@@ -160,7 +161,8 @@ if [ "$BUILD_BACKEND" = true ]; then
         # Build backend
         cd "$PROJECT_ROOT/core"
         if [ "$EDITION" = "ee" ]; then
-            go build -tags ee -o whodb-ee
+            # Use go.work.ee for EE builds
+            GOWORK="$PROJECT_ROOT/go.work.ee" go build -tags ee -o whodb-ee
             echo "✅ Built: core/whodb-ee"
         else
             go build -o whodb

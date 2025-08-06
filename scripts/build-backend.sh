@@ -78,7 +78,13 @@ if command -v git &> /dev/null && [ -d "$PROJECT_ROOT/.git" ]; then
 fi
 
 # Build the binary
-eval go build $BUILD_FLAGS -o "$OUTPUT_NAME"
+# For EE builds, use go.work.ee
+if [ "$EDITION" = "ee" ]; then
+    echo "   Using go.work.ee for EE build"
+    eval GOWORK="$PROJECT_ROOT/go.work.ee" go build $BUILD_FLAGS -o "$OUTPUT_NAME"
+else
+    eval go build $BUILD_FLAGS -o "$OUTPUT_NAME"
+fi
 
 if [ $? -eq 0 ]; then
     echo "✅ Backend built successfully: core/$OUTPUT_NAME"

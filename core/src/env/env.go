@@ -54,6 +54,8 @@ var AllowedOrigins = common.FilterList(strings.Split(os.Getenv("WHODB_ALLOWED_OR
 	return item != ""
 })
 
+var EnableHTTPLogging = os.Getenv("WHODB_ENABLE_HTTP_LOGGING") == "true"
+
 type ChatProvider struct {
 	Type       string
 	APIKey     string

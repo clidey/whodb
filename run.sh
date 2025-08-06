@@ -4,7 +4,7 @@
 
 if [[ "$1" == "--ee" ]]; then
     echo "🏢 Starting WhoDB Enterprise Edition..."
-    cd core && go run -tags ee .
+    cd core && GOWORK="$PWD/../go.work.ee" go run -tags ee .
 else
     echo "🚀 Starting WhoDB Community Edition..."
     cd core && go run .

@@ -368,6 +368,14 @@ func (p *RedisPlugin) Chat(config *engine.PluginConfig, schema string, model str
 	return nil, errors.ErrUnsupported
 }
 
+
+func (p *RedisPlugin) FormatValue(val interface{}) string {
+	if val == nil {
+		return ""
+	}
+	return fmt.Sprintf("%v", val)
+}
+
 func NewRedisPlugin() *engine.Plugin {
 	return &engine.Plugin{
 		Type:            engine.DatabaseType_Redis,

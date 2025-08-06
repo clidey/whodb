@@ -72,7 +72,7 @@ export const ExploreStorageUnit: FC = () => {
     const unitName = useMemo(() => {
         return unit?.Name;
     }, [unit]);
-    
+
     const handleSubmitRequest = useCallback(() => {
         getStorageUnitRows({
             variables: {
