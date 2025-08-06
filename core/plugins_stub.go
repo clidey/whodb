@@ -1,3 +1,5 @@
+//go:build !ee
+
 // Copyright 2025 Clidey, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,10 +14,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package graph
+package main
 
-// This file will not be regenerated automatically.
-//
-// It serves as dependency injection for your app, add any dependencies you require here.
-
-type Resolver struct{}
+// This file is used when building CE edition.
+// It provides an empty init function that does nothing.
+func init() {
+	// CE edition - no EE plugins to register
+}
