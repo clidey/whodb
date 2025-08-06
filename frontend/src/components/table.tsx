@@ -17,6 +17,7 @@
 import {
     Button,
     Checkbox,
+    cn,
     ContextMenu,
     ContextMenuContent,
     ContextMenuItem,
@@ -47,11 +48,54 @@ import {
     toast,
     VirtualizedTableBody
 } from "@clidey/ux";
+import {
+    CalculatorIcon,
+    CalendarIcon,
+    CheckCircleIcon,
+    CircleStackIcon,
+    ClockIcon,
+    DocumentDuplicateIcon,
+    DocumentTextIcon,
+    HashtagIcon,
+    KeyIcon,
+    ListBulletIcon,
+} from "@heroicons/react/24/outline";
 import { FC, useCallback, useMemo, useState } from "react";
+
+
+// Type sets based on core/src/plugins/gorm/utils.go
+const stringTypes = new Set([
+    "TEXT", "STRING", "VARCHAR", "CHAR"
+]);
+const intTypes = new Set([
+    "INTEGER", "SMALLINT", "BIGINT", "INT", "TINYINT", "MEDIUMINT", "INT4", "INT8", "INT16", "INT32", "INT64"
+]);
+const uintTypes = new Set([
+    "TINYINT UNSIGNED", "SMALLINT UNSIGNED", "MEDIUMINT UNSIGNED", "BIGINT UNSIGNED", "UINT8", "UINT16", "UINT32", "UINT64"
+]);
+const floatTypes = new Set([
+    "REAL", "NUMERIC", "DOUBLE PRECISION", "FLOAT", "NUMBER", "DOUBLE", "DECIMAL"
+]);
+const boolTypes = new Set([
+    "BOOLEAN", "BIT", "BOOL"
+]);
+const dateTypes = new Set([
+    "DATE"
+]);
+const dateTimeTypes = new Set([
+    "DATETIME", "TIMESTAMP", "TIMESTAMP WITH TIME ZONE", "TIMESTAMP WITHOUT TIME ZONE", "DATETIME2", "SMALLDATETIME", "TIMETZ", "TIMESTAMPTZ"
+]);
+const uuidTypes = new Set([
+    "UUID"
+]);
+const binaryTypes = new Set([
+    "BLOB", "BYTEA", "VARBINARY", "BINARY", "IMAGE", "TINYBLOB", "MEDIUMBLOB", "LONGBLOB"
+]);
 
 // For delete logic, we need to accept a prop for deleting a row
 interface TableProps {
     columns: string[];
+    columnTypes?: string[];
     rows: string[][];
     rowHeight?: number;
     height?: number;
@@ -62,6 +106,7 @@ interface TableProps {
 
 export const StorageUnitTable: FC<TableProps> = ({
     columns,
+    columnTypes,
     rows,
     rowHeight = 48,
     height = 500,
@@ -178,19 +223,47 @@ export const StorageUnitTable: FC<TableProps> = ({
         setChecked(checked.includes(rowIndex) ? checked.filter(i => i !== rowIndex) : [...checked, rowIndex]);
     }, [checked]);
 
+    const columnIcons = useMemo(() => {
+        return columns.map((col, idx) => {
+            const type = columnTypes?.[idx]?.toUpperCase?.() || "";
+            if (intTypes.has(type) || uintTypes.has(type)) return <HashtagIcon className="w-4 h-4" />;
+            if (floatTypes.has(type)) return <CalculatorIcon className="w-4 h-4" />;
+            if (boolTypes.has(type)) return <CheckCircleIcon className="w-4 h-4" />;
+            if (dateTypes.has(type)) return <CalendarIcon className="w-4 h-4" />;
+            if (dateTimeTypes.has(type)) return <ClockIcon className="w-4 h-4" />;
+            if (uuidTypes.has(type)) return <KeyIcon className="w-4 h-4" />;
+            if (binaryTypes.has(type)) return <DocumentDuplicateIcon className="w-4 h-4" />;
+            if (type.startsWith("ARRAY")) return <ListBulletIcon className="w-4 h-4" />;
+            if (stringTypes.has(type)) return <DocumentTextIcon className="w-4 h-4" />;
+            return <CircleStackIcon className="w-4 h-4" />;
+        });
+    }, [columns, columnTypes]);
+
+    const handleCellClick = (rowIndex: number, cellIndex: number) => {
+        const cell = paginatedRows[rowIndex][cellIndex];
+        if (cell !== undefined && cell !== null) {
+            if (typeof navigator !== "undefined" && navigator.clipboard) {
+                navigator.clipboard.writeText(String(cell));
+                toast.success("Copied to clipboard");
+            }
+        }
+    };
+
     return (
         <div className="flex flex-col grow h-full">
-            <TableComponent>
+            <TableComponent className="overflow-x-auto">
                 <TableHeader>
                     <TableRow>
-                        <TableCell className="flex items-center gap-2 w-[20rem]">
+                        <TableCell className={cn("flex items-center gap-2 w-[20rem]", {
+                            "hidden": disableEdit,
+                        })}>
                             <Checkbox
                                 checked={checked.length === paginatedRows.length}
                                 onCheckedChange={() => setChecked(checked.length === paginatedRows.length ? [] : paginatedRows.map((_, index) => index + (currentPage - 1) * pageSize))}
                             />
                         </TableCell>
                         {columns.map((col, idx) => (
-                            <TableHead key={col + idx}>{col}</TableHead>
+                            <TableHead key={col + idx} icon={columnIcons?.[idx]}>{col}</TableHead>
                         ))}
                     </TableRow>
                 </TableHeader>
@@ -205,14 +278,16 @@ export const StorageUnitTable: FC<TableProps> = ({
                                     className="contents"
                                 >
                                     <tr>
-                                        <TableCell className="w-[20rem]">
+                                        <TableCell className={cn("w-[20rem]", {
+                                            "hidden": disableEdit,
+                                        })}>
                                             <Checkbox
                                                 checked={checked.includes(globalIndex)}
                                                 onCheckedChange={() => setChecked(checked.includes(globalIndex) ? checked.filter(i => i !== globalIndex) : [...checked, globalIndex])}
                                             />
                                         </TableCell>
                                         {paginatedRows[index]?.map((cell, cellIdx) => (
-                                            <TableCell key={cellIdx} className="cursor-pointer">{cell}</TableCell>
+                                            <TableCell key={cellIdx} className="cursor-pointer" onClick={() => handleCellClick(globalIndex, cellIdx)}>{cell}</TableCell>
                                         ))}
                                     </tr>
                                 </ContextMenuTrigger>
@@ -250,7 +325,9 @@ export const StorageUnitTable: FC<TableProps> = ({
                 </VirtualizedTableBody>
             </TableComponent>
             <div className="flex mt-4">
-                <Pagination className="flex justify-end">
+                <Pagination className={cn("flex justify-end", {
+                    "hidden": totalPages <= 1,
+                })}>
                     <PaginationContent>
                         <PaginationItem>
                             <PaginationPrevious

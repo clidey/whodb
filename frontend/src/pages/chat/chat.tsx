@@ -106,6 +106,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
                     ? <div className="h-[250px]">
                         <StorageUnitTable
                             columns={data?.Columns.map(c => c.Name) ?? []}
+                            columnTypes={data?.Columns.map(c => c.Type) ?? []}
                             rows={data?.Rows ?? []}
                             disableEdit={true}
                         />

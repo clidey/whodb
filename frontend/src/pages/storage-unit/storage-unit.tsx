@@ -38,7 +38,7 @@ const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = (
     const navigate = useNavigate();
 
     const handleNavigateToDatabase = useCallback(() => {
-        navigate(InternalRoutes.Dashboard.ExploreStorageUnit(unit.Name).path, {
+        navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
             state: {
                 unit,
             },
@@ -360,7 +360,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data })
         if (data == null) {
             return;
         }
-        navigate(InternalRoutes.Dashboard.ExploreStorageUnit(data.Name).path, {
+        navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
             state: {
                 unit: data,
             }

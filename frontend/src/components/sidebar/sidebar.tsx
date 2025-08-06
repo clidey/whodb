@@ -41,7 +41,7 @@ import { Bars3Icon, ChevronDownIcon, PlusIcon } from "@heroicons/react/24/outlin
 import classNames from "classnames";
 import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { InternalRoutes } from "../../config/routes";
 import { LoginForm } from "../../pages/auth/login";
 import { AuthActions, LocalLoginProfile } from "../../store/auth";
@@ -99,7 +99,6 @@ export const Sidebar: FC = () => {
     const navigate = useNavigate();
     const [showLoginCard, setShowLoginCard] = useState(false);
     const { toggleSidebar, open } = useSidebar();
-    const storageUnitId = useParams().storageUnitId;
 
     // Profile select logic
     const profileOptions = useMemo(() => profiles.map(profile => ({
@@ -245,29 +244,27 @@ export const Sidebar: FC = () => {
     const loading = availableDatabasesLoading || availableSchemasLoading;
 
     useEffect(() => {
-        if (storageUnitId && open) {
+        if (pathname.includes(InternalRoutes.Dashboard.ExploreStorageUnit.path) && open) {
             toggleSidebar();
         }
     }, []);
 
     return (
         <div>
-            <SidebarComponent variant="sidebar" collapsible="icon">
-                <SidebarTrigger className={cn("ml-px self-end", {
-                    "self-center": !open,
-                    "self-end": open,
-                })} onClick={toggleSidebar}>
-                    <Bars3Icon />
-                </SidebarTrigger>
-                <SidebarHeader className={cn("mt-8", {
-                    "mx-4": open,
+            <SidebarComponent variant="sidebar" collapsible="icon" className="dark:group-data-[side=left]:border-r-neutral-800 z-[100]">
+                <SidebarHeader className={cn({
+                    "ml-4": open,
                 })}>
-                    <div className={cn("flex items-center gap-2", {
-                        "justify-center": !open,
-                        "justify-start": open,
-                    })}>
-                        <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
-                        {open && <span className={classNames(ClassNames.BrandText, "text-2xl")}>WhoDB</span>}
+                    <div className="flex items-center gap-2 justify-between">
+                        <div className={cn("flex items-center gap-2", {
+                            "hidden": !open,
+                        })}>
+                            <img src={logoImage} alt="clidey logo" className="w-auto h-4" />
+                            {open && <span className={classNames(ClassNames.BrandText, "text-lg")}>WhoDB</span>}
+                        </div>
+                        <SidebarTrigger onClick={toggleSidebar} className="px-0">
+                            <Bars3Icon />
+                        </SidebarTrigger>
                     </div>
                 </SidebarHeader>
                 <SidebarContent className={cn("mt-8 mb-16", {

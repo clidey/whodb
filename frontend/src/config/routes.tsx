@@ -51,11 +51,16 @@ export const InternalRoutes = {
             path: "/storage-unit",
             component: <StorageUnitPage />,
         },
-        ExploreStorageUnit: (storageUnitId: string = ":storageUnitId") => ({
+        ExploreStorageUnit: {
             name: "Explore",
-            path: `/storage-unit/${storageUnitId}/explore`,
+            path: "/storage-unit/explore",
             component: <ExploreStorageUnit />,
-        }),
+        },
+        ExploreStorageUnitWithScratchpad: {
+            name: "Explore",
+            path: "/storage-unit/explore",
+            component: <ExploreStorageUnit scratchpad={true} />,
+        },
     },
     Graph: {
         name: "Graph",
@@ -103,34 +108,17 @@ export const PrivateRoute: FC = () => {
 
 export const getRoutes = (): IInternalRoute[] => {
     const allRoutes: IInternalRoute[] = [];
-
-    const extractRoutes = (routeObj: any) => {
-        if (!routeObj) return;
-
-        // If it's a route object with 'path' and 'component', assume it's a route
-        if (
-            typeof routeObj === "object" &&
-            "path" in routeObj &&
-            "component" in routeObj
-        ) {
-            allRoutes.push(routeObj as IInternalRoute);
-            return;
+    const currentRoutes = values(InternalRoutes);
+    while (currentRoutes.length > 0) {
+        const currentRoute = currentRoutes.shift();
+        if (currentRoute == null) {
+            continue;
         }
-
-        // If it's a function (e.g., dynamic route generator), invoke and recurse
-        if (typeof routeObj === "function") {
-            const result = routeObj();
-            extractRoutes(result);
-            return;
+        if ("path" in currentRoute) {
+            allRoutes.push(currentRoute);
+            continue;
         }
-
-        // If it's an object (nested routes), process its values
-        if (typeof routeObj === "object" && routeObj !== null) {
-            const nestedValues = values(routeObj);
-            nestedValues.forEach(extractRoutes);
-        }
-    };
-
-    extractRoutes(InternalRoutes);
+        currentRoutes.push(...values((currentRoute)));
+    }
     return allRoutes;
-};
+}

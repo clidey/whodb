@@ -37,7 +37,7 @@ export const Breadcrumb: FC<IBreadcrumbProps> = ({ routes, active }) => {
   const navigate = useNavigate();
 
   return (
-    <UxBreadcrumb className="py-2 px-2">
+    <UxBreadcrumb className="py-2">
       <BreadcrumbList>
         {routes.map((route, i) => {
           const isActive = active === route;

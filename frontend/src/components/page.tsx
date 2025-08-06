@@ -25,7 +25,8 @@ import { Breadcrumb } from "./breadcrumbs";
 import { Loading } from "./loading";
 import { Sidebar } from "./sidebar/sidebar";
 import { SchemaViewer } from "./schema-viewer";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
+import { StorageUnit } from "../generated/graphql";
 
 type IPageProps = {
     wrapperClassName?: string;
@@ -53,15 +54,15 @@ type IInternalPageProps = IPageProps & {
 
 export const InternalPage: FC<IInternalPageProps> = (props) => {
     const current = useAppSelector(state => state.auth.current);
-    const { storageUnitId } = useParams();
+    const state = useLocation().state as { unit: StorageUnit } | undefined;
 
     return (
         <Container>
             <div className="flex flex-row grow dark">
-                <SidebarProvider>
+                <SidebarProvider defaultOpen={state?.unit == null}>
                     <Sidebar />
                 </SidebarProvider>
-                {storageUnitId && <SidebarProvider>
+                {state?.unit && <SidebarProvider>
                     <SchemaViewer />
                 </SidebarProvider>}
             </div>

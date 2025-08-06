@@ -15,14 +15,15 @@
  */
 
 import { FetchResult } from "@apollo/client";
-import { Button, Input, Label, Sheet, SheetContent, SheetFooter, toast } from "@clidey/ux";
+import { Button, Drawer, DrawerTitle, DrawerContent, DrawerHeader, Input, Label, Sheet, SheetContent, SheetFooter, toast, DrawerFooter, SearchInput } from "@clidey/ux";
 import {
     DatabaseType, DeleteRowDocument, DeleteRowMutationResult, RecordInput, RowsResult, StorageUnit,
     UpdateStorageUnitDocument, UpdateStorageUnitMutationResult, useAddRowMutation, useGetStorageUnitRowsLazyQuery,
+    useRawExecuteLazyQuery,
     WhereCondition
 } from '@graphql';
 import { clone, entries, keys, map } from "lodash";
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Icons } from "../../components/icons";
 import { Loading, LoadingPage } from "../../components/loading";
@@ -32,15 +33,18 @@ import { graphqlClient } from "../../config/graphql-client";
 import { InternalRoutes } from "../../config/routes";
 import { useAppSelector } from "../../store/hooks";
 import { getDatabaseOperators } from "../../utils/database-operators";
-import { getDatabaseStorageUnitLabel, isNumeric } from "../../utils/functions";
+import { getDatabaseStorageUnitLabel } from "../../utils/functions";
 import { ExploreStorageUnitWhereCondition } from "./explore-storage-unit-where-condition";
+import { CodeEditor } from "../../components/editor";
+import { PlayIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
-export const ExploreStorageUnit: FC = () => {
+export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad }) => {
     const [bufferPageSize, setBufferPageSize] = useState("100");
     const [currentPage, setCurrentPage] = useState(0);
     const [whereCondition, setWhereCondition] = useState<WhereCondition>();
     const [pageSize, setPageSize] = useState("");
     const unit: StorageUnit = useLocation().state?.unit;
+    const pathname = useLocation().pathname;
 
     let schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
@@ -49,16 +53,20 @@ export const ExploreStorageUnit: FC = () => {
     const [showAdd, setShowAdd] = useState(false);
     const [checkedRows, setCheckedRows] = useState<Set<number>>(new Set());
     const [deleting, setDeleting] = useState(false);
-    const addRowRef = useRef<HTMLDivElement>(null);
 
     // For add row sheet logic
     const [addRowData, setAddRowData] = useState<Record<string, any>>({});
     const [addRowError, setAddRowError] = useState<string | null>(null);
+    
 
+    // For scratchpad sheet logic
+    const [showScratchpad, setShowScratchpad] = useState(scratchpad ?? pathname.includes(InternalRoutes.Dashboard.ExploreStorageUnitWithScratchpad.path));
     // todo: is there a different way to do this? clickhouse doesn't have schemas as a table is considered a schema. people mainly switch between DB
     if (current?.Type === DatabaseType.ClickHouse) {
         schema = current.Database
     }
+
+    const [code, setCode] = useState(`SELECT * FROM ${schema}.${unit?.Name}`);
 
     const [getStorageUnitRows, { loading }] = useGetStorageUnitRowsLazyQuery({
         onCompleted(data) {
@@ -68,25 +76,13 @@ export const ExploreStorageUnit: FC = () => {
         fetchPolicy: "no-cache",
     });
     const [addRow, { loading: adding }] = useAddRowMutation();
+    const [rawExecute, { data: rawExecuteData, called }] = useRawExecuteLazyQuery();
 
     const unitName = useMemo(() => {
         return unit?.Name;
     }, [unit]);
 
     const handleSubmitRequest = useCallback(() => {
-        getStorageUnitRows({
-            variables: {
-                schema,
-                storageUnit: unitName,
-                where: whereCondition,
-                pageSize: Number.parseInt(bufferPageSize),
-                pageOffset: currentPage,
-            },
-        });
-    }, [getStorageUnitRows, schema, unitName, whereCondition, bufferPageSize, currentPage]);
-
-    const handlePageChange = useCallback((page: number) => {
-        setCurrentPage(page-1);
         getStorageUnitRows({
             variables: {
                 schema,
@@ -210,17 +206,11 @@ export const ExploreStorageUnit: FC = () => {
         return count;
     }, [unit]);
 
-    const totalPages = useMemo(() => {
-        if (!isNumeric(totalCount) || !isNumeric(pageSize)) {
-            return 1;
-        }
-        return Math.max(Math.round(Number.parseInt(totalCount)/(Number.parseInt(pageSize)+1)), 1);
-    }, [pageSize, totalCount]);
-
     useEffect(() => {
         handleSubmitRequest();
+        setCode(`SELECT * FROM ${schema}.${unit?.Name}`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [unit]);
 
     const routes = useMemo(() => {
         const name = getDatabaseStorageUnitLabel(current?.Type);
@@ -229,7 +219,8 @@ export const ExploreStorageUnit: FC = () => {
                 ...InternalRoutes.Dashboard.StorageUnit,
                 name,
             },
-            InternalRoutes.Dashboard.ExploreStorageUnit(unitName)
+            InternalRoutes.Dashboard.ExploreStorageUnit,
+            ...(scratchpad ? [InternalRoutes.Dashboard.ExploreStorageUnitWithScratchpad] : []),
         ];
     }, [current]);
     
@@ -284,11 +275,6 @@ export const ExploreStorageUnit: FC = () => {
         setShowAdd(true);
     }, [rows?.Columns]);
 
-    const handleCloseAddSheet = useCallback(() => {
-        setShowAdd(false);
-        setAddRowError(null);
-    }, []);
-
     const handleAddRowFieldChange = useCallback((key: string, value: string) => {
         setAddRowData(prev => ({
             ...prev,
@@ -332,6 +318,28 @@ export const ExploreStorageUnit: FC = () => {
         });
     }, [addRow, addRowData, handleSubmitRequest, rows?.Columns, schema, unit?.Name]);
 
+    const handleScratchpad = useCallback(() => {
+        if (current == null) {
+            return;
+        }
+        rawExecute({
+            variables: {
+                query: code,
+            },
+        });
+    }, [code, current, rawExecute]);
+
+    const handleOpenScratchpad = useCallback(() => {
+        handleScratchpad();
+        setShowScratchpad(true);
+        setCode(`SELECT * FROM ${schema}.${unit?.Name}`);
+        document.body.classList.add("!pointer-events-auto");
+    }, [schema, unit?.Name]);
+
+    const handleCloseScratchpad = useCallback((state: boolean) => {
+        setShowScratchpad(state);
+    }, []);
+
     if (unit == null) {
         return <Navigate to={InternalRoutes.Dashboard.StorageUnit.path} />
     }
@@ -342,7 +350,7 @@ export const ExploreStorageUnit: FC = () => {
         </InternalPage>
     }
 
-    return <InternalPage routes={routes}>
+    return <InternalPage routes={routes} className="relative">
         <div className="flex flex-col grow gap-4 h-[calc(100%-100px)]">
             <div className="flex items-center justify-between">
                 <div className="flex gap-2 items-center">
@@ -351,23 +359,30 @@ export const ExploreStorageUnit: FC = () => {
                 <div className="text-sm mr-4 dark:text-neutral-300"><span className="font-semibold">Total Count:</span> {totalCount}</div>
             </div>
             <div className="flex w-full relative">
-                <div className="flex gap-2">
-                    <div className="flex flex-col gap-2">
-                        <Label>Page Size</Label>
-                        <Input value={bufferPageSize} onChange={e => setBufferPageSize(e.target.value)} data-testid="table-page-size" />
+                <div className="flex justify-between items-end w-full">
+                    <div className="flex gap-2 items-end">
+                        <div className="flex flex-col gap-2">
+                            <Label>Search</Label>
+                            <SearchInput placeholder="Enter search query" className="w-64" />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <Label>Page Size</Label>
+                            <Input value={bufferPageSize} onChange={e => setBufferPageSize(e.target.value)} data-testid="table-page-size" />
+                        </div>
+                        { current?.Type !== DatabaseType.Redis && <ExploreStorageUnitWhereCondition defaultWhere={whereCondition} columns={columns} operators={validOperators} onChange={handleFilterChange} columnTypes={columnTypes ?? []} /> }
+                        <Button className="ml-6" onClick={handleQuery} data-testid="submit-button">
+                            {Icons.CheckCircle} Query
+                        </Button>
                     </div>
-                    { current?.Type !== DatabaseType.Redis && <ExploreStorageUnitWhereCondition defaultWhere={whereCondition} columns={columns} operators={validOperators} onChange={handleFilterChange} columnTypes={columnTypes ?? []} /> }
-                    <Button className="ml-6 mt-5" onClick={handleQuery} data-testid="submit-button">
-                        {Icons.CheckCircle} Query
-                    </Button>
-                </div>
-                <div className="flex flex-col absolute z-10 right-0 top-0">
-                    <div className="flex w-full justify-end gap-2">
+                    <div className="flex justify-end gap-2">
                         {adding || deleting ? <Loading /> : null}
                         {checkedRows.size > 0 && <Button variant="destructive" onClick={handleRowDelete} disabled={deleting} data-testid="delete-button">
                             {Icons.Delete} {checkedRows.size > 1 ? "Delete rows" : "Delete row"}
                         </Button> }
-                        <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-button" variant="secondary">
+                        <Button onClick={handleOpenScratchpad} data-testid="scratchpad-button" variant="secondary">
+                            {Icons.Code} Scratchpad
+                        </Button>
+                        <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-button">
                             {Icons.Add} Add Row
                         </Button>
                     </div>
@@ -405,9 +420,40 @@ export const ExploreStorageUnit: FC = () => {
             <div className="grow">
                 {
                     rows != null &&
-                    <StorageUnitTable columns={columns} rows={rows.Rows} onRowUpdate={handleRowUpdate} />
+                    <StorageUnitTable columns={columns} rows={rows.Rows} onRowUpdate={handleRowUpdate} columnTypes={columnTypes} />
                 }
             </div>
         </div>
+        <Drawer open={showScratchpad} onOpenChange={handleCloseScratchpad} modal={false} defaultOpen={showScratchpad}>
+            <DrawerContent className="px-8 max-h-[25vh]">
+                <DrawerHeader>
+                    <DrawerTitle className="flex justify-between items-center">
+                        <h2 className="text-lg font-semibold">Scratchpad</h2>
+                        <div className="flex gap-2 items-center">
+                            <Button onClick={() => handleCloseScratchpad(false)} variant="secondary">
+                                <XMarkIcon className="w-4 h-4" />
+                                Close
+                            </Button>
+                            <Button onClick={handleScratchpad} data-testid="submit-button">
+                                <PlayIcon className="w-4 h-4" />
+                                Run
+                            </Button>
+                        </div>
+                    </DrawerTitle>
+                </DrawerHeader>
+                <div className="flex flex-col gap-2 h-[150px]">
+                    <CodeEditor language="sql" value={code} setValue={setCode} onRun={() => handleScratchpad()} />
+                </div>
+                <DrawerFooter>
+                    <StorageUnitTable
+                        height={300}
+                        columns={rawExecuteData?.RawExecute.Columns.map(c => c.Name) ?? []}
+                        columnTypes={rawExecuteData?.RawExecute.Columns.map(c => c.Type) ?? []}
+                        rows={rawExecuteData?.RawExecute.Rows ?? []}
+                        disableEdit={true}
+                    />
+                </DrawerFooter>
+            </DrawerContent>
+        </Drawer>
     </InternalPage>
 }

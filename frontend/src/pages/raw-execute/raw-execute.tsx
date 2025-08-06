@@ -155,6 +155,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
             return <div className="flex flex-col w-full h-[250px] mt-4" data-testid="cell-query-output">
                 <StorageUnitTable
                     columns={rows.RawExecute.Columns.map(c => c.Name)}
+                    columnTypes={rows.RawExecute.Columns.map(c => c.Type)}
                     rows={rows.RawExecute.Rows}
                     disableEdit={true}
                 />
@@ -250,10 +251,10 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                     <div className="flex grow h-[150px] border border-gray-200 rounded-md overflow-hidden dark:bg-white/10 dark:border-white/5">
                         <CodeEditor language="sql" value={code} setValue={setCode} onRun={() => handleRawExecute()} />
                     </div>
-                    <div className={classNames("absolute -bottom-3 z-20 flex justify-between px-3 pr-8 w-full opacity-0 transition-all duration-500 group-hover/cell:opacity-100", {
+                    <div className={classNames("absolute -bottom-3 z-20 flex justify-between px-3 pr-8 w-full opacity-0 transition-all duration-500 group-hover/cell:opacity-100 pointer-events-none", {
                         "opacity-100": showTools,
                     })}>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 pointer-events-auto">
                             <Button onClick={handleAdd} data-testid="add-button">
                                 {Icons.PlusCircle} Add
                             </Button>
@@ -267,7 +268,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                 </Button>
                             }
                         </div>
-                        <Button onClick={() => handleRawExecute()} data-testid="submit-button">
+                        <Button onClick={() => handleRawExecute()} data-testid="submit-button" className="pointer-events-auto">
                             {Icons.CheckCircle} {mode}
                         </Button>
                     </div>
