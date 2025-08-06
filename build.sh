@@ -156,7 +156,16 @@ if [ "$BUILD_BACKEND" = true ]; then
         echo "⚠️  build-backend.sh not found, using fallback build process"
         
         # Generate GraphQL code
-        "$PROJECT_ROOT/scripts/generate-graphql.sh" "$EDITION"
+        if [ "$EDITION" = "ee" ]; then
+            echo "📊 Generating EE GraphQL code with native schema extension..."
+            cd "$PROJECT_ROOT/ee"
+            GOWORK="$PROJECT_ROOT/go.work.ee" go generate .
+            cd "$PROJECT_ROOT/core"
+        else
+            echo "📊 Generating CE GraphQL code..."
+            cd "$PROJECT_ROOT/core"
+            go generate ./...
+        fi
         
         # Build backend
         cd "$PROJECT_ROOT/core"

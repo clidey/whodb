@@ -83,23 +83,22 @@ cd core
 go generate ./...
 ```
 
-#### Enterprise Edition (Multiple Options)
+#### Enterprise Edition
 
-**Option 1 - Using the dedicated script (Recommended):**
-```bash
-./scripts/generate-graphql.sh ee
-```
+The EE edition uses native GraphQL schema extension support. The schema extension file at `ee/core/graph/schema.extension.graphqls` extends the base schema with enterprise-specific types.
 
-**Option 2 - From EE directory:**
+**From EE directory:**
 ```bash
 cd ee
-GOWORK=$PWD/../go.work.ee go generate ./...
+GOWORK=$PWD/../go.work.ee go generate .
 ```
 
-**Option 3 - From root directory:**
+**From root directory:**
 ```bash
 GOWORK=$PWD/go.work.ee go generate ./ee/...
 ```
+
+**Note:** The generation now uses gqlgen directly with native schema extension support instead of manual merging scripts. Any changes to `ee/core/graph/schema.extension.graphqls` will be automatically picked up during generation.
 
 ### Frontend GraphQL Generation
 
@@ -185,14 +184,63 @@ GOWORK=$PWD/../go.work.ee go test -tags ee ./... -cover
 ```
 
 ### Frontend E2E Tests
+
+The E2E test commands have been consolidated for better usability. They automatically handle:
+- Setting up the test environment (backend server, frontend server, Docker services)
+- Running Cypress tests
+- Cleaning up all processes and containers when done
+
+#### Running E2E Tests
+
 ```bash
 cd frontend
 
-# Community Edition tests
+# Community Edition - Interactive Cypress UI
 pnpm run cypress:ce
 
-# Enterprise Edition tests
+# Community Edition - Headless (for CI/automation)
+pnpm run cypress:ce:headless
+
+# Enterprise Edition - Interactive Cypress UI
 pnpm run cypress:ee
+
+# Enterprise Edition - Headless (for CI/automation)
+pnpm run cypress:ee:headless
+```
+
+#### What These Commands Do
+
+1. **Setup Phase** (`_test:*:setup` - runs automatically):
+   - Cleans up any previous test environment
+   - Builds and starts the backend test server with coverage
+   - Sets up test databases (SQLite for CE, additional databases for EE)
+   - Starts Docker containers for test databases
+   - Launches the frontend Vite dev server on port 3000
+
+2. **Test Phase**:
+   - Opens Cypress UI (interactive) or runs tests headlessly
+   - Tests run against the local environment on port 3000
+
+3. **Cleanup Phase** (`_test:*:cleanup` - runs automatically):
+   - Stops the frontend Vite server
+   - Stops the backend test server
+   - Removes Docker containers and volumes
+   - Cleans up temporary test files
+
+#### Auxiliary Test Commands
+
+These commands are prefixed with `_` and are used internally by the main test commands. They are not recommended for direct use:
+
+```bash
+# Individual setup/cleanup commands (not recommended for direct use)
+pnpm run _test:ce:setup     # Sets up CE test environment
+pnpm run _test:ce:cleanup    # Cleans up CE test environment
+pnpm run _test:ee:setup     # Sets up EE test environment
+pnpm run _test:ee:cleanup    # Cleans up EE test environment
+
+# Individual Cypress commands (not recommended for direct use)
+pnpm run _cypress:ce:open   # Opens Cypress UI without setup
+pnpm run _cypress:ce:run    # Runs Cypress headlessly without setup
 ```
 
 ## Docker Builds

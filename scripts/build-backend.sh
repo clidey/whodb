@@ -21,10 +21,23 @@ echo "🔨 Building WhoDB backend ($EDITION edition)..."
 
 # Step 1: Generate GraphQL code
 echo "📊 Generating GraphQL code..."
-"$SCRIPT_DIR/generate-graphql.sh" "$EDITION"
-if [ $? -ne 0 ]; then
-    echo "❌ GraphQL generation failed"
-    exit 1
+if [ "$EDITION" = "ee" ]; then
+    echo "   Generating EE GraphQL code with native schema extension..."
+    cd "$PROJECT_ROOT/ee"
+    GOWORK="$PROJECT_ROOT/go.work.ee" go generate .
+    if [ $? -ne 0 ]; then
+        echo "❌ EE GraphQL generation failed"
+        exit 1
+    fi
+    cd "$PROJECT_ROOT/core"
+else
+    echo "   Generating CE GraphQL code..."
+    cd "$PROJECT_ROOT/core"
+    go generate ./...
+    if [ $? -ne 0 ]; then
+        echo "❌ CE GraphQL generation failed"
+        exit 1
+    fi
 fi
 
 # Step 2: Download Go dependencies
