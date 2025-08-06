@@ -55,6 +55,7 @@ var AllowedOrigins = common.FilterList(strings.Split(os.Getenv("WHODB_ALLOWED_OR
 })
 
 var EnableHTTPLogging = os.Getenv("WHODB_ENABLE_HTTP_LOGGING") == "true"
+var AllowMockDataGeneration = os.Getenv("ALLOW_MOCK_DATA_GENERATION")
 
 type ChatProvider struct {
 	Type       string
@@ -210,4 +211,23 @@ func findAllDatabaseCredentials(databaseType string) []DatabaseCredentials {
 	}
 
 	return profiles
+}
+
+func IsMockDataGenerationAllowed(tableName string) bool {
+	if AllowMockDataGeneration == "" {
+		return false
+	}
+	
+	if AllowMockDataGeneration == "*" {
+		return true
+	}
+	
+	allowedTables := strings.Split(AllowMockDataGeneration, ",")
+	for _, allowed := range allowedTables {
+		if strings.TrimSpace(allowed) == tableName {
+			return true
+		}
+	}
+	
+	return false
 }

@@ -114,6 +114,21 @@ type StatusResponse {
   Status: Boolean!
 }
 
+input MockDataGenerationInput {
+  Schema: String!
+  StorageUnit: String!
+  RowCount: Int!
+  Method: String!
+  OverwriteExisting: Boolean!
+}
+
+type MockDataGenerationProgress {
+  TotalRows: Int!
+  GeneratedRows: Int!
+  FailedRows: Int!
+  ErrorMessages: [String!]!
+}
+
 input ChatInput {
   PreviousConversation: String!
   Query: String!
@@ -159,4 +174,5 @@ type Mutation {
   UpdateStorageUnit(schema: String!, storageUnit: String!, values: [RecordInput!]!, updatedColumns: [String!]!): StatusResponse!
   AddRow(schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
   DeleteRow(schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
+  GenerateMockData(input: MockDataGenerationInput!): MockDataGenerationProgress!
 }

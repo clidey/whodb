@@ -1,0 +1,8 @@
+mutation GenerateMockData($input: MockDataGenerationInput!) {
+    GenerateMockData(input: $input) {
+        TotalRows
+        GeneratedRows
+        FailedRows
+        ErrorMessages
+    }
+}
