@@ -82,18 +82,10 @@ type ComplexityRoot struct {
 		Type                 func(childComplexity int) int
 	}
 
-	MockDataGenerationProgress struct {
-		ErrorMessages func(childComplexity int) int
-		FailedRows    func(childComplexity int) int
-		GeneratedRows func(childComplexity int) int
-		TotalRows     func(childComplexity int) int
-	}
-
 	Mutation struct {
 		AddRow            func(childComplexity int, schema string, storageUnit string, values []*model.RecordInput) int
 		AddStorageUnit    func(childComplexity int, schema string, storageUnit string, fields []*model.RecordInput) int
 		DeleteRow         func(childComplexity int, schema string, storageUnit string, values []*model.RecordInput) int
-		GenerateMockData  func(childComplexity int, input model.MockDataGenerationInput) int
 		Login             func(childComplexity int, credentials model.LoginCredentials) int
 		LoginWithProfile  func(childComplexity int, profile model.LoginProfileInput) int
 		Logout            func(childComplexity int) int
@@ -150,7 +142,6 @@ type MutationResolver interface {
 	UpdateStorageUnit(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput, updatedColumns []string) (*model.StatusResponse, error)
 	AddRow(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
 	DeleteRow(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
-	GenerateMockData(ctx context.Context, input model.MockDataGenerationInput) (*model.MockDataGenerationProgress, error)
 }
 type QueryResolver interface {
 	Version(ctx context.Context) (string, error)
@@ -305,34 +296,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.LoginProfile.Type(childComplexity), true
 
-	case "MockDataGenerationProgress.ErrorMessages":
-		if e.complexity.MockDataGenerationProgress.ErrorMessages == nil {
-			break
-		}
-
-		return e.complexity.MockDataGenerationProgress.ErrorMessages(childComplexity), true
-
-	case "MockDataGenerationProgress.FailedRows":
-		if e.complexity.MockDataGenerationProgress.FailedRows == nil {
-			break
-		}
-
-		return e.complexity.MockDataGenerationProgress.FailedRows(childComplexity), true
-
-	case "MockDataGenerationProgress.GeneratedRows":
-		if e.complexity.MockDataGenerationProgress.GeneratedRows == nil {
-			break
-		}
-
-		return e.complexity.MockDataGenerationProgress.GeneratedRows(childComplexity), true
-
-	case "MockDataGenerationProgress.TotalRows":
-		if e.complexity.MockDataGenerationProgress.TotalRows == nil {
-			break
-		}
-
-		return e.complexity.MockDataGenerationProgress.TotalRows(childComplexity), true
-
 	case "Mutation.AddRow":
 		if e.complexity.Mutation.AddRow == nil {
 			break
@@ -368,18 +331,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteRow(childComplexity, args["schema"].(string), args["storageUnit"].(string), args["values"].([]*model.RecordInput)), true
-
-	case "Mutation.GenerateMockData":
-		if e.complexity.Mutation.GenerateMockData == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_GenerateMockData_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.GenerateMockData(childComplexity, args["input"].(model.MockDataGenerationInput)), true
 
 	case "Mutation.Login":
 		if e.complexity.Mutation.Login == nil {
@@ -630,7 +581,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputChatInput,
 		ec.unmarshalInputLoginCredentials,
 		ec.unmarshalInputLoginProfileInput,
-		ec.unmarshalInputMockDataGenerationInput,
 		ec.unmarshalInputOperationWhereCondition,
 		ec.unmarshalInputRecordInput,
 		ec.unmarshalInputSettingsConfigInput,
@@ -970,34 +920,6 @@ func (ec *executionContext) field_Mutation_DeleteRow_argsValues(
 	}
 
 	var zeroVal []*model.RecordInput
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_GenerateMockData_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := ec.field_Mutation_GenerateMockData_argsInput(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_GenerateMockData_argsInput(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (model.MockDataGenerationInput, error) {
-	if _, ok := rawArgs["input"]; !ok {
-		var zeroVal model.MockDataGenerationInput
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNMockDataGenerationInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataGenerationInput(ctx, tmp)
-	}
-
-	var zeroVal model.MockDataGenerationInput
 	return zeroVal, nil
 }
 
@@ -2515,182 +2437,6 @@ func (ec *executionContext) fieldContext_LoginProfile_IsEnvironmentDefined(_ con
 	return fc, nil
 }
 
-func (ec *executionContext) _MockDataGenerationProgress_TotalRows(ctx context.Context, field graphql.CollectedField, obj *model.MockDataGenerationProgress) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MockDataGenerationProgress_TotalRows(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TotalRows, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_MockDataGenerationProgress_TotalRows(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "MockDataGenerationProgress",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _MockDataGenerationProgress_GeneratedRows(ctx context.Context, field graphql.CollectedField, obj *model.MockDataGenerationProgress) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MockDataGenerationProgress_GeneratedRows(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.GeneratedRows, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_MockDataGenerationProgress_GeneratedRows(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "MockDataGenerationProgress",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _MockDataGenerationProgress_FailedRows(ctx context.Context, field graphql.CollectedField, obj *model.MockDataGenerationProgress) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MockDataGenerationProgress_FailedRows(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.FailedRows, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_MockDataGenerationProgress_FailedRows(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "MockDataGenerationProgress",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _MockDataGenerationProgress_ErrorMessages(ctx context.Context, field graphql.CollectedField, obj *model.MockDataGenerationProgress) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MockDataGenerationProgress_ErrorMessages(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ErrorMessages, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]string)
-	fc.Result = res
-	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_MockDataGenerationProgress_ErrorMessages(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "MockDataGenerationProgress",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Mutation_Login(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_Login(ctx, field)
 	if err != nil {
@@ -3146,71 +2892,6 @@ func (ec *executionContext) fieldContext_Mutation_DeleteRow(ctx context.Context,
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_DeleteRow_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_GenerateMockData(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_GenerateMockData(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().GenerateMockData(rctx, fc.Args["input"].(model.MockDataGenerationInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.MockDataGenerationProgress)
-	fc.Result = res
-	return ec.marshalNMockDataGenerationProgress2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataGenerationProgress(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_GenerateMockData(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "TotalRows":
-				return ec.fieldContext_MockDataGenerationProgress_TotalRows(ctx, field)
-			case "GeneratedRows":
-				return ec.fieldContext_MockDataGenerationProgress_GeneratedRows(ctx, field)
-			case "FailedRows":
-				return ec.fieldContext_MockDataGenerationProgress_FailedRows(ctx, field)
-			case "ErrorMessages":
-				return ec.fieldContext_MockDataGenerationProgress_ErrorMessages(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type MockDataGenerationProgress", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_GenerateMockData_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -6575,61 +6256,6 @@ func (ec *executionContext) unmarshalInputLoginProfileInput(ctx context.Context,
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputMockDataGenerationInput(ctx context.Context, obj any) (model.MockDataGenerationInput, error) {
-	var it model.MockDataGenerationInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"Schema", "StorageUnit", "RowCount", "Method", "OverwriteExisting"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "Schema":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Schema"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Schema = data
-		case "StorageUnit":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("StorageUnit"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.StorageUnit = data
-		case "RowCount":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("RowCount"))
-			data, err := ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.RowCount = data
-		case "Method":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Method"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Method = data
-		case "OverwriteExisting":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("OverwriteExisting"))
-			data, err := ec.unmarshalNBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.OverwriteExisting = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputOperationWhereCondition(ctx context.Context, obj any) (model.OperationWhereCondition, error) {
 	var it model.OperationWhereCondition
 	asMap := map[string]any{}
@@ -7061,60 +6687,6 @@ func (ec *executionContext) _LoginProfile(ctx context.Context, sel ast.Selection
 	return out
 }
 
-var mockDataGenerationProgressImplementors = []string{"MockDataGenerationProgress"}
-
-func (ec *executionContext) _MockDataGenerationProgress(ctx context.Context, sel ast.SelectionSet, obj *model.MockDataGenerationProgress) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, mockDataGenerationProgressImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("MockDataGenerationProgress")
-		case "TotalRows":
-			out.Values[i] = ec._MockDataGenerationProgress_TotalRows(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "GeneratedRows":
-			out.Values[i] = ec._MockDataGenerationProgress_GeneratedRows(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "FailedRows":
-			out.Values[i] = ec._MockDataGenerationProgress_FailedRows(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "ErrorMessages":
-			out.Values[i] = ec._MockDataGenerationProgress_ErrorMessages(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -7186,13 +6758,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "DeleteRow":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_DeleteRow(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "GenerateMockData":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_GenerateMockData(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -8470,25 +8035,6 @@ func (ec *executionContext) marshalNLoginProfile2ᚖgithubᚗcomᚋclideyᚋwhod
 func (ec *executionContext) unmarshalNLoginProfileInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐLoginProfileInput(ctx context.Context, v any) (model.LoginProfileInput, error) {
 	res, err := ec.unmarshalInputLoginProfileInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNMockDataGenerationInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataGenerationInput(ctx context.Context, v any) (model.MockDataGenerationInput, error) {
-	res, err := ec.unmarshalInputMockDataGenerationInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNMockDataGenerationProgress2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataGenerationProgress(ctx context.Context, sel ast.SelectionSet, v model.MockDataGenerationProgress) graphql.Marshaler {
-	return ec._MockDataGenerationProgress(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNMockDataGenerationProgress2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataGenerationProgress(ctx context.Context, sel ast.SelectionSet, v *model.MockDataGenerationProgress) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._MockDataGenerationProgress(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNRecord2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Record) graphql.Marshaler {

@@ -39,7 +39,6 @@ import { useAppSelector } from "../../store/hooks";
 import { getDatabaseStorageUnitLabel, isNoSQL, isNumeric } from "../../utils/functions";
 import { getDatabaseOperators } from "../../utils/database-operators";
 import { ExploreStorageUnitWhereCondition } from "./explore-storage-unit-where-condition";
-import { MockDataDialog } from "../../components/mock-data-dialog";
 
 
 export const ExploreStorageUnit: FC = () => {
@@ -56,7 +55,6 @@ export const ExploreStorageUnit: FC = () => {
     const [newRowForm, setNewRowForm] = useState<RecordInput[]>([]);
     const [checkedRows, setCheckedRows] = useState<Set<number>>(new Set());
     const [deleting, setDeleting] = useState(false);
-    const [showMockDataDialog, setShowMockDataDialog] = useState(false);
     const addRowRef = useRef<HTMLDivElement>(null);
 
     const hasFormContent = useCallback(() => {
@@ -452,7 +450,6 @@ export const ExploreStorageUnit: FC = () => {
                     <div className="flex w-full justify-end gap-2">
                         {adding || deleting && <Loading />}
                         {checkedRows.size > 0 && <AnimatedButton type="lg" icon={Icons.Delete} label={checkedRows.size > 1 ? "Delete rows" : "Delete row"} iconClassName="stroke-red-500 dark:stroke-red-500" labelClassName="text-red-500 dark:text-red-500" onClick={handleRowDelete} disabled={deleting} /> }
-                        <AnimatedButton type="lg" icon={Icons.Database} label="Generate Mock Data" onClick={() => setShowMockDataDialog(true)} disabled={adding || deleting} />
                         <AnimatedButton type="lg" icon={Icons.Add} label={showAdd ? "Cancel" : "Add Row"} onClick={handleToggleShowAdd} disabled={adding} />
                     </div>
                     <div className={classNames("flex flex-col gap-2 overflow-y-auto h-full p-8 mt-2", {
@@ -500,13 +497,5 @@ export const ExploreStorageUnit: FC = () => {
                 }
             </div>
         </div>
-        {unit && (
-            <MockDataDialog
-                isOpen={showMockDataDialog}
-                onClose={() => setShowMockDataDialog(false)}
-                storageUnit={unit}
-                onSuccess={handleQuery}
-            />
-        )}
     </InternalPage>
 }

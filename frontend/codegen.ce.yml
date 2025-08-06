@@ -13,8 +13,8 @@
 # limitations under the License.
 
 # CE-specific GraphQL code generation
-# Can use either the backend endpoint or the schema file directly
-schema: ../core/graph/schema.graphqls
+# Requires CE backend running on port 8080
+schema: http://localhost:8080/api/query
 documents: src/**/*.graphql
 generates:
   src/generated/graphql.tsx:

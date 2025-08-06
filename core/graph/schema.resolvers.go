@@ -7,7 +7,6 @@ package graph
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/clidey/whodb/core/graph/model"
@@ -169,102 +168,6 @@ func (r *mutationResolver) DeleteRow(ctx context.Context, schema string, storage
 	return &model.StatusResponse{
 		Status: status,
 	}, nil
-}
-
-// GenerateMockData is the resolver for the GenerateMockData field.
-func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.MockDataGenerationInput) (*model.MockDataGenerationProgress, error) {
-	// Check if mock data generation is allowed for this table
-	if !env.IsMockDataGenerationAllowed(input.StorageUnit) {
-		return nil, errors.New("mock data generation is not allowed for this table")
-	}
-
-	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
-	typeArg := config.Credentials.Type
-	plugin := src.MainEngine.Choose(engine.DatabaseType(typeArg))
-
-	// Get table columns to understand the schema
-	rowsResult, err := plugin.GetRows(config, input.Schema, input.StorageUnit, nil, 1, 0)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get table schema: %w", err)
-	}
-
-	// Initialize progress tracking
-	progress := &model.MockDataGenerationProgress{
-		TotalRows:     input.RowCount,
-		GeneratedRows: 0,
-		FailedRows:    0,
-		ErrorMessages: []string{},
-	}
-
-	// If overwrite is requested, delete existing data first
-	if input.OverwriteExisting {
-		// Start transaction by getting all existing rows
-		existingRows, err := plugin.GetRows(config, input.Schema, input.StorageUnit, nil, 1000000, 0) // Get all rows
-		if err != nil {
-			return nil, fmt.Errorf("failed to get existing rows: %w", err)
-		}
-
-		// Delete all existing rows
-		if len(existingRows.Rows) > 0 {
-			// For now, we'll use RawExecute to truncate the table
-			// This is more efficient than deleting row by row
-			truncateQuery := fmt.Sprintf("DELETE FROM %s", input.StorageUnit)
-			if typeArg == "Postgres" || typeArg == "MySQL" || typeArg == "MariaDB" {
-				truncateQuery = fmt.Sprintf("TRUNCATE TABLE %s", input.StorageUnit)
-			}
-			
-			_, err = plugin.RawExecute(config, truncateQuery)
-			if err != nil {
-				// If TRUNCATE fails, try DELETE
-				deleteQuery := fmt.Sprintf("DELETE FROM %s", input.StorageUnit)
-				_, err = plugin.RawExecute(config, deleteQuery)
-				if err != nil {
-					return nil, fmt.Errorf("failed to clear existing data: %w", err)
-				}
-			}
-		}
-	}
-
-	// Generate and insert mock data
-	generator := src.NewMockDataGenerator()
-	
-	for i := 0; i < input.RowCount; i++ {
-		// Generate mock data for one row
-		rowData, err := generator.GenerateRowData(rowsResult.Columns)
-		if err != nil {
-			progress.FailedRows++
-			progress.ErrorMessages = append(progress.ErrorMessages, fmt.Sprintf("Row %d: %v", i+1, err))
-			continue
-		}
-
-		// Try to insert the row
-		success, err := plugin.AddRow(config, input.Schema, input.StorageUnit, rowData)
-		if err != nil || !success {
-			// Retry with different values if it fails (e.g., due to unique constraints)
-			retryCount := 0
-			maxRetries := 3
-			
-			for retryCount < maxRetries && (!success || err != nil) {
-				retryCount++
-				rowData, _ = generator.GenerateRowData(rowsResult.Columns)
-				success, err = plugin.AddRow(config, input.Schema, input.StorageUnit, rowData)
-			}
-			
-			if err != nil || !success {
-				progress.FailedRows++
-				errorMsg := "unknown error"
-				if err != nil {
-					errorMsg = err.Error()
-				}
-				progress.ErrorMessages = append(progress.ErrorMessages, fmt.Sprintf("Row %d: %s", i+1, errorMsg))
-				continue
-			}
-		}
-		
-		progress.GeneratedRows++
-	}
-
-	return progress, nil
 }
 
 // Version is the resolver for the Version field.

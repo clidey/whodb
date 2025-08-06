@@ -27,7 +27,6 @@ import (
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
-	"github.com/clidey/whodb/core/src/mockdata"
 	"github.com/clidey/whodb/core/src/plugins/postgres"
 )
 
@@ -109,8 +108,4 @@ func GetLoginCredentials(profile env.DatabaseCredentials) *engine.Credentials {
 		Advanced:  advanced,
 		IsProfile: profile.IsProfile,
 	}
-}
-
-func NewMockDataGenerator() *mockdata.Generator {
-	return mockdata.NewGenerator()
 }
