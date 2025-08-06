@@ -22,21 +22,172 @@ import { json } from "@codemirror/lang-json";
 import { markdown } from "@codemirror/lang-markdown";
 import { sql } from "@codemirror/lang-sql";
 import { EditorState } from "@codemirror/state";
-import { EditorView, lineNumbers } from "@codemirror/view";
+import { EditorView, lineNumbers, GutterMarker, gutter } from "@codemirror/view";
+import { RangeSet, RangeValue } from "@codemirror/state";
 import { oneDark } from "@codemirror/theme-one-dark";
 import classNames from "classnames";
 import MarkdownPreview from 'react-markdown';
 import remarkGfm from "remark-gfm";
 import { useTheme } from "@clidey/ux";
 
+// SQL validation function
+const isValidSQLQuery = (text: string): boolean => {
+  const trimmed = text.trim();
+  if (!trimmed) return false;
+  
+  // Basic SQL validation - check for common SQL keywords at the start
+  const sqlKeywords = [
+    'SELECT', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'ALTER', 
+    'WITH', 'EXPLAIN', 'DESCRIBE', 'SHOW', 'USE', 'SET'
+  ];
+  
+  const upperText = trimmed.toUpperCase();
+  return sqlKeywords.some(keyword => upperText.startsWith(keyword));
+};
+
+// Split text into individual SQL queries
+const splitIntoQueries = (text: string): string[] => {
+  // Split by semicolon and filter out empty queries
+  return text.split(';')
+    .map(query => query.trim())
+    .filter(query => query.length > 0);
+};
+
+// Get the first line of a multiline query
+const getFirstLineOfQuery = (text: string): string => {
+  const lines = text.split('\n');
+  const firstLine = lines[0].trim();
+  
+  // If first line is empty, find the first non-empty line
+  if (!firstLine) {
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line) return line;
+    }
+  }
+  
+  return firstLine;
+};
+
+// Find all valid SQL queries and their starting line numbers
+const findValidQueriesWithPositions = (doc: any): Array<{query: string, startLine: number}> => {
+  const fullText = doc.toString();
+  const lines = fullText.split('\n');
+  const results: Array<{query: string, startLine: number}> = [];
+  
+  let currentQuery = '';
+  let queryStartLine = 1;
+  let inQuery = false;
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmedLine = line.trim();
+    
+    // Skip empty lines unless we're already in a query
+    if (!trimmedLine && !inQuery) {
+      continue;
+    }
+    
+    // If this line starts a new query (contains SQL keywords)
+    if (!inQuery && isValidSQLQuery(trimmedLine)) {
+      currentQuery = trimmedLine;
+      queryStartLine = i + 1; // Convert to 1-based line number
+      inQuery = true;
+    }
+    // If we're in a query, append to current query
+    else if (inQuery) {
+      currentQuery += '\n' + line;
+    }
+    
+    // Check if this line ends the current query (contains semicolon)
+    if (inQuery && line.includes(';')) {
+      // Remove the semicolon and trim for validation
+      const queryWithoutSemicolon = currentQuery.replace(/;$/, '').trim();
+      
+      if (isValidSQLQuery(queryWithoutSemicolon)) {
+        results.push({
+          query: queryWithoutSemicolon,
+          startLine: queryStartLine
+        });
+      }
+      
+      // Reset for next query
+      currentQuery = '';
+      inQuery = false;
+    }
+  }
+  
+  // Handle case where there's no semicolon at the end
+  if (inQuery && currentQuery.trim()) {
+    const queryWithoutSemicolon = currentQuery.trim();
+    if (isValidSQLQuery(queryWithoutSemicolon)) {
+      results.push({
+        query: queryWithoutSemicolon,
+        startLine: queryStartLine
+      });
+    }
+  }
+  
+  return results;
+};
+
 type ICodeEditorProps = {
   value: string;
   setValue?: (value: string) => void;
   language?: "sql" | "markdown" | "json";
-  onRun?: () => void;
+  onRun?: (lineText?: string) => void;
   defaultShowPreview?: boolean;
   disabled?: boolean;
 };
+
+// Custom gutter marker for play button
+class PlayButtonMarker extends GutterMarker {
+  constructor(private onRun: (lineText?: string) => void, private queryText: string) {
+    super();
+  }
+
+  toDOM() {
+    const button = document.createElement("div");
+    button.className = "cm-play-button";
+    button.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" class="w-4 h-4">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347c-.75.412-1.667-.13-1.667-.986V5.653Z" />
+      </svg>
+    `;
+    button.style.cssText = `
+      cursor: pointer;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      margin: 0;
+      padding: 0;
+      line-height: 1;
+      position: relative;
+      top: 50%;
+      transform: translateY(-50%);
+    `;
+    
+    button.addEventListener("mouseenter", () => {
+      button.style.opacity = "1";
+    });
+    
+    button.addEventListener("mouseleave", () => {
+      button.style.opacity = "0.6";
+    });
+    
+    button.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.onRun(this.queryText);
+    });
+    
+    return button;
+  }
+}
 
 export const CodeEditor: FC<ICodeEditorProps> = ({
   value,
@@ -71,13 +222,62 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
       }
     })();
 
+    // Create custom gutter for SQL queries
+    const createPlayButtonGutter = () => {
+      if (language !== "sql" || !onRun) {
+        return [];
+      }
+
+      return [
+        gutter({
+          class: "cm-play-gutter",
+          markers: (view) => {
+            const doc = view.state.doc;
+            const ranges = [];
+            
+            // Find all valid queries with their starting positions
+            const validQueries = findValidQueriesWithPositions(doc);
+            
+            // Add play buttons for each valid query
+            for (const { query, startLine } of validQueries) {
+              const startLineObj = doc.line(startLine);
+              if (startLineObj && startLineObj.text.trim().length > 0) {
+                // Create a unique marker for each query with the specific query text
+                const playMarker = new PlayButtonMarker((lineText) => {
+                  if (onRunReference.current) {
+                    onRunReference.current(lineText);
+                  }
+                }, query);
+                
+                ranges.push({ from: startLineObj.from, to: startLineObj.from, value: playMarker });
+              }
+            }
+            
+            return RangeSet.of(ranges);
+          },
+        }),
+      ];
+    };
+
     const state = EditorState.create({
         doc: value,
         extensions: [
           EditorView.domEventHandlers({
               keydown(event) {
                 if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && onRunReference.current != null) {
-                      onRunReference.current();
+                      // Get the selected text if any, otherwise use the entire content
+                      const selection = view.state.selection;
+                      let textToExecute = '';
+                      
+                      if (selection.main.empty) {
+                        // No selection, execute entire content
+                        textToExecute = view.state.doc.toString();
+                      } else {
+                        // Has selection, execute only the selected text
+                        textToExecute = view.state.sliceDoc(selection.main.from, selection.main.to);
+                      }
+                      
+                      onRunReference.current(textToExecute);
                       event.preventDefault();
                       event.stopPropagation();
                   }
@@ -88,9 +288,39 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
             darkModeEnabled ? [oneDark, EditorView.theme({
               ".cm-activeLine": { backgroundColor: "rgba(0,0,0,0.05) !important" },
               ".cm-activeLineGutter": { backgroundColor: "rgba(0,0,0,0.05) !important" },
+              ".cm-play-gutter": { 
+                width: "24px",
+                backgroundColor: "transparent",
+                borderRight: "1px solid rgba(0,0,0,0.1)",
+              },
+              ".cm-play-button": {
+                color: "#10b981", // teal-500
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100%",
+              },
+              ".dark .cm-play-button": {
+                color: "#14b8a6", // teal-400 for dark mode
+              },
+              ".dark .cm-play-gutter": {
+                borderRight: "1px solid rgba(255,255,255,0.1)",
+              },
             })] : [EditorView.theme({
               ".cm-activeLine": { backgroundColor: "rgba(0,0,0,0.05) !important" },
               ".cm-activeLineGutter": { backgroundColor: "rgba(0,0,0,0.05) !important" },
+              ".cm-play-gutter": { 
+                width: "24px",
+                backgroundColor: "transparent",
+                borderRight: "1px solid rgba(0,0,0,0.1)",
+              },
+              ".cm-play-button": {
+                color: "#10b981", // teal-500
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100%",
+              },
             })],
             EditorView.updateListener.of((update) => {
               if (update.docChanged && update.changes && setValue != null) {
@@ -99,6 +329,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
             }),
             lineNumbers(),
             EditorView.lineWrapping,
+            createPlayButtonGutter(),
         ],
     });
  
@@ -176,3 +407,4 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
     </div>
   );
 };
+

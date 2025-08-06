@@ -100,6 +100,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     const [showHistory, setShowHistory] = useState(false);
 
     const handleRawExecute = useCallback((historyCode?: string) => {
+        console.log("handleRawExecute", historyCode);
         if (current == null) {
             return;
         }
@@ -249,7 +250,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                     </div>
                 : <div className="relative">
                     <div className="flex grow h-[150px] border border-gray-200 rounded-md overflow-hidden dark:bg-white/10 dark:border-white/5">
-                        <CodeEditor language="sql" value={code} setValue={setCode} onRun={() => handleRawExecute()} />
+                        <CodeEditor language="sql" value={code} setValue={setCode} onRun={(c) => handleRawExecute(c)} />
                     </div>
                     <div className={classNames("absolute -bottom-3 z-20 flex justify-between px-3 pr-8 w-full opacity-0 transition-all duration-500 group-hover/cell:opacity-100 pointer-events-none", {
                         "opacity-100": showTools,
