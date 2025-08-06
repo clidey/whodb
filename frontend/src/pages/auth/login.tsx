@@ -14,39 +14,57 @@
  * limitations under the License.
  */
 
+import { Badge, Button, cn, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, toast } from '@clidey/ux';
+import { DatabaseType, LoginCredentials, useGetDatabaseLazyQuery, useGetProfilesQuery, useLoginMutation, useLoginWithProfileMutation } from '@graphql';
 import classNames from "classnames";
 import { entries } from "lodash";
 import { FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-const logoImage = "/images/logo.png";
-import { AnimatedButton } from "../../components/button";
-import { ClassNames } from "../../components/classes";
-import { createDropdownItem, DropdownWithLabel, IDropdownItem } from "../../components/dropdown";
 import { Icons } from "../../components/icons";
-import { InputWithlabel } from "../../components/input";
 import { Loading } from "../../components/loading";
 import { Container } from "../../components/page";
+import { updateProfileLastAccessed } from "../../components/profile-info-tooltip";
+import { baseDatabaseTypes, getDatabaseTypeDropdownItems, IDatabaseDropdownItem } from "../../config/database-types";
 import { InternalRoutes } from "../../config/routes";
-import { DatabaseType, LoginCredentials, useGetDatabaseLazyQuery, useGetProfilesQuery, useLoginMutation, useLoginWithProfileMutation } from '@graphql';
 import { AuthActions } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
-import { notify } from "../../store/function";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { updateProfileLastAccessed } from "../../components/profile-info-tooltip";
-import { getDatabaseTypeDropdownItems, baseDatabaseTypes, IDatabaseDropdownItem } from "../../config/database-types";
+import { ClassNames } from '../../components/classes';
+const logoImage = "/images/logo.png";
+// Embeddable LoginForm component for use in LoginPage and @sidebar.tsx
 
-export const LoginPage: FC = () => {
+import React from "react";
+
+// Embeddable LoginForm component
+export interface LoginFormProps {
+    // Optionally override navigation after login (e.g. for sidebar)
+    onLoginSuccess?: () => void;
+    // Optionally hide logo/title (for sidebar)
+    hideHeader?: boolean;
+    // Optionally compact mode (for sidebar)
+    compact?: boolean;
+    // Optionally override container className
+    className?: string;
+    advancedDirection?: "horizontal" | "vertical";
+}
+
+export const LoginForm: FC<LoginFormProps> = ({
+    onLoginSuccess,
+    hideHeader = false,
+    className = "",
+    advancedDirection = "horizontal",
+}) => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const currentProfile = useAppSelector(state => state.auth.current);
     const shouldUpdateLastAccessed = useRef(false);
-    
+
     const [login, { loading: loginLoading }] = useLoginMutation();
     const [loginWithProfile, { loading: loginWithProfileLoading }] = useLoginWithProfileMutation();
     const [getDatabases, { loading: databasesLoading, data: foundDatabases }] = useGetDatabaseLazyQuery();
     const { loading: profilesLoading, data: profiles } = useGetProfilesQuery();
     const [searchParams, ] = useSearchParams();
-    
+
     const [databaseTypeItems, setDatabaseTypeItems] = useState<IDatabaseDropdownItem[]>(baseDatabaseTypes);
     const [databaseType, setDatabaseType] = useState<IDatabaseDropdownItem>(baseDatabaseTypes[0]);
     const [hostName, setHostName] = useState("");
@@ -58,7 +76,7 @@ export const LoginPage: FC = () => {
         databaseType.extra ?? {}
     );
     const [showAdvanced, setShowAdvanced] = useState(false);
-    const [selectedAvailableProfile, setSelectedAvailableProfile] = useState<IDropdownItem>();
+    const [selectedAvailableProfile, setSelectedAvailableProfile] = useState<string>();
 
     const loading = useMemo(() => {
         return loginLoading || loginWithProfileLoading;
@@ -90,16 +108,20 @@ export const LoginPage: FC = () => {
                     const profileData = { ...credentials };
                     shouldUpdateLastAccessed.current = true;
                     dispatch(AuthActions.login(profileData));
-                    navigate(InternalRoutes.Dashboard.StorageUnit.path);
-                    return notify("Login successfully", "success");
+                    if (onLoginSuccess) {
+                        onLoginSuccess();
+                    } else {
+                        navigate(InternalRoutes.Dashboard.StorageUnit.path);
+                    }
+                    return toast.success("Login successfully");
                 }
-                return notify("Login failed", "error");
+                return toast.error("Login failed");
             },
             onError(error) {
-                return notify(`Login failed: ${error.message}`, "error");
+                return toast.error(`Login failed: ${error.message}`);
             }
         });
-    }, [databaseType.id, hostName, database, username, password, advancedForm, login, dispatch, navigate]);
+    }, [databaseType.id, hostName, database, username, password, advancedForm, login, dispatch, navigate, onLoginSuccess]);
 
     const handleLoginWithProfileSubmit = useCallback(() => {
         if (selectedAvailableProfile == null) {
@@ -107,21 +129,21 @@ export const LoginPage: FC = () => {
         }
         setError(undefined);
 
-        const profile = profiles?.Profiles.find(p => p.Id === selectedAvailableProfile.id);
+        const profile = profiles?.Profiles.find(p => p.Id === selectedAvailableProfile);
 
         loginWithProfile({
             variables: {
                 profile: {
-                    Id:  selectedAvailableProfile.id,
+                    Id:  selectedAvailableProfile,
                     Type: profile?.Type as DatabaseType,
                 },
             },
             onCompleted(data) {
                 if (data.LoginWithProfile.Status) {
-                    updateProfileLastAccessed(selectedAvailableProfile.id);
+                    updateProfileLastAccessed(selectedAvailableProfile);
                     dispatch(AuthActions.login({
                         Type: profile?.Type as DatabaseType,
-                        Id: selectedAvailableProfile.id,
+                        Id: selectedAvailableProfile,
                         Database: profile?.Database ?? "",
                         Hostname: "",
                         Password: "",
@@ -129,16 +151,20 @@ export const LoginPage: FC = () => {
                         Saved: true,
                         IsEnvironmentDefined: profile?.IsEnvironmentDefined ?? false,
                     }));
-                    navigate(InternalRoutes.Dashboard.StorageUnit.path);
-                    return notify("Login successfully", "success");
+                    if (onLoginSuccess) {
+                        onLoginSuccess();
+                    } else {
+                        navigate(InternalRoutes.Dashboard.StorageUnit.path);
+                    }
+                    return toast.success("Login successfully");
                 }
-                return notify("Login failed", "error");
+                return toast.error("Login failed");
             },
             onError(error) {
-                return notify(`Login failed: ${error.message}`, "error");
+                return toast.error(`Login failed: ${error.message}`);
             }
         });
-    }, [dispatch, loginWithProfile, navigate, profiles?.Profiles, selectedAvailableProfile]);
+    }, [dispatch, loginWithProfile, navigate, profiles?.Profiles, selectedAvailableProfile, onLoginSuccess]);
 
     const handleDatabaseTypeChange = useCallback((item: IDatabaseDropdownItem) => {
         if (item.id === DatabaseType.Sqlite3) {
@@ -168,8 +194,8 @@ export const LoginPage: FC = () => {
         });
     }, []);
 
-    const handleAvailableProfileChange = useCallback((item: IDropdownItem) => {
-        setSelectedAvailableProfile(item);
+    const handleAvailableProfileChange = useCallback((itemId: string) => {
+        setSelectedAvailableProfile(itemId);
     }, []);
 
     useEffect(() => {
@@ -217,7 +243,7 @@ export const LoginPage: FC = () => {
 
                     // gives warning
                     if (!hostname || !username || !password || !database) {
-                        notify("We could not extract all required details (host, username, password, or database) from this URL. Please enter the information manually.", "warning");
+                        toast.warning("We could not extract all required details (host, username, password, or database) from this URL. Please enter the information manually.");
                     }
                     setHostName(hostname);
                     setUsername(username);
@@ -233,7 +259,7 @@ export const LoginPage: FC = () => {
                         setShowAdvanced(true);
                     }
                 } catch (error) {
-                    notify("We could not extract all required details (host, username, password, or database) from this URL. Please enter the information manually.", "warning");
+                    toast.warning("We could not extract all required details (host, username, password, or database) from this URL. Please enter the information manually.");
                 }
             } else {
                 return setHostName(newHostName);
@@ -260,100 +286,251 @@ export const LoginPage: FC = () => {
 
     const fields = useMemo(() => {
         if (databaseType.id === DatabaseType.Sqlite3) {
-            return <>
-                <DropdownWithLabel label="Database" items={foundDatabases?.Database?.map(database => ({
-                    id: database,
-                    label: database,
-                    icon: Icons.Database,
-                })) ?? []} loading={databasesLoading} noItemsLabel="Not available. Mount SQLite file in /db/" fullWidth={true} value={{
-                    id: database,
-                    label: database,
-                    icon: Icons.Database,
-                }} onChange={(item) => setDatabase(item.id)} testId="database" />
-            </>
+            return <div className="flex flex-col gap-4 w-full">
+                <div className="flex flex-col gap-1 w-full">
+                    <Label>Database</Label>
+                    <Select
+                        value={database}
+                        onValueChange={setDatabase}
+                        disabled={databasesLoading}
+                    >
+                        <SelectTrigger className="w-full" data-testid="database">
+                            <SelectValue placeholder="Select Database" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {databasesLoading ? (
+                                <div className="px-4 py-2 text-sm text-muted-foreground">Loading...</div>
+                            ) : (foundDatabases?.Database?.length ? (
+                                foundDatabases.Database.map(db => (
+                                    <SelectItem key={db} value={db}>
+                                        <span className="flex items-center gap-2">
+                                            {Icons.Database}
+                                            {db}
+                                        </span>
+                                    </SelectItem>
+                                ))
+                            ) : (
+                                <div className="px-4 py-2 text-sm text-muted-foreground">
+                                    Not available. Mount SQLite file in /db/
+                                </div>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
         }
-        return <>
+        return <div className="flex flex-col gap-4 w-full">
             { databaseType.fields?.hostname && (
-                <InputWithlabel label={databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Postgres ? "Host Name (or paste Connection URL)" : "Host Name"} value={hostName} setValue={handleHostNameChange} testId="hostname" />
+                <div className="flex flex-col gap-2 w-full">
+                    <Label>{databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Postgres ? "Host Name (or paste Connection URL)" : "Host Name"}</Label>
+                    <Input value={hostName} onChange={(e) => handleHostNameChange(e.target.value)} data-testid="hostname" placeholder="Enter host name" />
+                </div>
             )}
             { databaseType.fields?.username && (
-                <InputWithlabel label="Username" value={username} setValue={setUsername} testId="username" />
+                <div className="flex flex-col gap-2 w-full">
+                    <Label>Username</Label>
+                    <Input value={username} onChange={(e) => setUsername(e.target.value)} data-testid="username" placeholder="Enter username" />
+                </div>
             )}
             { databaseType.fields?.password && (
-                <InputWithlabel label="Password" value={password} setValue={setPassword} type="password" testId="password" />
+                <div className="flex flex-col gap-2 w-full">
+                    <Label>Password</Label>
+                    <Input value={password} onChange={(e) => setPassword(e.target.value)} type="password" data-testid="password" placeholder="Enter password" />
+                </div>
             )}
             { databaseType.fields?.database && (
-                <InputWithlabel label="Database" value={database} setValue={setDatabase} testId="database" />
+                <div className="flex flex-col gap-2 w-full">
+                    <Label>Database</Label>
+                    <Input value={database} onChange={(e) => setDatabase(e.target.value)} data-testid="database" placeholder="Enter database" />
+                </div>
             )}
-        </>
+        </div>
     }, [database, databaseType.id, databaseType.fields, databasesLoading, foundDatabases?.Database, handleHostNameChange, hostName, password, username]);
 
     const availableProfiles = useMemo(() => {
-        return profiles?.Profiles.map(profile => createDropdownItem(profile.Alias ?? profile.Id, (Icons.Logos as Record<string, ReactElement>)[profile.Type])) ?? [];
-    }, [profiles?.Profiles])
+        return profiles?.Profiles.map(profile => ({
+            id: profile.Alias ?? profile.Id,
+            label: (Icons.Logos as Record<string, ReactElement>)[profile.Type],
+        })) ?? [];
+    }, [profiles?.Profiles]);
+
+    const loginEnabled = useMemo(() => {
+        if (databaseType.id === DatabaseType.Sqlite3) {
+            return database.length > 0;
+        }
+        if (databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Redis) {
+            return hostName.length > 0;
+        }
+        if (databaseType.id === DatabaseType.MySql || databaseType.id === DatabaseType.Postgres) {
+            return hostName.length > 0 && username.length > 0 && password.length > 0 && database.length > 0;
+        }
+        return false;
+    }, [databaseType.id, hostName, username, password, database]);
 
     if (loading || profilesLoading)  {
-        return <Container>
-                <div className="flex flex-col justify-center items-center gap-4 w-full">
-                    <div>
-                        <Loading hideText={true} />
-                    </div>
-                    <div className={ClassNames.Text}>
-                        Logging in
-                    </div>
+        return (
+            <div className={classNames("flex flex-col justify-center items-center gap-4 w-full", className)}>
+                <div>
+                    <Loading hideText={true} />
                 </div>
-        </Container>
+                <h1 className="text-xl">
+                    Logging in
+                </h1>
+            </div>
+        );
     }
 
     return (
-        <Container className="justify-center items-center">
-            <div className="w-fit h-fit">
-                <div className="flex flex-col justify-between grow gap-4">
-                    <div className="flex grow">
-                        <div className="flex flex-col gap-4 grow w-[350px]">
+        <div className={classNames("w-fit h-fit", className, {
+            "w-full h-full": advancedDirection === "vertical",
+        })}>
+            <div className={classNames("flex flex-col grow gap-4", {
+                "justify-between": advancedDirection === "horizontal",
+                "h-full": advancedDirection === "vertical",
+            })}>
+                <div className={classNames("flex", {
+                    "flex-row grow": advancedDirection === "horizontal",
+                    "flex-col w-full gap-4": advancedDirection === "vertical",
+                })}>
+                    <div className={classNames("flex flex-col gap-4 grow", advancedDirection === "vertical" ? "w-full" : "w-[350px]")}>
+                        {!hideHeader && (
                             <div className="flex justify-between">
-                                <div className="text-lg text-gray-600 flex gap-2 items-center">
+                                <div className="flex items-center gap-2 text-xl">
                                     <img src={logoImage} alt="clidey logo" className="w-auto h-6" />
-                                    <span className={ClassNames.BrandText}>WhoDB</span>
-                                    <span className={ClassNames.Text}>Login</span>
+                                    <h1 className={ClassNames.BrandText}>WhoDB</h1>
+                                    <h1>Login</h1>
                                 </div>
-                                <div className="text-red-500 text-xs flex items-center">
-                                    {error}
-                                </div>
+                                {
+                                    error &&
+                                    <Badge variant="destructive">
+                                        {error}
+                                    </Badge>
+                                }
                             </div>
-                            <div className="flex flex-col grow justify-center gap-1">
-                                <DropdownWithLabel fullWidth dropdownContainerHeight="max-h-[300px]" label="Database Type" value={databaseType} onChange={handleDatabaseTypeChange} items={databaseTypeItems} testId="database-type" />
-                                {fields}
+                        )}
+                        <div className={cn("flex flex-col grow gap-4", {
+                            "justify-center": advancedDirection === "horizontal",
+                        })}>
+                            <div className="flex flex-col gap-2 w-full">
+                                <Label>Database Type</Label>
+                                <Select
+                                    value={databaseType.id}
+                                    onValueChange={(value) => {
+                                        const selected = databaseTypeItems.find(item => item.id === value);
+                                        if (selected) {
+                                            handleDatabaseTypeChange(selected);
+                                        }
+                                    }}
+                                >
+                                    <SelectTrigger className="w-full justify-start" data-testid="database-type-select">
+                                        <SelectValue>
+                                            <span className="flex items-center gap-2">
+                                                {databaseType.icon}
+                                                {databaseType.label}
+                                            </span>
+                                        </SelectValue>
+                                    </SelectTrigger>
+                                    <SelectContent className="w-full">
+                                        {databaseTypeItems.map(item => (
+                                            <SelectItem key={item.id} value={item.id}>
+                                                <span className="flex items-center gap-2">
+                                                    {item.icon}
+                                                    {item.label}
+                                                </span>
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
+                            {fields}
                         </div>
-                        {
-                            (showAdvanced && advancedForm != null) &&
-                            <div className="transition-all h-full overflow-hidden mt-[43px] w-[350px] ml-4 flex flex-col gap-1">
-                                {entries(advancedForm).map(([key, value]) => (
-                                    <InputWithlabel label={key} value={value} setValue={(newValue) => handleAdvancedForm(key, newValue)} testId={`${key}-input`} />
-                                ))}
-                            </div>
-                        }
                     </div>
-                    <div className={classNames("flex", {
-                        "justify-end": advancedForm == null,
-                        "justify-between": advancedForm != null,
-                    })}>
-                        <AnimatedButton className={classNames({
-                            "hidden": advancedForm == null,
-                        })} icon={Icons.Adjustments} label={showAdvanced ? "Less Advanced" : "Advanced"} onClick={handleAdvancedToggle} testId="advanced-button" />
-                        <AnimatedButton icon={Icons.CheckCircle} label="Submit" onClick={handleSubmit} testId="submit-button" />
-                    </div>
+                    {
+                        (showAdvanced && advancedForm != null) &&
+                        <div className={classNames("transition-all h-full overflow-hidden flex flex-col gap-1", {
+                            "w-[350px] ml-4 mt-[43px]": advancedDirection === "horizontal",
+                            "w-full": advancedDirection === "vertical",
+                        })}>
+                            {entries(advancedForm).map(([key, value]) => (
+                                <div className="flex flex-col gap-1" key={key}>
+                                    <Label htmlFor={`${key}-input`}>{key}</Label>
+                                    <Input
+                                        id={`${key}-input`}
+                                        value={value}
+                                        onChange={e => handleAdvancedForm(key, e.target.value)}
+                                        data-testid={`${key}-input`}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    }
                 </div>
-                {
-                    availableProfiles.length > 0 &&
-                    <div className="mt-4 pt-2 border-t border-t-neutral-100/10 flex flex-col gap-2">
-                        <DropdownWithLabel dropdownContainerHeight="max-h-[300px]" fullWidth label="Available profiles" value={selectedAvailableProfile} onChange={handleAvailableProfileChange}
-                            items={availableProfiles} noItemsLabel="No available profiles" />
-                        <AnimatedButton className="self-end" icon={Icons.CheckCircle} label="Login" onClick={handleLoginWithProfileSubmit} />
+                <div className={classNames("flex", {
+                    "justify-end": advancedForm == null,
+                    "justify-between": advancedForm != null,
+                })}>
+                    <Button className={classNames({
+                        "hidden": advancedForm == null,
+                    })} icon={Icons.Adjustments} onClick={handleAdvancedToggle} data-testid="advanced-button" variant="secondary">
+                        {Icons.Adjustments} {showAdvanced ? "Less Advanced" : "Advanced"}
+                    </Button>
+                    {advancedDirection === "horizontal" && (
+                        <Button onClick={handleSubmit} data-testid="submit-button" variant={loginEnabled ? "default" : "secondary"}>
+                            {Icons.CheckCircle} Submit
+                        </Button>
+                    )}
+                </div>
+                {advancedDirection === "vertical" && (
+                    <div className='flex flex-col grow justify-end'>
+                        <Button onClick={handleSubmit} data-testid="submit-button" variant={loginEnabled ? "default" : "secondary"}>
+                            {Icons.CheckCircle} Submit
+                        </Button>
                     </div>
-                }
+                )}
             </div>
+            {
+                availableProfiles.length > 0 &&
+                <div className="mt-4 pt-2 border-t border-t-neutral-100/10 flex flex-col gap-2">
+                    <div>
+                        <Label className="mb-1 block">Available profiles</Label>
+                        <Select
+                            value={selectedAvailableProfile}
+                            onValueChange={handleAvailableProfileChange}
+                        >
+                            <SelectTrigger className="w-full" data-testid="available-profiles-select">
+                                <SelectValue>
+                                    {selectedAvailableProfile
+                                        ? <span className="flex items-center gap-2">{availableProfiles.find(p => p.id === selectedAvailableProfile)?.label}</span>
+                                        : <span className="text-neutral-400">No available profiles</span>
+                                    }
+                                </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent className="w-full max-h-[300px]">
+                                {availableProfiles.length === 0 ? (
+                                    <div className="px-4 py-2 text-neutral-400">No available profiles</div>
+                                ) : (
+                                    availableProfiles.map(item => (
+                                        <SelectItem key={item.id} value={item.id}>
+                                            <span className="flex items-center gap-2">{item.label}</span>
+                                        </SelectItem>
+                                    ))
+                                )}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <Button onClick={handleLoginWithProfileSubmit} data-testid="login-with-profile-button">
+                        {Icons.CheckCircle} Login
+                    </Button>
+                </div>
+            }
+        </div>
+    );
+};
+
+export const LoginPage: FC = () => {
+    return (
+        <Container className="justify-center items-center">
+            <LoginForm />
         </Container>
-    )
-}
+    );
+};
