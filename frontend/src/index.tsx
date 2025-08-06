@@ -28,6 +28,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { PostHogProvider } from 'posthog-js/react';
 import {initPosthog} from "./config/posthog";
 import { ThemeProvider } from './theme/theme-provider';
+import { Loading } from './components/loading';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -57,7 +58,7 @@ root.render(
     <BrowserRouter>
       <ApolloProvider client={graphqlClient}>
         <Provider store={reduxStore}>
-          <PersistGate loading={null} persistor={reduxStorePersistor}>
+          <PersistGate loading={<Loading />} persistor={reduxStorePersistor}>
             <AppWithProviders />
           </PersistGate>
         </Provider>

@@ -397,7 +397,10 @@ export const RawExecutePage: FC = () => {
         return [{ id: newId, name: "Page 1" }];
     });
 
-    const [activePage, setActivePage] = useState(pages[0].id);
+    const [activePage, setActivePage] = useState(() => {
+        const initialPages = pages.length > 0 ? pages : [{ id: v4(), name: "Page 1" }];
+        return initialPages[0].id;
+    });
     const [pageStates, setPageStates] = useState<{ [key: string]: ReactNode }>({});
 
     const handleAdd = useCallback(() => {

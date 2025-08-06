@@ -216,20 +216,31 @@ function setMigrationVersion(version: number): void {
  * Run all necessary migrations
  */
 export function runMigrations(): void {
-  const currentVersion = getMigrationVersion();
-  
-  // Run migrations in order based on version
-  if (currentVersion < 1) {
-    migrateAIModelsFromDatabase();
-    setMigrationVersion(1);
+  try {
+    // Check if localStorage is available before running migrations
+    if (typeof window === 'undefined' || !window.localStorage) {
+      console.warn('localStorage not available, skipping migrations');
+      return;
+    }
+    
+    const currentVersion = getMigrationVersion();
+    
+    // Run migrations in order based on version
+    if (currentVersion < 1) {
+      migrateAIModelsFromDatabase();
+      setMigrationVersion(1);
+    }
+    
+    // Future migrations can be added here
+    // if (currentVersion < 2) {
+    //   runMigrationV2();
+    //   setMigrationVersion(2);
+    // }
+    
+    // Always ensure AI models state is valid
+    ensureValidAIModelsState();
+  } catch (error) {
+    console.error('Error running migrations:', error);
+    // Continue with app initialization even if migrations fail
   }
-  
-  // Future migrations can be added here
-  // if (currentVersion < 2) {
-  //   runMigrationV2();
-  //   setMigrationVersion(2);
-  // }
-  
-  // Always ensure AI models state is valid
-  ensureValidAIModelsState();
 }
