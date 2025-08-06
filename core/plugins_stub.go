@@ -1,4 +1,4 @@
-//go:build ee
+//go:build !ee
 
 // Copyright 2025 Clidey, Inc.
 //
@@ -16,5 +16,8 @@
 
 package main
 
-// GraphQL code generation for Enterprise Edition
-//go:generate go run github.com/99designs/gqlgen generate
+// This file is used when building CE edition.
+// It provides an empty init function that does nothing.
+func init() {
+	// CE edition - no EE plugins to register
+}
