@@ -60,7 +60,6 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     
 
     // For scratchpad sheet logic
-    const [showScratchpad, setShowScratchpad] = useState(scratchpad ?? pathname.includes(InternalRoutes.Dashboard.ExploreStorageUnitWithScratchpad.path));
     // todo: is there a different way to do this? clickhouse doesn't have schemas as a table is considered a schema. people mainly switch between DB
     if (current?.Type === DatabaseType.ClickHouse) {
         schema = current.Database
@@ -237,10 +236,10 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     }, [rows?.Columns, rows?.Rows]);
 
     useEffect(() => {
-        if (unitName == null) {
+        if (unit == null) {
             navigate(InternalRoutes.Dashboard.StorageUnit.path);
         }
-    }, [navigate, unitName]);
+    }, [navigate, unit]);
 
     const handleFilterChange = useCallback((filters: WhereCondition) => {
         setWhereCondition(filters);
@@ -330,14 +329,18 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     }, [code, current, rawExecute]);
 
     const handleOpenScratchpad = useCallback(() => {
+        navigate(InternalRoutes.Dashboard.ExploreStorageUnitWithScratchpad.path, {
+            state: {
+                unit,
+            }
+        });
         handleScratchpad();
-        setShowScratchpad(true);
         setCode(`SELECT * FROM ${schema}.${unit?.Name}`);
         document.body.classList.add("!pointer-events-auto");
-    }, [schema, unit?.Name]);
+    }, [schema, unit]);
 
     const handleCloseScratchpad = useCallback((state: boolean) => {
-        setShowScratchpad(state);
+        navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path);
     }, []);
 
     if (unit == null) {
@@ -424,7 +427,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 }
             </div>
         </div>
-        <Drawer open={showScratchpad} onOpenChange={handleCloseScratchpad} modal={false} defaultOpen={showScratchpad}>
+        <Drawer open={scratchpad} onOpenChange={handleCloseScratchpad} modal={false}>
             <DrawerContent className="px-8 max-h-[25vh]">
                 <DrawerHeader>
                     <DrawerTitle className="flex justify-between items-center">

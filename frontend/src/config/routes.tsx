@@ -58,7 +58,7 @@ export const InternalRoutes = {
         },
         ExploreStorageUnitWithScratchpad: {
             name: "Explore",
-            path: "/storage-unit/explore",
+            path: "/storage-unit/explore/scratchpad",
             component: <ExploreStorageUnit scratchpad={true} />,
         },
     },

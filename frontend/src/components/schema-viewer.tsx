@@ -67,7 +67,7 @@ export const SchemaViewer: FC = () => {
         if (unit == null) {
             return;
         }
-        navigate(pathname, {
+        navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
             state: {
                 unit,
             },

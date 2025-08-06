@@ -251,7 +251,7 @@ export const Sidebar: FC = () => {
 
     return (
         <div>
-            <SidebarComponent variant="sidebar" collapsible="icon" className="dark:group-data-[side=left]:border-r-neutral-800 z-[100]">
+            <SidebarComponent variant="sidebar" collapsible="icon" className="dark:group-data-[side=left]:border-r-neutral-800 z-[50]">
                 <SidebarHeader className={cn({
                     "ml-4": open,
                 })}>
