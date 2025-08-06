@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ModeToggle } from "@clidey/ux";
+import { ModeToggle, SidebarProvider } from "@clidey/ux";
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import { FC, ReactNode } from "react";
@@ -24,6 +24,8 @@ import { useAppSelector } from "../store/hooks";
 import { Breadcrumb } from "./breadcrumbs";
 import { Loading } from "./loading";
 import { Sidebar } from "./sidebar/sidebar";
+import { SchemaViewer } from "./schema-viewer";
+import { useParams } from "react-router-dom";
 
 type IPageProps = {
     wrapperClassName?: string;
@@ -51,10 +53,18 @@ type IInternalPageProps = IPageProps & {
 
 export const InternalPage: FC<IInternalPageProps> = (props) => {
     const current = useAppSelector(state => state.auth.current);
+    const { storageUnitId } = useParams();
 
     return (
         <Container>
-            <Sidebar />
+            <div className="flex flex-row grow dark">
+                <SidebarProvider>
+                    <Sidebar />
+                </SidebarProvider>
+                {storageUnitId && <SidebarProvider>
+                    <SchemaViewer />
+                </SidebarProvider>}
+            </div>
             <Page wrapperClassName="p-0" {...props}>
                 <div className="flex flex-col grow py-6">
                     <div className="flex justify-between items-center mx-8">

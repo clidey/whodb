@@ -15,48 +15,45 @@
  */
 
 import {
-    Sidebar as SidebarComponent,
-    SidebarHeader,
-    SidebarTrigger,
-    SidebarContent,
-    SidebarGroup,
-    SidebarMenu,
-    SidebarMenuItem,
-    SidebarMenuButton,
-    Select,
-    SelectTrigger,
-    SelectValue,
-    SelectContent,
-    SelectItem,
-    Button,
-    toast,
     cn,
-    SidebarSeparator,
-    ThemeProvider,
-    useTheme,
-    SearchSelect,
     CommandItem,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+    SearchSelect,
     Sheet,
     SheetContent,
+    Sidebar as SidebarComponent,
+    SidebarContent,
+    SidebarGroup,
+    SidebarHeader,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+    SidebarSeparator,
+    SidebarTrigger,
+    toast,
+    useSidebar
 } from "@clidey/ux";
-import { FC, ReactElement, useCallback, useMemo, useState } from "react";
-import { Bars3Icon } from "@heroicons/react/24/outline";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { DatabaseType, useGetDatabaseQuery, useGetSchemaQuery, useGetVersionQuery, useLoginMutation, useLoginWithProfileMutation } from '@graphql';
+import { Bars3Icon, ChevronDownIcon, PlusIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
-import { Icons } from "../icons";
-import { Loading } from "../loading";
-import { useAppSelector } from "../../store/hooks";
+import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
+import { useDispatch } from "react-redux";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { InternalRoutes } from "../../config/routes";
+import { LoginForm } from "../../pages/auth/login";
 import { AuthActions, LocalLoginProfile } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
-import { InternalRoutes, PublicRoutes } from "../../config/routes";
-import { DatabaseType, useGetDatabaseQuery, useGetSchemaQuery, useGetVersionQuery, useLoginMutation, useLoginWithProfileMutation } from '@graphql';
-import { createStub, getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
-import { databaseSupportsScratchpad, databaseSupportsSchema } from "../../utils/database-features";
-import { ProfileInfoTooltip, updateProfileLastAccessed } from "../profile-info-tooltip";
-import { BRAND_COLOR_BG, ClassNames } from "../classes";
+import { useAppSelector } from "../../store/hooks";
+import { databaseSupportsSchema, databaseSupportsScratchpad } from "../../utils/database-features";
 import { isEEFeatureEnabled } from "../../utils/ee-loader";
-import { LoginForm } from "../../pages/auth/login";
+import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
+import { ClassNames } from "../classes";
+import { Icons } from "../icons";
+import { Loading } from "../loading";
+import { updateProfileLastAccessed } from "../profile-info-tooltip";
 
 const logoImage = "/images/logo.png";
 
@@ -72,7 +69,6 @@ function getProfileIcon(profile: LocalLoginProfile) {
 }
 
 export const Sidebar: FC = () => {
-    const [collapsed, setCollapsed] = useState(false);
     const schema = useAppSelector(state => state.database.schema);
     const dispatch = useDispatch();
     const pathname = useLocation().pathname;
@@ -101,6 +97,9 @@ export const Sidebar: FC = () => {
     const [login] = useLoginMutation();
     const [loginWithProfile] = useLoginWithProfileMutation();
     const navigate = useNavigate();
+    const [showLoginCard, setShowLoginCard] = useState(false);
+    const { toggleSidebar, open } = useSidebar();
+    const storageUnitId = useParams().storageUnitId;
 
     // Profile select logic
     const profileOptions = useMemo(() => profiles.map(profile => ({
@@ -233,11 +232,6 @@ export const Sidebar: FC = () => {
         return routes;
     }, [current]);
 
-    // Collapsible logic
-    const handleCollapseToggle = useCallback(() => {
-        setCollapsed(c => !c);
-    }, []);
-
     // Logout logic
     const handleLogout = useCallback(() => {
         navigate(InternalRoutes.Logout.path);
@@ -245,44 +239,39 @@ export const Sidebar: FC = () => {
 
     // Add profile logic
     const handleAddProfile = useCallback(() => {
-        setShowLogicCard(true);
+        setShowLoginCard(true);
     }, [navigate]);
-
-    // Sheet logic for logic card
-    const [showLogicCard, setShowLogicCard] = useState(false);
-
-    // Example: open logic card when clicking a menu item (replace with your trigger)
-    const handleOpenLogicCard = useCallback(() => {
-        setShowLogicCard(true);
-    }, []);
-    const handleCloseLogicCard = useCallback(() => {
-        setShowLogicCard(false);
-    }, []);
 
     const loading = availableDatabasesLoading || availableSchemasLoading;
 
+    useEffect(() => {
+        if (storageUnitId && open) {
+            toggleSidebar();
+        }
+    }, []);
+
     return (
-        <div className="dark">
+        <div>
             <SidebarComponent variant="sidebar" collapsible="icon">
                 <SidebarTrigger className={cn("ml-px self-end", {
-                    "self-center": collapsed,
-                    "self-end": !collapsed,
-                })} onClick={handleCollapseToggle}>
+                    "self-center": !open,
+                    "self-end": open,
+                })} onClick={toggleSidebar}>
                     <Bars3Icon />
                 </SidebarTrigger>
                 <SidebarHeader className={cn("mt-8", {
-                    "mx-4": !collapsed,
+                    "mx-4": open,
                 })}>
                     <div className={cn("flex items-center gap-2", {
-                        "justify-center": collapsed,
-                        "justify-start": !collapsed,
+                        "justify-center": !open,
+                        "justify-start": open,
                     })}>
                         <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
-                        {!collapsed && <span className={classNames(ClassNames.BrandText, "text-2xl")}>WhoDB</span>}
+                        {open && <span className={classNames(ClassNames.BrandText, "text-2xl")}>WhoDB</span>}
                     </div>
                 </SidebarHeader>
                 <SidebarContent className={cn("mt-8 mb-16", {
-                    "mx-4": !collapsed,
+                    "mx-4": open,
                 })}>
                     {loading ? (
                         <div className="flex justify-center items-center h-full">
@@ -293,25 +282,22 @@ export const Sidebar: FC = () => {
                             <div className="flex flex-col gap-4">
                                 {/* Profile Select */}
                                 <div className="flex flex-col gap-2 w-full">
-                                    <h2 className={classNames(ClassNames.Text, "text-sm", collapsed &&  "hidden")}>Profile</h2>
+                                    <h2 className={classNames(ClassNames.Text, "text-sm", !open &&  "hidden")}>Profile</h2>
                                     <SearchSelect
-                                        options={profileOptions.map(opt => ({
-                                            value: opt.value,
-                                            label: opt.label,
-                                            icon: opt.icon,
-                                        }))}
+                                        options={profileOptions}
                                         value={currentProfileOption?.value}
                                         onChange={handleProfileChange}
                                         placeholder="Select profile"
                                         searchPlaceholder="Search profile..."
+                                        onlyIcon={!open}
                                         extraOptions={
                                             <CommandItem
                                                 key="__add__"
                                                 value="__add__"
                                                 onSelect={handleAddProfile}
                                             >
-                                                <span className="flex items-center gap-2 text-green-800">
-                                                    {Icons.Add}
+                                                <span className="flex items-center gap-2 text-green-500">
+                                                    <PlusIcon className="w-4 h-4 stroke-green-500" />
                                                     Add another profile
                                                 </span>
                                             </CommandItem>
@@ -321,7 +307,7 @@ export const Sidebar: FC = () => {
                                 </div>
                                 {/* Database Select */}
                                 <div className={cn("flex flex-col gap-2 w-full", {
-                                    "opacity-0 pointer-events-none": collapsed,
+                                    "opacity-0 pointer-events-none": !open,
                                 })}>
                                     <h2 className={classNames(ClassNames.Text, "text-sm")}>Database</h2>
                                     <SearchSelect
@@ -334,7 +320,7 @@ export const Sidebar: FC = () => {
                                     />
                                 </div>
                                 <div className={cn("flex flex-col gap-2 w-full", {
-                                    "opacity-0 pointer-events-none": collapsed,
+                                    "opacity-0 pointer-events-none": !open,
                                 })}>
                                     <h2 className={cn(ClassNames.Text, "text-sm")}>Schema</h2>
                                     <SearchSelect
@@ -359,7 +345,7 @@ export const Sidebar: FC = () => {
                                                 })}
                                             >
                                                 {route.icon}
-                                                {!collapsed && <span>{route.title}</span>}
+                                                {open && <span>{route.title}</span>}
                                             </a>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
@@ -372,7 +358,7 @@ export const Sidebar: FC = () => {
                                         <SidebarMenuButton asChild>
                                             <a href={InternalRoutes.ContactUs.path} className="flex items-center gap-2">
                                                 {Icons.QuestionMark}
-                                                {!collapsed && <span>Contact Us</span>}
+                                                {open && <span>Contact Us</span>}
                                             </a>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
@@ -382,22 +368,42 @@ export const Sidebar: FC = () => {
                                         <SidebarMenuButton asChild>
                                             <a href={InternalRoutes.Settings.path} className="flex items-center gap-2">
                                                 {Icons.Settings}
-                                                {!collapsed && <span>Settings</span>}
+                                                {open && <span>Settings</span>}
                                             </a>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
                                 )}
                                 <div className="grow" />
-                                <SidebarMenuItem>
+                                    <SidebarMenuItem>
                                     <SidebarMenuButton asChild>
-                                        <a
-                                            href={InternalRoutes.Logout.path}
-                                            className="flex items-center gap-2"
-                                            data-testid="logout"
-                                        >
-                                            {Icons.Logout}
-                                            {!collapsed && <span>Logout</span>}
-                                        </a>
+                                        <div className="relative flex items-center gap-2">
+                                            <div className="flex items-center gap-2" onClick={handleLogout}>
+                                                {Icons.Logout}
+                                                {open && <span>Logout Profile</span>}
+                                            </div>
+                                            {/* Dropdown for additional logout options */}
+                                            <div className="ml-2">
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <button
+                                                            className="flex items-center justify-center p-1 rounded hover:bg-gray-100 dark:hover:bg-neutral-800"
+                                                            aria-label="More logout options"
+                                                            type="button"
+                                                        >
+                                                            <ChevronDownIcon className="w-4 h-4" />
+                                                        </button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent side="right" align="start">
+                                                        <DropdownMenuItem
+                                                            onClick={handleLogout}
+                                                        >
+                                                            {Icons.Logout}
+                                                            <span className="ml-2">Logout All Profiles</span>
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </div>
+                                        </div>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
                             </SidebarMenu>
@@ -408,7 +414,7 @@ export const Sidebar: FC = () => {
                     )}
                 </SidebarContent>
             </SidebarComponent>
-            <Sheet open={showLogicCard} onOpenChange={setShowLogicCard}>
+            <Sheet open={showLoginCard} onOpenChange={setShowLoginCard}>
                 <SheetContent side="right" className="p-8">
                     <LoginForm advancedDirection="vertical" />
                 </SheetContent>

@@ -26,7 +26,7 @@ import { BrowserRouter } from "react-router-dom";
 import { PersistGate } from 'redux-persist/integration/react';
 import { PostHogProvider } from 'posthog-js/react';
 import {initPosthog} from "./config/posthog";
-import { SidebarProvider, ThemeProvider } from '@clidey/ux'
+import { ThemeProvider } from '@clidey/ux'
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -37,10 +37,8 @@ const posthogClient = initPosthog()
 // Conditionally wrap with PostHogProvider only for CE builds
 const AppWithProviders = () => {
   const app = (
-    <ThemeProvider>
-      <SidebarProvider>
-        <App />
-      </SidebarProvider>
+    <ThemeProvider defaultTheme='light'>
+      <App />
     </ThemeProvider>
   );
 

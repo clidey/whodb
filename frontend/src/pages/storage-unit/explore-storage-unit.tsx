@@ -41,6 +41,7 @@ export const ExploreStorageUnit: FC = () => {
     const [whereCondition, setWhereCondition] = useState<WhereCondition>();
     const [pageSize, setPageSize] = useState("");
     const unit: StorageUnit = useLocation().state?.unit;
+
     let schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
     const navigate = useNavigate();
@@ -71,7 +72,7 @@ export const ExploreStorageUnit: FC = () => {
     const unitName = useMemo(() => {
         return unit?.Name;
     }, [unit]);
-
+    
     const handleSubmitRequest = useCallback(() => {
         getStorageUnitRows({
             variables: {
@@ -228,7 +229,7 @@ export const ExploreStorageUnit: FC = () => {
                 ...InternalRoutes.Dashboard.StorageUnit,
                 name,
             },
-            InternalRoutes.Dashboard.ExploreStorageUnit
+            InternalRoutes.Dashboard.ExploreStorageUnit(unitName)
         ];
     }, [current]);
     

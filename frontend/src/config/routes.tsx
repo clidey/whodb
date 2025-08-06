@@ -51,11 +51,11 @@ export const InternalRoutes = {
             path: "/storage-unit",
             component: <StorageUnitPage />,
         },
-        ExploreStorageUnit: {
+        ExploreStorageUnit: (storageUnitId: string = ":storageUnitId") => ({
             name: "Explore",
-            path: "/storage-unit/explore",
+            path: `/storage-unit/${storageUnitId}/explore`,
             component: <ExploreStorageUnit />,
-        },
+        }),
     },
     Graph: {
         name: "Graph",
@@ -101,20 +101,36 @@ export const PrivateRoute: FC = () => {
     return <Navigate to={PublicRoutes.Login.path} />
 }
 
-
 export const getRoutes = (): IInternalRoute[] => {
     const allRoutes: IInternalRoute[] = [];
-    const currentRoutes = values(InternalRoutes);
-    while (currentRoutes.length > 0) {
-        const currentRoute = currentRoutes.shift();
-        if (currentRoute == null) {
-            continue;
+
+    const extractRoutes = (routeObj: any) => {
+        if (!routeObj) return;
+
+        // If it's a route object with 'path' and 'component', assume it's a route
+        if (
+            typeof routeObj === "object" &&
+            "path" in routeObj &&
+            "component" in routeObj
+        ) {
+            allRoutes.push(routeObj as IInternalRoute);
+            return;
         }
-        if ("path" in currentRoute) {
-            allRoutes.push(currentRoute);
-            continue;
+
+        // If it's a function (e.g., dynamic route generator), invoke and recurse
+        if (typeof routeObj === "function") {
+            const result = routeObj();
+            extractRoutes(result);
+            return;
         }
-        currentRoutes.push(...values((currentRoute)));
-    }
+
+        // If it's an object (nested routes), process its values
+        if (typeof routeObj === "object" && routeObj !== null) {
+            const nestedValues = values(routeObj);
+            nestedValues.forEach(extractRoutes);
+        }
+    };
+
+    extractRoutes(InternalRoutes);
     return allRoutes;
-}
+};
