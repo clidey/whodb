@@ -242,10 +242,11 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                             data-testid="history-button"
                             className="pointer-events-auto"
                             variant="secondary"
+                            disabled={history.length === 0}
                         >
                             <ClockIcon className="w-4 h-4" />
                         </Button>
-                        <Button onClick={() => handleRawExecute()} data-testid="submit-button" className="pointer-events-auto">
+                        <Button onClick={() => handleRawExecute()} data-testid="submit-button" className="pointer-events-auto" disabled={code.length === 0}>
                             {Icons.CheckCircle}
                         </Button>
                     </div>

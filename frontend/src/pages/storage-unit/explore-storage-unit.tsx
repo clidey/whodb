@@ -357,9 +357,9 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         <div className="flex flex-col grow gap-4 h-[calc(100%-100px)]">
             <div className="flex items-center justify-between">
                 <div className="flex gap-2 items-center">
-                    <div className="text-xl font-bold mr-4 dark:text-neutral-300">{unitName}</div>
+                    <h1 className="text-xl font-bold mr-4">{unitName}</h1>
                 </div>
-                <div className="text-sm mr-4 dark:text-neutral-300"><span className="font-semibold">Total Count:</span> {totalCount}</div>
+                <div className="text-sm mr-4"><span className="font-semibold">Total Count:</span> {totalCount}</div>
             </div>
             <div className="flex w-full relative">
                 <div className="flex justify-between items-end w-full">

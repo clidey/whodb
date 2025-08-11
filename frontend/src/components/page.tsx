@@ -58,7 +58,7 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
 
     return (
         <Container>
-            <div className="flex flex-row grow dark">
+            <div className="flex flex-row grow">
                 <SidebarProvider defaultOpen={state?.unit == null}>
                     <Sidebar />
                 </SidebarProvider>
@@ -68,10 +68,8 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
             </div>
             <Page wrapperClassName="p-0" {...props}>
                 <div className="flex flex-col grow py-6">
-                    <div className="flex justify-between items-center mx-8">
-                        <div className="sticky z-10 top-4 w-fit rounded-xl transition-all">
-                            <Breadcrumb routes={props.routes ?? []} active={props.routes?.at(-1)} />
-                        </div>
+                    <div className="flex w-full justify-between items-center px-8">
+                        <Breadcrumb routes={props.routes ?? []} active={props.routes?.at(-1)} />
                         <ModeToggle />
                     </div>
                     {

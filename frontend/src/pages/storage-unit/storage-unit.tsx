@@ -66,10 +66,10 @@ const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = (
     })}>
         <div className="flex flex-col grow mt-2">
             <div className="flex flex-col grow mb-2">
-                <div className="text-sm font-semibold mb-2 break-words dark:text-neutral-100" data-testid="storage-unit-name">{unit.Name}</div>
+                <h1 className="text-sm font-semibold mb-2 break-words" data-testid="storage-unit-name">{unit.Name}</h1>
                 {
                     introAttributes.slice(0,2).map(attribute => (
-                        <div key={attribute.Key} className="text-xs dark:text-neutral-300">{attribute.Key}: {attribute.Value}</div>
+                        <p key={attribute.Key} className="text-xs">{attribute.Key}: {attribute.Value}</p>
                     ))
                 }
             </div>
@@ -383,7 +383,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data })
             <Card icon={Icons.Database} className="h-fit backdrop-blur-[2px] w-[400px] px-2 py-6">
                 <div className="flex flex-col grow mt-2 gap-4">
                     <div className="flex flex-col grow">
-                        <div className="text-3xl font-semibold mb-2 break-words">{data.Name}</div>
+                        <h2 className="text-3xl font-semibold mb-2 break-words">{data.Name}</h2>
                         <StackList>
                             {
                                 data.Attributes.map(attribute => (

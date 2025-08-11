@@ -19,6 +19,9 @@
 @import '@clidey/ux/styles.css';
 @import '@ee/index.css';
 
+@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant hover (&:hover);
+
 :root {
   --brand-foreground: #ca6f1e;
 }
@@ -41,5 +44,3 @@
 .markdown-preview > * {
   all: revert;
 }
-
-

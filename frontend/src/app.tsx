@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-import classNames from "classnames";
+import { Toaster } from "@clidey/ux";
+import { useUpdateSettingsMutation } from '@graphql';
 import { map } from "lodash";
+import { useCallback, useEffect } from "react";
 import { Route, Routes } from "react-router-dom";
+import { optInUser, optOutUser } from "./config/posthog";
 import { PrivateRoute, PublicRoutes, getRoutes } from './config/routes';
 import { NavigateToDefault } from "./pages/chat/default-chat-route";
 import { useAppSelector } from "./store/hooks";
-import { useCallback, useEffect } from "react";
-import { useUpdateSettingsMutation } from '@graphql';
-import { optInUser, optOutUser } from "./config/posthog";
-import { Toaster } from "@clidey/ux";
 
 export const App = () => {
   const [updateSettings, ] = useUpdateSettingsMutation();

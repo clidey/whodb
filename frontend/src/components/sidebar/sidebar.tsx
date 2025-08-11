@@ -259,7 +259,7 @@ export const Sidebar: FC = () => {
                             "hidden": !open,
                         })}>
                             <img src={logoImage} alt="clidey logo" className="w-auto h-4" />
-                            {open && <span className="text-lg">WhoDB</span>}
+                            {open && <span className="text-lg text-brand-foreground">WhoDB</span>}
                         </div>
                         <SidebarTrigger onClick={toggleSidebar} className="px-0">
                             <Bars3Icon />
