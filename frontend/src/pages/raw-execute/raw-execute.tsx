@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import { Button, Select, SelectContent, SelectItem, SelectValue, SelectTrigger, Sheet, SheetContent, Tabs, TabsContent, TabsList, TabsTrigger, EmptyState, Card, Badge, formatDate, Alert, AlertTitle, AlertDescription, ScrollArea } from "@clidey/ux";
+import { Alert, AlertDescription, AlertTitle, Badge, Button, Card, EmptyState, formatDate, Select, SelectContent, SelectItem, SelectTrigger, Sheet, SheetContent, Tabs, TabsContent, TabsList, TabsTrigger } from "@clidey/ux";
 import { DatabaseType, useRawExecuteLazyQuery } from '@graphql';
+import { BellAlertIcon, ClockIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import { indexOf } from "lodash";
@@ -31,7 +32,6 @@ import { InternalRoutes } from "../../config/routes";
 import { LocalLoginProfile } from "../../store/auth";
 import { useAppSelector } from "../../store/hooks";
 import { isEEFeatureEnabled, loadEEComponent } from "../../utils/ee-loader";
-import { BellAlertIcon, ClockIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 // Conditionally load the AnalyzeGraph component from EE
 const AnalyzeGraph = loadEEComponent(
@@ -277,7 +277,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                 <span className="font-semibold text-lg">Query History</span>
                             </div>
                         </div>
-                        <ScrollArea className="flex-1 px-2 py-4">
+                        <div className="flex-1 px-2 py-4 overflow-y-auto">
                             {history.length === 0 ? (
                                 <EmptyState title="No history yet" description="Run a query to see your history" icon={<ClockIcon className="w-10 h-10" />} />
                             ) : (
@@ -329,7 +329,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                     ))}
                                 </div>
                             )}
-                        </ScrollArea>
+                        </div>
                     </div>
                 </SheetContent>
             </Sheet>

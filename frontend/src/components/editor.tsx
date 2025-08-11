@@ -14,21 +14,20 @@
  * limitations under the License.
  */
 
-import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import ReactJson from "react-json-view";
-import { Icons } from "./icons";
-import {basicSetup} from "codemirror";
+import { useTheme } from "@clidey/ux";
 import { json } from "@codemirror/lang-json";
 import { markdown } from "@codemirror/lang-markdown";
 import { sql } from "@codemirror/lang-sql";
-import { EditorState } from "@codemirror/state";
-import { EditorView, lineNumbers, GutterMarker, gutter } from "@codemirror/view";
-import { RangeSet, RangeValue } from "@codemirror/state";
+import { EditorState, RangeSet } from "@codemirror/state";
 import { oneDark } from "@codemirror/theme-one-dark";
+import { EditorView, GutterMarker, gutter, lineNumbers } from "@codemirror/view";
 import classNames from "classnames";
+import { basicSetup } from "codemirror";
+import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import ReactJson from "react-json-view";
 import MarkdownPreview from 'react-markdown';
 import remarkGfm from "remark-gfm";
-import { ScrollArea, useTheme } from "@clidey/ux";
+import { Icons } from "./icons";
 
 // SQL validation function
 const isValidSQLQuery = (text: string): boolean => {
@@ -355,21 +354,21 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
     if (showPreview) {
       if (language === "markdown") {
         return (
-          <ScrollArea className="h-full bg-white p-4 pl-8 dark:bg-[#252526] dark:backdrop-blur-md markdown-preview dark:*:text-neutral-300">
+          <div className="h-full bg-white p-4 pl-8 dark:bg-[#252526] dark:backdrop-blur-md markdown-preview dark:*:text-neutral-300 overflow-y-auto">
             {/* todo: there seems to be an issue with links in markdown with the library */}
             <MarkdownPreview remarkPlugins={[remarkGfm]}>{value}</MarkdownPreview>
-          </ScrollArea>
+          </div>
         );
       }
       if (language === "json") {
         return (
-          <ScrollArea className="h-full bg-white p-4 pl-8 dark:bg-[#252526] dark:backdrop-blur-md">
+          <div className="h-full bg-white p-4 pl-8 dark:bg-[#252526] dark:backdrop-blur-md overflow-y-auto">
             <ReactJson
               src={JSON.parse(value)}
               theme={darkModeEnabled ? "bright" : undefined}
               style={{ height: "100%", backgroundColor: "unset" }}
             />
-          </ScrollArea>
+          </div>
         );
       }
     }

@@ -15,7 +15,7 @@
  */
 
 import { isEEMode } from "@/config/ee-imports";
-import { Button, Card, CommandItem, EmptyState, Input, Label, ScrollArea, SearchSelect, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Sheet, SheetContent, SheetFooter, toast } from "@clidey/ux";
+import { Button, Card, CommandItem, EmptyState, Input, Label, SearchSelect, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Sheet, SheetContent, SheetFooter, toast } from "@clidey/ux";
 import { AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery, useGetAiModelsLazyQuery, useGetAiProvidersLazyQuery } from '@graphql';
 import { ArrowTopRightOnSquareIcon, PlusIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
@@ -565,7 +565,7 @@ export const ChatPage: FC = () => {
                                 }
                             </div>
                         </div>
-                        : <ScrollArea className="h-full w-full py-8 max-h-[calc(80vh-5px)]" ref={scrollContainerRef}>
+                        : <div className="h-full w-full py-8 max-h-[calc(80vh-5px)] overflow-y-scroll" ref={scrollContainerRef}>
                             <div className="flex justify-center w-full">
                                 <div className="flex w-[max(65%,450px)] flex-col gap-2">
                                     {
@@ -616,7 +616,7 @@ export const ChatPage: FC = () => {
                                     </div> }
                                 </div>
                             </div>
-                        </ScrollArea>
+                        </div>
                     }
                 </div>
                 {
