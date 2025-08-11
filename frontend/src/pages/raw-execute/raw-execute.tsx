@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-import { Button, Select, SelectContent, SelectItem, SelectValue, SelectTrigger, Sheet, SheetContent, Tabs, TabsContent, TabsList, TabsTrigger, EmptyState, Card, Badge, formatDate, Alert, AlertTitle, AlertDescription } from "@clidey/ux";
+import { Button, Select, SelectContent, SelectItem, SelectValue, SelectTrigger, Sheet, SheetContent, Tabs, TabsContent, TabsList, TabsTrigger, EmptyState, Card, Badge, formatDate, Alert, AlertTitle, AlertDescription, ScrollArea } from "@clidey/ux";
 import { DatabaseType, useRawExecuteLazyQuery } from '@graphql';
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import { indexOf } from "lodash";
 import { ChangeEvent, cloneElement, FC, ReactElement, ReactNode, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { v4 } from "uuid";
-import { ClassNames } from "../../components/classes";
 import { CodeEditor } from "../../components/editor";
 import { AnalyzeGraphFallback } from "../../components/ee-fallbacks";
 import { Icons } from "../../components/icons";
@@ -278,7 +277,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                 <span className="font-semibold text-lg">Query History</span>
                             </div>
                         </div>
-                        <div className="flex-1 overflow-y-auto px-2 py-4">
+                        <ScrollArea className="flex-1 px-2 py-4">
                             {history.length === 0 ? (
                                 <EmptyState title="No history yet" description="Run a query to see your history" icon={<ClockIcon className="w-10 h-10" />} />
                             ) : (
@@ -330,7 +329,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                     ))}
                                 </div>
                             )}
-                        </div>
+                        </ScrollArea>
                     </div>
                 </SheetContent>
             </Sheet>
@@ -406,7 +405,7 @@ const EditableInput: FC<{ page: Page; setValue: (value: string) => void }> = ({ 
             className="w-full border-b border-gray-400 focus:outline-none focus:border-blue-500 transition-colors text-inherit"
           />
         ) : (
-          <span className={classNames(ClassNames.Text, "text-sm text-nowrap")}>
+          <span className="text-sm text-nowrap">
             {currentContent || "Double click to edit"}
           </span>
         )}

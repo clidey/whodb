@@ -28,7 +28,7 @@ import { oneDark } from "@codemirror/theme-one-dark";
 import classNames from "classnames";
 import MarkdownPreview from 'react-markdown';
 import remarkGfm from "remark-gfm";
-import { useTheme } from "@clidey/ux";
+import { ScrollArea, useTheme } from "@clidey/ux";
 
 // SQL validation function
 const isValidSQLQuery = (text: string): boolean => {
@@ -355,21 +355,21 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
     if (showPreview) {
       if (language === "markdown") {
         return (
-          <div className="overflow-y-auto h-full bg-white p-4 pl-8 dark:bg-[#252526] dark:backdrop-blur-md markdown-preview dark:*:text-neutral-300">
+          <ScrollArea className="h-full bg-white p-4 pl-8 dark:bg-[#252526] dark:backdrop-blur-md markdown-preview dark:*:text-neutral-300">
             {/* todo: there seems to be an issue with links in markdown with the library */}
             <MarkdownPreview remarkPlugins={[remarkGfm]}>{value}</MarkdownPreview>
-          </div>
+          </ScrollArea>
         );
       }
       if (language === "json") {
         return (
-          <div className="overflow-y-auto h-full bg-white p-4 pl-8 dark:bg-[#252526] dark:backdrop-blur-md">
+          <ScrollArea className="h-full bg-white p-4 pl-8 dark:bg-[#252526] dark:backdrop-blur-md">
             <ReactJson
               src={JSON.parse(value)}
               theme={darkModeEnabled ? "bright" : undefined}
               style={{ height: "100%", backgroundColor: "unset" }}
             />
-          </div>
+          </ScrollArea>
         );
       }
     }

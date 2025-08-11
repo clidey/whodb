@@ -38,48 +38,11 @@ export interface PieChartProps {
     columns: string[];
 }
 
-// ThemeConfig is not a component but a configuration object
-export interface ThemeConfigType {
-    name?: string;
-    logo: string;
-    layout: {
-        background: string;
-        sidebar: string;
-        sidebarItem: string;
-        chat: {
-            background: string;
-            user: string;
-            houdini: string;
-        };
-        graph: string;
-    };
-    components: {
-        card: string;
-        text: string;
-        brandText: string;
-        icon: string;
-        input: string;
-        button: string;
-        actionButton: string;
-        dropdown: string;
-        dropdownPanel: string;
-        toggle: string;
-        graphCard: string;
-        breadcrumb: string;
-        table: {
-            header: string;
-            evenRow: string;
-            oddRow: string;
-        };
-    };
-}
-
 // Type-safe EE component registry
 export type EEComponentTypes = {
     AnalyzeGraph: ComponentType<AnalyzeGraphProps> | null;
     LineChart: ComponentType<LineChartProps> | null;
     PieChart: ComponentType<PieChartProps> | null;
-    ThemeConfig: ThemeConfigType | null;
 };
 
 // Feature flags for Enterprise Edition

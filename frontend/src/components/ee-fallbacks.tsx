@@ -66,8 +66,3 @@ export const PieChartFallback: React.FC = () => {
         />
     );
 };
-
-export const ThemeConfigFallback: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    // In CE, just pass through children without custom theming
-    return <>{children}</>;
-};

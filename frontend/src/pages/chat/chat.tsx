@@ -15,14 +15,13 @@
  */
 
 import { isEEMode } from "@/config/ee-imports";
-import { Button, Card, EmptyState, Input, Label, SearchSelect, toast } from "@clidey/ux";
+import { Button, Card, CommandItem, EmptyState, Input, Label, ScrollArea, SearchSelect, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Sheet, SheetContent, SheetFooter, toast } from "@clidey/ux";
 import { AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery, useGetAiModelsLazyQuery, useGetAiProvidersLazyQuery } from '@graphql';
+import { ArrowTopRightOnSquareIcon, PlusIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
-import { AnimatePresence, motion } from "framer-motion";
 import { map } from "lodash";
 import { cloneElement, FC, KeyboardEventHandler, MouseEvent, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { v4 } from "uuid";
-import { createDropdownItem, Dropdown, DropdownWithLabel, IDropdownItem } from "../../components/dropdown";
 import { CodeEditor } from "../../components/editor";
 import { Icons } from "../../components/icons";
 import { Loading } from "../../components/loading";
@@ -125,12 +124,16 @@ type IChatMessage = AiChatMessage & {
 };
 
 
-export const externalModelTypes = map(availableExternalModelTypes, (model) => createDropdownItem(model, (Icons.Logos as Record<string, ReactElement>)[model]));
+export const externalModelTypes = map(availableExternalModelTypes, (model) => ({
+    id: model,
+    label: model,
+    icon: (Icons.Logos as Record<string, ReactElement>)[model],
+}));
 
 export const ChatPage: FC = () => {
     const [query, setQuery] = useState("");
     const [addExternalModel, setAddExternalModel] = useState(false);
-    const [externalModelType, setExternalModel] = useState(externalModelTypes[0]);
+    const [externalModelType, setExternalModel] = useState<string>(externalModelTypes[0].id);
     const [externalModelToken, setExternalModelToken] = useState<string>();
     const modelType = useAppSelector(state => state.aiModels.current);
     const modelTypesRaw = useAppSelector(state => state.aiModels.modelTypes);
@@ -159,13 +162,17 @@ export const ChatPage: FC = () => {
         return getAIChatLoading || getAIModelsLoading;
     }, [getAIModelsLoading, getAIChatLoading]);
 
-    const handleAIModelTypeChange = useCallback((item: IDropdownItem) => {
+    const handleAIModelTypeChange = useCallback((item: string) => {
+        const modelType = modelTypes.find(model => model.id === item);
+        if (modelType == null) {
+            return;
+        }
         setModelAvailable(true);
         getAIModels({
             variables: {
-                providerId: item.id,
-                modelType: item.label,
-                token: item.extra?.token,
+                providerId: modelType.id,
+                modelType: modelType.modelType,
+                token: modelType.token,
             },
             onCompleted(data) {
                 dispatch(AIModelsActions.setModels(data.AIModel));
@@ -176,16 +183,16 @@ export const ChatPage: FC = () => {
         });
     }, [dispatch, getAIModels]);
 
-    const handleAIModelChange = useCallback((item: IDropdownItem) => {
-        dispatch(AIModelsActions.setCurrentModel(item.id));
+    const handleAIModelChange = useCallback((item: string) => {
+        dispatch(AIModelsActions.setCurrentModel(item));
     }, [dispatch]);
 
-    const handleAIModelRemove = useCallback((_: MouseEvent<HTMLDivElement>, item?: IDropdownItem) => {
-        if (modelType?.id === item!.id) {
+    const handleAIModelRemove = useCallback((_: MouseEvent<HTMLDivElement>, item: string) => {
+        if (modelType?.id === item) {
             dispatch(AIModelsActions.setModels([]));
             dispatch(AIModelsActions.setCurrentModel(undefined));
         }
-        dispatch(AIModelsActions.removeAIModelType({ id: item!.id }));
+        dispatch(AIModelsActions.removeAIModelType({ id: item }));
     }, [dispatch, modelType?.id]);
 
     const examples = useMemo(() => {
@@ -285,7 +292,7 @@ export const ChatPage: FC = () => {
         setAddExternalModel(status => !status);
     }, []);
 
-    const handleExternalModelChange = useCallback((item: IDropdownItem) => {
+    const handleExternalModelChange = useCallback((item: string) => {
         setExternalModel(item);
     }, []);
 
@@ -294,7 +301,7 @@ export const ChatPage: FC = () => {
         dispatch(AIModelsActions.setModels([]));
         getAIModels({
             variables: {
-                modelType: externalModelType.id,
+                modelType: externalModelType,
                 token: externalModelToken,
             },
             onCompleted(data) {
@@ -302,11 +309,11 @@ export const ChatPage: FC = () => {
                 const id = v4();
                 dispatch(AIModelsActions.addAIModelType({
                     id,
-                    modelType: externalModelType.id,
+                    modelType: externalModelType,
                     token: externalModelToken,
                 }));
                 dispatch(AIModelsActions.setCurrentModelType({ id }));
-                setExternalModel(externalModelTypes[0]);
+                setExternalModel(externalModelTypes[0].id);
                 setExternalModelToken("");
                 setAddExternalModel(false);
                 if (data.AIModel.length > 0) {
@@ -317,7 +324,7 @@ export const ChatPage: FC = () => {
                 toast.error(`Unable to connect to the model: ${error.message}`);
             },
         });
-    }, [getAIModels, externalModelType.id, externalModelToken, dispatch]);
+    }, [getAIModels, externalModelType, externalModelToken, dispatch]);
 
     const handleOpenDocs = useCallback(() => {
         window.open("https://whodb.com/docs/usage-houdini/what-is-houdini", "_blank");
@@ -370,13 +377,7 @@ export const ChatPage: FC = () => {
         if (modelType == null || models.length > 0) {
             return;
         }
-        handleAIModelTypeChange({
-            id: modelType.id,
-            label: modelType.modelType,
-            extra: {
-                token: modelType.token,
-            },
-        });
+        handleAIModelTypeChange(modelType.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -403,53 +404,93 @@ export const ChatPage: FC = () => {
         dispatch(HoudiniActions.clear());
     }, []);
 
-    const handleAIProviderChange = useCallback((item: IDropdownItem) => {
-        dispatch(AIModelsActions.setCurrentModelType({ id: item.id }));
+    const handleAIProviderChange = useCallback((item: string) => {
+        dispatch(AIModelsActions.setCurrentModelType({ id: item }));
         handleAIModelTypeChange(item);
     }, [handleAIModelTypeChange]);
 
     const modelDropdownItems = useMemo(() => {
-        return models.map(model => createDropdownItem(model));
+        return models.map(model => ({
+            id: model,
+            label: model,
+            icon: (Icons.Logos as Record<string, ReactElement>)[model],
+        }));
     }, [models]);
 
     return (
-        <InternalPage routes={[InternalRoutes.Chat]}>
-            <AnimatePresence mode="wait">
-                {
-                    addExternalModel &&
-                    <div className="absolute inset-0 flex justify-center items-center">
-                        <motion.div className="w-[min(450px,calc(100vw-20px))] shadow-2xl z-10 rounded-xl px-8 py-12 flex flex-col gap-2 relative overflow-hidden"
-                            initial={{ y: 50, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            exit={{ y: 50, opacity: 0 }}>
-                            <div className="absolute inset-0 bg-white/5 backdrop-blur-xl -z-10" />
-                            <div className="text-neutral-800 dark:text-neutral-300 self-center flex gap-2 items-center">
-                                Run Ollama locally <Button icon={Icons.RightArrowUp} label="Docs" onClick={handleOpenDocs} />
-                            </div>
-                            <div className="text-neutral-800 dark:text-neutral-300 my-4 w-full flex items-center gap-2">
-                                <div className="border-t-[1px] border-t-white/5 rounded-lg grow border-dashed" /> or <div className="border-t-[1px] border-t-white/5 rounded-lg grow border-dashed" />
-                            </div>
-                            <div className="text-neutral-800 dark:text-neutral-300 self-center">
-                                Add External Model
-                            </div>
-                            <DropdownWithLabel label="Model Type" items={externalModelTypes} fullWidth={true} value={externalModelType} onChange={handleExternalModelChange} />
-                            <div className="flex flex-col gap-2">
-                                <Label>Token</Label>
-                                <Input value={externalModelToken ?? ""} onChange={e => setExternalModelToken(e.target.value)} type="password" />
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <Button onClick={handleAddExternalModel} data-testid="external-model-cancel">
-                                    {Icons.Cancel} Cancel
-                                </Button>
-                                <Button onClick={handleExternalModelSubmit} disabled={getAIModelsLoading} data-testid="external-model-submit">
-                                    {Icons.CheckCircle} Submit
-                                </Button>
-                            </div>
-                        </motion.div>
+        <InternalPage routes={[InternalRoutes.Chat]} className="h-full">
+            <Sheet open={addExternalModel} onOpenChange={setAddExternalModel}>
+                <SheetContent className="max-w-md mx-auto w-full px-8 py-10 flex flex-col gap-4">
+                    <div className="flex flex-col gap-4">
+                        <div className="text-lg font-semibold mb-2">Add External Model</div>
+                        <div className="flex flex-col gap-2">
+                            <Label>Model Type</Label>
+                            <Select
+                                value={externalModelType}
+                                onValueChange={handleExternalModelChange}
+                            >
+                                <SelectTrigger className="w-full" data-testid="external-model-type-select">
+                                    <SelectValue placeholder="Select Model Type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {externalModelTypes.map(item => (
+                                        <SelectItem key={item.id} value={item.id}>
+                                            <span className="flex items-center gap-2">
+                                                {item.icon}
+                                                {item.label}
+                                            </span>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <Label>Token</Label>
+                            <Input
+                                value={externalModelToken ?? ""}
+                                onChange={e => setExternalModelToken(e.target.value)}
+                                type="password"
+                            />
+                        </div>
                     </div>
-                }
-            </AnimatePresence>
-            <div className="flex flex-col justify-center items-center w-full h-full gap-2">
+                    <div className="flex items-center gap-2 self-end">
+                        <Button
+                            onClick={handleAddExternalModel}
+                            data-testid="external-model-cancel"
+                            variant="secondary"
+                        >
+                            {Icons.Cancel} Cancel
+                        </Button>
+                        <Button
+                            onClick={handleExternalModelSubmit}
+                            disabled={getAIModelsLoading}
+                            data-testid="external-model-submit"
+                        >
+                            {Icons.CheckCircle} Submit
+                        </Button>
+                    </div>
+                    <SheetFooter className="p-0">
+                        <div className="text-xs text-neutral-500 mt-4 flex flex-col gap-2">
+                            <div className="font-bold">Setup</div>
+                            <div>
+                                Go to <a href="https://ollama.com/" target="_blank" rel="noopener noreferrer" className="font-semibold underline text-blue-600 hover:text-blue-800">Ollama</a> and follow the installation instructions.
+                            </div>
+                            <div className="font-semibold">Downloading the Ollama Model</div>
+                            <div>
+                                Once installed, install the desired model you would like to use. In this guide, we will use <a href="https://ollama.com/library/llama3.1" target="_blank" rel="noopener noreferrer" className="font-semibold underline text-blue-600 hover:text-blue-800">Llama3.1 8b</a>. To install this model, run:
+                            </div>
+                            <div className="font-mono bg-neutral-100 dark:bg-neutral-900 rounded px-2 py-1 mb-1">
+                                ollama run llama3.1
+                            </div>
+                            <Button icon={Icons.RightArrowUp} variant="secondary" className="w-full mt-2" onClick={handleOpenDocs}>
+                                Docs
+                                <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                            </Button>
+                        </div>
+                    </SheetFooter>
+                </SheetContent>
+            </Sheet>
+            <div className="flex flex-col w-full h-full gap-2">
                 <div className="flex w-full justify-between">
                     <div className={classNames("flex gap-2", {
                         "opacity-50 pointer-events-none": addExternalModel,
@@ -463,11 +504,23 @@ export const ChatPage: FC = () => {
                             value={modelType?.id}
                             onChange={id => {
                                 const item = modelTypesDropdownItems.find(i => i.id === id);
-                                if (item) handleAIProviderChange(item);
+                                if (item) handleAIProviderChange(item.id);
                             }}
                             placeholder="Select Model Type"
                             side="right"
                             align="start"
+                            extraOptions={
+                                <CommandItem
+                                    key="__add__"
+                                    value="__add__"
+                                    onSelect={handleAddExternalModel}
+                                >
+                                    <span className="flex items-center gap-2 text-green-500">
+                                        <PlusIcon className="w-4 h-4 stroke-green-500" />
+                                        Add another profile
+                                    </span>
+                                </CommandItem>
+                            }
                         />
                         {
                             modelType && <SearchSelect
@@ -479,7 +532,7 @@ export const ChatPage: FC = () => {
                                 value={currentModel ? currentModel : undefined}
                                 onChange={id => {
                                     const item = modelDropdownItems.find(i => i.id === id);
-                                    if (item) handleAIModelChange(item);
+                                    if (item) handleAIModelChange(item.id);
                                 }}
                                 placeholder="Select Model"
                                 side="right"
@@ -512,7 +565,7 @@ export const ChatPage: FC = () => {
                                 }
                             </div>
                         </div>
-                        : <div className="h-full w-full py-8 max-h-[calc(80vh-5px)] overflow-y-scroll" ref={scrollContainerRef}>
+                        : <ScrollArea className="h-full w-full py-8 max-h-[calc(80vh-5px)]" ref={scrollContainerRef}>
                             <div className="flex justify-center w-full">
                                 <div className="flex w-[max(65%,450px)] flex-col gap-2">
                                     {
@@ -563,7 +616,7 @@ export const ChatPage: FC = () => {
                                     </div> }
                                 </div>
                             </div>
-                        </div>
+                        </ScrollArea>
                     }
                 </div>
                 {

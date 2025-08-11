@@ -29,7 +29,6 @@ import { InternalRoutes } from "../../config/routes";
 import { AuthActions } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { ClassNames } from '../../components/classes';
 const logoImage = "/images/logo.png";
 // Embeddable LoginForm component for use in LoginPage and @sidebar.tsx
 
@@ -397,7 +396,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                             <div className="flex justify-between">
                                 <div className="flex items-center gap-2 text-xl">
                                     <img src={logoImage} alt="clidey logo" className="w-auto h-6" />
-                                    <h1 className={ClassNames.BrandText}>WhoDB</h1>
+                                    <h1 className="text-brand-foreground">WhoDB</h1>
                                     <h1>Login</h1>
                                 </div>
                                 {

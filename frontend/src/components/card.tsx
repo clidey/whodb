@@ -38,38 +38,15 @@ import {
 import { Loading } from "./loading";
 
 
-type ICardIcon = {
-  component: ReactElement;
-  bgClassName?: string;
-  className?: string;
-};
-
 type ICardProps = {
   className?: string;
-  icon?: ICardIcon | ReactElement;
+  icon?: ReactElement;
   tag?: ReactElement;
   children: ReactElement[] | ReactElement | ReactNode;
   loading?: boolean;
   highlight?: boolean;
   loadingText?: string;
 };
-
-export const Icon: FC<ICardIcon> = memo((propsIcon) => (
-  <div
-    className={[
-      "h-[40px] w-[40px] rounded-lg flex justify-center items-center",
-      propsIcon.bgClassName,
-    ]
-      .filter(Boolean)
-      .join(" ")}
-  >
-    {cloneElement(propsIcon.component, {
-      className: ["w-6 h-6 stroke-white", propsIcon.className]
-        .filter(Boolean)
-        .join(" "),
-    })}
-  </div>
-));
 
 export const Card: FC<ICardProps> = ({
   children,
@@ -92,16 +69,6 @@ export const Card: FC<ICardProps> = ({
     }
   }, [highlight]);
 
-  const icon = useMemo(() => {
-    if (propsIcon == null) {
-      return null;
-    }
-    if (typeof propsIcon === "object" && "component" in propsIcon) {
-      return <Icon {...propsIcon} />;
-    }
-    return propsIcon;
-  }, [propsIcon]);
-
   return (
     <UxCard
       className={cn(
@@ -115,9 +82,13 @@ export const Card: FC<ICardProps> = ({
         <Loading loadingText={loadingText} />
       ) : (
         <>
-          {(icon || tag) && (
+          {(propsIcon || tag) && (
             <CardHeader className="flex flex-row justify-between items-start px-4">
-              {icon}
+              {propsIcon && <div className="h-[40px] w-[40px] rounded-lg flex justify-center items-center bg-icon dark:bg-icon">
+                {cloneElement(propsIcon, {
+                  className: "w-6 h-6 stroke-icon-foreground dark:stroke-icon-foreground",
+                })}
+              </div>}
               {tag && <Badge variant="secondary">{tag}</Badge>}
             </CardHeader>
           )}

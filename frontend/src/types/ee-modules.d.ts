@@ -24,7 +24,6 @@ declare module '@ee/index' {
   export const isEENoSQLDatabase: any;
   export const getEEDatabaseStorageUnitLabel: any;
   export const AnalyzeGraph: any;
-  export const ThemeConfig: any;
   export default null;
 }
 
@@ -41,9 +40,4 @@ declare module '@ee/components/charts/pie-chart' {
 declare module '@ee/pages/raw-execute/analyze-view' {
   export const AnalyzeGraph: any;
   export default AnalyzeGraph;
-}
-
-declare module '@ee/components/theme/theme' {
-  export const ThemeConfig: any;
-  export default ThemeConfig;
 }

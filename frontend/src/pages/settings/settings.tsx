@@ -15,12 +15,12 @@
  */
 
 import { FC, useCallback } from "react";
-import { Text, ToggleInput } from "../../components/input";
 import { InternalPage } from "../../components/page";
 import { InternalRoutes } from "../../config/routes";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { SettingsActions } from "../../store/settings";
 import { isEEMode } from "@/config/ee-imports";
+import { Label, Switch } from "@clidey/ux";
 
 export const SettingsPage: FC = () => {
     const dispatch = useAppDispatch();
@@ -58,8 +58,8 @@ export const SettingsPage: FC = () => {
                             "Contact Us" option in the bottom left corner of the screen.
                         </h3>
                         <div className="flex gap-2 items-center mr-4">
-                            <Text label={metricsEnabled ? "Enabled" : "Disabled"}/>
-                            <ToggleInput value={metricsEnabled} setValue={handleMetricsToggle}/>
+                            <Label>{metricsEnabled ? "Enabled" : "Disabled"}</Label>
+                            <Switch checked={metricsEnabled} onChange={() => handleMetricsToggle(!metricsEnabled)}/>
                         </div>
                     </>
                 )}

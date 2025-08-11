@@ -50,7 +50,6 @@ import { useAppSelector } from "../../store/hooks";
 import { databaseSupportsSchema, databaseSupportsScratchpad } from "../../utils/database-features";
 import { isEEFeatureEnabled } from "../../utils/ee-loader";
 import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
-import { ClassNames } from "../classes";
 import { Icons } from "../icons";
 import { Loading } from "../loading";
 import { updateProfileLastAccessed } from "../profile-info-tooltip";
@@ -260,7 +259,7 @@ export const Sidebar: FC = () => {
                             "hidden": !open,
                         })}>
                             <img src={logoImage} alt="clidey logo" className="w-auto h-4" />
-                            {open && <span className={classNames(ClassNames.BrandText, "text-lg")}>WhoDB</span>}
+                            {open && <span className="text-lg">WhoDB</span>}
                         </div>
                         <SidebarTrigger onClick={toggleSidebar} className="px-0">
                             <Bars3Icon />
@@ -279,7 +278,7 @@ export const Sidebar: FC = () => {
                             <div className="flex flex-col gap-4">
                                 {/* Profile Select */}
                                 <div className="flex flex-col gap-2 w-full">
-                                    <h2 className={classNames(ClassNames.Text, "text-sm", !open &&  "hidden")}>Profile</h2>
+                                    <h2 className={cn("text-sm", !open &&  "hidden")}>Profile</h2>
                                     <SearchSelect
                                         options={profileOptions}
                                         value={currentProfileOption?.value}
@@ -306,7 +305,7 @@ export const Sidebar: FC = () => {
                                 <div className={cn("flex flex-col gap-2 w-full", {
                                     "opacity-0 pointer-events-none": !open,
                                 })}>
-                                    <h2 className={classNames(ClassNames.Text, "text-sm")}>Database</h2>
+                                    <h2 className="text-sm">Database</h2>
                                     <SearchSelect
                                         options={databaseOptions}
                                         value={current?.Database}
@@ -319,7 +318,7 @@ export const Sidebar: FC = () => {
                                 <div className={cn("flex flex-col gap-2 w-full", {
                                     "opacity-0 pointer-events-none": !open,
                                 })}>
-                                    <h2 className={cn(ClassNames.Text, "text-sm")}>Schema</h2>
+                                    <h2 className="text-sm">Schema</h2>
                                     <SearchSelect
                                         options={schemaOptions}
                                         value={schema}
@@ -404,7 +403,7 @@ export const Sidebar: FC = () => {
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
                             </SidebarMenu>
-                            <div className={classNames(ClassNames.Text, "absolute right-8 bottom-8 text-sm text-gray-300 hover:text-gray-600 self-end dark:hover:text-neutral-300 transition-all")}>
+                            <div className="absolute right-8 bottom-8 text-sm text-gray-300 hover:text-gray-600 self-end dark:hover:text-neutral-300 transition-all">
                                 {version?.Version}
                             </div>
                         </SidebarGroup>
