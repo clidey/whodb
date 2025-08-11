@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Button, Tabs, TabsContent, TabsList, TabsTrigger } from "@clidey/ux";
+import { Button, Select, SelectContent, SelectItem, SelectValue, SelectTrigger, Sheet, SheetContent, Tabs, TabsContent, TabsList, TabsTrigger, EmptyState, Card, Badge, formatDate, Alert, AlertTitle, AlertDescription } from "@clidey/ux";
 import { DatabaseType, useRawExecuteLazyQuery } from '@graphql';
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
@@ -32,6 +32,7 @@ import { InternalRoutes } from "../../config/routes";
 import { LocalLoginProfile } from "../../store/auth";
 import { useAppSelector } from "../../store/hooks";
 import { isEEFeatureEnabled, loadEEComponent } from "../../utils/ee-loader";
+import { BellAlertIcon, ClockIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 // Conditionally load the AnalyzeGraph component from EE
 const AnalyzeGraph = loadEEComponent(
@@ -95,7 +96,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     const [code, setCode] = useState("");
     const [submittedCode, setSubmittedCode] = useState("");
     const [rawExecute, { data: rows, loading, error }] = useRawExecuteLazyQuery();
-    const [history, setHistory] = useState<{id: string, item: string, status: boolean}[]>([]);
+    const [history, setHistory] = useState<{id: string, item: string, status: boolean, date: Date}[]>([]);
     const current = useAppSelector(state => state.auth.current);
     const [showHistory, setShowHistory] = useState(false);
 
@@ -105,7 +106,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
             return;
         }
         const currentCode = historyCode ?? code;
-        const historyItem = { id: v4(), item: code, status: false };
+        const historyItem = { id: v4(), item: code, status: false, date: new Date() };
         setSubmittedCode(currentCode);
         rawExecute({
             variables: {
@@ -181,104 +182,84 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
 
     const rowLength = useMemo(() => rows?.RawExecute.Rows.length ?? 0, []);
 
-    return <div className="flex flex-col grow group/cell relative">
-            <div className="absolute left-0 -translate-x-full pr-2">
-                {actionOptions.map((item) => (
-                    <motion.div
-                        key={item}
-                        onClick={() => setMode(item)}
-                        className={classNames(
-                            ClassNames.Text,
-                            "relative text-sm px-2 py-1 rounded-lg rounded-r-none cursor-pointer transition-all w-[150px] whitespace-nowrap text-ellipsis hover:brightness-125 flex gap-1 items-center",
-                            {
-                                "hidden": !isAnalyzeAvailable || item === ActionOptions.Analyze && !isEEFeatureEnabled('analyzeView'),
-                            }
-                        )}
-                        title={item}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ type: "spring", stiffness: 500, damping: 30 }}>
-                        <AnimatePresence>
-                            {mode === item && (
-                                <motion.div
-                                    layoutId={`activeBackground-${cellId}`}
-                                    className="absolute inset-0 bg-neutral-800/5 dark:bg-neutral-700 rounded-lg rounded-r-none -z-10"
-                                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                                />
-                            )}
-                        </AnimatePresence>
-                        {cloneElement(ActionOptionIcons[item], {
-                            className: "w-4 h-4",
-                        })}
-                        <span className="relative z-10">{item}</span>
-                    </motion.div>
-                ))}
-            </div>
-            {
-                showHistory ?
-                    <div className="flex flex-col gap-2 grow h-[150px] pb-8 overflow-y-auto">
-                        {history.map(({ id, item, status }) => (
-                            <motion.div key={id}
-                                className={classNames(
-                                    ClassNames.Text, 
-                                    "text-sm bg-white/5 px-2 rounded-lg rounded-l-none cursor-pointer transition-all w-full group/history-item py-4 h-fit border-l-4 relative",
-                                    {
-                                        " border-l-green-500": status,
-                                        " border-l-red-500": !status,
-                                    }
-                                )}
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1, transition: { y: { stiffness: 1000, velocity: -100 }}}}
-                                exit={{ opacity: 0 }}
-                            >
-                                {item}
-                                <div className="opacity-0 group-hover/history-item:opacity-100 absolute right-4 top-1/2 -translate-y-1/2 px-4 py-2 flex items-center">
-                                    <CopyButton text={item} />
-                                    <div className="p-2 brightness-75 hover:brightness-100" onClick={() => {
-                                        setShowHistory(false);
-                                        setCode(item);
-                                    }}>{cloneElement(Icons.Edit, {
-                                        className: "w-5 h-5",
-                                    })}</div>
-                                    <div className="p-2 brightness-75 hover:brightness-100" onClick={() => {
-                                        handleRawExecute(item);
-                                    }}>{Icons.Play}</div>
+    // Sheet for history (right side, like sidebar)
+    const [historyOpen, setHistoryOpen] = useState(false);
+
+    return (
+        <div className="flex flex-col grow group/cell relative">
+            <div className="relative">
+                <div className="flex grow h-[150px] border border-gray-200 rounded-md overflow-hidden dark:bg-white/10 dark:border-white/5">
+                    <CodeEditor language="sql" value={code} setValue={setCode} onRun={(c) => handleRawExecute(c)} />
+                </div>
+                <div className={classNames("absolute -bottom-3 z-20 flex justify-between px-3 pr-8 w-full opacity-0 transition-all duration-500 group-hover/cell:opacity-100 pointer-events-none", {
+                    "opacity-100": showTools,
+                })}>
+                    <div className="flex gap-2 pointer-events-auto">
+                        <Select
+                            value={mode}
+                            onValueChange={(val) => setMode(val as ActionOptions)}
+                        >
+                            <SelectTrigger style={{
+                                background: "var(--secondary)",
+                            }}>
+                                <div className="flex items-center gap-2 w-full">
+                                    {cloneElement(ActionOptionIcons[mode], { className: "w-4 h-4" })}
+                                    <span>{mode}</span>
                                 </div>
-                            </motion.div>
-                        ))}
-                    </div>
-                : <div className="relative">
-                    <div className="flex grow h-[150px] border border-gray-200 rounded-md overflow-hidden dark:bg-white/10 dark:border-white/5">
-                        <CodeEditor language="sql" value={code} setValue={setCode} onRun={(c) => handleRawExecute(c)} />
-                    </div>
-                    <div className={classNames("absolute -bottom-3 z-20 flex justify-between px-3 pr-8 w-full opacity-0 transition-all duration-500 group-hover/cell:opacity-100 pointer-events-none", {
-                        "opacity-100": showTools,
-                    })}>
-                        <div className="flex gap-2 pointer-events-auto">
-                            <Button onClick={handleAdd} data-testid="add-button">
-                                {Icons.PlusCircle} Add
+                            </SelectTrigger>
+                            <SelectContent>
+                                {actionOptions.map((item) => (
+                                    <SelectItem
+                                        key={item}
+                                        value={item}
+                                        className={classNames({
+                                            "hidden": !isAnalyzeAvailable || (item === ActionOptions.Analyze && !isEEFeatureEnabled('analyzeView')),
+                                        })}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            {cloneElement(ActionOptionIcons[item], { className: "w-4 h-4" })}
+                                            <span>{item}</span>
+                                        </div>
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Button onClick={handleAdd} data-testid="add-button" variant="secondary" className="border border-input">
+                            {Icons.PlusCircle}
+                        </Button>
+                        <Button onClick={() => setCode("")} data-testid="clear-button" variant="secondary" className="border border-input">
+                            {Icons.Refresh}
+                        </Button>
+                        {
+                            onDelete != null &&
+                            <Button variant="destructive" onClick={handleDelete} disabled={loading} data-testid="delete-button">
+                                {Icons.Delete}
                             </Button>
-                            <Button onClick={() => setCode("")} data-testid="clear-button">
-                                {Icons.Refresh} Clear
-                            </Button>
-                            {
-                                onDelete != null &&
-                                <Button variant="destructive" onClick={handleDelete} disabled={loading} data-testid="delete-button">
-                                    {Icons.Delete} Delete
-                                </Button>
-                            }
-                        </div>
+                        }
+                    </div>
+                    <div className="flex gap-2 items-center">
+                        <Button
+                            onClick={() => setHistoryOpen(true)}
+                            data-testid="history-button"
+                            className="pointer-events-auto"
+                            variant="secondary"
+                        >
+                            <ClockIcon className="w-4 h-4" />
+                        </Button>
                         <Button onClick={() => handleRawExecute()} data-testid="submit-button" className="pointer-events-auto">
-                            {Icons.CheckCircle} {mode}
+                            {Icons.CheckCircle}
                         </Button>
                     </div>
                 </div>
-            }
+            </div>
             {
                 error != null &&
-                <div className="flex items-center justify-between mt-4" data-testid="cell-error">
-                    <div className="text-sm text-red-500 w-[33vw]">{error?.message ?? ""}</div>
+                <div className="flex items-center justify-between mt-8" data-testid="cell-error">
+                    <Alert variant="destructive" title="Error" description={error?.message ?? ""}>
+                        <BellAlertIcon className="w-4 h-4" />
+                        <AlertTitle>Error</AlertTitle>
+                        <AlertDescription>{error?.message ?? ""}</AlertDescription>
+                    </Alert>
                 </div>
             }
             {
@@ -288,38 +269,73 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                 </div>
                 : rows != null && submittedCode.length > 0 && output
             }
-            <div className={classNames("absolute right-0 translate-x-full pl-2 overflow-y-auto overflow-x-hidden", {
-                "max-h-[200px]": rowLength === 0,
-                "max-h-[400px]": rowLength > 0,
-            })}>
-                <motion.ul className="flex flex-col gap-1"
-                    initial={{opacity: 0, }}
-                    animate={{opacity: 1, transition: { staggerChildren: 0.07, delayChildren: 0.05 }}}
-                    exit={{opacity: 0, transition: { staggerChildren: 0.05, staggerDirection: -1 }}}>
-                    <motion.li
-                        className={classNames(
-                            ClassNames.Text,
-                            "relative text-sm px-2 py-1 rounded-lg rounded-l-none cursor-pointer transition-all w-[150px] whitespace-nowrap text-ellipsis hover:brightness-125 flex gap-1 items-center",
-                            {
-                                "hidden": history.length === 0,
-                            }
-                        )}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                        onClick={() => setShowHistory(!showHistory)}
-                    >
-                        {cloneElement(Icons.History, {
-                            className: classNames("w-4 h-4 transition-all", {
-                                "rotate-180": showHistory,
-                            })
-                        })}
-                        <span className="relative z-10">{showHistory ? "Hide" : "Show"} history</span>
-                    </motion.li>
-                </motion.ul>
-            </div>
+            <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
+                <SheetContent className="w-[350px] max-w-full p-0">
+                    <div className="flex flex-col h-full">
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                            <div className="flex items-center gap-2">
+                                <ClockIcon className="w-5 h-5" />
+                                <span className="font-semibold text-lg">Query History</span>
+                            </div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto px-2 py-4">
+                            {history.length === 0 ? (
+                                <EmptyState title="No history yet" description="Run a query to see your history" icon={<ClockIcon className="w-10 h-10" />} />
+                            ) : (
+                                <div className="flex flex-col gap-4 p-4">
+                                    {history.map(({ id, item, status, date }) => (
+                                        <Card className="w-full p-4 relative" key={id}>
+                                            <Badge
+                                                variant={status ? "success" : "destructive"}
+                                                className="absolute top-0 -translate-y-1/2 right-2"
+                                            >
+                                                {status ? "Success" : "Error"}
+                                            </Badge>
+                                            <div className="flex flex-col min-h-[60px]">
+                                                <div className="whitespace-pre-wrap break-words text-sm pr-12">
+                                                    {item}
+                                                </div>
+                                                <div className="flex gap-2 mt-4 justify-between items-center">
+                                                    <div className="text-xs text-muted-foreground">
+                                                        {formatDate(date)}
+                                                    </div>
+                                                    <div className="flex gap-2 items-center">
+
+                                                        <CopyButton text={item} />
+                                                        <Button
+                                                            size="icon"
+                                                            variant="secondary"
+                                                            className="border border-input"
+                                                            onClick={() => {
+                                                                setHistoryOpen(false);
+                                                                setCode(item);
+                                                            }}
+                                                            title="Clone to editor"
+                                                        >
+                                                            {cloneElement(Icons.Edit, { className: "w-5 h-5" })}
+                                                        </Button>
+                                                        <Button
+                                                            size="icon"
+                                                            variant="secondary"
+                                                            className="border border-input"
+                                                            onClick={() => handleRawExecute(item)}
+                                                            title="Run"
+                                                        >
+                                                            {Icons.Play}
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </Card>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </SheetContent>
+            </Sheet>
         </div>
+    )
 }
 
 const RawExecuteSubPage: FC = () => {
@@ -493,7 +509,9 @@ export const RawExecutePage: FC = () => {
                                         {Icons.Add}
                                     </TabsTrigger>
                                 </TabsList>
-                                <Button variant="destructive" onClick={() => handleDelete(activePage)}>{Icons.Delete} Delete page</Button>
+                                <Button className={classNames({
+                                    "hidden": pages.length <= 1,
+                                })} variant="secondary" onClick={() => handleDelete(activePage)}>{Icons.Delete} Delete page</Button>
                             </div>
                             <TabsContent value={activePage} className="h-full w-full mt-4">
                                 <AnimatePresence mode="wait">

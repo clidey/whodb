@@ -427,7 +427,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 }
             </div>
         </div>
-        <Drawer open={scratchpad} onOpenChange={handleCloseScratchpad} modal={false}>
+        <Drawer open={scratchpad} onOpenChange={handleCloseScratchpad}>
             <DrawerContent className="px-8 max-h-[25vh]">
                 <DrawerHeader>
                     <DrawerTitle className="flex justify-between items-center">

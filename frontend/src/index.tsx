@@ -37,7 +37,7 @@ const posthogClient = initPosthog()
 // Conditionally wrap with PostHogProvider only for CE builds
 const AppWithProviders = () => {
   const app = (
-    <ThemeProvider defaultTheme='light'>
+    <ThemeProvider>
       <App />
     </ThemeProvider>
   );
