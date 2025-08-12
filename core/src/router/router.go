@@ -61,7 +61,7 @@ func setupServer(router *chi.Mux, staticFiles embed.FS) {
 		fileServer(router, staticFiles)
 	}
 
-	server := NewGraphQLServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
+	server := createGraphQLServer()
 	server.AddTransport(&transport.Websocket{})
 	graph.SetupHTTPServer(router)
 	setupPlaygroundHandler(router, server)

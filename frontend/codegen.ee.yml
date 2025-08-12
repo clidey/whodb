@@ -15,7 +15,9 @@
 # EE-specific GraphQL code generation
 # Requires EE backend running on port 8080
 schema: http://localhost:8080/api/query
-documents: src/**/*.graphql
+documents: 
+  - src/**/*.graphql
+  - ../ee/frontend/src/**/*.graphql
 generates:
   ../ee/frontend/src/generated/graphql.tsx:
     plugins:
