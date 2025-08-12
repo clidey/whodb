@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-import { FC, useState, useRef, useEffect } from "react";
+import { FC, useState, useRef, useEffect, cloneElement } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import classNames from "classnames";
 import { AnimatedButton } from "./button";
 import { Icons } from "./icons";
-import { InputWithlabel } from "./input";
-import { Dropdown } from "./dropdown";
-import { StorageUnit, useGenerateMockDataMutation } from "@graphql";
+import { InputWithlabel, ToggleInput } from "./input";
+import { Dropdown, createDropdownItem, IDropdownItem } from "./dropdown";
+import { StorageUnit, useGenerateMockDataMutation, useMockDataMaxRowCountQuery } from "@graphql";
 import { notify } from "../store/function";
 import { useAppSelector } from "../store/hooks";
 
@@ -40,18 +39,13 @@ export const MockDataDialog: FC<MockDataDialogProps> = ({ isOpen, onClose, stora
     const dialogRef = useRef<HTMLDivElement>(null);
     const schema = useAppSelector(state => state.database.schema);
     const [generateMockData, { loading }] = useGenerateMockDataMutation();
-    const [progress, setProgress] = useState<{
-        total: number;
-        generated: number;
-        failed: number;
-    } | null>(null);
+    const { data: maxRowData } = useMockDataMaxRowCountQuery();
+    const maxRowCount = maxRowData?.MockDataMaxRowCount || 500;
 
-    // AI providers - currently disabled as per requirements
-    const aiProviders = [
-        { label: "Normal", value: "Normal", disabled: false },
-        { label: "ChatGPT", value: "ChatGPT", disabled: true },
-        { label: "Claude", value: "Claude", disabled: true },
-        { label: "Ollama", value: "Ollama", disabled: true },
+    const methodItems: IDropdownItem[] = [createDropdownItem("Normal")];
+    const handlingItems: IDropdownItem[] = [
+        { id: "append", label: "Append to existing data" },
+        { id: "overwrite", label: "Overwrite existing data" },
     ];
 
     useEffect(() => {
@@ -80,6 +74,20 @@ export const MockDataDialog: FC<MockDataDialogProps> = ({ isOpen, onClose, stora
         };
     }, [isOpen, onClose, loading]);
 
+    const handleRowCountChange = (value: string) => {
+        // Only allow numeric input
+        const numericValue = value.replace(/[^0-9]/g, '');
+        const parsedValue = parseInt(numericValue) || 0;
+        
+        // Enforce max limit
+        if (parsedValue > maxRowCount) {
+            setRowCount(maxRowCount.toString());
+            notify(`Maximum row count is ${maxRowCount}`, "info");
+        } else {
+            setRowCount(numericValue);
+        }
+    };
+
     const handleGenerate = async () => {
         if (overwriteExisting === "overwrite" && !showConfirmation) {
             setShowConfirmation(true);
@@ -88,9 +96,13 @@ export const MockDataDialog: FC<MockDataDialogProps> = ({ isOpen, onClose, stora
 
         const count = parseInt(rowCount) || 100;
         
+        // Double-check the limit
+        if (count > maxRowCount) {
+            notify(`Row count cannot exceed ${maxRowCount}`, "error");
+            return;
+        }
+        
         try {
-            setProgress({ total: count, generated: 0, failed: 0 });
-            
             const result = await generateMockData({
                 variables: {
                     input: {
@@ -104,21 +116,12 @@ export const MockDataDialog: FC<MockDataDialogProps> = ({ isOpen, onClose, stora
             });
 
             const data = result.data?.GenerateMockData;
-            if (data) {
-                setProgress({
-                    total: data.TotalRows,
-                    generated: data.GeneratedRows,
-                    failed: data.FailedRows,
-                });
-
-                if (data.FailedRows > 0 && data.ErrorMessages.length > 0) {
-                    notify(`Generated ${data.GeneratedRows} rows successfully. ${data.FailedRows} rows failed. Errors: ${data.ErrorMessages.join(", ")}`, "warning");
-                } else {
-                    notify(`Successfully generated ${data.GeneratedRows} rows`, "success");
-                }
-
+            if (data?.Status) {
+                notify(`Successfully generated ${count} rows`, "success");
                 onSuccess();
                 onClose();
+            } else {
+                notify(`Failed to generate mock data`, "error");
             }
         } catch (error: any) {
             if (error.message === "mock data generation is not allowed for this table") {
@@ -126,7 +129,6 @@ export const MockDataDialog: FC<MockDataDialogProps> = ({ isOpen, onClose, stora
             } else {
                 notify(`Failed to generate mock data: ${error.message}`, "error");
             }
-            setProgress(null);
         }
     };
 
@@ -159,22 +161,29 @@ export const MockDataDialog: FC<MockDataDialogProps> = ({ isOpen, onClose, stora
 
                         {!showConfirmation ? (
                             <div className="space-y-4">
-                                <InputWithlabel
-                                    label="Number of Rows"
-                                    value={rowCount}
-                                    setValue={setRowCount}
-                                    type="number"
-                                    placeholder="Enter number of rows"
-                                />
+                                <div>
+                                    <InputWithlabel
+                                        label={`Number of Rows (max: ${maxRowCount})`}
+                                        value={rowCount}
+                                        setValue={handleRowCountChange}
+                                        type="text"
+                                        inputProps={{ 
+                                            inputMode: "numeric", 
+                                            pattern: "[0-9]*",
+                                            max: maxRowCount.toString()
+                                        }}
+                                        placeholder={`Enter number of rows (1-${maxRowCount})`}
+                                    />
+                                </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                         Method
                                     </label>
                                     <Dropdown
-                                        options={aiProviders}
-                                        selected={method}
-                                        setSelected={setMethod}
+                                        items={methodItems}
+                                        value={methodItems.find(i => i.id === method)}
+                                        onChange={(item) => setMethod(item.id)}
                                     />
                                 </div>
 
@@ -183,45 +192,34 @@ export const MockDataDialog: FC<MockDataDialogProps> = ({ isOpen, onClose, stora
                                         Data Handling
                                     </label>
                                     <Dropdown
-                                        options={[
-                                            { label: "Append to existing data", value: "append" },
-                                            { label: "Overwrite existing data", value: "overwrite" },
-                                        ]}
-                                        selected={overwriteExisting}
-                                        setSelected={setOverwriteExisting}
+                                        items={handlingItems}
+                                        value={handlingItems.find(i => i.id === overwriteExisting)}
+                                        onChange={(item) => setOverwriteExisting(item.id)}
                                     />
                                 </div>
 
-                                {loading && progress && (
+                                {loading && (
                                     <div className="mt-4">
-                                        <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-1">
-                                            <span>Generating data...</span>
-                                            <span>{progress.generated} / {progress.total}</span>
+                                        <div className="flex justify-center">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                                         </div>
-                                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                                            <div
-                                                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                                                style={{ width: `${(progress.generated / progress.total) * 100}%` }}
-                                            />
-                                        </div>
-                                        {progress.failed > 0 && (
-                                            <p className="text-sm text-red-500 mt-1">
-                                                {progress.failed} rows failed
-                                            </p>
-                                        )}
+                                        <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-2">
+                                            Generating mock data...
+                                        </p>
                                     </div>
                                 )}
 
                                 <div className="flex justify-end gap-2 mt-6">
                                     <AnimatedButton
-                                        type="md"
+                                        type="sm"
                                         label="Cancel"
                                         onClick={handleCancel}
                                         disabled={loading}
                                         className="bg-gray-200 dark:bg-gray-700"
+                                        icon={Icons.Cancel}
                                     />
                                     <AnimatedButton
-                                        type="md"
+                                        type="sm"
                                         icon={Icons.CheckCircle}
                                         label="Generate"
                                         onClick={handleGenerate}
@@ -242,14 +240,15 @@ export const MockDataDialog: FC<MockDataDialogProps> = ({ isOpen, onClose, stora
                                 </p>
                                 <div className="flex justify-end gap-2 mt-6">
                                     <AnimatedButton
-                                        type="md"
+                                        type="sm"
                                         label="Cancel"
                                         onClick={() => setShowConfirmation(false)}
                                         disabled={loading}
                                         className="bg-gray-200 dark:bg-gray-700"
+                                        icon={Icons.Cancel}
                                     />
                                     <AnimatedButton
-                                        type="md"
+                                        type="sm"
                                         icon={Icons.Delete}
                                         label="Yes, Overwrite"
                                         onClick={handleGenerate}

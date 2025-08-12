@@ -243,8 +243,7 @@ func (p *MongoDBPlugin) Chat(config *engine.PluginConfig, schema string, model s
 	return nil, errors.ErrUnsupported
 }
 
-
-func (p *MongoDBPlugin) FormatValue(val interface{}) string {
+func (p *MongoDBPlugin) FormatValue(val any) string {
 	if val == nil {
 		return ""
 	}
@@ -253,6 +252,16 @@ func (p *MongoDBPlugin) FormatValue(val interface{}) string {
 
 func (p *MongoDBPlugin) GetSupportedOperators() map[string]string {
 	return supportedOperators
+}
+
+// GetColumnConstraints returns empty constraints for MongoDB since mock data generation doesn't apply to NoSQL databases
+func (p *MongoDBPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error) {
+	return make(map[string]map[string]any), nil
+}
+
+// ClearTableData returns not supported error for MongoDB since mock data generation doesn't apply to NoSQL databases
+func (p *MongoDBPlugin) ClearTableData(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {
+	return false, errors.New("mock data generation is not supported for MongoDB")
 }
 
 func NewMongoDBPlugin() *engine.Plugin {

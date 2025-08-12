@@ -172,7 +172,13 @@ func (r *mutationResolver) DeleteRow(ctx context.Context, schema string, storage
 }
 
 // GenerateMockData is the resolver for the GenerateMockData field.
-func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.MockDataGenerationInput) (*model.MockDataGenerationProgress, error) {
+func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.MockDataGenerationInput) (*model.StatusResponse, error) {
+	// Enforce maximum row limit
+	maxRowLimit := env.GetMockDataGenerationMaxRowCount()
+	if input.RowCount > maxRowLimit {
+		return nil, fmt.Errorf("row count exceeds maximum limit of %d", maxRowLimit)
+	}
+
 	// Check if mock data generation is allowed for this table
 	if !env.IsMockDataGenerationAllowed(input.StorageUnit) {
 		return nil, errors.New("mock data generation is not allowed for this table")
@@ -188,83 +194,58 @@ func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.Moc
 		return nil, fmt.Errorf("failed to get table schema: %w", err)
 	}
 
-	// Initialize progress tracking
-	progress := &model.MockDataGenerationProgress{
-		TotalRows:     input.RowCount,
-		GeneratedRows: 0,
-		FailedRows:    0,
-		ErrorMessages: []string{},
+	// Get column constraints from the database
+	constraints, err := plugin.GetColumnConstraints(config, input.Schema, input.StorageUnit)
+	if err != nil {
+		// Use empty constraints on error
+		constraints = make(map[string]map[string]any)
 	}
 
 	// If overwrite is requested, delete existing data first
 	if input.OverwriteExisting {
-		// Start transaction by getting all existing rows
-		existingRows, err := plugin.GetRows(config, input.Schema, input.StorageUnit, nil, 1000000, 0) // Get all rows
-		if err != nil {
-			return nil, fmt.Errorf("failed to get existing rows: %w", err)
-		}
-
-		// Delete all existing rows
-		if len(existingRows.Rows) > 0 {
-			// For now, we'll use RawExecute to truncate the table
-			// This is more efficient than deleting row by row
-			truncateQuery := fmt.Sprintf("DELETE FROM %s", input.StorageUnit)
-			if typeArg == "Postgres" || typeArg == "MySQL" || typeArg == "MariaDB" {
-				truncateQuery = fmt.Sprintf("TRUNCATE TABLE %s", input.StorageUnit)
-			}
-			
-			_, err = plugin.RawExecute(config, truncateQuery)
-			if err != nil {
-				// If TRUNCATE fails, try DELETE
-				deleteQuery := fmt.Sprintf("DELETE FROM %s", input.StorageUnit)
-				_, err = plugin.RawExecute(config, deleteQuery)
-				if err != nil {
-					return nil, fmt.Errorf("failed to clear existing data: %w", err)
-				}
-			}
+		if _, err := plugin.ClearTableData(config, input.Schema, input.StorageUnit); err != nil {
+			return nil, fmt.Errorf("failed to clear existing data: %w", err)
 		}
 	}
 
-	// Generate and insert mock data
+	// Generate and insert mock data synchronously
 	generator := src.NewMockDataGenerator()
-	
+
+	generatedRows := 0
+	failedRows := 0
+
 	for i := 0; i < input.RowCount; i++ {
-		// Generate mock data for one row
-		rowData, err := generator.GenerateRowData(rowsResult.Columns)
-		if err != nil {
-			progress.FailedRows++
-			progress.ErrorMessages = append(progress.ErrorMessages, fmt.Sprintf("Row %d: %v", i+1, err))
+		rowData, genErr := generator.GenerateRowDataWithConstraints(rowsResult.Columns, constraints)
+		if genErr != nil {
+			failedRows++
 			continue
 		}
 
 		// Try to insert the row
-		success, err := plugin.AddRow(config, input.Schema, input.StorageUnit, rowData)
-		if err != nil || !success {
-			// Retry with different values if it fails (e.g., due to unique constraints)
+		success, addErr := plugin.AddRow(config, input.Schema, input.StorageUnit, rowData)
+		if addErr != nil || !success {
+			// Retry logic for failed row
 			retryCount := 0
 			maxRetries := 3
-			
-			for retryCount < maxRetries && (!success || err != nil) {
+			for retryCount < maxRetries && (addErr != nil || !success) {
 				retryCount++
-				rowData, _ = generator.GenerateRowData(rowsResult.Columns)
-				success, err = plugin.AddRow(config, input.Schema, input.StorageUnit, rowData)
+				newRow, _ := generator.GenerateRowDataWithConstraints(rowsResult.Columns, constraints)
+				success, addErr = plugin.AddRow(config, input.Schema, input.StorageUnit, newRow)
 			}
-			
-			if err != nil || !success {
-				progress.FailedRows++
-				errorMsg := "unknown error"
-				if err != nil {
-					errorMsg = err.Error()
-				}
-				progress.ErrorMessages = append(progress.ErrorMessages, fmt.Sprintf("Row %d: %s", i+1, errorMsg))
-				continue
+			if addErr != nil || !success {
+				failedRows++
+			} else {
+				generatedRows++
 			}
+		} else {
+			generatedRows++
 		}
-		
-		progress.GeneratedRows++
 	}
 
-	return progress, nil
+	// Return success if any rows were generated
+	return &model.StatusResponse{
+		Status: generatedRows > 0,
+	}, nil
 }
 
 // Version is the resolver for the Version field.
@@ -489,6 +470,11 @@ func (r *queryResolver) AIChat(ctx context.Context, providerID *string, modelTyp
 func (r *queryResolver) SettingsConfig(ctx context.Context) (*model.SettingsConfig, error) {
 	currentSettings := settings.Get()
 	return &model.SettingsConfig{MetricsEnabled: &currentSettings.MetricsEnabled}, nil
+}
+
+// MockDataMaxRowCount is the resolver for the MockDataMaxRowCount field.
+func (r *queryResolver) MockDataMaxRowCount(ctx context.Context) (int, error) {
+	return env.GetMockDataGenerationMaxRowCount(), nil
 }
 
 // Mutation returns MutationResolver implementation.

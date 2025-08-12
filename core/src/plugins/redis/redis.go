@@ -376,6 +376,16 @@ func (p *RedisPlugin) FormatValue(val interface{}) string {
 	return fmt.Sprintf("%v", val)
 }
 
+// GetColumnConstraints - not supported for Redis
+func (p *RedisPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]interface{}, error) {
+	return make(map[string]map[string]interface{}), nil
+}
+
+// ClearTableData - not supported for Redis
+func (p *RedisPlugin) ClearTableData(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {
+	return false, errors.ErrUnsupported
+}
+
 func NewRedisPlugin() *engine.Plugin {
 	return &engine.Plugin{
 		Type:            engine.DatabaseType_Redis,

@@ -235,12 +235,21 @@ func (p *ElasticSearchPlugin) Chat(config *engine.PluginConfig, schema string, m
 	return nil, errors.ErrUnsupported
 }
 
-
 func (p *ElasticSearchPlugin) FormatValue(val interface{}) string {
 	if val == nil {
 		return ""
 	}
 	return fmt.Sprintf("%v", val)
+}
+
+// GetColumnConstraints - not supported for ElasticSearch
+func (p *ElasticSearchPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]interface{}, error) {
+	return make(map[string]map[string]interface{}), nil
+}
+
+// ClearTableData - not supported for ElasticSearch
+func (p *ElasticSearchPlugin) ClearTableData(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {
+	return false, errors.ErrUnsupported
 }
 
 func (p *ElasticSearchPlugin) GetSupportedOperators() map[string]string {

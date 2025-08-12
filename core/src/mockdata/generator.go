@@ -23,7 +23,30 @@ import (
 	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
+	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
+)
+
+const (
+	// Default configuration values
+	DefaultNullProbability = 0.2     // 20% chance of null for nullable columns
+	DefaultStringMinLen    = 10      // Minimum string length
+	DefaultStringMaxLen    = 24      // Maximum string length
+	DefaultFloatMin        = 0.0     // Minimum float value
+	DefaultFloatMax        = 10000.0 // Maximum float value
+)
+
+// Use shared database type sets
+var (
+	intTypes      = common.IntTypes
+	uintTypes     = common.UintTypes
+	floatTypes    = common.FloatTypes
+	boolTypes     = common.BoolTypes
+	dateTypes     = common.DateTypes
+	dateTimeTypes = common.DateTimeTypes
+	uuidTypes     = common.UuidTypes
+	textTypes     = common.TextTypes
+	jsonTypes     = common.JsonTypes
 )
 
 type Generator struct {
@@ -32,194 +55,259 @@ type Generator struct {
 
 func NewGenerator() *Generator {
 	return &Generator{
-		faker: gofakeit.New(time.Now().UnixNano()),
+		faker: gofakeit.New(uint64(time.Now().UnixNano())),
 	}
 }
 
-// GenerateValue generates a mock value based on column type and name
-func (g *Generator) GenerateValue(columnName string, columnType string, constraints map[string]interface{}) (string, error) {
-	// Handle NOT NULL constraint
-	isNotNull := false
+// detectDatabaseType returns the simplified database type for a column
+func detectDatabaseType(columnType string) string {
+	upperType := strings.ToUpper(columnType)
+
+	// Handle PostgreSQL arrays first
+	if strings.Contains(upperType, "[]") {
+		return "array"
+	}
+
+	// Remove size specifiers like VARCHAR(255) -> VARCHAR
+	if idx := strings.Index(upperType, "("); idx > 0 {
+		upperType = upperType[:idx]
+	}
+	upperType = strings.TrimSpace(upperType)
+
+	switch {
+	case intTypes.Contains(upperType):
+		return "int"
+	case uintTypes.Contains(upperType):
+		return "uint"
+	case floatTypes.Contains(upperType):
+		return "float"
+	case boolTypes.Contains(upperType):
+		return "bool"
+	case dateTypes.Contains(upperType):
+		return "date"
+	case dateTimeTypes.Contains(upperType):
+		return "datetime"
+	case uuidTypes.Contains(upperType):
+		return "uuid"
+	case jsonTypes.Contains(upperType):
+		return "json"
+	case textTypes.Contains(upperType):
+		return "text"
+	default:
+		return "text" // Default to text for unknown types
+	}
+}
+
+// parseMaxLen extracts the max length from types like varchar(n)
+func parseMaxLen(columnType string) int {
+	if strings.Contains(columnType, "(") {
+		start := strings.Index(columnType, "(")
+		end := strings.Index(columnType, ")")
+		if start != -1 && end != -1 && end > start+1 {
+			var n int
+			if _, err := fmt.Sscanf(columnType[start+1:end], "%d", &n); err == nil {
+				return n
+			}
+		}
+	}
+	return 0
+}
+
+// generateByType generates mock data based on the detected database type
+// Returns properly typed values that the database driver can handle
+
+func (g *Generator) generateByType(dbType string, columnType string) any {
+	switch dbType {
+	case "int":
+		// Use Go's explicit int types for SQL integer types
+		lowerType := strings.ToLower(columnType)
+		switch {
+		case strings.Contains(lowerType, "tinyint"):
+			return int8(g.faker.Int8())
+		case strings.Contains(lowerType, "smallint"):
+			return int16(g.faker.Int16())
+		case strings.Contains(lowerType, "bigint"):
+			return int64(g.faker.Int64())
+		case strings.Contains(lowerType, "int32"):
+			return int32(g.faker.Int32())
+		case strings.Contains(lowerType, "int16"):
+			return int16(g.faker.Int16())
+		case strings.Contains(lowerType, "int8"):
+			return int8(g.faker.Int8())
+		default:
+			return int(g.faker.Int8())
+		}
+	case "uint":
+		// Use Go's explicit uint types for SQL unsigned integer types
+		lowerType := strings.ToLower(columnType)
+		switch {
+		case strings.Contains(lowerType, "tinyint unsigned") || strings.Contains(lowerType, "uint8"):
+			return uint8(g.faker.Uint8())
+		case strings.Contains(lowerType, "smallint unsigned") || strings.Contains(lowerType, "uint16"):
+			return uint16(g.faker.Uint16())
+		case strings.Contains(lowerType, "bigint unsigned") || strings.Contains(lowerType, "uint64"):
+			return uint64(g.faker.Uint64())
+		case strings.Contains(lowerType, "uint32"):
+			return uint32(g.faker.Uint32())
+		case strings.Contains(lowerType, "uint16"):
+			return uint16(g.faker.Uint16())
+		case strings.Contains(lowerType, "uint8"):
+			return uint8(g.faker.Uint8())
+		default:
+			return uint(g.faker.Uint8())
+		}
+	case "float":
+		return g.faker.Float32Range(DefaultFloatMin, DefaultFloatMax)
+	case "bool":
+		return g.faker.Bool()
+	case "date":
+		// Generate dates within a reasonable range (last 10 years to avoid timezone issues)
+		now := time.Now()
+		tenYearsAgo := now.AddDate(-10, 0, 0)
+		return g.faker.DateRange(tenYearsAgo, now)
+	case "datetime":
+		// Generate datetimes within a reasonable range (last 10 years to avoid timezone issues)
+		now := time.Now()
+		tenYearsAgo := now.AddDate(-10, 0, 0)
+		return g.faker.DateRange(tenYearsAgo, now)
+	case "uuid":
+		return g.faker.UUID()
+	case "json":
+		data := map[string]any{
+			g.faker.Word(): g.faker.Word(),
+			g.faker.Word(): g.faker.IntRange(1, 100),
+		}
+		jsonBytes, _ := json.Marshal(data)
+		return string(jsonBytes)
+	case "array":
+		// PostgreSQL array format - needs to be string representation
+		baseType := strings.ReplaceAll(columnType, "[]", "")
+		arraySize := g.faker.IntRange(1, 5)
+		elements := make([]string, arraySize)
+		for i := range arraySize {
+			val := g.generateByType(detectDatabaseType(baseType), baseType)
+			elements[i] = fmt.Sprintf("%v", val)
+		}
+		return "{" + strings.Join(elements, ",") + "}"
+	case "text":
+		fallthrough
+	default:
+		maxLen := parseMaxLen(columnType)
+		if maxLen <= 0 {
+			maxLen = g.faker.IntRange(DefaultStringMinLen, DefaultStringMaxLen)
+		}
+		text := g.faker.LetterN(uint(maxLen))
+		if len(text) > maxLen {
+			text = text[:maxLen]
+		}
+		return text
+	}
+}
+
+// GenerateValue generates a mock value based on column type only
+// Returns properly typed values that the database driver can handle
+func (g *Generator) GenerateValue(columnName string, columnType string, constraints map[string]any) (any, error) {
+	columnTypeLower := strings.ToLower(columnType)
+
+	// Check constraints
+	allowNull := false
+	requireUnique := false
 	if constraints != nil {
-		if notNull, ok := constraints["not_null"].(bool); ok {
-			isNotNull = notNull
+		if nullable, ok := constraints["nullable"]; ok {
+			allowNull = nullable.(bool)
+		}
+		if unique, ok := constraints["unique"]; ok {
+			requireUnique = unique.(bool)
 		}
 	}
 
-	// Normalize column type to lowercase for comparison
-	columnType = strings.ToLower(columnType)
-	columnNameLower := strings.ToLower(columnName)
-
-	// First, try to generate based on column name patterns
-	if value := g.generateByColumnName(columnNameLower); value != "" {
-		return value, nil
+	// Generate NULL for nullable columns with configured probability
+	if allowNull && g.faker.Float64() < DefaultNullProbability {
+		return nil, nil
 	}
 
-	// Then, generate based on column type
-	value, err := g.generateByColumnType(columnType)
-	if err != nil {
-		return "", err
-	}
+	// Generate value based on database type only
+	dbType := detectDatabaseType(columnTypeLower)
+	value := g.generateByType(dbType, columnTypeLower)
 
-	// Handle NULL values if allowed
-	if !isNotNull && g.faker.Bool() && g.faker.IntRange(1, 10) > 8 { // 20% chance of NULL
-		return "", nil
+	// For columns that require uniqueness, use inherently unique generators
+	if requireUnique {
+		// For unique columns, prefer UUIDs or timestamp-based values
+		switch dbType {
+		case "text", "uuid":
+			value = g.faker.UUID()
+		case "int", "uint":
+			// Use timestamp + random for unique integers
+			value = int32(time.Now().UnixNano()/1000 + int64(g.faker.IntRange(0, 9999)))
+		}
+		// For other types, rely on random generation being unlikely to collide
 	}
 
 	return value, nil
 }
 
-// generateByColumnName generates values based on common column name patterns
-func (g *Generator) generateByColumnName(columnName string) string {
-	switch {
-	case strings.Contains(columnName, "email"):
-		return g.faker.Email()
-	case strings.Contains(columnName, "first_name") || columnName == "firstname":
-		return g.faker.FirstName()
-	case strings.Contains(columnName, "last_name") || columnName == "lastname":
-		return g.faker.LastName()
-	case strings.Contains(columnName, "name") && !strings.Contains(columnName, "username"):
-		return g.faker.Name()
-	case strings.Contains(columnName, "username") || strings.Contains(columnName, "user_name"):
-		return g.faker.Username()
-	case strings.Contains(columnName, "phone"):
-		return g.faker.Phone()
-	case strings.Contains(columnName, "address"):
-		return g.faker.Address().Address
-	case strings.Contains(columnName, "city"):
-		return g.faker.City()
-	case strings.Contains(columnName, "state"):
-		return g.faker.State()
-	case strings.Contains(columnName, "country"):
-		return g.faker.Country()
-	case strings.Contains(columnName, "zip") || strings.Contains(columnName, "postal"):
-		return g.faker.Zip()
-	case strings.Contains(columnName, "company"):
-		return g.faker.Company()
-	case strings.Contains(columnName, "job_title") || strings.Contains(columnName, "jobtitle"):
-		return g.faker.JobTitle()
-	case strings.Contains(columnName, "description") || strings.Contains(columnName, "desc"):
-		return g.faker.Paragraph(1, 3, 10, " ")
-	case strings.Contains(columnName, "url") || strings.Contains(columnName, "website"):
-		return g.faker.URL()
-	case strings.Contains(columnName, "uuid"):
-		return g.faker.UUID()
-	case strings.Contains(columnName, "price") || strings.Contains(columnName, "amount") || strings.Contains(columnName, "cost"):
-		return fmt.Sprintf("%.2f", g.faker.Price(10.0, 1000.0))
-	case strings.Contains(columnName, "created_at") || strings.Contains(columnName, "updated_at") || strings.Contains(columnName, "date"):
-		return g.faker.Date().Format(time.RFC3339)
-	}
-	return ""
-}
+// GenerateRowDataWithConstraints generates mock data for a complete row
+func (g *Generator) GenerateRowDataWithConstraints(columns []engine.Column, colConstraints map[string]map[string]any) ([]engine.Record, error) {
 
-// generateByColumnType generates values based on SQL column types
-func (g *Generator) generateByColumnType(columnType string) (string, error) {
-	switch {
-	// Integer types
-	case strings.Contains(columnType, "int") || strings.Contains(columnType, "serial"):
-		if strings.Contains(columnType, "bigint") || strings.Contains(columnType, "int8") {
-			return fmt.Sprintf("%d", g.faker.Int64()), nil
-		}
-		if strings.Contains(columnType, "smallint") || strings.Contains(columnType, "int2") {
-			return fmt.Sprintf("%d", g.faker.Int16()), nil
-		}
-		return fmt.Sprintf("%d", g.faker.Int32()), nil
-
-	// Decimal/Numeric types
-	case strings.Contains(columnType, "decimal") || strings.Contains(columnType, "numeric") || 
-		 strings.Contains(columnType, "real") || strings.Contains(columnType, "double") || 
-		 strings.Contains(columnType, "float"):
-		return fmt.Sprintf("%.2f", g.faker.Float64Range(0.0, 10000.0)), nil
-
-	// Text/String types
-	case strings.Contains(columnType, "varchar") || strings.Contains(columnType, "text") || 
-		 strings.Contains(columnType, "char"):
-		// Extract length if specified
-		maxLen := 255
-		if strings.Contains(columnType, "(") {
-			// Try to extract length from varchar(n)
-			start := strings.Index(columnType, "(")
-			end := strings.Index(columnType, ")")
-			if start != -1 && end != -1 && end > start {
-				lengthStr := columnType[start+1 : end]
-				if len, err := fmt.Sscanf(lengthStr, "%d", &maxLen); err == nil && len == 1 {
-					// Successfully parsed length
-				}
-			}
-		}
-		text := g.faker.LetterN(uint(g.faker.IntRange(10, maxLen)))
-		if len(text) > maxLen {
-			text = text[:maxLen]
-		}
-		return text, nil
-
-	// Boolean type
-	case strings.Contains(columnType, "bool"):
-		return fmt.Sprintf("%t", g.faker.Bool()), nil
-
-	// Date/Time types
-	case strings.Contains(columnType, "timestamp"):
-		return g.faker.Date().Format(time.RFC3339), nil
-	case strings.Contains(columnType, "date"):
-		return g.faker.Date().Format("2006-01-02"), nil
-	case strings.Contains(columnType, "time"):
-		return g.faker.Date().Format("15:04:05"), nil
-
-	// UUID type
-	case strings.Contains(columnType, "uuid"):
-		return g.faker.UUID(), nil
-
-	// JSON/JSONB types
-	case strings.Contains(columnType, "json"):
-		data := map[string]interface{}{
-			g.faker.Word(): g.faker.Word(),
-			g.faker.Word(): g.faker.IntRange(1, 100),
-		}
-		jsonBytes, err := json.Marshal(data)
-		if err != nil {
-			return "", err
-		}
-		return string(jsonBytes), nil
-
-	// Array types (PostgreSQL)
-	case strings.Contains(columnType, "[]"):
-		// Generate array with 1-5 elements
-		baseType := strings.Replace(columnType, "[]", "", -1)
-		arraySize := g.faker.IntRange(1, 5)
-		elements := make([]string, arraySize)
-		for i := 0; i < arraySize; i++ {
-			elem, err := g.generateByColumnType(baseType)
-			if err != nil {
-				return "", err
-			}
-			elements[i] = elem
-		}
-		return "{" + strings.Join(elements, ",") + "}", nil
-
-	// Default to string
-	default:
-		return g.faker.Word(), nil
-	}
-}
-
-// GenerateRowData generates mock data for a complete row
-func (g *Generator) GenerateRowData(columns []engine.Column) ([]engine.Record, error) {
 	records := make([]engine.Record, 0, len(columns))
-	
+
 	for _, col := range columns {
-		constraints := make(map[string]interface{})
-		// TODO: Parse constraints from column metadata
-		
+		// Skip serial columns - database generates these
+		if strings.Contains(strings.ToLower(col.Type), "serial") {
+			continue
+		}
+
+		constraints := make(map[string]any)
+		if colConstraints != nil {
+			if c, ok := colConstraints[col.Name]; ok {
+				constraints = c
+			}
+		}
+
 		value, err := g.GenerateValue(col.Name, col.Type, constraints)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate value for column %s: %w", col.Name, err)
 		}
-		
+
+		// TODO: Refactor engine.Record to support interface{}/any values instead of strings.
+		// This would allow us to pass typed values directly to database plugins,
+		// letting each plugin handle formatting according to its specific requirements.
+		// Current approach requires converting typed values to strings here, which
+		// defeats the purpose of returning typed values from generateByType().
+
+		// Convert typed value to string for the Record
+		var valueStr string
+		extra := map[string]string{
+			"Type": col.Type,
+		}
+
+		if value == nil {
+			// Mark as NULL in Extra field, leave Value empty
+			valueStr = ""
+			extra["IsNull"] = "true"
+		} else if t, ok := value.(time.Time); ok {
+			// Format time values for MySQL compatibility
+			if strings.Contains(strings.ToLower(col.Type), "date") && !strings.Contains(strings.ToLower(col.Type), "time") {
+				valueStr = t.Format("2006-01-02")
+			} else {
+				// MySQL datetime format without timezone
+				valueStr = t.Format("2006-01-02 15:04:05")
+			}
+		} else {
+			valueStr = fmt.Sprintf("%v", value)
+		}
+
 		records = append(records, engine.Record{
 			Key:   col.Name,
-			Value: value,
+			Value: valueStr,
+			Extra: extra,
 		})
 	}
-	
+
 	return records, nil
+}
+
+// GenerateRowData generates mock data without constraints
+func (g *Generator) GenerateRowData(columns []engine.Column) ([]engine.Record, error) {
+	return g.GenerateRowDataWithConstraints(columns, nil)
 }

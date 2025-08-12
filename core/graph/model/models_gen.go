@@ -82,13 +82,6 @@ type MockDataGenerationInput struct {
 	OverwriteExisting bool   `json:"OverwriteExisting"`
 }
 
-type MockDataGenerationProgress struct {
-	TotalRows     int      `json:"TotalRows"`
-	GeneratedRows int      `json:"GeneratedRows"`
-	FailedRows    int      `json:"FailedRows"`
-	ErrorMessages []string `json:"ErrorMessages"`
-}
-
 type Mutation struct {
 }
 

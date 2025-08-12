@@ -101,6 +101,16 @@ func (p *MySQLPlugin) GetTableNameAndAttributes(rows *sql.Rows, db *gorm.DB) (st
 		log.Fatal(err)
 	}
 
+	// If row count is 0 or suspiciously low, do a select count which shouldn't be too expensive
+	// MySQL's TABLE_ROWS is just an estimate that can be very inaccurate
+	if rowCount < 100 {
+		var actualCount int64
+		countQuery := db.Table(tableName).Select("COUNT(*)")
+		if err := countQuery.Scan(&actualCount).Error; err == nil {
+			rowCount = actualCount
+		}
+	}
+
 	attributes := []engine.Record{
 		{Key: "Type", Value: tableType},
 		{Key: "Total Size", Value: fmt.Sprintf("%.2f MB", totalSize)},

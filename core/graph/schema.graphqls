@@ -122,12 +122,6 @@ input MockDataGenerationInput {
   OverwriteExisting: Boolean!
 }
 
-type MockDataGenerationProgress {
-  TotalRows: Int!
-  GeneratedRows: Int!
-  FailedRows: Int!
-  ErrorMessages: [String!]!
-}
 
 input ChatInput {
   PreviousConversation: String!
@@ -162,6 +156,7 @@ type Query {
   AIModel(providerId: String, modelType: String!, token: String): [String!]!
   AIChat(providerId: String, modelType: String!, token: String, schema: String!, input: ChatInput!): [AIChatMessage!]!
   SettingsConfig: SettingsConfig!
+  MockDataMaxRowCount: Int!
 }
 
 type Mutation {
@@ -174,5 +169,5 @@ type Mutation {
   UpdateStorageUnit(schema: String!, storageUnit: String!, values: [RecordInput!]!, updatedColumns: [String!]!): StatusResponse!
   AddRow(schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
   DeleteRow(schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
-  GenerateMockData(input: MockDataGenerationInput!): MockDataGenerationProgress!
+  GenerateMockData(input: MockDataGenerationInput!): StatusResponse!
 }

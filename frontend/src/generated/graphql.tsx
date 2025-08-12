@@ -115,20 +115,12 @@ export type MockDataGenerationInput = {
   StorageUnit: Scalars['String']['input'];
 };
 
-export type MockDataGenerationProgress = {
-  __typename?: 'MockDataGenerationProgress';
-  ErrorMessages: Array<Scalars['String']['output']>;
-  FailedRows: Scalars['Int']['output'];
-  GeneratedRows: Scalars['Int']['output'];
-  TotalRows: Scalars['Int']['output'];
-};
-
 export type Mutation = {
   __typename?: 'Mutation';
   AddRow: StatusResponse;
   AddStorageUnit: StatusResponse;
   DeleteRow: StatusResponse;
-  GenerateMockData: MockDataGenerationProgress;
+  GenerateMockData: StatusResponse;
   Login: StatusResponse;
   LoginWithProfile: StatusResponse;
   Logout: StatusResponse;
@@ -196,6 +188,7 @@ export type Query = {
   AIProviders: Array<AiProvider>;
   Database: Array<Scalars['String']['output']>;
   Graph: Array<GraphUnit>;
+  MockDataMaxRowCount: Scalars['Int']['output'];
   Profiles: Array<LoginProfile>;
   RawExecute: RowsResult;
   Row: RowsResult;
@@ -317,12 +310,17 @@ export type GetVersionQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type GetVersionQuery = { __typename?: 'Query', Version: string };
 
+export type MockDataMaxRowCountQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MockDataMaxRowCountQuery = { __typename?: 'Query', MockDataMaxRowCount: number };
+
 export type GenerateMockDataMutationVariables = Exact<{
   input: MockDataGenerationInput;
 }>;
 
 
-export type GenerateMockDataMutation = { __typename?: 'Mutation', GenerateMockData: { __typename?: 'MockDataGenerationProgress', TotalRows: number, GeneratedRows: number, FailedRows: number, ErrorMessages: Array<string> } };
+export type GenerateMockDataMutation = { __typename?: 'Mutation', GenerateMockData: { __typename?: 'StatusResponse', Status: boolean } };
 
 export type GetDatabaseQueryVariables = Exact<{
   type: Scalars['String']['input'];
@@ -576,13 +574,47 @@ export type GetVersionQueryHookResult = ReturnType<typeof useGetVersionQuery>;
 export type GetVersionLazyQueryHookResult = ReturnType<typeof useGetVersionLazyQuery>;
 export type GetVersionSuspenseQueryHookResult = ReturnType<typeof useGetVersionSuspenseQuery>;
 export type GetVersionQueryResult = Apollo.QueryResult<GetVersionQuery, GetVersionQueryVariables>;
+export const MockDataMaxRowCountDocument = gql`
+    query MockDataMaxRowCount {
+  MockDataMaxRowCount
+}
+    `;
+
+/**
+ * __useMockDataMaxRowCountQuery__
+ *
+ * To run a query within a React component, call `useMockDataMaxRowCountQuery` and pass it any options that fit your needs.
+ * When your component renders, `useMockDataMaxRowCountQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useMockDataMaxRowCountQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useMockDataMaxRowCountQuery(baseOptions?: Apollo.QueryHookOptions<MockDataMaxRowCountQuery, MockDataMaxRowCountQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<MockDataMaxRowCountQuery, MockDataMaxRowCountQueryVariables>(MockDataMaxRowCountDocument, options);
+      }
+export function useMockDataMaxRowCountLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<MockDataMaxRowCountQuery, MockDataMaxRowCountQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<MockDataMaxRowCountQuery, MockDataMaxRowCountQueryVariables>(MockDataMaxRowCountDocument, options);
+        }
+export function useMockDataMaxRowCountSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<MockDataMaxRowCountQuery, MockDataMaxRowCountQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<MockDataMaxRowCountQuery, MockDataMaxRowCountQueryVariables>(MockDataMaxRowCountDocument, options);
+        }
+export type MockDataMaxRowCountQueryHookResult = ReturnType<typeof useMockDataMaxRowCountQuery>;
+export type MockDataMaxRowCountLazyQueryHookResult = ReturnType<typeof useMockDataMaxRowCountLazyQuery>;
+export type MockDataMaxRowCountSuspenseQueryHookResult = ReturnType<typeof useMockDataMaxRowCountSuspenseQuery>;
+export type MockDataMaxRowCountQueryResult = Apollo.QueryResult<MockDataMaxRowCountQuery, MockDataMaxRowCountQueryVariables>;
 export const GenerateMockDataDocument = gql`
     mutation GenerateMockData($input: MockDataGenerationInput!) {
   GenerateMockData(input: $input) {
-    TotalRows
-    GeneratedRows
-    FailedRows
-    ErrorMessages
+    Status
   }
 }
     `;

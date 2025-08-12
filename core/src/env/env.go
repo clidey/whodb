@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/clidey/whodb/core/src/common"
@@ -55,7 +56,7 @@ var AllowedOrigins = common.FilterList(strings.Split(os.Getenv("WHODB_ALLOWED_OR
 })
 
 var EnableHTTPLogging = os.Getenv("WHODB_ENABLE_HTTP_LOGGING") == "true"
-var AllowMockDataGeneration = os.Getenv("ALLOW_MOCK_DATA_GENERATION")
+var EnableMockDataGeneration = os.Getenv("WHODB_ENABLE_MOCK_DATA_GENERATION")
 
 type ChatProvider struct {
 	Type       string
@@ -214,20 +215,36 @@ func findAllDatabaseCredentials(databaseType string) []DatabaseCredentials {
 }
 
 func IsMockDataGenerationAllowed(tableName string) bool {
-	if AllowMockDataGeneration == "" {
+	if EnableMockDataGeneration == "" {
 		return false
 	}
-	
-	if AllowMockDataGeneration == "*" {
+
+	if EnableMockDataGeneration == "*" {
 		return true
 	}
-	
-	allowedTables := strings.Split(AllowMockDataGeneration, ",")
-	for _, allowed := range allowedTables {
+
+	allowedTables := strings.SplitSeq(EnableMockDataGeneration, ",")
+	for allowed := range allowedTables {
 		if strings.TrimSpace(allowed) == tableName {
 			return true
 		}
 	}
-	
+
 	return false
+}
+
+func GetMockDataGenerationMaxRowCount() int {
+	const maxAllowed = 500
+
+	envValue := os.Getenv("WHODB_MOCK_DATA_GENERATION_MAX_ROW_COUNT")
+	if envValue == "" {
+		return maxAllowed
+	}
+
+	value, err := strconv.Atoi(envValue)
+	if err != nil || value <= 0 || value > maxAllowed {
+		return maxAllowed
+	}
+
+	return value
 }
