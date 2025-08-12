@@ -68,6 +68,8 @@ export const getFeatureFlags = (): FeatureFlags => {
     // Return default enabled features for EE mode until async load completes
     return {
         analyzeView: true,
+        explainView: true,
+        generateView: true,
         customTheme: true,
         dataVisualization: true,
         aiChat: true,

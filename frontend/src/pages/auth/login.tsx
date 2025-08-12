@@ -32,8 +32,6 @@ import { useAppDispatch, useAppSelector } from "../../store/hooks";
 const logoImage = "/images/logo.png";
 // Embeddable LoginForm component for use in LoginPage and @sidebar.tsx
 
-import React from "react";
-
 // Embeddable LoginForm component
 export interface LoginFormProps {
     // Optionally override navigation after login (e.g. for sidebar)

@@ -48,6 +48,8 @@ export type EEComponentTypes = {
 // Feature flags for Enterprise Edition
 export interface FeatureFlags {
     analyzeView: boolean;
+    explainView: boolean;
+    generateView: boolean;
     customTheme: boolean;
     dataVisualization: boolean; // For charts (line, pie)
     aiChat: boolean; // For Houdini AI assistant

@@ -15,27 +15,22 @@
  */
 
 import { isEEMode } from "@/config/ee-imports";
-import { Button, Card, CommandItem, EmptyState, Input, Label, SearchSelect, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Sheet, SheetContent, SheetFooter, toast } from "@clidey/ux";
-import { AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery, useGetAiModelsLazyQuery, useGetAiProvidersLazyQuery } from '@graphql';
-import { ArrowTopRightOnSquareIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { Button, Card, EmptyState, Input, toast } from "@clidey/ux";
+import { AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery } from '@graphql';
 import classNames from "classnames";
-import { map } from "lodash";
-import { cloneElement, FC, KeyboardEventHandler, MouseEvent, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { v4 } from "uuid";
+import { cloneElement, FC, KeyboardEventHandler, useCallback, useMemo, useRef, useState } from "react";
 import { CodeEditor } from "../../components/editor";
 import { Icons } from "../../components/icons";
 import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { StorageUnitTable } from "../../components/table";
 import { InternalRoutes } from "../../config/routes";
-import { reduxStore } from "../../store";
-import { AIModelsActions, availableExternalModelTypes } from "../../store/ai-models";
 import { HoudiniActions } from "../../store/chat";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { ensureModelsArray, ensureModelTypesArray } from "../../utils/ai-models-helper";
 import { isEEFeatureEnabled, loadEEComponent } from "../../utils/ee-loader";
 import { chooseRandomItems } from "../../utils/functions";
 import { chatExamples } from "./examples";
+import { AIProvider, useAI } from "../../components/ai";
 const logoImage = "/images/logo.png";
 
 // Lazy load chart components if EE is enabled
@@ -51,7 +46,7 @@ const PieChart = isEEFeatureEnabled('dataVisualization') ? loadEEComponent(
 
 const thinkingPhrases = [
     "Thinking",
-    "Pondering life’s mysteries",
+    "Pondering life's mysteries",
     "Consulting the cloud oracles",
     "Googling furiously (just kidding)",
     "Aligning the neural networks",
@@ -123,77 +118,22 @@ type IChatMessage = AiChatMessage & {
     isUserInput?: boolean;
 };
 
-
-export const externalModelTypes = map(availableExternalModelTypes, (model) => ({
-    id: model,
-    label: model,
-    icon: (Icons.Logos as Record<string, ReactElement>)[model],
-}));
-
 export const ChatPage: FC = () => {
     const [query, setQuery] = useState("");
-    const [addExternalModel, setAddExternalModel] = useState(false);
-    const [externalModelType, setExternalModel] = useState<string>(externalModelTypes[0].id);
-    const [externalModelToken, setExternalModelToken] = useState<string>();
-    const modelType = useAppSelector(state => state.aiModels.current);
-    const modelTypesRaw = useAppSelector(state => state.aiModels.modelTypes);
-    const modelTypes = ensureModelTypesArray(modelTypesRaw);
-    const currentModel = useAppSelector(state => state.aiModels.currentModel);
-    const modelsRaw = useAppSelector(state => state.aiModels.models);
-    const models = ensureModelsArray(modelsRaw);
     const chats = useAppSelector(state => state.houdini.chats);
-    const [modelAvailable, setModelAvailable] = useState(true);
-    const [getAiProviders, ] = useGetAiProvidersLazyQuery();
-    const dispatch = useAppDispatch();
-    const [getAIModels, { loading: getAIModelsLoading }] = useGetAiModelsLazyQuery({
-        onError() {
-            setModelAvailable(false);
-            dispatch(AIModelsActions.setModels([]));
-            dispatch(AIModelsActions.setCurrentModel(undefined));
-        },
-        fetchPolicy: "network-only",
-    });
     const [getAIChat, { loading: getAIChatLoading }] = useGetAiChatLazyQuery();
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const schema = useAppSelector(state => state.database.schema);
     const [currentSearchIndex, setCurrentSearchIndex] = useState<number>();
 
+    const dispatch = useAppDispatch();
+
+    const aiState = useAI();
+    const { modelType, currentModel, modelAvailable, models } = aiState;
+
     const loading = useMemo(() => {
-        return getAIChatLoading || getAIModelsLoading;
-    }, [getAIModelsLoading, getAIChatLoading]);
-
-    const handleAIModelTypeChange = useCallback((item: string) => {
-        const modelType = modelTypes.find(model => model.id === item);
-        if (modelType == null) {
-            return;
-        }
-        setModelAvailable(true);
-        getAIModels({
-            variables: {
-                providerId: modelType.id,
-                modelType: modelType.modelType,
-                token: modelType.token,
-            },
-            onCompleted(data) {
-                dispatch(AIModelsActions.setModels(data.AIModel));
-                if (data.AIModel.length > 0) {
-                    dispatch(AIModelsActions.setCurrentModel(data.AIModel[0]));
-                }
-            },
-        });
-    }, [dispatch, getAIModels]);
-
-    const handleAIModelChange = useCallback((item: string) => {
-        dispatch(AIModelsActions.setCurrentModel(item));
-    }, [dispatch]);
-
-    const handleAIModelRemove = useCallback((_: MouseEvent<HTMLDivElement>, item: string) => {
-        if (modelType?.id === item) {
-            dispatch(AIModelsActions.setModels([]));
-            dispatch(AIModelsActions.setCurrentModel(undefined));
-        }
-        dispatch(AIModelsActions.removeAIModelType({ id: item }));
-    }, [dispatch, modelType?.id]);
+        return getAIChatLoading;
+    }, [getAIChatLoading]);
 
     const examples = useMemo(() => {
         return chooseRandomItems(chatExamples);
@@ -254,7 +194,7 @@ export const ChatPage: FC = () => {
             },
         });
         setQuery("");
-    }, [chats, currentModel, getAIChat, modelType, query, schema]);
+    }, [chats, currentModel, getAIChat, modelType, query, schema, dispatch]);
 
     const handleKeyUp: KeyboardEventHandler<HTMLInputElement> = useCallback((e) => {
         if (e.key === "ArrowUp") {
@@ -288,109 +228,9 @@ export const ChatPage: FC = () => {
         setQuery(example);
     }, []);
 
-    const handleAddExternalModel = useCallback(() => {
-        setAddExternalModel(status => !status);
-    }, []);
-
-    const handleExternalModelChange = useCallback((item: string) => {
-        setExternalModel(item);
-    }, []);
-
-    const handleExternalModelSubmit = useCallback(() => {
-        dispatch(AIModelsActions.setCurrentModel(undefined));
-        dispatch(AIModelsActions.setModels([]));
-        getAIModels({
-            variables: {
-                modelType: externalModelType,
-                token: externalModelToken,
-            },
-            onCompleted(data) {
-                dispatch(AIModelsActions.setModels(data.AIModel));
-                const id = v4();
-                dispatch(AIModelsActions.addAIModelType({
-                    id,
-                    modelType: externalModelType,
-                    token: externalModelToken,
-                }));
-                dispatch(AIModelsActions.setCurrentModelType({ id }));
-                setExternalModel(externalModelTypes[0].id);
-                setExternalModelToken("");
-                setAddExternalModel(false);
-                if (data.AIModel.length > 0) {
-                    dispatch(AIModelsActions.setCurrentModel(data.AIModel[0]));
-                }
-            },
-            onError(error) {
-                toast.error(`Unable to connect to the model: ${error.message}`);
-            },
-        });
-    }, [getAIModels, externalModelType, externalModelToken, dispatch]);
-
-    const handleOpenDocs = useCallback(() => {
-        window.open("https://whodb.com/docs/usage-houdini/what-is-houdini", "_blank");
-    }, []);
-
-    useEffect(() => {
-        getAiProviders({
-            onCompleted(data) {
-                const aiProviders = data.AIProviders || [];
-                const modelTypesState = ensureModelTypesArray(reduxStore.getState().aiModels.modelTypes);
-                const initialModelTypes = modelTypesState.filter(model => {
-                const existingModel = aiProviders.find(provider => provider.ProviderId === model.id);
-                return existingModel != null || (model.token != null && model.token !== "");
-                });
-
-                // Filter out providers that already exist in modelTypes
-                const newProviders = aiProviders.filter(provider =>
-                !initialModelTypes.some(model => model.id === provider.ProviderId)
-                );
-
-                const finalModelTypes = [
-                ...newProviders.map(provider => ({
-                    id: provider.ProviderId,
-                    modelType: provider.Type,
-                    isEnvironmentDefined: provider.IsEnvironmentDefined,
-                })),
-                ...initialModelTypes
-                ];
-
-                // Check if current model type exists in final model types
-                const currentModelType = reduxStore.getState().aiModels.current;
-                if (currentModelType && !finalModelTypes.some(model => model.id === currentModelType.id)) {
-                dispatch(AIModelsActions.setCurrentModelType({ id: "" }));
-                dispatch(AIModelsActions.setModels([]));
-                dispatch(AIModelsActions.setCurrentModel(undefined));
-                }
-
-                dispatch(AIModelsActions.setModelTypes(finalModelTypes));
-                getAIModels({
-                    variables: {
-                        providerId: currentModelType?.id,
-                        modelType: currentModelType?.modelType ?? "",
-                        token: currentModelType?.token ?? "",
-                    },
-                });
-            },
-        });
-
-        const modelType = modelTypes[0];
-        if (modelType == null || models.length > 0) {
-            return;
-        }
-        handleAIModelTypeChange(modelType.id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    const modelTypesDropdownItems = useMemo(() => {
-        return modelTypes.filter(modelType => modelType != null && modelType.modelType != null).map(modelType => ({
-            id: modelType.id,
-            label: modelType.modelType,
-            icon: (Icons.Logos as Record<string, ReactElement>)[modelType.modelType.replace("-", "")],
-            extra: {
-                token: modelType.token,
-            }
-        }));
-    }, [modelTypes]);
+    const handleClear = useCallback(() => {
+        dispatch(HoudiniActions.clear());
+    }, [dispatch]);
 
     const disableAll = useMemo(() => {
         return models.length === 0 || !modelAvailable;
@@ -400,152 +240,13 @@ export const ChatPage: FC = () => {
         return loading || models.length === 0 || !modelAvailable;
     }, [loading, modelAvailable, models.length]);
 
-    const handleClear = useCallback(() => {
-        dispatch(HoudiniActions.clear());
-    }, []);
-
-    const handleAIProviderChange = useCallback((item: string) => {
-        dispatch(AIModelsActions.setCurrentModelType({ id: item }));
-        handleAIModelTypeChange(item);
-    }, [handleAIModelTypeChange]);
-
-    const modelDropdownItems = useMemo(() => {
-        return models.map(model => ({
-            id: model,
-            label: model,
-            icon: (Icons.Logos as Record<string, ReactElement>)[model],
-        }));
-    }, [models]);
-
     return (
         <InternalPage routes={[InternalRoutes.Chat]} className="h-full">
-            <Sheet open={addExternalModel} onOpenChange={setAddExternalModel}>
-                <SheetContent className="max-w-md mx-auto w-full px-8 py-10 flex flex-col gap-4">
-                    <div className="flex flex-col gap-4">
-                        <div className="text-lg font-semibold mb-2">Add External Model</div>
-                        <div className="flex flex-col gap-2">
-                            <Label>Model Type</Label>
-                            <Select
-                                value={externalModelType}
-                                onValueChange={handleExternalModelChange}
-                            >
-                                <SelectTrigger className="w-full" data-testid="external-model-type-select">
-                                    <SelectValue placeholder="Select Model Type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {externalModelTypes.map(item => (
-                                        <SelectItem key={item.id} value={item.id}>
-                                            <span className="flex items-center gap-2">
-                                                {item.icon}
-                                                {item.label}
-                                            </span>
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                            <Label>Token</Label>
-                            <Input
-                                value={externalModelToken ?? ""}
-                                onChange={e => setExternalModelToken(e.target.value)}
-                                type="password"
-                            />
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2 self-end">
-                        <Button
-                            onClick={handleAddExternalModel}
-                            data-testid="external-model-cancel"
-                            variant="secondary"
-                        >
-                            {Icons.Cancel} Cancel
-                        </Button>
-                        <Button
-                            onClick={handleExternalModelSubmit}
-                            disabled={getAIModelsLoading}
-                            data-testid="external-model-submit"
-                        >
-                            {Icons.CheckCircle} Submit
-                        </Button>
-                    </div>
-                    <SheetFooter className="p-0">
-                        <div className="text-xs text-neutral-500 mt-4 flex flex-col gap-2">
-                            <div className="font-bold">Setup</div>
-                            <div>
-                                Go to <a href="https://ollama.com/" target="_blank" rel="noopener noreferrer" className="font-semibold underline text-blue-600 hover:text-blue-800">Ollama</a> and follow the installation instructions.
-                            </div>
-                            <div className="font-semibold">Downloading the Ollama Model</div>
-                            <div>
-                                Once installed, install the desired model you would like to use. In this guide, we will use <a href="https://ollama.com/library/llama3.1" target="_blank" rel="noopener noreferrer" className="font-semibold underline text-blue-600 hover:text-blue-800">Llama3.1 8b</a>. To install this model, run:
-                            </div>
-                            <div className="font-mono bg-neutral-100 dark:bg-neutral-900 rounded px-2 py-1 mb-1">
-                                ollama run llama3.1
-                            </div>
-                            <Button icon={Icons.RightArrowUp} variant="secondary" className="w-full mt-2" onClick={handleOpenDocs}>
-                                Docs
-                                <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-                            </Button>
-                        </div>
-                    </SheetFooter>
-                </SheetContent>
-            </Sheet>
             <div className="flex flex-col w-full h-full gap-2">
-                <div className="flex w-full justify-between">
-                    <div className={classNames("flex gap-2", {
-                        "opacity-50 pointer-events-none": addExternalModel,
-                    })}>
-                        <SearchSelect
-                            options={modelTypesDropdownItems.map(item => ({
-                                value: item.id,
-                                label: item.label,
-                                icon: item.icon,
-                            }))}
-                            value={modelType?.id}
-                            onChange={id => {
-                                const item = modelTypesDropdownItems.find(i => i.id === id);
-                                if (item) handleAIProviderChange(item.id);
-                            }}
-                            placeholder="Select Model Type"
-                            side="right"
-                            align="start"
-                            extraOptions={
-                                <CommandItem
-                                    key="__add__"
-                                    value="__add__"
-                                    onSelect={handleAddExternalModel}
-                                >
-                                    <span className="flex items-center gap-2 text-green-500">
-                                        <PlusIcon className="w-4 h-4 stroke-green-500" />
-                                        Add another profile
-                                    </span>
-                                </CommandItem>
-                            }
-                        />
-                        {
-                            modelType && <SearchSelect
-                                options={modelDropdownItems.map(item => ({
-                                    value: item.id,
-                                    label: item.label,
-                                    icon: item.icon,
-                                }))}
-                                value={currentModel ? currentModel : undefined}
-                                onChange={id => {
-                                    const item = modelDropdownItems.find(i => i.id === id);
-                                    if (item) handleAIModelChange(item.id);
-                                }}
-                                placeholder="Select Model"
-                                side="right"
-                                align="start"
-                            />
-                        }
-                    </div>
-                    <div className="flex gap-2">
-                        <Button onClick={handleClear} disabled={loading} data-testid="chat-new-chat">
-                            {Icons.Refresh} New Chat
-                        </Button>
-                    </div>
-                </div>
+                <AIProvider 
+                    {...aiState}
+                    onClear={handleClear}
+                />
                 <div className={classNames("flex grow w-full rounded-xl overflow-hidden", {
                     "hidden": disableAll,
                 })}>

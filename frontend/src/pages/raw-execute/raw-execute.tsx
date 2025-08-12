@@ -23,7 +23,6 @@ import { indexOf } from "lodash";
 import { ChangeEvent, cloneElement, FC, ReactElement, ReactNode, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { v4 } from "uuid";
 import { CodeEditor } from "../../components/editor";
-import { AnalyzeGraphFallback } from "../../components/ee-fallbacks";
 import { Icons } from "../../components/icons";
 import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
@@ -36,7 +35,6 @@ import { isEEFeatureEnabled, loadEEComponent } from "../../utils/ee-loader";
 // Conditionally load the AnalyzeGraph component from EE
 const AnalyzeGraph = loadEEComponent(
     () => import('@ee/pages/raw-execute/analyze-view').then(m => ({ default: m.AnalyzeGraph })),
-    AnalyzeGraphFallback
 );
 
 type IRawExecuteCellProps = {

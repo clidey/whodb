@@ -40,29 +40,3 @@ export const EEFeatureCard: React.FC<{ feature: string; description?: string }> 
     );
 };
 
-export const AnalyzeGraphFallback: React.FC = () => {
-    return (
-        <EEFeatureCard 
-            feature="Query Analyzer" 
-            description="Visualize query execution plans and optimize database performance with interactive execution graphs."
-        />
-    );
-};
-
-export const LineChartFallback: React.FC = () => {
-    return (
-        <EEFeatureCard 
-            feature="Line Charts" 
-            description="Visualize time-series data with interactive line charts."
-        />
-    );
-};
-
-export const PieChartFallback: React.FC = () => {
-    return (
-        <EEFeatureCard 
-            feature="Pie Charts" 
-            description="Display categorical data distribution with pie charts."
-        />
-    );
-};
