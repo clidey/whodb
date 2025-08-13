@@ -112,7 +112,7 @@ export const Sidebar: FC = () => {
         return profileOptions.find(opt => opt.value === current.Id);
     }, [current, profileOptions]);
 
-    const handleProfileChange = useCallback(async (value: string) => {
+    const handleProfileChange = useCallback(async (value: string, database?: string) => {
         const selectedProfile = profiles.find(profile => profile.Id === value);
         if (!selectedProfile) return;
         if (selectedProfile.Saved) {
@@ -142,7 +142,7 @@ export const Sidebar: FC = () => {
                 variables: {
                     credentials: {
                         Type: selectedProfile.Type,
-                        Database: selectedProfile.Database,
+                        Database: database ?? selectedProfile.Database,
                         Hostname: selectedProfile.Hostname,
                         Password: selectedProfile.Password,
                         Username: selectedProfile.Username,
@@ -180,7 +180,7 @@ export const Sidebar: FC = () => {
             navigate(InternalRoutes.Dashboard.StorageUnit.path);
         }
         dispatch(AuthActions.setLoginProfileDatabase({ id: current?.Id, database: value }));
-        handleProfileChange(current.Id);
+        handleProfileChange(current.Id, value);
     }, [current, dispatch, handleProfileChange, navigate, pathname]);
 
     // Schema select logic
