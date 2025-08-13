@@ -24,6 +24,10 @@ type PromiseFunction = (code: string) => Promise<any>;
 export type IPluginProps = {
     code: string;
     handleExecuteRef: React.MutableRefObject<PromiseFunction | null>;
+    providerId?: string;
+    modelType: string;
+    token?: string;
+    schema: string;
 }
 
 function isSQLQueryAction(code?: string): boolean {
@@ -50,7 +54,6 @@ export const QueryView: FC<IPluginProps> = ({ code, handleExecuteRef }) => {
     // Set the ref to a function that executes the query and returns a promise
     useEffect(() => {
         handleExecuteRef.current = (code: string) => {
-            console.log("code", code);
             return new Promise((resolve, reject) => {
                 rawExecute({
                     variables: {

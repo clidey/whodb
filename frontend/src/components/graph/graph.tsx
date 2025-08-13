@@ -34,7 +34,7 @@ export const createRedirectState = (nodes: {id: string, type: GraphElements}[]) 
 }
 
 export type IGraphInstance = {
-    layout: (type?: "dagre") => void;
+    layout: (type?: "dagre", padding?: number) => void;
 } & ReactFlowInstance;
 
 export type IGraphProps<NodeData extends unknown = any, EdgeData extends unknown = any, ChangesType extends unknown = any> = {
@@ -60,7 +60,7 @@ export const Graph: FC<IGraphProps> = (props) => {
         floatingGraphEdge: FloatingGraphEdge,
     }), []);
 
-    const onLayout = useCallback((type = "dagre") => {
+    const onLayout = useCallback((type = "dagre", padding?: number) => {
         const nodes = getNodes();
         const edges = getEdges();
 
@@ -81,6 +81,7 @@ export const Graph: FC<IGraphProps> = (props) => {
             setIsLayingOut(false);
             fitView({
                 duration: 300,
+                padding,
             });
         }, 350);
     }, [fitView, getEdges, getNodes, setEdges, setNodes]);
@@ -145,7 +146,7 @@ export const Graph: FC<IGraphProps> = (props) => {
         {
             !downloading && <Controls />
         }
-        <div className={classNames("flex flex-row gap-2 absolute bottom-0 right-0 z-10", {
+        <div className={classNames("flex flex-row gap-2 absolute bottom-4 right-4 z-10", {
             "hidden": downloading,
         })}>
             <div className="flex flex-col gap-2">

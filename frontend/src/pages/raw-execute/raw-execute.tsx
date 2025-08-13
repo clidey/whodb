@@ -88,6 +88,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     const [error, setError] = useState<Error | null>(null);
     const [loading, setLoading] = useState(false);
     const [rows, setRows] = useState<RowsResult | null>(null);
+    const { modelType } = useAI();
 
     // State for all plugins, action options, and action option icons (not just EE)
     const [allPlugins, setAllPlugins] = useState<{ type: string, component: FC<IPluginProps> }[]>([
@@ -165,16 +166,16 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     // Use all plugins
     const output = useMemo(() => {
         const selectedPlugin = allPlugins.find((p: any) => p.type === mode);
-        if (selectedPlugin?.component == null) {
+        if (selectedPlugin?.component == null || modelType == null || current == null) {
             return null;
         }
         const Component = selectedPlugin.component as FC<IPluginProps>;
         return <div className="flex mt-4 w-full">
             <Suspense fallback={<Loading />}>
-                <Component code={code} handleExecuteRef={handleExecute} />
+                <Component code={code} handleExecuteRef={handleExecute} modelType={modelType.modelType} schema={current.Database} token={modelType.token} providerId={current.Id} />
             </Suspense>
         </div>
-    }, [mode, allActionOptions, allPlugins, code]);
+    }, [mode, allActionOptions, allPlugins, code, modelType, current]);
 
     const isAnalyzeAvailable = useMemo(() => {
         if (!isEEFeatureEnabled('analyzeView')) {
@@ -209,7 +210,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                     "opacity-100": showTools,
                 })}>
                     <div className="flex gap-2 pointer-events-auto">
-                        <Select
+                        {actionOptions.length > 1 && <Select
                             value={mode}
                             onValueChange={(val) => setMode(val as string)}
                         >
@@ -237,7 +238,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                     </SelectItem>
                                 ))}
                             </SelectContent>
-                        </Select>
+                        </Select>}
                         <Button onClick={handleAdd} data-testid="add-button" variant="secondary" className="border border-input">
                             {Icons.PlusCircle}
                         </Button>
@@ -508,10 +509,10 @@ export const RawExecutePage: FC = () => {
     return (
         <InternalPage routes={[InternalRoutes.RawExecute]}>
             <div className="flex flex-col w-full gap-2">
-                <AIProvider 
+                {isEEFeatureEnabled('analyzeView') && <AIProvider 
                     {...aiState}
                     disableNewChat={true}
-                />
+                />}
                 <div className="flex justify-center items-center w-full mt-4">
                     <div className="w-full max-w-[1000px] flex flex-col gap-4">
                         <div className="flex justify-between items-center">

@@ -44,30 +44,6 @@ const isValidSQLQuery = (text: string): boolean => {
   return sqlKeywords.some(keyword => upperText.startsWith(keyword));
 };
 
-// Split text into individual SQL queries
-const splitIntoQueries = (text: string): string[] => {
-  // Split by semicolon and filter out empty queries
-  return text.split(';')
-    .map(query => query.trim())
-    .filter(query => query.length > 0);
-};
-
-// Get the first line of a multiline query
-const getFirstLineOfQuery = (text: string): string => {
-  const lines = text.split('\n');
-  const firstLine = lines[0].trim();
-  
-  // If first line is empty, find the first non-empty line
-  if (!firstLine) {
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (line) return line;
-    }
-  }
-  
-  return firstLine;
-};
-
 // Find all valid SQL queries and their starting line numbers
 const findValidQueriesWithPositions = (doc: any): Array<{query: string, startLine: number}> => {
   const fullText = doc.toString();

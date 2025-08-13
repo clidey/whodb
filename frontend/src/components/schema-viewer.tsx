@@ -1,4 +1,5 @@
 import {
+    SearchInput,
     Sidebar as SidebarComponent,
     SidebarContent,
     SidebarGroup,
@@ -9,7 +10,7 @@ import {
 } from "@clidey/ux";
 import { StorageUnit, useGetStorageUnitsQuery } from "@graphql";
 import { FolderIcon, TableCellsIcon } from "@heroicons/react/24/outline";
-import { FC, useCallback, useMemo } from "react";
+import { FC, useCallback, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { InternalRoutes } from "../config/routes";
 import { useAppSelector } from "../store/hooks";
@@ -32,7 +33,10 @@ export const SchemaViewer: FC = () => {
     const navigate = useNavigate();
     const state = useLocation().state as { unit: StorageUnit } | undefined;
     const pathname = useLocation().pathname;
-    
+
+    // Search state
+    const [search, setSearch] = useState("");
+
     // Query for storage units (tables, views, etc.)
     const { data, loading } = useGetStorageUnitsQuery({
         variables: {
@@ -41,10 +45,32 @@ export const SchemaViewer: FC = () => {
         skip: !current || !selectedSchema,
     });
 
-    // Group storage units by type for tree display
+    // Group storage units by type for tree display, with search filter
     const treeData: TreeDataItem[] = useMemo(() => {
         if (!data?.StorageUnit) return [];
         const grouped = groupByType(data.StorageUnit);
+
+        // If searching, flatten all units and filter by name, then group again
+        if (search.trim() !== "") {
+            const searchLower = search.trim().toLowerCase();
+            // Flatten all units
+            const filteredUnits = data.StorageUnit.filter(unit =>
+                unit.Name.toLowerCase().includes(searchLower)
+            );
+            const filteredGrouped = groupByType(filteredUnits);
+            return Object.entries(filteredGrouped).map(([type, units]) => ({
+                id: type,
+                name: type,
+                icon: FolderIcon as TreeDataItem["icon"],
+                children: units.map(unit => ({
+                    id: unit.Name,
+                    name: unit.Name,
+                    icon: TableCellsIcon as TreeDataItem["icon"],
+                })),
+            }));
+        }
+
+        // Default: show all grouped
         return Object.entries(grouped).map(([type, units]) => ({
             id: type,
             name: type,
@@ -55,7 +81,7 @@ export const SchemaViewer: FC = () => {
                 icon: TableCellsIcon as TreeDataItem["icon"],
             })),
         }));
-    }, [data]);
+    }, [data, search]);
 
     const handleSelect = useCallback((item: TreeDataItem | undefined) => {
         // Only leaf nodes (tables) are selectable
@@ -83,6 +109,14 @@ export const SchemaViewer: FC = () => {
                             {getDatabaseStorageUnitLabel(current?.Type)}
                         </h1>
                     </SidebarHeader>
+                    <div className="px-4">
+                        <SearchInput
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            placeholder="Search tables..."
+                            aria-label="Search tables"
+                        />
+                    </div>
                     <SidebarGroup>
                         {
                             loading ? (

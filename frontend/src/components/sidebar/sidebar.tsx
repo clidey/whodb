@@ -41,7 +41,7 @@ import { Bars3Icon, ChevronDownIcon, PlusIcon } from "@heroicons/react/24/outlin
 import classNames from "classnames";
 import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { InternalRoutes } from "../../config/routes";
 import { LoginForm } from "../../pages/auth/login";
 import { AuthActions, LocalLoginProfile } from "../../store/auth";
@@ -334,15 +334,15 @@ export const Sidebar: FC = () => {
                                 {sidebarRoutes.map(route => (
                                     <SidebarMenuItem key={route.title}>
                                         <SidebarMenuButton asChild>
-                                            <a
-                                                href={route.path}
+                                            <Link
+                                                to={route.path}
                                                 className={classNames("flex items-center gap-2", {
                                                     "font-bold": pathname === route.path,
                                                 })}
                                             >
                                                 {route.icon}
                                                 {open && <span>{route.title}</span>}
-                                            </a>
+                                            </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
                                 ))}
@@ -352,20 +352,20 @@ export const Sidebar: FC = () => {
                                 {isEEFeatureEnabled('contactUsPage') && InternalRoutes.ContactUs && (
                                     <SidebarMenuItem>
                                         <SidebarMenuButton asChild>
-                                            <a href={InternalRoutes.ContactUs.path} className="flex items-center gap-2">
+                                            <Link to={InternalRoutes.ContactUs.path} className="flex items-center gap-2">
                                                 {Icons.QuestionMark}
                                                 {open && <span>Contact Us</span>}
-                                            </a>
+                                            </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
                                 )}
                                 {isEEFeatureEnabled('settingsPage') && InternalRoutes.Settings && (
                                     <SidebarMenuItem>
                                         <SidebarMenuButton asChild>
-                                            <a href={InternalRoutes.Settings.path} className="flex items-center gap-2">
+                                            <Link to={InternalRoutes.Settings.path} className="flex items-center gap-2">
                                                 {Icons.Settings}
                                                 {open && <span>Settings</span>}
-                                            </a>
+                                            </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
                                 )}
