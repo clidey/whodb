@@ -55,6 +55,7 @@ import {
     CircleStackIcon,
     ClockIcon,
     DocumentDuplicateIcon,
+    DocumentIcon,
     DocumentTextIcon,
     HashtagIcon,
     KeyIcon,
@@ -116,7 +117,6 @@ export const StorageUnitTable: FC<TableProps> = ({
 }) => {
     const [editIndex, setEditIndex] = useState<number | null>(null);
     const [editRow, setEditRow] = useState<string[] | null>(null);
-    const [contextMenuRow, setContextMenuRow] = useState<number | null>(null);
     const [deleting, setDeleting] = useState(false);
     const [checked, setChecked] = useState<number[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
@@ -274,7 +274,6 @@ export const StorageUnitTable: FC<TableProps> = ({
                             <ContextMenu key={globalIndex}>
                                 <ContextMenuTrigger
                                     asChild
-                                    onContextMenu={() => setContextMenuRow(globalIndex)}
                                     className="contents"
                                 >
                                     <tr>
@@ -299,6 +298,19 @@ export const StorageUnitTable: FC<TableProps> = ({
                                         Edit Row
                                         <ContextMenuShortcut>⌘E</ContextMenuShortcut>
                                     </ContextMenuItem>
+                                    <ContextMenuSub>
+                                        <ContextMenuSubTrigger>Export</ContextMenuSubTrigger>
+                                        <ContextMenuSubContent className="w-44">
+                                            <ContextMenuItem>
+                                                <DocumentIcon className="w-4 h-4" />
+                                                Export CSV
+                                            </ContextMenuItem>
+                                            <ContextMenuItem>
+                                                <DocumentIcon className="w-4 h-4" />
+                                                Export Excel
+                                            </ContextMenuItem>
+                                        </ContextMenuSubContent>
+                                    </ContextMenuSub>
                                     <ContextMenuSub>
                                         <ContextMenuSubTrigger>More Actions</ContextMenuSubTrigger>
                                         <ContextMenuSubContent className="w-44">

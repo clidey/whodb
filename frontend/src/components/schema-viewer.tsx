@@ -101,7 +101,7 @@ export const SchemaViewer: FC = () => {
     }, [navigate, state, data]);
 
     return (
-        <div className="flex h-full">
+        <div className="flex h-full dark">
             <SidebarComponent variant="embed" className="w-64 h-full flex flex-col">
                 <SidebarContent>
                     <SidebarHeader>

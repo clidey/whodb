@@ -56,6 +56,7 @@ const PopoverCard: FC<IPopoverCardProps> = ({ open, onOpenChange, currentFilter,
                     options={fieldsDropdownItems}
                     onChange={handleFieldSelect}
                     data-testid="field-key"
+                    contentClassName="w-[var(--radix-popover-trigger-width)]"
                 />
             </div>
             <div className="flex flex-col gap-2 w-full">
@@ -67,6 +68,7 @@ const PopoverCard: FC<IPopoverCardProps> = ({ open, onOpenChange, currentFilter,
                     options={validOperators}
                     onChange={handleOperatorSelector}
                     data-testid="field-operator"
+                    contentClassName="w-[var(--radix-popover-trigger-width)]"
                 />
             </div>
             <div className="flex flex-col gap-2 w-full">

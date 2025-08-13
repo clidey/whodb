@@ -32,7 +32,7 @@ export const SettingsPage: FC = () => {
 
     return <InternalPage routes={[InternalRoutes.Settings!]}>
         <div className="flex justify-center items-center w-full">
-            <div className="w-full max-w-[1000px] flex flex-col gap-4">
+            <div className="w-full flex flex-col gap-4">
                 <h2 className="text-2xl text-neutral-700 dark:text-neutral-300">Telemetry and Performance Metrics</h2>
                 {isEEMode ? (
                     <h3 className="text-base text-neutral-700 dark:text-neutral-300">

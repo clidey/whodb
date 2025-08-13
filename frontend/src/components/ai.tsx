@@ -351,7 +351,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         >
                             <span className="flex items-center gap-2 text-green-500">
                                 <PlusIcon className="w-4 h-4 stroke-green-500" />
-                                Add another profile
+                                Add a provider
                             </span>
                         </CommandItem>
                     }

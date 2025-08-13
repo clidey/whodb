@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Alert, AlertDescription, AlertTitle, Badge, Button, Card, cn, EmptyState, formatDate, Select, SelectContent, SelectItem, SelectTrigger, Separator, Sheet, SheetContent, Tabs, TabsContent, TabsList, TabsTrigger } from "@clidey/ux";
+import { Alert, AlertDescription, AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertTitle, Badge, Button, Card, cn, EmptyState, formatDate, Select, SelectContent, SelectItem, SelectTrigger, Separator, Sheet, SheetContent, Tabs, TabsContent, TabsList, TabsTrigger, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@clidey/ux";
 import { DatabaseType, RowsResult } from '@graphql';
 import { BellAlertIcon, ClockIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
@@ -32,6 +32,7 @@ import { LocalLoginProfile } from "../../store/auth";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { isEEFeatureEnabled, loadEEModule } from "../../utils/ee-loader";
 import { IPluginProps, QueryView } from "./query-view";
+import { Tip } from "../../components/tip";
 
 type EEExports = {
     plugins: any[];
@@ -239,17 +240,26 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                 ))}
                             </SelectContent>
                         </Select>}
-                        <Button onClick={handleAdd} data-testid="add-button" variant="secondary" className="border border-input">
-                            {Icons.PlusCircle}
-                        </Button>
-                        <Button onClick={() => setCode("")} data-testid="clear-button" variant="secondary" className="border border-input">
-                            {Icons.Refresh}
-                        </Button>
+                        <Tip>
+                            <Button onClick={handleAdd} data-testid="add-button" variant="secondary" className="border border-input">
+                                {Icons.PlusCircle}
+                            </Button>
+                                <p>Add a new cell</p>
+                        </Tip>
+                        <Tip>
+                            <Button onClick={() => setCode("")} data-testid="clear-button" variant="secondary" className="border border-input">
+                                {Icons.Refresh}
+                            </Button>
+                            <p>Clear the editor</p>
+                        </Tip>
                         {
                             onDelete != null &&
-                            <Button variant="destructive" onClick={handleDelete} data-testid="delete-button">
-                                {Icons.Delete}
-                            </Button>
+                            <Tip>
+                                <Button variant="destructive" onClick={handleDelete} data-testid="delete-button">
+                                    {Icons.Delete}
+                                </Button>
+                                <p>Delete the cell</p>
+                            </Tip>
                         }
                     </div>
                     <div className="flex gap-2 items-center">
@@ -372,7 +382,7 @@ const RawExecuteSubPage: FC = () => {
 
     return (
         <div className="flex justify-center items-center w-full">
-            <div className="w-full max-w-[1000px] flex flex-col gap-4">
+            <div className="w-full flex flex-col gap-4">
                 {
                     cellIds.map((cellId, index) => (
                         <div key={cellId} data-testid={`cell-${index}`}>
@@ -508,13 +518,13 @@ export const RawExecutePage: FC = () => {
 
     return (
         <InternalPage routes={[InternalRoutes.RawExecute]}>
-            <div className="flex flex-col w-full gap-2">
+            <div className="flex flex-col w-full gap-2" data-testid="raw-execute-page">
                 {isEEFeatureEnabled('analyzeView') && <AIProvider 
                     {...aiState}
                     disableNewChat={true}
                 />}
                 <div className="flex justify-center items-center w-full mt-4">
-                    <div className="w-full max-w-[1000px] flex flex-col gap-4">
+                    <div className="w-full flex flex-col gap-4">
                         <div className="flex justify-between items-center">
                             <Tabs defaultValue="buttons" className="w-full h-full" value={activePage}>
                                 <div className="flex gap-2 w-full justify-between">
@@ -532,9 +542,37 @@ export const RawExecutePage: FC = () => {
                                             {Icons.Add}
                                         </TabsTrigger>
                                     </TabsList>
-                                    <Button className={classNames({
-                                        "hidden": pages.length <= 1,
-                                    })} variant="secondary" onClick={() => handleDelete(activePage)}>{Icons.Delete} Delete page</Button>
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button
+                                          className={classNames({
+                                            "hidden": pages.length <= 1,
+                                          })}
+                                          variant="secondary"
+                                        >
+                                          {Icons.Delete} Delete page
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            This action cannot be undone. This will permanently delete this page and remove its data.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                          <AlertDialogAction asChild>
+                                            <Button
+                                              variant="destructive"
+                                              onClick={() => handleDelete(activePage)}
+                                            >
+                                              Continue
+                                            </Button>
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
                                 </div>
                                 <TabsContent value={activePage} className="h-full w-full mt-4">
                                     <AnimatePresence mode="wait">
