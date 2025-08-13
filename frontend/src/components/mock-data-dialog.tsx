@@ -116,8 +116,8 @@ export const MockDataDialog: FC<MockDataDialogProps> = ({ isOpen, onClose, stora
             });
 
             const data = result.data?.GenerateMockData;
-            if (data?.Status) {
-                notify(`Successfully generated ${count} rows`, "success");
+            if (data?.AmountGenerated) {
+                notify(`Successfully generated ${data.AmountGenerated} rows`, "success");
                 onSuccess();
                 onClose();
             } else {
