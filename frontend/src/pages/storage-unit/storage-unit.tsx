@@ -64,7 +64,7 @@ const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = (
     return (<ExpandableCard key={unit.Name} isExpanded={expanded} setExpanded={setExpanded} icon={Icons.Tables} className={cn({
         "shadow-2xl": expanded,
     })}>
-        <div className="flex flex-col grow mt-2">
+        <div className="flex flex-col grow mt-2" data-testid="storage-unit-card">
             <div className="flex flex-col grow mb-2">
                 <h1 className="text-sm font-semibold mb-2 break-words" data-testid="storage-unit-name">{unit.Name}</h1>
                 {
@@ -269,8 +269,8 @@ export const StorageUnitPage: FC = () => {
             <ExpandableCard className={classNames("overflow-visible min-w-[200px] max-w-[700px] h-full", {
                 "hidden": current?.Type === DatabaseType.Redis,
             })} icon={Icons.Add} isExpanded={create} setExpanded={setCreate} tag={<Badge variant="destructive">{error}</Badge>}>
-                <div className="flex flex-col grow h-full justify-between">
-                    <h2 className="text-lg">Create a {getDatabaseStorageUnitLabel(current?.Type, true)}</h2>
+                <div className="flex flex-col grow h-full justify-between mt-2 gap-2" data-testid="create-storage-unit-card">
+                    <h1 className="text-lg"><span className="prefix-create-storage-unit">Create a</span> {getDatabaseStorageUnitLabel(current?.Type, true)}</h1>
                     <Button className="self-end" onClick={handleCreate} variant="secondary">
                         {Icons.Add} Create
                     </Button>

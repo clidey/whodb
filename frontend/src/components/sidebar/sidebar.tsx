@@ -250,7 +250,7 @@ export const Sidebar: FC = () => {
     }, []);
 
     return (
-        <div>
+        <div className="dark">
             <SidebarComponent variant="sidebar" collapsible="icon" className="dark:group-data-[side=left]:border-r-neutral-800 z-[50]">
                 <SidebarHeader className={cn({
                     "ml-4": open,
