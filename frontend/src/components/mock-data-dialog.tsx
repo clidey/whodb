@@ -161,7 +161,7 @@ export const MockDataDialog: FC<MockDataDialogProps> = ({ isOpen, onClose, stora
 
                         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 mb-4">
                             <p className="text-sm text-blue-700 dark:text-blue-300">
-                                <strong>Note:</strong> Mock data generation is in development. You may experience some errors or missing data.
+                                <strong>Note:</strong> Mock data generation does not yet fully support foreign keys and all constraints. You may experience some errors or missing data.
                             </p>
                         </div>
 
