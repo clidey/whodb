@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Badge, Button, cn, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, toast } from '@clidey/ux';
+import { Badge, Button, cn, Input, Label, SearchSelect, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, toast } from '@clidey/ux';
 import { DatabaseType, LoginCredentials, useGetDatabaseLazyQuery, useGetProfilesQuery, useLoginMutation, useLoginWithProfileMutation } from '@graphql';
 import classNames from "classnames";
 import { entries } from "lodash";
@@ -29,6 +29,7 @@ import { InternalRoutes } from "../../config/routes";
 import { AuthActions } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { extensions } from '../../config/features';
 const logoImage = "/images/logo.png";
 // Embeddable LoginForm component for use in LoginPage and @sidebar.tsx
 
@@ -286,33 +287,22 @@ export const LoginForm: FC<LoginFormProps> = ({
             return <div className="flex flex-col gap-4 w-full">
                 <div className="flex flex-col gap-1 w-full">
                     <Label>Database</Label>
-                    <Select
+                    <SearchSelect
                         value={database}
-                        onValueChange={setDatabase}
+                        onChange={setDatabase}
                         disabled={databasesLoading}
-                    >
-                        <SelectTrigger className="w-full" data-testid="database">
-                            <SelectValue placeholder="Select Database" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {databasesLoading ? (
-                                <div className="px-4 py-2 text-sm text-muted-foreground">Loading...</div>
-                            ) : (foundDatabases?.Database?.length ? (
-                                foundDatabases.Database.map(db => (
-                                    <SelectItem key={db} value={db}>
-                                        <span className="flex items-center gap-2">
-                                            {Icons.Database}
-                                            {db}
-                                        </span>
-                                    </SelectItem>
-                                ))
-                            ) : (
-                                <div className="px-4 py-2 text-sm text-muted-foreground">
-                                    Not available. Mount SQLite file in /db/
-                                </div>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                        options={
+                            databasesLoading
+                                ? []
+                                : foundDatabases?.Database?.map(db => ({
+                                    value: db,
+                                    label: db,
+                                    icon: Icons.Database,
+                                })) ?? []
+                        }
+                        placeholder="Select Database"
+                        data-testid="database"
+                    />
                 </div>
             </div>
         }
@@ -394,7 +384,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                             <div className="flex justify-between">
                                 <div className="flex items-center gap-2 text-xl">
                                     <img src={logoImage} alt="clidey logo" className="w-auto h-6" />
-                                    <h1 className="text-brand-foreground">WhoDB</h1>
+                                    <h1 className="text-brand-foreground">{extensions.AppName ?? "WhoDB"}</h1>
                                     <h1>Login</h1>
                                 </div>
                                 {
@@ -410,34 +400,20 @@ export const LoginForm: FC<LoginFormProps> = ({
                         })}>
                             <div className="flex flex-col gap-2 w-full">
                                 <Label>Database Type</Label>
-                                <Select
-                                    value={databaseType.id}
-                                    onValueChange={(value) => {
+                                <SearchSelect
+                                    value={databaseType?.id || ""}
+                                    onChange={(value) => {
                                         const selected = databaseTypeItems.find(item => item.id === value);
-                                        if (selected) {
-                                            handleDatabaseTypeChange(selected);
-                                        }
+                                        handleDatabaseTypeChange(selected ?? databaseTypeItems[0]);
                                     }}
-                                >
-                                    <SelectTrigger className="w-full justify-start" data-testid="database-type-select">
-                                        <SelectValue>
-                                            <span className="flex items-center gap-2">
-                                                {databaseType.icon}
-                                                {databaseType.label}
-                                            </span>
-                                        </SelectValue>
-                                    </SelectTrigger>
-                                    <SelectContent className="w-full">
-                                        {databaseTypeItems.map(item => (
-                                            <SelectItem key={item.id} value={item.id}>
-                                                <span className="flex items-center gap-2">
-                                                    {item.icon}
-                                                    {item.label}
-                                                </span>
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                    options={databaseTypeItems.map(item => ({
+                                        value: item.id,
+                                        label: item.label,
+                                        icon: item.icon,
+                                    }))}
+                                    data-testid="database-type-select"
+                                    contentClassName="w-[var(--radix-popover-trigger-width)]"
+                                />
                             </div>
                             {fields}
                         </div>

@@ -53,6 +53,7 @@ import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
 import { Icons } from "../icons";
 import { Loading } from "../loading";
 import { updateProfileLastAccessed } from "../profile-info-tooltip";
+import { extensions } from "../../config/features";
 
 const logoImage = "/images/logo.png";
 
@@ -255,11 +256,11 @@ export const Sidebar: FC = () => {
                     "ml-4": open,
                 })}>
                     <div className="flex items-center gap-2 justify-between">
-                        <div className={cn("flex items-center gap-2", {
+                        <div className={cn("flex items-center gap-2 mt-2", {
                             "hidden": !open,
                         })}>
-                            <img src={logoImage} alt="clidey logo" className="w-auto h-4" />
-                            {open && <span className="text-lg text-brand-foreground">WhoDB</span>}
+                            {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4" />}
+                            {open && <span className="text-lg text-brand-foreground">{extensions.AppName ?? "WhoDB"}</span>}
                         </div>
                         <SidebarTrigger onClick={toggleSidebar} className="px-0">
                             <Bars3Icon />
@@ -347,7 +348,9 @@ export const Sidebar: FC = () => {
                                     </SidebarMenuItem>
                                 ))}
 
-                                <SidebarSeparator />
+                                <SidebarSeparator className={cn("my-16", {
+                                    "mx-0": !open,
+                                })} />
 
                                 {isEEFeatureEnabled('contactUsPage') && InternalRoutes.ContactUs && (
                                     <SidebarMenuItem>

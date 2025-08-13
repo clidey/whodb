@@ -152,7 +152,7 @@ let eeLoadPromise: Promise<void> | null = null;
 if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
     // Store the promise so we can await it later
     eeLoadPromise = Promise.all([
-        import('@ee/config'),
+        import('@ee/config.tsx'),
         import('@ee/icons')
     ]).then(([eeConfig, eeIcons]) => {
         console.log('Loading EE config:', eeConfig);

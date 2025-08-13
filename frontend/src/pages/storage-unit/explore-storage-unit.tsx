@@ -412,7 +412,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                                 <div className="text-red-500 text-xs">{addRowError}</div>
                             )}
                         </div>
-                        <SheetFooter>
+                        <SheetFooter className="px-0">
                             <Button onClick={handleAddRowSubmit} data-testid="submit-button" disabled={adding}>
                                 {Icons.CheckCircle} Submit
                             </Button>

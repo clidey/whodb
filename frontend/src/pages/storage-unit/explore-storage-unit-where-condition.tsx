@@ -266,35 +266,33 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
     }, [newFilter, editingFilter, handleKeyDown, handleClickOutside]);
 
     return (
-        <div className="flex flex-col gap-1 h-full relative">
-            <Label className="mb-1">Where condition</Label>
-            <div className="flex gap-1 items-center max-w-[min(500px,calc(100vw-20px))] flex-wrap">
+        <div className="flex flex-col justify-end">
+            <Label className="mb-2">Where condition</Label>
+            <div className="flex flex-row gap-1 max-w-[min(500px,calc(100vw-20px))] flex-wrap">
                 {filters.And?.Children?.map((filter, i) => (
                     <div
                         key={`explore-storage-unit-filter-${i}`}
-                        className="group/filter-item flex gap-1 items-center text-xs rounded-2xl dark:bg-white/5 cursor-pointer"
+                        className="group/filter-item flex gap-1 items-center text-xs rounded-2xl cursor-pointer"
                         data-testid="where-condition"
                     >
-                        <div className="flex items-center">
-                            <Badge
-                                className={twMerge(
-                                    classNames(
-                                        "flex items-center gap-1 pl-4 pr-2 h-full max-w-[350px] truncate cursor-pointer",
-                                        { "ring-2 ring-primary-500 dark:ring-primary-400": editingFilter === i }
-                                    )
-                                )}
-                                onClick={() => handleEdit(i)}
-                                data-testid="where-condition-badge"
-                                variant="secondary"
-                            >
-                                <div className="flex items-center gap-1">
-                                    {filter.Atomic?.Key} {filter.Atomic?.Operator} {filter.Atomic?.Value}
-                                    <Button onClick={() => handleRemove(i)} data-testid="remove-where-condition-button" variant="ghost" size="icon">
-                                        <XCircleIcon />
-                                    </Button>
-                                </div>
-                            </Badge>
-                        </div>
+                        <Badge
+                            className={twMerge(
+                                classNames(
+                                    "flex items-center gap-1 pl-4 pr-2 h-full max-w-[350px] truncate cursor-pointer py-0",
+                                    { "ring-2 ring-primary-500 dark:ring-primary-400": editingFilter === i }
+                                )
+                            )}
+                            onClick={() => handleEdit(i)}
+                            data-testid="where-condition-badge"
+                            variant="secondary"
+                        >
+                            <div className="flex items-center gap-1 h-full">
+                                {filter.Atomic?.Key} {filter.Atomic?.Operator} {filter.Atomic?.Value}
+                                <Button className="size-8 h-full" onClick={() => handleRemove(i)} data-testid="remove-where-condition-button" variant="ghost" size="icon">
+                                    <XCircleIcon />
+                                </Button>
+                            </div>
+                        </Badge>
                         <PopoverCard
                             className="mt-8"
                             open={editingFilter === i}

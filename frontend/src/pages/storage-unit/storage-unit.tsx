@@ -254,15 +254,15 @@ export const StorageUnitPage: FC = () => {
     return <InternalPage routes={routes}>
         <div className="flex w-full h-fit my-2 gap-4 justify-between">
             <div>
+                <SearchInput value={filterValue} onChange={e => setFilterValue(e.target.value)} placeholder="Enter filter value..." />
+            </div>
+            <div>
                 {
                     databaseSupportsScratchpad(current?.Type) &&
                     <Button onClick={() => navigate(InternalRoutes.RawExecute.path)} data-testid="scratchpad-button" variant="secondary">
                         {Icons.Console} Scratchpad
                     </Button>
                 }
-            </div>
-            <div>
-                <SearchInput value={filterValue} onChange={e => setFilterValue(e.target.value)} placeholder="Enter filter value..." />
             </div>
         </div>
         <div className="flex flex-wrap gap-4">

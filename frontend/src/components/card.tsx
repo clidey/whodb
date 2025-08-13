@@ -92,7 +92,7 @@ export const Card: FC<ICardProps> = ({
               {tag && <Badge variant="secondary">{tag}</Badge>}
             </CardHeader>
           )}
-          <CardContent className="px-4 grow">{children}</CardContent>
+          <CardContent className="px-4 flex flex-col grow justify-between">{children}</CardContent>
         </>
       )}
     </UxCard>
