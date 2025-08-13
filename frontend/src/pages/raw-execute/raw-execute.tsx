@@ -14,28 +14,30 @@
  * limitations under the License.
  */
 
-import { Alert, AlertDescription, AlertTitle, Badge, Button, Card, EmptyState, formatDate, Select, SelectContent, SelectItem, SelectTrigger, Sheet, SheetContent, Tabs, TabsContent, TabsList, TabsTrigger } from "@clidey/ux";
-import { DatabaseType, useRawExecuteLazyQuery } from '@graphql';
+import { Alert, AlertDescription, AlertTitle, Badge, Button, Card, cn, EmptyState, formatDate, Select, SelectContent, SelectItem, SelectTrigger, Separator, Sheet, SheetContent, Tabs, TabsContent, TabsList, TabsTrigger } from "@clidey/ux";
+import { DatabaseType, RowsResult } from '@graphql';
 import { BellAlertIcon, ClockIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import { indexOf } from "lodash";
 import { ChangeEvent, cloneElement, FC, ReactElement, ReactNode, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { v4 } from "uuid";
+import { AIProvider, useAI } from "../../components/ai";
 import { CodeEditor } from "../../components/editor";
 import { Icons } from "../../components/icons";
 import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
-import { StorageUnitTable } from "../../components/table";
 import { InternalRoutes } from "../../config/routes";
 import { LocalLoginProfile } from "../../store/auth";
-import { useAppSelector } from "../../store/hooks";
-import { isEEFeatureEnabled, loadEEComponent } from "../../utils/ee-loader";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { isEEFeatureEnabled, loadEEModule } from "../../utils/ee-loader";
+import { IPluginProps, QueryView } from "./query-view";
 
-// Conditionally load the AnalyzeGraph component from EE
-const AnalyzeGraph = loadEEComponent(
-    () => import('@ee/pages/raw-execute/analyze-view').then(m => ({ default: m.AnalyzeGraph })),
-);
+type EEExports = {
+    plugins: any[];
+    ActionOptions: Record<string, string>;
+    ActionOptionIcons: Record<string, ReactElement>;
+};
 
 type IRawExecuteCellProps = {
     cellId: string;
@@ -46,27 +48,14 @@ type IRawExecuteCellProps = {
 
 enum ActionOptions {
     Query="Query",
-    Analyze="Analyze",
 }
-
-// Only include Analyze option if EE is available
-const getActionOptions = (): ActionOptions[] => {
-    const options = [ActionOptions.Query];
-    if (isEEFeatureEnabled('analyzeView')) {
-        options.push(ActionOptions.Analyze);
-    }
-    return options;
-};
 
 export const ActionOptionIcons: Record<string, ReactElement> = {
     [ActionOptions.Query]: Icons.Database,
-    [ActionOptions.Analyze]: Icons.Code,
 }
 
-const actionOptions = getActionOptions();
-
-function getModeCommand(mode: ActionOptions, current?: LocalLoginProfile) {
-    if (current == null || mode !== ActionOptions.Analyze) {
+function getModeCommand(mode: string, current?: LocalLoginProfile, eeActionOptions?: Record<string, string>) {
+    if (current == null || !eeActionOptions || mode !== eeActionOptions.Analyze) {
          return "";
     }
     if (current.Type === DatabaseType.Postgres) {
@@ -89,33 +78,81 @@ const CopyButton: FC<{ text: string }> = (props) => {
 }
 
 const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, showTools }) => {
-    const [mode, setMode] = useState<ActionOptions>(ActionOptions.Query);
+    const [mode, setMode] = useState<string>(ActionOptions.Query);
     const [code, setCode] = useState("");
     const [submittedCode, setSubmittedCode] = useState("");
-    const [rawExecute, { data: rows, loading, error }] = useRawExecuteLazyQuery();
     const [history, setHistory] = useState<{id: string, item: string, status: boolean, date: Date}[]>([]);
     const current = useAppSelector(state => state.auth.current);
-    const [showHistory, setShowHistory] = useState(false);
+    const handleExecute = useRef<(code: string) => Promise<any>>(() => Promise.resolve());
+    const [historyOpen, setHistoryOpen] = useState(false);
+    const [error, setError] = useState<Error | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [rows, setRows] = useState<RowsResult | null>(null);
+
+    // State for all plugins, action options, and action option icons (not just EE)
+    const [allPlugins, setAllPlugins] = useState<{ type: string, component: FC<IPluginProps> }[]>([
+        {
+            type: ActionOptions.Query,
+            component: QueryView,
+        },
+    ]);
+    const [allActionOptions, setAllActionOptions] = useState<Record<string, string>>({ ...ActionOptions });
+    const [allActionOptionIcons, setAllActionOptionIcons] = useState<Record<string, ReactElement>>({ ...ActionOptionIcons });
+
+    // Load EE module on mount and merge with base
+    useEffect(() => {
+        let mounted = true;
+        loadEEModule<EEExports>(
+            () => import('@ee/pages/raw-execute/index'),
+            { plugins: [], ActionOptions: {}, ActionOptionIcons: {} }
+        ).then((mod) => {
+            if (mod && mounted) {
+                const { default: defaultMod } = mod as any;
+                if (defaultMod.plugins == null) {
+                    return;
+                }
+                // Merge plugins
+                setAllPlugins(prev => [
+                    ...prev,
+                    ...(defaultMod.plugins || []).map((p: any) => ({
+                        type: p.type,
+                        component: p.component,
+                    })),
+                ]);
+                // Merge action options
+                setAllActionOptions(prev => ({
+                    ...prev,
+                    ...(defaultMod.ActionOptions || {})
+                }));
+                // Merge action option icons
+                setAllActionOptionIcons(prev => ({
+                    ...prev,
+                    ...(defaultMod.ActionOptionIcons || {})
+                }));
+            }
+        });
+        return () => { mounted = false; }
+    }, []);
 
     const handleRawExecute = useCallback((historyCode?: string) => {
-        console.log("handleRawExecute", historyCode);
         if (current == null) {
             return;
         }
         const currentCode = historyCode ?? code;
         const historyItem = { id: v4(), item: code, status: false, date: new Date() };
         setSubmittedCode(currentCode);
-        rawExecute({
-            variables: {
-                query: getModeCommand(mode, current) + currentCode,
-            },
-            onCompleted() {
-                historyItem.status = true;
-            },
+        setError(null);
+        setLoading(true);
+        handleExecute.current(currentCode).then((data) => {
+            historyItem.status = true;
+            setRows(data);
+        }).catch((err) => {
+            setError(err);
         }).finally(() => {
+            setLoading(false);
             if (historyCode == null) setHistory(h => [historyItem , ...h]);
-        });
-    }, [code, rawExecute, current, mode]);
+        })
+    }, [code, current, mode, allActionOptions]);
 
     const handleAdd = useCallback(() => {
         onAdd(cellId);
@@ -125,46 +162,19 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
         onDelete?.(cellId);
     }, [cellId, onDelete]);
 
-    const isCodeAQuery = useMemo(() => {
-        if (submittedCode == null) {
-            return true;
-        }
-        return submittedCode.split("\n").filter(text => !text.startsWith("--")).join("\n").trim().toLowerCase().startsWith("select");
-    }, [submittedCode]);
-
+    // Use all plugins
     const output = useMemo(() => {
-        if (rows == null) {
+        const selectedPlugin = allPlugins.find((p: any) => p.type === mode);
+        if (selectedPlugin?.component == null) {
             return null;
         }
-        if (mode === ActionOptions.Analyze && isEEFeatureEnabled('analyzeView') && AnalyzeGraph) {
-            let data;
-            try {
-                data = JSON.parse(rows.RawExecute.Rows[0][0])[0];
-            } catch {
-                return <div className="text-red-500 mt-4">Unable to analyze the query</div>
-            }
-            return <div className="flex mt-4 h-[350px] w-full">
-                <Suspense fallback={<Loading />}>
-                {/* @ts-ignore */}
-                    <AnalyzeGraph data={data} />
-                </Suspense>
-            </div>
-        }
-        if (isCodeAQuery || rows.RawExecute.Rows.length > 0) {
-            return <div className="flex flex-col w-full h-[250px] mt-4" data-testid="cell-query-output">
-                <StorageUnitTable
-                    columns={rows.RawExecute.Columns.map(c => c.Name)}
-                    columnTypes={rows.RawExecute.Columns.map(c => c.Type)}
-                    rows={rows.RawExecute.Rows}
-                    disableEdit={true}
-                />
-            </div>
-        }
-        return <div className="bg-white/10 text-neutral-800 dark:text-neutral-300 rounded-lg p-2 flex gap-2 self-start items-center my-4" data-testid="cell-action-output">
-            Action Executed
-            {Icons.CheckCircle}
+        const Component = selectedPlugin.component as FC<IPluginProps>;
+        return <div className="flex mt-4 w-full">
+            <Suspense fallback={<Loading />}>
+                <Component code={code} handleExecuteRef={handleExecute} />
+            </Suspense>
         </div>
-    }, [rows, isCodeAQuery, mode]);
+    }, [mode, allActionOptions, allPlugins, code]);
 
     const isAnalyzeAvailable = useMemo(() => {
         if (!isEEFeatureEnabled('analyzeView')) {
@@ -172,15 +182,22 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
         }
         switch(current?.Type) {
             case DatabaseType.Postgres:
-                return true;
+                return !!allActionOptions.Analyze;
         }
         return false;
-    }, [current?.Type]);
+    }, [current?.Type, allActionOptions]);
 
-    const rowLength = useMemo(() => rows?.RawExecute.Rows.length ?? 0, []);
+    // Merge icons from all sources
+    const mergedActionOptionIcons = useMemo(() => {
+        return {
+            ...ActionOptionIcons,
+            ...allActionOptionIcons,
+        };
+    }, [allActionOptionIcons]);
 
-    // Sheet for history (right side, like sidebar)
-    const [historyOpen, setHistoryOpen] = useState(false);
+    const actionOptions = useMemo(() => {
+        return Object.keys(allActionOptions);
+    }, [allActionOptions]);
 
     return (
         <div className="flex flex-col grow group/cell relative">
@@ -194,13 +211,13 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                     <div className="flex gap-2 pointer-events-auto">
                         <Select
                             value={mode}
-                            onValueChange={(val) => setMode(val as ActionOptions)}
+                            onValueChange={(val) => setMode(val as string)}
                         >
                             <SelectTrigger style={{
                                 background: "var(--secondary)",
                             }}>
                                 <div className="flex items-center gap-2 w-full">
-                                    {cloneElement(ActionOptionIcons[mode], { className: "w-4 h-4" })}
+                                    {mergedActionOptionIcons[mode] && cloneElement(mergedActionOptionIcons[mode], { className: "w-4 h-4" })}
                                     <span>{mode}</span>
                                 </div>
                             </SelectTrigger>
@@ -210,11 +227,11 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                         key={item}
                                         value={item}
                                         className={classNames({
-                                            "hidden": !isAnalyzeAvailable || (item === ActionOptions.Analyze && !isEEFeatureEnabled('analyzeView')),
+                                            "hidden": !isAnalyzeAvailable && (item === allActionOptions.Analyze),
                                         })}
                                     >
                                         <div className="flex items-center gap-2">
-                                            {cloneElement(ActionOptionIcons[item], { className: "w-4 h-4" })}
+                                            {mergedActionOptionIcons[item] && cloneElement(mergedActionOptionIcons[item], { className: "w-4 h-4" })}
                                             <span>{item}</span>
                                         </div>
                                     </SelectItem>
@@ -229,7 +246,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                         </Button>
                         {
                             onDelete != null &&
-                            <Button variant="destructive" onClick={handleDelete} disabled={loading} data-testid="delete-button">
+                            <Button variant="destructive" onClick={handleDelete} data-testid="delete-button">
                                 {Icons.Delete}
                             </Button>
                         }
@@ -238,13 +255,17 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                         <Button
                             onClick={() => setHistoryOpen(true)}
                             data-testid="history-button"
-                            className="pointer-events-auto"
+                            className={cn("pointer-events-auto", {
+                                "hidden": history.length === 0,
+                            })}
                             variant="secondary"
                             disabled={history.length === 0}
                         >
                             <ClockIcon className="w-4 h-4" />
                         </Button>
-                        <Button onClick={() => handleRawExecute()} data-testid="submit-button" className="pointer-events-auto" disabled={code.length === 0}>
+                        <Button onClick={() => handleRawExecute()} data-testid="submit-button" className={cn("pointer-events-auto", {
+                            "hidden": code.length === 0,
+                        })} disabled={code.length === 0}>
                             {Icons.CheckCircle}
                         </Button>
                     </div>
@@ -260,13 +281,8 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                     </Alert>
                 </div>
             }
-            {
-                loading
-                ? <div className="flex justify-center items-center h-[250px]">
-                    <Loading />
-                </div>
-                : rows != null && submittedCode.length > 0 && output
-            }
+            { loading && <Loading /> }
+            { output }
             <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
                 <SheetContent className="w-[350px] max-w-full p-0">
                     <div className="flex flex-col h-full">
@@ -359,7 +375,7 @@ const RawExecuteSubPage: FC = () => {
                 {
                     cellIds.map((cellId, index) => (
                         <div key={cellId} data-testid={`cell-${index}`}>
-                            {index > 0 && <div className="border-dashed border-t border-gray-300 my-2 dark:border-neutral-600"></div>}
+                            {index > 0 && <Separator className="my-4" />}
                             <RawExecuteCell key={cellId} cellId={cellId} onAdd={handleAdd} onDelete={cellIds.length <= 1 ? undefined : handleDelete}
                                 showTools={cellIds.length === 1} />
                         </div>
@@ -427,6 +443,9 @@ export const RawExecutePage: FC = () => {
     const [activePage, setActivePage] = useState(pages[0].id);
     const [pageStates, setPageStates] = useState<{ [key: string]: ReactNode }>({});
 
+    const aiState = useAI();
+    const dispatch = useAppDispatch();
+
     const handleAdd = useCallback(() => {
         const newId = v4();
         setPages((prevPages) => [
@@ -488,48 +507,54 @@ export const RawExecutePage: FC = () => {
 
     return (
         <InternalPage routes={[InternalRoutes.RawExecute]}>
-            <div className="flex justify-center items-center w-full">
-                <div className="w-full max-w-[1000px] flex flex-col gap-4">
-                    <div className="flex justify-between items-center">
-                        <Tabs defaultValue="buttons" className="w-full h-full" value={activePage}>
-                            <div className="flex gap-2 w-full justify-between">
-                                <TabsList className="grid" style={{
-                                    gridTemplateColumns: `repeat(${pages.length+1}, minmax(0, 1fr))`
-                                }} defaultValue={activePage}>
-                                    {
-                                        pages.map(page => (
-                                            <TabsTrigger value={page.id} key={page.id} onClick={() => handleSelect(page.id)}>
-                                                <EditableInput page={page} setValue={(newName) => handleUpdatePageName(page, newName)} />
-                                            </TabsTrigger>
-                                        ))
-                                    }
-                                    <TabsTrigger value="add" onClick={handleAdd}>
-                                        {Icons.Add}
-                                    </TabsTrigger>
-                                </TabsList>
-                                <Button className={classNames({
-                                    "hidden": pages.length <= 1,
-                                })} variant="secondary" onClick={() => handleDelete(activePage)}>{Icons.Delete} Delete page</Button>
-                            </div>
-                            <TabsContent value={activePage} className="h-full w-full mt-4">
-                                <AnimatePresence mode="wait">
-                                    {Object.entries(pageStates).map(([id, component]) => (
-                                        <motion.div
-                                            key={id}
-                                            className={classNames({
-                                                "hidden": id !== activePage,
-                                            })}
-                                            // todo this animation
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -10 }}
-                                        >
-                                            {component}
-                                        </motion.div>
-                                    ))}
-                                </AnimatePresence>
-                            </TabsContent>
-                        </Tabs>
+            <div className="flex flex-col w-full gap-2">
+                <AIProvider 
+                    {...aiState}
+                    disableNewChat={true}
+                />
+                <div className="flex justify-center items-center w-full mt-4">
+                    <div className="w-full max-w-[1000px] flex flex-col gap-4">
+                        <div className="flex justify-between items-center">
+                            <Tabs defaultValue="buttons" className="w-full h-full" value={activePage}>
+                                <div className="flex gap-2 w-full justify-between">
+                                    <TabsList className="grid" style={{
+                                        gridTemplateColumns: `repeat(${pages.length+1}, minmax(0, 1fr))`
+                                    }} defaultValue={activePage}>
+                                        {
+                                            pages.map(page => (
+                                                <TabsTrigger value={page.id} key={page.id} onClick={() => handleSelect(page.id)}>
+                                                    <EditableInput page={page} setValue={(newName) => handleUpdatePageName(page, newName)} />
+                                                </TabsTrigger>
+                                            ))
+                                        }
+                                        <TabsTrigger value="add" onClick={handleAdd}>
+                                            {Icons.Add}
+                                        </TabsTrigger>
+                                    </TabsList>
+                                    <Button className={classNames({
+                                        "hidden": pages.length <= 1,
+                                    })} variant="secondary" onClick={() => handleDelete(activePage)}>{Icons.Delete} Delete page</Button>
+                                </div>
+                                <TabsContent value={activePage} className="h-full w-full mt-4">
+                                    <AnimatePresence mode="wait">
+                                        {Object.entries(pageStates).map(([id, component]) => (
+                                            <motion.div
+                                                key={id}
+                                                className={classNames({
+                                                    "hidden": id !== activePage,
+                                                })}
+                                                // todo this animation
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -10 }}
+                                            >
+                                                {component}
+                                            </motion.div>
+                                        ))}
+                                    </AnimatePresence>
+                                </TabsContent>
+                            </Tabs>
+                        </div>
                     </div>
                 </div>
             </div>

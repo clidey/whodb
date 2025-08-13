@@ -37,7 +37,9 @@ declare module '@ee/components/charts/pie-chart' {
   export default PieChart;
 }
 
-declare module '@ee/pages/raw-execute/analyze-view' {
-  export const AnalyzeGraph: any;
-  export default AnalyzeGraph;
+declare module '@ee/pages/raw-execute/index' {
+  export const plugins: any;
+  export const ActionOptions: any;
+  export const ActionOptionIcons: any;
+  export default { plugins, ActionOptions, ActionOptionIcons };
 }
