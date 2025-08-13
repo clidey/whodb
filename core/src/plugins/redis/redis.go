@@ -386,6 +386,13 @@ func (p *RedisPlugin) ClearTableData(config *engine.PluginConfig, schema string,
 	return false, errors.ErrUnsupported
 }
 
+// WithTransaction executes the operation directly since Redis doesn't support transactions in the same way as SQL databases
+func (p *RedisPlugin) WithTransaction(config *engine.PluginConfig, operation func(tx any) error) error {
+	// Redis doesn't support transactions in the same way as SQL databases
+	// For now, just execute the operation directly
+	return operation(nil)
+}
+
 func NewRedisPlugin() *engine.Plugin {
 	return &engine.Plugin{
 		Type:            engine.DatabaseType_Redis,

@@ -264,6 +264,13 @@ func (p *MongoDBPlugin) ClearTableData(config *engine.PluginConfig, schema strin
 	return false, errors.New("mock data generation is not supported for MongoDB")
 }
 
+// WithTransaction executes the operation directly since MongoDB doesn't support transactions in the same way as SQL databases
+func (p *MongoDBPlugin) WithTransaction(config *engine.PluginConfig, operation func(tx any) error) error {
+	// MongoDB doesn't support transactions in the same way as SQL databases
+	// For now, just execute the operation directly
+	return operation(nil)
+}
+
 func NewMongoDBPlugin() *engine.Plugin {
 	return &engine.Plugin{
 		Type:            engine.DatabaseType_MongoDB,

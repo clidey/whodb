@@ -17,6 +17,8 @@
 package postgres
 
 import (
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
@@ -83,6 +85,32 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 			constraints[columnName]["unique"] = true
 		}
 		
+		// Get CHECK constraints
+		checkQuery := `
+			SELECT 
+				conname AS constraint_name,
+				pg_get_constraintdef(oid) AS check_clause
+			FROM pg_constraint
+			WHERE contype = 'c'
+			AND conrelid = ?::regclass`
+		
+		fullTableName := schema + "." + storageUnit
+		checkRows, err := db.Raw(checkQuery, fullTableName).Rows()
+		if err == nil {
+			defer checkRows.Close()
+			
+			for checkRows.Next() {
+				var constraintName, checkClause string
+				if err := checkRows.Scan(&constraintName, &checkClause); err != nil {
+					continue
+				}
+				
+				// Parse the CHECK clause to extract column and condition
+				p.parseCheckConstraint(checkClause, constraints)
+			}
+		}
+		// Ignore error if query fails
+		
 		return true, nil
 	})
 	
@@ -91,4 +119,75 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 	}
 	
 	return constraints, nil
+}
+
+// parseCheckConstraint parses PostgreSQL CHECK constraint clauses to extract column constraints
+func (p *PostgresPlugin) parseCheckConstraint(checkClause string, constraints map[string]map[string]interface{}) {
+	// PostgreSQL formats CHECK constraints like:
+	// - CHECK ((price >= (0)::numeric))
+	// - CHECK ((stock_quantity >= 0))
+	// - CHECK ((age >= 18) AND (age <= 120))
+	// - CHECK ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text]))
+	
+	// Remove CHECK keyword and outer parentheses
+	clause := strings.TrimPrefix(checkClause, "CHECK ")
+	clause = strings.Trim(clause, "()")
+	
+	// Pattern for >= or > constraints
+	minPattern := regexp.MustCompile(`\(?(\w+)\)?\s*>=?\s*\(?([\-]?\d+(?:\.\d+)?)\)?`)
+	if matches := minPattern.FindStringSubmatch(clause); len(matches) > 2 {
+		columnName := matches[1]
+		if constraints[columnName] == nil {
+			constraints[columnName] = map[string]interface{}{}
+		}
+		if val, err := strconv.ParseFloat(matches[2], 64); err == nil {
+			if strings.Contains(matches[0], ">=") {
+				constraints[columnName]["check_min"] = val
+			} else {
+				constraints[columnName]["check_min"] = val + 1
+			}
+		}
+	}
+	
+	// Pattern for <= or < constraints
+	maxPattern := regexp.MustCompile(`\(?(\w+)\)?\s*<=?\s*\(?([\-]?\d+(?:\.\d+)?)\)?`)
+	if matches := maxPattern.FindStringSubmatch(clause); len(matches) > 2 {
+		columnName := matches[1]
+		if constraints[columnName] == nil {
+			constraints[columnName] = map[string]interface{}{}
+		}
+		if val, err := strconv.ParseFloat(matches[2], 64); err == nil {
+			if strings.Contains(matches[0], "<=") {
+				constraints[columnName]["check_max"] = val
+			} else {
+				constraints[columnName]["check_max"] = val - 1
+			}
+		}
+	}
+	
+	// Pattern for ANY (ARRAY[...]) constraints (PostgreSQL's way of doing IN)
+	anyArrayPattern := regexp.MustCompile(`\(?(\w+)\)?.*?ANY\s*\(ARRAY\[(.*?)\]`)
+	if matches := anyArrayPattern.FindStringSubmatch(clause); len(matches) > 2 {
+		columnName := matches[1]
+		if constraints[columnName] == nil {
+			constraints[columnName] = map[string]interface{}{}
+		}
+		// Extract values from ARRAY
+		valuesStr := matches[2]
+		values := []string{}
+		// Split by comma and clean up
+		parts := strings.Split(valuesStr, ",")
+		for _, part := range parts {
+			cleaned := strings.TrimSpace(part)
+			// Remove ::text or other type casts
+			cleaned = regexp.MustCompile(`::\w+`).ReplaceAllString(cleaned, "")
+			cleaned = strings.Trim(cleaned, "'\"")
+			if cleaned != "" {
+				values = append(values, cleaned)
+			}
+		}
+		if len(values) > 0 {
+			constraints[columnName]["check_values"] = values
+		}
+	}
 }

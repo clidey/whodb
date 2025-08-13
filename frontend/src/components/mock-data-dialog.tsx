@@ -40,7 +40,7 @@ export const MockDataDialog: FC<MockDataDialogProps> = ({ isOpen, onClose, stora
     const schema = useAppSelector(state => state.database.schema);
     const [generateMockData, { loading }] = useGenerateMockDataMutation();
     const { data: maxRowData } = useMockDataMaxRowCountQuery();
-    const maxRowCount = maxRowData?.MockDataMaxRowCount || 500;
+    const maxRowCount = maxRowData?.MockDataMaxRowCount || 200;
 
     const methodItems: IDropdownItem[] = [createDropdownItem("Normal")];
     const handlingItems: IDropdownItem[] = [
@@ -82,7 +82,7 @@ export const MockDataDialog: FC<MockDataDialogProps> = ({ isOpen, onClose, stora
         // Enforce max limit
         if (parsedValue > maxRowCount) {
             setRowCount(maxRowCount.toString());
-            notify(`Maximum row count is ${maxRowCount}`, "info");
+            notify(`Maximum row count is ${maxRowCount}`, "warning");
         } else {
             setRowCount(numericValue);
         }
@@ -158,6 +158,12 @@ export const MockDataDialog: FC<MockDataDialogProps> = ({ isOpen, onClose, stora
                         <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
                             Generate Mock Data for {storageUnit.Name}
                         </h2>
+
+                        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 mb-4">
+                            <p className="text-sm text-blue-700 dark:text-blue-300">
+                                <strong>Note:</strong> Mock data generation is in development. You may experience some errors or missing data.
+                            </p>
+                        </div>
 
                         {!showConfirmation ? (
                             <div className="space-y-4">

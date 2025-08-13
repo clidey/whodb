@@ -2,6 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Communication Style
+- Maintain a professional, neutral tone in all communications
+- Use exclamation points sparingly and only when genuinely necessary
+- Approach problems with the measured perspective of an experienced software engineer
+- Keep a level head when discussing technical challenges and solutions
+- Focus on clear, factual explanations without unnecessary enthusiasm
+
 ## Development requirements
 To develop WhoDB, follow the below requirements every time you do a task:
 1. Clean code is paramount—make sure it is easy to understand and follow

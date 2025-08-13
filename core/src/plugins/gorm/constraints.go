@@ -32,10 +32,16 @@ func (p *GormPlugin) GetColumnConstraints(config *engine.PluginConfig, schema st
 }
 
 // ClearTableData clears all data from a table
+// clearTableDataWithDB performs the actual table data clearing using the provided database connection
+func (p *GormPlugin) clearTableDataWithDB(db *gorm.DB, schema string, storageUnit string) error {
+	tableName := p.FormTableName(schema, storageUnit)
+	result := db.Table(tableName).Where("1=1").Delete(nil)
+	return result.Error
+}
+
 func (p *GormPlugin) ClearTableData(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
-		tableName := p.FormTableName(schema, storageUnit)
-		result := db.Table(tableName).Delete(nil)
-		return result.Error == nil, result.Error
+		err := p.clearTableDataWithDB(db, schema, storageUnit)
+		return err == nil, err
 	})
 }

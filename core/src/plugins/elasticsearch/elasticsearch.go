@@ -252,6 +252,13 @@ func (p *ElasticSearchPlugin) ClearTableData(config *engine.PluginConfig, schema
 	return false, errors.ErrUnsupported
 }
 
+// WithTransaction executes the operation directly since ElasticSearch doesn't support transactions
+func (p *ElasticSearchPlugin) WithTransaction(config *engine.PluginConfig, operation func(tx any) error) error {
+	// ElasticSearch doesn't support transactions
+	// For now, just execute the operation directly
+	return operation(nil)
+}
+
 func (p *ElasticSearchPlugin) GetSupportedOperators() map[string]string {
 	return supportedOperators
 }

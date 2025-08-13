@@ -31,7 +31,7 @@ const (
 	// Default configuration values
 	DefaultNullProbability = 0.2     // 20% chance of null for nullable columns
 	DefaultStringMinLen    = 10      // Minimum string length
-	DefaultStringMaxLen    = 24      // Maximum string length
+	DefaultStringMaxLen    = 255     // Maximum string length
 	DefaultFloatMin        = 0.0     // Minimum float value
 	DefaultFloatMax        = 10000.0 // Maximum float value
 )
@@ -115,8 +115,7 @@ func parseMaxLen(columnType string) int {
 
 // generateByType generates mock data based on the detected database type
 // Returns properly typed values that the database driver can handle
-
-func (g *Generator) generateByType(dbType string, columnType string) any {
+func (g *Generator) generateByType(dbType string, columnType string, constraints map[string]any) any {
 	switch dbType {
 	case "int":
 		// Use Go's explicit int types for SQL integer types
@@ -185,18 +184,26 @@ func (g *Generator) generateByType(dbType string, columnType string) any {
 		arraySize := g.faker.IntRange(1, 5)
 		elements := make([]string, arraySize)
 		for i := range arraySize {
-			val := g.generateByType(detectDatabaseType(baseType), baseType)
+			val := g.generateByType(detectDatabaseType(baseType), baseType, constraints)
 			elements[i] = fmt.Sprintf("%v", val)
 		}
 		return "{" + strings.Join(elements, ",") + "}"
 	case "text":
 		fallthrough
 	default:
+		// Check for IN constraint values
+		if constraints != nil {
+			if values, ok := constraints["check_values"].([]string); ok && len(values) > 0 {
+				// Pick a random value from the allowed values
+				return values[g.faker.IntRange(0, len(values)-1)]
+			}
+		}
+
 		maxLen := parseMaxLen(columnType)
 		if maxLen <= 0 {
 			maxLen = g.faker.IntRange(DefaultStringMinLen, DefaultStringMaxLen)
 		}
-		text := g.faker.LetterN(uint(maxLen))
+		text := g.faker.LoremIpsumSentence(g.faker.IntRange(1, 10))
 		if len(text) > maxLen {
 			text = text[:maxLen]
 		}
@@ -226,9 +233,9 @@ func (g *Generator) GenerateValue(columnName string, columnType string, constrai
 		return nil, nil
 	}
 
-	// Generate value based on database type only
+	// Generate value based on database type and constraints
 	dbType := detectDatabaseType(columnTypeLower)
-	value := g.generateByType(dbType, columnTypeLower)
+	value := g.generateByType(dbType, columnTypeLower, constraints)
 
 	// For columns that require uniqueness, use inherently unique generators
 	if requireUnique {
@@ -310,4 +317,51 @@ func (g *Generator) GenerateRowDataWithConstraints(columns []engine.Column, colC
 // GenerateRowData generates mock data without constraints
 func (g *Generator) GenerateRowData(columns []engine.Column) ([]engine.Record, error) {
 	return g.GenerateRowDataWithConstraints(columns, nil)
+}
+
+// GenerateRowWithDefaults generates a row using safe default values
+// This is used as a fallback when constraint violations occur
+func (g *Generator) GenerateRowWithDefaults(columns []engine.Column) []engine.Record {
+	records := make([]engine.Record, 0, len(columns))
+
+	for _, col := range columns {
+		// Skip serial/auto-increment columns
+		if strings.Contains(strings.ToLower(col.Type), "serial") {
+			continue
+		}
+
+		colType := strings.ToLower(col.Type)
+		var valueStr string
+		extra := map[string]string{
+			"Type": col.Type,
+		}
+
+		// Use safe defaults based on column type
+		switch {
+		case strings.Contains(colType, "int"):
+			valueStr = "0"
+		case strings.Contains(colType, "float") || strings.Contains(colType, "decimal") || strings.Contains(colType, "numeric"):
+			valueStr = "0.0"
+		case strings.Contains(colType, "bool"):
+			valueStr = "false"
+		case strings.Contains(colType, "date"):
+			valueStr = time.Now().Format("2006-01-02")
+		case strings.Contains(colType, "time"):
+			valueStr = time.Now().Format("2006-01-02 15:04:05")
+		case strings.Contains(colType, "uuid"):
+			valueStr = g.faker.UUID()
+		case strings.Contains(colType, "json"):
+			valueStr = "{}"
+		default:
+			valueStr = "default"
+		}
+
+		records = append(records, engine.Record{
+			Key:   col.Name,
+			Value: valueStr,
+			Extra: extra,
+		})
+	}
+
+	return records
 }

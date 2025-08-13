@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/clidey/whodb/core/src/common"
@@ -234,17 +233,5 @@ func IsMockDataGenerationAllowed(tableName string) bool {
 }
 
 func GetMockDataGenerationMaxRowCount() int {
-	const maxAllowed = 500
-
-	envValue := os.Getenv("WHODB_MOCK_DATA_GENERATION_MAX_ROW_COUNT")
-	if envValue == "" {
-		return maxAllowed
-	}
-
-	value, err := strconv.Atoi(envValue)
-	if err != nil || value <= 0 || value > maxAllowed {
-		return maxAllowed
-	}
-
-	return value
+	return 200
 }

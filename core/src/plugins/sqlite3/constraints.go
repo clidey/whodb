@@ -18,6 +18,9 @@ package sqlite3
 
 import (
 	"fmt"
+	"regexp"
+	"strconv"
+	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
@@ -120,6 +123,16 @@ func (p *Sqlite3Plugin) GetColumnConstraints(config *engine.PluginConfig, schema
 			}
 		}
 		
+		// Get CHECK constraints from sqlite_master
+		// SQLite stores CHECK constraints in the CREATE TABLE statement
+		checkQuery := `SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?`
+		var createSQL string
+		err = db.Raw(checkQuery, storageUnit).Row().Scan(&createSQL)
+		if err == nil && createSQL != "" {
+			// Parse CHECK constraints from the CREATE TABLE statement
+			p.parseCheckConstraints(createSQL, constraints)
+		}
+		
 		return true, nil
 	})
 	
@@ -128,4 +141,109 @@ func (p *Sqlite3Plugin) GetColumnConstraints(config *engine.PluginConfig, schema
 	}
 	
 	return constraints, nil
+}
+
+// parseCheckConstraints extracts CHECK constraints from SQLite's CREATE TABLE statement
+func (p *Sqlite3Plugin) parseCheckConstraints(createSQL string, constraints map[string]map[string]interface{}) {
+	// SQLite stores CHECK constraints in the CREATE TABLE statement like:
+	// CREATE TABLE products (
+	//   price DECIMAL(10,2) NOT NULL CHECK (price >= 0),
+	//   stock_quantity INT CHECK (stock_quantity >= 0),
+	//   status TEXT CHECK (status IN ('active', 'inactive'))
+	// )
+	
+	// Find all CHECK clauses
+	checkPattern := regexp.MustCompile(`CHECK\s*\((.*?)\)(?:,|\s|$)`)
+	checkMatches := checkPattern.FindAllStringSubmatch(createSQL, -1)
+	
+	for _, match := range checkMatches {
+		if len(match) > 1 {
+			checkClause := match[1]
+			p.parseSingleCheckConstraint(checkClause, constraints)
+		}
+	}
+}
+
+// parseSingleCheckConstraint parses a single CHECK constraint clause
+func (p *Sqlite3Plugin) parseSingleCheckConstraint(checkClause string, constraints map[string]map[string]interface{}) {
+	// Pattern for >= or > constraints
+	minPattern := regexp.MustCompile(`(\w+)\s*>=?\s*([\-]?\d+(?:\.\d+)?)`)
+	if matches := minPattern.FindStringSubmatch(checkClause); len(matches) > 2 {
+		columnName := matches[1]
+		if constraints[columnName] == nil {
+			constraints[columnName] = map[string]interface{}{}
+		}
+		if val, err := strconv.ParseFloat(matches[2], 64); err == nil {
+			if strings.Contains(matches[0], ">=") {
+				constraints[columnName]["check_min"] = val
+			} else {
+				constraints[columnName]["check_min"] = val + 1
+			}
+		}
+	}
+	
+	// Pattern for <= or < constraints
+	maxPattern := regexp.MustCompile(`(\w+)\s*<=?\s*([\-]?\d+(?:\.\d+)?)`)
+	if matches := maxPattern.FindStringSubmatch(checkClause); len(matches) > 2 {
+		columnName := matches[1]
+		if constraints[columnName] == nil {
+			constraints[columnName] = map[string]interface{}{}
+		}
+		if val, err := strconv.ParseFloat(matches[2], 64); err == nil {
+			if strings.Contains(matches[0], "<=") {
+				constraints[columnName]["check_max"] = val
+			} else {
+				constraints[columnName]["check_max"] = val - 1
+			}
+		}
+	}
+	
+	// Pattern for BETWEEN constraints
+	betweenPattern := regexp.MustCompile(`(\w+)\s+BETWEEN\s+([\-]?\d+(?:\.\d+)?)\s+AND\s+([\-]?\d+(?:\.\d+)?)`)
+	if matches := betweenPattern.FindStringSubmatch(strings.ToUpper(checkClause)); len(matches) > 3 {
+		// Get original column name (case-sensitive)
+		origPattern := regexp.MustCompile(`(\w+)\s+(?i)between`)
+		origMatches := origPattern.FindStringSubmatch(checkClause)
+		if len(origMatches) > 1 {
+			columnName := origMatches[1]
+			if constraints[columnName] == nil {
+				constraints[columnName] = map[string]interface{}{}
+			}
+			if minVal, err := strconv.ParseFloat(matches[2], 64); err == nil {
+				constraints[columnName]["check_min"] = minVal
+			}
+			if maxVal, err := strconv.ParseFloat(matches[3], 64); err == nil {
+				constraints[columnName]["check_max"] = maxVal
+			}
+		}
+	}
+	
+	// Pattern for IN constraints
+	inPattern := regexp.MustCompile(`(\w+)\s+IN\s*\((.*?)\)`)
+	if matches := inPattern.FindStringSubmatch(strings.ToUpper(checkClause)); len(matches) > 2 {
+		// Get original column name (case-sensitive)
+		origPattern := regexp.MustCompile(`(\w+)\s+(?i)in\s*\(`)
+		origMatches := origPattern.FindStringSubmatch(checkClause)
+		if len(origMatches) > 1 {
+			columnName := origMatches[1]
+			if constraints[columnName] == nil {
+				constraints[columnName] = map[string]interface{}{}
+			}
+			// Extract values from IN clause
+			valuesStr := matches[2]
+			values := []string{}
+			// Split by comma and clean up
+			parts := strings.Split(valuesStr, ",")
+			for _, part := range parts {
+				cleaned := strings.TrimSpace(part)
+				cleaned = strings.Trim(cleaned, "'\"")
+				if cleaned != "" {
+					values = append(values, cleaned)
+				}
+			}
+			if len(values) > 0 {
+				constraints[columnName]["check_values"] = values
+			}
+		}
+	}
 }
