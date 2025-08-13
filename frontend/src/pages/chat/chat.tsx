@@ -282,7 +282,7 @@ export const ChatPage: FC = () => {
                                                     <div className={classNames("text-neutral-800 dark:text-neutral-300 px-4 py-2 rounded-xl whitespace-pre-wrap", {
                                                         "bg-neutral-600/5 dark:bg-[#2C2F33]": chat.isUserInput,
                                                         "-ml-2": !chat.isUserInput && chats[i-1]?.isUserInput,
-                                                    })}>
+                                                    })} data-input-message={chat.isUserInput ? "user" : "system"}>
                                                         {chat.Text}
                                                     </div>
                                                 </div>
