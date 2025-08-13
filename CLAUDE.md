@@ -47,15 +47,40 @@ npm run cypress:ee            # EE tests
 ```
 
 ### GraphQL Code Generation
+
+#### Resolver Architecture
+The project uses a dual-resolver architecture to maintain separation between CE and EE:
+- CE resolvers are in `core/graph/schema.resolvers.go` and are never overwritten by EE generation
+- EE resolvers extend CE resolvers through embedding and are generated as `*.ee.resolvers.go`
+- Build tags control which resolver is used at compile time
+
+#### Generation Commands
 ```bash
-# Backend CE (from core/)
+# Backend CE (from project root)
+./scripts/generate-graphql.sh
+
+# Backend EE (from project root)
+./scripts/generate-graphql.sh --ee
+
+# Alternative manual commands:
+# CE (from core/)
 go generate ./...
 
-# Backend EE (from core/) 
-GOWORK=../go.work.ee go generate ./...
+# EE (from ee/)
+GOWORK=../go.work.ee go generate .
 
 # Frontend (from frontend/)
-npm run generate              # Generates TypeScript types from GraphQL
+npm run generate:ce           # CE types
+npm run generate:ee           # EE types
+```
+
+#### Testing GraphQL Generation
+```bash
+# Validate the resolver structure
+./scripts/test-graphql-generation.sh
+
+# View merged CE+EE schema
+./scripts/merge-ee-schema.sh
 ```
 
 ## Architecture Overview

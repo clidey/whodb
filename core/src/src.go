@@ -18,6 +18,7 @@ package src
 
 import (
 	"fmt"
+
 	"github.com/clidey/whodb/core/src/plugins/clickhouse"
 	"github.com/clidey/whodb/core/src/plugins/elasticsearch"
 	"github.com/clidey/whodb/core/src/plugins/mongodb"
@@ -46,7 +47,7 @@ func SetEEInitializer(fn InitEEFunc) {
 
 func InitializeEngine() *engine.Engine {
 	MainEngine = &engine.Engine{}
-	
+
 	// Register community edition plugins
 	MainEngine.RegistryPlugin(postgres.NewPostgresPlugin())
 	MainEngine.RegistryPlugin(mysql.NewMySQLPlugin())
@@ -56,12 +57,12 @@ func InitializeEngine() *engine.Engine {
 	MainEngine.RegistryPlugin(redis.NewRedisPlugin())
 	MainEngine.RegistryPlugin(elasticsearch.NewElasticSearchPlugin())
 	MainEngine.RegistryPlugin(clickhouse.NewClickHousePlugin())
-	
+
 	// Initialize Enterprise Edition plugins if available
 	if initEE != nil {
 		initEE(MainEngine)
 	}
-	
+
 	return MainEngine
 }
 
