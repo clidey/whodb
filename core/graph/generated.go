@@ -82,6 +82,10 @@ type ComplexityRoot struct {
 		Type                 func(childComplexity int) int
 	}
 
+	MockDataGenerationStatus struct {
+		AmountGenerated func(childComplexity int) int
+	}
+
 	Mutation struct {
 		AddRow            func(childComplexity int, schema string, storageUnit string, values []*model.RecordInput) int
 		AddStorageUnit    func(childComplexity int, schema string, storageUnit string, fields []*model.RecordInput) int
@@ -144,7 +148,7 @@ type MutationResolver interface {
 	UpdateStorageUnit(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput, updatedColumns []string) (*model.StatusResponse, error)
 	AddRow(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
 	DeleteRow(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
-	GenerateMockData(ctx context.Context, input model.MockDataGenerationInput) (*model.StatusResponse, error)
+	GenerateMockData(ctx context.Context, input model.MockDataGenerationInput) (*model.MockDataGenerationStatus, error)
 }
 type QueryResolver interface {
 	Version(ctx context.Context) (string, error)
@@ -299,6 +303,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.LoginProfile.Type(childComplexity), true
+
+	case "MockDataGenerationStatus.AmountGenerated":
+		if e.complexity.MockDataGenerationStatus.AmountGenerated == nil {
+			break
+		}
+
+		return e.complexity.MockDataGenerationStatus.AmountGenerated(childComplexity), true
 
 	case "Mutation.AddRow":
 		if e.complexity.Mutation.AddRow == nil {
@@ -2489,6 +2500,50 @@ func (ec *executionContext) fieldContext_LoginProfile_IsEnvironmentDefined(_ con
 	return fc, nil
 }
 
+func (ec *executionContext) _MockDataGenerationStatus_AmountGenerated(ctx context.Context, field graphql.CollectedField, obj *model.MockDataGenerationStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MockDataGenerationStatus_AmountGenerated(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AmountGenerated, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MockDataGenerationStatus_AmountGenerated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MockDataGenerationStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_Login(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_Login(ctx, field)
 	if err != nil {
@@ -2976,9 +3031,9 @@ func (ec *executionContext) _Mutation_GenerateMockData(ctx context.Context, fiel
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.StatusResponse)
+	res := resTmp.(*model.MockDataGenerationStatus)
 	fc.Result = res
-	return ec.marshalNStatusResponse2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐStatusResponse(ctx, field.Selections, res)
+	return ec.marshalNMockDataGenerationStatus2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataGenerationStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_GenerateMockData(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2989,10 +3044,10 @@ func (ec *executionContext) fieldContext_Mutation_GenerateMockData(ctx context.C
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "Status":
-				return ec.fieldContext_StatusResponse_Status(ctx, field)
+			case "AmountGenerated":
+				return ec.fieldContext_MockDataGenerationStatus_AmountGenerated(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type StatusResponse", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type MockDataGenerationStatus", field.Name)
 		},
 	}
 	defer func() {
@@ -6897,6 +6952,45 @@ func (ec *executionContext) _LoginProfile(ctx context.Context, sel ast.Selection
 	return out
 }
 
+var mockDataGenerationStatusImplementors = []string{"MockDataGenerationStatus"}
+
+func (ec *executionContext) _MockDataGenerationStatus(ctx context.Context, sel ast.SelectionSet, obj *model.MockDataGenerationStatus) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, mockDataGenerationStatusImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MockDataGenerationStatus")
+		case "AmountGenerated":
+			out.Values[i] = ec._MockDataGenerationStatus_AmountGenerated(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -8279,6 +8373,20 @@ func (ec *executionContext) unmarshalNLoginProfileInput2githubᚗcomᚋclideyᚋ
 func (ec *executionContext) unmarshalNMockDataGenerationInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataGenerationInput(ctx context.Context, v any) (model.MockDataGenerationInput, error) {
 	res, err := ec.unmarshalInputMockDataGenerationInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNMockDataGenerationStatus2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataGenerationStatus(ctx context.Context, sel ast.SelectionSet, v model.MockDataGenerationStatus) graphql.Marshaler {
+	return ec._MockDataGenerationStatus(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNMockDataGenerationStatus2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataGenerationStatus(ctx context.Context, sel ast.SelectionSet, v *model.MockDataGenerationStatus) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MockDataGenerationStatus(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNRecord2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Record) graphql.Marshaler {

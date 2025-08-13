@@ -82,6 +82,10 @@ type MockDataGenerationInput struct {
 	OverwriteExisting bool   `json:"OverwriteExisting"`
 }
 
+type MockDataGenerationStatus struct {
+	AmountGenerated int `json:"AmountGenerated"`
+}
+
 type Mutation struct {
 }
 

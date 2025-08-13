@@ -115,12 +115,17 @@ export type MockDataGenerationInput = {
   StorageUnit: Scalars['String']['input'];
 };
 
+export type MockDataGenerationStatus = {
+  __typename?: 'MockDataGenerationStatus';
+  AmountGenerated: Scalars['Int']['output'];
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
   AddRow: StatusResponse;
   AddStorageUnit: StatusResponse;
   DeleteRow: StatusResponse;
-  GenerateMockData: StatusResponse;
+  GenerateMockData: MockDataGenerationStatus;
   Login: StatusResponse;
   LoginWithProfile: StatusResponse;
   Logout: StatusResponse;
@@ -320,7 +325,7 @@ export type GenerateMockDataMutationVariables = Exact<{
 }>;
 
 
-export type GenerateMockDataMutation = { __typename?: 'Mutation', GenerateMockData: { __typename?: 'StatusResponse', Status: boolean } };
+export type GenerateMockDataMutation = { __typename?: 'Mutation', GenerateMockData: { __typename?: 'MockDataGenerationStatus', AmountGenerated: number } };
 
 export type GetDatabaseQueryVariables = Exact<{
   type: Scalars['String']['input'];
@@ -614,7 +619,7 @@ export type MockDataMaxRowCountQueryResult = Apollo.QueryResult<MockDataMaxRowCo
 export const GenerateMockDataDocument = gql`
     mutation GenerateMockData($input: MockDataGenerationInput!) {
   GenerateMockData(input: $input) {
-    Status
+    AmountGenerated
   }
 }
     `;

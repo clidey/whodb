@@ -174,7 +174,7 @@ func (r *mutationResolver) DeleteRow(ctx context.Context, schema string, storage
 }
 
 // GenerateMockData is the resolver for the GenerateMockData field.
-func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.MockDataGenerationInput) (*model.StatusResponse, error) {
+func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.MockDataGenerationInput) (*model.MockDataGenerationStatus, error) {
 	// Enforce maximum row limit
 	maxRowLimit := env.GetMockDataGenerationMaxRowCount()
 	if input.RowCount > maxRowLimit {
@@ -371,8 +371,8 @@ func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.Moc
 	}
 
 	// Return success if any rows were generated
-	return &model.StatusResponse{
-		Status: generatedRows > 0,
+	return &model.MockDataGenerationStatus{
+		AmountGenerated: generatedRows,
 	}, nil
 }
 

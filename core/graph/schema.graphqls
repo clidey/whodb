@@ -122,6 +122,9 @@ input MockDataGenerationInput {
   OverwriteExisting: Boolean!
 }
 
+type MockDataGenerationStatus {
+  AmountGenerated: Int!
+}
 
 input ChatInput {
   PreviousConversation: String!
@@ -169,5 +172,5 @@ type Mutation {
   UpdateStorageUnit(schema: String!, storageUnit: String!, values: [RecordInput!]!, updatedColumns: [String!]!): StatusResponse!
   AddRow(schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
   DeleteRow(schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
-  GenerateMockData(input: MockDataGenerationInput!): StatusResponse!
+  GenerateMockData(input: MockDataGenerationInput!): MockDataGenerationStatus!
 }
