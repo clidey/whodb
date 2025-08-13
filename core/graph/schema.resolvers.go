@@ -424,7 +424,9 @@ func (r *queryResolver) StorageUnit(ctx context.Context, schema string) ([]*mode
 	}
 	storageUnits := []*model.StorageUnit{}
 	for _, unit := range units {
-		storageUnits = append(storageUnits, engine.GetStorageUnitModel(unit))
+		storageUnit := engine.GetStorageUnitModel(unit)
+		storageUnit.IsMockDataGenerationAllowed = env.IsMockDataGenerationAllowed(unit.Name)
+		storageUnits = append(storageUnits, storageUnit)
 	}
 	return storageUnits, nil
 }

@@ -452,7 +452,7 @@ export const ExploreStorageUnit: FC = () => {
                     <div className="flex w-full justify-end gap-2">
                         {adding || deleting && <Loading />}
                         {checkedRows.size > 0 && <AnimatedButton type="lg" icon={Icons.Delete} label={checkedRows.size > 1 ? "Delete rows" : "Delete row"} iconClassName="stroke-red-500 dark:stroke-red-500" labelClassName="text-red-500 dark:text-red-500" onClick={handleRowDelete} disabled={deleting} /> }
-                        <AnimatedButton type="lg" icon={Icons.Database} label="Generate Mock Data" onClick={() => setShowMockDataDialog(true)} disabled={adding || deleting} />
+                        {unit?.IsMockDataGenerationAllowed && <AnimatedButton type="lg" icon={Icons.Database} label="Generate Mock Data" onClick={() => setShowMockDataDialog(true)} disabled={adding || deleting} />}
                         <AnimatedButton type="lg" icon={Icons.Add} label={showAdd ? "Cancel" : "Add Row"} onClick={handleToggleShowAdd} disabled={adding} />
                     </div>
                     <div className={classNames("flex flex-col gap-2 overflow-y-auto h-full p-8 mt-2", {

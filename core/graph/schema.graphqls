@@ -58,6 +58,7 @@ input RecordInput {
 type StorageUnit {
   Name: String!
   Attributes: [Record!]!
+  IsMockDataGenerationAllowed: Boolean!
 }
 
 enum GraphUnitRelationshipType {

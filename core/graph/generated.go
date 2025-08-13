@@ -134,8 +134,9 @@ type ComplexityRoot struct {
 	}
 
 	StorageUnit struct {
-		Attributes func(childComplexity int) int
-		Name       func(childComplexity int) int
+		Attributes                  func(childComplexity int) int
+		IsMockDataGenerationAllowed func(childComplexity int) int
+		Name                        func(childComplexity int) int
 	}
 }
 
@@ -595,6 +596,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.StorageUnit.Attributes(childComplexity), true
+
+	case "StorageUnit.IsMockDataGenerationAllowed":
+		if e.complexity.StorageUnit.IsMockDataGenerationAllowed == nil {
+			break
+		}
+
+		return e.complexity.StorageUnit.IsMockDataGenerationAllowed(childComplexity), true
 
 	case "StorageUnit.Name":
 		if e.complexity.StorageUnit.Name == nil {
@@ -2141,6 +2149,8 @@ func (ec *executionContext) fieldContext_GraphUnit_Unit(_ context.Context, field
 				return ec.fieldContext_StorageUnit_Name(ctx, field)
 			case "Attributes":
 				return ec.fieldContext_StorageUnit_Attributes(ctx, field)
+			case "IsMockDataGenerationAllowed":
+				return ec.fieldContext_StorageUnit_IsMockDataGenerationAllowed(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type StorageUnit", field.Name)
 		},
@@ -3306,6 +3316,8 @@ func (ec *executionContext) fieldContext_Query_StorageUnit(ctx context.Context, 
 				return ec.fieldContext_StorageUnit_Name(ctx, field)
 			case "Attributes":
 				return ec.fieldContext_StorageUnit_Attributes(ctx, field)
+			case "IsMockDataGenerationAllowed":
+				return ec.fieldContext_StorageUnit_IsMockDataGenerationAllowed(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type StorageUnit", field.Name)
 		},
@@ -4304,6 +4316,50 @@ func (ec *executionContext) fieldContext_StorageUnit_Attributes(_ context.Contex
 				return ec.fieldContext_Record_Value(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Record", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StorageUnit_IsMockDataGenerationAllowed(ctx context.Context, field graphql.CollectedField, obj *model.StorageUnit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_StorageUnit_IsMockDataGenerationAllowed(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsMockDataGenerationAllowed, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_StorageUnit_IsMockDataGenerationAllowed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StorageUnit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7618,6 +7674,11 @@ func (ec *executionContext) _StorageUnit(ctx context.Context, sel ast.SelectionS
 			}
 		case "Attributes":
 			out.Values[i] = ec._StorageUnit_Attributes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "IsMockDataGenerationAllowed":
+			out.Values[i] = ec._StorageUnit_IsMockDataGenerationAllowed(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

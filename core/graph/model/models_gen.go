@@ -126,8 +126,9 @@ type StatusResponse struct {
 }
 
 type StorageUnit struct {
-	Name       string    `json:"Name"`
-	Attributes []*Record `json:"Attributes"`
+	Name                        string    `json:"Name"`
+	Attributes                  []*Record `json:"Attributes"`
+	IsMockDataGenerationAllowed bool      `json:"IsMockDataGenerationAllowed"`
 }
 
 type WhereCondition struct {

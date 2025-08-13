@@ -284,6 +284,7 @@ export type StatusResponse = {
 export type StorageUnit = {
   __typename?: 'StorageUnit';
   Attributes: Array<Record>;
+  IsMockDataGenerationAllowed: Scalars['Boolean']['output'];
   Name: Scalars['String']['output'];
 };
 
@@ -449,7 +450,7 @@ export type GetStorageUnitsQueryVariables = Exact<{
 }>;
 
 
-export type GetStorageUnitsQuery = { __typename?: 'Query', StorageUnit: Array<{ __typename?: 'StorageUnit', Name: string, Attributes: Array<{ __typename?: 'Record', Key: string, Value: string }> }> };
+export type GetStorageUnitsQuery = { __typename?: 'Query', StorageUnit: Array<{ __typename?: 'StorageUnit', Name: string, IsMockDataGenerationAllowed: boolean, Attributes: Array<{ __typename?: 'Record', Key: string, Value: string }> }> };
 
 export type UpdateStorageUnitMutationVariables = Exact<{
   schema: Scalars['String']['input'];
@@ -1260,6 +1261,7 @@ export const GetStorageUnitsDocument = gql`
       Key
       Value
     }
+    IsMockDataGenerationAllowed
   }
 }
     `;
