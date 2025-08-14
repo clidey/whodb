@@ -1,0 +1,5 @@
+mutation GenerateMockData($input: MockDataGenerationInput!) {
+    GenerateMockData(input: $input) {
+        AmountGenerated
+    }
+}

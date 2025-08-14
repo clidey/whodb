@@ -70,27 +70,28 @@ func (p *GormPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, 
 	})
 }
 
+// addRowWithDB performs the actual row insertion using the provided database connection
+func (p *GormPlugin) addRowWithDB(db *gorm.DB, schema string, storageUnit string, values []engine.Record) error {
+	if len(values) == 0 {
+		return errors.New("no values provided to insert into the table")
+	}
+
+	schema = p.EscapeIdentifier(schema)
+	storageUnit = p.EscapeIdentifier(storageUnit)
+	fullTableName := p.FormTableName(schema, storageUnit)
+
+	valuesToAdd, err := p.ConvertRecordValuesToMap(values)
+	if err != nil {
+		return err
+	}
+
+	result := db.Table(fullTableName).Create(valuesToAdd)
+	return result.Error
+}
+
 func (p *GormPlugin) AddRow(config *engine.PluginConfig, schema string, storageUnit string, values []engine.Record) (bool, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
-		if len(values) == 0 {
-			return false, errors.New("no values provided to insert into the table")
-		}
-
-		schema = p.EscapeIdentifier(schema)
-		storageUnit = p.EscapeIdentifier(storageUnit)
-		fullTableName := p.FormTableName(schema, storageUnit)
-
-		valuesToAdd, err := p.ConvertRecordValuesToMap(values)
-		if err != nil {
-			return false, err
-		}
-
-		result := db.Table(fullTableName).Create(valuesToAdd)
-
-		if result.Error != nil {
-			return false, result.Error
-		}
-
-		return true, nil
+		err := p.addRowWithDB(db, schema, storageUnit, values)
+		return err == nil, err
 	})
 }

@@ -74,6 +74,18 @@ type LoginProfileInput struct {
 	Database *string      `json:"Database,omitempty"`
 }
 
+type MockDataGenerationInput struct {
+	Schema            string `json:"Schema"`
+	StorageUnit       string `json:"StorageUnit"`
+	RowCount          int    `json:"RowCount"`
+	Method            string `json:"Method"`
+	OverwriteExisting bool   `json:"OverwriteExisting"`
+}
+
+type MockDataGenerationStatus struct {
+	AmountGenerated int `json:"AmountGenerated"`
+}
+
 type Mutation struct {
 }
 
@@ -114,8 +126,9 @@ type StatusResponse struct {
 }
 
 type StorageUnit struct {
-	Name       string    `json:"Name"`
-	Attributes []*Record `json:"Attributes"`
+	Name                        string    `json:"Name"`
+	Attributes                  []*Record `json:"Attributes"`
+	IsMockDataGenerationAllowed bool      `json:"IsMockDataGenerationAllowed"`
 }
 
 type WhereCondition struct {

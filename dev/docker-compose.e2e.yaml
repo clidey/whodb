@@ -56,20 +56,20 @@ services:
     networks:
       - db
 
-  # e2e_mysql_842:
-  #   image: mysql:8.4.2
-  #   environment:
-  #     MYSQL_USER: user
-  #     MYSQL_PASSWORD: password
-  #     MYSQL_DATABASE: mysql
-  #     MYSQL_ROOT_PASSWORD: password
-  #   volumes:
-  #     - e2e_mysql_842:/var/lib/mysql
-  #     - ./sample-data/mysql/data.sql:/docker-entrypoint-initdb.d/init.sql
-  #   ports:
-  #     - "3306:3306"
-  #   networks:
-  #     - db
+  e2e_mysql_842:
+    image: mysql:8.4.2
+    environment:
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: test_db
+      MYSQL_ROOT_PASSWORD: password
+    volumes:
+      - e2e_mysql_842:/var/lib/mysql
+      - ./sample-data/mysql/data.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3308:3306"
+    networks:
+      - db
 
   e2e_mariadb:
     image: mariadb
@@ -211,4 +211,4 @@ volumes:
   e2e_clickhouse:
   e2e_redis:
   e2e_elasticsearch:
-  # e2e_mysql_842:
+  e2e_mysql_842:
