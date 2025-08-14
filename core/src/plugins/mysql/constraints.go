@@ -20,6 +20,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
 	"gorm.io/gorm"
@@ -142,6 +143,11 @@ func (p *MySQLPlugin) parseCheckConstraint(checkClause string, constraints map[s
 	}
 
 	columnName := tokens[0]
+	
+	// Validate column name to prevent SQL injection
+	if !common.ValidateColumnName(columnName) {
+		return
+	}
 
 	// Check for >= or > constraints
 	if strings.Contains(clause, ">=") {
@@ -276,7 +282,7 @@ func extractNumber(s string) string {
 	return s
 }
 
-// parseInValues parses the values from an IN clause
+// parseInValues parses the values from an IN clause with SQL injection protection
 func parseInValues(valuesStr string) []string {
 	var values []string
 	parts := strings.Split(valuesStr, ",")
@@ -293,7 +299,11 @@ func parseInValues(valuesStr string) []string {
 		cleaned = strings.Trim(cleaned, "'\"")
 
 		if cleaned != "" {
-			values = append(values, cleaned)
+			// Validate the value to prevent SQL injection
+			if sanitized, ok := common.SanitizeConstraintValue(cleaned); ok {
+				values = append(values, sanitized)
+			}
+			// Skip malicious values silently
 		}
 	}
 

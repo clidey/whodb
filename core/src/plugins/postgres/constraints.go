@@ -21,6 +21,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
 	"gorm.io/gorm"
@@ -137,6 +138,10 @@ func (p *PostgresPlugin) parseCheckConstraint(checkClause string, constraints ma
 	minPattern := regexp.MustCompile(`\(?(\w+)\)?\s*>=?\s*\(?([\-]?\d+(?:\.\d+)?)\)?`)
 	if matches := minPattern.FindStringSubmatch(clause); len(matches) > 2 {
 		columnName := matches[1]
+		// Validate column name to prevent SQL injection
+		if !common.ValidateColumnName(columnName) {
+			return
+		}
 		if constraints[columnName] == nil {
 			constraints[columnName] = map[string]interface{}{}
 		}
@@ -153,6 +158,10 @@ func (p *PostgresPlugin) parseCheckConstraint(checkClause string, constraints ma
 	maxPattern := regexp.MustCompile(`\(?(\w+)\)?\s*<=?\s*\(?([\-]?\d+(?:\.\d+)?)\)?`)
 	if matches := maxPattern.FindStringSubmatch(clause); len(matches) > 2 {
 		columnName := matches[1]
+		// Validate column name to prevent SQL injection
+		if !common.ValidateColumnName(columnName) {
+			return
+		}
 		if constraints[columnName] == nil {
 			constraints[columnName] = map[string]interface{}{}
 		}
@@ -169,6 +178,10 @@ func (p *PostgresPlugin) parseCheckConstraint(checkClause string, constraints ma
 	anyArrayPattern := regexp.MustCompile(`\(?(\w+)\)?.*?ANY\s*\(ARRAY\[(.*?)\]`)
 	if matches := anyArrayPattern.FindStringSubmatch(clause); len(matches) > 2 {
 		columnName := matches[1]
+		// Validate column name to prevent SQL injection
+		if !common.ValidateColumnName(columnName) {
+			return
+		}
 		if constraints[columnName] == nil {
 			constraints[columnName] = map[string]interface{}{}
 		}
@@ -183,7 +196,11 @@ func (p *PostgresPlugin) parseCheckConstraint(checkClause string, constraints ma
 			cleaned = regexp.MustCompile(`::\w+`).ReplaceAllString(cleaned, "")
 			cleaned = strings.Trim(cleaned, "'\"")
 			if cleaned != "" {
-				values = append(values, cleaned)
+				// Validate the value to prevent SQL injection
+				if sanitized, ok := common.SanitizeConstraintValue(cleaned); ok {
+					values = append(values, sanitized)
+				}
+				// Skip malicious values silently
 			}
 		}
 		if len(values) > 0 {
