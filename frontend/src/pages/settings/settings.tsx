@@ -15,12 +15,12 @@
  */
 
 import { FC, useCallback } from "react";
-import { Text, ToggleInput } from "../../components/input";
 import { InternalPage } from "../../components/page";
 import { InternalRoutes } from "../../config/routes";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { SettingsActions } from "../../store/settings";
 import { isEEMode } from "@/config/ee-imports";
+import { Label, Switch } from "@clidey/ux";
 
 export const SettingsPage: FC = () => {
     const dispatch = useAppDispatch();
@@ -32,7 +32,7 @@ export const SettingsPage: FC = () => {
 
     return <InternalPage routes={[InternalRoutes.Settings!]}>
         <div className="flex justify-center items-center w-full">
-            <div className="w-full max-w-[1000px] flex flex-col gap-4">
+            <div className="w-full flex flex-col gap-4">
                 <h2 className="text-2xl text-neutral-700 dark:text-neutral-300">Telemetry and Performance Metrics</h2>
                 {isEEMode ? (
                     <h3 className="text-base text-neutral-700 dark:text-neutral-300">
@@ -58,8 +58,8 @@ export const SettingsPage: FC = () => {
                             "Contact Us" option in the bottom left corner of the screen.
                         </h3>
                         <div className="flex gap-2 items-center mr-4">
-                            <Text label={metricsEnabled ? "Enabled" : "Disabled"}/>
-                            <ToggleInput value={metricsEnabled} setValue={handleMetricsToggle}/>
+                            <Label>{metricsEnabled ? "Enabled" : "Disabled"}</Label>
+                            <Switch checked={metricsEnabled} onChange={() => handleMetricsToggle(!metricsEnabled)}/>
                         </div>
                     </>
                 )}

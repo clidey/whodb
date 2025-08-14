@@ -2,7 +2,6 @@ import classNames from "classnames";
 import { FC, useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Icons } from "./icons";
-import { ClassNames } from "./classes";
 import { LocalLoginProfile } from "../store/auth";
 import { databaseTypeDropdownItems } from "../config/database-types";
 
@@ -135,13 +134,13 @@ export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, class
         {port && (
           <div className="flex justify-between">
             <span className="text-gray-600 dark:text-gray-400">Port:</span>
-            <span className={ClassNames.Text}>{port}</span>
+            <span>{port}</span>
           </div>
         )}
         {lastAccessed && (
           <div className="flex justify-between">
             <span className="text-gray-600 dark:text-gray-400">Last Logged In:&nbsp;</span>
-            <span className={ClassNames.Text}>{lastAccessed}</span>
+            <span>{lastAccessed}</span>
           </div>
         )}
       </div>

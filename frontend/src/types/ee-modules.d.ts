@@ -11,9 +11,10 @@ declare module '@ee/icons' {
   export default EEIcons;
 }
 
-declare module '@ee/config' {
+declare module '@ee/config.tsx' {
   export const eeDatabaseTypes: any;
   export const eeFeatures: any;
+  export const eeExtensions: Record<string, any>;
   export const isEEDatabase: any;
   export const isEENoSQLDatabase: any;
   export const getEEDatabaseStorageUnitLabel: any;
@@ -24,7 +25,6 @@ declare module '@ee/index' {
   export const isEENoSQLDatabase: any;
   export const getEEDatabaseStorageUnitLabel: any;
   export const AnalyzeGraph: any;
-  export const ThemeConfig: any;
   export default null;
 }
 
@@ -38,12 +38,9 @@ declare module '@ee/components/charts/pie-chart' {
   export default PieChart;
 }
 
-declare module '@ee/pages/raw-execute/analyze-view' {
-  export const AnalyzeGraph: any;
-  export default AnalyzeGraph;
-}
-
-declare module '@ee/components/theme/theme' {
-  export const ThemeConfig: any;
-  export default ThemeConfig;
+declare module '@ee/pages/raw-execute/index' {
+  export const plugins: any;
+  export const ActionOptions: any;
+  export const ActionOptionIcons: any;
+  export default { plugins, ActionOptions, ActionOptionIcons };
 }

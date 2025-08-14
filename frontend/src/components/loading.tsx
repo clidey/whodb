@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-import classNames from "classnames";
 import { FC } from "react";
 import { twMerge } from "tailwind-merge";
-import { ClassNames } from "./classes";
 import { Container } from "./page";
 
 type ILoadingProps = {
@@ -37,7 +35,7 @@ export const Loading: FC<ILoadingProps> = ({ className, hideText, loadingText, s
       </div>
       {
         !hideText &&
-        <div className={classNames(ClassNames.Text, "text-sm")}>{loadingText}</div>
+        <p className="text-sm">{loadingText}</p>
       }
     </div>
   }
@@ -50,7 +48,7 @@ export const Loading: FC<ILoadingProps> = ({ className, hideText, loadingText, s
       </div>
       {
         !hideText &&
-        <div className={classNames(ClassNames.Text, "text-sm")}>{loadingText}</div>
+        <p className="text-sm">{loadingText}</p>
       }
     </div>
   }

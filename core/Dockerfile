@@ -21,7 +21,6 @@ COPY ./frontend/ ./
 
 # Create empty EE modules for Vite to resolve during CE build
 RUN mkdir -p ee/frontend/src/components/theme ee/frontend/src/components/charts ee/frontend/src/pages/raw-execute ee/frontend/src && \
-    echo "export default {}; export const ThemeConfig = {};" > ee/frontend/src/components/theme/theme.ts && \
     echo "export default {}; export const LineChart = () => null;" > ee/frontend/src/components/charts/line-chart.tsx && \
     echo "export default {}; export const PieChart = () => null;" > ee/frontend/src/components/charts/pie-chart.tsx && \
     echo "export default {}; export const AnalyzeGraph = () => null;" > ee/frontend/src/pages/raw-execute/analyze-view.tsx && \

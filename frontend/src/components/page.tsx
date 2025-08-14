@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
+import { ModeToggle, SidebarProvider } from "@clidey/ux";
+import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
-import { FC, ReactNode, useCallback } from "react";
+import { FC, ReactNode } from "react";
 import { twMerge } from "tailwind-merge";
 import { IInternalRoute } from "../config/routes";
-import { GlobalActions } from "../store/global";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { useAppSelector } from "../store/hooks";
 import { Breadcrumb } from "./breadcrumbs";
-import { ClassNames } from "./classes";
-import { Icons } from "./icons";
 import { Loading } from "./loading";
 import { Sidebar } from "./sidebar/sidebar";
-import classNames from "classnames";
+import { SchemaViewer } from "./schema-viewer";
+import { useLocation, useParams } from "react-router-dom";
+import { StorageUnit } from "../generated/graphql";
 
 type IPageProps = {
     wrapperClassName?: string;
@@ -53,25 +54,23 @@ type IInternalPageProps = IPageProps & {
 
 export const InternalPage: FC<IInternalPageProps> = (props) => {
     const current = useAppSelector(state => state.auth.current);
-    const darkModeEnabled = useAppSelector(state => state.global.theme === "dark");
-    const dispatch = useAppDispatch();
-
-    const handleDarkModeToggle = useCallback(() => {
-        dispatch(GlobalActions.setTheme(darkModeEnabled ? "light" : "dark"));
-    }, [dispatch, darkModeEnabled]);
+    const state = useLocation().state as { unit: StorageUnit } | undefined;
 
     return (
         <Container>
-            <Sidebar />
+            <div className="flex flex-row grow">
+                <SidebarProvider defaultOpen={state?.unit == null}>
+                    <Sidebar />
+                </SidebarProvider>
+                {state?.unit && <SidebarProvider>
+                    <SchemaViewer />
+                </SidebarProvider>}
+            </div>
             <Page wrapperClassName="p-0" {...props}>
                 <div className="flex flex-col grow py-6">
-                    <div className="flex justify-between items-center">
-                        <div className="sticky z-10 top-2 left-4 w-fit rounded-xl transition-all">
-                            <Breadcrumb routes={props.routes ?? []} active={props.routes?.at(-1)} />
-                        </div>
-                        <div className={classNames("flex gap-2 items-center mr-8 cursor-pointer rounded-full", ClassNames.Text, ClassNames.Hover)} onClick={handleDarkModeToggle}>
-                            {darkModeEnabled ? Icons.Sun : Icons.Moon }
-                        </div>
+                    <div className="flex w-full justify-between items-center px-8">
+                        <Breadcrumb routes={props.routes ?? []} active={props.routes?.at(-1)} />
+                        <ModeToggle />
                     </div>
                     {
                         current == null
@@ -92,7 +91,7 @@ type IContainerProps = {
 }
 
 export const Container: FC<IContainerProps> = ({ className, children }) => {
-    return  <div className={classNames(className, "flex grow h-full w-full", ClassNames.Background)}>
+    return  <div className={classNames(className, "flex grow h-full w-full")}>
         {children}
     </div>
 }

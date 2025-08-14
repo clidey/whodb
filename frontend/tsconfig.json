@@ -24,7 +24,8 @@
       "@/*": ["src/*"],
       "@ee/*": ["../ee/frontend/src/*"],
       "@graphql": ["src/generated/graphql.tsx"]
-    }
+    },
+    "allowImportingTsExtensions": true
   },
   "include": [
     "src",

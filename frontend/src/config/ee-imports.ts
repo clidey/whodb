@@ -13,7 +13,6 @@ export const EEComponents: EEComponentTypes = {
     AnalyzeGraph: null,
     LineChart: null,
     PieChart: null,
-    ThemeConfig: null,
 };
 
 // Load EE components if in EE mode
@@ -29,8 +28,6 @@ if (isEEMode) {
                 if (eeModule.LineChart) EEComponents.LineChart = eeModule.LineChart;
                 // @ts-ignore - TODO: fix this
                 if (eeModule.PieChart) EEComponents.PieChart = eeModule.PieChart;
-                // @ts-ignore - TODO: fix this
-                if (eeModule.ThemeConfig) EEComponents.ThemeConfig = eeModule.ThemeConfig;
             }
         } catch (error) {
             console.warn('EE components could not be loaded:', error);

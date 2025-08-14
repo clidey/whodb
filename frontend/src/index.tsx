@@ -23,11 +23,10 @@ import { Provider } from "react-redux";
 import { reduxStore, reduxStorePersistor } from './store';
 import { App } from './app';
 import { BrowserRouter } from "react-router-dom";
-import 'reactflow/dist/style.css';
 import { PersistGate } from 'redux-persist/integration/react';
 import { PostHogProvider } from 'posthog-js/react';
 import {initPosthog} from "./config/posthog";
-import { ThemeProvider } from './theme/theme-provider';
+import { ThemeProvider } from '@clidey/ux'
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
