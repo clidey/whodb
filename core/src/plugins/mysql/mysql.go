@@ -18,9 +18,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	mapset "github.com/deckarep/golang-set/v2"
@@ -98,7 +98,8 @@ func (p *MySQLPlugin) GetTableNameAndAttributes(rows *sql.Rows, db *gorm.DB) (st
 	var totalSize, dataSize float64
 	var rowCount int64
 	if err := rows.Scan(&tableName, &tableType, &totalSize, &dataSize, &rowCount); err != nil {
-		log.Fatal(err)
+		log.Logger.WithError(err).Error("Failed to scan MySQL table information")
+		return "", []engine.Record{}
 	}
 
 	attributes := []engine.Record{

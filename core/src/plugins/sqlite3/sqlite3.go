@@ -19,15 +19,14 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
+	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	mapset "github.com/deckarep/golang-set/v2"
-
-	"github.com/clidey/whodb/core/src/engine"
 	"gorm.io/gorm"
 )
 
@@ -101,7 +100,8 @@ func (p *Sqlite3Plugin) GetPlaceholder(index int) string {
 func (p *Sqlite3Plugin) GetTableNameAndAttributes(rows *sql.Rows, db *gorm.DB) (string, []engine.Record) {
 	var tableName, tableType string
 	if err := rows.Scan(&tableName, &tableType); err != nil {
-		log.Fatal(err)
+		log.Logger.WithError(err).Error("Failed to scan SQLite table information from rows")
+		return "", nil
 	}
 
 	var rowCount int64

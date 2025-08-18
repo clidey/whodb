@@ -23,6 +23,7 @@ import (
 
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 )
 
 var (
@@ -59,21 +60,26 @@ func (p *ElasticSearchPlugin) GetAllSchemas(config *engine.PluginConfig) ([]stri
 func (p *ElasticSearchPlugin) GetStorageUnits(config *engine.PluginConfig, database string) ([]engine.StorageUnit, error) {
 	client, err := DB(config)
 	if err != nil {
+		log.Logger.WithError(err).Error("Failed to connect to ElasticSearch while getting storage units")
 		return nil, err
 	}
 
 	res, err := client.Indices.Stats()
 	if err != nil {
+		log.Logger.WithError(err).Error("Failed to get ElasticSearch indices stats")
 		return nil, err
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return nil, fmt.Errorf("error getting stats for indices: %s", res.String())
+		err := fmt.Errorf("error getting stats for indices: %s", res.String())
+		log.Logger.WithError(err).Error("ElasticSearch indices stats API returned error")
+		return nil, err
 	}
 
 	var stats map[string]interface{}
 	if err := json.NewDecoder(res.Body).Decode(&stats); err != nil {
+		log.Logger.WithError(err).Error("Failed to decode ElasticSearch indices stats response")
 		return nil, err
 	}
 
@@ -102,12 +108,14 @@ func (p *ElasticSearchPlugin) GetStorageUnits(config *engine.PluginConfig, datab
 func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, collection string, where *model.WhereCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	client, err := DB(config)
 	if err != nil {
+		log.Logger.WithError(err).WithField("collection", collection).Error("Failed to connect to ElasticSearch while getting rows")
 		return nil, err
 	}
 
 	// Convert the where condition to an Elasticsearch filter
 	elasticSearchConditions, err := convertWhereConditionToES(where)
 	if err != nil {
+		log.Logger.WithError(err).WithField("collection", collection).Error("Failed to convert where condition to ElasticSearch query")
 		return nil, fmt.Errorf("error converting where condition: %v", err)
 	}
 
@@ -121,6 +129,7 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(query); err != nil {
+		log.Logger.WithError(err).WithField("collection", collection).Error("Failed to encode ElasticSearch query to JSON")
 		return nil, err
 	}
 
@@ -131,22 +140,28 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 		client.Search.WithTrackTotalHits(true),
 	)
 	if err != nil {
+		log.Logger.WithError(err).WithField("collection", collection).Error("Failed to execute ElasticSearch search query")
 		return nil, err
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return nil, fmt.Errorf("error searching documents: %s", res.String())
+		err := fmt.Errorf("error searching documents: %s", res.String())
+		log.Logger.WithError(err).WithField("collection", collection).Error("ElasticSearch search API returned error")
+		return nil, err
 	}
 
 	var searchResult map[string]interface{}
 	if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
+		log.Logger.WithError(err).WithField("collection", collection).Error("Failed to decode ElasticSearch search response")
 		return nil, err
 	}
 
 	hits, ok := searchResult["hits"].(map[string]interface{})["hits"].([]interface{})
 	if !ok {
-		return nil, fmt.Errorf("invalid response structure")
+		err := fmt.Errorf("invalid response structure")
+		log.Logger.WithError(err).WithField("collection", collection).Error("ElasticSearch search response has invalid structure")
+		return nil, err
 	}
 
 	result := &engine.GetRowsResult{
@@ -163,6 +178,7 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 		source["_id"] = id
 		jsonBytes, err := json.Marshal(source)
 		if err != nil {
+			log.Logger.WithError(err).WithField("collection", collection).Error("Failed to marshal ElasticSearch document source to JSON")
 			return nil, err
 		}
 		result.Rows = append(result.Rows, []string{string(jsonBytes)})
@@ -179,7 +195,9 @@ func convertWhereConditionToES(where *model.WhereCondition) (map[string]interfac
 	switch where.Type {
 	case model.WhereConditionTypeAtomic:
 		if where.Atomic == nil {
-			return nil, fmt.Errorf("atomic condition must have an atomicwherecondition")
+			err := fmt.Errorf("atomic condition must have an atomicwherecondition")
+			log.Logger.WithError(err).Error("Invalid atomic where condition: missing atomic condition")
+			return nil, err
 		}
 		return map[string]interface{}{
 			"must": []map[string]interface{}{
@@ -193,12 +211,15 @@ func convertWhereConditionToES(where *model.WhereCondition) (map[string]interfac
 
 	case model.WhereConditionTypeAnd:
 		if where.And == nil || len(where.And.Children) == 0 {
-			return nil, fmt.Errorf("and condition must have children")
+			err := fmt.Errorf("and condition must have children")
+			log.Logger.WithError(err).Error("Invalid AND where condition: missing children")
+			return nil, err
 		}
 		mustClauses := []map[string]interface{}{}
 		for _, child := range where.And.Children {
 			childCondition, err := convertWhereConditionToES(child)
 			if err != nil {
+				log.Logger.WithError(err).Error("Failed to convert child condition in AND clause to ElasticSearch query")
 				return nil, err
 			}
 			mustClauses = append(mustClauses, childCondition)
@@ -207,12 +228,15 @@ func convertWhereConditionToES(where *model.WhereCondition) (map[string]interfac
 
 	case model.WhereConditionTypeOr:
 		if where.Or == nil || len(where.Or.Children) == 0 {
-			return nil, fmt.Errorf("or condition must have children")
+			err := fmt.Errorf("or condition must have children")
+			log.Logger.WithError(err).Error("Invalid OR where condition: missing children")
+			return nil, err
 		}
 		shouldClauses := []map[string]interface{}{}
 		for _, child := range where.Or.Children {
 			childCondition, err := convertWhereConditionToES(child)
 			if err != nil {
+				log.Logger.WithError(err).Error("Failed to convert child condition in OR clause to ElasticSearch query")
 				return nil, err
 			}
 			shouldClauses = append(shouldClauses, childCondition)
@@ -223,7 +247,8 @@ func convertWhereConditionToES(where *model.WhereCondition) (map[string]interfac
 		}, nil
 
 	default:
-		return nil, fmt.Errorf("unknown whereconditiontype: %v", where.Type)
+		err := fmt.Errorf("unknown whereconditiontype: %v", where.Type)
+		return nil, err
 	}
 }
 

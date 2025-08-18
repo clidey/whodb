@@ -25,6 +25,7 @@ import (
 
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	mapset "github.com/deckarep/golang-set/v2"
 	"gorm.io/gorm"
@@ -102,12 +103,14 @@ func (p *GormPlugin) GetStorageUnits(config *engine.PluginConfig, schema string)
 		storageUnits := []engine.StorageUnit{}
 		rows, err := db.Raw(p.GetTableInfoQuery(), schema).Rows()
 		if err != nil {
+			log.Logger.WithError(err).Error("Failed to execute table info query for schema: " + schema)
 			return nil, err
 		}
 		defer rows.Close()
 
 		allTablesWithColumns, err := p.GetTableSchema(db, schema)
 		if err != nil {
+			log.Logger.WithError(err).Error("Failed to get table schema for schema: " + schema)
 			return nil, err
 		}
 
@@ -139,6 +142,7 @@ func (p *GormPlugin) GetTableSchema(db *gorm.DB, schema string) (map[string][]en
 	query := p.GetSchemaTableQuery()
 
 	if err := db.Raw(query, schema).Scan(&result).Error; err != nil {
+		log.Logger.WithError(err).Error("Failed to execute schema table query for schema: " + schema)
 		return nil, err
 	}
 
@@ -155,6 +159,7 @@ func (p *GormPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, error
 		var schemas []any
 		query := p.GetAllSchemasQuery()
 		if err := db.Raw(query).Scan(&schemas).Error; err != nil {
+			log.Logger.WithError(err).Error("Failed to execute get all schemas query")
 			return nil, err
 		}
 		schemaNames := []string{}
@@ -180,6 +185,7 @@ func (p *GormPlugin) GetRows(config *engine.PluginConfig, schema string, storage
 func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	columnInfo, err := p.GetColumnTypes(db, schema, storageUnit)
 	if err != nil {
+		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get column types for table %s.%s", schema, storageUnit))
 		return nil, err
 	}
 
@@ -202,6 +208,7 @@ func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, page
 
 	rows, err := db.Raw(query).Rows()
 	if err != nil {
+		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to execute SQLite rows query for table %s.%s", schema, storageUnit))
 		return nil, err
 	}
 	defer rows.Close()
@@ -222,6 +229,7 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 	query := db.Table(fullTable)
 	query, err := p.applyWhereConditions(query, where, columnTypes)
 	if err != nil {
+		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to apply where conditions for table %s.%s", schema, storageUnit))
 		return nil, err
 	}
 
@@ -234,12 +242,14 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 
 	rows, err := query.Rows()
 	if err != nil {
+		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to execute generic rows query for table %s.%s", schema, storageUnit))
 		return nil, err
 	}
 	defer rows.Close()
 
 	result, err := p.GormPluginFunctions.ConvertRawToRows(rows)
 	if err != nil {
+		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to convert raw rows for table %s.%s", schema, storageUnit))
 		return nil, err
 	}
 
@@ -271,6 +281,7 @@ func (p *GormPlugin) applyWhereConditions(query *gorm.DB, condition *model.Where
 
 			value, err := p.GormPluginFunctions.ConvertStringValue(condition.Atomic.Value, columnType)
 			if err != nil {
+				log.Logger.WithError(err).Error(fmt.Sprintf("Failed to convert string value '%s' for column type '%s'", condition.Atomic.Value, columnType))
 				return nil, err
 			}
 			operator, ok := p.GetSupportedOperators()[condition.Atomic.Operator]
@@ -286,6 +297,7 @@ func (p *GormPlugin) applyWhereConditions(query *gorm.DB, condition *model.Where
 				var err error
 				query, err = p.applyWhereConditions(query, child, columnTypes)
 				if err != nil {
+					log.Logger.WithError(err).Error("Failed to apply AND where condition")
 					return nil, err
 				}
 			}
@@ -297,6 +309,7 @@ func (p *GormPlugin) applyWhereConditions(query *gorm.DB, condition *model.Where
 			for _, child := range condition.Or.Children {
 				childQuery, err := p.applyWhereConditions(query, child, columnTypes)
 				if err != nil {
+					log.Logger.WithError(err).Error("Failed to apply OR where condition")
 					return nil, err
 				}
 				orQueries = orQueries.Or(childQuery)
@@ -311,11 +324,13 @@ func (p *GormPlugin) applyWhereConditions(query *gorm.DB, condition *model.Where
 func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, error) {
 	columns, err := rows.Columns()
 	if err != nil {
+		log.Logger.WithError(err).Error("Failed to get column names from result set")
 		return nil, err
 	}
 
 	columnTypes, err := rows.ColumnTypes()
 	if err != nil {
+		log.Logger.WithError(err).Error("Failed to get column types from result set")
 		return nil, err
 	}
 
@@ -370,6 +385,7 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 		}
 
 		if err := rows.Scan(columnPointers...); err != nil {
+			log.Logger.WithError(err).Error("Failed to scan row data")
 			return nil, err
 		}
 
@@ -432,6 +448,7 @@ func (p *GormPlugin) FindMissingDataType(db *gorm.DB, columnType string) string 
 	if p.Type == engine.DatabaseType_Postgres {
 		var typname string
 		if err := db.Raw("SELECT typname FROM pg_type WHERE oid = ?", columnType).Scan(&typname).Error; err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to find PostgreSQL type name for OID: %s", columnType))
 			typname = columnType
 		}
 		return strings.ToUpper(typname)

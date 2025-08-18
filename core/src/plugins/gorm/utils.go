@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -63,6 +64,7 @@ func (p *GormPlugin) ConvertRecordValuesToMap(values []engine.Record) (map[strin
 	for _, value := range values {
 		val, err := p.GormPluginFunctions.ConvertStringValueDuringMap(value.Value, value.Extra["Type"])
 		if err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to convert record value '%s' of type '%s' for key '%s'", value.Value, value.Extra["Type"], value.Key))
 			return nil, err
 		}
 		data[value.Key] = val
@@ -85,6 +87,7 @@ func (p *GormPlugin) GetPrimaryKeyColumns(db *gorm.DB, schema string, tableName 
 	}
 
 	if err != nil {
+		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to execute primary key query for table %s.%s", schema, tableName))
 		return nil, err
 	}
 	defer rows.Close()
@@ -92,12 +95,14 @@ func (p *GormPlugin) GetPrimaryKeyColumns(db *gorm.DB, schema string, tableName 
 	for rows.Next() {
 		var pkColumn string
 		if err := rows.Scan(&pkColumn); err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to scan primary key column for table %s.%s", schema, tableName))
 			return nil, err
 		}
 		primaryKeys = append(primaryKeys, pkColumn)
 	}
 
 	if err := rows.Err(); err != nil {
+		log.Logger.WithError(err).Error(fmt.Sprintf("Row iteration error while getting primary keys for table %s.%s", schema, tableName))
 		return nil, err
 	}
 
@@ -122,6 +127,7 @@ func (p *GormPlugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[
 	}
 
 	if err != nil {
+		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to execute column types query for table %s.%s", schema, tableName))
 		return nil, err
 	}
 	defer rows.Close()
@@ -129,12 +135,14 @@ func (p *GormPlugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[
 	for rows.Next() {
 		var columnName, dataType string
 		if err := rows.Scan(&columnName, &dataType); err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to scan column type data for table %s.%s", schema, tableName))
 			return nil, err
 		}
 		columnTypes[columnName] = dataType
 	}
 
 	if err := rows.Err(); err != nil {
+		log.Logger.WithError(err).Error(fmt.Sprintf("Row iteration error while getting column types for table %s.%s", schema, tableName))
 		return nil, err
 	}
 
@@ -194,6 +202,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (interface{}, 
 	case intTypes.Contains(columnType):
 		parsedValue, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to parse integer value '%s' for column type '%s'", value, columnType))
 			return nil, err
 		}
 		if isNullable {
@@ -209,6 +218,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (interface{}, 
 		}
 		parsedValue, err := strconv.ParseUint(value, 10, bitSize)
 		if err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to parse unsigned integer value '%s' for column type '%s'", value, columnType))
 			return nil, err
 		}
 		if isNullable {
@@ -218,6 +228,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (interface{}, 
 	case floatTypes.Contains(columnType):
 		parsedValue, err := strconv.ParseFloat(value, 64)
 		if err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to parse float value '%s' for column type '%s'", value, columnType))
 			return nil, err
 		}
 		if isNullable {
@@ -227,6 +238,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (interface{}, 
 	case boolTypes.Contains(columnType):
 		parsedValue, err := strconv.ParseBool(value)
 		if err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to parse boolean value '%s' for column type '%s'", value, columnType))
 			return nil, err
 		}
 		if isNullable {
@@ -236,6 +248,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (interface{}, 
 	case dateTypes.Contains(columnType):
 		date, err := p.parseDate(value)
 		if err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to parse date value '%s' for column type '%s'", value, columnType))
 			return nil, fmt.Errorf("invalid date format: %v", err)
 		}
 		if isNullable {
@@ -245,6 +258,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (interface{}, 
 	case dateTimeTypes.Contains(columnType):
 		datetime, err := p.parseDateTime(value)
 		if err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to parse datetime value '%s' for column type '%s'", value, columnType))
 			return nil, fmt.Errorf("invalid datetime format: %v", err)
 		}
 		if isNullable {
@@ -267,6 +281,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (interface{}, 
 	case uuidTypes.Contains(columnType):
 		_, err := uuid.Parse(value)
 		if err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to parse UUID value '%s' for column type '%s'", value, columnType))
 			return nil, fmt.Errorf("invalid UUID format: %v", err)
 		}
 		fallthrough // let it be handled as a string for now
@@ -343,6 +358,7 @@ func (p *GormPlugin) convertArrayValue(value string, columnType string) (interfa
 
 		converted, err := p.GormPluginFunctions.ConvertStringValue(element, elementType)
 		if err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to convert array element '%s' of type '%s'", element, elementType))
 			return nil, fmt.Errorf("converting array element: %w", err)
 		}
 		result = append(result, converted)

@@ -21,6 +21,8 @@ import (
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/clidey/whodb/core/src/log"
 )
 
 type LLMType string
@@ -60,11 +62,13 @@ func (c *LLMClient) Complete(prompt string, model LLMModel, receiverChan *chan s
 	}
 
 	if err != nil {
+		log.Logger.WithError(err).Errorf("Failed to prepare %s LLM request for model %s", c.Type, model)
 		return nil, err
 	}
 
 	resp, err := sendHTTPRequest("POST", url, requestBody, headers)
 	if err != nil {
+		log.Logger.WithError(err).Errorf("Failed to send HTTP request to %s LLM service at %s", c.Type, url)
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -72,8 +76,10 @@ func (c *LLMClient) Complete(prompt string, model LLMModel, receiverChan *chan s
 	if resp.StatusCode != http.StatusOK {
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
+			log.Logger.WithError(err).Errorf("Failed to read error response body from %s LLM service (status: %d)", c.Type, resp.StatusCode)
 			return nil, err
 		}
+		log.Logger.Errorf("%s LLM service returned non-OK status: %d, body: %s", c.Type, resp.StatusCode, string(body))
 		return nil, errors.New(string(body))
 	}
 
@@ -99,6 +105,7 @@ func (c *LLMClient) GetSupportedModels() ([]string, error) {
 
 	resp, err := sendHTTPRequest("GET", url, nil, headers)
 	if err != nil {
+		log.Logger.WithError(err).Errorf("Failed to fetch models from %s LLM service at %s", c.Type, url)
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -106,8 +113,10 @@ func (c *LLMClient) GetSupportedModels() ([]string, error) {
 	if resp.StatusCode != http.StatusOK {
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
+			log.Logger.WithError(err).Errorf("Failed to read models error response body from %s LLM service (status: %d)", c.Type, resp.StatusCode)
 			return nil, err
 		}
+		log.Logger.Errorf("%s LLM service models endpoint returned non-OK status: %d, body: %s", c.Type, resp.StatusCode, string(body))
 		return nil, errors.New(string(body))
 	}
 

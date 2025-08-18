@@ -22,6 +22,7 @@ import (
 
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -42,6 +43,7 @@ type MongoDBPlugin struct{}
 func (p *MongoDBPlugin) IsAvailable(config *engine.PluginConfig) bool {
 	client, err := DB(config)
 	if err != nil {
+		log.Logger.WithError(err).WithField("hostname", config.Credentials.Hostname).Error("Failed to connect to MongoDB for availability check")
 		return false
 	}
 	defer client.Disconnect(context.TODO())
@@ -55,12 +57,14 @@ func (p *MongoDBPlugin) GetDatabases(config *engine.PluginConfig) ([]string, err
 func (p *MongoDBPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, error) {
 	client, err := DB(config)
 	if err != nil {
+		log.Logger.WithError(err).WithField("hostname", config.Credentials.Hostname).Error("Failed to connect to MongoDB for schema listing")
 		return nil, err
 	}
 	defer client.Disconnect(context.TODO())
 
 	databases, err := client.ListDatabaseNames(context.TODO(), bson.M{})
 	if err != nil {
+		log.Logger.WithError(err).WithField("hostname", config.Credentials.Hostname).Error("Failed to list MongoDB database names")
 		return nil, err
 	}
 	return databases, nil
@@ -69,6 +73,10 @@ func (p *MongoDBPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, er
 func (p *MongoDBPlugin) GetStorageUnits(config *engine.PluginConfig, database string) ([]engine.StorageUnit, error) {
 	client, err := DB(config)
 	if err != nil {
+		log.Logger.WithError(err).WithFields(map[string]interface{}{
+			"hostname": config.Credentials.Hostname,
+			"database": database,
+		}).Error("Failed to connect to MongoDB for storage unit listing")
 		return nil, err
 	}
 	defer client.Disconnect(context.TODO())
@@ -76,6 +84,10 @@ func (p *MongoDBPlugin) GetStorageUnits(config *engine.PluginConfig, database st
 	db := client.Database(database)
 	cursor, err := db.ListCollections(context.TODO(), bson.M{})
 	if err != nil {
+		log.Logger.WithError(err).WithFields(map[string]interface{}{
+			"hostname": config.Credentials.Hostname,
+			"database": database,
+		}).Error("Failed to list MongoDB collections")
 		return nil, err
 	}
 	defer cursor.Close(context.TODO())
@@ -84,6 +96,10 @@ func (p *MongoDBPlugin) GetStorageUnits(config *engine.PluginConfig, database st
 	for cursor.Next(context.TODO()) {
 		var collectionInfo bson.M
 		if err := cursor.Decode(&collectionInfo); err != nil {
+			log.Logger.WithError(err).WithFields(map[string]interface{}{
+				"hostname": config.Credentials.Hostname,
+				"database": database,
+			}).Error("Failed to decode MongoDB collection info")
 			return nil, err
 		}
 
@@ -103,6 +119,11 @@ func (p *MongoDBPlugin) GetStorageUnits(config *engine.PluginConfig, database st
 			stats := bson.M{}
 			err := db.RunCommand(context.TODO(), bson.D{{Key: "collStats", Value: collectionName}}).Decode(&stats)
 			if err != nil {
+				log.Logger.WithError(err).WithFields(map[string]interface{}{
+					"hostname": config.Credentials.Hostname,
+					"database": database,
+					"collection": collectionName,
+				}).Error("Failed to get MongoDB collection statistics")
 				return nil, err
 			}
 
@@ -117,6 +138,10 @@ func (p *MongoDBPlugin) GetStorageUnits(config *engine.PluginConfig, database st
 	}
 
 	if err := cursor.Err(); err != nil {
+		log.Logger.WithError(err).WithFields(map[string]interface{}{
+			"hostname": config.Credentials.Hostname,
+			"database": database,
+		}).Error("MongoDB cursor error while listing collections")
 		return nil, err
 	}
 
@@ -126,6 +151,11 @@ func (p *MongoDBPlugin) GetStorageUnits(config *engine.PluginConfig, database st
 func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collection string, where *model.WhereCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	client, err := DB(config)
 	if err != nil {
+		log.Logger.WithError(err).WithFields(map[string]interface{}{
+			"hostname": config.Credentials.Hostname,
+			"database": database,
+			"collection": collection,
+		}).Error("Failed to connect to MongoDB for row retrieval")
 		return nil, err
 	}
 	defer client.Disconnect(context.TODO())
@@ -135,6 +165,11 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 
 	bsonFilter, err := convertWhereConditionToMongoDB(where)
 	if err != nil {
+		log.Logger.WithError(err).WithFields(map[string]interface{}{
+			"hostname": config.Credentials.Hostname,
+			"database": database,
+			"collection": collection,
+		}).Error("Failed to convert where condition to MongoDB filter")
 		return nil, fmt.Errorf("error converting where condition: %v", err)
 	}
 
@@ -144,12 +179,24 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 
 	cursor, err := coll.Find(context.TODO(), bsonFilter, findOptions)
 	if err != nil {
+		log.Logger.WithError(err).WithFields(map[string]interface{}{
+			"hostname": config.Credentials.Hostname,
+			"database": database,
+			"collection": collection,
+			"pageSize": pageSize,
+			"pageOffset": pageOffset,
+		}).Error("Failed to execute MongoDB find query")
 		return nil, err
 	}
 	defer cursor.Close(context.TODO())
 
 	var rowsResult []bson.M
 	if err = cursor.All(context.TODO(), &rowsResult); err != nil {
+		log.Logger.WithError(err).WithFields(map[string]interface{}{
+			"hostname": config.Credentials.Hostname,
+			"database": database,
+			"collection": collection,
+		}).Error("Failed to decode MongoDB query results")
 		return nil, err
 	}
 
@@ -163,6 +210,11 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 	for _, doc := range rowsResult {
 		jsonBytes, err := json.Marshal(doc)
 		if err != nil {
+			log.Logger.WithError(err).WithFields(map[string]interface{}{
+				"hostname": config.Credentials.Hostname,
+				"database": database,
+				"collection": collection,
+			}).Error("Failed to marshal MongoDB document to JSON")
 			return nil, err
 		}
 		result.Rows = append(result.Rows, []string{string(jsonBytes)})
@@ -207,6 +259,7 @@ func convertWhereConditionToMongoDB(where *model.WhereCondition) (bson.M, error)
 		for _, child := range where.And.Children {
 			childCondition, err := convertWhereConditionToMongoDB(child)
 			if err != nil {
+				log.Logger.WithError(err).Error("Failed to convert child AND condition to MongoDB filter")
 				return nil, err
 			}
 			andConditions = append(andConditions, childCondition)
@@ -223,6 +276,7 @@ func convertWhereConditionToMongoDB(where *model.WhereCondition) (bson.M, error)
 		for _, child := range where.Or.Children {
 			childCondition, err := convertWhereConditionToMongoDB(child)
 			if err != nil {
+				log.Logger.WithError(err).Error("Failed to convert child OR condition to MongoDB filter")
 				return nil, err
 			}
 			orConditions = append(orConditions, childCondition)

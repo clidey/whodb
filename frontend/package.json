@@ -43,13 +43,11 @@
     "build": "tsc -p tsconfig.ce.json && vite build",
     "build:ce": "tsc -p tsconfig.ce.json && vite build",
     "build:ee": "VITE_BUILD_EDITION=ee vite build",
-    
     "# Primary test commands - use these for running tests": "",
-    "cypress:ce": "pnpm run _test:ce:setup && bash ../dev/wait-for-services.sh && NODE_ENV=test pnpm cypress open; pnpm run _test:ce:cleanup",
-    "cypress:ce:headless": "pnpm run _test:ce:setup && bash ../dev/wait-for-services.sh && NODE_ENV=test npx cypress run --browser chrome; pnpm run _test:ce:cleanup",
-    "cypress:ee": "pnpm run _test:ee:setup && bash ../dev/wait-for-services.sh && NODE_ENV=test pnpm cypress open; pnpm run _test:ee:cleanup",
-    "cypress:ee:headless": "pnpm run _test:ee:setup && bash ../dev/wait-for-services.sh && NODE_ENV=test npx cypress run --browser chrome; pnpm run _test:ee:cleanup",
-    
+    "cypress:ce": "bash ../dev/run-cypress-ce.sh",
+    "cypress:ce:headless": "bash ../dev/run-cypress-ce.sh true",
+    "cypress:ee": "bash ../ee/dev/run-cypress-ee.sh",
+    "cypress:ee:headless": "bash ../ee/dev/run-cypress-ee.sh true",
     "# Auxiliary test commands - not recommended for individual use": "",
     "_test:ce:setup": "bash ../dev/setup-e2e.sh && NODE_ENV=test vite --port 3000 &",
     "_test:ce:cleanup": "pkill -f 'vite --port 3000' || true; bash ../dev/cleanup-e2e.sh",
@@ -60,10 +58,13 @@
     "_cypress:ce:run": "NODE_ENV=test npx cypress run --browser chrome",
     "_cypress:ee:run": "NODE_ENV=test npx cypress run --browser chrome",
     "_cypress:run:chromium": "NODE_ENV=test npx cypress run --browser chromium",
-    
     "# Coverage and code generation utilities": "",
-    "view:coverage": "npx nyc report --reporter=text-summary",
-    "view:coverage:frontend": "npx nyc report --reporter=html",
+    "view:coverage": "nyc report --reporter=text-summary",
+    "view:coverage:ce": "nyc report --reporter=text-summary",
+    "view:coverage:ee": "VITE_BUILD_EDITION=ee nyc report --reporter=text-summary",
+    "view:coverage:frontend": "nyc report --reporter=html && open coverage/index.html",
+    "coverage:merge": "nyc merge .nyc_output coverage/coverage-final.json",
+    "coverage:clean": "rm -rf .nyc_output coverage",
     "view:coverage:backend": "cd ../core && go tool cover -html=coverage.out",
     "generate": "npx graphql-codegen",
     "generate:ce": "npx graphql-codegen --config codegen.ce.yml",
@@ -102,7 +103,8 @@
     "process": "^0.11.10",
     "tailwindcss": "^4.1.11",
     "typescript": "^5.8.3",
-    "vite": "^7.0.6"
+    "vite": "^7.0.6",
+    "vite-plugin-istanbul": "^7.1.0"
   },
   "packageManager": "pnpm@10.14.0+sha512.ad27a79641b49c3e481a16a805baa71817a04bbe06a38d17e60e2eaee83f6a146c6a688125f5792e48dd5ba30e7da52a5cda4c3992b9ccf333f9ce223af84748"
 }

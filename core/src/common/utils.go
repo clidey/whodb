@@ -78,7 +78,7 @@ func OpenBrowser(url string) {
 	case "linux":
 		err = exec.Command("xdg-open", url).Start()
 	default:
-		log.Logger.Warnf("Unsupported platform. Please open the URL manually: %s\n", url)
+		// Unsupported platform - silently continue
 	}
 	if err != nil {
 		log.Logger.Warnf("Failed to open browser: %v\n", err)

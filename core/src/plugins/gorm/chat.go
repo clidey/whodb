@@ -21,6 +21,7 @@ import (
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/llm"
+	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	"gorm.io/gorm"
 )
@@ -29,6 +30,7 @@ func (p *GormPlugin) Chat(config *engine.PluginConfig, schema string, model stri
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]*engine.ChatMessage, error) {
 		tableFields, err := p.GetTableSchema(db, schema)
 		if err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get table schema for chat operation in schema: %s", schema))
 			return nil, err
 		}
 
@@ -46,6 +48,7 @@ func (p *GormPlugin) Chat(config *engine.PluginConfig, schema string, model stri
 
 		response, err := llm.Instance(config).Complete(completeQuery, llm.LLMModel(model), nil)
 		if err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to complete LLM query using model %s for schema %s", model, schema))
 			return nil, err
 		}
 

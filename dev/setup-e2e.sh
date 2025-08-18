@@ -21,6 +21,7 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 echo "📁 Working from project root: $PROJECT_ROOT"
 
+
 # Run cleanup first to ensure clean state
 echo "🧹 Running cleanup first..."
 if [ -f "$SCRIPT_DIR/cleanup-e2e.sh" ]; then
@@ -31,11 +32,11 @@ fi
 
 echo "🚀 Setting up complete E2E environment..."
 
-# Build test binary with coverage
-echo "🔧 Building test binary with coverage..."
+# Build CE test binary with coverage
+echo "🔧 Building CE test binary with coverage..."
 cd "$PROJECT_ROOT/core"
 go test -coverpkg=./... -c -o server.test
-echo "✅ Test binary built successfully"
+echo "✅ CE test binary built successfully"
 
 
 # Setup SQLite
@@ -71,8 +72,8 @@ for service in e2e_postgres e2e_mysql e2e_mariadb e2e_mongo e2e_clickhouse; do
     fi
 done
 
-# Start the test server with coverage
-echo "🚀 Starting test server with coverage..."
+# Start the CE test server with coverage
+echo "🚀 Starting CE test server with coverage..."
 cd "$PROJECT_ROOT/core"
 ENVIRONMENT=dev ./server.test -test.run=^TestMain$ -test.coverprofile=coverage.out &
 TEST_SERVER_PID=$!
@@ -85,8 +86,9 @@ echo "⏳ Waiting for test server to be ready..."
 MAX_WAIT=30
 COUNTER=0
 while [ $COUNTER -lt $MAX_WAIT ]; do
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/graphql 2>/dev/null | grep -q "200\|405\|400"; then
-        echo "✅ Test server is ready and responding (PID: $TEST_SERVER_PID)"
+    # Check if port 8080 is listening
+    if nc -z localhost 8080 2>/dev/null; then
+        echo "✅ Test server is ready and listening on port 8080 (PID: $TEST_SERVER_PID)"
         break
     fi
     echo -n "."

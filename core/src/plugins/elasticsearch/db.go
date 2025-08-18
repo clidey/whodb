@@ -22,6 +22,7 @@ import (
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 	"github.com/elastic/go-elasticsearch/v8"
 )
 
@@ -29,6 +30,7 @@ func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 	var addresses []string
 	port, err := strconv.Atoi(common.GetRecordValueOrDefault(config.Credentials.Advanced, "Port", "9200"))
 	if err != nil {
+		log.Logger.WithError(err).WithField("hostname", config.Credentials.Hostname).Error("Invalid port number for ElasticSearch connection")
 		return nil, err
 	}
 	sslMode := common.GetRecordValueOrDefault(config.Credentials.Advanced, "SSL Mode", "disable")
@@ -57,11 +59,13 @@ func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 
 	client, err := elasticsearch.NewClient(cfg)
 	if err != nil {
+		log.Logger.WithError(err).WithField("hostname", config.Credentials.Hostname).WithField("port", port).Error("Failed to create ElasticSearch client")
 		return nil, err
 	}
 
 	res, err := client.Info()
 	if err != nil || res.IsError() {
+		log.Logger.WithError(err).WithField("hostname", config.Credentials.Hostname).WithField("port", port).Error("Failed to ping ElasticSearch server")
 		return nil, fmt.Errorf("error pinging Elasticsearch: %v", err)
 	}
 

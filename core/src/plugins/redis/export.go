@@ -24,5 +24,6 @@ import (
 
 // ExportData exports Redis data to tabular format
 func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error {
-	return fmt.Errorf("data export is not supported for Redis databases")
+	err := fmt.Errorf("data export is not supported for Redis databases")
+	return err
 }

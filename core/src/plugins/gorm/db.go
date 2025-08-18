@@ -24,6 +24,7 @@ import (
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	"gorm.io/gorm"
 )
@@ -72,20 +73,24 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 	}
 	port, err := strconv.Atoi(common.GetRecordValueOrDefault(config.Credentials.Advanced, portKey, defaultPort))
 	if err != nil {
+		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to parse port for database type %s", p.Type))
 		return nil, err
 	}
 
 	//mysql/mariadb specific
 	parseTime, err := strconv.ParseBool(common.GetRecordValueOrDefault(config.Credentials.Advanced, parseTimeKey, "True"))
 	if err != nil {
+		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to parse parseTime setting for database type %s", p.Type))
 		return nil, err
 	}
 	loc, err := time.LoadLocation(common.GetRecordValueOrDefault(config.Credentials.Advanced, locKey, "Local"))
 	if err != nil {
+		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to load time location for database type %s", p.Type))
 		return nil, err
 	}
 	allowClearTextPasswords, err := strconv.ParseBool(common.GetRecordValueOrDefault(config.Credentials.Advanced, allowClearTextPasswordsKey, "0"))
 	if err != nil {
+		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to parse allowClearTextPasswords setting for database type %s", p.Type))
 		return nil, err
 	}
 
@@ -97,6 +102,7 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 
 	connectionTimeout, err := strconv.Atoi(common.GetRecordValueOrDefault(config.Credentials.Advanced, connectionTimeoutKey, "90"))
 	if err != nil {
+		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to parse connection timeout for database type %s", p.Type))
 		return nil, err
 	}
 
@@ -153,9 +159,11 @@ func (p *GormPlugin) IsAvailable(config *engine.PluginConfig) bool {
 	available, err := plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
 		sqlDb, err := db.DB()
 		if err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get SQL DB instance for database type %s", p.Type))
 			return false, err
 		}
 		if err = sqlDb.Ping(); err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to ping database for type %s", p.Type))
 			return false, nil
 		}
 		return true, nil

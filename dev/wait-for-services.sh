@@ -25,18 +25,24 @@ echo "   Backend:  $BACKEND_URL"
 echo "   Frontend: $FRONTEND_URL"
 echo "   Timeout:  ${MAX_WAIT}s"
 
-# Function to check if a URL is responding
-check_url() {
-    local url=$1
-    curl -s -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "000"
+# Function to check if a port is listening
+check_port() {
+    local host=$1
+    local port=$2
+    nc -z "$host" "$port" 2>/dev/null
 }
 
+# Extract host and port from URLs
+BACKEND_HOST=$(echo "$BACKEND_URL" | sed -e 's|^[^/]*//||' -e 's|:.*||')
+BACKEND_PORT=$(echo "$BACKEND_URL" | sed -e 's|.*:||' -e 's|/.*||')
+BACKEND_HOST=${BACKEND_HOST:-localhost}
+BACKEND_PORT=${BACKEND_PORT:-8080}
+
 # Wait for backend
-echo -n "⏳ Waiting for backend..."
+echo -n "⏳ Waiting for backend (${BACKEND_HOST}:${BACKEND_PORT})..."
 COUNTER=0
 while [ $COUNTER -lt $MAX_WAIT ]; do
-    STATUS=$(check_url "$BACKEND_URL/graphql")
-    if [ "$STATUS" = "200" ] || [ "$STATUS" = "405" ] || [ "$STATUS" = "400" ]; then
+    if check_port "$BACKEND_HOST" "$BACKEND_PORT"; then
         echo " ✅ Ready!"
         break
     fi
@@ -51,12 +57,17 @@ if [ $COUNTER -eq $MAX_WAIT ]; then
     exit 1
 fi
 
+# Extract host and port from frontend URL
+FRONTEND_HOST=$(echo "$FRONTEND_URL" | sed -e 's|^[^/]*//||' -e 's|:.*||')
+FRONTEND_PORT=$(echo "$FRONTEND_URL" | sed -e 's|.*:||' -e 's|/.*||')
+FRONTEND_HOST=${FRONTEND_HOST:-localhost}
+FRONTEND_PORT=${FRONTEND_PORT:-3000}
+
 # Wait for frontend
-echo -n "⏳ Waiting for frontend..."
+echo -n "⏳ Waiting for frontend (${FRONTEND_HOST}:${FRONTEND_PORT})..."
 COUNTER=0
 while [ $COUNTER -lt $MAX_WAIT ]; do
-    STATUS=$(check_url "$FRONTEND_URL")
-    if [ "$STATUS" = "200" ] || [ "$STATUS" = "304" ]; then
+    if check_port "$FRONTEND_HOST" "$FRONTEND_PORT"; then
         echo " ✅ Ready!"
         break
     fi
