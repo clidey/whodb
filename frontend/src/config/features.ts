@@ -39,26 +39,26 @@ const checkEEAvailability = (): boolean => {
 };
 
 // Store the loaded EE feature flags
-let loadedEEFeatures: FeatureFlags | null = null;
+export let featureFlags: FeatureFlags = {} as FeatureFlags;
+export let extensions: Record<string, any> = {};
 
 // Get feature flags based on environment and EE availability
-export const getFeatureFlags = (): FeatureFlags => {
+export const initialize = () => {
     const isEEAvailable = checkEEAvailability();
     
     if (!isEEAvailable) {
-        return defaultFeatures;
-    }
-    
-    // If we've already loaded EE features, return them
-    if (loadedEEFeatures) {
-        return loadedEEFeatures;
+        featureFlags = defaultFeatures;
+        return;
     }
     
     // Try to load EE features asynchronously
     if (isEEAvailable) {
-        import('@ee/config').then(eeConfig => {
+        import('@ee/config.tsx').then(eeConfig => {
             if (eeConfig?.eeFeatures) {
-                loadedEEFeatures = eeConfig.eeFeatures;
+                featureFlags = eeConfig.eeFeatures;
+            }
+            if (eeConfig?.eeExtensions) {
+                extensions = eeConfig.eeExtensions;
             }
         }).catch(() => {
             console.warn('Could not load EE feature flags');
@@ -68,6 +68,8 @@ export const getFeatureFlags = (): FeatureFlags => {
     // Return default enabled features for EE mode until async load completes
     return {
         analyzeView: true,
+        explainView: true,
+        generateView: true,
         customTheme: true,
         dataVisualization: true,
         aiChat: true,
@@ -78,5 +80,4 @@ export const getFeatureFlags = (): FeatureFlags => {
     };
 };
 
-// Singleton instance of feature flags
-export const featureFlags = getFeatureFlags();
+initialize();

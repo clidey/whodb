@@ -30,7 +30,7 @@ import (
 )
 
 var (
-	intTypes      = mapset.NewSet("INTEGER", "SMALLINT", "BIGINT", "INT", "TINYINT", "MEDIUMINT", "INT8", "INT16", "INT32", "INT64")
+	intTypes      = mapset.NewSet("INTEGER", "SMALLINT", "BIGINT", "INT", "TINYINT", "MEDIUMINT", "INT4", "INT8", "INT16", "INT32", "INT64")
 	uintTypes     = mapset.NewSet("TINYINT UNSIGNED", "SMALLINT UNSIGNED", "MEDIUMINT UNSIGNED", "BIGINT UNSIGNED", "UINT8", "UINT16", "UINT32", "UINT64")
 	floatTypes    = mapset.NewSet("REAL", "NUMERIC", "DOUBLE PRECISION", "FLOAT", "NUMBER", "DOUBLE", "DECIMAL")
 	boolTypes     = mapset.NewSet("BOOLEAN", "BIT", "BOOL")

@@ -56,6 +56,11 @@ export const InternalRoutes = {
             path: "/storage-unit/explore",
             component: <ExploreStorageUnit />,
         },
+        ExploreStorageUnitWithScratchpad: {
+            name: "Explore",
+            path: "/storage-unit/explore/scratchpad",
+            component: <ExploreStorageUnit scratchpad={true} />,
+        },
     },
     Graph: {
         name: "Graph",
@@ -100,7 +105,6 @@ export const PrivateRoute: FC = () => {
     }
     return <Navigate to={PublicRoutes.Login.path} />
 }
-
 
 export const getRoutes = (): IInternalRoute[] => {
     const allRoutes: IInternalRoute[] = [];

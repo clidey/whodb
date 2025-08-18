@@ -1,10 +1,12 @@
-import { DatabaseType } from "@graphql";
+import { ReactElement } from "react";
 import { Icons } from "../components/icons";
-import { IDropdownItem } from "../components/dropdown";
-import { EEDatabaseType } from "./ee-types";
 
 // Extended dropdown item type with UI field configuration
-export interface IDatabaseDropdownItem extends IDropdownItem<Record<string, string>> {
+export interface IDatabaseDropdownItem {
+    id: string;
+    label: string;
+    icon: ReactElement;
+    extra: Record<string, string>;
     // UI field configuration
     fields?: {
         hostname?: boolean;
@@ -150,7 +152,7 @@ let eeLoadPromise: Promise<void> | null = null;
 if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
     // Store the promise so we can await it later
     eeLoadPromise = Promise.all([
-        import('@ee/config'),
+        import('@ee/config.tsx'),
         import('@ee/icons')
     ]).then(([eeConfig, eeIcons]) => {
         console.log('Loading EE config:', eeConfig);
