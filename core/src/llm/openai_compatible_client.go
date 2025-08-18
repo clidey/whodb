@@ -18,14 +18,11 @@ package llm
 
 import (
 	"github.com/clidey/whodb/core/src/env"
-	"github.com/clidey/whodb/core/src/log"
 )
 
 func getOpenAICompatibleModels() ([]string, error) {
 	if len(env.CustomModels) > 0 {
-		log.Logger.Infof("Using %d custom models for OpenAI-compatible service", len(env.CustomModels))
 		return env.CustomModels, nil
 	}
-	log.Logger.Info("No custom models configured for OpenAI-compatible service")
 	return []string{}, nil
 }

@@ -14,6 +14,7 @@ To develop WhoDB, follow the below requirements every time you do a task:
 8. If you do a build to test something (e.g., `go build`), delete the binary afterwards to keep the workspace clean.
 9. Use `any` instead of `interface{}` in all Go code (Go 1.18+ modern syntax).
 10. When updating dependencies, ensure versions are identical between Community Edition (`core/go.mod`) and Enterprise Edition (`ee/go.mod`) to prevent version mismatches and compatibility issues.
+11. Never log sensitive data such as passwords, API keys, tokens, or full connection strings. Only log non-sensitive metadata like hostnames, ports, database names, and error types.
 
 ## Build & Development Commands
 
