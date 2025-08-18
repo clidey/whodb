@@ -23,22 +23,22 @@ import (
 	"strings"
 	"time"
 
+	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
-	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 var (
-	intTypes      = mapset.NewSet("INTEGER", "SMALLINT", "BIGINT", "INT", "TINYINT", "MEDIUMINT", "INT4", "INT8", "INT16", "INT32", "INT64")
-	uintTypes     = mapset.NewSet("TINYINT UNSIGNED", "SMALLINT UNSIGNED", "MEDIUMINT UNSIGNED", "BIGINT UNSIGNED", "UINT8", "UINT16", "UINT32", "UINT64")
-	floatTypes    = mapset.NewSet("REAL", "NUMERIC", "DOUBLE PRECISION", "FLOAT", "NUMBER", "DOUBLE", "DECIMAL")
-	boolTypes     = mapset.NewSet("BOOLEAN", "BIT", "BOOL")
-	dateTypes     = mapset.NewSet("DATE")
-	dateTimeTypes = mapset.NewSet("DATETIME", "TIMESTAMP", "TIMESTAMP WITH TIME ZONE", "TIMESTAMP WITHOUT TIME ZONE", "DATETIME2", "SMALLDATETIME", "TIMETZ", "TIMESTAMPTZ")
-	uuidTypes     = mapset.NewSet("UUID")
-	binaryTypes   = mapset.NewSet("BLOB", "BYTEA", "VARBINARY", "BINARY", "IMAGE", "BLOB", "TINYBLOB", "MEDIUMBLOB", "LONGBLOB")
-	// geometryTypes = mapset.NewSet("GEOMETRY", "POINT", "LINESTRING", "POLYGON", "MULTIPOINT", "MULTILINESTRING", "MULTIPOLYGON")
+	intTypes      = common.IntTypes
+	uintTypes     = common.UintTypes
+	floatTypes    = common.FloatTypes
+	boolTypes     = common.BoolTypes
+	dateTypes     = common.DateTypes
+	dateTimeTypes = common.DateTimeTypes
+	uuidTypes     = common.UuidTypes
+	binaryTypes   = common.BinaryTypes
+	// geometryTypes = common.GeometryTypes // not defined yet
 )
 
 func (p *GormPlugin) EscapeIdentifier(identifier string) string {
@@ -61,11 +61,16 @@ func (p *GormPlugin) EscapeIdentifier(identifier string) string {
 func (p *GormPlugin) ConvertRecordValuesToMap(values []engine.Record) (map[string]interface{}, error) {
 	data := make(map[string]interface{}, len(values))
 	for _, value := range values {
-		val, err := p.GormPluginFunctions.ConvertStringValueDuringMap(value.Value, value.Extra["Type"])
-		if err != nil {
-			return nil, err
+		// Check if this is a NULL value
+		if value.Extra != nil && value.Extra["IsNull"] == "true" {
+			data[value.Key] = nil
+		} else {
+			val, err := p.GormPluginFunctions.ConvertStringValueDuringMap(value.Value, value.Extra["Type"])
+			if err != nil {
+				return nil, err
+			}
+			data[value.Key] = val
 		}
-		data[value.Key] = val
 	}
 	return data, nil
 }

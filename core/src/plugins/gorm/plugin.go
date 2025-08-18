@@ -91,7 +91,7 @@ type GormPluginFunctions interface {
 	// FormatGeometryValue formats geometry data for display
 	// Return empty string to use default hex formatting
 	FormatGeometryValue(rawBytes []byte, columnType string) string
-	
+
 	// HandleCustomDataType allows plugins to handle their own data type conversions
 	// Return (value, true) if handled, or (nil, false) to use default handling
 	HandleCustomDataType(value string, columnType string, isNullable bool) (interface{}, bool, error)
@@ -490,4 +490,52 @@ func (p *GormPlugin) FormatGeometryValue(rawBytes []byte, columnType string) str
 // HandleCustomDataType returns false by default (no custom handling)
 func (p *GormPlugin) HandleCustomDataType(value string, columnType string, isNullable bool) (interface{}, bool, error) {
 	return nil, false, nil
+}
+
+// WithTransaction executes the given operation within a database transaction
+func (p *GormPlugin) WithTransaction(config *engine.PluginConfig, operation func(tx any) error) error {
+	_, err := plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
+		// Begin transaction
+		tx := db.Begin()
+		if tx.Error != nil {
+			return false, fmt.Errorf("failed to begin transaction: %w", tx.Error)
+		}
+
+		// Execute the operation
+		if err := operation(tx); err != nil {
+			// Rollback on error
+			tx.Rollback()
+			return false, err
+		}
+
+		// Commit transaction
+		if err := tx.Commit().Error; err != nil {
+			return false, fmt.Errorf("failed to commit transaction: %w", err)
+		}
+
+		return true, nil
+	})
+
+	return err
+}
+
+// ExecuteInTransaction wraps common database operations in a transaction
+func (p *GormPlugin) ExecuteInTransaction(config *engine.PluginConfig, operations func(tx *gorm.DB) error) error {
+	return p.WithTransaction(config, func(txInterface any) error {
+		tx, ok := txInterface.(*gorm.DB)
+		if !ok {
+			return fmt.Errorf("invalid transaction type")
+		}
+		return operations(tx)
+	})
+}
+
+// AddRowInTx adds a row using an existing transaction
+func (p *GormPlugin) AddRowInTx(tx *gorm.DB, schema string, storageUnit string, values []engine.Record) error {
+	return p.addRowWithDB(tx, schema, storageUnit, values)
+}
+
+// ClearTableDataInTx clears table data using an existing transaction
+func (p *GormPlugin) ClearTableDataInTx(tx *gorm.DB, schema string, storageUnit string) error {
+	return p.clearTableDataWithDB(tx, schema, storageUnit)
 }

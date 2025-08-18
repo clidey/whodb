@@ -12,7 +12,8 @@
             "program": "${workspaceFolder}/core/server.go",
             "env": {
                 "ENVIRONMENT": "dev",
-                "WHODB_ENABLE_HTTP_LOGGING": "true"
+                "WHODB_ENABLE_HTTP_LOGGING": "true",
+                "WHODB_ENABLE_MOCK_DATA_GENERATION": "*"
             }
         },
         {

@@ -44,3 +44,7 @@
 .markdown-preview > * {
   all: revert;
 }
+
+[data-slot="drawer-overlay"] {
+  transform: translateY(-10vh);
+}

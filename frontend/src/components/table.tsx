@@ -28,6 +28,9 @@ import {
     ContextMenuSubTrigger,
     ContextMenuTrigger,
     Input,
+    Alert,
+    AlertDescription,
+    AlertTitle,
     Label,
     Pagination,
     PaginationContent,
@@ -66,9 +69,11 @@ import {
     KeyIcon,
     ListBulletIcon,
     ArrowDownCircleIcon,
+    XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { FC, useCallback, useMemo, useState } from "react";
 import { useExportToCSV } from "./hooks"; // You may need to adjust this import
+import { useGenerateMockDataMutation, useMockDataMaxRowCountQuery } from '@graphql';
 
 // Type sets based on core/src/plugins/gorm/utils.go
 const stringTypes = new Set([
@@ -110,6 +115,7 @@ interface TableProps {
     disableEdit?: boolean;
     schema?: string;
     storageUnit?: string;
+    onRefresh?: () => void;
 }
 
 export const StorageUnitTable: FC<TableProps> = ({
@@ -123,6 +129,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     disableEdit = false,
     schema,
     storageUnit,
+    onRefresh,
 }) => {
     const [editIndex, setEditIndex] = useState<number | null>(null);
     const [editRow, setEditRow] = useState<string[] | null>(null);
@@ -132,6 +139,17 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [showExportConfirm, setShowExportConfirm] = useState(false);
     const [exportDelimiter, setExportDelimiter] = useState(',');
     const [exportFormat, setExportFormat] = useState<'csv' | 'excel'>('csv');
+    
+    // Mock data state
+    const [showMockDataSheet, setShowMockDataSheet] = useState(false);
+    const [mockDataRowCount, setMockDataRowCount] = useState("100");
+    const [mockDataMethod, setMockDataMethod] = useState("Normal");
+    const [mockDataOverwriteExisting, setMockDataOverwriteExisting] = useState("append");
+    const [showMockDataConfirmation, setShowMockDataConfirmation] = useState(false);
+    const [generateMockData, { loading: generatingMockData }] = useGenerateMockDataMutation();
+    const { data: maxRowData } = useMockDataMaxRowCountQuery();
+    const maxRowCount = maxRowData?.MockDataMaxRowCount || 200;
+    
     const pageSize = 20;
     const totalRows = rows.length;
     const totalPages = Math.ceil(totalRows / pageSize);
@@ -296,6 +314,74 @@ export const StorageUnitTable: FC<TableProps> = ({
 
     // --- End export logic ---
 
+    // Mock data handlers
+    const handleMockDataRowCountChange = useCallback((value: string) => {
+        // Only allow numeric input
+        const numericValue = value.replace(/[^0-9]/g, '');
+        const parsedValue = parseInt(numericValue) || 0;
+        
+        // Enforce max limit
+        if (parsedValue > maxRowCount) {
+            setMockDataRowCount(maxRowCount.toString());
+            toast.error(`Maximum row count is ${maxRowCount}`);
+        } else {
+            setMockDataRowCount(numericValue);
+        }
+    }, [maxRowCount]);
+
+    const handleMockDataGenerate = useCallback(async () => {
+        if (!schema || !storageUnit) {
+            toast.error("Schema and storage unit are required for mock data generation");
+            return;
+        }
+
+        if (mockDataOverwriteExisting === "overwrite" && !showMockDataConfirmation) {
+            setShowMockDataConfirmation(true);
+            return;
+        }
+
+        const count = parseInt(mockDataRowCount) || 100;
+        
+        // Double-check the limit
+        if (count > maxRowCount) {
+            toast.error(`Row count cannot exceed ${maxRowCount}`);
+            return;
+        }
+        
+        try {
+            const result = await generateMockData({
+                variables: {
+                    input: {
+                        Schema: schema,
+                        StorageUnit: storageUnit,
+                        RowCount: count,
+                        Method: mockDataMethod,
+                        OverwriteExisting: mockDataOverwriteExisting === "overwrite",
+                    }
+                }
+            });
+
+            const data = result.data?.GenerateMockData;
+            if (data?.AmountGenerated) {
+                toast.success(`Successfully generated ${data.AmountGenerated} rows`);
+                setShowMockDataSheet(false);
+                setShowMockDataConfirmation(false);
+                // Trigger a refresh by calling the onRefresh callback if provided
+                if (onRefresh) {
+                    onRefresh();
+                }
+            } else {
+                toast.error(`Failed to generate mock data`);
+            }
+        } catch (error: any) {
+            if (error.message === "mock data generation is not allowed for this table") {
+                toast.error("Mock data generation is not allowed for this table");
+            } else {
+                toast.error(`Failed to generate mock data: ${error.message}`);
+            }
+        }
+    }, [generateMockData, schema, storageUnit, mockDataRowCount, mockDataMethod, mockDataOverwriteExisting, showMockDataConfirmation, maxRowCount]);
+
     return (
         <>
         <div className="flex flex-col grow h-full">
@@ -388,6 +474,11 @@ export const StorageUnitTable: FC<TableProps> = ({
                                             </ContextMenuItem>
                                         </ContextMenuSubContent>
                                     </ContextMenuSub>
+                                    <ContextMenuItem
+                                        onSelect={() => setShowMockDataSheet(true)}
+                                    >
+                                        Generate Mock Data
+                                    </ContextMenuItem>
                                     <ContextMenuSub>
                                         <ContextMenuSubTrigger>More Actions</ContextMenuSubTrigger>
                                         <ContextMenuSubContent className="w-44">
@@ -553,6 +644,85 @@ export const StorageUnitTable: FC<TableProps> = ({
                         </Button>
                     </SheetFooter>
                 </div>
+            </SheetContent>
+        </Sheet>
+        <Sheet open={showMockDataSheet} onOpenChange={setShowMockDataSheet}>
+            <SheetContent side="right" className="p-8">
+                <div className="flex flex-col gap-4 h-full">
+                    <div className="text-lg font-semibold mb-2">Generate Mock Data for {storageUnit}</div>
+                    
+                    {!showMockDataConfirmation ? (
+                        <div className="space-y-4">
+                            <Label>Number of Rows (max: {maxRowCount})</Label>
+                            <Input
+                                value={mockDataRowCount}
+                                onChange={e => handleMockDataRowCountChange(e.target.value)}
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                max={maxRowCount.toString()}
+                                placeholder={`Enter number of rows (1-${maxRowCount})`}
+                            />
+                            <Label>Method</Label>
+                            <Select value={mockDataMethod} onValueChange={setMockDataMethod}>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Normal">Normal</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <Label>Data Handling</Label>
+                            <Select value={mockDataOverwriteExisting} onValueChange={setMockDataOverwriteExisting}>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="append">Append to existing data</SelectItem>
+                                    <SelectItem value="overwrite">Overwrite existing data</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            {generatingMockData && (
+                                <div className="mt-4">
+                                    <div className="flex justify-center">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                                    </div>
+                                    <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-2">
+                                        Generating mock data...
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-center mb-4">
+                                <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
+                                    <XMarkIcon className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
+                                </div>
+                            </div>
+                            <p className="text-center text-gray-700 dark:text-gray-300">
+                                Are you sure you want to overwrite all existing data in {storageUnit}? This action cannot be undone.
+                            </p>
+                        </div>
+                    )}
+                </div>
+                <SheetFooter className="px-0">
+                    <Alert variant="info" className="mb-4">
+                        <AlertTitle>Note</AlertTitle>
+                        <AlertDescription>
+                            Mock data generation does not yet fully support foreign keys and all constraints. You may experience some errors or missing data.
+                        </AlertDescription>
+                    </Alert>
+                    {!showMockDataConfirmation ? (
+                        <Button onClick={handleMockDataGenerate} disabled={generatingMockData}>
+                            Generate
+                        </Button>
+                    ) : (
+                        <Button onClick={handleMockDataGenerate} disabled={generatingMockData} variant="destructive">
+                            Yes, Overwrite
+                        </Button>
+                    )}
+                </SheetFooter>
             </SheetContent>
         </Sheet>
         </>

@@ -15,7 +15,7 @@
  */
 
 import { FetchResult } from "@apollo/client";
-import { Button, Drawer, DrawerTitle, DrawerContent, DrawerHeader, Input, Label, Sheet, SheetContent, SheetFooter, toast, DrawerFooter, SearchInput } from "@clidey/ux";
+import { Button, Drawer, DrawerTitle, DrawerContent, DrawerHeader, Input, Label, Sheet, SheetContent, SheetFooter, toast, DrawerFooter, SearchInput, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@clidey/ux";
 import {
     DatabaseType, DeleteRowDocument, DeleteRowMutationResult, RecordInput, RowsResult, StorageUnit,
     UpdateStorageUnitDocument, UpdateStorageUnitMutationResult, useAddRowMutation, useGetStorageUnitRowsLazyQuery,
@@ -23,7 +23,7 @@ import {
     WhereCondition
 } from '@graphql';
 import { clone, entries, keys, map } from "lodash";
-import { FC, useCallback, useEffect, useMemo, useState } from "react";
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Icons } from "../../components/icons";
 import { Loading, LoadingPage } from "../../components/loading";
@@ -53,12 +53,12 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     const [showAdd, setShowAdd] = useState(false);
     const [checkedRows, setCheckedRows] = useState<Set<number>>(new Set());
     const [deleting, setDeleting] = useState(false);
+    const addRowRef = useRef<HTMLDivElement>(null);
 
     // For add row sheet logic
     const [addRowData, setAddRowData] = useState<Record<string, any>>({});
     const [addRowError, setAddRowError] = useState<string | null>(null);
     
-
     // For scratchpad sheet logic
     // todo: is there a different way to do this? clickhouse doesn't have schemas as a table is considered a schema. people mainly switch between DB
     if (current?.Type === DatabaseType.ClickHouse) {
@@ -423,17 +423,29 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                         </SheetFooter>
                     </SheetContent>
                 </Sheet>
+
             </div>
             <div className="grow">
                 {
                     rows != null &&
-                    <StorageUnitTable columns={columns} rows={rows.Rows} onRowUpdate={handleRowUpdate} columnTypes={columnTypes} />
+                    <StorageUnitTable 
+                        columns={columns} 
+                        rows={rows.Rows} 
+                        onRowUpdate={handleRowUpdate} 
+                        columnTypes={columnTypes}
+                        schema={schema}
+                        storageUnit={unitName}
+                        onRefresh={handleSubmitRequest}
+                    />
                 }
             </div>
         </div>
         <Drawer open={scratchpad} onOpenChange={handleCloseScratchpad}>
             <DrawerContent className="px-8 max-h-[25vh]">
-                <DrawerHeader>
+                <Button variant="ghost" className="absolute top-0 right-0" onClick={handleCloseScratchpad}>
+                    <XMarkIcon className="w-4 h-4" />
+                </Button>
+                <DrawerHeader className="px-0">
                     <DrawerTitle className="flex justify-between items-center">
                         <h2 className="text-lg font-semibold">Scratchpad</h2>
                         <div className="flex gap-2 items-center">
@@ -454,6 +466,9 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                         columnTypes={rawExecuteData?.RawExecute.Columns.map(c => c.Type) ?? []}
                         rows={rawExecuteData?.RawExecute.Rows ?? []}
                         disableEdit={true}
+                        schema={schema}
+                        storageUnit={unitName}
+                        onRefresh={handleSubmitRequest}
                     />
                 </DrawerFooter>
             </DrawerContent>
