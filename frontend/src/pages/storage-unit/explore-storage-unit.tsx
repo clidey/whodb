@@ -339,9 +339,13 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         document.body.classList.add("!pointer-events-auto");
     }, [schema, unit]);
 
-    const handleCloseScratchpad = useCallback((state: boolean) => {
-        navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path);
-    }, []);
+    const handleCloseScratchpad = useCallback(() => {
+        navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
+            state: {
+                unit,
+            }
+        });
+    }, [unit]);
 
     if (unit == null) {
         return <Navigate to={InternalRoutes.Dashboard.StorageUnit.path} />
@@ -433,10 +437,6 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                     <DrawerTitle className="flex justify-between items-center">
                         <h2 className="text-lg font-semibold">Scratchpad</h2>
                         <div className="flex gap-2 items-center">
-                            <Button onClick={() => handleCloseScratchpad(false)} variant="secondary">
-                                <XMarkIcon className="w-4 h-4" />
-                                Close
-                            </Button>
                             <Button onClick={handleScratchpad} data-testid="submit-button">
                                 <PlayIcon className="w-4 h-4" />
                                 Run

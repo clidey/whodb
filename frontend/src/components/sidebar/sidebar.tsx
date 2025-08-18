@@ -15,6 +15,7 @@
  */
 
 import {
+    Button,
     cn,
     CommandItem,
     DropdownMenu,
@@ -22,6 +23,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
     SearchSelect,
+    Separator,
     Sheet,
     SheetContent,
     Sidebar as SidebarComponent,
@@ -37,7 +39,7 @@ import {
     useSidebar
 } from "@clidey/ux";
 import { DatabaseType, useGetDatabaseQuery, useGetSchemaQuery, useGetVersionQuery, useLoginMutation, useLoginWithProfileMutation } from '@graphql';
-import { Bars3Icon, ChevronDownIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { ArrowLeftStartOnRectangleIcon, Bars3Icon, ChevronDownIcon, PlusIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
@@ -122,7 +124,7 @@ export const Sidebar: FC = () => {
                     profile: {
                         Id: selectedProfile.Id,
                         Type: selectedProfile.Type as DatabaseType,
-                        Database: current?.Database,
+                        Database: database ?? current?.Database,
                     },
                 },
                 onCompleted(status) {
@@ -281,6 +283,7 @@ export const Sidebar: FC = () => {
                                 <div className="flex flex-col gap-2 w-full">
                                     <h2 className={cn("text-sm", !open &&  "hidden")}>Profile</h2>
                                     <SearchSelect
+                                        label="Profile"
                                         options={profileOptions}
                                         value={currentProfileOption?.value}
                                         onChange={handleProfileChange}
@@ -308,6 +311,7 @@ export const Sidebar: FC = () => {
                                 })}>
                                     <h2 className="text-sm">Database</h2>
                                     <SearchSelect
+                                        label="Database"
                                         options={databaseOptions}
                                         value={current?.Database}
                                         onChange={handleDatabaseChange}
@@ -321,6 +325,7 @@ export const Sidebar: FC = () => {
                                 })}>
                                     <h2 className="text-sm">Schema</h2>
                                     <SearchSelect
+                                        label="Schema"
                                         options={schemaOptions}
                                         value={schema}
                                         onChange={handleSchemaChange}
@@ -330,6 +335,7 @@ export const Sidebar: FC = () => {
                                     />
                                 </div>
                             </div>
+                            
                             {/* Main navigation */}
                             <SidebarMenu className="grow mt-16 gap-4">
                                 {sidebarRoutes.map(route => (
@@ -373,45 +379,48 @@ export const Sidebar: FC = () => {
                                     </SidebarMenuItem>
                                 )}
                                 <div className="grow" />
-                                    <SidebarMenuItem>
+                                    <SidebarMenuItem className="flex justify-between items-center w-full">
+                                    {/* Logout Profile button */}
                                     <SidebarMenuButton asChild>
-                                        <div className="relative flex items-center gap-2">
-                                            <div className="flex items-center gap-2 text-nowrap" onClick={handleLogout}>
-                                                {Icons.Logout}
-                                                {open && <span>Logout Profile</span>}
-                                            </div>
-                                            {/* Dropdown for additional logout options */}
-                                            <div className="ml-2">
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <button
-                                                            className="flex items-center justify-center p-1 rounded hover:bg-gray-100 dark:hover:bg-neutral-800"
-                                                            aria-label="More logout options"
-                                                            type="button"
-                                                        >
-                                                            <ChevronDownIcon className="w-4 h-4" />
-                                                        </button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent side="right" align="start">
-                                                        <DropdownMenuItem
-                                                            onClick={handleLogout}
-                                                        >
-                                                            {Icons.Logout}
-                                                            <span className="ml-2">Logout All Profiles</span>
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </div>
+                                        <div className="flex items-center gap-2 text-nowrap w-fit cursor-pointer" onClick={handleLogout}>
+                                            <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />
+                                            {open && <span>Logout Profile</span>}
                                         </div>
+                                    </SidebarMenuButton>
+                                    {/* Dropdown for additional logout options */}
+                                    <SidebarMenuButton asChild>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger className={cn({
+                                                "hidden": !open,
+                                            })}>
+                                                <Button
+                                                    className="flex items-center justify-center p-1 rounded hover:bg-gray-100 dark:hover:bg-neutral-800 ml-2"
+                                                    aria-label="More logout options"
+                                                    variant="ghost"
+                                                >
+                                                    <ChevronDownIcon className="w-4 h-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent side="right" align="start">
+                                                <DropdownMenuItem
+                                                    onClick={handleLogout}
+                                                >
+                                                    <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />
+                                                    <span className="ml-2">Logout All Profiles</span>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
                             </SidebarMenu>
-                            <div className="absolute right-8 bottom-8 text-sm text-gray-300 hover:text-gray-600 self-end dark:hover:text-neutral-300 transition-all">
-                                {version?.Version}
-                            </div>
                         </SidebarGroup>
                     )}
                 </SidebarContent>
+                <div className={cn("absolute right-4 bottom-4 text-xs text-muted-foreground", {
+                    "hidden": !open,
+                })}>
+                    {version?.Version} 0.11.0
+                </div>
             </SidebarComponent>
             <Sheet open={showLoginCard} onOpenChange={setShowLoginCard}>
                 <SheetContent side="right" className="p-8">

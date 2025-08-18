@@ -15,7 +15,7 @@
  */
 
 import { isEEMode } from "@/config/ee-imports";
-import { Button, Card, EmptyState, Input, toast } from "@clidey/ux";
+import { Alert, AlertDescription, AlertTitle, Button, Card, cn, EmptyState, Input, toast, toTitleCase } from "@clidey/ux";
 import { AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery } from '@graphql';
 import classNames from "classnames";
 import { cloneElement, FC, KeyboardEventHandler, useCallback, useMemo, useRef, useState } from "react";
@@ -31,6 +31,8 @@ import { isEEFeatureEnabled, loadEEComponent } from "../../utils/ee-loader";
 import { chooseRandomItems } from "../../utils/functions";
 import { chatExamples } from "./examples";
 import { AIProvider, useAI } from "../../components/ai";
+import { extensions } from "../../config/features";
+import { ArrowUpCircleIcon, BellAlertIcon } from "@heroicons/react/24/outline";
 const logoImage = "/images/logo.png";
 
 // Lazy load chart components if EE is enabled
@@ -97,7 +99,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
                     <CodeEditor value={text} />
                 </div>
                 :  (data != null && data.Rows.length > 0) || type === "sql:get"
-                    ? <div className="h-[250px]">
+                    ? <div className="h-[250px] w-full">
                         <StorageUnitTable
                             columns={data?.Columns.map(c => c.Name) ?? []}
                             columnTypes={data?.Columns.map(c => c.Type) ?? []}
@@ -196,7 +198,17 @@ export const ChatPage: FC = () => {
         setQuery("");
     }, [chats, currentModel, getAIChat, modelType, query, schema, dispatch]);
 
+    const disableChat = useMemo(() => {
+        return loading || models.length === 0 || !modelAvailable || query.trim().length === 0;
+    }, [loading, modelAvailable, models.length, query]);
+
     const handleKeyUp: KeyboardEventHandler<HTMLInputElement> = useCallback((e) => {
+        if (e.key === "Enter") {
+            if (query.trim().length > 0 && !disableChat) {
+                handleSubmitQuery();
+            }
+            return;
+        }
         if (e.key === "ArrowUp") {
           const foundSearchIndex = currentSearchIndex != null ? currentSearchIndex - 1 : chats.length - 1;
           let searchIndex = foundSearchIndex;
@@ -222,7 +234,7 @@ export const ChatPage: FC = () => {
             }
           }
         }
-    }, [chats, currentSearchIndex]);
+    }, [chats, currentSearchIndex, query, handleSubmitQuery, disableChat]);
 
     const handleSelectExample = useCallback((example: string) => {
         setQuery(example);
@@ -235,10 +247,6 @@ export const ChatPage: FC = () => {
     const disableAll = useMemo(() => {
         return models.length === 0 || !modelAvailable;
     }, [modelAvailable, models.length]);
-
-    const disableChat = useMemo(() => {
-        return loading || models.length === 0 || !modelAvailable;
-    }, [loading, modelAvailable, models.length]);
 
     return (
         <InternalPage routes={[InternalRoutes.Chat]} className="h-full">
@@ -253,7 +261,7 @@ export const ChatPage: FC = () => {
                     {
                         chats.length === 0
                         ? <div className="flex flex-col justify-center items-center w-full gap-8">
-                            <img src={logoImage} alt="clidey logo" className="w-auto h-16" />
+                            {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4" />}
                             <div className="flex flex-wrap justify-center items-center gap-4">
                                 {
                                     examples.map((example, i) => (
@@ -277,7 +285,7 @@ export const ChatPage: FC = () => {
                                                     "self-start": !chat.isUserInput,
                                                 })}>
                                                     {!chat.isUserInput && chats[i-1]?.isUserInput
-                                                        ? <img src={logoImage} alt="clidey logo" className="w-auto h-6 mt-2" />
+                                                        ? extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4 mt-2" />
                                                         : <div className="pl-4" />}
                                                     <div className={classNames("text-neutral-800 dark:text-neutral-300 px-4 py-2 rounded-xl whitespace-pre-wrap", {
                                                         "bg-neutral-600/5 dark:bg-[#2C2F33]": chat.isUserInput,
@@ -287,17 +295,21 @@ export const ChatPage: FC = () => {
                                                     </div>
                                                 </div>
                                             } else if (chat.Type === "error") {
-                                                return <div key={`chat-${i}`} className="flex items-center gap-4 overflow-hidden break-words leading-6 shrink-0 self-start">
-                                                    {!chat.isUserInput && chats[i-1]?.isUserInput
-                                                        ? <img src={logoImage} alt="clidey logo" className="w-auto h-6" />
-                                                        : <div className="pl-4" />}
-                                                    <div className="text-red-800 dark:text-red-300 px-4 py-2 rounded-lg">
-                                                        {chat.Text}
+                                                return (
+                                                    <div key={`chat-${i}`} className="flex items-center gap-4 overflow-hidden break-words leading-6 shrink-0 self-start">
+                                                        {!chat.isUserInput && chats[i-1]?.isUserInput
+                                                            ? extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4" />
+                                                            : <div className="pl-4" />}
+                                                        <Alert variant="destructive" title="Error" description={chat.Text}>
+                                                            <BellAlertIcon className="w-4 h-4" />
+                                                            <AlertTitle>Error</AlertTitle>
+                                                            <AlertDescription>{toTitleCase(chat.Text.replaceAll("ERROR: ", ""))}</AlertDescription>
+                                                        </Alert>
                                                     </div>
-                                                </div>
+                                                );
                                             } else if (isEEFeatureEnabled('dataVisualization') && (chat.Type === "sql:pie-chart" || chat.Type === "sql:line-chart")) {
                                                 return <div key={`chat-${i}`} className="flex items-center self-start">
-                                                    {!chat.isUserInput && chats[i-1]?.isUserInput && <img src={logoImage} alt="clidey logo" className="w-auto h-6" />}
+                                                    {!chat.isUserInput && chats[i-1]?.isUserInput && (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4" />)}
                                                     {/* @ts-ignore */}
                                                     {chat.Type === "sql:pie-chart" && PieChart && <PieChart columns={chat.Result?.Columns.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} />}
                                                     {/* @ts-ignore */}
@@ -306,7 +318,7 @@ export const ChatPage: FC = () => {
                                             }
                                             return <div key={`chat-${i}`} className="flex gap-4 w-full overflow-hidden pt-4 pr-9">
                                                 {!chat.isUserInput && chats[i-1]?.isUserInput
-                                                    ? <img src={logoImage} alt="clidey logo" className="w-auto h-6" />
+                                                    ? (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4" />)
                                                     : <div className="pl-4" />}
                                                 <TablePreview type={chat.Type} text={chat.Text} data={chat.Result} />
                                             </div>
@@ -324,19 +336,23 @@ export const ChatPage: FC = () => {
                     (!modelAvailable || models.length === 0) &&
                     <EmptyState title="No Model Available" description="Please choose an available model to start chatting with your data." icon={Icons.Sparkles} />
                 }
-                <div className={classNames("relative w-full", {
+                <div className={classNames("flex justify-between items-center gap-2", {
                     "opacity-80": disableChat,
                     "opacity-10": disableAll,
                 })}>
-                    <div className={classNames("absolute right-2 top-1/2 -translate-y-1/2 z-10 backdrop-blur-lg rounded-full cursor-pointer hover:scale-110 transition-all", {
+                    <Input
+                        value={query}
+                        onChange={e => setQuery(e.target.value)}
+                        placeholder="Type your message here..."
+                        onSubmit={handleSubmitQuery}
+                        disabled={disableAll}
+                        onKeyUp={handleKeyUp}
+                    />
+                    <Button tabIndex={0} onClick={loading ? undefined : handleSubmitQuery} className={cn("rounded-full", {
                         "opacity-50": loading,
-                    })} onClick={loading ? undefined : handleSubmitQuery}>
-                        {cloneElement(Icons.ArrowUp, {
-                            className: "w-5 h-5 stroke-neutral-800 dark:stroke-neutral-300",
-                        })}
-                    </div>
-                    <Input value={query} onChange={e => setQuery(e.target.value)} placeholder="Talk to me..." onSubmit={handleSubmitQuery}
-                        disabled={disableChat} onKeyUp={handleKeyUp} />
+                    })} disabled={disableChat} variant={disableChat ? "secondary" : undefined}>
+                        <ArrowUpCircleIcon className="w-8 h-8" />
+                    </Button>
                 </div>
             </div>
         </InternalPage>

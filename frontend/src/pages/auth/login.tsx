@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Badge, Button, cn, Input, Label, SearchSelect, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, toast } from '@clidey/ux';
+import { Badge, Button, cn, Input, Label, SearchSelect, Separator, toast } from '@clidey/ux';
 import { DatabaseType, LoginCredentials, useGetDatabaseLazyQuery, useGetProfilesQuery, useLoginMutation, useLoginWithProfileMutation } from '@graphql';
 import classNames from "classnames";
 import { entries } from "lodash";
@@ -25,11 +25,11 @@ import { Loading } from "../../components/loading";
 import { Container } from "../../components/page";
 import { updateProfileLastAccessed } from "../../components/profile-info-tooltip";
 import { baseDatabaseTypes, getDatabaseTypeDropdownItems, IDatabaseDropdownItem } from "../../config/database-types";
+import { extensions } from '../../config/features';
 import { InternalRoutes } from "../../config/routes";
 import { AuthActions } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { extensions } from '../../config/features';
 const logoImage = "/images/logo.png";
 // Embeddable LoginForm component for use in LoginPage and @sidebar.tsx
 
@@ -111,7 +111,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                     } else {
                         navigate(InternalRoutes.Dashboard.StorageUnit.path);
                     }
-                    return toast.success("Login successfully");
+                    return toast.success("Login successful");
                 }
                 return toast.error("Login failed");
             },
@@ -336,12 +336,13 @@ export const LoginForm: FC<LoginFormProps> = ({
 
     const availableProfiles = useMemo(() => {
         return profiles?.Profiles.map(profile => ({
-            id: profile.Alias ?? profile.Id,
-            label: (Icons.Logos as Record<string, ReactElement>)[profile.Type],
+            value: profile.Id,
+            label: profile.Alias ?? profile.Id,
+            icon: (Icons.Logos as Record<string, ReactElement>)[profile.Type],
         })) ?? [];
     }, [profiles?.Profiles]);
 
-    const loginEnabled = useMemo(() => {
+    const loginWithCredentialsEnabled = useMemo(() => {
         if (databaseType.id === DatabaseType.Sqlite3) {
             return database.length > 0;
         }
@@ -353,6 +354,10 @@ export const LoginForm: FC<LoginFormProps> = ({
         }
         return false;
     }, [databaseType.id, hostName, username, password, database]);
+
+    const loginWithProfileEnabled = useMemo(() => {
+        return selectedAvailableProfile != null;
+    }, [selectedAvailableProfile]);
 
     if (loading || profilesLoading)  {
         return (
@@ -373,7 +378,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         })}>
             <div className={classNames("flex flex-col grow gap-4", {
                 "justify-between": advancedDirection === "horizontal",
-                "h-full": advancedDirection === "vertical",
+                "h-full": advancedDirection === "vertical" && availableProfiles.length === 0,
             })}>
                 <div className={classNames("flex", {
                     "flex-row grow": advancedDirection === "horizontal",
@@ -383,8 +388,8 @@ export const LoginForm: FC<LoginFormProps> = ({
                         {!hideHeader && (
                             <div className="flex justify-between">
                                 <div className="flex items-center gap-2 text-xl">
-                                    <img src={logoImage} alt="clidey logo" className="w-auto h-6" />
-                                    <h1 className="text-brand-foreground">{extensions.AppName ?? "WhoDB"}</h1>
+                                {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4" />}
+                                <h1 className="text-brand-foreground">{extensions.AppName ?? "WhoDB"}</h1>
                                     <h1>Login</h1>
                                 </div>
                                 {
@@ -438,7 +443,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                         </div>
                     }
                 </div>
-                <div className={classNames("flex login-action-buttons", {
+                <div className={classNames("flex", {
                     "justify-end": advancedForm == null,
                     "justify-between": advancedForm != null,
                 })}>
@@ -448,14 +453,16 @@ export const LoginForm: FC<LoginFormProps> = ({
                         {Icons.Adjustments} {showAdvanced ? "Less Advanced" : "Advanced"}
                     </Button>
                     {advancedDirection === "horizontal" && (
-                        <Button onClick={handleSubmit} data-testid="submit-button" variant={loginEnabled ? "default" : "secondary"}>
+                        <Button onClick={handleSubmit} data-testid="login-button" variant={loginWithCredentialsEnabled ? "default" : "secondary"}>
                             {Icons.CheckCircle} Submit
                         </Button>
                     )}
                 </div>
                 {advancedDirection === "vertical" && (
-                    <div className='flex flex-col grow justify-end'>
-                        <Button onClick={handleSubmit} data-testid="submit-button" variant={loginEnabled ? "default" : "secondary"}>
+                    <div className={cn("flex flex-col justify-end", {
+                        "grow": availableProfiles.length === 0,
+                    })}>
+                        <Button onClick={handleSubmit} data-testid="login-button" variant={loginWithCredentialsEnabled ? "default" : "secondary"}>
                             {Icons.CheckCircle} Submit
                         </Button>
                     </div>
@@ -463,38 +470,23 @@ export const LoginForm: FC<LoginFormProps> = ({
             </div>
             {
                 availableProfiles.length > 0 &&
-                <div className="mt-4 pt-2 border-t border-t-neutral-100/10 flex flex-col gap-2">
-                    <div>
-                        <Label className="mb-1 block">Available profiles</Label>
-                        <Select
+                <>
+                    <Separator className="my-8" />
+                    <div className="flex flex-col gap-4">
+                        <Label>Available profiles</Label>
+                        <SearchSelect
                             value={selectedAvailableProfile}
-                            onValueChange={handleAvailableProfileChange}
-                        >
-                            <SelectTrigger className="w-full" data-testid="available-profiles-select">
-                                <SelectValue>
-                                    {selectedAvailableProfile
-                                        ? <span className="flex items-center gap-2">{availableProfiles.find(p => p.id === selectedAvailableProfile)?.label}</span>
-                                        : <span className="text-neutral-400">No available profiles</span>
-                                    }
-                                </SelectValue>
-                            </SelectTrigger>
-                            <SelectContent className="w-full max-h-[300px]">
-                                {availableProfiles.length === 0 ? (
-                                    <div className="px-4 py-2 text-neutral-400">No available profiles</div>
-                                ) : (
-                                    availableProfiles.map(item => (
-                                        <SelectItem key={item.id} value={item.id}>
-                                            <span className="flex items-center gap-2">{item.label}</span>
-                                        </SelectItem>
-                                    ))
-                                )}
-                            </SelectContent>
-                        </Select>
+                            onChange={handleAvailableProfileChange}
+                            placeholder="Select a profile"
+                            data-testid="available-profiles-select"
+                            contentClassName="w-[var(--radix-popover-trigger-width)]"
+                            options={availableProfiles}
+                        />
+                        <Button onClick={handleLoginWithProfileSubmit} data-testid="login-with-profile-button" variant={loginWithProfileEnabled ? "default" : "secondary"}>
+                            {Icons.CheckCircle} Login
+                        </Button>
                     </div>
-                    <Button onClick={handleLoginWithProfileSubmit} data-testid="login-with-profile-button">
-                        {Icons.CheckCircle} Login
-                    </Button>
-                </div>
+                </>
             }
         </div>
     );

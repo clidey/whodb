@@ -36,6 +36,11 @@ import {
     PaginationLink,
     PaginationNext,
     PaginationPrevious,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
     Sheet,
     SheetContent,
     SheetFooter,
@@ -60,9 +65,10 @@ import {
     HashtagIcon,
     KeyIcon,
     ListBulletIcon,
+    ArrowDownCircleIcon,
 } from "@heroicons/react/24/outline";
 import { FC, useCallback, useMemo, useState } from "react";
-
+import { useExportToCSV } from "./hooks"; // You may need to adjust this import
 
 // Type sets based on core/src/plugins/gorm/utils.go
 const stringTypes = new Set([
@@ -93,7 +99,6 @@ const binaryTypes = new Set([
     "BLOB", "BYTEA", "VARBINARY", "BINARY", "IMAGE", "TINYBLOB", "MEDIUMBLOB", "LONGBLOB"
 ]);
 
-// For delete logic, we need to accept a prop for deleting a row
 interface TableProps {
     columns: string[];
     columnTypes?: string[];
@@ -103,6 +108,8 @@ interface TableProps {
     onRowUpdate?: (row: Record<string, string | number>, updatedColumn: string) => Promise<void>;
     onRowDelete?: (rowIndex: number) => Promise<void> | void;
     disableEdit?: boolean;
+    schema?: string;
+    storageUnit?: string;
 }
 
 export const StorageUnitTable: FC<TableProps> = ({
@@ -114,15 +121,32 @@ export const StorageUnitTable: FC<TableProps> = ({
     onRowUpdate,
     onRowDelete,
     disableEdit = false,
+    schema,
+    storageUnit,
 }) => {
     const [editIndex, setEditIndex] = useState<number | null>(null);
     const [editRow, setEditRow] = useState<string[] | null>(null);
     const [deleting, setDeleting] = useState(false);
     const [checked, setChecked] = useState<number[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
+    const [showExportConfirm, setShowExportConfirm] = useState(false);
+    const [exportDelimiter, setExportDelimiter] = useState(',');
+    const [exportFormat, setExportFormat] = useState<'csv' | 'excel'>('csv');
     const pageSize = 20;
     const totalRows = rows.length;
     const totalPages = Math.ceil(totalRows / pageSize);
+
+    // Export options as lists
+    const exportFormatOptions = [
+        { value: 'csv', label: 'CSV - Comma Separated Values' },
+        { value: 'excel', label: 'Excel - XLSX Format' },
+    ] as const;
+
+    const exportDelimiterOptions = [
+        { value: ',', label: 'Comma (,) - Standard CSV' },
+        { value: ';', label: 'Semicolon (;) - Excel in some locales' },
+        { value: '|', label: 'Pipe (|) - Less common in data' },
+    ] as const;
 
     const handleEdit = (index: number) => {
         setEditIndex(index);
@@ -249,8 +273,42 @@ export const StorageUnitTable: FC<TableProps> = ({
         }
     };
 
+    // --- Export logic ---
+    const hasSelectedRows = checked.length > 0;
+    const selectedRowsData = useMemo(() => {
+        if (hasSelectedRows) {
+            return checked.map(idx => rows[idx]);
+        }
+        return undefined;
+    }, [hasSelectedRows, checked, rows]);
+
+    // Always call the hook, but use conditional logic inside
+    const backendExport = useExportToCSV(schema || '', storageUnit || '', hasSelectedRows, exportDelimiter, selectedRowsData, exportFormat);
+
+    const handleExportConfirm = useCallback(async () => {
+        try {
+            await backendExport();
+            setShowExportConfirm(false);
+        } catch (error: any) {
+            toast.error(error.message || 'Export failed');
+        }
+    }, [backendExport]);
+
+    // --- End export logic ---
+
     return (
+        <>
         <div className="flex flex-col grow h-full">
+            <div className="flex justify-end items-center mb-2">
+                <Button
+                    variant="secondary"
+                    onClick={() => setShowExportConfirm(true)}
+                    className="flex gap-2"
+                >
+                    <ArrowDownCircleIcon className="w-4 h-4" />
+                    {hasSelectedRows ? `Export ${checked.length} selected` : "Export all"}
+                </Button>
+            </div>
             <TableComponent className="overflow-x-auto">
                 <TableHeader>
                     <TableRow>
@@ -300,14 +358,33 @@ export const StorageUnitTable: FC<TableProps> = ({
                                     </ContextMenuItem>
                                     <ContextMenuSub>
                                         <ContextMenuSubTrigger>Export</ContextMenuSubTrigger>
-                                        <ContextMenuSubContent className="w-44">
-                                            <ContextMenuItem>
+                                        <ContextMenuSubContent>
+                                            <ContextMenuItem
+                                                onSelect={() => { setShowExportConfirm(true); setExportFormat('csv'); }}
+                                            >
                                                 <DocumentIcon className="w-4 h-4" />
-                                                Export CSV
+                                                Export All as CSV
                                             </ContextMenuItem>
-                                            <ContextMenuItem>
+                                            <ContextMenuItem
+                                                onSelect={() => { setShowExportConfirm(true); setExportFormat('excel'); }}
+                                            >
                                                 <DocumentIcon className="w-4 h-4" />
-                                                Export Excel
+                                                Export All as Excel
+                                            </ContextMenuItem>
+                                            <ContextMenuSeparator />
+                                            <ContextMenuItem
+                                                onSelect={() => { setShowExportConfirm(true); setExportFormat('csv'); }}
+                                                disabled={checked.length === 0}
+                                            >
+                                                <DocumentIcon className="w-4 h-4" />
+                                                Export Selected as CSV
+                                            </ContextMenuItem>
+                                            <ContextMenuItem
+                                                onSelect={() => { setShowExportConfirm(true); setExportFormat('excel'); }}
+                                                disabled={checked.length === 0}
+                                            >
+                                                <DocumentIcon className="w-4 h-4" />
+                                                Export Selected as Excel
                                             </ContextMenuItem>
                                         </ContextMenuSubContent>
                                     </ContextMenuSub>
@@ -390,5 +467,94 @@ export const StorageUnitTable: FC<TableProps> = ({
                 </SheetContent>
             </Sheet>
         </div>
+        <Sheet open={showExportConfirm} onOpenChange={setShowExportConfirm}>
+            <SheetContent side="right" className="max-w-md w-full p-8">
+                <div className="flex flex-col gap-4 grow">
+                    <h2 className="text-xl font-semibold mb-4">Export Data</h2>
+                    <div className="space-y-4 grow">
+                        <p>
+                            {hasSelectedRows
+                                ? `You are about to export ${checked.length} selected rows.`
+                                : `You are about to export all data from the table. This may take some time for large tables.`}
+                        </p>
+                        <div className="mb-4 flex flex-col gap-2">
+                            <Label>
+                                Format
+                            </Label>
+                            <Select
+                                value={exportFormat}
+                                onValueChange={(value) => setExportFormat(value as 'csv' | 'excel')}
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue>
+                                        {
+                                            exportFormatOptions.find(opt => opt.value === exportFormat)?.label
+                                        }
+                                    </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {exportFormatOptions.map(opt => (
+                                        <SelectItem key={opt.value} value={opt.value}>
+                                            {opt.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {exportFormat === 'csv' && (
+                                <>
+                                    <Label>
+                                        Delimiter
+                                    </Label>
+                                    <Select
+                                        value={exportDelimiter}
+                                        onValueChange={(value) => setExportDelimiter(value)}
+                                    >
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue>
+                                                {
+                                                    exportDelimiterOptions.find(opt => opt.value === exportDelimiter)?.label
+                                                }
+                                            </SelectValue>
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {exportDelimiterOptions.map(opt => (
+                                                <SelectItem key={opt.value} value={opt.value}>
+                                                    {opt.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <p className="text-sm mt-2">Choose a delimiter that doesn't appear in your data</p>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                    <SheetFooter className="px-0">
+                        <div className="text-xs text-muted-foreground mb-8">
+                            <p className="font-medium mb-1">Export Details:</p>
+                            <ul className="list-disc list-inside space-y-1">
+                                {exportFormat === 'csv' ? (
+                                    <>
+                                        <li><p>Headers include column names and data types</p></li>
+                                        <li><p>UTF-8 encoding</p></li>
+                                        <li><p>Customizable delimiter</p></li>
+                                    </>
+                                ) : (
+                                    <>
+                                        <li><p>Excel XLSX format</p></li>
+                                        <li><p>Formatted headers with styling</p></li>
+                                        <li><p>Auto-sized columns</p></li>
+                                    </>
+                                )}
+                            </ul>
+                        </div>
+                        <Button onClick={handleExportConfirm}>
+                            Export
+                        </Button>
+                    </SheetFooter>
+                </div>
+            </SheetContent>
+        </Sheet>
+        </>
     );
 };

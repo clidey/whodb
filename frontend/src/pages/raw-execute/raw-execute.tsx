@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Alert, AlertDescription, AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertTitle, Badge, Button, Card, cn, EmptyState, formatDate, Select, SelectContent, SelectItem, SelectTrigger, Separator, Sheet, SheetContent, Tabs, TabsContent, TabsList, TabsTrigger, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@clidey/ux";
+import { Alert, AlertDescription, AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertTitle, Badge, Button, Card, cn, EmptyState, formatDate, Select, SelectContent, SelectItem, SelectTrigger, Separator, Sheet, SheetContent, Tabs, TabsContent, TabsList, TabsTrigger } from "@clidey/ux";
 import { DatabaseType, RowsResult } from '@graphql';
 import { BellAlertIcon, ClockIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
@@ -27,12 +27,12 @@ import { CodeEditor } from "../../components/editor";
 import { Icons } from "../../components/icons";
 import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
+import { Tip } from "../../components/tip";
 import { InternalRoutes } from "../../config/routes";
 import { LocalLoginProfile } from "../../store/auth";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { isEEFeatureEnabled, loadEEModule } from "../../utils/ee-loader";
 import { IPluginProps, QueryView } from "./query-view";
-import { Tip } from "../../components/tip";
 
 type EEExports = {
     plugins: any[];

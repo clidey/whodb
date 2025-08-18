@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { Button, CommandItem, Input, Label, SearchSelect, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Sheet, SheetContent, SheetFooter, toast } from "@clidey/ux";
-import { ArrowTopRightOnSquareIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { AlertDialogCancel, AlertDialogFooter, AlertDialogDescription, AlertDialogHeader, AlertDialog, AlertDialogContent, AlertDialogTrigger, Button, cn, CommandItem, Input, Label, SearchSelect, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Sheet, SheetContent, SheetFooter, toast, AlertDialogTitle, AlertDialogAction } from "@clidey/ux";
+import { ArrowTopRightOnSquareIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { map } from "lodash";
 import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 import { v4 } from "uuid";
@@ -255,7 +255,16 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
         onClear?.();
     }, [onClear]);
 
-    return <>
+    const handleDeleteProvider = useCallback((id?: string) => {
+        if (id) {
+            dispatch(AIModelsActions.removeAIModelType({ id }));
+        }
+        dispatch(AIModelsActions.setCurrentModelType({ id: "" }));
+        dispatch(AIModelsActions.setModels([]));
+        dispatch(AIModelsActions.setCurrentModel(undefined));
+    }, [dispatch]);
+
+    return <div className="flex flex-col gap-4">
         <Sheet open={addExternalModel} onOpenChange={setAddExternalModel}>
             <SheetContent className="max-w-md mx-auto w-full px-8 py-10 flex flex-col gap-4">
                 <div className="flex flex-col gap-4">
@@ -308,7 +317,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                 </div>
                 <SheetFooter className="p-0">
                     <div className="text-xs text-neutral-500 mt-4 flex flex-col gap-2">
-                        <div className="font-bold">Setup</div>
+                        <div className="font-bold">Local Setup</div>
                         <div>
                             Go to <a href="https://ollama.com/" target="_blank" rel="noopener noreferrer" className="font-semibold underline text-blue-600 hover:text-blue-800">Ollama</a> and follow the installation instructions.
                         </div>
@@ -318,6 +327,9 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         </div>
                         <div className="font-mono bg-neutral-100 dark:bg-neutral-900 rounded px-2 py-1 mb-1">
                             ollama run llama3.1
+                        </div>
+                        <div>
+                            Check our documentation for more information on how to setup Ollama.
                         </div>
                         <Button icon={Icons.RightArrowUp} variant="secondary" className="w-full mt-2" onClick={handleOpenDocs}>
                             Docs
@@ -374,14 +386,46 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                     />
                 }
             </div>
-            {
-                !disableNewChat &&
-                <div className="flex gap-2">
-                    <Button onClick={handleClear} disabled={loading} data-testid="chat-new-chat">
-                        {Icons.Refresh} New Chat
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button
+                        data-testid="chat-delete-provider"
+                        variant="destructive"
+                        className={cn({
+                            "hidden": disableNewChat,
+                        })}
+                    >
+                        <TrashIcon className="w-4 h-4" /> Delete Provider
                     </Button>
-                </div>
-            }
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Provider</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to delete this provider? This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction asChild>
+                            <Button
+                                data-testid="chat-delete-provider-confirm"
+                                onClick={() => handleDeleteProvider(modelType?.id)}
+                                variant="destructive"
+                            >
+                                Delete
+                            </Button>
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
-    </>
+        <div className={cn("flex items-center", {
+            "hidden": disableNewChat,
+        })}>
+            <Button onClick={handleClear} disabled={loading} data-testid="chat-new-chat" variant="secondary">
+                {Icons.Refresh} New Chat
+            </Button>
+        </div>
+    </div>
 }

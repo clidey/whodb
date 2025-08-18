@@ -23,6 +23,7 @@ import { Icons } from '../icons';
 import { GraphElements } from './constants';
 import { FloatingGraphEdge, GraphEdgeConnectionLine } from './edge';
 import { getDagreLayoutedElements } from './layouts';
+import { Tip } from '../tip';
 
 
 export type IGraphCardProps<T extends unknown = any> = NodeProps<(T & {}) | undefined>;
@@ -153,10 +154,16 @@ export const Graph: FC<IGraphProps> = (props) => {
                 <Tabs value={undefined} onValueChange={() => {}}>
                     <TabsList dir="column">
                         <TabsTrigger value="download" onClick={handleDownloadImage}>
-                            {Icons.Download}
+                            <Tip>
+                                {Icons.Download}
+                                Download
+                            </Tip>
                         </TabsTrigger>
                         <TabsTrigger value="layout" onClick={() => onLayout("dagre")}>
-                            {Icons.GraphLayout}
+                            <Tip>
+                                {Icons.GraphLayout}
+                                Layout
+                            </Tip>
                         </TabsTrigger>
                     </TabsList>
                 </Tabs>
