@@ -85,7 +85,7 @@ const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = (
         <div className="flex flex-col grow gap-4 justify-between h-full">
             <div className="w-full" data-testid="explore-fields">
                 <div className="flex flex-col gap-12">
-                    <h1 className="text-2xl font-bold mb-4">{unit.Name}</h1>
+                    <h1 className="text-2xl font-bold mb-4 break-all">{unit.Name}</h1>
                     <StackList>
                         {
                             introAttributes.map(attribute => (
