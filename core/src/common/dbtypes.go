@@ -23,7 +23,7 @@ import (
 var (
 	IntTypes = mapset.NewSet(
 		"INTEGER", "SMALLINT", "BIGINT", "INT", "TINYINT", "MEDIUMINT",
-		"INT8", "INT16", "INT32", "INT64",
+		"INT4", "INT8", "INT16", "INT32", "INT64",
 		// Serial types (primarily Postgres)
 		"SERIAL", "BIGSERIAL", "SMALLSERIAL",
 	)

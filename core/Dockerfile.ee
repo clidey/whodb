@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # WhoDB Enterprise Edition Dockerfile
-# Build from project root: docker build -f ee/Dockerfile -t whodb:ee .
+# Build from project root: docker build -f core/Dockerfile.ee -t whodb:ee .
 
 # Build frontend with EE modules
 FROM node:lts-alpine AS build-stage
@@ -37,8 +37,8 @@ FROM golang:1.24.1-alpine AS backend-stage
 RUN apk update && apk add --no-cache gcc musl-dev git bash
 WORKDIR /app
 
-# Copy scripts first as they're needed for GraphQL generation
-COPY ./scripts/ ./scripts/
+# Copy EE workspace file
+COPY ./go.work.ee ./
 
 # Copy core module files
 COPY ./core/go.mod ./core/go.sum ./core/
@@ -55,22 +55,14 @@ RUN go mod download
 WORKDIR /app
 COPY ./core/ ./core/
 COPY ./ee/ ./ee/
+COPY ./scripts/ ./scripts/
 
 # Copy frontend build to be embedded
 COPY --from=build-stage /app/build/ ./core/build/
 
-# Generate GraphQL code for EE
-# First ensure we have all the dependencies for gqlgen
-WORKDIR /app/ee
-RUN go mod download
-WORKDIR /app
-
-# Build backend with EE features
+# Build backend with EE features using workspace
 WORKDIR /app/core
-# Add replace directive for EE module
-RUN go mod edit -replace github.com/clidey/whodb/ee=/app/ee && \
-    go mod tidy && \
-    CGO_ENABLED=1 GOOS=linux go build -tags ee -o /core
+RUN GOWORK=/app/go.work.ee CGO_ENABLED=1 GOOS=linux go build -tags ee -o /core
 
 # Final stage
 FROM alpine:3.22.1

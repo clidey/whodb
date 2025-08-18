@@ -116,9 +116,7 @@ export function migrateAIModelsFromDatabase(): void {
 
     // Mark migration as completed
     localStorage.setItem(migrationKey, 'true');
-    
-    console.log('AI models migration completed successfully');
-  } catch (error) {
+      } catch (error) {
     console.error('Error during AI models migration:', error);
     // Don't mark as completed so it can be retried on next load
   }
@@ -190,7 +188,6 @@ function ensureValidAIModelsState(): void {
 
     if (needsUpdate) {
       localStorage.setItem('persist:aiModels', JSON.stringify(aiModelsState));
-      console.log('Fixed AI models state to ensure arrays');
     }
   } catch (error) {
     console.error('Error ensuring valid AI models state:', error);

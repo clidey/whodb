@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
+import { Tabs, TabsList, TabsTrigger } from '@clidey/ux';
 import classNames from 'classnames';
+import { toPng } from 'html-to-image';
 import { Dispatch, FC, ReactNode, SetStateAction, useCallback, useMemo, useRef, useState } from "react";
 import ReactFlow, { Background, Controls, Edge, Node, NodeProps, NodeTypes, OnInit, ReactFlowInstance, ReactFlowProps, useReactFlow } from 'reactflow';
-import { ActionButton } from '../button';
 import { Icons } from '../icons';
 import { GraphElements } from './constants';
 import { FloatingGraphEdge, GraphEdgeConnectionLine } from './edge';
 import { getDagreLayoutedElements } from './layouts';
-import { toPng } from 'html-to-image';
+import { Tip } from '../tip';
 
 
 export type IGraphCardProps<T extends unknown = any> = NodeProps<(T & {}) | undefined>;
@@ -34,7 +35,7 @@ export const createRedirectState = (nodes: {id: string, type: GraphElements}[]) 
 }
 
 export type IGraphInstance = {
-    layout: (type?: "dagre") => void;
+    layout: (type?: "dagre", padding?: number) => void;
 } & ReactFlowInstance;
 
 export type IGraphProps<NodeData extends unknown = any, EdgeData extends unknown = any, ChangesType extends unknown = any> = {
@@ -60,7 +61,7 @@ export const Graph: FC<IGraphProps> = (props) => {
         floatingGraphEdge: FloatingGraphEdge,
     }), []);
 
-    const onLayout = useCallback((type = "dagre") => {
+    const onLayout = useCallback((type = "dagre", padding?: number) => {
         const nodes = getNodes();
         const edges = getEdges();
 
@@ -81,6 +82,7 @@ export const Graph: FC<IGraphProps> = (props) => {
             setIsLayingOut(false);
             fitView({
                 duration: 300,
+                padding,
             });
         }, 350);
     }, [fitView, getEdges, getNodes, setEdges, setNodes]);
@@ -122,7 +124,7 @@ export const Graph: FC<IGraphProps> = (props) => {
 
     return <ReactFlow
         ref={reactFlowWrapper}
-        className={classNames("group bg-transparent rounded-lg", {
+        className={classNames("group rounded-lg", {
             "laying-out": isLayingOut,
         })}
         {...props}
@@ -145,12 +147,26 @@ export const Graph: FC<IGraphProps> = (props) => {
         {
             !downloading && <Controls />
         }
-        <div className={classNames("flex flex-row gap-2 absolute bottom-8 right-5 z-10", {
+        <div className={classNames("flex flex-row gap-2 absolute bottom-4 right-4 z-10", {
             "hidden": downloading,
         })}>
             <div className="flex flex-col gap-2">
-                <ActionButton icon={Icons.Download} onClick={handleDownloadImage} />
-                <ActionButton icon={Icons.GraphLayout} onClick={() => onLayout("dagre")} />
+                <Tabs value={undefined} onValueChange={() => {}}>
+                    <TabsList dir="column">
+                        <TabsTrigger value="download" onClick={handleDownloadImage}>
+                            <Tip>
+                                {Icons.Download}
+                                Download
+                            </Tip>
+                        </TabsTrigger>
+                        <TabsTrigger value="layout" onClick={() => onLayout("dagre")}>
+                            <Tip>
+                                {Icons.GraphLayout}
+                                Layout
+                            </Tip>
+                        </TabsTrigger>
+                    </TabsList>
+                </Tabs>
             </div>
         </div>
         {props.children}

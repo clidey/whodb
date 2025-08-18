@@ -20,8 +20,8 @@ import { useDispatch } from "react-redux";
 import { Container } from "../../components/page";
 import { LogoutDocument, LogoutMutation, LogoutMutationVariables } from '@graphql';
 import { AuthActions } from "../../store/auth";
-import { notify } from "../../store/function";
 import { Loading } from "../../components/loading";
+import { toast } from "@clidey/ux";
 
 export const LogoutPage: FC = () => {
   const [logout, ] = useMutation<LogoutMutation, LogoutMutationVariables>(LogoutDocument);
@@ -31,10 +31,10 @@ export const LogoutPage: FC = () => {
     logout({
       onCompleted() {
         dispatch(AuthActions.logout());
-        notify("Logged out successfully", "success");
+        toast.success("Logged out successfully");
       },
       onError() {
-        notify("Error logging out", "error");
+        toast.error("Error logging out");
       }
     });
   }, [dispatch, logout]);

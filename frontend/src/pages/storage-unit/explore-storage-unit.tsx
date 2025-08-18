@@ -15,104 +15,60 @@
  */
 
 import { FetchResult } from "@apollo/client";
-import classNames from "classnames";
-import { motion } from "framer-motion";
-import { clone, entries, keys, map } from "lodash";
-import {cloneElement, FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
-import { AnimatedButton } from "../../components/button";
-import { Dropdown } from "../../components/dropdown";
-import { Icons } from "../../components/icons";
-import { Input, InputWithlabel } from "../../components/input";
-import { Loading, LoadingPage } from "../../components/loading";
-import { InternalPage } from "../../components/page";
-import { Table } from "../../components/table";
-import { graphqlClient } from "../../config/graphql-client";
-import { InternalRoutes } from "../../config/routes";
+import { Button, Drawer, DrawerTitle, DrawerContent, DrawerHeader, Input, Label, Sheet, SheetContent, SheetFooter, toast, DrawerFooter, SearchInput } from "@clidey/ux";
 import {
-    Column, DatabaseType, DeleteRowDocument, DeleteRowMutationResult, RecordInput, RowsResult, StorageUnit,
+    DatabaseType, DeleteRowDocument, DeleteRowMutationResult, RecordInput, RowsResult, StorageUnit,
     UpdateStorageUnitDocument, UpdateStorageUnitMutationResult, useAddRowMutation, useGetStorageUnitRowsLazyQuery,
+    useRawExecuteLazyQuery,
     WhereCondition
 } from '@graphql';
-import { notify } from "../../store/function";
+import { clone, entries, keys, map } from "lodash";
+import { FC, useCallback, useEffect, useMemo, useState } from "react";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Icons } from "../../components/icons";
+import { Loading, LoadingPage } from "../../components/loading";
+import { InternalPage } from "../../components/page";
+import { StorageUnitTable } from "../../components/table";
+import { graphqlClient } from "../../config/graphql-client";
+import { InternalRoutes } from "../../config/routes";
 import { useAppSelector } from "../../store/hooks";
-import { getDatabaseStorageUnitLabel, isNoSQL, isNumeric } from "../../utils/functions";
 import { getDatabaseOperators } from "../../utils/database-operators";
+import { getDatabaseStorageUnitLabel } from "../../utils/functions";
 import { ExploreStorageUnitWhereCondition } from "./explore-storage-unit-where-condition";
 import { MockDataDialog } from "../../components/mock-data-dialog";
+import { CodeEditor } from "../../components/editor";
+import { PlayIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
-
-export const ExploreStorageUnit: FC = () => {
+export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad }) => {
     const [bufferPageSize, setBufferPageSize] = useState("100");
     const [currentPage, setCurrentPage] = useState(0);
     const [whereCondition, setWhereCondition] = useState<WhereCondition>();
     const [pageSize, setPageSize] = useState("");
     const unit: StorageUnit = useLocation().state?.unit;
+    const pathname = useLocation().pathname;
+
     let schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
     const navigate = useNavigate();
     const [rows, setRows] = useState<RowsResult>();
     const [showAdd, setShowAdd] = useState(false);
-    const [newRowForm, setNewRowForm] = useState<RecordInput[]>([]);
     const [checkedRows, setCheckedRows] = useState<Set<number>>(new Set());
     const [deleting, setDeleting] = useState(false);
     const [showMockDataDialog, setShowMockDataDialog] = useState(false);
     const addRowRef = useRef<HTMLDivElement>(null);
 
-    const hasFormContent = useCallback(() => {
-        // Check if any form field has been modified from default values
-        return newRowForm.some(field => {
-            // If it's an ID or date field with default values, don't count it
-            const isDefault =
-                (field.Key.toLowerCase() === "id" && field.Value === "gen_random_uuid()") ||
-                (field.Extra?.at(1)?.Value === "TIMESTAMPTZ" && field.Value === "now()") ||
-                (field.Extra?.at(1)?.Value === "NUMERIC" && field.Value === "0") ||
-                field.Value === "";
+    // For add row sheet logic
+    const [addRowData, setAddRowData] = useState<Record<string, any>>({});
+    const [addRowError, setAddRowError] = useState<string | null>(null);
+    
 
-            return !isDefault;
-        });
-    }, [newRowForm]);
-
-    const handleKeyDown = useCallback((e: KeyboardEvent) => {
-        if (e.key === 'Escape' && showAdd) {
-            // Only close if no content has been entered
-            if (!hasFormContent()) {
-                setShowAdd(false);
-            }
-        }
-    }, [showAdd, hasFormContent]);
-
-    useEffect(() => {
-        if (showAdd) {
-            document.addEventListener('keydown', handleKeyDown);
-            return () => {
-                document.removeEventListener('keydown', handleKeyDown);
-            };
-        }
-    }, [showAdd, handleKeyDown]);
-
-    const handleClickOutside = useCallback((e: MouseEvent) => {
-        if (showAdd && addRowRef.current && !addRowRef.current.contains(e.target as Node)) {
-            // Only close if no content has been entered
-            if (!hasFormContent()) {
-                setShowAdd(false);
-            }
-        }
-    }, [showAdd, hasFormContent]);
-
-    useEffect(() => {
-        if (showAdd) {
-            document.addEventListener('mousedown', handleClickOutside);
-            return () => {
-                document.removeEventListener('mousedown', handleClickOutside);
-            };
-        }
-    }, [showAdd, handleClickOutside]);
-
+    // For scratchpad sheet logic
     // todo: is there a different way to do this? clickhouse doesn't have schemas as a table is considered a schema. people mainly switch between DB
     if (current?.Type === DatabaseType.ClickHouse) {
         schema = current.Database
     }
+
+    const [code, setCode] = useState(`SELECT * FROM ${schema}.${unit?.Name}`);
 
     const [getStorageUnitRows, { loading }] = useGetStorageUnitRowsLazyQuery({
         onCompleted(data) {
@@ -122,25 +78,13 @@ export const ExploreStorageUnit: FC = () => {
         fetchPolicy: "no-cache",
     });
     const [addRow, { loading: adding }] = useAddRowMutation();
+    const [rawExecute, { data: rawExecuteData, called }] = useRawExecuteLazyQuery();
 
     const unitName = useMemo(() => {
         return unit?.Name;
     }, [unit]);
 
     const handleSubmitRequest = useCallback(() => {
-        getStorageUnitRows({
-            variables: {
-                schema,
-                storageUnit: unitName,
-                where: whereCondition,
-                pageSize: Number.parseInt(bufferPageSize),
-                pageOffset: currentPage,
-            },
-        });
-    }, [getStorageUnitRows, schema, unitName, whereCondition, bufferPageSize, currentPage]);
-
-    const handlePageChange = useCallback((page: number) => {
-        setCurrentPage(page-1);
         getStorageUnitRows({
             variables: {
                 schema,
@@ -167,8 +111,6 @@ export const ExploreStorageUnit: FC = () => {
         }));
         const updatedColumns = [updatedColumn]
         return new Promise<void>(async (res, rej) => {
-            // this method ensures that the component is not rerendered
-            // hence, the edited cache in the table would stay intact & performant
             try {
                 const { data }: FetchResult<UpdateStorageUnitMutationResult["data"]> = await graphqlClient.mutate({
                     mutation: UpdateStorageUnitDocument,
@@ -181,14 +123,12 @@ export const ExploreStorageUnit: FC = () => {
                     },
                 });
                 if (data?.UpdateStorageUnit.Status) {
-                    notify("Row updated successfully!", "success");
                     return res();
                 }
-                notify("Unable to update the row!", "error");
+                return rej();
             } catch (err) {
-                notify(`Unable to update the row: ${err}`, "error");
+                return rej(err);
             }
-            return rej();
         });
     }, [current, schema, unitName]);
 
@@ -231,9 +171,9 @@ export const ExploreStorageUnit: FC = () => {
                 deletedIndexes.push(index);
             } catch (e) {
                 if ((checkedRows.size-1) > index) {
-                    notify(`Unable to delete the row: ${e}. Stopping deleting other selected rows.`, "error");
+                    toast.error(`Unable to delete the row: ${e}. Stopping deleting other selected rows.`);
                 } else {
-                    notify(`Unable to delete the row: ${e}`, "error");
+                    toast.error(`Unable to delete the row: ${e}`);
                 }
                 setDeleting(false);
                 unableToDeleteAll=true;
@@ -252,7 +192,7 @@ export const ExploreStorageUnit: FC = () => {
         });
         setCheckedRows(newCheckedRows);
         if (!unableToDeleteAll) {
-            notify("Row deleted successfully!", "success");
+            toast.success("Row deleted successfully!");
         }
         setDeleting(false);
     }, [checkedRows, current, rows, schema, unitName]);
@@ -268,17 +208,11 @@ export const ExploreStorageUnit: FC = () => {
         return count;
     }, [unit]);
 
-    const totalPages = useMemo(() => {
-        if (!isNumeric(totalCount) || !isNumeric(pageSize)) {
-            return 1;
-        }
-        return Math.max(Math.round(Number.parseInt(totalCount)/(Number.parseInt(pageSize)+1)), 1);
-    }, [pageSize, totalCount]);
-
     useEffect(() => {
         handleSubmitRequest();
+        setCode(`SELECT * FROM ${schema}.${unit?.Name}`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [unit]);
 
     const routes = useMemo(() => {
         const name = getDatabaseStorageUnitLabel(current?.Type);
@@ -287,7 +221,8 @@ export const ExploreStorageUnit: FC = () => {
                 ...InternalRoutes.Dashboard.StorageUnit,
                 name,
             },
-            InternalRoutes.Dashboard.ExploreStorageUnit
+            InternalRoutes.Dashboard.ExploreStorageUnit,
+            ...(scratchpad ? [InternalRoutes.Dashboard.ExploreStorageUnitWithScratchpad] : []),
         ];
     }, [current]);
     
@@ -304,10 +239,10 @@ export const ExploreStorageUnit: FC = () => {
     }, [rows?.Columns, rows?.Rows]);
 
     useEffect(() => {
-        if (unitName == null) {
+        if (unit == null) {
             navigate(InternalRoutes.Dashboard.StorageUnit.path);
         }
-    }, [navigate, unitName]);
+    }, [navigate, unit]);
 
     const handleFilterChange = useCallback((filters: WhereCondition) => {
         setWhereCondition(filters);
@@ -317,61 +252,53 @@ export const ExploreStorageUnit: FC = () => {
         if (!current?.Type) {
             return [];
         }
-        
         return getDatabaseOperators(current.Type);
     }, [current?.Type]);
 
-    const handleToggleShowAdd = useCallback(() => {
-        const showAddStatus = !showAdd;
-        if (showAddStatus) {
-            if (newRowForm.length === 0) {
-                let columns: Column[] = [];
-                if (isNoSQL(current?.Type as DatabaseType)) {
-                    if (rows?.Rows != null && rows.Rows.length > 0) {
-                        columns = entries(JSON.parse(rows.Rows[0][0])).filter(([col,]) => col !== "_id").map(([col, value]) => ({
-                            Name: col,
-                            Type: typeof value,
-                        }));
-                    }
+    // Sheet logic for Add Row (like table.tsx)
+    const handleOpenAddSheet = useCallback(() => {
+        // Prepare default values for addRowData
+        let initialData: Record<string, any> = {};
+        if (rows?.Columns) {
+            for (const col of rows.Columns) {
+                if (col.Name.toLowerCase() === "id" && col.Type === "UUID") {
+                    initialData[col.Name] = "gen_random_uuid()";
+                } else if (col.Type === "TIMESTAMPTZ") {
+                    initialData[col.Name] = "now()";
+                } else if (col.Type === "NUMERIC") {
+                    initialData[col.Name] = "0";
+                } else {
+                    initialData[col.Name] = "";
                 }
-                if (columns.length === 0) {
-                    columns = rows?.Columns ?? [];
-                }
-                setNewRowForm((columns.map(col => {
-                    const colName = col.Name.toLowerCase();
-                    const isId = colName === "id" && col.Type === "UUID";
-                    const isDate = col.Type === "TIMESTAMPTZ";
-                    const isNumeric = col.Type === "NUMERIC";
-                    const isCode = isId || isDate;
-                    return {
-                        Key: col.Name,
-                        Value: isId ? "gen_random_uuid()" : isDate ? "now()" : isNumeric ? "0" : "",
-                        Extra: [
-                            {
-                                Key: "Config",
-                                Value: isCode ? "sql" : "text",
-                            },
-                            {
-                                Key: "Type",
-                                Value: col.Type,
-                            },
-                        ],
-                    }
-                })));
             }
         }
-        setShowAdd(showAddStatus);
-    }, [current?.Type, newRowForm.length, rows?.Columns, rows?.Rows, showAdd]);
+        setAddRowData(initialData);
+        setAddRowError(null);
+        setShowAdd(true);
+    }, [rows?.Columns]);
 
-    const handleAddSubmitRequest = useCallback(() => {
-        let values = newRowForm;
-        values = values.filter(item => item.Value != '')  // remove empty fields
-        if (isNoSQL(current?.Type as DatabaseType) && rows?.Rows != null && rows.Rows.length === 0) {
-            try {
-                values = entries(JSON.parse(newRowForm[0].Value)).map(([Key, Value]) => ({ Key, Value } as RecordInput));
-            } catch {
-                values = [];
+    const handleAddRowFieldChange = useCallback((key: string, value: string) => {
+        setAddRowData(prev => ({
+            ...prev,
+            [key]: value,
+        }));
+    }, []);
+
+    const handleAddRowSubmit = useCallback(() => {
+        if (!rows?.Columns) return;
+        // Prepare values as RecordInput[]
+        let values: RecordInput[] = [];
+        for (const col of rows.Columns) {
+            if (addRowData[col.Name] !== undefined && addRowData[col.Name] !== "") {
+                values.push({
+                    Key: col.Name,
+                    Value: addRowData[col.Name],
+                });
             }
+        }
+        if (values.length === 0) {
+            setAddRowError("Please fill at least one value.");
+            return;
         }
         addRow({
             variables: {
@@ -380,38 +307,48 @@ export const ExploreStorageUnit: FC = () => {
                 values,
             },
             onCompleted() {
-                notify("Added data row successfully!", "success");
+                toast.success("Added data row successfully!");
                 setShowAdd(false);
                 setTimeout(() => {
                     handleSubmitRequest();
                 }, 500);
             },
             onError(e) {
-                notify(`Unable to add the data row: ${e.message}`, "error");
+                setAddRowError(e.message);
+                toast.error(`Unable to add the data row: ${e.message}`);
             },
         });
-    }, [addRow, current?.Type, handleSubmitRequest, newRowForm, rows?.Rows, schema, unit?.Name]);
+    }, [addRow, addRowData, handleSubmitRequest, rows?.Columns, schema, unit?.Name]);
 
-    const handleNewFormChange = useCallback((type: "value" | "config", index: number, value: string) => {
-        setNewRowForm(rowForm => {
-            const newFormClone = clone(rowForm);
-            if (type === "value") {
-                newFormClone[index].Value = value;
-            } else {
-                newFormClone[index].Extra![0].Value = value;
-            }
-                
-            return newFormClone;
+    const handleScratchpad = useCallback(() => {
+        if (current == null) {
+            return;
+        }
+        rawExecute({
+            variables: {
+                query: code,
+            },
         });
-    }, []);
+    }, [code, current, rawExecute]);
 
-    const configDropdown = useMemo(() => {
-        return [{id: "text", label: "Text", icon: cloneElement(Icons.Text, {
-            className: "w-4 h-4",
-        })}, { id: "sql", label: "SQL", icon: cloneElement(Icons.Code, {
-            className: "w-4 h-4",
-        })}];
-    }, []);
+    const handleOpenScratchpad = useCallback(() => {
+        navigate(InternalRoutes.Dashboard.ExploreStorageUnitWithScratchpad.path, {
+            state: {
+                unit,
+            }
+        });
+        handleScratchpad();
+        setCode(`SELECT * FROM ${schema}.${unit?.Name}`);
+        document.body.classList.add("!pointer-events-auto");
+    }, [schema, unit]);
+
+    const handleCloseScratchpad = useCallback(() => {
+        navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
+            state: {
+                unit,
+            }
+        });
+    }, [unit]);
 
     if (unit == null) {
         return <Navigate to={InternalRoutes.Dashboard.StorageUnit.path} />
@@ -423,90 +360,106 @@ export const ExploreStorageUnit: FC = () => {
         </InternalPage>
     }
 
-    return <InternalPage routes={routes}>
+    return <InternalPage routes={routes} className="relative">
         <div className="flex flex-col grow gap-4 h-[calc(100%-100px)]">
             <div className="flex items-center justify-between">
                 <div className="flex gap-2 items-center">
-                    <div className="text-xl font-bold mr-4 dark:text-neutral-300">{unitName}</div>
+                    <h1 className="text-xl font-bold mr-4">{unitName}</h1>
                 </div>
-                <div className="text-sm mr-4 dark:text-neutral-300"><span className="font-semibold">Total Count:</span> {totalCount}</div>
+                <div className="text-sm mr-4"><span className="font-semibold">Total Count:</span> {totalCount}</div>
             </div>
             <div className="flex w-full relative">
-                <div className="flex gap-2">
-                    <InputWithlabel label="Page Size" value={bufferPageSize} setValue={setBufferPageSize} testId="table-page-size" />
-                    { current?.Type !== DatabaseType.Redis && <ExploreStorageUnitWhereCondition defaultWhere={whereCondition} columns={columns} operators={validOperators} onChange={handleFilterChange} columnTypes={columnTypes ?? []} /> }
-                    <AnimatedButton className="mt-5" type="lg" icon={Icons.CheckCircle} label="Query" onClick={handleQuery} testId="submit-button" />
+                <div className="flex justify-between items-end w-full">
+                    <div className="flex gap-2 items-end">
+                        <div className="flex flex-col gap-2">
+                            <Label>Search</Label>
+                            <SearchInput placeholder="Enter search query" className="w-64" />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <Label>Page Size</Label>
+                            <Input value={bufferPageSize} onChange={e => setBufferPageSize(e.target.value)} data-testid="table-page-size" />
+                        </div>
+                        { current?.Type !== DatabaseType.Redis && <ExploreStorageUnitWhereCondition defaultWhere={whereCondition} columns={columns} operators={validOperators} onChange={handleFilterChange} columnTypes={columnTypes ?? []} /> }
+                        <Button className="ml-6" onClick={handleQuery} data-testid="submit-button">
+                            {Icons.CheckCircle} Query
+                        </Button>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                        {adding || deleting ? <Loading /> : null}
+                        {checkedRows.size > 0 && <Button variant="destructive" onClick={handleRowDelete} disabled={deleting} data-testid="delete-button">
+                            {Icons.Delete} {checkedRows.size > 1 ? "Delete rows" : "Delete row"}
+                        </Button> }
+                        <Button onClick={handleOpenScratchpad} data-testid="scratchpad-button" variant="secondary">
+                            {Icons.Code} Scratchpad
+                        </Button>
+                        <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-button">
+                            {Icons.Add} Add Row
+                        </Button>
+                    </div>
                 </div>
-                <motion.div tabIndex={0} ref={addRowRef} className={classNames("flex flex-col absolute z-10 right-0 top-0 backdrop-blur-xl", {
-                        "hidden": current?.Type === DatabaseType.Redis,
-                    })} variants={{
-                    "open": {
-                        height: "500px",
-                        width: "800px",
-                    },
-                    "close": {
-                        height: "35px",
-                        width: "fit-content",
-                    },
-                }} animate={showAdd ? "open" : "close"}>
-                    <div className="flex w-full justify-end gap-2">
-                        {adding || deleting && <Loading />}
-                        {checkedRows.size > 0 && <AnimatedButton type="lg" icon={Icons.Delete} label={checkedRows.size > 1 ? "Delete rows" : "Delete row"} iconClassName="stroke-red-500 dark:stroke-red-500" labelClassName="text-red-500 dark:text-red-500" onClick={handleRowDelete} disabled={deleting} /> }
-                        {unit?.IsMockDataGenerationAllowed && <AnimatedButton type="lg" icon={Icons.Database} label="Generate Mock Data" onClick={() => setShowMockDataDialog(true)} disabled={adding || deleting} />}
-                        <AnimatedButton type="lg" icon={Icons.Add} label={showAdd ? "Cancel" : "Add Row"} onClick={handleToggleShowAdd} disabled={adding} />
-                    </div>
-                    <div className={classNames("flex flex-col gap-2 overflow-y-auto h-full p-8 mt-2", {
-                        "flex border border-white/5 rounded-lg": showAdd,
-                        "hidden": !showAdd,
-                    })}>
-                        <div className="flex justify-between gap-4">
-                            <div
-                                className="text-lg text-neutral-800 dark:text-neutral-300 w-full border-b border-white/10 pb-2 mb-2">
-                                Add new row
+                <Sheet open={showAdd} onOpenChange={setShowAdd}>
+                    <SheetContent side="right" className="p-8">
+                        <div className="flex flex-col gap-4 h-full">
+                            <div className="text-lg font-semibold mb-2">Add new row</div>
+                            <div className="flex flex-col gap-4">
+                                {rows?.Columns?.map((col) => (
+                                    <div key={col.Name} className="flex flex-col gap-2">
+                                        <Label>
+                                            {col.Name} <span className="italic">[{col.Type}]</span>
+                                        </Label>
+                                        <Input
+                                            value={addRowData[col.Name] ?? ""}
+                                            onChange={e => handleAddRowFieldChange(col.Name, e.target.value)}
+                                            placeholder={`Enter value for ${col.Name}`}
+                                        />
+                                    </div>
+                                ))}
                             </div>
+                            {addRowError && (
+                                <div className="text-red-500 text-xs">{addRowError}</div>
+                            )}
                         </div>
-                        {newRowForm.map((col, i) => <>
-                            <div key={`add-row-${col.Key}`} className="flex gap-2 items-center">
-                                <div
-                                    className="text-xs text-neutral-800 dark:text-neutral-300 w-[150px]">{col.Key} [{col.Extra?.at(1)?.Value}]
-                                </div>
-                                <Dropdown className={classNames({
-                                    "hidden": isNoSQL(current?.Type as DatabaseType),
-                                })} value={configDropdown.find(item => item.id === col.Extra?.at(0)?.Value)}
-                                          onChange={item => handleNewFormChange("config", i, item.id)}
-                                          items={configDropdown}
-                                          showIconOnly={true}/>
-                                <Input value={col.Value} inputProps={{
-                                    placeholder: `Enter value for ${col.Key}`,
-                                }} setValue={(value) => handleNewFormChange("value", i, value)}/>
-                            </div>
-                        </>)}
-                        <div className="flex justify-end gap-4 mt-2">
-                            <AnimatedButton className="px-3" type="lg" icon={Icons.CheckCircle} label="Submit"
-                                            onClick={handleAddSubmitRequest}/>
-                        </div>
-                    </div>
-                </motion.div>
+                        <SheetFooter className="px-0">
+                            <Button onClick={handleAddRowSubmit} data-testid="submit-button" disabled={adding}>
+                                {Icons.CheckCircle} Submit
+                            </Button>
+                        </SheetFooter>
+                    </SheetContent>
+                </Sheet>
             </div>
             <div className="grow">
                 {
                     rows != null &&
-                    <Table columns={rows.Columns.map(c => c.Name)} columnTags={rows.Columns.map(c => c.Type)}
-                           rows={rows.Rows} totalPages={totalPages} currentPage={currentPage + 1}
-                           onPageChange={handlePageChange}
-                           onRowUpdate={handleRowUpdate} disableEdit={rows.DisableUpdate}
-                        checkedRows={checkedRows} setCheckedRows={setCheckedRows}
-                        schema={schema} storageUnit={unitName} />
+                    <StorageUnitTable columns={columns} rows={rows.Rows} onRowUpdate={handleRowUpdate} columnTypes={columnTypes} />
                 }
             </div>
         </div>
-        {unit && (
-            <MockDataDialog
-                isOpen={showMockDataDialog}
-                onClose={() => setShowMockDataDialog(false)}
-                storageUnit={unit}
-                onSuccess={handleQuery}
-            />
-        )}
+        <Drawer open={scratchpad} onOpenChange={handleCloseScratchpad}>
+            <DrawerContent className="px-8 max-h-[25vh]">
+                <DrawerHeader>
+                    <DrawerTitle className="flex justify-between items-center">
+                        <h2 className="text-lg font-semibold">Scratchpad</h2>
+                        <div className="flex gap-2 items-center">
+                            <Button onClick={handleScratchpad} data-testid="submit-button">
+                                <PlayIcon className="w-4 h-4" />
+                                Run
+                            </Button>
+                        </div>
+                    </DrawerTitle>
+                </DrawerHeader>
+                <div className="flex flex-col gap-2 h-[150px]">
+                    <CodeEditor language="sql" value={code} setValue={setCode} onRun={() => handleScratchpad()} />
+                </div>
+                <DrawerFooter>
+                    <StorageUnitTable
+                        height={300}
+                        columns={rawExecuteData?.RawExecute.Columns.map(c => c.Name) ?? []}
+                        columnTypes={rawExecuteData?.RawExecute.Columns.map(c => c.Type) ?? []}
+                        rows={rawExecuteData?.RawExecute.Rows ?? []}
+                        disableEdit={true}
+                    />
+                </DrawerFooter>
+            </DrawerContent>
+        </Drawer>
     </InternalPage>
 }
