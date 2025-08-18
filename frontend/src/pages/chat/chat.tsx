@@ -88,7 +88,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
         <div className="absolute -top-3 -left-3 opacity-0 group-hover/table-preview:opacity-100 transition-all z-[1]">
             <Button containerClassName="w-8 h-8" className="w-5 h-5" onClick={handleCodeToggle} data-testid="table-preview-code-toggle">
                 {cloneElement(showSQL ? Icons.Tables : Icons.Code, {
-                    className: "w-6 h-6 stroke-white",
+                    className: "w-6 h-6",
                 })}
             </Button>
         </div>
@@ -274,7 +274,7 @@ export const ChatPage: FC = () => {
                                 }
                             </div>
                         </div>
-                        : <div className="h-full w-full py-8 max-h-[calc(80vh-5px)] overflow-y-scroll" ref={scrollContainerRef}>
+                        : <div className="h-full w-full py-8 max-h-[calc(75vh-25px)] overflow-y-auto" ref={scrollContainerRef}>
                             <div className="flex justify-center w-full">
                                 <div className="flex w-[max(65%,450px)] flex-col gap-2">
                                     {
@@ -316,7 +316,7 @@ export const ChatPage: FC = () => {
                                                     {chat.Type === "sql:line-chart" && LineChart && <LineChart columns={chat.Result?.Columns.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} />}
                                                 </div>
                                             }
-                                            return <div key={`chat-${i}`} className="flex gap-4 w-full overflow-hidden pt-4 pr-9">
+                                            return <div key={`chat-${i}`} className="flex gap-4 w-full overflow-hidden pt-4">
                                                 {!chat.isUserInput && chats[i-1]?.isUserInput
                                                     ? (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4" />)
                                                     : <div className="pl-4" />}
