@@ -265,9 +265,7 @@ export const Sidebar: FC = () => {
                             {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4" />}
                             {open && <span className="text-lg text-brand-foreground">{extensions.AppName ?? "WhoDB"}</span>}
                         </div>
-                        <SidebarTrigger onClick={toggleSidebar} className="px-0">
-                            <Bars3Icon />
-                        </SidebarTrigger>
+                        <SidebarTrigger className="px-0" />
                     </div>
                 </SidebarHeader>
                 <SidebarContent className={cn("mt-8 mb-16", {
