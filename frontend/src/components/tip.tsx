@@ -6,7 +6,7 @@ export const Tip: FC<{
 }> = ({ children }) => {
     return (
         <Tooltip>
-            <TooltipTrigger>
+            <TooltipTrigger className="w-fit">
                 {children[0]}
             </TooltipTrigger>
             <TooltipContent>

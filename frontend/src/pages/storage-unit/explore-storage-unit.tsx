@@ -39,13 +39,14 @@ import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { CodeEditor } from "../../components/editor";
 import { Loading, LoadingPage } from "../../components/loading";
 import { InternalPage } from "../../components/page";
-import { StorageUnitTable } from "../../components/table";
+import { getColumnIcons, StorageUnitTable } from "../../components/table";
 import { graphqlClient } from "../../config/graphql-client";
 import { InternalRoutes } from "../../config/routes";
 import { useAppSelector } from "../../store/hooks";
 import { getDatabaseOperators } from "../../utils/database-operators";
 import { getDatabaseStorageUnitLabel } from "../../utils/functions";
 import { ExploreStorageUnitWhereCondition } from "./explore-storage-unit-where-condition";
+import { Tip } from "../../components/tip";
 
 
 export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad }) => {
@@ -322,6 +323,8 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         });
     }, [unit]);
 
+    const columnIcons = useMemo(() => getColumnIcons(columns, columnTypes), [columns, columnTypes]);
+
     if (unit == null) {
         return <Navigate to={InternalRoutes.Dashboard.StorageUnit.path} />
     }
@@ -375,9 +378,17 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                         <div className="flex flex-col gap-4 h-full">
                             <div className="text-lg font-semibold mb-2">Add new row</div>
                             <div className="flex flex-col gap-4">
-                                {rows?.Columns?.map((col) => (
+                                {rows?.Columns?.map((col, index) => (
                                     <div key={col.Name} className="flex flex-col gap-2">
-                                        <Label>{col.Name} <span className="italic">[{col.Type}]</span></Label>
+                                        <Tip>
+                                            <div className="flex items-center gap-1">
+                                                {columnIcons[index]}
+                                                <Label className="w-fit">
+                                                    {col.Name}
+                                                </Label> 
+                                            </div>
+                                            <p className="text-xs">{col.Type}</p>
+                                        </Tip>
                                         <Input
                                             value={addRowData[col.Name] ?? ""}
                                             onChange={e => handleAddRowFieldChange(col.Name, e.target.value)}
@@ -402,7 +413,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
             <div className="grow">
                 {
                     rows != null &&
-                    <StorageUnitTable 
+                    <StorageUnitTable
                         columns={columns} 
                         rows={rows.Rows} 
                         onRowUpdate={handleRowUpdate} 

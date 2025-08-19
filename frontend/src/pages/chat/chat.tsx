@@ -285,7 +285,7 @@ export const ChatPage: FC = () => {
                                                     "self-start": !chat.isUserInput,
                                                 })}>
                                                     {!chat.isUserInput && chats[i-1]?.isUserInput
-                                                        ? extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4 mt-2" />
+                                                        ? extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8 mt-2" />
                                                         : <div className="pl-4" />}
                                                     <div className={classNames("text-neutral-800 dark:text-neutral-300 px-4 py-2 rounded-xl whitespace-pre-wrap", {
                                                         "bg-neutral-600/5 dark:bg-[#2C2F33]": chat.isUserInput,
@@ -298,7 +298,7 @@ export const ChatPage: FC = () => {
                                                 return (
                                                     <div key={`chat-${i}`} className="flex items-center gap-4 overflow-hidden break-words leading-6 shrink-0 self-start">
                                                         {!chat.isUserInput && chats[i-1]?.isUserInput
-                                                            ? extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4" />
+                                                            ? extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
                                                             : <div className="pl-4" />}
                                                         <Alert variant="destructive" title="Error" description={chat.Text}>
                                                             <BellAlertIcon className="w-4 h-4" />
@@ -309,7 +309,7 @@ export const ChatPage: FC = () => {
                                                 );
                                             } else if (isEEFeatureEnabled('dataVisualization') && (chat.Type === "sql:pie-chart" || chat.Type === "sql:line-chart")) {
                                                 return <div key={`chat-${i}`} className="flex items-center self-start">
-                                                    {!chat.isUserInput && chats[i-1]?.isUserInput && (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4" />)}
+                                                    {!chat.isUserInput && chats[i-1]?.isUserInput && (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
                                                     {/* @ts-ignore */}
                                                     {chat.Type === "sql:pie-chart" && PieChart && <PieChart columns={chat.Result?.Columns.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} />}
                                                     {/* @ts-ignore */}
@@ -318,7 +318,7 @@ export const ChatPage: FC = () => {
                                             }
                                             return <div key={`chat-${i}`} className="flex gap-4 w-full overflow-hidden pt-4">
                                                 {!chat.isUserInput && chats[i-1]?.isUserInput
-                                                    ? (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4" />)
+                                                    ? (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)
                                                     : <div className="pl-4" />}
                                                 <TablePreview type={chat.Type} text={chat.Text} data={chat.Result} />
                                             </div>

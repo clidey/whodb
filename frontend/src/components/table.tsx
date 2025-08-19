@@ -73,9 +73,10 @@ import {
     ArrowDownCircleIcon,
     XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { FC, useCallback, useMemo, useState } from "react";
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useExportToCSV } from "./hooks"; // You may need to adjust this import
 import { RecordInput, useDeleteRowMutation, useGenerateMockDataMutation, useMockDataMaxRowCountQuery } from '@graphql';
+import { Tip } from "./tip";
 
 // Type sets based on core/src/plugins/gorm/utils.go
 const stringTypes = new Set([
@@ -105,6 +106,23 @@ const uuidTypes = new Set([
 const binaryTypes = new Set([
     "BLOB", "BYTEA", "VARBINARY", "BINARY", "IMAGE", "TINYBLOB", "MEDIUMBLOB", "LONGBLOB"
 ]);
+
+
+export function getColumnIcons(columns: string[], columnTypes?: string[]) {
+    return columns.map((col, idx) => {
+        const type = columnTypes?.[idx]?.toUpperCase?.() || "";
+        if (intTypes.has(type) || uintTypes.has(type)) return <HashtagIcon className="w-4 h-4" />;
+        if (floatTypes.has(type)) return <CalculatorIcon className="w-4 h-4" />;
+        if (boolTypes.has(type)) return <CheckCircleIcon className="w-4 h-4" />;
+        if (dateTypes.has(type)) return <CalendarIcon className="w-4 h-4" />;
+        if (dateTimeTypes.has(type)) return <ClockIcon className="w-4 h-4" />;
+        if (uuidTypes.has(type)) return <KeyIcon className="w-4 h-4" />;
+        if (binaryTypes.has(type)) return <DocumentDuplicateIcon className="w-4 h-4" />;
+        if (type.startsWith("ARRAY")) return <ListBulletIcon className="w-4 h-4" />;
+        if (stringTypes.has(type)) return <DocumentTextIcon className="w-4 h-4" />;
+        return <CircleStackIcon className="w-4 h-4" />;
+    });
+}
 
 interface TableProps {
     columns: string[];
@@ -147,6 +165,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [showExportConfirm, setShowExportConfirm] = useState(false);
     const [exportDelimiter, setExportDelimiter] = useState(',');
     const [exportFormat, setExportFormat] = useState<'csv' | 'excel'>('csv');
+    const tableRef = useRef<HTMLDivElement>(null);
     
     // Mock data state
     const [showMockDataSheet, setShowMockDataSheet] = useState(false);
@@ -290,22 +309,6 @@ export const StorageUnitTable: FC<TableProps> = ({
         setChecked(checked.includes(rowIndex) ? checked.filter(i => i !== rowIndex) : [...checked, rowIndex]);
     }, [checked]);
 
-    const columnIcons = useMemo(() => {
-        return columns.map((col, idx) => {
-            const type = columnTypes?.[idx]?.toUpperCase?.() || "";
-            if (intTypes.has(type) || uintTypes.has(type)) return <HashtagIcon className="w-4 h-4" />;
-            if (floatTypes.has(type)) return <CalculatorIcon className="w-4 h-4" />;
-            if (boolTypes.has(type)) return <CheckCircleIcon className="w-4 h-4" />;
-            if (dateTypes.has(type)) return <CalendarIcon className="w-4 h-4" />;
-            if (dateTimeTypes.has(type)) return <ClockIcon className="w-4 h-4" />;
-            if (uuidTypes.has(type)) return <KeyIcon className="w-4 h-4" />;
-            if (binaryTypes.has(type)) return <DocumentDuplicateIcon className="w-4 h-4" />;
-            if (type.startsWith("ARRAY")) return <ListBulletIcon className="w-4 h-4" />;
-            if (stringTypes.has(type)) return <DocumentTextIcon className="w-4 h-4" />;
-            return <CircleStackIcon className="w-4 h-4" />;
-        });
-    }, [columns, columnTypes]);
-
     const handleCellClick = (rowIndex: number, cellIndex: number) => {
         const cell = paginatedRows[rowIndex][cellIndex];
         if (cell !== undefined && cell !== null) {
@@ -407,363 +410,390 @@ export const StorageUnitTable: FC<TableProps> = ({
         }
     }, [generateMockData, schema, storageUnit, mockDataRowCount, mockDataMethod, mockDataOverwriteExisting, showMockDataConfirmation, maxRowCount]);
 
+    const columnIcons = useMemo(() => getColumnIcons(columns, columnTypes), [columns, columnTypes]);
+
+    // Refresh page when it is resized and it settles
+    useEffect(() => {
+        let resizeTimeout: NodeJS.Timeout | null = null;
+
+        const handleResize = () => {
+            if (resizeTimeout) clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                if (onRefresh) {
+                    onRefresh();
+                }
+            }, 300);
+        };
+
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            if (resizeTimeout) clearTimeout(resizeTimeout);
+        };
+    }, [onRefresh]);
+
     return (
-        <>
-        <div className="flex flex-col grow h-full">
-            <TableComponent className="overflow-x-auto">
-                <TableHeader>
-                    <TableRow>
-                        <TableCell className={cn("flex items-center gap-2 w-[20rem]", {
-                            "hidden": disableEdit,
-                        })}>
-                            <Checkbox
-                                checked={checked.length === paginatedRows.length}
-                                onCheckedChange={() => setChecked(checked.length === paginatedRows.length ? [] : paginatedRows.map((_, index) => index + (currentPage - 1) * pageSize))}
-                            />
-                        </TableCell>
-                        {columns.map((col, idx) => (
-                            <TableHead 
-                                key={col + idx} 
-                                icon={columnIcons?.[idx]}
-                                className={onColumnSort ? "cursor-pointer select-none" : ""}
-                                onClick={() => onColumnSort?.(col)}
-                            >
-                                <div className="flex items-center gap-1">
-                                    {col}
-                                    {onColumnSort && sortedColumns?.has(col) && (
-                                        sortedColumns.get(col) === 'asc' 
-                                            ? <ChevronUpIcon className="w-4 h-4" />
-                                            : <ChevronDownIcon className="w-4 h-4" />
-                                    )}
-                                </div>
-                            </TableHead>
-                        ))}
-                    </TableRow>
-                </TableHeader>
-                <VirtualizedTableBody rowCount={paginatedRows.length} rowHeight={rowHeight} height={height}>
-                    {(index) => {
-                        const globalIndex = (currentPage - 1) * pageSize + index;
-                        return (
-                            <ContextMenu key={globalIndex}>
-                                <ContextMenuTrigger
-                                    asChild
-                                    className="contents"
+        <div ref={tableRef}>
+            <div className="flex flex-col h-full space-y-4 w-0" style={{
+                width: `${tableRef.current?.offsetWidth}px`,
+            }}>
+                <TableComponent className="overflow-x-auto">
+                    <TableHeader>
+                        <TableRow>
+                            <TableCell className={cn("flex items-center gap-2 w-[20rem]", {
+                                "hidden": disableEdit,
+                            })}>
+                                <Checkbox
+                                    checked={checked.length === paginatedRows.length}
+                                    onCheckedChange={() => setChecked(checked.length === paginatedRows.length ? [] : paginatedRows.map((_, index) => index + (currentPage - 1) * pageSize))}
+                                />
+                            </TableCell>
+                            {columns.map((col, idx) => (
+                                <TableHead
+                                    key={col + idx} 
+                                    icon={columnIcons?.[idx]}
+                                    className={onColumnSort ? "cursor-pointer select-none" : ""}
+                                    onClick={() => onColumnSort?.(col)}
                                 >
-                                    <tr>
-                                        <TableCell className={cn("w-[20rem]", {
-                                            "hidden": disableEdit,
-                                        })}>
-                                            <Checkbox
-                                                checked={checked.includes(globalIndex)}
-                                                onCheckedChange={() => setChecked(checked.includes(globalIndex) ? checked.filter(i => i !== globalIndex) : [...checked, globalIndex])}
-                                            />
-                                        </TableCell>
-                                        {paginatedRows[index]?.map((cell, cellIdx) => (
-                                            <TableCell key={cellIdx} className="cursor-pointer" onClick={() => handleCellClick(globalIndex, cellIdx)}>{cell}</TableCell>
-                                        ))}
-                                    </tr>
-                                </ContextMenuTrigger>
-                                <ContextMenuContent className="w-52">
-                                    <ContextMenuItem onSelect={() => handleSelectRow(globalIndex)}>
-                                        {checked.includes(globalIndex) ? "Deselect Row" : "Select Row"}
-                                    </ContextMenuItem>
-                                    <ContextMenuItem onSelect={() => handleEdit(globalIndex)} disabled={checked.length > 0}>
-                                        Edit Row
-                                        <ContextMenuShortcut>⌘E</ContextMenuShortcut>
-                                    </ContextMenuItem>
-                                    <ContextMenuSub>
-                                        <ContextMenuSubTrigger>Export</ContextMenuSubTrigger>
-                                        <ContextMenuSubContent>
-                                            <ContextMenuItem
-                                                onSelect={() => { setShowExportConfirm(true); setExportFormat('csv'); }}
-                                            >
-                                                <DocumentIcon className="w-4 h-4" />
-                                                Export All as CSV
-                                            </ContextMenuItem>
-                                            <ContextMenuItem
-                                                onSelect={() => { setShowExportConfirm(true); setExportFormat('excel'); }}
-                                            >
-                                                <DocumentIcon className="w-4 h-4" />
-                                                Export All as Excel
-                                            </ContextMenuItem>
-                                            <ContextMenuSeparator />
-                                            <ContextMenuItem
-                                                onSelect={() => { setShowExportConfirm(true); setExportFormat('csv'); }}
-                                                disabled={checked.length === 0}
-                                            >
-                                                <DocumentIcon className="w-4 h-4" />
-                                                Export Selected as CSV
-                                            </ContextMenuItem>
-                                            <ContextMenuItem
-                                                onSelect={() => { setShowExportConfirm(true); setExportFormat('excel'); }}
-                                                disabled={checked.length === 0}
-                                            >
-                                                <DocumentIcon className="w-4 h-4" />
-                                                Export Selected as Excel
-                                            </ContextMenuItem>
-                                        </ContextMenuSubContent>
-                                    </ContextMenuSub>
-                                    <ContextMenuItem
-                                        onSelect={() => setShowMockDataSheet(true)}
-                                    >
-                                        Generate Mock Data
-                                    </ContextMenuItem>
-                                    <ContextMenuSub>
-                                        <ContextMenuSubTrigger>More Actions</ContextMenuSubTrigger>
-                                        <ContextMenuSubContent className="w-44">
-                                            <ContextMenuItem
-                                                variant="destructive"
-                                                disabled={deleting}
-                                                onSelect={() => handleDeleteRow(globalIndex)}>
-                                                Delete {selectedRowsData == null ? "This" : "All"} Row{selectedRowsData == null ? "" : "s"}
-                                            </ContextMenuItem>
-                                        </ContextMenuSubContent>
-                                    </ContextMenuSub>
-                                    <ContextMenuSeparator />
-                                    <ContextMenuItem onSelect={() => handleEdit(globalIndex)}>
-                                        Open in Graph View
-                                        <ContextMenuShortcut>⌘G</ContextMenuShortcut>
-                                    </ContextMenuItem>
-                                </ContextMenuContent>
-                            </ContextMenu>
-                        );
-                    }}
-                </VirtualizedTableBody>
-            </TableComponent>
-            <div className={cn("flex justify-between items-center mb-2", {
-                "justify-end": children == null,
-            })}>
-                {children}
-                <Button
-                    variant="secondary"
-                    onClick={() => setShowExportConfirm(true)}
-                    className="flex gap-2"
-                >
-                    <ArrowDownCircleIcon className="w-4 h-4" />
-                    {hasSelectedRows ? `Export ${checked.length} selected` : "Export all"}
-                </Button>
-            </div>
-            <div className="flex mt-4">
-                <Pagination className={cn("flex justify-end", {
-                    "hidden": totalPages <= 1,
-                })}>
-                    <PaginationContent>
-                        <PaginationItem>
-                            <PaginationPrevious
-                                href="#"
-                                onClick={e => {
-                                    e.preventDefault();
-                                    if (currentPage > 1) setCurrentPage(currentPage - 1);
-                                }}
-                                aria-disabled={currentPage === 1}
-                                size="sm"
-                            />
-                        </PaginationItem>
-                        {renderPaginationLinks()}
-                        <PaginationItem>
-                            <PaginationNext
-                                href="#"
-                                onClick={e => {
-                                    e.preventDefault();
-                                    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-                                }}
-                                aria-disabled={currentPage === totalPages}
-                                size="sm"
-                            />
-                        </PaginationItem>
-                    </PaginationContent>
-                </Pagination>
-            </div>
-            <Sheet open={editIndex !== null} onOpenChange={open => { if (!open) setEditIndex(null); }}>
-                <SheetContent side="right" className="w-[400px] max-w-full p-8">
-                    <SheetTitle>Edit Row</SheetTitle>
-                    <div className="flex flex-col gap-4 mt-4">
-                        {editRow &&
-                            columns.map((col, idx) => (
-                                <div key={col} className="flex flex-col gap-2">
-                                    <Label>{col}</Label>
-                                    <Input
-                                        value={editRow[idx] ?? ""}
-                                        onChange={e => handleInputChange(e.target.value, idx)}
-                                    />
-                                </div>
+                                    <Tip>
+                                        <div className="flex items-center gap-1">
+                                            {col}
+                                            {onColumnSort && sortedColumns?.has(col) && (
+                                                sortedColumns.get(col) === 'asc' 
+                                                    ? <ChevronUpIcon className="w-4 h-4" />
+                                                    : <ChevronDownIcon className="w-4 h-4" />
+                                            )}
+                                        </div>
+                                        <p className="text-xs">{columnTypes?.[idx]}</p>
+                                    </Tip>
+                                </TableHead>
                             ))}
+                        </TableRow>
+                    </TableHeader>
+                    <VirtualizedTableBody rowCount={paginatedRows.length} rowHeight={rowHeight} height={height}>
+                        {(index) => {
+                            const globalIndex = (currentPage - 1) * pageSize + index;
+                            return (
+                                <ContextMenu key={globalIndex}>
+                                    <ContextMenuTrigger
+                                        asChild
+                                        className="contents"
+                                    >
+                                        <tr>
+                                            <TableCell className={cn("w-[20rem]", {
+                                                "hidden": disableEdit,
+                                            })}>
+                                                <Checkbox
+                                                    checked={checked.includes(globalIndex)}
+                                                    onCheckedChange={() => setChecked(checked.includes(globalIndex) ? checked.filter(i => i !== globalIndex) : [...checked, globalIndex])}
+                                                />
+                                            </TableCell>
+                                            {paginatedRows[index]?.map((cell, cellIdx) => (
+                                                <TableCell key={cellIdx} className="cursor-pointer" onClick={() => handleCellClick(globalIndex, cellIdx)}>{cell}</TableCell>
+                                            ))}
+                                        </tr>
+                                    </ContextMenuTrigger>
+                                    <ContextMenuContent className="w-52">
+                                        <ContextMenuItem onSelect={() => handleSelectRow(globalIndex)}>
+                                            {checked.includes(globalIndex) ? "Deselect Row" : "Select Row"}
+                                        </ContextMenuItem>
+                                        <ContextMenuItem onSelect={() => handleEdit(globalIndex)} disabled={checked.length > 0}>
+                                            Edit Row
+                                            <ContextMenuShortcut>⌘E</ContextMenuShortcut>
+                                        </ContextMenuItem>
+                                        <ContextMenuSub>
+                                            <ContextMenuSubTrigger>Export</ContextMenuSubTrigger>
+                                            <ContextMenuSubContent>
+                                                <ContextMenuItem
+                                                    onSelect={() => { setShowExportConfirm(true); setExportFormat('csv'); }}
+                                                >
+                                                    <DocumentIcon className="w-4 h-4" />
+                                                    Export All as CSV
+                                                </ContextMenuItem>
+                                                <ContextMenuItem
+                                                    onSelect={() => { setShowExportConfirm(true); setExportFormat('excel'); }}
+                                                >
+                                                    <DocumentIcon className="w-4 h-4" />
+                                                    Export All as Excel
+                                                </ContextMenuItem>
+                                                <ContextMenuSeparator />
+                                                <ContextMenuItem
+                                                    onSelect={() => { setShowExportConfirm(true); setExportFormat('csv'); }}
+                                                    disabled={checked.length === 0}
+                                                >
+                                                    <DocumentIcon className="w-4 h-4" />
+                                                    Export Selected as CSV
+                                                </ContextMenuItem>
+                                                <ContextMenuItem
+                                                    onSelect={() => { setShowExportConfirm(true); setExportFormat('excel'); }}
+                                                    disabled={checked.length === 0}
+                                                >
+                                                    <DocumentIcon className="w-4 h-4" />
+                                                    Export Selected as Excel
+                                                </ContextMenuItem>
+                                            </ContextMenuSubContent>
+                                        </ContextMenuSub>
+                                        <ContextMenuItem
+                                            onSelect={() => setShowMockDataSheet(true)}
+                                        >
+                                            Generate Mock Data
+                                        </ContextMenuItem>
+                                        <ContextMenuSub>
+                                            <ContextMenuSubTrigger>More Actions</ContextMenuSubTrigger>
+                                            <ContextMenuSubContent className="w-44">
+                                                <ContextMenuItem
+                                                    variant="destructive"
+                                                    disabled={deleting}
+                                                    onSelect={() => handleDeleteRow(globalIndex)}>
+                                                    Delete {selectedRowsData == null ? "This" : "All"} Row{selectedRowsData == null ? "" : "s"}
+                                                </ContextMenuItem>
+                                            </ContextMenuSubContent>
+                                        </ContextMenuSub>
+                                        <ContextMenuSeparator />
+                                        <ContextMenuItem onSelect={() => handleEdit(globalIndex)}>
+                                            Open in Graph View
+                                            <ContextMenuShortcut>⌘G</ContextMenuShortcut>
+                                        </ContextMenuItem>
+                                    </ContextMenuContent>
+                                </ContextMenu>
+                            );
+                        }}
+                    </VirtualizedTableBody>
+                </TableComponent>
+                <div className={cn("flex justify-between items-center mb-2", {
+                    "justify-end": children == null,
+                })}>
+                    {children}
+                    <Button
+                        variant="secondary"
+                        onClick={() => setShowExportConfirm(true)}
+                        className="flex gap-2"
+                    >
+                        <ArrowDownCircleIcon className="w-4 h-4" />
+                        {hasSelectedRows ? `Export ${checked.length} selected` : "Export all"}
+                    </Button>
+                </div>
+                <div className="flex mt-4">
+                    <Pagination className={cn("flex justify-end", {
+                        "hidden": totalPages <= 1,
+                    })}>
+                        <PaginationContent>
+                            <PaginationItem>
+                                <PaginationPrevious
+                                    href="#"
+                                    onClick={e => {
+                                        e.preventDefault();
+                                        if (currentPage > 1) setCurrentPage(currentPage - 1);
+                                    }}
+                                    aria-disabled={currentPage === 1}
+                                    size="sm"
+                                />
+                            </PaginationItem>
+                            {renderPaginationLinks()}
+                            <PaginationItem>
+                                <PaginationNext
+                                    href="#"
+                                    onClick={e => {
+                                        e.preventDefault();
+                                        if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                                    }}
+                                    aria-disabled={currentPage === totalPages}
+                                    size="sm"
+                                />
+                            </PaginationItem>
+                        </PaginationContent>
+                    </Pagination>
+                </div>
+                <Sheet open={editIndex !== null} onOpenChange={open => { if (!open) setEditIndex(null); }}>
+                    <SheetContent side="right" className="w-[400px] max-w-full p-8">
+                        <SheetTitle>Edit Row</SheetTitle>
+                        <div className="flex flex-col gap-4 mt-4">
+                            {editRow &&
+                                columns.map((col, idx) => (
+                                    <div key={col} className="flex flex-col gap-2">
+                                        <Label>{col}</Label>
+                                        <Input
+                                            value={editRow[idx] ?? ""}
+                                            onChange={e => handleInputChange(e.target.value, idx)}
+                                        />
+                                    </div>
+                                ))}
+                        </div>
+                        <SheetFooter className="flex gap-2">
+                            <Button onClick={handleUpdate} disabled={!editRow}>
+                                Update
+                            </Button>
+                        </SheetFooter>
+                    </SheetContent>
+                </Sheet>
+            </div>
+            <Sheet open={showExportConfirm} onOpenChange={setShowExportConfirm}>
+                <SheetContent side="right" className="max-w-md w-full p-8">
+                    <div className="flex flex-col gap-4 grow">
+                        <h2 className="text-xl font-semibold mb-4">Export Data</h2>
+                        <div className="space-y-4 grow">
+                            <p>
+                                {hasSelectedRows
+                                    ? `You are about to export ${checked.length} selected rows.`
+                                    : `You are about to export all data from the table. This may take some time for large tables.`}
+                            </p>
+                            <div className="mb-4 flex flex-col gap-2">
+                                <Label>
+                                    Format
+                                </Label>
+                                <Select
+                                    value={exportFormat}
+                                    onValueChange={(value) => setExportFormat(value as 'csv' | 'excel')}
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue>
+                                            {
+                                                exportFormatOptions.find(opt => opt.value === exportFormat)?.label
+                                            }
+                                        </SelectValue>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {exportFormatOptions.map(opt => (
+                                            <SelectItem key={opt.value} value={opt.value}>
+                                                {opt.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {exportFormat === 'csv' && (
+                                    <>
+                                        <Label>
+                                            Delimiter
+                                        </Label>
+                                        <Select
+                                            value={exportDelimiter}
+                                            onValueChange={(value) => setExportDelimiter(value)}
+                                        >
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue>
+                                                    {
+                                                        exportDelimiterOptions.find(opt => opt.value === exportDelimiter)?.label
+                                                    }
+                                                </SelectValue>
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {exportDelimiterOptions.map(opt => (
+                                                    <SelectItem key={opt.value} value={opt.value}>
+                                                        {opt.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <p className="text-sm mt-2">Choose a delimiter that doesn't appear in your data</p>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                        <SheetFooter className="px-0">
+                            <div className="text-xs text-muted-foreground mb-8">
+                                <p className="font-medium mb-1">Export Details:</p>
+                                <ul className="list-disc list-inside space-y-1">
+                                    {exportFormat === 'csv' ? (
+                                        <>
+                                            <li><p>Headers include column names and data types</p></li>
+                                            <li><p>UTF-8 encoding</p></li>
+                                            <li><p>Customizable delimiter</p></li>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <li><p>Excel XLSX format</p></li>
+                                            <li><p>Formatted headers with styling</p></li>
+                                            <li><p>Auto-sized columns</p></li>
+                                        </>
+                                    )}
+                                </ul>
+                            </div>
+                            <Button onClick={handleExportConfirm}>
+                                Export
+                            </Button>
+                        </SheetFooter>
                     </div>
-                    <SheetFooter className="flex gap-2">
-                        <Button onClick={handleUpdate} disabled={!editRow}>
-                            Update
-                        </Button>
+                </SheetContent>
+            </Sheet>
+            <Sheet open={showMockDataSheet} onOpenChange={setShowMockDataSheet}>
+                <SheetContent side="right" className="p-8">
+                    <div className="flex flex-col gap-4 h-full">
+                        <div className="text-lg font-semibold mb-2">Generate Mock Data for {storageUnit}</div>
+                        {!showMockDataConfirmation ? (
+                            <div className="space-y-4">
+                                <Label>Number of Rows (max: {maxRowCount})</Label>
+                                <Input
+                                    value={mockDataRowCount}
+                                    onChange={e => handleMockDataRowCountChange(e.target.value)}
+                                    type="text"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    max={maxRowCount.toString()}
+                                    placeholder={`Enter number of rows (1-${maxRowCount})`}
+                                />
+                                <Label>Method</Label>
+                                <Select value={mockDataMethod} onValueChange={setMockDataMethod}>
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Normal">Normal</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <Label>Data Handling</Label>
+                                <Select value={mockDataOverwriteExisting} onValueChange={setMockDataOverwriteExisting}>
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="append">Append to existing data</SelectItem>
+                                        <SelectItem value="overwrite">Overwrite existing data</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                {generatingMockData && (
+                                    <div className="mt-4">
+                                        <div className="flex justify-center">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                                        </div>
+                                        <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-2">
+                                            Generating mock data...
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-center mb-4">
+                                    <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
+                                        <XMarkIcon className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
+                                    </div>
+                                </div>
+                                <p className="text-center text-gray-700 dark:text-gray-300">
+                                    Are you sure you want to overwrite all existing data in {storageUnit}? This action cannot be undone.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                    <SheetFooter className="px-0">
+                        <Alert variant="info" className="mb-4">
+                            <AlertTitle>Note</AlertTitle>
+                            <AlertDescription>
+                                Mock data generation does not yet fully support foreign keys and all constraints. You may experience some errors or missing data.
+                            </AlertDescription>
+                        </Alert>
+                        {!showMockDataConfirmation ? (
+                            <Button onClick={handleMockDataGenerate} disabled={generatingMockData}>
+                                Generate
+                            </Button>
+                        ) : (
+                            <Button onClick={handleMockDataGenerate} disabled={generatingMockData} variant="destructive">
+                                Yes, Overwrite
+                            </Button>
+                        )}
                     </SheetFooter>
                 </SheetContent>
             </Sheet>
         </div>
-        <Sheet open={showExportConfirm} onOpenChange={setShowExportConfirm}>
-            <SheetContent side="right" className="max-w-md w-full p-8">
-                <div className="flex flex-col gap-4 grow">
-                    <h2 className="text-xl font-semibold mb-4">Export Data</h2>
-                    <div className="space-y-4 grow">
-                        <p>
-                            {hasSelectedRows
-                                ? `You are about to export ${checked.length} selected rows.`
-                                : `You are about to export all data from the table. This may take some time for large tables.`}
-                        </p>
-                        <div className="mb-4 flex flex-col gap-2">
-                            <Label>
-                                Format
-                            </Label>
-                            <Select
-                                value={exportFormat}
-                                onValueChange={(value) => setExportFormat(value as 'csv' | 'excel')}
-                            >
-                                <SelectTrigger className="w-full">
-                                    <SelectValue>
-                                        {
-                                            exportFormatOptions.find(opt => opt.value === exportFormat)?.label
-                                        }
-                                    </SelectValue>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {exportFormatOptions.map(opt => (
-                                        <SelectItem key={opt.value} value={opt.value}>
-                                            {opt.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            {exportFormat === 'csv' && (
-                                <>
-                                    <Label>
-                                        Delimiter
-                                    </Label>
-                                    <Select
-                                        value={exportDelimiter}
-                                        onValueChange={(value) => setExportDelimiter(value)}
-                                    >
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue>
-                                                {
-                                                    exportDelimiterOptions.find(opt => opt.value === exportDelimiter)?.label
-                                                }
-                                            </SelectValue>
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {exportDelimiterOptions.map(opt => (
-                                                <SelectItem key={opt.value} value={opt.value}>
-                                                    {opt.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <p className="text-sm mt-2">Choose a delimiter that doesn't appear in your data</p>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                    <SheetFooter className="px-0">
-                        <div className="text-xs text-muted-foreground mb-8">
-                            <p className="font-medium mb-1">Export Details:</p>
-                            <ul className="list-disc list-inside space-y-1">
-                                {exportFormat === 'csv' ? (
-                                    <>
-                                        <li><p>Headers include column names and data types</p></li>
-                                        <li><p>UTF-8 encoding</p></li>
-                                        <li><p>Customizable delimiter</p></li>
-                                    </>
-                                ) : (
-                                    <>
-                                        <li><p>Excel XLSX format</p></li>
-                                        <li><p>Formatted headers with styling</p></li>
-                                        <li><p>Auto-sized columns</p></li>
-                                    </>
-                                )}
-                            </ul>
-                        </div>
-                        <Button onClick={handleExportConfirm}>
-                            Export
-                        </Button>
-                    </SheetFooter>
-                </div>
-            </SheetContent>
-        </Sheet>
-        <Sheet open={showMockDataSheet} onOpenChange={setShowMockDataSheet}>
-            <SheetContent side="right" className="p-8">
-                <div className="flex flex-col gap-4 h-full">
-                    <div className="text-lg font-semibold mb-2">Generate Mock Data for {storageUnit}</div>
-                    
-                    {!showMockDataConfirmation ? (
-                        <div className="space-y-4">
-                            <Label>Number of Rows (max: {maxRowCount})</Label>
-                            <Input
-                                value={mockDataRowCount}
-                                onChange={e => handleMockDataRowCountChange(e.target.value)}
-                                type="text"
-                                inputMode="numeric"
-                                pattern="[0-9]*"
-                                max={maxRowCount.toString()}
-                                placeholder={`Enter number of rows (1-${maxRowCount})`}
-                            />
-                            <Label>Method</Label>
-                            <Select value={mockDataMethod} onValueChange={setMockDataMethod}>
-                                <SelectTrigger className="w-full">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Normal">Normal</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <Label>Data Handling</Label>
-                            <Select value={mockDataOverwriteExisting} onValueChange={setMockDataOverwriteExisting}>
-                                <SelectTrigger className="w-full">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="append">Append to existing data</SelectItem>
-                                    <SelectItem value="overwrite">Overwrite existing data</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            {generatingMockData && (
-                                <div className="mt-4">
-                                    <div className="flex justify-center">
-                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                                    </div>
-                                    <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-2">
-                                        Generating mock data...
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-center mb-4">
-                                <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
-                                    <XMarkIcon className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
-                                </div>
-                            </div>
-                            <p className="text-center text-gray-700 dark:text-gray-300">
-                                Are you sure you want to overwrite all existing data in {storageUnit}? This action cannot be undone.
-                            </p>
-                        </div>
-                    )}
-                </div>
-                <SheetFooter className="px-0">
-                    <Alert variant="info" className="mb-4">
-                        <AlertTitle>Note</AlertTitle>
-                        <AlertDescription>
-                            Mock data generation does not yet fully support foreign keys and all constraints. You may experience some errors or missing data.
-                        </AlertDescription>
-                    </Alert>
-                    {!showMockDataConfirmation ? (
-                        <Button onClick={handleMockDataGenerate} disabled={generatingMockData}>
-                            Generate
-                        </Button>
-                    ) : (
-                        <Button onClick={handleMockDataGenerate} disabled={generatingMockData} variant="destructive">
-                            Yes, Overwrite
-                        </Button>
-                    )}
-                </SheetFooter>
-            </SheetContent>
-        </Sheet>
-        </>
     );
 };
