@@ -73,7 +73,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { FC, useCallback, useMemo, useState } from "react";
 import { useExportToCSV } from "./hooks"; // You may need to adjust this import
-import { useGenerateMockDataMutation, useMockDataMaxRowCountQuery } from '@graphql';
+import { RecordInput, useDeleteRowMutation, useGenerateMockDataMutation, useMockDataMaxRowCountQuery } from '@graphql';
 
 // Type sets based on core/src/plugins/gorm/utils.go
 const stringTypes = new Set([
@@ -116,6 +116,7 @@ interface TableProps {
     schema?: string;
     storageUnit?: string;
     onRefresh?: () => void;
+    children?: React.ReactNode;
 }
 
 export const StorageUnitTable: FC<TableProps> = ({
@@ -130,6 +131,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     schema,
     storageUnit,
     onRefresh,
+    children,
 }) => {
     const [editIndex, setEditIndex] = useState<number | null>(null);
     const [editRow, setEditRow] = useState<string[] | null>(null);
@@ -146,13 +148,15 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [mockDataMethod, setMockDataMethod] = useState("Normal");
     const [mockDataOverwriteExisting, setMockDataOverwriteExisting] = useState("append");
     const [showMockDataConfirmation, setShowMockDataConfirmation] = useState(false);
-    const [generateMockData, { loading: generatingMockData }] = useGenerateMockDataMutation();
     const { data: maxRowData } = useMockDataMaxRowCountQuery();
     const maxRowCount = maxRowData?.MockDataMaxRowCount || 200;
     
     const pageSize = 20;
     const totalRows = rows.length;
     const totalPages = Math.ceil(totalRows / pageSize);
+    
+    const [generateMockData, { loading: generatingMockData }] = useGenerateMockDataMutation();
+    const [deleteRow, ] = useDeleteRowMutation();
 
     // Export options as lists
     const exportFormatOptions = [
@@ -200,18 +204,33 @@ export const StorageUnitTable: FC<TableProps> = ({
     };
 
     // Delete logic, adapted from explore-storage-unit.tsx
-    const handleDeleteRow = async (rowIndex: number) => {
-        if (onRowDelete) {
-            setDeleting(true);
-            try {
-                await onRowDelete(rowIndex);
-                toast.success("Row deleted");
-            } catch (e: any) {
-                toast.error(`Unable to delete the row: ${e?.message || e}`);
-            }
-            setDeleting(false);
+    const handleDeleteRow = useCallback((rowIndex: number) => {
+        let values: RecordInput[] = [{ Key: 'id', Value: rowIndex.toString() }]
+        if (selectedRowsData != null) {
+            values = selectedRowsData.map((value, index) => ({ Key: "id", Value: value[index] }));
         }
-    };
+        if (values.length === 0) {
+            return;
+        }
+        toast.info(values.length === 1 ? "Deleting row..." : "Deleting rows...");
+        deleteRow({
+            variables: {
+                schema: schema || '',
+                storageUnit: storageUnit || '',
+                values,
+            },
+            onCompleted(data) {
+                if (data?.DeleteRow.Status) {
+                    toast.success("Row deleted");
+                } else {
+                    toast.error("Failed to delete row");
+                }
+            },
+            onError(error) {
+                toast.error(error.message);
+            },
+        });
+    }, [deleteRow, schema, storageUnit]);
 
     const paginatedRows = useMemo(() => rows.slice((currentPage - 1) * pageSize, currentPage * pageSize), [rows, currentPage, pageSize]);
 
@@ -385,16 +404,6 @@ export const StorageUnitTable: FC<TableProps> = ({
     return (
         <>
         <div className="flex flex-col grow h-full">
-            <div className="flex justify-end items-center mb-2">
-                <Button
-                    variant="secondary"
-                    onClick={() => setShowExportConfirm(true)}
-                    className="flex gap-2"
-                >
-                    <ArrowDownCircleIcon className="w-4 h-4" />
-                    {hasSelectedRows ? `Export ${checked.length} selected` : "Export all"}
-                </Button>
-            </div>
             <TableComponent className="overflow-x-auto">
                 <TableHeader>
                     <TableRow>
@@ -485,11 +494,8 @@ export const StorageUnitTable: FC<TableProps> = ({
                                             <ContextMenuItem
                                                 variant="destructive"
                                                 disabled={deleting}
-                                                onSelect={async () => {
-                                                    await handleDeleteRow(globalIndex);
-                                                }}
-                                            >
-                                                Delete Row
+                                                onSelect={() => handleDeleteRow(globalIndex)}>
+                                                Delete {selectedRowsData == null ? "This" : "All"} Row{selectedRowsData == null ? "" : "s"}
                                             </ContextMenuItem>
                                         </ContextMenuSubContent>
                                     </ContextMenuSub>
@@ -504,6 +510,17 @@ export const StorageUnitTable: FC<TableProps> = ({
                     }}
                 </VirtualizedTableBody>
             </TableComponent>
+            <div className="flex justify-between items-center mb-2">
+                {children}
+                <Button
+                    variant="secondary"
+                    onClick={() => setShowExportConfirm(true)}
+                    className="flex gap-2"
+                >
+                    <ArrowDownCircleIcon className="w-4 h-4" />
+                    {hasSelectedRows ? `Export ${checked.length} selected` : "Export all"}
+                </Button>
+            </div>
             <div className="flex mt-4">
                 <Pagination className={cn("flex justify-end", {
                     "hidden": totalPages <= 1,

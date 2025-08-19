@@ -395,7 +395,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                                 </div>
                                 {
                                     error &&
-                                    <Badge variant="destructive">
+                                    <Badge variant="destructive" className="self-end">
                                         {error}
                                     </Badge>
                                 }
@@ -455,7 +455,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                     </Button>
                     {advancedDirection === "horizontal" && (
                         <Button onClick={handleSubmit} data-testid="login-button" variant={loginWithCredentialsEnabled ? "default" : "secondary"}>
-                            <CheckCircleIcon className="w-4 h-4" /> Submit
+                            <CheckCircleIcon className="w-4 h-4" /> Login
                         </Button>
                     )}
                 </div>
@@ -464,7 +464,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                         "grow": availableProfiles.length === 0,
                     })}>
                         <Button onClick={handleSubmit} data-testid="login-button" variant={loginWithCredentialsEnabled ? "default" : "secondary"}>
-                            <CheckCircleIcon className="w-4 h-4" /> Submit
+                            <CheckCircleIcon className="w-4 h-4" /> Login
                         </Button>
                     </div>
                 )}

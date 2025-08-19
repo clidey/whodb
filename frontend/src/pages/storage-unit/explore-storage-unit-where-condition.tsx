@@ -267,13 +267,13 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
     }, [newFilter, editingFilter, handleKeyDown, handleClickOutside]);
 
     return (
-        <div className="flex flex-col justify-end">
+        <div className="flex flex-col">
             <Label className="mb-2">Where condition</Label>
             <div className="flex flex-row gap-1 max-w-[min(500px,calc(100vw-20px))] flex-wrap">
                 {filters.And?.Children?.map((filter, i) => (
                     <div
                         key={`explore-storage-unit-filter-${i}`}
-                        className="group/filter-item flex gap-1 items-center text-xs rounded-2xl cursor-pointer"
+                        className="group/filter-item flex gap-1 items-center text-xs rounded-2xl cursor-pointer h-[36px]"
                         data-testid="where-condition"
                     >
                         <Badge

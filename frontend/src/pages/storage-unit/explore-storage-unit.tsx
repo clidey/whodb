@@ -15,16 +15,17 @@
  */
 
 import { FetchResult } from "@apollo/client";
-import { Button, Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle, Input, Label, SearchInput, Sheet, SheetContent, SheetFooter, toast } from "@clidey/ux";
+import { Button, Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle, Input, Label, SearchInput, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Sheet, SheetContent, SheetFooter, toast } from "@clidey/ux";
 import {
-    DatabaseType, DeleteRowDocument, DeleteRowMutationResult, RecordInput, RowsResult, StorageUnit,
+    DatabaseType,
+    RecordInput, RowsResult, StorageUnit,
     UpdateStorageUnitDocument, UpdateStorageUnitMutationResult, useAddRowMutation, useGetStorageUnitRowsLazyQuery,
     useRawExecuteLazyQuery,
     WhereCondition
 } from '@graphql';
 import { CheckCircleIcon, CommandLineIcon, PlayIcon, PlusCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { clone, entries, keys, map } from "lodash";
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { entries, keys, map } from "lodash";
+import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { CodeEditor } from "../../components/editor";
 import { Loading, LoadingPage } from "../../components/loading";
@@ -37,22 +38,18 @@ import { getDatabaseOperators } from "../../utils/database-operators";
 import { getDatabaseStorageUnitLabel } from "../../utils/functions";
 import { ExploreStorageUnitWhereCondition } from "./explore-storage-unit-where-condition";
 
+
 export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad }) => {
     const [bufferPageSize, setBufferPageSize] = useState("100");
     const [currentPage, setCurrentPage] = useState(0);
     const [whereCondition, setWhereCondition] = useState<WhereCondition>();
-    const [pageSize, setPageSize] = useState("");
     const unit: StorageUnit = useLocation().state?.unit;
-    const pathname = useLocation().pathname;
 
     let schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
     const navigate = useNavigate();
     const [rows, setRows] = useState<RowsResult>();
     const [showAdd, setShowAdd] = useState(false);
-    const [checkedRows, setCheckedRows] = useState<Set<number>>(new Set());
-    const [deleting, setDeleting] = useState(false);
-    const addRowRef = useRef<HTMLDivElement>(null);
 
     // For add row sheet logic
     const [addRowData, setAddRowData] = useState<Record<string, any>>({});
@@ -69,12 +66,11 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     const [getStorageUnitRows, { loading }] = useGetStorageUnitRowsLazyQuery({
         onCompleted(data) {
             setRows(data.Row);
-            setPageSize(bufferPageSize);
         },
         fetchPolicy: "no-cache",
     });
     const [addRow, { loading: adding }] = useAddRowMutation();
-    const [rawExecute, { data: rawExecuteData, called }] = useRawExecuteLazyQuery();
+    const [rawExecute, { data: rawExecuteData }] = useRawExecuteLazyQuery();
 
     const unitName = useMemo(() => {
         return unit?.Name;
@@ -128,81 +124,13 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         });
     }, [current, schema, unitName]);
 
-    const handleRowDelete = useCallback(async () => {
-        if (current == null || rows == null || checkedRows.size === 0) {
-            return;
-        }
-        let unableToDeleteAll = false;
-        setDeleting(true);
-        const deletedIndexes = [];
-        for (const index of [...checkedRows].sort()) {
-            const row = rows.Rows[index];
-            if (row == null) {
-                continue;
-            }
-            const values = map(rows.Columns, (column, i) => ({
-                Key: column.Name,
-                Value: row[i],
-            }));
-            try {
-                await new Promise<void>(async (res, rej) => {
-                    try {
-                        const { data }: FetchResult<DeleteRowMutationResult["data"]> = await graphqlClient.mutate({
-                            mutation: DeleteRowDocument,
-                            variables: {
-                                schema,
-                                storageUnit: unitName,
-                                type: current.Type as DatabaseType,
-                                values,
-                            }
-                        });
-                        if (data?.DeleteRow.Status) {
-                            return res();
-                        }
-                        return rej();
-                    } catch (err) {
-                        return rej(err);
-                    }
-                });
-                deletedIndexes.push(index);
-            } catch (e) {
-                if ((checkedRows.size-1) > index) {
-                    toast.error(`Unable to delete the row: ${e}. Stopping deleting other selected rows.`);
-                } else {
-                    toast.error(`Unable to delete the row: ${e}`);
-                }
-                setDeleting(false);
-                unableToDeleteAll=true;
-                break;
-            }
-        }
-        const newRows = clone(rows.Rows);
-        const newCheckedRows = new Set(checkedRows);
-        for (const deletedIndex of deletedIndexes.reverse()) {
-            newRows.splice(deletedIndex, 1);
-            newCheckedRows.delete(deletedIndex);
-        }
-        setRows({
-            ...rows,
-            Rows: newRows,
-        });
-        setCheckedRows(newCheckedRows);
-        if (!unableToDeleteAll) {
-            toast.success("Row deleted successfully!");
-        }
-        setDeleting(false);
-    }, [checkedRows, current, rows, schema, unitName]);
-
     const totalCount = useMemo(() => {
         const count = unit?.Attributes.find(attribute => attribute.Key === "Count")?.Value;
-        if (count == null) {
-            return "<50";
-        }
-        if (count == "unknown") {
+        if (count == null || count === "0" || count === "unknown") {
             return rows?.Rows.length?.toString() ?? "unknown";
         }
         return count;
-    }, [unit]);
+    }, [unit, rows?.Rows.length]);
 
     useEffect(() => {
         handleSubmitRequest();
@@ -362,34 +290,35 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 <div className="flex gap-2 items-center">
                     <h1 className="text-xl font-bold mr-4">{unitName}</h1>
                 </div>
-                <div className="text-sm mr-4"><span className="font-semibold">Total Count:</span> {totalCount}</div>
+                <div className="text-sm"><span className="font-semibold">Total Count:</span> {totalCount}</div>
             </div>
             <div className="flex w-full relative">
                 <div className="flex justify-between items-end w-full">
-                    <div className="flex gap-2 items-end">
+                    <div className="flex gap-2">
                         <div className="flex flex-col gap-2">
                             <Label>Search</Label>
                             <SearchInput placeholder="Enter search query" className="w-64" />
                         </div>
                         <div className="flex flex-col gap-2">
                             <Label>Page Size</Label>
-                            <Input value={bufferPageSize} onChange={e => setBufferPageSize(e.target.value)} data-testid="table-page-size" />
+                            <Select value={bufferPageSize} onValueChange={setBufferPageSize}>
+                                <SelectTrigger className="w-32" data-testid="table-page-size">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="10">10</SelectItem>
+                                    <SelectItem value="25">25</SelectItem>
+                                    <SelectItem value="50">50</SelectItem>
+                                    <SelectItem value="100">100</SelectItem>
+                                    <SelectItem value="250">250</SelectItem>
+                                    <SelectItem value="500">500</SelectItem>
+                                    <SelectItem value="1000">1000</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                         { current?.Type !== DatabaseType.Redis && <ExploreStorageUnitWhereCondition defaultWhere={whereCondition} columns={columns} operators={validOperators} onChange={handleFilterChange} columnTypes={columnTypes ?? []} /> }
-                        <Button className="ml-6" onClick={handleQuery} data-testid="submit-button">
+                        <Button className="ml-6 self-end" onClick={handleQuery} data-testid="submit-button">
                             <CheckCircleIcon className="w-4 h-4" /> Query
-                        </Button>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                        {adding || deleting ? <Loading /> : null}
-                        {checkedRows.size > 0 && <Button variant="destructive" onClick={handleRowDelete} disabled={deleting} data-testid="delete-button">
-                            <XMarkIcon className="w-4 h-4" /> {checkedRows.size > 1 ? "Delete rows" : "Delete row"}
-                        </Button> }
-                        <Button onClick={handleOpenScratchpad} data-testid="scratchpad-button" variant="secondary">
-                            <CommandLineIcon className="w-4 h-4" /> Scratchpad
-                        </Button>
-                        <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-button">
-                            <PlusCircleIcon className="w-4 h-4" /> Add Row
                         </Button>
                     </div>
                 </div>
@@ -400,9 +329,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                             <div className="flex flex-col gap-4">
                                 {rows?.Columns?.map((col) => (
                                     <div key={col.Name} className="flex flex-col gap-2">
-                                        <Label>
-                                            {col.Name} <span className="italic">[{col.Type}]</span>
-                                        </Label>
+                                        <Label>{col.Name} <span className="italic">[{col.Type}]</span></Label>
                                         <Input
                                             value={addRowData[col.Name] ?? ""}
                                             onChange={e => handleAddRowFieldChange(col.Name, e.target.value)}
@@ -435,7 +362,16 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                         schema={schema}
                         storageUnit={unitName}
                         onRefresh={handleSubmitRequest}
-                    />
+                    >
+                        <div className="flex gap-2">
+                            <Button onClick={handleOpenScratchpad} data-testid="scratchpad-button" variant="secondary">
+                                <CommandLineIcon className="w-4 h-4" /> Scratchpad
+                            </Button>
+                            <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-button">
+                                <PlusCircleIcon className="w-4 h-4" /> Add Row
+                            </Button>
+                        </div>
+                    </StorageUnitTable>
                 }
             </div>
         </div>
