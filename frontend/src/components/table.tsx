@@ -182,6 +182,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     
     const [generateMockData, { loading: generatingMockData }] = useGenerateMockDataMutation();
     const [deleteRow, ] = useDeleteRowMutation();
+    const [containerWidth, setContainerWidth] = useState<number>(0);
 
     // Export options as lists
     const exportFormatOptions = [
@@ -433,10 +434,16 @@ export const StorageUnitTable: FC<TableProps> = ({
         };
     }, [onRefresh]);
 
+    useEffect(() => {
+        if (tableRef.current) {
+            setContainerWidth(tableRef.current.offsetWidth);
+        }
+    }, [tableRef]);
+
     return (
         <div ref={tableRef}>
             <div className="flex flex-col h-full space-y-4 w-0" style={{
-                width: `${tableRef.current?.offsetWidth}px`,
+                width: `${containerWidth}px`,
             }}>
                 <TableComponent className="overflow-x-auto">
                     <TableHeader>

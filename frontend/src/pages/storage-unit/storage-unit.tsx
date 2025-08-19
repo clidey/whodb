@@ -380,7 +380,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data })
     return (
         <>
             <Handle className="dark:border-white/5" type="target" position={Position.Left} />
-            <Card icon=<CircleStackIcon className="w-4 h-4" /> className="h-fit backdrop-blur-[2px] w-[400px] px-2 py-6">
+            <Card icon={<CircleStackIcon className="w-4 h-4" />} className="h-fit backdrop-blur-[2px] w-[400px] px-2 py-6">
                 <div className="flex flex-col grow mt-2 gap-4">
                     <div className="flex flex-col grow">
                         <h2 className="text-3xl font-semibold mb-2 break-words">{data.Name}</h2>
