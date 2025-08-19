@@ -165,19 +165,19 @@ func (p *GormPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, error
 	})
 }
 
-func (p *GormPlugin) GetRows(config *engine.PluginConfig, schema string, storageUnit string, where *model.WhereCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+func (p *GormPlugin) GetRows(config *engine.PluginConfig, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
 		// Handle SQLite separately due to text conversion of date/time columns
 		if p.Type == engine.DatabaseType_Sqlite3 {
-			return p.getSQLiteRows(db, schema, storageUnit, pageSize, pageOffset)
+			return p.getSQLiteRows(db, schema, storageUnit, sort, pageSize, pageOffset)
 		}
 
 		// General case for other databases
-		return p.getGenericRows(db, schema, storageUnit, where, pageSize, pageOffset)
+		return p.getGenericRows(db, schema, storageUnit, where, sort, pageSize, pageOffset)
 	})
 }
 
-func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	columnInfo, err := p.GetColumnTypes(db, schema, storageUnit)
 	if err != nil {
 		return nil, err
@@ -194,11 +194,25 @@ func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, page
 	}
 
 	query := fmt.Sprintf(
-		"SELECT %s FROM %s LIMIT %d OFFSET %d",
+		"SELECT %s FROM %s",
 		strings.Join(selects, ", "),
 		p.EscapeIdentifier(storageUnit),
-		pageSize, pageOffset,
 	)
+
+	// Add ORDER BY clause if sort conditions are provided
+	if len(sort) > 0 {
+		orderByParts := []string{}
+		for _, s := range sort {
+			direction := "ASC"
+			if s.Direction == model.SortDirectionDesc {
+				direction = "DESC"
+			}
+			orderByParts = append(orderByParts, fmt.Sprintf("%s %s", p.EscapeIdentifier(s.Column), direction))
+		}
+		query += " ORDER BY " + strings.Join(orderByParts, ", ")
+	}
+
+	query += fmt.Sprintf(" LIMIT %d OFFSET %d", pageSize, pageOffset)
 
 	rows, err := db.Raw(query).Rows()
 	if err != nil {
@@ -209,7 +223,7 @@ func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, page
 	return p.ConvertRawToRows(rows)
 }
 
-func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, where *model.WhereCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	var columnTypes map[string]string
 	if where != nil {
 		columnTypes, _ = p.GetColumnTypes(db, schema, storageUnit)
@@ -225,9 +239,21 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 		return nil, err
 	}
 
-	// Apply custom ordering if specified by the database plugin
-	if orderBy := p.GormPluginFunctions.GetRowsOrderBy(db, schema, storageUnit); orderBy != "" {
-		query = query.Order(orderBy)
+	// Apply sorting conditions if provided
+	if len(sort) > 0 {
+		for _, s := range sort {
+			column := p.EscapeIdentifier(s.Column)
+			direction := "ASC"
+			if s.Direction == model.SortDirectionDesc {
+				direction = "DESC"
+			}
+			query = query.Order(fmt.Sprintf("%s %s", column, direction))
+		}
+	} else {
+		// Apply custom ordering if specified by the database plugin
+		if orderBy := p.GormPluginFunctions.GetRowsOrderBy(db, schema, storageUnit); orderBy != "" {
+			query = query.Order(orderBy)
+		}
 	}
 
 	query = query.Limit(pageSize).Offset(pageOffset)

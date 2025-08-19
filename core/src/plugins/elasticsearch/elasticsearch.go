@@ -99,7 +99,7 @@ func (p *ElasticSearchPlugin) GetStorageUnits(config *engine.PluginConfig, datab
 	return storageUnits, nil
 }
 
-func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, collection string, where *model.WhereCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, collection string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	client, err := DB(config)
 	if err != nil {
 		return nil, err
@@ -117,6 +117,23 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 		"query": map[string]interface{}{
 			"bool": elasticSearchConditions,
 		},
+	}
+
+	// Apply sorting if provided
+	if len(sort) > 0 {
+		sortArray := []map[string]interface{}{}
+		for _, s := range sort {
+			order := "asc"
+			if s.Direction == model.SortDirectionDesc {
+				order = "desc"
+			}
+			sortArray = append(sortArray, map[string]interface{}{
+				s.Column: map[string]interface{}{
+					"order": order,
+				},
+			})
+		}
+		query["sort"] = sortArray
 	}
 
 	var buf bytes.Buffer

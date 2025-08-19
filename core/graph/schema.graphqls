@@ -38,6 +38,16 @@ input WhereCondition {
   Or: OperationWhereCondition
 }
 
+enum SortDirection {
+  ASC
+  DESC
+}
+
+input SortCondition {
+  Column: String!
+  Direction: SortDirection!
+}
+
 type RowsResult {
   Columns: [Column!]!
   Rows: [[String!]!]!
@@ -153,7 +163,7 @@ type Query {
   Database(type: String!): [String!]!
   Schema: [String!]!
   StorageUnit(schema: String!): [StorageUnit!]!
-  Row(schema: String!, storageUnit: String!, where: WhereCondition, pageSize: Int!, pageOffset: Int!): RowsResult!
+  Row(schema: String!, storageUnit: String!, where: WhereCondition, sort: [SortCondition!], pageSize: Int!, pageOffset: Int!): RowsResult!
   RawExecute(query: String!): RowsResult!
   Graph(schema: String!): [GraphUnit!]!
   AIProviders: [AIProvider!]!
