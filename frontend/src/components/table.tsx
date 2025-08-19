@@ -60,6 +60,8 @@ import {
     CalculatorIcon,
     CalendarIcon,
     CheckCircleIcon,
+    ChevronDownIcon,
+    ChevronUpIcon,
     CircleStackIcon,
     ClockIcon,
     DocumentDuplicateIcon,
@@ -116,6 +118,8 @@ interface TableProps {
     schema?: string;
     storageUnit?: string;
     onRefresh?: () => void;
+    onColumnSort?: (column: string) => void;
+    sortedColumns?: Map<string, 'asc' | 'desc'>;
 }
 
 export const StorageUnitTable: FC<TableProps> = ({
@@ -130,6 +134,8 @@ export const StorageUnitTable: FC<TableProps> = ({
     schema,
     storageUnit,
     onRefresh,
+    onColumnSort,
+    sortedColumns,
 }) => {
     const [editIndex, setEditIndex] = useState<number | null>(null);
     const [editRow, setEditRow] = useState<string[] | null>(null);
@@ -407,7 +413,21 @@ export const StorageUnitTable: FC<TableProps> = ({
                             />
                         </TableCell>
                         {columns.map((col, idx) => (
-                            <TableHead key={col + idx} icon={columnIcons?.[idx]}>{col}</TableHead>
+                            <TableHead 
+                                key={col + idx} 
+                                icon={columnIcons?.[idx]}
+                                className={onColumnSort ? "cursor-pointer select-none" : ""}
+                                onClick={() => onColumnSort?.(col)}
+                            >
+                                <div className="flex items-center gap-1">
+                                    {col}
+                                    {onColumnSort && sortedColumns?.has(col) && (
+                                        sortedColumns.get(col) === 'asc' 
+                                            ? <ChevronUpIcon className="w-4 h-4" />
+                                            : <ChevronDownIcon className="w-4 h-4" />
+                                    )}
+                                </div>
+                            </TableHead>
                         ))}
                     </TableRow>
                 </TableHeader>

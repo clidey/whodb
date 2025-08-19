@@ -182,6 +182,7 @@ func (p *RedisPlugin) GetRows(
 	config *engine.PluginConfig,
 	schema, storageUnit string,
 	where *model.WhereCondition,
+	sort []*model.SortCondition,
 	pageSize, pageOffset int,
 ) (*engine.GetRowsResult, error) {
 	ctx := context.Background()

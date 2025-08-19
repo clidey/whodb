@@ -17,7 +17,7 @@
 import { FetchResult } from "@apollo/client";
 import { Button, Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle, Input, Label, SearchInput, Sheet, SheetContent, SheetFooter, toast } from "@clidey/ux";
 import {
-    DatabaseType, DeleteRowDocument, DeleteRowMutationResult, RecordInput, RowsResult, StorageUnit,
+    DatabaseType, DeleteRowDocument, DeleteRowMutationResult, RecordInput, RowsResult, SortCondition, SortDirection, StorageUnit,
     UpdateStorageUnitDocument, UpdateStorageUnitMutationResult, useAddRowMutation, useGetStorageUnitRowsLazyQuery,
     useRawExecuteLazyQuery,
     WhereCondition
@@ -41,6 +41,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     const [bufferPageSize, setBufferPageSize] = useState("100");
     const [currentPage, setCurrentPage] = useState(0);
     const [whereCondition, setWhereCondition] = useState<WhereCondition>();
+    const [sortConditions, setSortConditions] = useState<SortCondition[]>([]);
     const [pageSize, setPageSize] = useState("");
     const unit: StorageUnit = useLocation().state?.unit;
     const pathname = useLocation().pathname;
@@ -86,16 +87,38 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 schema,
                 storageUnit: unitName,
                 where: whereCondition,
+                sort: sortConditions.length > 0 ? sortConditions : undefined,
                 pageSize: Number.parseInt(bufferPageSize),
                 pageOffset: currentPage,
             },
         });
-    }, [getStorageUnitRows, schema, unitName, whereCondition, bufferPageSize, currentPage]);
+    }, [getStorageUnitRows, schema, unitName, whereCondition, sortConditions, bufferPageSize, currentPage]);
 
     const handleQuery = useCallback(() => {
         handleSubmitRequest();
         setCurrentPage(0);
     }, [handleSubmitRequest]);
+
+    const handleColumnSort = useCallback((columnName: string) => {
+        setSortConditions(prev => {
+            const existingSort = prev.find(s => s.Column === columnName);
+            
+            if (!existingSort) {
+                // Add ascending sort for this column
+                return [...prev, { Column: columnName, Direction: SortDirection.Asc }];
+            } else if (existingSort.Direction === SortDirection.Asc) {
+                // Change to descending
+                return prev.map(s => 
+                    s.Column === columnName 
+                        ? { ...s, Direction: SortDirection.Desc }
+                        : s
+                );
+            } else {
+                // Remove sort for this column
+                return prev.filter(s => s.Column !== columnName);
+            }
+        });
+    }, []);
 
     const handleRowUpdate = useCallback((row: Record<string, string | number>, updatedColumn: string) => {
         if (current == null) {
@@ -210,6 +233,13 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [unit]);
 
+    useEffect(() => {
+        if (sortConditions.length > 0) {
+            handleSubmitRequest();
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [sortConditions]);
+
     const routes = useMemo(() => {
         const name = getDatabaseStorageUnitLabel(current?.Type);
         return [
@@ -250,6 +280,14 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         }
         return getDatabaseOperators(current.Type);
     }, [current?.Type]);
+
+    const sortedColumnsMap = useMemo(() => {
+        const map = new Map<string, 'asc' | 'desc'>();
+        sortConditions.forEach(cond => {
+            map.set(cond.Column, cond.Direction === SortDirection.Asc ? 'asc' : 'desc');
+        });
+        return map;
+    }, [sortConditions]);
 
     // Sheet logic for Add Row (like table.tsx)
     const handleOpenAddSheet = useCallback(() => {
@@ -435,6 +473,8 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                         schema={schema}
                         storageUnit={unitName}
                         onRefresh={handleSubmitRequest}
+                        onColumnSort={handleColumnSort}
+                        sortedColumns={sortedColumnsMap}
                     />
                 }
             </div>
