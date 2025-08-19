@@ -16,7 +16,7 @@
 
 import { Alert, AlertDescription, AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertTitle, Badge, Button, Card, cn, EmptyState, formatDate, Select, SelectContent, SelectItem, SelectTrigger, Separator, Sheet, SheetContent, Tabs, TabsContent, TabsList, TabsTrigger } from "@clidey/ux";
 import { DatabaseType, RowsResult } from '@graphql';
-import { BellAlertIcon, ClockIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, BellAlertIcon, CheckCircleIcon, CircleStackIcon, ClipboardDocumentIcon, ClockIcon, PencilIcon, PlayIcon, PlusCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import { indexOf } from "lodash";
@@ -24,7 +24,6 @@ import { ChangeEvent, cloneElement, FC, ReactElement, ReactNode, Suspense, useCa
 import { v4 } from "uuid";
 import { AIProvider, useAI } from "../../components/ai";
 import { CodeEditor } from "../../components/editor";
-import { Icons } from "../../components/icons";
 import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { Tip } from "../../components/tip";
@@ -52,7 +51,7 @@ enum ActionOptions {
 }
 
 export const ActionOptionIcons: Record<string, ReactElement> = {
-    [ActionOptions.Query]: Icons.Database,
+    [ActionOptions.Query]: <CircleStackIcon className="w-4 h-4" />,
 }
 
 function getModeCommand(mode: string, current?: LocalLoginProfile, eeActionOptions?: Record<string, string>) {
@@ -75,7 +74,7 @@ const CopyButton: FC<{ text: string }> = (props) => {
         });
     }, []);
 
-    return <div className="p-2 brightness-75 hover:brightness-100" onClick={handleCopyToClibpoard}>{copied ? Icons.CheckCircle : Icons.Clipboard}</div>;
+    return <div className="p-2 brightness-75 hover:brightness-100" onClick={handleCopyToClibpoard}>{copied ? <CheckCircleIcon className="w-4 h-4" /> : <ClipboardDocumentIcon className="w-4 h-4" />}</div>;
 }
 
 const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, showTools }) => {
@@ -242,13 +241,13 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                         </Select>}
                         <Tip>
                             <Button onClick={handleAdd} data-testid="add-button" variant="secondary" className="border border-input">
-                                {Icons.PlusCircle}
+                                <PlusCircleIcon className="w-4 h-4" />
                             </Button>
                                 <p>Add a new cell</p>
                         </Tip>
                         <Tip>
                             <Button onClick={() => setCode("")} data-testid="clear-button" variant="secondary" className="border border-input">
-                                {Icons.Refresh}
+                                <ArrowPathIcon className="w-4 h-4" />
                             </Button>
                             <p>Clear the editor</p>
                         </Tip>
@@ -256,7 +255,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                             onDelete != null &&
                             <Tip>
                                 <Button variant="destructive" onClick={handleDelete} data-testid="delete-button">
-                                    {Icons.Delete}
+                                    <XMarkIcon className="w-4 h-4" />
                                 </Button>
                                 <p>Delete the cell</p>
                             </Tip>
@@ -277,7 +276,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                         <Button onClick={() => handleRawExecute()} data-testid="submit-button" className={cn("pointer-events-auto", {
                             "hidden": code.length === 0,
                         })} disabled={code.length === 0}>
-                            {Icons.CheckCircle}
+                            {<CheckCircleIcon className="w-4 h-4" />}
                         </Button>
                     </div>
                 </div>
@@ -337,7 +336,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                                             }}
                                                             title="Clone to editor"
                                                         >
-                                                            {cloneElement(Icons.Edit, { className: "w-5 h-5" })}
+                                                            <PencilIcon className="w-4 h-4" />
                                                         </Button>
                                                         <Button
                                                             size="icon"
@@ -346,7 +345,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                                             onClick={() => handleRawExecute(item)}
                                                             title="Run"
                                                         >
-                                                            {Icons.Play}
+                                                            <PlayIcon className="w-4 h-4" />
                                                         </Button>
                                                     </div>
                                                 </div>
@@ -539,7 +538,7 @@ export const RawExecutePage: FC = () => {
                                             ))
                                         }
                                         <TabsTrigger value="add" onClick={handleAdd}>
-                                            {Icons.Add}
+                                            <PlusCircleIcon className="w-4 h-4" />
                                         </TabsTrigger>
                                     </TabsList>
                                     <AlertDialog>
@@ -550,7 +549,7 @@ export const RawExecutePage: FC = () => {
                                           })}
                                           variant="secondary"
                                         >
-                                          {Icons.Delete} Delete page
+                                          <XMarkIcon className="w-4 h-4" /> Delete page
                                         </Button>
                                       </AlertDialogTrigger>
                                       <AlertDialogContent>

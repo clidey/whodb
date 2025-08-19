@@ -39,7 +39,7 @@ import {
     useSidebar
 } from "@clidey/ux";
 import { DatabaseType, useGetDatabaseQuery, useGetSchemaQuery, useGetVersionQuery, useLoginMutation, useLoginWithProfileMutation } from '@graphql';
-import { ArrowLeftStartOnRectangleIcon, Bars3Icon, ChevronDownIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { ArrowLeftStartOnRectangleIcon, Bars3Icon, ChevronDownIcon, CommandLineIcon, PlusIcon, SparklesIcon, TableCellsIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
@@ -56,6 +56,7 @@ import { Icons } from "../icons";
 import { Loading } from "../loading";
 import { updateProfileLastAccessed } from "../profile-info-tooltip";
 import { extensions } from "../../config/features";
+import { CogIcon, QuestionMarkCircleIcon, RectangleGroupIcon } from "@heroicons/react/24/outline";
 
 const logoImage = "/images/logo.png";
 
@@ -207,26 +208,26 @@ export const Sidebar: FC = () => {
         const routes = [
             {
                 title: getDatabaseStorageUnitLabel(current.Type),
-                icon: Icons.Tables,
+                icon: <TableCellsIcon className="w-4 h-4" />,
                 path: InternalRoutes.Dashboard.StorageUnit.path,
             },
             {
                 title: "Graph",
-                icon: Icons.GraphLayout,
+                icon: <RectangleGroupIcon className="w-4 h-4" />,
                 path: InternalRoutes.Graph.path,
             },
         ];
         if (!isNoSQL(current.Type)) {
             routes.unshift({
                 title: "Chat",
-                icon: Icons.Sparkles,
+                icon: <SparklesIcon className="w-4 h-4" />,
                 path: InternalRoutes.Chat.path,
             });
         }
         if (databaseSupportsScratchpad(current.Type)) {
             routes.push({
                 title: "Scratchpad",
-                icon: Icons.Console,
+                icon: <CommandLineIcon className="w-4 h-4" />,
                 path: InternalRoutes.RawExecute.path,
             });
         }
@@ -362,7 +363,7 @@ export const Sidebar: FC = () => {
                                     <SidebarMenuItem>
                                         <SidebarMenuButton asChild>
                                             <Link to={InternalRoutes.ContactUs.path} className="flex items-center gap-2">
-                                                {Icons.QuestionMark}
+                                                <QuestionMarkCircleIcon className="w-4 h-4" />
                                                 {open && <span>Contact Us</span>}
                                             </Link>
                                         </SidebarMenuButton>
@@ -372,7 +373,7 @@ export const Sidebar: FC = () => {
                                     <SidebarMenuItem>
                                         <SidebarMenuButton asChild>
                                             <Link to={InternalRoutes.Settings.path} className="flex items-center gap-2">
-                                                {Icons.Settings}
+                                                <CogIcon className="w-4 h-4" />
                                                 {open && <span>Settings</span>}
                                             </Link>
                                         </SidebarMenuButton>

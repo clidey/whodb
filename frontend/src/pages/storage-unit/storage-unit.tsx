@@ -16,6 +16,7 @@
 
 import { Badge, Button, Checkbox, cn, Input, Label, SearchInput, SearchSelect, Separator, StackList, StackListItem, toast } from '@clidey/ux';
 import { DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useGetStorageUnitsQuery } from '@graphql';
+import { ArrowPathRoundedSquareIcon, CheckCircleIcon, CircleStackIcon, CommandLineIcon, MagnifyingGlassIcon, PlusCircleIcon, TableCellsIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import classNames from "classnames";
 import { clone, cloneDeep, filter } from "lodash";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
@@ -23,7 +24,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Handle, Node, Position, useReactFlow } from "reactflow";
 import { Card, ExpandableCard } from "../../components/card";
 import { IGraphCardProps } from "../../components/graph/graph";
-import { Icons } from "../../components/icons";
 import { Loading, LoadingPage } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { InternalRoutes } from "../../config/routes";
@@ -61,7 +61,7 @@ const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = (
         return false;
     }, [allTableNames]);
 
-    return (<ExpandableCard key={unit.Name} isExpanded={expanded} setExpanded={setExpanded} icon={Icons.Tables} className={cn({
+    return (<ExpandableCard key={unit.Name} isExpanded={expanded} setExpanded={setExpanded} icon={<TableCellsIcon className="w-4 h-4" />} className={cn({
         "shadow-2xl": expanded,
     })}>
         <div className="flex flex-col grow mt-2" data-testid="storage-unit-card">
@@ -75,10 +75,10 @@ const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = (
             </div>
             <div className="flex flex-row justify-end gap-1">
                 <Button onClick={handleExpand} data-testid="explore-button" variant="secondary">
-                    {Icons.DocumentMagnify} Explore
+                    <MagnifyingGlassIcon className="w-4 h-4" /> Explore
                 </Button>
                 <Button onClick={handleNavigateToDatabase} data-testid="data-button" variant="secondary">
-                    {Icons.Database} Data
+                    <CircleStackIcon className="w-4 h-4" /> Data
                 </Button>
             </div>
         </div>
@@ -105,8 +105,8 @@ const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = (
                 </div>
             </div>
             <div className="flex items-end grow">
-                <Button icon={Icons.Database} onClick={handleNavigateToDatabase} data-testid="data-button" variant="secondary" className="w-full">
-                    {Icons.Database} Data
+                <Button onClick={handleNavigateToDatabase} data-testid="data-button" variant="secondary" className="w-full">
+                    <CircleStackIcon className="w-4 h-4" /> Data
                 </Button>
             </div>
         </div>
@@ -260,7 +260,7 @@ export const StorageUnitPage: FC = () => {
                 {
                     databaseSupportsScratchpad(current?.Type) &&
                     <Button onClick={() => navigate(InternalRoutes.RawExecute.path)} data-testid="scratchpad-button" variant="secondary">
-                        {Icons.Console} Scratchpad
+                        <CommandLineIcon className="w-4 h-4" /> Scratchpad
                     </Button>
                 }
             </div>
@@ -268,11 +268,11 @@ export const StorageUnitPage: FC = () => {
         <div className="flex flex-wrap gap-4">
             <ExpandableCard className={classNames("overflow-visible min-w-[200px] max-w-[700px] h-full", {
                 "hidden": current?.Type === DatabaseType.Redis,
-            })} icon={Icons.Add} isExpanded={create} setExpanded={setCreate} tag={<Badge variant="destructive">{error}</Badge>}>
+            })} icon={<PlusCircleIcon className="w-4 h-4" />} isExpanded={create} setExpanded={setCreate} tag={<Badge variant="destructive">{error}</Badge>}>
                 <div className="flex flex-col grow h-full justify-between mt-2 gap-2" data-testid="create-storage-unit-card">
                     <h1 className="text-lg"><span className="prefix-create-storage-unit">Create a</span> {getDatabaseStorageUnitLabel(current?.Type, true)}</h1>
                     <Button className="self-end" onClick={handleCreate} variant="secondary">
-                        {Icons.Add} Create
+                        <PlusCircleIcon  className='w-4 h-4' /> Create
                     </Button>
                 </div>
                 <div className="flex grow flex-col my-2 gap-4">
@@ -317,7 +317,7 @@ export const StorageUnitPage: FC = () => {
                                             {
                                                 fields.length > 1 &&
                                                 <Button variant="destructive" onClick={() => handleRemove(index)} data-testid="remove-field-button" className="w-full mt-1">
-                                                    {Icons.Delete} Remove
+                                                    <XMarkIcon className="w-4 h-4" /> Remove
                                                 </Button>
                                             }
                                             {index !== fields.length - 1 && <Separator className="mt-2" />}
@@ -326,13 +326,13 @@ export const StorageUnitPage: FC = () => {
                                 } 
                             </div>
                             <Button className="self-end" onClick={handleAddField} data-testid="add-field-button" variant="secondary">
-                                {Icons.Add} Add field
+                                <PlusCircleIcon  className='w-4 h-4' /> Add field
                             </Button>
                         </div>
                     </div>
                     <div className="flex grow" />
-                    <Button icon={Icons.CheckCircle} onClick={handleSubmit} data-testid="submit-button" className="w-full">
-                        {Icons.CheckCircle} Submit
+                    <Button onClick={handleSubmit} data-testid="submit-button" className="w-full">
+                        <CheckCircleIcon className="w-4 h-4" /> Submit
                     </Button>
                 </div>
             </ExpandableCard>
@@ -372,7 +372,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data })
     }, [getNodes]);
 
     if (data == null) {
-        return (<Card icon={Icons.Fetch}>
+        return (<Card icon={<ArrowPathRoundedSquareIcon className="w-4 h-4" />}>
             <Loading hideText={true} />
         </Card>)
     }
@@ -380,7 +380,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data })
     return (
         <>
             <Handle className="dark:border-white/5" type="target" position={Position.Left} />
-            <Card icon={Icons.Database} className="h-fit backdrop-blur-[2px] w-[400px] px-2 py-6">
+            <Card icon=<CircleStackIcon className="w-4 h-4" /> className="h-fit backdrop-blur-[2px] w-[400px] px-2 py-6">
                 <div className="flex flex-col grow mt-2 gap-4">
                     <div className="flex flex-col grow">
                         <h2 className="text-3xl font-semibold mb-2 break-words">{data.Name}</h2>
@@ -395,7 +395,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data })
                         </StackList>
                     </div>
                     <Button onClick={handleNavigateTo} data-testid="data-button">
-                        {Icons.Database} Data
+                        <CircleStackIcon className="w-4 h-4" /> Data
                     </Button>
                 </div>
             </Card>

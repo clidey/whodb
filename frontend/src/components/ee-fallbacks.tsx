@@ -16,13 +16,13 @@
 
 import React from 'react';
 import { Card } from './card';
-import { Icons } from './icons';
+import { StarIcon } from '@heroicons/react/24/outline';
 
 export const EEFeatureCard: React.FC<{ feature: string; description?: string }> = ({ feature, description }) => {
     return (
         <Card className="p-8 text-center">
             <div className="flex flex-col items-center space-y-4">
-                {Icons.Star}
+                <StarIcon className="w-4 h-4" />
                 <h3 className="text-xl font-semibold">{feature}</h3>
                 <p className="text-gray-600 dark:text-gray-400">
                     {description || 'This feature is available in WhoDB Enterprise Edition'}

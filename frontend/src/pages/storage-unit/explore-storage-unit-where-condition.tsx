@@ -16,11 +16,10 @@
 
 import { Badge, Button, cn, Input, Label, Popover, PopoverContent, PopoverTrigger, SearchSelect } from "@clidey/ux";
 import { AtomicWhereCondition, WhereCondition, WhereConditionType } from '@graphql';
-import { XCircleIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon, PlusCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
-import { Icons } from "../../components/icons";
 
 type IPopoverCardProps = {
     open: boolean;
@@ -90,7 +89,7 @@ const PopoverCard: FC<IPopoverCardProps> = ({ open, onOpenChange, currentFilter,
                     data-testid="cancel-button"
                     variant="secondary"
                 >
-                    {Icons.Cancel} Cancel
+                    <XCircleIcon className="w-4 h-4" /> Cancel
                 </Button>
                 <Button
                     className="dark:bg-white/5 flex-1"
@@ -102,7 +101,7 @@ const PopoverCard: FC<IPopoverCardProps> = ({ open, onOpenChange, currentFilter,
                     }
                     data-testid="add-button"
                 >
-                    {Icons.CheckCircle} Add
+                    <CheckCircleIcon className="w-4 h-4" /> Add
                 </Button>
             </div>
         </PopoverContent>
@@ -315,7 +314,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                     </div>
                 ))}
                 <Button onClick={handleClick} data-testid="where-button" variant="secondary">
-                    {Icons.Add} Add
+                    <PlusCircleIcon className="w-4 h-4" /> Add
                 </Button>
             </div>
             <PopoverCard

@@ -1,9 +1,9 @@
 import classNames from "classnames";
 import { FC, useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { Icons } from "./icons";
 import { LocalLoginProfile } from "../store/auth";
 import { databaseTypeDropdownItems } from "../config/database-types";
+import { InformationCircleIcon } from "@heroicons/react/24/outline";
 
 interface ProfileInfoTooltipProps {
   profile: LocalLoginProfile;
@@ -162,7 +162,7 @@ export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, class
         tabIndex={0}
         type="button"
       >
-        <div className="w-4 h-4">{Icons.Information}</div>
+        <div className="w-4 h-4"><InformationCircleIcon className="w-4 h-4" /></div>
       </button>
       {tooltip}
     </div>

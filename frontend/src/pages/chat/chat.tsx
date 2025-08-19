@@ -17,22 +17,22 @@
 import { isEEMode } from "@/config/ee-imports";
 import { Alert, AlertDescription, AlertTitle, Button, Card, cn, EmptyState, Input, toast, toTitleCase } from "@clidey/ux";
 import { AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery } from '@graphql';
+import { ArrowUpCircleIcon, BellAlertIcon, CodeBracketIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon, SparklesIcon, TableCellsIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import { cloneElement, FC, KeyboardEventHandler, useCallback, useMemo, useRef, useState } from "react";
+import { AIProvider, useAI } from "../../components/ai";
 import { CodeEditor } from "../../components/editor";
-import { Icons } from "../../components/icons";
 import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { StorageUnitTable } from "../../components/table";
+import { extensions } from "../../config/features";
 import { InternalRoutes } from "../../config/routes";
 import { HoudiniActions } from "../../store/chat";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { isEEFeatureEnabled, loadEEComponent } from "../../utils/ee-loader";
 import { chooseRandomItems } from "../../utils/functions";
 import { chatExamples } from "./examples";
-import { AIProvider, useAI } from "../../components/ai";
-import { extensions } from "../../config/features";
-import { ArrowUpCircleIcon, BellAlertIcon } from "@heroicons/react/24/outline";
 const logoImage = "/images/logo.png";
 
 // Lazy load chart components if EE is enabled
@@ -87,7 +87,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
     return <div className="flex flex-col w-[calc(100%-50px)] group/table-preview gap-2 relative">
         <div className="absolute -top-3 -left-3 opacity-0 group-hover/table-preview:opacity-100 transition-all z-[1]">
             <Button containerClassName="w-8 h-8" className="w-5 h-5" onClick={handleCodeToggle} data-testid="table-preview-code-toggle">
-                {cloneElement(showSQL ? Icons.Tables : Icons.Code, {
+                {cloneElement(showSQL ? <TableCellsIcon className="w-6 h-6" /> : <CodeBracketIcon className="w-6 h-6" />, {
                     className: "w-6 h-6",
                 })}
             </Button>
@@ -109,7 +109,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
                     </div>
                     : <div className="bg-white/10 text-neutral-800 dark:text-neutral-300 rounded-lg p-2 flex gap-2">
                         Action Executed ({type.toUpperCase().split(":")?.[1]})
-                        {Icons.CheckCircle}
+                        <CheckCircleIcon className="w-4 h-4" />
                     </div>
             }
         </div>
@@ -265,7 +265,7 @@ export const ChatPage: FC = () => {
                             <div className="flex flex-wrap justify-center items-center gap-4">
                                 {
                                     examples.map((example, i) => (
-                                        <Card key={`chat-${i}`} className="flex flex-col gap-2 w-[150px] h-[200px] rounded-3xl p-4 text-sm cursor-pointer hover:opacity-80 transition-all"
+                                        <Card key={`chat-${i}`} className="flex flex-col gap-2 w-[250px] h-[120px] p-4 text-sm cursor-pointer hover:opacity-80 transition-all"
                                             onClick={() => handleSelectExample(example.description)}>
                                             {example.icon}
                                             {example.description}
@@ -334,7 +334,7 @@ export const ChatPage: FC = () => {
                 </div>
                 {
                     (!modelAvailable || models.length === 0) &&
-                    <EmptyState title="No Model Available" description="Please choose an available model to start chatting with your data." icon={Icons.Sparkles} />
+                    <EmptyState title="No Model Available" description="Please choose an available model to start chatting with your data." icon={<SparklesIcon className="w-4 h-4" />} />
                 }
                 <div className={classNames("flex justify-between items-center gap-2", {
                     "opacity-80": disableChat,

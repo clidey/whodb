@@ -15,17 +15,18 @@
  */
 
 import { FetchResult } from "@apollo/client";
-import { Button, Drawer, DrawerTitle, DrawerContent, DrawerHeader, Input, Label, Sheet, SheetContent, SheetFooter, toast, DrawerFooter, SearchInput, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@clidey/ux";
+import { Button, Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle, Input, Label, SearchInput, Sheet, SheetContent, SheetFooter, toast } from "@clidey/ux";
 import {
     DatabaseType, DeleteRowDocument, DeleteRowMutationResult, RecordInput, RowsResult, StorageUnit,
     UpdateStorageUnitDocument, UpdateStorageUnitMutationResult, useAddRowMutation, useGetStorageUnitRowsLazyQuery,
     useRawExecuteLazyQuery,
     WhereCondition
 } from '@graphql';
+import { CheckCircleIcon, CommandLineIcon, PlayIcon, PlusCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { clone, entries, keys, map } from "lodash";
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
-import { Icons } from "../../components/icons";
+import { CodeEditor } from "../../components/editor";
 import { Loading, LoadingPage } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { StorageUnitTable } from "../../components/table";
@@ -35,8 +36,6 @@ import { useAppSelector } from "../../store/hooks";
 import { getDatabaseOperators } from "../../utils/database-operators";
 import { getDatabaseStorageUnitLabel } from "../../utils/functions";
 import { ExploreStorageUnitWhereCondition } from "./explore-storage-unit-where-condition";
-import { CodeEditor } from "../../components/editor";
-import { PlayIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad }) => {
     const [bufferPageSize, setBufferPageSize] = useState("100");
@@ -378,19 +377,19 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                         </div>
                         { current?.Type !== DatabaseType.Redis && <ExploreStorageUnitWhereCondition defaultWhere={whereCondition} columns={columns} operators={validOperators} onChange={handleFilterChange} columnTypes={columnTypes ?? []} /> }
                         <Button className="ml-6" onClick={handleQuery} data-testid="submit-button">
-                            {Icons.CheckCircle} Query
+                            <CheckCircleIcon className="w-4 h-4" /> Query
                         </Button>
                     </div>
                     <div className="flex justify-end gap-2">
                         {adding || deleting ? <Loading /> : null}
                         {checkedRows.size > 0 && <Button variant="destructive" onClick={handleRowDelete} disabled={deleting} data-testid="delete-button">
-                            {Icons.Delete} {checkedRows.size > 1 ? "Delete rows" : "Delete row"}
+                            <XMarkIcon className="w-4 h-4" /> {checkedRows.size > 1 ? "Delete rows" : "Delete row"}
                         </Button> }
                         <Button onClick={handleOpenScratchpad} data-testid="scratchpad-button" variant="secondary">
-                            {Icons.Code} Scratchpad
+                            <CommandLineIcon className="w-4 h-4" /> Scratchpad
                         </Button>
                         <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-button">
-                            {Icons.Add} Add Row
+                            <PlusCircleIcon className="w-4 h-4" /> Add Row
                         </Button>
                     </div>
                 </div>
@@ -418,7 +417,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                         </div>
                         <SheetFooter className="px-0">
                             <Button onClick={handleAddRowSubmit} data-testid="submit-button" disabled={adding}>
-                                {Icons.CheckCircle} Submit
+                                <CheckCircleIcon className="w-4 h-4" /> Submit
                             </Button>
                         </SheetFooter>
                     </SheetContent>

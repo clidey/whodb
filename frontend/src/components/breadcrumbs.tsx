@@ -16,7 +16,6 @@
 import { FC } from "react";
 import { useNavigate } from "react-router-dom";
 import { IInternalRoute } from "../config/routes";
-import { Icons } from "./icons";
 import {
   Breadcrumb as UxBreadcrumb,
   BreadcrumbList,
@@ -25,6 +24,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@clidey/ux";
+import { ChevronRightIcon, HomeIcon } from "@heroicons/react/24/outline";
 
 export type IBreadcrumbRoute = Omit<IInternalRoute, "component">;
 
@@ -44,12 +44,12 @@ export const Breadcrumb: FC<IBreadcrumbProps> = ({ routes, active }) => {
           const isLast = i === routes.length - 1;
           return (
             <BreadcrumbItem key={route.name}>
-              {i > 0 && <BreadcrumbSeparator>{Icons.RightChevron}</BreadcrumbSeparator>}
+              {i > 0 && <BreadcrumbSeparator><ChevronRightIcon className="w-4 h-4" /></BreadcrumbSeparator>}
               {isLast || isActive ? (
                 <BreadcrumbPage>
                   {i === 0 && (
                     <span className="inline-flex items-center mr-1">
-                      {Icons.Home}
+                      <HomeIcon className="w-4 h-4" />
                     </span>
                   )}
                   {route.name}
@@ -63,7 +63,7 @@ export const Breadcrumb: FC<IBreadcrumbProps> = ({ routes, active }) => {
                   <span className="flex items-center gap-2">
                     {i === 0 && (
                       <span className="inline-flex items-center mr-1">
-                        {Icons.Home}
+                        <HomeIcon className="w-4 h-4" />
                       </span>
                     )}
                     {route.name}

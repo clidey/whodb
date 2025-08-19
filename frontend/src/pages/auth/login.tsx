@@ -30,6 +30,7 @@ import { InternalRoutes } from "../../config/routes";
 import { AuthActions } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { AdjustmentsHorizontalIcon, CheckCircleIcon, CircleStackIcon } from '@heroicons/react/24/outline';
 const logoImage = "/images/logo.png";
 // Embeddable LoginForm component for use in LoginPage and @sidebar.tsx
 
@@ -297,7 +298,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                                 : foundDatabases?.Database?.map(db => ({
                                     value: db,
                                     label: db,
-                                    icon: Icons.Database,
+                                    icon: <CircleStackIcon className="w-4 h-4" />,
                                 })) ?? []
                         }
                         placeholder="Select Database"
@@ -449,12 +450,12 @@ export const LoginForm: FC<LoginFormProps> = ({
                 })}>
                     <Button className={classNames({
                         "hidden": advancedForm == null,
-                    })} icon={Icons.Adjustments} onClick={handleAdvancedToggle} data-testid="advanced-button" variant="secondary">
-                        {Icons.Adjustments} {showAdvanced ? "Less Advanced" : "Advanced"}
+                    })} onClick={handleAdvancedToggle} data-testid="advanced-button" variant="secondary">
+                        <AdjustmentsHorizontalIcon className="w-4 h-4" /> {showAdvanced ? "Less Advanced" : "Advanced"}
                     </Button>
                     {advancedDirection === "horizontal" && (
                         <Button onClick={handleSubmit} data-testid="login-button" variant={loginWithCredentialsEnabled ? "default" : "secondary"}>
-                            {Icons.CheckCircle} Submit
+                            <CheckCircleIcon className="w-4 h-4" /> Submit
                         </Button>
                     )}
                 </div>
@@ -463,7 +464,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                         "grow": availableProfiles.length === 0,
                     })}>
                         <Button onClick={handleSubmit} data-testid="login-button" variant={loginWithCredentialsEnabled ? "default" : "secondary"}>
-                            {Icons.CheckCircle} Submit
+                            <CheckCircleIcon className="w-4 h-4" /> Submit
                         </Button>
                     </div>
                 )}
@@ -483,7 +484,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                             options={availableProfiles}
                         />
                         <Button onClick={handleLoginWithProfileSubmit} data-testid="login-with-profile-button" variant={loginWithProfileEnabled ? "default" : "secondary"}>
-                            {Icons.CheckCircle} Login
+                            <CheckCircleIcon className="w-4 h-4" /> Login
                         </Button>
                     </div>
                 </>

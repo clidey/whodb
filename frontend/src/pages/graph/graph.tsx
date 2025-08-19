@@ -20,7 +20,6 @@ import { Edge, Node, ReactFlowProvider, useEdgesState, useNodesState } from "rea
 import { GraphElements } from "../../components/graph/constants";
 import { Graph, IGraphInstance } from "../../components/graph/graph";
 import { createEdge, createNode } from "../../components/graph/utils";
-import { Icons } from "../../components/icons";
 import { LoadingPage } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { InternalRoutes } from "../../config/routes";
@@ -30,6 +29,7 @@ import { getDatabaseStorageUnitLabel } from "../../utils/functions";
 import { StorageUnitGraphCard } from "../storage-unit/storage-unit";
 import { Button, EmptyState } from "@clidey/ux";
 import { useNavigate } from "react-router-dom";
+import { CircleStackIcon } from "@heroicons/react/24/outline";
 
 export const GraphPage: FC = () => {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -105,7 +105,7 @@ export const GraphPage: FC = () => {
             {
                 !loading && nodes.length === 0
                 ? <EmptyState 
-                    icon={Icons.Database} 
+                    icon={<CircleStackIcon className="w-4 h-4" />} 
                     title={`No ${getDatabaseStorageUnitLabel(current?.Type)} found`} 
                     description={`It looks like there are no ${getDatabaseStorageUnitLabel(current?.Type).toLowerCase()} in your database yet. Once you add some, you'll be able to visualize their relationships here.`}>
                     <Button

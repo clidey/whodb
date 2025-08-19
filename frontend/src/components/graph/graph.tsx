@@ -15,15 +15,15 @@
  */
 
 import { Tabs, TabsList, TabsTrigger } from '@clidey/ux';
+import { ArrowDownTrayIcon, RectangleGroupIcon } from '@heroicons/react/24/outline';
 import classNames from 'classnames';
 import { toPng } from 'html-to-image';
 import { Dispatch, FC, ReactNode, SetStateAction, useCallback, useMemo, useRef, useState } from "react";
 import ReactFlow, { Background, Controls, Edge, Node, NodeProps, NodeTypes, OnInit, ReactFlowInstance, ReactFlowProps, useReactFlow } from 'reactflow';
-import { Icons } from '../icons';
+import { Tip } from '../tip';
 import { GraphElements } from './constants';
 import { FloatingGraphEdge, GraphEdgeConnectionLine } from './edge';
 import { getDagreLayoutedElements } from './layouts';
-import { Tip } from '../tip';
 
 
 export type IGraphCardProps<T extends unknown = any> = NodeProps<(T & {}) | undefined>;
@@ -155,13 +155,13 @@ export const Graph: FC<IGraphProps> = (props) => {
                     <TabsList dir="column">
                         <TabsTrigger value="download" onClick={handleDownloadImage}>
                             <Tip>
-                                {Icons.Download}
+                                <ArrowDownTrayIcon className="w-4 h-4" />
                                 Download
                             </Tip>
                         </TabsTrigger>
                         <TabsTrigger value="layout" onClick={() => onLayout("dagre")}>
                             <Tip>
-                                {Icons.GraphLayout}
+                                <RectangleGroupIcon className="w-4 h-4" />
                                 Layout
                             </Tip>
                         </TabsTrigger>

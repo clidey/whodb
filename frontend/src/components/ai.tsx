@@ -15,7 +15,7 @@
  */
 
 import { AlertDialogCancel, AlertDialogFooter, AlertDialogDescription, AlertDialogHeader, AlertDialog, AlertDialogContent, AlertDialogTrigger, Button, cn, CommandItem, Input, Label, SearchSelect, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Sheet, SheetContent, SheetFooter, toast, AlertDialogTitle, AlertDialogAction } from "@clidey/ux";
-import { ArrowTopRightOnSquareIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { ArrowTopRightOnSquareIcon, CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { map } from "lodash";
 import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 import { v4 } from "uuid";
@@ -25,6 +25,7 @@ import { AIModelsActions, availableExternalModelTypes } from "../store/ai-models
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { ensureModelsArray, ensureModelTypesArray } from "../utils/ai-models-helper";
 import { Icons } from "./icons";
+import { ArrowPathIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 export const externalModelTypes = map(availableExternalModelTypes, (model) => ({
     id: model,
@@ -305,14 +306,14 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         data-testid="external-model-cancel"
                         variant="secondary"
                     >
-                        {Icons.Cancel} Cancel
+                        <XMarkIcon className="w-4 h-4" /> Cancel
                     </Button>
                     <Button
                         onClick={handleExternalModelSubmit}
                         disabled={getAIModelsLoading}
                         data-testid="external-model-submit"
                     >
-                        {Icons.CheckCircle} Submit
+                        <CheckCircleIcon className="w-4 h-4" /> Submit
                     </Button>
                 </div>
                 <SheetFooter className="p-0">
@@ -331,7 +332,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         <div>
                             Check our documentation for more information on how to setup Ollama.
                         </div>
-                        <Button icon={Icons.RightArrowUp} variant="secondary" className="w-full mt-2" onClick={handleOpenDocs}>
+                        <Button variant="secondary" className="w-full mt-2" onClick={handleOpenDocs}>
                             Docs
                             <ArrowTopRightOnSquareIcon className="w-4 h-4" />
                         </Button>
@@ -424,7 +425,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
             "hidden": disableNewChat,
         })}>
             <Button onClick={handleClear} disabled={loading} data-testid="chat-new-chat" variant="secondary">
-                {Icons.Refresh} New Chat
+                <ArrowPathIcon className="w-4 h-4" /> New Chat
             </Button>
         </div>
     </div>

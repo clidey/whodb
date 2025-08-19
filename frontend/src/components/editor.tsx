@@ -21,13 +21,13 @@ import { sql } from "@codemirror/lang-sql";
 import { EditorState, RangeSet } from "@codemirror/state";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { EditorView, GutterMarker, gutter, lineNumbers } from "@codemirror/view";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import { basicSetup } from "codemirror";
 import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactJson from "react-json-view";
 import MarkdownPreview from 'react-markdown';
 import remarkGfm from "remark-gfm";
-import { Icons } from "./icons";
 
 // SQL validation function
 const isValidSQLQuery = (text: string): boolean => {
@@ -357,7 +357,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
         className="transition-all cursor-pointer hover:scale-110 hover:bg-gray-100/50 rounded-full p-1"
         onClick={handlePreviewToggle}
       >
-        {React.cloneElement(showPreview ? Icons.Hide : Icons.Show, {
+        {React.cloneElement(showPreview ? <EyeSlashIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />, {
           className: "stroke-teal-500 w-8 h-8",
         })}
       </button>
