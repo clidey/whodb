@@ -107,7 +107,7 @@ type ComplexityRoot struct {
 		MockDataMaxRowCount func(childComplexity int) int
 		Profiles            func(childComplexity int) int
 		RawExecute          func(childComplexity int, query string) int
-		Row                 func(childComplexity int, schema string, storageUnit string, where *model.WhereCondition, pageSize int, pageOffset int) int
+		Row                 func(childComplexity int, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) int
 		Schema              func(childComplexity int) int
 		SettingsConfig      func(childComplexity int) int
 		StorageUnit         func(childComplexity int, schema string) int
@@ -157,7 +157,7 @@ type QueryResolver interface {
 	Database(ctx context.Context, typeArg string) ([]string, error)
 	Schema(ctx context.Context) ([]string, error)
 	StorageUnit(ctx context.Context, schema string) ([]*model.StorageUnit, error)
-	Row(ctx context.Context, schema string, storageUnit string, where *model.WhereCondition, pageSize int, pageOffset int) (*model.RowsResult, error)
+	Row(ctx context.Context, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) (*model.RowsResult, error)
 	RawExecute(ctx context.Context, query string) (*model.RowsResult, error)
 	Graph(ctx context.Context, schema string) ([]*model.GraphUnit, error)
 	AIProviders(ctx context.Context) ([]*model.AIProvider, error)
@@ -506,7 +506,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Row(childComplexity, args["schema"].(string), args["storageUnit"].(string), args["where"].(*model.WhereCondition), args["pageSize"].(int), args["pageOffset"].(int)), true
+		return e.complexity.Query.Row(childComplexity, args["schema"].(string), args["storageUnit"].(string), args["where"].(*model.WhereCondition), args["sort"].([]*model.SortCondition), args["pageSize"].(int), args["pageOffset"].(int)), true
 
 	case "Query.Schema":
 		if e.complexity.Query.Schema == nil {
@@ -627,6 +627,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputOperationWhereCondition,
 		ec.unmarshalInputRecordInput,
 		ec.unmarshalInputSettingsConfigInput,
+		ec.unmarshalInputSortCondition,
 		ec.unmarshalInputWhereCondition,
 	)
 	first := true
@@ -1471,16 +1472,21 @@ func (ec *executionContext) field_Query_Row_args(ctx context.Context, rawArgs ma
 		return nil, err
 	}
 	args["where"] = arg2
-	arg3, err := ec.field_Query_Row_argsPageSize(ctx, rawArgs)
+	arg3, err := ec.field_Query_Row_argsSort(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["pageSize"] = arg3
-	arg4, err := ec.field_Query_Row_argsPageOffset(ctx, rawArgs)
+	args["sort"] = arg3
+	arg4, err := ec.field_Query_Row_argsPageSize(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["pageOffset"] = arg4
+	args["pageSize"] = arg4
+	arg5, err := ec.field_Query_Row_argsPageOffset(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["pageOffset"] = arg5
 	return args, nil
 }
 func (ec *executionContext) field_Query_Row_argsSchema(
@@ -1534,6 +1540,24 @@ func (ec *executionContext) field_Query_Row_argsWhere(
 	}
 
 	var zeroVal *model.WhereCondition
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_Row_argsSort(
+	ctx context.Context,
+	rawArgs map[string]any,
+) ([]*model.SortCondition, error) {
+	if _, ok := rawArgs["sort"]; !ok {
+		var zeroVal []*model.SortCondition
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("sort"))
+	if tmp, ok := rawArgs["sort"]; ok {
+		return ec.unmarshalOSortCondition2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSortConditionᚄ(ctx, tmp)
+	}
+
+	var zeroVal []*model.SortCondition
 	return zeroVal, nil
 }
 
@@ -3350,7 +3374,7 @@ func (ec *executionContext) _Query_Row(ctx context.Context, field graphql.Collec
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Row(rctx, fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["where"].(*model.WhereCondition), fc.Args["pageSize"].(int), fc.Args["pageOffset"].(int))
+		return ec.resolvers.Query().Row(rctx, fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["where"].(*model.WhereCondition), fc.Args["sort"].([]*model.SortCondition), fc.Args["pageSize"].(int), fc.Args["pageOffset"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6672,6 +6696,40 @@ func (ec *executionContext) unmarshalInputSettingsConfigInput(ctx context.Contex
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputSortCondition(ctx context.Context, obj any) (model.SortCondition, error) {
+	var it model.SortCondition
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"Column", "Direction"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "Column":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Column"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Column = data
+		case "Direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Direction"))
+			data, err := ec.unmarshalNSortDirection2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSortDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputWhereCondition(ctx context.Context, obj any) (model.WhereCondition, error) {
 	var it model.WhereCondition
 	asMap := map[string]any{}
@@ -8557,6 +8615,21 @@ func (ec *executionContext) unmarshalNSettingsConfigInput2githubᚗcomᚋclidey�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNSortCondition2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSortCondition(ctx context.Context, v any) (*model.SortCondition, error) {
+	res, err := ec.unmarshalInputSortCondition(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNSortDirection2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSortDirection(ctx context.Context, v any) (model.SortDirection, error) {
+	var res model.SortDirection
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSortDirection2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSortDirection(ctx context.Context, sel ast.SelectionSet, v model.SortDirection) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) marshalNStatusResponse2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐStatusResponse(ctx context.Context, sel ast.SelectionSet, v model.StatusResponse) graphql.Marshaler {
 	return ec._StatusResponse(ctx, sel, &v)
 }
@@ -9053,6 +9126,24 @@ func (ec *executionContext) marshalORowsResult2ᚖgithubᚗcomᚋclideyᚋwhodb�
 		return graphql.Null
 	}
 	return ec._RowsResult(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOSortCondition2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSortConditionᚄ(ctx context.Context, v any) ([]*model.SortCondition, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]*model.SortCondition, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNSortCondition2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSortCondition(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v any) (*string, error) {

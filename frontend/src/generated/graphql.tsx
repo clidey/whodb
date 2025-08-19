@@ -45,6 +45,11 @@ export type ChatInput = {
   Token?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type CodeCompletionResult = {
+  __typename?: 'CodeCompletionResult';
+  Completions: Array<Scalars['String']['output']>;
+};
+
 export type Column = {
   __typename?: 'Column';
   Name: Scalars['String']['output'];
@@ -53,10 +58,13 @@ export type Column = {
 
 export enum DatabaseType {
   ClickHouse = 'ClickHouse',
+  DynamoDb = 'DynamoDB',
   ElasticSearch = 'ElasticSearch',
+  Mssql = 'MSSQL',
   MariaDb = 'MariaDB',
   MongoDb = 'MongoDB',
   MySql = 'MySQL',
+  Oracle = 'Oracle',
   Postgres = 'Postgres',
   Redis = 'Redis',
   Sqlite3 = 'Sqlite3'
@@ -191,7 +199,10 @@ export type Query = {
   AIChat: Array<AiChatMessage>;
   AIModel: Array<Scalars['String']['output']>;
   AIProviders: Array<AiProvider>;
+  CodeCompletion: CodeCompletionResult;
   Database: Array<Scalars['String']['output']>;
+  ExplainQuery: Scalars['String']['output'];
+  GenerateQuery: Scalars['String']['output'];
   Graph: Array<GraphUnit>;
   MockDataMaxRowCount: Scalars['Int']['output'];
   Profiles: Array<LoginProfile>;
@@ -220,8 +231,35 @@ export type QueryAiModelArgs = {
 };
 
 
+export type QueryCodeCompletionArgs = {
+  input: ChatInput;
+  modelType: Scalars['String']['input'];
+  providerId?: InputMaybe<Scalars['String']['input']>;
+  schema: Scalars['String']['input'];
+  token?: InputMaybe<Scalars['String']['input']>;
+};
+
+
 export type QueryDatabaseArgs = {
   type: Scalars['String']['input'];
+};
+
+
+export type QueryExplainQueryArgs = {
+  input: ChatInput;
+  modelType: Scalars['String']['input'];
+  providerId?: InputMaybe<Scalars['String']['input']>;
+  schema: Scalars['String']['input'];
+  token?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryGenerateQueryArgs = {
+  input: ChatInput;
+  modelType: Scalars['String']['input'];
+  providerId?: InputMaybe<Scalars['String']['input']>;
+  schema: Scalars['String']['input'];
+  token?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -239,6 +277,7 @@ export type QueryRowArgs = {
   pageOffset: Scalars['Int']['input'];
   pageSize: Scalars['Int']['input'];
   schema: Scalars['String']['input'];
+  sort?: InputMaybe<Array<SortCondition>>;
   storageUnit: Scalars['String']['input'];
   where?: InputMaybe<WhereCondition>;
 };
@@ -275,6 +314,16 @@ export type SettingsConfig = {
 export type SettingsConfigInput = {
   MetricsEnabled?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type SortCondition = {
+  Column: Scalars['String']['input'];
+  Direction: SortDirection;
+};
+
+export enum SortDirection {
+  Asc = 'ASC',
+  Desc = 'DESC'
+}
 
 export type StatusResponse = {
   __typename?: 'StatusResponse';
@@ -438,6 +487,7 @@ export type GetStorageUnitRowsQueryVariables = Exact<{
   schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
   where?: InputMaybe<WhereCondition>;
+  sort?: InputMaybe<Array<SortCondition> | SortCondition>;
   pageSize: Scalars['Int']['input'];
   pageOffset: Scalars['Int']['input'];
 }>;
@@ -1199,11 +1249,12 @@ export type DeleteRowMutationHookResult = ReturnType<typeof useDeleteRowMutation
 export type DeleteRowMutationResult = Apollo.MutationResult<DeleteRowMutation>;
 export type DeleteRowMutationOptions = Apollo.BaseMutationOptions<DeleteRowMutation, DeleteRowMutationVariables>;
 export const GetStorageUnitRowsDocument = gql`
-    query GetStorageUnitRows($schema: String!, $storageUnit: String!, $where: WhereCondition, $pageSize: Int!, $pageOffset: Int!) {
+    query GetStorageUnitRows($schema: String!, $storageUnit: String!, $where: WhereCondition, $sort: [SortCondition!], $pageSize: Int!, $pageOffset: Int!) {
   Row(
     schema: $schema
     storageUnit: $storageUnit
     where: $where
+    sort: $sort
     pageSize: $pageSize
     pageOffset: $pageOffset
   ) {
@@ -1232,6 +1283,7 @@ export const GetStorageUnitRowsDocument = gql`
  *      schema: // value for 'schema'
  *      storageUnit: // value for 'storageUnit'
  *      where: // value for 'where'
+ *      sort: // value for 'sort'
  *      pageSize: // value for 'pageSize'
  *      pageOffset: // value for 'pageOffset'
  *   },

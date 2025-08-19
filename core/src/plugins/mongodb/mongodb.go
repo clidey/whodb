@@ -123,7 +123,7 @@ func (p *MongoDBPlugin) GetStorageUnits(config *engine.PluginConfig, database st
 	return storageUnits, nil
 }
 
-func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collection string, where *model.WhereCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collection string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	client, err := DB(config)
 	if err != nil {
 		return nil, err
@@ -141,6 +141,19 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 	findOptions := options.Find()
 	findOptions.SetLimit(int64(pageSize))
 	findOptions.SetSkip(int64(pageOffset))
+
+	// Apply sorting if provided
+	if len(sort) > 0 {
+		sortMap := bson.D{}
+		for _, s := range sort {
+			direction := 1 // ASC
+			if s.Direction == model.SortDirectionDesc {
+				direction = -1 // DESC
+			}
+			sortMap = append(sortMap, bson.E{Key: s.Column, Value: direction})
+		}
+		findOptions.SetSort(sortMap)
+	}
 
 	cursor, err := coll.Find(context.TODO(), bsonFilter, findOptions)
 	if err != nil {

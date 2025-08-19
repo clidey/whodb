@@ -261,7 +261,7 @@ export const ChatPage: FC = () => {
                     {
                         chats.length === 0
                         ? <div className="flex flex-col justify-center items-center w-full gap-8">
-                            {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4" />}
+                            {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-16" />}
                             <div className="flex flex-wrap justify-center items-center gap-4">
                                 {
                                     examples.map((example, i) => (

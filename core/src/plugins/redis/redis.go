@@ -182,6 +182,7 @@ func (p *RedisPlugin) GetRows(
 	config *engine.PluginConfig,
 	schema, storageUnit string,
 	where *model.WhereCondition,
+	sortConditions []*model.SortCondition,
 	pageSize, pageOffset int,
 ) (*engine.GetRowsResult, error) {
 	ctx := context.Background()
@@ -367,7 +368,6 @@ func (p *RedisPlugin) RawExecute(config *engine.PluginConfig, query string) (*en
 func (p *RedisPlugin) Chat(config *engine.PluginConfig, schema string, model string, previousConversation string, query string) ([]*engine.ChatMessage, error) {
 	return nil, errors.ErrUnsupported
 }
-
 
 func (p *RedisPlugin) FormatValue(val interface{}) string {
 	if val == nil {

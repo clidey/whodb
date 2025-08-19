@@ -191,7 +191,7 @@ func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.Moc
 	plugin := src.MainEngine.Choose(engine.DatabaseType(typeArg))
 
 	// Get table columns to understand the schema
-	rowsResult, err := plugin.GetRows(config, input.Schema, input.StorageUnit, nil, 1, 0)
+	rowsResult, err := plugin.GetRows(config, input.Schema, input.StorageUnit, nil, []*model.SortCondition{}, 1, 0)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get table schema: %w", err)
 	}
@@ -432,10 +432,10 @@ func (r *queryResolver) StorageUnit(ctx context.Context, schema string) ([]*mode
 }
 
 // Row is the resolver for the Row field.
-func (r *queryResolver) Row(ctx context.Context, schema string, storageUnit string, where *model.WhereCondition, pageSize int, pageOffset int) (*model.RowsResult, error) {
+func (r *queryResolver) Row(ctx context.Context, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) (*model.RowsResult, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
 	typeArg := config.Credentials.Type
-	rowsResult, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetRows(config, schema, storageUnit, where, pageSize, pageOffset)
+	rowsResult, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetRows(config, schema, storageUnit, where, sort, pageSize, pageOffset)
 	if err != nil {
 		return nil, err
 	}
