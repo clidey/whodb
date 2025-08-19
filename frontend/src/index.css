@@ -48,3 +48,8 @@
 [data-slot="drawer-overlay"] {
   transform: translateY(-10vh);
 }
+
+.table-search-highlight {
+  transition: background-color 0.3s ease-in-out;
+  border-radius: 0.25rem;
+}

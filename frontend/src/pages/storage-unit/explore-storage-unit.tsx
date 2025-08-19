@@ -34,7 +34,7 @@ import {
 } from '@graphql';
 import { CheckCircleIcon, CommandLineIcon, PlayIcon, PlusCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { entries, keys, map } from "lodash";
-import { FC, useCallback, useEffect, useMemo, useState } from "react";
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { CodeEditor } from "../../components/editor";
 import { Loading, LoadingPage } from "../../components/loading";
@@ -62,7 +62,9 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     const navigate = useNavigate();
     const [rows, setRows] = useState<RowsResult>();
     const [showAdd, setShowAdd] = useState(false);
-
+    const searchRef = useRef<(search: string) => void>(() => {});
+    const [search, setSearch] = useState("");
+    
     // For add row sheet logic
     const [addRowData, setAddRowData] = useState<Record<string, any>>({});
     const [addRowError, setAddRowError] = useState<string | null>(null);
@@ -348,7 +350,13 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                     <div className="flex gap-2">
                         <div className="flex flex-col gap-2">
                             <Label>Search</Label>
-                            <SearchInput placeholder="Enter search query" className="w-64" />
+                            <SearchInput placeholder="Enter search query" className="w-64" value={search} onChange={e => setSearch(e.target.value)}
+                                onKeyDown={e => {
+                                    if (e.key === "Enter") {
+                                        searchRef.current?.(search);
+                                    }
+                                }}
+                            />
                         </div>
                         <div className="flex flex-col gap-2">
                             <Label>Page Size</Label>
@@ -423,6 +431,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                         onRefresh={handleSubmitRequest}
                         onColumnSort={handleColumnSort}
                         sortedColumns={sortedColumnsMap}
+                        searchRef={searchRef}
                     >
                         <div className="flex gap-2">
                             <Button onClick={handleOpenScratchpad} data-testid="scratchpad-button" variant="secondary">

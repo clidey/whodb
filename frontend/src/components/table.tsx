@@ -139,6 +139,7 @@ interface TableProps {
     children?: React.ReactNode;
     onColumnSort?: (column: string) => void;
     sortedColumns?: Map<string, 'asc' | 'desc'>;
+    searchRef?: React.MutableRefObject<(search: string) => void>;
 }
 
 export const StorageUnitTable: FC<TableProps> = ({
@@ -156,6 +157,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     children,
     onColumnSort,
     sortedColumns,
+    searchRef,
 }) => {
     const [editIndex, setEditIndex] = useState<number | null>(null);
     const [editRow, setEditRow] = useState<string[] | null>(null);
@@ -440,6 +442,53 @@ export const StorageUnitTable: FC<TableProps> = ({
         }
     }, [tableRef]);
 
+    // Highlight and scroll to the searched cell using document querySelector, no state needed
+
+    useEffect(() => {
+        if (!searchRef) return;
+
+        searchRef.current = (search: string) => {
+            // Remove any previous highlight
+            document.querySelectorAll('.table-search-highlight').forEach(el => {
+                el.classList.remove('bg-yellow-200', 'table-search-highlight');
+            });
+
+            if (!search || !rows || !columns) {
+                return;
+            }
+
+            // Find all matching cells
+            const matches: { rowIdx: number; colIdx: number }[] = [];
+            rows.forEach((row, rowIdx) => {
+                row.forEach((cellValue, colIdx) => {
+                    if (
+                        cellValue !== undefined &&
+                        cellValue !== null &&
+                        cellValue.toString().toLowerCase().includes(search.toLowerCase())
+                    ) {
+                        matches.push({ rowIdx, colIdx });
+                    }
+                });
+            });
+
+            if (matches.length > 0) {
+                // Only highlight and scroll to the first match (radix logic: rowIdx, colIdx)
+                const { rowIdx, colIdx } = matches[0];
+                // Compose a unique selector for the cell
+                // Each cell should have a data attribute for row and col index
+                const selector = `[data-row-idx="${rowIdx}"] [data-col-idx="${colIdx}"]`;
+                const cell = document.querySelector(selector) as HTMLElement | null;
+                if (cell) {
+                    cell.classList.add('bg-muted', 'table-search-highlight');
+                    cell.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                    setTimeout(() => {
+                        cell.classList.remove('bg-muted', 'table-search-highlight');
+                    }, 3000);
+                }
+            }
+        };
+    }, [searchRef, rows, columns]);
+
     return (
         <div ref={tableRef}>
             <div className="flex flex-col h-full space-y-4 w-0" style={{
@@ -487,7 +536,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                         asChild
                                         className="contents"
                                     >
-                                        <tr>
+                                        <tr data-row-idx={index}>
                                             <TableCell className={cn("w-[20rem]", {
                                                 "hidden": disableEdit,
                                             })}>
@@ -497,7 +546,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                                 />
                                             </TableCell>
                                             {paginatedRows[index]?.map((cell, cellIdx) => (
-                                                <TableCell key={cellIdx} className="cursor-pointer" onClick={() => handleCellClick(globalIndex, cellIdx)}>{cell}</TableCell>
+                                                <TableCell key={cellIdx} className="cursor-pointer" onClick={() => handleCellClick(globalIndex, cellIdx)} data-col-idx={cellIdx}>{cell}</TableCell>
                                             ))}
                                         </tr>
                                     </ContextMenuTrigger>
