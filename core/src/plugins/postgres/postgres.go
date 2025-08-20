@@ -19,9 +19,9 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
-	"log"
 
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	mapset "github.com/deckarep/golang-set/v2"
@@ -105,7 +105,8 @@ func (p *PostgresPlugin) GetTableNameAndAttributes(rows *sql.Rows, db *gorm.DB) 
 	var tableName, tableType, totalSize, dataSize string
 	var rowCount int64
 	if err := rows.Scan(&tableName, &tableType, &totalSize, &dataSize, &rowCount); err != nil {
-		log.Fatal(err)
+		log.Logger.WithError(err).Error("Failed to scan table info row data")
+		return "", nil
 	}
 
 	rowCountRecordValue := "unknown"

@@ -24,6 +24,7 @@ import (
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 )
 
 // ExportData exports data to tabular format (CSV/Excel). If selectedRows is nil/empty, exports all rows from the table.
@@ -38,6 +39,7 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 
 		// Write header row
 		if err := writer(columns); err != nil {
+			log.Logger.WithError(err).Error("Failed to write CSV headers for selected rows export")
 			return fmt.Errorf("failed to write headers: %v", err)
 		}
 
@@ -52,6 +54,7 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 				}
 			}
 			if err := writer(rowData); err != nil {
+				log.Logger.WithError(err).Error(fmt.Sprintf("Failed to write selected row %d during export", i+1))
 				return fmt.Errorf("failed to write row %d: %v", i+1, err)
 			}
 		}
@@ -62,12 +65,14 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 	// Export all rows from the database
 	db, err := p.DB(config)
 	if err != nil {
+		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to connect to database for export of table %s.%s", schema, storageUnit))
 		return err
 	}
 
 	// Get column information using existing GetTableSchema
 	tableSchema, err := p.GetTableSchema(db, schema)
 	if err != nil {
+		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get table schema for export of schema: %s", schema))
 		return fmt.Errorf("failed to get table schema: %v", err)
 	}
 
@@ -93,6 +98,7 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 		headers[i] = common.FormatCSVHeader(col, columnTypes[i])
 	}
 	if err := writer(headers); err != nil {
+		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to write CSV headers for table %s.%s export", schema, storageUnit))
 		return fmt.Errorf("failed to write headers: %v", err)
 	}
 
@@ -117,6 +123,7 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 	// Execute query
 	rows, err := db.Raw(query).Rows()
 	if err != nil {
+		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to execute export query for table %s.%s: %s", schema, storageUnit, query))
 		return fmt.Errorf("failed to query data: %v", err)
 	}
 	defer rows.Close()
@@ -131,6 +138,7 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 
 	for rows.Next() {
 		if err := rows.Scan(valuePtrs...); err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to scan row during export of table %s.%s", schema, storageUnit))
 			return fmt.Errorf("failed to scan row: %v", err)
 		}
 
@@ -140,6 +148,7 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 		}
 
 		if err := writer(row); err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to write row %d during export of table %s.%s", rowCount+1, schema, storageUnit))
 			return fmt.Errorf("failed to write row: %v", err)
 		}
 

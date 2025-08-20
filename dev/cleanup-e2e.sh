@@ -21,13 +21,25 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 echo "📁 Working from project root: $PROJECT_ROOT"
 
-# Cleanup SQLite
+# Cleanup SQLite and tmp directory
 echo "🧹 Cleaning up tmp directory..."
 if [ -d "$PROJECT_ROOT/core/tmp" ]; then
     rm -rf "$PROJECT_ROOT/core/tmp"
     echo "✅ tmp directory cleaned up"
 else
     echo "ℹ️ No tmp directory to clean up"
+fi
+
+# Clean up test binary
+if [ -f "$PROJECT_ROOT/core/server.test" ]; then
+    rm "$PROJECT_ROOT/core/server.test"
+    echo "✅ Test binary cleaned up"
+fi
+
+# Clean up coverage file
+if [ -f "$PROJECT_ROOT/core/coverage.out" ]; then
+    rm "$PROJECT_ROOT/core/coverage.out"
+    echo "✅ Coverage file cleaned up"
 fi
 
 # Stop and remove Docker services
@@ -70,5 +82,13 @@ if [ -f "$SCRIPT_DIR/cleanup.sh" ]; then
 else
     echo "ℹ️ No cleanup.sh found, skipping Docker volume cleanup"
 fi
+
+# Kill anything still on port 3000 (just in case)
+echo "🔍 Ensuring port 3000 is free..."
+lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+
+# Kill anything still on port 8080 (just in case)
+echo "🔍 Ensuring port 8080 is free..."
+lsof -ti:8080 | xargs kill -9 2>/dev/null || true
 
 echo "✅ E2E environment cleanup complete!"

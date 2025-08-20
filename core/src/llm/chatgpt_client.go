@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"github.com/clidey/whodb/core/src/env"
+	"github.com/clidey/whodb/core/src/log"
 )
 
 func prepareChatGPTRequest(c *LLMClient, prompt string, model LLMModel, receiverChan *chan string, isOpenAICompatible bool) (string, []byte, map[string]string, error) {
@@ -34,6 +35,7 @@ func prepareChatGPTRequest(c *LLMClient, prompt string, model LLMModel, receiver
 		"stream":   receiverChan != nil,
 	})
 	if err != nil {
+		log.Logger.WithError(err).Errorf("Failed to marshal ChatGPT request body for model %s", model)
 		return "", nil, nil, err
 	}
 	url := fmt.Sprintf("%v/chat/completions", env.GetOpenAIEndpoint())
@@ -67,6 +69,7 @@ func parseChatGPTResponse(body io.ReadCloser, receiverChan *chan string, respons
 				if err == io.EOF {
 					break
 				}
+				log.Logger.WithError(err).Error("Failed to read line from ChatGPT streaming response")
 				return nil, err
 			}
 
@@ -84,6 +87,7 @@ func parseChatGPTResponse(body io.ReadCloser, receiverChan *chan string, respons
 			}
 
 			if err := json.Unmarshal([]byte(line), &completionResponse); err != nil {
+				log.Logger.WithError(err).Errorf("Failed to unmarshal ChatGPT streaming response line: %s", line)
 				return nil, err
 			}
 
@@ -109,6 +113,7 @@ func parseChatGPTResponse(body io.ReadCloser, receiverChan *chan string, respons
 		}
 
 		if err := json.NewDecoder(body).Decode(&completionResponse); err != nil {
+			log.Logger.WithError(err).Error("Failed to decode ChatGPT non-streaming response")
 			return nil, err
 		}
 
@@ -132,6 +137,7 @@ func parseChatGPTModelsResponse(body io.ReadCloser) ([]string, error) {
 		} `json:"data"`
 	}
 	if err := json.NewDecoder(body).Decode(&modelsResp); err != nil {
+		log.Logger.WithError(err).Error("Failed to decode ChatGPT models response")
 		return nil, err
 	}
 

@@ -22,6 +22,7 @@ import (
 	"strconv"
 
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	"gorm.io/gorm"
 )
@@ -44,10 +45,12 @@ func (p *GormPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, 
 			fieldName := p.EscapeIdentifier(fieldType.Key)
 			primaryKey, err := strconv.ParseBool(fieldType.Extra["Primary"])
 			if err != nil {
+				log.Logger.WithError(err).Error(fmt.Sprintf("Failed to parse Primary key flag for field %s in table %s.%s", fieldType.Key, schema, storageUnit))
 				primaryKey = false
 			}
 			nullable, err := strconv.ParseBool(fieldType.Extra["Nullable"])
 			if err != nil {
+				log.Logger.WithError(err).Error(fmt.Sprintf("Failed to parse Nullable flag for field %s in table %s.%s", fieldType.Key, schema, storageUnit))
 				nullable = false
 			}
 
@@ -64,6 +67,7 @@ func (p *GormPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, 
 		createTableQuery := p.GetCreateTableQuery(schema, storageUnit, columns)
 
 		if err := db.Exec(createTableQuery).Error; err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to create table %s.%s with query: %s", schema, storageUnit, createTableQuery))
 			return false, err
 		}
 		return true, nil

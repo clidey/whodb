@@ -18,8 +18,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"strconv"
+
+	"github.com/clidey/whodb/core/src/log"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
@@ -102,7 +103,8 @@ func (p *ClickHousePlugin) GetTableNameAndAttributes(rows *sql.Rows, db *gorm.DB
 	var totalSize *string
 
 	if err := rows.Scan(&tableName, &tableType, &totalRows, &totalSize); err != nil {
-		log.Fatal(err)
+		log.Logger.WithError(err).Error("Failed to scan table name and attributes from ClickHouse system.tables query")
+		return "", nil
 	}
 
 	rowCount := "0"

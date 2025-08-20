@@ -18,21 +18,32 @@ To develop WhoDB, follow the below requirements every time you do a task:
 5. Do not leave unused code lying around.
 6. Ask as many questions as you have to in order to understand your task.
 7. You MUST use multiple subagents wherever possible to help you accomplish your task faster.
+8. If you do a build to test something (e.g., `go build`), delete the binary afterwards to keep the workspace clean.
+9. Use `any` instead of `interface{}` in all Go code (Go 1.18+ modern syntax).
+10. When updating dependencies, ensure versions are identical between Community Edition (`core/go.mod`) and Enterprise Edition (`ee/go.mod`) to prevent version mismatches and compatibility issues.
+11. Never log sensitive data such as passwords, API keys, tokens, or full connection strings. Only log non-sensitive metadata like hostnames, ports, database names, and error types.
 
 ## Build & Development Commands
 
 ### Community Edition (CE)
 ```bash
-./build.sh                    # Full build (frontend + backend)
-./run.sh                      # Run the application
-./dev.sh                      # Development mode with hot-reload
+# Run backend
+cd core
+go run .
+
+# Run frontend (separate terminal)
+cd frontend
+pnpm start
 ```
 
 ### Enterprise Edition (EE)
 ```bash
-./build.sh --ee               # Full EE build
-./run.sh --ee                 # Run EE application
-./dev.sh --ee                 # EE development with hot-reload
+# Run backend (from project root)
+GOWORK=$PWD/go.work.ee go run -tags ee ./core
+
+# Run frontend (separate terminal)
+cd frontend
+pnpm start:ee
 ```
 
 ### Testing

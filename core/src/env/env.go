@@ -54,7 +54,7 @@ var AllowedOrigins = common.FilterList(strings.Split(os.Getenv("WHODB_ALLOWED_OR
 	return item != ""
 })
 
-var EnableHTTPLogging = os.Getenv("WHODB_ENABLE_HTTP_LOGGING") == "true"
+var LogLevel = getLogLevel()
 var EnableMockDataGeneration = os.Getenv("WHODB_ENABLE_MOCK_DATA_GENERATION")
 
 type ChatProvider struct {
@@ -181,7 +181,7 @@ func GetDefaultDatabaseCredentials(databaseType string) []DatabaseCredentials {
 	var creds []DatabaseCredentials
 	err := json.Unmarshal([]byte(credEnvValue), &creds)
 	if err != nil {
-		log.Logger.Warn("🔴 [Database Error] Failed to parse database credentials from environment variable! Error: ", err)
+		log.Logger.Error("🔴 [Database Error] Failed to parse database credentials from environment variable! Error: ", err)
 		return nil
 	}
 
@@ -202,7 +202,7 @@ func findAllDatabaseCredentials(databaseType string) []DatabaseCredentials {
 		var creds DatabaseCredentials
 		err := json.Unmarshal([]byte(databaseProfile), &creds)
 		if err != nil {
-			log.Logger.Warn("Unable to parse database credential: ", err)
+			log.Logger.Error("Unable to parse database credential: ", err)
 			break
 		}
 
@@ -211,6 +211,20 @@ func findAllDatabaseCredentials(databaseType string) []DatabaseCredentials {
 	}
 
 	return profiles
+}
+
+func getLogLevel() string {
+	level := os.Getenv("WHODB_LOG_LEVEL")
+	switch level {
+	case "info", "INFO", "Info":
+		return "info"
+	case "warning", "WARNING", "Warning", "warn", "WARN", "Warn":
+		return "warning"
+	case "error", "ERROR", "Error":
+		return "error"
+	default:
+		return "info" // Default to info level
+	}
 }
 
 func IsMockDataGenerationAllowed(tableName string) bool {

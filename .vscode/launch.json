@@ -12,7 +12,7 @@
             "program": "${workspaceFolder}/core/server.go",
             "env": {
                 "ENVIRONMENT": "dev",
-                "WHODB_ENABLE_HTTP_LOGGING": "true",
+                "WHODB_LOG_LEVEL": "debug"
                 "WHODB_ENABLE_MOCK_DATA_GENERATION": "*"
             }
         },
@@ -24,7 +24,7 @@
             "program": "${workspaceFolder}/core/server_ee.go",
             "env": {
                 "ENVIRONMENT": "dev",
-                "WHODB_ENABLE_HTTP_LOGGING": "true"
+                "WHODB_LOG_LEVEL": "debug"
             },
             "buildFlags": "-tags=ee",
             "args": []

@@ -79,7 +79,7 @@ func setupMiddlewares(router *chi.Mux) {
 		middleware.RealIP,
 	}
 
-	if env.EnableHTTPLogging {
+	if env.LogLevel == "error" {
 		middlewares = append(middlewares, middleware.Logger)
 	}
 

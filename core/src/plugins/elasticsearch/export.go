@@ -24,16 +24,19 @@ import (
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 )
 
 // ExportData exports ElasticSearch index data to tabular format
 func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error {
 	// ElasticSearch doesn't support exporting selected rows from frontend
 	if len(selectedRows) > 0 {
-		return fmt.Errorf("exporting selected rows is not supported for ElasticSearch")
+		err := fmt.Errorf("exporting selected rows is not supported for ElasticSearch")
+		return err
 	}
 	db, err := DB(config)
 	if err != nil {
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to connect to ElasticSearch while exporting data")
 		return err
 	}
 
@@ -42,12 +45,14 @@ func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema str
 		db.Indices.GetMapping.WithIndex(storageUnit),
 	)
 	if err != nil {
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to get ElasticSearch index mapping for export")
 		return fmt.Errorf("failed to get index mapping: %v", err)
 	}
 	defer mapping.Body.Close()
 
 	var mappingResponse map[string]any
 	if err := json.NewDecoder(mapping.Body).Decode(&mappingResponse); err != nil {
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to decode ElasticSearch mapping response for export")
 		return fmt.Errorf("failed to decode mapping: %v", err)
 	}
 
@@ -60,6 +65,7 @@ func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema str
 		headers[i] = common.FormatCSVHeader(field, "JSON")
 	}
 	if err := writer(headers); err != nil {
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to write CSV headers during ElasticSearch export")
 		return fmt.Errorf("failed to write headers: %v", err)
 	}
 
@@ -71,12 +77,14 @@ func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema str
 		db.Search.WithSize(1000),
 	)
 	if err != nil {
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to execute ElasticSearch scroll search for export")
 		return fmt.Errorf("failed to search index: %v", err)
 	}
 	defer res.Body.Close()
 
 	var searchResult map[string]any
 	if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to decode ElasticSearch search result during export")
 		return fmt.Errorf("failed to decode search result: %v", err)
 	}
 
@@ -101,6 +109,7 @@ func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema str
 				}
 			}
 			if err := writer(row); err != nil {
+				log.Logger.WithError(err).WithField("storageUnit", storageUnit).WithField("rowCount", rowCount).Error("Failed to write row during ElasticSearch export")
 				return fmt.Errorf("failed to write row: %v", err)
 			}
 
@@ -113,12 +122,14 @@ func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema str
 			db.Scroll.WithScroll(5*60*1000),
 		)
 		if err != nil {
+			log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Error during ElasticSearch scroll operation, breaking export loop")
 			break
 		}
 		defer res.Body.Close()
 
 		searchResult = make(map[string]any)
 		if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
+			log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Error decoding ElasticSearch scroll response, breaking export loop")
 			break
 		}
 	}
@@ -196,6 +207,7 @@ func (p *ElasticSearchPlugin) formatElasticValue(val any) string {
 	case []any, map[string]any:
 		data, err := json.Marshal(v)
 		if err != nil {
+			log.Logger.WithError(err).Error("Failed to marshal ElasticSearch value to JSON during export formatting")
 			strVal = fmt.Sprintf("%v", v)
 		} else {
 			strVal = string(data)

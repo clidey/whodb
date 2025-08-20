@@ -22,6 +22,7 @@ import (
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	"gorm.io/gorm"
 )
@@ -30,11 +31,13 @@ func (p *GormPlugin) DeleteRow(config *engine.PluginConfig, schema string, stora
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
 		pkColumns, err := p.GetPrimaryKeyColumns(db, schema, storageUnit)
 		if err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get primary key columns for table %s.%s during delete operation", schema, storageUnit))
 			pkColumns = []string{}
 		}
 
 		columnTypes, err := p.GetColumnTypes(db, schema, storageUnit)
 		if err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get column types for table %s.%s during delete operation", schema, storageUnit))
 			return false, err
 		}
 
@@ -48,6 +51,7 @@ func (p *GormPlugin) DeleteRow(config *engine.PluginConfig, schema string, stora
 
 			convertedValue, err := p.GormPluginFunctions.ConvertStringValue(strValue, columnType)
 			if err != nil {
+				log.Logger.WithError(err).Error(fmt.Sprintf("Failed to convert string value '%s' for column '%s' during delete from table %s.%s", strValue, column, schema, storageUnit))
 				convertedValue = strValue // use string value if conversion fails?
 			}
 
@@ -75,6 +79,7 @@ func (p *GormPlugin) DeleteRow(config *engine.PluginConfig, schema string, stora
 		}
 
 		if result.Error != nil {
+			log.Logger.WithError(result.Error).Error(fmt.Sprintf("Failed to delete rows from table %s.%s", schema, storageUnit))
 			return false, result.Error
 		}
 

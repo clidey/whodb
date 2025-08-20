@@ -26,8 +26,47 @@ const eeModulePlugin = () => ({
 });
 
 // https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [react(), eeModulePlugin(), tailwindcss()],
+export default defineConfig(async () => {
+  // Dynamically import istanbul plugin only in test mode
+  let istanbulPlugin = null;
+  if (process.env.NODE_ENV === 'test') {
+    try {
+      const { default: istanbul } = await import('vite-plugin-istanbul');
+      // @ts-ignore
+      istanbulPlugin = istanbul({
+        cypress: true,
+        requireEnv: false,
+        include: [
+          'src/**/*.{js,jsx,ts,tsx}',
+          // Include EE sources when testing EE edition
+          ...(process.env.VITE_BUILD_EDITION === 'ee' && eeExists ? [
+            '../ee/frontend/src/**/*.{js,jsx,ts,tsx}'
+          ] : [])
+        ],
+        exclude: [
+          'node_modules',
+          'cypress',
+          '**/*.d.ts',
+          '**/*.test.{js,jsx,ts,tsx}',
+          '**/*.spec.{js,jsx,ts,tsx}',
+          'src/generated/**',
+          '../ee/frontend/src/generated/**',
+          'src/index.tsx'
+        ],
+        cwd: process.cwd(),
+      });
+    } catch (e) {
+      console.warn('Failed to load vite-plugin-istanbul:', e);
+    }
+  }
+
+  return {
+    plugins: [
+      react(),
+      eeModulePlugin(),
+      istanbulPlugin
+    ].filter(Boolean),
+
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -55,8 +94,9 @@ export default defineConfig({
     outDir: 'build',
     sourcemap: true,
   },
-  define: {
-    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
-    'process.env.BUILD_EDITION': JSON.stringify(process.env.VITE_BUILD_EDITION),
-  },
+    define: {
+      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
+      'process.env.BUILD_EDITION': JSON.stringify(process.env.VITE_BUILD_EDITION),
+    },
+  };
 });

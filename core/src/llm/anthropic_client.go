@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"github.com/clidey/whodb/core/src/env"
+	"github.com/clidey/whodb/core/src/log"
 )
 
 func prepareAnthropicRequest(c *LLMClient, prompt string, model LLMModel) (string, []byte, map[string]string, error) {
@@ -49,6 +50,7 @@ func prepareAnthropicRequest(c *LLMClient, prompt string, model LLMModel) (strin
 		},
 	})
 	if err != nil {
+		log.Logger.WithError(err).Errorf("Failed to marshal Anthropic request body for model %s", model)
 		return "", nil, nil, err
 	}
 
@@ -86,6 +88,7 @@ func parseAnthropicResponse(body io.ReadCloser, receiverChan *chan string, respo
 		line, err := reader.ReadString('\n')
 		if err != nil {
 			if err != io.EOF {
+				log.Logger.WithError(err).Error("Failed to read line from Anthropic response")
 				return nil, err
 			}
 		}
@@ -108,6 +111,7 @@ func parseAnthropicResponse(body io.ReadCloser, receiverChan *chan string, respo
 		}
 
 		if err := json.Unmarshal([]byte(line), &anthropicResponse); err != nil {
+			log.Logger.WithError(err).Errorf("Failed to unmarshal Anthropic response line: %s", line)
 			return nil, err
 		}
 
@@ -116,6 +120,7 @@ func parseAnthropicResponse(body io.ReadCloser, receiverChan *chan string, respo
 				*receiverChan <- content.Text
 			}
 			if _, err := responseBuilder.WriteString(content.Text); err != nil {
+				log.Logger.WithError(err).Error("Failed to write to Anthropic response builder")
 				return nil, err
 			}
 		}
