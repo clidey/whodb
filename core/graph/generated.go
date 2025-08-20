@@ -82,10 +82,15 @@ type ComplexityRoot struct {
 		Type                 func(childComplexity int) int
 	}
 
+	MockDataGenerationStatus struct {
+		AmountGenerated func(childComplexity int) int
+	}
+
 	Mutation struct {
 		AddRow            func(childComplexity int, schema string, storageUnit string, values []*model.RecordInput) int
 		AddStorageUnit    func(childComplexity int, schema string, storageUnit string, fields []*model.RecordInput) int
 		DeleteRow         func(childComplexity int, schema string, storageUnit string, values []*model.RecordInput) int
+		GenerateMockData  func(childComplexity int, input model.MockDataGenerationInput) int
 		Login             func(childComplexity int, credentials model.LoginCredentials) int
 		LoginWithProfile  func(childComplexity int, profile model.LoginProfileInput) int
 		Logout            func(childComplexity int) int
@@ -94,18 +99,19 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		AIChat         func(childComplexity int, providerID *string, modelType string, token *string, schema string, input model.ChatInput) int
-		AIModel        func(childComplexity int, providerID *string, modelType string, token *string) int
-		AIProviders    func(childComplexity int) int
-		Database       func(childComplexity int, typeArg string) int
-		Graph          func(childComplexity int, schema string) int
-		Profiles       func(childComplexity int) int
-		RawExecute     func(childComplexity int, query string) int
-		Row            func(childComplexity int, schema string, storageUnit string, where *model.WhereCondition, pageSize int, pageOffset int) int
-		Schema         func(childComplexity int) int
-		SettingsConfig func(childComplexity int) int
-		StorageUnit    func(childComplexity int, schema string) int
-		Version        func(childComplexity int) int
+		AIChat              func(childComplexity int, providerID *string, modelType string, token *string, schema string, input model.ChatInput) int
+		AIModel             func(childComplexity int, providerID *string, modelType string, token *string) int
+		AIProviders         func(childComplexity int) int
+		Database            func(childComplexity int, typeArg string) int
+		Graph               func(childComplexity int, schema string) int
+		MockDataMaxRowCount func(childComplexity int) int
+		Profiles            func(childComplexity int) int
+		RawExecute          func(childComplexity int, query string) int
+		Row                 func(childComplexity int, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) int
+		Schema              func(childComplexity int) int
+		SettingsConfig      func(childComplexity int) int
+		StorageUnit         func(childComplexity int, schema string) int
+		Version             func(childComplexity int) int
 	}
 
 	Record struct {
@@ -128,8 +134,9 @@ type ComplexityRoot struct {
 	}
 
 	StorageUnit struct {
-		Attributes func(childComplexity int) int
-		Name       func(childComplexity int) int
+		Attributes                  func(childComplexity int) int
+		IsMockDataGenerationAllowed func(childComplexity int) int
+		Name                        func(childComplexity int) int
 	}
 }
 
@@ -142,6 +149,7 @@ type MutationResolver interface {
 	UpdateStorageUnit(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput, updatedColumns []string) (*model.StatusResponse, error)
 	AddRow(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
 	DeleteRow(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
+	GenerateMockData(ctx context.Context, input model.MockDataGenerationInput) (*model.MockDataGenerationStatus, error)
 }
 type QueryResolver interface {
 	Version(ctx context.Context) (string, error)
@@ -149,13 +157,14 @@ type QueryResolver interface {
 	Database(ctx context.Context, typeArg string) ([]string, error)
 	Schema(ctx context.Context) ([]string, error)
 	StorageUnit(ctx context.Context, schema string) ([]*model.StorageUnit, error)
-	Row(ctx context.Context, schema string, storageUnit string, where *model.WhereCondition, pageSize int, pageOffset int) (*model.RowsResult, error)
+	Row(ctx context.Context, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) (*model.RowsResult, error)
 	RawExecute(ctx context.Context, query string) (*model.RowsResult, error)
 	Graph(ctx context.Context, schema string) ([]*model.GraphUnit, error)
 	AIProviders(ctx context.Context) ([]*model.AIProvider, error)
 	AIModel(ctx context.Context, providerID *string, modelType string, token *string) ([]string, error)
 	AIChat(ctx context.Context, providerID *string, modelType string, token *string, schema string, input model.ChatInput) ([]*model.AIChatMessage, error)
 	SettingsConfig(ctx context.Context) (*model.SettingsConfig, error)
+	MockDataMaxRowCount(ctx context.Context) (int, error)
 }
 
 type executableSchema struct {
@@ -296,6 +305,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.LoginProfile.Type(childComplexity), true
 
+	case "MockDataGenerationStatus.AmountGenerated":
+		if e.complexity.MockDataGenerationStatus.AmountGenerated == nil {
+			break
+		}
+
+		return e.complexity.MockDataGenerationStatus.AmountGenerated(childComplexity), true
+
 	case "Mutation.AddRow":
 		if e.complexity.Mutation.AddRow == nil {
 			break
@@ -331,6 +347,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteRow(childComplexity, args["schema"].(string), args["storageUnit"].(string), args["values"].([]*model.RecordInput)), true
+
+	case "Mutation.GenerateMockData":
+		if e.complexity.Mutation.GenerateMockData == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_GenerateMockData_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.GenerateMockData(childComplexity, args["input"].(model.MockDataGenerationInput)), true
 
 	case "Mutation.Login":
 		if e.complexity.Mutation.Login == nil {
@@ -442,6 +470,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Query.Graph(childComplexity, args["schema"].(string)), true
 
+	case "Query.MockDataMaxRowCount":
+		if e.complexity.Query.MockDataMaxRowCount == nil {
+			break
+		}
+
+		return e.complexity.Query.MockDataMaxRowCount(childComplexity), true
+
 	case "Query.Profiles":
 		if e.complexity.Query.Profiles == nil {
 			break
@@ -471,7 +506,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Row(childComplexity, args["schema"].(string), args["storageUnit"].(string), args["where"].(*model.WhereCondition), args["pageSize"].(int), args["pageOffset"].(int)), true
+		return e.complexity.Query.Row(childComplexity, args["schema"].(string), args["storageUnit"].(string), args["where"].(*model.WhereCondition), args["sort"].([]*model.SortCondition), args["pageSize"].(int), args["pageOffset"].(int)), true
 
 	case "Query.Schema":
 		if e.complexity.Query.Schema == nil {
@@ -562,6 +597,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.StorageUnit.Attributes(childComplexity), true
 
+	case "StorageUnit.IsMockDataGenerationAllowed":
+		if e.complexity.StorageUnit.IsMockDataGenerationAllowed == nil {
+			break
+		}
+
+		return e.complexity.StorageUnit.IsMockDataGenerationAllowed(childComplexity), true
+
 	case "StorageUnit.Name":
 		if e.complexity.StorageUnit.Name == nil {
 			break
@@ -581,9 +623,11 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputChatInput,
 		ec.unmarshalInputLoginCredentials,
 		ec.unmarshalInputLoginProfileInput,
+		ec.unmarshalInputMockDataGenerationInput,
 		ec.unmarshalInputOperationWhereCondition,
 		ec.unmarshalInputRecordInput,
 		ec.unmarshalInputSettingsConfigInput,
+		ec.unmarshalInputSortCondition,
 		ec.unmarshalInputWhereCondition,
 	)
 	first := true
@@ -764,6 +808,34 @@ func (ec *executionContext) field_Mutation_DeleteRow_args(ctx context.Context, r
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_GenerateMockData_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_GenerateMockData_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_GenerateMockData_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (model.MockDataGenerationInput, error) {
+	if _, ok := rawArgs["input"]; !ok {
+		var zeroVal model.MockDataGenerationInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNMockDataGenerationInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataGenerationInput(ctx, tmp)
+	}
+
+	var zeroVal model.MockDataGenerationInput
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Mutation_LoginWithProfile_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -935,8 +1007,120 @@ func (ec *executionContext) field_Query_Row_args(ctx context.Context, rawArgs ma
 	if err != nil {
 		return nil, err
 	}
-	args["pageOffset"] = arg4
+	args["pageSize"] = arg4
+	arg5, err := ec.field_Query_Row_argsPageOffset(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["pageOffset"] = arg5
 	return args, nil
+}
+func (ec *executionContext) field_Query_Row_argsSchema(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (string, error) {
+	if _, ok := rawArgs["schema"]; !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schema"))
+	if tmp, ok := rawArgs["schema"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_Row_argsStorageUnit(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (string, error) {
+	if _, ok := rawArgs["storageUnit"]; !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("storageUnit"))
+	if tmp, ok := rawArgs["storageUnit"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_Row_argsWhere(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*model.WhereCondition, error) {
+	if _, ok := rawArgs["where"]; !ok {
+		var zeroVal *model.WhereCondition
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("where"))
+	if tmp, ok := rawArgs["where"]; ok {
+		return ec.unmarshalOWhereCondition2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐWhereCondition(ctx, tmp)
+	}
+
+	var zeroVal *model.WhereCondition
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_Row_argsSort(
+	ctx context.Context,
+	rawArgs map[string]any,
+) ([]*model.SortCondition, error) {
+	if _, ok := rawArgs["sort"]; !ok {
+		var zeroVal []*model.SortCondition
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("sort"))
+	if tmp, ok := rawArgs["sort"]; ok {
+		return ec.unmarshalOSortCondition2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSortConditionᚄ(ctx, tmp)
+	}
+
+	var zeroVal []*model.SortCondition
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_Row_argsPageSize(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (int, error) {
+	if _, ok := rawArgs["pageSize"]; !ok {
+		var zeroVal int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pageSize"))
+	if tmp, ok := rawArgs["pageSize"]; ok {
+		return ec.unmarshalNInt2int(ctx, tmp)
+	}
+
+	var zeroVal int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_Row_argsPageOffset(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (int, error) {
+	if _, ok := rawArgs["pageOffset"]; !ok {
+		var zeroVal int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pageOffset"))
+	if tmp, ok := rawArgs["pageOffset"]; ok {
+		return ec.unmarshalNInt2int(ctx, tmp)
+	}
+
+	var zeroVal int
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_StorageUnit_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
@@ -1413,6 +1597,8 @@ func (ec *executionContext) fieldContext_GraphUnit_Unit(_ context.Context, field
 				return ec.fieldContext_StorageUnit_Name(ctx, field)
 			case "Attributes":
 				return ec.fieldContext_StorageUnit_Attributes(ctx, field)
+			case "IsMockDataGenerationAllowed":
+				return ec.fieldContext_StorageUnit_IsMockDataGenerationAllowed(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type StorageUnit", field.Name)
 		},
@@ -1767,6 +1953,50 @@ func (ec *executionContext) fieldContext_LoginProfile_IsEnvironmentDefined(_ con
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MockDataGenerationStatus_AmountGenerated(ctx context.Context, field graphql.CollectedField, obj *model.MockDataGenerationStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MockDataGenerationStatus_AmountGenerated(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AmountGenerated, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MockDataGenerationStatus_AmountGenerated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MockDataGenerationStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2233,6 +2463,65 @@ func (ec *executionContext) fieldContext_Mutation_DeleteRow(ctx context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_GenerateMockData(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_GenerateMockData(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().GenerateMockData(rctx, fc.Args["input"].(model.MockDataGenerationInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.MockDataGenerationStatus)
+	fc.Result = res
+	return ec.marshalNMockDataGenerationStatus2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataGenerationStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_GenerateMockData(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "AmountGenerated":
+				return ec.fieldContext_MockDataGenerationStatus_AmountGenerated(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MockDataGenerationStatus", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_GenerateMockData_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_Version(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_Version(ctx, field)
 	if err != nil {
@@ -2475,6 +2764,8 @@ func (ec *executionContext) fieldContext_Query_StorageUnit(ctx context.Context, 
 				return ec.fieldContext_StorageUnit_Name(ctx, field)
 			case "Attributes":
 				return ec.fieldContext_StorageUnit_Attributes(ctx, field)
+			case "IsMockDataGenerationAllowed":
+				return ec.fieldContext_StorageUnit_IsMockDataGenerationAllowed(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type StorageUnit", field.Name)
 		},
@@ -2507,7 +2798,7 @@ func (ec *executionContext) _Query_Row(ctx context.Context, field graphql.Collec
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Row(rctx, fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["where"].(*model.WhereCondition), fc.Args["pageSize"].(int), fc.Args["pageOffset"].(int))
+		return ec.resolvers.Query().Row(rctx, fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["where"].(*model.WhereCondition), fc.Args["sort"].([]*model.SortCondition), fc.Args["pageSize"].(int), fc.Args["pageOffset"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2893,6 +3184,50 @@ func (ec *executionContext) fieldContext_Query_SettingsConfig(_ context.Context,
 				return ec.fieldContext_SettingsConfig_MetricsEnabled(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SettingsConfig", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_MockDataMaxRowCount(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_MockDataMaxRowCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().MockDataMaxRowCount(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_MockDataMaxRowCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3429,6 +3764,50 @@ func (ec *executionContext) fieldContext_StorageUnit_Attributes(_ context.Contex
 				return ec.fieldContext_Record_Value(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Record", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StorageUnit_IsMockDataGenerationAllowed(ctx context.Context, field graphql.CollectedField, obj *model.StorageUnit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_StorageUnit_IsMockDataGenerationAllowed(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsMockDataGenerationAllowed, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_StorageUnit_IsMockDataGenerationAllowed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StorageUnit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -5591,6 +5970,61 @@ func (ec *executionContext) unmarshalInputLoginProfileInput(ctx context.Context,
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputMockDataGenerationInput(ctx context.Context, obj any) (model.MockDataGenerationInput, error) {
+	var it model.MockDataGenerationInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"Schema", "StorageUnit", "RowCount", "Method", "OverwriteExisting"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "Schema":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Schema"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Schema = data
+		case "StorageUnit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("StorageUnit"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StorageUnit = data
+		case "RowCount":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("RowCount"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RowCount = data
+		case "Method":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Method"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Method = data
+		case "OverwriteExisting":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("OverwriteExisting"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OverwriteExisting = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputOperationWhereCondition(ctx context.Context, obj any) (model.OperationWhereCondition, error) {
 	var it model.OperationWhereCondition
 	asMap := map[string]any{}
@@ -5680,6 +6114,40 @@ func (ec *executionContext) unmarshalInputSettingsConfigInput(ctx context.Contex
 				return it, err
 			}
 			it.MetricsEnabled = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputSortCondition(ctx context.Context, obj any) (model.SortCondition, error) {
+	var it model.SortCondition
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"Column", "Direction"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "Column":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Column"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Column = data
+		case "Direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Direction"))
+			data, err := ec.unmarshalNSortDirection2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSortDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
 		}
 	}
 
@@ -6022,6 +6490,45 @@ func (ec *executionContext) _LoginProfile(ctx context.Context, sel ast.Selection
 	return out
 }
 
+var mockDataGenerationStatusImplementors = []string{"MockDataGenerationStatus"}
+
+func (ec *executionContext) _MockDataGenerationStatus(ctx context.Context, sel ast.SelectionSet, obj *model.MockDataGenerationStatus) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, mockDataGenerationStatusImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MockDataGenerationStatus")
+		case "AmountGenerated":
+			out.Values[i] = ec._MockDataGenerationStatus_AmountGenerated(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -6093,6 +6600,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "DeleteRow":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_DeleteRow(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "GenerateMockData":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_GenerateMockData(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -6403,6 +6917,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "MockDataMaxRowCount":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_MockDataMaxRowCount(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -6620,6 +7156,11 @@ func (ec *executionContext) _StorageUnit(ctx context.Context, sel ast.SelectionS
 			}
 		case "Attributes":
 			out.Values[i] = ec._StorageUnit_Attributes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "IsMockDataGenerationAllowed":
+			out.Values[i] = ec._StorageUnit_IsMockDataGenerationAllowed(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -7372,6 +7913,25 @@ func (ec *executionContext) unmarshalNLoginProfileInput2githubᚗcomᚋclideyᚋ
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNMockDataGenerationInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataGenerationInput(ctx context.Context, v any) (model.MockDataGenerationInput, error) {
+	res, err := ec.unmarshalInputMockDataGenerationInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNMockDataGenerationStatus2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataGenerationStatus(ctx context.Context, sel ast.SelectionSet, v model.MockDataGenerationStatus) graphql.Marshaler {
+	return ec._MockDataGenerationStatus(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNMockDataGenerationStatus2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataGenerationStatus(ctx context.Context, sel ast.SelectionSet, v *model.MockDataGenerationStatus) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MockDataGenerationStatus(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNRecord2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Record) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -7477,6 +8037,21 @@ func (ec *executionContext) marshalNSettingsConfig2ᚖgithubᚗcomᚋclideyᚋwh
 func (ec *executionContext) unmarshalNSettingsConfigInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSettingsConfigInput(ctx context.Context, v any) (model.SettingsConfigInput, error) {
 	res, err := ec.unmarshalInputSettingsConfigInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNSortCondition2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSortCondition(ctx context.Context, v any) (*model.SortCondition, error) {
+	res, err := ec.unmarshalInputSortCondition(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNSortDirection2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSortDirection(ctx context.Context, v any) (model.SortDirection, error) {
+	var res model.SortDirection
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSortDirection2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSortDirection(ctx context.Context, sel ast.SelectionSet, v model.SortDirection) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) marshalNStatusResponse2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐStatusResponse(ctx context.Context, sel ast.SelectionSet, v model.StatusResponse) graphql.Marshaler {
@@ -7975,6 +8550,24 @@ func (ec *executionContext) marshalORowsResult2ᚖgithubᚗcomᚋclideyᚋwhodb�
 		return graphql.Null
 	}
 	return ec._RowsResult(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOSortCondition2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSortConditionᚄ(ctx context.Context, v any) ([]*model.SortCondition, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]*model.SortCondition, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNSortCondition2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSortCondition(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v any) (*string, error) {

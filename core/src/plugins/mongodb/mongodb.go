@@ -148,7 +148,7 @@ func (p *MongoDBPlugin) GetStorageUnits(config *engine.PluginConfig, database st
 	return storageUnits, nil
 }
 
-func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collection string, where *model.WhereCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collection string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	client, err := DB(config)
 	if err != nil {
 		log.Logger.WithError(err).WithFields(map[string]interface{}{
@@ -176,6 +176,19 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 	findOptions := options.Find()
 	findOptions.SetLimit(int64(pageSize))
 	findOptions.SetSkip(int64(pageOffset))
+
+	// Apply sorting if provided
+	if len(sort) > 0 {
+		sortMap := bson.D{}
+		for _, s := range sort {
+			direction := 1 // ASC
+			if s.Direction == model.SortDirectionDesc {
+				direction = -1 // DESC
+			}
+			sortMap = append(sortMap, bson.E{Key: s.Column, Value: direction})
+		}
+		findOptions.SetSort(sortMap)
+	}
 
 	cursor, err := coll.Find(context.TODO(), bsonFilter, findOptions)
 	if err != nil {
@@ -297,8 +310,7 @@ func (p *MongoDBPlugin) Chat(config *engine.PluginConfig, schema string, model s
 	return nil, errors.ErrUnsupported
 }
 
-
-func (p *MongoDBPlugin) FormatValue(val interface{}) string {
+func (p *MongoDBPlugin) FormatValue(val any) string {
 	if val == nil {
 		return ""
 	}
@@ -307,6 +319,23 @@ func (p *MongoDBPlugin) FormatValue(val interface{}) string {
 
 func (p *MongoDBPlugin) GetSupportedOperators() map[string]string {
 	return supportedOperators
+}
+
+// GetColumnConstraints returns empty constraints for MongoDB since mock data generation doesn't apply to NoSQL databases
+func (p *MongoDBPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error) {
+	return make(map[string]map[string]any), nil
+}
+
+// ClearTableData returns not supported error for MongoDB since mock data generation doesn't apply to NoSQL databases
+func (p *MongoDBPlugin) ClearTableData(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {
+	return false, errors.New("mock data generation is not supported for MongoDB")
+}
+
+// WithTransaction executes the operation directly since MongoDB doesn't support transactions in the same way as SQL databases
+func (p *MongoDBPlugin) WithTransaction(config *engine.PluginConfig, operation func(tx any) error) error {
+	// MongoDB doesn't support transactions in the same way as SQL databases
+	// For now, just execute the operation directly
+	return operation(nil)
 }
 
 func NewMongoDBPlugin() *engine.Plugin {

@@ -200,6 +200,7 @@ func (p *RedisPlugin) GetRows(
 	config *engine.PluginConfig,
 	schema, storageUnit string,
 	where *model.WhereCondition,
+	sortConditions []*model.SortCondition,
 	pageSize, pageOffset int,
 ) (*engine.GetRowsResult, error) {
 	ctx := context.Background()
@@ -394,12 +395,28 @@ func (p *RedisPlugin) Chat(config *engine.PluginConfig, schema string, model str
 	return nil, errors.ErrUnsupported
 }
 
-
 func (p *RedisPlugin) FormatValue(val interface{}) string {
 	if val == nil {
 		return ""
 	}
 	return fmt.Sprintf("%v", val)
+}
+
+// GetColumnConstraints - not supported for Redis
+func (p *RedisPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]interface{}, error) {
+	return make(map[string]map[string]interface{}), nil
+}
+
+// ClearTableData - not supported for Redis
+func (p *RedisPlugin) ClearTableData(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {
+	return false, errors.ErrUnsupported
+}
+
+// WithTransaction executes the operation directly since Redis doesn't support transactions in the same way as SQL databases
+func (p *RedisPlugin) WithTransaction(config *engine.PluginConfig, operation func(tx any) error) error {
+	// Redis doesn't support transactions in the same way as SQL databases
+	// For now, just execute the operation directly
+	return operation(nil)
 }
 
 func NewRedisPlugin() *engine.Plugin {

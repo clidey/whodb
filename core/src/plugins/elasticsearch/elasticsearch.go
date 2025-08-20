@@ -105,7 +105,7 @@ func (p *ElasticSearchPlugin) GetStorageUnits(config *engine.PluginConfig, datab
 	return storageUnits, nil
 }
 
-func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, collection string, where *model.WhereCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, collection string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	client, err := DB(config)
 	if err != nil {
 		log.Logger.WithError(err).WithField("collection", collection).Error("Failed to connect to ElasticSearch while getting rows")
@@ -125,6 +125,23 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 		"query": map[string]interface{}{
 			"bool": elasticSearchConditions,
 		},
+	}
+
+	// Apply sorting if provided
+	if len(sort) > 0 {
+		sortArray := []map[string]interface{}{}
+		for _, s := range sort {
+			order := "asc"
+			if s.Direction == model.SortDirectionDesc {
+				order = "desc"
+			}
+			sortArray = append(sortArray, map[string]interface{}{
+				s.Column: map[string]interface{}{
+					"order": order,
+				},
+			})
+		}
+		query["sort"] = sortArray
 	}
 
 	var buf bytes.Buffer
@@ -260,12 +277,28 @@ func (p *ElasticSearchPlugin) Chat(config *engine.PluginConfig, schema string, m
 	return nil, errors.ErrUnsupported
 }
 
-
 func (p *ElasticSearchPlugin) FormatValue(val interface{}) string {
 	if val == nil {
 		return ""
 	}
 	return fmt.Sprintf("%v", val)
+}
+
+// GetColumnConstraints - not supported for ElasticSearch
+func (p *ElasticSearchPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]interface{}, error) {
+	return make(map[string]map[string]interface{}), nil
+}
+
+// ClearTableData - not supported for ElasticSearch
+func (p *ElasticSearchPlugin) ClearTableData(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {
+	return false, errors.ErrUnsupported
+}
+
+// WithTransaction executes the operation directly since ElasticSearch doesn't support transactions
+func (p *ElasticSearchPlugin) WithTransaction(config *engine.PluginConfig, operation func(tx any) error) error {
+	// ElasticSearch doesn't support transactions
+	// For now, just execute the operation directly
+	return operation(nil)
 }
 
 func (p *ElasticSearchPlugin) GetSupportedOperators() map[string]string {

@@ -55,6 +55,7 @@ var AllowedOrigins = common.FilterList(strings.Split(os.Getenv("WHODB_ALLOWED_OR
 })
 
 var LogLevel = getLogLevel()
+var EnableMockDataGeneration = os.Getenv("WHODB_ENABLE_MOCK_DATA_GENERATION")
 
 type ChatProvider struct {
 	Type       string
@@ -224,4 +225,26 @@ func getLogLevel() string {
 	default:
 		return "info" // Default to info level
 	}
+
+  func IsMockDataGenerationAllowed(tableName string) bool {
+	if EnableMockDataGeneration == "" {
+		return false
+	}
+
+	if EnableMockDataGeneration == "*" {
+		return true
+	}
+
+	allowedTables := strings.SplitSeq(EnableMockDataGeneration, ",")
+	for allowed := range allowedTables {
+		if strings.TrimSpace(allowed) == tableName {
+			return true
+		}
+	}
+
+	return false
+}
+
+func GetMockDataGenerationMaxRowCount() int {
+	return 200
 }

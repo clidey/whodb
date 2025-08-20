@@ -92,7 +92,7 @@ type GormPluginFunctions interface {
 	// FormatGeometryValue formats geometry data for display
 	// Return empty string to use default hex formatting
 	FormatGeometryValue(rawBytes []byte, columnType string) string
-	
+
 	// HandleCustomDataType allows plugins to handle their own data type conversions
 	// Return (value, true) if handled, or (nil, false) to use default handling
 	HandleCustomDataType(value string, columnType string, isNullable bool) (interface{}, bool, error)
@@ -170,19 +170,19 @@ func (p *GormPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, error
 	})
 }
 
-func (p *GormPlugin) GetRows(config *engine.PluginConfig, schema string, storageUnit string, where *model.WhereCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+func (p *GormPlugin) GetRows(config *engine.PluginConfig, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
 		// Handle SQLite separately due to text conversion of date/time columns
 		if p.Type == engine.DatabaseType_Sqlite3 {
-			return p.getSQLiteRows(db, schema, storageUnit, pageSize, pageOffset)
+			return p.getSQLiteRows(db, schema, storageUnit, sort, pageSize, pageOffset)
 		}
 
 		// General case for other databases
-		return p.getGenericRows(db, schema, storageUnit, where, pageSize, pageOffset)
+		return p.getGenericRows(db, schema, storageUnit, where, sort, pageSize, pageOffset)
 	})
 }
 
-func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	columnInfo, err := p.GetColumnTypes(db, schema, storageUnit)
 	if err != nil {
 		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get column types for table %s.%s", schema, storageUnit))
@@ -200,11 +200,25 @@ func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, page
 	}
 
 	query := fmt.Sprintf(
-		"SELECT %s FROM %s LIMIT %d OFFSET %d",
+		"SELECT %s FROM %s",
 		strings.Join(selects, ", "),
 		p.EscapeIdentifier(storageUnit),
-		pageSize, pageOffset,
 	)
+
+	// Add ORDER BY clause if sort conditions are provided
+	if len(sort) > 0 {
+		orderByParts := []string{}
+		for _, s := range sort {
+			direction := "ASC"
+			if s.Direction == model.SortDirectionDesc {
+				direction = "DESC"
+			}
+			orderByParts = append(orderByParts, fmt.Sprintf("%s %s", p.EscapeIdentifier(s.Column), direction))
+		}
+		query += " ORDER BY " + strings.Join(orderByParts, ", ")
+	}
+
+	query += fmt.Sprintf(" LIMIT %d OFFSET %d", pageSize, pageOffset)
 
 	rows, err := db.Raw(query).Rows()
 	if err != nil {
@@ -216,7 +230,7 @@ func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, page
 	return p.ConvertRawToRows(rows)
 }
 
-func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, where *model.WhereCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	var columnTypes map[string]string
 	if where != nil {
 		columnTypes, _ = p.GetColumnTypes(db, schema, storageUnit)
@@ -233,9 +247,21 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 		return nil, err
 	}
 
-	// Apply custom ordering if specified by the database plugin
-	if orderBy := p.GormPluginFunctions.GetRowsOrderBy(db, schema, storageUnit); orderBy != "" {
-		query = query.Order(orderBy)
+	// Apply sorting conditions if provided
+	if len(sort) > 0 {
+		for _, s := range sort {
+			column := p.EscapeIdentifier(s.Column)
+			direction := "ASC"
+			if s.Direction == model.SortDirectionDesc {
+				direction = "DESC"
+			}
+			query = query.Order(fmt.Sprintf("%s %s", column, direction))
+		}
+	} else {
+		// Apply custom ordering if specified by the database plugin
+		if orderBy := p.GormPluginFunctions.GetRowsOrderBy(db, schema, storageUnit); orderBy != "" {
+			query = query.Order(orderBy)
+		}
 	}
 
 	query = query.Limit(pageSize).Offset(pageOffset)
@@ -507,4 +533,52 @@ func (p *GormPlugin) FormatGeometryValue(rawBytes []byte, columnType string) str
 // HandleCustomDataType returns false by default (no custom handling)
 func (p *GormPlugin) HandleCustomDataType(value string, columnType string, isNullable bool) (interface{}, bool, error) {
 	return nil, false, nil
+}
+
+// WithTransaction executes the given operation within a database transaction
+func (p *GormPlugin) WithTransaction(config *engine.PluginConfig, operation func(tx any) error) error {
+	_, err := plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
+		// Begin transaction
+		tx := db.Begin()
+		if tx.Error != nil {
+			return false, fmt.Errorf("failed to begin transaction: %w", tx.Error)
+		}
+
+		// Execute the operation
+		if err := operation(tx); err != nil {
+			// Rollback on error
+			tx.Rollback()
+			return false, err
+		}
+
+		// Commit transaction
+		if err := tx.Commit().Error; err != nil {
+			return false, fmt.Errorf("failed to commit transaction: %w", err)
+		}
+
+		return true, nil
+	})
+
+	return err
+}
+
+// ExecuteInTransaction wraps common database operations in a transaction
+func (p *GormPlugin) ExecuteInTransaction(config *engine.PluginConfig, operations func(tx *gorm.DB) error) error {
+	return p.WithTransaction(config, func(txInterface any) error {
+		tx, ok := txInterface.(*gorm.DB)
+		if !ok {
+			return fmt.Errorf("invalid transaction type")
+		}
+		return operations(tx)
+	})
+}
+
+// AddRowInTx adds a row using an existing transaction
+func (p *GormPlugin) AddRowInTx(tx *gorm.DB, schema string, storageUnit string, values []engine.Record) error {
+	return p.addRowWithDB(tx, schema, storageUnit, values)
+}
+
+// ClearTableDataInTx clears table data using an existing transaction
+func (p *GormPlugin) ClearTableDataInTx(tx *gorm.DB, schema string, storageUnit string) error {
+	return p.clearTableDataWithDB(tx, schema, storageUnit)
 }

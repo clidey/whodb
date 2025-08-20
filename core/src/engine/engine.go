@@ -58,7 +58,8 @@ func GetStorageUnitModel(unit StorageUnit) *model.StorageUnit {
 		})
 	}
 	return &model.StorageUnit{
-		Name:       unit.Name,
-		Attributes: attributes,
+		Name:                        unit.Name,
+		Attributes:                  attributes,
+		IsMockDataGenerationAllowed: false, // Will be set in resolver
 	}
 }

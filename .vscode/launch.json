@@ -13,6 +13,7 @@
             "env": {
                 "ENVIRONMENT": "dev",
                 "WHODB_LOG_LEVEL": "debug"
+                "WHODB_ENABLE_MOCK_DATA_GENERATION": "*"
             }
         },
         {

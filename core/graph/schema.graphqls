@@ -38,6 +38,16 @@ input WhereCondition {
   Or: OperationWhereCondition
 }
 
+enum SortDirection {
+  ASC
+  DESC
+}
+
+input SortCondition {
+  Column: String!
+  Direction: SortDirection!
+}
+
 type RowsResult {
   Columns: [Column!]!
   Rows: [[String!]!]!
@@ -58,6 +68,7 @@ input RecordInput {
 type StorageUnit {
   Name: String!
   Attributes: [Record!]!
+  IsMockDataGenerationAllowed: Boolean!
 }
 
 enum GraphUnitRelationshipType {
@@ -114,6 +125,18 @@ type StatusResponse {
   Status: Boolean!
 }
 
+input MockDataGenerationInput {
+  Schema: String!
+  StorageUnit: String!
+  RowCount: Int!
+  Method: String!
+  OverwriteExisting: Boolean!
+}
+
+type MockDataGenerationStatus {
+  AmountGenerated: Int!
+}
+
 input ChatInput {
   PreviousConversation: String!
   Query: String!
@@ -140,13 +163,14 @@ type Query {
   Database(type: String!): [String!]!
   Schema: [String!]!
   StorageUnit(schema: String!): [StorageUnit!]!
-  Row(schema: String!, storageUnit: String!, where: WhereCondition, pageSize: Int!, pageOffset: Int!): RowsResult!
+  Row(schema: String!, storageUnit: String!, where: WhereCondition, sort: [SortCondition!], pageSize: Int!, pageOffset: Int!): RowsResult!
   RawExecute(query: String!): RowsResult!
   Graph(schema: String!): [GraphUnit!]!
   AIProviders: [AIProvider!]!
   AIModel(providerId: String, modelType: String!, token: String): [String!]!
   AIChat(providerId: String, modelType: String!, token: String, schema: String!, input: ChatInput!): [AIChatMessage!]!
   SettingsConfig: SettingsConfig!
+  MockDataMaxRowCount: Int!
 }
 
 type Mutation {
@@ -159,4 +183,5 @@ type Mutation {
   UpdateStorageUnit(schema: String!, storageUnit: String!, values: [RecordInput!]!, updatedColumns: [String!]!): StatusResponse!
   AddRow(schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
   DeleteRow(schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
+  GenerateMockData(input: MockDataGenerationInput!): MockDataGenerationStatus!
 }

@@ -88,7 +88,6 @@ type ChatMessage struct {
 	Text   string
 }
 
-
 type PluginFunctions interface {
 	GetDatabases(config *PluginConfig) ([]string, error)
 	IsAvailable(config *PluginConfig) bool
@@ -98,12 +97,19 @@ type PluginFunctions interface {
 	UpdateStorageUnit(config *PluginConfig, schema string, storageUnit string, values map[string]string, updatedColumns []string) (bool, error)
 	AddRow(config *PluginConfig, schema string, storageUnit string, values []Record) (bool, error)
 	DeleteRow(config *PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error)
-	GetRows(config *PluginConfig, schema string, storageUnit string, where *model.WhereCondition, pageSize int, pageOffset int) (*GetRowsResult, error)
+	GetRows(config *PluginConfig, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) (*GetRowsResult, error)
 	GetGraph(config *PluginConfig, schema string) ([]GraphUnit, error)
 	RawExecute(config *PluginConfig, query string) (*GetRowsResult, error)
 	Chat(config *PluginConfig, schema string, model string, previousConversation string, query string) ([]*ChatMessage, error)
 	ExportData(config *PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error
 	FormatValue(val any) string
+
+	// Mock data generation methods
+	GetColumnConstraints(config *PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error)
+	ClearTableData(config *PluginConfig, schema string, storageUnit string) (bool, error)
+	
+	// Transaction support
+	WithTransaction(config *PluginConfig, operation func(tx any) error) error
 }
 
 type Plugin struct {
