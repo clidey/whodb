@@ -231,34 +231,58 @@ export const StorageUnitTable: FC<TableProps> = ({
         }
     };
 
+    // --- Export logic ---
+    const hasSelectedRows = checked.length > 0;
+    const selectedRowsData = useMemo(() => {
+        if (hasSelectedRows) {
+            return checked.map(idx => rows[idx]);
+        }
+        return undefined;
+    }, [hasSelectedRows, checked, rows]);
+
     // Delete logic, adapted from explore-storage-unit.tsx
-    const handleDeleteRow = useCallback((rowIndex: number) => {
-        let values: RecordInput[] = [{ Key: 'id', Value: rowIndex.toString() }]
-        if (selectedRowsData != null) {
-            values = selectedRowsData.map((value, index) => ({ Key: "id", Value: value[index] }));
+    const handleDeleteRow = useCallback(async (rowIndex: number) => {
+        if (!rows || !columns) return;
+        let unableToDeleteAll = false;
+        const deletedIndexes: number[] = [];
+        let indexesToDelete: number[] = [];
+        if (Array.isArray(rowIndex)) {
+            indexesToDelete = rowIndex;
+        } else if (typeof rowIndex === "number") {
+            indexesToDelete = [rowIndex];
         }
-        if (values.length === 0) {
-            return;
+        if (selectedRowsData && selectedRowsData.length > 0) {
+            indexesToDelete = selectedRowsData.map((_, idx) => idx);
         }
-        toast.info(values.length === 1 ? "Deleting row..." : "Deleting rows...");
-        deleteRow({
-            variables: {
-                schema: schema || '',
-                storageUnit: storageUnit || '',
-                values,
-            },
-            onCompleted(data) {
-                if (data?.DeleteRow.Status) {
-                    toast.success("Row deleted");
-                } else {
-                    toast.error("Failed to delete row");
-                }
-            },
-            onError(error) {
-                toast.error(error.message);
-            },
-        });
-    }, [deleteRow, schema, storageUnit]);
+        if (indexesToDelete.length === 0) return;
+        toast.info(indexesToDelete.length === 1 ? "Deleting row..." : "Deleting rows...");
+        for (const index of indexesToDelete) {
+            const row = rows[index];
+            if (!row) continue;
+            const values = columns.map((col, i) => ({
+                Key: col,
+                Value: row[i],
+            }));
+            try {
+                await deleteRow({
+                    variables: {
+                        schema: schema || '',
+                        storageUnit: storageUnit || '',
+                        values,
+                    },
+                });
+                deletedIndexes.push(index);
+            } catch (e: any) {
+                toast.error(`Unable to delete the row: ${e?.message || e}`);
+                unableToDeleteAll = true;
+                break;
+            }
+        }
+        if (!unableToDeleteAll) {
+            toast.success("Row deleted");
+        }
+        onRefresh?.();
+    }, [deleteRow, schema, storageUnit, rows, columns, selectedRowsData, onRefresh]);
 
     const paginatedRows = useMemo(() => rows.slice((currentPage - 1) * pageSize, currentPage * pageSize), [rows, currentPage, pageSize]);
 
@@ -321,15 +345,6 @@ export const StorageUnitTable: FC<TableProps> = ({
             }
         }
     };
-
-    // --- Export logic ---
-    const hasSelectedRows = checked.length > 0;
-    const selectedRowsData = useMemo(() => {
-        if (hasSelectedRows) {
-            return checked.map(idx => rows[idx]);
-        }
-        return undefined;
-    }, [hasSelectedRows, checked, rows]);
 
     // Always call the hook, but use conditional logic inside
     const backendExport = useExportToCSV(schema || '', storageUnit || '', hasSelectedRows, exportDelimiter, selectedRowsData, exportFormat);
@@ -602,7 +617,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                                     variant="destructive"
                                                     disabled={deleting}
                                                     onSelect={() => handleDeleteRow(globalIndex)}>
-                                                    Delete {selectedRowsData == null ? "This" : "All"} Row{selectedRowsData == null ? "" : "s"}
+                                                    Delete {checked.length > 0 ? "Selected" : "This"} Row{checked.length > 1 ? "s" : ""}
                                                 </ContextMenuItem>
                                             </ContextMenuSubContent>
                                         </ContextMenuSub>
