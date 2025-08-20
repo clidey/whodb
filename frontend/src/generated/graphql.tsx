@@ -45,11 +45,6 @@ export type ChatInput = {
   Token?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type CodeCompletionResult = {
-  __typename?: 'CodeCompletionResult';
-  Completions: Array<Scalars['String']['output']>;
-};
-
 export type Column = {
   __typename?: 'Column';
   Name: Scalars['String']['output'];
@@ -58,13 +53,10 @@ export type Column = {
 
 export enum DatabaseType {
   ClickHouse = 'ClickHouse',
-  DynamoDb = 'DynamoDB',
   ElasticSearch = 'ElasticSearch',
-  Mssql = 'MSSQL',
   MariaDb = 'MariaDB',
   MongoDb = 'MongoDB',
   MySql = 'MySQL',
-  Oracle = 'Oracle',
   Postgres = 'Postgres',
   Redis = 'Redis',
   Sqlite3 = 'Sqlite3'
@@ -199,10 +191,7 @@ export type Query = {
   AIChat: Array<AiChatMessage>;
   AIModel: Array<Scalars['String']['output']>;
   AIProviders: Array<AiProvider>;
-  CodeCompletion: CodeCompletionResult;
   Database: Array<Scalars['String']['output']>;
-  ExplainQuery: Scalars['String']['output'];
-  GenerateQuery: Scalars['String']['output'];
   Graph: Array<GraphUnit>;
   MockDataMaxRowCount: Scalars['Int']['output'];
   Profiles: Array<LoginProfile>;
@@ -231,35 +220,8 @@ export type QueryAiModelArgs = {
 };
 
 
-export type QueryCodeCompletionArgs = {
-  input: ChatInput;
-  modelType: Scalars['String']['input'];
-  providerId?: InputMaybe<Scalars['String']['input']>;
-  schema: Scalars['String']['input'];
-  token?: InputMaybe<Scalars['String']['input']>;
-};
-
-
 export type QueryDatabaseArgs = {
   type: Scalars['String']['input'];
-};
-
-
-export type QueryExplainQueryArgs = {
-  input: ChatInput;
-  modelType: Scalars['String']['input'];
-  providerId?: InputMaybe<Scalars['String']['input']>;
-  schema: Scalars['String']['input'];
-  token?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type QueryGenerateQueryArgs = {
-  input: ChatInput;
-  modelType: Scalars['String']['input'];
-  providerId?: InputMaybe<Scalars['String']['input']>;
-  schema: Scalars['String']['input'];
-  token?: InputMaybe<Scalars['String']['input']>;
 };
 
 

@@ -811,29 +811,12 @@ func (ec *executionContext) field_Mutation_DeleteRow_args(ctx context.Context, r
 func (ec *executionContext) field_Mutation_GenerateMockData_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Mutation_GenerateMockData_argsInput(ctx, rawArgs)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNMockDataGenerationInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataGenerationInput)
 	if err != nil {
 		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
-}
-func (ec *executionContext) field_Mutation_GenerateMockData_argsInput(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (model.MockDataGenerationInput, error) {
-	if _, ok := rawArgs["input"]; !ok {
-		var zeroVal model.MockDataGenerationInput
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNMockDataGenerationInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataGenerationInput(ctx, tmp)
-	}
-
-	var zeroVal model.MockDataGenerationInput
-	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_LoginWithProfile_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
@@ -998,129 +981,22 @@ func (ec *executionContext) field_Query_Row_args(ctx context.Context, rawArgs ma
 		return nil, err
 	}
 	args["where"] = arg2
-	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "pageSize", ec.unmarshalNInt2int)
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "sort", ec.unmarshalOSortCondition2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSortConditionᚄ)
 	if err != nil {
 		return nil, err
 	}
-	args["pageSize"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "pageOffset", ec.unmarshalNInt2int)
+	args["sort"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "pageSize", ec.unmarshalNInt2int)
 	if err != nil {
 		return nil, err
 	}
 	args["pageSize"] = arg4
-	arg5, err := ec.field_Query_Row_argsPageOffset(ctx, rawArgs)
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "pageOffset", ec.unmarshalNInt2int)
 	if err != nil {
 		return nil, err
 	}
 	args["pageOffset"] = arg5
 	return args, nil
-}
-func (ec *executionContext) field_Query_Row_argsSchema(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (string, error) {
-	if _, ok := rawArgs["schema"]; !ok {
-		var zeroVal string
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schema"))
-	if tmp, ok := rawArgs["schema"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_Row_argsStorageUnit(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (string, error) {
-	if _, ok := rawArgs["storageUnit"]; !ok {
-		var zeroVal string
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("storageUnit"))
-	if tmp, ok := rawArgs["storageUnit"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_Row_argsWhere(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*model.WhereCondition, error) {
-	if _, ok := rawArgs["where"]; !ok {
-		var zeroVal *model.WhereCondition
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("where"))
-	if tmp, ok := rawArgs["where"]; ok {
-		return ec.unmarshalOWhereCondition2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐWhereCondition(ctx, tmp)
-	}
-
-	var zeroVal *model.WhereCondition
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_Row_argsSort(
-	ctx context.Context,
-	rawArgs map[string]any,
-) ([]*model.SortCondition, error) {
-	if _, ok := rawArgs["sort"]; !ok {
-		var zeroVal []*model.SortCondition
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("sort"))
-	if tmp, ok := rawArgs["sort"]; ok {
-		return ec.unmarshalOSortCondition2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSortConditionᚄ(ctx, tmp)
-	}
-
-	var zeroVal []*model.SortCondition
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_Row_argsPageSize(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (int, error) {
-	if _, ok := rawArgs["pageSize"]; !ok {
-		var zeroVal int
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pageSize"))
-	if tmp, ok := rawArgs["pageSize"]; ok {
-		return ec.unmarshalNInt2int(ctx, tmp)
-	}
-
-	var zeroVal int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_Row_argsPageOffset(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (int, error) {
-	if _, ok := rawArgs["pageOffset"]; !ok {
-		var zeroVal int
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pageOffset"))
-	if tmp, ok := rawArgs["pageOffset"]; ok {
-		return ec.unmarshalNInt2int(ctx, tmp)
-	}
-
-	var zeroVal int
-	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_StorageUnit_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
