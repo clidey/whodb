@@ -26,7 +26,6 @@ import (
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
-	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )

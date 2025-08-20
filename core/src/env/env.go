@@ -225,8 +225,9 @@ func getLogLevel() string {
 	default:
 		return "info" // Default to info level
 	}
+}
 
-  func IsMockDataGenerationAllowed(tableName string) bool {
+func IsMockDataGenerationAllowed(tableName string) bool {
 	if EnableMockDataGeneration == "" {
 		return false
 	}

@@ -95,28 +95,6 @@ func (p *GormPlugin) addRowWithDB(db *gorm.DB, schema string, storageUnit string
 
 func (p *GormPlugin) AddRow(config *engine.PluginConfig, schema string, storageUnit string, values []engine.Record) (bool, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
-		if len(values) == 0 {
-			return false, errors.New("no values provided to insert into the table")
-		}
-
-		schema = p.EscapeIdentifier(schema)
-		storageUnit = p.EscapeIdentifier(storageUnit)
-		fullTableName := p.FormTableName(schema, storageUnit)
-
-		valuesToAdd, err := p.ConvertRecordValuesToMap(values)
-		if err != nil {
-			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to convert record values for insertion into table %s.%s", schema, storageUnit))
-			return false, err
-		}
-
-		result := db.Table(fullTableName).Create(valuesToAdd)
-
-		if result.Error != nil {
-			log.Logger.WithError(result.Error).Error(fmt.Sprintf("Failed to insert row into table %s.%s", schema, storageUnit))
-			return false, result.Error
-		}
-
-		return true, nil
 		err := p.addRowWithDB(db, schema, storageUnit, values)
 		return err == nil, err
 	})
