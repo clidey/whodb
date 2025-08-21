@@ -17,7 +17,6 @@
 @import 'tailwindcss';
 @import 'reactflow/dist/style.css';
 @import '@clidey/ux/styles.css';
-@import '@ee/index.css';
 
 @custom-variant dark (&:where(.dark, .dark *));
 @custom-variant hover (&:hover);

@@ -27,6 +27,12 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { PostHogProvider } from 'posthog-js/react';
 import {initPosthog} from "./config/posthog";
 import { ThemeProvider } from '@clidey/ux'
+import { isEEMode } from './config/ee-imports';
+
+if (isEEMode) {
+  import("@ee/index.css");
+}
+
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement

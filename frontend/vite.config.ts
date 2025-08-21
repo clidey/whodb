@@ -63,6 +63,7 @@ export default defineConfig(async () => {
   return {
     plugins: [
       react(),
+      tailwindcss(),
       eeModulePlugin(),
       istanbulPlugin
     ].filter(Boolean),
