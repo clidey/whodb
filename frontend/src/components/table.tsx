@@ -15,6 +15,9 @@
  */
 
 import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
     Button,
     Checkbox,
     cn,
@@ -28,9 +31,6 @@ import {
     ContextMenuSubTrigger,
     ContextMenuTrigger,
     Input,
-    Alert,
-    AlertDescription,
-    AlertTitle,
     Label,
     Pagination,
     PaginationContent,
@@ -48,8 +48,8 @@ import {
     SheetContent,
     SheetFooter,
     SheetTitle,
-    TableCell,
     Table as TableComponent,
+    TableCell,
     TableHead,
     TableHeader,
     TableRow,
@@ -57,6 +57,7 @@ import {
     VirtualizedTableBody
 } from "@clidey/ux";
 import {
+    ArrowDownCircleIcon,
     CalculatorIcon,
     CalendarIcon,
     CheckCircleIcon,
@@ -70,13 +71,12 @@ import {
     HashtagIcon,
     KeyIcon,
     ListBulletIcon,
-    ArrowDownCircleIcon,
     XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useExportToCSV } from "./hooks"; // You may need to adjust this import
-import { RecordInput, useDeleteRowMutation, useGenerateMockDataMutation, useMockDataMaxRowCountQuery } from '@graphql';
-import { Tip } from "./tip";
+import {FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {useExportToCSV} from "./hooks"; // You may need to adjust this import
+import {useDeleteRowMutation, useGenerateMockDataMutation, useMockDataMaxRowCountQuery} from '@graphql';
+import {Tip} from "./tip";
 
 // Type sets based on core/src/plugins/gorm/utils.go
 const stringTypes = new Set([
@@ -432,7 +432,7 @@ export const StorageUnitTable: FC<TableProps> = ({
 
     // Refresh page when it is resized and it settles
     useEffect(() => {
-        let resizeTimeout: NodeJS.Timeout | null = null;
+        let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
 
         const handleResize = () => {
             if (resizeTimeout) clearTimeout(resizeTimeout);
