@@ -84,6 +84,13 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
         setShowSQL(status => !status);
     }, []);
 
+    const previewResult = useMemo(() => {
+        if (data == null || data.Rows.length === 0) {
+            return "No data was returned.";
+        }
+        return type.toUpperCase().split(":")?.[1];
+    }, [data, type]);
+
     return <div className="flex flex-col w-[calc(100%-50px)] group/table-preview gap-2 relative">
         <div className="absolute -top-3 -left-3 opacity-0 group-hover/table-preview:opacity-100 transition-all z-[1]">
             <Button containerClassName="w-8 h-8" className="w-5 h-5" onClick={handleCodeToggle} data-testid="table-preview-code-toggle">
@@ -107,10 +114,13 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
                             disableEdit={true}
                         />
                     </div>
-                    : <div className="bg-white/10 text-neutral-800 dark:text-neutral-300 rounded-lg p-2 flex gap-2">
-                        Action Executed ({type.toUpperCase().split(":")?.[1]})
+                    : <Alert title="Action Executed" className="w-fit">
                         <CheckCircleIcon className="w-4 h-4" />
-                    </div>
+                        <AlertTitle>Action Executed</AlertTitle>
+                        <AlertDescription>
+                            {previewResult}
+                        </AlertDescription>
+                    </Alert>
             }
         </div>
     </div>
