@@ -179,6 +179,9 @@ export const Sidebar: FC = () => {
     }, [availableDatabases?.Database]);
     
     const handleDatabaseChange = useCallback((value: string) => {
+        if (value === "") {
+            return;
+        }
         if (!current?.Id) return;
         if (pathname !== InternalRoutes.Graph.path && pathname !== InternalRoutes.Dashboard.StorageUnit.path) {
             navigate(InternalRoutes.Dashboard.StorageUnit.path);
@@ -196,6 +199,9 @@ export const Sidebar: FC = () => {
     }, [availableSchemas?.Schema]);
 
     const handleSchemaChange = useCallback((value: string) => {
+        if (value === "") {
+            return;
+        }
         if (pathname !== InternalRoutes.Graph.path && pathname !== InternalRoutes.Dashboard.StorageUnit.path) {
             navigate(InternalRoutes.Dashboard.StorageUnit.path);
         }
