@@ -31,6 +31,7 @@ import {
     WhereCondition,
     SortCondition,
     SortDirection,
+    useUpdateStorageUnitMutation,
 } from '@graphql';
 import { CheckCircleIcon, CommandLineIcon, PlayIcon, PlusCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { entries, keys, map } from "lodash";
@@ -68,6 +69,8 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     // For add row sheet logic
     const [addRowData, setAddRowData] = useState<Record<string, any>>({});
     const [addRowError, setAddRowError] = useState<string | null>(null);
+
+    const [updateStorageUnit, { loading: updating }] = useUpdateStorageUnitMutation();
     
     // For scratchpad sheet logic
     // todo: is there a different way to do this? clickhouse doesn't have schemas as a table is considered a schema. people mainly switch between DB
@@ -129,36 +132,53 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         });
     }, []);
 
-    const handleRowUpdate = useCallback((row: Record<string, string | number>, updatedColumn: string) => {
-        if (current == null) {
-            return Promise.reject();
-        }
-        const values = map(entries(row), ([Key, Value]) => ({
-            Key,
-            Value,
-        }));
-        const updatedColumns = [updatedColumn]
-        return new Promise<void>(async (res, rej) => {
-            try {
-                const { data }: FetchResult<UpdateStorageUnitMutationResult["data"]> = await graphqlClient.mutate({
-                    mutation: UpdateStorageUnitDocument,
+    const handleRowUpdate = useCallback(
+        (
+            row: Record<string, string | number>,
+            originalRow?: Record<string, string | number>
+        ) => {
+            if (!current) {
+                return Promise.resolve();
+            }
+    
+            return new Promise<void>((resolve, reject) => {
+                // Figure out which columns to update
+                const changedColumns = originalRow
+                    ? Object.keys(row).filter((col) => row[col] !== originalRow[col])
+                    : Object.keys(row);
+        
+                if (changedColumns.length === 0) {
+                    // Nothing changed, skip
+                    return Promise.resolve();
+                }
+        
+                // Build values for only changed columns
+                const values = changedColumns.map((col) => ({
+                    Key: col,
+                    Value: row[col].toString(),
+                }));
+        
+                updateStorageUnit({
                     variables: {
                         schema,
                         storageUnit: unitName,
-                        type: current.Type as DatabaseType,
                         values,
-                        updatedColumns,
+                        updatedColumns: changedColumns,
+                    },
+                    onCompleted: (data) => {
+                        if (!data?.UpdateStorageUnit.Status) {
+                            return reject(new Error("Update failed"));
+                        }
+                        return resolve();
+                    },
+                    onError: (error) => {
+                        return reject(error);
                     },
                 });
-                if (data?.UpdateStorageUnit.Status) {
-                    return res();
-                }
-                return rej();
-            } catch (err) {
-                return rej(err);
-            }
-        });
-    }, [current, schema, unitName]);
+            });
+        },
+        [current, schema, unitName]
+    );
 
     const totalCount = useMemo(() => {
         const count = unit?.Attributes.find(attribute => attribute.Key === "Count")?.Value;

@@ -130,8 +130,7 @@ interface TableProps {
     rows: string[][];
     rowHeight?: number;
     height?: number;
-    onRowUpdate?: (row: Record<string, string | number>, updatedColumn: string) => Promise<void>;
-    onRowDelete?: (rowIndex: number) => Promise<void> | void;
+    onRowUpdate?: (row: Record<string, string | number>, originalRow?: Record<string, string | number>) => Promise<void>;
     disableEdit?: boolean;
     schema?: string;
     storageUnit?: string;
@@ -149,7 +148,6 @@ export const StorageUnitTable: FC<TableProps> = ({
     rowHeight = 48,
     height = 500,
     onRowUpdate,
-    onRowDelete,
     disableEdit = false,
     schema,
     storageUnit,
@@ -211,25 +209,31 @@ export const StorageUnitTable: FC<TableProps> = ({
         }
     };
 
-    const handleUpdate = () => {
+    const handleUpdate = useCallback(() => {
         if (editIndex !== null && editRow) {
-            if (editRow && editIndex !== null) {
-                const updatedRow: Record<string, string | number> = {};
+            const updatedRow: Record<string, string | number> = {};
+            columns.forEach((col, idx) => {
+                updatedRow[col] = editRow[idx];
+            });
+            // Pass the original row as the second argument
+            const originalRow: Record<string, string | number> = {};
+            if (rows[editIndex]) {
                 columns.forEach((col, idx) => {
-                    updatedRow[col] = editRow[idx];
+                    originalRow[col] = rows[editIndex][idx];
                 });
-                onRowUpdate?.(updatedRow, columns[editIndex]).then(() => {
+            }
+            onRowUpdate?.(updatedRow, originalRow)
+                .then(() => {
                     setEditIndex(null);
                     setEditRow(null);
                     toast.success("Row updated");
-                }).catch(() => {
+                    onRefresh?.();
+                })
+                .catch(() => {
                     toast.error("Error updating row");
                 });
-            }
-            setEditIndex(null);
-            setEditRow(null);
         }
-    };
+    }, [editIndex, editRow, columns, onRowUpdate, rows, onRefresh]);
 
     // --- Export logic ---
     const hasSelectedRows = checked.length > 0;
@@ -691,7 +695,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                     </div>
                                 ))}
                         </div>
-                        <SheetFooter className="flex gap-2">
+                        <SheetFooter className="flex gap-2 px-0">
                             <Button onClick={handleUpdate} disabled={!editRow}>
                                 Update
                             </Button>
