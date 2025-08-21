@@ -67,8 +67,12 @@ func (p *GormPlugin) DeleteRow(config *engine.PluginConfig, schema string, stora
 			}
 		}
 
-		schema = p.EscapeIdentifier(schema)
-		storageUnit = p.EscapeIdentifier(storageUnit)
+		// todo: mysql seems to break with the below, so skip it for now. need to refactor and fix data handling at an earlier stage
+		if p.Type != engine.DatabaseType_MySQL && p.Type != engine.DatabaseType_MariaDB {
+			schema = p.EscapeIdentifier(schema)
+			storageUnit = p.EscapeIdentifier(storageUnit)
+		}
+
 		tableName := p.FormTableName(schema, storageUnit)
 
 		var result *gorm.DB
