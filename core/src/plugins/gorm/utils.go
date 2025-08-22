@@ -76,14 +76,36 @@ func (p *GormPlugin) ConvertRecordValuesToMap(values []engine.Record) (map[strin
 	return data, nil
 }
 
-// todo: see if the 2 functions below can use db.Migrator.Column_Info
+// GetPrimaryKeyColumns uses GORM's Migrator when possible, falls back to raw SQL
 func (p *GormPlugin) GetPrimaryKeyColumns(db *gorm.DB, schema string, tableName string) ([]string, error) {
-	var primaryKeys []string
+	// Try using Migrator first
+	migrator := NewMigratorHelper(db, p)
+
+	// Build full table name for Migrator
+	var fullTableName string
+	if schema != "" && p.Type != engine.DatabaseType_Sqlite3 {
+		fullTableName = schema + "." + tableName
+	} else {
+		fullTableName = tableName
+	}
+
+	// Attempt to get primary keys using Migrator
+	primaryKeys, err := migrator.GetPrimaryKeys(fullTableName)
+	if err == nil && len(primaryKeys) > 0 {
+		return primaryKeys, nil
+	}
+
+	// Fall back to raw SQL if Migrator didn't work
+	log.Logger.Debug("Migrator failed to get primary keys, falling back to raw SQL")
+
+	// Reset for raw SQL approach
+	primaryKeys = []string{}
 	query := p.GetPrimaryKeyColQuery()
 
 	var rows *sql.Rows
-	var err error
 
+	// TODO: BIG EDGE CASE - SQLite doesn't use schema in queries
+	// This should be handled by each plugin's override of GetPrimaryKeyColQuery
 	if p.Type == engine.DatabaseType_Sqlite3 {
 		rows, err = db.Raw(query, tableName).Rows()
 	} else {
@@ -117,12 +139,32 @@ func (p *GormPlugin) GetPrimaryKeyColumns(db *gorm.DB, schema string, tableName 
 	return primaryKeys, nil
 }
 
+// GetColumnTypes uses GORM's Migrator when possible, falls back to raw SQL
 func (p *GormPlugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[string]string, error) {
-	columnTypes := make(map[string]string)
+	// Try using Migrator first
+	migrator := NewMigratorHelper(db, p)
+
+	// Build full table name for Migrator
+	var fullTableName string
+	if schema != "" && p.Type != engine.DatabaseType_Sqlite3 {
+		fullTableName = schema + "." + tableName
+	} else {
+		fullTableName = tableName
+	}
+
+	// Attempt to get column types using Migrator
+	columnTypes, err := migrator.GetColumnTypes(fullTableName)
+	if err == nil && len(columnTypes) > 0 {
+		return columnTypes, nil
+	}
+
+	// Fall back to raw SQL if Migrator didn't work
+	log.Logger.Debug("Migrator failed to get column types, falling back to raw SQL")
+
+	columnTypes = make(map[string]string)
 	query := p.GetColTypeQuery()
 
 	var rows *sql.Rows
-	var err error
 
 	if p.Type == engine.DatabaseType_Sqlite3 {
 		rows, err = db.Raw(query, tableName).Rows()

@@ -34,6 +34,14 @@ import (
 type GormPlugin struct {
 	engine.Plugin
 	GormPluginFunctions
+	errorHandler *ErrorHandler
+}
+
+// InitPlugin initializes the plugin with an error handler
+func (p *GormPlugin) InitPlugin() {
+	if p.errorHandler == nil {
+		p.errorHandler = NewErrorHandler(p)
+	}
 }
 
 type GormPluginFunctions interface {
@@ -50,6 +58,8 @@ type GormPluginFunctions interface {
 	DB(config *engine.PluginConfig) (*gorm.DB, error)
 	GetSupportedColumnDataTypes() mapset.Set[string]
 	GetPlaceholder(index int) string
+	// Deprecated: GORM handles identifier escaping automatically
+	// This method is kept for backward compatibility but should not be used
 	ShouldQuoteIdentifiers() bool
 
 	GetTableInfoQuery() string
@@ -100,7 +110,7 @@ type GormPluginFunctions interface {
 
 func (p *GormPlugin) GetStorageUnits(config *engine.PluginConfig, schema string) ([]engine.StorageUnit, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]engine.StorageUnit, error) {
-		storageUnits := []engine.StorageUnit{}
+		var storageUnits []engine.StorageUnit
 		rows, err := db.Raw(p.GetTableInfoQuery(), schema).Rows()
 		if err != nil {
 			log.Logger.WithError(err).Error("Failed to execute table info query for schema: " + schema)
@@ -159,10 +169,12 @@ func (p *GormPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, error
 		var schemas []any
 		query := p.GetAllSchemasQuery()
 		if err := db.Raw(query).Scan(&schemas).Error; err != nil {
-			log.Logger.WithError(err).Error("Failed to execute get all schemas query")
-			return nil, err
+			// Use error handler for consistent error handling
+			return nil, p.errorHandler.HandleError(err, "GetAllSchemas", map[string]any{
+				"query": query,
+			})
 		}
-		schemaNames := []string{}
+		var schemaNames []string
 		for _, schema := range schemas {
 			schemaNames = append(schemaNames, fmt.Sprintf("%s", schema))
 		}
@@ -172,7 +184,9 @@ func (p *GormPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, error
 
 func (p *GormPlugin) GetRows(config *engine.PluginConfig, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
-		// Handle SQLite separately due to text conversion of date/time columns
+		// TODO: BIG EDGE CASE - SQLite requires special handling for date/time columns
+		// SQLite stores dates as TEXT and needs CAST operations for proper sorting
+		// This should ideally be handled by the SQLite plugin override, not here
 		if p.Type == engine.DatabaseType_Sqlite3 {
 			return p.getSQLiteRows(db, schema, storageUnit, sort, pageSize, pageOffset)
 		}
@@ -190,7 +204,9 @@ func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, sort
 	}
 
 	selects := make([]string, 0, len(columnInfo))
+	columns := make([]string, 0, len(columnInfo))
 	for col, colType := range columnInfo {
+		columns = append(columns, col)
 		colType = strings.ToUpper(colType)
 		if colType == "DATE" || colType == "DATETIME" || colType == "TIMESTAMP" {
 			selects = append(selects, fmt.Sprintf("CAST(%s AS TEXT) AS %s", col, col))
@@ -199,21 +215,21 @@ func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, sort
 		}
 	}
 
-	query := fmt.Sprintf(
-		"SELECT %s FROM %s",
-		strings.Join(selects, ", "),
-		p.EscapeIdentifier(storageUnit),
-	)
+	// Use SQL builder for query construction
+	// This special case is for SQLite date/time handling
+	builder := NewSQLBuilder(db, p)
+	query := builder.BuildExportSelectQuery("", storageUnit, columns)
 
 	// Add ORDER BY clause if sort conditions are provided
 	if len(sort) > 0 {
-		orderByParts := []string{}
+		var orderByParts []string
 		for _, s := range sort {
 			direction := "ASC"
 			if s.Direction == model.SortDirectionDesc {
 				direction = "DESC"
 			}
-			orderByParts = append(orderByParts, fmt.Sprintf("%s %s", p.EscapeIdentifier(s.Column), direction))
+			// For raw SQL, we need escaping
+			orderByParts = append(orderByParts, builder.QuoteIdentifier(s.Column)+" "+direction)
 		}
 		query += " ORDER BY " + strings.Join(orderByParts, ", ")
 	}
@@ -236,9 +252,9 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 		columnTypes, _ = p.GetColumnTypes(db, schema, storageUnit)
 	}
 
-	schema = p.EscapeIdentifier(schema)
-	storageUnit = p.EscapeIdentifier(storageUnit)
-	fullTable := p.FormTableName(schema, storageUnit)
+	// Use SQL builder for table name construction
+	builder := NewSQLBuilder(db, p)
+	fullTable := builder.BuildFullTableName(schema, storageUnit)
 
 	query := db.Table(fullTable)
 	query, err := p.applyWhereConditions(query, where, columnTypes)
@@ -249,14 +265,18 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 
 	// Apply sorting conditions if provided
 	if len(sort) > 0 {
-		for _, s := range sort {
-			column := p.EscapeIdentifier(s.Column)
-			direction := "ASC"
-			if s.Direction == model.SortDirectionDesc {
-				direction = "DESC"
+		// Convert to Sort type for builder
+		sortList := make([]plugins.Sort, len(sort))
+		for i, s := range sort {
+			sortList[i] = plugins.Sort{
+				Column:    s.Column,
+				Direction: plugins.Down,
 			}
-			query = query.Order(fmt.Sprintf("%s %s", column, direction))
+			if s.Direction == model.SortDirectionAsc {
+				sortList[i].Direction = plugins.Up
+			}
 		}
+		query = builder.BuildOrderBy(query, sortList)
 	} else {
 		// Apply custom ordering if specified by the database plugin
 		if orderBy := p.GormPluginFunctions.GetRowsOrderBy(db, schema, storageUnit); orderBy != "" {
@@ -314,7 +334,8 @@ func (p *GormPlugin) applyWhereConditions(query *gorm.DB, condition *model.Where
 			if !ok {
 				return nil, fmt.Errorf("invalid SQL operator: %s", condition.Atomic.Operator)
 			}
-			query = query.Where(fmt.Sprintf("%s %s ?", p.EscapeIdentifier(condition.Atomic.Key), operator), value)
+			builder := NewSQLBuilder(query.Session(&gorm.Session{NewDB: true}), p)
+			query = query.Where(builder.QuoteIdentifier(condition.Atomic.Key)+" "+operator+" ?", value)
 		}
 
 	case model.WhereConditionTypeAnd:
@@ -376,6 +397,14 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 	for _, col := range columns {
 		if colType, exists := typeMap[col]; exists {
 			colTypeName := colType.DatabaseTypeName()
+			// TODO: BIG EDGE CASE - PostgreSQL array types start with underscore
+			// This should be handled in the PostgreSQL plugin's GetCustomColumnTypeName
+			/*
+				if p.Type == engine.DatabaseType_Postgres && strings.HasPrefix(colTypeName, "_") {
+					colTypeName = strings.Replace(colTypeName, "_", "[]", 1)
+				}
+			*/
+			// Keep for now until PostgreSQL plugin properly handles this
 			if p.Type == engine.DatabaseType_Postgres && strings.HasPrefix(colTypeName, "_") {
 				colTypeName = strings.Replace(colTypeName, "_", "[]", 1)
 			}
@@ -482,8 +511,8 @@ func (p *GormPlugin) FindMissingDataType(db *gorm.DB, columnType string) string 
 	return columnType
 }
 
-// ShouldQuoteIdentifiers returns whether column identifiers should be quoted in queries
-// Default implementation returns false; specific database plugins can override
+// ShouldQuoteIdentifiers is deprecated - GORM handles identifier escaping automatically
+// This method is kept for backward compatibility with existing plugins
 func (p *GormPlugin) ShouldQuoteIdentifiers() bool {
 	return false
 }

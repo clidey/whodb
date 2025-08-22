@@ -18,10 +18,10 @@ package clickhouse
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/plugins/gorm"
 )
 
 // ExportData exports ClickHouse table data to tabular format
@@ -68,14 +68,9 @@ func (p *ClickHousePlugin) ExportData(config *engine.PluginConfig, schema string
 		return fmt.Errorf("failed to write headers: %v", err)
 	}
 
-	// Export data with proper identifier escaping
-	// Escape column names
-	escapedColumns := make([]string, len(columns))
-	for i, col := range columns {
-		escapedColumns[i] = EscapeIdentifier(col)
-	}
-	selectQuery := fmt.Sprintf("SELECT %s FROM %s.%s",
-		strings.Join(escapedColumns, ", "), EscapeIdentifier(schema), EscapeIdentifier(storageUnit))
+	// Use SQL builder for query construction
+	builder := gorm_plugin.NewSQLBuilder(db, p)
+	selectQuery := builder.BuildExportSelectQuery(schema, storageUnit, columns)
 
 	dataRows, err := db.Raw(selectQuery).Rows()
 	if err != nil {
@@ -107,10 +102,8 @@ func (p *ClickHousePlugin) ExportData(config *engine.PluginConfig, schema string
 		rowCount++
 	}
 
-
 	return dataRows.Err()
 }
-
 
 // Helper functions
 
@@ -128,15 +121,7 @@ func (p *ClickHousePlugin) formatValue(val any) string {
 	default:
 		strVal = fmt.Sprintf("%v", v)
 	}
-	
+
 	// Apply formula injection protection
 	return common.EscapeFormula(strVal)
 }
-
-// EscapeIdentifier escapes ClickHouse identifiers to prevent SQL injection
-func EscapeIdentifier(identifier string) string {
-	// ClickHouse uses backticks for identifier escaping
-	// Replace any backticks in the identifier with doubled backticks
-	return "`" + strings.ReplaceAll(identifier, "`", "``") + "`"
-}
-

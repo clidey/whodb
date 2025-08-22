@@ -293,3 +293,5 @@ import { useMyQuery } from '@graphql';
 1. Ensure the backend is running: `cd core && go run .`
 2. Run code generation: `cd frontend && pnpm run generate`
 3. This will update `src/generated/graphql.tsx` with all types and hooks
+
+- never fully outright delete files, and always confirm with me before you do.

@@ -33,16 +33,27 @@ func (p *GormPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, 
 			return false, errors.New("no fields provided for table creation")
 		}
 
-		schema = p.EscapeIdentifier(schema)
-		storageUnit = p.EscapeIdentifier(storageUnit)
+		// Check if table already exists using Migrator
+		migrator := NewMigratorHelper(db, p)
+		var fullTableName string
+		if schema != "" && p.Type != engine.DatabaseType_Sqlite3 {
+			fullTableName = schema + "." + storageUnit
+		} else {
+			fullTableName = storageUnit
+		}
 
-		columns := []engine.Record{}
+		if migrator.TableExists(fullTableName) {
+			return false, fmt.Errorf("table %s already exists", fullTableName)
+		}
+
+		var columns []engine.Record
 		for _, fieldType := range fields {
 			if !p.GetSupportedColumnDataTypes().Contains(fieldType.Value) {
 				return false, fmt.Errorf("data type: %s not supported by: %s", fieldType.Value, p.Plugin.Type)
 			}
 
-			fieldName := p.EscapeIdentifier(fieldType.Key)
+			// Keep original field name without quoting for column definition
+			fieldName := fieldType.Key
 			primaryKey, err := strconv.ParseBool(fieldType.Extra["Primary"])
 			if err != nil {
 				log.Logger.WithError(err).Error(fmt.Sprintf("Failed to parse Primary key flag for field %s in table %s.%s", fieldType.Key, schema, storageUnit))
@@ -80,22 +91,34 @@ func (p *GormPlugin) addRowWithDB(db *gorm.DB, schema string, storageUnit string
 		return errors.New("no values provided to insert into the table")
 	}
 
-	schema = p.EscapeIdentifier(schema)
-	storageUnit = p.EscapeIdentifier(storageUnit)
-	fullTableName := p.FormTableName(schema, storageUnit)
+	// Use SQL builder for consistent insert operations
+	builder := NewSQLBuilder(db, p)
 
 	valuesToAdd, err := p.ConvertRecordValuesToMap(values)
 	if err != nil {
 		return err
 	}
 
-	result := db.Table(fullTableName).Create(valuesToAdd)
-	return result.Error
+	// Use SQLBuilder's InsertRow method which uses GORM's native Create
+	return builder.InsertRow(schema, storageUnit, valuesToAdd)
 }
 
 func (p *GormPlugin) AddRow(config *engine.PluginConfig, schema string, storageUnit string, values []engine.Record) (bool, error) {
+	// Initialize error handler if needed
+	if p.errorHandler == nil {
+		p.InitPlugin()
+	}
+
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
 		err := p.addRowWithDB(db, schema, storageUnit, values)
+		if err != nil {
+			// Use error handler for user-friendly error messages
+			err = p.errorHandler.HandleError(err, "AddRow", map[string]any{
+				"schema":      schema,
+				"storageUnit": storageUnit,
+				"valueCount":  len(values),
+			})
+		}
 		return err == nil, err
 	})
 }

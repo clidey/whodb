@@ -104,10 +104,9 @@ func (p *Sqlite3Plugin) GetTableNameAndAttributes(rows *sql.Rows, db *gorm.DB) (
 		return "", nil
 	}
 
-	var rowCount int64
-	escapedTableName := p.EscapeIdentifier(tableName)
-	rowCountRow := db.Raw(fmt.Sprintf("SELECT COUNT(*) FROM %s", escapedTableName)).Row()
-	err := rowCountRow.Scan(&rowCount)
+	// Use SQL builder for count query
+	builder := gorm_plugin.NewSQLBuilder(db, p)
+	rowCount, err := builder.CountQuery("", tableName)
 	if err != nil {
 		return "", nil
 	}

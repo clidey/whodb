@@ -1,0 +1,220 @@
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package gorm_plugin
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/clidey/whodb/core/src/plugins"
+	"gorm.io/gorm"
+)
+
+// SQLBuilder provides SQL query building functionality
+// IMPORTANT: This builder prioritizes GORM's native methods for all operations where possible.
+// Manual SQL building is ONLY used for:
+//   - DDL statements (CREATE TABLE, ALTER TABLE) - GORM doesn't support dynamic DDL
+//   - SQLite PRAGMA commands - These don't support placeholders
+//   - Export queries with specific column formatting needs
+type SQLBuilder struct {
+	db     *gorm.DB
+	plugin *GormPlugin
+}
+
+// NewSQLBuilder creates a new SQL builder
+func NewSQLBuilder(db *gorm.DB, plugin *GormPlugin) *SQLBuilder {
+	return &SQLBuilder{
+		db:     db,
+		plugin: plugin,
+	}
+}
+
+// QuoteIdentifier quotes an identifier (column/table name) ONLY for DDL operations
+// For DML operations (SELECT, INSERT, UPDATE, DELETE), use GORM's native methods
+// which handle escaping automatically
+func (sb *SQLBuilder) QuoteIdentifier(identifier string) string {
+	return sb.plugin.EscapeIdentifier(identifier)
+}
+
+// BuildFullTableName builds a fully qualified table name for GORM operations
+// GORM handles escaping internally, so we just build the string
+func (sb *SQLBuilder) BuildFullTableName(schema, table string) string {
+	if schema == "" {
+		return table
+	}
+	return schema + "." + table
+}
+
+// SelectQuery builds a SELECT query using GORM's query builder
+// GORM handles all escaping automatically
+func (sb *SQLBuilder) SelectQuery(schema, table string, columns []string, conditions map[string]any) *gorm.DB {
+	fullTableName := sb.BuildFullTableName(schema, table)
+	query := sb.db.Table(fullTableName)
+
+	// GORM handles column name escaping automatically
+	if len(columns) > 0 {
+		query = query.Select(columns)
+	}
+
+	// Add WHERE conditions using GORM's native support
+	if len(conditions) > 0 {
+		query = query.Where(conditions)
+	}
+
+	return query
+}
+
+// BuildOrderBy builds ORDER BY clause using GORM's Order method
+// GORM handles column name escaping automatically
+func (sb *SQLBuilder) BuildOrderBy(query *gorm.DB, sortList []plugins.Sort) *gorm.DB {
+	for _, sort := range sortList {
+		direction := "ASC"
+		if sort.Direction == plugins.Down {
+			direction = "DESC"
+		}
+		// GORM's Order method handles column name escaping automatically
+		query = query.Order(sort.Column + " " + direction)
+	}
+	return query
+}
+
+// CreateTableQuery builds a CREATE TABLE statement for DDL operations
+// DDL requires manual SQL building as GORM doesn't support dynamic table creation
+func (sb *SQLBuilder) CreateTableQuery(schema, table string, columns []ColumnDef) string {
+	columnDefs := make([]string, len(columns))
+	primaryKeys := []string{}
+
+	for i, col := range columns {
+		def := sb.QuoteIdentifier(col.Name) + " " + col.Type
+
+		if col.Primary {
+			primaryKeys = append(primaryKeys, sb.QuoteIdentifier(col.Name))
+		}
+
+		if !col.Nullable && !col.Primary {
+			def += " NOT NULL"
+		}
+
+		columnDefs[i] = def
+	}
+
+	// Add primary key constraint if there are primary keys
+	if len(primaryKeys) > 0 {
+		columnDefs = append(columnDefs, fmt.Sprintf("PRIMARY KEY (%s)", strings.Join(primaryKeys, ", ")))
+	}
+
+	// For DDL, we need proper identifier escaping
+	var fullTableName string
+	if schema == "" {
+		fullTableName = sb.QuoteIdentifier(table)
+	} else {
+		fullTableName = sb.QuoteIdentifier(schema) + "." + sb.QuoteIdentifier(table)
+	}
+	return fmt.Sprintf("CREATE TABLE %s (%s)", fullTableName, strings.Join(columnDefs, ", "))
+}
+
+// CreateTableQueryWithSuffix builds a CREATE TABLE statement with a suffix (for ClickHouse ENGINE, etc)
+func (sb *SQLBuilder) CreateTableQueryWithSuffix(schema, table string, columns []ColumnDef, suffix string) string {
+	baseQuery := sb.CreateTableQuery(schema, table, columns)
+	if suffix != "" {
+		return baseQuery + " " + suffix
+	}
+	return baseQuery
+}
+
+// InsertRow inserts a row using GORM's Create method
+// GORM handles all escaping automatically
+func (sb *SQLBuilder) InsertRow(schema, table string, data map[string]any) error {
+	fullTableName := sb.BuildFullTableName(schema, table)
+	return sb.db.Table(fullTableName).Create(data).Error
+}
+
+// UpdateQuery builds an UPDATE query using GORM's Update methods
+// GORM handles all escaping automatically
+func (sb *SQLBuilder) UpdateQuery(schema, table string, updates map[string]any, conditions map[string]any) *gorm.DB {
+	fullTableName := sb.BuildFullTableName(schema, table)
+	query := sb.db.Table(fullTableName)
+
+	// Add WHERE conditions using GORM's native support
+	if len(conditions) > 0 {
+		query = query.Where(conditions)
+	}
+
+	// Add updates - GORM handles column escaping
+	return query.Updates(updates)
+}
+
+// DeleteQuery builds a DELETE query using GORM's Delete method
+// GORM handles all escaping automatically
+func (sb *SQLBuilder) DeleteQuery(schema, table string, conditions map[string]any) *gorm.DB {
+	fullTableName := sb.BuildFullTableName(schema, table)
+	query := sb.db.Table(fullTableName)
+
+	// Add WHERE conditions using GORM's native support
+	if len(conditions) > 0 {
+		query = query.Where(conditions)
+	}
+
+	return query.Delete(nil)
+}
+
+// CountQuery builds a COUNT query using GORM's Count method
+// GORM handles all escaping automatically
+func (sb *SQLBuilder) CountQuery(schema, table string) (int64, error) {
+	var count int64
+	fullTableName := sb.BuildFullTableName(schema, table)
+	err := sb.db.Table(fullTableName).Count(&count).Error
+	return count, err
+}
+
+// BuildExportSelectQuery builds a SELECT query for export
+// This is only used for SQLite special case where GORM doesn't handle date casting
+// For normal exports, use GORM's query builder instead
+func (sb *SQLBuilder) BuildExportSelectQuery(schema, table string, columns []string) string {
+	columnList := "*"
+	if len(columns) > 0 {
+		quotedColumns := make([]string, len(columns))
+		for i, col := range columns {
+			quotedColumns[i] = sb.QuoteIdentifier(col)
+		}
+		columnList = strings.Join(quotedColumns, ", ")
+	}
+
+	// For raw SQL, we need proper identifier escaping
+	var fullTableName string
+	if schema == "" {
+		fullTableName = sb.QuoteIdentifier(table)
+	} else {
+		fullTableName = sb.QuoteIdentifier(schema) + "." + sb.QuoteIdentifier(table)
+	}
+	return fmt.Sprintf("SELECT %s FROM %s", columnList, fullTableName)
+}
+
+// PragmaQuery builds a SQLite PRAGMA query
+// PRAGMA commands don't support placeholders, so we must escape identifiers
+// This is a SQLite-specific edge case
+func (sb *SQLBuilder) PragmaQuery(pragma, table string) string {
+	return fmt.Sprintf("PRAGMA %s(%s)", pragma, sb.QuoteIdentifier(table))
+}
+
+// ColumnDef represents a column definition for CREATE TABLE
+type ColumnDef struct {
+	Name     string
+	Type     string
+	Primary  bool
+	Nullable bool
+}
