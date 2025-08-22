@@ -184,6 +184,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [generateMockData, { loading: generatingMockData }] = useGenerateMockDataMutation();
     const [deleteRow, ] = useDeleteRowMutation();
     const [containerWidth, setContainerWidth] = useState<number>(0);
+    const lastSearchState = useRef<{ search: string; matchIdx: number }>({ search: '', matchIdx: 0 });
 
     // Export options as lists
     const exportFormatOptions = [
@@ -467,13 +468,22 @@ export const StorageUnitTable: FC<TableProps> = ({
     useEffect(() => {
         if (!searchRef) return;
 
+        let lastHighlightedCell: HTMLElement | null = null;
+
         searchRef.current = (search: string) => {
             // Remove any previous highlight
             document.querySelectorAll('.table-search-highlight').forEach(el => {
-                el.classList.remove('bg-yellow-200', 'table-search-highlight');
+                el.classList.remove('bg-yellow-200', 'table-search-highlight', 'bg-muted');
             });
 
+            // Remove highlight from the last highlighted cell if it exists
+            if (lastHighlightedCell) {
+                lastHighlightedCell.classList.remove('bg-muted', 'table-search-highlight', 'bg-yellow-200');
+                lastHighlightedCell = null;
+            }
+
             if (!search || !rows || !columns) {
+                lastSearchState.current = { search: '', matchIdx: 0 };
                 return;
             }
 
@@ -492,19 +502,45 @@ export const StorageUnitTable: FC<TableProps> = ({
             });
 
             if (matches.length > 0) {
-                // Only highlight and scroll to the first match (radix logic: rowIdx, colIdx)
-                const { rowIdx, colIdx } = matches[0];
+                // Determine which match to highlight
+                let matchIdx = 0;
+                if (lastSearchState.current.search === search) {
+                    // Advance to next match, wrap around
+                    matchIdx = (lastSearchState.current.matchIdx + 1) % matches.length;
+                }
+                // Update last search state
+                lastSearchState.current = { search, matchIdx };
+
+                const { rowIdx, colIdx } = matches[matchIdx];
                 // Compose a unique selector for the cell
-                // Each cell should have a data attribute for row and col index
                 const selector = `[data-row-idx="${rowIdx}"] [data-col-idx="${colIdx}"]`;
                 const cell = document.querySelector(selector) as HTMLElement | null;
                 if (cell) {
+                    // Remove highlight from any previously highlighted cell
+                    document.querySelectorAll('.table-search-highlight').forEach(el => {
+                        el.classList.remove('bg-muted', 'table-search-highlight', 'bg-yellow-200');
+                    });
                     cell.classList.add('bg-muted', 'table-search-highlight');
+                    lastHighlightedCell = cell;
                     cell.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
                     setTimeout(() => {
-                        cell.classList.remove('bg-muted', 'table-search-highlight');
+                        if (cell === lastHighlightedCell) {
+                            cell.classList.remove('bg-muted', 'table-search-highlight');
+                            lastHighlightedCell = null;
+                        }
                     }, 3000);
                 }
+            } else {
+                // No matches, reset state
+                lastSearchState.current = { search, matchIdx: 0 };
+            }
+        };
+
+        // Cleanup on unmount
+        return () => {
+            if (lastHighlightedCell) {
+                lastHighlightedCell.classList.remove('bg-muted', 'table-search-highlight', 'bg-yellow-200');
+                lastHighlightedCell = null;
             }
         };
     }, [searchRef, rows, columns]);
