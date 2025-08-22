@@ -54,7 +54,8 @@ import {
     TableHeader,
     TableRow,
     toast,
-    VirtualizedTableBody
+    VirtualizedTableBody,
+    EmptyState
 } from "@clidey/ux";
 import {
     ArrowDownCircleIcon,
@@ -546,95 +547,160 @@ export const StorageUnitTable: FC<TableProps> = ({
                             ))}
                         </TableRow>
                     </TableHeader>
-                    <VirtualizedTableBody rowCount={paginatedRows.length} rowHeight={rowHeight} height={height}>
-                        {(index) => {
-                            const globalIndex = (currentPage - 1) * pageSize + index;
-                            return (
-                                <ContextMenu key={globalIndex}>
-                                    <ContextMenuTrigger
-                                        asChild
-                                        className="contents"
-                                    >
-                                        <tr data-row-idx={index}>
-                                            <TableCell className={cn("w-[20rem]", {
-                                                "hidden": disableEdit,
-                                            })}>
-                                                <Checkbox
-                                                    checked={checked.includes(globalIndex)}
-                                                    onCheckedChange={() => setChecked(checked.includes(globalIndex) ? checked.filter(i => i !== globalIndex) : [...checked, globalIndex])}
-                                                />
-                                            </TableCell>
-                                            {paginatedRows[index]?.map((cell, cellIdx) => (
-                                                <TableCell key={cellIdx} className="cursor-pointer" onClick={() => handleCellClick(globalIndex, cellIdx)} data-col-idx={cellIdx}>{cell}</TableCell>
-                                            ))}
-                                        </tr>
-                                    </ContextMenuTrigger>
-                                    <ContextMenuContent className="w-52">
-                                        <ContextMenuItem onSelect={() => handleSelectRow(globalIndex)}>
-                                            {checked.includes(globalIndex) ? "Deselect Row" : "Select Row"}
-                                        </ContextMenuItem>
-                                        <ContextMenuItem onSelect={() => handleEdit(globalIndex)} disabled={checked.length > 0}>
-                                            Edit Row
-                                            <ContextMenuShortcut>⌘E</ContextMenuShortcut>
-                                        </ContextMenuItem>
-                                        <ContextMenuSub>
-                                            <ContextMenuSubTrigger>Export</ContextMenuSubTrigger>
-                                            <ContextMenuSubContent>
-                                                <ContextMenuItem
-                                                    onSelect={() => { setShowExportConfirm(true); setExportFormat('csv'); }}
-                                                >
-                                                    <DocumentIcon className="w-4 h-4" />
-                                                    Export All as CSV
-                                                </ContextMenuItem>
-                                                <ContextMenuItem
-                                                    onSelect={() => { setShowExportConfirm(true); setExportFormat('excel'); }}
-                                                >
-                                                    <DocumentIcon className="w-4 h-4" />
-                                                    Export All as Excel
-                                                </ContextMenuItem>
-                                                <ContextMenuSeparator />
-                                                <ContextMenuItem
-                                                    onSelect={() => { setShowExportConfirm(true); setExportFormat('csv'); }}
-                                                    disabled={checked.length === 0}
-                                                >
-                                                    <DocumentIcon className="w-4 h-4" />
-                                                    Export Selected as CSV
-                                                </ContextMenuItem>
-                                                <ContextMenuItem
-                                                    onSelect={() => { setShowExportConfirm(true); setExportFormat('excel'); }}
-                                                    disabled={checked.length === 0}
-                                                >
-                                                    <DocumentIcon className="w-4 h-4" />
-                                                    Export Selected as Excel
-                                                </ContextMenuItem>
-                                            </ContextMenuSubContent>
-                                        </ContextMenuSub>
+                    {paginatedRows.length === 0 ? (
+                        <ContextMenu>
+                            <ContextMenuTrigger asChild>
+                                <div className="flex items-center justify-center h-full min-h-[500px]">
+                                    <EmptyState title="No data available" description="No data available" icon={<DocumentTextIcon className="w-4 h-4" />} />
+                                </div>
+                            </ContextMenuTrigger>
+                            <ContextMenuContent className="w-52">
+                                <ContextMenuItem disabled>
+                                    No rows to select
+                                </ContextMenuItem>
+                                <ContextMenuItem disabled>
+                                    Edit Row
+                                    <ContextMenuShortcut>⌘E</ContextMenuShortcut>
+                                </ContextMenuItem>
+                                <ContextMenuSub>
+                                    <ContextMenuSubTrigger>Export</ContextMenuSubTrigger>
+                                    <ContextMenuSubContent>
                                         <ContextMenuItem
-                                            onSelect={() => setShowMockDataSheet(true)}
+                                            disabled
+                                            onSelect={() => { setShowExportConfirm(true); setExportFormat('csv'); }}
                                         >
-                                            Generate Mock Data
+                                            <DocumentIcon className="w-4 h-4" />
+                                            Export All as CSV
                                         </ContextMenuItem>
-                                        <ContextMenuSub>
-                                            <ContextMenuSubTrigger>More Actions</ContextMenuSubTrigger>
-                                            <ContextMenuSubContent className="w-44">
-                                                <ContextMenuItem
-                                                    variant="destructive"
-                                                    disabled={deleting}
-                                                    onSelect={() => handleDeleteRow(globalIndex)}>
-                                                    Delete {checked.length > 0 ? "Selected" : "This"} Row{checked.length > 1 ? "s" : ""}
-                                                </ContextMenuItem>
-                                            </ContextMenuSubContent>
-                                        </ContextMenuSub>
+                                        <ContextMenuItem
+                                            disabled
+                                            onSelect={() => { setShowExportConfirm(true); setExportFormat('excel'); }}
+                                        >
+                                            <DocumentIcon className="w-4 h-4" />
+                                            Export All as Excel
+                                        </ContextMenuItem>
                                         <ContextMenuSeparator />
-                                        <ContextMenuItem onSelect={() => handleEdit(globalIndex)}>
-                                            Open in Graph View
-                                            <ContextMenuShortcut>⌘G</ContextMenuShortcut>
+                                        <ContextMenuItem disabled>
+                                            <DocumentIcon className="w-4 h-4" />
+                                            Export Selected as CSV
                                         </ContextMenuItem>
-                                    </ContextMenuContent>
-                                </ContextMenu>
-                            );
-                        }}
-                    </VirtualizedTableBody>
+                                        <ContextMenuItem disabled>
+                                            <DocumentIcon className="w-4 h-4" />
+                                            Export Selected as Excel
+                                        </ContextMenuItem>
+                                    </ContextMenuSubContent>
+                                </ContextMenuSub>
+                                <ContextMenuItem
+                                    onSelect={() => setShowMockDataSheet(true)}
+                                >
+                                    Generate Mock Data
+                                </ContextMenuItem>
+                                <ContextMenuSub>
+                                    <ContextMenuSubTrigger>More Actions</ContextMenuSubTrigger>
+                                    <ContextMenuSubContent className="w-44">
+                                        <ContextMenuItem disabled>
+                                            Delete Row
+                                        </ContextMenuItem>
+                                    </ContextMenuSubContent>
+                                </ContextMenuSub>
+                                <ContextMenuSeparator />
+                                <ContextMenuItem disabled>
+                                    Open in Graph View
+                                    <ContextMenuShortcut>⌘G</ContextMenuShortcut>
+                                </ContextMenuItem>
+                            </ContextMenuContent>
+                        </ContextMenu>
+                    ) : (
+                        <VirtualizedTableBody rowCount={paginatedRows.length} rowHeight={rowHeight} height={height}>
+                            {(index) => {
+                                const globalIndex = (currentPage - 1) * pageSize + index;
+                                return (
+                                    <ContextMenu key={globalIndex}>
+                                        <ContextMenuTrigger
+                                            asChild
+                                            className="contents"
+                                        >
+                                            <tr data-row-idx={index}>
+                                                <TableCell className={cn("w-[20rem]", {
+                                                    "hidden": disableEdit,
+                                                })}>
+                                                    <Checkbox
+                                                        checked={checked.includes(globalIndex)}
+                                                        onCheckedChange={() => setChecked(checked.includes(globalIndex) ? checked.filter(i => i !== globalIndex) : [...checked, globalIndex])}
+                                                    />
+                                                </TableCell>
+                                                {paginatedRows[index]?.map((cell, cellIdx) => (
+                                                    <TableCell key={cellIdx} className="cursor-pointer" onClick={() => handleCellClick(globalIndex, cellIdx)} data-col-idx={cellIdx}>{cell}</TableCell>
+                                                ))}
+                                            </tr>
+                                        </ContextMenuTrigger>
+                                        <ContextMenuContent className="w-52">
+                                            <ContextMenuItem onSelect={() => handleSelectRow(globalIndex)}>
+                                                {checked.includes(globalIndex) ? "Deselect Row" : "Select Row"}
+                                            </ContextMenuItem>
+                                            <ContextMenuItem onSelect={() => handleEdit(globalIndex)} disabled={checked.length > 0}>
+                                                Edit Row
+                                                <ContextMenuShortcut>⌘E</ContextMenuShortcut>
+                                            </ContextMenuItem>
+                                            <ContextMenuSub>
+                                                <ContextMenuSubTrigger>Export</ContextMenuSubTrigger>
+                                                <ContextMenuSubContent>
+                                                    <ContextMenuItem
+                                                        onSelect={() => { setShowExportConfirm(true); setExportFormat('csv'); }}
+                                                    >
+                                                        <DocumentIcon className="w-4 h-4" />
+                                                        Export All as CSV
+                                                    </ContextMenuItem>
+                                                    <ContextMenuItem
+                                                        onSelect={() => { setShowExportConfirm(true); setExportFormat('excel'); }}
+                                                    >
+                                                        <DocumentIcon className="w-4 h-4" />
+                                                        Export All as Excel
+                                                    </ContextMenuItem>
+                                                    <ContextMenuSeparator />
+                                                    <ContextMenuItem
+                                                        onSelect={() => { setShowExportConfirm(true); setExportFormat('csv'); }}
+                                                        disabled={checked.length === 0}
+                                                    >
+                                                        <DocumentIcon className="w-4 h-4" />
+                                                        Export Selected as CSV
+                                                    </ContextMenuItem>
+                                                    <ContextMenuItem
+                                                        onSelect={() => { setShowExportConfirm(true); setExportFormat('excel'); }}
+                                                        disabled={checked.length === 0}
+                                                    >
+                                                        <DocumentIcon className="w-4 h-4" />
+                                                        Export Selected as Excel
+                                                    </ContextMenuItem>
+                                                </ContextMenuSubContent>
+                                            </ContextMenuSub>
+                                            <ContextMenuItem
+                                                onSelect={() => setShowMockDataSheet(true)}
+                                            >
+                                                Generate Mock Data
+                                            </ContextMenuItem>
+                                            <ContextMenuSub>
+                                                <ContextMenuSubTrigger>More Actions</ContextMenuSubTrigger>
+                                                <ContextMenuSubContent className="w-44">
+                                                    <ContextMenuItem
+                                                        variant="destructive"
+                                                        disabled={deleting}
+                                                        onSelect={() => handleDeleteRow(globalIndex)}>
+                                                        Delete {checked.length > 0 ? "Selected" : "This"} Row{checked.length > 1 ? "s" : ""}
+                                                    </ContextMenuItem>
+                                                </ContextMenuSubContent>
+                                            </ContextMenuSub>
+                                            <ContextMenuSeparator />
+                                            <ContextMenuItem onSelect={() => handleEdit(globalIndex)} disabled>
+                                                Open in Graph View
+                                                <ContextMenuShortcut>⌘G</ContextMenuShortcut>
+                                            </ContextMenuItem>
+                                        </ContextMenuContent>
+                                    </ContextMenu>
+                                );
+                            }}
+                        </VirtualizedTableBody>
+                    )}
                 </TableComponent>
                 <div className={cn("flex justify-between items-center mb-2", {
                     "justify-end": children == null,

@@ -276,7 +276,7 @@ export const StorageUnitPage: FC = () => {
                     </Button>
                 </div>
                 <div className="flex grow flex-col my-2 gap-4">
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-4">
                         <h1 className="text-2xl font-bold mb-4">Create a {getDatabaseStorageUnitLabel(current?.Type, true)}</h1>
                         <div className="flex flex-col gap-2">
                             <Label>Name</Label>
@@ -288,7 +288,7 @@ export const StorageUnitPage: FC = () => {
                             <div className="flex flex-col gap-4">
                                 {
                                     fields.map((field, index) => (
-                                        <div className="flex flex-col gap-2" key={`field-${index}`}>
+                                        <div className="flex flex-col gap-4" key={`field-${index}`}>
                                             <Label>Field Name</Label>
                                             <Input value={field.Key} onChange={e => handleFieldValueChange("Key", index, e.target.value)} placeholder="Enter field name"/>
                                             <Label>Field Type</Label>
