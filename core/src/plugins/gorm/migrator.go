@@ -30,12 +30,12 @@ import (
 // NOTE: Most methods are not yet used but are prepared for future schema modification features
 type MigratorHelper struct {
 	db       *gorm.DB
-	plugin   *GormPlugin
+	plugin   GormPluginFunctions
 	migrator gorm.Migrator
 }
 
 // NewMigratorHelper creates a new migrator helper
-func NewMigratorHelper(db *gorm.DB, plugin *GormPlugin) *MigratorHelper {
+func NewMigratorHelper(db *gorm.DB, plugin GormPluginFunctions) *MigratorHelper {
 	return &MigratorHelper{
 		db:       db,
 		plugin:   plugin,
@@ -131,7 +131,7 @@ func (m *MigratorHelper) getColumnTypesRaw(tableName string) (map[string]string,
 	var rows *sql.Rows
 	var err error
 
-	if m.plugin.Type == engine.DatabaseType_Sqlite3 {
+	if m.plugin.GetDatabaseType() == engine.DatabaseType_Sqlite3 {
 		rows, err = m.db.Raw(query, table).Rows()
 	} else {
 		rows, err = m.db.Raw(query, schema, table).Rows()
@@ -233,7 +233,7 @@ func (m *MigratorHelper) RenameColumn(tableName string, oldName, newName string,
 	escapedOld := m.plugin.EscapeIdentifier(oldName)
 	escapedNew := m.plugin.EscapeIdentifier(newName)
 
-	switch m.plugin.Type {
+	switch m.plugin.GetDatabaseType() {
 	case engine.DatabaseType_Postgres:
 		query = "ALTER TABLE " + escapedTable +
 			" RENAME COLUMN " + escapedOld +
@@ -320,7 +320,7 @@ func (m *MigratorHelper) DropConstraint(tableName string, constraintName string)
 	escapedConstraint := m.plugin.EscapeIdentifier(constraintName)
 
 	var query string
-	switch m.plugin.Type {
+	switch m.plugin.GetDatabaseType() {
 	case engine.DatabaseType_MySQL, engine.DatabaseType_MariaDB:
 		// MySQL uses different syntax for different constraint types
 		// For simplicity, try dropping as index first, then as foreign key

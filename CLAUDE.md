@@ -22,6 +22,8 @@ To develop WhoDB, follow the below requirements every time you do a task:
 9. Use `any` instead of `interface{}` in all Go code (Go 1.18+ modern syntax).
 10. When updating dependencies, ensure versions are identical between Community Edition (`core/go.mod`) and Enterprise Edition (`ee/go.mod`) to prevent version mismatches and compatibility issues.
 11. Never log sensitive data such as passwords, API keys, tokens, or full connection strings. Only log non-sensitive metadata like hostnames, ports, database names, and error types.
+12. Never fully outright delete files, and always confirm with me before you do. 
+13. Use the BUILD_AND_RUN.md to see how to run the various commands for both versions.
 
 ## Build & Development Commands
 
@@ -293,5 +295,3 @@ import { useMyQuery } from '@graphql';
 1. Ensure the backend is running: `cd core && go run .`
 2. Run code generation: `cd frontend && pnpm run generate`
 3. This will update `src/generated/graphql.tsx` with all types and hooks
-
-- never fully outright delete files, and always confirm with me before you do.

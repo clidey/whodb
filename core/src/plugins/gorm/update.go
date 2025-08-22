@@ -75,7 +75,7 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 
 		// Use SQL builder for table name construction
 		builder := NewSQLBuilder(db, p)
-		tableName := builder.QuoteFullTableName(schema, storageUnit)
+		tableName := builder.BuildFullTableName(schema, storageUnit)
 
 		// TODO: BIG EDGE CASE - MySQL/MariaDB have escaping issues with WHERE clause
 		// This needs manual investigation - the driver doesn't properly escape WHERE conditions

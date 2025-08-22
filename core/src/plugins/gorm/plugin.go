@@ -106,6 +106,15 @@ type GormPluginFunctions interface {
 	// HandleCustomDataType allows plugins to handle their own data type conversions
 	// Return (value, true) if handled, or (nil, false) to use default handling
 	HandleCustomDataType(value string, columnType string, isNullable bool) (interface{}, bool, error)
+
+	// GetPrimaryKeyColumns returns the primary key columns for a table
+	GetPrimaryKeyColumns(db *gorm.DB, schema string, tableName string) ([]string, error)
+
+	// GetDatabaseType returns the database type
+	GetDatabaseType() engine.DatabaseType
+
+	// GetColumnConstraints retrieves column constraints for a table
+	GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error)
 }
 
 func (p *GormPlugin) GetStorageUnits(config *engine.PluginConfig, schema string) ([]engine.StorageUnit, error) {
@@ -562,6 +571,11 @@ func (p *GormPlugin) FormatGeometryValue(rawBytes []byte, columnType string) str
 // HandleCustomDataType returns false by default (no custom handling)
 func (p *GormPlugin) HandleCustomDataType(value string, columnType string, isNullable bool) (interface{}, bool, error) {
 	return nil, false, nil
+}
+
+// GetDatabaseType returns the database type
+func (p *GormPlugin) GetDatabaseType() engine.DatabaseType {
+	return p.Type
 }
 
 // WithTransaction executes the given operation within a database transaction

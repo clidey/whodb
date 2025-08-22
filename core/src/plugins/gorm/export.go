@@ -100,7 +100,7 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 	}
 
 	// Use batch processor for efficient export
-	processor := NewBatchProcessor(p, &BatchConfig{
+	processor := NewBatchProcessor(p, p.Type, &BatchConfig{
 		BatchSize:   10000, // Larger batch size for exports
 		LogProgress: true,  // Log export progress
 	})

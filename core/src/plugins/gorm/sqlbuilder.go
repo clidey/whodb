@@ -32,11 +32,11 @@ import (
 //   - Export queries with specific column formatting needs
 type SQLBuilder struct {
 	db     *gorm.DB
-	plugin *GormPlugin
+	plugin GormPluginFunctions
 }
 
 // NewSQLBuilder creates a new SQL builder
-func NewSQLBuilder(db *gorm.DB, plugin *GormPlugin) *SQLBuilder {
+func NewSQLBuilder(db *gorm.DB, plugin GormPluginFunctions) *SQLBuilder {
 	return &SQLBuilder{
 		db:     db,
 		plugin: plugin,
@@ -217,4 +217,6 @@ type ColumnDef struct {
 	Type     string
 	Primary  bool
 	Nullable bool
+	NotNull  bool   // Explicit NOT NULL flag (opposite of Nullable)
+	Extra    string // Additional column modifiers (e.g., AUTO_INCREMENT, DEFAULT)
 }

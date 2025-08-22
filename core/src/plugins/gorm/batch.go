@@ -45,18 +45,20 @@ func DefaultBatchConfig() *BatchConfig {
 
 // BatchProcessor handles batch operations for the plugin
 type BatchProcessor struct {
-	plugin *GormPlugin
+	plugin GormPluginFunctions
 	config *BatchConfig
+	dbType engine.DatabaseType
 }
 
 // NewBatchProcessor creates a new batch processor
-func NewBatchProcessor(plugin *GormPlugin, config *BatchConfig) *BatchProcessor {
+func NewBatchProcessor(plugin GormPluginFunctions, dbType engine.DatabaseType, config *BatchConfig) *BatchProcessor {
 	if config == nil {
 		config = DefaultBatchConfig()
 	}
 	return &BatchProcessor{
 		plugin: plugin,
 		config: config,
+		dbType: dbType,
 	}
 }
 
@@ -68,7 +70,7 @@ func (b *BatchProcessor) InsertBatch(db *gorm.DB, schema, tableName string, reco
 
 	// Build full table name
 	var fullTableName string
-	if schema != "" && b.plugin.Type != engine.DatabaseType_Sqlite3 {
+	if schema != "" && b.dbType != engine.DatabaseType_Sqlite3 {
 		fullTableName = schema + "." + tableName
 	} else {
 		fullTableName = tableName
@@ -143,7 +145,7 @@ func (b *BatchProcessor) UpdateBatch(db *gorm.DB, schema, tableName string, upda
 
 	// Build full table name
 	var fullTableName string
-	if schema != "" && b.plugin.Type != engine.DatabaseType_Sqlite3 {
+	if schema != "" && b.dbType != engine.DatabaseType_Sqlite3 {
 		fullTableName = schema + "." + tableName
 	} else {
 		fullTableName = tableName
@@ -226,7 +228,7 @@ func (b *BatchProcessor) DeleteBatch(db *gorm.DB, schema, tableName string, cond
 
 	// Build full table name
 	var fullTableName string
-	if schema != "" && b.plugin.Type != engine.DatabaseType_Sqlite3 {
+	if schema != "" && b.dbType != engine.DatabaseType_Sqlite3 {
 		fullTableName = schema + "." + tableName
 	} else {
 		fullTableName = tableName
@@ -286,7 +288,7 @@ func (b *BatchProcessor) DeleteBatch(db *gorm.DB, schema, tableName string, cond
 func (b *BatchProcessor) ExportInBatches(db *gorm.DB, schema, tableName string, columns []string, writer func([]map[string]any) error) error {
 	// Build full table name
 	var fullTableName string
-	if schema != "" && b.plugin.Type != engine.DatabaseType_Sqlite3 {
+	if schema != "" && b.dbType != engine.DatabaseType_Sqlite3 {
 		fullTableName = schema + "." + tableName
 	} else {
 		fullTableName = tableName
@@ -348,7 +350,7 @@ func (b *BatchProcessor) ExportInBatches(db *gorm.DB, schema, tableName string, 
 func (b *BatchProcessor) ProcessInBatches(db *gorm.DB, schema, tableName string, processor func(*gorm.DB, []map[string]any) error) error {
 	// Build full table name
 	var fullTableName string
-	if schema != "" && b.plugin.Type != engine.DatabaseType_Sqlite3 {
+	if schema != "" && b.dbType != engine.DatabaseType_Sqlite3 {
 		fullTableName = schema + "." + tableName
 	} else {
 		fullTableName = tableName
@@ -419,7 +421,7 @@ func (p *GormPlugin) BulkAddRows(config *engine.PluginConfig, schema string, sto
 		}
 
 		// Use batch processor for bulk insert
-		processor := NewBatchProcessor(p, &BatchConfig{
+		processor := NewBatchProcessor(p, p.Type, &BatchConfig{
 			BatchSize:     1000,
 			UseBulkInsert: true,
 			FailOnError:   true,

@@ -27,11 +27,11 @@ import (
 
 // ErrorHandler provides centralized error handling for GORM operations
 type ErrorHandler struct {
-	plugin *GormPlugin
+	plugin GormPluginFunctions
 }
 
 // NewErrorHandler creates a new error handler
-func NewErrorHandler(plugin *GormPlugin) *ErrorHandler {
+func NewErrorHandler(plugin GormPluginFunctions) *ErrorHandler {
 	return &ErrorHandler{plugin: plugin}
 }
 
