@@ -119,6 +119,7 @@ export const Sidebar: FC = () => {
     const handleProfileChange = useCallback(async (value: string, database?: string) => {
         const selectedProfile = profiles.find(profile => profile.Id === value);
         if (!selectedProfile) return;
+        dispatch(DatabaseActions.setSchema(""));
         if (selectedProfile.Saved) {
             await loginWithProfile({
                 variables: {

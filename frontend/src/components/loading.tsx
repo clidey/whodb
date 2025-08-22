@@ -15,45 +15,34 @@
  */
 
 import { FC } from "react";
-import { twMerge } from "tailwind-merge";
 import { Container } from "./page";
+
+import { Spinner } from "@clidey/ux";
 
 type ILoadingProps = {
   className?: string;
+  size?: "sm" | "md" | "lg";
   hideText?: boolean;
   loadingText?: string;
-  size?: "lg" | "md" | "sm";
 }
 
-export const Loading: FC<ILoadingProps> = ({ className, hideText, loadingText, size = "md" }) => {
+export const Loading: FC<ILoadingProps> = ({ className, size = 56, hideText, loadingText }) => {
+  let textSize = "text-base";
   if (size === "sm") {
-    return <div className="flex justify-center items-center w-fit h-fit gap-1">
-      <div className="h-[16px] w-[16px] relative">
-        <div className="scale-[0.25] absolute top-0 left-0 -translate-y-[20px] -translate-x-[20px]">
-          <Loading className={className} hideText={hideText} loadingText={loadingText} size="lg" />
-        </div>
-      </div>
-      {
-        !hideText &&
-        <p className="text-sm">{loadingText}</p>
-      }
-    </div>
+    textSize = "text-xs";
+  } else if (size === "md") {
+    textSize = "text-sm";
+  } else if (size === "lg") {
+    textSize = "text-base";
   }
-  if (size === "md") {
-    return <div className="flex justify-center items-center w-fit h-fit gap-1">
-      <div className="h-[32px] w-[32px] relative">
-        <div className="scale-[0.5] absolute top-0 left-0 -translate-y-[12px] -translate-x-[12px]">
-          <Loading className={className} hideText={hideText} loadingText={loadingText} size="lg" />
-        </div>
-      </div>
-      {
-        !hideText &&
-        <p className="text-sm">{loadingText}</p>
-      }
+
+  return (
+    <div className="flex justify-center items-center w-fit h-fit gap-2">
+      <Spinner className={className} size={size} />
+      {!hideText && <p className={textSize}>{loadingText}</p>}
     </div>
-  }
-  return <div className={twMerge("loader w-14 aspect-square animate-boxy rounded-full", className)}></div>;
-}
+  );
+};
 
 
 export const LoadingPage: FC = () => {

@@ -676,7 +676,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                             </ContextMenuItem>
                                             <ContextMenuItem onSelect={() => handleEdit(globalIndex)} disabled={checked.length > 0}>
                                                 Edit Row
-                                                <ContextMenuShortcut>⌘E</ContextMenuShortcut>
+                                                {/* <ContextMenuShortcut>⌘E</ContextMenuShortcut> */}
                                             </ContextMenuItem>
                                             <ContextMenuSub>
                                                 <ContextMenuSubTrigger>Export</ContextMenuSubTrigger>
@@ -873,15 +873,15 @@ export const StorageUnitTable: FC<TableProps> = ({
                                 <ul className="list-disc list-inside space-y-1">
                                     {exportFormat === 'csv' ? (
                                         <>
-                                            <li><p>Headers include column names and data types</p></li>
-                                            <li><p>UTF-8 encoding</p></li>
-                                            <li><p>Customizable delimiter</p></li>
+                                            <li><p className="inline-block">Headers include column names and data types</p></li>
+                                            <li><p className="inline-block">UTF-8 encoding</p></li>
+                                            <li><p className="inline-block">Customizable delimiter</p></li>
                                         </>
                                     ) : (
                                         <>
-                                            <li><p>Excel XLSX format</p></li>
-                                            <li><p>Formatted headers with styling</p></li>
-                                            <li><p>Auto-sized columns</p></li>
+                                            <li><p className="inline-block">Excel XLSX format</p></li>
+                                            <li><p className="inline-block">Formatted headers with styling</p></li>
+                                            <li><p className="inline-block">Auto-sized columns</p></li>
                                         </>
                                     )}
                                 </ul>

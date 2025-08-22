@@ -23,6 +23,7 @@ import {
   Sheet,
   SheetTrigger,
   SheetContent,
+  Spinner,
 } from "@clidey/ux";
 import {
   FC,
@@ -45,7 +46,6 @@ type ICardProps = {
   children: ReactElement[] | ReactElement | ReactNode;
   loading?: boolean;
   highlight?: boolean;
-  loadingText?: string;
 };
 
 export const Card: FC<ICardProps> = ({
@@ -55,7 +55,6 @@ export const Card: FC<ICardProps> = ({
   tag,
   highlight,
   loading,
-  loadingText,
 }) => {
   const [highlightStatus, setHighlightStatus] = useState(highlight);
 
@@ -79,7 +78,7 @@ export const Card: FC<ICardProps> = ({
         className,
       )}>
       {loading ? (
-        <Loading loadingText={loadingText} />
+        <Spinner />
       ) : (
         <>
           {(propsIcon || tag) && (

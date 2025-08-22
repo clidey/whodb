@@ -44,13 +44,11 @@ export const Breadcrumb: FC<IBreadcrumbProps> = ({ routes, active }) => {
           const isLast = i === routes.length - 1;
           return (
             <BreadcrumbItem key={route.name}>
-              {i > 0 && <BreadcrumbSeparator><ChevronRightIcon className="w-4 h-4" /></BreadcrumbSeparator>}
+              {i > 0 && <BreadcrumbSeparator><ChevronRightIcon className="w-4 h-4 mr-1" /></BreadcrumbSeparator>}
               {isLast || isActive ? (
-                <BreadcrumbPage>
+                <BreadcrumbPage className="flex items-center gap-1">
                   {i === 0 && (
-                    <span className="inline-flex items-center mr-1">
-                      <HomeIcon className="w-4 h-4" />
-                    </span>
+                    <HomeIcon className="w-4 h-4" />
                   )}
                   {route.name}
                 </BreadcrumbPage>
@@ -60,11 +58,9 @@ export const Breadcrumb: FC<IBreadcrumbProps> = ({ routes, active }) => {
                   className="cursor-pointer"
                   onClick={() => navigate(route.path)}
                 >
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center gap-1">
                     {i === 0 && (
-                      <span className="inline-flex items-center mr-1">
-                        <HomeIcon className="w-4 h-4" />
-                      </span>
+                      <HomeIcon className="w-4 h-4" />
                     )}
                     {route.name}
                   </span>
