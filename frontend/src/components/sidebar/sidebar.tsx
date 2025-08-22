@@ -327,6 +327,7 @@ export const Sidebar: FC = () => {
                                 </div>
                                 <div className={cn("flex flex-col gap-2 w-full", {
                                     "opacity-0 pointer-events-none": !open || pathname.includes(InternalRoutes.RawExecute.path),
+                                    "hidden": !databaseSupportsSchema(current?.Database),
                                 })}>
                                     <h2 className="text-sm">Schema</h2>
                                     <SearchSelect

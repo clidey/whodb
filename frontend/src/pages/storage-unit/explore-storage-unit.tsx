@@ -14,40 +14,34 @@
  * limitations under the License.
  */
 
-import { FetchResult } from "@apollo/client";
 import { Button, Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle, Input, Label, SearchInput, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Sheet, SheetContent, SheetFooter, toast } from "@clidey/ux";
 import {
     DatabaseType,
     RecordInput,
     RowsResult,
+    SortCondition,
+    SortDirection,
     StorageUnit,
-    DeleteRowDocument,
-    DeleteRowMutationResult,
-    UpdateStorageUnitDocument,
-    UpdateStorageUnitMutationResult,
     useAddRowMutation,
     useGetStorageUnitRowsLazyQuery,
     useRawExecuteLazyQuery,
-    WhereCondition,
-    SortCondition,
-    SortDirection,
     useUpdateStorageUnitMutation,
+    WhereCondition
 } from '@graphql';
 import { CheckCircleIcon, CommandLineIcon, PlayIcon, PlusCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { entries, keys, map } from "lodash";
+import { keys } from "lodash";
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { CodeEditor } from "../../components/editor";
-import { Loading, LoadingPage } from "../../components/loading";
+import { LoadingPage } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { getColumnIcons, StorageUnitTable } from "../../components/table";
-import { graphqlClient } from "../../config/graphql-client";
+import { Tip } from "../../components/tip";
 import { InternalRoutes } from "../../config/routes";
 import { useAppSelector } from "../../store/hooks";
 import { getDatabaseOperators } from "../../utils/database-operators";
 import { getDatabaseStorageUnitLabel } from "../../utils/functions";
 import { ExploreStorageUnitWhereCondition } from "./explore-storage-unit-where-condition";
-import { Tip } from "../../components/tip";
 
 
 export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad }) => {
@@ -152,8 +146,9 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                     return Promise.resolve();
                 }
         
-                // Build values for only changed columns
-                const values = changedColumns.map((col) => ({
+                // Build values for all columns
+                const allColumns = Object.keys(row);
+                const values = allColumns.map((col) => ({
                     Key: col,
                     Value: row[col].toString(),
                 }));
