@@ -75,7 +75,7 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
                     {
                         current == null
                         ? <Loading />
-                        : <div className="flex grow flex-wrap gap-2 py-4 content-start relative px-8">
+                        : <div className="flex grow flex-wrap gap-2 py-4 content-start relative px-8" data-testid="page-content">
                             {props.children}
                         </div>
                     }

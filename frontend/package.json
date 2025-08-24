@@ -5,7 +5,7 @@
   "type": "module",
   "dependencies": {
     "@apollo/client": "^3.13.8",
-    "@clidey/ux": "^0.21.0",
+    "@clidey/ux": "^0.21.1",
     "@codemirror/lang-json": "^6.0.2",
     "@codemirror/lang-markdown": "^6.3.3",
     "@codemirror/lang-sql": "^6.9.0",
