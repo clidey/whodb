@@ -310,7 +310,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                     {history.map(({ id, item, status, date }) => (
                                         <Card className="w-full p-4 relative" key={id}>
                                             <Badge
-                                                variant={status ? "success" : "destructive"}
+                                                variant={status ? "default" : "destructive"}
                                                 className="absolute top-0 -translate-y-1/2 right-2"
                                             >
                                                 {status ? "Success" : "Error"}

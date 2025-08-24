@@ -297,12 +297,12 @@ export const ChatPage: FC = () => {
                                                     {!chat.isUserInput && chats[i-1]?.isUserInput
                                                         ? extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8 mt-2" />
                                                         : <div className="pl-4" />}
-                                                    <div className={classNames("text-neutral-800 dark:text-neutral-300 px-4 py-2 rounded-xl whitespace-pre-wrap", {
+                                                    <p className={classNames("px-4 py-2 rounded-xl whitespace-pre-wrap", {
                                                         "bg-neutral-600/5 dark:bg-[#2C2F33]": chat.isUserInput,
                                                         "-ml-2": !chat.isUserInput && chats[i-1]?.isUserInput,
                                                     })} data-input-message={chat.isUserInput ? "user" : "system"}>
                                                         {chat.Text}
-                                                    </div>
+                                                    </p>
                                                 </div>
                                             } else if (chat.Type === "error") {
                                                 return (
