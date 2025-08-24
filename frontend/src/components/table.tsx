@@ -643,41 +643,39 @@ export const StorageUnitTable: FC<TableProps> = ({
                             ))}
                         </TableRow>
                     </TableHeader>
-                    {paginatedRows.length === 0 ? (
-                        <div 
-                            className="flex items-center justify-center h-full min-h-[500px]"
-                            onContextMenu={(e) => handleTableContextMenu(e)}
-                        >
-                            <EmptyState title="No data available" description="No data available" icon={<DocumentTextIcon className="w-4 h-4" />} />
-                        </div>
-                    ) : (
-                        <VirtualizedTableBody rowCount={paginatedRows.length} rowHeight={rowHeight} height={height}>
-                            {(index) => {
-                                const globalIndex = (currentPage - 1) * pageSize + index;
-                                return (
-                                    <TableRow 
-                                        key={globalIndex}
-                                        data-row-idx={index}
-                                        onContextMenu={(e) => handleTableContextMenu(e, index)}
-                                    >
-                                        <TableCell className={cn({
-                                            "hidden": disableEdit,
-                                        })}>
-                                            <Checkbox
-                                                checked={checked.includes(globalIndex)}
-                                                onCheckedChange={() => setChecked(checked.includes(globalIndex) ? checked.filter(i => i !== globalIndex) : [...checked, globalIndex])}
-                                            />
-                                        </TableCell>
-                                        {paginatedRows[index]?.map((cell, cellIdx) => (
-                                            <TableCell key={cellIdx} className="cursor-pointer" onClick={() => handleCellClick(globalIndex, cellIdx)} data-col-idx={cellIdx}>{cell}</TableCell>
-                                        ))}
-                                    </TableRow>
-                                );
-                            }}
-                        </VirtualizedTableBody>
-                    )}
+                    {paginatedRows.length > 0 &&
+                    <VirtualizedTableBody rowCount={paginatedRows.length} rowHeight={rowHeight} height={height}>
+                        {(index) => {
+                            const globalIndex = (currentPage - 1) * pageSize + index;
+                            return (
+                                <TableRow 
+                                    key={globalIndex}
+                                    data-row-idx={index}
+                                    onContextMenu={(e) => handleTableContextMenu(e, index)}
+                                >
+                                    <TableCell className={cn({
+                                        "hidden": disableEdit,
+                                    })}>
+                                        <Checkbox
+                                            checked={checked.includes(globalIndex)}
+                                            onCheckedChange={() => setChecked(checked.includes(globalIndex) ? checked.filter(i => i !== globalIndex) : [...checked, globalIndex])}
+                                        />
+                                    </TableCell>
+                                    {paginatedRows[index]?.map((cell, cellIdx) => (
+                                        <TableCell key={cellIdx} className="cursor-pointer" onClick={() => handleCellClick(globalIndex, cellIdx)} data-col-idx={cellIdx}>{cell}</TableCell>
+                                    ))}
+                                </TableRow>
+                            );
+                        }}
+                    </VirtualizedTableBody>}
                 </TableComponent>
-                
+                {paginatedRows.length === 0 && (
+                    <div 
+                        className="flex items-center justify-center h-full min-h-[500px]"
+                        onContextMenu={(e) => handleTableContextMenu(e)}>
+                        <EmptyState title="No data available" description="No data available" icon={<DocumentTextIcon className="w-4 h-4" />} />
+                    </div>
+                )}
                 {/* Table-level context menu */}
                 {contextMenuOpen && (
                     <div 
