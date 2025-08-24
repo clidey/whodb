@@ -291,7 +291,7 @@ export const ChatPage: FC = () => {
                                         chats.map((chat, i) => {
                                             if (chat.Type === "message" || chat.Type === "text") {
                                                 return <div key={`chat-${i}`} className={classNames("flex gap-4 overflow-hidden break-words leading-6 shrink-0 relative", {
-                                                    "self-end": chat.isUserInput,
+                                                    "self-end ml-3": chat.isUserInput,
                                                     "self-start": !chat.isUserInput,
                                                 })}>
                                                     {!chat.isUserInput && chats[i-1]?.isUserInput
