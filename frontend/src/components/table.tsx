@@ -629,14 +629,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                                     onClick={() => onColumnSort?.(col)}
                                 >
                                     <Tip>
-                                        <div className="flex items-center gap-1">
+                                        <p className="flex items-center gap-1">
                                             {col}
                                             {onColumnSort && sortedColumns?.has(col) && (
                                                 sortedColumns.get(col) === 'asc' 
                                                     ? <ChevronUpIcon className="w-4 h-4" />
                                                     : <ChevronDownIcon className="w-4 h-4" />
                                             )}
-                                        </div>
+                                        </p>
                                         <p className="text-xs">{columnTypes?.[idx]}</p>
                                     </Tip>
                                 </TableHead>

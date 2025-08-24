@@ -12,8 +12,8 @@ importers:
         specifier: ^3.13.8
         version: 3.13.8(@types/react@18.3.23)(graphql-ws@6.0.6(graphql@16.11.0)(ws@8.18.3))(graphql@16.11.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@clidey/ux':
-        specifier: ^0.21.1
-        version: 0.21.1(@types/react-dom@18.3.7(@types/react@18.3.23))(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^0.21.2
+        version: 0.21.2(@types/react-dom@18.3.7(@types/react@18.3.23))(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@codemirror/lang-json':
         specifier: ^6.0.2
         version: 6.0.2
@@ -779,8 +779,8 @@ packages:
     resolution: {integrity: sha512-ruv7Ae4J5dUYULmeXw1gmb7rYRz57OWCPM57pHojnLq/3Z1CK2lNSLTCVjxVk1F/TZHwOZZrOWi0ur95BbLxNQ==}
     engines: {node: '>=6.9.0'}
 
-  '@clidey/ux@0.21.1':
-    resolution: {integrity: sha512-j60cQDIIy6hwQqEZMM9NDFDQu1Qe8BTLUZ6+Q0HJObcP7e5Ez2YOk6NsSSigQFYj/GRY0pfkqQ3oixuJdl1p3w==}
+  '@clidey/ux@0.21.2':
+    resolution: {integrity: sha512-rk1+vZwti9Hp6NT2+Duxx6BZBSZxqhj4V7kqW3VTCKA/kn20xvtCH7mHqMjnaMdEScdn0ME43UqvVK/jUKjYxw==}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
@@ -6146,7 +6146,7 @@ snapshots:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.27.1
 
-  '@clidey/ux@0.21.1(@types/react-dom@18.3.7(@types/react@18.3.23))(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@clidey/ux@0.21.2(@types/react-dom@18.3.7(@types/react@18.3.23))(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@radix-ui/react-accordion': 1.2.12(@types/react-dom@18.3.7(@types/react@18.3.23))(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@radix-ui/react-alert-dialog': 1.1.15(@types/react-dom@18.3.7(@types/react@18.3.23))(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)

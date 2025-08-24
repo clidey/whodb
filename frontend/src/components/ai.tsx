@@ -369,23 +369,22 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         </CommandItem>
                     }
                 />
-                {
-                    modelType && <SearchSelect
-                        options={modelDropdownItems.map(item => ({
-                            value: item.id,
-                            label: item.label,
-                            icon: item.icon,
-                        }))}
-                        value={currentModel ? currentModel : undefined}
-                        onChange={id => {
-                            const item = modelDropdownItems.find(i => i.id === id);
-                            if (item) handleAIModelChange(item.id);
-                        }}
-                        placeholder="Select Model"
-                        side="right"
-                        align="start"
-                    />
-                }
+                <SearchSelect
+                    disabled={modelType == null}
+                    options={modelDropdownItems.map(item => ({
+                        value: item.id,
+                        label: item.label,
+                        icon: item.icon,
+                    }))}
+                    value={currentModel ? currentModel : undefined}
+                    onChange={id => {
+                        const item = modelDropdownItems.find(i => i.id === id);
+                        if (item) handleAIModelChange(item.id);
+                    }}
+                    placeholder="Select Model"
+                    side="right"
+                    align="start"
+                />
             </div>
             <AlertDialog>
                 <AlertDialogTrigger asChild>
