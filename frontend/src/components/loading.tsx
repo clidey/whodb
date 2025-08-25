@@ -26,7 +26,7 @@ type ILoadingProps = {
   loadingText?: string;
 }
 
-export const Loading: FC<ILoadingProps> = ({ className, size = 56, hideText, loadingText }) => {
+export const Loading: FC<ILoadingProps> = ({ className, size = "md", hideText, loadingText }) => {
   let textSize = "text-base";
   if (size === "sm") {
     textSize = "text-xs";

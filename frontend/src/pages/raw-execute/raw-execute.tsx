@@ -265,7 +265,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                         <Button
                             onClick={() => setHistoryOpen(true)}
                             data-testid="history-button"
-                            className={cn("pointer-events-auto", {
+                            className={cn("pointer-events-auto border border-input", {
                                 "hidden": history.length === 0,
                             })}
                             variant="secondary"
@@ -273,7 +273,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                         >
                             <ClockIcon className="w-4 h-4" />
                         </Button>
-                        <Button onClick={() => handleRawExecute()} data-testid="submit-button" className={cn("pointer-events-auto", {
+                        <Button onClick={() => handleRawExecute()} data-testid="query-button" className={cn("pointer-events-auto", {
                             "hidden": code.length === 0,
                         })} disabled={code.length === 0}>
                             {<CheckCircleIcon className="w-4 h-4" />}
@@ -291,8 +291,12 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                     </Alert>
                 </div>
             }
-            { loading && <Loading /> }
-            { output }
+            { loading
+                ? <div className="flex justify-center items-center h-full my-16">
+                    <Loading />
+                </div>
+                : output
+            }
             <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
                 <SheetContent className="w-[350px] max-w-full p-0">
                     <div className="flex flex-col h-full">
