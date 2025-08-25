@@ -64,17 +64,29 @@ function getModeCommand(mode: string, current?: LocalLoginProfile, eeActionOptio
     return "";
 }
 
-const CopyButton: FC<{ text: string }> = (props) => {
+const CopyButton: FC<{ text: string }> = ({ text }) => {
     const [copied, setCopied] = useState(false);
 
-    const handleCopyToClibpoard = useCallback(() => {
-        navigator.clipboard.writeText(props.text).then(() => {
+    const handleCopyToClipboard = useCallback(() => {
+        navigator.clipboard.writeText(text).then(() => {
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         });
-    }, []);
+    }, [text]);
 
-    return <div className="p-2 brightness-75 hover:brightness-100" onClick={handleCopyToClibpoard}>{copied ? <CheckCircleIcon className="w-4 h-4" /> : <ClipboardDocumentIcon className="w-4 h-4" />}</div>;
+    return (
+        <Button
+            size="icon"
+            variant="secondary"
+            className="border border-input"
+            onClick={handleCopyToClipboard}
+            title={copied ? "Copied!" : "Copy to clipboard"}
+            type="button"
+            data-testid="copy-to-clipboard-button"
+        >
+            {copied ? <CheckCircleIcon className="w-4 h-4" /> : <ClipboardDocumentIcon className="w-4 h-4" />}
+        </Button>
+    );
 }
 
 const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, showTools }) => {
@@ -137,10 +149,11 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
 
     const handleRawExecute = useCallback((historyCode?: string) => {
         if (current == null) {
+            setLoading(false);
             return;
         }
         const currentCode = historyCode ?? code;
-        const historyItem = { id: v4(), item: code, status: false, date: new Date() };
+        const historyItem = { id: v4(), item: currentCode, status: false, date: new Date() };
         setSubmittedCode(currentCode);
         setError(null);
         setLoading(true);
@@ -151,9 +164,9 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
             setError(err);
         }).finally(() => {
             setLoading(false);
-            if (historyCode == null) setHistory(h => [historyItem , ...h]);
-        })
-    }, [code, current, mode, allActionOptions]);
+            setHistory(h => [historyItem , ...h]);
+        });
+    }, [code, current, mode, allActionOptions, handleExecute]);
 
     const handleAdd = useCallback(() => {
         onAdd(cellId);
@@ -240,13 +253,13 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                             </SelectContent>
                         </Select>}
                         <Tip>
-                            <Button onClick={handleAdd} data-testid="add-button" variant="secondary" className="border border-input">
+                            <Button onClick={handleAdd} data-testid="add-cell-button" variant="secondary" className="border border-input">
                                 <PlusCircleIcon className="w-4 h-4" />
                             </Button>
                                 <p>Add a new cell</p>
                         </Tip>
                         <Tip>
-                            <Button onClick={() => setCode("")} data-testid="clear-button" variant="secondary" className="border border-input">
+                            <Button onClick={() => setCode("")} data-testid="clear-cell-button" variant="secondary" className="border border-input">
                                 <ArrowPathIcon className="w-4 h-4" />
                             </Button>
                             <p>Clear the editor</p>
@@ -254,7 +267,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                         {
                             onDelete != null &&
                             <Tip>
-                                <Button variant="destructive" onClick={handleDelete} data-testid="delete-button">
+                                <Button variant="destructive" onClick={handleDelete} data-testid="delete-cell-button" className="border border-input">
                                     <XMarkIcon className="w-4 h-4" />
                                 </Button>
                                 <p>Delete the cell</p>
@@ -273,7 +286,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                         >
                             <ClockIcon className="w-4 h-4" />
                         </Button>
-                        <Button onClick={() => handleRawExecute()} data-testid="query-button" className={cn("pointer-events-auto", {
+                        <Button onClick={() => handleRawExecute()} data-testid="query-cell-button" className={cn("pointer-events-auto", {
                             "hidden": code.length === 0,
                         })} disabled={code.length === 0}>
                             {<CheckCircleIcon className="w-4 h-4" />}
@@ -291,12 +304,10 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                     </Alert>
                 </div>
             }
-            { loading
-                ? <div className="flex justify-center items-center h-full my-16">
-                    <Loading />
-                </div>
-                : output
-            }
+            { loading && <div className="flex justify-center items-center h-full my-16">
+                <Loading />
+            </div>}
+            {output}
             <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
                 <SheetContent className="w-[350px] max-w-full p-0">
                     <div className="flex flex-col h-full">
@@ -328,7 +339,6 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                                         {formatDate(date)}
                                                     </div>
                                                     <div className="flex gap-2 items-center">
-
                                                         <CopyButton text={item} />
                                                         <Button
                                                             size="icon"
@@ -339,6 +349,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                                                 setCode(item);
                                                             }}
                                                             title="Clone to editor"
+                                                            data-testid="clone-to-editor-button"
                                                         >
                                                             <PencilIcon className="w-4 h-4" />
                                                         </Button>
@@ -348,6 +359,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                                             className="border border-input"
                                                             onClick={() => handleRawExecute(item)}
                                                             title="Run"
+                                                            data-testid="run-history-button"
                                                         >
                                                             <PlayIcon className="w-4 h-4" />
                                                         </Button>
@@ -385,7 +397,7 @@ const RawExecuteSubPage: FC = () => {
 
     return (
         <div className="flex justify-center items-center w-full">
-            <div className="w-full flex flex-col gap-4">
+            <div className="w-full flex flex-col gap-2">
                 {
                     cellIds.map((cellId, index) => (
                         <div key={cellId} data-testid={`cell-${index}`}>
@@ -541,7 +553,7 @@ export const RawExecutePage: FC = () => {
                                                 </TabsTrigger>
                                             ))
                                         }
-                                        <TabsTrigger value="add" onClick={handleAdd}>
+                                        <TabsTrigger value="add" onClick={handleAdd} data-testid="add-page-button">
                                             <PlusCircleIcon className="w-4 h-4" />
                                         </TabsTrigger>
                                     </TabsList>
