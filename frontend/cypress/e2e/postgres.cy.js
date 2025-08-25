@@ -41,23 +41,25 @@ describe('Postgres E2E test', () => {
 
     // check users table and fields
     cy.explore("users");
-    cy.getExploreFields().then(text => {
-      const textLines = text.split("\n");
-    
-      const expectedPatterns = [
-        /^users$/,
-        /^Type: BASE TABLE$/,
-        /^Total Size: .+$/, // Ignores actual size value
-        /^Data Size: .+$/,  // Ignores actual size value
-        /^Count: .+$/,      // Ignores actual count value
-        /^id: integer$/,
-        /^username: character varying$/,
-        /^email: character varying$/,
-        /^password: character varying$/,
-        /^created_at: timestamp without time zone$/
+    cy.getExploreFields().then(fields => {
+      // Check type
+      expect(fields.some(([k, v]) => k === "Type" && v === "BASE TABLE")).to.be.true;
+
+      // Check Total Size, Data Size, Count (just keys exist)
+      expect(fields.some(([k]) => k === "Total Size")).to.be.true;
+      expect(fields.some(([k]) => k === "Data Size")).to.be.true;
+      expect(fields.some(([k]) => k === "Count")).to.be.true;
+
+      // Check columns and types
+      const expectedColumns = [
+        ["id", "integer"],
+        ["username", "character varying"],
+        ["email", "character varying"],
+        ["password", "character varying"],
+        ["created_at", "timestamp without time zone"]
       ];
-      expectedPatterns.forEach(pattern => {
-        expect(textLines.some(line => pattern.test(line))).to.be.true;
+      expectedColumns.forEach(([col, type]) => {
+        expect(fields.some(([k, v]) => k === col && v === type)).to.be.true;
       });
     });
 
@@ -66,37 +68,40 @@ describe('Postgres E2E test', () => {
     cy.sortBy(0);
     cy.getTableData().then(({ columns, rows }) => {
       expect(columns).to.deep.equal([
-        "#",
-        "id [INT4]",
-        "username [VARCHAR]",
-        "email [VARCHAR]",
-        "password [VARCHAR]",
-        "created_at [TIMESTAMP]"
+        "",
+        "id",
+        "username",
+        "email",
+        "password",
+        "created_at"
       ]);
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         [
-            "1",
+            "",
             "1",
             "john_doe",
             "john@example.com",
-            "securepassword1",
+            "securepassword1"
         ],
         [
-            "2",
+            "",
             "2",
             "jane_smith",
             "jane@example.com",
-            "securepassword2",
+            "securepassword2"
         ],
         [
-            "3",
+            "",
             "3",
             "admin_user",
             "admin@example.com",
-            "adminpass",
+            "adminpass"
         ]
       ]);
     });
+
+    // check page size
+    cy.setTablePageSize(1);
 
     // check total count
 
@@ -106,7 +111,7 @@ describe('Postgres E2E test', () => {
     cy.getTableData().then(({ rows }) => {
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         [
-            "1",
+            "",
             "1",
             "john_doe",
             "john@example.com",
@@ -124,7 +129,7 @@ describe('Postgres E2E test', () => {
     cy.getTableData().then(({ rows }) => {
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         [
-          "1",
+          "",
           "3",
           "admin_user",
           "admin@example.com",
@@ -141,15 +146,12 @@ describe('Postgres E2E test', () => {
       expect(rows.length).to.equal(3);
     });
     
-    // todo: [NOT PASSING - FIX] check pagination on the bottom
-    // cy.getPageNumbers().then(pageNumbers => expect(pageNumbers).to.deep.equal(['1']));
-    
-    // check editing capability
+
     cy.setTablePageSize(2);
     cy.submitTable();
-
-    // test saving
-    cy.updateRow(1, 2, "jane_smith1", false);
+    
+    // check editing capability
+    cy.updateRow(1, 1, "jane_smith1", false);
     cy.getTableData().then(({ rows }) => {
       expect(rows.slice(1).map(row => row.slice(0, -1))).to.deep.equal([
         [
@@ -161,7 +163,7 @@ describe('Postgres E2E test', () => {
         ]
       ]);
     });
-    cy.updateRow(1, 2, "jane_smith", false);
+    cy.updateRow(1, 1, "jane_smith", false);
     cy.getTableData().then(({ rows }) => {
       expect(rows.slice(1).map(row => row.slice(0, -1))).to.deep.equal([
         [
@@ -174,7 +176,7 @@ describe('Postgres E2E test', () => {
       ]);
     });
 
-    cy.updateRow(1, 2, "jane_smith");
+    cy.updateRow(1, 1, "jane_smith");
     cy.getTableData().then(({ rows }) => {
       expect(rows.slice(1).map(row => row.slice(0, -1))).to.deep.equal([
         [
@@ -189,19 +191,11 @@ describe('Postgres E2E test', () => {
 
     // check search
     cy.searchTable("john");
-    cy.wait(250);
-    cy.getHighlightedRows().then(rows => {
-      expect(rows.length).to.equal(1);
-      expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
-        [
-            "1",
-            "1",
-            "john_doe",
-            "john@example.com",
-            "securepassword1"
-        ]
-      ]);
-    });
+    cy.wait(100);
+    cy.getHighlightedCell().first().should('have.text', 'john_doe');
+    cy.searchTable("john");
+    cy.wait(100);
+    cy.getHighlightedCell().first().should('have.text', 'john@example.com');
 
     // check graph
     cy.goto("graph");
@@ -220,18 +214,25 @@ describe('Postgres E2E test', () => {
         expect(graph[key].sort()).to.deep.equal(expectedGraph[key].sort());
       });
     });
-    cy.getGraphNode().then(text => {
-      const textLines = text.split("\n");
-      const expectedPatterns = [
-        /^users$/,
-        /^Type: BASE TABLE$/,
-        /^Total Size: .+$/, // Ignores actual size value
-        /^Data Size: .+$/,  // Ignores actual size value
-        /^Count: .+$/,      // Ignores actual count value
-        /^id: integer$/,
+    cy.getGraphNode("users").then(fields => {
+      // Check type
+      expect(fields.some(([k, v]) => k === "Type" && v === "BASE TABLE")).to.be.true;
+
+      // Check Total Size, Data Size, Count (just keys exist)
+      expect(fields.some(([k]) => k === "Total Size")).to.be.true;
+      expect(fields.some(([k]) => k === "Data Size")).to.be.true;
+      expect(fields.some(([k]) => k === "Count")).to.be.true;
+
+      // Check columns and types
+      const expectedColumns = [
+        ["id", "integer"],
+        ["username", "character varying"],
+        ["email", "character varying"],
+        ["password", "character varying"],
+        ["created_at", "timestamp without time zone"]
       ];
-      expectedPatterns.forEach(pattern => {
-        expect(textLines.some(line => pattern.test(line))).to.be.true;
+      expectedColumns.forEach(([col, type]) => {
+        expect(fields.some(([k, v]) => k === col && v === type)).to.be.true;
       });
     });
 

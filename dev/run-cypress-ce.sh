@@ -41,7 +41,7 @@ run_tests() {
     # Start frontend
     echo "🚀 Starting frontend..."
     cd "$PROJECT_ROOT/frontend"
-    NODE_ENV=test vite --port 3000 &
+    VITE_E2E_TEST=true NODE_ENV=test vite --port 3000 &
     FRONTEND_PID=$!
 
     # Wait for services

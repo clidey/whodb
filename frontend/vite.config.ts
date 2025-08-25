@@ -91,7 +91,7 @@ export default defineConfig(async () => {
       },
     },
   },
-  publicDir: eeExists ? path.resolve(__dirname, '../ee/frontend/public') : path.resolve(__dirname, './public'),
+  publicDir: eeExists ? path.resolve(__dirname, '../ee/frontend/public') : undefined,
   build: {
     outDir: 'build',
     sourcemap: true,

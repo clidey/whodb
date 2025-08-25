@@ -15,11 +15,13 @@
  */
 
 import { defineConfig } from "cypress";
+import codeCoverageTask from "@cypress/code-coverage/task";
 
-module.exports = defineConfig({
+export default defineConfig({
+  numTestsKeptInMemory: 0,
   e2e: {
     async setupNodeEvents(on, config) {
-      require("@cypress/code-coverage/task")(on, config);
+      codeCoverageTask(on, config);
 
       on("task", {
         async execCommand(command) {
