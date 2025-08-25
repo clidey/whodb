@@ -387,7 +387,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data })
                         <StackList>
                             {
                                 data.Attributes.map(attribute => (
-                                    <StackListItem key={attribute.Key} item={isValidForeignKey(attribute.Key) ? <Badge className="text-lg">{attribute.Key}</Badge> : attribute.Key}>
+                                    <StackListItem rowClassName="items-start" key={attribute.Key} item={isValidForeignKey(attribute.Key) ? <Badge className="text-lg">{attribute.Key}</Badge> : attribute.Key}>
                                         {attribute.Value}
                                     </StackListItem>
                                 ))
