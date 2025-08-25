@@ -121,7 +121,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
         ).then((mod) => {
             if (mod && mounted) {
                 const { default: defaultMod } = mod as any;
-                if (defaultMod.plugins == null) {
+                if (defaultMod == null || defaultMod.plugins == null) {
                     return;
                 }
                 // Merge plugins

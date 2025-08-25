@@ -45,6 +45,9 @@ import { ExploreStorageUnitWhereCondition } from "./explore-storage-unit-where-c
 
 
 export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad }) => {
+    // Debug: Log E2E_TEST environment variable
+    console.log('E2E_TEST environment variable:', import.meta.env.VITE_E2E_TEST);
+    
     const [bufferPageSize, setBufferPageSize] = useState("100");
     const [currentPage, setCurrentPage] = useState(0);
     const [whereCondition, setWhereCondition] = useState<WhereCondition>();
@@ -371,6 +374,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                                         searchRef.current?.(search);
                                     }
                                 }}
+                                data-testid="table-search"
                             />
                         </div>
                         <div className="flex flex-col gap-2">
@@ -380,13 +384,15 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="10">10</SelectItem>
-                                    <SelectItem value="25">25</SelectItem>
-                                    <SelectItem value="50">50</SelectItem>
-                                    <SelectItem value="100">100</SelectItem>
-                                    <SelectItem value="250">250</SelectItem>
-                                    <SelectItem value="500">500</SelectItem>
-                                    <SelectItem value="1000">1000</SelectItem>
+                                    {import.meta.env.VITE_E2E_TEST === "true" && <SelectItem value="1" data-value="1">1</SelectItem>}
+                                    {import.meta.env.VITE_E2E_TEST === "true" && <SelectItem value="2" data-value="2">2</SelectItem>}
+                                    <SelectItem value="10" data-value="10">10</SelectItem>
+                                    <SelectItem value="25" data-value="25">25</SelectItem>
+                                    <SelectItem value="50" data-value="50">50</SelectItem>
+                                    <SelectItem value="100" data-value="100">100</SelectItem>
+                                    <SelectItem value="250" data-value="250">250</SelectItem>
+                                    <SelectItem value="500" data-value="500">500</SelectItem>
+                                    <SelectItem value="1000" data-value="1000">1000</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

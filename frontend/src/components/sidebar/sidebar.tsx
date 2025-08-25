@@ -309,6 +309,9 @@ export const Sidebar: FC = () => {
                                             </CommandItem>
                                         }
                                         side="left" align="start"
+                                        buttonProps={{
+                                            "data-testid": "sidebar-profile",
+                                        }}
                                     />
                                 </div>
                                 {/* Database Select */}
@@ -325,6 +328,9 @@ export const Sidebar: FC = () => {
                                         placeholder="Select database"
                                         searchPlaceholder="Search database..."
                                         side="left" align="start"
+                                        buttonProps={{
+                                            "data-testid": "sidebar-database",
+                                        }}
                                     />
                                 </div>
                                 <div className={cn("flex flex-col gap-2 w-full", {
@@ -340,6 +346,9 @@ export const Sidebar: FC = () => {
                                         placeholder="Select schema"
                                         searchPlaceholder="Search schema..."
                                         side="left" align="start"
+                                        buttonProps={{
+                                            "data-testid": "sidebar-schema",
+                                        }}
                                     />
                                 </div>
                             </div>

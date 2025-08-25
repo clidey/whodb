@@ -301,6 +301,9 @@ export const StorageUnitPage: FC = () => {
                                                 onChange={value => handleFieldValueChange("Value", index, value)}
                                                 placeholder="Select type"
                                                 searchPlaceholder="Search type..."
+                                                buttonProps={{
+                                                    "data-testid": `field-type-${index}`,
+                                                }}
                                             />
 
                                             {showModifiers && (

@@ -552,7 +552,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     }, [searchRef, rows, columns]);
 
     return (
-        <div ref={tableRef}>
+        <div ref={tableRef} className="h-full">
             <div className="flex flex-col h-full space-y-4 w-0" style={{
                 width: `${containerWidth}px`,
             }}>
@@ -598,7 +598,6 @@ export const StorageUnitTable: FC<TableProps> = ({
                             return (
                                 <ContextMenu key={globalIndex}>
                                     <ContextMenuTrigger
-                                        asChild
                                         className="contents"
                                     >
                                         <TableRow data-row-idx={index}>
@@ -619,7 +618,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                         <ContextMenuItem onSelect={() => handleSelectRow(globalIndex)}>
                                             {checked.includes(globalIndex) ? "Deselect Row" : "Select Row"}
                                         </ContextMenuItem>
-                                        <ContextMenuItem onSelect={() => handleEdit(globalIndex)} disabled={checked.length > 0}>
+                                        <ContextMenuItem onSelect={() => handleEdit(globalIndex)} disabled={checked.length > 0} data-testid="context-menu-edit-row">
                                             Edit Row
                                             <ContextMenuShortcut>⌘E</ContextMenuShortcut>
                                         </ContextMenuItem>
@@ -767,7 +766,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         <div className="flex flex-col gap-4 mt-4">
                             {editRow &&
                                 columns.map((col, idx) => (
-                                    <div key={col} className="flex flex-col gap-2">
+                                    <div key={col} className="flex flex-col gap-2" data-testid={`editable-field-${idx}`}>
                                         <Label>{col}</Label>
                                         <Input
                                             value={editRow[idx] ?? ""}
@@ -777,7 +776,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                 ))}
                         </div>
                         <SheetFooter className="flex gap-2 px-0">
-                            <Button onClick={handleUpdate} disabled={!editRow}>
+                            <Button onClick={handleUpdate} disabled={!editRow} data-testid="update-button">
                                 Update
                             </Button>
                         </SheetFooter>

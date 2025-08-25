@@ -54,8 +54,10 @@ const PopoverCard: FC<IPopoverCardProps> = ({ open, onOpenChange, currentFilter,
                     value={currentFilter.Key}
                     options={fieldsDropdownItems}
                     onChange={handleFieldSelect}
-                    data-testid="field-key"
                     contentClassName="w-[var(--radix-popover-trigger-width)]"
+                    buttonProps={{
+                        "data-testid": "field-key",
+                    }}
                 />
             </div>
             <div className="flex flex-col gap-2 w-full">
@@ -66,8 +68,10 @@ const PopoverCard: FC<IPopoverCardProps> = ({ open, onOpenChange, currentFilter,
                     value={currentFilter.Operator}
                     options={validOperators}
                     onChange={handleOperatorSelector}
-                    data-testid="field-operator"
                     contentClassName="w-[var(--radix-popover-trigger-width)]"
+                    buttonProps={{
+                        "data-testid": "field-operator",
+                    }}
                 />
             </div>
             <div className="flex flex-col gap-2 w-full">
@@ -84,7 +88,7 @@ const PopoverCard: FC<IPopoverCardProps> = ({ open, onOpenChange, currentFilter,
             </div>
             <div className="flex gap-2 mt-2">
                 <Button
-                    className="dark:bg-white/5 flex-1"
+                    className="flex-1"
                     onClick={handleClick}
                     data-testid="cancel-button"
                     variant="secondary"
@@ -92,14 +96,14 @@ const PopoverCard: FC<IPopoverCardProps> = ({ open, onOpenChange, currentFilter,
                     <XCircleIcon className="w-4 h-4" /> Cancel
                 </Button>
                 <Button
-                    className="dark:bg-white/5 flex-1"
+                    className="flex-1"
                     onClick={handleAddFilter}
                     disabled={
                         !currentFilter.Key ||
                         !currentFilter.Operator ||
                         !currentFilter.Value
                     }
-                    data-testid="add-button"
+                    data-testid="add-condition-button"
                 >
                     <CheckCircleIcon className="w-4 h-4" /> Add
                 </Button>
@@ -422,7 +426,9 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                                         value={filter.Key}
                                         options={fieldsDropdownItems}
                                         onChange={(value) => handleSheetFieldChange(index, 'Key', value)}
-                                        data-testid={`sheet-field-key-${index}`}
+                                        buttonProps={{
+                                            "data-testid": `sheet-field-key-${index}`,
+                                        }}
                                     />
                                 </div>
                                 <div className="flex flex-col gap-2">
@@ -431,7 +437,9 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                                         value={filter.Operator}
                                         options={validOperators}
                                         onChange={(value) => handleSheetFieldChange(index, 'Operator', value)}
-                                        data-testid={`sheet-field-operator-${index}`}
+                                        buttonProps={{
+                                            "data-testid": `sheet-field-operator-${index}`,
+                                        }}
                                     />
                                 </div>
                                 <div className="flex flex-col gap-2">

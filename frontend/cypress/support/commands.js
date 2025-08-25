@@ -30,11 +30,11 @@ Cypress.Commands.add("goto", (route) => {
 
 Cypress.Commands.add('login', (databaseType, hostname, username, password, database, advanced={}) => {
     cy.visit('http://localhost:3000/login');
-    if (databaseType) cy.get('[data-testid="database-type"]').click().get(`[data-value="${databaseType}"]`).click();
-    if (hostname) cy.get('[data-testid="hostname"] input').clear().type(hostname);
-    if (username) cy.get('[data-testid="username"] input').clear().type(username);
-    if (password) cy.get('[data-testid="password"] input').clear().type(password, { log: false });
-    if (databaseType !== "Sqlite3" && database) cy.get('[data-testid="database"] input').clear().type(database);
+    if (databaseType) cy.get('[data-testid="database-type-select"]').click().get(`[data-value="${databaseType}"]`).click();
+    if (hostname) cy.get('[data-testid="hostname"]').clear().type(hostname);
+    if (username) cy.get('[data-testid="username"]').clear().type(username);
+    if (password) cy.get('[data-testid="password"]').clear().type(password, { log: false });
+    if (databaseType !== "Sqlite3" && database) cy.get('[data-testid="database"]').clear().type(database);
     if (databaseType === "Sqlite3" && database) cy.get('[data-testid="database"]').click().get(`[data-value="${database}"]`).click();
 
     if (Object.keys(advanced).length > 0) {
@@ -44,7 +44,7 @@ Cypress.Commands.add('login', (databaseType, hostname, username, password, datab
         }
     }
 
-    cy.get('[data-testid="submit-button"]').click();
+    cy.get('[data-testid="login-button"]').click();
 });
 
 Cypress.Commands.add('setAdvanced', (type, value) => {
@@ -66,7 +66,20 @@ Cypress.Commands.add('explore', (tableName) => {
 });
 
 Cypress.Commands.add('getExploreFields', () => {
-    return extractText(cy.get('[data-testid="explore-fields"]'));
+    // Returns a list of [key, value] arrays from the explore fields panel
+    return cy.document().then((doc) => {
+        const result = [];
+        const rows = doc.querySelectorAll('[data-testid="explore-fields"] p');
+        rows.forEach(row => {
+            const spans = row.querySelectorAll('span');
+            if (spans.length >= 2) {
+                const key = spans[0].textContent.trim();
+                const value = spans[1].textContent.trim();
+                result.push([key, value]);
+            }
+        });
+        return result;
+    });
 });
 
 Cypress.Commands.add('data', (tableName) => {
@@ -74,37 +87,32 @@ Cypress.Commands.add('data', (tableName) => {
         const index = elements.findIndex(name => name === tableName);
         return cy.get('[data-testid="data-button"]').eq(index).click().then(() => {
             // Wait for the table to be present after clicking data button
-            return cy.get('[data-testid="table"]', { timeout: 10000 }).should('exist');
+            return cy.get('table', { timeout: 10000 }).should('exist');
         });
     });
 });
 
 Cypress.Commands.add('sortBy', (index) => {
-    return cy.get('[data-testid="table-header"]').eq(index+1).click();
+    return cy.get('th').eq(index+1).click();
 });
 
 Cypress.Commands.add('getTableData', () => {
     // First wait for the table to exist
-    return cy.get('[data-testid="table"]', { timeout: 10000 }).should('exist').then(() => {
+    return cy.get('table', { timeout: 10000 }).should('exist').then(() => {
         // Wait for at least one table row to be present with proper scoping
-        return cy.get('[data-testid="table"] [data-testid="table-row"]', { timeout: 10000 })
+        return cy.get('table tbody tr', { timeout: 10000 })
             .should('have.length.greaterThan', 0)
             .then(() => {
                 // Additional wait to ensure data is fully rendered
                 cy.wait(100);
                 
                 // Now get the table and extract data
-                return cy.get('[data-testid="table"]').then($table => {
-                    const columns = Cypress.$.makeArray($table.find('[data-testid="table-header"]'))
+                return cy.get('table').then($table => {
+                    const columns = Cypress.$.makeArray($table.find('th'))
                         .map(el => el.innerText.trim());
 
-                    const rows = Cypress.$.makeArray($table.find('[data-testid="table-row"]')).map(row => {
-                        const cells = Cypress.$(row).find('[data-testid="table-row-data"] .cell-data');
-                        if (cells.length === 0) {
-                            // Fallback: try without .cell-data class
-                            return Cypress.$.makeArray(Cypress.$(row).find('[data-testid="table-row-data"]'))
-                                .map(cell => cell.innerText.trim());
-                        }
+                    const rows = Cypress.$.makeArray($table.find('tbody tr')).map(row => {
+                        const cells = Cypress.$(row).find('td');
                         return Cypress.$.makeArray(cells).map(cell => cell.innerText.trim());
                     });
 
@@ -115,7 +123,14 @@ Cypress.Commands.add('getTableData', () => {
 });
 
 Cypress.Commands.add("setTablePageSize", (pageSize) => {
-    cy.get('[data-testid="table-page-size"] input').clear().type(pageSize);
+    cy.get('[data-testid="table-page-size"]').click();
+    cy.get(`[role="option"][data-value="${pageSize}"]`).click();
+});
+
+Cypress.Commands.add("getTablePageSize", () => {
+    return cy.get('[data-testid="table-page-size"]').then(($el) => {
+        return $el.innerText.trim();
+    });
 });
 
 Cypress.Commands.add("submitTable", (pageSize) => {
@@ -126,12 +141,17 @@ Cypress.Commands.add("submitTable", (pageSize) => {
 });
 
 Cypress.Commands.add("whereTable", (fieldArray) => {
-    cy.get('[data-testid="where-button"]').click();
+    cy.get('[data-testid="where-button"]').click()
+    cy.wait(100);
     for (const [key, operator, value] of fieldArray) {
-        cy.get('[data-testid="field-key"]').click().get(`[data-value="${key}"]`).click();
-        cy.get('[data-testid="field-operator"]').click().get(`[data-value="${operator}"]`).click();
+        cy.log(key, operator, value);
+        cy.get('[data-testid="field-key"]').click()
+        cy.get(`[data-value="${key}"]`).click();
+        cy.get('[data-testid="field-operator"]').click();
+        cy.get(`[data-value="${operator}"]`).click();
         cy.get('[data-testid="field-value"]').clear().type(value);
-        cy.get('[data-testid="add-button"]').click();
+        cy.wait(100);
+        cy.get('[data-testid="add-condition-button"]').click();
     }
     cy.get('[data-testid="cancel-button"]').click();
 });
@@ -142,44 +162,39 @@ Cypress.Commands.add("clearWhereConditions", () => {
             .scrollIntoView()
             .click()
             .within(() => {
-                cy.get('[data-testid="remove-where-condition-button"] button')
+                cy.get('[data-testid="remove-where-condition-button"]')
                     .click({ force: true });
             });
     });
 });
 
-Cypress.Commands.add("getHighlightedRows", () => {
-    return cy.get('[data-testid="table"]').then($table => {
-        return Cypress.$.makeArray($table.find('[class*="bg-yellow-100"][data-testid="table-row"]')).map(row => {
-            return Cypress.$.makeArray(Cypress.$(row).find('[data-testid="table-row-data"] .cell-data'))
-                .map(cell => cell.innerText.trim());
-        });
-    });
+Cypress.Commands.add("getHighlightedCell", () => {
+    return cy.get('td.table-search-highlight');
 });
 
 Cypress.Commands.add("updateRow", (rowIndex, columnIndex, text, cancel = true) => {
-    cy.get('[data-testid="table"] [data-testid="table-row"]')
+    // Open the context menu for the row at rowIndex
+    cy.get('table tbody tr')
       .eq(rowIndex)
-      .find('[data-testid="table-row-data"]') 
-      .eq(columnIndex)
-      .find('[data-testid="edit-button"]')
-      .click({ force: true });
+      .rightclick();
 
-    cy.get('[data-testid="edit-dialog"] [data-testid="code-editor"]')
-        .then(($editor) => {
-            const editorElement = $editor[0].querySelector('.cm-content');
-            if (editorElement) {
-                editorElement.textContent = text;
-                editorElement.dispatchEvent(new Event('input', { bubbles: true }));
-            } else {
-                throw new Error("Editor not found!");
-            }
-        });
-    
+    // Click the "Edit row" context menu item
+    cy.get('[data-testid="context-menu-edit-row"]').click();
+
+    // Wait for the editable row to appear, using the row index in the test id
+    cy.get(`[data-testid="editable-field-${columnIndex}"]`).should('exist');
+
+    // Find the correct input for the column using the row and column index
+    cy.get(`[data-testid="editable-field-${columnIndex}"] input`)
+        .should('exist')
+        .clear()
+        .type(text, { force: true });
+
+    // Click cancel or update as requested
     if (cancel) {
-        return cy.get('[data-testid="cancel-update-button"]').click();
+        return cy.get('[role="dialog"] > button').click();
     }
-    cy.get('[data-testid="update-button"]').click();
+    cy.get(`[data-testid="update-button"]`).click();
 });
 
 
@@ -190,7 +205,7 @@ Cypress.Commands.add("getPageNumbers", () => {
 });
 
 Cypress.Commands.add("searchTable", (search) => {
-    cy.get('[data-testid="table-search"] input').clear().type(`${search}{enter}`);
+    cy.get('[data-testid="table-search"]').clear().type(`${search}{enter}`);
 });
 
 Cypress.Commands.add("getGraph", () => {
@@ -214,45 +229,71 @@ Cypress.Commands.add("getGraph", () => {
     });
 });
 
-Cypress.Commands.add("getGraphNode", () => {
-    return extractText(cy.get('.react-flow__node[data-id="users"]'));
+Cypress.Commands.add("getGraphNode", (nodeId) => {
+    // Returns the key-value data from the "users" node in the graph, as an array of [key, value] pairs
+    return cy.document().then((doc) => {
+        const el = doc.querySelector(`[data-testid="rf__node-${nodeId}"]`);
+        if (!el) return [];
+        const result = [];
+        // Find all <p> elements inside the node (like in getExploreFields)
+        const rows = el.querySelectorAll('p');
+        rows.forEach(row => {
+            const spans = row.querySelectorAll('span');
+            if (spans.length >= 2) {
+                const key = spans[0].textContent.trim();
+                const value = spans[1].textContent.trim();
+                result.push([key, value]);
+            }
+        });
+        return result;
+    });
 });
 
 Cypress.Commands.add("addCell", (afterIndex) => {
-    return cy.get(`[data-testid="cell-${afterIndex}"] [data-testid="add-button"]`).click();
+    return cy.get(`[data-testid="cell-${afterIndex}"] [data-testid="add-cell-button"]`).click();
 });
 
 Cypress.Commands.add("removeCell", (index) => {
-    return cy.get(`[data-testid="cell-${index}"] [data-testid="delete-button"]`).click();
+    return cy.get(`[data-testid="cell-${index}"] [data-testid="delete-cell-button"]`).click();
 });
 
 Cypress.Commands.add("writeCode", (index, text) => {
-    cy.get(`[data-testid="cell-${index}"] [data-testid="code-editor"]`)
-        .should('exist') // Wait for the code editor to exist in the DOM
-        .should('be.visible') // Ensure it is visible before interacting
-        .then(($editor) => {
-            $editor.click();
-            const editorElement = $editor[0].querySelector('.cm-content');
-            if (editorElement) {
-                editorElement.textContent = text;
-                editorElement.dispatchEvent(new Event('input', { bubbles: true }));
+    cy.get(`[data-testid="cell-${index}"] [data-testid="code-editor"] .cm-content`)
+        .should('exist')
+        .should('be.visible')
+        .then($cmContent => {
+            // Focus the editor
+            $cmContent[0].focus();
+
+            // Select all and delete (simulate Ctrl+A, Backspace)
+            cy.wrap($cmContent).type('{selectall}{backspace}', { force: true });
+
+            // Type the new text
+            // If multiline, type line by line to avoid issues with special chars
+            if (text.includes('\n')) {
+                text.split('\n').forEach((line, idx, arr) => {
+                    cy.wrap($cmContent).type(line, { force: true });
+                    if (idx < arr.length - 1) {
+                        cy.wrap($cmContent).type('{enter}', { force: true });
+                    }
+                });
             } else {
-                throw new Error("Editor not found!");
+                cy.wrap($cmContent).type(text, { force: true });
             }
         });
 });
 
 Cypress.Commands.add("runCode", (index) => {
-    return cy.get(`[data-testid="cell-${index}"] [data-testid="submit-button"]`).click();
+    return cy.get(`[data-testid="cell-${index}"] [data-testid="query-cell-button"]`).click();
 });
 
 Cypress.Commands.add("getCellQueryOutput", (index) => {
-    return cy.get(`[data-testid="cell-${index}"] [data-testid="cell-query-output"] [data-testid="table"]`).then($table => {
-        const columns = Cypress.$.makeArray($table.find('[data-testid="table-header"]'))
+    return cy.get(`[data-testid="cell-${index}"] [data-testid="cell-query-output"] table`).then($table => {
+        const columns = Cypress.$.makeArray($table.find('th'))
             .map(el => el.innerText.trim());
 
-        const rows = Cypress.$.makeArray($table.find('[data-testid="table-row"]')).map(row => {
-            return Cypress.$.makeArray(Cypress.$(row).find('[data-testid="table-row-data"] .cell-data'))
+        const rows = Cypress.$.makeArray($table.find('tbody tr')).map(row => {
+            return Cypress.$.makeArray(Cypress.$(row).find('td'))
                 .map(cell => cell.innerText.trim());
         });
         return { columns, rows };
@@ -268,7 +309,7 @@ Cypress.Commands.add("getCellError", (index) => {
 });
 
 Cypress.Commands.add('logout', () => {
-    cy.get('[data-testid="logout"] [data-testid="sidebar-button"]').click();
+    cy.get('[data-testid="logout"]').click();
 });
 
 Cypress.Commands.add('getTables', () => {

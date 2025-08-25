@@ -302,7 +302,9 @@ export const LoginForm: FC<LoginFormProps> = ({
                                 })) ?? []
                         }
                         placeholder="Select Database"
-                        data-testid="database"
+                        buttonProps={{
+                            "data-testid": "database",
+                        }}
                     />
                 </div>
             </div>
@@ -417,7 +419,9 @@ export const LoginForm: FC<LoginFormProps> = ({
                                         label: item.label,
                                         icon: item.icon,
                                     }))}
-                                    data-testid="database-type-select"
+                                    buttonProps={{
+                                        "data-testid": "database-type-select",
+                                    }}
                                     contentClassName="w-[var(--radix-popover-trigger-width)]"
                                 />
                             </div>
@@ -479,9 +483,11 @@ export const LoginForm: FC<LoginFormProps> = ({
                             value={selectedAvailableProfile}
                             onChange={handleAvailableProfileChange}
                             placeholder="Select a profile"
-                            data-testid="available-profiles-select"
                             contentClassName="w-[var(--radix-popover-trigger-width)]"
                             options={availableProfiles}
+                            buttonProps={{
+                                "data-testid": "available-profiles-select",
+                            }}
                         />
                         <Button onClick={handleLoginWithProfileSubmit} data-testid="login-with-profile-button" variant={loginWithProfileEnabled ? "default" : "secondary"}>
                             <CheckCircleIcon className="w-4 h-4" /> Login
