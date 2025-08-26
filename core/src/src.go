@@ -25,6 +25,7 @@ import (
 	"github.com/clidey/whodb/core/src/plugins/mysql"
 	"github.com/clidey/whodb/core/src/plugins/redis"
 	"github.com/clidey/whodb/core/src/plugins/sqlite3"
+	"github.com/clidey/whodb/core/src/types"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
@@ -66,8 +67,11 @@ func InitializeEngine() *engine.Engine {
 	return MainEngine
 }
 
-func GetLoginProfiles() []env.DatabaseCredentials {
-	profiles := []env.DatabaseCredentials{}
+func GetLoginProfiles() []types.DatabaseCredentials {
+	profiles := []types.DatabaseCredentials{}
+
+	profiles = append(profiles, MainEngine.LoginProfiles...)
+
 	for _, plugin := range MainEngine.Plugins {
 		databaseProfiles := env.GetDefaultDatabaseCredentials(string(plugin.Type))
 		for _, databaseProfile := range databaseProfiles {
@@ -79,14 +83,14 @@ func GetLoginProfiles() []env.DatabaseCredentials {
 	return profiles
 }
 
-func GetLoginProfileId(index int, profile env.DatabaseCredentials) string {
+func GetLoginProfileId(index int, profile types.DatabaseCredentials) string {
 	if len(profile.Alias) > 0 {
 		return profile.Alias
 	}
 	return fmt.Sprintf("#%v - %v@%v [%v]", index+1, profile.Username, profile.Hostname, profile.Database)
 }
 
-func GetLoginCredentials(profile env.DatabaseCredentials) *engine.Credentials {
+func GetLoginCredentials(profile types.DatabaseCredentials) *engine.Credentials {
 	advanced := []engine.Record{
 		{
 			Key:   "Port",

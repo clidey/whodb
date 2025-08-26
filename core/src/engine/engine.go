@@ -14,7 +14,10 @@
 
 package engine
 
-import "github.com/clidey/whodb/core/graph/model"
+import (
+	"github.com/clidey/whodb/core/graph/model"
+	"github.com/clidey/whodb/core/src/types"
+)
 
 type DatabaseType string
 
@@ -30,7 +33,8 @@ const (
 )
 
 type Engine struct {
-	Plugins []*Plugin
+	Plugins       []*Plugin
+	LoginProfiles []types.DatabaseCredentials
 }
 
 func (e *Engine) RegistryPlugin(plugin *Plugin) {
@@ -47,6 +51,13 @@ func (e *Engine) Choose(databaseType DatabaseType) *Plugin {
 		}
 	}
 	return nil
+}
+
+func (e *Engine) AddLoginProfile(profile types.DatabaseCredentials) {
+	if e.LoginProfiles == nil {
+		e.LoginProfiles = []types.DatabaseCredentials{}
+	}
+	e.LoginProfiles = append(e.LoginProfiles, profile)
 }
 
 func GetStorageUnitModel(unit StorageUnit) *model.StorageUnit {
