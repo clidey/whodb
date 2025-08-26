@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Badge, Button, cn, Input, Label, SearchSelect, Separator, toast } from '@clidey/ux';
+import { Badge, Button, cn, Input, Label, ModeToggle, SearchSelect, Separator, toast } from '@clidey/ux';
 import { DatabaseType, LoginCredentials, useGetDatabaseLazyQuery, useGetProfilesQuery, useLoginMutation, useLoginWithProfileMutation } from '@graphql';
 import classNames from "classnames";
 import { entries } from "lodash";
@@ -379,6 +379,9 @@ export const LoginForm: FC<LoginFormProps> = ({
         <div className={classNames("w-fit h-fit", className, {
             "w-full h-full": advancedDirection === "vertical",
         })}>
+            <div className="fixed top-4 right-4">
+                <ModeToggle />
+            </div>
             <div className={classNames("flex flex-col grow gap-4", {
                 "justify-between": advancedDirection === "horizontal",
                 "h-full": advancedDirection === "vertical" && availableProfiles.length === 0,
@@ -422,7 +425,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                                     buttonProps={{
                                         "data-testid": "database-type-select",
                                     }}
-                                    contentClassName="w-[var(--radix-popover-trigger-width)]"
+                                    contentClassName="w-[var(--radix-popover-trigger-width)] login-select-popover"
                                 />
                             </div>
                             {fields}

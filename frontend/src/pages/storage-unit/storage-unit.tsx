@@ -288,7 +288,7 @@ export const StorageUnitPage: FC = () => {
                             <div className="flex flex-col gap-4">
                                 {
                                     fields.map((field, index) => (
-                                        <div className="flex flex-col gap-4" key={`field-${index}`}>
+                                        <div className="flex flex-col gap-4 relative" key={`field-${index}`}>
                                             <Label>Field Name</Label>
                                             <Input value={field.Key} onChange={e => handleFieldValueChange("Key", index, e.target.value)} placeholder="Enter field name"/>
                                             <Label>Field Type</Label>
@@ -320,7 +320,7 @@ export const StorageUnitPage: FC = () => {
                                             {
                                                 fields.length > 1 &&
                                                 <Button variant="destructive" onClick={() => handleRemove(index)} data-testid="remove-field-button" className="w-full mt-1">
-                                                    <XMarkIcon className="w-4 h-4" /> Remove
+                                                    <XMarkIcon className="w-4 h-4" /> <span>Remove</span>
                                                 </Button>
                                             }
                                             {index !== fields.length - 1 && <Separator className="mt-2" />}
