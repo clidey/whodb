@@ -172,6 +172,24 @@ Cypress.Commands.add("getHighlightedCell", () => {
     return cy.get('td.table-search-highlight');
 });
 
+Cypress.Commands.add("addRow", (data) => {
+    cy.get('[data-testid="add-row-button"]').click();
+
+    for (const [key, value] of Object.entries(data)) {
+        cy.get(`[data-testid="add-row-field-${key}"] input`).clear().type(value);
+    }
+
+    cy.get('[data-testid="submit-add-row-button"]').click();
+});
+
+Cypress.Commands.add("deleteRow", (rowIndex) => {
+    cy.get('table tbody tr')
+      .eq(rowIndex)
+      .rightclick();
+    cy.get('[data-testid="context-menu-more-actions"]').click();
+    cy.get('[data-testid="context-menu-delete-row"]').click();
+});
+
 Cypress.Commands.add("updateRow", (rowIndex, columnIndex, text, cancel = true) => {
     // Open the context menu for the row at rowIndex
     cy.get('table tbody tr')
@@ -258,27 +276,17 @@ Cypress.Commands.add("removeCell", (index) => {
 });
 
 Cypress.Commands.add("writeCode", (index, text) => {
-    cy.get(`[data-testid="cell-${index}"] [data-testid="code-editor"] .cm-content`)
-        .should('exist')
-        .should('be.visible')
-        .then($cmContent => {
-            // Focus the editor
-            $cmContent[0].focus();
-
-            // Select all and delete (simulate Ctrl+A, Backspace)
-            cy.wrap($cmContent).type('{selectall}{backspace}', { force: true });
-
-            // Type the new text
-            // If multiline, type line by line to avoid issues with special chars
-            if (text.includes('\n')) {
-                text.split('\n').forEach((line, idx, arr) => {
-                    cy.wrap($cmContent).type(line, { force: true });
-                    if (idx < arr.length - 1) {
-                        cy.wrap($cmContent).type('{enter}', { force: true });
-                    }
-                });
+    cy.get(`[data-testid="cell-${index}"] [data-testid="code-editor"]`)
+        .should('exist') // Wait for the code editor to exist in the DOM
+        .should('be.visible') // Ensure it is visible before interacting
+        .then(($editor) => {
+            $editor.click();
+            const editorElement = $editor[0].querySelector('.cm-content');
+            if (editorElement) {
+                editorElement.textContent = text;
+                editorElement.dispatchEvent(new Event('input', { bubbles: true }));
             } else {
-                cy.wrap($cmContent).type(text, { force: true });
+                throw new Error("Editor not found!");
             }
         });
 });
@@ -318,4 +326,24 @@ Cypress.Commands.add('getTables', () => {
         .then($elements => {
             return Cypress.$.makeArray($elements).map(el => el.innerText);
         });
+});
+
+Cypress.Commands.add('addScratchadPage', () => {
+    cy.get('[data-testid="add-page-button"]').click();
+});
+
+Cypress.Commands.add('getScratchpadPages', () => {
+    return cy.get('[data-testid="page-tabs"] [data-testid*="page-tab"]').then(($els) => {
+        return $els.toArray().map(el => el.innerText.trim());
+    });
+});
+
+Cypress.Commands.add('deleteScratchpadPage', (index, cancel = true) => {
+    cy.get(`[data-testid="page-tab-${index}"]`).click();
+    cy.get('[data-testid="delete-page-button"]').click();
+    if (cancel) {
+        cy.get('[data-testid="delete-page-button-cancel"]').click();
+    } else {
+        cy.get('[data-testid="delete-page-button-confirm"]').click();
+    }
 });

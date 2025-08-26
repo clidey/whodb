@@ -660,7 +660,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                             Generate Mock Data
                                         </ContextMenuItem>
                                         <ContextMenuSub>
-                                            <ContextMenuSubTrigger>More Actions</ContextMenuSubTrigger>
+                                            <ContextMenuSubTrigger data-testid="context-menu-more-actions">More Actions</ContextMenuSubTrigger>
                                             <ContextMenuSubContent className="w-44">
                                                 <ContextMenuItem
                                                     variant="destructive"
@@ -668,6 +668,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                                     onSelect={async () => {
                                                         await handleDeleteRow(globalIndex);
                                                     }}
+                                                    data-testid="context-menu-delete-row"
                                                 >
                                                     Delete Row
                                                 </ContextMenuItem>

@@ -66,6 +66,17 @@ describe('Postgres E2E test', () => {
     // check user default data
     cy.data("users");
     cy.sortBy(0);
+
+    cy.addRow({
+      id: "5",
+      username: "alice_wonder",
+      email: "alice@example.com",
+      password: "securepassword2",
+      created_at: "2022-02-02"
+    });
+
+    cy.deleteRow(3);
+
     cy.getTableData().then(({ columns, rows }) => {
       expect(columns).to.deep.equal([
         "",
@@ -238,6 +249,21 @@ describe('Postgres E2E test', () => {
 
     // check sql query in scratchpad
     cy.goto("scratchpad");
+
+    cy.addScratchadPage();
+    cy.getScratchpadPages().then(pages => {
+      expect(pages).to.deep.equal(["Page 1", "Page 2"]);
+    });
+
+    cy.deleteScratchpadPage(0);
+    cy.getScratchpadPages().then(pages => {
+      expect(pages).to.deep.equal(["Page 1", "Page 2"]);
+    });
+    cy.deleteScratchpadPage(0, false);
+    cy.getScratchpadPages().then(pages => {
+      expect(pages).to.deep.equal(["Page 2"]);
+    });
+
     cy.writeCode(0, "SELECT * FROM test_schema.users1;");
     cy.runCode(0);
     cy.getCellError(0).then(err => expect(err).to.equal('ERROR: relation "test_schema.users1" does not exist (SQLSTATE 42P01)'));
@@ -246,7 +272,7 @@ describe('Postgres E2E test', () => {
     cy.runCode(0);
     cy.getCellQueryOutput(0).then(({ rows, columns }) => {
       expect(columns).to.deep.equal([
-        "#",
+        "",
         "id [INT4]",
         "username [VARCHAR]",
         "email [VARCHAR]",
@@ -255,21 +281,21 @@ describe('Postgres E2E test', () => {
       ]);
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         [
-            "1",
+            "",
             "1",
             "john_doe",
             "john@example.com",
             "securepassword1",
         ],
         [
-            "2",
+            "",
             "2",
             "jane_smith",
             "jane@example.com",
             "securepassword2",
         ],
         [
-            "3",
+            "",
             "3",
             "admin_user",
             "admin@example.com",
@@ -292,7 +318,7 @@ describe('Postgres E2E test', () => {
     cy.runCode(1);
     cy.getCellQueryOutput(1).then(({ rows, columns }) => {
       expect(columns).to.deep.equal([
-        "#",
+        "",
         "id [INT4]",
         "username [VARCHAR]",
         "email [VARCHAR]",
@@ -301,7 +327,7 @@ describe('Postgres E2E test', () => {
       ]);
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         [
-            "1",
+            "",
             "1",
             "john_doe",
             "john@example.com",
@@ -316,7 +342,7 @@ describe('Postgres E2E test', () => {
     // ensure the first cell has the second cell data
     cy.getCellQueryOutput(0).then(({ rows, columns }) => {
       expect(columns).to.deep.equal([
-        "#",
+        "",
         "id [INT4]",
         "username [VARCHAR]",
         "email [VARCHAR]",
@@ -325,7 +351,7 @@ describe('Postgres E2E test', () => {
       ]);
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         [
-            "1",
+            "",
             "1",
             "john_doe",
             "john@example.com",

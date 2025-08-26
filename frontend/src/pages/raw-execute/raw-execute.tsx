@@ -545,10 +545,10 @@ export const RawExecutePage: FC = () => {
                                 <div className="flex gap-2 w-full justify-between">
                                     <TabsList className="grid" style={{
                                         gridTemplateColumns: `repeat(${pages.length+1}, minmax(0, 1fr))`
-                                    }} defaultValue={activePage}>
+                                    }} defaultValue={activePage} data-testid="page-tabs">
                                         {
-                                            pages.map(page => (
-                                                <TabsTrigger value={page.id} key={page.id} onClick={() => handleSelect(page.id)}>
+                                            pages.map((page, index) => (
+                                                <TabsTrigger value={page.id} key={page.id} onClick={() => handleSelect(page.id)} data-testid={`page-tab-${index}`}>
                                                     <EditableInput page={page} setValue={(newName) => handleUpdatePageName(page, newName)} />
                                                 </TabsTrigger>
                                             ))
@@ -564,6 +564,7 @@ export const RawExecutePage: FC = () => {
                                             "hidden": pages.length <= 1,
                                           })}
                                           variant="secondary"
+                                          data-testid="delete-page-button"
                                         >
                                           <XMarkIcon className="w-4 h-4" /> Delete page
                                         </Button>
@@ -576,11 +577,12 @@ export const RawExecutePage: FC = () => {
                                           </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
-                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                          <AlertDialogCancel data-testid="delete-page-button-cancel">Cancel</AlertDialogCancel>
                                           <AlertDialogAction asChild>
                                             <Button
                                               variant="destructive"
                                               onClick={() => handleDelete(activePage)}
+                                              data-testid="delete-page-button-confirm"
                                             >
                                               Continue
                                             </Button>

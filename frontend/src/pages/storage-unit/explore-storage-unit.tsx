@@ -408,7 +408,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                             <div className="text-lg font-semibold mb-2">Add new row</div>
                             <div className="flex flex-col gap-4">
                                 {rows?.Columns?.map((col, index) => (
-                                    <div key={col.Name} className="flex flex-col gap-2">
+                                    <div key={col.Name} className="flex flex-col gap-2" data-testid={`add-row-field-${col.Name}`}>
                                         <Tip>
                                             <div className="flex items-center gap-1">
                                                 {columnIcons[index]}
@@ -431,7 +431,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                             )}
                         </div>
                         <SheetFooter className="px-0">
-                            <Button onClick={handleAddRowSubmit} data-testid="submit-button" disabled={adding}>
+                            <Button onClick={handleAddRowSubmit} data-testid="submit-add-row-button" disabled={adding}>
                                 <CheckCircleIcon className="w-4 h-4" /> Submit
                             </Button>
                         </SheetFooter>
@@ -458,7 +458,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                             <Button onClick={handleOpenScratchpad} data-testid="scratchpad-button" variant="secondary">
                                 <CommandLineIcon className="w-4 h-4" /> Scratchpad
                             </Button>
-                            <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-button">
+                            <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-row-button">
                                 <PlusCircleIcon className="w-4 h-4" /> Add Row
                             </Button>
                         </div>
