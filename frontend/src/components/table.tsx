@@ -649,7 +649,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 </ContextMenuItem>
             </ContextMenuContent>
         </ContextMenu>
-    }, []);
+    }, [checked, handleCellClick, handleEdit, handleSelectRow, handleDeleteRow, paginatedRows, disableEdit, onRefresh]);
 
     return (
         <div ref={tableRef} className="h-full">
