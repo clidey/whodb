@@ -79,6 +79,7 @@ type ComplexityRoot struct {
 		Database             func(childComplexity int) int
 		ID                   func(childComplexity int) int
 		IsEnvironmentDefined func(childComplexity int) int
+		Source               func(childComplexity int) int
 		Type                 func(childComplexity int) int
 	}
 
@@ -297,6 +298,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.LoginProfile.IsEnvironmentDefined(childComplexity), true
+
+	case "LoginProfile.Source":
+		if e.complexity.LoginProfile.Source == nil {
+			break
+		}
+
+		return e.complexity.LoginProfile.Source(childComplexity), true
 
 	case "LoginProfile.Type":
 		if e.complexity.LoginProfile.Type == nil {
@@ -1834,6 +1842,50 @@ func (ec *executionContext) fieldContext_LoginProfile_IsEnvironmentDefined(_ con
 	return fc, nil
 }
 
+func (ec *executionContext) _LoginProfile_Source(ctx context.Context, field graphql.CollectedField, obj *model.LoginProfile) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LoginProfile_Source(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Source, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LoginProfile_Source(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LoginProfile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _MockDataGenerationStatus_AmountGenerated(ctx context.Context, field graphql.CollectedField, obj *model.MockDataGenerationStatus) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_MockDataGenerationStatus_AmountGenerated(ctx, field)
 	if err != nil {
@@ -2491,6 +2543,8 @@ func (ec *executionContext) fieldContext_Query_Profiles(_ context.Context, field
 				return ec.fieldContext_LoginProfile_Database(ctx, field)
 			case "IsEnvironmentDefined":
 				return ec.fieldContext_LoginProfile_IsEnvironmentDefined(ctx, field)
+			case "Source":
+				return ec.fieldContext_LoginProfile_Source(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type LoginProfile", field.Name)
 		},
@@ -6340,6 +6394,11 @@ func (ec *executionContext) _LoginProfile(ctx context.Context, sel ast.Selection
 			out.Values[i] = ec._LoginProfile_Database(ctx, field, obj)
 		case "IsEnvironmentDefined":
 			out.Values[i] = ec._LoginProfile_IsEnvironmentDefined(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Source":
+			out.Values[i] = ec._LoginProfile_Source(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

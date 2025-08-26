@@ -41,6 +41,7 @@ const checkEEAvailability = (): boolean => {
 // Store the loaded EE feature flags
 export let featureFlags: FeatureFlags = {} as FeatureFlags;
 export let extensions: Record<string, any> = {};
+export let sources: Record<string, any> = {};
 
 // Get feature flags based on environment and EE availability
 export const initialize = () => {
@@ -59,6 +60,9 @@ export const initialize = () => {
             }
             if (eeConfig?.eeExtensions) {
                 extensions = eeConfig.eeExtensions;
+            }
+            if (eeConfig?.eeSources) {
+                sources = eeConfig.eeSources;
             }
         }).catch(() => {
             console.warn('Could not load EE feature flags');

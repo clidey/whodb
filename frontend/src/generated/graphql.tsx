@@ -98,6 +98,7 @@ export type LoginProfile = {
   Database?: Maybe<Scalars['String']['output']>;
   Id: Scalars['String']['output'];
   IsEnvironmentDefined: Scalars['Boolean']['output'];
+  Source: Scalars['String']['output'];
   Type: DatabaseType;
 };
 
@@ -315,7 +316,7 @@ export enum WhereConditionType {
 export type GetProfilesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetProfilesQuery = { __typename?: 'Query', Profiles: Array<{ __typename?: 'LoginProfile', Alias?: string | null, Id: string, Type: DatabaseType, Database?: string | null, IsEnvironmentDefined: boolean }> };
+export type GetProfilesQuery = { __typename?: 'Query', Profiles: Array<{ __typename?: 'LoginProfile', Alias?: string | null, Id: string, Type: DatabaseType, Database?: string | null, IsEnvironmentDefined: boolean, Source: string }> };
 
 export type GetSchemaQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -483,6 +484,7 @@ export const GetProfilesDocument = gql`
     Type
     Database
     IsEnvironmentDefined
+    Source
   }
 }
     `;

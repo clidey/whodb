@@ -69,6 +69,7 @@ import {
     DocumentDuplicateIcon,
     DocumentIcon,
     DocumentTextIcon,
+    EllipsisVerticalIcon,
     HashtagIcon,
     KeyIcon,
     ListBulletIcon,
@@ -551,6 +552,105 @@ export const StorageUnitTable: FC<TableProps> = ({
         };
     }, [searchRef, rows, columns]);
 
+    const contextMenu = useCallback((globalIndex: number, index: number) => {
+        return <ContextMenu key={globalIndex}>
+            <ContextMenuTrigger className="contents">
+                <TableRow data-row-idx={index} className="group">
+                    <TableCell className={cn({
+                        "hidden": disableEdit,
+                    })}>
+                        <Checkbox
+                            checked={checked.includes(globalIndex)}
+                            onCheckedChange={() => setChecked(checked.includes(globalIndex) ? checked.filter(i => i !== globalIndex) : [...checked, globalIndex])}
+                        />
+                    </TableCell>
+                    {paginatedRows[index]?.map((cell, cellIdx) => (
+                        <TableCell key={cellIdx} className="cursor-pointer" onClick={() => handleCellClick(globalIndex, cellIdx)} data-col-idx={cellIdx}>{cell}</TableCell>
+                    ))}
+                    <Button variant="secondary" className="absolute right-6 opacity-0 group-hover:opacity-100 border border-input" onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // Manually trigger context menu on this row
+                        const event = new MouseEvent("contextmenu", {
+                            bubbles: true,
+                            clientX: e.clientX,
+                            clientY: e.clientY,
+                        });
+                        e.currentTarget.dispatchEvent(event);
+                        }} data-testid="icon-button">
+                        <EllipsisVerticalIcon className="w-4 h-4" />
+                    </Button>
+                </TableRow>
+            </ContextMenuTrigger>
+            <ContextMenuContent className="w-52">
+                <ContextMenuItem onSelect={() => handleSelectRow(globalIndex)}>
+                    {checked.includes(globalIndex) ? "Deselect Row" : "Select Row"}
+                </ContextMenuItem>
+                <ContextMenuItem onSelect={() => handleEdit(globalIndex)} disabled={checked.length > 0} data-testid="context-menu-edit-row">
+                    Edit Row
+                    <ContextMenuShortcut>⌘E</ContextMenuShortcut>
+                </ContextMenuItem>
+                <ContextMenuSub>
+                    <ContextMenuSubTrigger>Export</ContextMenuSubTrigger>
+                    <ContextMenuSubContent>
+                        <ContextMenuItem
+                            onSelect={() => { setShowExportConfirm(true); setExportFormat('csv'); }}
+                        >
+                            <DocumentIcon className="w-4 h-4" />
+                            Export All as CSV
+                        </ContextMenuItem>
+                        <ContextMenuItem
+                            onSelect={() => { setShowExportConfirm(true); setExportFormat('excel'); }}
+                        >
+                            <DocumentIcon className="w-4 h-4" />
+                            Export All as Excel
+                        </ContextMenuItem>
+                        <ContextMenuSeparator />
+                        <ContextMenuItem
+                            onSelect={() => { setShowExportConfirm(true); setExportFormat('csv'); }}
+                            disabled={checked.length === 0}
+                        >
+                            <DocumentIcon className="w-4 h-4" />
+                            Export Selected as CSV
+                        </ContextMenuItem>
+                        <ContextMenuItem
+                            onSelect={() => { setShowExportConfirm(true); setExportFormat('excel'); }}
+                            disabled={checked.length === 0}
+                        >
+                            <DocumentIcon className="w-4 h-4" />
+                            Export Selected as Excel
+                        </ContextMenuItem>
+                    </ContextMenuSubContent>
+                </ContextMenuSub>
+                <ContextMenuItem
+                    onSelect={() => setShowMockDataSheet(true)}
+                >
+                    Generate Mock Data
+                </ContextMenuItem>
+                <ContextMenuSub>
+                    <ContextMenuSubTrigger data-testid="context-menu-more-actions">More Actions</ContextMenuSubTrigger>
+                    <ContextMenuSubContent className="w-44">
+                        <ContextMenuItem
+                            variant="destructive"
+                            disabled={deleting}
+                            onSelect={async () => {
+                                await handleDeleteRow(globalIndex);
+                            }}
+                            data-testid="context-menu-delete-row"
+                        >
+                            Delete Row
+                        </ContextMenuItem>
+                    </ContextMenuSubContent>
+                </ContextMenuSub>
+                <ContextMenuSeparator />
+                <ContextMenuItem disabled={true}>
+                    Open in Graph View
+                    <ContextMenuShortcut>⌘G</ContextMenuShortcut>
+                </ContextMenuItem>
+            </ContextMenuContent>
+        </ContextMenu>
+    }, []);
+
     return (
         <div ref={tableRef} className="h-full">
             <div className="flex flex-col h-full space-y-4 w-0" style={{
@@ -595,93 +695,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     <VirtualizedTableBody rowCount={paginatedRows.length} rowHeight={rowHeight} height={height}>
                         {(index) => {
                             const globalIndex = (currentPage - 1) * pageSize + index;
-                            return (
-                                <ContextMenu key={globalIndex}>
-                                    <ContextMenuTrigger
-                                        className="contents"
-                                    >
-                                        <TableRow data-row-idx={index}>
-                                            <TableCell className={cn({
-                                                "hidden": disableEdit,
-                                            })}>
-                                                <Checkbox
-                                                    checked={checked.includes(globalIndex)}
-                                                    onCheckedChange={() => setChecked(checked.includes(globalIndex) ? checked.filter(i => i !== globalIndex) : [...checked, globalIndex])}
-                                                />
-                                            </TableCell>
-                                            {paginatedRows[index]?.map((cell, cellIdx) => (
-                                                <TableCell key={cellIdx} className="cursor-pointer" onClick={() => handleCellClick(globalIndex, cellIdx)} data-col-idx={cellIdx}>{cell}</TableCell>
-                                            ))}
-                                        </TableRow>
-                                    </ContextMenuTrigger>
-                                    <ContextMenuContent className="w-52">
-                                        <ContextMenuItem onSelect={() => handleSelectRow(globalIndex)}>
-                                            {checked.includes(globalIndex) ? "Deselect Row" : "Select Row"}
-                                        </ContextMenuItem>
-                                        <ContextMenuItem onSelect={() => handleEdit(globalIndex)} disabled={checked.length > 0} data-testid="context-menu-edit-row">
-                                            Edit Row
-                                            <ContextMenuShortcut>⌘E</ContextMenuShortcut>
-                                        </ContextMenuItem>
-                                        <ContextMenuSub>
-                                            <ContextMenuSubTrigger>Export</ContextMenuSubTrigger>
-                                            <ContextMenuSubContent>
-                                                <ContextMenuItem
-                                                    onSelect={() => { setShowExportConfirm(true); setExportFormat('csv'); }}
-                                                >
-                                                    <DocumentIcon className="w-4 h-4" />
-                                                    Export All as CSV
-                                                </ContextMenuItem>
-                                                <ContextMenuItem
-                                                    onSelect={() => { setShowExportConfirm(true); setExportFormat('excel'); }}
-                                                >
-                                                    <DocumentIcon className="w-4 h-4" />
-                                                    Export All as Excel
-                                                </ContextMenuItem>
-                                                <ContextMenuSeparator />
-                                                <ContextMenuItem
-                                                    onSelect={() => { setShowExportConfirm(true); setExportFormat('csv'); }}
-                                                    disabled={checked.length === 0}
-                                                >
-                                                    <DocumentIcon className="w-4 h-4" />
-                                                    Export Selected as CSV
-                                                </ContextMenuItem>
-                                                <ContextMenuItem
-                                                    onSelect={() => { setShowExportConfirm(true); setExportFormat('excel'); }}
-                                                    disabled={checked.length === 0}
-                                                >
-                                                    <DocumentIcon className="w-4 h-4" />
-                                                    Export Selected as Excel
-                                                </ContextMenuItem>
-                                            </ContextMenuSubContent>
-                                        </ContextMenuSub>
-                                        <ContextMenuItem
-                                            onSelect={() => setShowMockDataSheet(true)}
-                                        >
-                                            Generate Mock Data
-                                        </ContextMenuItem>
-                                        <ContextMenuSub>
-                                            <ContextMenuSubTrigger data-testid="context-menu-more-actions">More Actions</ContextMenuSubTrigger>
-                                            <ContextMenuSubContent className="w-44">
-                                                <ContextMenuItem
-                                                    variant="destructive"
-                                                    disabled={deleting}
-                                                    onSelect={async () => {
-                                                        await handleDeleteRow(globalIndex);
-                                                    }}
-                                                    data-testid="context-menu-delete-row"
-                                                >
-                                                    Delete Row
-                                                </ContextMenuItem>
-                                            </ContextMenuSubContent>
-                                        </ContextMenuSub>
-                                        <ContextMenuSeparator />
-                                        <ContextMenuItem disabled={true}>
-                                            Open in Graph View
-                                            <ContextMenuShortcut>⌘G</ContextMenuShortcut>
-                                        </ContextMenuItem>
-                                    </ContextMenuContent>
-                                </ContextMenu>
-                            );
+                            return contextMenu(globalIndex, index);
                         }}
                     </VirtualizedTableBody>}
                 </TableComponent>

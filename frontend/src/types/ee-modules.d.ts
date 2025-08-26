@@ -15,6 +15,7 @@ declare module '@ee/config.tsx' {
   export const eeDatabaseTypes: any;
   export const eeFeatures: any;
   export const eeExtensions: Record<string, any>;
+  export const eeSources: Record<string, any>;
   export const isEEDatabase: any;
   export const isEENoSQLDatabase: any;
   export const getEEDatabaseStorageUnitLabel: any;

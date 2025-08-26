@@ -66,6 +66,7 @@ type LoginProfile struct {
 	Type                 DatabaseType `json:"Type"`
 	Database             *string      `json:"Database,omitempty"`
 	IsEnvironmentDefined bool         `json:"IsEnvironmentDefined"`
+	Source               string       `json:"Source"`
 }
 
 type LoginProfileInput struct {

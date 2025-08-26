@@ -25,7 +25,7 @@ import { Loading } from "../../components/loading";
 import { Container } from "../../components/page";
 import { updateProfileLastAccessed } from "../../components/profile-info-tooltip";
 import { baseDatabaseTypes, getDatabaseTypeDropdownItems, IDatabaseDropdownItem } from "../../config/database-types";
-import { extensions } from '../../config/features';
+import { extensions, sources } from '../../config/features';
 import { InternalRoutes } from "../../config/routes";
 import { AuthActions } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
@@ -342,6 +342,7 @@ export const LoginForm: FC<LoginFormProps> = ({
             value: profile.Id,
             label: profile.Alias ?? profile.Id,
             icon: (Icons.Logos as Record<string, ReactElement>)[profile.Type],
+            rightIcon: sources[profile.Source],
         })) ?? [];
     }, [profiles?.Profiles]);
 

@@ -434,8 +434,8 @@ func (r *queryResolver) Profiles(ctx context.Context) ([]*model.LoginProfile, er
 			Type:                 model.DatabaseType(profile.Type),
 			Database:             &profile.Database,
 			IsEnvironmentDefined: true,
+			Source:               profile.Source,
 		}
-
 		if len(profile.Alias) > 0 {
 			loginProfile.Alias = &profile.Alias
 		}
