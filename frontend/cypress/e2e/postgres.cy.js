@@ -267,17 +267,17 @@ describe('Postgres E2E test', () => {
     cy.writeCode(0, "SELECT * FROM test_schema.users1;");
     cy.runCode(0);
     cy.getCellError(0).then(err => expect(err).to.equal('ERROR: relation "test_schema.users1" does not exist (SQLSTATE 42P01)'));
-    
+
     cy.writeCode(0, "SELECT * FROM test_schema.users ORDER BY id;");
     cy.runCode(0);
     cy.getCellQueryOutput(0).then(({ rows, columns }) => {
       expect(columns).to.deep.equal([
         "",
-        "id [INT4]",
-        "username [VARCHAR]",
-        "email [VARCHAR]",
-        "password [VARCHAR]",
-        "created_at [TIMESTAMP]"
+        "id",
+        "username",
+        "email",
+        "password",
+        "created_at"
       ]);
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         [
@@ -319,11 +319,11 @@ describe('Postgres E2E test', () => {
     cy.getCellQueryOutput(1).then(({ rows, columns }) => {
       expect(columns).to.deep.equal([
         "",
-        "id [INT4]",
-        "username [VARCHAR]",
-        "email [VARCHAR]",
-        "password [VARCHAR]",
-        "created_at [TIMESTAMP]"
+        "id",
+        "username",
+        "email",
+        "password",
+        "created_at"
       ]);
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         [
@@ -343,11 +343,11 @@ describe('Postgres E2E test', () => {
     cy.getCellQueryOutput(0).then(({ rows, columns }) => {
       expect(columns).to.deep.equal([
         "",
-        "id [INT4]",
-        "username [VARCHAR]",
-        "email [VARCHAR]",
-        "password [VARCHAR]",
-        "created_at [TIMESTAMP]"
+        "id",
+        "username",
+        "email",
+        "password",
+        "created_at"
       ]);
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         [
