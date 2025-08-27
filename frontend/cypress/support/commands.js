@@ -296,7 +296,7 @@ Cypress.Commands.add("runCode", (index) => {
 });
 
 Cypress.Commands.add("getCellQueryOutput", (index) => {
-    return cy.get(`[data-testid="cell-${index}"] [data-testid="cell-query-output"] table`).then($table => {
+    return cy.get(`[data-testid="cell-${index}"] [data-testid="cell-query-output"] table`, { timeout: 10000 }).then($table => {
         const columns = Cypress.$.makeArray($table.find('th'))
             .map(el => el.innerText.trim());
 
@@ -309,11 +309,23 @@ Cypress.Commands.add("getCellQueryOutput", (index) => {
 });
 
 Cypress.Commands.add("getCellActionOutput", (index) => {
-    return extractText(cy.get(`[data-testid="cell-${index}"] [data-testid="cell-action-output"]`));
+    return cy.get(`[data-testid="cell-${index}"] [data-testid="cell-action-output"]`, { timeout: 10000 })
+        .should('exist')
+        .then($el => extractText(cy.wrap($el)));
 });
 
 Cypress.Commands.add("getCellError", (index) => {
-    return extractText(cy.get(`[data-testid="cell-${index}"] [data-testid="cell-error"]`));
+    // Wait for error element to appear after query execution
+    // The error is in an Alert component, we need to extract just the AlertDescription text
+    return cy.get(`[data-testid="cell-${index}"] [data-testid="cell-error"]`, { timeout: 10000 })
+        .should('exist')
+        .find('[role="alert"]') // Find the Alert component
+        .invoke("text")
+        .then((text) => {
+            // The Alert contains both AlertTitle ("Error") and AlertDescription (actual error message)
+            // Remove the "Error" prefix if it exists
+            return text.replace(/^Error\s*/i, '').trim();
+        });
 });
 
 Cypress.Commands.add('logout', () => {
