@@ -5,6 +5,7 @@ go 1.24.1
 require (
 	github.com/99designs/gqlgen v0.17.78
 	github.com/ClickHouse/clickhouse-go/v2 v2.36.0
+	github.com/bradfitz/gomemcache v0.0.0-20230905024940-24af94b03874
 	github.com/brianvoe/gofakeit/v7 v7.4.0
 	github.com/deckarep/golang-set/v2 v2.8.0
 	github.com/elastic/go-elasticsearch/v8 v8.19.0

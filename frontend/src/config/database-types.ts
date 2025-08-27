@@ -142,6 +142,20 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         supportsScratchpad: true,
         supportsSchema: true,
     },
+    {
+        id: "Memcached",
+        label: "Memcached",
+        icon: Icons.Logos.Memcached,
+        extra: {"Port": "11211"},
+        fields: {
+            hostname: true,
+            // username: false - Memcached doesn't use authentication by default
+            // password: false - Memcached doesn't use authentication by default
+            // database: false - Memcached doesn't use database field
+        },
+        supportsScratchpad: true,  // Memcached supports simple commands via scratchpad
+        supportsSchema: false,  // Memcached doesn't have schemas
+    },
 ];
 
 // This will be populated if EE is loaded

@@ -30,6 +30,7 @@ const (
 	DatabaseType_Redis         = "Redis"
 	DatabaseType_ElasticSearch = "ElasticSearch"
 	DatabaseType_ClickHouse    = "ClickHouse"
+	DatabaseType_Memcached     = "Memcached"
 )
 
 type Engine struct {

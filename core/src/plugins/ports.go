@@ -30,6 +30,7 @@ var defaultDatabasePorts = map[engine.DatabaseType]string{
 	engine.DatabaseType_MongoDB:       "27017",
 	engine.DatabaseType_ElasticSearch: "9200", // HTTP port (Transport port is 9300)
 	engine.DatabaseType_Redis:         "6379",
+	engine.DatabaseType_Memcached:     "11211",
 }
 
 // additionalPorts holds ports registered by external packages (e.g., enterprise edition)
