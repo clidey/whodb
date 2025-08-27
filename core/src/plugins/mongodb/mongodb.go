@@ -236,6 +236,13 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 	return result, nil
 }
 
+func (p *MongoDBPlugin) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {
+	// MongoDB doesn't have a traditional column structure, it returns documents
+	return []engine.Column{
+		{Name: "document", Type: "Document"},
+	}, nil
+}
+
 func convertWhereConditionToMongoDB(where *model.WhereCondition) (bson.M, error) {
 	if where == nil {
 		return bson.M{}, nil

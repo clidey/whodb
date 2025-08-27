@@ -6,6 +6,7 @@
   "dependencies": {
     "@apollo/client": "^3.13.8",
     "@clidey/ux": "^0.22.0",
+    "@codemirror/autocomplete": "^6.18.1",
     "@codemirror/lang-json": "^6.0.2",
     "@codemirror/lang-markdown": "^6.3.3",
     "@codemirror/lang-sql": "^6.9.0",

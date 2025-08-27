@@ -182,6 +182,26 @@ func (p *GormPlugin) GetRows(config *engine.PluginConfig, schema string, storage
 	})
 }
 
+func (p *GormPlugin) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]engine.Column, error) {
+		columnTypes, err := p.GetColumnTypes(db, schema, storageUnit)
+		if err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get column types for table %s.%s", schema, storageUnit))
+			return nil, err
+		}
+
+		columns := make([]engine.Column, 0, len(columnTypes))
+		for columnName, columnType := range columnTypes {
+			columns = append(columns, engine.Column{
+				Name: columnName,
+				Type: columnType,
+			})
+		}
+
+		return columns, nil
+	})
+}
+
 func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	columnInfo, err := p.GetColumnTypes(db, schema, storageUnit)
 	if err != nil {
