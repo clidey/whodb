@@ -30,7 +30,7 @@ const SQL_KEYWORDS = new Set([
 ]);
 
 // Parse the SQL context to determine what type of suggestions to provide
-function parseSQLContext(text: string, pos: number): { type: 'schema' | 'table' | 'column' | null, schema?: string, table?: string } {
+function parseSQLContext(text: string, pos: number): { type: 'schema' | 'table' | 'column' | 'mixed' | null, schema?: string, table?: string, alias?: string, showTables?: boolean, singleTable?: boolean } {
   const beforeCursor = text.slice(0, pos);
   const beforeCursorUpper = beforeCursor.toUpperCase();
   const lines = beforeCursorUpper.split('\n');
@@ -63,6 +63,48 @@ function parseSQLContext(text: string, pos: number): { type: 'schema' | 'table' 
     return { type: 'column', table: schemaTableMatch[1] };
   }
   
+  // Extract all tables and their aliases from the query
+  const extractTablesAndAliases = () => {
+    const tables: Array<{schema?: string, table: string, alias?: string}> = [];
+    // Match patterns like: FROM schema.table alias, FROM table AS alias, FROM table alias
+    const tablePatterns = [
+      /FROM\s+(?:(\w+)\.)?(\w+)(?:\s+(?:AS\s+)?(\w+))?/gi,
+      /JOIN\s+(?:(\w+)\.)?(\w+)(?:\s+(?:AS\s+)?(\w+))?/gi
+    ];
+    
+    for (const pattern of tablePatterns) {
+      let match;
+      while ((match = pattern.exec(beforeCursorUpper)) !== null) {
+        tables.push({
+          schema: match[1] || undefined,
+          table: match[2],
+          alias: match[3] || undefined
+        });
+      }
+    }
+    
+    return tables;
+  };
+  
+  const tables = extractTablesAndAliases();
+  const singleTable = tables.length === 1;
+  
+  // Check if we're immediately after WHERE with no additional context
+  if (lastWhere > -1 && lastWhere > lastFrom && lastWhere > lastJoin) {
+    const afterWhere = beforeCursorUpper.slice(lastWhere + 5).trim();
+    
+    // If we're right after WHERE or after WHERE followed by whitespace only
+    if (!afterWhere || afterWhere.match(/^\s*$/)) {
+      return { 
+        type: 'mixed',
+        showTables: true,
+        singleTable,
+        schema: singleTable ? tables[0].schema : undefined,
+        table: singleTable ? tables[0].table : undefined
+      };
+    }
+  }
+  
   // Check if we're in a SELECT context
   if (lastSelect > -1 && (!lastFrom || lastSelect > lastFrom)) {
     // We're in SELECT clause, show columns
@@ -80,16 +122,18 @@ function parseSQLContext(text: string, pos: number): { type: 'schema' | 'table' 
     }
   }
   
-  // Check if we're after WHERE
+  // Check if we're in a context after WHERE but with some content
   if (lastWhere > -1 && lastWhere > lastFrom && lastWhere > lastJoin) {
     // Extract table name from the query
-    const tableMatch = /FROM\s+(?:(\w+)\.)?(\w+)/i.exec(beforeCursorUpper);
-    if (tableMatch) {
-      return { 
-        type: 'column', 
-        schema: tableMatch[1] || undefined,
-        table: tableMatch[2]
-      };
+    if (tables.length > 0) {
+      // If single table, return column context
+      if (singleTable) {
+        return { 
+          type: 'column', 
+          schema: tables[0].schema,
+          table: tables[0].table
+        };
+      }
     }
   }
   
@@ -105,19 +149,50 @@ function parseSQLContext(text: string, pos: number): { type: 'schema' | 'table' 
       recentText.match(/\s+(<|>|<=|>=|<>|!=)\s*\w*$/i)) {
     
     // Try to find the main table from the query
-    const tableMatch = /FROM\s+(?:(\w+)\.)?(\w+)/i.exec(beforeCursorUpper) ||
-                      /FROM\s+(?:(\w+)\.)?(\w+)/i.exec(text.slice(pos).toUpperCase());
-    
-    if (tableMatch) {
+    if (tables.length > 0) {
+      // If single table, return its info
+      if (singleTable) {
+        return { 
+          type: 'column', 
+          schema: tables[0].schema,
+          table: tables[0].table
+        };
+      }
+      // Multiple tables, just use the first one for now
       return { 
         type: 'column', 
-        schema: tableMatch[1] || undefined,
-        table: tableMatch[2]
+        schema: tables[0].schema,
+        table: tables[0].table
       };
     }
   }
   
   return { type: null };
+}
+
+// Extract tables and aliases from the full query
+function extractTablesAndAliasesFromQuery(text: string): Array<{schema?: string, table: string, alias?: string}> {
+  const tables: Array<{schema?: string, table: string, alias?: string}> = [];
+  const textUpper = text.toUpperCase();
+  
+  // Match patterns like: FROM schema.table alias, FROM table AS alias, FROM table alias
+  const tablePatterns = [
+    /FROM\s+(?:(\w+)\.)?(\w+)(?:\s+(?:AS\s+)?(\w+))?/gi,
+    /JOIN\s+(?:(\w+)\.)?(\w+)(?:\s+(?:AS\s+)?(\w+))?/gi
+  ];
+  
+  for (const pattern of tablePatterns) {
+    let match;
+    while ((match = pattern.exec(textUpper)) !== null) {
+      tables.push({
+        schema: match[1] || undefined,
+        table: match[2],
+        alias: match[3] || undefined
+      });
+    }
+  }
+  
+  return tables;
 }
 
 // Create completion items with proper formatting
@@ -232,6 +307,43 @@ async function sqlAutocomplete(context: CompletionContext, options: Autocomplete
                 completions = columnsResult.data.Columns.map((column: any) => 
                   createCompletion(column.Name, 'property', column.Type)
                 );
+              }
+            }
+          }
+          break;
+          
+        case 'mixed':
+          // Mixed context - show both tables and columns
+          if (sqlContext.showTables) {
+            // First, get all tables from the query
+            const tables = extractTablesAndAliasesFromQuery(text);
+            
+            // Add table/alias suggestions
+            for (const tableInfo of tables) {
+              // Add alias if it exists
+              if (tableInfo.alias) {
+                completions.push(createCompletion(tableInfo.alias, 'variable', `Alias for ${tableInfo.table}`));
+              }
+              // Add table name
+              completions.push(createCompletion(tableInfo.table, 'class', 'Table'));
+            }
+            
+            // If single table, also fetch its columns
+            if (sqlContext.singleTable && sqlContext.table && sqlContext.schema) {
+              const columnsResult = await apolloClient.query({
+                query: ColumnsDocument,
+                variables: { 
+                  schema: sqlContext.schema,
+                  storageUnit: sqlContext.table 
+                },
+                fetchPolicy: 'cache-first',
+              });
+              
+              if (columnsResult.data?.Columns) {
+                const columnCompletions = columnsResult.data.Columns.map((column: any) => 
+                  createCompletion(column.Name, 'property', column.Type)
+                );
+                completions = completions.concat(columnCompletions);
               }
             }
           }
