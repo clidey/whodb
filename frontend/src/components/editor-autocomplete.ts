@@ -15,9 +15,8 @@
  */
 
 import { CompletionContext, CompletionResult, autocompletion, Completion } from "@codemirror/autocomplete";
-import { syntaxTree } from "@codemirror/language";
 import { ApolloClient } from "@apollo/client";
-import { ColumnsDocument, SchemaDocument, StorageUnitDocument } from "@graphql";
+import { ColumnsDocument, GetSchemaDocument, GetStorageUnitsDocument } from "@graphql";
 
 interface AutocompleteOptions {
   apolloClient: ApolloClient<any>;
@@ -111,7 +110,7 @@ async function sqlAutocomplete(context: CompletionContext, options: Autocomplete
       case 'schema':
         // Fetch all schemas
         const schemasResult = await apolloClient.query({
-          query: SchemaDocument,
+          query: GetSchemaDocument,
           fetchPolicy: 'cache-first',
         });
         
@@ -126,7 +125,7 @@ async function sqlAutocomplete(context: CompletionContext, options: Autocomplete
         // Fetch tables for the specified schema
         if (sqlContext.schema) {
           const tablesResult = await apolloClient.query({
-            query: StorageUnitDocument,
+            query: GetStorageUnitsDocument,
             variables: { schema: sqlContext.schema },
             fetchPolicy: 'cache-first',
           });

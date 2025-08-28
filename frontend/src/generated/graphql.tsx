@@ -192,6 +192,7 @@ export type Query = {
   AIChat: Array<AiChatMessage>;
   AIModel: Array<Scalars['String']['output']>;
   AIProviders: Array<AiProvider>;
+  Columns: Array<Column>;
   Database: Array<Scalars['String']['output']>;
   Graph: Array<GraphUnit>;
   MockDataMaxRowCount: Scalars['Int']['output'];
@@ -218,6 +219,12 @@ export type QueryAiModelArgs = {
   modelType: Scalars['String']['input'];
   providerId?: InputMaybe<Scalars['String']['input']>;
   token?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryColumnsArgs = {
+  schema: Scalars['String']['input'];
+  storageUnit: Scalars['String']['input'];
 };
 
 
@@ -399,6 +406,14 @@ export type GetGraphQueryVariables = Exact<{
 
 
 export type GetGraphQuery = { __typename?: 'Query', Graph: Array<{ __typename?: 'GraphUnit', Unit: { __typename?: 'StorageUnit', Name: string, Attributes: Array<{ __typename?: 'Record', Key: string, Value: string }> }, Relations: Array<{ __typename?: 'GraphUnitRelationship', Name: string, Relationship: GraphUnitRelationshipType }> }> };
+
+export type ColumnsQueryVariables = Exact<{
+  schema: Scalars['String']['input'];
+  storageUnit: Scalars['String']['input'];
+}>;
+
+
+export type ColumnsQuery = { __typename?: 'Query', Columns: Array<{ __typename?: 'Column', Name: string, Type: string }> };
 
 export type RawExecuteQueryVariables = Exact<{
   query: Scalars['String']['input'];
@@ -991,6 +1006,48 @@ export type GetGraphQueryHookResult = ReturnType<typeof useGetGraphQuery>;
 export type GetGraphLazyQueryHookResult = ReturnType<typeof useGetGraphLazyQuery>;
 export type GetGraphSuspenseQueryHookResult = ReturnType<typeof useGetGraphSuspenseQuery>;
 export type GetGraphQueryResult = Apollo.QueryResult<GetGraphQuery, GetGraphQueryVariables>;
+export const ColumnsDocument = gql`
+    query Columns($schema: String!, $storageUnit: String!) {
+  Columns(schema: $schema, storageUnit: $storageUnit) {
+    Name
+    Type
+  }
+}
+    `;
+
+/**
+ * __useColumnsQuery__
+ *
+ * To run a query within a React component, call `useColumnsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useColumnsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useColumnsQuery({
+ *   variables: {
+ *      schema: // value for 'schema'
+ *      storageUnit: // value for 'storageUnit'
+ *   },
+ * });
+ */
+export function useColumnsQuery(baseOptions: Apollo.QueryHookOptions<ColumnsQuery, ColumnsQueryVariables> & ({ variables: ColumnsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ColumnsQuery, ColumnsQueryVariables>(ColumnsDocument, options);
+      }
+export function useColumnsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ColumnsQuery, ColumnsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ColumnsQuery, ColumnsQueryVariables>(ColumnsDocument, options);
+        }
+export function useColumnsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ColumnsQuery, ColumnsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ColumnsQuery, ColumnsQueryVariables>(ColumnsDocument, options);
+        }
+export type ColumnsQueryHookResult = ReturnType<typeof useColumnsQuery>;
+export type ColumnsLazyQueryHookResult = ReturnType<typeof useColumnsLazyQuery>;
+export type ColumnsSuspenseQueryHookResult = ReturnType<typeof useColumnsSuspenseQuery>;
+export type ColumnsQueryResult = Apollo.QueryResult<ColumnsQuery, ColumnsQueryVariables>;
 export const RawExecuteDocument = gql`
     query RawExecute($query: String!) {
   RawExecute(query: $query) {
