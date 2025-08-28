@@ -172,6 +172,18 @@ Cypress.Commands.add("getHighlightedCell", () => {
     return cy.get('td.table-search-highlight');
 });
 
+Cypress.Commands.add("getHighlightedRows", () => {
+    return cy.get('tr:has(td.table-search-highlight)').then(($rows) => {
+        const rows = [];
+        $rows.each((index, row) => {
+            const cells = Cypress.$(row).find('td').toArray()
+                .map(cell => cell.innerText.trim());
+            rows.push(cells);
+        });
+        return rows;
+    });
+});
+
 Cypress.Commands.add("addRow", (data) => {
     cy.get('[data-testid="add-row-button"]').click();
 
@@ -386,7 +398,7 @@ Cypress.Commands.add('getTables', () => {
         });
 });
 
-Cypress.Commands.add('addScratchadPage', () => {
+Cypress.Commands.add('addScratchpadPage', () => {
     cy.get('[data-testid="add-page-button"]').click();
 });
 
