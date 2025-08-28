@@ -87,6 +87,33 @@ function createCompletion(label: string, type: string, detail?: string): Complet
   };
 }
 
+// SQL keywords for fallback completion
+const SQL_KEYWORD_LIST = [
+  'SELECT', 'FROM', 'WHERE', 'JOIN', 'INNER', 'LEFT', 'RIGHT', 'OUTER', 'FULL',
+  'ON', 'AND', 'OR', 'NOT', 'NULL', 'TRUE', 'FALSE', 'ORDER', 'BY', 'GROUP',
+  'HAVING', 'LIMIT', 'OFFSET', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP',
+  'ALTER', 'TABLE', 'INDEX', 'VIEW', 'DATABASE', 'SCHEMA', 'INTO', 'VALUES',
+  'SET', 'AS', 'DISTINCT', 'COUNT', 'SUM', 'AVG', 'MAX', 'MIN', 'CASE', 'WHEN',
+  'THEN', 'ELSE', 'END', 'IF', 'EXISTS', 'LIKE', 'IN', 'BETWEEN', 'IS', 'ASC',
+  'DESC', 'UNION', 'ALL', 'ANY', 'SOME', 'WITH', 'RECURSIVE', 'CASCADE',
+  'CONSTRAINT', 'PRIMARY', 'KEY', 'FOREIGN', 'REFERENCES', 'UNIQUE', 'CHECK',
+  'DEFAULT', 'AUTO_INCREMENT', 'SERIAL', 'TRUNCATE', 'EXPLAIN', 'ANALYZE',
+  'GRANT', 'REVOKE', 'COMMIT', 'ROLLBACK', 'TRANSACTION', 'BEGIN', 'START'
+];
+
+// Create SQL keyword completions
+function createKeywordCompletions(prefix: string, from: number): CompletionResult {
+  const keywordCompletions = SQL_KEYWORD_LIST
+    .filter(keyword => keyword.toLowerCase().startsWith(prefix.toLowerCase()))
+    .map(keyword => createCompletion(keyword, 'keyword', 'SQL Keyword'));
+    
+  return {
+    from,
+    options: keywordCompletions,
+    validFor: /^\w*$/,
+  };
+}
+
 // Main autocomplete function
 async function sqlAutocomplete(context: CompletionContext, options: AutocompleteOptions): Promise<CompletionResult | null> {
   const { apolloClient } = options;
@@ -96,102 +123,112 @@ async function sqlAutocomplete(context: CompletionContext, options: Autocomplete
   // Parse the SQL context
   const sqlContext = parseSQLContext(text, pos);
   
-  if (!sqlContext.type) {
-    return null;
-  }
-  
   const word = context.matchBefore(/\w*/);
   const from = word?.from ?? pos;
   
-  try {
-    let completions: Completion[] = [];
-    
-    switch (sqlContext.type) {
-      case 'schema':
-        // Fetch all schemas
-        const schemasResult = await apolloClient.query({
-          query: GetSchemaDocument,
-          fetchPolicy: 'cache-first',
-        });
-        
-        if (schemasResult.data?.Schema) {
-          completions = schemasResult.data.Schema.map((schema: string) => 
-            createCompletion(schema, 'namespace', 'Schema')
-          );
-        }
-        break;
-        
-      case 'table':
-        // Fetch tables for the specified schema
-        if (sqlContext.schema) {
-          const tablesResult = await apolloClient.query({
-            query: GetStorageUnitsDocument,
-            variables: { schema: sqlContext.schema },
+  // Try to get custom completions first if we have a specific context
+  if (sqlContext.type) {
+    try {
+      let completions: Completion[] = [];
+      
+      switch (sqlContext.type) {
+        case 'schema':
+          // Fetch all schemas
+          const schemasResult = await apolloClient.query({
+            query: GetSchemaDocument,
             fetchPolicy: 'cache-first',
           });
           
-          if (tablesResult.data?.StorageUnit) {
-            completions = tablesResult.data.StorageUnit.map((unit: any) => 
-              createCompletion(unit.Name, 'class', 'Table')
+          if (schemasResult.data?.Schema) {
+            completions = schemasResult.data.Schema.map((schema: string) => 
+              createCompletion(schema, 'namespace', 'Schema')
             );
           }
-        }
-        break;
-        
-      case 'column':
-        // Fetch columns for the specified table
-        if (sqlContext.table) {
-          // If we have a schema from the context, use it
-          let schema = sqlContext.schema;
+          break;
           
-          // If no schema in context, try to find it from the query
-          if (!schema) {
-            const schemaMatch = new RegExp(`(\\w+)\\.${sqlContext.table}`, 'i').exec(text);
-            schema = schemaMatch?.[1];
-          }
-          
-          if (schema) {
-            const columnsResult = await apolloClient.query({
-              query: ColumnsDocument,
-              variables: { 
-                schema: schema,
-                storageUnit: sqlContext.table 
-              },
+        case 'table':
+          // Fetch tables for the specified schema
+          if (sqlContext.schema) {
+            const tablesResult = await apolloClient.query({
+              query: GetStorageUnitsDocument,
+              variables: { schema: sqlContext.schema },
               fetchPolicy: 'cache-first',
             });
             
-            if (columnsResult.data?.Columns) {
-              completions = columnsResult.data.Columns.map((column: any) => 
-                createCompletion(column.Name, 'property', column.Type)
+            if (tablesResult.data?.StorageUnit) {
+              completions = tablesResult.data.StorageUnit.map((unit: any) => 
+                createCompletion(unit.Name, 'class', 'Table')
               );
             }
           }
-        }
-        break;
+          break;
+          
+        case 'column':
+          // Fetch columns for the specified table
+          if (sqlContext.table) {
+            // If we have a schema from the context, use it
+            let schema = sqlContext.schema;
+            
+            // If no schema in context, try to find it from the query
+            if (!schema) {
+              const schemaMatch = new RegExp(`(\\w+)\\.${sqlContext.table}`, 'i').exec(text);
+              schema = schemaMatch?.[1];
+            }
+            
+            if (schema) {
+              const columnsResult = await apolloClient.query({
+                query: ColumnsDocument,
+                variables: { 
+                  schema: schema,
+                  storageUnit: sqlContext.table 
+                },
+                fetchPolicy: 'cache-first',
+              });
+              
+              if (columnsResult.data?.Columns) {
+                completions = columnsResult.data.Columns.map((column: any) => 
+                  createCompletion(column.Name, 'property', column.Type)
+                );
+              }
+            }
+          }
+          break;
+      }
+      
+      // Filter completions based on the current word
+      if (word && completions.length > 0) {
+        const prefix = text.slice(word.from, pos).toLowerCase();
+        completions = completions.filter(c => 
+          c.label.toLowerCase().startsWith(prefix)
+        );
+      }
+      
+      // If we have custom completions, return them
+      if (completions.length > 0) {
+        return {
+          from,
+          options: completions,
+          validFor: /^\w*$/,
+        };
+      }
+      
+    } catch (error) {
+      console.error('Error fetching autocomplete suggestions:', error);
+      // Fall through to keyword completions
     }
-    
-    // Filter completions based on the current word
-    if (word) {
-      const prefix = text.slice(word.from, pos).toLowerCase();
-      completions = completions.filter(c => 
-        c.label.toLowerCase().startsWith(prefix)
-      );
-    }
-    
-    if (completions.length === 0) {
-      return null;
-    }
-    
-    return {
-      from,
-      options: completions,
-      validFor: /^\w*$/,
-    };
-    
-  } catch (error) {
-    console.error('Error fetching autocomplete suggestions:', error);
-    return null;
   }
+  
+  // Fallback to SQL keywords if no custom completions or if we have a word to complete
+  if (word && word.text.length > 0) {
+    return createKeywordCompletions(word.text, from);
+  }
+  
+  // Show all keywords if no word typed yet
+  if (!word || word.text.length === 0) {
+    return createKeywordCompletions('', from);
+  }
+  
+  return null;
 }
 
 // Export the autocomplete extension
