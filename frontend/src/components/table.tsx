@@ -55,7 +55,8 @@ import {
     TableRow,
     toast,
     VirtualizedTableBody,
-    EmptyState
+    EmptyState,
+    TextArea
 } from "@clidey/ux";
 import {
     ArrowDownCircleIcon,
@@ -783,10 +784,19 @@ export const StorageUnitTable: FC<TableProps> = ({
                                 columns.map((col, idx) => (
                                     <div key={col} className="flex flex-col gap-2" data-testid={`editable-field-${idx}`}>
                                         <Label>{col}</Label>
-                                        <Input
-                                            value={editRow[idx] ?? ""}
-                                            onChange={e => handleInputChange(e.target.value, idx)}
-                                        />
+                                        {
+                                            editRow[idx].length < 50 ?
+                                                <Input
+                                                    value={editRow[idx] ?? ""}
+                                                    onChange={e => handleInputChange(e.target.value, idx)}
+                                                />
+                                            : <TextArea
+                                                    value={editRow[idx] ?? ""}
+                                                    onChange={e => handleInputChange(e.target.value, idx)}
+                                                    rows={5}
+                                                    className="min-h-[100px]"
+                                                />
+                                        }
                                     </div>
                                 ))}
                         </div>

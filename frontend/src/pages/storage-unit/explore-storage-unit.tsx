@@ -213,14 +213,15 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     
     const {columns, columnTypes} = useMemo(() => {
         const dataColumns = rows?.Columns.map(c => c.Name) ?? [];
-        if (dataColumns.length !== 1 || dataColumns[0] !== "document") {
-            return {columns: dataColumns, columnTypes: rows?.Columns.map(column => column.Type)};
-        }
-        const firstRow = rows?.Rows?.[0];
-        if (firstRow == null) {
-            return {columns: [], columnTypes: []}
-        }
-        return  { columns: keys(JSON.parse(firstRow[0])), columnTypes: []}
+        return {columns: dataColumns, columnTypes: rows?.Columns.map(column => column.Type)};
+        // if (dataColumns.length !== 1 || dataColumns[0] !== "document") {
+        // todo: for NoSQL queries, figure out how to show columns correctly
+        // }
+        // const firstRow = rows?.Rows?.[0];
+        // if (firstRow == null) {
+        //     return {columns: [], columnTypes: []}
+        // }
+        // return  { columns: keys(JSON.parse(firstRow[0])), columnTypes: []}
     }, [rows?.Columns, rows?.Rows]);
 
     useEffect(() => {

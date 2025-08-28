@@ -100,6 +100,10 @@ export const SchemaViewer: FC = () => {
         });
     }, [navigate, state, data]);
 
+    if (treeData.length === 0) {
+        return null;
+    }
+
     return (
         <div className="flex h-full dark">
             <SidebarComponent variant="embed" className="w-64 h-full flex flex-col">
