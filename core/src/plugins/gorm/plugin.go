@@ -174,7 +174,7 @@ func (p *GormPlugin) GetRows(config *engine.PluginConfig, schema string, storage
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
 		// Handle SQLite separately due to text conversion of date/time columns
 		if p.Type == engine.DatabaseType_Sqlite3 {
-			return p.getSQLiteRows(db, schema, storageUnit, sort, pageSize, pageOffset)
+			return p.getSQLiteRows(db, schema, storageUnit, where, sort, pageSize, pageOffset)
 		}
 
 		// General case for other databases
@@ -182,7 +182,7 @@ func (p *GormPlugin) GetRows(config *engine.PluginConfig, schema string, storage
 	})
 }
 
-func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	// Get columns with preserved order for SQLite
 	query := p.GetColTypeQuery()
 	rows, err := db.Raw(query, storageUnit).Rows()
@@ -215,28 +215,34 @@ func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, sort
 		}
 	}
 
-	selectQuery := fmt.Sprintf(
-		"SELECT %s FROM %s",
-		strings.Join(selects, ", "),
-		p.EscapeIdentifier(storageUnit),
-	)
+	// Build the query using GORM's query builder
+	selectQuery := db.Table(storageUnit)
+
+	// Apply WHERE conditions using the existing function
+	selectQuery, err = p.applyWhereConditions(selectQuery, where, columnTypes)
+	if err != nil {
+		log.Logger.WithError(err).Error("Failed to apply where conditions for SQLite")
+		return nil, err
+	}
+
+	// Select columns with datetime casting
+	selectQuery = selectQuery.Select(selects)
 
 	// Add ORDER BY clause if sort conditions are provided
 	if len(sort) > 0 {
-		orderByParts := []string{}
 		for _, s := range sort {
 			direction := "ASC"
 			if s.Direction == model.SortDirectionDesc {
 				direction = "DESC"
 			}
-			orderByParts = append(orderByParts, fmt.Sprintf("%s %s", p.EscapeIdentifier(s.Column), direction))
+			selectQuery = selectQuery.Order(fmt.Sprintf("%s %s", p.EscapeIdentifier(s.Column), direction))
 		}
-		selectQuery += " ORDER BY " + strings.Join(orderByParts, ", ")
 	}
 
-	selectQuery += fmt.Sprintf(" LIMIT %d OFFSET %d", pageSize, pageOffset)
+	// Apply pagination
+	selectQuery = selectQuery.Limit(pageSize).Offset(pageOffset)
 
-	dataRows, err := db.Raw(selectQuery).Rows()
+	dataRows, err := selectQuery.Rows()
 	if err != nil {
 		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to execute SQLite rows query for table %s.%s", schema, storageUnit))
 		return nil, err
