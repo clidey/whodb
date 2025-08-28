@@ -31,34 +31,59 @@ const SQL_KEYWORDS = new Set([
 
 // Parse the SQL context to determine what type of suggestions to provide
 function parseSQLContext(text: string, pos: number): { type: 'schema' | 'table' | 'column' | null, schema?: string, table?: string } {
-  const beforeCursor = text.slice(0, pos).toUpperCase();
-  const lines = beforeCursor.split('\n');
+  const beforeCursor = text.slice(0, pos);
+  const beforeCursorUpper = beforeCursor.toUpperCase();
+  const lines = beforeCursorUpper.split('\n');
   const currentLine = lines[lines.length - 1];
   
-  // Find the last occurrence of FROM, JOIN, or WHERE
-  const lastFrom = beforeCursor.lastIndexOf('FROM');
-  const lastJoin = beforeCursor.lastIndexOf('JOIN');
-  const lastWhere = beforeCursor.lastIndexOf('WHERE');
-  
-  // Check if we're in a FROM or JOIN context
-  const inFromContext = lastFrom > -1 && (lastWhere === -1 || lastFrom > lastWhere);
-  const inJoinContext = lastJoin > -1 && lastJoin > lastFrom && (lastWhere === -1 || lastJoin > lastWhere);
+  // Find the last occurrence of key SQL keywords
+  const lastSelect = beforeCursorUpper.lastIndexOf('SELECT');
+  const lastFrom = beforeCursorUpper.lastIndexOf('FROM');
+  const lastJoin = beforeCursorUpper.lastIndexOf('JOIN');
+  const lastWhere = beforeCursorUpper.lastIndexOf('WHERE');
   
   // Check if we just typed FROM or JOIN
   if (currentLine.endsWith('FROM ') || currentLine.endsWith('JOIN ')) {
     return { type: 'schema' };
   }
   
-  // Check for schema.table pattern
+  // Check for schema.table pattern (for table completion)
   const schemaTableMatch = /(\w+)\.$/i.exec(text.slice(Math.max(0, pos - 100), pos));
   if (schemaTableMatch) {
-    return { type: 'table', schema: schemaTableMatch[1] };
+    // Determine if this is for table or column based on context
+    const beforeDot = beforeCursorUpper.slice(0, pos - 1);
+    
+    // If we're after FROM or JOIN and no table selected yet, it's a table completion
+    if ((beforeDot.match(/FROM\s+\w*$/i) || beforeDot.match(/JOIN\s+\w*$/i)) && 
+        (!lastWhere || pos < lastWhere)) {
+      return { type: 'table', schema: schemaTableMatch[1] };
+    }
+    
+    // Otherwise it's a column completion with table prefix
+    return { type: 'column', table: schemaTableMatch[1] };
   }
   
-  // Check if we're after WHERE or in a JOIN ON clause
+  // Check if we're in a SELECT context
+  if (lastSelect > -1 && (!lastFrom || lastSelect > lastFrom)) {
+    // We're in SELECT clause, show columns
+    // Try to find table from a future FROM clause
+    const afterCursor = text.slice(pos).toUpperCase();
+    const fullText = beforeCursorUpper + afterCursor;
+    const fromMatch = /FROM\s+(?:(\w+)\.)?(\w+)/i.exec(fullText.slice(lastSelect));
+    
+    if (fromMatch) {
+      return { 
+        type: 'column', 
+        schema: fromMatch[1] || undefined,
+        table: fromMatch[2]
+      };
+    }
+  }
+  
+  // Check if we're after WHERE
   if (lastWhere > -1 && lastWhere > lastFrom && lastWhere > lastJoin) {
     // Extract table name from the query
-    const tableMatch = /FROM\s+(?:(\w+)\.)?(\w+)/i.exec(beforeCursor);
+    const tableMatch = /FROM\s+(?:(\w+)\.)?(\w+)/i.exec(beforeCursorUpper);
     if (tableMatch) {
       return { 
         type: 'column', 
@@ -68,10 +93,28 @@ function parseSQLContext(text: string, pos: number): { type: 'schema' | 'table' 
     }
   }
   
-  // Check for table.column pattern in WHERE or JOIN ON
-  const tableColumnMatch = /(\w+)\.$/i.exec(text.slice(Math.max(0, pos - 50), pos));
-  if (tableColumnMatch && (lastWhere > -1 || currentLine.includes(' ON '))) {
-    return { type: 'column', table: tableColumnMatch[1] };
+  // Check if we're in a context where columns make sense
+  // This includes: after SELECT, after comma in SELECT, after WHERE, after AND/OR, etc.
+  const recentText = beforeCursorUpper.slice(Math.max(0, pos - 50));
+  if (recentText.match(/SELECT\s+\w*$/i) || 
+      recentText.match(/,\s*\w*$/i) ||
+      recentText.match(/WHERE\s+\w*$/i) ||
+      recentText.match(/\s+(AND|OR)\s+\w*$/i) ||
+      recentText.match(/\s+ON\s+\w*$/i) ||
+      recentText.match(/\s+=\s*\w*$/i) ||
+      recentText.match(/\s+(<|>|<=|>=|<>|!=)\s*\w*$/i)) {
+    
+    // Try to find the main table from the query
+    const tableMatch = /FROM\s+(?:(\w+)\.)?(\w+)/i.exec(beforeCursorUpper) ||
+                      /FROM\s+(?:(\w+)\.)?(\w+)/i.exec(text.slice(pos).toUpperCase());
+    
+    if (tableMatch) {
+      return { 
+        type: 'column', 
+        schema: tableMatch[1] || undefined,
+        table: tableMatch[2]
+      };
+    }
   }
   
   return { type: null };
