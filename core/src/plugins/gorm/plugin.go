@@ -183,15 +183,31 @@ func (p *GormPlugin) GetRows(config *engine.PluginConfig, schema string, storage
 }
 
 func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
-	columnInfo, err := p.GetColumnTypes(db, schema, storageUnit)
+	// Get columns with preserved order for SQLite
+	query := p.GetColTypeQuery()
+	rows, err := db.Raw(query, storageUnit).Rows()
 	if err != nil {
 		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get column types for table %s.%s", schema, storageUnit))
 		return nil, err
 	}
+	defer rows.Close()
 
-	selects := make([]string, 0, len(columnInfo))
-	for col, colType := range columnInfo {
-		colType = strings.ToUpper(colType)
+	// Build ordered column list with type information
+	var columns []string
+	columnTypes := make(map[string]string)
+	for rows.Next() {
+		var columnName, dataType string
+		if err := rows.Scan(&columnName, &dataType); err != nil {
+			log.Logger.WithError(err).Error("Failed to scan column info")
+			return nil, err
+		}
+		columns = append(columns, columnName)
+		columnTypes[columnName] = dataType
+	}
+
+	selects := make([]string, 0, len(columns))
+	for _, col := range columns {
+		colType := strings.ToUpper(columnTypes[col])
 		if colType == "DATE" || colType == "DATETIME" || colType == "TIMESTAMP" {
 			selects = append(selects, fmt.Sprintf("CAST(%s AS TEXT) AS %s", col, col))
 		} else {
@@ -199,7 +215,7 @@ func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, sort
 		}
 	}
 
-	query := fmt.Sprintf(
+	selectQuery := fmt.Sprintf(
 		"SELECT %s FROM %s",
 		strings.Join(selects, ", "),
 		p.EscapeIdentifier(storageUnit),
@@ -215,19 +231,19 @@ func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, sort
 			}
 			orderByParts = append(orderByParts, fmt.Sprintf("%s %s", p.EscapeIdentifier(s.Column), direction))
 		}
-		query += " ORDER BY " + strings.Join(orderByParts, ", ")
+		selectQuery += " ORDER BY " + strings.Join(orderByParts, ", ")
 	}
 
-	query += fmt.Sprintf(" LIMIT %d OFFSET %d", pageSize, pageOffset)
+	selectQuery += fmt.Sprintf(" LIMIT %d OFFSET %d", pageSize, pageOffset)
 
-	rows, err := db.Raw(query).Rows()
+	dataRows, err := db.Raw(selectQuery).Rows()
 	if err != nil {
 		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to execute SQLite rows query for table %s.%s", schema, storageUnit))
 		return nil, err
 	}
-	defer rows.Close()
+	defer dataRows.Close()
 
-	return p.ConvertRawToRows(rows)
+	return p.ConvertRawToRows(dataRows)
 }
 
 func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
