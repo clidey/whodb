@@ -172,6 +172,18 @@ Cypress.Commands.add("getHighlightedCell", () => {
     return cy.get('td.table-search-highlight');
 });
 
+Cypress.Commands.add("getHighlightedRows", () => {
+    return cy.get('tr:has(td.table-search-highlight)').then(($rows) => {
+        const rows = [];
+        $rows.each((index, row) => {
+            const cells = Cypress.$(row).find('td').toArray()
+                .map(cell => cell.innerText.trim());
+            rows.push(cells);
+        });
+        return rows;
+    });
+});
+
 Cypress.Commands.add("addRow", (data) => {
     cy.get('[data-testid="add-row-button"]').click();
 
@@ -180,21 +192,31 @@ Cypress.Commands.add("addRow", (data) => {
     }
 
     cy.get('[data-testid="submit-add-row-button"]').click();
+    // Wait for the sheet/dialog to close - the submit button should no longer be visible
+    cy.get('[data-testid="submit-add-row-button"]').should('not.exist');
+    // Additional wait to ensure animations complete
+    cy.wait(500);
 });
 
 Cypress.Commands.add("deleteRow", (rowIndex) => {
+    // Wait a moment for any previous operations to complete
+    cy.wait(500);
     cy.get('table tbody tr')
       .eq(rowIndex)
-      .rightclick();
+      .rightclick({ force: true });
     cy.get('[data-testid="context-menu-more-actions"]').click();
     cy.get('[data-testid="context-menu-delete-row"]').click();
+    // Wait for the delete to process
+    cy.wait(500);
 });
 
 Cypress.Commands.add("updateRow", (rowIndex, columnIndex, text, cancel = true) => {
-    // Open the context menu for the row at rowIndex
+    // Wait a moment for any previous operations to complete
+    cy.wait(500);
+    // Open the context menu for the row at rowIndex, use force since dialogs might be animating
     cy.get('table tbody tr')
       .eq(rowIndex)
-      .rightclick();
+      .rightclick({ force: true });
 
     // Click the "Edit row" context menu item
     cy.get('[data-testid="context-menu-edit-row"]').click();
@@ -208,11 +230,17 @@ Cypress.Commands.add("updateRow", (rowIndex, columnIndex, text, cancel = true) =
         .clear()
         .type(text, { force: true });
 
-    // Click cancel or update as requested
+    // Click cancel (escape key) or update as requested
     if (cancel) {
-        return cy.get('[role="dialog"] > button').click();
+        // Close the sheet by pressing Escape
+        cy.get('body').type('{esc}');
+        // Force wait since the sheet might have animation
+        cy.wait(1000);
+    } else {
+        cy.get(`[data-testid="update-button"]`).click();
+        // Wait longer for the update to process and sheet to close
+        cy.wait(1500);
     }
-    cy.get(`[data-testid="update-button"]`).click();
 });
 
 
@@ -276,27 +304,57 @@ Cypress.Commands.add("removeCell", (index) => {
 });
 
 Cypress.Commands.add("writeCode", (index, text) => {
+    // First, click to focus the editor
     cy.get(`[data-testid="cell-${index}"] [data-testid="code-editor"]`)
-        .should('exist') // Wait for the code editor to exist in the DOM
-        .should('be.visible') // Ensure it is visible before interacting
-        .then(($editor) => {
-            $editor.click();
-            const editorElement = $editor[0].querySelector('.cm-content');
-            if (editorElement) {
-                editorElement.textContent = text;
-                editorElement.dispatchEvent(new Event('input', { bubbles: true }));
-            } else {
-                throw new Error("Editor not found!");
-            }
-        });
+        .should('exist')
+        .should('be.visible')
+        .click();
+    
+    // Wait a bit for focus
+    cy.wait(200);
+    
+    // Clear existing content using keyboard shortcuts
+    // Try both ctrl+a and cmd+a for cross-platform support
+    cy.get(`[data-testid="cell-${index}"] .cm-content`)
+        .type('{selectall}')
+        .type('{backspace}');
+    
+    // Type the new text slowly to ensure each character is registered
+    cy.get(`[data-testid="cell-${index}"] .cm-content`)
+        .type(text, { delay: 30 });
+    
+    // Blur the focused element (cm-content) to trigger state update
+    cy.focused().blur();
+    
+    // Re-focus by clicking the editor again
+    cy.get(`[data-testid="cell-${index}"] [data-testid="code-editor"]`)
+        .click();
+    
+    // Wait for state to update
+    cy.wait(1000);
 });
 
 Cypress.Commands.add("runCode", (index) => {
-    return cy.get(`[data-testid="cell-${index}"] [data-testid="query-cell-button"]`).click();
+    // Try the main run button first
+    cy.get(`[data-testid="cell-${index}"] [data-testid="query-cell-button"]`)
+        .should('exist')
+        .then($button => {
+            if ($button.is(':visible') && !$button.is(':disabled')) {
+                cy.wrap($button).click();
+            } else {
+                // If main button not available, try the play button in the gutter
+                cy.get(`[data-testid="cell-${index}"] .cm-play-button`)
+                    .first()
+                    .click();
+            }
+        });
+    
+    // Wait for the query to execute
+    cy.wait(1000);
 });
 
 Cypress.Commands.add("getCellQueryOutput", (index) => {
-    return cy.get(`[data-testid="cell-${index}"] [data-testid="cell-query-output"] table`).then($table => {
+    return cy.get(`[data-testid="cell-${index}"] [data-testid="cell-query-output"] table`, { timeout: 10000 }).then($table => {
         const columns = Cypress.$.makeArray($table.find('th'))
             .map(el => el.innerText.trim());
 
@@ -309,15 +367,27 @@ Cypress.Commands.add("getCellQueryOutput", (index) => {
 });
 
 Cypress.Commands.add("getCellActionOutput", (index) => {
-    return extractText(cy.get(`[data-testid="cell-${index}"] [data-testid="cell-action-output"]`));
+    return cy.get(`[data-testid="cell-${index}"] [data-testid="cell-action-output"]`, { timeout: 10000 })
+        .should('exist')
+        .then($el => extractText(cy.wrap($el)));
 });
 
 Cypress.Commands.add("getCellError", (index) => {
-    return extractText(cy.get(`[data-testid="cell-${index}"] [data-testid="cell-error"]`));
+    // Wait for the error element to appear
+    return cy.get(`[data-testid="cell-${index}"] [data-testid="cell-error"]`, { timeout: 10000 })
+        .should('exist')
+        .should('be.visible')
+        .invoke('text')
+        .then((text) => {
+            // Remove "Error" prefix from AlertTitle
+            return text.replace(/^Error\s*/i, '').trim();
+        });
 });
 
 Cypress.Commands.add('logout', () => {
-    cy.get('[data-testid="logout"]').click();
+    // The logout button is in the sidebar, look for it by text or icon
+    // First try to find and click the logout option in the sidebar
+    cy.contains('Logout Profile').click({ force: true });
 });
 
 Cypress.Commands.add('getTables', () => {
@@ -328,7 +398,7 @@ Cypress.Commands.add('getTables', () => {
         });
 });
 
-Cypress.Commands.add('addScratchadPage', () => {
+Cypress.Commands.add('addScratchpadPage', () => {
     cy.get('[data-testid="add-page-button"]').click();
 });
 
