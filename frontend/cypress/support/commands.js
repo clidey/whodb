@@ -40,7 +40,7 @@ Cypress.Commands.add('login', (databaseType, hostname, username, password, datab
     if (Object.keys(advanced).length > 0) {
         cy.get('[data-testid="advanced-button"]').click();
         for (const [key, value] of Object.entries(advanced)) {
-            cy.get(`[data-testid="${key}-input"] input`).clear().type(value);
+            cy.get(`[data-testid="${key}-input"]`).clear().type(value);
         }
     }
 
@@ -184,12 +184,24 @@ Cypress.Commands.add("getHighlightedRows", () => {
     });
 });
 
-Cypress.Commands.add("addRow", (data) => {
+Cypress.Commands.add("addRow", (data, isSingleInput = false) => {
     cy.get('[data-testid="add-row-button"]').click();
 
-    for (const [key, value] of Object.entries(data)) {
-        cy.get(`[data-testid="add-row-field-${key}"] input`).clear().type(value);
-    }
+    // Check if we have a single "document" field (for Elasticsearch/document databases)
+    cy.get('body').then($body => {
+        if (isSingleInput) {
+            // Document database - single text box for JSON
+            const jsonString = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+            cy.get('[data-testid="add-row-field-document"] input, [data-testid="add-row-field-document"] textarea').first()
+                .clear()
+                .type(jsonString, {parseSpecialCharSequences: false});
+        } else {
+            // Traditional database - multiple fields
+            for (const [key, value] of Object.entries(data)) {
+                cy.get(`[data-testid="add-row-field-${key}"] input`).clear().type(value);
+            }
+        }
+    });
 
     cy.get('[data-testid="submit-add-row-button"]').click();
     // Wait for the sheet/dialog to close - the submit button should no longer be visible
@@ -322,16 +334,30 @@ Cypress.Commands.add("writeCode", (index, text) => {
     // Type the new text slowly to ensure each character is registered
     cy.get(`[data-testid="cell-${index}"] .cm-content`)
         .type(text, { delay: 30 });
+
+    // First, press escape while focused to dismiss any autocomplete dropdown
+    cy.get(`[data-testid="cell-${index}"] .cm-content`)
+        .type('{esc}');
+
+    // Wait for autocomplete to close
+    cy.wait(100);
     
     // Blur the focused element (cm-content) to trigger state update
     cy.focused().blur();
-    
-    // Re-focus by clicking the editor again
+
+    // Wait a moment for any remaining autocomplete state to clear
+    cy.wait(300);
+
+    // Re-focus by clicking the editor at the top-left to avoid any lingering dropdowns
     cy.get(`[data-testid="cell-${index}"] [data-testid="code-editor"]`)
-        .click();
+        .click('topLeft');
+
+    // Press escape again as a final safety measure
+    cy.get(`[data-testid="cell-${index}"] .cm-content`)
+        .type('{esc}');
     
     // Wait for state to update
-    cy.wait(1000);
+    cy.wait(800);
 });
 
 Cypress.Commands.add("runCode", (index) => {
