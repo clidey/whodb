@@ -24,6 +24,7 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -281,7 +282,20 @@ func convertWhereConditionToMongoDB(where *model.WhereCondition) (bson.M, error)
 			return nil, fmt.Errorf("unsupported operator: %s", where.Atomic.Operator)
 		}
 
-		return bson.M{where.Atomic.Key: bson.M{mongoOperator: where.Atomic.Value}}, nil
+		// Handle _id field specially - convert string to ObjectID
+		var value any = where.Atomic.Value
+		if where.Atomic.Key == "_id" {
+			objectID, err := primitive.ObjectIDFromHex(where.Atomic.Value)
+			if err != nil {
+				// If it's not a valid ObjectID, use the string value as-is
+				// This allows querying by non-ObjectID _id values if they exist
+				value = where.Atomic.Value
+			} else {
+				value = objectID
+			}
+		}
+
+		return bson.M{where.Atomic.Key: bson.M{mongoOperator: value}}, nil
 
 	case model.WhereConditionTypeAnd:
 		if where.And == nil || len(where.And.Children) == 0 {
