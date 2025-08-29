@@ -5,7 +5,7 @@
  * The actual implementations remain in the EE module.
  */
 
-import { ComponentType } from 'react';
+import {ComponentType} from 'react';
 
 // Types from analyze-view component
 type IPlanNode = {
@@ -76,4 +76,5 @@ export interface EEDatabaseType {
     supportsModifiers?: boolean; // Whether this database supports field modifiers (primary, nullable)
     supportsScratchpad?: boolean; // Whether this database supports scratchpad/raw query execution
     supportsSchema?: boolean; // Whether this database supports schemas
+    supportsDatabaseSwitching?: boolean; // Whether this database supports switching between databases in the UI
 }

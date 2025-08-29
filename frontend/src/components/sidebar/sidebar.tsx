@@ -49,7 +49,7 @@ import { LoginForm } from "../../pages/auth/login";
 import { AuthActions, LocalLoginProfile } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
 import { useAppSelector } from "../../store/hooks";
-import { databaseSupportsSchema, databaseSupportsScratchpad } from "../../utils/database-features";
+import { databaseSupportsDatabaseSwitching, databaseSupportsSchema, databaseSupportsScratchpad } from "../../utils/database-features";
 import { isEEFeatureEnabled } from "../../utils/ee-loader";
 import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
 import { Icons } from "../icons";
@@ -79,7 +79,7 @@ export const Sidebar: FC = () => {
         variables: {
             type: current?.Type as DatabaseType,
         },
-        skip: current == null || (current.Type !== DatabaseType.Redis && isNoSQL(current?.Type as DatabaseType)),
+        skip: current == null || !databaseSupportsDatabaseSwitching(current?.Type),
     });
     const { data: availableSchemas, loading: availableSchemasLoading, refetch: getSchemas } = useGetSchemaQuery({
         onCompleted(data) {
@@ -315,7 +315,7 @@ export const Sidebar: FC = () => {
                                 {/* Database Select */}
                                 <div className={cn("flex flex-col gap-2 w-full", {
                                     "opacity-0 pointer-events-none": !open,
-                                    "hidden": !current || isNoSQL(current?.Type as DatabaseType),
+                                    "hidden": !current || !databaseSupportsDatabaseSwitching(current?.Type),
                                 })}>
                                     <h2 className="text-sm">Database</h2>
                                     <SearchSelect
@@ -333,7 +333,7 @@ export const Sidebar: FC = () => {
                                 </div>
                                 <div className={cn("flex flex-col gap-2 w-full", {
                                     "opacity-0 pointer-events-none": !open || pathname.includes(InternalRoutes.RawExecute.path),
-                                    "hidden": !databaseSupportsSchema(current?.Database),
+                                    "hidden": !databaseSupportsSchema(current?.Type),
                                 })}>
                                     <h2 className="text-sm">Schema</h2>
                                     <SearchSelect

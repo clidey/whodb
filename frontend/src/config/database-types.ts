@@ -1,5 +1,5 @@
-import { ReactElement } from "react";
-import { Icons } from "../components/icons";
+import {ReactElement} from "react";
+import {Icons} from "../components/icons";
 
 // Extended dropdown item type with UI field configuration
 export interface IDatabaseDropdownItem {
@@ -24,6 +24,8 @@ export interface IDatabaseDropdownItem {
     supportsScratchpad?: boolean;
     // Whether this database supports schemas
     supportsSchema?: boolean;
+    // Whether this database supports switching between databases in the UI
+    supportsDatabaseSwitching?: boolean;
 }
 
 export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
@@ -40,6 +42,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         },
         supportsScratchpad: true,
         supportsSchema: true,
+        supportsDatabaseSwitching: true,
     },
     {
         id: "MySQL",
@@ -54,6 +57,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         },
         supportsScratchpad: true,
         supportsSchema: true,
+        supportsDatabaseSwitching: true,
     },
     {
         id: "MariaDB",
@@ -68,6 +72,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         },
         supportsScratchpad: true,
         supportsSchema: true,
+        supportsDatabaseSwitching: true,
     },
     {
         id: "Sqlite3",
@@ -79,6 +84,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         },
         supportsScratchpad: true,
         supportsSchema: false,  // SQLite doesn't support schemas
+        supportsDatabaseSwitching: false,
     },
     {
         id: "MongoDB",
@@ -89,10 +95,11 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
             hostname: true,
             username: true,
             password: true,
-            // database: false - MongoDB doesn't use database field
+            database: true,
         },
         supportsScratchpad: false,  // MongoDB doesn't support SQL scratchpad
-        supportsSchema: true,  // MongoDB doesn't have traditional schemas
+        supportsSchema: false,  // MongoDB doesn't have traditional schemas
+        supportsDatabaseSwitching: true,
     },
     {
         id: "Redis",
@@ -107,6 +114,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         },
         supportsScratchpad: false,  // Redis doesn't support SQL scratchpad
         supportsSchema: false,  // Redis doesn't have schemas
+        supportsDatabaseSwitching: false,
     },
     {
         id: "ElasticSearch",
@@ -121,6 +129,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         },
         supportsScratchpad: false,  // ElasticSearch doesn't support SQL scratchpad
         supportsSchema: false,  // ElasticSearch doesn't have schemas
+        supportsDatabaseSwitching: false,
     },
     {
         id: "ClickHouse",
@@ -140,7 +149,8 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
             database: true,
         },
         supportsScratchpad: true,
-        supportsSchema: true,
+        supportsSchema: false,
+        supportsDatabaseSwitching: true,
     },
 ];
 
@@ -175,6 +185,7 @@ if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
                 supportsModifiers: dbType.supportsModifiers,
                 supportsScratchpad: dbType.supportsScratchpad,
                 supportsSchema: dbType.supportsSchema,
+                supportsDatabaseSwitching: dbType.supportsDatabaseSwitching,
             }));
             
             console.log('EE database types loaded:', eeDatabaseTypes);
