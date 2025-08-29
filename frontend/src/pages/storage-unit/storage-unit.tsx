@@ -14,23 +14,45 @@
  * limitations under the License.
  */
 
-import { Badge, Button, Checkbox, cn, Input, Label, SearchInput, SearchSelect, Separator, StackList, StackListItem, toast } from '@clidey/ux';
-import { DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useGetStorageUnitsQuery } from '@graphql';
-import { ArrowPathRoundedSquareIcon, CheckCircleIcon, CircleStackIcon, CommandLineIcon, MagnifyingGlassIcon, PlusCircleIcon, TableCellsIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import {
+    Badge,
+    Button,
+    Checkbox,
+    cn,
+    Input,
+    Label,
+    SearchInput,
+    SearchSelect,
+    Separator,
+    StackList,
+    StackListItem,
+    toast
+} from '@clidey/ux';
+import {DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useGetStorageUnitsQuery} from '@graphql';
+import {
+    ArrowPathRoundedSquareIcon,
+    CheckCircleIcon,
+    CircleStackIcon,
+    CommandLineIcon,
+    MagnifyingGlassIcon,
+    PlusCircleIcon,
+    TableCellsIcon,
+    XMarkIcon
+} from '@heroicons/react/24/outline';
 import classNames from "classnames";
-import { clone, cloneDeep, filter } from "lodash";
-import { FC, useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { Handle, Node, Position, useReactFlow } from "reactflow";
-import { Card, ExpandableCard } from "../../components/card";
-import { IGraphCardProps } from "../../components/graph/graph";
-import { Loading, LoadingPage } from "../../components/loading";
-import { InternalPage } from "../../components/page";
-import { InternalRoutes } from "../../config/routes";
-import { useAppSelector } from "../../store/hooks";
-import { databaseSupportsModifiers, getDatabaseDataTypes } from "../../utils/database-data-types";
-import { databaseSupportsScratchpad } from "../../utils/database-features";
-import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
+import {clone, cloneDeep, filter} from "lodash";
+import {FC, useCallback, useEffect, useMemo, useState} from "react";
+import {useNavigate, useSearchParams} from "react-router-dom";
+import {Handle, Node, Position, useReactFlow} from "reactflow";
+import {Card, ExpandableCard} from "../../components/card";
+import {IGraphCardProps} from "../../components/graph/graph";
+import {Loading, LoadingPage} from "../../components/loading";
+import {InternalPage} from "../../components/page";
+import {InternalRoutes} from "../../config/routes";
+import {useAppSelector} from "../../store/hooks";
+import {databaseSupportsModifiers, getDatabaseDataTypes} from "../../utils/database-data-types";
+import {databaseSupportsScratchpad} from "../../utils/database-features";
+import {getDatabaseStorageUnitLabel, isNoSQL} from "../../utils/functions";
 
 const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = ({ unit, allTableNames }) => {
     const [expanded, setExpanded] = useState(false);
@@ -124,8 +146,9 @@ export const StorageUnitPage: FC = () => {
     const current = useAppSelector(state => state.auth.current);
     const [addStorageUnit,] = useAddStorageUnitMutation();
 
+    // For databases that don't have schemas (MongoDB, ClickHouse), pass the database name as the schema parameter
     // todo: is there a different way to do this? clickhouse doesn't have schemas as a table is considered a schema. people mainly switch between DB
-    if (current?.Type === DatabaseType.ClickHouse) {
+    if (current?.Type === DatabaseType.ClickHouse || current?.Type === DatabaseType.MongoDb) {
         schema = current.Database
     }
 

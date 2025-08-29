@@ -14,7 +14,25 @@
  * limitations under the License.
  */
 
-import { Button, Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle, Input, Label, SearchInput, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Sheet, SheetContent, SheetFooter, toast } from "@clidey/ux";
+import {
+    Button,
+    Drawer,
+    DrawerContent,
+    DrawerHeader,
+    DrawerTitle,
+    Input,
+    Label,
+    SearchInput,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+    Sheet,
+    SheetContent,
+    SheetFooter,
+    toast
+} from "@clidey/ux";
 import {
     DatabaseType,
     RecordInput,
@@ -28,20 +46,19 @@ import {
     useUpdateStorageUnitMutation,
     WhereCondition
 } from '@graphql';
-import { CheckCircleIcon, CommandLineIcon, PlayIcon, PlusCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { keys } from "lodash";
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
-import { CodeEditor } from "../../components/editor";
-import { LoadingPage } from "../../components/loading";
-import { InternalPage } from "../../components/page";
-import { getColumnIcons, StorageUnitTable } from "../../components/table";
-import { Tip } from "../../components/tip";
-import { InternalRoutes } from "../../config/routes";
-import { useAppSelector } from "../../store/hooks";
-import { getDatabaseOperators } from "../../utils/database-operators";
-import { getDatabaseStorageUnitLabel } from "../../utils/functions";
-import { ExploreStorageUnitWhereCondition } from "./explore-storage-unit-where-condition";
+import {CheckCircleIcon, CommandLineIcon, PlayIcon, PlusCircleIcon, XMarkIcon} from "@heroicons/react/24/outline";
+import {FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {Navigate, useLocation, useNavigate} from "react-router-dom";
+import {CodeEditor} from "../../components/editor";
+import {LoadingPage} from "../../components/loading";
+import {InternalPage} from "../../components/page";
+import {getColumnIcons, StorageUnitTable} from "../../components/table";
+import {Tip} from "../../components/tip";
+import {InternalRoutes} from "../../config/routes";
+import {useAppSelector} from "../../store/hooks";
+import {getDatabaseOperators} from "../../utils/database-operators";
+import {getDatabaseStorageUnitLabel} from "../../utils/functions";
+import {ExploreStorageUnitWhereCondition} from "./explore-storage-unit-where-condition";
 
 
 export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad }) => {
@@ -68,10 +85,10 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     const [addRowError, setAddRowError] = useState<string | null>(null);
 
     const [updateStorageUnit, { loading: updating }] = useUpdateStorageUnitMutation();
-    
-    // For scratchpad sheet logic
+
+    // For databases that don't have schemas (MongoDB, ClickHouse), pass the database name as the schema parameter
     // todo: is there a different way to do this? clickhouse doesn't have schemas as a table is considered a schema. people mainly switch between DB
-    if (current?.Type === DatabaseType.ClickHouse) {
+    if (current?.Type === DatabaseType.ClickHouse || current?.Type === DatabaseType.MongoDb) {
         schema = current.Database
     }
 

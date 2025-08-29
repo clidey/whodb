@@ -23,7 +23,6 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
     SearchSelect,
-    Separator,
     Sheet,
     SheetContent,
     Sidebar as SidebarComponent,
@@ -38,25 +37,45 @@ import {
     toast,
     useSidebar
 } from "@clidey/ux";
-import { DatabaseType, useGetDatabaseQuery, useGetSchemaQuery, useGetVersionQuery, useLoginMutation, useLoginWithProfileMutation } from '@graphql';
-import { ArrowLeftStartOnRectangleIcon, Bars3Icon, ChevronDownIcon, CommandLineIcon, PlusIcon, SparklesIcon, TableCellsIcon } from "@heroicons/react/24/outline";
+import {
+    DatabaseType,
+    useGetDatabaseQuery,
+    useGetSchemaQuery,
+    useGetVersionQuery,
+    useLoginMutation,
+    useLoginWithProfileMutation
+} from '@graphql';
+import {
+    ArrowLeftStartOnRectangleIcon,
+    ChevronDownIcon,
+    CogIcon,
+    CommandLineIcon,
+    PlusIcon,
+    QuestionMarkCircleIcon,
+    RectangleGroupIcon,
+    SparklesIcon,
+    TableCellsIcon
+} from "@heroicons/react/24/outline";
 import classNames from "classnames";
-import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
-import { useDispatch } from "react-redux";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { InternalRoutes } from "../../config/routes";
-import { LoginForm } from "../../pages/auth/login";
-import { AuthActions, LocalLoginProfile } from "../../store/auth";
-import { DatabaseActions } from "../../store/database";
-import { useAppSelector } from "../../store/hooks";
-import { databaseSupportsSchema, databaseSupportsScratchpad } from "../../utils/database-features";
-import { isEEFeatureEnabled } from "../../utils/ee-loader";
-import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
-import { Icons } from "../icons";
-import { Loading } from "../loading";
-import { updateProfileLastAccessed } from "../profile-info-tooltip";
-import { extensions } from "../../config/features";
-import { CogIcon, QuestionMarkCircleIcon, RectangleGroupIcon } from "@heroicons/react/24/outline";
+import {FC, ReactElement, useCallback, useEffect, useMemo, useState} from "react";
+import {useDispatch} from "react-redux";
+import {Link, useLocation, useNavigate} from "react-router-dom";
+import {InternalRoutes} from "../../config/routes";
+import {LoginForm} from "../../pages/auth/login";
+import {AuthActions, LocalLoginProfile} from "../../store/auth";
+import {DatabaseActions} from "../../store/database";
+import {useAppSelector} from "../../store/hooks";
+import {
+    databaseSupportsDatabaseSwitching,
+    databaseSupportsSchema,
+    databaseSupportsScratchpad
+} from "../../utils/database-features";
+import {isEEFeatureEnabled} from "../../utils/ee-loader";
+import {getDatabaseStorageUnitLabel, isNoSQL} from "../../utils/functions";
+import {Icons} from "../icons";
+import {Loading} from "../loading";
+import {updateProfileLastAccessed} from "../profile-info-tooltip";
+import {extensions} from "../../config/features";
 
 const logoImage = "/images/logo.png";
 
@@ -81,7 +100,7 @@ export const Sidebar: FC = () => {
         variables: {
             type: current?.Type as DatabaseType,
         },
-        skip: current == null || (current.Type !== DatabaseType.Redis && isNoSQL(current?.Type as DatabaseType)),
+        skip: current == null || !databaseSupportsDatabaseSwitching(current?.Type),
     });
     const { data: availableSchemas, loading: availableSchemasLoading, refetch: getSchemas } = useGetSchemaQuery({
         onCompleted(data) {
@@ -317,7 +336,7 @@ export const Sidebar: FC = () => {
                                 {/* Database Select */}
                                 <div className={cn("flex flex-col gap-2 w-full", {
                                     "opacity-0 pointer-events-none": !open,
-                                    "hidden": !current || isNoSQL(current?.Type as DatabaseType),
+                                    "hidden": !current || !databaseSupportsDatabaseSwitching(current?.Type),
                                 })}>
                                     <h2 className="text-sm">Database</h2>
                                     <SearchSelect
@@ -335,7 +354,7 @@ export const Sidebar: FC = () => {
                                 </div>
                                 <div className={cn("flex flex-col gap-2 w-full", {
                                     "opacity-0 pointer-events-none": !open || pathname.includes(InternalRoutes.RawExecute.path),
-                                    "hidden": !databaseSupportsSchema(current?.Database),
+                                    "hidden": !databaseSupportsSchema(current?.Type),
                                 })}>
                                     <h2 className="text-sm">Schema</h2>
                                     <SearchSelect
