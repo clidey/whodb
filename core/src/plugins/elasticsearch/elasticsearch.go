@@ -204,6 +204,13 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 	return result, nil
 }
 
+func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {
+	// Elasticsearch doesn't have a traditional column structure, it returns documents
+	return []engine.Column{
+		{Name: "document", Type: "Document"},
+	}, nil
+}
+
 func convertWhereConditionToES(where *model.WhereCondition) (map[string]interface{}, error) {
 	if where == nil {
 		return map[string]interface{}{}, nil

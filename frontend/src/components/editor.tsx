@@ -28,6 +28,8 @@ import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from "re
 import ReactJson from "react-json-view";
 import MarkdownPreview from 'react-markdown';
 import remarkGfm from "remark-gfm";
+import { useApolloClient } from "@apollo/client";
+import { createSQLAutocomplete } from "./editor-autocomplete";
 
 // SQL validation function
 const isValidSQLQuery = (text: string): boolean => {
@@ -175,6 +177,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
   const editorRef = useRef<HTMLDivElement>(null);
   const onRunReference = useRef<Function>();
   const darkModeEnabled = useTheme().theme === "dark";
+  const apolloClient = useApolloClient();
 
   useEffect(() => {
     onRunReference.current = onRun;
@@ -259,6 +262,8 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
           }),
             basicSetup,
             languageExtension != null ? languageExtension : [],
+            // Add autocomplete for SQL
+            language === "sql" ? createSQLAutocomplete({ apolloClient }) : [],
             darkModeEnabled ? [oneDark, EditorView.theme({
               ".cm-activeLine": { backgroundColor: "rgba(0,0,0,0.05) !important" },
               ".cm-activeLineGutter": { backgroundColor: "rgba(0,0,0,0.05) !important" },
@@ -315,7 +320,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
     return () => {
       view.destroy();
     };
-  }, []);
+  }, [language, apolloClient, darkModeEnabled]);
 
   const handlePreviewToggle = useCallback(() => {
     setShowPreview((prev) => !prev);

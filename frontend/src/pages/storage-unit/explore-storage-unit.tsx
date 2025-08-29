@@ -468,7 +468,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
             </div>
         </div>
         <Drawer open={scratchpad} onOpenChange={handleCloseScratchpad}>
-            <DrawerContent className="px-8 max-h-[25vh]">
+            <DrawerContent className="px-8 min-h-[65vh]">
                 <Button variant="ghost" className="absolute top-0 right-0" onClick={handleCloseScratchpad}>
                     <XMarkIcon className="w-4 h-4" />
                 </Button>
@@ -483,21 +483,18 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                         </div>
                     </DrawerTitle>
                 </DrawerHeader>
-                <div className="flex flex-col gap-2 h-[150px]">
+                <div className="flex flex-col gap-2 h-[150px] mb-4">
                     <CodeEditor language="sql" value={code} setValue={setCode} onRun={() => handleScratchpad()} />
                 </div>
-                <DrawerFooter>
-                    <StorageUnitTable
-                        height={300}
-                        columns={rawExecuteData?.RawExecute.Columns.map(c => c.Name) ?? []}
-                        columnTypes={rawExecuteData?.RawExecute.Columns.map(c => c.Type) ?? []}
-                        rows={rawExecuteData?.RawExecute.Rows ?? []}
-                        disableEdit={true}
-                        schema={schema}
-                        storageUnit={unitName}
-                        onRefresh={handleSubmitRequest}
-                    />
-                </DrawerFooter>
+                <StorageUnitTable
+                    columns={rawExecuteData?.RawExecute.Columns.map(c => c.Name) ?? []}
+                    columnTypes={rawExecuteData?.RawExecute.Columns.map(c => c.Type) ?? []}
+                    rows={rawExecuteData?.RawExecute.Rows ?? []}
+                    disableEdit={true}
+                    schema={schema}
+                    storageUnit={unitName}
+                    onRefresh={handleSubmitRequest}
+                />
             </DrawerContent>
         </Drawer>
     </InternalPage>

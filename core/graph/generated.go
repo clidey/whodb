@@ -103,6 +103,7 @@ type ComplexityRoot struct {
 		AIChat              func(childComplexity int, providerID *string, modelType string, token *string, schema string, input model.ChatInput) int
 		AIModel             func(childComplexity int, providerID *string, modelType string, token *string) int
 		AIProviders         func(childComplexity int) int
+		Columns             func(childComplexity int, schema string, storageUnit string) int
 		Database            func(childComplexity int, typeArg string) int
 		Graph               func(childComplexity int, schema string) int
 		MockDataMaxRowCount func(childComplexity int) int
@@ -159,6 +160,7 @@ type QueryResolver interface {
 	Schema(ctx context.Context) ([]string, error)
 	StorageUnit(ctx context.Context, schema string) ([]*model.StorageUnit, error)
 	Row(ctx context.Context, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) (*model.RowsResult, error)
+	Columns(ctx context.Context, schema string, storageUnit string) ([]*model.Column, error)
 	RawExecute(ctx context.Context, query string) (*model.RowsResult, error)
 	Graph(ctx context.Context, schema string) ([]*model.GraphUnit, error)
 	AIProviders(ctx context.Context) ([]*model.AIProvider, error)
@@ -453,6 +455,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.AIProviders(childComplexity), true
+
+	case "Query.Columns":
+		if e.complexity.Query.Columns == nil {
+			break
+		}
+
+		args, err := ec.field_Query_Columns_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Columns(childComplexity, args["schema"].(string), args["storageUnit"].(string)), true
 
 	case "Query.Database":
 		if e.complexity.Query.Database == nil {
@@ -935,6 +949,22 @@ func (ec *executionContext) field_Query_AIModel_args(ctx context.Context, rawArg
 		return nil, err
 	}
 	args["token"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_Columns_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "schema", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["schema"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "storageUnit", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["storageUnit"] = arg1
 	return args, nil
 }
 
@@ -2771,6 +2801,67 @@ func (ec *executionContext) fieldContext_Query_Row(ctx context.Context, field gr
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_Row_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_Columns(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_Columns(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Columns(rctx, fc.Args["schema"].(string), fc.Args["storageUnit"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Column)
+	fc.Result = res
+	return ec.marshalNColumn2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐColumnᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_Columns(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "Type":
+				return ec.fieldContext_Column_Type(ctx, field)
+			case "Name":
+				return ec.fieldContext_Column_Name(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Column", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_Columns_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -6708,6 +6799,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_Row(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "Columns":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_Columns(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}

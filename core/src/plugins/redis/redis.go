@@ -304,6 +304,38 @@ func (p *RedisPlugin) GetRows(
 	return result, nil
 }
 
+func (p *RedisPlugin) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {
+	ctx := context.Background()
+
+	client, err := DB(config)
+	if err != nil {
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to connect to Redis for columns retrieval")
+		return nil, err
+	}
+	defer client.Close()
+
+	keyType, err := client.Type(ctx, storageUnit).Result()
+	if err != nil {
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to get Redis key type for columns retrieval")
+		return nil, err
+	}
+
+	switch keyType {
+	case "string":
+		return []engine.Column{{Name: "value", Type: "string"}}, nil
+	case "hash":
+		return []engine.Column{{Name: "field", Type: "string"}, {Name: "value", Type: "string"}}, nil
+	case "list":
+		return []engine.Column{{Name: "index", Type: "string"}, {Name: "value", Type: "string"}}, nil
+	case "set":
+		return []engine.Column{{Name: "index", Type: "string"}, {Name: "value", Type: "string"}}, nil
+	case "zset":
+		return []engine.Column{{Name: "index", Type: "string"}, {Name: "member", Type: "string"}, {Name: "score", Type: "string"}}, nil
+	default:
+		return nil, errors.New("unsupported Redis data type")
+	}
+}
+
 func filterRedisHash(field, value string, where *model.WhereCondition) bool {
 	condition, err := convertWhereConditionToRedisFilter(where)
 	if err != nil {
