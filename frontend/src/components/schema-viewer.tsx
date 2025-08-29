@@ -21,6 +21,7 @@ function groupByType(units: StorageUnit[]) {
     const groups: Record<string, any[]> = {};
     for (const unit of units) {
         const type = toTitleCase(unit.Attributes.find(a => a.Key === "Type")?.Value ?? "");
+        if (type === "") continue; // Ignore grouping if empty
         if (!groups[type]) groups[type] = [];
         groups[type].push(unit);
     }

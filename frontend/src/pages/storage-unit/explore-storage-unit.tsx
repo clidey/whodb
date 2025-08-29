@@ -14,25 +14,7 @@
  * limitations under the License.
  */
 
-import {
-    Button,
-    Drawer,
-    DrawerContent,
-    DrawerHeader,
-    DrawerTitle,
-    Input,
-    Label,
-    SearchInput,
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-    Sheet,
-    SheetContent,
-    SheetFooter,
-    toast
-} from "@clidey/ux";
+import { Button, Drawer, DrawerContent, DrawerHeader, DrawerTitle, Input, Label, SearchInput, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Sheet, SheetContent, SheetFooter, toast } from "@clidey/ux";
 import {
     DatabaseType,
     RecordInput,
@@ -46,19 +28,20 @@ import {
     useUpdateStorageUnitMutation,
     WhereCondition
 } from '@graphql';
-import {CheckCircleIcon, CommandLineIcon, PlayIcon, PlusCircleIcon, XMarkIcon} from "@heroicons/react/24/outline";
-import {FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
-import {Navigate, useLocation, useNavigate} from "react-router-dom";
-import {CodeEditor} from "../../components/editor";
-import {LoadingPage} from "../../components/loading";
-import {InternalPage} from "../../components/page";
-import {getColumnIcons, StorageUnitTable} from "../../components/table";
-import {Tip} from "../../components/tip";
-import {InternalRoutes} from "../../config/routes";
-import {useAppSelector} from "../../store/hooks";
-import {getDatabaseOperators} from "../../utils/database-operators";
-import {getDatabaseStorageUnitLabel} from "../../utils/functions";
-import {ExploreStorageUnitWhereCondition} from "./explore-storage-unit-where-condition";
+import { CheckCircleIcon, CommandLineIcon, PlayIcon, PlusCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { keys } from "lodash";
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { CodeEditor } from "../../components/editor";
+import { LoadingPage } from "../../components/loading";
+import { InternalPage } from "../../components/page";
+import { getColumnIcons, StorageUnitTable } from "../../components/table";
+import { Tip } from "../../components/tip";
+import { InternalRoutes } from "../../config/routes";
+import { useAppSelector } from "../../store/hooks";
+import { getDatabaseOperators } from "../../utils/database-operators";
+import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
+import { ExploreStorageUnitWhereCondition } from "./explore-storage-unit-where-condition";
 
 
 export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad }) => {
@@ -296,17 +279,28 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     }, []);
 
     const handleAddRowSubmit = useCallback(() => {
-        if (!rows?.Columns) return;
-        // Prepare values as RecordInput[]
+        if (rows?.Columns == null) return;
         let values: RecordInput[] = [];
-        for (const col of rows.Columns) {
-            if (addRowData[col.Name] !== undefined && addRowData[col.Name] !== "") {
+        console.log(rows.Columns);
+        if (isNoSQL(current?.Type as DatabaseType) && rows.Columns.length === 1 && rows.Columns[0].Type === "Document") {
+            const json = JSON.parse(addRowData.document);
+            for (const key of keys(json)) {
                 values.push({
-                    Key: col.Name,
-                    Value: addRowData[col.Name],
+                    Key: key,
+                    Value: json[key],
                 });
             }
+        } else {
+            for (const col of rows.Columns) {
+                if (addRowData[col.Name] !== undefined && addRowData[col.Name] !== "") {
+                    values.push({
+                        Key: col.Name,
+                        Value: addRowData[col.Name],
+                    });
+                }
+            }
         }
+
         if (values.length === 0) {
             setAddRowError("Please fill at least one value.");
             return;
@@ -329,7 +323,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 toast.error(`Unable to add the data row: ${e.message}`);
             },
         });
-    }, [addRow, addRowData, handleSubmitRequest, rows?.Columns, schema, unit?.Name]);
+    }, [addRow, addRowData, handleSubmitRequest, rows?.Columns, schema, unit?.Name, current?.Type]);
 
     const handleScratchpad = useCallback(() => {
         if (current == null) {
