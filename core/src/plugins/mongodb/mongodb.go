@@ -51,7 +51,20 @@ func (p *MongoDBPlugin) IsAvailable(config *engine.PluginConfig) bool {
 }
 
 func (p *MongoDBPlugin) GetDatabases(config *engine.PluginConfig) ([]string, error) {
-	return nil, errors.ErrUnsupported
+	client, err := DB(config)
+	if err != nil {
+		log.Logger.WithError(err).WithField("hostname", config.Credentials.Hostname).Error("Failed to connect to MongoDB for database listing")
+		return nil, err
+	}
+	defer client.Disconnect(context.TODO())
+
+	databases, err := client.ListDatabaseNames(context.TODO(), bson.M{})
+	if err != nil {
+		log.Logger.WithError(err).WithField("hostname", config.Credentials.Hostname).Error("Failed to list MongoDB database names")
+		return nil, err
+	}
+
+	return databases, nil
 }
 
 func (p *MongoDBPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, error) {
@@ -120,8 +133,8 @@ func (p *MongoDBPlugin) GetStorageUnits(config *engine.PluginConfig, database st
 			err := db.RunCommand(context.TODO(), bson.D{{Key: "collStats", Value: collectionName}}).Decode(&stats)
 			if err != nil {
 				log.Logger.WithError(err).WithFields(map[string]interface{}{
-					"hostname": config.Credentials.Hostname,
-					"database": database,
+					"hostname":   config.Credentials.Hostname,
+					"database":   database,
 					"collection": collectionName,
 				}).Error("Failed to get MongoDB collection statistics")
 				return nil, err
@@ -152,8 +165,8 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 	client, err := DB(config)
 	if err != nil {
 		log.Logger.WithError(err).WithFields(map[string]interface{}{
-			"hostname": config.Credentials.Hostname,
-			"database": database,
+			"hostname":   config.Credentials.Hostname,
+			"database":   database,
 			"collection": collection,
 		}).Error("Failed to connect to MongoDB for row retrieval")
 		return nil, err
@@ -166,8 +179,8 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 	bsonFilter, err := convertWhereConditionToMongoDB(where)
 	if err != nil {
 		log.Logger.WithError(err).WithFields(map[string]interface{}{
-			"hostname": config.Credentials.Hostname,
-			"database": database,
+			"hostname":   config.Credentials.Hostname,
+			"database":   database,
 			"collection": collection,
 		}).Error("Failed to convert where condition to MongoDB filter")
 		return nil, fmt.Errorf("error converting where condition: %v", err)
@@ -193,10 +206,10 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 	cursor, err := coll.Find(context.TODO(), bsonFilter, findOptions)
 	if err != nil {
 		log.Logger.WithError(err).WithFields(map[string]interface{}{
-			"hostname": config.Credentials.Hostname,
-			"database": database,
+			"hostname":   config.Credentials.Hostname,
+			"database":   database,
 			"collection": collection,
-			"pageSize": pageSize,
+			"pageSize":   pageSize,
 			"pageOffset": pageOffset,
 		}).Error("Failed to execute MongoDB find query")
 		return nil, err
@@ -206,8 +219,8 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 	var rowsResult []bson.M
 	if err = cursor.All(context.TODO(), &rowsResult); err != nil {
 		log.Logger.WithError(err).WithFields(map[string]interface{}{
-			"hostname": config.Credentials.Hostname,
-			"database": database,
+			"hostname":   config.Credentials.Hostname,
+			"database":   database,
 			"collection": collection,
 		}).Error("Failed to decode MongoDB query results")
 		return nil, err
@@ -224,8 +237,8 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 		jsonBytes, err := json.Marshal(doc)
 		if err != nil {
 			log.Logger.WithError(err).WithFields(map[string]interface{}{
-				"hostname": config.Credentials.Hostname,
-				"database": database,
+				"hostname":   config.Credentials.Hostname,
+				"database":   database,
 				"collection": collection,
 			}).Error("Failed to marshal MongoDB document to JSON")
 			return nil, err
