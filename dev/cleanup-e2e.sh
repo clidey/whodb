@@ -1,4 +1,5 @@
 #!/bin/bash
+#
 # Copyright 2025 Clidey, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,8 +13,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
-echo "🧹 Cleaning up complete E2E environment..."
+# Get edition from parameter (default to CE)
+EDITION="${1:-ce}"
+
+echo "🧹 Cleaning up $EDITION E2E environment..."
 
 # Get the script directory (so it works from any location)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -42,8 +47,17 @@ if [ -f "$PROJECT_ROOT/core/coverage.out" ]; then
     echo "✅ Coverage file cleaned up"
 fi
 
-# Stop and remove Docker services
-echo "🐳 Stopping database services..."
+# If EE mode, run EE-specific cleanup first (if it exists)
+if [ "$EDITION" = "ee" ]; then
+    EE_CLEANUP_SCRIPT="$PROJECT_ROOT/ee/dev/cleanup-ee-databases.sh"
+    if [ -f "$EE_CLEANUP_SCRIPT" ]; then
+        echo "🧹 Running EE-specific cleanup..."
+        bash "$EE_CLEANUP_SCRIPT"
+    fi
+fi
+
+# Stop and remove CE Docker services
+echo "🐳 Stopping CE database services..."
 cd "$SCRIPT_DIR"
 docker-compose -f docker-compose.e2e.yaml down -v
 
@@ -74,14 +88,6 @@ else
 fi
 
 
-# Run the existing cleanup script if it exists
-if [ -f "$SCRIPT_DIR/cleanup.sh" ]; then
-    echo "🗑️ Running Docker cleanup..."
-    chmod +x "$SCRIPT_DIR/cleanup.sh"
-    bash "$SCRIPT_DIR/cleanup.sh"
-else
-    echo "ℹ️ No cleanup.sh found, skipping Docker volume cleanup"
-fi
 
 # Kill anything still on port 3000 (just in case)
 echo "🔍 Ensuring port 3000 is free..."
@@ -91,4 +97,4 @@ lsof -ti:3000 | xargs kill -9 2>/dev/null || true
 echo "🔍 Ensuring port 8080 is free..."
 lsof -ti:8080 | xargs kill -9 2>/dev/null || true
 
-echo "✅ E2E environment cleanup complete!"
+echo "✅ $EDITION E2E environment cleanup complete!"
