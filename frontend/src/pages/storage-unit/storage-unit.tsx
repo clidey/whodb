@@ -31,6 +31,7 @@ import { useAppSelector } from "../../store/hooks";
 import { databaseSupportsModifiers, getDatabaseDataTypes } from "../../utils/database-data-types";
 import { databaseSupportsScratchpad } from "../../utils/database-features";
 import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
+import { Tip } from '../../components/tip';
 
 const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = ({ unit, allTableNames }) => {
     const [expanded, setExpanded] = useState(false);
@@ -65,8 +66,17 @@ const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = (
         "shadow-2xl": expanded,
     })}>
         <div className="flex flex-col grow mt-2" data-testid="storage-unit-card">
-            <div className="flex flex-col grow mb-2">
-                <h1 className="text-sm font-semibold mb-2 break-words" data-testid="storage-unit-name">{unit.Name}</h1>
+            <div className="flex flex-col grow mb-2 w-full overflow-x-hidden">
+                <Tip>
+                    <h1
+                        className="text-sm font-semibold mb-2 max-w-[190px] overflow-hidden text-ellipsis whitespace-nowrap"
+                        data-testid="storage-unit-name"
+                        title={unit.Name}
+                    >
+                        {unit.Name}
+                    </h1>
+                    <p className="text-xs">{unit.Name}</p>
+                </Tip>
                 {
                     introAttributes.slice(0,2).map(attribute => (
                         <p key={attribute.Key} className="text-xs">{attribute.Key}: {attribute.Value}</p>
