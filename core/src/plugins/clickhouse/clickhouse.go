@@ -18,7 +18,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/clidey/whodb/core/src/log"
 
@@ -26,6 +29,8 @@ import (
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	mapset "github.com/deckarep/golang-set/v2"
+	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
 
@@ -152,6 +157,109 @@ func (p *ClickHousePlugin) executeRawSQL(config *engine.PluginConfig, query stri
 
 		return p.ConvertRawToRows(rows)
 	})
+}
+
+// ShouldHandleColumnType returns true for ClickHouse special types
+func (p *ClickHousePlugin) ShouldHandleColumnType(typeName string) bool {
+	// Handle all ClickHouse array and special types
+	return strings.HasPrefix(typeName, "Array(") ||
+		strings.HasPrefix(typeName, "Tuple(") ||
+		strings.HasPrefix(typeName, "Map(") ||
+		strings.HasPrefix(typeName, "Nested(") ||
+		strings.HasPrefix(typeName, "Decimal") || // Decimal32, Decimal64, Decimal128, Decimal256
+		strings.HasPrefix(typeName, "FixedString") ||
+		strings.HasPrefix(typeName, "Enum") || // Enum8, Enum16
+		strings.Contains(typeName, "DateTime64") ||
+		typeName == "IPv4" ||
+		typeName == "IPv6" ||
+		typeName == "UUID" ||
+		typeName == "Date32" ||
+		typeName == "JSON" ||
+		typeName == "Point" ||
+		typeName == "Ring" ||
+		typeName == "Polygon" ||
+		typeName == "MultiPolygon"
+}
+
+// GetColumnScanner returns appropriate scanner for ClickHouse column types
+func (p *ClickHousePlugin) GetColumnScanner(typeName string) interface{} {
+	// For special ClickHouse types, use interface{} to handle any type
+	var value interface{}
+	return &value
+}
+
+// FormatColumnValue formats the value for display
+func (p *ClickHousePlugin) FormatColumnValue(typeName string, value interface{}) (string, error) {
+	// Handle the interface{} pointer we created in GetColumnScanner
+	if ptr, ok := value.(*interface{}); ok && ptr != nil {
+		actualValue := *ptr
+		if actualValue == nil {
+			return "", nil
+		}
+
+		// Handle different ClickHouse types
+		switch v := actualValue.(type) {
+		case []string:
+			// Array of strings
+			return fmt.Sprintf("[%s]", strings.Join(v, ", ")), nil
+		case []interface{}:
+			// Array of mixed types
+			parts := make([]string, len(v))
+			for i, item := range v {
+				parts[i] = fmt.Sprintf("%v", item)
+			}
+			return fmt.Sprintf("[%s]", strings.Join(parts, ", ")), nil
+		case map[string]interface{}:
+			// Map type
+			parts := make([]string, 0, len(v))
+			for key, val := range v {
+				parts = append(parts, fmt.Sprintf("%s:%v", key, val))
+			}
+			return fmt.Sprintf("{%s}", strings.Join(parts, ", ")), nil
+		case net.IP:
+			// IPv4 or IPv6 address
+			return v.String(), nil
+		case *net.IP:
+			// Pointer to IP address
+			if v != nil {
+				return v.String(), nil
+			}
+			return "", nil
+		case uuid.UUID:
+			// UUID type
+			return v.String(), nil
+		case time.Time:
+			// DateTime, DateTime64, Date, Date32
+			if strings.Contains(typeName, "Date") && !strings.Contains(typeName, "DateTime") {
+				// Date types - show only date part
+				return v.Format("2006-01-02"), nil
+			}
+			// DateTime types - show full timestamp
+			if strings.Contains(typeName, "DateTime64") {
+				// High precision datetime
+				return v.Format("2006-01-02 15:04:05.999999999"), nil
+			}
+			return v.Format("2006-01-02 15:04:05"), nil
+		case decimal.Decimal:
+			// Decimal32, Decimal64, Decimal128, Decimal256
+			return v.String(), nil
+		case []byte:
+			// FixedString or binary data
+			if strings.HasPrefix(typeName, "FixedString") {
+				// Trim null bytes for FixedString
+				trimmed := strings.TrimRight(string(v), "\x00")
+				return trimmed, nil
+			}
+			// Other binary data
+			return fmt.Sprintf("0x%x", v), nil
+		default:
+			// For other types, use default formatting
+			return fmt.Sprintf("%v", actualValue), nil
+		}
+	}
+
+	// Fallback to string representation
+	return fmt.Sprintf("%v", value), nil
 }
 
 func NewClickHousePlugin() *engine.Plugin {
