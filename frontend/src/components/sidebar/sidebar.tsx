@@ -317,7 +317,7 @@ export const Sidebar: FC = () => {
                                 {/* Database Select */}
                                 <div className={cn("flex flex-col gap-2 w-full", {
                                     "opacity-0 pointer-events-none": !open,
-                                    "hidden": current?.Type === DatabaseType.MySql,
+                                    "hidden": !current || isNoSQL(current?.Type as DatabaseType),
                                 })}>
                                     <h2 className="text-sm">Database</h2>
                                     <SearchSelect

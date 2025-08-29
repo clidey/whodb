@@ -174,7 +174,7 @@ func (p *GormPlugin) GetRows(config *engine.PluginConfig, schema string, storage
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
 		// Handle SQLite separately due to text conversion of date/time columns
 		if p.Type == engine.DatabaseType_Sqlite3 {
-			return p.getSQLiteRows(db, schema, storageUnit, sort, pageSize, pageOffset)
+			return p.getSQLiteRows(db, schema, storageUnit, where, sort, pageSize, pageOffset)
 		}
 
 		// General case for other databases
@@ -202,16 +202,32 @@ func (p *GormPlugin) GetColumnsForTable(config *engine.PluginConfig, schema stri
 	})
 }
 
-func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
-	columnInfo, err := p.GetColumnTypes(db, schema, storageUnit)
+func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+	// Get columns with preserved order for SQLite
+	query := p.GetColTypeQuery()
+	rows, err := db.Raw(query, storageUnit).Rows()
 	if err != nil {
 		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get column types for table %s.%s", schema, storageUnit))
 		return nil, err
 	}
+	defer rows.Close()
 
-	selects := make([]string, 0, len(columnInfo))
-	for col, colType := range columnInfo {
-		colType = strings.ToUpper(colType)
+	// Build ordered column list with type information
+	var columns []string
+	columnTypes := make(map[string]string)
+	for rows.Next() {
+		var columnName, dataType string
+		if err := rows.Scan(&columnName, &dataType); err != nil {
+			log.Logger.WithError(err).Error("Failed to scan column info")
+			return nil, err
+		}
+		columns = append(columns, columnName)
+		columnTypes[columnName] = dataType
+	}
+
+	selects := make([]string, 0, len(columns))
+	for _, col := range columns {
+		colType := strings.ToUpper(columnTypes[col])
 		if colType == "DATE" || colType == "DATETIME" || colType == "TIMESTAMP" {
 			selects = append(selects, fmt.Sprintf("CAST(%s AS TEXT) AS %s", col, col))
 		} else {
@@ -219,35 +235,41 @@ func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, sort
 		}
 	}
 
-	query := fmt.Sprintf(
-		"SELECT %s FROM %s",
-		strings.Join(selects, ", "),
-		p.EscapeIdentifier(storageUnit),
-	)
+	// Build the query using GORM's query builder
+	selectQuery := db.Table(storageUnit)
+
+	// Apply WHERE conditions using the existing function
+	selectQuery, err = p.applyWhereConditions(selectQuery, where, columnTypes)
+	if err != nil {
+		log.Logger.WithError(err).Error("Failed to apply where conditions for SQLite")
+		return nil, err
+	}
+
+	// Select columns with datetime casting
+	selectQuery = selectQuery.Select(selects)
 
 	// Add ORDER BY clause if sort conditions are provided
 	if len(sort) > 0 {
-		orderByParts := []string{}
 		for _, s := range sort {
 			direction := "ASC"
 			if s.Direction == model.SortDirectionDesc {
 				direction = "DESC"
 			}
-			orderByParts = append(orderByParts, fmt.Sprintf("%s %s", p.EscapeIdentifier(s.Column), direction))
+			selectQuery = selectQuery.Order(fmt.Sprintf("%s %s", p.EscapeIdentifier(s.Column), direction))
 		}
-		query += " ORDER BY " + strings.Join(orderByParts, ", ")
 	}
 
-	query += fmt.Sprintf(" LIMIT %d OFFSET %d", pageSize, pageOffset)
+	// Apply pagination
+	selectQuery = selectQuery.Limit(pageSize).Offset(pageOffset)
 
-	rows, err := db.Raw(query).Rows()
+	dataRows, err := selectQuery.Rows()
 	if err != nil {
 		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to execute SQLite rows query for table %s.%s", schema, storageUnit))
 		return nil, err
 	}
-	defer rows.Close()
+	defer dataRows.Close()
 
-	return p.ConvertRawToRows(rows)
+	return p.ConvertRawToRows(dataRows)
 }
 
 func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {

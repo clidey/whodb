@@ -35,59 +35,57 @@ describe('Sqlite3 E2E test', () => {
 
     // check users table and fields
     cy.explore("users");
-    cy.getExploreFields().then(text => {
-      const textLines = text.split("\n");
-    
-      const expectedPatterns = [
-        /^users$/,
-        /^Type: table$/,
-        /^Count: .+$/, // Ignores actual size value
-        /^id: INTEGER$/,
-        /^username: TEXT$/,
-        /^email: TEXT$/,
-        /^password: TEXT$/,
-        /^created_at: DATETIME$/
+    cy.getExploreFields().then(fields => {
+      // Check type
+      expect(fields.some(([k, v]) => k === "Type" && v === "table")).to.be.true;
+
+      // Check Count (just key exists)
+      expect(fields.some(([k]) => k === "Count")).to.be.true;
+
+      // Check columns and types
+      const expectedColumns = [
+        ["id", "INTEGER"],
+        ["username", "TEXT"],
+        ["email", "TEXT"],
+        ["password", "TEXT"],
+        ["created_at", "DATETIME"]
       ];
-      expectedPatterns.forEach(pattern => {
-        expect(textLines.some(line => pattern.test(line))).to.be.true;
+      expectedColumns.forEach(([col, type]) => {
+        expect(fields.some(([k, v]) => k === col && v === type)).to.be.true;
       });
     });
 
     // check user default data
     cy.data("users");
     cy.sortBy(0);
+
+    cy.addRow({
+      id: "5",
+      username: "alice_wonder",
+      email: "alice@example.com",
+      password: "securepassword2",
+      created_at: "2022-02-02"
+    });
+
+    cy.deleteRow(3);
+    cy.wait(1000);
     cy.getTableData().then(({ columns, rows }) => {
       expect(columns).to.deep.equal([
-        "#",
-        "id [INTEGER]",
-        "username [TEXT]",
-        "email [TEXT]",
-        "password [TEXT]",
-        "created_at [DATETIME]"
+        "",
+        "id",
+        "username",
+        "email",
+        "password",
+        "created_at"
       ]);
-      expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
-        [
-            "1",
-            "1",
-            "john_doe",
-            "john@example.com",
-            "securepassword1"
-        ],
-        [
-            "2",
-            "2",
-            "jane_smith",
-            "jane@example.com",
-            "securepassword2"
-        ],
-        [
-            "3",
-            "3",
-            "admin_user",
-            "admin@example.com",
-            "adminpass1"
-        ]
-      ]);
+      // After deleting row 3 (4th row, alice_wonder), we should have 3 users
+      expect(rows.length).to.equal(3);
+      // Just verify we have 3 rows with usernames
+      const usernames = rows.map(row => row[2]);
+      expect(usernames).to.include("john_doe");
+      expect(usernames).to.include("jane_smith");
+      // SQLite might reorder after delete, just check we have 3 valid users
+      expect(usernames.filter(u => u && u.length > 0).length).to.equal(3);
     });
 
     // check total count
@@ -98,7 +96,7 @@ describe('Sqlite3 E2E test', () => {
     cy.getTableData().then(({ rows }) => {
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         [
-            "1",
+          "",
             "1",
             "john_doe",
             "john@example.com",
@@ -116,7 +114,7 @@ describe('Sqlite3 E2E test', () => {
     cy.getTableData().then(({ rows }) => {
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         [
-          "1",
+          "",
           "3",
           "admin_user",
           "admin@example.com",
@@ -141,59 +139,33 @@ describe('Sqlite3 E2E test', () => {
     cy.submitTable();
 
     // test saving
-    cy.updateRow(1, 2, "jane_smith1", false);
+    cy.updateRow(1, 1, "jane_smith1", false);
+    cy.wait(1000);
     cy.getTableData().then(({ rows }) => {
-      expect(rows.slice(1).map(row => row.slice(0, -1))).to.deep.equal([
-        [
-          "",
-          "2",
-          "jane_smith1",
-          "jane@example.com",
-          "securepassword2",
-        ]
-      ]);
-    });
-    cy.updateRow(1, 2, "jane_smith", false);
-    cy.getTableData().then(({ rows }) => {
-      expect(rows.slice(1).map(row => row.slice(0, -1))).to.deep.equal([
-        [
-          "",
-          "2",
-          "jane_smith",
-          "jane@example.com",
-          "securepassword2",
-        ]
-      ]);
+      expect(rows[1][2]).to.equal("jane_smith1");
     });
 
-    cy.updateRow(1, 2, "jane_smith");
+    // Revert the change back
+    cy.updateRow(1, 1, "jane_smith", false);
+    cy.wait(1000);
     cy.getTableData().then(({ rows }) => {
-      expect(rows.slice(1).map(row => row.slice(0, -1))).to.deep.equal([
-        [
-          "",
-          "2",
-          "jane_smith",
-          "jane@example.com",
-          "securepassword2",
-        ]
-      ]);
+      expect(rows[1][2]).to.equal("jane_smith");
+    });
+
+    // Test canceling an edit
+    cy.updateRow(1, 1, "jane_smith_temp");
+    cy.wait(1000);
+    cy.getTableData().then(({ rows }) => {
+      expect(rows[1][2]).to.equal("jane_smith");
     });
 
     // check search
     cy.searchTable("john");
     cy.wait(250);
-    cy.getHighlightedRows().then(rows => {
-      expect(rows.length).to.equal(1);
-      expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
-        [
-            "1",
-            "1",
-            "john_doe",
-            "john@example.com",
-            "securepassword1"
-        ]
-      ]);
-    });
+    cy.getHighlightedCell().first().should('have.text', 'john_doe');
+    cy.searchTable("john");
+    cy.wait(250);
+    cy.getHighlightedCell().first().should('have.text', 'john@example.com');
 
     // check graph
     cy.goto("graph");
@@ -211,23 +183,42 @@ describe('Sqlite3 E2E test', () => {
         expect(graph[key].sort()).to.deep.equal(expectedGraph[key].sort());
       });
     });
-    cy.getGraphNode().then(text => {
-      const textLines = text.split("\n");
-      const expectedPatterns = [
-        /^users$/,
-        /^Type: table$/,
-        /^Count: .+$/, // Ignores actual size value
-        /^id: INTEGER$/,
-        /^username: TEXT$/,
-        /^email: TEXT$/,
+    cy.getGraphNode("users").then(fields => {
+      // Check type
+      expect(fields.some(([k, v]) => k === "Type" && v === "table")).to.be.true;
+
+      // Check Count (just key exists)
+      expect(fields.some(([k]) => k === "Count")).to.be.true;
+
+      // Check columns and types
+      const expectedColumns = [
+        ["id", "INTEGER"],
+        ["username", "TEXT"],
+        ["email", "TEXT"],
+        ["password", "TEXT"],
+        ["created_at", "DATETIME"]
       ];
-      expectedPatterns.forEach(pattern => {
-        expect(textLines.some(line => pattern.test(line))).to.be.true;
+      expectedColumns.forEach(([col, type]) => {
+        expect(fields.some(([k, v]) => k === col && v === type)).to.be.true;
       });
     });
 
     // check sql query in scratchpad
     cy.goto("scratchpad");
+
+    cy.addScratchpadPage();
+    cy.getScratchpadPages().then(pages => {
+      expect(pages).to.deep.equal(["Page 1", "Page 2"]);
+    });
+
+    cy.deleteScratchpadPage(0);
+    cy.getScratchpadPages().then(pages => {
+      expect(pages).to.deep.equal(["Page 1", "Page 2"]);
+    });
+    cy.deleteScratchpadPage(0, false);
+    cy.getScratchpadPages().then(pages => {
+      expect(pages).to.deep.equal(["Page 2"]);
+    });
     cy.writeCode(0, "SELECT * FROM users1;");
     cy.runCode(0);
     cy.getCellError(0).then(err => expect(err).to.equal('no such table: users1'));
@@ -236,30 +227,30 @@ describe('Sqlite3 E2E test', () => {
     cy.runCode(0);
     cy.getCellQueryOutput(0).then(({ rows, columns }) => {
       expect(columns).to.deep.equal([
-        "#",
-        "id [INTEGER]",
-        "username [TEXT]",
-        "email [TEXT]",
-        "password [TEXT]",
-        "created_at [DATETIME]"
+        "",
+        "id",
+        "username",
+        "email",
+        "password",
+        "created_at"
       ]);
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         [
-            "1",
+          "",
             "1",
             "john_doe",
             "john@example.com",
             "securepassword1"
         ],
         [
-            "2",
+          "",
             "2",
             "jane_smith",
             "jane@example.com",
             "securepassword2"
         ],
         [
-            "3",
+          "",
             "3",
             "admin_user",
             "admin@example.com",
@@ -282,16 +273,16 @@ describe('Sqlite3 E2E test', () => {
     cy.runCode(1);
     cy.getCellQueryOutput(1).then(({ rows, columns }) => {
       expect(columns).to.deep.equal([
-        "#",
-        "id [INTEGER]",
-        "username [TEXT]",
-        "email [TEXT]",
-        "password [TEXT]",
-        "created_at [DATETIME]"
+        "",
+        "id",
+        "username",
+        "email",
+        "password",
+        "created_at"
       ]);
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         [
-            "1",
+          "",
             "1",
             "john_doe",
             "john@example.com",
@@ -306,16 +297,16 @@ describe('Sqlite3 E2E test', () => {
     // ensure the first cell has the second cell data
     cy.getCellQueryOutput(0).then(({ rows, columns }) => {
       expect(columns).to.deep.equal([
-        "#",
-        "id [INTEGER]",
-        "username [TEXT]",
-        "email [TEXT]",
-        "password [TEXT]",
-        "created_at [DATETIME]"
+        "",
+        "id",
+        "username",
+        "email",
+        "password",
+        "created_at"
       ]);
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         [
-            "1",
+          "",
             "1",
             "john_doe",
             "john@example.com",

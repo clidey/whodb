@@ -85,7 +85,8 @@ func (p *Sqlite3Plugin) GetPrimaryKeyColQuery() string {
 }
 
 func (p *Sqlite3Plugin) GetColTypeQuery() string {
-	return `SELECT name AS column_name, type AS data_type FROM pragma_table_info(?)`
+	// Order by cid to preserve column definition order
+	return `SELECT name AS column_name, type AS data_type FROM pragma_table_info(?) ORDER BY cid`
 }
 
 func (p *Sqlite3Plugin) EscapeSpecificIdentifier(identifier string) string {

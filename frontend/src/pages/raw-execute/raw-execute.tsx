@@ -179,13 +179,13 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     // Use all plugins
     const output = useMemo(() => {
         const selectedPlugin = allPlugins.find((p: any) => p.type === mode);
-        if (selectedPlugin?.component == null || modelType == null || current == null) {
+        if (selectedPlugin?.component == null || current == null) {
             return null;
         }
         const Component = selectedPlugin.component as FC<IPluginProps>;
         return <div className="flex mt-4 w-full">
             <Suspense fallback={<Loading />}>
-                <Component code={code} handleExecuteRef={handleExecute} modelType={modelType.modelType} schema={current.Database} token={modelType.token} providerId={current.Id} />
+                <Component code={code} handleExecuteRef={handleExecute} modelType={modelType?.modelType || ''} schema={current.Database} token={modelType?.token} providerId={current.Id} />
             </Suspense>
         </div>
     }, [mode, allActionOptions, allPlugins, code, modelType, current]);
