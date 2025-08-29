@@ -155,7 +155,7 @@ describe('MongoDB E2E test', () => {
         password: expectedRows[1].password,
         username: "jane_smith1"
       };
-      cy.updateRow(1, 1, JSON.stringify(updatedJane), false);
+      cy.updateRow(0, 0, JSON.stringify(updatedJane), false);
       cy.wait(1000);
       cy.getTableData().then(({ rows }) => {
         const [_, rawJson] = rows[1];
@@ -170,7 +170,7 @@ describe('MongoDB E2E test', () => {
         password: expectedRows[1].password,
         username: "jane_smith"
       };
-      cy.updateRow(1, 1, JSON.stringify(revertedJane), false);
+      cy.updateRow(0, 0, JSON.stringify(revertedJane), false);
       cy.wait(1000);
       cy.getTableData().then(({ rows }) => {
         const [_, rawJson] = rows[1];
@@ -185,7 +185,7 @@ describe('MongoDB E2E test', () => {
         password: expectedRows[1].password,
         username: "jane_smith_temp"
       };
-      cy.updateRow(1, 1, JSON.stringify(tempJane));
+      cy.updateRow(0, 0, JSON.stringify(tempJane));
       cy.wait(1000);
       cy.getTableData().then(({ rows }) => {
         const [_, rawJson] = rows[1];
@@ -198,7 +198,7 @@ describe('MongoDB E2E test', () => {
       cy.wait(250);
       cy.getHighlightedRows().then(rows => {
         expect(rows.length).to.equal(1);
-        const [rowIndex, rawJson] = rows[0];
+        const [_, rawJson] = rows[0];
         const json = JSON.parse(rawJson);
         expect(json.email).to.equal("john@example.com");
         expect(json.username).to.equal("john_doe");

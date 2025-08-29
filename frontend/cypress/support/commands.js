@@ -237,7 +237,7 @@ Cypress.Commands.add("updateRow", (rowIndex, columnIndex, text, cancel = true) =
     cy.get(`[data-testid="editable-field-${columnIndex}"]`).should('exist');
 
     // Find the correct input for the column using the row and column index
-    cy.get(`[data-testid="editable-field-${columnIndex}"] input`)
+    cy.get(`[data-testid="editable-field-${columnIndex}"]`)
         .should('exist')
         .clear()
         .type(text, { force: true });
