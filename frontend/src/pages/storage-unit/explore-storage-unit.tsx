@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Button, Drawer, DrawerContent, DrawerHeader, DrawerTitle, Input, Label, SearchInput, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Sheet, SheetContent, SheetFooter, toast } from "@clidey/ux";
+import { Alert, AlertDescription, AlertTitle, Button, cn, Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle, Input, Label, SearchInput, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Sheet, SheetContent, SheetFooter, toast } from "@clidey/ux";
 import {
     DatabaseType,
     RecordInput,
@@ -42,6 +42,7 @@ import { useAppSelector } from "../../store/hooks";
 import { getDatabaseOperators } from "../../utils/database-operators";
 import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
 import { ExploreStorageUnitWhereCondition } from "./explore-storage-unit-where-condition";
+import { databaseSupportsScratchpad } from "../../utils/database-features";
 
 
 export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad }) => {
@@ -214,14 +215,6 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     const {columns, columnTypes} = useMemo(() => {
         const dataColumns = rows?.Columns.map(c => c.Name) ?? [];
         return {columns: dataColumns, columnTypes: rows?.Columns.map(column => column.Type)};
-        // if (dataColumns.length !== 1 || dataColumns[0] !== "document") {
-        // todo: for NoSQL queries, figure out how to show columns correctly
-        // }
-        // const firstRow = rows?.Rows?.[0];
-        // if (firstRow == null) {
-        //     return {columns: [], columnTypes: []}
-        // }
-        // return  { columns: keys(JSON.parse(firstRow[0])), columnTypes: []}
     }, [rows?.Columns, rows?.Rows]);
 
     useEffect(() => {
@@ -281,14 +274,18 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     const handleAddRowSubmit = useCallback(() => {
         if (rows?.Columns == null) return;
         let values: RecordInput[] = [];
-        console.log(rows.Columns);
         if (isNoSQL(current?.Type as DatabaseType) && rows.Columns.length === 1 && rows.Columns[0].Type === "Document") {
-            const json = JSON.parse(addRowData.document);
-            for (const key of keys(json)) {
-                values.push({
-                    Key: key,
-                    Value: json[key],
-                });
+            try {
+                const json = JSON.parse(addRowData.document);
+                for (const key of keys(json)) {
+                    values.push({
+                        Key: key,
+                        Value: json[key],
+                    });
+                }
+            } catch (e) {
+                setAddRowError("Invalid JSON.");
+                return;
             }
         } else {
             for (const col of rows.Columns) {
@@ -357,6 +354,15 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
 
     const columnIcons = useMemo(() => getColumnIcons(columns, columnTypes), [columns, columnTypes]);
 
+    const { whereColumns, whereColumnTypes } = useMemo(() => {
+        if (rows?.Columns.length === 1 && rows?.Columns[0].Type === "Document" && isNoSQL(current?.Type as DatabaseType)) {
+            const whereColumns = keys(JSON.parse(rows?.Rows[0][0]));
+            const whereColumnTypes = whereColumns.map(() => "string");
+            return {whereColumns, whereColumnTypes}
+        }
+        return {whereColumns: columns, whereColumnTypes: columnTypes}
+    }, [rows?.Columns, rows?.Rows, current?.Type])
+
     if (unit == null) {
         return <Navigate to={InternalRoutes.Dashboard.StorageUnit.path} />
     }
@@ -408,7 +414,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                                 </SelectContent>
                             </Select>
                         </div>
-                        { current?.Type !== DatabaseType.Redis && <ExploreStorageUnitWhereCondition defaultWhere={whereCondition} columns={columns} operators={validOperators} onChange={handleFilterChange} columnTypes={columnTypes ?? []} /> }
+                        { current?.Type !== DatabaseType.Redis && <ExploreStorageUnitWhereCondition defaultWhere={whereCondition} columns={whereColumns} operators={validOperators} onChange={handleFilterChange} columnTypes={whereColumnTypes ?? []} /> }
                         <Button className="ml-6 mt-[22px]" onClick={handleQuery} data-testid="submit-button">
                             <CheckCircleIcon className="w-4 h-4" /> Query
                         </Button>
@@ -439,7 +445,10 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                                 ))}
                             </div>
                             {addRowError && (
-                                <div className="text-red-500 text-xs">{addRowError}</div>
+                                <Alert variant="destructive">
+                                    <AlertTitle>Error</AlertTitle>
+                                    <AlertDescription>{addRowError}</AlertDescription>
+                                </Alert>
                             )}
                         </div>
                         <SheetFooter className="px-0">
@@ -467,7 +476,9 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                         searchRef={searchRef}
                     >
                         <div className="flex gap-2">
-                            <Button onClick={handleOpenScratchpad} data-testid="scratchpad-button" variant="secondary">
+                            <Button onClick={handleOpenScratchpad} data-testid="scratchpad-button" variant="secondary" className={cn({
+                                "hidden": !databaseSupportsScratchpad(current?.Database),
+                            })}>
                                 <CommandLineIcon className="w-4 h-4" /> Scratchpad
                             </Button>
                             <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-row-button">

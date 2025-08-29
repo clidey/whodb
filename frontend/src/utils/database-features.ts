@@ -51,15 +51,15 @@ export function databaseSupportsScratchpad(databaseType: DatabaseType | string |
  * @returns boolean indicating if the database supports schemas
  */
 export function databaseSupportsSchema(databaseType: DatabaseType | string | undefined): boolean {
-    if (!databaseType) {
+    if (databaseType == null) {
         return false;
     }
     
     // Try to get schema support from the database configuration first
     const dbTypeItems = getDatabaseTypeDropdownItemsSync();
     const dbConfig = dbTypeItems.find(item => item.id === databaseType);
-
-    if (dbConfig?.supportsSchema !== undefined) {
+    
+    if (dbConfig?.supportsSchema != null) {
         return dbConfig.supportsSchema;
     }
 

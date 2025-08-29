@@ -37,45 +37,24 @@ import {
     toast,
     useSidebar
 } from "@clidey/ux";
-import {
-    DatabaseType,
-    useGetDatabaseQuery,
-    useGetSchemaQuery,
-    useGetVersionQuery,
-    useLoginMutation,
-    useLoginWithProfileMutation
-} from '@graphql';
-import {
-    ArrowLeftStartOnRectangleIcon,
-    ChevronDownIcon,
-    CogIcon,
-    CommandLineIcon,
-    PlusIcon,
-    QuestionMarkCircleIcon,
-    RectangleGroupIcon,
-    SparklesIcon,
-    TableCellsIcon
-} from "@heroicons/react/24/outline";
+import { DatabaseType, useGetDatabaseQuery, useGetSchemaQuery, useGetVersionQuery, useLoginMutation, useLoginWithProfileMutation } from '@graphql';
+import { ArrowLeftStartOnRectangleIcon, ChevronDownIcon, CogIcon, CommandLineIcon, PlusIcon, QuestionMarkCircleIcon, RectangleGroupIcon, SparklesIcon, TableCellsIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
-import {FC, ReactElement, useCallback, useEffect, useMemo, useState} from "react";
-import {useDispatch} from "react-redux";
-import {Link, useLocation, useNavigate} from "react-router-dom";
-import {InternalRoutes} from "../../config/routes";
-import {LoginForm} from "../../pages/auth/login";
-import {AuthActions, LocalLoginProfile} from "../../store/auth";
-import {DatabaseActions} from "../../store/database";
-import {useAppSelector} from "../../store/hooks";
-import {
-    databaseSupportsDatabaseSwitching,
-    databaseSupportsSchema,
-    databaseSupportsScratchpad
-} from "../../utils/database-features";
-import {isEEFeatureEnabled} from "../../utils/ee-loader";
-import {getDatabaseStorageUnitLabel, isNoSQL} from "../../utils/functions";
-import {Icons} from "../icons";
-import {Loading} from "../loading";
-import {updateProfileLastAccessed} from "../profile-info-tooltip";
-import {extensions} from "../../config/features";
+import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
+import { useDispatch } from "react-redux";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { extensions } from "../../config/features";
+import { InternalRoutes } from "../../config/routes";
+import { LoginForm } from "../../pages/auth/login";
+import { AuthActions, LocalLoginProfile } from "../../store/auth";
+import { DatabaseActions } from "../../store/database";
+import { useAppSelector } from "../../store/hooks";
+import { databaseSupportsDatabaseSwitching, databaseSupportsSchema, databaseSupportsScratchpad } from "../../utils/database-features";
+import { isEEFeatureEnabled } from "../../utils/ee-loader";
+import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
+import { Icons } from "../icons";
+import { Loading } from "../loading";
+import { updateProfileLastAccessed } from "../profile-info-tooltip";
 
 const logoImage = "/images/logo.png";
 

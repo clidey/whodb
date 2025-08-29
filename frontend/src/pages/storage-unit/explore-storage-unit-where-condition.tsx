@@ -267,10 +267,6 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
         setSheetOpen(false);
     }, [sheetFilters, onChange]);
 
-    const handleSheetCancel = useCallback(() => {
-        setSheetOpen(false);
-    }, []);
-
     useEffect(() => {
         if (defaultWhere == null) {
             return;
