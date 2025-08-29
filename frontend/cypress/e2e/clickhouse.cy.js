@@ -154,7 +154,6 @@ describe('Clickhouse E2E test', () => {
     cy.updateRow(1, 1, "jane_smith1", false);
     cy.wait(1000);
     cy.getTableData().then(({ rows }) => {
-      console.log(rows);
       // Just check that the update was applied to the second row
       expect(rows[1][2]).to.equal("jane_smith1");
     });

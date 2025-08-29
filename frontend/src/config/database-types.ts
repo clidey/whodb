@@ -92,7 +92,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
             // database: false - MongoDB doesn't use database field
         },
         supportsScratchpad: false,  // MongoDB doesn't support SQL scratchpad
-        supportsSchema: false,  // MongoDB doesn't have traditional schemas
+        supportsSchema: true,  // MongoDB doesn't have traditional schemas
     },
     {
         id: "Redis",
