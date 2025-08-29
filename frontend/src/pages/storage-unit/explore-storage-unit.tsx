@@ -356,7 +356,9 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
 
     const { whereColumns, whereColumnTypes } = useMemo(() => {
         if (rows?.Columns.length === 1 && rows?.Columns[0].Type === "Document" && isNoSQL(current?.Type as DatabaseType)) {
-            return {whereColumns: keys(JSON.parse(rows?.Rows[0][0])), whereColumnTypes: []}
+            const whereColumns = keys(JSON.parse(rows?.Rows[0][0]));
+            const whereColumnTypes = whereColumns.map(() => "string");
+            return {whereColumns, whereColumnTypes}
         }
         return {whereColumns: columns, whereColumnTypes: columnTypes}
     }, [rows?.Columns, rows?.Rows, current?.Type])
