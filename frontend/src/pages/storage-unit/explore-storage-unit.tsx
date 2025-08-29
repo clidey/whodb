@@ -477,7 +477,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                     >
                         <div className="flex gap-2">
                             <Button onClick={handleOpenScratchpad} data-testid="scratchpad-button" variant="secondary" className={cn({
-                                "hidden": !databaseSupportsScratchpad(current?.Database),
+                                "hidden": !databaseSupportsScratchpad(current?.Type),
                             })}>
                                 <CommandLineIcon className="w-4 h-4" /> Scratchpad
                             </Button>

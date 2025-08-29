@@ -304,33 +304,40 @@ Cypress.Commands.add("removeCell", (index) => {
 });
 
 Cypress.Commands.add("writeCode", (index, text) => {
-    // First, click to focus the editor
-    cy.get(`[data-testid="cell-${index}"] [data-testid="code-editor"]`)
+    // Focus the editor
+    cy.get('[data-testid="cell-' + index + '"] [data-testid="code-editor"]')
         .should('exist')
         .should('be.visible')
         .click();
-    
-    // Wait a bit for focus
+
     cy.wait(200);
-    
-    // Clear existing content using keyboard shortcuts
-    // Try both ctrl+a and cmd+a for cross-platform support
-    cy.get(`[data-testid="cell-${index}"] .cm-content`)
-        .type('{selectall}')
-        .type('{backspace}');
-    
-    // Type the new text slowly to ensure each character is registered
-    cy.get(`[data-testid="cell-${index}"] .cm-content`)
-        .type(text, { delay: 30 });
-    
-    // Blur the focused element (cm-content) to trigger state update
-    cy.focused().blur();
-    
-    // Re-focus by clicking the editor again
-    cy.get(`[data-testid="cell-${index}"] [data-testid="code-editor"]`)
-        .click();
-    
-    // Wait for state to update
+
+    // Clear content
+    cy.get('[data-testid="cell-' + index + '"] .cm-content')
+        .type('{selectall}{backspace}', { delay: 0 });
+
+    // Paste the text directly to avoid intellisense
+    cy.window().then(win => {
+        const textarea = win.document.querySelector('[data-testid="cell-' + index + '"] .cm-content');
+        if (textarea) {
+            textarea.textContent = '';
+            // Simulate paste event
+            const pasteEvent = new win.ClipboardEvent('paste', {
+                bubbles: true,
+                cancelable: true,
+                clipboardData: new DataTransfer()
+            });
+            pasteEvent.clipboardData.setData('text/plain', text);
+            textarea.dispatchEvent(pasteEvent);
+        }
+    });
+
+    // Blur to trigger state update
+    cy.get('[data-testid="cell-' + index + '"] .cm-content').blur();
+
+    // Re-focus
+    cy.get('[data-testid="cell-' + index + '"] [data-testid="code-editor"]').click();
+
     cy.wait(1000);
 });
 

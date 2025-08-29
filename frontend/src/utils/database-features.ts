@@ -31,7 +31,7 @@ export function databaseSupportsScratchpad(databaseType: DatabaseType | string |
     const dbTypeItems = getDatabaseTypeDropdownItemsSync();
     const dbConfig = dbTypeItems.find(item => item.id === databaseType);
     
-    if (dbConfig?.supportsScratchpad !== undefined) {
+    if (dbConfig?.supportsScratchpad != null) {
         return dbConfig.supportsScratchpad;
     }
     
