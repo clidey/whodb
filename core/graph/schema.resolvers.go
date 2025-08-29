@@ -529,6 +529,31 @@ func (r *queryResolver) Row(ctx context.Context, schema string, storageUnit stri
 	}, nil
 }
 
+// Columns is the resolver for the Columns field.
+func (r *queryResolver) Columns(ctx context.Context, schema string, storageUnit string) ([]*model.Column, error) {
+	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	typeArg := config.Credentials.Type
+	columnsResult, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetColumnsForTable(config, schema, storageUnit)
+	if err != nil {
+		log.LogFields(log.Fields{
+			"operation":     "GetColumnsForTable",
+			"schema":        schema,
+			"storage_unit":  storageUnit,
+			"database_type": typeArg,
+			"error":         err.Error(),
+		}).Error("Database operation failed")
+		return nil, err
+	}
+	columns := []*model.Column{}
+	for _, column := range columnsResult {
+		columns = append(columns, &model.Column{
+			Type: column.Type,
+			Name: column.Name,
+		})
+	}
+	return columns, nil
+}
+
 // RawExecute is the resolver for the RawExecute field.
 func (r *queryResolver) RawExecute(ctx context.Context, query string) (*model.RowsResult, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
