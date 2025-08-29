@@ -385,9 +385,23 @@ Cypress.Commands.add("getCellError", (index) => {
 });
 
 Cypress.Commands.add('logout', () => {
-    // The logout button is in the sidebar, look for it by text or icon
-    // First try to find and click the logout option in the sidebar
-    cy.contains('Logout Profile').click({ force: true });
+    // The logout button is in the sidebar
+    // Try to find it by text first (expanded sidebar), then by finding the last menu item
+    cy.get('body').then($body => {
+        if ($body.text().includes('Logout Profile')) {
+            // Sidebar is expanded, click on the text
+            cy.contains('Logout Profile').click({force: true});
+        } else {
+            // Sidebar is minimized, find and click the logout icon
+            // The logout button is the last li[data-sidebar="menu-item"] in the sidebar
+            // Click on the div with cursor-pointer class within it
+            cy.get('[data-sidebar="sidebar"]').within(() => {
+                cy.get('li[data-sidebar="menu-item"]').last().within(() => {
+                    cy.get('div.cursor-pointer').first().click({force: true});
+                });
+            });
+        }
+    });
 });
 
 Cypress.Commands.add('getTables', () => {

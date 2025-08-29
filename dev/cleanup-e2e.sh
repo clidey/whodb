@@ -45,7 +45,7 @@ fi
 # Stop and remove Docker services
 echo "🐳 Stopping database services..."
 cd "$SCRIPT_DIR"
-docker-compose -f docker-compose.e2e.yaml down
+docker-compose -f docker-compose.e2e.yaml down -v
 
 # Stop the test server if it's running
 echo "🛑 Stopping test server..."

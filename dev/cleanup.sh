@@ -12,16 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-docker rm dev-e2e_sqlite3-1
-docker rm dev-e2e_postgres-1
-docker rm dev-e2e_mysql-1
-docker rm dev-e2e_mariadb-1
-docker rm dev-e2e_mongo-1
-docker rm dev-e2e_clickhouse-1
+docker rm dev-e2e_sqlite3-1 2>/dev/null || true
+docker rm dev-e2e_postgres-1 2>/dev/null || true
+docker rm dev-e2e_mysql-1 2>/dev/null || true
+docker rm dev-e2e_mariadb-1 2>/dev/null || true
+docker rm dev-e2e_mongo-1 2>/dev/null || true
+docker rm dev-e2e_clickhouse-1 2>/dev/null || true
+docker rm e2e_redis 2>/dev/null || true
+docker rm e2e_elasticsearch 2>/dev/null || true
+docker rm e2e_mysql_842-1 2>/dev/null || true
 
-docker volume rm dev_e2e_sqlite3
-docker volume rm dev_e2e_postgres
-docker volume rm dev_e2e_mysql
-docker volume rm dev_e2e_mariadb
-docker volume rm dev_e2e_mongo
-docker volume rm dev_e2e_clickhouse
+docker volume rm dev_e2e_sqlite3 2>/dev/null || true
+docker volume rm dev_e2e_postgres 2>/dev/null || true
+docker volume rm dev_e2e_mysql 2>/dev/null || true
+docker volume rm dev_e2e_mariadb 2>/dev/null || true
+docker volume rm dev_e2e_mongo 2>/dev/null || true
+docker volume rm dev_e2e_clickhouse 2>/dev/null || true
+docker volume rm dev_e2e_redis 2>/dev/null || true
+docker volume rm dev_e2e_elasticsearch 2>/dev/null || true
+docker volume rm dev_e2e_mysql_842 2>/dev/null || true
