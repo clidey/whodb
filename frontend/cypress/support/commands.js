@@ -237,10 +237,10 @@ Cypress.Commands.add("updateRow", (rowIndex, columnIndex, text, cancel = true) =
     cy.get(`[data-testid="editable-field-${columnIndex}"]`).should('exist');
 
     // Find the correct input for the column using the row and column index
-    cy.get(`[data-testid="editable-field-${columnIndex}"] input`)
+    cy.get(`[data-testid="editable-field-${columnIndex}"]`)
         .should('exist')
         .clear()
-        .type(text, { force: true });
+        .type(text, { force: true, parseSpecialCharSequences: false });
 
     // Click cancel (escape key) or update as requested
     if (cancel) {
@@ -254,7 +254,6 @@ Cypress.Commands.add("updateRow", (rowIndex, columnIndex, text, cancel = true) =
         cy.wait(1500);
     }
 });
-
 
 Cypress.Commands.add("getPageNumbers", () => {
     return cy.get('[data-testid="table-page-number"]').then(($els) => {

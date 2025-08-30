@@ -168,6 +168,7 @@ export const StorageUnitTable: FC<TableProps> = ({
 }) => {
     const [editIndex, setEditIndex] = useState<number | null>(null);
     const [editRow, setEditRow] = useState<string[] | null>(null);
+    const [editRowInitialLengths, setEditRowInitialLengths] = useState<number[]>([]);
     const [deleting, setDeleting] = useState(false);
     const [checked, setChecked] = useState<number[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
@@ -210,7 +211,10 @@ export const StorageUnitTable: FC<TableProps> = ({
 
     const handleEdit = (index: number) => {
         setEditIndex(index);
-        setEditRow([...rows[index]]);
+        const rowData = [...rows[index]];
+        setEditRow(rowData);
+        // Store initial lengths to prevent input/textarea switching
+        setEditRowInitialLengths(rowData.map(cell => cell?.length || 0));
     };
 
     const handleInputChange = (value: string, idx: number) => {
@@ -238,6 +242,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 .then(() => {
                     setEditIndex(null);
                     setEditRow(null);
+                    setEditRowInitialLengths([]);
                     toast.success("Row updated");
                     onRefresh?.();
                 })
@@ -927,25 +932,35 @@ export const StorageUnitTable: FC<TableProps> = ({
                         </PaginationContent>
                     </Pagination>
                 </div>
-                <Sheet open={editIndex !== null} onOpenChange={open => { if (!open) setEditIndex(null); }}>
+                <Sheet open={editIndex !== null} onOpenChange={open => { 
+                    if (!open) {
+                        setEditIndex(null);
+                        setEditRow(null);
+                        setEditRowInitialLengths([]);
+                    }
+                }}>
                     <SheetContent side="right" className="w-[400px] max-w-full p-8">
                         <SheetTitle>Edit Row</SheetTitle>
                         <div className="flex flex-col gap-4 mt-4">
                             {editRow &&
                                 columns.map((col, idx) => (
-                                    <div key={col} className="flex flex-col gap-2" data-testid={`editable-field-${idx}`}>
+                                    <div key={col} className="flex flex-col gap-2">
                                         <Label>{col}</Label>
                                         {
-                                            editRow[idx].length < 50 ?
+                                            editRowInitialLengths[idx] < 50 ?
                                                 <Input
+                                                    key={`input-${idx}`}
                                                     value={editRow[idx] ?? ""}
                                                     onChange={e => handleInputChange(e.target.value, idx)}
+                                                    data-testid={`editable-field-${idx}`}
                                                 />
                                             : <TextArea
+                                                    key={`textarea-${idx}`}
                                                     value={editRow[idx] ?? ""}
                                                     onChange={e => handleInputChange(e.target.value, idx)}
                                                     rows={5}
                                                     className="min-h-[100px]"
+                                                    data-testid={`editable-field-${idx}`}
                                                 />
                                         }
                                     </div>

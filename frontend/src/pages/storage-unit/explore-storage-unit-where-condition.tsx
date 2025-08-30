@@ -31,11 +31,22 @@ type IPopoverCardProps = {
     handleOperatorSelector: (item: string) => void;
     handleInputChange: (newValue: string) => void;
     handleAddFilter: () => void;
+    handleSaveFilter?: (index: number) => void;
     handleClick: () => void;
     className?: string;
+    isEditing?: boolean;
+    editingIndex?: number;
 }
 
-const PopoverCard: FC<IPopoverCardProps> = ({ open, onOpenChange, currentFilter, fieldsDropdownItems, validOperators, handleFieldSelect, handleOperatorSelector, handleInputChange, handleAddFilter, handleClick, className }) => {
+const PopoverCard: FC<IPopoverCardProps> = ({ open, onOpenChange, currentFilter, fieldsDropdownItems, validOperators, handleFieldSelect, handleOperatorSelector, handleInputChange, handleAddFilter, handleSaveFilter, handleClick, className, isEditing = false, editingIndex = -1 }) => {
+    const handleAction = () => {
+        if (isEditing && handleSaveFilter && editingIndex !== -1) {
+            handleSaveFilter(editingIndex);
+        } else {
+            handleAddFilter();
+        }
+    };
+
     return  <Popover open={open} onOpenChange={onOpenChange}>
         <PopoverTrigger asChild>
             <div />
@@ -97,15 +108,15 @@ const PopoverCard: FC<IPopoverCardProps> = ({ open, onOpenChange, currentFilter,
                 </Button>
                 <Button
                     className="flex-1"
-                    onClick={handleAddFilter}
+                    onClick={handleAction}
                     disabled={
                         !currentFilter.Key ||
                         !currentFilter.Operator ||
                         !currentFilter.Value
                     }
-                    data-testid="add-condition-button"
+                    data-testid={isEditing ? "update-condition-button" : "add-condition-button"}
                 >
-                    <CheckCircleIcon className="w-4 h-4" /> Add
+                    <CheckCircleIcon className="w-4 h-4" /> {isEditing ? "Update" : "Add"}
                 </Button>
             </div>
         </PopoverContent>
@@ -372,7 +383,10 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                             handleOperatorSelector={handleOperatorSelector}
                             handleInputChange={handleInputChange}
                             handleAddFilter={handleAddFilter}
+                            handleSaveFilter={handleSaveFilter}
                             handleClick={handleClick}
+                            isEditing={true}
+                            editingIndex={i}
                         />
                     </div>
                 ))}
@@ -395,7 +409,10 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                 handleOperatorSelector={handleOperatorSelector}
                 handleInputChange={handleInputChange}
                 handleAddFilter={handleAddFilter}
+                handleSaveFilter={handleSaveFilter}
                 handleClick={handleClick}
+                isEditing={false}
+                editingIndex={-1}
             />
             
             {/* Sheet for managing all conditions */}
