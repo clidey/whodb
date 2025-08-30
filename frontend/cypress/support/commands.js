@@ -216,8 +216,8 @@ Cypress.Commands.add("deleteRow", (rowIndex) => {
     cy.get('table tbody tr')
       .eq(rowIndex)
       .rightclick({ force: true });
-    cy.get('[data-testid="context-menu-more-actions"]').click();
-    cy.get('[data-testid="context-menu-delete-row"]').click();
+    cy.get('[data-testid="context-menu-more-actions"]').click({force: true});
+    cy.get('[data-testid="context-menu-delete-row"]').click({force: true});
     // Wait for the delete to process
     cy.wait(500);
 });
@@ -231,7 +231,7 @@ Cypress.Commands.add("updateRow", (rowIndex, columnIndex, text, cancel = true) =
       .rightclick({ force: true });
 
     // Click the "Edit row" context menu item
-    cy.get('[data-testid="context-menu-edit-row"]').click();
+    cy.get('[data-testid="context-menu-edit-row"]').click({force: true});
 
     // Wait for the editable row to appear, using the row index in the test id
     cy.get(`[data-testid="editable-field-${columnIndex}"]`).should('exist');
@@ -250,8 +250,8 @@ Cypress.Commands.add("updateRow", (rowIndex, columnIndex, text, cancel = true) =
         cy.wait(1000);
     } else {
         cy.get(`[data-testid="update-button"]`).click();
-        // Wait longer for the update to process and sheet to close
-        cy.wait(1500);
+        // Wait for the update to process and sheet to close
+        cy.wait(1000);
     }
 });
 

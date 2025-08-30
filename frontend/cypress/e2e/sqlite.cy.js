@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -147,7 +147,6 @@ describe('Sqlite3 E2E test', () => {
 
     // Revert the change back
     cy.updateRow(1, 1, "jane_smith", false);
-    cy.wait(1000);
     cy.getTableData().then(({ rows }) => {
       expect(rows[1][2]).to.equal("jane_smith");
     });
