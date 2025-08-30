@@ -222,10 +222,28 @@ export const LoginForm: FC<LoginFormProps> = ({
                 const databaseType = searchParams.get("type")!;
                 setDatabaseType(databaseTypeItems.find(item => item.id === databaseType) ?? databaseTypeItems[0]);
             }
+
             if (searchParams.has("host")) setHostName(searchParams.get("host")!);
             if (searchParams.has("username")) setUsername(searchParams.get("username")!);
             if (searchParams.has("password")) setPassword(searchParams.get("password")!);
             if (searchParams.has("database")) setDatabase(searchParams.get("database")!);
+
+            if (searchParams.has("resource")) {
+                const selectedProfile = availableProfiles.find(profile => profile.value === searchParams.get("resource"));
+                setSelectedAvailableProfile(selectedProfile?.value);
+                setTimeout(() => {
+                    handleLoginWithProfileSubmit();
+                }, 10);
+            } else if (searchParams.has("login")) {
+                setTimeout(() => {
+                    handleSubmit();
+                    searchParams.delete("login");
+                }, 10);
+            } else {
+                setSelectedAvailableProfile(undefined);
+            }
+        } else {
+            setSelectedAvailableProfile(undefined);
         }
     }, [searchParams, databaseTypeItems]);
 
