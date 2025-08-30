@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -184,7 +184,7 @@ describe('MongoDB E2E test', () => {
         username: "jane_smith_temp"
       };
       cy.updateRow(1, 0, JSON.stringify(tempJane));
-      cy.wait(1000);
+      cy.wait(500);
       cy.getTableData().then(({ rows }) => {
         const [_, rawJson] = rows[1];
         const json = JSON.parse(rawJson);

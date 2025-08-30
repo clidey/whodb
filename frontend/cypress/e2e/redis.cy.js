@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -126,7 +126,7 @@ describe('Redis E2E test', () => {
 
     // Redis supports delete for hash fields - delete the "id" field
     cy.deleteRow(2);
-    cy.wait(1000);
+    cy.wait(500);
     cy.getTableData().then(({ columns, rows }) => {
       expect(columns).to.deep.equal([
         "",

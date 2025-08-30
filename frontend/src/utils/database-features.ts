@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -161,4 +161,28 @@ export function databaseSupportsDatabaseSwitching(databaseType: DatabaseType | s
     ];
 
     return databasesThatSupportDatabaseSwitching.includes(databaseType as DatabaseType);
+}
+
+/**
+ * Check if a database should use the schema field for graph queries
+ * @param databaseType The database type (can be CE or EE type)
+ * @returns boolean indicating if the database uses schema field (true) or database field (false) for graph queries
+ */
+export function databaseUsesSchemaForGraph(databaseType: DatabaseType | string | undefined): boolean {
+    if (!databaseType) {
+        return true; // Default to schema field if unknown
+    }
+
+    // Try to get graph field preference from the database configuration first
+    const dbTypeItems = getDatabaseTypeDropdownItemsSync();
+    const dbConfig = dbTypeItems.find(item => item.id === databaseType);
+
+    if (dbConfig?.usesSchemaForGraph !== undefined) {
+        return dbConfig.usesSchemaForGraph;
+    }
+
+    // Fall back to using the database switching logic (inverted)
+    // If database supports database switching, it uses database field (false)
+    // If database doesn't support database switching, it uses schema field (true)
+    return !databaseSupportsDatabaseSwitching(databaseType);
 }

@@ -129,7 +129,7 @@ describe('MySQL E2E test', () => {
 
     // test saving
     cy.updateRow(1, 1, "jane_smith1", false);
-    cy.wait(1000);
+    cy.wait(500);
     cy.getTableData().then(({ rows }) => {
       expect(rows[1][2]).to.equal("jane_smith1");
     });
@@ -142,7 +142,7 @@ describe('MySQL E2E test', () => {
 
     // Test canceling an edit
     cy.updateRow(1, 1, "jane_smith_temp");
-    cy.wait(1000);
+    cy.wait(500);
     cy.getTableData().then(({ rows }) => {
       expect(rows[1][2]).to.equal("jane_smith");
     });

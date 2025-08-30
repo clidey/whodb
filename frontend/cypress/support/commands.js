@@ -247,11 +247,11 @@ Cypress.Commands.add("updateRow", (rowIndex, columnIndex, text, cancel = true) =
         // Close the sheet by pressing Escape
         cy.get('body').type('{esc}');
         // Force wait since the sheet might have animation
-        cy.wait(1000);
+        cy.wait(500);
     } else {
         cy.get(`[data-testid="update-button"]`).click();
         // Wait for the update to process and sheet to close
-        cy.wait(1000);
+        cy.wait(500);
     }
 });
 
@@ -349,7 +349,7 @@ Cypress.Commands.add("writeCode", (index, text) => {
     // Re-focus
     cy.get('[data-testid="cell-' + index + '"] [data-testid="code-editor"]').click();
 
-    cy.wait(1000);
+    cy.wait(500);
 });
 
 Cypress.Commands.add("runCode", (index) => {
@@ -368,7 +368,7 @@ Cypress.Commands.add("runCode", (index) => {
         });
     
     // Wait for the query to execute
-    cy.wait(1000);
+    cy.wait(500);
 });
 
 Cypress.Commands.add("getCellQueryOutput", (index) => {

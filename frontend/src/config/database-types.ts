@@ -42,6 +42,8 @@ export interface IDatabaseDropdownItem {
     supportsSchema?: boolean;
     // Whether this database supports switching between databases in the UI
     supportsDatabaseSwitching?: boolean;
+    // Whether this database should use the schema field (true) or database field (false) for graph queries
+    usesSchemaForGraph?: boolean;
 }
 
 export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
@@ -59,6 +61,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         supportsScratchpad: true,
         supportsSchema: true,
         supportsDatabaseSwitching: true,
+        usesSchemaForGraph: true,  // Uses database field for graph queries
     },
     {
         id: "MySQL",
@@ -74,6 +77,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         supportsScratchpad: true,
         supportsSchema: true,
         supportsDatabaseSwitching: true,
+        usesSchemaForGraph: true,  // Uses database field for graph queries
     },
     {
         id: "MariaDB",
@@ -89,6 +93,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         supportsScratchpad: true,
         supportsSchema: true,
         supportsDatabaseSwitching: true,
+        usesSchemaForGraph: true,  // Uses database field for graph queries
     },
     {
         id: "Sqlite3",
@@ -101,6 +106,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         supportsScratchpad: true,
         supportsSchema: false,  // SQLite doesn't support schemas
         supportsDatabaseSwitching: false,
+        usesSchemaForGraph: true,  // Uses schema field for graph queries
     },
     {
         id: "MongoDB",
@@ -116,6 +122,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         supportsScratchpad: false,  // MongoDB doesn't support SQL scratchpad
         supportsSchema: false,  // MongoDB doesn't have traditional schemas
         supportsDatabaseSwitching: true,
+        usesSchemaForGraph: false,  // Uses database field for graph queries
     },
     {
         id: "Redis",
@@ -131,6 +138,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         supportsScratchpad: false,  // Redis doesn't support SQL scratchpad
         supportsSchema: false,  // Redis doesn't have schemas
         supportsDatabaseSwitching: false,
+        usesSchemaForGraph: true,  // Uses schema field for graph queries
     },
     {
         id: "ElasticSearch",
@@ -146,6 +154,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         supportsScratchpad: false,  // ElasticSearch doesn't support SQL scratchpad
         supportsSchema: false,  // ElasticSearch doesn't have schemas
         supportsDatabaseSwitching: false,
+        usesSchemaForGraph: true,  // Uses schema field for graph queries
     },
     {
         id: "ClickHouse",
@@ -167,6 +176,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         supportsScratchpad: true,
         supportsSchema: false,
         supportsDatabaseSwitching: true,
+        usesSchemaForGraph: false,  // Uses database field for graph queries
     },
 ];
 
@@ -199,6 +209,7 @@ if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
                 supportsScratchpad: dbType.supportsScratchpad,
                 supportsSchema: dbType.supportsSchema,
                 supportsDatabaseSwitching: dbType.supportsDatabaseSwitching,
+                usesSchemaForGraph: dbType.usesSchemaForGraph,
             }));
             
         } else {

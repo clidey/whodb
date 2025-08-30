@@ -160,7 +160,7 @@ describe('MariaDB E2E test', () => {
 
     // test saving
     cy.updateRow(1, 1, "jane_smith1", false);
-    cy.wait(1000);
+    cy.wait(500);
     cy.getTableData().then(({ rows }) => {
       // Just check that the update was applied to the second row
       expect(rows[1][2]).to.equal("jane_smith1");
@@ -175,7 +175,7 @@ describe('MariaDB E2E test', () => {
 
     // Test canceling an edit
     cy.updateRow(1, 1, "jane_smith_temp");
-    cy.wait(1000);
+    cy.wait(500);
     cy.getTableData().then(({ rows }) => {
       // Check that canceling preserves the original value
       expect(rows[1][2]).to.equal("jane_smith");
