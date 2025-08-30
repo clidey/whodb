@@ -20,6 +20,14 @@ set -e
 # Get edition from parameter (default to CE)
 EDITION="${1:-ce}"
 
+# Check if this is EE-only mode (passed from run-cypress.sh)
+if [ "$EDITION" = "ee-only" ]; then
+    SKIP_CE_DATABASES="true"
+    EDITION="ee"  # Use ee for everything else
+else
+    SKIP_CE_DATABASES="false"
+fi
+
 # Get the script directory (so it works from any location)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
@@ -69,24 +77,28 @@ chmod 644 "$PROJECT_ROOT/core/tmp/e2e_test.db"
 
 echo "✅ SQLite E2E database ready at core/tmp/e2e_test.db"
 
-# Start CE database services
-echo "🐳 Starting CE database services..."
-cd "$SCRIPT_DIR"
-docker-compose -f docker-compose.e2e.yaml up -d
+# Start CE database services (skip if EE-only mode)
+if [ "$SKIP_CE_DATABASES" = "false" ]; then
+    echo "🐳 Starting CE database services..."
+    cd "$SCRIPT_DIR"
+    docker-compose -f docker-compose.e2e.yaml up -d
 
-# Wait for services to be ready
-echo "⏳ Waiting for services to be ready..."
-sleep 15
+    # Wait for services to be ready
+    echo "⏳ Waiting for services to be ready..."
+    sleep 15
 
-# Check if CE services are healthy
-echo "🔍 Checking CE service health..."
-for service in e2e_postgres e2e_mysql e2e_mariadb e2e_mongo e2e_clickhouse e2e_redis e2e_elasticsearch; do
-    if docker ps --filter "name=$service" --filter "status=running" | grep -q $service; then
-        echo "✅ $service is running"
-    else
-        echo "⚠️ $service may not be running (some services are optional)"
-    fi
-done
+    # Check if CE services are healthy
+    echo "🔍 Checking CE service health..."
+    for service in e2e_postgres e2e_mysql e2e_mariadb e2e_mongo e2e_clickhouse e2e_redis e2e_elasticsearch; do
+        if docker ps --filter "name=$service" --filter "status=running" | grep -q $service; then
+            echo "✅ $service is running"
+        else
+            echo "⚠️ $service may not be running (some services are optional)"
+        fi
+    done
+else
+    echo "⏭️ Skipping CE database services (EE-only mode)"
+fi
 
 # If EE mode, run EE-specific setup (if it exists)
 if [ "$EDITION" = "ee" ]; then
