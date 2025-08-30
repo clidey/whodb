@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,13 +17,13 @@
 const dbHost = 'localhost';
 const dbUser = 'user';
 const dbPassword = 'password';
+const dbName = 'test_db';
 
 describe('MongoDB E2E test', () => {
   it('should login correctly', () => {
     // login and setup
-    cy.login('MongoDB', dbHost, dbUser, dbPassword);
-    cy.selectSchema("test_db");
-    
+    cy.login('MongoDB', dbHost, dbUser, dbPassword, dbName);
+
     // get all çollections
     cy.getTables().then(storageUnitNames => {
       expect(storageUnitNames).to.be.an('array');
