@@ -30,6 +30,7 @@ import { StorageUnitGraphCard } from "../storage-unit/storage-unit";
 import { Button, EmptyState } from "@clidey/ux";
 import { useNavigate } from "react-router-dom";
 import { CircleStackIcon } from "@heroicons/react/24/outline";
+import { databaseSupportsDatabaseSwitching } from "../../utils/database-features";
 
 export const GraphPage: FC = () => {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -41,7 +42,7 @@ export const GraphPage: FC = () => {
 
     const { loading } = useQuery<GetGraphQuery, GetGraphQueryVariables>(GetGraphDocument, {
         variables: {
-            schema,
+            schema: databaseSupportsDatabaseSwitching(current?.Type) ? current?.Database ?? "" : schema,
         },
         onCompleted(data) {
             const newNodes: Node[] = [];

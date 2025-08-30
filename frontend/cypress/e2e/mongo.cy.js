@@ -155,8 +155,7 @@ describe('MongoDB E2E test', () => {
         password: expectedRows[1].password,
         username: "jane_smith1"
       };
-      cy.updateRow(0, 0, JSON.stringify(updatedJane), false);
-      cy.wait(1000);
+      cy.updateRow(1, 0, JSON.stringify(updatedJane), false);
       cy.getTableData().then(({ rows }) => {
         const [_, rawJson] = rows[1];
         const json = JSON.parse(rawJson);
@@ -170,8 +169,7 @@ describe('MongoDB E2E test', () => {
         password: expectedRows[1].password,
         username: "jane_smith"
       };
-      cy.updateRow(0, 0, JSON.stringify(revertedJane), false);
-      cy.wait(1000);
+      cy.updateRow(1, 0, JSON.stringify(revertedJane), false);
       cy.getTableData().then(({ rows }) => {
         const [_, rawJson] = rows[1];
         const json = JSON.parse(rawJson);
@@ -185,7 +183,7 @@ describe('MongoDB E2E test', () => {
         password: expectedRows[1].password,
         username: "jane_smith_temp"
       };
-      cy.updateRow(0, 0, JSON.stringify(tempJane));
+      cy.updateRow(1, 0, JSON.stringify(tempJane));
       cy.wait(1000);
       cy.getTableData().then(({ rows }) => {
         const [_, rawJson] = rows[1];
@@ -223,17 +221,12 @@ describe('MongoDB E2E test', () => {
       });
 
       cy.getGraphNode("users").then(fields => {
-        // fields is a string with lines
-        const textLines = (typeof fields === "string" ? fields.split("\n") : fields);
-        const expectedPatterns = [
-          /^users$/,
-          /^Type: Collection$/,
-          /^Storage Size: .+$/,
-          /^Count: .+$/
-        ];
-        expectedPatterns.forEach(pattern => {
-          expect(textLines.some(line => pattern.test(line))).to.be.true;
-        });
+        // Check type
+        expect(fields.some(([k, v]) => k === "Type" && v === "Collection")).to.be.true;
+
+        // Check Storage Size, Count (just keys exist)
+        expect(fields.some(([k]) => k === "Storage Size")).to.be.true;
+        expect(fields.some(([k]) => k === "Count")).to.be.true;
       });
 
       // Logout
