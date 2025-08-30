@@ -68,9 +68,7 @@ import {databaseSupportsScratchpad} from "../../utils/database-features";
 
 
 export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad }) => {
-    // Debug: Log E2E_TEST environment variable
-    console.log('E2E_TEST environment variable:', import.meta.env.VITE_E2E_TEST);
-    
+
     const [bufferPageSize, setBufferPageSize] = useState("100");
     const [currentPage, setCurrentPage] = useState(0);
     const [whereCondition, setWhereCondition] = useState<WhereCondition>();

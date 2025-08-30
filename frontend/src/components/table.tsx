@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,7 @@ import {
     ContextMenuSubContent,
     ContextMenuSubTrigger,
     ContextMenuTrigger,
+    EmptyState,
     Input,
     Label,
     Pagination,
@@ -53,10 +54,9 @@ import {
     TableHead,
     TableHeader,
     TableRow,
+    TextArea,
     toast,
-    VirtualizedTableBody,
-    EmptyState,
-    TextArea
+    VirtualizedTableBody
 } from "@clidey/ux";
 import {
     ArrowDownCircleIcon,
@@ -73,13 +73,12 @@ import {
     DocumentTextIcon,
     EllipsisHorizontalIcon,
     EllipsisVerticalIcon,
-    ShareIcon,
-    SparklesIcon,
-    TrashIcon,
     HashtagIcon,
     KeyIcon,
     ListBulletIcon,
     PencilSquareIcon,
+    ShareIcon,
+    TrashIcon,
     XMarkIcon,
 } from "@heroicons/react/24/outline";
 import {FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
@@ -939,34 +938,36 @@ export const StorageUnitTable: FC<TableProps> = ({
                         setEditRowInitialLengths([]);
                     }
                 }}>
-                    <SheetContent side="right" className="w-[400px] max-w-full p-8">
+                    <SheetContent side="right" className="w-[400px] max-w-full p-8 flex flex-col">
                         <SheetTitle>Edit Row</SheetTitle>
-                        <div className="flex flex-col gap-4 mt-4">
-                            {editRow &&
-                                columns.map((col, idx) => (
-                                    <div key={col} className="flex flex-col gap-2">
-                                        <Label>{col}</Label>
-                                        {
-                                            editRowInitialLengths[idx] < 50 ?
-                                                <Input
-                                                    key={`input-${idx}`}
-                                                    value={editRow[idx] ?? ""}
-                                                    onChange={e => handleInputChange(e.target.value, idx)}
-                                                    data-testid={`editable-field-${idx}`}
-                                                />
-                                            : <TextArea
-                                                    key={`textarea-${idx}`}
-                                                    value={editRow[idx] ?? ""}
-                                                    onChange={e => handleInputChange(e.target.value, idx)}
-                                                    rows={5}
-                                                    className="min-h-[100px]"
-                                                    data-testid={`editable-field-${idx}`}
-                                                />
-                                        }
-                                    </div>
-                                ))}
+                        <div className="flex-1 overflow-y-auto mt-4">
+                            <div className="flex flex-col gap-4 pr-2">
+                                {editRow &&
+                                    columns.map((col, idx) => (
+                                        <div key={col} className="flex flex-col gap-2">
+                                            <Label>{col}</Label>
+                                            {
+                                                editRowInitialLengths[idx] < 50 ?
+                                                    <Input
+                                                        key={`input-${idx}`}
+                                                        value={editRow[idx] ?? ""}
+                                                        onChange={e => handleInputChange(e.target.value, idx)}
+                                                        data-testid={`editable-field-${idx}`}
+                                                    />
+                                                    : <TextArea
+                                                        key={`textarea-${idx}`}
+                                                        value={editRow[idx] ?? ""}
+                                                        onChange={e => handleInputChange(e.target.value, idx)}
+                                                        rows={5}
+                                                        className="min-h-[100px]"
+                                                        data-testid={`editable-field-${idx}`}
+                                                    />
+                                            }
+                                        </div>
+                                    ))}
+                            </div>
                         </div>
-                        <SheetFooter className="flex gap-2 px-0">
+                        <SheetFooter className="flex gap-2 px-0 mt-4">
                             <Button onClick={handleUpdate} disabled={!editRow} data-testid="update-button">
                                 Update
                             </Button>

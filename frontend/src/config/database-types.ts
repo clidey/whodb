@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import {ReactElement} from "react";
 import {Icons} from "../components/icons";
 
@@ -165,9 +181,6 @@ if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
         import('@ee/config.tsx'),
         import('@ee/icons')
     ]).then(([eeConfig, eeIcons]) => {
-        console.log('Loading EE config:', eeConfig);
-        console.log('Loading EE icons:', eeIcons);
-        
         if (eeConfig?.eeDatabaseTypes && eeIcons?.EEIcons?.Logos) {
             // First merge the icons
             Object.assign(Icons.Logos, eeIcons.EEIcons.Logos);
@@ -188,12 +201,8 @@ if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
                 supportsDatabaseSwitching: dbType.supportsDatabaseSwitching,
             }));
             
-            console.log('EE database types loaded:', eeDatabaseTypes);
         } else {
-            console.warn('EE modules loaded but missing expected exports', {
-                hasDatabaseTypes: !!eeConfig?.eeDatabaseTypes,
-                hasIcons: !!eeIcons?.EEIcons?.Logos
-            });
+            console.warn('EE modules loaded but missing expected exports');
         }
     }).catch((error) => {
         console.error('Could not load EE database types:', error);
