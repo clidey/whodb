@@ -17,14 +17,14 @@
 const dbHost = 'localhost';
 const dbUser = 'user';
 const dbPassword = 'password';
+const dbName = 'test_db';
 
 describe('MongoDB E2E test', () => {
   it('should login correctly', () => {
     // login and setup
-    cy.login('MongoDB', dbHost, dbUser, dbPassword);
-    cy.selectDatabase("test_db");
+    cy.login('MongoDB', dbHost, dbUser, dbPassword, dbName);
 
-    // get all collections
+    // get all çollections
     cy.getTables().then(storageUnitNames => {
       cy.log(storageUnitNames);
       expect(storageUnitNames).to.be.an('array');
