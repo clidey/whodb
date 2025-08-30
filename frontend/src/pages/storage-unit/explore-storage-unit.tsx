@@ -14,7 +14,29 @@
  * limitations under the License.
  */
 
-import { Alert, AlertDescription, AlertTitle, Button, cn, Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle, Input, Label, SearchInput, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Sheet, SheetContent, SheetFooter, toast } from "@clidey/ux";
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+    Button,
+    cn,
+    Drawer,
+    DrawerContent,
+    DrawerHeader,
+    DrawerTitle,
+    Input,
+    Label,
+    SearchInput,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+    Sheet,
+    SheetContent,
+    SheetFooter,
+    toast
+} from "@clidey/ux";
 import {
     DatabaseType,
     RecordInput,
@@ -28,21 +50,21 @@ import {
     useUpdateStorageUnitMutation,
     WhereCondition
 } from '@graphql';
-import { CheckCircleIcon, CommandLineIcon, PlayIcon, PlusCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { keys } from "lodash";
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
-import { CodeEditor } from "../../components/editor";
-import { LoadingPage } from "../../components/loading";
-import { InternalPage } from "../../components/page";
-import { getColumnIcons, StorageUnitTable } from "../../components/table";
-import { Tip } from "../../components/tip";
-import { InternalRoutes } from "../../config/routes";
-import { useAppSelector } from "../../store/hooks";
-import { getDatabaseOperators } from "../../utils/database-operators";
-import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
-import { ExploreStorageUnitWhereCondition } from "./explore-storage-unit-where-condition";
-import { databaseSupportsScratchpad } from "../../utils/database-features";
+import {CheckCircleIcon, CommandLineIcon, PlayIcon, PlusCircleIcon, XMarkIcon} from "@heroicons/react/24/outline";
+import {keys} from "lodash";
+import {FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {Navigate, useLocation, useNavigate} from "react-router-dom";
+import {CodeEditor} from "../../components/editor";
+import {LoadingPage} from "../../components/loading";
+import {InternalPage} from "../../components/page";
+import {getColumnIcons, StorageUnitTable} from "../../components/table";
+import {Tip} from "../../components/tip";
+import {InternalRoutes} from "../../config/routes";
+import {useAppSelector} from "../../store/hooks";
+import {getDatabaseOperators} from "../../utils/database-operators";
+import {getDatabaseStorageUnitLabel, isNoSQL} from "../../utils/functions";
+import {ExploreStorageUnitWhereCondition} from "./explore-storage-unit-where-condition";
+import {databaseSupportsScratchpad} from "../../utils/database-features";
 
 
 export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad }) => {
@@ -424,9 +446,9 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                     </div>
                 </div>
                 <Sheet open={showAdd} onOpenChange={setShowAdd}>
-                    <SheetContent side="right" className="p-8">
-                        <div className="flex flex-col gap-4 h-full">
-                            <div className="text-lg font-semibold mb-2">Add new row</div>
+                    <SheetContent side="right" className="flex flex-col p-8">
+                        <div className="text-lg font-semibold mb-4">Add new row</div>
+                        <div className="flex-1 overflow-y-auto pr-2">
                             <div className="flex flex-col gap-4">
                                 {rows?.Columns?.map((col, index) => (
                                     <div key={col.Name} className="flex flex-col gap-2" data-testid={`add-row-field-${col.Name}`}>
@@ -448,13 +470,13 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                                 ))}
                             </div>
                             {addRowError && (
-                                <Alert variant="destructive">
+                                <Alert variant="destructive" className="mt-4">
                                     <AlertTitle>Error</AlertTitle>
                                     <AlertDescription>{addRowError}</AlertDescription>
                                 </Alert>
                             )}
                         </div>
-                        <SheetFooter className="px-0">
+                        <SheetFooter className="px-0 pt-4 border-t">
                             <Button onClick={handleAddRowSubmit} data-testid="submit-add-row-button" disabled={adding}>
                                 <CheckCircleIcon className="w-4 h-4" /> Submit
                             </Button>
