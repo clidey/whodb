@@ -160,8 +160,7 @@ describe('MariaDB E2E test', () => {
 
     // test saving
     cy.updateRow(1, 1, "jane_smith1", false);
-    cy.wait(500);
-    cy.getTableData().then(({ rows }) => {
+    cy.getTableData().then(({rows}) => {
       // Just check that the update was applied to the second row
       expect(rows[1][2]).to.equal("jane_smith1");
     });
@@ -175,18 +174,17 @@ describe('MariaDB E2E test', () => {
 
     // Test canceling an edit
     cy.updateRow(1, 1, "jane_smith_temp");
-    cy.wait(500);
-    cy.getTableData().then(({ rows }) => {
+    cy.getTableData().then(({rows}) => {
       // Check that canceling preserves the original value
       expect(rows[1][2]).to.equal("jane_smith");
     });
 
     // check search
     cy.searchTable("john");
-    cy.wait(250);
+    cy.wait(100);
     cy.getHighlightedCell().first().should('have.text', 'john_doe');
     cy.searchTable("john");
-    cy.wait(250);
+    cy.wait(100);
     cy.getHighlightedCell().first().should('have.text', 'john@example.com');
 
     // check graph

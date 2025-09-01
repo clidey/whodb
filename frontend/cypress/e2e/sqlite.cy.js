@@ -67,8 +67,7 @@ describe('Sqlite3 E2E test', () => {
     });
 
     cy.deleteRow(3);
-    cy.wait(500);
-    cy.getTableData().then(({ columns, rows }) => {
+    cy.getTableData().then(({columns, rows}) => {
       expect(columns).to.deep.equal([
         "",
         "id",
@@ -139,8 +138,7 @@ describe('Sqlite3 E2E test', () => {
 
     // test saving
     cy.updateRow(1, 1, "jane_smith1", false);
-    cy.wait(500);
-    cy.getTableData().then(({ rows }) => {
+    cy.getTableData().then(({rows}) => {
       expect(rows[1][2]).to.equal("jane_smith1");
     });
 
@@ -152,17 +150,16 @@ describe('Sqlite3 E2E test', () => {
 
     // Test canceling an edit
     cy.updateRow(1, 1, "jane_smith_temp");
-    cy.wait(500);
-    cy.getTableData().then(({ rows }) => {
+    cy.getTableData().then(({rows}) => {
       expect(rows[1][2]).to.equal("jane_smith");
     });
 
     // check search
     cy.searchTable("john");
-    cy.wait(250);
+    cy.wait(100);
     cy.getHighlightedCell().first().should('have.text', 'john_doe');
     cy.searchTable("john");
-    cy.wait(250);
+    cy.wait(100);
     cy.getHighlightedCell().first().should('have.text', 'john@example.com');
 
     // check graph

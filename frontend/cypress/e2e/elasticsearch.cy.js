@@ -38,7 +38,7 @@ describe('ElasticSearch E2E test', () => {
 
     // check users index and fields
     cy.explore("users");
-    cy.wait(500);
+    cy.wait(100);
     cy.getExploreFields().then(fields => {
       // Check Storage Size, Count (just keys exist)
       expect(fields.some(([k]) => k === "Storage Size")).to.be.true;
@@ -65,7 +65,7 @@ describe('ElasticSearch E2E test', () => {
       // Delete the last row (which should be the newly added one)
       const lastRowIndex = rows.length - 1;
       cy.deleteRow(lastRowIndex);
-      cy.wait(500);
+      cy.wait(100);
     });
 
     cy.getTableData().then(({ columns, rows }) => {
@@ -129,7 +129,6 @@ describe('ElasticSearch E2E test', () => {
       cy.updateRow(1, 1, JSON.stringify(doc), false);
     });
 
-    cy.wait(100);
     cy.getTableData().then(({rows}) => {
       const doc = JSON.parse(rows[2][1]);
       expect(doc.username).to.equal("jane_smith1");
@@ -137,7 +136,6 @@ describe('ElasticSearch E2E test', () => {
       cy.updateRow(1, 1, JSON.stringify(doc), false);
     });
 
-    cy.wait(100);
     cy.getTableData().then(({rows}) => {
       const doc = JSON.parse(rows[2][1]);
       expect(doc.username).to.equal("jane_smith");
@@ -149,7 +147,6 @@ describe('ElasticSearch E2E test', () => {
       cy.updateRow(1, 1, JSON.stringify(doc));
     });
 
-    cy.wait(100);
     cy.getTableData().then(({rows}) => {
       const doc = JSON.parse(rows[2][1]);
       expect(doc.username).to.equal("jane_smith");

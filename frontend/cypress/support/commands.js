@@ -136,7 +136,7 @@ Cypress.Commands.add("getTablePageSize", () => {
 Cypress.Commands.add("submitTable", (pageSize) => {
     cy.get('[data-testid="submit-button"]').click().then(() => {
         // Wait a bit for the request to complete
-        cy.wait(500);
+        cy.wait(100);
     });
 });
 
@@ -207,12 +207,12 @@ Cypress.Commands.add("addRow", (data, isSingleInput = false) => {
     // Wait for the sheet/dialog to close - the submit button should no longer be visible
     cy.get('[data-testid="submit-add-row-button"]').should('not.exist');
     // Additional wait to ensure animations complete
-    cy.wait(500);
+    cy.wait(100);
 });
 
 Cypress.Commands.add("deleteRow", (rowIndex) => {
     // Wait a moment for any previous operations to complete
-    cy.wait(500);
+    cy.wait(100);
 
     // First check how many rows exist and ensure the target row exists
     cy.get('table tbody tr').should('have.length.greaterThan', rowIndex).then(() => {
@@ -222,13 +222,13 @@ Cypress.Commands.add("deleteRow", (rowIndex) => {
         cy.get('[data-testid="context-menu-more-actions"]').click({force: true});
         cy.get('[data-testid="context-menu-delete-row"]').click({force: true});
         // Wait for the delete to process
-        cy.wait(500);
+        cy.wait(100);
     });
 });
 
 Cypress.Commands.add("updateRow", (rowIndex, columnIndex, text, cancel = true) => {
     // Wait a moment for any previous operations to complete
-    cy.wait(500);
+    cy.wait(100);
     // Open the context menu for the row at rowIndex, use force since dialogs might be animating
     cy.get('table tbody tr')
       .eq(rowIndex)
@@ -274,11 +274,11 @@ Cypress.Commands.add("updateRow", (rowIndex, columnIndex, text, cancel = true) =
         // Close the sheet by pressing Escape
         cy.get('body').type('{esc}');
         // Force wait since the sheet might have animation
-        cy.wait(500);
+        cy.wait(100);
     } else {
         cy.get(`[data-testid="update-button"]`).click();
         // Wait for the update to process and sheet to close
-        cy.wait(500);
+        cy.wait(100);
     }
 });
 
@@ -348,7 +348,7 @@ Cypress.Commands.add("writeCode", (index, text) => {
         .should('be.visible')
         .click();
 
-    cy.wait(200);
+    cy.wait(100);
 
     // Clear content
     cy.get('[data-testid="cell-' + index + '"] .cm-content')
@@ -376,7 +376,7 @@ Cypress.Commands.add("writeCode", (index, text) => {
     // Re-focus
     cy.get('[data-testid="cell-' + index + '"] [data-testid="code-editor"]').click();
 
-    cy.wait(500);
+    cy.wait(100);
 });
 
 Cypress.Commands.add("runCode", (index) => {
@@ -395,7 +395,7 @@ Cypress.Commands.add("runCode", (index) => {
         });
     
     // Wait for the query to execute
-    cy.wait(500);
+    cy.wait(100);
 });
 
 Cypress.Commands.add("getCellQueryOutput", (index) => {

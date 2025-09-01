@@ -184,7 +184,7 @@ describe('MongoDB E2E test', () => {
         username: "jane_smith_temp"
       };
       cy.updateRow(1, 0, JSON.stringify(tempJane));
-      cy.wait(500);
+      cy.wait(100);
       cy.getTableData().then(({ rows }) => {
         const [_, rawJson] = rows[1];
         const json = JSON.parse(rawJson);
@@ -193,7 +193,7 @@ describe('MongoDB E2E test', () => {
 
       // Search
       cy.searchTable("john");
-      cy.wait(250);
+      cy.wait(100);
       cy.getHighlightedRows().then(rows => {
         expect(rows.length).to.equal(1);
         const [_, rawJson] = rows[0];

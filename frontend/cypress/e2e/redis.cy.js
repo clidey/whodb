@@ -126,8 +126,7 @@ describe('Redis E2E test', () => {
 
     // Redis supports delete for hash fields - delete the "id" field
     cy.deleteRow(2);
-    cy.wait(500);
-    cy.getTableData().then(({ columns, rows }) => {
+    cy.getTableData().then(({columns, rows}) => {
       expect(columns).to.deep.equal([
         "",
         "field",
@@ -232,22 +231,19 @@ describe('Redis E2E test', () => {
 
     // check editing capability for hash
     cy.updateRow(4, 1, "johndoe_updated", false);
-    cy.wait(500);
-    cy.getTableData().then(({ rows }) => {
+    cy.getTableData().then(({rows}) => {
       expect(rows[4][2]).to.equal("johndoe_updated");
     });
     
     // revert the change
     cy.updateRow(4, 1, "johndoe", false);
-    cy.wait(500);
-    cy.getTableData().then(({ rows }) => {
+    cy.getTableData().then(({rows}) => {
       expect(rows[4][2]).to.equal("johndoe");
     });
 
     // save the change
     cy.updateRow(4, 1, "johndoe100");
-    cy.wait(500);
-    cy.getTableData().then(({ rows }) => {
+    cy.getTableData().then(({rows}) => {
       expect(rows[4][2]).to.equal("johndoe");
     });
 

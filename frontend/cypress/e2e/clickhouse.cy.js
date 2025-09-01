@@ -152,7 +152,7 @@ describe('Clickhouse E2E test', () => {
 
     // test saving
     cy.updateRow(1, 1, "jane_smith1", false);
-      cy.wait(500);
+    cy.wait(100);
     cy.getTableData().then(({ rows }) => {
       // Just check that the update was applied to the second row
       expect(rows[1][2]).to.equal("jane_smith1");
@@ -167,7 +167,7 @@ describe('Clickhouse E2E test', () => {
 
     // Test canceling an edit
     cy.updateRow(1, 1, "jane_smith_temp");
-      cy.wait(500);
+    cy.wait(100);
     cy.getTableData().then(({ rows }) => {
       // Check that canceling preserves the original value
       expect(rows[1][2]).to.equal("jane_smith");
@@ -175,7 +175,7 @@ describe('Clickhouse E2E test', () => {
 
     // check search
     cy.searchTable("john");
-    cy.wait(250);
+    cy.wait(100);
     cy.getHighlightedRows().then(rows => {
       expect(rows.length).to.equal(1);
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
@@ -190,39 +190,39 @@ describe('Clickhouse E2E test', () => {
     });
 
     // check graph
-    // cy.goto("graph");
-    // cy.getGraph().then(graph => {
-    //   const expectedGraph = {
-    //     "users": [],
-    //     "orders": [],
-    //     "order_items": [],
-    //     "products": [],
-    //     "payments": [],
-    //     "order_summary": []
-    //   };
-    
-    //   Object.keys(expectedGraph).forEach(key => {
-    //     expect(graph).to.have.property(key);
-    //     expect(graph[key].sort()).to.deep.equal(expectedGraph[key].sort());
-    //   });
-    // });
-    // cy.getGraphNode().then(text => {
-    //   const textLines = text.split("\n");
-    //   const expectedPatterns = [
-    //     /^users$/,
-    //     /^Type: MergeTree$/,
-    //     /^Total Size: .+$/,
-    //     /^Count: .+$/,     
-    //     /^id: UInt32$/,
-    //     /^username: String$/,
-    //     /^email: String$/,
-    //     /^password: String$/,
-    //     /^created_at: DateTime$/
-    //   ];
-    //   expectedPatterns.forEach(pattern => {
-    //     expect(textLines.some(line => pattern.test(line))).to.be.true;
-    //   });
-    // });
+    cy.goto("graph");
+    cy.getGraph().then(graph => {
+      const expectedGraph = {
+        "users": [],
+        "orders": [],
+        "order_items": [],
+        "products": [],
+        "payments": [],
+        "order_summary": []
+      };
+
+      Object.keys(expectedGraph).forEach(key => {
+        expect(graph).to.have.property(key);
+        expect(graph[key].sort()).to.deep.equal(expectedGraph[key].sort());
+      });
+    });
+    cy.getGraphNode().then(text => {
+      const textLines = text.split("\n");
+      const expectedPatterns = [
+        /^users$/,
+        /^Type: MergeTree$/,
+        /^Total Size: .+$/,
+        /^Count: .+$/,
+        /^id: UInt32$/,
+        /^username: String$/,
+        /^email: String$/,
+        /^password: String$/,
+        /^created_at: DateTime$/
+      ];
+      expectedPatterns.forEach(pattern => {
+        expect(textLines.some(line => pattern.test(line))).to.be.true;
+      });
+    });
 
     // check sql query in scratchpad
     cy.goto("scratchpad");
