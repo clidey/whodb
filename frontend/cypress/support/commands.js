@@ -213,13 +213,17 @@ Cypress.Commands.add("addRow", (data, isSingleInput = false) => {
 Cypress.Commands.add("deleteRow", (rowIndex) => {
     // Wait a moment for any previous operations to complete
     cy.wait(500);
-    cy.get('table tbody tr')
-      .eq(rowIndex)
-      .rightclick({ force: true });
-    cy.get('[data-testid="context-menu-more-actions"]').click({force: true});
-    cy.get('[data-testid="context-menu-delete-row"]').click({force: true});
-    // Wait for the delete to process
-    cy.wait(500);
+
+    // First check how many rows exist and ensure the target row exists
+    cy.get('table tbody tr').should('have.length.greaterThan', rowIndex).then(() => {
+        cy.get('table tbody tr')
+            .eq(rowIndex)
+            .rightclick({force: true});
+        cy.get('[data-testid="context-menu-more-actions"]').click({force: true});
+        cy.get('[data-testid="context-menu-delete-row"]').click({force: true});
+        // Wait for the delete to process
+        cy.wait(500);
+    });
 });
 
 Cypress.Commands.add("updateRow", (rowIndex, columnIndex, text, cancel = true) => {
@@ -233,14 +237,37 @@ Cypress.Commands.add("updateRow", (rowIndex, columnIndex, text, cancel = true) =
     // Click the "Edit row" context menu item
     cy.get('[data-testid="context-menu-edit-row"]').click({force: true});
 
-    // Wait for the editable row to appear, using the row index in the test id
-    cy.get(`[data-testid="editable-field-${columnIndex}"]`).should('exist');
+    // Try to find the standard editable field first
+    cy.get('body').then(($body) => {
+        if ($body.find(`[data-testid="editable-field-${columnIndex}"]`).length > 0) {
+            // Standard field-based editing (SQL databases)
+            cy.get(`[data-testid="editable-field-${columnIndex}"]`)
+                .should('exist')
+                .clear()
+                .type(text, {force: true, parseSpecialCharSequences: false});
+        } else {
+            // Document-based editing (MongoDB, Elasticsearch)
+            // Look for a textarea or input that contains the JSON document
+            cy.get('textarea, input[type="text"]').then(($elements) => {
+                // Find the element that contains JSON-like content or is empty and ready for input
+                const targetElement = $elements.filter((index, el) => {
+                    const value = el.value;
+                    return value === '' || value.startsWith('{') || value.startsWith('[');
+                })[0];
 
-    // Find the correct input for the column using the row and column index
-    cy.get(`[data-testid="editable-field-${columnIndex}"]`)
-        .should('exist')
-        .clear()
-        .type(text, { force: true, parseSpecialCharSequences: false });
+                if (targetElement) {
+                    cy.wrap(targetElement)
+                        .clear()
+                        .type(text, {force: true, parseSpecialCharSequences: false});
+                } else {
+                    // Fallback: use the first textarea or text input
+                    cy.get('textarea, input[type="text"]').first()
+                        .clear()
+                        .type(text, {force: true, parseSpecialCharSequences: false});
+                }
+            });
+        }
+    });
 
     // Click cancel (escape key) or update as requested
     if (cancel) {
