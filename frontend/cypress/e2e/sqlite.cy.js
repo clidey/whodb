@@ -18,8 +18,7 @@ describe('Sqlite3 E2E test', () => {
   it('should login correctly', () => {
     // login and setup
     cy.login('Sqlite3', undefined, undefined, undefined, 'e2e_test.db');
-    cy.selectDatabase("e2e_test.db");
-    
+
     // get all tables
     cy.getTables().then(storageUnitNames => {
       cy.log(storageUnitNames);
