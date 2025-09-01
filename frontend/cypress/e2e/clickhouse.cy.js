@@ -206,21 +206,20 @@ describe('Clickhouse E2E test', () => {
         expect(graph[key].sort()).to.deep.equal(expectedGraph[key].sort());
       });
     });
-    cy.getGraphNode().then(text => {
-      const textLines = text.split("\n");
-      const expectedPatterns = [
-        /^users$/,
-        /^Type: MergeTree$/,
-        /^Total Size: .+$/,
-        /^Count: .+$/,
-        /^id: UInt32$/,
-        /^username: String$/,
-        /^email: String$/,
-        /^password: String$/,
-        /^created_at: DateTime$/
-      ];
-      expectedPatterns.forEach(pattern => {
-        expect(textLines.some(line => pattern.test(line))).to.be.true;
+    cy.getGraphNode("users").then(text => {
+      const expectedText = {
+        0: ["Type", "MergeTree"],
+        1: ["Total Size", "1.90 KiB"],
+        2: ["Count", "3"],
+        3: ["id", "UInt32"],
+        4: ["username", "String"],
+        5: ["email", "String"],
+        6: ["password", "String"],
+        7: ["created_at", "DateTime"],
+      };
+      Object.keys(expectedText).forEach(key => {
+        expect(text).to.have.property(key);
+        expect(text[key]).to.deep.equal(expectedText[key]);
       });
     });
 

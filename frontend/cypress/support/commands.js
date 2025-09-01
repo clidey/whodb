@@ -293,22 +293,39 @@ Cypress.Commands.add("searchTable", (search) => {
 });
 
 Cypress.Commands.add("getGraph", () => {
+    // Wait for the graph to be fully loaded - nodes should exist and be visible
+    cy.get('.react-flow__node', {timeout: 10000}).should('be.visible');
+
+    // Add a small wait to ensure layout has completed (React Flow layout takes time)
+    cy.wait(400); // Slightly more than the 300ms layout timeout
+    
     return cy.get('.react-flow__node').then(($nodeEls) => {
         const nodes = $nodeEls.toArray().map(el => el.getAttribute("data-id"));
 
-        return cy.get('.react-flow__edge').then(($edgeEls) => {            
-            const edges = $edgeEls.toArray().map(el => {
-                const [source, target] = el.getAttribute("data-testid").slice("rf__edge-".length).split("->");
-                return { source, target };
-            });
-            const graph = {};
-            nodes.forEach(node => {
-                graph[node] = edges
-                    .filter(edge => edge.source === node)
-                    .map(edge => edge.target);
-            });
-
-            return graph;
+        // Check if edges exist, if not, return graph with empty connections
+        return cy.get('body').then(($body) => {
+            if ($body.find('.react-flow__edge').length > 0) {
+                return cy.get('.react-flow__edge').then(($edgeEls) => {
+                    const edges = $edgeEls.toArray().map(el => {
+                        const [source, target] = el.getAttribute("data-testid").slice("rf__edge-".length).split("->");
+                        return {source, target};
+                    });
+                    const graph = {};
+                    nodes.forEach(node => {
+                        graph[node] = edges
+                            .filter(edge => edge.source === node)
+                            .map(edge => edge.target);
+                    });
+                    return graph;
+                });
+            } else {
+                // No edges exist, create graph with empty connections
+                const graph = {};
+                nodes.forEach(node => {
+                    graph[node] = [];
+                });
+                return graph;
+            }
         });
     });
 });
