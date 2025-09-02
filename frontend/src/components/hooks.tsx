@@ -17,32 +17,76 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 
-export const useExportToCSV = (columns: string[], rows: Record<string, string | number>[], specificIndexes: number[] = []) => {
-    return useCallback(() => {
-      let selectedRows: Record<string, string | number>[];
-      if (specificIndexes.length === 0) {
-        selectedRows = rows;
-      } else {
-        selectedRows = specificIndexes.map(index => rows[index]);
-      }
-      const csvContent = [
-        columns.join(','), 
-        ...selectedRows.map(row => columns.map(col => row[col]).join(","))
-      ].join('\n'); 
-  
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  
-      const link = document.createElement('a');
-      if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', 'data.csv');
-        link.style.visibility = 'hidden';
+export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly: boolean = false, delimiter: string = ',', selectedRows?: Record<string, any>[], format: 'csv' | 'excel' = 'csv') => {
+    return useCallback(async () => {
+      try {
+        // Prepare request body
+        const requestBody: any = {
+          schema,
+          storageUnit,
+          delimiter,
+          format,
+        };
+        
+        // Add selected rows if provided
+        // For now, we'll use the full row data approach for selections
+        // In the future, we can optimize this by detecting primary keys
+        if (selectedOnly && selectedRows && selectedRows.length > 0) {
+          // Threshold: if more than 1000 rows selected, warn the user
+          if (selectedRows.length > 1000) {
+            console.warn(`Exporting ${selectedRows.length} rows. Large selections may be slow.`);
+          }
+          requestBody.selectedRows = selectedRows;
+        }
+        
+        // Use backend export endpoint for full data export
+        const response = await fetch('/api/export', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Accept': format === 'excel' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'text/csv',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+        });
+
+        if (!response.ok) {
+          throw new Error(await response.text());
+        }
+
+        // Get filename from Content-Disposition header
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = `${schema}_${storageUnit}.${format === 'excel' ? 'xlsx' : 'csv'}`;
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+          if (filenameMatch) {
+            filename = filenameMatch[1];
+          }
+        }
+
+        // Create blob from response
+        const blob = await response.blob();
+        
+        // Create download link
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = filename;
+        link.style.display = 'none';
         document.body.appendChild(link);
+        
+        // Trigger download
         link.click();
-        document.body.removeChild(link);
+        
+        // Cleanup
+        setTimeout(() => {
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(downloadUrl);
+        }, 100);
+      } catch (error) {
+        throw error;
       }
-    }, [columns, rows, specificIndexes]);
+    }, [schema, storageUnit, selectedOnly, delimiter, selectedRows, format]);
 };
 
 type ILongPressProps = {
@@ -60,7 +104,7 @@ export const useLongPress = ({
   const cleanUpFunction = useRef<() => void | void>();
 
   useEffect(() => {
-    let timerId: NodeJS.Timeout | undefined;
+    let timerId: ReturnType<typeof setTimeout> | undefined;
     if (startLongPress) {
       timerId = setTimeout(() => {
         cleanUpFunction.current = onLongPress();

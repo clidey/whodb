@@ -14,24 +14,43 @@
  * limitations under the License.
  */
 
-const { defineConfig } = require("cypress");
-const { execSync } = require("child_process");
+import { defineConfig } from "cypress";
+import codeCoverageTask from "@cypress/code-coverage/task";
 
-module.exports = defineConfig({
+export default defineConfig({
+  numTestsKeptInMemory: 0,
   e2e: {
-    setupNodeEvents(on, config) {
-      require('@cypress/code-coverage/task')(on, config)
-      on('task', {
-        execCommand(command) {
+    async setupNodeEvents(on, config) {
+      codeCoverageTask(on, config);
+
+      on("task", {
+        async execCommand(command) {
           try {
-            const result = execSync(command, { stdio: 'inherit' });
+            const result = await command(command, { shell: true });
             return { success: true, output: result.toString() };
           } catch (error) {
             return { success: false, error: error.toString() };
           }
-        }
+        },
       });
-      return config
+
+      // list of browsers in order of preference
+      const preferred = ["chromium", "chrome", "edge", "firefox", "electron"];
+
+      // Cypress gives you detected browsers in config
+      const installed = (config.browsers || []).map((b) => b.name);
+      const found = preferred.find((name) => installed.includes(name));
+
+      if (found) {
+        console.log(`✅ Found preferred browser: ${found}`);
+        // Instead of setting config.browser here,
+        // tell Cypress to use it when you launch
+        config.env.PREFERRED_BROWSER = found;
+      } else {
+        console.warn("⚠️ No preferred browser found, Cypress will use default.");
+      }
+
+      return config;
     },
   },
 });

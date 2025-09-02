@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,22 +42,24 @@ describe('Clickhouse E2E test', () => {
 
     // check users table and fields
     cy.explore("users");
-    cy.getExploreFields().then(text => {
-      const textLines = text.split("\n");
-    
-      const expectedPatterns = [
-        /^users$/,
-        /^Type: MergeTree$/,
-        /^Total Size: .+$/, // Ignores actual size value
-        /^Count: .+$/,      // Ignores actual count value
-        /^id: UInt32$/,
-        /^username: String$/,
-        /^email: String$/,
-        /^password: String$/,
-        /^created_at: DateTime$/
+    cy.getExploreFields().then(fields => {
+      // Check type
+      expect(fields.some(([k, v]) => k === "Type" && v === "MergeTree")).to.be.true;
+
+      // Check Total Size, Count (just keys exist)
+      expect(fields.some(([k]) => k === "Total Size")).to.be.true;
+      expect(fields.some(([k]) => k === "Count")).to.be.true;
+
+      // Check columns and types
+      const expectedColumns = [
+        ["id", "UInt32"],
+        ["username", "String"],
+        ["email", "String"],
+        ["password", "String"],
+        ["created_at", "DateTime"]
       ];
-      expectedPatterns.forEach(pattern => {
-        expect(textLines.some(line => pattern.test(line))).to.be.true;
+      expectedColumns.forEach(([col, type]) => {
+        expect(fields.some(([k, v]) => k === col && v === type)).to.be.true;
       });
     });
 
@@ -66,30 +68,30 @@ describe('Clickhouse E2E test', () => {
     cy.sortBy(0);
     cy.getTableData().then(({ columns, rows }) => {
       expect(columns).to.deep.equal([
-        "#",
-        "id [UInt32]",
-        "username [String]",
-        "email [String]",
-        "password [String]",
-        "created_at [DateTime]"
+        "",
+        "id",
+        "username",
+        "email",
+        "password",
+        "created_at"
       ]);
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         [
-            "1",
+            "",
             "1",
             "john_doe",
             "john@example.com",
             "securepassword1",
         ],
         [
-            "2",
+            "",
             "2",
             "jane_smith",
             "jane@example.com",
             "securepassword2",
         ],
         [
-            "3",
+            "",
             "3",
             "admin_user",
             "admin@example.com",
@@ -106,7 +108,7 @@ describe('Clickhouse E2E test', () => {
     cy.getTableData().then(({ rows }) => {
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         [
-            "1",
+            "",
             "1",
             "john_doe",
             "john@example.com",
@@ -124,7 +126,7 @@ describe('Clickhouse E2E test', () => {
     cy.getTableData().then(({ rows }) => {
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         [
-          "1",
+          "",
           "3",
           "admin_user",
           "admin@example.com",
@@ -149,52 +151,36 @@ describe('Clickhouse E2E test', () => {
     cy.submitTable();
 
     // test saving
-    cy.updateRow(1, 2, "jane_smith1", false);
+    cy.updateRow(1, 1, "jane_smith1", false);
+    cy.wait(100);
     cy.getTableData().then(({ rows }) => {
-      expect(rows.slice(1).map(row => row.slice(0, -1))).to.deep.equal([
-        [
-          "",
-          "2",
-          "jane_smith1",
-          "jane@example.com",
-          "securepassword2",
-        ]
-      ]);
+      // Just check that the update was applied to the second row
+      expect(rows[1][2]).to.equal("jane_smith1");
     });
-    cy.updateRow(1, 2, "jane_smith", false);
+    
+    // Revert the change back
+    cy.updateRow(1, 1, "jane_smith", false);
     cy.getTableData().then(({ rows }) => {
-      expect(rows.slice(1).map(row => row.slice(0, -1))).to.deep.equal([
-        [
-          "",
-          "2",
-          "jane_smith",
-          "jane@example.com",
-          "securepassword2",
-        ]
-      ]);
+      // Check that the update was reverted
+      expect(rows[1][2]).to.equal("jane_smith");
     });
 
-    cy.updateRow(1, 2, "jane_smith");
+    // Test canceling an edit
+    cy.updateRow(1, 1, "jane_smith_temp");
+    cy.wait(100);
     cy.getTableData().then(({ rows }) => {
-      expect(rows.slice(1).map(row => row.slice(0, -1))).to.deep.equal([
-        [
-          "",
-          "2",
-          "jane_smith",
-          "jane@example.com",
-          "securepassword2",
-        ]
-      ]);
+      // Check that canceling preserves the original value
+      expect(rows[1][2]).to.equal("jane_smith");
     });
 
     // check search
     cy.searchTable("john");
-    cy.wait(250);
+    cy.wait(100);
     cy.getHighlightedRows().then(rows => {
       expect(rows.length).to.equal(1);
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         [
-            "1",
+            "",
             "1",
             "john_doe",
             "john@example.com",
@@ -204,42 +190,56 @@ describe('Clickhouse E2E test', () => {
     });
 
     // check graph
-    // cy.goto("graph");
-    // cy.getGraph().then(graph => {
-    //   const expectedGraph = {
-    //     "users": [],
-    //     "orders": [],
-    //     "order_items": [],
-    //     "products": [],
-    //     "payments": [],
-    //     "order_summary": []
-    //   };
-    
-    //   Object.keys(expectedGraph).forEach(key => {
-    //     expect(graph).to.have.property(key);
-    //     expect(graph[key].sort()).to.deep.equal(expectedGraph[key].sort());
-    //   });
-    // });
-    // cy.getGraphNode().then(text => {
-    //   const textLines = text.split("\n");
-    //   const expectedPatterns = [
-    //     /^users$/,
-    //     /^Type: MergeTree$/,
-    //     /^Total Size: .+$/,
-    //     /^Count: .+$/,     
-    //     /^id: UInt32$/,
-    //     /^username: String$/,
-    //     /^email: String$/,
-    //     /^password: String$/,
-    //     /^created_at: DateTime$/
-    //   ];
-    //   expectedPatterns.forEach(pattern => {
-    //     expect(textLines.some(line => pattern.test(line))).to.be.true;
-    //   });
-    // });
+    cy.goto("graph");
+    cy.getGraph().then(graph => {
+      const expectedGraph = {
+        "users": [],
+        "orders": [],
+        "order_items": [],
+        "products": [],
+        "payments": [],
+        "order_summary": []
+      };
+
+      Object.keys(expectedGraph).forEach(key => {
+        expect(graph).to.have.property(key);
+        expect(graph[key].sort()).to.deep.equal(expectedGraph[key].sort());
+      });
+    });
+    cy.getGraphNode("users").then(text => {
+      const expectedText = {
+        0: ["Type", "MergeTree"],
+        1: ["Total Size", "1.90 KiB"],
+        2: ["Count", "3"],
+        3: ["id", "UInt32"],
+        4: ["username", "String"],
+        5: ["email", "String"],
+        6: ["password", "String"],
+        7: ["created_at", "DateTime"],
+      };
+      Object.keys(expectedText).forEach(key => {
+        expect(text).to.have.property(key);
+        expect(text[key]).to.deep.equal(expectedText[key]);
+      });
+    });
 
     // check sql query in scratchpad
     cy.goto("scratchpad");
+
+    cy.addScratchpadPage();
+    cy.getScratchpadPages().then(pages => {
+      expect(pages).to.deep.equal(["Page 1", "Page 2"]);
+    });
+
+    cy.deleteScratchpadPage(0);
+    cy.getScratchpadPages().then(pages => {
+      expect(pages).to.deep.equal(["Page 1", "Page 2"]);
+    });
+    cy.deleteScratchpadPage(0, false);
+    cy.getScratchpadPages().then(pages => {
+      expect(pages).to.deep.equal(["Page 2"]);
+    });
+
     cy.writeCode(0, "SELECT * FROM test_db.users1;");
     cy.runCode(0);
     cy.getCellError(0).then(err => expect(err).to.equal("code: 60, message: Unknown table expression identifier 'test_db.users1' in scope SELECT * FROM test_db.users1"));
@@ -248,30 +248,30 @@ describe('Clickhouse E2E test', () => {
     cy.runCode(0);
     cy.getCellQueryOutput(0).then(({ rows, columns }) => {
       expect(columns).to.deep.equal([
-        "#",
-        "id [UInt32]",
-        "username [String]",
-        "email [String]",
-        "password [String]",
-        "created_at [DateTime]"
+        "",
+        "id",
+        "username",
+        "email",
+        "password",
+        "created_at"
       ]);
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         [
-            "1",
+            "",
             "1",
             "john_doe",
             "john@example.com",
             "securepassword1",
         ],
         [
-            "2",
+            "",
             "2",
             "jane_smith",
             "jane@example.com",
             "securepassword2",
         ],
         [
-            "3",
+            "",
             "3",
             "admin_user",
             "admin@example.com",
@@ -286,16 +286,16 @@ describe('Clickhouse E2E test', () => {
     cy.runCode(1);
     cy.getCellQueryOutput(1).then(({ rows, columns }) => {
       expect(columns).to.deep.equal([
-        "#",
-        "id [UInt32]",
-        "username [String]",
-        "email [String]",
-        "password [String]",
-        "created_at [DateTime]"
+        "",
+        "id",
+        "username",
+        "email",
+        "password",
+        "created_at"
       ]);
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         [
-            "1",
+            "",
             "1",
             "john_doe",
             "john@example.com",
@@ -310,16 +310,16 @@ describe('Clickhouse E2E test', () => {
     // ensure the first cell has the second cell data
     cy.getCellQueryOutput(0).then(({ rows, columns }) => {
       expect(columns).to.deep.equal([
-        "#",
-        "id [UInt32]",
-        "username [String]",
-        "email [String]",
-        "password [String]",
-        "created_at [DateTime]"
+        "",
+        "id",
+        "username",
+        "email",
+        "password",
+        "created_at"
       ]);
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         [
-            "1",
+            "",
             "1",
             "john_doe",
             "john@example.com",

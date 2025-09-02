@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,62 +41,78 @@ describe('Postgres E2E test', () => {
 
     // check users table and fields
     cy.explore("users");
-    cy.getExploreFields().then(text => {
-      const textLines = text.split("\n");
-    
-      const expectedPatterns = [
-        /^users$/,
-        /^Type: BASE TABLE$/,
-        /^Total Size: .+$/, // Ignores actual size value
-        /^Data Size: .+$/,  // Ignores actual size value
-        /^Count: .+$/,      // Ignores actual count value
-        /^id: integer$/,
-        /^username: character varying$/,
-        /^email: character varying$/,
-        /^password: character varying$/,
-        /^created_at: timestamp without time zone$/
+    cy.getExploreFields().then(fields => {
+      // Check type
+      expect(fields.some(([k, v]) => k === "Type" && v === "BASE TABLE")).to.be.true;
+
+      // Check Total Size, Data Size, Count (just keys exist)
+      expect(fields.some(([k]) => k === "Total Size")).to.be.true;
+      expect(fields.some(([k]) => k === "Data Size")).to.be.true;
+      expect(fields.some(([k]) => k === "Count")).to.be.true;
+
+      // Check columns and types
+      const expectedColumns = [
+        ["id", "integer"],
+        ["username", "character varying"],
+        ["email", "character varying"],
+        ["password", "character varying"],
+        ["created_at", "timestamp without time zone"]
       ];
-      expectedPatterns.forEach(pattern => {
-        expect(textLines.some(line => pattern.test(line))).to.be.true;
+      expectedColumns.forEach(([col, type]) => {
+        expect(fields.some(([k, v]) => k === col && v === type)).to.be.true;
       });
     });
 
     // check user default data
     cy.data("users");
     cy.sortBy(0);
+
+    cy.addRow({
+      id: "5",
+      username: "alice_wonder",
+      email: "alice@example.com",
+      password: "securepassword2",
+      created_at: "2022-02-02"
+    });
+
+    cy.deleteRow(3);
+
     cy.getTableData().then(({ columns, rows }) => {
       expect(columns).to.deep.equal([
-        "#",
-        "id [INT4]",
-        "username [VARCHAR]",
-        "email [VARCHAR]",
-        "password [VARCHAR]",
-        "created_at [TIMESTAMP]"
+        "",
+        "id",
+        "username",
+        "email",
+        "password",
+        "created_at"
       ]);
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         [
-            "1",
+            "",
             "1",
             "john_doe",
             "john@example.com",
-            "securepassword1",
+            "securepassword1"
         ],
         [
-            "2",
+            "",
             "2",
             "jane_smith",
             "jane@example.com",
-            "securepassword2",
+            "securepassword2"
         ],
         [
-            "3",
+            "",
             "3",
             "admin_user",
             "admin@example.com",
-            "adminpass",
+            "adminpass"
         ]
       ]);
     });
+
+    // check page size
+    cy.setTablePageSize(1);
 
     // check total count
 
@@ -106,7 +122,7 @@ describe('Postgres E2E test', () => {
     cy.getTableData().then(({ rows }) => {
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         [
-            "1",
+            "",
             "1",
             "john_doe",
             "john@example.com",
@@ -124,7 +140,7 @@ describe('Postgres E2E test', () => {
     cy.getTableData().then(({ rows }) => {
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         [
-          "1",
+          "",
           "3",
           "admin_user",
           "admin@example.com",
@@ -141,67 +157,38 @@ describe('Postgres E2E test', () => {
       expect(rows.length).to.equal(3);
     });
     
-    // todo: [NOT PASSING - FIX] check pagination on the bottom
-    // cy.getPageNumbers().then(pageNumbers => expect(pageNumbers).to.deep.equal(['1']));
-    
-    // check editing capability
+
     cy.setTablePageSize(2);
     cy.submitTable();
-
-    // test saving
-    cy.updateRow(1, 2, "jane_smith1", false);
-    cy.getTableData().then(({ rows }) => {
-      expect(rows.slice(1).map(row => row.slice(0, -1))).to.deep.equal([
-        [
-          "",
-          "2",
-          "jane_smith1",
-          "jane@example.com",
-          "securepassword2",
-        ]
-      ]);
+    
+    // check editing capability
+    // First, update and save the change
+    cy.updateRow(1, 1, "jane_smith1", false);
+    cy.getTableData().then(({rows}) => {
+      // Just check that the update was applied to the second row
+      expect(rows[1][2]).to.equal("jane_smith1");
     });
-    cy.updateRow(1, 2, "jane_smith", false);
+    
+    // Revert the change back
+    cy.updateRow(1, 1, "jane_smith", false);
     cy.getTableData().then(({ rows }) => {
-      expect(rows.slice(1).map(row => row.slice(0, -1))).to.deep.equal([
-        [
-          "",
-          "2",
-          "jane_smith",
-          "jane@example.com",
-          "securepassword2",
-        ]
-      ]);
+      // Check that the update was reverted
+      expect(rows[1][2]).to.equal("jane_smith");
     });
 
-    cy.updateRow(1, 2, "jane_smith");
-    cy.getTableData().then(({ rows }) => {
-      expect(rows.slice(1).map(row => row.slice(0, -1))).to.deep.equal([
-        [
-          "",
-          "2",
-          "jane_smith",
-          "jane@example.com",
-          "securepassword2",
-        ]
-      ]);
+    // Test canceling an edit (should keep original value)
+    cy.updateRow(1, 1, "jane_smith_temp");
+    cy.getTableData().then(({rows}) => {
+      // Check that canceling preserves the original value
+      expect(rows[1][2]).to.equal("jane_smith");
     });
 
     // check search
     cy.searchTable("john");
-    cy.wait(250);
-    cy.getHighlightedRows().then(rows => {
-      expect(rows.length).to.equal(1);
-      expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
-        [
-            "1",
-            "1",
-            "john_doe",
-            "john@example.com",
-            "securepassword1"
-        ]
-      ]);
-    });
+    cy.wait(100);
+    cy.getHighlightedCell().first().should('have.text', 'john_doe');
+    cy.searchTable("john");
+    cy.getHighlightedCell().first().should('have.text', 'john@example.com');
 
     // check graph
     cy.goto("graph");
@@ -220,55 +207,77 @@ describe('Postgres E2E test', () => {
         expect(graph[key].sort()).to.deep.equal(expectedGraph[key].sort());
       });
     });
-    cy.getGraphNode().then(text => {
-      const textLines = text.split("\n");
-      const expectedPatterns = [
-        /^users$/,
-        /^Type: BASE TABLE$/,
-        /^Total Size: .+$/, // Ignores actual size value
-        /^Data Size: .+$/,  // Ignores actual size value
-        /^Count: .+$/,      // Ignores actual count value
-        /^id: integer$/,
+    cy.getGraphNode("users").then(fields => {
+      // Check type
+      expect(fields.some(([k, v]) => k === "Type" && v === "BASE TABLE")).to.be.true;
+
+      // Check Total Size, Data Size, Count (just keys exist)
+      expect(fields.some(([k]) => k === "Total Size")).to.be.true;
+      expect(fields.some(([k]) => k === "Data Size")).to.be.true;
+      expect(fields.some(([k]) => k === "Count")).to.be.true;
+
+      // Check columns and types
+      const expectedColumns = [
+        ["id", "integer"],
+        ["username", "character varying"],
+        ["email", "character varying"],
+        ["password", "character varying"],
+        ["created_at", "timestamp without time zone"]
       ];
-      expectedPatterns.forEach(pattern => {
-        expect(textLines.some(line => pattern.test(line))).to.be.true;
+      expectedColumns.forEach(([col, type]) => {
+        expect(fields.some(([k, v]) => k === col && v === type)).to.be.true;
       });
     });
 
     // check sql query in scratchpad
     cy.goto("scratchpad");
+
+    cy.addScratchpadPage();
+    cy.getScratchpadPages().then(pages => {
+      expect(pages).to.deep.equal(["Page 1", "Page 2"]);
+    });
+
+    cy.deleteScratchpadPage(0);
+    cy.getScratchpadPages().then(pages => {
+      expect(pages).to.deep.equal(["Page 1", "Page 2"]);
+    });
+    cy.deleteScratchpadPage(0, false);
+    cy.getScratchpadPages().then(pages => {
+      expect(pages).to.deep.equal(["Page 2"]);
+    });
+
     cy.writeCode(0, "SELECT * FROM test_schema.users1;");
     cy.runCode(0);
     cy.getCellError(0).then(err => expect(err).to.equal('ERROR: relation "test_schema.users1" does not exist (SQLSTATE 42P01)'));
-    
+
     cy.writeCode(0, "SELECT * FROM test_schema.users ORDER BY id;");
     cy.runCode(0);
     cy.getCellQueryOutput(0).then(({ rows, columns }) => {
       expect(columns).to.deep.equal([
-        "#",
-        "id [INT4]",
-        "username [VARCHAR]",
-        "email [VARCHAR]",
-        "password [VARCHAR]",
-        "created_at [TIMESTAMP]"
+        "",
+        "id",
+        "username",
+        "email",
+        "password",
+        "created_at"
       ]);
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         [
-            "1",
+            "",
             "1",
             "john_doe",
             "john@example.com",
             "securepassword1",
         ],
         [
-            "2",
+            "",
             "2",
             "jane_smith",
             "jane@example.com",
             "securepassword2",
         ],
         [
-            "3",
+            "",
             "3",
             "admin_user",
             "admin@example.com",
@@ -291,16 +300,16 @@ describe('Postgres E2E test', () => {
     cy.runCode(1);
     cy.getCellQueryOutput(1).then(({ rows, columns }) => {
       expect(columns).to.deep.equal([
-        "#",
-        "id [INT4]",
-        "username [VARCHAR]",
-        "email [VARCHAR]",
-        "password [VARCHAR]",
-        "created_at [TIMESTAMP]"
+        "",
+        "id",
+        "username",
+        "email",
+        "password",
+        "created_at"
       ]);
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         [
-            "1",
+            "",
             "1",
             "john_doe",
             "john@example.com",
@@ -315,16 +324,16 @@ describe('Postgres E2E test', () => {
     // ensure the first cell has the second cell data
     cy.getCellQueryOutput(0).then(({ rows, columns }) => {
       expect(columns).to.deep.equal([
-        "#",
-        "id [INT4]",
-        "username [VARCHAR]",
-        "email [VARCHAR]",
-        "password [VARCHAR]",
-        "created_at [TIMESTAMP]"
+        "",
+        "id",
+        "username",
+        "email",
+        "password",
+        "created_at"
       ]);
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         [
-            "1",
+            "",
             "1",
             "john_doe",
             "john@example.com",

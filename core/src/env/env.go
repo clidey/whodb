@@ -24,9 +24,11 @@ import (
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/types"
 )
 
 var IsDevelopment = os.Getenv("ENVIRONMENT") == "dev"
+var IsEnterpriseEdition = false // Set to true by EE build
 var Tokens = common.FilterList(strings.Split(os.Getenv("WHODB_TOKENS"), ","), func(item string) bool {
 	return item != ""
 })
@@ -52,6 +54,9 @@ var CustomModels = common.FilterList(strings.Split(os.Getenv("WHODB_CUSTOM_MODEL
 var AllowedOrigins = common.FilterList(strings.Split(os.Getenv("WHODB_ALLOWED_ORIGINS"), ","), func(item string) bool {
 	return item != ""
 })
+
+var LogLevel = getLogLevel()
+var EnableMockDataGeneration = os.Getenv("WHODB_ENABLE_MOCK_DATA_GENERATION")
 
 type ChatProvider struct {
 	Type       string
@@ -152,20 +157,7 @@ func GetClideyQuickContainerImage() string {
 	return splitImage[1]
 }
 
-type DatabaseCredentials struct {
-	Alias    string            `json:"alias"`
-	Hostname string            `json:"host"`
-	Username string            `json:"user"`
-	Password string            `json:"password"`
-	Database string            `json:"database"`
-	Port     string            `json:"port"`
-	Config   map[string]string `json:"config"`
-
-	IsProfile bool
-	Type      string
-}
-
-func GetDefaultDatabaseCredentials(databaseType string) []DatabaseCredentials {
+func GetDefaultDatabaseCredentials(databaseType string) []types.DatabaseCredentials {
 	uppercaseDatabaseType := strings.ToUpper(databaseType)
 	credEnvVar := fmt.Sprintf("WHODB_%s", uppercaseDatabaseType)
 	credEnvValue := os.Getenv(credEnvVar)
@@ -174,20 +166,20 @@ func GetDefaultDatabaseCredentials(databaseType string) []DatabaseCredentials {
 		return findAllDatabaseCredentials(databaseType)
 	}
 
-	var creds []DatabaseCredentials
+	var creds []types.DatabaseCredentials
 	err := json.Unmarshal([]byte(credEnvValue), &creds)
 	if err != nil {
-		log.Logger.Warn("🔴 [Database Error] Failed to parse database credentials from environment variable! Error: ", err)
+		log.Logger.Error("🔴 [Database Error] Failed to parse database credentials from environment variable! Error: ", err)
 		return nil
 	}
 
 	return creds
 }
 
-func findAllDatabaseCredentials(databaseType string) []DatabaseCredentials {
+func findAllDatabaseCredentials(databaseType string) []types.DatabaseCredentials {
 	uppercaseDatabaseType := strings.ToUpper(databaseType)
 	i := 1
-	profiles := []DatabaseCredentials{}
+	profiles := []types.DatabaseCredentials{}
 
 	for {
 		databaseProfile := os.Getenv(fmt.Sprintf("WHODB_%s_%d", uppercaseDatabaseType, i))
@@ -195,10 +187,10 @@ func findAllDatabaseCredentials(databaseType string) []DatabaseCredentials {
 			break
 		}
 
-		var creds DatabaseCredentials
+		var creds types.DatabaseCredentials
 		err := json.Unmarshal([]byte(databaseProfile), &creds)
 		if err != nil {
-			log.Logger.Warn("Unable to parse database credential: ", err)
+			log.Logger.Error("Unable to parse database credential: ", err)
 			break
 		}
 
@@ -207,4 +199,41 @@ func findAllDatabaseCredentials(databaseType string) []DatabaseCredentials {
 	}
 
 	return profiles
+}
+
+func getLogLevel() string {
+	level := os.Getenv("WHODB_LOG_LEVEL")
+	switch level {
+	case "info", "INFO", "Info":
+		return "info"
+	case "warning", "WARNING", "Warning", "warn", "WARN", "Warn":
+		return "warning"
+	case "error", "ERROR", "Error":
+		return "error"
+	default:
+		return "info" // Default to info level
+	}
+}
+
+func IsMockDataGenerationAllowed(tableName string) bool {
+	if EnableMockDataGeneration == "" {
+		return false
+	}
+
+	if EnableMockDataGeneration == "*" {
+		return true
+	}
+
+	allowedTables := strings.SplitSeq(EnableMockDataGeneration, ",")
+	for allowed := range allowedTables {
+		if strings.TrimSpace(allowed) == tableName {
+			return true
+		}
+	}
+
+	return false
+}
+
+func GetMockDataGenerationMaxRowCount() int {
+	return 200
 }

@@ -19,25 +19,27 @@ package gorm_plugin
 import (
 	"database/sql"
 	"fmt"
-	"github.com/clidey/whodb/core/src/engine"
-	mapset "github.com/deckarep/golang-set/v2"
-	"github.com/google/uuid"
-	"gorm.io/gorm"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/clidey/whodb/core/src/common"
+	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 var (
-	intTypes      = mapset.NewSet("INTEGER", "SMALLINT", "BIGINT", "INT", "TINYINT", "MEDIUMINT", "INT8", "INT16", "INT32", "INT64")
-	uintTypes     = mapset.NewSet("TINYINT UNSIGNED", "SMALLINT UNSIGNED", "MEDIUMINT UNSIGNED", "BIGINT UNSIGNED", "UINT8", "UINT16", "UINT32", "UINT64")
-	floatTypes    = mapset.NewSet("REAL", "NUMERIC", "DOUBLE PRECISION", "FLOAT", "NUMBER", "DOUBLE", "DECIMAL")
-	boolTypes     = mapset.NewSet("BOOLEAN", "BIT", "BOOL")
-	dateTypes     = mapset.NewSet("DATE")
-	dateTimeTypes = mapset.NewSet("DATETIME", "TIMESTAMP", "TIMESTAMP WITH TIME ZONE", "TIMESTAMP WITHOUT TIME ZONE", "DATETIME2", "SMALLDATETIME", "TIMETZ", "TIMESTAMPTZ")
-	uuidTypes     = mapset.NewSet("UUID")
-	binaryTypes   = mapset.NewSet("BLOB", "BYTEA", "VARBINARY", "BINARY", "IMAGE", "BLOB", "TINYBLOB", "MEDIUMBLOB", "LONGBLOB")
-	// geometryTypes = mapset.NewSet("GEOMETRY", "POINT", "LINESTRING", "POLYGON", "MULTIPOINT", "MULTILINESTRING", "MULTIPOLYGON")
+	intTypes      = common.IntTypes
+	uintTypes     = common.UintTypes
+	floatTypes    = common.FloatTypes
+	boolTypes     = common.BoolTypes
+	dateTypes     = common.DateTypes
+	dateTimeTypes = common.DateTimeTypes
+	uuidTypes     = common.UuidTypes
+	binaryTypes   = common.BinaryTypes
+	// geometryTypes = common.GeometryTypes // not defined yet
 )
 
 func (p *GormPlugin) EscapeIdentifier(identifier string) string {
@@ -60,11 +62,16 @@ func (p *GormPlugin) EscapeIdentifier(identifier string) string {
 func (p *GormPlugin) ConvertRecordValuesToMap(values []engine.Record) (map[string]interface{}, error) {
 	data := make(map[string]interface{}, len(values))
 	for _, value := range values {
-		val, err := p.ConvertStringValueDuringMap(value.Value, value.Extra["Type"])
-		if err != nil {
-			return nil, err
+		// Check if this is a NULL value
+		if value.Extra != nil && value.Extra["IsNull"] == "true" {
+			data[value.Key] = nil
+		} else {
+			val, err := p.GormPluginFunctions.ConvertStringValueDuringMap(value.Value, value.Extra["Type"])
+			if err != nil {
+				return nil, err
+			}
+			data[value.Key] = val
 		}
-		data[value.Key] = val
 	}
 	return data, nil
 }
@@ -84,6 +91,7 @@ func (p *GormPlugin) GetPrimaryKeyColumns(db *gorm.DB, schema string, tableName 
 	}
 
 	if err != nil {
+		log.Logger.WithError(err).WithField("schema", schema).WithField("tableName", tableName).Error("Failed to execute primary key query")
 		return nil, err
 	}
 	defer rows.Close()
@@ -91,12 +99,14 @@ func (p *GormPlugin) GetPrimaryKeyColumns(db *gorm.DB, schema string, tableName 
 	for rows.Next() {
 		var pkColumn string
 		if err := rows.Scan(&pkColumn); err != nil {
+			log.Logger.WithError(err).WithField("schema", schema).WithField("tableName", tableName).Error("Failed to scan primary key column")
 			return nil, err
 		}
 		primaryKeys = append(primaryKeys, pkColumn)
 	}
 
 	if err := rows.Err(); err != nil {
+		log.Logger.WithError(err).WithField("schema", schema).WithField("tableName", tableName).Error("Row iteration error while getting primary keys")
 		return nil, err
 	}
 
@@ -110,8 +120,18 @@ func (p *GormPlugin) GetPrimaryKeyColumns(db *gorm.DB, schema string, tableName 
 func (p *GormPlugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[string]string, error) {
 	columnTypes := make(map[string]string)
 	query := p.GetColTypeQuery()
-	rows, err := db.Raw(query, schema, tableName).Rows()
+
+	var rows *sql.Rows
+	var err error
+
+	if p.Type == engine.DatabaseType_Sqlite3 {
+		rows, err = db.Raw(query, tableName).Rows()
+	} else {
+		rows, err = db.Raw(query, schema, tableName).Rows()
+	}
+
 	if err != nil {
+		log.Logger.WithError(err).WithField("schema", schema).WithField("tableName", tableName).Error("Failed to execute column types query")
 		return nil, err
 	}
 	defer rows.Close()
@@ -119,12 +139,14 @@ func (p *GormPlugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[
 	for rows.Next() {
 		var columnName, dataType string
 		if err := rows.Scan(&columnName, &dataType); err != nil {
+			log.Logger.WithError(err).WithField("schema", schema).WithField("tableName", tableName).Error("Failed to scan column type data")
 			return nil, err
 		}
 		columnTypes[columnName] = dataType
 	}
 
 	if err := rows.Err(); err != nil {
+		log.Logger.WithError(err).WithField("schema", schema).WithField("tableName", tableName).Error("Row iteration error while getting column types")
 		return nil, err
 	}
 
@@ -143,6 +165,11 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (interface{}, 
 	}
 
 	columnType = strings.ToUpper(columnType)
+
+	// Check if plugin wants to handle this data type
+	if customValue, handled, err := p.GormPluginFunctions.HandleCustomDataType(value, columnType, isNullable); handled {
+		return customValue, err
+	}
 
 	// Handle NULL values
 	if isNullable && (value == "" || strings.EqualFold(value, "NULL")) {
@@ -179,6 +206,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (interface{}, 
 	case intTypes.Contains(columnType):
 		parsedValue, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
+			log.Logger.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse integer value")
 			return nil, err
 		}
 		if isNullable {
@@ -194,6 +222,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (interface{}, 
 		}
 		parsedValue, err := strconv.ParseUint(value, 10, bitSize)
 		if err != nil {
+			log.Logger.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse unsigned integer value")
 			return nil, err
 		}
 		if isNullable {
@@ -203,6 +232,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (interface{}, 
 	case floatTypes.Contains(columnType):
 		parsedValue, err := strconv.ParseFloat(value, 64)
 		if err != nil {
+			log.Logger.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse float value")
 			return nil, err
 		}
 		if isNullable {
@@ -212,6 +242,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (interface{}, 
 	case boolTypes.Contains(columnType):
 		parsedValue, err := strconv.ParseBool(value)
 		if err != nil {
+			log.Logger.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse boolean value")
 			return nil, err
 		}
 		if isNullable {
@@ -221,6 +252,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (interface{}, 
 	case dateTypes.Contains(columnType):
 		date, err := p.parseDate(value)
 		if err != nil {
+			log.Logger.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse date value")
 			return nil, fmt.Errorf("invalid date format: %v", err)
 		}
 		if isNullable {
@@ -230,6 +262,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (interface{}, 
 	case dateTimeTypes.Contains(columnType):
 		datetime, err := p.parseDateTime(value)
 		if err != nil {
+			log.Logger.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse datetime value")
 			return nil, fmt.Errorf("invalid datetime format: %v", err)
 		}
 		if isNullable {
@@ -252,6 +285,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (interface{}, 
 	case uuidTypes.Contains(columnType):
 		_, err := uuid.Parse(value)
 		if err != nil {
+			log.Logger.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse UUID value")
 			return nil, fmt.Errorf("invalid UUID format: %v", err)
 		}
 		fallthrough // let it be handled as a string for now
@@ -326,8 +360,9 @@ func (p *GormPlugin) convertArrayValue(value string, columnType string) (interfa
 			continue
 		}
 
-		converted, err := p.ConvertStringValue(element, elementType)
+		converted, err := p.GormPluginFunctions.ConvertStringValue(element, elementType)
 		if err != nil {
+			log.Logger.WithError(err).WithField("element", element).WithField("elementType", elementType).Error("Failed to convert array element")
 			return nil, fmt.Errorf("converting array element: %w", err)
 		}
 		result = append(result, converted)

@@ -18,9 +18,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	mapset "github.com/deckarep/golang-set/v2"
@@ -35,6 +35,13 @@ var (
 		"TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT",
 		"ENUM", "SET", "JSON", "BOOLEAN", "VARCHAR(100)", "VARCHAR(1000)",
 	)
+
+	supportedOperators = map[string]string{
+		"=": "=", ">=": ">=", ">": ">", "<=": "<=", "<": "<", "<>": "<>",
+		"!=": "!=", "!>": "!>", "!<": "!<", "BETWEEN": "BETWEEN", "NOT BETWEEN": "NOT BETWEEN",
+		"LIKE": "LIKE", "NOT LIKE": "NOT LIKE", "IN": "IN", "NOT IN": "NOT IN",
+		"IS NULL": "IS NULL", "IS NOT NULL": "IS NOT NULL", "AND": "AND", "OR": "OR", "NOT": "NOT",
+	}
 )
 
 type MySQLPlugin struct {
@@ -55,6 +62,10 @@ func (p *MySQLPlugin) FormTableName(schema string, storageUnit string) string {
 
 func (p *MySQLPlugin) GetSupportedColumnDataTypes() mapset.Set[string] {
 	return supportedColumnDataTypes
+}
+
+func (p *MySQLPlugin) GetSupportedOperators() map[string]string {
+	return supportedOperators
 }
 
 func (p *MySQLPlugin) GetSchemaTableQuery() string {
@@ -78,12 +89,27 @@ func (p *MySQLPlugin) GetTableInfoQuery() string {
 			TABLE_SCHEMA = ?`
 }
 
+func (p *MySQLPlugin) GetPlaceholder(index int) string {
+	return "?"
+}
+
 func (p *MySQLPlugin) GetTableNameAndAttributes(rows *sql.Rows, db *gorm.DB) (string, []engine.Record) {
 	var tableName, tableType string
 	var totalSize, dataSize float64
 	var rowCount int64
 	if err := rows.Scan(&tableName, &tableType, &totalSize, &dataSize, &rowCount); err != nil {
-		log.Fatal(err)
+		log.Logger.WithError(err).Error("Failed to scan MySQL table information")
+		return "", []engine.Record{}
+	}
+
+	// If row count is 0 or suspiciously low, do a select count which shouldn't be too expensive
+	// MySQL's TABLE_ROWS is just an estimate that can be very inaccurate
+	if rowCount < 100 {
+		var actualCount int64
+		countQuery := db.Table(tableName).Select("COUNT(*)")
+		if err := countQuery.Scan(&actualCount).Error; err == nil {
+			rowCount = actualCount
+		}
 	}
 
 	attributes := []engine.Record{

@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -32,6 +33,10 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 	ctx := context.Background()
 	client, err := DB(config)
 	if err != nil {
+		log.Logger.WithError(err).WithFields(map[string]interface{}{
+			"hostname": config.Credentials.Hostname,
+			"database": database,
+		}).Error("Failed to connect to MongoDB for graph generation")
 		return nil, err
 	}
 	defer client.Disconnect(ctx)
@@ -39,6 +44,10 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 	db := client.Database(database)
 	cursor, err := db.ListCollections(ctx, bson.M{})
 	if err != nil {
+		log.Logger.WithError(err).WithFields(map[string]interface{}{
+			"hostname": config.Credentials.Hostname,
+			"database": database,
+		}).Error("Failed to list MongoDB collections for graph generation")
 		return nil, err
 	}
 	defer cursor.Close(ctx)
@@ -49,6 +58,10 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 	for cursor.Next(ctx) {
 		var collectionInfo bson.M
 		if err := cursor.Decode(&collectionInfo); err != nil {
+			log.Logger.WithError(err).WithFields(map[string]interface{}{
+				"hostname": config.Credentials.Hostname,
+				"database": database,
+			}).Error("Failed to decode MongoDB collection info for graph generation")
 			return nil, err
 		}
 
@@ -72,6 +85,11 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 		collection := db.Collection(collectionName)
 		indexes, err := collection.Indexes().List(ctx)
 		if err != nil {
+			log.Logger.WithError(err).WithFields(map[string]interface{}{
+				"hostname": config.Credentials.Hostname,
+				"database": database,
+				"collection": collectionName,
+			}).Error("Failed to list MongoDB collection indexes for graph generation")
 			return nil, err
 		}
 
@@ -81,6 +99,11 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 		for indexes.Next(ctx) {
 			var index bson.M
 			if err := indexes.Decode(&index); err != nil {
+				log.Logger.WithError(err).WithFields(map[string]interface{}{
+					"hostname": config.Credentials.Hostname,
+					"database": database,
+					"collection": collectionName,
+				}).Error("Failed to decode MongoDB index for graph generation")
 				return nil, err
 			}
 
@@ -151,6 +174,10 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 
 	storageUnits, err := p.GetStorageUnits(config, database)
 	if err != nil {
+		log.Logger.WithError(err).WithFields(map[string]interface{}{
+			"hostname": config.Credentials.Hostname,
+			"database": database,
+		}).Error("Failed to get MongoDB storage units for graph generation")
 		return nil, err
 	}
 

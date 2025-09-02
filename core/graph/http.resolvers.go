@@ -39,6 +39,9 @@ func SetupHTTPServer(router chi.Router) {
 	router.Post("/api/storage-units", addStorageUnitHandler)
 	router.Post("/api/rows", addRowHandler)
 	router.Delete("/api/rows", deleteRowHandler)
+
+	// Export endpoint with streaming support
+	router.Post("/api/export", HandleExport)
 }
 
 var resolver = mutationResolver{}
@@ -101,7 +104,7 @@ func getRowsHandler(w http.ResponseWriter, r *http.Request) {
 	pageOffset := parseQueryParamToInt(r.URL.Query().Get("pageOffset"))
 
 	// todo: add where condition if necessary
-	rowsResult, err := resolver.Query().Row(r.Context(), schema, storageUnit, &model.WhereCondition{}, pageSize, pageOffset)
+	rowsResult, err := resolver.Query().Row(r.Context(), schema, storageUnit, &model.WhereCondition{}, []*model.SortCondition{}, pageSize, pageOffset)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

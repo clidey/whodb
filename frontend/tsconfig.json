@@ -18,10 +18,18 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@ee/*": ["../ee/frontend/src/*"],
+      "@graphql": ["src/generated/graphql.tsx"]
+    },
+    "allowImportingTsExtensions": true
   },
   "include": [
     "src",
+    "../ee/frontend/src/**/*"
   ],
   "exclude": [
     "node_modules",

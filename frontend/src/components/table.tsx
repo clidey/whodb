@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,721 +14,1133 @@
  * limitations under the License.
  */
 
-import classNames from "classnames";
-import { AnimatePresence, motion } from "framer-motion";
-import { clone, isString, values } from "lodash";
-import { CSSProperties, FC, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Cell, Row, useBlockLayout, useTable } from 'react-table';
-import { FixedSizeList, ListChildComponentProps } from "react-window";
-import { twMerge } from "tailwind-merge";
-import { notify } from "../store/function";
-import { isMarkdown, isNumeric, isValidJSON } from "../utils/functions";
-import { ActionButton, AnimatedButton } from "./button";
-import { Portal } from "./common";
-import { CodeEditor } from "./editor";
-import { useExportToCSV, useLongPress } from "./hooks";
-import { Icons } from "./icons";
-import { CheckBoxInput } from "./input";
-import { Loading } from "./loading";
-import { SearchInput } from "./search";
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+    Button,
+    Checkbox,
+    cn,
+    ContextMenu,
+    ContextMenuContent,
+    ContextMenuItem,
+    ContextMenuSeparator,
+    ContextMenuShortcut,
+    ContextMenuSub,
+    ContextMenuSubContent,
+    ContextMenuSubTrigger,
+    ContextMenuTrigger,
+    EmptyState,
+    Input,
+    Label,
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+    Sheet,
+    SheetContent,
+    SheetFooter,
+    SheetTitle,
+    Table as TableComponent,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+    TextArea,
+    toast,
+    VirtualizedTableBody
+} from "@clidey/ux";
+import {
+    ArrowDownCircleIcon,
+    ArrowDownTrayIcon,
+    CalculatorIcon,
+    CalendarIcon,
+    CheckCircleIcon,
+    ChevronDownIcon,
+    ChevronUpIcon,
+    CircleStackIcon,
+    ClockIcon,
+    DocumentDuplicateIcon,
+    DocumentIcon,
+    DocumentTextIcon,
+    EllipsisHorizontalIcon,
+    EllipsisVerticalIcon,
+    HashtagIcon,
+    KeyIcon,
+    ListBulletIcon,
+    PencilSquareIcon,
+    ShareIcon,
+    TrashIcon,
+    XMarkIcon,
+} from "@heroicons/react/24/outline";
+import {FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {useExportToCSV} from "./hooks"; // You may need to adjust this import
+import {useDeleteRowMutation, useGenerateMockDataMutation, useMockDataMaxRowCountQuery} from '@graphql';
+import {Tip} from "./tip";
 
-type IPaginationProps = {
-    pageCount: number;
-    currentPage: number;
-    onPageChange?: (page: number) => void;
+// Type sets based on core/src/plugins/gorm/utils.go
+const stringTypes = new Set([
+    "TEXT", "STRING", "VARCHAR", "CHAR"
+]);
+const intTypes = new Set([
+    "INTEGER", "SMALLINT", "BIGINT", "INT", "TINYINT", "MEDIUMINT", "INT4", "INT8", "INT16", "INT32", "INT64"
+]);
+const uintTypes = new Set([
+    "TINYINT UNSIGNED", "SMALLINT UNSIGNED", "MEDIUMINT UNSIGNED", "BIGINT UNSIGNED", "UINT8", "UINT16", "UINT32", "UINT64"
+]);
+const floatTypes = new Set([
+    "REAL", "NUMERIC", "DOUBLE PRECISION", "FLOAT", "NUMBER", "DOUBLE", "DECIMAL"
+]);
+const boolTypes = new Set([
+    "BOOLEAN", "BIT", "BOOL"
+]);
+const dateTypes = new Set([
+    "DATE"
+]);
+const dateTimeTypes = new Set([
+    "DATETIME", "TIMESTAMP", "TIMESTAMP WITH TIME ZONE", "TIMESTAMP WITHOUT TIME ZONE", "DATETIME2", "SMALLDATETIME", "TIMETZ", "TIMESTAMPTZ"
+]);
+const uuidTypes = new Set([
+    "UUID"
+]);
+const binaryTypes = new Set([
+    "BLOB", "BYTEA", "VARBINARY", "BINARY", "IMAGE", "TINYBLOB", "MEDIUMBLOB", "LONGBLOB"
+]);
+
+
+export function getColumnIcons(columns: string[], columnTypes?: string[]) {
+    return columns.map((col, idx) => {
+        const type = columnTypes?.[idx]?.toUpperCase?.() || "";
+        if (intTypes.has(type) || uintTypes.has(type)) return <HashtagIcon className="w-4 h-4" />;
+        if (floatTypes.has(type)) return <CalculatorIcon className="w-4 h-4" />;
+        if (boolTypes.has(type)) return <CheckCircleIcon className="w-4 h-4" />;
+        if (dateTypes.has(type)) return <CalendarIcon className="w-4 h-4" />;
+        if (dateTimeTypes.has(type)) return <ClockIcon className="w-4 h-4" />;
+        if (uuidTypes.has(type)) return <KeyIcon className="w-4 h-4" />;
+        if (binaryTypes.has(type)) return <DocumentDuplicateIcon className="w-4 h-4" />;
+        if (type.startsWith("ARRAY")) return <ListBulletIcon className="w-4 h-4" />;
+        if (stringTypes.has(type)) return <DocumentTextIcon className="w-4 h-4" />;
+        return <CircleStackIcon className="w-4 h-4" />;
+    });
 }
 
-const Pagination: FC<IPaginationProps> = ({ pageCount, currentPage, onPageChange }) => {
-    const paginationRef = useRef<HTMLDivElement>(null);
-    const [focusedPage, setFocusedPage] = useState<number | null>(null);
+interface TableProps {
+    columns: string[];
+    columnTypes?: string[];
+    rows: string[][];
+    rowHeight?: number;
+    height?: number;
+    onRowUpdate?: (row: Record<string, string | number>, originalRow?: Record<string, string | number>) => Promise<void>;
+    disableEdit?: boolean;
+    schema?: string;
+    storageUnit?: string;
+    onRefresh?: () => void;
+    children?: React.ReactNode;
+    onColumnSort?: (column: string) => void;
+    sortedColumns?: Map<string, 'asc' | 'desc'>;
+    searchRef?: React.MutableRefObject<(search: string) => void>;
+}
 
-    const handlePageChange = useCallback((page: number) => {
-        setFocusedPage(page);
-        onPageChange?.(page);
-        
-        // Set focus to the new current page button after page change
-        setTimeout(() => {
-            if (paginationRef.current) {
-                const pageButton = paginationRef.current.querySelector(`button[aria-current="page"]`) as HTMLButtonElement;
-                if (pageButton) {
-                    pageButton.focus();
-                } else {
-                    // Fallback: focus first available page button
-                    const firstButton = paginationRef.current.querySelector('button') as HTMLButtonElement;
-                    firstButton?.focus();
-                }
-            }
-        }, 100);
-    }, [onPageChange]);
+export const StorageUnitTable: FC<TableProps> = ({
+    columns,
+    columnTypes,
+    rows,
+    rowHeight = 48,
+    height = 500,
+    onRowUpdate,
+    disableEdit = false,
+    schema,
+    storageUnit,
+    onRefresh,
+    children,
+    onColumnSort,
+    sortedColumns,
+    searchRef,
+}) => {
+    const [editIndex, setEditIndex] = useState<number | null>(null);
+    const [editRow, setEditRow] = useState<string[] | null>(null);
+    const [editRowInitialLengths, setEditRowInitialLengths] = useState<number[]>([]);
+    const [deleting, setDeleting] = useState(false);
+    const [checked, setChecked] = useState<number[]>([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [showExportConfirm, setShowExportConfirm] = useState(false);
+    const [exportDelimiter, setExportDelimiter] = useState(',');
+    const [exportFormat, setExportFormat] = useState<'csv' | 'excel'>('csv');
+    const tableRef = useRef<HTMLDivElement>(null);
+    
+    // Mock data state
+    const [showMockDataSheet, setShowMockDataSheet] = useState(false);
+    const [mockDataRowCount, setMockDataRowCount] = useState("100");
+    const [mockDataMethod, setMockDataMethod] = useState("Normal");
+    const [mockDataOverwriteExisting, setMockDataOverwriteExisting] = useState("append");
+    const [showMockDataConfirmation, setShowMockDataConfirmation] = useState(false);
+    const { data: maxRowData } = useMockDataMaxRowCountQuery();
+    const maxRowCount = maxRowData?.MockDataMaxRowCount || 200;
+    
+    const pageSize = 20;
+    const totalRows = rows.length;
+    const totalPages = Math.ceil(totalRows / pageSize);
+    
+    const [generateMockData, { loading: generatingMockData }] = useGenerateMockDataMutation();
+    const [deleteRow, ] = useDeleteRowMutation();
+    const [containerWidth, setContainerWidth] = useState<number>(0);
+    const lastSearchState = useRef<{ search: string; matchIdx: number }>({ search: '', matchIdx: 0 });
 
-    const renderPageNumbers = () => {
-        const pageNumbers = [];
-        const maxVisiblePages = 5;
 
-        if (pageCount <= maxVisiblePages) {
-            for (let i = 1; i <= pageCount; i++) {
-                pageNumbers.push(
-                    <button
-                        key={i}
-                        className={`cursor-pointer p-2 text-sm hover:scale-110 hover:bg-gray-200 rounded-md text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 ${currentPage === i ? 'bg-gray-300' : ''}`}
-                        onClick={() => handlePageChange(i)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                handlePageChange(i);
-                            }
-                        }}
-                        aria-label={`Go to page ${i}`}
-                        aria-current={currentPage === i ? 'page' : undefined}
-                        data-testid="table-page-number">
-                        {i}
-                    </button>
-                );
-            }
-        } else {
-            const createPageItem = (i: number) => (
-                <button
-                    key={i}
-                    className={classNames("cursor-pointer p-2 text-sm hover:scale-110 hover:bg-gray-200 dark:hover:bg-white/15 rounded-md text-gray-600 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-blue-500", {
-                        "bg-gray-300 dark:bg-white/10": currentPage === i,
-                    })}
-                    onClick={() => handlePageChange(i)}
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            handlePageChange(i);
-                        }
-                    }}
-                    aria-label={`Go to page ${i}`}
-                    aria-current={currentPage === i ? 'page' : undefined}
-                    data-testid="table-page-number">
-                    {i}
-                </button>
-            );
 
-            pageNumbers.push(createPageItem(1));
+    // Export options as lists
+    const exportFormatOptions = [
+        { value: 'csv', label: 'CSV - Comma Separated Values' },
+        { value: 'excel', label: 'Excel - XLSX Format' },
+    ] as const;
 
-            if (currentPage > 3) {
-                pageNumbers.push(
-                    <div key="start-ellipsis" className="cursor-default p-2 text-sm text-gray-600 dark:text-neutral-300">...</div>
-                );
-            }
+    const exportDelimiterOptions = [
+        { value: ',', label: 'Comma (,) - Standard CSV' },
+        { value: ';', label: 'Semicolon (;) - Excel in some locales' },
+        { value: '|', label: 'Pipe (|) - Less common in data' },
+    ] as const;
 
-            const startPage = Math.max(2, currentPage - 1);
-            const endPage = Math.min(pageCount - 1, currentPage + 1);
-
-            for (let i = startPage; i <= endPage; i++) {
-                pageNumbers.push(createPageItem(i));
-            }
-
-            if (currentPage < pageCount - 2) {
-                pageNumbers.push(
-                    <div key="end-ellipsis" className="cursor-default p-2 text-sm text-gray-600 dark:text-neutral-300">...</div>
-                );
-            }
-
-            pageNumbers.push(createPageItem(pageCount));
-        }
-
-        return pageNumbers;
+    const handleEdit = (index: number) => {
+        setEditIndex(index);
+        const rowData = [...rows[index]];
+        setEditRow(rowData);
+        // Store initial lengths to prevent input/textarea switching
+        setEditRowInitialLengths(rowData.map(cell => cell?.length || 0));
     };
 
-    return (
-        <nav aria-label="Table pagination" role="navigation">
-            <div ref={paginationRef} className="flex space-x-2">
-                {renderPageNumbers()}
-            </div>
-        </nav>
-    );
-};
-
-type ITDataProps = {
-    cell: Cell<Record<string, string | number>>;
-    onCellUpdate?: (row: Cell<Record<string, string | number>>) => Promise<void>;
-    disableEdit?: boolean;
-    checked?: boolean;
-    onRowCheck?: (value: boolean) => void;
-}
-
-const TData: FC<ITDataProps> = ({ cell, onCellUpdate, checked, onRowCheck, disableEdit }) => {
-    const [changed, setChanged] = useState(false);
-    const [editedData, setEditedData] = useState<string>(cell.value);
-    const [editable, setEditable] = useState(false);
-    const [preview, setPreview] = useState(false);
-    const [cellRect, setCellRect] = useState<DOMRect | null>(null);
-    const cellRef = useRef<HTMLDivElement>(null);
-    const [copied, setCopied] = useState(false);
-    const [updating, setUpdating] = useState(false);
-    const [escapeAttempted, setEscapeAttempted] = useState(false);
-
-    const handleChange = useCallback((value: string) => {
-        setEditedData(value);
-        if (!changed) setChanged(true);
-    }, [changed]);
-
-    const handleCancel = useCallback(() => {
-        setEditedData(cell.value);
-        setEditable(false);
-        setCellRect(null);
-    }, [cell]);
-
-    const handleEdit = useCallback((e: MouseEvent) => {
-        e.stopPropagation();
-        e.preventDefault();
-        if (cellRef.current) {
-            setCellRect(cellRef.current.getBoundingClientRect());
-            setEditable(true);
+    const handleInputChange = (value: string, idx: number) => {
+        if (editRow) {
+            const updated = [...editRow];
+            updated[idx] = value;
+            setEditRow(updated);
         }
-    }, []);
-
-    const handlePreview = useCallback(() => {
-        if (cellRef.current) {
-            setCellRect(cellRef.current.getBoundingClientRect());
-            setPreview(true);
-        }
-    }, []);
-
-    const handleLongPress = useCallback(() => {
-        handlePreview();
-        return () => {
-            setCellRect(null);
-            setPreview(false);
-        }
-    }, [handlePreview]);
-
-    const handleCopy = useCallback(() => {
-        navigator.clipboard.writeText(editedData).then(() => {
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        });
-    }, [editedData]);
-
-    const longPressProps = useLongPress({
-        onLongPress: handleLongPress,
-        onClick: handleCopy,
-    });
+    };
 
     const handleUpdate = useCallback(() => {
-        let previousValue = cell.value;
-        cell.value = editedData;
-        setUpdating(true);
-        onCellUpdate?.(cell).then(() => {
-            setEditable(false);
-            setCellRect(null);
-        }).catch(() => {
-            cell.value = previousValue;
-        }).finally(() => {
-            setUpdating(false); 
-        });
-    }, [cell, editedData, onCellUpdate]);
+        if (editIndex !== null && editRow) {
+            const updatedRow: Record<string, string | number> = {};
+            columns.forEach((col, idx) => {
+                updatedRow[col] = editRow[idx];
+            });
+            // Pass the original row as the second argument
+            const originalRow: Record<string, string | number> = {};
+            if (rows[editIndex]) {
+                columns.forEach((col, idx) => {
+                    originalRow[col] = rows[editIndex][idx];
+                });
+            }
+            onRowUpdate?.(updatedRow, originalRow)
+                .then(() => {
+                    setEditIndex(null);
+                    setEditRow(null);
+                    setEditRowInitialLengths([]);
+                    toast.success("Row updated");
+                    onRefresh?.();
+                })
+                .catch(() => {
+                    toast.error("Error updating row");
+                });
+        }
+    }, [editIndex, editRow, columns, onRowUpdate, rows, onRefresh]);
 
-    const handleEditorEscapeButton = useCallback((e: KeyboardEvent) => {
-        if (e.key === "Escape" && !changed) {
-            handleCancel();
-        } else if (e.key === "Escape" && changed) {
-            if (escapeAttempted) {
-                setEscapeAttempted(false);
-                handleCancel();
-            } else {
-                setEscapeAttempted(true);
-                notify("You have unsaved changes, please save or cancel. Pressing Escape again will close without saving.", "warning");
-                setTimeout(() => setEscapeAttempted(false), 2000); // reset it in case
+    // --- Export logic ---
+    const hasSelectedRows = checked.length > 0;
+    const selectedRowsData = useMemo(() => {
+        if (hasSelectedRows) {
+            return checked.map(idx => rows[idx]);
+        }
+        return undefined;
+    }, [hasSelectedRows, checked, rows]);
+
+    // Delete logic, adapted from explore-storage-unit.tsx
+    const handleDeleteRow = useCallback(async (rowIndex: number) => {
+        if (!rows || !columns) return;
+        let unableToDeleteAll = false;
+        const deletedIndexes: number[] = [];
+        let indexesToDelete: number[] = [];
+        if (Array.isArray(rowIndex)) {
+            indexesToDelete = rowIndex;
+        } else if (typeof rowIndex === "number") {
+            indexesToDelete = [rowIndex];
+        }
+        if (selectedRowsData && selectedRowsData.length > 0) {
+            indexesToDelete = selectedRowsData.map((_, idx) => idx);
+        }
+        if (indexesToDelete.length === 0) return;
+        toast.info(indexesToDelete.length === 1 ? "Deleting row..." : "Deleting rows...");
+        for (const index of indexesToDelete) {
+            const row = rows[index];
+            if (!row) continue;
+            const values = columns.map((col, i) => ({
+                Key: col,
+                Value: row[i],
+            }));
+            try {
+                await deleteRow({
+                    variables: {
+                        schema: schema || '',
+                        storageUnit: storageUnit || '',
+                        values,
+                    },
+                });
+                deletedIndexes.push(index);
+            } catch (e: any) {
+                toast.error(`Unable to delete the row: ${e?.message || e}`);
+                unableToDeleteAll = true;
+                break;
             }
         }
-    }, [changed, handleCancel, escapeAttempted]);
+        if (!unableToDeleteAll) {
+            toast.success("Row deleted");
+        }
+        onRefresh?.();
+    }, [deleteRow, schema, storageUnit, rows, columns, selectedRowsData, onRefresh]);
 
-    const language = useMemo(() => {
-        if (editedData == null) {
+    const paginatedRows = useMemo(() => rows.slice((currentPage - 1) * pageSize, currentPage * pageSize), [rows, currentPage, pageSize]);
+
+    const renderPaginationLinks = () => {
+        const links = [];
+        // Show up to 3 pages before and after current
+        const start = Math.max(1, currentPage - 2);
+        const end = Math.min(totalPages, currentPage + 2);
+
+        if (start > 1) {
+            links.push(
+                <PaginationItem key={1}>
+                    <PaginationLink href="#" onClick={e => { e.preventDefault(); setCurrentPage(1); }} size="sm">1</PaginationLink>
+                </PaginationItem>
+            );
+            if (start > 2) {
+                links.push(<PaginationEllipsis key="start-ellipsis" />);
+            }
+        }
+
+        for (let i = start; i <= end; i++) {
+            links.push(
+                <PaginationItem key={i}>
+                    <PaginationLink
+                        href="#"
+                        isActive={i === currentPage}
+                        onClick={e => { e.preventDefault(); setCurrentPage(i); }}
+                        size="sm"
+                    >
+                        {i}
+                    </PaginationLink>
+                </PaginationItem>
+            );
+        }
+
+        if (end < totalPages) {
+            if (end < totalPages - 1) {
+                links.push(<PaginationEllipsis key="end-ellipsis" />);
+            }
+            links.push(
+                <PaginationItem key={totalPages}>
+                    <PaginationLink href="#" onClick={e => { e.preventDefault(); setCurrentPage(totalPages); }} size="sm">{totalPages}</PaginationLink>
+                </PaginationItem>
+            );
+        }
+
+        return links;
+    };
+
+    const handleSelectRow = useCallback((rowIndex: number) => {
+        setChecked(checked.includes(rowIndex) ? checked.filter(i => i !== rowIndex) : [...checked, rowIndex]);
+    }, [checked]);
+
+    const handleCellClick = (rowIndex: number, cellIndex: number) => {
+        const cell = paginatedRows[rowIndex][cellIndex];
+        if (cell !== undefined && cell !== null) {
+            if (typeof navigator !== "undefined" && navigator.clipboard) {
+                navigator.clipboard.writeText(String(cell));
+                toast.success("Copied to clipboard");
+            }
+        }
+    };
+
+
+
+    // Always call the hook, but use conditional logic inside
+    const backendExport = useExportToCSV(schema || '', storageUnit || '', hasSelectedRows, exportDelimiter, selectedRowsData, exportFormat);
+
+    const handleExportConfirm = useCallback(async () => {
+        try {
+            await backendExport();
+            setShowExportConfirm(false);
+        } catch (error: any) {
+            toast.error(error.message || 'Export failed');
+        }
+    }, [backendExport]);
+
+    // --- End export logic ---
+
+    // Mock data handlers
+    const handleMockDataRowCountChange = useCallback((value: string) => {
+        // Only allow numeric input
+        const numericValue = value.replace(/[^0-9]/g, '');
+        const parsedValue = parseInt(numericValue) || 0;
+        
+        // Enforce max limit
+        if (parsedValue > maxRowCount) {
+            setMockDataRowCount(maxRowCount.toString());
+            toast.error(`Maximum row count is ${maxRowCount}`);
+        } else {
+            setMockDataRowCount(numericValue);
+        }
+    }, [maxRowCount]);
+
+    const handleMockDataGenerate = useCallback(async () => {
+        if (!schema || !storageUnit) {
+            toast.error("Schema and storage unit are required for mock data generation");
             return;
         }
-        if (isValidJSON(editedData)) {
-            return "json";
-        }
-        if (isMarkdown(editedData)) {
-            return "markdown";
-        }
-    }, [editedData]);
 
-    useEffect(() => {
-        setEditedData(cell.value);
-    }, [cell.value]);
-
-    const props = useMemo(() => {
-        return cell.getCellProps();
-    }, [cell]);
-
-    return <div ref={cellRef} {...props} key={props.key}
-        className={classNames("relative group/data cursor-pointer transition-all text-xs table-cell border-t border-l last:border-r group-last/row:border-b first:group-last/row:rounded-bl-lg last:group-last/row:rounded-br-lg border-gray-200 dark:border-white/5 p-0", {
-            "bg-gray-200 dark:bg-white/10 blur-[2px]": editable || preview,
-        })} data-testid="table-row-data">
-        <span className="cell-data hidden">{editedData}</span>
-        <div 
-            className={classNames("w-full h-full p-2 leading-tight focus:outline-hidden focus:shadow-outline appearance-none transition-all duration-300 border-solid border-gray-200 dark:border-white/5 overflow-hidden whitespace-nowrap select-none text-gray-600 dark:text-neutral-300", {
-                "group-even/row:bg-gray-100 hover:bg-gray-300 hover:group-even/row:bg-gray-300 dark:group-even/row:bg-white/10 dark:group-odd/row:bg-white/5 dark:hover:group-even/row:bg-white/15 dark:hover:group-odd/row:bg-white/15": !editable,
-                "bg-transparent": editable,
-            })}>
-            <div className={classNames("absolute top-0 left-0 h-full w-full justify-center items-center bg-transparent z-1 hover:scale-110 transition-all", {
-                "group-hover/row:flex": checked != null && cell.column.id === "#",
-                "flex": cell.column.id === "#" && checked === true,
-                "hidden": checked == null || cell.column.id !== "#" || checked === false,
-            })}>
-                <CheckBoxInput value={checked ?? false} setValue={onRowCheck} />
-            </div>
-            <div className={classNames({
-                "group-hover/row:hidden": checked != null && cell.column.id === "#",
-                "hidden": cell.column.id === "#" && checked === true,
-            })} {...longPressProps}>
-                {editedData}
-            </div>
-        </div>
-        <div className={classNames("transition-all hidden absolute right-2 top-1/2 -translate-y-1/2 hover:scale-125 p-1", {
-            "hidden": copied || disableEdit,
-            "group-hover/data:flex": !copied && !disableEdit,
-        })} onClick={handleEdit} data-testid="edit-button">
-            {Icons.Edit}
-        </div>
-         <AnimatePresence mode="wait">
-            {cellRect != null && (
-                <Portal>
-                    <motion.div
-                        initial={{ opacity: 0, }}
-                        animate={{ opacity: 1, }}
-                        exit={{ opacity: 0, }}
-                        transition={{ duration: 0.3 }}
-                        className={classNames("fixed top-0 left-0 w-screen h-screen flex items-center justify-center z-50 bg-gray-500/40", {
-                            "select-none": preview,
-                        })}
-                        onMouseUp={preview ? longPressProps.onMouseUp : undefined} onTouchEnd={preview ? longPressProps.onTouchEnd : undefined}
-                        data-testid="edit-dialog">
-                        <motion.div
-                            initial={{
-                                top: cellRect.top,
-                                left: cellRect.left,
-                                width: cellRect.width,
-                                height: cellRect.height,
-                                transform: "unset",
-                            }}
-                            animate={{
-                                top: "20vh",
-                                left: "20vw",
-                                height: "60vh",
-                                width: "60vw",
-                            }}
-                            exit={{
-                                top: cellRect.top,
-                                left: cellRect.left,
-                                width: cellRect.width,
-                                height: cellRect.height,
-                                transform: "unset",
-                            }}
-                            transition={{ duration: 0.3 }}
-                            className="absolute flex flex-col h-full justify-between gap-4">
-                            <div className="rounded-lg shadow-lg overflow-hidden grow" onKeyDown={handleEditorEscapeButton}>
-                                <CodeEditor
-                                    defaultShowPreview={preview}
-                                    disabled={preview}
-                                    language={language}
-                                    value={editedData}
-                                    setValue={handleChange}
-                                />
-                            </div>
-                            <motion.div
-                                initial={{ opacity: 0, }}
-                                animate={{ opacity: 1, }}
-                                exit={{ opacity: 0, }}
-                                transition={{ duration: 0.1 }}
-                                className={classNames("flex gap-2 justify-center w-full", {
-                                    "hidden": preview,
-                                })}>
-                                <ActionButton icon={Icons.Cancel} onClick={handleCancel} disabled={updating} testId="cancel-update-button" />
-                                {
-                                    updating
-                                    ? <div className="bg-white rounded-full p-2"><Loading hideText={true} /></div>
-                                    : <ActionButton icon={Icons.CheckCircle} className={changed ? "stroke-green-500" : undefined} onClick={handleUpdate} disabled={!changed} testId="update-button" />
-                                }
-                            </motion.div>
-                        </motion.div>
-                    </motion.div>
-                </Portal>
-            )}
-        </AnimatePresence>
-        <AnimatePresence>
-            {copied && (
-                <motion.div
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    transition={{ duration: 0.5 }}
-                    className="absolute top-0 h-full right-2 flex justify-center items-center pointer-events-none">
-                    <div className="text-xs rounded-md px-2 bg-green-200 text-green-800">
-                        Copied!
-                    </div>
-                </motion.div>
-            )}
-        </AnimatePresence>
-    </div>
-}
-
-type ITableRow = {
-    row: Row<Record<string, string | number>>;
-    style: CSSProperties;
-    onRowUpdate?: (row: Record<string, string | number>, updatedColumn: string) => Promise<void>;
-    checked?: boolean;
-    onRowCheck?: (value: boolean) => void;
-    disableEdit?: boolean;
-}
-
-const TableRow: FC<ITableRow> = ({ row, style, onRowUpdate, checked, onRowCheck, disableEdit }) => {
-    const handleCellUpdate = useCallback((cell: Cell<Record<string, string | number>>) => {
-        if (onRowUpdate == null) {
-            return Promise.reject();
-        }
-        const updatedRow = row.cells.reduce((all, one) => {
-            all[one.column.id] = one.value;
-            return all;
-        }, {} as Record<string, string | number>);
-        updatedRow[cell.column.id] = cell.value;
-        return onRowUpdate?.(updatedRow, cell.column.id);
-    }, [onRowUpdate, row.cells]);
-
-    const props = useMemo(() => {
-        return row.getRowProps({ style });
-    }, [row, style]);
-
-    return (
-        <div className="table-row-group text-xs group/row" {...props} key={props.key} data-testid="table-row">
-            {
-                row.cells.map((cell) => (
-                    <TData key={cell.getCellProps().key} cell={cell} onCellUpdate={handleCellUpdate}
-                        disableEdit={disableEdit || cell.column.id === "#"}
-                        checked={checked}
-                        onRowCheck={onRowCheck} />
-                ))
-            }
-        </div>
-    )
-}
-
-type ITableProps = {
-    className?: string;
-    columns: string[];
-    columnTags?: string[];
-    rows: string[][];
-    totalPages: number;
-    currentPage: number;
-    onPageChange?: (page: number) => void;
-    onRowUpdate?: (row: Record<string, string | number>, updatedColumn: string) => Promise<void>;
-    disableEdit?: boolean;
-    checkedRows?: Set<number>;
-    setCheckedRows?: (checkedRows: Set<number>) => void;
-    hideActions?: boolean;
-}
-
-export const Table: FC<ITableProps> = ({ className, columns: actualColumns, rows: actualRows, columnTags, totalPages, currentPage, onPageChange, onRowUpdate, disableEdit, checkedRows, setCheckedRows, hideActions }) => {
-    const fixedTableRef = useRef<FixedSizeList>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
-    const operationsRef = useRef<HTMLDivElement>(null);
-    const tableRef = useRef<HTMLTableElement>(null);
-    const [direction, setDirection] = useState<"asc" | "dsc">();
-    const [sortedColumn, setSortedColumn] = useState<string>();
-    const [search, setSearch] = useState("");
-    const [searchIndex, setSearchIndex] = useState(0);
-    const [height, setHeight] = useState(0);
-    const [width, setWidth] = useState(0);
-    const [data, setData] = useState<Record<string, string | number>[]>([]);
-
-    const columns = useMemo(() => {
-        const indexWidth = 50;
-        const colWidth = Math.max(((width - indexWidth)/actualColumns.length), 150);
-        const headerCount: Record<string, number> = {};
-        const cols = actualColumns.map((col) => {
-            if (headerCount[col] == null) {
-                headerCount[col] = 0;
-            } else {
-                headerCount[col] += 1;
-            }
-
-            const id = headerCount[col] > 0 ? `${col}-${headerCount[col]}` : col;
-
-            return {
-                id,
-                Header: col,
-                accessor: id,
-                width: colWidth,
-            };
-        });
-        cols.unshift({
-            id: "#",
-            Header: "#",
-            accessor: "#",
-            width: indexWidth + 10,
-        });
-        return cols;
-    }, [actualColumns, width]);
-
-    useEffect(() => {
-        setData(actualRows.map((row, rowIndex) => {
-            const newRow = row.reduce((all, one, colIndex) => {
-                if (actualColumns[colIndex] === "#") {
-                    all[actualColumns[colIndex]] = one;
-                } else {
-                    all[columns[colIndex+1].accessor] = one;
-                }
-                return all;
-            }, { "#": (rowIndex+1+(currentPage-1)*actualRows.length).toString() } as Record<string, string | number>);
-            newRow.originalIndex = rowIndex;
-            return newRow;
-        }));
-    }, [actualColumns, actualRows]);
-
-    const sortedRows = useMemo(() => {
-        if (!sortedColumn) {
-            return data;
-        }
-        const newRows = [...data];
-        newRows.sort((a, b) => {
-            const aValue = a[sortedColumn];
-            const bValue = b[sortedColumn];
-            if (isString(aValue) && isString(bValue) && isNumeric(aValue) && isNumeric(bValue)) {
-                const aValueNumber = Number.parseFloat(aValue);
-                const bValueNumber = Number.parseFloat(bValue);
-                return direction === 'asc' ? aValueNumber - bValueNumber : bValueNumber - aValueNumber;
-            }
-
-            if (aValue < bValue) {
-                return direction === 'asc' ? -1 : 1;
-            }
-            
-            if (aValue > bValue) {
-                return direction === 'asc' ? 1 : -1;
-            }
-            return 0;
-        });
-        return newRows;
-    }, [sortedColumn, direction, data]);
-
-    const {
-        getTableProps,
-        getTableBodyProps,
-        headerGroups,
-        rows,
-        prepareRow,
-    } = useTable(
-        {
-            columns,
-            data: sortedRows,
-        },
-        useBlockLayout,
-    );
-
-    const rowCount = useMemo(() => {
-        return rows.length ?? 0;
-    }, [rows]);
-
-    const handleKeyUp = useCallback((e: KeyboardEvent<HTMLInputElement>) => {
-        if (tableRef.current == null || search.length === 0) {
+        if (mockDataOverwriteExisting === "overwrite" && !showMockDataConfirmation) {
+            setShowMockDataConfirmation(true);
             return;
         }
-        // @ts-ignore
-        let interval: NodeJS.Timeout;
-        if (e.key === "Enter") {
-            const searchText = search.toLowerCase();
-            const filteredToOriginalIndex = [];
-            for (const [index, row] of rows.entries()) {
-                for (const value of values(row.values)) {
-                    if (value == null) {
-                        continue;
-                    }
-                    const text = value.toLowerCase();
-                    if (text != null && searchText != null && text.includes(searchText)) {
-                        filteredToOriginalIndex.push(index);
+
+        const count = parseInt(mockDataRowCount) || 100;
+        
+        // Double-check the limit
+        if (count > maxRowCount) {
+            toast.error(`Row count cannot exceed ${maxRowCount}`);
+            return;
+        }
+        
+        try {
+            const result = await generateMockData({
+                variables: {
+                    input: {
+                        Schema: schema,
+                        StorageUnit: storageUnit,
+                        RowCount: count,
+                        Method: mockDataMethod,
+                        OverwriteExisting: mockDataOverwriteExisting === "overwrite",
                     }
                 }
+            });
+
+            const data = result.data?.GenerateMockData;
+            if (data?.AmountGenerated) {
+                toast.success(`Successfully generated ${data.AmountGenerated} rows`);
+                setShowMockDataSheet(false);
+                setShowMockDataConfirmation(false);
+                // Trigger a refresh by calling the onRefresh callback if provided
+                if (onRefresh) {
+                    onRefresh();
+                }
+            } else {
+                toast.error(`Failed to mock data`);
             }
-            
-            if (rows.length > 0 &&  filteredToOriginalIndex.length > 0) {
-                const newSearchIndex = (searchIndex + 1) % filteredToOriginalIndex.length;
-                setSearchIndex(newSearchIndex);
-                const originalIndex = filteredToOriginalIndex[newSearchIndex] + 1;
-                fixedTableRef.current?.scrollToItem(originalIndex, "center");
-                setTimeout(() => {
-                    const currentVisibleRows = tableRef.current?.querySelectorAll(".table-row-group") ?? [];
-                    for (const currentVisibleRow of currentVisibleRows) {
-                        const text = currentVisibleRow.querySelector("div > span")?.textContent ?? "";
-                        if (isNumeric(text)) {
-                            const id = parseInt(text);
-                            if (id === originalIndex) {
-                                currentVisibleRow.classList.add("!bg-yellow-100", "dark:!bg-yellow-800");
-                                interval = setTimeout(() => {
-                                    currentVisibleRow.classList.remove("!bg-yellow-100", "dark:!bg-yellow-800");
-                                }, 3000);
-                            }
-                        }
-                    }
-                }, 100);
+        } catch (error: any) {
+            if (error.message === "mock data generation is not allowed for this table") {
+                toast.error("Mock data generation is not allowed for this table");
+            } else {
+                toast.error(`Failed to mock data: ${error.message}`);
             }
         }
+    }, [generateMockData, schema, storageUnit, mockDataRowCount, mockDataMethod, mockDataOverwriteExisting, showMockDataConfirmation, maxRowCount]);
+
+    const columnIcons = useMemo(() => getColumnIcons(columns, columnTypes), [columns, columnTypes]);
+
+    // Refresh page when it is resized and it settles
+    useEffect(() => {
+        let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
+
+        const handleResize = () => {
+            if (resizeTimeout) clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                if (onRefresh) {
+                    onRefresh();
+                }
+            }, 300);
+        };
+
+        window.addEventListener('resize', handleResize);
 
         return () => {
-            if (interval != null) {
-                clearInterval(interval);
+            window.removeEventListener('resize', handleResize);
+            if (resizeTimeout) clearTimeout(resizeTimeout);
+        };
+    }, [onRefresh]);
+
+    // Keyboard shortcuts for table operations
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            // Only handle shortcuts when not in input fields
+            if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+                return;
             }
-        }
-    }, [rows, search, searchIndex]);
 
-    const handleSearchChange = useCallback((newValue: string) => {
-        setSearchIndex(-1);
-        setSearch(newValue);
-    }, []);
+            const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+            const cmdKey = isMac ? event.metaKey : event.ctrlKey;
 
-    const handleSort = useCallback((columnToSort: string) => {
-        const columnSelectedIsDifferent = columnToSort !== sortedColumn;
-        if (!columnSelectedIsDifferent && direction === "dsc") {
-            setDirection(undefined);
-            return setSortedColumn(undefined);
-        }
-        setSortedColumn(columnToSort);
-        if (direction == null || columnSelectedIsDifferent) {
-            return setDirection("asc");
-        }
-        setDirection("dsc");
-    }, [sortedColumn, direction]);
+            if (cmdKey) {
+                switch (event.key.toLowerCase()) {
+                    case 'm':
+                        event.preventDefault();
+                        setShowMockDataSheet(true);
+                        break;
+                    case 'r':
+                        event.preventDefault();
+                        onRefresh?.();
+                        break;
+                    case 'a':
+                        event.preventDefault();
+                        setChecked(checked.length === paginatedRows.length ? [] : paginatedRows.map((_, index) => index + (currentPage - 1) * pageSize));
+                        break;
+                    case 'e':
+                        event.preventDefault();
+                        setShowExportConfirm(true);
+                        break;
+                }
+            }
+        };
 
-    const handleRowUpdate = useCallback((index: number, row: Record<string, string | number>, updatedColumn: string) => {
-        if (onRowUpdate == null) {
-            return Promise.resolve();
-        }
-        delete row["#"];
-        return onRowUpdate(row, updatedColumn).then(() => {
-            setData(value => {
-                const newValue = clone(value);
-                newValue[index] = clone(row);
-                return newValue;
-            });
-        });
-    }, [onRowUpdate]);
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [onRefresh, checked, paginatedRows, currentPage, pageSize]);
 
-    const handleRowCheck = useCallback((index: number, value: boolean) => {
-        const newCheckedRows = new Set(checkedRows);
-        if (value) {
-            newCheckedRows.add(index);
-        } else {
-            newCheckedRows.delete(index);
-        }
-        setCheckedRows?.(newCheckedRows);
-    }, [checkedRows, setCheckedRows]);
 
-    const handleRenderRow = useCallback(({ index, style }: ListChildComponentProps) => {
-        const row = rows[index];
-        prepareRow(row);
-        const originalIndex = row.original.originalIndex as number;
-        return <TableRow key={`row-${row.values[actualColumns[0]]}`} row={row} style={style}
-            onRowUpdate={(row, updatedColumn) => handleRowUpdate(index, row, updatedColumn)}
-            checked={checkedRows?.has(originalIndex)}
-            onRowCheck={(value) => handleRowCheck(originalIndex, value)}
-            disableEdit={disableEdit} />;
-    }, [rows, prepareRow, actualColumns, checkedRows, disableEdit, handleRowUpdate, handleRowCheck]);
 
     useEffect(() => {
-        if (containerRef.current == null || operationsRef.current == null) {
-            return;
+        if (tableRef.current) {
+            setContainerWidth(tableRef.current.offsetWidth);
         }
-        const { height, width } = containerRef.current.getBoundingClientRect();
-        const padding = 60;
-        setHeight(height - operationsRef.current.getBoundingClientRect().height - padding); 
-        setWidth(width);
-    }, []);
+    }, [tableRef]);
 
-    const allChecked = useMemo(() => {
-        return (checkedRows?.size ?? 0) === rows.length;
-    }, [checkedRows?.size, rows.length]);;
+    // Highlight and scroll to the searched cell using document querySelector, no state needed
 
-    const handleCheckAll = useCallback(() => {
-        if (setCheckedRows == null) {
-            return;
-        }
-        if (allChecked) {
-            return setCheckedRows(new Set<number>());
-        }
-        setCheckedRows(new Set(rows.map((_, i) => i)));
-    }, [allChecked, rows, setCheckedRows]);
+    useEffect(() => {
+        if (!searchRef) return;
 
-    const specificIndexes = useMemo(() => {
-        return  [...checkedRows ?? []];
-    }, [checkedRows]);
+        let lastHighlightedCell: HTMLElement | null = null;
 
-    const exportToCSV = useExportToCSV(actualColumns, sortedRows, specificIndexes);
+        searchRef.current = (search: string) => {
+            // Remove any previous highlight
+            document.querySelectorAll('.table-search-highlight').forEach(el => {
+                el.classList.remove('bg-yellow-200', 'table-search-highlight', 'bg-muted');
+            });
+
+            // Remove highlight from the last highlighted cell if it exists
+            if (lastHighlightedCell) {
+                lastHighlightedCell.classList.remove('bg-muted', 'table-search-highlight', 'bg-yellow-200');
+                lastHighlightedCell = null;
+            }
+
+            if (!search || !rows || !columns) {
+                lastSearchState.current = { search: '', matchIdx: 0 };
+                return;
+            }
+
+            // Find all matching cells
+            const matches: { rowIdx: number; colIdx: number }[] = [];
+            rows.forEach((row, rowIdx) => {
+                row.forEach((cellValue, colIdx) => {
+                    if (
+                        cellValue !== undefined &&
+                        cellValue !== null &&
+                        cellValue.toString().toLowerCase().includes(search.toLowerCase())
+                    ) {
+                        matches.push({ rowIdx, colIdx });
+                    }
+                });
+            });
+
+            if (matches.length > 0) {
+                // Determine which match to highlight
+                let matchIdx = 0;
+                if (lastSearchState.current.search === search) {
+                    // Advance to next match, wrap around
+                    matchIdx = (lastSearchState.current.matchIdx + 1) % matches.length;
+                }
+                // Update last search state
+                lastSearchState.current = { search, matchIdx };
+
+                const { rowIdx, colIdx } = matches[matchIdx];
+                // Compose a unique selector for the cell
+                const selector = `[data-row-idx="${rowIdx}"] [data-col-idx="${colIdx}"]`;
+                const cell = document.querySelector(selector) as HTMLElement | null;
+                if (cell) {
+                    // Remove highlight from any previously highlighted cell
+                    document.querySelectorAll('.table-search-highlight').forEach(el => {
+                        el.classList.remove('bg-muted', 'table-search-highlight', 'bg-yellow-200');
+                    });
+                    cell.classList.add('bg-muted', 'table-search-highlight');
+                    lastHighlightedCell = cell;
+                    cell.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                    setTimeout(() => {
+                        if (cell === lastHighlightedCell) {
+                            cell.classList.remove('bg-muted', 'table-search-highlight');
+                            lastHighlightedCell = null;
+                        }
+                    }, 3000);
+                }
+            } else {
+                // No matches, reset state
+                lastSearchState.current = { search, matchIdx: 0 };
+            }
+        };
+
+        // Cleanup on unmount
+        return () => {
+            if (lastHighlightedCell) {
+                lastHighlightedCell.classList.remove('bg-muted', 'table-search-highlight', 'bg-yellow-200');
+                lastHighlightedCell = null;
+            }
+        };
+    }, [searchRef, rows, columns]);
+
+    const contextMenu = useCallback((globalIndex: number, index: number) => {
+        return <ContextMenu key={globalIndex}>
+            <ContextMenuTrigger className="contents">
+                <TableRow data-row-idx={index} className="group">
+                    <TableCell className={cn({
+                        "hidden": disableEdit,
+                    })}>
+                        <Checkbox
+                            checked={checked.includes(globalIndex)}
+                            onCheckedChange={() => setChecked(checked.includes(globalIndex) ? checked.filter(i => i !== globalIndex) : [...checked, globalIndex])}
+                        />
+                    </TableCell>
+                    {paginatedRows[index]?.map((cell, cellIdx) => (
+                        <TableCell key={cellIdx} className="cursor-pointer" onClick={() => handleCellClick(globalIndex, cellIdx)} data-col-idx={cellIdx}>{cell}</TableCell>
+                    ))}
+                    <Button variant="secondary" className="absolute right-6 opacity-0 group-hover:opacity-100 border border-input" onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // Manually trigger context menu on this row
+                        const event = new MouseEvent("contextmenu", {
+                            bubbles: true,
+                            clientX: e.clientX,
+                            clientY: e.clientY,
+                        });
+                        e.currentTarget.dispatchEvent(event);
+                        }} data-testid="icon-button">
+                        <EllipsisVerticalIcon className="w-4 h-4" />
+                    </Button>
+                </TableRow>
+            </ContextMenuTrigger>
+            <ContextMenuContent className="w-52">
+                <ContextMenuItem onSelect={() => handleSelectRow(globalIndex)}>
+                    {checked.includes(globalIndex) ? (
+                        <>
+                            <CheckCircleIcon className="w-4 h-4 text-primary" />
+                            Deselect Row
+                            <ContextMenuShortcut>⌘D</ContextMenuShortcut>
+                        </>
+                    ) : (
+                        <>
+                            <CheckCircleIcon className="w-4 h-4 text-primary" />
+                            Select Row
+                            <ContextMenuShortcut>⌘S</ContextMenuShortcut>
+                        </>
+                    )}
+                </ContextMenuItem>
+                <ContextMenuItem onSelect={() => handleEdit(globalIndex)} disabled={checked.length > 0} data-testid="context-menu-edit-row">
+                    <PencilSquareIcon className="w-4 h-4" />
+                    Edit Row
+                    <ContextMenuShortcut>⌘E</ContextMenuShortcut>
+                </ContextMenuItem>
+                <ContextMenuSub>
+                    <ContextMenuSubTrigger>
+                        <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
+                        Export
+                    </ContextMenuSubTrigger>
+                    <ContextMenuSubContent>
+                        <ContextMenuItem
+                            onSelect={() => { setShowExportConfirm(true); setExportFormat('csv'); }}
+                        >
+                            <DocumentIcon className="w-4 h-4" />
+                            Export All as CSV
+                            <ContextMenuShortcut>⌘⇧C</ContextMenuShortcut>
+                        </ContextMenuItem>
+                        <ContextMenuItem
+                            onSelect={() => { setShowExportConfirm(true); setExportFormat('excel'); }}
+                        >
+                            <DocumentIcon className="w-4 h-4" />
+                            Export All as Excel
+                            <ContextMenuShortcut>⌘⇧X</ContextMenuShortcut>
+                        </ContextMenuItem>
+                        <ContextMenuSeparator />
+                        <ContextMenuItem
+                            onSelect={() => { setShowExportConfirm(true); setExportFormat('csv'); }}
+                            disabled={checked.length === 0}
+                        >
+                            <DocumentIcon className="w-4 h-4" />
+                            Export Selected as CSV
+                            <ContextMenuShortcut>⌘C</ContextMenuShortcut>
+                        </ContextMenuItem>
+                        <ContextMenuItem
+                            onSelect={() => { setShowExportConfirm(true); setExportFormat('excel'); }}
+                            disabled={checked.length === 0}
+                        >
+                            <DocumentIcon className="w-4 h-4" />
+                            Export Selected as Excel
+                            <ContextMenuShortcut>⌘X</ContextMenuShortcut>
+                        </ContextMenuItem>
+                    </ContextMenuSubContent>
+                </ContextMenuSub>
+                <ContextMenuItem
+                    onSelect={() => setShowMockDataSheet(true)}
+                >
+                    <DocumentDuplicateIcon className="w-4 h-4" />
+                    Mock Data
+                    <ContextMenuShortcut>⌘M</ContextMenuShortcut>
+                </ContextMenuItem>
+                <ContextMenuSub>
+                    <ContextMenuSubTrigger data-testid="context-menu-more-actions">
+                        <EllipsisHorizontalIcon className="w-4 h-4 mr-2" />
+                        More Actions
+                    </ContextMenuSubTrigger>
+                    <ContextMenuSubContent className="w-44">
+                        <ContextMenuItem
+                            variant="destructive"
+                            disabled={deleting}
+                            onSelect={async () => {
+                                await handleDeleteRow(globalIndex);
+                            }}
+                            data-testid="context-menu-delete-row"
+                        >
+                            <TrashIcon className="w-4 h-4 text-destructive" />
+                            Delete Row
+                            <ContextMenuShortcut>⌘⌫</ContextMenuShortcut>
+                        </ContextMenuItem>
+                    </ContextMenuSubContent>
+                </ContextMenuSub>
+                <ContextMenuSeparator />
+                <ContextMenuItem disabled={true}>
+                    <ShareIcon className="w-4 h-4" />
+                    Open in Graph
+                    <ContextMenuShortcut>⌘G</ContextMenuShortcut>
+                </ContextMenuItem>
+            </ContextMenuContent>
+        </ContextMenu>
+    }, [checked, handleCellClick, handleEdit, handleSelectRow, handleDeleteRow, paginatedRows, disableEdit, onRefresh]);
 
     return (
-        <div className="flex flex-col grow gap-4 items-center w-full h-full" ref={containerRef}>
-            <div className={classNames("flex justify-between items-center w-full", {
-                "hidden": hideActions,
-            })} ref={operationsRef}>
-                <div>
-                    <SearchInput search={search} setSearch={handleSearchChange} placeholder="Search through rows     [Press Enter]" inputProps={{
-                        className: "w-[300px]",
-                        onKeyUp: handleKeyUp,
-                    }} testId="table-search" />
-                </div>
-                <div className="flex gap-4 items-center">
-                    <div className="text-sm text-gray-600 dark:text-neutral-300"><span className="font-semibold">Count:</span> {rowCount}</div>
-                    <AnimatedButton icon={Icons.Download} label={checkedRows != null && checkedRows?.size > 0 ? "Export selected" : "Export"} type="lg" onClick={exportToCSV} />
-                </div>
-            </div>
-            <div className={twMerge(classNames("flex overflow-x-auto h-full", className))} style={{
-                width,
-            }} data-testid="table">
-                <div className="border-separate border-spacing-0 h-fit" ref={tableRef} {...getTableProps()}>
-                    <div>
-                        {headerGroups.map(headerGroup => (
-                            <div className="group/header-row" {...headerGroup.getHeaderGroupProps()} key={headerGroup.getHeaderGroupProps().key}>
-                                {headerGroup.headers.map((column, i) => (
-                                    <>
-                                        <div {...column.getHeaderProps()} key={column.getHeaderProps().key} className="text-xs border-t border-l last:border-r border-gray-200 dark:border-white/5 p-2 text-left bg-gray-500 dark:bg-white/20 text-white first:rounded-tl-lg last:rounded-tr-lg relative group/header cursor-pointer select-none">
-                                            <div className={classNames({
-                                                "group-hover/header-row:hidden": checkedRows != null && column.id === "#",
-                                                "hidden": column.id === "#" && allChecked,
-                                            })} onClick={() => handleSort(column.id)} data-testid="table-header">
-                                                {column.render('Header')} {i > 0 && columnTags?.[i-1] != null && columnTags?.[i-1].length > 0 && <span className="text-[11px]">[{columnTags?.[i-1]}]</span>}
-                                            </div>
-                                            <div className={classNames("absolute top-0 left-0 h-full w-full justify-center items-center bg-transparent z-[1] hover:scale-110 transition-all", {
-                                                "group-hover/header-row:flex": checkedRows != null && column.id === "#",
-                                                "flex": column.id === "#" && allChecked,
-                                                "hidden": checkedRows == null || column.id !== "#" || !allChecked,
-                                            })}>
-                                                <CheckBoxInput value={allChecked} setValue={handleCheckAll} />
-                                            </div>
-                                            <div className={twMerge(classNames("transition-all absolute top-2 right-2 opacity-0", {
-                                                "opacity-100": sortedColumn === column.id,
-                                                "rotate-180": direction === "dsc",
-                                            }))}>
-                                                {Icons.ArrowUp}
-                                            </div>
+        <div ref={tableRef} className="h-full">
+            <div className="flex flex-col h-full space-y-4 w-0" style={{
+                width: `${containerWidth}px`,
+            }}>
+                <TableComponent className="overflow-x-auto">
+                    <TableHeader>
+                        <ContextMenu>
+                            <ContextMenuTrigger asChild>
+                                <TableRow className="group cursor-context-menu hover:bg-muted/50 transition-colors" title="Right-click for table options">
+                                    <TableHead className={cn({
+                                        "hidden": disableEdit,
+                                    })}>
+                                        <div className="flex items-center gap-2">
+                                            <Checkbox
+                                                checked={checked.length === paginatedRows.length}
+                                                onCheckedChange={() => setChecked(checked.length === paginatedRows.length ? [] : paginatedRows.map((_, index) => index + (currentPage - 1) * pageSize))}
+                                            />
+                                            <EllipsisVerticalIcon className="w-3 h-3 opacity-0 group-hover:opacity-50 transition-opacity" />
                                         </div>
-                                    </>
-                                ))}
+                                    </TableHead>
+                                    {columns.map((col, idx) => (
+                                        <TableHead
+                                            key={col + idx} 
+                                            icon={columnIcons?.[idx]}
+                                            className={cn({
+                                                "cursor-pointer select-none": onColumnSort,
+                                            })}
+                                            onClick={() => onColumnSort?.(col)}
+                                        >
+                                            <Tip>
+                                                <p className="flex items-center gap-1">
+                                                    {col}
+                                                    {onColumnSort && sortedColumns?.has(col) && (
+                                                        sortedColumns.get(col) === 'asc' 
+                                                            ? <ChevronUpIcon className="w-4 h-4" />
+                                                            : <ChevronDownIcon className="w-4 h-4" />
+                                                    )}
+                                                </p>
+                                                <p className="text-xs">{columnTypes?.[idx]}</p>
+                                            </Tip>
+                                        </TableHead>
+                                    ))}
+                                </TableRow>
+                            </ContextMenuTrigger>
+                            <ContextMenuContent className="w-64">
+                                <ContextMenuItem onSelect={() => setShowMockDataSheet(true)}>
+                                    <DocumentDuplicateIcon className="w-4 h-4" />
+                                    Mock Data
+                                    <ContextMenuShortcut>⌘M</ContextMenuShortcut>
+                                </ContextMenuItem>
+                                <ContextMenuSeparator />
+                                <ContextMenuSub>
+                                    <ContextMenuSubTrigger>
+                                        <ArrowDownCircleIcon className="w-4 h-4 mr-2" />
+                                        Export Data
+                                    </ContextMenuSubTrigger>
+                                    <ContextMenuSubContent>
+                                        <ContextMenuItem
+                                            onSelect={() => { setShowExportConfirm(true); setExportFormat('csv'); }}
+                                        >
+                                            <DocumentIcon className="w-4 h-4" />
+                                            Export All as CSV
+                                        </ContextMenuItem>
+                                        <ContextMenuItem
+                                            onSelect={() => { setShowExportConfirm(true); setExportFormat('excel'); }}
+                                        >
+                                            <DocumentIcon className="w-4 h-4" />
+                                            Export All as Excel
+                                        </ContextMenuItem>
+                                        <ContextMenuSeparator />
+                                        <ContextMenuItem
+                                            onSelect={() => { setShowExportConfirm(true); setExportFormat('csv'); }}
+                                            disabled={checked.length === 0}
+                                        >
+                                            <DocumentIcon className="w-4 h-4" />
+                                            Export Selected as CSV
+                                        </ContextMenuItem>
+                                        <ContextMenuItem
+                                            onSelect={() => { setShowExportConfirm(true); setExportFormat('excel'); }}
+                                            disabled={checked.length === 0}
+                                        >
+                                            <DocumentIcon className="w-4 h-4" />
+                                            Export Selected as Excel
+                                        </ContextMenuItem>
+                                    </ContextMenuSubContent>
+                                </ContextMenuSub>
+                                <ContextMenuSeparator />
+                                <ContextMenuItem onSelect={() => onRefresh?.()}>
+                                    <CircleStackIcon className="w-4 h-4" />
+                                    Refresh Data
+                                    <ContextMenuShortcut>⌘R</ContextMenuShortcut>
+                                </ContextMenuItem>
+                                <ContextMenuItem 
+                                    onSelect={() => setChecked(checked.length === paginatedRows.length ? [] : paginatedRows.map((_, index) => index + (currentPage - 1) * pageSize))}
+                                >
+                                    <CheckCircleIcon className="w-4 h-4" />
+                                    {checked.length === paginatedRows.length ? "Deselect All" : "Select All"}
+                                    <ContextMenuShortcut>⌘A</ContextMenuShortcut>
+                                </ContextMenuItem>
+                                <ContextMenuSeparator />
+                                <ContextMenuItem disabled={true}>
+                                    <CalculatorIcon className="w-4 h-4" />
+                                    Column Statistics
+                                    <ContextMenuShortcut>⌘S</ContextMenuShortcut>
+                                </ContextMenuItem>
+                                <ContextMenuItem disabled={true}>
+                                    <DocumentTextIcon className="w-4 h-4" />
+                                    Schema Information
+                                </ContextMenuItem>
+                            </ContextMenuContent>
+                        </ContextMenu>
+                    </TableHeader>
+                    {paginatedRows.length > 0 &&
+                    <VirtualizedTableBody rowCount={paginatedRows.length} rowHeight={rowHeight} height={height}>
+                        {(index) => {
+                            const globalIndex = (currentPage - 1) * pageSize + index;
+                            return contextMenu(globalIndex, index);
+                        }}
+                    </VirtualizedTableBody>}
+                </TableComponent>
+                {paginatedRows.length === 0 && (
+                    <ContextMenu>
+                        <ContextMenuTrigger asChild>
+                            <div className="flex items-center justify-center h-full min-h-[500px] cursor-pointer">
+                                <EmptyState title="No data available" description="No data available" icon={<DocumentTextIcon className="w-4 h-4" />} />
                             </div>
-                        ))}
-                    </div>
-                    <div className="tbody" {...getTableBodyProps()}>
-                        <FixedSizeList
-                            ref={fixedTableRef}
-                            height={height}
-                            itemCount={sortedRows.length}
-                            itemSize={31}
-                            width="100%"
-                        >
-                            {handleRenderRow}
-                        </FixedSizeList>
-                    </div>
+                        </ContextMenuTrigger>
+                        <ContextMenuContent className="w-52">
+                            <ContextMenuItem onSelect={() => setShowMockDataSheet(true)}>
+                                <CalculatorIcon className="w-4 h-4" />
+                                Mock Data
+                                <ContextMenuShortcut>⌘G</ContextMenuShortcut>
+                            </ContextMenuItem>
+                            <ContextMenuSub>
+                                <ContextMenuSubTrigger>
+                                    <ArrowDownCircleIcon className="w-4 h-4" />
+                                    Export
+                                </ContextMenuSubTrigger>
+                                <ContextMenuSubContent>
+                                    <ContextMenuItem
+                                        onSelect={() => { setShowExportConfirm(true); setExportFormat('csv'); }}
+                                    >
+                                        <DocumentIcon className="w-4 h-4" />
+                                        Export All as CSV
+                                        <ContextMenuShortcut>⌘C</ContextMenuShortcut>
+                                    </ContextMenuItem>
+                                    <ContextMenuItem
+                                        onSelect={() => { setShowExportConfirm(true); setExportFormat('excel'); }}
+                                    >
+                                        <DocumentIcon className="w-4 h-4" />
+                                        Export All as Excel
+                                        <ContextMenuShortcut>⌘E</ContextMenuShortcut>
+                                    </ContextMenuItem>
+                                </ContextMenuSubContent>
+                            </ContextMenuSub>
+                        </ContextMenuContent>
+                    </ContextMenu>
+                )}
+
+                <div className={cn("flex justify-between items-center mb-2", {
+                    "justify-end": children == null,
+                })}>
+                    {children}
+                    <Button
+                        variant="secondary"
+                        onClick={() => setShowExportConfirm(true)}
+                        className="flex gap-2"
+                    >
+                        <ArrowDownCircleIcon className="w-4 h-4" />
+                        {hasSelectedRows ? `Export ${checked.length} selected` : "Export all"}
+                    </Button>
                 </div>
+                <div className="flex mt-4">
+                    <Pagination className={cn("flex justify-end", {
+                        "hidden": totalPages <= 1,
+                    })}>
+                        <PaginationContent>
+                            <PaginationItem>
+                                <PaginationPrevious
+                                    href="#"
+                                    onClick={e => {
+                                        e.preventDefault();
+                                        if (currentPage > 1) setCurrentPage(currentPage - 1);
+                                    }}
+                                    aria-disabled={currentPage === 1}
+                                    size="sm"
+                                />
+                            </PaginationItem>
+                            {renderPaginationLinks()}
+                            <PaginationItem>
+                                <PaginationNext
+                                    href="#"
+                                    onClick={e => {
+                                        e.preventDefault();
+                                        if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                                    }}
+                                    aria-disabled={currentPage === totalPages}
+                                    size="sm"
+                                />
+                            </PaginationItem>
+                        </PaginationContent>
+                    </Pagination>
+                </div>
+                <Sheet open={editIndex !== null} onOpenChange={open => { 
+                    if (!open) {
+                        setEditIndex(null);
+                        setEditRow(null);
+                        setEditRowInitialLengths([]);
+                    }
+                }}>
+                    <SheetContent side="right" className="w-[400px] max-w-full p-8 flex flex-col">
+                        <SheetTitle>Edit Row</SheetTitle>
+                        <div className="flex-1 overflow-y-auto mt-4">
+                            <div className="flex flex-col gap-4 pr-2">
+                                {editRow &&
+                                    columns.map((col, idx) => (
+                                        <div key={col} className="flex flex-col gap-2">
+                                            <Label>{col}</Label>
+                                            {
+                                                editRowInitialLengths[idx] < 50 ?
+                                                    <Input
+                                                        key={`input-${idx}`}
+                                                        value={editRow[idx] ?? ""}
+                                                        onChange={e => handleInputChange(e.target.value, idx)}
+                                                        data-testid={`editable-field-${idx}`}
+                                                    />
+                                                    : <TextArea
+                                                        key={`textarea-${idx}`}
+                                                        value={editRow[idx] ?? ""}
+                                                        onChange={e => handleInputChange(e.target.value, idx)}
+                                                        rows={5}
+                                                        className="min-h-[100px]"
+                                                        data-testid={`editable-field-${idx}`}
+                                                    />
+                                            }
+                                        </div>
+                                    ))}
+                            </div>
+                        </div>
+                        <SheetFooter className="flex gap-2 px-0 mt-4">
+                            <Button onClick={handleUpdate} disabled={!editRow} data-testid="update-button">
+                                Update
+                            </Button>
+                        </SheetFooter>
+                    </SheetContent>
+                </Sheet>
             </div>
-            {
-                totalPages > 1 &&
-                <div className="flex justify-center items-center">
-                    <Pagination pageCount={totalPages} currentPage={currentPage} onPageChange={onPageChange} />
-                </div>
-            }
+            <Sheet open={showExportConfirm} onOpenChange={setShowExportConfirm}>
+                <SheetContent side="right" className="max-w-md w-full p-8">
+                    <div className="flex flex-col gap-4 grow">
+                        <h2 className="text-xl font-semibold mb-4">Export Data</h2>
+                        <div className="space-y-4 grow">
+                            <p>
+                                {hasSelectedRows
+                                    ? `You are about to export ${checked.length} selected rows.`
+                                    : `You are about to export all data from the table. This may take some time for large tables.`}
+                            </p>
+                            <div className="mb-4 flex flex-col gap-2">
+                                <Label>
+                                    Format
+                                </Label>
+                                <Select
+                                    value={exportFormat}
+                                    onValueChange={(value) => setExportFormat(value as 'csv' | 'excel')}
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue>
+                                            {
+                                                exportFormatOptions.find(opt => opt.value === exportFormat)?.label
+                                            }
+                                        </SelectValue>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {exportFormatOptions.map(opt => (
+                                            <SelectItem key={opt.value} value={opt.value}>
+                                                {opt.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {exportFormat === 'csv' && (
+                                    <>
+                                        <Label>
+                                            Delimiter
+                                        </Label>
+                                        <Select
+                                            value={exportDelimiter}
+                                            onValueChange={(value) => setExportDelimiter(value)}
+                                        >
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue>
+                                                    {
+                                                        exportDelimiterOptions.find(opt => opt.value === exportDelimiter)?.label
+                                                    }
+                                                </SelectValue>
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {exportDelimiterOptions.map(opt => (
+                                                    <SelectItem key={opt.value} value={opt.value}>
+                                                        {opt.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <p className="text-sm mt-2">Choose a delimiter that doesn't appear in your data</p>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                        <SheetFooter className="px-0">
+                            <div className="text-xs text-muted-foreground mb-8">
+                                <p className="font-medium mb-1">Export Details:</p>
+                                <ul className="list-disc list-inside space-y-1">
+                                    {exportFormat === 'csv' ? (
+                                        <>
+                                            <li><p className="inline-block">Headers include column names and data types</p></li>
+                                            <li><p className="inline-block">UTF-8 encoding</p></li>
+                                            <li><p className="inline-block">Customizable delimiter</p></li>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <li><p className="inline-block">Excel XLSX format</p></li>
+                                            <li><p className="inline-block">Formatted headers with styling</p></li>
+                                            <li><p className="inline-block">Auto-sized columns</p></li>
+                                        </>
+                                    )}
+                                </ul>
+                            </div>
+                            <Button onClick={handleExportConfirm}>
+                                Export
+                            </Button>
+                        </SheetFooter>
+                    </div>
+                </SheetContent>
+            </Sheet>
+            <Sheet open={showMockDataSheet} onOpenChange={setShowMockDataSheet}>
+                <SheetContent side="right" className="p-8">
+                    <div className="flex flex-col gap-4 h-full">
+                        <div className="text-lg font-semibold mb-2">Mock Data for {storageUnit}</div>
+                        {!showMockDataConfirmation ? (
+                            <div className="space-y-4">
+                                <Label>Number of Rows (max: {maxRowCount})</Label>
+                                <Input
+                                    value={mockDataRowCount}
+                                    onChange={e => handleMockDataRowCountChange(e.target.value)}
+                                    type="text"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    max={maxRowCount.toString()}
+                                    placeholder={`Enter number of rows (1-${maxRowCount})`}
+                                />
+                                <Label>Method</Label>
+                                <Select value={mockDataMethod} onValueChange={setMockDataMethod}>
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Normal">Normal</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <Label>Data Handling</Label>
+                                <Select value={mockDataOverwriteExisting} onValueChange={setMockDataOverwriteExisting}>
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="append">Append to existing data</SelectItem>
+                                        <SelectItem value="overwrite">Overwrite existing data</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                {generatingMockData && (
+                                    <div className="mt-4">
+                                        <div className="flex justify-center">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                                        </div>
+                                        <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-2">
+                                            Generating mock data...
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-center mb-4">
+                                    <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
+                                        <XMarkIcon className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
+                                    </div>
+                                </div>
+                                <p className="text-center text-gray-700 dark:text-gray-300">
+                                    Are you sure you want to overwrite all existing data in {storageUnit}? This action cannot be undone.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                    <SheetFooter className="px-0">
+                        <Alert variant="info" className="mb-4">
+                            <AlertTitle>Note</AlertTitle>
+                            <AlertDescription>
+                                Mock data generation does not yet fully support foreign keys and all constraints. You may experience some errors or missing data.
+                            </AlertDescription>
+                        </Alert>
+                        {!showMockDataConfirmation ? (
+                            <Button onClick={handleMockDataGenerate} disabled={generatingMockData}>
+                                Generate
+                            </Button>
+                        ) : (
+                            <Button onClick={handleMockDataGenerate} disabled={generatingMockData} variant="destructive">
+                                Yes, Overwrite
+                            </Button>
+                        )}
+                    </SheetFooter>
+                </SheetContent>
+            </Sheet>
         </div>
-    )
-}
+    );
+};

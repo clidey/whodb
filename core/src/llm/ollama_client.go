@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"github.com/clidey/whodb/core/src/env"
+	"github.com/clidey/whodb/core/src/log"
 )
 
 func prepareOllamaRequest(prompt string, model LLMModel) (string, []byte, map[string]string, error) {
@@ -32,6 +33,7 @@ func prepareOllamaRequest(prompt string, model LLMModel) (string, []byte, map[st
 		"prompt": prompt,
 	})
 	if err != nil {
+		log.Logger.WithError(err).Errorf("Failed to marshal Ollama request body for model %s", model)
 		return "", nil, nil, err
 	}
 	url := fmt.Sprintf("%v/generate", env.GetOllamaEndpoint())
@@ -53,6 +55,7 @@ func parseOllamaResponse(body io.ReadCloser, receiverChan *chan string, response
 			if err == io.EOF {
 				break
 			}
+			log.Logger.WithError(err).Error("Failed to read line from Ollama streaming response")
 			return nil, err
 		}
 
@@ -61,6 +64,7 @@ func parseOllamaResponse(body io.ReadCloser, receiverChan *chan string, response
 			Done     bool   `json:"done"`
 		}
 		if err := json.Unmarshal([]byte(line), &completionResponse); err != nil {
+			log.Logger.WithError(err).Errorf("Failed to unmarshal Ollama response line: %s", line)
 			return nil, err
 		}
 
@@ -69,6 +73,7 @@ func parseOllamaResponse(body io.ReadCloser, receiverChan *chan string, response
 		}
 
 		if _, err := responseBuilder.WriteString(completionResponse.Response); err != nil {
+			log.Logger.WithError(err).Error("Failed to write to Ollama response builder")
 			return nil, err
 		}
 
@@ -90,6 +95,7 @@ func parseOllamaModelsResponse(body io.ReadCloser) ([]string, error) {
 		} `json:"models"`
 	}
 	if err := json.NewDecoder(body).Decode(&modelsResp); err != nil {
+		log.Logger.WithError(err).Error("Failed to decode Ollama models response")
 		return nil, err
 	}
 

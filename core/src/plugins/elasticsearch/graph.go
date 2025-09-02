@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 )
 
 type tableRelation struct {
@@ -33,21 +34,26 @@ type tableRelation struct {
 func (p *ElasticSearchPlugin) GetGraph(config *engine.PluginConfig, database string) ([]engine.GraphUnit, error) {
 	client, err := DB(config)
 	if err != nil {
+		log.Logger.WithError(err).Error("Failed to connect to ElasticSearch while getting graph")
 		return nil, err
 	}
 
 	res, err := client.Indices.Stats()
 	if err != nil {
+		log.Logger.WithError(err).Error("Failed to get ElasticSearch indices stats for graph generation")
 		return nil, err
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return nil, fmt.Errorf("error getting indices: %s", res.String())
+		err := fmt.Errorf("error getting indices: %s", res.String())
+		log.Logger.WithError(err).Error("ElasticSearch indices stats API returned error for graph generation")
+		return nil, err
 	}
 
 	var stats map[string]interface{}
 	if err := json.NewDecoder(res.Body).Decode(&stats); err != nil {
+		log.Logger.WithError(err).Error("Failed to decode ElasticSearch indices stats for graph generation")
 		return nil, err
 	}
 
@@ -63,6 +69,7 @@ func (p *ElasticSearchPlugin) GetGraph(config *engine.PluginConfig, database str
 			},
 		}
 		if err := json.NewEncoder(&buf).Encode(query); err != nil {
+			log.Logger.WithError(err).WithField("indexName", indexName).Error("Failed to encode ElasticSearch query for graph generation")
 			return nil, err
 		}
 
@@ -72,16 +79,20 @@ func (p *ElasticSearchPlugin) GetGraph(config *engine.PluginConfig, database str
 			client.Search.WithBody(&buf),
 		)
 		if err != nil {
+			log.Logger.WithError(err).WithField("indexName", indexName).Error("Failed to execute ElasticSearch search query for graph generation")
 			return nil, err
 		}
 		defer res.Body.Close()
 
 		if res.IsError() {
-			return nil, fmt.Errorf("error searching documents: %s", res.String())
+			err := fmt.Errorf("error searching documents: %s", res.String())
+			log.Logger.WithError(err).WithField("indexName", indexName).Error("ElasticSearch search API returned error for graph generation")
+			return nil, err
 		}
 
 		var searchResult map[string]interface{}
 		if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
+			log.Logger.WithError(err).WithField("indexName", indexName).Error("Failed to decode ElasticSearch search result for graph generation")
 			return nil, err
 		}
 
@@ -111,6 +122,7 @@ func (p *ElasticSearchPlugin) GetGraph(config *engine.PluginConfig, database str
 
 	storageUnits, err := p.GetStorageUnits(config, database)
 	if err != nil {
+		log.Logger.WithError(err).Error("Failed to get storage units for ElasticSearch graph generation")
 		return nil, err
 	}
 

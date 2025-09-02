@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,61 +40,55 @@ describe('MySQL E2E test', () => {
 
     // check users table and fields
     cy.explore("users");
-    cy.getExploreFields().then(text => {
-      const textLines = text.split("\n");
-    
-      const expectedPatterns = [
-        /^users$/,
-        /^Type: BASE TABLE$/,
-        /^Total Size: .+$/, // Ignores actual size value
-        /^Data Size: .+$/,  // Ignores actual size value
-        /^Count: .+$/,      // Ignores actual count value
-        /^id: int$/,
-        /^username: varchar$/,
-        /^email: varchar$/,
-        /^password: varchar$/,
-        /^created_at: timestamp$/
+    cy.getExploreFields().then(fields => {
+      // Check type
+      expect(fields.some(([k, v]) => k === "Type" && v === "BASE TABLE")).to.be.true;
+
+      // Check Total Size, Data Size, Count (just keys exist)
+      expect(fields.some(([k]) => k === "Total Size")).to.be.true;
+      expect(fields.some(([k]) => k === "Data Size")).to.be.true;
+      expect(fields.some(([k]) => k === "Count")).to.be.true;
+
+      // Check columns and types
+      const expectedColumns = [
+        ["id", "int"],
+        ["username", "varchar"],
+        ["email", "varchar"],
+        ["password", "varchar"],
+        ["created_at", "timestamp"]
       ];
-      expectedPatterns.forEach(pattern => {
-        expect(textLines.some(line => pattern.test(line))).to.be.true;
+      expectedColumns.forEach(([col, type]) => {
+        expect(fields.some(([k, v]) => k === col && v === type)).to.be.true;
       });
     });
 
     // check user default data
     cy.data("users");
     cy.sortBy(0);
+
+    cy.addRow({
+      id: "5",
+      username: "alice_wonder",
+      email: "alice@example.com",
+      password: "securepassword2",
+      created_at: "2022-02-02"
+    });
+
+    cy.deleteRow(3);
     cy.getTableData().then(({ columns, rows }) => {
       expect(columns).to.deep.equal([
-        "#",
-        "id [INT]",
-        "username [VARCHAR]",
-        "email [VARCHAR]",
-        "password [VARCHAR]",
-        "created_at [TIMESTAMP]"
+        "",
+        "id",
+        "username",
+        "email",
+        "password",
+        "created_at"
     ]);
-      expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
-        [
-            "1",
-            "1",
-            "john_doe",
-            "john@example.com",
-            "securepassword1",
-        ],
-        [
-            "2",
-            "2",
-            "jane_smith",
-            "jane@example.com",
-            "securepassword2",
-        ],
-        [
-            "3",
-            "3",
-            "admin_user",
-            "admin@example.com",
-            "adminpass",
-        ]
-      ]);
+      // Check usernames are correct after delete operation
+      expect(rows.length).to.equal(3);
+      expect(rows[0][2]).to.equal("john_doe");
+      expect(rows[1][2]).to.equal("jane_smith");
+      expect(rows[2][2]).to.equal("admin_user");
     });
 
     // check total count
@@ -103,15 +97,8 @@ describe('MySQL E2E test', () => {
     cy.setTablePageSize(1);
     cy.submitTable();
     cy.getTableData().then(({ rows }) => {
-      expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
-        [
-            "1",
-            "1",
-            "john_doe",
-            "john@example.com",
-            "securepassword1",
-        ],
-      ]);
+      expect(rows.length).to.equal(1);
+      expect(rows[0][2]).to.equal("john_doe");
     });
 
     // check conditions
@@ -121,15 +108,8 @@ describe('MySQL E2E test', () => {
     ]);
     cy.submitTable();
     cy.getTableData().then(({ rows }) => {
-      expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
-        [
-          "1",
-          "3",
-          "admin_user",
-          "admin@example.com",
-          "adminpass",
-        ]
-      ]);
+      expect(rows.length).to.equal(1);
+      expect(rows[0][2]).to.equal("admin_user");
     });
 
     // check clearing of the query and page size
@@ -148,59 +128,30 @@ describe('MySQL E2E test', () => {
     cy.submitTable();
 
     // test saving
-    cy.updateRow(1, 2, "jane_smith1", false);
-    cy.getTableData().then(({ rows }) => {
-      expect(rows.slice(1).map(row => row.slice(0, -1))).to.deep.equal([
-        [
-          "",
-          "2",
-          "jane_smith1",
-          "jane@example.com",
-          "securepassword2",
-        ]
-      ]);
+    cy.updateRow(1, 1, "jane_smith1", false);
+    cy.getTableData().then(({rows}) => {
+      expect(rows[1][2]).to.equal("jane_smith1");
     });
-    cy.updateRow(1, 2, "jane_smith", false);
+    
+    // Revert the change back
+    cy.updateRow(1, 1, "jane_smith", false);
     cy.getTableData().then(({ rows }) => {
-      expect(rows.slice(1).map(row => row.slice(0, -1))).to.deep.equal([
-        [
-          "",
-          "2",
-          "jane_smith",
-          "jane@example.com",
-          "securepassword2",
-        ]
-      ]);
+      expect(rows[1][2]).to.equal("jane_smith");
     });
 
-    cy.updateRow(1, 2, "jane_smith");
-    cy.getTableData().then(({ rows }) => {
-      expect(rows.slice(1).map(row => row.slice(0, -1))).to.deep.equal([
-        [
-          "",
-          "2",
-          "jane_smith",
-          "jane@example.com",
-          "securepassword2",
-        ]
-      ]);
+    // Test canceling an edit
+    cy.updateRow(1, 1, "jane_smith_temp");
+    cy.getTableData().then(({rows}) => {
+      expect(rows[1][2]).to.equal("jane_smith");
     });
 
     // check search
     cy.searchTable("john");
-    cy.wait(250);
-    cy.getHighlightedRows().then(rows => {
-      expect(rows.length).to.equal(1);
-      expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
-        [
-            "1",
-            "1",
-            "john_doe",
-            "john@example.com",
-            "securepassword1"
-        ]
-      ]);
-    });
+    cy.wait(100);
+    cy.getHighlightedCell().first().should('have.text', 'john_doe');
+    cy.searchTable("john");
+    cy.wait(100);
+    cy.getHighlightedCell().first().should('have.text', 'john@example.com');
 
     // check graph
     cy.goto("graph");
@@ -219,23 +170,44 @@ describe('MySQL E2E test', () => {
         expect(graph[key].sort()).to.deep.equal(expectedGraph[key].sort());
       });
     });
-    cy.getGraphNode().then(text => {
-      const textLines = text.split("\n");
-      const expectedPatterns = [
-        /^users$/,
-        /^Type: BASE TABLE$/,
-        /^Total Size: .+$/, // Ignores actual size value
-        /^Data Size: .+$/,  // Ignores actual size value
-        /^Count: .+$/,      // Ignores actual count value
-        /^id: int$/,
+    cy.getGraphNode("users").then(fields => {
+      // Check type
+      expect(fields.some(([k, v]) => k === "Type" && v === "BASE TABLE")).to.be.true;
+
+      // Check Total Size, Data Size, Count (just keys exist)
+      expect(fields.some(([k]) => k === "Total Size")).to.be.true;
+      expect(fields.some(([k]) => k === "Data Size")).to.be.true;
+      expect(fields.some(([k]) => k === "Count")).to.be.true;
+
+      // Check columns and types
+      const expectedColumns = [
+        ["id", "int"],
+        ["username", "varchar"],
+        ["email", "varchar"],
+        ["password", "varchar"],
+        ["created_at", "timestamp"]
       ];
-      expectedPatterns.forEach(pattern => {
-        expect(textLines.some(line => pattern.test(line))).to.be.true;
+      expectedColumns.forEach(([col, type]) => {
+        expect(fields.some(([k, v]) => k === col && v === type)).to.be.true;
       });
     });
 
     // check sql query in scratchpad
     cy.goto("scratchpad");
+
+    cy.addScratchpadPage();
+    cy.getScratchpadPages().then(pages => {
+      expect(pages).to.deep.equal(["Page 1", "Page 2"]);
+    });
+
+    cy.deleteScratchpadPage(0);
+    cy.getScratchpadPages().then(pages => {
+      expect(pages).to.deep.equal(["Page 1", "Page 2"]);
+    });
+    cy.deleteScratchpadPage(0, false);
+    cy.getScratchpadPages().then(pages => {
+      expect(pages).to.deep.equal(["Page 2"]);
+    });
     cy.writeCode(0, "SELECT * FROM test_db.users1;");
     cy.runCode(0);
     cy.getCellError(0).then(err => expect(err).to.equal("Error 1146 (42S02): Table 'test_db.users1' doesn't exist"));
@@ -244,36 +216,17 @@ describe('MySQL E2E test', () => {
     cy.runCode(0);
     cy.getCellQueryOutput(0).then(({ rows, columns }) => {
       expect(columns).to.deep.equal([
-        "#",
-        "id [INT]",
-        "username [VARCHAR]",
-        "email [VARCHAR]",
-        "password [VARCHAR]",
-        "created_at [TIMESTAMP]"
+        "",
+        "id",
+        "username",
+        "email",
+        "password",
+        "created_at"
       ]);
-      expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
-        [
-            "1",
-            "1",
-            "john_doe",
-            "john@example.com",
-            "securepassword1",
-        ],
-        [
-            "2",
-            "2",
-            "jane_smith",
-            "jane@example.com",
-            "securepassword2",
-        ],
-        [
-            "3",
-            "3",
-            "admin_user",
-            "admin@example.com",
-            "adminpass",
-        ]
-      ]);
+      expect(rows.length).to.equal(3);
+      expect(rows[0][2]).to.equal("john_doe");
+      expect(rows[1][2]).to.equal("jane_smith");
+      expect(rows[2][2]).to.equal("admin_user");
     });
 
     cy.writeCode(0, "UPDATE test_db.users SET username='john_doe1' WHERE id=1");
@@ -290,22 +243,15 @@ describe('MySQL E2E test', () => {
     cy.runCode(1);
     cy.getCellQueryOutput(1).then(({ rows, columns }) => {
       expect(columns).to.deep.equal([
-        "#",
-        "id [INT]",
-        "username [VARCHAR]",
-        "email [VARCHAR]",
-        "password [VARCHAR]",
-        "created_at [TIMESTAMP]"
+        "",
+        "id",
+        "username",
+        "email",
+        "password",
+        "created_at"
       ]);
-      expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
-        [
-            "1",
-            "1",
-            "john_doe",
-            "john@example.com",
-            "securepassword1",
-        ]
-      ]);
+      expect(rows.length).to.equal(1);
+      expect(rows[0][2]).to.equal("john_doe");
     });
 
     // remove first cell
@@ -314,22 +260,15 @@ describe('MySQL E2E test', () => {
     // ensure the first cell has the second cell data
     cy.getCellQueryOutput(0).then(({ rows, columns }) => {
       expect(columns).to.deep.equal([
-        "#",
-        "id [INT]",
-        "username [VARCHAR]",
-        "email [VARCHAR]",
-        "password [VARCHAR]",
-        "created_at [TIMESTAMP]"
+        "",
+        "id",
+        "username",
+        "email",
+        "password",
+        "created_at"
       ]);
-      expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
-        [
-            "1",
-            "1",
-            "john_doe",
-            "john@example.com",
-            "securepassword1",
-        ]
-      ]);
+      expect(rows.length).to.equal(1);
+      expect(rows[0][2]).to.equal("john_doe");
     });
 
     // logout

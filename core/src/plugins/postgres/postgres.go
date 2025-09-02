@@ -19,9 +19,9 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
-	"log"
 
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	mapset "github.com/deckarep/golang-set/v2"
@@ -37,6 +37,13 @@ var (
 		"BOOLEAN", "POINT", "LINE", "LSEG", "BOX", "PATH", "POLYGON", "CIRCLE",
 		"CIDR", "INET", "MACADDR", "UUID", "XML", "JSON", "JSONB", "ARRAY", "HSTORE",
 	)
+
+	supportedOperators = map[string]string{
+		"=": "=", ">=": ">=", ">": ">", "<=": "<=", "<": "<", "<>": "<>",
+		"!=": "!=", "!>": "!>", "!<": "!<", "BETWEEN": "BETWEEN", "NOT BETWEEN": "NOT BETWEEN",
+		"LIKE": "LIKE", "NOT LIKE": "NOT LIKE", "IN": "IN", "NOT IN": "NOT IN",
+		"IS NULL": "IS NULL", "IS NOT NULL": "IS NOT NULL", "AND": "AND", "OR": "OR", "NOT": "NOT",
+	}
 )
 
 type PostgresPlugin struct {
@@ -45,6 +52,10 @@ type PostgresPlugin struct {
 
 func (p *PostgresPlugin) GetSupportedColumnDataTypes() mapset.Set[string] {
 	return supportedColumnDataTypes
+}
+
+func (p *PostgresPlugin) GetSupportedOperators() map[string]string {
+	return supportedOperators
 }
 
 func (p *PostgresPlugin) FormTableName(schema string, storageUnit string) string {
@@ -86,11 +97,16 @@ func (p *PostgresPlugin) GetTableInfoQuery() string {
 	// AND t.table_type = 'BASE TABLE' this removes the view tables
 }
 
+func (p *PostgresPlugin) GetPlaceholder(index int) string {
+	return fmt.Sprintf("$%d", index)
+}
+
 func (p *PostgresPlugin) GetTableNameAndAttributes(rows *sql.Rows, db *gorm.DB) (string, []engine.Record) {
 	var tableName, tableType, totalSize, dataSize string
 	var rowCount int64
 	if err := rows.Scan(&tableName, &tableType, &totalSize, &dataSize, &rowCount); err != nil {
-		log.Fatal(err)
+		log.Logger.WithError(err).Error("Failed to scan table info row data")
+		return "", nil
 	}
 
 	rowCountRecordValue := "unknown"
@@ -109,7 +125,7 @@ func (p *PostgresPlugin) GetTableNameAndAttributes(rows *sql.Rows, db *gorm.DB) 
 }
 
 func (p *PostgresPlugin) GetDatabases(config *engine.PluginConfig) ([]string, error) {
-	return plugins.WithConnection[[]string](config, p.DB, func(db *gorm.DB) ([]string, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]string, error) {
 		var databases []struct {
 			Datname string `gorm:"column:datname"`
 		}
@@ -125,7 +141,7 @@ func (p *PostgresPlugin) GetDatabases(config *engine.PluginConfig) ([]string, er
 }
 
 func (p *PostgresPlugin) executeRawSQL(config *engine.PluginConfig, query string, params ...interface{}) (*engine.GetRowsResult, error) {
-	return plugins.WithConnection[*engine.GetRowsResult](config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
 		rows, err := db.Raw(query, params...).Rows()
 		if err != nil {
 			return nil, err

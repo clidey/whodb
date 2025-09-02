@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,15 +17,16 @@
 const dbHost = 'localhost';
 const dbUser = 'user';
 const dbPassword = 'password';
+const dbName = 'test_db';
 
 describe('MongoDB E2E test', () => {
   it('should login correctly', () => {
     // login and setup
-    cy.login('MongoDB', dbHost, dbUser, dbPassword);
-    cy.selectSchema("test_db");
-    
+    cy.login('MongoDB', dbHost, dbUser, dbPassword, dbName);
+
     // get all çollections
     cy.getTables().then(storageUnitNames => {
+      cy.log(storageUnitNames);
       expect(storageUnitNames).to.be.an('array');
       expect(storageUnitNames).to.deep.equal([
         "order_items",
@@ -34,147 +35,173 @@ describe('MongoDB E2E test', () => {
         "payments",
         "products",
         "system.views",
-        "users",
+        "users"
       ]);
     });
 
-    // check users table and fields
+    // check users collection and fields
     cy.explore("users");
-    cy.getExploreFields().then(text => {
-      const textLines = text.split("\n");
-    
-      const expectedPatterns = [
-        /^users$/,
-        /^Type: Collection$/,
-        /^Storage Size: .+$/, // Ignores actual size value
-        /^Count: .+$/,      // Ignores actual count value
-      ];
-      expectedPatterns.forEach(pattern => {
-        expect(textLines.some(line => pattern.test(line))).to.be.true;
-      });
+    cy.getExploreFields().then(fields => {
+      // For Mongo, fields may be a string or array of [key, value]
+      const arr = Array.isArray(fields)
+        ? fields
+        : (typeof fields === "string"
+            ? fields.split("\n").map(line => {
+                const idx = line.indexOf(": ");
+                if (idx === -1) return [line, ""];
+                return [line.slice(0, idx), line.slice(idx + 2)];
+              })
+            : []);
+      // Check type
+      expect(arr.some(([k, v]) => k === "Type" && v === "Collection")).to.be.true;
+
+      // Check Storage Size, Count (just keys exist)
+      expect(arr.some(([k]) => k === "Storage Size")).to.be.true;
+      expect(arr.some(([k]) => k === "Count")).to.be.true;
+
+      // Check columns and types (Mongo doesn't have fixed columns, but check for sample document keys)
+      // Not applicable for Mongo, so skip
     });
 
     // check user default data
     cy.data("users");
     cy.sortBy(0);
-    
-    const expectedData = [
-      {
-        _id: undefined, // only used to update and not needed
-        email: "john@example.com",
-        password: "securepassword1",
-        username: "john_doe",
-      },
-      {
-        _id: undefined, // only used to update and not needed
-        email: "jane@example.com",
-        password: "securepassword2",
-        username: "jane_smith",
-      },
-      {
-        _id: undefined, // only used to update and not needed
-        email: "admin@example.com",
-        password: "adminpass",
-        username: "admin_user",
-      }
-    ];
-    
-    function validateRow(row, expected, expectedIndex) {
-      const [rowIndex, rawJson] = row;
-      const json = JSON.parse(rawJson);
-      if (expectedData[expectedIndex-1]._id == null) {
-        expectedData[expectedIndex-1]._id = json["_id"];
-      }
-      expect(rowIndex).to.equal(expectedIndex.toString());
-      expect(json.email).to.equal(expected.email);
-      expect(json.password).to.equal(expected.password);
-      expect(json.username).to.equal(expected.username);
-    }
 
+    // We'll use the same approach as Postgres: get table data, check columns and rows
     cy.getTableData().then(({ columns, rows }) => {
+      console.log(columns);
+      console.log(rows);
       expect(columns).to.deep.equal([
-        "#",
-        "document [Document]"
+        "",
+        "document"
       ]);
-    
-      rows.forEach((row, index) => {
-        const expected = expectedData[index];
-        validateRow(row, expected, index + 1);
+      // Save _id for each row for later use
+      const expectedRows = [
+        {
+          email: "john@example.com",
+          password: "securepassword1",
+          username: "john_doe"
+        },
+        {
+          email: "jane@example.com",
+          password: "securepassword2",
+          username: "jane_smith"
+        },
+        {
+          email: "admin@example.com",
+          password: "adminpass",
+          username: "admin_user"
+        }
+      ];
+      // Map to store _ids for later
+      const rowIds = [];
+      rows.forEach((row, idx) => {
+        const [_, rawJson] = row;
+        const json = JSON.parse(rawJson);
+        rowIds.push(json._id);
+        expect(json.email).to.equal(expectedRows[idx].email);
+        expect(json.password).to.equal(expectedRows[idx].password);
+        expect(json.username).to.equal(expectedRows[idx].username);
       });
-    
+
       // Now that all _id values are captured, use them dynamically
+      // check page size
       cy.setTablePageSize(1);
       cy.submitTable();
       cy.getTableData().then(({ rows }) => {
-        validateRow(rows[0], expectedData[0], 1);
+        const [_, rawJson] = rows[0];
+        const json = JSON.parse(rawJson);
+        expect(json.email).to.equal(expectedRows[0].email);
+        expect(json.password).to.equal(expectedRows[0].password);
+        expect(json.username).to.equal(expectedRows[0].username);
       });
-    
+
+      // check where condition by _id
       cy.whereTable([
-        ["_id", "eq", expectedData[0]._id],
+        ["_id", "eq", rowIds[0]],
       ]);
       cy.submitTable();
       cy.getTableData().then(({ rows }) => {
-        validateRow(rows[0], expectedData[0], 1);
+        const [_, rawJson] = rows[0];
+        const json = JSON.parse(rawJson);
+        expect(json.email).to.equal(expectedRows[0].email);
+        expect(json.password).to.equal(expectedRows[0].password);
+        expect(json.username).to.equal(expectedRows[0].username);
       });
-    
+
+      // check clearing of the query and page size
       cy.setTablePageSize(10);
       cy.clearWhereConditions();
       cy.submitTable();
       cy.getTableData().then(({ rows }) => {
         expect(rows.length).to.equal(3);
-        rows.forEach((row, index) => {
-          validateRow(row, expectedData[index], index + 1);
+        rows.forEach((row, idx) => {
+          const [_, rawJson] = row;
+          const json = JSON.parse(rawJson);
+          expect(json.email).to.equal(expectedRows[idx].email);
+          expect(json.password).to.equal(expectedRows[idx].password);
+          expect(json.username).to.equal(expectedRows[idx].username);
         });
       });
-    
-      // Editing check
+
+      // check editing capability
       cy.setTablePageSize(2);
       cy.submitTable();
-    
-      cy.updateRow(1, 1, JSON.stringify({
-        _id: expectedData[1]._id,
-        created_at: "2025-02-22T10:42:06.577Z",
-        email: expectedData[1].email,
-        password: expectedData[1].password,
+
+      // First, update and save the change
+      const updatedJane = {
+        _id: rowIds[1],
+        email: expectedRows[1].email,
+        password: expectedRows[1].password,
         username: "jane_smith1"
-      }), false);
-    
+      };
+      cy.updateRow(1, 0, JSON.stringify(updatedJane), false);
       cy.getTableData().then(({ rows }) => {
-        const updated = { ...expectedData[1], username: "jane_smith1" };
-        const row = rows[1];
-        const [_, rawJson] = row;
+        const [_, rawJson] = rows[1];
         const json = JSON.parse(rawJson);
-        expect(json.username).to.equal(updated.username);
+        expect(json.username).to.equal("jane_smith1");
       });
-    
-      cy.updateRow(1, 1, JSON.stringify(expectedData[1]), false);
+
+      // Revert the change back
+      const revertedJane = {
+        _id: rowIds[1],
+        email: expectedRows[1].email,
+        password: expectedRows[1].password,
+        username: "jane_smith"
+      };
+      cy.updateRow(1, 0, JSON.stringify(revertedJane), false);
       cy.getTableData().then(({ rows }) => {
-        const row = rows[1];
-        const [_, rawJson] = row;
+        const [_, rawJson] = rows[1];
         const json = JSON.parse(rawJson);
-        expect(json.username).to.equal(expectedData[1].username);
+        expect(json.username).to.equal("jane_smith");
       });
-    
-      cy.updateRow(1, 1, JSON.stringify({
-        ...expectedData[1],
-        username: "jane_smith1"
-      }));
+
+      // Test canceling an edit (should keep original value)
+      const tempJane = {
+        _id: rowIds[1],
+        email: expectedRows[1].email,
+        password: expectedRows[1].password,
+        username: "jane_smith_temp"
+      };
+      cy.updateRow(1, 0, JSON.stringify(tempJane));
+      cy.wait(100);
       cy.getTableData().then(({ rows }) => {
-        const row = rows[1];
-        const [_, rawJson] = row;
+        const [_, rawJson] = rows[1];
         const json = JSON.parse(rawJson);
-        // Even though we updated, we are expecting the username to still be "jane_smith"
-        expect(json.username).to.equal(expectedData[1].username);
+        expect(json.username).to.equal("jane_smith");
       });
-    
+
       // Search
       cy.searchTable("john");
-      cy.wait(250);
+      cy.wait(100);
       cy.getHighlightedRows().then(rows => {
         expect(rows.length).to.equal(1);
-        validateRow(rows[0], expectedData[0], 1);
+        const [_, rawJson] = rows[0];
+        const json = JSON.parse(rawJson);
+        expect(json.email).to.equal("john@example.com");
+        expect(json.username).to.equal("john_doe");
       });
-    
+
       // Graph
       cy.goto("graph");
       cy.getGraph().then(graph => {
@@ -186,26 +213,22 @@ describe('MongoDB E2E test', () => {
           "payments": [],
           "order_summary": []
         };
-    
+
         Object.keys(expectedGraph).forEach(key => {
           expect(graph).to.have.property(key);
           expect(graph[key].sort()).to.deep.equal(expectedGraph[key].sort());
         });
       });
-    
-      cy.getGraphNode().then(text => {
-        const textLines = text.split("\n");
-        const expectedPatterns = [
-          /^users$/,
-          /^Type: Collection$/,
-          /^Storage Size: .+$/,
-          /^Count: .+$/
-        ];
-        expectedPatterns.forEach(pattern => {
-          expect(textLines.some(line => pattern.test(line))).to.be.true;
-        });
+
+      cy.getGraphNode("users").then(fields => {
+        // Check type
+        expect(fields.some(([k, v]) => k === "Type" && v === "Collection")).to.be.true;
+
+        // Check Storage Size, Count (just keys exist)
+        expect(fields.some(([k]) => k === "Storage Size")).to.be.true;
+        expect(fields.some(([k]) => k === "Count")).to.be.true;
       });
-    
+
       // Logout
       cy.logout();
     });

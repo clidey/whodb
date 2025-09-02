@@ -56,6 +56,21 @@ services:
     networks:
       - db
 
+  e2e_mysql_842:
+    image: mysql:8.4.2
+    environment:
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: test_db
+      MYSQL_ROOT_PASSWORD: password
+    volumes:
+      - e2e_mysql_842:/var/lib/mysql
+      - ./sample-data/mysql/data.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3308:3306"
+    networks:
+      - db
+
   e2e_mariadb:
     image: mariadb
     environment:
@@ -76,6 +91,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: user
       MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: test_db
     volumes:
       - e2e_mongo:/data/db
       - ./sample-data/mongo/data.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
@@ -83,7 +99,6 @@ services:
       - "27017:27017"
     networks:
       - db
-    command: mongod --bind_ip_all --auth
 
   e2e_clickhouse:
     image: clickhouse/clickhouse-server
@@ -182,6 +197,7 @@ services:
     networks:
       - db
 
+
 networks:
   db:
     driver: bridge
@@ -195,3 +211,4 @@ volumes:
   e2e_clickhouse:
   e2e_redis:
   e2e_elasticsearch:
+  e2e_mysql_842:

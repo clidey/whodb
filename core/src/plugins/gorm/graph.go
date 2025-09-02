@@ -15,7 +15,10 @@
 package gorm_plugin
 
 import (
+	"fmt"
+
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	"gorm.io/gorm"
 )
@@ -34,6 +37,7 @@ func (p *GormPlugin) GetGraph(config *engine.PluginConfig, schema string) ([]eng
 			schema = config.Credentials.Database
 		}
 		if err := p.GetGraphQueryDB(db, schema).Scan(&tableRelations).Error; err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to execute graph query for schema: %s", schema))
 			return nil, err
 		}
 
@@ -44,6 +48,7 @@ func (p *GormPlugin) GetGraph(config *engine.PluginConfig, schema string) ([]eng
 
 		storageUnits, err := p.GetStorageUnits(config, schema)
 		if err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get storage units for graph generation in schema: %s", schema))
 			return nil, err
 		}
 

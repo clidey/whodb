@@ -17,12 +17,11 @@
 import { useMutation } from "@apollo/client";
 import { FC, useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { Icons } from "../../components/icons";
-import { Container, Page } from "../../components/page";
-import { LogoutDocument, LogoutMutation, LogoutMutationVariables } from "../../generated/graphql";
+import { Container } from "../../components/page";
+import { LogoutDocument, LogoutMutation, LogoutMutationVariables } from '@graphql';
 import { AuthActions } from "../../store/auth";
-import { notify } from "../../store/function";
 import { Loading } from "../../components/loading";
+import { toast } from "@clidey/ux";
 
 export const LogoutPage: FC = () => {
   const [logout, ] = useMutation<LogoutMutation, LogoutMutationVariables>(LogoutDocument);
@@ -32,10 +31,10 @@ export const LogoutPage: FC = () => {
     logout({
       onCompleted() {
         dispatch(AuthActions.logout());
-        notify("Logged out successfully", "success");
+        toast.success("Logged out successfully");
       },
       onError() {
-        notify("Error logging out", "error");
+        toast.error("Error logging out");
       }
     });
   }, [dispatch, logout]);
