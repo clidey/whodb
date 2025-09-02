@@ -23,9 +23,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/alifiroozi80/duckdb"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
+	duckdbdriver "github.com/clidey/whodb/core/src/plugins/duckdb/driver"
 	"gorm.io/gorm"
 )
 
@@ -103,7 +103,7 @@ func (p *DuckDBPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 		dsn += "?" + strings.Join(params, "&")
 	}
 	
-	db, err := gorm.Open(duckdb.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(duckdbdriver.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to DuckDB: %w", err)
 	}
