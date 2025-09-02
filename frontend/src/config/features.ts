@@ -19,6 +19,8 @@ import { FeatureFlags } from './ee-types';
 // Default feature flags (all disabled for open source version)
 const defaultFeatures: FeatureFlags = {
     analyzeView: false,
+    explainView: false,
+    generateView: false,
     customTheme: false,
     dataVisualization: false,
     aiChat: false,
