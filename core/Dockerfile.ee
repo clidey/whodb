@@ -13,7 +13,6 @@
 # limitations under the License.
 
 # WhoDB Enterprise Edition Dockerfile
-# Build from project root: docker build -f core/Dockerfile.ee -t whodb:ee .
 
 # Build frontend with EE modules
 FROM node:lts-alpine AS build-stage
