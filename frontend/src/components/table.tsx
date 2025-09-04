@@ -85,6 +85,7 @@ import {FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {useExportToCSV} from "./hooks"; // You may need to adjust this import
 import {useDeleteRowMutation, useGenerateMockDataMutation, useMockDataMaxRowCountQuery} from '@graphql';
 import {Tip} from "./tip";
+import {filterKeyboardInput, getInputTypeForColumnType, getPlaceholderForColumnType, validateInputForColumnType} from "@/utils/input-validation";
 
 // Type sets based on core/src/plugins/gorm/utils.go
 const stringTypes = new Set([
@@ -216,13 +217,13 @@ export const StorageUnitTable: FC<TableProps> = ({
         setEditRowInitialLengths(rowData.map(cell => cell?.length || 0));
     };
 
-    const handleInputChange = (value: string, idx: number) => {
-        if (editRow) {
+    const handleInputChange = useCallback((value: string, idx: number, columnType?: string) => {
+        if (editRow && validateInputForColumnType(value, columnType)) {
             const updated = [...editRow];
             updated[idx] = value;
             setEditRow(updated);
         }
-    };
+    }, [editRow]);
 
     const handleUpdate = useCallback(() => {
         if (editIndex !== null && editRow) {
@@ -950,16 +951,21 @@ export const StorageUnitTable: FC<TableProps> = ({
                                                 editRowInitialLengths[idx] < 50 ?
                                                     <Input
                                                         key={`input-${idx}`}
+                                                        type={getInputTypeForColumnType(columnTypes?.[idx])}
                                                         value={editRow[idx] ?? ""}
-                                                        onChange={e => handleInputChange(e.target.value, idx)}
+                                                        onChange={e => handleInputChange(e.target.value, idx, columnTypes?.[idx])}
+                                                        onKeyDown={e => filterKeyboardInput(e, columnTypes?.[idx])}
+                                                        placeholder={getPlaceholderForColumnType(columnTypes?.[idx])}
                                                         data-testid={`editable-field-${idx}`}
                                                     />
                                                     : <TextArea
                                                         key={`textarea-${idx}`}
                                                         value={editRow[idx] ?? ""}
-                                                        onChange={e => handleInputChange(e.target.value, idx)}
+                                                        onChange={e => handleInputChange(e.target.value, idx, columnTypes?.[idx])}
+                                                        onKeyDown={e => filterKeyboardInput(e, columnTypes?.[idx])}
                                                         rows={5}
                                                         className="min-h-[100px]"
+                                                        placeholder={getPlaceholderForColumnType(columnTypes?.[idx])}
                                                         data-testid={`editable-field-${idx}`}
                                                     />
                                             }

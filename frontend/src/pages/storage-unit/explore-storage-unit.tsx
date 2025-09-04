@@ -65,6 +65,7 @@ import {getDatabaseOperators} from "../../utils/database-operators";
 import {getDatabaseStorageUnitLabel, isNoSQL} from "../../utils/functions";
 import {ExploreStorageUnitWhereCondition} from "./explore-storage-unit-where-condition";
 import {databaseSupportsScratchpad} from "../../utils/database-features";
+import {filterKeyboardInput, getInputTypeForColumnType, getPlaceholderForColumnType, validateInputForColumnType} from "@/utils/input-validation";
 
 
 export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad }) => {
@@ -284,12 +285,19 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         setShowAdd(true);
     }, [rows?.Columns]);
 
-    const handleAddRowFieldChange = useCallback((key: string, value: string) => {
-        setAddRowData(prev => ({
-            ...prev,
-            [key]: value,
-        }));
-    }, []);
+    const handleAddRowFieldChange = useCallback((key: string, value: string, columnType?: string) => {
+        // Validate the input based on column type
+        if (validateInputForColumnType(value, columnType)) {
+            setAddRowData(prev => ({
+                ...prev,
+                [key]: value,
+            }));
+            // Clear error if validation passes
+            if (addRowError) {
+                setAddRowError(null);
+            }
+        }
+    }, [addRowError]);
 
     const handleAddRowSubmit = useCallback(() => {
         if (rows?.Columns == null) return;
@@ -460,9 +468,11 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                                             <p className="text-xs">{col.Type}</p>
                                         </Tip>
                                         <Input
+                                            type={getInputTypeForColumnType(col.Type)}
                                             value={addRowData[col.Name] ?? ""}
-                                            onChange={e => handleAddRowFieldChange(col.Name, e.target.value)}
-                                            placeholder={`Enter value for ${col.Name}`}
+                                            onChange={e => handleAddRowFieldChange(col.Name, e.target.value, col.Type)}
+                                            onKeyDown={e => filterKeyboardInput(e, col.Type)}
+                                            placeholder={getPlaceholderForColumnType(col.Type) || `Enter value for ${col.Name}`}
                                         />
                                     </div>
                                 ))}
