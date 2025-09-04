@@ -60,6 +60,7 @@ type GetRowsResult struct {
 	Columns       []Column
 	Rows          [][]string
 	DisableUpdate bool
+	TotalCount    int64
 }
 
 type GraphUnitRelationshipType string

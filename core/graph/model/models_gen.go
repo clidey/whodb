@@ -112,6 +112,7 @@ type RowsResult struct {
 	Columns       []*Column  `json:"Columns"`
 	Rows          [][]string `json:"Rows"`
 	DisableUpdate bool       `json:"DisableUpdate"`
+	TotalCount    int        `json:"TotalCount"`
 }
 
 type SettingsConfig struct {

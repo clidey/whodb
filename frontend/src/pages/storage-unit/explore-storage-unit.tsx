@@ -200,12 +200,20 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     );
 
     const totalCount = useMemo(() => {
-        const count = unit?.Attributes.find(attribute => attribute.Key === "Count")?.Value;
-        if (count == null || count === "0" || count === "unknown") {
-            return rows?.Rows.length?.toString() ?? "unknown";
+        // Use backend-provided total count if available and valid
+        if (rows?.TotalCount != null && rows.TotalCount > 0) {
+            return rows.TotalCount.toString();
         }
-        return count;
-    }, [unit, rows?.Rows.length]);
+        
+        // Fall back to storage unit metadata if backend count is unavailable or failed
+        const count = unit?.Attributes.find(attribute => attribute.Key === "Count")?.Value;
+        if (count != null && count !== "0" && count !== "unknown") {
+            return count;
+        }
+        
+        // Last resort: return unknown
+        return "unknown";
+    }, [unit, rows?.TotalCount]);
 
     useEffect(() => {
         handleSubmitRequest();

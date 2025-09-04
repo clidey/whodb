@@ -245,6 +245,15 @@ func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, wher
 		return nil, err
 	}
 
+	// Get total count before applying pagination
+	var totalCount int64
+	countQuery := selectQuery.Session(&gorm.Session{})
+	if err := countQuery.Count(&totalCount).Error; err != nil {
+		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get total count for SQLite table %s", storageUnit))
+		// Don't fail the whole query if count fails
+		totalCount = -1
+	}
+
 	// Select columns with datetime casting
 	selectQuery = selectQuery.Select(selects)
 
@@ -269,7 +278,15 @@ func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, wher
 	}
 	defer dataRows.Close()
 
-	return p.ConvertRawToRows(dataRows)
+	result, err := p.ConvertRawToRows(dataRows)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set the total count
+	result.TotalCount = totalCount
+
+	return result, nil
 }
 
 func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
@@ -287,6 +304,15 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 	if err != nil {
 		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to apply where conditions for table %s.%s", schema, storageUnit))
 		return nil, err
+	}
+
+	// Get total count before applying pagination
+	var totalCount int64
+	countQuery := query.Session(&gorm.Session{})
+	if err := countQuery.Count(&totalCount).Error; err != nil {
+		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get total count for table %s.%s", schema, storageUnit))
+		// Don't fail the whole query if count fails
+		totalCount = -1
 	}
 
 	// Apply sorting conditions if provided
@@ -320,6 +346,9 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to convert raw rows for table %s.%s", schema, storageUnit))
 		return nil, err
 	}
+
+	// Set the total count
+	result.TotalCount = totalCount
 
 	// Fix any missing column type metadata
 	for i, col := range result.Columns {

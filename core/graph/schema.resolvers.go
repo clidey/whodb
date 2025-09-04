@@ -542,6 +542,7 @@ func (r *queryResolver) Row(ctx context.Context, schema string, storageUnit stri
 		Columns:       columns,
 		Rows:          rowsResult.Rows,
 		DisableUpdate: rowsResult.DisableUpdate,
+		TotalCount:    int(rowsResult.TotalCount),
 	}, nil
 }
 
