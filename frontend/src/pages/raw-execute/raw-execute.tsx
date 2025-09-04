@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { Alert, AlertDescription, AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertTitle, Badge, Button, Card, cn, EmptyState, formatDate, Select, SelectContent, SelectItem, SelectTrigger, Separator, Sheet, SheetContent, Tabs, TabsContent, TabsList, TabsTrigger } from "@clidey/ux";
+import { Alert, AlertDescription, AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertTitle, Badge, Button, Card, cn, ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, EmptyState, formatDate, Select, SelectContent, SelectItem, SelectTrigger, Separator, Sheet, SheetContent, Tabs, TabsContent, TabsList, TabsTrigger } from "@clidey/ux";
 import { DatabaseType, RowsResult } from '@graphql';
-import { ArrowPathIcon, BellAlertIcon, CheckCircleIcon, CircleStackIcon, ClipboardDocumentIcon, ClockIcon, PencilIcon, PlayIcon, PlusCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, BellAlertIcon, CheckCircleIcon, CircleStackIcon, ClipboardDocumentIcon, ClockIcon, EllipsisVerticalIcon, PencilIcon, PlayIcon, PlusCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import { indexOf } from "lodash";
@@ -219,6 +219,28 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                 <div className="flex grow h-[150px] border border-gray-200 rounded-md overflow-hidden dark:bg-white/10 dark:border-white/5">
                     <CodeEditor language="sql" value={code} setValue={setCode} onRun={(c) => handleRawExecute(c)} />
                 </div>
+                <div className="absolute top-2 right-2 z-10" data-testid="scratchpad-cell-options">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger>
+                            <Button
+                                variant="ghost"
+                                className="flex justify-center items-center"
+                                data-testid="icon-button">
+                                <EllipsisVerticalIcon className="w-4 h-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setCode("")}>
+                                <ArrowPathIcon className="w-4 h-4" />
+                                Clear
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setHistoryOpen(true)}>
+                                <ClockIcon className="w-4 h-4" />
+                                Query History
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
                 <div className={classNames("absolute -bottom-3 z-20 flex justify-between px-3 pr-8 w-full opacity-0 transition-all duration-500 group-hover/cell:opacity-100 pointer-events-none", {
                     "opacity-100": showTools,
                 })}>
@@ -267,8 +289,8 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                         {
                             onDelete != null &&
                             <Tip>
-                                <Button variant="destructive" onClick={handleDelete} data-testid="delete-cell-button" className="border border-input">
-                                    <XMarkIcon className="w-4 h-4" />
+                                <Button variant="destructive" onClick={handleDelete} data-testid="delete-cell-button" className="border border-input bg-white hover:bg-white/95">
+                                    <XMarkIcon className="w-4 h-4 text-destructive" />
                                 </Button>
                                 <p>Delete the cell</p>
                             </Tip>

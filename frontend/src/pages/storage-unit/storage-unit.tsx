@@ -64,12 +64,12 @@ const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = (
 
     return (<ExpandableCard key={unit.Name} isExpanded={expanded} setExpanded={setExpanded} icon={<TableCellsIcon className="w-4 h-4" />} className={cn({
         "shadow-2xl": expanded,
-    })}>
+    })} data-testid="storage-unit-card">
         <div className="flex flex-col grow mt-2" data-testid="storage-unit-card">
             <div className="flex flex-col grow mb-2 w-full overflow-x-hidden">
                 <Tip>
                     <h1
-                        className="text-sm font-semibold mb-2 max-w-[190px] overflow-hidden text-ellipsis whitespace-nowrap"
+                        className="text-sm font-semibold mb-2 overflow-hidden text-ellipsis whitespace-nowrap max-w-[190px] mx-auto text-center"
                         data-testid="storage-unit-name"
                         title={unit.Name}
                     >
@@ -106,7 +106,7 @@ const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = (
                         }
                         {
                             expandedAttributes.map(attribute => (
-                                <StackListItem key={attribute.Key} item={isValidForeignKey(attribute.Key) ? <Badge className="text-lg">{attribute.Key}</Badge> : attribute.Key}>
+                                <StackListItem key={attribute.Key} item={isValidForeignKey(attribute.Key) ? <Badge className="text-lg" data-testid="foreign-key-attribute">{attribute.Key}</Badge> : attribute.Key}>
                                     {attribute.Value}
                                 </StackListItem>
                             ))
