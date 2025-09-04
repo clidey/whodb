@@ -1,0 +1,13 @@
+query GetFunctions($schema: String!) {
+  Functions(schema: $schema) {
+    Name
+    ReturnType
+    Parameters {
+      Key
+      Value
+    }
+    Definition
+    Language
+    IsAggregate
+  }
+}

@@ -1,0 +1,8 @@
+query GetTypes($schema: String!) {
+  Types(schema: $schema) {
+    Name
+    Schema
+    Type
+    Definition
+  }
+}

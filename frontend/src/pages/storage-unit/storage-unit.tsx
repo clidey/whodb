@@ -123,7 +123,7 @@ const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = (
     </ExpandableCard>);
 }
 
-export const StorageUnitPage: FC = () => {
+export const StorageUnitPage: FC<{ entityType?: string }> = ({ entityType = "tables" }) => {
     const navigate = useNavigate();
     const [searchParams,] = useSearchParams();
     const [create, setCreate] = useState(searchParams.get("create") === "true");

@@ -28,6 +28,7 @@ import { ChatPage } from "../pages/chat/chat";
 import {SettingsPage} from "../pages/settings/settings";
 import {ContactUsPage} from "../pages/contact-us/contact-us";
 import { isEEFeatureEnabled } from "../utils/ee-loader";
+import { EntityPage } from "../pages/entities/entity-page";
 
 export type IInternalRoute = {
     name: string;
@@ -60,6 +61,36 @@ export const InternalRoutes = {
             name: "Explore",
             path: "/storage-unit/explore/scratchpad",
             component: <ExploreStorageUnit scratchpad={true} />,
+        },
+        Functions: {
+            name: "Functions",
+            path: "/functions",
+            component: <EntityPage entityType="functions" />,
+        },
+        Procedures: {
+            name: "Procedures", 
+            path: "/procedures",
+            component: <EntityPage entityType="procedures" />,
+        },
+        Triggers: {
+            name: "Triggers",
+            path: "/triggers", 
+            component: <EntityPage entityType="triggers" />,
+        },
+        Indexes: {
+            name: "Indexes",
+            path: "/indexes",
+            component: <EntityPage entityType="indexes" />,
+        },
+        Sequences: {
+            name: "Sequences",
+            path: "/sequences",
+            component: <EntityPage entityType="sequences" />,
+        },
+        Types: {
+            name: "Types",
+            path: "/types",
+            component: <EntityPage entityType="types" />,
         },
     },
     Graph: {

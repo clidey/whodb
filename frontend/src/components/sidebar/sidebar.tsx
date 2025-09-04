@@ -38,7 +38,7 @@ import {
     useSidebar
 } from "@clidey/ux";
 import { DatabaseType, useGetDatabaseQuery, useGetSchemaQuery, useGetVersionQuery, useLoginMutation, useLoginWithProfileMutation } from '@graphql';
-import { ArrowLeftStartOnRectangleIcon, ChevronDownIcon, CogIcon, CommandLineIcon, PlusIcon, QuestionMarkCircleIcon, RectangleGroupIcon, SparklesIcon, TableCellsIcon } from "@heroicons/react/24/outline";
+import { ArrowLeftStartOnRectangleIcon, ChevronDownIcon, CogIcon, CommandLineIcon, PlusIcon, QuestionMarkCircleIcon, RectangleGroupIcon, SparklesIcon, TableCellsIcon, BeakerIcon, CodeBracketIcon, BoltIcon, DocumentDuplicateIcon, HashtagIcon, CubeIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
@@ -216,12 +216,63 @@ export const Sidebar: FC = () => {
                 icon: <TableCellsIcon className="w-4 h-4" />,
                 path: InternalRoutes.Dashboard.StorageUnit.path,
             },
-            {
-                title: "Graph",
-                icon: <RectangleGroupIcon className="w-4 h-4" />,
-                path: InternalRoutes.Graph.path,
-            },
         ];
+        
+        // Add SQL-specific entity routes
+        if (!isNoSQL(current.Type)) {
+            routes.push(
+                {
+                    title: "Functions",
+                    icon: <BeakerIcon className="w-4 h-4" />,
+                    path: InternalRoutes.Dashboard.Functions.path,
+                },
+                {
+                    title: "Procedures", 
+                    icon: <CodeBracketIcon className="w-4 h-4" />,
+                    path: InternalRoutes.Dashboard.Procedures.path,
+                },
+                {
+                    title: "Triggers",
+                    icon: <BoltIcon className="w-4 h-4" />,
+                    path: InternalRoutes.Dashboard.Triggers.path,
+                },
+                {
+                    title: "Indexes",
+                    icon: <DocumentDuplicateIcon className="w-4 h-4" />,
+                    path: InternalRoutes.Dashboard.Indexes.path,
+                }
+            );
+            
+            // PostgreSQL-specific entities
+            if (current.Type === DatabaseType.Postgres) {
+                routes.push(
+                    {
+                        title: "Sequences",
+                        icon: <HashtagIcon className="w-4 h-4" />,
+                        path: InternalRoutes.Dashboard.Sequences.path,
+                    },
+                    {
+                        title: "Types",
+                        icon: <CubeIcon className="w-4 h-4" />,
+                        path: InternalRoutes.Dashboard.Types.path,
+                    }
+                );
+            }
+        } else if (current.Type === DatabaseType.MongoDb) {
+            // MongoDB-specific entities
+            routes.push({
+                title: "Indexes",
+                icon: <DocumentDuplicateIcon className="w-4 h-4" />,
+                path: InternalRoutes.Dashboard.Indexes.path,
+            });
+        }
+        
+        routes.push({
+            title: "Graph",
+            icon: <RectangleGroupIcon className="w-4 h-4" />,
+            path: InternalRoutes.Graph.path,
+        });
+        
         if (!isNoSQL(current.Type)) {
             routes.unshift({
                 title: "Chat",
