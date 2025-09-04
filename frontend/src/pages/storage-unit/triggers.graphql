@@ -1,0 +1,9 @@
+query GetTriggers($schema: String!) {
+  Triggers(schema: $schema) {
+    Name
+    TableName
+    Event
+    Timing
+    Definition
+  }
+}

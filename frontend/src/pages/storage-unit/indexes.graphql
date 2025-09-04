@@ -1,0 +1,11 @@
+query GetIndexes($schema: String!) {
+  Indexes(schema: $schema) {
+    Name
+    TableName
+    Columns
+    Type
+    IsUnique
+    IsPrimary
+    Size
+  }
+}

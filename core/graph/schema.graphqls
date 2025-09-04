@@ -89,6 +89,58 @@ type GraphUnit {
 	Relations: [GraphUnitRelationship!]!
 }
 
+type DatabaseFunction {
+  Name: String!
+  ReturnType: String!
+  Parameters: [Record!]!
+  Definition: String!
+  Language: String!
+  IsAggregate: Boolean!
+}
+
+type DatabaseProcedure {
+  Name: String!
+  Parameters: [Record!]!
+  Definition: String!
+  Language: String!
+}
+
+type DatabaseTrigger {
+  Name: String!
+  TableName: String!
+  Event: String!
+  Timing: String!
+  Definition: String!
+}
+
+type DatabaseIndex {
+  Name: String!
+  TableName: String!
+  Columns: [String!]!
+  Type: String!
+  IsUnique: Boolean!
+  IsPrimary: Boolean!
+  Size: String!
+}
+
+type DatabaseSequence {
+  Name: String!
+  DataType: String!
+  StartValue: String!
+  Increment: String!
+  MinValue: String!
+  MaxValue: String!
+  CacheSize: String!
+  IsCycle: Boolean!
+}
+
+type DatabaseUserType {
+  Name: String!
+  Schema: String!
+  Type: String!
+  Definition: String!
+}
+
 input LoginCredentials {
   Id: String
   Type: String!
@@ -173,6 +225,14 @@ type Query {
   AIChat(providerId: String, modelType: String!, token: String, schema: String!, input: ChatInput!): [AIChatMessage!]!
   SettingsConfig: SettingsConfig!
   MockDataMaxRowCount: Int!
+  
+  # New entity queries
+  Functions(schema: String!): [DatabaseFunction!]!
+  Procedures(schema: String!): [DatabaseProcedure!]!
+  Triggers(schema: String!): [DatabaseTrigger!]!
+  Indexes(schema: String!): [DatabaseIndex!]!
+  Sequences(schema: String!): [DatabaseSequence!]!
+  Types(schema: String!): [DatabaseUserType!]!
 }
 
 type Mutation {

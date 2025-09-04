@@ -751,6 +751,197 @@ func (r *queryResolver) MockDataMaxRowCount(ctx context.Context) (int, error) {
 	return env.GetMockDataGenerationMaxRowCount(), nil
 }
 
+// Functions is the resolver for the Functions field.
+func (r *queryResolver) Functions(ctx context.Context, schema string) ([]*model.DatabaseFunction, error) {
+	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	typeArg := config.Credentials.Type
+	functions, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetFunctions(config, schema)
+	if err != nil {
+		log.LogFields(log.Fields{
+			"operation":     "GetFunctions",
+			"schema":        schema,
+			"database_type": typeArg,
+			"error":         err.Error(),
+		}).Error("Database operation failed")
+		return nil, err
+	}
+
+	var result []*model.DatabaseFunction
+	for _, f := range functions {
+		params := []*model.Record{}
+		for _, p := range f.Parameters {
+			params = append(params, &model.Record{
+				Key:   p.Key,
+				Value: p.Value,
+			})
+		}
+		
+		result = append(result, &model.DatabaseFunction{
+			Name:        f.Name,
+			ReturnType:  f.ReturnType,
+			Parameters:  params,
+			Definition:  f.Definition,
+			Language:    f.Language,
+			IsAggregate: f.IsAggregate,
+		})
+	}
+	return result, nil
+}
+
+// Procedures is the resolver for the Procedures field.
+func (r *queryResolver) Procedures(ctx context.Context, schema string) ([]*model.DatabaseProcedure, error) {
+	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	typeArg := config.Credentials.Type
+	procedures, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetProcedures(config, schema)
+	if err != nil {
+		log.LogFields(log.Fields{
+			"operation":     "GetProcedures",
+			"schema":        schema,
+			"database_type": typeArg,
+			"error":         err.Error(),
+		}).Error("Database operation failed")
+		return nil, err
+	}
+
+	var result []*model.DatabaseProcedure
+	for _, p := range procedures {
+		params := []*model.Record{}
+		for _, param := range p.Parameters {
+			params = append(params, &model.Record{
+				Key:   param.Key,
+				Value: param.Value,
+			})
+		}
+		
+		result = append(result, &model.DatabaseProcedure{
+			Name:       p.Name,
+			Parameters: params,
+			Definition: p.Definition,
+			Language:   p.Language,
+		})
+	}
+	return result, nil
+}
+
+// Triggers is the resolver for the Triggers field.
+func (r *queryResolver) Triggers(ctx context.Context, schema string) ([]*model.DatabaseTrigger, error) {
+	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	typeArg := config.Credentials.Type
+	triggers, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetTriggers(config, schema)
+	if err != nil {
+		log.LogFields(log.Fields{
+			"operation":     "GetTriggers",
+			"schema":        schema,
+			"database_type": typeArg,
+			"error":         err.Error(),
+		}).Error("Database operation failed")
+		return nil, err
+	}
+
+	var result []*model.DatabaseTrigger
+	for _, t := range triggers {
+		result = append(result, &model.DatabaseTrigger{
+			Name:       t.Name,
+			TableName:  t.TableName,
+			Event:      t.Event,
+			Timing:     t.Timing,
+			Definition: t.Definition,
+		})
+	}
+	return result, nil
+}
+
+// Indexes is the resolver for the Indexes field.
+func (r *queryResolver) Indexes(ctx context.Context, schema string) ([]*model.DatabaseIndex, error) {
+	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	typeArg := config.Credentials.Type
+	indexes, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetIndexes(config, schema)
+	if err != nil {
+		log.LogFields(log.Fields{
+			"operation":     "GetIndexes",
+			"schema":        schema,
+			"database_type": typeArg,
+			"error":         err.Error(),
+		}).Error("Database operation failed")
+		return nil, err
+	}
+
+	var result []*model.DatabaseIndex
+	for _, i := range indexes {
+		columns := make([]string, len(i.Columns))
+		copy(columns, i.Columns)
+		
+		result = append(result, &model.DatabaseIndex{
+			Name:      i.Name,
+			TableName: i.TableName,
+			Columns:   columns,
+			Type:      i.Type,
+			IsUnique:  i.IsUnique,
+			IsPrimary: i.IsPrimary,
+			Size:      i.Size,
+		})
+	}
+	return result, nil
+}
+
+// Sequences is the resolver for the Sequences field.
+func (r *queryResolver) Sequences(ctx context.Context, schema string) ([]*model.DatabaseSequence, error) {
+	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	typeArg := config.Credentials.Type
+	sequences, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetSequences(config, schema)
+	if err != nil {
+		log.LogFields(log.Fields{
+			"operation":     "GetSequences",
+			"schema":        schema,
+			"database_type": typeArg,
+			"error":         err.Error(),
+		}).Error("Database operation failed")
+		return nil, err
+	}
+
+	var result []*model.DatabaseSequence
+	for _, s := range sequences {
+		result = append(result, &model.DatabaseSequence{
+			Name:       s.Name,
+			DataType:   s.DataType,
+			StartValue: fmt.Sprintf("%d", s.StartValue),
+			Increment:  fmt.Sprintf("%d", s.Increment),
+			MinValue:   fmt.Sprintf("%d", s.MinValue),
+			MaxValue:   fmt.Sprintf("%d", s.MaxValue),
+			CacheSize:  fmt.Sprintf("%d", s.CacheSize),
+			IsCycle:    s.IsCycle,
+		})
+	}
+	return result, nil
+}
+
+// Types is the resolver for the Types field.
+func (r *queryResolver) Types(ctx context.Context, schema string) ([]*model.DatabaseUserType, error) {
+	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	typeArg := config.Credentials.Type
+	types, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetTypes(config, schema)
+	if err != nil {
+		log.LogFields(log.Fields{
+			"operation":     "GetTypes",
+			"schema":        schema,
+			"database_type": typeArg,
+			"error":         err.Error(),
+		}).Error("Database operation failed")
+		return nil, err
+	}
+
+	var result []*model.DatabaseUserType
+	for _, t := range types {
+		result = append(result, &model.DatabaseUserType{
+			Name:       t.Name,
+			Schema:     t.Schema,
+			Type:       t.Type,
+			Definition: t.Definition,
+		})
+	}
+	return result, nil
+}
+
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 

@@ -372,6 +372,122 @@ func (p *MongoDBPlugin) WithTransaction(config *engine.PluginConfig, operation f
 	return operation(nil)
 }
 
+// GetFunctions - MongoDB doesn't have stored functions
+func (p *MongoDBPlugin) GetFunctions(config *engine.PluginConfig, schema string) ([]engine.DatabaseFunction, error) {
+	return []engine.DatabaseFunction{}, nil
+}
+
+// GetProcedures - MongoDB doesn't have stored procedures
+func (p *MongoDBPlugin) GetProcedures(config *engine.PluginConfig, schema string) ([]engine.DatabaseProcedure, error) {
+	return []engine.DatabaseProcedure{}, nil
+}
+
+// GetTriggers - MongoDB doesn't have traditional triggers
+func (p *MongoDBPlugin) GetTriggers(config *engine.PluginConfig, schema string) ([]engine.DatabaseTrigger, error) {
+	return []engine.DatabaseTrigger{}, nil
+}
+
+// GetIndexes returns all indexes for collections in the database
+func (p *MongoDBPlugin) GetIndexes(config *engine.PluginConfig, schema string) ([]engine.DatabaseIndex, error) {
+	client, err := p.GetClient(config)
+	if err != nil {
+		log.Logger.WithError(err).WithField("hostname", config.Credentials.Hostname).Error("Failed to connect to MongoDB")
+		return nil, err
+	}
+	defer client.Disconnect(context.TODO())
+
+	db := client.Database(schema)
+	collections, err := db.ListCollectionNames(context.TODO(), bson.M{})
+	if err != nil {
+		log.Logger.WithError(err).WithFields(map[string]interface{}{
+			"hostname": config.Credentials.Hostname,
+			"database": schema,
+		}).Error("Failed to list MongoDB collections")
+		return nil, err
+	}
+
+	var indexes []engine.DatabaseIndex
+	
+	for _, collection := range collections {
+		coll := db.Collection(collection)
+		cursor, err := coll.Indexes().List(context.TODO())
+		if err != nil {
+			log.Logger.WithError(err).WithFields(map[string]interface{}{
+				"hostname":   config.Credentials.Hostname,
+				"database":   schema,
+				"collection": collection,
+			}).Error("Failed to list MongoDB indexes")
+			continue
+		}
+		
+		var indexDocs []bson.M
+		if err := cursor.All(context.TODO(), &indexDocs); err != nil {
+			log.Logger.WithError(err).WithFields(map[string]interface{}{
+				"hostname":   config.Credentials.Hostname,
+				"database":   schema,
+				"collection": collection,
+			}).Error("Failed to decode MongoDB indexes")
+			cursor.Close(context.TODO())
+			continue
+		}
+		cursor.Close(context.TODO())
+		
+		for _, indexDoc := range indexDocs {
+			name, _ := indexDoc["name"].(string)
+			keyDoc, ok := indexDoc["key"].(bson.M)
+			if !ok {
+				continue
+			}
+			
+			// Extract column names from the key document
+			var columns []string
+			for field := range keyDoc {
+				columns = append(columns, field)
+			}
+			
+			// Check if it's a unique index
+			isUnique := false
+			if unique, ok := indexDoc["unique"].(bool); ok {
+				isUnique = unique
+			}
+			
+			// Determine index type
+			indexType := "BTREE" // Default for MongoDB
+			if textDoc, ok := indexDoc["textIndexVersion"].(int32); ok && textDoc > 0 {
+				indexType = "TEXT"
+			} else if weights, ok := indexDoc["weights"].(bson.M); ok && len(weights) > 0 {
+				indexType = "TEXT"
+			} else if _, ok := indexDoc["2dsphereIndexVersion"].(int32); ok {
+				indexType = "2DSPHERE"
+			} else if _, ok := indexDoc["2dIndexVersion"].(int32); ok {
+				indexType = "2D"
+			}
+			
+			indexes = append(indexes, engine.DatabaseIndex{
+				Name:      name,
+				TableName: collection,
+				Columns:   columns,
+				Type:      indexType,
+				IsUnique:  isUnique,
+				IsPrimary: name == "_id_",
+				Size:      "", // MongoDB doesn't provide index size in listing
+			})
+		}
+	}
+	
+	return indexes, nil
+}
+
+// GetSequences - MongoDB doesn't have sequences
+func (p *MongoDBPlugin) GetSequences(config *engine.PluginConfig, schema string) ([]engine.DatabaseSequence, error) {
+	return []engine.DatabaseSequence{}, nil
+}
+
+// GetTypes - MongoDB doesn't have user-defined types
+func (p *MongoDBPlugin) GetTypes(config *engine.PluginConfig, schema string) ([]engine.DatabaseType, error) {
+	return []engine.DatabaseType{}, nil
+}
+
 func NewMongoDBPlugin() *engine.Plugin {
 	return &engine.Plugin{
 		Type:            engine.DatabaseType_MongoDB,

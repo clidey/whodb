@@ -624,3 +624,42 @@ func (p *GormPlugin) AddRowInTx(tx *gorm.DB, schema string, storageUnit string, 
 func (p *GormPlugin) ClearTableDataInTx(tx *gorm.DB, schema string, storageUnit string) error {
 	return p.clearTableDataWithDB(tx, schema, storageUnit)
 }
+
+// Additional database entities - base implementations that return empty results
+// Specific database plugins should override these methods with proper implementations
+
+func (p *GormPlugin) GetFunctions(config *engine.PluginConfig, schema string) ([]engine.DatabaseFunction, error) {
+	// Base implementation - returns empty list
+	// Override in database-specific plugins
+	return []engine.DatabaseFunction{}, nil
+}
+
+func (p *GormPlugin) GetProcedures(config *engine.PluginConfig, schema string) ([]engine.DatabaseProcedure, error) {
+	// Base implementation - returns empty list
+	// Override in database-specific plugins
+	return []engine.DatabaseProcedure{}, nil
+}
+
+func (p *GormPlugin) GetTriggers(config *engine.PluginConfig, schema string) ([]engine.DatabaseTrigger, error) {
+	// Base implementation - returns empty list
+	// Override in database-specific plugins
+	return []engine.DatabaseTrigger{}, nil
+}
+
+func (p *GormPlugin) GetIndexes(config *engine.PluginConfig, schema string) ([]engine.DatabaseIndex, error) {
+	// Base implementation - returns empty list
+	// Override in database-specific plugins
+	return []engine.DatabaseIndex{}, nil
+}
+
+func (p *GormPlugin) GetSequences(config *engine.PluginConfig, schema string) ([]engine.DatabaseSequence, error) {
+	// Base implementation - returns empty list
+	// Override in database-specific plugins
+	return []engine.DatabaseSequence{}, nil
+}
+
+func (p *GormPlugin) GetTypes(config *engine.PluginConfig, schema string) ([]engine.DatabaseType, error) {
+	// Base implementation - returns empty list
+	// Override in database-specific plugins
+	return []engine.DatabaseType{}, nil
+}
