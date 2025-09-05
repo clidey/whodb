@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-const dbHost = 'localhost';
-const dbUser = 'user';
-const dbPassword = 'password';
-const dbName = 'test_db';
-
 describe('MongoDB E2E test', () => {
+  const isDocker = Cypress.env('isDocker');
+  const dbHost = isDocker ? 'e2e_mongo' : 'localhost';
+  const dbUser = 'user';
+  const dbPassword = 'password';
+  const dbName = 'test_db';
+
+
   it('should login correctly', () => {
     // login and setup
     cy.login('MongoDB', dbHost, dbUser, dbPassword, dbName);

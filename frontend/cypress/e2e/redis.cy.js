@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-const dbHost = 'localhost';
-const dbPassword = 'password';
-
 describe('Redis E2E test', () => {
+  const isDocker = Cypress.env('isDocker');
+  const dbHost = isDocker ? 'e2e_redis' : 'localhost';
+  const dbPassword = 'password';
+
+
   it('should login correctly', () => {
     // login and setup
     cy.login('Redis', dbHost, '', dbPassword, '');

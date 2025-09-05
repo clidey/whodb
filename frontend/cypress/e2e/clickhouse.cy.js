@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-const dbHost = 'localhost';
-const dbUser = 'user';
-const dbPassword = 'password';
-
 describe('Clickhouse E2E test', () => {
+  const isDocker = Cypress.env('isDocker');
+  const dbHost = isDocker ? 'e2e_clickhouse' : 'localhost';
+  const dbUser = 'user';
+  const dbPassword = 'password';
+
+
   it('should login correctly', () => {
     // login and setup
     cy.login('ClickHouse', dbHost, dbUser, dbPassword, 'test_db');

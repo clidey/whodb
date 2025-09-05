@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-const dbHost = 'localhost';
-const dbUser = 'user';
-const dbPassword = 'password';
-
 describe('MySQL E2E test', () => {
+  const isDocker = Cypress.env('isDocker');
+  const dbHost = isDocker ? 'e2e_mysql' : 'localhost';
+  const dbUser = 'user';
+  const dbPassword = 'password';
+
+
   it('should login correctly', () => {
     // login and setup
     cy.login('MySQL', dbHost, dbUser, dbPassword, 'test_db');

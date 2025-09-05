@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-const dbHost = 'localhost';
-const dbUser = 'user';
-const dbPassword = 'password';
-
 describe('MariaDB E2E test', () => {
+  const isDocker = Cypress.env('isDocker');
+  const dbHost = isDocker ? 'e2e_mariadb' : 'localhost';
+  const dbUser = 'user';
+  const dbPassword = 'password';
+
+
   it('should login correctly', () => {
     // login and setup
     // Note: Port configuration through advanced options is not working, using default port

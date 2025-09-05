@@ -25,11 +25,11 @@ function extractText(chain) {
 }
 
 Cypress.Commands.add("goto", (route) => {
-    cy.visit(`http://localhost:3000/${route}`);
+    cy.visit(`/${route}`);
 });
 
 Cypress.Commands.add('login', (databaseType, hostname, username, password, database, advanced={}) => {
-    cy.visit('http://localhost:3000/login');
+    cy.visit('/login');
     if (databaseType) cy.get('[data-testid="database-type-select"]').click().get(`[data-value="${databaseType}"]`).click();
     if (hostname) cy.get('[data-testid="hostname"]').clear().type(hostname);
     if (username) cy.get('[data-testid="username"]').clear().type(username);
@@ -96,12 +96,17 @@ Cypress.Commands.add('sortBy', (index) => {
     return cy.get('th').eq(index+1).click();
 });
 
+Cypress.Commands.add('assertNoDataAvailable', () => {
+    // Assert the empty-state text is visible (retries until timeout)
+    cy.contains(/No data available/i, {timeout: 10000}).should('be.visible');
+});
+
+
 Cypress.Commands.add('getTableData', () => {
     // First wait for the table to exist
     return cy.get('table', { timeout: 10000 }).should('exist').then(() => {
         // Wait for at least one table row to be present with proper scoping
         return cy.get('table tbody tr', { timeout: 10000 })
-            .should('have.length.greaterThan', 0)
             .then(() => {
                 // Additional wait to ensure data is fully rendered
                 cy.wait(100);
@@ -133,7 +138,7 @@ Cypress.Commands.add("getTablePageSize", () => {
     });
 });
 
-Cypress.Commands.add("submitTable", (pageSize) => {
+Cypress.Commands.add("submitTable", () => {
     cy.get('[data-testid="submit-button"]').click().then(() => {
         // Wait a bit for the request to complete
         cy.wait(100);
@@ -467,7 +472,7 @@ Cypress.Commands.add('logout', () => {
 });
 
 Cypress.Commands.add('getTables', () => {
-    cy.visit('http://localhost:3000/storage-unit');
+    cy.visit('/storage-unit');
     return cy.get('[data-testid="storage-unit-name"]')
         .then($elements => {
             return Cypress.$.makeArray($elements).map(el => el.innerText);

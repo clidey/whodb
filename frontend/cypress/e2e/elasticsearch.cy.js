@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-const dbHost = 'localhost';
-const password = 'pgmio430fe$$#@@';
-const username = 'elastic';
-
 describe('ElasticSearch E2E test', () => {
+  const isDocker = Cypress.env('isDocker');
+  const dbHost = isDocker ? 'e2e_elasticsearch' : 'localhost';
+  const password = 'pgmio430fe$$#@@';
+  const username = 'elastic';
+
   it('should login correctly', () => {
     // login and setup
     cy.login('ElasticSearch', dbHost, username, password);
