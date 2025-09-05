@@ -39,13 +39,13 @@ type IPopoverCardProps = {
 }
 
 const PopoverCard: FC<IPopoverCardProps> = ({ open, onOpenChange, currentFilter, fieldsDropdownItems, validOperators, handleFieldSelect, handleOperatorSelector, handleInputChange, handleAddFilter, handleSaveFilter, handleClick, className, isEditing = false, editingIndex = -1 }) => {
-    const handleAction = () => {
+    const handleAction = useCallback(() => {
         if (isEditing && handleSaveFilter && editingIndex !== -1) {
             handleSaveFilter(editingIndex);
         } else {
             handleAddFilter();
         }
-    };
+    }, [isEditing, handleSaveFilter, editingIndex, handleAddFilter]);
 
     return  <Popover open={open} onOpenChange={onOpenChange}>
         <PopoverTrigger asChild>
@@ -216,7 +216,6 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
     const handleSaveFilter = useCallback((index: number) => {
         const updatedFilters = { ...filters };
         updatedFilters.And!.Children[index] = { Type: WhereConditionType.Atomic, Atomic: { ...currentFilter } };
-
         setFilters(updatedFilters);
         setEditingFilter(-1);
         setCurrentFilter({ ColumnType: "string", Key: "", Operator: "", Value: "" });
