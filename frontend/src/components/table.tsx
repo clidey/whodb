@@ -1071,7 +1071,12 @@ export const StorageUnitTable: FC<TableProps> = ({
                     </div>
                 </SheetContent>
             </Sheet>
-            <Sheet open={showMockDataSheet} onOpenChange={setShowMockDataSheet}>
+            <Sheet open={showMockDataSheet} onOpenChange={(open) => {
+                setShowMockDataSheet(open);
+                if (!open) {
+                    setShowMockDataConfirmation(false);
+                }
+            }}>
                 <SheetContent side="right" className="p-8">
                     <div className="flex flex-col gap-4 h-full">
                         <div className="text-lg font-semibold mb-2">Mock Data for {storageUnit}</div>
