@@ -255,10 +255,18 @@ export const StorageUnitTable: FC<TableProps> = ({
     const hasSelectedRows = checked.length > 0;
     const selectedRowsData = useMemo(() => {
         if (hasSelectedRows) {
-            return checked.map(idx => rows[idx]);
+            // Convert array of arrays to array of objects with column names as keys
+            return checked.map(idx => {
+                const row = rows[idx];
+                const rowObj: Record<string, any> = {};
+                columns.forEach((col, colIdx) => {
+                    rowObj[col] = row[colIdx];
+                });
+                return rowObj;
+            });
         }
         return undefined;
-    }, [hasSelectedRows, checked, rows]);
+    }, [hasSelectedRows, checked, rows, columns]);
 
     // Delete logic, adapted from explore-storage-unit.tsx
     const handleDeleteRow = useCallback(async (rowIndex: number) => {
