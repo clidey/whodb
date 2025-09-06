@@ -503,5 +503,13 @@ describe('Postgres E2E test', () => {
       // expect(count).to.be.equal(10); // TODO: fix this when we can sync the Total Count on update
     });
     cy.get('body').type('{esc}');
+
+    // 14) Mock data on a table that does not support it
+    cy.data('orders');
+    cy.get('table thead tr').rightclick({force: true});
+    cy.contains('div,button,span', 'Mock Data').click({force: true});
+    cy.contains('button', 'Generate').click();
+    // Check for toast notification (may be partially covered but should exist)
+    cy.contains('Mock data generation is not allowed for this table').should('exist');
   });
 });
