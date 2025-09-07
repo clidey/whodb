@@ -41,10 +41,10 @@ if [ -f "$PROJECT_ROOT/core/server.test" ]; then
     echo "✅ Test binary cleaned up"
 fi
 
-# Clean up coverage file
+# Coverage is already written by the test server to coverage.out
+# Just report that it's available
 if [ -f "$PROJECT_ROOT/core/coverage.out" ]; then
-    rm "$PROJECT_ROOT/core/coverage.out"
-    echo "✅ Coverage file cleaned up"
+    echo "✅ Backend coverage saved to core/coverage.out"
 fi
 
 # If EE mode, run EE-specific cleanup first (if it exists)
@@ -59,7 +59,13 @@ fi
 # Stop and remove CE Docker services
 echo "🐳 Stopping CE database services..."
 cd "$SCRIPT_DIR"
-docker-compose -f docker-compose.e2e.yaml down -v
+# Use --volumes to ensure volumes are removed, and --remove-orphans for cleanup
+# The --timeout 0 forces immediate stop without graceful shutdown
+docker-compose -f docker-compose.e2e.yaml down --volumes --remove-orphans --timeout 0
+
+# Force prune any dangling volumes to ensure complete cleanup
+echo "🔄 Pruning any dangling volumes..."
+docker volume prune -f
 
 # Stop the test server if it's running
 echo "🛑 Stopping test server..."
@@ -69,6 +75,8 @@ if [ -f "$PROJECT_ROOT/core/tmp/test-server.pid" ]; then
     TEST_SERVER_PID=$(cat "$PROJECT_ROOT/core/tmp/test-server.pid")
     if ps -p $TEST_SERVER_PID > /dev/null 2>&1; then
         kill $TEST_SERVER_PID
+        # Wait for process to finish and write coverage
+        sleep 2
         echo "✅ Test server stopped (PID: $TEST_SERVER_PID)"
     fi
     rm -f "$PROJECT_ROOT/core/tmp/test-server.pid"

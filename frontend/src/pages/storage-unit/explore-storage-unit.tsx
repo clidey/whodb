@@ -96,7 +96,13 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         schema = current.Database
     }
 
-    const [code, setCode] = useState(`SELECT * FROM ${schema}.${unit?.Name}`);
+    let initialCode = `SELECT *
+                       FROM ${unit?.Name} LIMIT 5`;
+    if (schema) {
+        initialCode = `SELECT *
+                       FROM ${schema}.${unit?.Name} LIMIT 5`
+    }
+    const [code, setCode] = useState(initialCode);
 
     const [getStorageUnitRows, { loading }] = useGetStorageUnitRowsLazyQuery({
         onCompleted(data) {
@@ -209,7 +215,11 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
 
     useEffect(() => {
         handleSubmitRequest();
-        setCode(`SELECT * FROM ${schema}.${unit?.Name}`);
+        let code = `SELECT * FROM ${unit?.Name} LIMIT 5`;
+        if (schema) {
+            code = `SELECT * FROM ${schema}.${unit?.Name} LIMIT 5`
+        }
+        setCode(code);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [unit]);
 
@@ -360,7 +370,11 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
             }
         });
         handleScratchpad();
-        setCode(`SELECT * FROM ${schema}.${unit?.Name}`);
+        let code = `SELECT * FROM ${unit?.Name} LIMIT 5`;
+        if (schema) {
+            code = `SELECT * FROM ${schema}.${unit?.Name} LIMIT 5`
+        }
+        setCode(code);
         document.body.classList.add("!pointer-events-auto");
     }, [schema, unit]);
 
@@ -404,7 +418,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 </div>
                 <div className="text-sm"><span className="font-semibold">Total Count:</span> {totalCount}</div>
             </div>
-            <div className="flex w-full relative">
+            <div className="flex w-full relative" data-testid="explore-storage-unit-options">
                 <div className="flex justify-between items-end w-full">
                     <div className="flex gap-2">
                         <div className="flex flex-col gap-2">

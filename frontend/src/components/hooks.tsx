@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {useCallback, useEffect, useRef, useState} from "react";
 
 
 export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly: boolean = false, delimiter: string = ',', selectedRows?: Record<string, any>[], format: 'csv' | 'excel' = 'csv') => {
@@ -56,7 +56,8 @@ export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly
 
         // Get filename from Content-Disposition header
         const contentDisposition = response.headers.get('Content-Disposition');
-        let filename = `${schema}_${storageUnit}.${format === 'excel' ? 'xlsx' : 'csv'}`;
+        // Only include schema in filename if it exists (for SQLite, schema is empty)
+        let filename = schema ? `${schema}_${storageUnit}.${format === 'excel' ? 'xlsx' : 'csv'}` : `${storageUnit}.${format === 'excel' ? 'xlsx' : 'csv'}`;
         if (contentDisposition) {
           const filenameMatch = contentDisposition.match(/filename="(.+)"/);
           if (filenameMatch) {
