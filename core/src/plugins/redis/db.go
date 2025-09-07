@@ -21,6 +21,7 @@ import (
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 	"github.com/go-redis/redis/v8"
 )
 
@@ -28,6 +29,7 @@ func DB(config *engine.PluginConfig) (*redis.Client, error) {
 	ctx := context.Background()
 	port, err := strconv.Atoi(common.GetRecordValueOrDefault(config.Credentials.Advanced, "Port", "6379"))
 	if err != nil {
+		log.Logger.WithError(err).WithField("hostname", config.Credentials.Hostname).Error("Failed to parse Redis port number")
 		return nil, err
 	}
 	database := 0
@@ -35,6 +37,7 @@ func DB(config *engine.PluginConfig) (*redis.Client, error) {
 		var err error
 		database, err = strconv.Atoi(config.Credentials.Database)
 		if err != nil {
+			log.Logger.WithError(err).WithField("database", config.Credentials.Database).WithField("hostname", config.Credentials.Hostname).Error("Failed to parse Redis database number")
 			return nil, err
 		}
 	}
@@ -45,6 +48,7 @@ func DB(config *engine.PluginConfig) (*redis.Client, error) {
 		DB:       database,
 	})
 	if _, err := client.Ping(ctx).Result(); err != nil {
+		log.Logger.WithError(err).WithField("hostname", config.Credentials.Hostname).WithField("database", database).Error("Failed to ping Redis server")
 		return nil, err
 	}
 	return client, nil

@@ -1,16 +1,18 @@
-// Copyright 2025 Clidey, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package graph
 
@@ -37,6 +39,9 @@ func SetupHTTPServer(router chi.Router) {
 	router.Post("/api/storage-units", addStorageUnitHandler)
 	router.Post("/api/rows", addRowHandler)
 	router.Delete("/api/rows", deleteRowHandler)
+
+	// Export endpoint with streaming support
+	router.Post("/api/export", HandleExport)
 }
 
 var resolver = mutationResolver{}
@@ -99,7 +104,7 @@ func getRowsHandler(w http.ResponseWriter, r *http.Request) {
 	pageOffset := parseQueryParamToInt(r.URL.Query().Get("pageOffset"))
 
 	// todo: add where condition if necessary
-	rowsResult, err := resolver.Query().Row(r.Context(), schema, storageUnit, &model.WhereCondition{}, pageSize, pageOffset)
+	rowsResult, err := resolver.Query().Row(r.Context(), schema, storageUnit, &model.WhereCondition{}, []*model.SortCondition{}, pageSize, pageOffset)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -147,7 +152,7 @@ func getGraphHandler(w http.ResponseWriter, r *http.Request) {
 func getAIModelsHandler(w http.ResponseWriter, r *http.Request) {
 	modelType := r.URL.Query().Get("modelType")
 	token := r.URL.Query().Get("token")
-	models, err := resolver.Query().AIModel(r.Context(), modelType, &token)
+	models, err := resolver.Query().AIModel(r.Context(), nil, modelType, &token)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -171,7 +176,7 @@ func aiChatHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	messages, err := resolver.Query().AIChat(r.Context(), req.ModelType, &req.Token, req.Schema, req.Input)
+	messages, err := resolver.Query().AIChat(r.Context(), nil, req.ModelType, &req.Token, req.Schema, req.Input)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

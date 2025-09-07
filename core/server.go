@@ -20,6 +20,12 @@ import (
 	"context"
 	"embed"
 	"fmt"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/env"
@@ -27,11 +33,6 @@ import (
 	"github.com/clidey/whodb/core/src/router"
 	"github.com/clidey/whodb/core/src/settings"
 	"github.com/pkg/errors"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
 //go:embed build/*
@@ -75,23 +76,27 @@ func main() {
 	select {
 	case success := <-serverStarted:
 		if !success {
-			log.Logger.Println("Server failed to start. Exiting...")
+			log.Logger.Error("Server failed to start. Exiting...")
 			os.Exit(1)
 		}
 	case <-time.After(2 * time.Second):
-		log.Logger.Infof("🎉 Welcome to WhoDB! 🎉")
-		log.Logger.Infof("Get started by visiting:")
+		if env.IsEnterpriseEdition {
+			log.Logger.Info("🎉 Welcome to WhoDB Enterprise! 🎉")
+		} else {
+			log.Logger.Info("🎉 Welcome to WhoDB! 🎉")
+		}
+		log.Logger.Info("Get started by visiting:")
 		log.Logger.Infof("http://0.0.0.0:%s", port)
 		log.Logger.Info("Explore and enjoy working with your databases!")
 		if !env.IsAPIGatewayEnabled && !common.IsRunningInsideDocker() {
-			common.OpenBrowser(fmt.Sprintf("http://localhost:%v", port))
+			//common.OpenBrowser(fmt.Sprintf("http://localhost:%v", port))
 		}
 	}
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	log.Logger.Println("Shutting down server, 30 second timeout started...")
+	log.Logger.Info("Shutting down server, 30 second timeout started...")
 
 	// Create a deadline to wait for
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -106,5 +111,5 @@ func main() {
 	close(serverStarted)
 	close(quit)
 
-	log.Logger.Println("Server exiting")
+	log.Logger.Info("Server exiting")
 }

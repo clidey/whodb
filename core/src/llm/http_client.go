@@ -17,11 +17,14 @@ package llm
 import (
 	"bytes"
 	"net/http"
+
+	"github.com/clidey/whodb/core/src/log"
 )
 
 func sendHTTPRequest(method, url string, body []byte, headers map[string]string) (*http.Response, error) {
 	req, err := http.NewRequest(method, url, bytes.NewBuffer(body))
 	if err != nil {
+		log.Logger.WithError(err).Errorf("Failed to create HTTP request: method=%s, url=%s", method, url)
 		return nil, err
 	}
 
@@ -30,5 +33,12 @@ func sendHTTPRequest(method, url string, body []byte, headers map[string]string)
 	}
 
 	client := &http.Client{}
-	return client.Do(req)
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Logger.WithError(err).Errorf("HTTP request failed: method=%s, url=%s", method, url)
+		return nil, err
+	}
+
+	log.Logger.Infof("HTTP request completed: method=%s, url=%s, status=%d", method, url, resp.StatusCode)
+	return resp, nil
 }

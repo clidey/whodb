@@ -4,5 +4,7 @@ query GetProfiles {
     Id
     Type
     Database
+    IsEnvironmentDefined
+    Source
   }
 }

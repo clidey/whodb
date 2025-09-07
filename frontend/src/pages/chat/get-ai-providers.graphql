@@ -1,0 +1,7 @@
+query GetAIProviders {
+  AIProviders {
+    Type
+    ProviderId
+    IsEnvironmentDefined
+  }
+}

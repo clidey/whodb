@@ -1,5 +1,5 @@
-query GetAIChat($modelType: String!, $token: String, $schema: String!, $previousConversation: String!, $query: String!, $model: String!) {
-  AIChat(modelType: $modelType, token: $token, schema: $schema, input: {
+query GetAIChat($providerId: String, $modelType: String!, $token: String, $schema: String!, $previousConversation: String!, $query: String!, $model: String!) {
+  AIChat(providerId: $providerId, modelType: $modelType, token: $token, schema: $schema, input: {
     PreviousConversation: $previousConversation,
     Query: $query,
     Model: $model,

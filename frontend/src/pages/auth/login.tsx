@@ -14,100 +14,68 @@
  * limitations under the License.
  */
 
+import { Badge, Button, cn, Input, Label, ModeToggle, SearchSelect, Separator, toast } from '@clidey/ux';
+import { DatabaseType, LoginCredentials, useGetDatabaseLazyQuery, useGetProfilesQuery, useLoginMutation, useLoginWithProfileMutation } from '@graphql';
 import classNames from "classnames";
 import { entries } from "lodash";
-import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
+import { FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import logoImage from "../../../public/images/logo.png";
-import { AnimatedButton } from "../../components/button";
-import { ClassNames } from "../../components/classes";
-import { createDropdownItem, DropdownWithLabel, IDropdownItem } from "../../components/dropdown";
 import { Icons } from "../../components/icons";
-import { InputWithlabel } from "../../components/input";
 import { Loading } from "../../components/loading";
 import { Container } from "../../components/page";
+import { updateProfileLastAccessed } from "../../components/profile-info-tooltip";
+import { baseDatabaseTypes, getDatabaseTypeDropdownItems, IDatabaseDropdownItem } from "../../config/database-types";
+import { extensions, sources } from '../../config/features';
 import { InternalRoutes } from "../../config/routes";
-import { DatabaseType, LoginCredentials, useGetDatabaseLazyQuery, useGetProfilesQuery, useLoginMutation, useLoginWithProfileMutation } from '../../generated/graphql';
 import { AuthActions } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
-import { notify } from "../../store/function";
-import { useAppDispatch } from "../../store/hooks";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { AdjustmentsHorizontalIcon, CheckCircleIcon, CircleStackIcon } from '@heroicons/react/24/outline';
+const logoImage = "/images/logo.png";
+// Embeddable LoginForm component for use in LoginPage and @sidebar.tsx
 
-const databaseTypeDropdownItems: IDropdownItem<Record<string, string>>[] = [
-    {
-        id: "Postgres",
-        label: "Postgres",
-        icon: Icons.Logos.Postgres,
-        extra: {"Port": "5432"},
-    },
-    {
-        id: "MySQL",
-        label: "MySQL",
-        icon: Icons.Logos.MySQL,
-        extra: {"Port": "3306", "Parse Time": "True", "Loc": "Local", "Allow clear text passwords": "0"},
-    },
-    {
-        id: "MariaDB",
-        label: "MariaDB",
-        icon: Icons.Logos.MariaDB,
-        extra: {"Port": "3306", "Parse Time": "True", "Loc": "Local", "Allow clear text passwords": "0"},
-    },
-    {
-        id: "Sqlite3",
-        label: "Sqlite3",
-        icon: Icons.Logos.Sqlite3,
-    },
-    {
-        id: "MongoDB",
-        label: "MongoDB",
-        icon: Icons.Logos.MongoDB,
-        extra: {"Port": "27017", "URL Params": "?", "DNS Enabled": "false"},
-    },
-    {
-        id: "Redis",
-        label: "Redis",
-        icon: Icons.Logos.Redis,
-        extra: {"Port": "6379"},
-    },
-    {
-        id: "ElasticSearch",
-        label: "ElasticSearch",
-        icon: Icons.Logos.ElasticSearch,
-        extra: {"Port": "9200", "SSL Mode": "disable"},
-    },
-    {
-        id: "ClickHouse",
-        label: "ClickHouse",
-        icon: Icons.Logos.ClickHouse,
-        extra: {
-            "Port": "9000",
-            "SSL mode": "disable",
-            "HTTP Protocol": "disable",
-            "Readonly": "disable",
-            "Debug": "disable"
-        }
-    },
-]
+// Embeddable LoginForm component
+export interface LoginFormProps {
+    // Optionally override navigation after login (e.g. for sidebar)
+    onLoginSuccess?: () => void;
+    // Optionally hide logo/title (for sidebar)
+    hideHeader?: boolean;
+    // Optionally compact mode (for sidebar)
+    compact?: boolean;
+    // Optionally override container className
+    className?: string;
+    advancedDirection?: "horizontal" | "vertical";
+}
 
-export const LoginPage: FC = () => {
+export const LoginForm: FC<LoginFormProps> = ({
+    onLoginSuccess,
+    hideHeader = false,
+    className = "",
+    advancedDirection = "horizontal",
+}) => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    
+    const currentProfile = useAppSelector(state => state.auth.current);
+    const shouldUpdateLastAccessed = useRef(false);
+
     const [login, { loading: loginLoading }] = useLoginMutation();
     const [loginWithProfile, { loading: loginWithProfileLoading }] = useLoginWithProfileMutation();
     const [getDatabases, { loading: databasesLoading, data: foundDatabases }] = useGetDatabaseLazyQuery();
     const { loading: profilesLoading, data: profiles } = useGetProfilesQuery();
     const [searchParams, ] = useSearchParams();
-    
-    const [databaseType, setDatabaseType] = useState<IDropdownItem>(databaseTypeDropdownItems[0]);
+
+    const [databaseTypeItems, setDatabaseTypeItems] = useState<IDatabaseDropdownItem[]>(baseDatabaseTypes);
+    const [databaseType, setDatabaseType] = useState<IDatabaseDropdownItem>(baseDatabaseTypes[0]);
     const [hostName, setHostName] = useState("");
     const [database, setDatabase] = useState("");
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string>();
-    const [advancedForm, setAdvancedForm] = useState<Record<string, string>>(databaseType.extra);
+    const [advancedForm, setAdvancedForm] = useState<Record<string, string>>(
+        databaseType.extra ?? {}
+    );
     const [showAdvanced, setShowAdvanced] = useState(false);
-    const [selectedAvailableProfile, setSelectedAvailableProfile] = useState<IDropdownItem>();
+    const [selectedAvailableProfile, setSelectedAvailableProfile] = useState<string>();
 
     const loading = useMemo(() => {
         return loginLoading || loginWithProfileLoading;
@@ -136,17 +104,23 @@ export const LoginPage: FC = () => {
             },
             onCompleted(data) {
                 if (data.Login.Status) {
-                    dispatch(AuthActions.login(credentials));
-                    navigate(InternalRoutes.Dashboard.StorageUnit.path);
-                    return notify("Login successfully", "success");
+                    const profileData = { ...credentials };
+                    shouldUpdateLastAccessed.current = true;
+                    dispatch(AuthActions.login(profileData));
+                    if (onLoginSuccess) {
+                        onLoginSuccess();
+                    } else {
+                        navigate(InternalRoutes.Dashboard.StorageUnit.path);
+                    }
+                    return toast.success("Login successful");
                 }
-                return notify("Login failed", "error");
+                return toast.error("Login failed");
             },
             onError(error) {
-                return notify(`Login failed: ${error.message}`, "error");
+                return toast.error(`Login failed: ${error.message}`);
             }
         });
-    }, [databaseType.id, hostName, database, username, password, advancedForm, login, dispatch, navigate]);
+    }, [databaseType.id, hostName, database, username, password, advancedForm, login, dispatch, navigate, onLoginSuccess]);
 
     const handleLoginWithProfileSubmit = useCallback(() => {
         if (selectedAvailableProfile == null) {
@@ -154,38 +128,44 @@ export const LoginPage: FC = () => {
         }
         setError(undefined);
 
-        const profile = profiles?.Profiles.find(p => p.Id === selectedAvailableProfile.id);
+        const profile = profiles?.Profiles.find(p => p.Id === selectedAvailableProfile);
 
         loginWithProfile({
             variables: {
                 profile: {
-                    Id:  selectedAvailableProfile.id,
+                    Id:  selectedAvailableProfile,
                     Type: profile?.Type as DatabaseType,
                 },
             },
             onCompleted(data) {
                 if (data.LoginWithProfile.Status) {
+                    updateProfileLastAccessed(selectedAvailableProfile);
                     dispatch(AuthActions.login({
                         Type: profile?.Type as DatabaseType,
-                        Id: selectedAvailableProfile.id,
+                        Id: selectedAvailableProfile,
                         Database: profile?.Database ?? "",
                         Hostname: "",
                         Password: "",
                         Username: "",
                         Saved: true,
+                        IsEnvironmentDefined: profile?.IsEnvironmentDefined ?? false,
                     }));
-                    navigate(InternalRoutes.Dashboard.StorageUnit.path);
-                    return notify("Login successfully", "success");
+                    if (onLoginSuccess) {
+                        onLoginSuccess();
+                    } else {
+                        navigate(InternalRoutes.Dashboard.StorageUnit.path);
+                    }
+                    return toast.success("Login successfully");
                 }
-                return notify("Login failed", "error");
+                return toast.error("Login failed");
             },
             onError(error) {
-                return notify(`Login failed: ${error.message}`, "error");
+                return toast.error(`Login failed: ${error.message}`);
             }
         });
-    }, [dispatch, loginWithProfile, navigate, profiles?.Profiles, selectedAvailableProfile]);
+    }, [dispatch, loginWithProfile, navigate, profiles?.Profiles, selectedAvailableProfile, onLoginSuccess]);
 
-    const handleDatabaseTypeChange = useCallback((item: IDropdownItem) => {
+    const handleDatabaseTypeChange = useCallback((item: IDatabaseDropdownItem) => {
         if (item.id === DatabaseType.Sqlite3) {
             getDatabases({
                 variables: {
@@ -198,7 +178,7 @@ export const LoginPage: FC = () => {
         setPassword("");
         setDatabase("");
         setDatabaseType(item);
-        setAdvancedForm(item.extra);
+        setAdvancedForm(item.extra ?? {});
     }, [getDatabases]);
 
     const handleAdvancedToggle = useCallback(() => {
@@ -213,26 +193,59 @@ export const LoginPage: FC = () => {
         });
     }, []);
 
-    const handleAvailableProfileChange = useCallback((item: IDropdownItem) => {
-        setSelectedAvailableProfile(item);
+    const handleAvailableProfileChange = useCallback((itemId: string) => {
+        setSelectedAvailableProfile(itemId);
     }, []);
 
     useEffect(() => {
         dispatch(DatabaseActions.setSchema(""));
     }, [dispatch]);
 
+    // Load EE database types if available
+    useEffect(() => {
+        getDatabaseTypeDropdownItems().then(items => {
+            setDatabaseTypeItems(items);
+        });
+    }, []);
+
+    // Update last accessed time when a new profile is created during login
+    useEffect(() => {
+        if (shouldUpdateLastAccessed.current && currentProfile?.Id) {
+            updateProfileLastAccessed(currentProfile.Id);
+            shouldUpdateLastAccessed.current = false;
+        }
+    }, [currentProfile]);
+
     useEffect(() => {
         if (searchParams.size > 0) {
             if (searchParams.has("type")) {
                 const databaseType = searchParams.get("type")!;
-                setDatabaseType(databaseTypeDropdownItems.find(item => item.id === databaseType) ?? databaseTypeDropdownItems[0]);
+                setDatabaseType(databaseTypeItems.find(item => item.id === databaseType) ?? databaseTypeItems[0]);
             }
+
             if (searchParams.has("host")) setHostName(searchParams.get("host")!);
             if (searchParams.has("username")) setUsername(searchParams.get("username")!);
             if (searchParams.has("password")) setPassword(searchParams.get("password")!);
             if (searchParams.has("database")) setDatabase(searchParams.get("database")!);
+
+            if (searchParams.has("resource")) {
+                const selectedProfile = availableProfiles.find(profile => profile.value === searchParams.get("resource"));
+                setSelectedAvailableProfile(selectedProfile?.value);
+                setTimeout(() => {
+                    handleLoginWithProfileSubmit();
+                }, 10);
+            } else if (searchParams.has("login")) {
+                setTimeout(() => {
+                    handleSubmit();
+                    searchParams.delete("login");
+                }, 10);
+            } else {
+                setSelectedAvailableProfile(undefined);
+            }
+        } else {
+            setSelectedAvailableProfile(undefined);
         }
-    }, [searchParams]);
+    }, [searchParams, databaseTypeItems]);
 
     const handleHostNameChange = useCallback((newHostName: string) => {
         if (databaseType.id !== DatabaseType.MongoDb || !newHostName.startsWith("mongodb+srv://")) {
@@ -247,7 +260,7 @@ export const LoginPage: FC = () => {
 
                     // gives warning
                     if (!hostname || !username || !password || !database) {
-                        notify("We could not extract all required details (host, username, password, or database) from this URL. Please enter the information manually.", "warning");
+                        toast.warning("We could not extract all required details (host, username, password, or database) from this URL. Please enter the information manually.");
                     }
                     setHostName(hostname);
                     setUsername(username);
@@ -263,7 +276,7 @@ export const LoginPage: FC = () => {
                         setShowAdvanced(true);
                     }
                 } catch (error) {
-                    notify("We could not extract all required details (host, username, password, or database) from this URL. Please enter the information manually.", "warning");
+                    toast.warning("We could not extract all required details (host, username, password, or database) from this URL. Please enter the information manually.");
                 }
             } else {
                 return setHostName(newHostName);
@@ -290,92 +303,228 @@ export const LoginPage: FC = () => {
 
     const fields = useMemo(() => {
         if (databaseType.id === DatabaseType.Sqlite3) {
-            return <>
-                <DropdownWithLabel label="Database" items={foundDatabases?.Database?.map(database => ({
-                    id: database,
-                    label: database,
-                    icon: Icons.Database,
-                })) ?? []} loading={databasesLoading} noItemsLabel="Not available. Mount SQLite file in /db/" fullWidth={true} value={{
-                    id: database,
-                    label: database,
-                    icon: Icons.Database,
-                }} onChange={(item) => setDatabase(item.id)} testId="database" />
-            </>
+            return <div className="flex flex-col gap-4 w-full">
+                <div className="flex flex-col gap-1 w-full">
+                    <Label>Database</Label>
+                    <SearchSelect
+                        value={database}
+                        onChange={setDatabase}
+                        disabled={databasesLoading}
+                        options={
+                            databasesLoading
+                                ? []
+                                : foundDatabases?.Database?.map(db => ({
+                                    value: db,
+                                    label: db,
+                                    icon: <CircleStackIcon className="w-4 h-4" />,
+                                })) ?? []
+                        }
+                        placeholder="Select Database"
+                        buttonProps={{
+                            "data-testid": "database",
+                        }}
+                    />
+                </div>
+            </div>
         }
-        return <>
-            <InputWithlabel label={databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Postgres ? "Host Name (or paste Connection URL)" : "Host Name"} value={hostName} setValue={handleHostNameChange} testId="hostname" />
-            { databaseType.id !== DatabaseType.Redis && <InputWithlabel label="Username" value={username} setValue={setUsername} testId="username" /> }
-            <InputWithlabel label="Password" value={password} setValue={setPassword} type="password" testId="password" />
-            { (databaseType.id !== DatabaseType.MongoDb && databaseType.id !== DatabaseType.Redis && databaseType.id !== DatabaseType.ElasticSearch)  && <InputWithlabel label="Database" value={database} setValue={setDatabase} testId="database" /> }
-        </>
-    }, [database, databaseType.id, databasesLoading, foundDatabases?.Database, handleHostNameChange, hostName, password, username]);
+        return <div className="flex flex-col gap-4 w-full">
+            { databaseType.fields?.hostname && (
+                <div className="flex flex-col gap-2 w-full">
+                    <Label>{databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Postgres ? "Host Name (or paste Connection URL)" : "Host Name"}</Label>
+                    <Input value={hostName} onChange={(e) => handleHostNameChange(e.target.value)} data-testid="hostname" placeholder="Enter host name" />
+                </div>
+            )}
+            { databaseType.fields?.username && (
+                <div className="flex flex-col gap-2 w-full">
+                    <Label>Username</Label>
+                    <Input value={username} onChange={(e) => setUsername(e.target.value)} data-testid="username" placeholder="Enter username" />
+                </div>
+            )}
+            { databaseType.fields?.password && (
+                <div className="flex flex-col gap-2 w-full">
+                    <Label>Password</Label>
+                    <Input value={password} onChange={(e) => setPassword(e.target.value)} type="password" data-testid="password" placeholder="Enter password" />
+                </div>
+            )}
+            { databaseType.fields?.database && (
+                <div className="flex flex-col gap-2 w-full">
+                    <Label>Database</Label>
+                    <Input value={database} onChange={(e) => setDatabase(e.target.value)} data-testid="database" placeholder="Enter database" />
+                </div>
+            )}
+        </div>
+    }, [database, databaseType.id, databaseType.fields, databasesLoading, foundDatabases?.Database, handleHostNameChange, hostName, password, username]);
 
     const availableProfiles = useMemo(() => {
-        return profiles?.Profiles.map(profile => createDropdownItem(profile.Alias ?? profile.Id, (Icons.Logos as Record<string, ReactElement>)[profile.Type])) ?? [];
-    }, [profiles?.Profiles])
+        return profiles?.Profiles.map(profile => ({
+            value: profile.Id,
+            label: profile.Alias ?? profile.Id,
+            icon: (Icons.Logos as Record<string, ReactElement>)[profile.Type],
+            rightIcon: sources[profile.Source],
+        })) ?? [];
+    }, [profiles?.Profiles]);
+
+    const loginWithCredentialsEnabled = useMemo(() => {
+        if (databaseType.id === DatabaseType.Sqlite3) {
+            return database.length > 0;
+        }
+        if (databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Redis) {
+            return hostName.length > 0;
+        }
+        if (databaseType.id === DatabaseType.MySql || databaseType.id === DatabaseType.Postgres) {
+            return hostName.length > 0 && username.length > 0 && password.length > 0 && database.length > 0;
+        }
+        return false;
+    }, [databaseType.id, hostName, username, password, database]);
+
+    const loginWithProfileEnabled = useMemo(() => {
+        return selectedAvailableProfile != null;
+    }, [selectedAvailableProfile]);
 
     if (loading || profilesLoading)  {
-        return <Container>
-                <div className="flex flex-col justify-center items-center gap-4 w-full">
-                    <div>
-                        <Loading hideText={true} />
-                    </div>
-                    <div className={ClassNames.Text}>
-                        Logging in
-                    </div>
+        return (
+            <div className={classNames("flex flex-col justify-center items-center gap-4 w-full", className)}>
+                <div>
+                    <Loading hideText={true} />
                 </div>
-        </Container>
+                <h1 className="text-xl">
+                    Logging in
+                </h1>
+            </div>
+        );
     }
 
     return (
-        <Container className="justify-center items-center">
-            <div className="w-fit h-fit">
-                <div className="flex flex-col justify-between grow gap-4">
-                    <div className="flex grow">
-                        <div className="flex flex-col gap-4 grow w-[350px]">
-                            <div className="flex justify-between">
-                                <div className="text-lg text-gray-600 flex gap-2 items-center">
-                                    <img src={logoImage} alt="clidey logo" className="w-auto h-6" />
-                                    <span className={ClassNames.BrandText}>WhoDB</span>
-                                    <span className={ClassNames.Text}>Login</span>
-                                </div>
-                                <div className="text-red-500 text-xs flex items-center">
-                                    {error}
-                                </div>
-                            </div>
-                            <div className="flex flex-col grow justify-center gap-1">
-                                <DropdownWithLabel fullWidth dropdownContainerHeight="max-h-[300px]" label="Database Type" value={databaseType} onChange={handleDatabaseTypeChange} items={databaseTypeDropdownItems} testId="database-type" />
-                                {fields}
-                            </div>
-                        </div>
-                        {
-                            (showAdvanced && advancedForm != null) &&
-                            <div className="transition-all h-full overflow-hidden mt-[43px] w-[350px] ml-4 flex flex-col gap-1">
-                                {entries(advancedForm).map(([key, value]) => (
-                                    <InputWithlabel label={key} value={value} setValue={(newValue) => handleAdvancedForm(key, newValue)} testId={`${key}-input`} />
-                                ))}
-                            </div>
-                        }
-                    </div>
-                    <div className={classNames("flex", {
-                        "justify-end": advancedForm == null,
-                        "justify-between": advancedForm != null,
-                    })}>
-                        <AnimatedButton className={classNames({
-                            "hidden": advancedForm == null,
-                        })} icon={Icons.Adjustments} label={showAdvanced ? "Less Advanced" : "Advanced"} onClick={handleAdvancedToggle} testId="advanced-button" />
-                        <AnimatedButton icon={Icons.CheckCircle} label="Submit" onClick={handleSubmit} testId="submit-button" />
-                    </div>
-                </div>
-                {
-                    availableProfiles.length > 0 &&
-                    <div className="mt-4 pt-2 border-t border-t-neutral-100/10 flex flex-col gap-2">
-                        <DropdownWithLabel dropdownContainerHeight="max-h-[300px]" fullWidth label="Available profiles" value={selectedAvailableProfile} onChange={handleAvailableProfileChange}
-                            items={availableProfiles} noItemsLabel="No available profiles" />
-                        <AnimatedButton className="self-end" icon={Icons.CheckCircle} label="Login" onClick={handleLoginWithProfileSubmit} />
-                    </div>
-                }
+        <div className={classNames("w-fit h-fit", className, {
+            "w-full h-full": advancedDirection === "vertical",
+        })}>
+            <div className="fixed top-4 right-4">
+                <ModeToggle />
             </div>
+            <div className={classNames("flex flex-col grow gap-4", {
+                "justify-between": advancedDirection === "horizontal",
+                "h-full": advancedDirection === "vertical" && availableProfiles.length === 0,
+            })}>
+                <div className={classNames("flex", {
+                    "flex-row grow": advancedDirection === "horizontal",
+                    "flex-col w-full gap-4": advancedDirection === "vertical",
+                })}>
+                    <div className={classNames("flex flex-col gap-4 grow", advancedDirection === "vertical" ? "w-full" : "w-[350px]")}>
+                        {!hideHeader && (
+                            <div className="flex justify-between">
+                                <div className="flex items-center gap-2 text-xl">
+                                {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4" />}
+                                <h1 className="text-brand-foreground">{extensions.AppName ?? "WhoDB"}</h1>
+                                    <h1>Login</h1>
+                                </div>
+                                {
+                                    error &&
+                                    <Badge variant="destructive" className="self-end">
+                                        {error}
+                                    </Badge>
+                                }
+                            </div>
+                        )}
+                        <div className={cn("flex flex-col grow gap-4", {
+                            "justify-center": advancedDirection === "horizontal",
+                        })}>
+                            <div className="flex flex-col gap-2 w-full">
+                                <Label>Database Type</Label>
+                                <SearchSelect
+                                    value={databaseType?.id || ""}
+                                    onChange={(value) => {
+                                        const selected = databaseTypeItems.find(item => item.id === value);
+                                        handleDatabaseTypeChange(selected ?? databaseTypeItems[0]);
+                                    }}
+                                    options={databaseTypeItems.map(item => ({
+                                        value: item.id,
+                                        label: item.label,
+                                        icon: item.icon,
+                                    }))}
+                                    buttonProps={{
+                                        "data-testid": "database-type-select",
+                                    }}
+                                    contentClassName="w-[var(--radix-popover-trigger-width)] login-select-popover"
+                                />
+                            </div>
+                            {fields}
+                        </div>
+                    </div>
+                    {
+                        (showAdvanced && advancedForm != null) &&
+                        <div className={classNames("transition-all h-full overflow-hidden flex flex-col gap-1", {
+                            "w-[350px] ml-4 mt-[43px]": advancedDirection === "horizontal",
+                            "w-full": advancedDirection === "vertical",
+                        })}>
+                            {entries(advancedForm).map(([key, value]) => (
+                                <div className="flex flex-col gap-1" key={key}>
+                                    <Label htmlFor={`${key}-input`}>{key}</Label>
+                                    <Input
+                                        id={`${key}-input`}
+                                        value={value}
+                                        onChange={e => handleAdvancedForm(key, e.target.value)}
+                                        data-testid={`${key}-input`}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    }
+                </div>
+                <div className={classNames("flex login-action-buttons", {
+                    "justify-end": advancedForm == null,
+                    "justify-between": advancedForm != null,
+                })}>
+                    <Button className={classNames({
+                        "hidden": advancedForm == null,
+                    })} onClick={handleAdvancedToggle} data-testid="advanced-button" variant="secondary">
+                        <AdjustmentsHorizontalIcon className="w-4 h-4" /> {showAdvanced ? "Less Advanced" : "Advanced"}
+                    </Button>
+                    {advancedDirection === "horizontal" && (
+                        <Button onClick={handleSubmit} data-testid="login-button" variant={loginWithCredentialsEnabled ? "default" : "secondary"}>
+                            <CheckCircleIcon className="w-4 h-4" /> Login
+                        </Button>
+                    )}
+                </div>
+                {advancedDirection === "vertical" && (
+                    <div className={cn("flex flex-col justify-end", {
+                        "grow": availableProfiles.length === 0,
+                    })}>
+                        <Button onClick={handleSubmit} data-testid="login-button" variant={loginWithCredentialsEnabled ? "default" : "secondary"}>
+                            <CheckCircleIcon className="w-4 h-4" /> Login
+                        </Button>
+                    </div>
+                )}
+            </div>
+            {
+                availableProfiles.length > 0 &&
+                <>
+                    <Separator className="my-8" />
+                    <div className="flex flex-col gap-4">
+                        <Label>Available profiles</Label>
+                        <SearchSelect
+                            value={selectedAvailableProfile}
+                            onChange={handleAvailableProfileChange}
+                            placeholder="Select a profile"
+                            contentClassName="w-[var(--radix-popover-trigger-width)]"
+                            options={availableProfiles}
+                            buttonProps={{
+                                "data-testid": "available-profiles-select",
+                            }}
+                        />
+                        <Button onClick={handleLoginWithProfileSubmit} data-testid="login-with-profile-button" variant={loginWithProfileEnabled ? "default" : "secondary"}>
+                            <CheckCircleIcon className="w-4 h-4" /> Login
+                        </Button>
+                    </div>
+                </>
+            }
+        </div>
+    );
+};
+
+export const LoginPage: FC = () => {
+    return (
+        <Container className="justify-center items-center">
+            <LoginForm />
         </Container>
-    )
-}
+    );
+};

@@ -18,22 +18,38 @@ package src
 
 import (
 	"fmt"
+
 	"github.com/clidey/whodb/core/src/plugins/clickhouse"
 	"github.com/clidey/whodb/core/src/plugins/elasticsearch"
 	"github.com/clidey/whodb/core/src/plugins/mongodb"
 	"github.com/clidey/whodb/core/src/plugins/mysql"
 	"github.com/clidey/whodb/core/src/plugins/redis"
 	"github.com/clidey/whodb/core/src/plugins/sqlite3"
+	"github.com/clidey/whodb/core/src/types"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
+	"github.com/clidey/whodb/core/src/mockdata"
 	"github.com/clidey/whodb/core/src/plugins/postgres"
 )
 
 var MainEngine *engine.Engine
 
+// InitEEFunc is a function type for initializing Enterprise Edition features
+type InitEEFunc func(*engine.Engine)
+
+// initEE is a variable that will be set by the EE build to initialize EE features
+var initEE InitEEFunc
+
+// SetEEInitializer allows external packages to register the EE initialization function
+func SetEEInitializer(fn InitEEFunc) {
+	initEE = fn
+}
+
 func InitializeEngine() *engine.Engine {
 	MainEngine = &engine.Engine{}
+
+	// Register community edition plugins
 	MainEngine.RegistryPlugin(postgres.NewPostgresPlugin())
 	MainEngine.RegistryPlugin(mysql.NewMySQLPlugin())
 	MainEngine.RegistryPlugin(mysql.NewMyMariaDBPlugin())
@@ -42,11 +58,20 @@ func InitializeEngine() *engine.Engine {
 	MainEngine.RegistryPlugin(redis.NewRedisPlugin())
 	MainEngine.RegistryPlugin(elasticsearch.NewElasticSearchPlugin())
 	MainEngine.RegistryPlugin(clickhouse.NewClickHousePlugin())
+
+	// Initialize Enterprise Edition plugins if available
+	if initEE != nil {
+		initEE(MainEngine)
+	}
+
 	return MainEngine
 }
 
-func GetLoginProfiles() []env.DatabaseCredentials {
-	profiles := []env.DatabaseCredentials{}
+func GetLoginProfiles() []types.DatabaseCredentials {
+	profiles := []types.DatabaseCredentials{}
+
+	profiles = append(profiles, MainEngine.LoginProfiles...)
+
 	for _, plugin := range MainEngine.Plugins {
 		databaseProfiles := env.GetDefaultDatabaseCredentials(string(plugin.Type))
 		for _, databaseProfile := range databaseProfiles {
@@ -58,14 +83,14 @@ func GetLoginProfiles() []env.DatabaseCredentials {
 	return profiles
 }
 
-func GetLoginProfileId(index int, profile env.DatabaseCredentials) string {
+func GetLoginProfileId(index int, profile types.DatabaseCredentials) string {
 	if len(profile.Alias) > 0 {
 		return profile.Alias
 	}
 	return fmt.Sprintf("#%v - %v@%v [%v]", index+1, profile.Username, profile.Hostname, profile.Database)
 }
 
-func GetLoginCredentials(profile env.DatabaseCredentials) *engine.Credentials {
+func GetLoginCredentials(profile types.DatabaseCredentials) *engine.Credentials {
 	advanced := []engine.Record{
 		{
 			Key:   "Port",
@@ -89,4 +114,8 @@ func GetLoginCredentials(profile env.DatabaseCredentials) *engine.Credentials {
 		Advanced:  advanced,
 		IsProfile: profile.IsProfile,
 	}
+}
+
+func NewMockDataGenerator() *mockdata.Generator {
+	return mockdata.NewGenerator()
 }

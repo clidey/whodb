@@ -21,6 +21,7 @@ import (
 	"errors"
 
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -28,6 +29,11 @@ import (
 func (p *MongoDBPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, fields []engine.Record) (bool, error) {
 	client, err := DB(config)
 	if err != nil {
+		log.Logger.WithError(err).WithFields(map[string]interface{}{
+			"hostname": config.Credentials.Hostname,
+			"schema": schema,
+			"storageUnit": storageUnit,
+		}).Error("Failed to connect to MongoDB for adding storage unit")
 		return false, err
 	}
 	defer client.Disconnect(context.Background())
@@ -36,6 +42,11 @@ func (p *MongoDBPlugin) AddStorageUnit(config *engine.PluginConfig, schema strin
 
 	err = createCollectionIfNotExists(database, storageUnit)
 	if err != nil {
+		log.Logger.WithError(err).WithFields(map[string]interface{}{
+			"hostname": config.Credentials.Hostname,
+			"schema": schema,
+			"storageUnit": storageUnit,
+		}).Error("Failed to create MongoDB collection")
 		return false, err
 	}
 
@@ -45,6 +56,11 @@ func (p *MongoDBPlugin) AddStorageUnit(config *engine.PluginConfig, schema strin
 func (p *MongoDBPlugin) AddRow(config *engine.PluginConfig, schema string, storageUnit string, values []engine.Record) (bool, error) {
 	client, err := DB(config)
 	if err != nil {
+		log.Logger.WithError(err).WithFields(map[string]interface{}{
+			"hostname": config.Credentials.Hostname,
+			"schema": schema,
+			"storageUnit": storageUnit,
+		}).Error("Failed to connect to MongoDB for adding row")
 		return false, err
 	}
 	defer client.Disconnect(context.Background())
@@ -58,6 +74,12 @@ func (p *MongoDBPlugin) AddRow(config *engine.PluginConfig, schema string, stora
 
 	_, err = collection.InsertOne(context.Background(), document)
 	if err != nil {
+		log.Logger.WithError(err).WithFields(map[string]interface{}{
+			"hostname": config.Credentials.Hostname,
+			"schema": schema,
+			"storageUnit": storageUnit,
+			"documentFields": len(values),
+		}).Error("Failed to insert document into MongoDB collection")
 		return false, err
 	}
 
@@ -67,6 +89,7 @@ func (p *MongoDBPlugin) AddRow(config *engine.PluginConfig, schema string, stora
 func createCollectionIfNotExists(database *mongo.Database, collectionName string) error {
 	collections, err := database.ListCollectionNames(context.Background(), bson.D{})
 	if err != nil {
+		log.Logger.WithError(err).WithField("collectionName", collectionName).Error("Failed to list MongoDB collection names")
 		return err
 	}
 
@@ -78,6 +101,7 @@ func createCollectionIfNotExists(database *mongo.Database, collectionName string
 
 	err = database.CreateCollection(context.Background(), collectionName)
 	if err != nil {
+		log.Logger.WithError(err).WithField("collectionName", collectionName).Error("Failed to create MongoDB collection")
 		return err
 	}
 

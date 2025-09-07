@@ -14,18 +14,83 @@
  * limitations under the License.
  */
 
-import {FC} from "react";
-import {InternalPage} from "../../components/page";
-import {InternalRoutes} from "../../config/routes";
+import { Badge, Button, Label, Separator } from "@clidey/ux";
+import { ChatBubbleLeftRightIcon, EnvelopeIcon, GlobeAltIcon } from "@heroicons/react/24/outline";
+import { FC } from "react";
+import { InternalPage } from "../../components/page";
+import { InternalRoutes } from "../../config/routes";
 
 export const ContactUsPage: FC = () => {
-    return <InternalPage routes={[InternalRoutes.ContactUs]}>
-        <div className="flex justify-center items-center w-full">
-            <iframe
-                title={"WhoDB Feedback Form"}
-                src="https://docs.google.com/forms/d/e/1FAIpQLSfldEyTbzRdtsFX_6fYtntg9N9s_M7zm8wX8JmrOc98IJPX_A/viewform?embedded=true"
-                width="100%" height="1500">Loading…
-            </iframe>
-        </div>
-    </InternalPage>
+    return (
+        <InternalPage routes={[InternalRoutes.ContactUs!]}>
+            <div className="flex flex-col items-center w-full max-w-2xl mx-auto py-10 gap-8">
+                <div className="w-full flex flex-col gap-0">
+                    <div className="flex flex-col gap-2 mb-4">
+                        <div className="text-2xl font-bold flex items-center gap-2">
+                            <EnvelopeIcon className="w-6 h-6" />
+                            Contact Us
+                        </div>
+                        <p className="mt-2">We're here to help! Reach out to us for support, questions, or feedback.</p>
+                    </div>
+                    <Separator />
+                    <div className="flex flex-col gap-6 py-6">
+                        <div className="flex flex-col gap-2">
+                            <Label className="text-lg font-semibold">Email</Label>
+                            <Badge>
+                                <a
+                                    href="mailto:support@clidey.com"
+                                    className="transition-colors text-base font-medium"
+                                    data-testid="contact-email"
+                                >
+                                    support@clidey.com
+                                </a>
+                            </Badge>
+                            <p className="text-sm">Our support team typically responds within 1 business day.</p>
+                        </div>
+                        <Separator />
+                        <div className="flex flex-col gap-2">
+                            <Label className="text-lg font-semibold">Community & Issues</Label>
+                            <Button
+                                asChild
+                                variant="secondary"
+                                className="w-fit gap-2"
+                                data-testid="github-issue-button"
+                            >
+                                <a
+                                    href="https://github.com/clidey/whodb/issues"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <GlobeAltIcon className="w-5 h-5" />
+                                    Submit an Issue on GitHub
+                                </a>
+                            </Button>
+                            <p className="text-sm">For bug reports, feature requests, or to join the discussion, visit our GitHub issues page.</p>
+                        </div>
+                        <Separator />
+                        <div className="flex flex-col gap-2">
+                            <Label className="text-lg font-semibold">Live Chat (Coming Soon)</Label>
+                            <Button
+                                variant="ghost"
+                                className="w-fit gap-2 cursor-not-allowed opacity-60"
+                                disabled
+                            >
+                                <ChatBubbleLeftRightIcon className="w-5 h-5" />
+                                Chat with Support
+                            </Button>
+                            <p className="text-sm">Live chat support will be available soon. Stay tuned!</p>
+                        </div>
+                    </div>
+                    <div className="flex flex-col items-start gap-2 text-xs text-gray-500 py-4">
+                        <div>
+                            <span className="font-semibold">Clidey, Inc.</span> &middot; 2025 &middot; All rights reserved.
+                        </div>
+                        <div>
+                            For urgent matters, please mention <span className="font-mono bg-gray-100 px-1 rounded">[URGENT]</span> in your email subject.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </InternalPage>
+    );
 }

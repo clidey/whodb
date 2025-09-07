@@ -3,6 +3,7 @@
 package model
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"strconv"
@@ -12,6 +13,12 @@ type AIChatMessage struct {
 	Type   string      `json:"Type"`
 	Result *RowsResult `json:"Result,omitempty"`
 	Text   string      `json:"Text"`
+}
+
+type AIProvider struct {
+	Type                 string `json:"Type"`
+	ProviderID           string `json:"ProviderId"`
+	IsEnvironmentDefined bool   `json:"IsEnvironmentDefined"`
 }
 
 type AtomicWhereCondition struct {
@@ -54,16 +61,30 @@ type LoginCredentials struct {
 }
 
 type LoginProfile struct {
-	Alias    *string      `json:"Alias,omitempty"`
-	ID       string       `json:"Id"`
-	Type     DatabaseType `json:"Type"`
-	Database *string      `json:"Database,omitempty"`
+	Alias                *string      `json:"Alias,omitempty"`
+	ID                   string       `json:"Id"`
+	Type                 DatabaseType `json:"Type"`
+	Database             *string      `json:"Database,omitempty"`
+	IsEnvironmentDefined bool         `json:"IsEnvironmentDefined"`
+	Source               string       `json:"Source"`
 }
 
 type LoginProfileInput struct {
 	ID       string       `json:"Id"`
 	Type     DatabaseType `json:"Type"`
 	Database *string      `json:"Database,omitempty"`
+}
+
+type MockDataGenerationInput struct {
+	Schema            string `json:"Schema"`
+	StorageUnit       string `json:"StorageUnit"`
+	RowCount          int    `json:"RowCount"`
+	Method            string `json:"Method"`
+	OverwriteExisting bool   `json:"OverwriteExisting"`
+}
+
+type MockDataGenerationStatus struct {
+	AmountGenerated int `json:"AmountGenerated"`
 }
 
 type Mutation struct {
@@ -101,13 +122,19 @@ type SettingsConfigInput struct {
 	MetricsEnabled *string `json:"MetricsEnabled,omitempty"`
 }
 
+type SortCondition struct {
+	Column    string        `json:"Column"`
+	Direction SortDirection `json:"Direction"`
+}
+
 type StatusResponse struct {
 	Status bool `json:"Status"`
 }
 
 type StorageUnit struct {
-	Name       string    `json:"Name"`
-	Attributes []*Record `json:"Attributes"`
+	Name                        string    `json:"Name"`
+	Attributes                  []*Record `json:"Attributes"`
+	IsMockDataGenerationAllowed bool      `json:"IsMockDataGenerationAllowed"`
 }
 
 type WhereCondition struct {
@@ -170,6 +197,20 @@ func (e DatabaseType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
+func (e *DatabaseType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e DatabaseType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 type GraphUnitRelationshipType string
 
 const (
@@ -217,6 +258,75 @@ func (e GraphUnitRelationshipType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
+func (e *GraphUnitRelationshipType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e GraphUnitRelationshipType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type SortDirection string
+
+const (
+	SortDirectionAsc  SortDirection = "ASC"
+	SortDirectionDesc SortDirection = "DESC"
+)
+
+var AllSortDirection = []SortDirection{
+	SortDirectionAsc,
+	SortDirectionDesc,
+}
+
+func (e SortDirection) IsValid() bool {
+	switch e {
+	case SortDirectionAsc, SortDirectionDesc:
+		return true
+	}
+	return false
+}
+
+func (e SortDirection) String() string {
+	return string(e)
+}
+
+func (e *SortDirection) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SortDirection(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SortDirection", str)
+	}
+	return nil
+}
+
+func (e SortDirection) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *SortDirection) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e SortDirection) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 type WhereConditionType string
 
 const (
@@ -258,4 +368,18 @@ func (e *WhereConditionType) UnmarshalGQL(v any) error {
 
 func (e WhereConditionType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *WhereConditionType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e WhereConditionType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }

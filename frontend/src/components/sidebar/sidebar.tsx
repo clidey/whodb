@@ -14,156 +14,62 @@
  * limitations under the License.
  */
 
-
+import {
+    Button,
+    cn,
+    CommandItem,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+    SearchSelect,
+    Sheet,
+    SheetContent,
+    Sidebar as SidebarComponent,
+    SidebarContent,
+    SidebarGroup,
+    SidebarHeader,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+    SidebarSeparator,
+    SidebarTrigger,
+    toast,
+    useSidebar
+} from "@clidey/ux";
+import { DatabaseType, useGetDatabaseQuery, useGetSchemaQuery, useGetVersionQuery, useLoginMutation, useLoginWithProfileMutation } from '@graphql';
+import { ArrowLeftStartOnRectangleIcon, ChevronDownIcon, CogIcon, CommandLineIcon, PlusIcon, QuestionMarkCircleIcon, RectangleGroupIcon, SparklesIcon, TableCellsIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
-import { AnimatePresence, motion } from "framer-motion";
-import { debounce } from "lodash";
-import { cloneElement, FC, MouseEvent, ReactElement, useCallback, useMemo, useState } from "react";
+import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { twMerge } from "tailwind-merge";
-import logoImage from "../../../public/images/logo.png";
-import { InternalRoutes, PublicRoutes } from "../../config/routes";
-import { DatabaseType, useGetDatabaseQuery, useGetSchemaQuery, useGetVersionQuery, useLoginMutation, useLoginWithProfileMutation } from "../../generated/graphql";
+import { extensions } from "../../config/features";
+import { InternalRoutes } from "../../config/routes";
+import { LoginForm } from "../../pages/auth/login";
 import { AuthActions, LocalLoginProfile } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
-import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
-import { createStub, getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
-import { AnimatedButton } from "../button";
-import { BRAND_COLOR_BG, ClassNames } from "../classes";
-import { createDropdownItem, Dropdown, IDropdownItem } from "../dropdown";
+import { databaseSupportsDatabaseSwitching, databaseSupportsSchema, databaseSupportsScratchpad } from "../../utils/database-features";
+import { isEEFeatureEnabled } from "../../utils/ee-loader";
+import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
 import { Icons } from "../icons";
 import { Loading } from "../loading";
+import { updateProfileLastAccessed } from "../profile-info-tooltip";
 
+const logoImage = "/images/logo.png";
 
-type IRoute = {
-    icon?: React.ReactElement;
-    name: string;
-    path: string;
+function getProfileLabel(profile: LocalLoginProfile) {
+    if (profile.Saved) return profile.Id;
+    if (profile.Type === DatabaseType.Redis) return profile.Hostname;
+    if (profile.Type === DatabaseType.Sqlite3) return profile.Database;
+    return `${profile.Hostname} [${profile.Username}]`;
 }
 
-type IRouteProps = {
-    title: string;
-    icon: React.ReactElement;
-    path?: string;
-    routes?: IRoute[];
-    collapse?: boolean;
-    testId?: string;
-};
-
-export const SideMenu: FC<IRouteProps> = (props) => {
-    const navigate = useNavigate();
-    const [hover, setHover] = useState(false);
-    const status = hover ? "show" : "hide";
-    const pathname = useLocation().pathname;
-
-    const handleMouseEnter = useMemo(() => {
-        return debounce(() => setHover(true));
-    }, []);
-
-    const handleMouseLeave = useMemo(() => {
-        return debounce(() => setHover(false));
-    }, []);
-
-    const handleClick = useCallback(() => {
-        if (props.path != null) {
-            navigate(props.path);
-        }
-    }, [navigate, props.path]);
-
-    return <div className={classNames("flex items-center", {
-        "justify-center": props.collapse,
-    })}  onMouseEnter={handleMouseEnter} onMouseOver={handleMouseEnter} onMouseLeave={handleMouseLeave} data-testid={props.testId}>
-        <AnimatePresence mode="sync">
-            <div className={twMerge(classNames("cursor-default text-md inline-flex gap-2 transition-all hover:gap-2 relative w-full py-4 rounded-md dark:border-white/5", {
-                "cursor-pointer": props.path != null,
-                "pl-4": !props.collapse,
-                "pl-2": props.collapse,
-            }, ClassNames.Hover))} onClick={handleClick} data-testid="sidebar-button">
-                {pathname === props.path && <motion.div layoutId="indicator" className={classNames("w-[5px] h-full absolute top-0 right-0 rounded-3xl", BRAND_COLOR_BG)} />}
-                {cloneElement(props.icon, {
-                    className: classNames("transition-all dark:stroke-white", {
-                        "w-4 h-4": !props.collapse,
-                        "w-6 h-6 hover:scale-110 ml-1": props.collapse,
-                    })
-                })}
-                <span className={ClassNames.Text}>
-                    {!props.collapse && props.title}
-                </span>
-                {
-                    props.routes != null &&
-                    <motion.div className="absolute z-40 divide-y rounded-lg shadow-lg min-w-[250px] bg-white left-[100%] -top-[20px] border border-gray-200" variants={{
-                        hide: {
-                            scale: 0.9,
-                            opacity: 0,
-                            x: 10,
-                            transition: {
-                                duration: 0.1,
-                            },
-                            transitionEnd: {
-                                display: "none",
-                            }
-                        },
-                        show: {
-                            scale: 1,
-                            opacity: 100,
-                            x: 0,
-                            display: "flex",
-                        }
-                    }} initial={status} animate={status}>
-                        <ul className="py-2 px-2 text-sm flex flex-col justify-center w-full">
-                            {props.routes.map(route => (
-                                <Link key={route.name} className="flex items-center gap-1 transition-all hover:gap-2 hover:bg-gray-100 w-full rounded-md pl-2 py-2" to={route.path}>
-                                    {route.icon && cloneElement(route.icon, {
-                                        className: "w-4 h-4"
-                                    })}
-                                    {route.name}
-                                </Link>
-                            ))}
-                        </ul>
-                    </motion.div>
-                }
-            </div>
-        </AnimatePresence>
-    </div>
+function getProfileIcon(profile: LocalLoginProfile) {
+    return (Icons.Logos as Record<string, ReactElement>)[profile.Type];
 }
-
-function getDropdownLoginProfileItem(profile: LocalLoginProfile): IDropdownItem {
-    const icon = (Icons.Logos as Record<string, ReactElement>)[profile.Type];
-    if (profile.Saved) {
-        return {
-            id: profile.Id,
-            label: profile.Id,
-            icon,
-        }
-    }
-    if (profile.Type === DatabaseType.MongoDb) {
-        return {
-            id: profile.Id,
-            label: `${profile.Hostname} - ${profile.Username} [${profile.Type}]`,
-            icon,
-        }
-    }
-    if (profile.Type === DatabaseType.Sqlite3) {
-        return {
-            id: profile.Id,
-            label: `${profile.Database} [${profile.Type}]`,
-            icon,
-        }
-    }
-    return {
-        id: profile.Id,
-        label: `${profile.Hostname} - ${profile.Database} [${profile.Type}]`,
-        icon,
-    };
-}
-
-export const DATABASES_THAT_DONT_SUPPORT_SCRATCH_PAD = [DatabaseType.MongoDb, DatabaseType.Redis, DatabaseType.ElasticSearch];
-const DATABASES_THAT_DONT_SUPPORT_SCHEMA = [DatabaseType.Sqlite3, DatabaseType.Redis, DatabaseType.ElasticSearch];
 
 export const Sidebar: FC = () => {
-    const [collapsed, setCollapsed] = useState(false);
     const schema = useAppSelector(state => state.database.schema);
     const dispatch = useDispatch();
     const pathname = useLocation().pathname;
@@ -173,317 +79,369 @@ export const Sidebar: FC = () => {
         variables: {
             type: current?.Type as DatabaseType,
         },
-        skip: current == null || (current.Type !== DatabaseType.Redis && isNoSQL(current?.Type as DatabaseType)),
+        skip: current == null || !databaseSupportsDatabaseSwitching(current?.Type),
     });
     const { data: availableSchemas, loading: availableSchemasLoading, refetch: getSchemas } = useGetSchemaQuery({
         onCompleted(data) {
-            if (current == null) {
-                return;
-            }
+            if (current == null) return;
             if (schema === "") {
                 if (([DatabaseType.MySql, DatabaseType.MariaDb].includes(current.Type as DatabaseType)) && data.Schema.includes(current.Database)) {
                     dispatch(DatabaseActions.setSchema(current.Database));
-                    return;   
+                    return;
                 }
                 dispatch(DatabaseActions.setSchema(data.Schema[0] ?? ""));
             }
         },
-        skip: current == null || DATABASES_THAT_DONT_SUPPORT_SCHEMA.includes(current?.Type as DatabaseType),
+        skip: current == null || !databaseSupportsSchema(current?.Type),
     });
     const { data: version } = useGetVersionQuery();
-    const [login, ] = useLoginMutation();
-    const [loginWithProfile, ] = useLoginWithProfileMutation();
+    const [login] = useLoginMutation();
+    const [loginWithProfile] = useLoginWithProfileMutation();
     const navigate = useNavigate();
+    const [showLoginCard, setShowLoginCard] = useState(false);
+    const { toggleSidebar, open } = useSidebar();
 
-    const handleProfileChange = useCallback((item: IDropdownItem, database?: string) => {
-        const selectedProfile = profiles.find(profile => profile.Id === item.id);
-        if (selectedProfile == null) {
-            return;
-        }
+    // Profile select logic
+    const profileOptions = useMemo(() => profiles.map(profile => ({
+        value: profile.Id,
+        label: getProfileLabel(profile),
+        icon: getProfileIcon(profile),
+        profile,
+    })), [profiles]);
+
+    const currentProfileOption = useMemo(() => {
+        if (!current) return undefined;
+        return profileOptions.find(opt => opt.value === current.Id);
+    }, [current, profileOptions]);
+
+    const handleProfileChange = useCallback(async (value: string, database?: string) => {
+        const selectedProfile = profiles.find(profile => profile.Id === value);
+        if (!selectedProfile) return;
+        dispatch(DatabaseActions.setSchema(""));
         if (selectedProfile.Saved) {
-            return loginWithProfile({
+            await loginWithProfile({
                 variables: {
                     profile: {
-                        Id: item.id,
+                        Id: selectedProfile.Id,
                         Type: selectedProfile.Type as DatabaseType,
                         Database: database ?? current?.Database,
                     },
                 },
                 onCompleted(status) {
                     if (status.LoginWithProfile.Status) {
+                        updateProfileLastAccessed(selectedProfile.Id);
                         dispatch(DatabaseActions.setSchema(""));
-                        dispatch(AuthActions.switch({ id: item.id }));
+                        dispatch(AuthActions.switch({ id: selectedProfile.Id }));
                         navigate(InternalRoutes.Dashboard.StorageUnit.path);
-                        if (!DATABASES_THAT_DONT_SUPPORT_SCHEMA.includes(current?.Type as DatabaseType)) {
-                            getSchemas();
-                        }
+                        if (databaseSupportsSchema(current?.Type)) getSchemas();
                     }
                 },
                 onError(error) {
-                    notify(`Error signing you in: ${error.message}`, "error")
+                    toast.error(`Error signing you in: ${error.message}`);
                 },
-            })
+            });
+        } else {
+            await login({
+                variables: {
+                    credentials: {
+                        Type: selectedProfile.Type,
+                        Database: database ?? selectedProfile.Database,
+                        Hostname: selectedProfile.Hostname,
+                        Password: selectedProfile.Password,
+                        Username: selectedProfile.Username,
+                        Advanced: selectedProfile.Advanced,
+                    },
+                },
+                onCompleted(status) {
+                    if (status.Login.Status) {
+                        updateProfileLastAccessed(selectedProfile.Id);
+                        dispatch(DatabaseActions.setSchema(""));
+                        dispatch(AuthActions.switch({ id: selectedProfile.Id }));
+                        navigate(InternalRoutes.Dashboard.StorageUnit.path);
+                        getSchemas();
+                    }
+                },
+                onError(error) {
+                    toast.error(`Error signing you in: ${error.message}`);
+                },
+            });
         }
-        login({
-            variables: {
-                credentials: {
-                    Type: selectedProfile.Type,
-                    Database: database ?? selectedProfile.Database,
-                    Hostname: selectedProfile.Hostname,
-                    Password: selectedProfile.Password,
-                    Username: selectedProfile.Username,
-                    Advanced: selectedProfile.Advanced,
-                },
-            },
-            onCompleted(status) {
-                if (status.Login.Status) {
-                    dispatch(DatabaseActions.setSchema(""));
-                    dispatch(AuthActions.switch({ id: selectedProfile.Id }));
-                    navigate(InternalRoutes.Dashboard.StorageUnit.path);
-                    getSchemas();
-                }
-            },
-            onError(error) {
-                notify(`Error signing you in: ${error.message}`, "error")
-            },
-        });
-    }, [current?.Database, current?.Type, dispatch, getSchemas, login, loginWithProfile, navigate, profiles]);
+    }, [profiles, login, loginWithProfile, dispatch, navigate, getSchemas, current?.Database, current?.Type]);
 
-    const handleDatabaseChange = useCallback((item: IDropdownItem) => {
-        if (current?.Id == null) {
+    // Database select logic
+    const databaseOptions = useMemo(() => {
+        if (!availableDatabases?.Database) return [];
+        return availableDatabases.Database.map(db => ({
+            value: db,
+            label: db,
+        }));
+    }, [availableDatabases?.Database]);
+    
+    const handleDatabaseChange = useCallback((value: string) => {
+        if (value === "") {
+            return;
+        }
+        if (!current?.Id) return;
+        if (pathname !== InternalRoutes.Graph.path && pathname !== InternalRoutes.Dashboard.StorageUnit.path) {
+            navigate(InternalRoutes.Dashboard.StorageUnit.path);
+        }
+        dispatch(AuthActions.setLoginProfileDatabase({ id: current?.Id, database: value }));
+        handleProfileChange(current.Id, value);
+    }, [current, dispatch, handleProfileChange, navigate, pathname]);
+
+    // Schema select logic
+    const schemaOptions = useMemo(() => {
+        return availableSchemas?.Schema?.map(s => ({
+            value: s,
+            label: s,
+        })) ?? [];
+    }, [availableSchemas?.Schema]);
+
+    const handleSchemaChange = useCallback((value: string) => {
+        if (value === "") {
             return;
         }
         if (pathname !== InternalRoutes.Graph.path && pathname !== InternalRoutes.Dashboard.StorageUnit.path) {
             navigate(InternalRoutes.Dashboard.StorageUnit.path);
         }
-        dispatch(AuthActions.setLoginProfileDatabase({ id: current?.Id, database: item.id }));
-        handleProfileChange(createDropdownItem(current.Id), item.id);
-    }, [current, dispatch, handleProfileChange, navigate, pathname]);
-
-    const handleSchemaChange = useCallback((item: IDropdownItem) => {
-        if (pathname !== InternalRoutes.Graph.path && pathname !== InternalRoutes.Dashboard.StorageUnit.path) {
-            navigate(InternalRoutes.Dashboard.StorageUnit.path);
-        }
-        dispatch(DatabaseActions.setSchema(item.id));
+        dispatch(DatabaseActions.setSchema(value));
     }, [dispatch, navigate, pathname]);
 
-    const loading = useMemo(() => {
-        return availableDatabasesLoading || availableSchemasLoading;
-    }, [availableDatabasesLoading, availableSchemasLoading]);
-
-    const sidebarRoutes: IRouteProps[] = useMemo(() => {
-        if (current == null) {
-            return [];
-        }
+    // Sidebar routes
+    const sidebarRoutes = useMemo(() => {
+        if (!current) return [];
         const routes = [
             {
                 title: getDatabaseStorageUnitLabel(current.Type),
-                icon: Icons.Tables,
+                icon: <TableCellsIcon className="w-4 h-4" />,
                 path: InternalRoutes.Dashboard.StorageUnit.path,
             },
             {
                 title: "Graph",
-                icon: Icons.GraphLayout,
+                icon: <RectangleGroupIcon className="w-4 h-4" />,
                 path: InternalRoutes.Graph.path,
             },
         ];
-
         if (!isNoSQL(current.Type)) {
             routes.unshift({
-                title: "Houdini",
-                icon: Icons.Sparkles,
+                title: "Chat",
+                icon: <SparklesIcon className="w-4 h-4" />,
                 path: InternalRoutes.Chat.path,
             });
         }
-        if (!DATABASES_THAT_DONT_SUPPORT_SCRATCH_PAD.includes(current.Type as DatabaseType)) {
+        if (databaseSupportsScratchpad(current.Type)) {
             routes.push({
                 title: "Scratchpad",
-                icon: Icons.Console,
+                icon: <CommandLineIcon className="w-4 h-4" />,
                 path: InternalRoutes.RawExecute.path,
             });
         }
         return routes;
     }, [current]);
 
-    const handleCollapseToggle = useCallback(() => {
-        setCollapsed(c => !c);
-    }, []);
-
-    const handleNavigateToLogin = useCallback(() => {
-        navigate(PublicRoutes.Login.path);
+    // Logout logic
+    const handleLogout = useCallback(() => {
+        navigate(InternalRoutes.Logout.path);
     }, [navigate]);
 
-    const routes = useMemo(() => {
-        return sidebarRoutes.map(route => (
-            <SideMenu key={`sidebar-routes-${createStub(route.title)}`} collapse={collapsed} title={route.title} icon={route.icon}
-                routes={route.routes} path={route.path} />
-        ));
-    }, [collapsed, sidebarRoutes]);
+    // Add profile logic
+    const handleAddProfile = useCallback(() => {
+        setShowLoginCard(true);
+    }, [navigate]);
 
-    const loginItems: IDropdownItem[] = useMemo(() => {
-        return profiles.map(profile => getDropdownLoginProfileItem(profile));
-    }, [profiles]);
+    const loading = availableDatabasesLoading || availableSchemasLoading;
 
-    const handleMenuLogout = useCallback((e: MouseEvent, item: IDropdownItem) => {
-        e.stopPropagation();
-        const selectedProfile = profiles.find(profile => profile.Id === item.id);
-        if (selectedProfile == null) {
-            return;
+    useEffect(() => {
+        if (pathname.includes(InternalRoutes.Dashboard.ExploreStorageUnit.path) && open) {
+            toggleSidebar();
         }
-        if (selectedProfile.Id === current?.Id) {
-            return navigate(InternalRoutes.Logout.path);
-        }
-        dispatch(AuthActions.remove({ id: selectedProfile.Id }));
-    }, [current?.Id, dispatch, navigate, profiles]);
-
-    const currentProfile = useMemo(() => {
-        if (current == null) {
-            return;
-        }
-        const icon = (Icons.Logos as Record<string, ReactElement>)[current.Type];
-        if (current.Saved) {
-            return {
-                id: current.Id,
-                label: current.Id,
-                icon,
-            }
-        }
-        if (current.Type === DatabaseType.Redis) {
-            return {
-                id: current.Id,
-                label: current.Hostname,
-                icon,
-            }
-        }
-        if (current.Type === DatabaseType.Sqlite3) {
-            return {
-                id: current.Id,
-                label: current.Database,
-                icon,
-            }
-        }
-        return {
-            id: current.Id,
-            label: `${current.Hostname} [${current.Username}]`,
-            icon,
-        }
-    }, [current]);
-
-    const schemasDropdownItems = useMemo(() => {
-        return availableSchemas?.Schema.map(schema => createDropdownItem(schema)) ?? [];
-    }, [availableSchemas?.Schema]);
-
-    const animate = collapsed ? "hide" : "show";
+    }, []);
 
     return (
-        <div className={
-            classNames("h-[100vh] flex flex-col gap-4 shadow-md relative transition-all duration-500 dark:bg-[#1E1E1E] dark:shadow-neutral-100/5", {
-                "w-[50px] py-20": collapsed,
-                "w-[300px] px-10 py-20": !collapsed,
-            })}>
-                <motion.div className="flex flex-col gap-4" variants={{
-                    show: {
-                        opacity: 1,
-                        transition: {
-                            delay: 0.3,
-                        }
-                    },
-                    hide: {
-                        opacity: 0,
-                        transition: {
-                            duration: 0.1,
-                        }
-                    }
-                }} animate={animate}>
-                <div className="flex gap-2">
-                    <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
-                    <span className={classNames(ClassNames.BrandText, "text-2xl")}>WhoDB</span>
-                </div>
-            </motion.div>
-            <motion.div className={classNames("absolute top-4 cursor-pointer transition-all dark:text-neutral-300", {
-                "right-2 hover:right-3": !collapsed,
-                "right-3 hover:right-2": collapsed,
-            })} initial="show" variants={{
-                show: {
-                    rotate: "180deg",
-                },
-                hide: {
-                    rotate: "0deg",
-                }
-            }} animate={animate} onClick={handleCollapseToggle} transition={{
-                duration: 0.1,
-            }}>
-                {Icons.DoubleRightArrow}
-            </motion.div>
-            {
-                loading
-                ? <Loading />
-                : <div className="flex flex-col justify-center mt-[10vh] grow">
-                        <div className="flex flex-col">
-                            <div className="flex flex-col mb-[10vh] gap-4 ml-4">
-                                <div className={classNames("flex gap-2 items-center", {
-                                    "hidden": collapsed,
-                                })}>
-                                    <div className={classNames(ClassNames.Text, "text-sm mr-2.5")}>Profile:</div>
-                                    {
-                                        currentProfile != null &&
-                                        <Dropdown className="w-[140px]" items={loginItems} value={currentProfile}
-                                                  onChange={handleProfileChange} dropdownContainerHeight="max-h-[200px]"
-                                                  defaultItem={{
-                                                      label: "Add another profile",
-                                                      icon: cloneElement(Icons.Add, {
-                                                          className: "w-6 h-6 stroke-green-800 dark:stroke-green-400",
-                                                      }),
-                                                  }} defaultItemClassName="text-green-800"
-                                                  onDefaultItemClick={handleNavigateToLogin}
-                                                  action={<AnimatedButton icon={Icons.Logout} label="Logout"
-                                                                          onClick={handleMenuLogout}/>}/>
-                                    }
-                                </div>
-                                {
-                                    availableDatabases != null && current != null &&
-                                    <div className={classNames("flex gap-2 items-center w-full", {
-                                        "opacity-0 pointer-events-none": collapsed || (current.Type !== DatabaseType.Redis && isNoSQL(current?.Type as DatabaseType)),
-                                    })}>
-                                        <div className={classNames(ClassNames.Text, "text-sm")}>Database:</div>
-                                        <Dropdown className="w-[140px]" value={createDropdownItem(current!.Database)}
-                                                  items={availableDatabases.Database.map(database => createDropdownItem(database))}
-                                                  onChange={handleDatabaseChange}
-                                                  noItemsLabel="No available database found" dropdownContainerHeight="max-h-[300px]"
-                                                  testId="sidebar-database" />
-                                    </div>
-                                }
-                                {
-                                    schemasDropdownItems.length > 0 &&
-                                    <div className={classNames("flex gap-2 items-center w-full", {
-                                        "opacity-0 pointer-events-none": pathname === InternalRoutes.RawExecute.path || collapsed || DATABASES_THAT_DONT_SUPPORT_SCHEMA.includes(current?.Type as DatabaseType),
-                                    })}>
-                                        <div className={classNames(ClassNames.Text, "text-sm")}>Schema:</div>
-                                        <Dropdown className="w-[140px]" value={createDropdownItem(schema)}
-                                                  items={schemasDropdownItems} onChange={handleSchemaChange}
-                                                  noItemsLabel="No schema found"
-                                                  testId="sidebar-schema" />
-                                    </div>
-                                }
-                            </div>
-                            {routes}
+        <div className="dark">
+            <SidebarComponent variant="sidebar" collapsible="icon" className="dark:group-data-[side=left]:border-r-neutral-800 z-[50]">
+                <SidebarHeader className={cn({
+                    "ml-4": open,
+                })}>
+                    <div className="flex items-center gap-2 justify-between">
+                        <div className={cn("flex items-center gap-2 mt-2", {
+                            "hidden": !open,
+                        })}>
+                            {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4" />}
+                            {open && <span className="text-lg text-brand-foreground">{extensions.AppName ?? "WhoDB"}</span>}
                         </div>
-                        <div className="grow"/>
-                        <div className="flex flex-col">
-                            <SideMenu collapse={collapsed} title="Contact Us" icon={Icons.QuestionMark}
-                                      path={InternalRoutes.ContactUs.path}/>
-                        </div>
-                        <div className="flex flex-col gap-8">
-                            <SideMenu collapse={collapsed} title="Settings" icon={Icons.Settings}
-                                      path={InternalRoutes.Settings.path}/>
-                        </div>
-                        <div className="flex flex-col gap-8">
-                            <SideMenu collapse={collapsed} title="Logout" icon={Icons.Logout}
-                                      path={InternalRoutes.Logout.path} testId="logout" />
-                        </div>
+                        <SidebarTrigger className="px-0" />
                     </div>
-            }
-            <div className={classNames(ClassNames.Text, "absolute right-8 bottom-8 text-sm text-gray-300 hover:text-gray-600 self-end dark:hover:text-neutral-300 transition-all")}>{version?.Version}</div>
+                </SidebarHeader>
+                <SidebarContent className={cn("mt-8 mb-16", {
+                    "mx-4": open,
+                })}>
+                    {loading ? (
+                        <div className="flex justify-center items-center h-full">
+                            <Loading />
+                        </div>
+                    ) : (
+                        <SidebarGroup className="grow">
+                            <div className="flex flex-col gap-4">
+                                {/* Profile Select */}
+                                <div className="flex flex-col gap-2 w-full">
+                                    <h2 className={cn("text-sm", !open &&  "hidden")}>Profile</h2>
+                                    <SearchSelect
+                                        label="Profile"
+                                        options={profileOptions}
+                                        value={currentProfileOption?.value}
+                                        onChange={handleProfileChange}
+                                        placeholder="Select profile"
+                                        searchPlaceholder="Search profile..."
+                                        onlyIcon={!open}
+                                        extraOptions={
+                                            <CommandItem
+                                                key="__add__"
+                                                value="__add__"
+                                                onSelect={handleAddProfile}
+                                            >
+                                                <span className="flex items-center gap-2 text-green-500">
+                                                    <PlusIcon className="w-4 h-4 stroke-green-500" />
+                                                    Add another profile
+                                                </span>
+                                            </CommandItem>
+                                        }
+                                        side="left" align="start"
+                                        buttonProps={{
+                                            "data-testid": "sidebar-profile",
+                                        }}
+                                    />
+                                </div>
+                                {/* Database Select */}
+                                <div className={cn("flex flex-col gap-2 w-full", {
+                                    "opacity-0 pointer-events-none": !open,
+                                    "hidden": !current || !databaseSupportsDatabaseSwitching(current?.Type),
+                                })}>
+                                    <h2 className="text-sm">Database</h2>
+                                    <SearchSelect
+                                        label="Database"
+                                        options={databaseOptions}
+                                        value={current?.Database}
+                                        onChange={handleDatabaseChange}
+                                        placeholder="Select database"
+                                        searchPlaceholder="Search database..."
+                                        side="left" align="start"
+                                        buttonProps={{
+                                            "data-testid": "sidebar-database",
+                                        }}
+                                    />
+                                </div>
+                                <div className={cn("flex flex-col gap-2 w-full", {
+                                    "opacity-0 pointer-events-none": !open || pathname.includes(InternalRoutes.RawExecute.path),
+                                    "hidden": !databaseSupportsSchema(current?.Type),
+                                })}>
+                                    <h2 className="text-sm">Schema</h2>
+                                    <SearchSelect
+                                        label="Schema"
+                                        options={schemaOptions}
+                                        value={schema}
+                                        onChange={handleSchemaChange}
+                                        placeholder="Select schema"
+                                        searchPlaceholder="Search schema..."
+                                        side="left" align="start"
+                                        buttonProps={{
+                                            "data-testid": "sidebar-schema",
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                            
+                            {/* Main navigation */}
+                            <SidebarMenu className="grow mt-16 gap-4">
+                                {sidebarRoutes.map(route => (
+                                    <SidebarMenuItem key={route.title}>
+                                        <SidebarMenuButton asChild>
+                                            <Link
+                                                to={route.path}
+                                                className={classNames("flex items-center gap-2", {
+                                                    "font-bold": pathname === route.path,
+                                                })}
+                                            >
+                                                {route.icon}
+                                                {open && <span>{route.title}</span>}
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                ))}
+
+                                <SidebarSeparator className={cn("my-16", {
+                                    "mx-0": !open,
+                                })} />
+
+                                {isEEFeatureEnabled('contactUsPage') && InternalRoutes.ContactUs && (
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton asChild>
+                                            <Link to={InternalRoutes.ContactUs.path} className="flex items-center gap-2">
+                                                <QuestionMarkCircleIcon className="w-4 h-4" />
+                                                {open && <span>Contact Us</span>}
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                )}
+                                {isEEFeatureEnabled('settingsPage') && InternalRoutes.Settings && (
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton asChild>
+                                            <Link to={InternalRoutes.Settings.path} className="flex items-center gap-2">
+                                                <CogIcon className="w-4 h-4" />
+                                                {open && <span>Settings</span>}
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                )}
+                                <div className="grow" />
+                                    <SidebarMenuItem className="flex justify-between items-center w-full">
+                                    {/* Logout Profile button */}
+                                    <SidebarMenuButton asChild>
+                                        <div className="flex items-center gap-2 text-nowrap w-fit cursor-pointer" onClick={handleLogout}>
+                                            <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />
+                                            {open && <span>Logout Profile</span>}
+                                        </div>
+                                    </SidebarMenuButton>
+                                    {/* Dropdown for additional logout options */}
+                                    <SidebarMenuButton asChild>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger className={cn({
+                                                "hidden": !open,
+                                            })}>
+                                                <Button
+                                                    className="flex items-center justify-center p-1 rounded hover:bg-gray-100 dark:hover:bg-neutral-800 ml-2"
+                                                    aria-label="More logout options"
+                                                    variant="ghost"
+                                                >
+                                                    <ChevronDownIcon className="w-4 h-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent side="right" align="start">
+                                                <DropdownMenuItem
+                                                    onClick={handleLogout}
+                                                >
+                                                    <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />
+                                                    <span className="ml-2">Logout All Profiles</span>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            </SidebarMenu>
+                        </SidebarGroup>
+                    )}
+                </SidebarContent>
+                <div className={cn("absolute right-4 bottom-4 text-xs text-muted-foreground", {
+                    "hidden": !open,
+                })}>
+                    {version?.Version}
+                </div>
+            </SidebarComponent>
+            <Sheet open={showLoginCard} onOpenChange={setShowLoginCard}>
+                <SheetContent side="right" className="p-8">
+                    <LoginForm advancedDirection="vertical" />
+                </SheetContent>
+            </Sheet>
         </div>
-    )
-}
+    );
+};

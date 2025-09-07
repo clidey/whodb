@@ -22,16 +22,21 @@ import (
 	"fmt"
 	"io"
 	"strings"
+
+	"github.com/clidey/whodb/core/src/env"
+	"github.com/clidey/whodb/core/src/log"
 )
 
-const anthropicEndpoint = "https://api.anthropic.com/v1"
-
 func prepareAnthropicRequest(c *LLMClient, prompt string, model LLMModel) (string, []byte, map[string]string, error) {
-	maxTokens := 64000 // this is for claude-3-7-sonnet-20250219
+	maxTokens := 4096 // conservative default for unknown models
 	modelName := string(model)
 
 	switch modelName {
-	case "claude-3-5-sonnet-20241022", "claude-3-5-sonnet-20240620", "claude-3-5-haiku-20241022":
+	case "claude-3-7-sonnet-20250219", "claude-sonnet-4-20250514":
+		maxTokens = 64000
+	case "claude-opus-4-20250514":
+		maxTokens = 32000
+	case "claude-3-5-sonnet-20241022", "claude-3-5-sonnet-20240620", "claude-3-5-opus-20241022", "claude-3-5-haiku-20241022":
 		maxTokens = 8192
 	case "claude-3-opus-20240229", "claude-3-haiku-20240307":
 		maxTokens = 4096
@@ -45,10 +50,11 @@ func prepareAnthropicRequest(c *LLMClient, prompt string, model LLMModel) (strin
 		},
 	})
 	if err != nil {
+		log.Logger.WithError(err).Errorf("Failed to marshal Anthropic request body for model %s", model)
 		return "", nil, nil, err
 	}
 
-	url := fmt.Sprintf("%v/messages", anthropicEndpoint)
+	url := fmt.Sprintf("%v/messages", env.GetAnthropicEndpoint())
 
 	headers := map[string]string{
 		"x-api-key":         c.APIKey,
@@ -61,16 +67,15 @@ func prepareAnthropicRequest(c *LLMClient, prompt string, model LLMModel) (strin
 
 func getAnthropicModels(_ string) ([]string, error) {
 	models := []string{
-		//"claude-3-7-sonnet-latest",
-		//"claude-3-5-haiku-latest",
-		//"claude-3-5-sonnet-latest",
-		//"claude-3-opus-latest",
+		"claude-opus-4-20250514",
+		"claude-sonnet-4-20250514",
 		"claude-3-7-sonnet-20250219",
 		"claude-3-5-sonnet-20241022",
 		"claude-3-5-sonnet-20240620",
+		"claude-3-5-opus-20241022",
 		"claude-3-5-haiku-20241022",
-		"claude-3-haiku-20240307",
 		"claude-3-opus-20240229",
+		"claude-3-haiku-20240307",
 	}
 	return models, nil
 }
@@ -83,6 +88,7 @@ func parseAnthropicResponse(body io.ReadCloser, receiverChan *chan string, respo
 		line, err := reader.ReadString('\n')
 		if err != nil {
 			if err != io.EOF {
+				log.Logger.WithError(err).Error("Failed to read line from Anthropic response")
 				return nil, err
 			}
 		}
@@ -105,6 +111,7 @@ func parseAnthropicResponse(body io.ReadCloser, receiverChan *chan string, respo
 		}
 
 		if err := json.Unmarshal([]byte(line), &anthropicResponse); err != nil {
+			log.Logger.WithError(err).Errorf("Failed to unmarshal Anthropic response line: %s", line)
 			return nil, err
 		}
 
@@ -113,6 +120,7 @@ func parseAnthropicResponse(body io.ReadCloser, receiverChan *chan string, respo
 				*receiverChan <- content.Text
 			}
 			if _, err := responseBuilder.WriteString(content.Text); err != nil {
+				log.Logger.WithError(err).Error("Failed to write to Anthropic response builder")
 				return nil, err
 			}
 		}

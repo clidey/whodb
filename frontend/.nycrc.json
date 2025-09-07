@@ -1,0 +1,33 @@
+{
+  "all": true,
+  "include": [
+    "src/**/*.{js,jsx,ts,tsx}",
+    "../ee/frontend/src/**/*.{js,jsx,ts,tsx}"
+  ],
+  "exclude": [
+    "**/*.d.ts",
+    "**/*.test.{js,jsx,ts,tsx}",
+    "**/*.spec.{js,jsx,ts,tsx}",
+    "**/generated/**",
+    "**/node_modules/**",
+    "**/cypress/**",
+    "**/coverage/**",
+    "**/dist/**",
+    "src/index.tsx",
+    "src/reportWebVitals.ts"
+  ],
+  "reporter": [
+    "text",
+    "text-summary",
+    "html",
+    "lcov"
+  ],
+  "report-dir": "coverage",
+  "temp-dir": ".nyc_output",
+  "check-coverage": false,
+  "per-file": false,
+  "skip-full": false,
+  "sourceMap": true,
+  "instrument": true,
+  "cache": true
+}

@@ -19,14 +19,16 @@ package gorm_plugin
 import (
 	"errors"
 	"fmt"
+	"strconv"
+
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	"gorm.io/gorm"
-	"strconv"
 )
 
 func (p *GormPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, fields []engine.Record) (bool, error) {
-	return plugins.WithConnection[bool](config, p.DB, func(db *gorm.DB) (bool, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
 		if len(fields) == 0 {
 			return false, errors.New("no fields provided for table creation")
 		}
@@ -43,10 +45,12 @@ func (p *GormPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, 
 			fieldName := p.EscapeIdentifier(fieldType.Key)
 			primaryKey, err := strconv.ParseBool(fieldType.Extra["Primary"])
 			if err != nil {
+				log.Logger.WithError(err).Error(fmt.Sprintf("Failed to parse Primary key flag for field %s in table %s.%s", fieldType.Key, schema, storageUnit))
 				primaryKey = false
 			}
 			nullable, err := strconv.ParseBool(fieldType.Extra["Nullable"])
 			if err != nil {
+				log.Logger.WithError(err).Error(fmt.Sprintf("Failed to parse Nullable flag for field %s in table %s.%s", fieldType.Key, schema, storageUnit))
 				nullable = false
 			}
 
@@ -63,33 +67,35 @@ func (p *GormPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, 
 		createTableQuery := p.GetCreateTableQuery(schema, storageUnit, columns)
 
 		if err := db.Exec(createTableQuery).Error; err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to create table %s.%s with query: %s", schema, storageUnit, createTableQuery))
 			return false, err
 		}
 		return true, nil
 	})
 }
 
+// addRowWithDB performs the actual row insertion using the provided database connection
+func (p *GormPlugin) addRowWithDB(db *gorm.DB, schema string, storageUnit string, values []engine.Record) error {
+	if len(values) == 0 {
+		return errors.New("no values provided to insert into the table")
+	}
+
+	schema = p.EscapeIdentifier(schema)
+	storageUnit = p.EscapeIdentifier(storageUnit)
+	fullTableName := p.FormTableName(schema, storageUnit)
+
+	valuesToAdd, err := p.ConvertRecordValuesToMap(values)
+	if err != nil {
+		return err
+	}
+
+	result := db.Table(fullTableName).Create(valuesToAdd)
+	return result.Error
+}
+
 func (p *GormPlugin) AddRow(config *engine.PluginConfig, schema string, storageUnit string, values []engine.Record) (bool, error) {
-	return plugins.WithConnection[bool](config, p.DB, func(db *gorm.DB) (bool, error) {
-		if len(values) == 0 {
-			return false, errors.New("no values provided to insert into the table")
-		}
-
-		schema = p.EscapeIdentifier(schema)
-		storageUnit = p.EscapeIdentifier(storageUnit)
-		fullTableName := p.FormTableName(schema, storageUnit)
-
-		valuesToAdd, err := p.ConvertRecordValuesToMap(values)
-		if err != nil {
-			return false, err
-		}
-
-		result := db.Table(fullTableName).Create(valuesToAdd)
-
-		if result.Error != nil {
-			return false, result.Error
-		}
-
-		return true, nil
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
+		err := p.addRowWithDB(db, schema, storageUnit, values)
+		return err == nil, err
 	})
 }

@@ -19,8 +19,10 @@ package gorm_plugin
 import (
 	"errors"
 	"fmt"
+
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	"gorm.io/gorm"
 )
@@ -29,11 +31,13 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
 		pkColumns, err := p.GetPrimaryKeyColumns(db, schema, storageUnit)
 		if err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get primary key columns for table %s.%s during update operation", schema, storageUnit))
 			pkColumns = []string{}
 		}
 
 		columnTypes, err := p.GetColumnTypes(db, schema, storageUnit)
 		if err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get column types for table %s.%s during update operation", schema, storageUnit))
 			return false, err
 		}
 
@@ -47,12 +51,17 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 				return false, fmt.Errorf("column '%s' does not exist in table %s", column, storageUnit)
 			}
 
-			convertedValue, err := p.ConvertStringValue(strValue, columnType)
+			convertedValue, err := p.GormPluginFunctions.ConvertStringValue(strValue, columnType)
 			if err != nil {
-				return false, fmt.Errorf("failed to convert value for column '%s': %v", column, err)
+				log.Logger.WithError(err).Error(fmt.Sprintf("Failed to convert string value '%s' for column '%s' during update of table %s.%s", strValue, column, schema, storageUnit))
+				convertedValue = strValue
 			}
 
 			targetColumn := column
+			if p.GormPluginFunctions.ShouldQuoteIdentifiers() {
+				targetColumn = fmt.Sprintf("\"%s\"", column)
+			}
+
 			if common.ContainsString(pkColumns, column) {
 				conditions[targetColumn] = convertedValue
 			} else if common.ContainsString(updatedColumns, column) {
@@ -74,12 +83,21 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 
 		var result *gorm.DB
 		if len(conditions) == 0 {
-			result = db.Table(tableName).Where(unchangedValues).Updates(convertedValues)
+			if p.Type == engine.DatabaseType_MySQL || p.Type == engine.DatabaseType_MariaDB {
+				result = p.executeUpdateWithWhereMap(db, tableName, unchangedValues, convertedValues)
+			} else {
+				result = db.Table(tableName).Where(unchangedValues).Updates(convertedValues)
+			}
 		} else {
-			result = db.Table(tableName).Where(conditions).Updates(convertedValues)
+			if p.Type == engine.DatabaseType_MySQL || p.Type == engine.DatabaseType_MariaDB {
+				result = p.executeUpdateWithWhereMap(db, tableName, conditions, convertedValues)
+			} else {
+				result = db.Table(tableName).Where(conditions, nil).Updates(convertedValues)
+			}
 		}
 
 		if result.Error != nil {
+			log.Logger.WithError(result.Error).Error(fmt.Sprintf("Failed to update rows in table %s.%s", schema, storageUnit))
 			return false, result.Error
 		}
 
@@ -90,4 +108,18 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 
 		return true, nil
 	})
+}
+
+// weird bug for mysql/mariadb driver where the where clause is not properly escaped, so have to do it manually below
+// should be fine as it still uses the query builder
+// todo: need to investigate underlying driver to see what's going on
+func (p *GormPlugin) executeUpdateWithWhereMap(db *gorm.DB, tableName string, whereConditions map[string]interface{}, updateValues map[string]interface{}) *gorm.DB {
+	query := db.Table(tableName)
+
+	for column, value := range whereConditions {
+		escapedColumn := p.EscapeIdentifier(column)
+		query = query.Where(fmt.Sprintf("%s = ?", escapedColumn), value)
+	}
+
+	return query.Updates(updateValues)
 }

@@ -33,7 +33,7 @@ Build Status: &nbsp; <img src="https://hello.clidey.com/api/flows/status?id=b322
 
 
 ## Description
-**WhoDB** is a lightweight (~20MB), powerful, and user-friendly database management tool designed to streamline your database administration tasks.
+**WhoDB** is a lightweight (<50MB), powerful, and user-friendly database management tool designed to streamline your database administration tasks.
 Combining the simplicity of Adminer with enhanced UX and performance, WhoDB is built with GoLang to deliver optimal speed and efficiency.
 With features like interactive schema visualization and inline editing, WhoDB caters to both small projects and complex enterprise systems.
 
@@ -42,12 +42,21 @@ This feature allows you to perform queries and manage your data through conversa
 
 ## Key Features
 - **Conversate With Your Data:** No more wasting time crafting complex SQL queries - ask away!
-- **Enhanced UX:** A clean, intuitive interface that’s easy to navigate.
+- **Enhanced UX:** A clean, intuitive interface that's easy to navigate.
 - **Blazing Fast Performance:** Built with GoLang for exceptional speed, including table virtualization on the frontend.
 - **Schema Visualization:** Interactive graphs to easily visualize your database schema.
 - **Inline Editing & Preview:** Edit and preview data directly in the interface.
-- **Broad Database Support:** Compatible with PostgreSQL, MySQL, SQLite3, MongoDB, Redis, MariaDB, & ElasticSearch.
+- **Broad Database Support:** Compatible with PostgreSQL, MySQL, SQLite3, MongoDB, Redis, MariaDB, & ElasticSearch. Enterprise supports a lot more NoSQL and SQL-like databases including Oracle, SQL Server, DynamoDB, Athena, Snowflake, and more.
 - **Scratchpad:** A Jupyter notebook-like interface for performing database queries.
+
+## Editions
+
+WhoDB is available in two editions:
+
+- **Community Edition (CE)**: Open source with all core features
+- **Enterprise Edition (EE)**: Additional database support and advanced features
+
+See [BUILD_AND_RUN.md](./BUILD_AND_RUN.md) for detailed build and run instructions for both editions.
 
 <div style="width:100%;border-bottom:0.5px solid white;margin:50px 0px;"></div>
 
@@ -78,6 +87,18 @@ services:
     image: clidey/whodb
     # volumes: # (optional for sqlite) 
     #   - ./sample.db:/db/sample.db
+    environment:
+#      optional if you have ollama configured elsewhere. will use these defaults otherwise
+#      - WHODB_OLLAMA_HOST=localhost
+#      - WHODB_OLLAMA_PORT=11434
+
+#      use this to preconfigure your Anthropic connection. endpoint will default to below
+      - WHODB_ANTHROPIC_API_KEY=...
+#      - WHODB_ANTHROPIC_ENDPOINT=https://api.anthropic.com/v1
+
+#     use this to preconfigure your OpenAI connection. endpoint will default to below
+      - WHODB_OPENAI_API_KEY=...
+#      - WHODB_OPENAI_ENDPOINT=https://api.openai.com/v1
     ports:
       - "8080:8080"
 ```
@@ -90,6 +111,14 @@ Access WhoDB by navigating to http://localhost:8080 in your browser.
 ### Prerequisites
 - GoLang (latest version recommended)
 - PNPM (latest version recommended)
+
+### Editions
+
+WhoDB is available in two editions:
+- **Community Edition (CE)**: Core features with support for PostgreSQL, MySQL, SQLite3, MongoDB, Redis, MariaDB, & ElasticSearch
+- **Enterprise Edition (EE)**: All CE features plus additional database support, advanced visualizations, and enhanced UI components
+
+See [BUILD_AND_RUN.md](./BUILD_AND_RUN.md) for detailed build and run instructions and [ARCHITECTURE.md](./ARCHITECTURE.md) for understanding the modular design.
 
 ### Frontend Setup
 To start the frontend service, navigate to the `frontend/` directory and run:
@@ -133,7 +162,7 @@ WhoDB supports lazy loading, ensuring smooth performance even with large dataset
 Unlike DBeaver, which is feature-rich but resource-heavy, WhoDB is designed to be lightweight and efficient, running on minimal resources—perfect for smaller setups or resource-constrained environments.
 
 **Is WhoDB compatible with any database?**
-WhoDB supports a wide range of databases, providing a consistent experience across SQL, NoSQL, and Graph databases. Currently, it supports PostgreSQL, MySQL, SQLite3, MongoDB, Redis, MariaDB, & ElasticSearch.
+WhoDB supports a wide range of databases, providing a consistent experience across SQL, NoSQL, and Graph databases. The Community Edition supports PostgreSQL, MySQL, SQLite3, MongoDB, Redis, MariaDB, & ElasticSearch. The Enterprise Edition adds support for additional databases.
 
 **How do I deploy WhoDB?**
 WhoDB can be deployed easily using Docker or Docker Compose. See the ["Quick Start"](#quick-start) section for details.

@@ -21,30 +21,37 @@ import (
 	"fmt"
 
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 )
 
 func (p *ElasticSearchPlugin) DeleteRow(config *engine.PluginConfig, database string, storageUnit string, values map[string]string) (bool, error) {
 	client, err := DB(config)
 	if err != nil {
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to connect to ElasticSearch while deleting row")
 		return false, err
 	}
 
 	// Extract the document JSON
 	documentJSON, ok := values["document"]
 	if !ok {
-		return false, errors.New("missing 'document' key in values map")
+		err := errors.New("missing 'document' key in values map")
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Missing document key in delete request values")
+		return false, err
 	}
 
 	// Unmarshal the JSON to extract the _id field
 	var jsonValues map[string]interface{}
 	if err := json.Unmarshal([]byte(documentJSON), &jsonValues); err != nil {
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to unmarshal document JSON for deletion")
 		return false, err
 	}
 
 	// Get the _id from the document
 	id, ok := jsonValues["_id"]
 	if !ok {
-		return false, errors.New("missing '_id' field in the document")
+		err := errors.New("missing '_id' field in the document")
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Missing _id field in document for deletion")
+		return false, err
 	}
 
 	// Delete the document by ID
@@ -55,24 +62,30 @@ func (p *ElasticSearchPlugin) DeleteRow(config *engine.PluginConfig, database st
 		client.Delete.WithRefresh("true"), // Ensure the deletion is immediately visible
 	)
 	if err != nil {
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", id).Error("Failed to execute ElasticSearch delete operation")
 		return false, fmt.Errorf("failed to execute delete: %w", err)
 	}
 	defer res.Body.Close()
 
 	// Check if the response indicates an error
 	if res.IsError() {
-		return false, fmt.Errorf("error deleting document: %s", res.String())
+		err := fmt.Errorf("error deleting document: %s", res.String())
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", id).Error("ElasticSearch delete API returned error")
+		return false, err
 	}
 
 	// Decode the response to check the result
 	var deleteResponse map[string]interface{}
 	if err := json.NewDecoder(res.Body).Decode(&deleteResponse); err != nil {
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", id).Error("Failed to decode ElasticSearch delete response")
 		return false, err
 	}
 
 	// Check if the deletion was successful
 	if result, ok := deleteResponse["result"].(string); ok && result != "deleted" {
-		return false, errors.New("no documents were deleted")
+		err := errors.New("no documents were deleted")
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", id).WithField("result", result).Error("ElasticSearch delete operation did not delete any documents")
+		return false, err
 	}
 
 	return true, nil

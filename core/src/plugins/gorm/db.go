@@ -1,27 +1,32 @@
-// Copyright 2025 Clidey, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package gorm_plugin
 
 import (
-	"github.com/clidey/whodb/core/src/common"
-	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/plugins"
-	"gorm.io/gorm"
+	"fmt"
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/clidey/whodb/core/src/common"
+	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/plugins"
+	"gorm.io/gorm"
 )
 
 const (
@@ -62,22 +67,30 @@ type ConnectionInput struct {
 
 func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*ConnectionInput, error) {
 	//common
-	port, err := strconv.Atoi(common.GetRecordValueOrDefault(config.Credentials.Advanced, portKey, "3306"))
+	defaultPort, ok := plugins.GetDefaultPort(p.Type)
+	if !ok {
+		return nil, fmt.Errorf("unsupported database type: %v", p.Type)
+	}
+	port, err := strconv.Atoi(common.GetRecordValueOrDefault(config.Credentials.Advanced, portKey, defaultPort))
 	if err != nil {
+		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to parse port for database type %s", p.Type))
 		return nil, err
 	}
 
 	//mysql/mariadb specific
 	parseTime, err := strconv.ParseBool(common.GetRecordValueOrDefault(config.Credentials.Advanced, parseTimeKey, "True"))
 	if err != nil {
+		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to parse parseTime setting for database type %s", p.Type))
 		return nil, err
 	}
 	loc, err := time.LoadLocation(common.GetRecordValueOrDefault(config.Credentials.Advanced, locKey, "Local"))
 	if err != nil {
+		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to load time location for database type %s", p.Type))
 		return nil, err
 	}
 	allowClearTextPasswords, err := strconv.ParseBool(common.GetRecordValueOrDefault(config.Credentials.Advanced, allowClearTextPasswordsKey, "0"))
 	if err != nil {
+		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to parse allowClearTextPasswords setting for database type %s", p.Type))
 		return nil, err
 	}
 
@@ -89,14 +102,27 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 
 	connectionTimeout, err := strconv.Atoi(common.GetRecordValueOrDefault(config.Credentials.Advanced, connectionTimeoutKey, "90"))
 	if err != nil {
+		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to parse connection timeout for database type %s", p.Type))
 		return nil, err
 	}
 
+	database := config.Credentials.Database
+	username := config.Credentials.Username
+	password := config.Credentials.Password
+	hostname := config.Credentials.Hostname
+
+	if p.Type != engine.DatabaseType_Sqlite3 && p.Type != engine.DatabaseType_Postgres {
+		database = url.PathEscape(database)
+		username = url.PathEscape(username)
+		password = url.PathEscape(password)
+		hostname = url.PathEscape(hostname)
+	}
+
 	input := &ConnectionInput{
-		Username:                url.PathEscape(config.Credentials.Username),
-		Password:                url.PathEscape(config.Credentials.Password),
-		Database:                url.PathEscape(config.Credentials.Database),
-		Hostname:                url.PathEscape(config.Credentials.Hostname),
+		Username:                username,
+		Password:                password,
+		Database:                database,
+		Hostname:                hostname,
 		Port:                    port,
 		ParseTime:               parseTime,
 		Loc:                     loc,
@@ -116,7 +142,11 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 			case portKey, parseTimeKey, locKey, allowClearTextPasswordsKey, sslModeKey, httpProtocolKey, readOnlyKey, debugKey, connectionTimeoutKey:
 				continue
 			default:
-				params[record.Key] = url.QueryEscape(record.Value) // todo: this may break for postgres
+				if p.Type == engine.DatabaseType_Postgres {
+					params[record.Key] = record.Value
+				} else {
+					params[record.Key] = url.QueryEscape(record.Value)
+				}
 			}
 		}
 		input.ExtraOptions = params
@@ -126,12 +156,14 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 }
 
 func (p *GormPlugin) IsAvailable(config *engine.PluginConfig) bool {
-	available, err := plugins.WithConnection[bool](config, p.DB, func(db *gorm.DB) (bool, error) {
+	available, err := plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
 		sqlDb, err := db.DB()
 		if err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get SQL DB instance for database type %s", p.Type))
 			return false, err
 		}
 		if err = sqlDb.Ping(); err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to ping database for type %s", p.Type))
 			return false, nil
 		}
 		return true, nil

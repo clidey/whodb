@@ -22,23 +22,28 @@ import (
 	"fmt"
 
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 )
 
 func (p *ElasticSearchPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, fields []engine.Record) (bool, error) {
 	client, err := DB(config)
 	if err != nil {
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to connect to ElasticSearch while adding storage unit")
 		return false, err
 	}
 
 	res, err := client.Indices.Create(storageUnit)
 	if err != nil {
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to create ElasticSearch index")
 		return false, err
 	}
 
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return false, fmt.Errorf("failed to create index: %s", res.String())
+		err := fmt.Errorf("failed to create index: %s", res.String())
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("ElasticSearch index creation API returned error")
+		return false, err
 	}
 
 	return true, nil
@@ -47,6 +52,7 @@ func (p *ElasticSearchPlugin) AddStorageUnit(config *engine.PluginConfig, schema
 func (p *ElasticSearchPlugin) AddRow(config *engine.PluginConfig, schema string, storageUnit string, values []engine.Record) (bool, error) {
 	client, err := DB(config)
 	if err != nil {
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to connect to ElasticSearch while adding row")
 		return false, err
 	}
 
@@ -57,19 +63,27 @@ func (p *ElasticSearchPlugin) AddRow(config *engine.PluginConfig, schema string,
 
 	documentBytes, err := json.Marshal(jsonValue)
 	if err != nil {
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to marshal ElasticSearch document to JSON")
 		return false, fmt.Errorf("error marshaling document to JSON: %v", err)
 	}
 
 	documentReader := bytes.NewReader(documentBytes)
 
-	res, err := client.Index(storageUnit, documentReader)
+	res, err := client.Index(
+		storageUnit,
+		documentReader,
+		client.Index.WithRefresh("true"), // Ensure the document is immediately visible
+	)
 	if err != nil {
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to index document in ElasticSearch")
 		return false, fmt.Errorf("error indexing document: %v", err)
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return false, fmt.Errorf("failed to index document: %s", res.String())
+		err := fmt.Errorf("failed to index document: %s", res.String())
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("ElasticSearch document indexing API returned error")
+		return false, err
 	}
 
 	return true, nil

@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noImplicitAny": false,
+    "strict": false,
+    "skipLibCheck": true,
+    "paths": {
+      "@/*": ["src/*"],
+      "@ee/*": ["../ee/frontend/src/*"],
+      "@graphql": ["../ee/frontend/src/generated/graphql.tsx"],
+      "../../../../../frontend/src/*": ["src/*"],
+      "../../../frontend/src/*": ["src/*"]
+    }
+  }
+}

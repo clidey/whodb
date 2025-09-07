@@ -14,28 +14,26 @@
  * limitations under the License.
  */
 
+import { Badge, Button, Checkbox, cn, Input, Label, SearchInput, SearchSelect, Separator, StackList, StackListItem, toast } from '@clidey/ux';
+import { DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useGetStorageUnitsQuery } from '@graphql';
+import { ArrowPathRoundedSquareIcon, CheckCircleIcon, CircleStackIcon, CommandLineIcon, MagnifyingGlassIcon, PlusCircleIcon, TableCellsIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import classNames from "classnames";
-import {clone, cloneDeep, filter} from "lodash";
+import { clone, cloneDeep, filter } from "lodash";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Handle, Position } from "reactflow";
-import { ActionButton, AnimatedButton } from "../../components/button";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Handle, Node, Position, useReactFlow } from "reactflow";
 import { Card, ExpandableCard } from "../../components/card";
-import { createDropdownItem, Dropdown } from "../../components/dropdown";
 import { IGraphCardProps } from "../../components/graph/graph";
-import { Icons } from "../../components/icons";
-import {CheckBoxInput, Input, InputWithlabel, Label} from "../../components/input";
 import { Loading, LoadingPage } from "../../components/loading";
 import { InternalPage } from "../../components/page";
-import { SearchInput } from "../../components/search";
-import { DATABASES_THAT_DONT_SUPPORT_SCRATCH_PAD } from "../../components/sidebar/sidebar";
 import { InternalRoutes } from "../../config/routes";
-import { DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useGetStorageUnitsQuery } from "../../generated/graphql";
-import { notify } from "../../store/function";
 import { useAppSelector } from "../../store/hooks";
+import { databaseSupportsModifiers, getDatabaseDataTypes } from "../../utils/database-data-types";
+import { databaseSupportsScratchpad } from "../../utils/database-features";
 import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
+import { Tip } from '../../components/tip';
 
-const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
+const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = ({ unit, allTableNames }) => {
     const [expanded, setExpanded] = useState(false);
     const navigate = useNavigate();
 
@@ -52,48 +50,74 @@ const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
     }, []);
 
     const [introAttributes, expandedAttributes] = useMemo(() => {
-        return [ unit.Attributes.slice(0,5), unit.Attributes.slice(5) ];
+        return [ unit.Attributes.slice(0,4), unit.Attributes.slice(4) ];
     }, [unit.Attributes]);
 
-    return (<ExpandableCard key={unit.Name} isExpanded={expanded} icon={{
-        bgClassName: "bg-teal-500",
-        component: Icons.Tables,
-    }}>
-        <div className="flex flex-col grow mt-2">
-            <div className="flex flex-col grow mb-2">
-                <div className="text-sm font-semibold mb-2 break-words dark:text-neutral-100" data-testid="storage-unit-name">{unit.Name}</div>
+    const isValidForeignKey = useCallback((key: string) => {
+        // Check for both singular and plural table names
+        if (key.endsWith("_id")) {
+            const base = key.slice(0, -3);
+            return allTableNames.has(base) || allTableNames.has(base + "s");
+        }
+        return false;
+    }, [allTableNames]);
+
+    return (<ExpandableCard key={unit.Name} isExpanded={expanded} setExpanded={setExpanded} icon={<TableCellsIcon className="w-4 h-4" />} className={cn({
+        "shadow-2xl": expanded,
+    })} data-testid="storage-unit-card">
+        <div className="flex flex-col grow mt-2" data-testid="storage-unit-card">
+            <div className="flex flex-col grow mb-2 w-full overflow-x-hidden">
+                <Tip>
+                    <h1
+                        className="text-sm font-semibold mb-2 overflow-hidden text-ellipsis whitespace-nowrap max-w-[190px] mx-auto text-center"
+                        data-testid="storage-unit-name"
+                        title={unit.Name}
+                    >
+                        {unit.Name}
+                    </h1>
+                    <p className="text-xs">{unit.Name}</p>
+                </Tip>
                 {
                     introAttributes.slice(0,2).map(attribute => (
-                        <div key={attribute.Key} className="text-xs dark:text-neutral-300">{attribute.Key}: {attribute.Value}</div>
+                        <p key={attribute.Key} className="text-xs">{attribute.Key}: {attribute.Value}</p>
                     ))
                 }
             </div>
             <div className="flex flex-row justify-end gap-1">
-                <AnimatedButton icon={Icons.DocumentMagnify} label="Explore" onClick={handleExpand} testId="explore-button" />
-                <AnimatedButton icon={Icons.Database} label="Data" onClick={handleNavigateToDatabase} testId="data-button" />
+                <Button onClick={handleExpand} data-testid="explore-button" variant="secondary">
+                    <MagnifyingGlassIcon className="w-4 h-4" /> Explore
+                </Button>
+                <Button onClick={handleNavigateToDatabase} data-testid="data-button" variant="secondary">
+                    <CircleStackIcon className="w-4 h-4" /> Data
+                </Button>
             </div>
         </div>
-        <div className="flex flex-col grow mt-2 gap-4">
-            <div className="flex flex-row grow" data-testid="explore-fields">
-                <div className="flex flex-col grow">
-                    <div className="text-md font-semibold mb-2 dark:text-neutral-100">{unit.Name}</div>
-                    {
-                        introAttributes.map(attribute => (
-                            <div key={attribute.Key} className="text-xs dark:text-neutral-300"><span className="font-semibold">{attribute.Key}:</span> {attribute.Value}</div>
-                        ))
-                    }
-                </div>
-                <div className="flex flex-col grow mt-6">
-                    {
-                        expandedAttributes.map(attribute => (
-                            <div key={attribute.Key} className="text-xs dark:text-neutral-300"><span className="font-semibold">{attribute.Key}:</span> {attribute.Value}</div>
-                        ))
-                    }
+        <div className="flex flex-col grow gap-4 justify-between h-full">
+            <div className="w-full" data-testid="explore-fields">
+                <div className="flex flex-col gap-12">
+                    <h1 className="text-2xl font-bold mb-4 break-all">{unit.Name}</h1>
+                    <StackList>
+                        {
+                            introAttributes.map(attribute => (
+                                <StackListItem key={attribute.Key} item={attribute.Key}>
+                                    {attribute.Value}
+                                </StackListItem>
+                            ))
+                        }
+                        {
+                            expandedAttributes.map(attribute => (
+                                <StackListItem key={attribute.Key} item={isValidForeignKey(attribute.Key) ? <Badge className="text-lg" data-testid="foreign-key-attribute">{attribute.Key}</Badge> : attribute.Key}>
+                                    {attribute.Value}
+                                </StackListItem>
+                            ))
+                        }
+                    </StackList>
                 </div>
             </div>
-            <div className="flex flex-row justify-end gap-1">
-                <AnimatedButton icon={Icons.DocumentMagnify} label={expanded ? "Hide" : "Explore"} onClick={handleExpand} />
-                <AnimatedButton icon={Icons.Database} label="Data" onClick={handleNavigateToDatabase} />
+            <div className="flex items-end grow">
+                <Button onClick={handleNavigateToDatabase} data-testid="data-button" variant="secondary" className="w-full">
+                    <CircleStackIcon className="w-4 h-4" /> Data
+                </Button>
             </div>
         </div>
     </ExpandableCard>);
@@ -101,7 +125,8 @@ const StorageUnitCard: FC<{ unit: StorageUnit }> = ({ unit }) => {
 
 export const StorageUnitPage: FC = () => {
     const navigate = useNavigate();
-    const [create, setCreate] = useState(false);
+    const [searchParams,] = useSearchParams();
+    const [create, setCreate] = useState(searchParams.get("create") === "true");
     const [storageUnitName, setStorageUnitName] = useState("");
     const [fields, setFields] = useState<RecordInput[]>([ {Key: "", Value: "", Extra: [] }]);
     const [error, setError] = useState<string>();
@@ -109,8 +134,9 @@ export const StorageUnitPage: FC = () => {
     const current = useAppSelector(state => state.auth.current);
     const [addStorageUnit,] = useAddStorageUnitMutation();
 
+    // For databases that don't have schemas (MongoDB, ClickHouse), pass the database name as the schema parameter
     // todo: is there a different way to do this? clickhouse doesn't have schemas as a table is considered a schema. people mainly switch between DB
-    if (current?.Type === DatabaseType.ClickHouse) {
+    if (current?.Type === DatabaseType.ClickHouse || current?.Type === DatabaseType.MongoDb) {
         schema = current.Database
     }
 
@@ -150,14 +176,14 @@ export const StorageUnitPage: FC = () => {
                 fields,
             },
             onCompleted() {
-                notify(`${getDatabaseStorageUnitLabel(current?.Type, true)} ${storageUnitName} created successfully!`, "success");
+                toast.success(`${getDatabaseStorageUnitLabel(current?.Type, true)} ${storageUnitName} created successfully!`);
                 setStorageUnitName("");
                 setFields([]);
                 refetch();
                 setCreate(false);
             },
             onError(e) {
-                notify(e.message, "error");
+                toast.error(e.message);
             },
         });
     }, [addStorageUnit, current?.Type, fields, refetch, schema, storageUnitName]);
@@ -201,49 +227,12 @@ export const StorageUnitPage: FC = () => {
         if (current?.Type == null || isNoSQL(current.Type)) {
             return [];
         }
-        let items: string[] = [];
-    
-        switch(current.Type) {
-            case DatabaseType.MariaDb:
-                items = [
-                    "TINYINT", "SMALLINT", "MEDIUMINT", "INT", "INTEGER", "BIGINT", "FLOAT", "DOUBLE", "DECIMAL",
-                    "DATE", "DATETIME", "TIMESTAMP", "TIME", "YEAR",
-                    "CHAR", "VARCHAR", "BINARY", "VARBINARY", "TINYBLOB", "BLOB", "MEDIUMBLOB", "LONGBLOB", 
-                    "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT",
-                    "ENUM", "SET", "JSON", "BOOLEAN"
-                ];
-                break;
-            case DatabaseType.MySql:
-            case DatabaseType.ClickHouse:
-                items = [
-                    "TINYINT", "SMALLINT", "MEDIUMINT", "INT", "INTEGER", "BIGINT", "FLOAT", "DOUBLE", "DECIMAL",
-                    "DATE", "DATETIME", "TIMESTAMP", "TIME", "YEAR",
-                    "CHAR", "VARCHAR(255)", "BINARY", "VARBINARY", "TINYBLOB", "BLOB", "MEDIUMBLOB", "LONGBLOB", 
-                    "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT",
-                    "ENUM", "SET", "JSON", "BOOLEAN", "VARCHAR(100)", "VARCHAR(1000)"
-                ];
-                break;
-            case DatabaseType.Postgres:
-                items = [
-                    "SMALLINT", "INTEGER", "BIGINT", "DECIMAL", "NUMERIC", "REAL", "DOUBLE PRECISION", "SMALLSERIAL", 
-                    "SERIAL", "BIGSERIAL", "MONEY",
-                    "CHAR", "VARCHAR", "TEXT", "BYTEA",
-                    "TIMESTAMP", "TIMESTAMPTZ", "DATE", "TIME", "TIMETZ",
-                    "BOOLEAN", "POINT", "LINE", "LSEG", "BOX", "PATH", "POLYGON", "CIRCLE",
-                    "CIDR", "INET", "MACADDR", "UUID", "XML", "JSON", "JSONB", "ARRAY", "HSTORE"
-                ];
-                break;
-            case DatabaseType.Sqlite3:
-                items = [
-                    "NULL", "INTEGER", "REAL", "TEXT", "BLOB",
-                    "NUMERIC", "BOOLEAN", "DATE", "DATETIME"
-                ];
-                break;
-            default:
-                items = [];
-                break;
-        }
-        return items.map(item => createDropdownItem(item));
+        
+        const dataTypes = getDatabaseDataTypes(current.Type);
+        return dataTypes.map(item => ({
+            id: item,
+            label: item,
+        }));
     }, [current?.Type]);
     
     useEffect(() => {
@@ -257,8 +246,15 @@ export const StorageUnitPage: FC = () => {
     }, [data?.StorageUnit, filterValue]);
 
     const showModifiers = useMemo(() => {
-        return [DatabaseType.MySql, DatabaseType.MariaDb, DatabaseType.Postgres, DatabaseType.Sqlite3, DatabaseType.ClickHouse].includes(current?.Type as DatabaseType);
-    }, [current]);
+        if (!current?.Type) {
+            return false;
+        }
+        return databaseSupportsModifiers(current.Type);
+    }, [current?.Type]);
+
+    const allTableNames = useMemo(() => {
+        return new Set(Array.isArray(data?.StorageUnit) ? data.StorageUnit.map(unit => unit.Name) : []);
+    }, [data?.StorageUnit]);
 
     if (loading) {
         return <InternalPage routes={routes}>
@@ -267,100 +263,110 @@ export const StorageUnitPage: FC = () => {
     }
 
     return <InternalPage routes={routes}>
-        <div className="flex w-full h-fit my-2 gap-2 justify-between">
+        <div className="flex w-full h-fit my-2 gap-4 justify-between">
+            <div>
+                <SearchInput value={filterValue} onChange={e => setFilterValue(e.target.value)} placeholder="Enter filter value..." />
+            </div>
             <div>
                 {
-                    !DATABASES_THAT_DONT_SUPPORT_SCRATCH_PAD.includes(current?.Type as DatabaseType) &&
-                    <AnimatedButton icon={Icons.Console} label="Scratchpad" onClick={() => navigate(InternalRoutes.RawExecute.path)} type="lg" />
+                    databaseSupportsScratchpad(current?.Type) &&
+                    <Button onClick={() => navigate(InternalRoutes.RawExecute.path)} data-testid="scratchpad-button" variant="secondary">
+                        <CommandLineIcon className="w-4 h-4" /> Scratchpad
+                    </Button>
                 }
             </div>
-            <div>
-                <SearchInput search={filterValue} setSearch={setFilterValue} placeholder="Enter filter value..." />
-            </div>
         </div>
-        <ExpandableCard className={classNames("overflow-visible max-w-[700px]", {
-            "hidden": current?.Type === DatabaseType.Redis,
-        })} icon={{
-            bgClassName: "bg-teal-500",
-            component: Icons.Add,
-        }} isExpanded={create} tag={<div className="text-red-700 dark:text-red-400 text-xs">
-            {error}
-        </div>}>
-            <div className="flex grow flex-col justify-between mt-3 text-neutral-800 dark:text-neutral-100">
-                Create a {getDatabaseStorageUnitLabel(current?.Type, true)}
-                <AnimatedButton className="self-end" icon={Icons.Add} label="Create" onClick={handleCreate} />
-            </div>
-            <div className="flex grow flex-col justify-between my-2 gap-4">
-                <div className="flex flex-col gap-2">
-                    <InputWithlabel label="Name" value={storageUnitName} setValue={setStorageUnitName} />
-                    <div className={classNames("flex flex-col gap-2", {
-                        "hidden": isNoSQL(current?.Type as DatabaseType),
-                    })}>
-                        <div className="flex gap-2 justify-between">
-                            <Label label="Field Name" />
-                            <Label label="Value" />
-
-                            {showModifiers && (
-                                <div className="ml-18">
-                                    <Label label="Modifiers" />
-                                </div>
-                            )}
-                            
-                            <div className="w-14" />
+        <div className="flex flex-wrap gap-4">
+            <ExpandableCard className={classNames("overflow-visible min-w-[200px] max-w-[700px] h-full", {
+                "hidden": current?.Type === DatabaseType.Redis,
+            })} icon={<PlusCircleIcon className="w-4 h-4" />} isExpanded={create} setExpanded={setCreate} tag={<Badge variant="destructive">{error}</Badge>}>
+                <div className="flex flex-col grow h-full justify-between mt-2 gap-2" data-testid="create-storage-unit-card">
+                    <h1 className="text-lg"><span className="prefix-create-storage-unit">Create a</span> {getDatabaseStorageUnitLabel(current?.Type, true)}</h1>
+                    <Button className="self-end" onClick={handleCreate} variant="secondary">
+                        <PlusCircleIcon  className='w-4 h-4' /> Create
+                    </Button>
+                </div>
+                <div className="flex grow flex-col my-2 gap-4">
+                    <div className="flex flex-col gap-4">
+                        <h1 className="text-2xl font-bold mb-4">Create a {getDatabaseStorageUnitLabel(current?.Type, true)}</h1>
+                        <div className="flex flex-col gap-2">
+                            <Label>Name</Label>
+                            <Input value={storageUnitName} onChange={e => setStorageUnitName(e.target.value)} />
                         </div>
-                        {
-                            fields.map((field, index) => (
-                                <div className="flex gap-2" key={`field-${index}`}>
-                                    <Input inputProps={{className: "w-1/3"}} value={field.Key}
-                                           setValue={(value) => handleFieldValueChange("Key", index, value)}
-                                           placeholder="Enter field name"/>
-                                    <Dropdown className="w-1/3" items={storageUnitTypesDropdownItems}
-                                              value={createDropdownItem(field.Value)} dropdownContainerHeight="max-h-[400px]"
-                                              onChange={(item) => handleFieldValueChange("Value", index, item.id)}/>
+                        <div className={classNames("flex flex-col gap-2 overflow-y-auto max-h-[75vh]", {
+                            "hidden": isNoSQL(current?.Type as DatabaseType),
+                        })}>
+                            <div className="flex flex-col gap-4">
+                                {
+                                    fields.map((field, index) => (
+                                        <div className="flex flex-col gap-4 relative" key={`field-${index}`}>
+                                            <Label>Field Name</Label>
+                                            <Input value={field.Key} onChange={e => handleFieldValueChange("Key", index, e.target.value)} placeholder="Enter field name"/>
+                                            <Label>Field Type</Label>
+                                            <SearchSelect
+                                                options={storageUnitTypesDropdownItems.map(item => ({
+                                                    value: item.id,
+                                                    label: item.label,
+                                                }))}
+                                                value={field.Value}
+                                                onChange={value => handleFieldValueChange("Value", index, value)}
+                                                placeholder="Select type"
+                                                searchPlaceholder="Search type..."
+                                                buttonProps={{
+                                                    "data-testid": `field-type-${index}`,
+                                                }}
+                                            />
 
-                                    {showModifiers && (
-                                        <div className="flex items-center w-1/3 justify-start gap-2">
-                                            <CheckBoxInput value={field.Extra?.find(extra => extra.Key === "Primary") != null} setValue={value => handleFieldValueChange("Primary", index, value)}/>
-                                            <Label label="Primary" />
-
-                                            <CheckBoxInput value={field.Extra?.find(extra => extra.Key === "Nullable") != null} setValue={value => handleFieldValueChange("Nullable", index, value)}/>
-                                            <Label label="Nullable" />
+                                            {showModifiers && (
+                                                <>
+                                                    <Label>Modifiers</Label>
+                                                    <div className="flex items-center w-1/3 justify-start gap-2">
+                                                        <Checkbox checked={field.Extra?.find(extra => extra.Key === "Primary") != null} onCheckedChange={() => handleFieldValueChange("Primary", index, !field.Extra?.find(extra => extra.Key === "Primary") != null)}/>
+                                                        <Label>Primary</Label>
+                                                        <Checkbox checked={field.Extra?.find(extra => extra.Key === "Nullable") != null} onCheckedChange={() => handleFieldValueChange("Nullable", index, !field.Extra?.find(extra => extra.Key === "Nullable") != null)}/>
+                                                        <Label>Nullable</Label>
+                                                    </div>
+                                                </>
+                                            )}
+                                            {
+                                                fields.length > 1 &&
+                                                <Button variant="destructive" onClick={() => handleRemove(index)} data-testid="remove-field-button" className="w-full mt-1">
+                                                    <XMarkIcon className="w-4 h-4" /> <span>Remove</span>
+                                                </Button>
+                                            }
+                                            {index !== fields.length - 1 && <Separator className="mt-2" />}
                                         </div>
-                                    )}
-
-                                    <div className="flex items-end mb-2">
-                                        <ActionButton disabled={fields.length === 1} containerClassName="w-6 h-6"
-                                                      icon={Icons.Delete} className={classNames({
-                                            "stroke-red-500 dark:stroke-red-400": fields.length > 1,
-                                            "stroke-neutral-300 dark:stroke-neutral-600": fields.length === 1,
-                                        })} onClick={() => handleRemove(index)}/>
-                                    </div>
-                                </div>
-                            ))
-                        }
-                        <AnimatedButton className="self-end" icon={Icons.Add} label="Add field" onClick={handleAddField} />
+                                    ))
+                                } 
+                            </div>
+                            <Button className="self-end" onClick={handleAddField} data-testid="add-field-button" variant="secondary">
+                                <PlusCircleIcon  className='w-4 h-4' /> Add field
+                            </Button>
+                        </div>
                     </div>
+                    <div className="flex grow" />
+                    <Button onClick={handleSubmit} data-testid="submit-button" className="w-full">
+                        <CheckCircleIcon className="w-4 h-4" /> Submit
+                    </Button>
                 </div>
-                <div className="flex items-center justify-between">
-                    <AnimatedButton icon={Icons.Cancel} label="Cancel" onClick={handleCreate} />
-                    <AnimatedButton labelClassName="text-green-600 dark:text-green-300"
-                        iconClassName="stroke-green-600 dark:stroke-green-300" icon={Icons.Add}
-                        label="Submit" onClick={handleSubmit} testId="submit-button" />
-                </div>
-            </div>
-        </ExpandableCard>
-        {
-            data != null && data.StorageUnit.length > 0 && filterStorageUnits.map(unit => (
-                <StorageUnitCard key={unit.Name} unit={unit} />
-            ))
-        }
+            </ExpandableCard>
+            {
+                data != null && data.StorageUnit.length > 0 && filterStorageUnits.map(unit => (
+                    <StorageUnitCard key={unit.Name} unit={unit} allTableNames={allTableNames} />
+                ))
+            }
+        </div>
     </InternalPage>
 }
 
 export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data }) => {
+    const { getNodes } = useReactFlow();
     const navigate = useNavigate();
 
     const handleNavigateTo = useCallback(() => {
+        if (data == null) {
+            return;
+        }
         navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
             state: {
                 unit: data,
@@ -368,11 +374,19 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data })
         });
     }, [navigate, data]);
 
+    const isValidForeignKey = useCallback((key: string) => {
+        // Use node ids as table names
+        if (key.endsWith("_id")) {
+            const nodes = getNodes();
+            const base = key.slice(0, -3);
+            const nodeIds = new Set(nodes.map((node: Node) => node.id));
+            return nodeIds.has(base) || nodeIds.has(base + "s");
+        }
+        return false;
+    }, [getNodes]);
+
     if (data == null) {
-        return (<Card icon={{
-            component: Icons.Fetch,
-            bgClassName: "bg-green-500",
-        }}>
+        return (<Card icon={<ArrowPathRoundedSquareIcon className="w-4 h-4" />}>
             <Loading hideText={true} />
         </Card>)
     }
@@ -380,22 +394,23 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data })
     return (
         <>
             <Handle className="dark:border-white/5" type="target" position={Position.Left} />
-            <Card icon={{
-                bgClassName: "bg-teal-500",
-                component: Icons.Database,
-            }} className="h-fit backdrop-blur-[2px] bg-transparent">
+            <Card icon={<CircleStackIcon className="w-4 h-4" />} className="h-fit backdrop-blur-[2px] w-[400px] px-2 py-6">
                 <div className="flex flex-col grow mt-2 gap-4">
                     <div className="flex flex-col grow">
-                        <div className="text-md font-semibold mb-2 break-words dark:text-neutral-300">{data.Name}</div>
-                        {
-                            data.Attributes.slice(0, 5).map(attribute => (
-                                <div key={attribute.Key} className="text-xs dark:text-neutral-300"><span className="font-semibold">{attribute.Key}:</span> {attribute.Value}</div>
-                            ))
-                        }
+                        <h2 className="text-3xl font-semibold mb-2 break-words">{data.Name}</h2>
+                        <StackList>
+                            {
+                                data.Attributes.map(attribute => (
+                                    <StackListItem rowClassName="items-start" key={attribute.Key} item={isValidForeignKey(attribute.Key) ? <Badge className="text-lg">{attribute.Key}</Badge> : attribute.Key}>
+                                        {attribute.Value}
+                                    </StackListItem>
+                                ))
+                            }
+                        </StackList>
                     </div>
-                    <div className="flex flex-row justify-end gap-1">
-                        <AnimatedButton icon={Icons.RightArrowUp} label="Data" onClick={handleNavigateTo} />
-                    </div>
+                    <Button onClick={handleNavigateTo} data-testid="data-button">
+                        <CircleStackIcon className="w-4 h-4" /> Data
+                    </Button>
                 </div>
             </Card>
             <Handle className="dark:border-white/5" type="source" position={Position.Right} />

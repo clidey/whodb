@@ -38,6 +38,16 @@ input WhereCondition {
   Or: OperationWhereCondition
 }
 
+enum SortDirection {
+  ASC
+  DESC
+}
+
+input SortCondition {
+  Column: String!
+  Direction: SortDirection!
+}
+
 type RowsResult {
   Columns: [Column!]!
   Rows: [[String!]!]!
@@ -58,6 +68,7 @@ input RecordInput {
 type StorageUnit {
   Name: String!
   Attributes: [Record!]!
+  IsMockDataGenerationAllowed: Boolean!
 }
 
 enum GraphUnitRelationshipType {
@@ -107,10 +118,24 @@ type LoginProfile {
   Id: String!
   Type: DatabaseType!
   Database: String
+  IsEnvironmentDefined: Boolean!
+  Source: String!
 }
 
 type StatusResponse {
   Status: Boolean!
+}
+
+input MockDataGenerationInput {
+  Schema: String!
+  StorageUnit: String!
+  RowCount: Int!
+  Method: String!
+  OverwriteExisting: Boolean!
+}
+
+type MockDataGenerationStatus {
+  AmountGenerated: Int!
 }
 
 input ChatInput {
@@ -126,18 +151,28 @@ type AIChatMessage {
   Text: String!
 }
 
+type AIProvider {
+  Type: String!
+  ProviderId: String!
+  IsEnvironmentDefined: Boolean!
+}
+
+
 type Query {
   Version: String!
   Profiles: [LoginProfile!]!
   Database(type: String!): [String!]!
   Schema: [String!]!
   StorageUnit(schema: String!): [StorageUnit!]!
-  Row(schema: String!, storageUnit: String!, where: WhereCondition, pageSize: Int!, pageOffset: Int!): RowsResult!
+  Row(schema: String!, storageUnit: String!, where: WhereCondition, sort: [SortCondition!], pageSize: Int!, pageOffset: Int!): RowsResult!
+  Columns(schema: String!, storageUnit: String!): [Column!]!
   RawExecute(query: String!): RowsResult!
   Graph(schema: String!): [GraphUnit!]!
-  AIModel(modelType: String!, token: String): [String!]!
-  AIChat(modelType: String!, token: String, schema: String!, input: ChatInput!): [AIChatMessage!]!
+  AIProviders: [AIProvider!]!
+  AIModel(providerId: String, modelType: String!, token: String): [String!]!
+  AIChat(providerId: String, modelType: String!, token: String, schema: String!, input: ChatInput!): [AIChatMessage!]!
   SettingsConfig: SettingsConfig!
+  MockDataMaxRowCount: Int!
 }
 
 type Mutation {
@@ -150,4 +185,5 @@ type Mutation {
   UpdateStorageUnit(schema: String!, storageUnit: String!, values: [RecordInput!]!, updatedColumns: [String!]!): StatusResponse!
   AddRow(schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
   DeleteRow(schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
+  GenerateMockData(input: MockDataGenerationInput!): MockDataGenerationStatus!
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,21 +14,23 @@
  * limitations under the License.
  */
 
-import { useQuery } from "@apollo/client";
-import { FC, useCallback, useMemo, useRef } from "react";
-import { Edge, Node, ReactFlowProvider, useEdgesState, useNodesState } from "reactflow";
-import { EmptyMessage } from "../../components/common";
-import { GraphElements } from "../../components/graph/constants";
-import { Graph, IGraphInstance } from "../../components/graph/graph";
-import { createEdge, createNode } from "../../components/graph/utils";
-import { Icons } from "../../components/icons";
-import { LoadingPage } from "../../components/loading";
-import { InternalPage } from "../../components/page";
-import { InternalRoutes } from "../../config/routes";
-import { GetGraphDocument, GetGraphQuery, GetGraphQueryVariables } from "../../generated/graphql";
-import { useAppSelector } from "../../store/hooks";
-import { getDatabaseStorageUnitLabel } from "../../utils/functions";
-import { StorageUnitGraphCard } from "../storage-unit/storage-unit";
+import {useQuery} from "@apollo/client";
+import {FC, useCallback, useMemo, useRef} from "react";
+import {Edge, Node, ReactFlowProvider, useEdgesState, useNodesState} from "reactflow";
+import {GraphElements} from "../../components/graph/constants";
+import {Graph, IGraphInstance} from "../../components/graph/graph";
+import {createEdge, createNode} from "../../components/graph/utils";
+import {LoadingPage} from "../../components/loading";
+import {InternalPage} from "../../components/page";
+import {InternalRoutes} from "../../config/routes";
+import {GetGraphDocument, GetGraphQuery, GetGraphQueryVariables} from '@graphql';
+import {useAppSelector} from "../../store/hooks";
+import {getDatabaseStorageUnitLabel} from "../../utils/functions";
+import {StorageUnitGraphCard} from "../storage-unit/storage-unit";
+import {Button, EmptyState} from "@clidey/ux";
+import {useNavigate} from "react-router-dom";
+import {CircleStackIcon} from "@heroicons/react/24/outline";
+import {databaseUsesSchemaForGraph} from "../../utils/database-features";
 
 export const GraphPage: FC = () => {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -36,10 +38,11 @@ export const GraphPage: FC = () => {
     const reactFlowRef = useRef<IGraphInstance>();
     const schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
+    const navigate = useNavigate();
 
     const { loading } = useQuery<GetGraphQuery, GetGraphQueryVariables>(GetGraphDocument, {
         variables: {
-            schema,
+            schema: databaseUsesSchemaForGraph(current?.Type) ? schema : current?.Database ?? "",
         },
         onCompleted(data) {
             const newNodes: Node[] = [];
@@ -102,7 +105,16 @@ export const GraphPage: FC = () => {
         <ReactFlowProvider>
             {
                 !loading && nodes.length === 0
-                ? <EmptyMessage icon={Icons.SadSmile} label={`No ${getDatabaseStorageUnitLabel(current?.Type)} found`} />
+                ? <EmptyState 
+                    icon={<CircleStackIcon className="w-4 h-4" />} 
+                    title={`No ${getDatabaseStorageUnitLabel(current?.Type)} found`} 
+                    description={`It looks like there are no ${getDatabaseStorageUnitLabel(current?.Type).toLowerCase()} in your database yet. Once you add some, you'll be able to visualize their relationships here.`}>
+                    <Button
+                        onClick={() => navigate(InternalRoutes.Dashboard.StorageUnit.path + "?create=true")}
+                    >
+                        Create {getDatabaseStorageUnitLabel(current?.Type, true)}
+                    </Button>
+            </EmptyState>
                 : <Graph nodes={nodes} edges={edges} nodeTypes={nodeTypes}
                     setNodes={setNodes} setEdges={setEdges}
                     onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}    

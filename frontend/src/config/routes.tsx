@@ -27,6 +27,7 @@ import { LogoutPage } from "../pages/auth/logout";
 import { ChatPage } from "../pages/chat/chat";
 import {SettingsPage} from "../pages/settings/settings";
 import {ContactUsPage} from "../pages/contact-us/contact-us";
+import { isEEFeatureEnabled } from "../utils/ee-loader";
 
 export type IInternalRoute = {
     name: string;
@@ -55,6 +56,11 @@ export const InternalRoutes = {
             path: "/storage-unit/explore",
             component: <ExploreStorageUnit />,
         },
+        ExploreStorageUnitWithScratchpad: {
+            name: "Explore",
+            path: "/storage-unit/explore/scratchpad",
+            component: <ExploreStorageUnit scratchpad={true} />,
+        },
     },
     Graph: {
         name: "Graph",
@@ -76,16 +82,20 @@ export const InternalRoutes = {
         path: "/logout",
         component: <LogoutPage />,
     },
-    Settings: {
-        name: "Settings",
-        path: "/settings",
-        component: <SettingsPage />
-    },
-    ContactUs: {
-        name: "Contact Us",
-        path: "/contact-us",
-        component: <ContactUsPage />
-    }
+    ...(isEEFeatureEnabled('settingsPage') ? {
+        Settings: {
+            name: "Settings",
+            path: "/settings",
+            component: <SettingsPage />
+        }
+    } : {}),
+    ...(isEEFeatureEnabled('contactUsPage') ? {
+        ContactUs: {
+            name: "Contact Us",
+            path: "/contact-us",
+            component: <ContactUsPage />
+        }
+    } : {})
 }
 
 export const PrivateRoute: FC = () => {
@@ -95,7 +105,6 @@ export const PrivateRoute: FC = () => {
     }
     return <Navigate to={PublicRoutes.Login.path} />
 }
-
 
 export const getRoutes = (): IInternalRoute[] => {
     const allRoutes: IInternalRoute[] = [];

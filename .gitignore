@@ -1,3 +1,14 @@
 /.idea
-/.vscode
 /dev/elasticsearch
+DS_Store
+.DS_Store
+__debug*
+*.db
+frontend/coverage
+frontend/.nyc_output
+tmp/
+core/tmp/
+ee/frontend/node_modules/
+worktree/
+frontend/cypress/screenshots/
+frontend/cypress/downloads/

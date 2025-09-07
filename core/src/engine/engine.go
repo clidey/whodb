@@ -14,7 +14,10 @@
 
 package engine
 
-import "github.com/clidey/whodb/core/graph/model"
+import (
+	"github.com/clidey/whodb/core/graph/model"
+	"github.com/clidey/whodb/core/src/types"
+)
 
 type DatabaseType string
 
@@ -30,7 +33,8 @@ const (
 )
 
 type Engine struct {
-	Plugins []*Plugin
+	Plugins       []*Plugin
+	LoginProfiles []types.DatabaseCredentials
 }
 
 func (e *Engine) RegistryPlugin(plugin *Plugin) {
@@ -49,6 +53,13 @@ func (e *Engine) Choose(databaseType DatabaseType) *Plugin {
 	return nil
 }
 
+func (e *Engine) AddLoginProfile(profile types.DatabaseCredentials) {
+	if e.LoginProfiles == nil {
+		e.LoginProfiles = []types.DatabaseCredentials{}
+	}
+	e.LoginProfiles = append(e.LoginProfiles, profile)
+}
+
 func GetStorageUnitModel(unit StorageUnit) *model.StorageUnit {
 	attributes := []*model.Record{}
 	for _, attribute := range unit.Attributes {
@@ -58,7 +69,8 @@ func GetStorageUnitModel(unit StorageUnit) *model.StorageUnit {
 		})
 	}
 	return &model.StorageUnit{
-		Name:       unit.Name,
-		Attributes: attributes,
+		Name:                        unit.Name,
+		Attributes:                  attributes,
+		IsMockDataGenerationAllowed: false, // Will be set in resolver
 	}
 }
