@@ -123,7 +123,6 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     }, [unit]);
 
     const initialScratchpadQuery = useMemo(() => {
-        console.log("here")
         if (generateInitialQuery && current?.Type) {
             return generateInitialQuery(current?.Type, schema, unitName);
         }
