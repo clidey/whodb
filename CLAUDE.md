@@ -27,6 +27,8 @@ These are non-negotiable principles. Follow them at all times.
    without unnecessary enthusiasm.
 9. **Ask questions**: You must ask as many questions as you have to in order to understand.
 10. **Be clean**: Do not leave unused code lying around. Make sure code is easy to follow and understand.
+11. **Separation between CE and EE versions**: All EE code and related functionality MUST be in the ee submodule. No
+    excuses.
 
 ## Development Requirements
 
