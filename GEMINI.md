@@ -236,7 +236,7 @@ All GraphQL operations must be defined in `.graphql` files:
 const MY_QUERY = gql`query MyQuery { ... }`;
 
 // CORRECT: Use the generated hook
-import { useMyQuery } from '@graphql';
+import {useMyQuery} from '@graphql';
 ```
 
 ### Frontend Feature Development
