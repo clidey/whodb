@@ -86,7 +86,6 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     const [currentPage, setCurrentPage] = useState(0);
     const [whereCondition, setWhereCondition] = useState<WhereCondition>();
     const [sortConditions, setSortConditions] = useState<SortCondition[]>([]);
-    const [pageSize, setPageSize] = useState("");
     const unit: StorageUnit = useLocation().state?.unit;
 
     let schema = useAppSelector(state => state.database.schema);
