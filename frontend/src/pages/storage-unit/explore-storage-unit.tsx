@@ -65,7 +65,20 @@ import {getDatabaseOperators} from "../../utils/database-operators";
 import {getDatabaseStorageUnitLabel, isNoSQL} from "../../utils/functions";
 import {ExploreStorageUnitWhereCondition} from "./explore-storage-unit-where-condition";
 import {databaseSupportsScratchpad} from "../../utils/database-features";
+import {BUILD_EDITION} from "../../config/edition";
 
+// Conditionally import EE query utilities
+let generateInitialQuery: ((databaseType: string | undefined, schema: string | undefined, tableName: string | undefined) => string) | undefined;
+
+if (BUILD_EDITION === 'ee') {
+    // Dynamically import EE query utilities when in EE mode
+    import('@ee/pages/storage-unit/query-utils').then(module => {
+        generateInitialQuery = module.generateInitialQuery;
+    }).catch(() => {
+        // EE module not available, use default
+        generateInitialQuery = undefined;
+    });
+}
 
 export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad }) => {
 
@@ -96,14 +109,6 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         schema = current.Database
     }
 
-    let initialCode = `SELECT *
-                       FROM ${unit?.Name} LIMIT 5`;
-    if (schema) {
-        initialCode = `SELECT *
-                       FROM ${schema}.${unit?.Name} LIMIT 5`
-    }
-    const [code, setCode] = useState(initialCode);
-
     const [getStorageUnitRows, { loading }] = useGetStorageUnitRowsLazyQuery({
         onCompleted(data) {
             setRows(data.Row);
@@ -116,6 +121,18 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     const unitName = useMemo(() => {
         return unit?.Name;
     }, [unit]);
+
+    const initialScratchpadQuery = useMemo(() => {
+        console.log("here")
+        if (generateInitialQuery && current?.Type) {
+            return generateInitialQuery(current?.Type, schema, unitName);
+        }
+        const qualified = schema ? `${schema}.${unitName}` : unitName;
+        return `SELECT *
+                FROM ${qualified} LIMIT 5`;
+    }, [schema, unitName, current?.Type, generateInitialQuery]);
+
+    const [code, setCode] = useState(initialScratchpadQuery);
 
     const handleSubmitRequest = useCallback(() => {
         getStorageUnitRows({
@@ -215,11 +232,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
 
     useEffect(() => {
         handleSubmitRequest();
-        let code = `SELECT * FROM ${unit?.Name} LIMIT 5`;
-        if (schema) {
-            code = `SELECT * FROM ${schema}.${unit?.Name} LIMIT 5`
-        }
-        setCode(code);
+        setCode(initialScratchpadQuery);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [unit]);
 
@@ -370,11 +383,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
             }
         });
         handleScratchpad();
-        let code = `SELECT * FROM ${unit?.Name} LIMIT 5`;
-        if (schema) {
-            code = `SELECT * FROM ${schema}.${unit?.Name} LIMIT 5`
-        }
-        setCode(code);
+        setCode(initialScratchpadQuery);
         document.body.classList.add("!pointer-events-auto");
     }, [schema, unit]);
 
