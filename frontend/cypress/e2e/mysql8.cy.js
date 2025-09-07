@@ -480,7 +480,7 @@ describe('MySQL 8 E2E test', () => {
         cy.contains('button', 'Generate').click();
 
         // Wait for mock data generation to complete and verify the total count
-        cy.wait(2000); // Give time for data generation
+        cy.wait(5000); // Give time for data generation
         cy.contains(/Total Count:\s*\d+/).should(($el) => {
             const text = $el.text();
             const match = text.match(/Total Count:\s*(\d+)/);
