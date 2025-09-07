@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package graph
 
 import (
@@ -131,7 +147,13 @@ func handleCSVExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfig 
 	delimRune := rune(delimiter[0])
 
 	// Set response headers for CSV download
-	filename := fmt.Sprintf("%s_%s.csv", schema, storageUnit)
+	// Only include schema in filename if it exists (for SQLite, schema is empty)
+	var filename string
+	if schema != "" {
+		filename = fmt.Sprintf("%s_%s.csv", schema, storageUnit)
+	} else {
+		filename = fmt.Sprintf("%s.csv", storageUnit)
+	}
 	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
@@ -267,7 +289,13 @@ func handleExcelExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfi
 	}
 
 	// Set response headers for Excel download
-	filename := fmt.Sprintf("%s_%s.xlsx", schema, storageUnit)
+	// Only include schema in filename if it exists (for SQLite, schema is empty)
+	var filename string
+	if schema != "" {
+		filename = fmt.Sprintf("%s_%s.xlsx", schema, storageUnit)
+	} else {
+		filename = fmt.Sprintf("%s.xlsx", storageUnit)
+	}
 	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")

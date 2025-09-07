@@ -69,7 +69,11 @@ func (p *ElasticSearchPlugin) AddRow(config *engine.PluginConfig, schema string,
 
 	documentReader := bytes.NewReader(documentBytes)
 
-	res, err := client.Index(storageUnit, documentReader)
+	res, err := client.Index(
+		storageUnit,
+		documentReader,
+		client.Index.WithRefresh("true"), // Ensure the document is immediately visible
+	)
 	if err != nil {
 		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to index document in ElasticSearch")
 		return false, fmt.Errorf("error indexing document: %v", err)

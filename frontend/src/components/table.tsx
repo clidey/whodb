@@ -406,8 +406,9 @@ export const StorageUnitTable: FC<TableProps> = ({
     }, [maxRowCount]);
 
     const handleMockDataGenerate = useCallback(async () => {
-        if (!schema || !storageUnit) {
-            toast.error("Schema and storage unit are required for mock data generation");
+        // For databases without schemas (like SQLite), only storageUnit is required
+        if (!storageUnit) {
+            toast.error("Storage unit is required for mock data generation");
             return;
         }
 
@@ -428,7 +429,7 @@ export const StorageUnitTable: FC<TableProps> = ({
             const result = await generateMockData({
                 variables: {
                     input: {
-                        Schema: schema,
+                        Schema: schema || "",  // Use empty string if schema is null/undefined (SQLite case)
                         StorageUnit: storageUnit,
                         RowCount: count,
                         Method: mockDataMethod,

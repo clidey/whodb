@@ -473,6 +473,7 @@ describe('Postgres E2E test', () => {
       expect(parseInt(val, 10)).to.be.equal(200);
     });
 
+    cy.wait(1000);
     // now actually add 50
     cy.contains('label', 'Number of Rows').parent().find('input').as('rowsInput');
     cy.get('@rowsInput').clear().type('50');
@@ -508,8 +509,13 @@ describe('Postgres E2E test', () => {
     cy.data('orders');
     cy.get('table thead tr').rightclick({force: true});
     cy.contains('div,button,span', 'Mock Data').click({force: true});
+    // Wait for any toasts to clear
+    cy.wait(1000);
     cy.contains('button', 'Generate').click();
     // Check for toast notification (may be partially covered but should exist)
     cy.contains('Mock data generation is not allowed for this table').should('exist');
+
+    cy.get('body').type('{esc}');
+    cy.logout()
   });
 });

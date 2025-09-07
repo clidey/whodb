@@ -37,7 +37,6 @@ COPY ./core/go.mod ./core/go.sum ./
 RUN go mod download
 COPY ./core/ ./
 
-COPY ./scripts/ ../scripts/
 
 COPY --from=build-stage /app/build/ ./build/
 

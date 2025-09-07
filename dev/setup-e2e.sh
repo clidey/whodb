@@ -81,11 +81,15 @@ echo "✅ SQLite E2E database ready at core/tmp/e2e_test.db"
 if [ "$SKIP_CE_DATABASES" = "false" ]; then
     echo "🐳 Starting CE database services..."
     cd "$SCRIPT_DIR"
-    docker-compose -f docker-compose.e2e.yaml up -d
+    docker-compose -f docker-compose.e2e.yaml up -d --remove-orphans
 
     # Wait for services to be ready
     echo "⏳ Waiting for services to be ready..."
     sleep 15
+
+    # Extra wait for MySQL to fully initialize with the init script
+    echo "⏳ Waiting for MySQL to initialize data..."
+    sleep 5
 
     # Check if CE services are healthy
     echo "🔍 Checking CE service health..."
@@ -109,6 +113,13 @@ if [ "$EDITION" = "ee" ]; then
     else
         echo "⚠️ EE setup script not found, continuing with CE only"
     fi
+fi
+
+# Clean up old coverage to start fresh each test run
+COVERAGE_FILE="$PROJECT_ROOT/core/coverage.out"
+if [ -f "$COVERAGE_FILE" ]; then
+    echo "🧹 Cleaning previous backend coverage"
+    rm -f "$COVERAGE_FILE"
 fi
 
 # Start the CE test server with coverage
