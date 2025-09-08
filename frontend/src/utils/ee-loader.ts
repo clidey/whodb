@@ -56,10 +56,7 @@ export const loadEEComponent = <T extends ComponentType<any>>(
                     console.warn('EE component not available');
                 }
                 
-                if (fallback) {
-                    return { default: fallback };
-                }
-                throw error;
+                return { default: fallback };
             }
         });
     } catch (error) {

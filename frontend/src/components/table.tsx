@@ -88,7 +88,7 @@ import { loadEEComponent } from "../utils/ee-loader";
 // Dynamically load EE Export component
 const EEExport = loadEEComponent(
     () => import('@ee/components/export').then(mod => ({ default: mod.Export })),
-    null
+    null,
 );
 
 // Dynamic Export component that uses EE version if available, otherwise CE version
