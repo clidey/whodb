@@ -12,3 +12,10 @@ ee/frontend/node_modules/
 worktree/
 frontend/cypress/screenshots/
 frontend/cypress/downloads/
+
+# Desktop application
+desktop/node_modules/
+desktop/dist/
+desktop/whodb
+desktop/whodb.exe
+desktop/*.log

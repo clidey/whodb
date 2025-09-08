@@ -1,0 +1,19 @@
+{
+  "name": "whodb-workspace",
+  "version": "1.0.0",
+  "description": "WhoDB - Database Management Tool",
+  "private": true,
+  "scripts": {
+    "desktop:install": "cd desktop && npm install",
+    "desktop:dev": "concurrently \"cd core && go run .\" \"cd desktop && npm run dev\"",
+    "desktop:build-backend": "cd core && go build -o ../desktop/whodb",
+    "desktop:build": "npm run desktop:build-backend && cd desktop && npm run build",
+    "desktop:dist": "npm run desktop:build-backend && cd desktop && npm run dist",
+    "desktop:dist:win": "npm run desktop:build-backend && cd desktop && npm run dist:win",
+    "desktop:dist:mac": "npm run desktop:build-backend && cd desktop && npm run dist:mac",
+    "desktop:dist:linux": "npm run desktop:build-backend && cd desktop && npm run dist:linux"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}
