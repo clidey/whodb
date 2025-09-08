@@ -38,7 +38,6 @@ import {AuthActions} from "../../store/auth";
 import {DatabaseActions} from "../../store/database";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {AdjustmentsHorizontalIcon, CheckCircleIcon, CircleStackIcon} from '@heroicons/react/24/outline';
-import {TestRunner} from "../../components/test-runner/test-runner";
 
 const logoImage = "/images/logo.png";
 // Embeddable LoginForm component for use in LoginPage and @sidebar.tsx
@@ -57,11 +56,11 @@ export interface LoginFormProps {
 }
 
 export const LoginForm: FC<LoginFormProps> = ({
-    onLoginSuccess,
-    hideHeader = false,
-    className = "",
-    advancedDirection = "horizontal",
-}) => {
+                                                  onLoginSuccess,
+                                                  hideHeader = false,
+                                                  className = "",
+                                                  advancedDirection = "horizontal",
+                                              }) => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const currentProfile = useAppSelector(state => state.auth.current);
@@ -261,7 +260,7 @@ export const LoginForm: FC<LoginFormProps> = ({
             // Checks the valid postgres URL
             if (databaseType.id === DatabaseType.Postgres && (newHostName.startsWith("postgres://") || newHostName.startsWith("postgresql://"))) {
                 try {
-                    const url = new URL(newHostName); 
+                    const url = new URL(newHostName);
                     const hostname = url.hostname;
                     const username = url.username;
                     const password = url.password;
@@ -323,10 +322,10 @@ export const LoginForm: FC<LoginFormProps> = ({
                             databasesLoading
                                 ? []
                                 : foundDatabases?.Database?.map(db => ({
-                                    value: db,
-                                    label: db,
-                                    icon: <CircleStackIcon className="w-4 h-4" />,
-                                })) ?? []
+                                value: db,
+                                label: db,
+                                icon: <CircleStackIcon className="w-4 h-4"/>,
+                            })) ?? []
                         }
                         placeholder="Select Database"
                         buttonProps={{
@@ -422,8 +421,8 @@ export const LoginForm: FC<LoginFormProps> = ({
                         {!hideHeader && (
                             <div className="flex justify-between">
                                 <div className="flex items-center gap-2 text-xl">
-                                {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4" />}
-                                <h1 className="text-brand-foreground">{extensions.AppName ?? "WhoDB"}</h1>
+                                    {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4"/>}
+                                    <h1 className="text-brand-foreground">{extensions.AppName ?? "WhoDB"}</h1>
                                     <h1>Login</h1>
                                 </div>
                                 {
@@ -531,46 +530,9 @@ export const LoginForm: FC<LoginFormProps> = ({
 };
 
 export const LoginPage: FC = () => {
-    const [showTestRunner, setShowTestRunner] = useState(false);
-
-    // Check if test runner is enabled (via environment variable or window object)
-    const isTestingEnabled = import.meta.env.VITE_ENABLE_TESTING === 'true' ||
-        (window as any).ENABLE_TEST_RUNNER === true;
-    
     return (
-        <Container className="justify-center items-center relative">
+        <Container className="justify-center items-center">
             <LoginForm />
-            {isTestingEnabled && (
-                <div className="absolute bottom-4 right-4">
-                    <Button
-                        onClick={() => setShowTestRunner(!showTestRunner)}
-                        variant="outline"
-                        className="gap-2"
-                    >
-                        <CircleStackIcon className="w-4 h-4"/>
-                        Test Runner
-                    </Button>
-                </div>
-            )}
-            {showTestRunner && isTestingEnabled && (
-                <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50">
-                    <div className="fixed inset-4 bg-background border rounded-lg shadow-lg overflow-hidden">
-                        <div className="flex justify-between items-center p-4 border-b">
-                            <h2 className="text-lg font-semibold">E2E Test Runner</h2>
-                            <Button
-                                onClick={() => setShowTestRunner(false)}
-                                variant="ghost"
-                                size="sm"
-                            >
-                                Close
-                            </Button>
-                        </div>
-                        <div className="p-4 h-[calc(100%-80px)] overflow-auto">
-                            <TestRunner/>
-                        </div>
-                    </div>
-                </div>
-            )}
         </Container>
     );
 };
