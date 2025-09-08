@@ -54,16 +54,6 @@ export const ActionOptionIcons: Record<string, ReactElement> = {
     [ActionOptions.Query]: <CircleStackIcon className="w-4 h-4" />,
 }
 
-function getModeCommand(mode: string, current?: LocalLoginProfile, eeActionOptions?: Record<string, string>) {
-    if (current == null || !eeActionOptions || mode !== eeActionOptions.Analyze) {
-         return "";
-    }
-    if (current.Type === DatabaseType.Postgres) {
-        return "EXPLAIN (ANALYZE, FORMAT JSON)"
-    }
-    return "";
-}
-
 const CopyButton: FC<{ text: string }> = ({ text }) => {
     const [copied, setCopied] = useState(false);
 
