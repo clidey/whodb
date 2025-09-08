@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,12 +14,26 @@
  * limitations under the License.
  */
 
-import { Badge, Button, cn, Input, Label, Popover, PopoverContent, PopoverTrigger, SearchSelect, Sheet, SheetContent, SheetFooter, SheetTitle, Separator } from "@clidey/ux";
-import { AtomicWhereCondition, WhereCondition, WhereConditionType } from '@graphql';
-import { CheckCircleIcon, PlusCircleIcon, XCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import {
+    Badge,
+    Button,
+    cn,
+    Input,
+    Label,
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+    SearchSelect,
+    Sheet,
+    SheetContent,
+    SheetFooter,
+    SheetTitle
+} from "@clidey/ux";
+import {AtomicWhereCondition, WhereCondition, WhereConditionType} from '@graphql';
+import {CheckCircleIcon, PlusCircleIcon, XCircleIcon, XMarkIcon} from "@heroicons/react/24/outline";
 import classNames from "classnames";
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { twMerge } from "tailwind-merge";
+import {FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {twMerge} from "tailwind-merge";
 
 type IPopoverCardProps = {
     open: boolean;
@@ -32,13 +46,28 @@ type IPopoverCardProps = {
     handleInputChange: (newValue: string) => void;
     handleAddFilter: () => void;
     handleSaveFilter?: (index: number) => void;
-    handleClick: () => void;
+    handleCancel: () => void;
     className?: string;
     isEditing?: boolean;
     editingIndex?: number;
 }
 
-const PopoverCard: FC<IPopoverCardProps> = ({ open, onOpenChange, currentFilter, fieldsDropdownItems, validOperators, handleFieldSelect, handleOperatorSelector, handleInputChange, handleAddFilter, handleSaveFilter, handleClick, className, isEditing = false, editingIndex = -1 }) => {
+const PopoverCard: FC<IPopoverCardProps> = ({
+                                                open,
+                                                onOpenChange,
+                                                currentFilter,
+                                                fieldsDropdownItems,
+                                                validOperators,
+                                                handleFieldSelect,
+                                                handleOperatorSelector,
+                                                handleInputChange,
+                                                handleAddFilter,
+                                                handleSaveFilter,
+                                                handleCancel,
+                                                className,
+                                                isEditing = false,
+                                                editingIndex = -1
+                                            }) => {
     const handleAction = useCallback(() => {
         if (isEditing && handleSaveFilter && editingIndex !== -1) {
             handleSaveFilter(editingIndex);
@@ -100,7 +129,7 @@ const PopoverCard: FC<IPopoverCardProps> = ({ open, onOpenChange, currentFilter,
             <div className="flex gap-2 mt-2">
                 <Button
                     className="flex-1"
-                    onClick={handleClick}
+                    onClick={handleCancel}
                     data-testid="cancel-button"
                     variant="secondary"
                 >
@@ -155,6 +184,16 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
         }
         setNewFilter(!newFilter);
     }, [newFilter]);
+
+    const handleCancelNewFilter = useCallback(() => {
+        setNewFilter(false);
+        setCurrentFilter({ColumnType: "string", Key: "", Operator: "", Value: ""});
+    }, []);
+
+    const handleCancelEditFilter = useCallback(() => {
+        setEditingFilter(-1);
+        setCurrentFilter({ColumnType: "string", Key: "", Operator: "", Value: ""});
+    }, []);
 
     const fieldsDropdownItems = useMemo(() => columns.map(column => ({ value: column, label: column })), [columns]);
 
@@ -383,7 +422,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                             handleInputChange={handleInputChange}
                             handleAddFilter={handleAddFilter}
                             handleSaveFilter={handleSaveFilter}
-                            handleClick={handleClick}
+                            handleCancel={handleCancelEditFilter}
                             isEditing={true}
                             editingIndex={i}
                         />
@@ -409,7 +448,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                 handleInputChange={handleInputChange}
                 handleAddFilter={handleAddFilter}
                 handleSaveFilter={handleSaveFilter}
-                handleClick={handleClick}
+                handleCancel={handleCancelNewFilter}
                 isEditing={false}
                 editingIndex={-1}
             />

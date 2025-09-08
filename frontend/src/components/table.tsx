@@ -264,10 +264,18 @@ export const StorageUnitTable: FC<TableProps> = ({
     const hasSelectedRows = checked.length > 0;
     const selectedRowsData = useMemo(() => {
         if (hasSelectedRows) {
-            return checked.map(idx => rows[idx]);
+            // Convert array of arrays to array of objects with column names as keys
+            return checked.map(idx => {
+                const row = rows[idx];
+                const rowObj: Record<string, any> = {};
+                columns.forEach((col, colIdx) => {
+                    rowObj[col] = row[colIdx];
+                });
+                return rowObj;
+            });
         }
         return undefined;
-    }, [hasSelectedRows, checked, rows]);
+    }, [hasSelectedRows, checked, rows, columns]);
 
     // Delete logic, adapted from explore-storage-unit.tsx
     const handleDeleteRow = useCallback(async (rowIndex: number) => {
@@ -395,8 +403,9 @@ export const StorageUnitTable: FC<TableProps> = ({
     }, [maxRowCount]);
 
     const handleMockDataGenerate = useCallback(async () => {
-        if (!schema || !storageUnit) {
-            toast.error("Schema and storage unit are required for mock data generation");
+        // For databases without schemas (like SQLite), only storageUnit is required
+        if (!storageUnit) {
+            toast.error("Storage unit is required for mock data generation");
             return;
         }
 
@@ -417,7 +426,7 @@ export const StorageUnitTable: FC<TableProps> = ({
             const result = await generateMockData({
                 variables: {
                     input: {
-                        Schema: schema,
+                        Schema: schema || "",  // Use empty string if schema is null/undefined (SQLite case)
                         StorageUnit: storageUnit,
                         RowCount: count,
                         Method: mockDataMethod,
@@ -974,8 +983,12 @@ export const StorageUnitTable: FC<TableProps> = ({
                     </SheetContent>
                 </Sheet>
             </div>
-            
-            <Sheet open={showMockDataSheet} onOpenChange={setShowMockDataSheet}>
+            <Sheet open={showMockDataSheet} onOpenChange={(open) => {
+                setShowMockDataSheet(open);
+                    if (!open) {
+                        setShowMockDataConfirmation(false);
+                    }
+                }}>
                 <SheetContent side="right" className="p-8">
                     <div className="flex flex-col gap-4 h-full">
                         <div className="text-lg font-semibold mb-2">Mock Data for {storageUnit}</div>

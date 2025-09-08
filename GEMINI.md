@@ -49,10 +49,12 @@ These are non-negotiable principles. Follow them at all times.
 ## Architecture Overview
 
 WhoDB is a database management tool with a **dual-edition architecture**:
+
 - **Community Edition (CE)**: Open source core features
 - **Enterprise Edition (EE)**: Extended features without modifying CE code
 
 ### Backend Structure (Go)
+
 - **Location**: `/core/`
 - **Main Entry**: `core/src/main.go`
 - **Plugin System**: Database connectors in `core/src/plugins/`
@@ -70,24 +72,24 @@ WhoDB is a database management tool with a **dual-edition architecture**:
 ### Key Architectural Patterns
 
 1. **Plugin-Based Database Support**
-   - Each database type implements the Plugin interface
-   - Plugins register themselves with the engine
-   - GraphQL resolvers dispatch to appropriate plugin
+    - Each database type implements the Plugin interface
+    - Plugins register themselves with the engine
+    - GraphQL resolvers dispatch to appropriate plugin
 
 2. **Unified GraphQL API**
-   - All database operations go through a single GraphQL schema
-   - Database-agnostic queries that work across all supported databases
-   - Type safety through code generation
+    - All database operations go through a single GraphQL schema
+    - Database-agnostic queries that work across all supported databases
+    - Type safety through code generation
 
 3. **AI Integration**
-   - Multiple LLM providers (Ollama, OpenAI, Anthropic)
-   - Natural language to SQL conversion
-   - Schema-aware query generation
+    - Multiple LLM providers (Ollama, OpenAI, Anthropic)
+    - Natural language to SQL conversion
+    - Schema-aware query generation
 
 4. **Embedded Frontend**
-   - Go embeds the React build using `//go:embed`
-   - Single binary deployment
-   - Development mode runs separate servers
+    - Go embeds the React build using `//go:embed`
+    - Single binary deployment
+    - Development mode runs separate servers
 
 ## Plugin Architecture Principles
 
@@ -216,6 +218,7 @@ defer rows.Close()
 ### GraphQL First Architecture
 
 **Important: GraphQL is the Default API**
+
 - **Always use GraphQL** for new API endpoints unless explicitly instructed otherwise
 - **Do NOT modify or add HTTP resolvers** in `http.resolvers.go` unless specifically requested
 - The codebase follows a GraphQL-first approach for all data operations
@@ -233,7 +236,7 @@ All GraphQL operations must be defined in `.graphql` files:
 const MY_QUERY = gql`query MyQuery { ... }`;
 
 // CORRECT: Use the generated hook
-import { useMyQuery } from '@graphql';
+import {useMyQuery} from '@graphql';
 ```
 
 ### Frontend Feature Development
@@ -254,6 +257,7 @@ The project uses a dual-resolver architecture to maintain separation between CE 
 - Build tags control which resolver is used at compile time
 
 ### Backend GraphQL Development
+
 - Add new queries/mutations to `core/graph/schema.graphqls`
 - Implement resolvers in appropriate resolver files (e.g., `core/graph/model.resolvers.go`)
 - HTTP endpoints should only be used for special cases like file downloads that can't be handled via GraphQL

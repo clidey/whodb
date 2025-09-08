@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,14 +14,20 @@
  * limitations under the License.
  */
 
-import { defineConfig } from "cypress";
-import codeCoverageTask from "@cypress/code-coverage/task";
+import {defineConfig} from "cypress";
+import codeCoverageTask from "@cypress/code-coverage/task.js";
 
 export default defineConfig({
   numTestsKeptInMemory: 0,
+  experimentalStudio: true,
   e2e: {
+    baseUrl: 'http://localhost:3000', // Default for local development
     async setupNodeEvents(on, config) {
       codeCoverageTask(on, config);
+
+      // Pass Docker flag to tests
+      config.env = config.env || {};
+      config.env.isDocker = process.env.CYPRESS_IN_DOCKER === 'true';
 
       on("task", {
         async execCommand(command) {
