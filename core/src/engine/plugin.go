@@ -51,6 +51,58 @@ type StorageUnit struct {
 	Attributes []Record
 }
 
+type DatabaseFunction struct {
+	Name        string
+	ReturnType  string
+	Parameters  []Record
+	Definition  string
+	Language    string
+	IsAggregate bool
+}
+
+type DatabaseProcedure struct {
+	Name       string
+	Parameters []Record
+	Definition string
+	Language   string
+}
+
+type DatabaseTrigger struct {
+	Name       string
+	TableName  string
+	Event      string // INSERT, UPDATE, DELETE
+	Timing     string // BEFORE, AFTER
+	Definition string
+}
+
+type DatabaseIndex struct {
+	Name        string
+	TableName   string
+	Columns     []string
+	Type        string // BTREE, HASH, etc.
+	IsUnique    bool
+	IsPrimary   bool
+	Size        string
+}
+
+type DatabaseSequence struct {
+	Name        string
+	DataType    string
+	StartValue  int64
+	Increment   int64
+	MinValue    int64
+	MaxValue    int64
+	CacheSize   int64
+	IsCycle     bool
+}
+
+type DatabaseType struct {
+	Name       string
+	Schema     string
+	Type       string // ENUM, COMPOSITE, etc.
+	Definition string
+}
+
 type Column struct {
 	Type string
 	Name string
@@ -111,6 +163,14 @@ type PluginFunctions interface {
 	
 	// Transaction support
 	WithTransaction(config *PluginConfig, operation func(tx any) error) error
+	
+	// Additional database entities
+	GetFunctions(config *PluginConfig, schema string) ([]DatabaseFunction, error)
+	GetProcedures(config *PluginConfig, schema string) ([]DatabaseProcedure, error)
+	GetTriggers(config *PluginConfig, schema string) ([]DatabaseTrigger, error)
+	GetIndexes(config *PluginConfig, schema string) ([]DatabaseIndex, error)
+	GetSequences(config *PluginConfig, schema string) ([]DatabaseSequence, error)
+	GetTypes(config *PluginConfig, schema string) ([]DatabaseType, error)
 }
 
 type Plugin struct {

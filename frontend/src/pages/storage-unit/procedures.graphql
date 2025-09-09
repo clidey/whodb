@@ -1,0 +1,11 @@
+query GetProcedures($schema: String!) {
+  Procedures(schema: $schema) {
+    Name
+    Parameters {
+      Key
+      Value
+    }
+    Definition
+    Language
+  }
+}

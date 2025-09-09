@@ -1,0 +1,12 @@
+query GetSequences($schema: String!) {
+  Sequences(schema: $schema) {
+    Name
+    DataType
+    StartValue
+    Increment
+    MinValue
+    MaxValue
+    CacheSize
+    IsCycle
+  }
+}
