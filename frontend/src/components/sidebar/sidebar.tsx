@@ -55,8 +55,7 @@ import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
 import { Icons } from "../icons";
 import { Loading } from "../loading";
 import { updateProfileLastAccessed } from "../profile-info-tooltip";
-
-const logoImage = "/images/logo.png";
+import logoImage from "../../../public/images/logo.png";
 
 function getProfileLabel(profile: LocalLoginProfile) {
     if (profile.Saved) return profile.Id;
