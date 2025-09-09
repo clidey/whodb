@@ -13,7 +13,6 @@
 # limitations under the License.
 
 # WhoDB Enterprise Edition Dockerfile
-# Build from project root: docker build -f core/Dockerfile.ee -t whodb:ee .
 
 # Build frontend with EE modules
 FROM node:lts-alpine AS build-stage
@@ -55,7 +54,6 @@ RUN go mod download
 WORKDIR /app
 COPY ./core/ ./core/
 COPY ./ee/ ./ee/
-COPY ./scripts/ ./scripts/
 
 # Copy frontend build to be embedded
 COPY --from=build-stage /app/build/ ./core/build/

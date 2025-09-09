@@ -1,16 +1,18 @@
-// Copyright 2025 Clidey, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package redis
 
@@ -302,6 +304,38 @@ func (p *RedisPlugin) GetRows(
 	}
 
 	return result, nil
+}
+
+func (p *RedisPlugin) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {
+	ctx := context.Background()
+
+	client, err := DB(config)
+	if err != nil {
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to connect to Redis for columns retrieval")
+		return nil, err
+	}
+	defer client.Close()
+
+	keyType, err := client.Type(ctx, storageUnit).Result()
+	if err != nil {
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to get Redis key type for columns retrieval")
+		return nil, err
+	}
+
+	switch keyType {
+	case "string":
+		return []engine.Column{{Name: "value", Type: "string"}}, nil
+	case "hash":
+		return []engine.Column{{Name: "field", Type: "string"}, {Name: "value", Type: "string"}}, nil
+	case "list":
+		return []engine.Column{{Name: "index", Type: "string"}, {Name: "value", Type: "string"}}, nil
+	case "set":
+		return []engine.Column{{Name: "index", Type: "string"}, {Name: "value", Type: "string"}}, nil
+	case "zset":
+		return []engine.Column{{Name: "index", Type: "string"}, {Name: "member", Type: "string"}, {Name: "score", Type: "string"}}, nil
+	default:
+		return nil, errors.New("unsupported Redis data type")
+	}
 }
 
 func filterRedisHash(field, value string, where *model.WhereCondition) bool {

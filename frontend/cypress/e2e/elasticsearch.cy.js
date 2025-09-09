@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-const dbHost = 'localhost';
-const password = 'pgmio430fe$$#@@';
-const username = 'elastic';
-
 describe('ElasticSearch E2E test', () => {
-  it('should login correctly', () => {
+  const isDocker = Cypress.env('isDocker');
+  const dbHost = isDocker ? 'e2e_elasticsearch' : 'localhost';
+  const password = 'pgmio430fe$$#@@';
+  const username = 'elastic';
+
+  it('runs full ElasticSearch E2E flow', () => {
     // login and setup
     cy.login('ElasticSearch', dbHost, username, password);
-    
-    // get all indices
+
+    // 1) Lists indices
     cy.getTables().then(storageUnitNames => {
-      cy.log(storageUnitNames);
       expect(storageUnitNames).to.be.an('array');
       expect(storageUnitNames).to.deep.equal([
         "order_items",
@@ -36,193 +36,200 @@ describe('ElasticSearch E2E test', () => {
       ]);
     });
 
-    // check users index and fields
+    // 2) Explore users index metadata
     cy.explore("users");
-    cy.getExploreFields().then(text => {
-      const textLines = text.split("\n");
-    
-      const expectedPatterns = [
-        /^users$/,
-        /^Storage Size: \d+$/,
-        /^Count: \d+$/,
-      ];
-      expectedPatterns.forEach(pattern => {
-        expect(textLines.some(line => pattern.test(line))).to.be.true;
-      });
+    cy.wait(100);
+    cy.getExploreFields().then(fields => {
+      expect(fields.some(([k]) => k === "Storage Size")).to.be.true;
+      expect(fields.some(([k]) => k === "Count")).to.be.true;
     });
 
-    // check user default data
+    // 3) Data: add a document then delete and verify index data
     cy.data("users");
+    cy.addRow({
+      username: "new_user",
+      email: "new@example.com",
+      password: "newpassword"
+    }, true);
+    cy.data("users");
+    cy.getTableData().then(({rows}) => {
+      const lastRowIndex = rows.length - 1;
+      cy.deleteRow(lastRowIndex);
+      cy.wait(100);
+    });
     cy.getTableData().then(({ columns, rows }) => {
-      expect(columns).to.deep.equal([
-        "#",
-        "document [Document]",
-      ]);
+      expect(columns).to.deep.equal(["", "document"]);
       expect(rows.length).to.equal(3);
-      expect(rows[0]).to.deep.equal([
-        "1",
-        "{\"_id\":\"1\",\"created_at\":\"2024-01-01T12:00:00\",\"email\":\"john@example.com\",\"password\":\"securepassword1\",\"username\":\"john_doe\"}"
-    ]);
-      expect(rows[1]).to.deep.equal([
-        "2",
-        "{\"_id\":\"2\",\"created_at\":\"2024-01-02T12:00:00\",\"email\":\"jane@example.com\",\"password\":\"securepassword2\",\"username\":\"jane_smith\"}"
-    ]);
-      expect(rows[2]).to.deep.equal([
-        "3",
-        "{\"_id\":\"3\",\"created_at\":\"2024-01-03T12:00:00\",\"email\":\"admin@example.com\",\"password\":\"adminpass\",\"username\":\"admin_user\"}"
-    ]);
+      const usernames = rows.map(row => JSON.parse(row[1]).username);
+      expect(usernames).to.include.members(["john_doe", "jane_smith", "admin_user"]);
     });
 
-    // check page size
+    // 4) Respects page size pagination
     cy.setTablePageSize(1);
     cy.submitTable();
     cy.getTableData().then(({ rows }) => {
       expect(rows.length).to.equal(1);
-      expect(rows[0]).to.deep.equal([
-        "1",
-        "{\"_id\":\"1\",\"created_at\":\"2024-01-01T12:00:00\",\"email\":\"john@example.com\",\"password\":\"securepassword1\",\"username\":\"john_doe\"}"
-    ]);
     });
 
-    // check conditions
-    cy.whereTable([
-      ["username", "match", "john_doe"],
-    ]);
+    // 5) Applies where condition and clears it
+    cy.setTablePageSize(10);
+    cy.whereTable([["username", "match", "john_doe"]]);
     cy.submitTable();
     cy.getTableData().then(({ rows }) => {
       expect(rows.length).to.equal(1);
-      expect(rows[0]).to.deep.equal([
-        "1",
-        "{\"_id\":\"1\",\"created_at\":\"2024-01-01T12:00:00\",\"email\":\"john@example.com\",\"password\":\"securepassword1\",\"username\":\"john_doe\"}"
-    ]);
+      const doc = JSON.parse(rows[0][1]);
+      expect(doc.username).to.equal("john_doe");
     });
-
-    // check clearing of the query and page size
-    cy.setTablePageSize(10);
     cy.clearWhereConditions();
     cy.submitTable();
     cy.getTableData().then(({ rows }) => {
-      expect(rows.length).to.equal(1);
+      expect(rows.length).to.equal(3);
     });
 
-    // check editing capability
-    // cy.updateRow(0, 6, "155", false);
-    // cy.getTableData().then(({ rows }) => {
-    //   expect(rows[0][6]).to.equal("155");
-    // });
-    
-    // revert the change
-    // cy.updateRow(0, 6, "150", false);
-    // cy.getTableData().then(({ rows }) => {
-    //   expect(rows[0][6]).to.equal("150");
-    // });
+    // 6) Edit document: save, revert, and cancel
+    cy.getTableData().then(({rows}) => {
+      const doc = JSON.parse(rows[1][1]);
+      doc.username = "jane_smith1";
+      cy.updateRow(1, 1, JSON.stringify(doc), false);
+    });
+    cy.getTableData().then(({rows}) => {
+      const doc = JSON.parse(rows[2][1]);
+      expect(doc.username).to.equal("jane_smith1");
+      doc.username = "jane_smith";
+      cy.updateRow(1, 1, JSON.stringify(doc), false);
+    });
+    cy.getTableData().then(({rows}) => {
+      const doc = JSON.parse(rows[2][1]);
+      expect(doc.username).to.equal("jane_smith");
+    });
+    cy.getTableData().then(({rows}) => {
+      const doc = JSON.parse(rows[2][1]);
+      doc.username = "jane_smith_temp";
+      cy.updateRow(1, 1, JSON.stringify(doc));
+    });
+    cy.getTableData().then(({rows}) => {
+      const doc = JSON.parse(rows[2][1]);
+      expect(doc.username).to.equal("jane_smith");
+    });
 
-    // save the change
-    // cy.updateRow(0, 6, "150");
-    // cy.getTableData().then(({ rows }) => {
-    //   expect(rows[0][6]).to.equal("150");
-    // });
+    // 7) Search highlights multiple matches in sequence
+    cy.searchTable("john");
+    cy.wait(100);
+    cy.getHighlightedCell().first().should('contain.text', 'john');
 
-    // check search
-    // cy.searchTable("laptop");
-    // cy.wait(250);
-    // cy.getHighlightedRows().then(rows => {
-    //   expect(rows[0]).to.equal("Laptop");
-    // });
-
-    // check graph - Elasticsearch doesn't have traditional foreign key relationships
+    // 8) Graph topology and node fields
     cy.goto("graph");
     cy.getGraph().then(graph => {
-      // Elasticsearch indices should appear as isolated nodes without connections
-      const expectedIndices = ["users", "products", "orders", "order_items", "payments"];
-      expectedIndices.forEach(index => {
-        expect(graph).to.have.property(index);
+      const expectedGraph = {
+        "users": ["orders"],
+        "orders": ["order_items", "payments", "users"],
+        "order_items": ["orders", "products"],
+        "products": ["order_items"],
+        "payments": ["orders"]
+      };
+      Object.keys(expectedGraph).forEach(key => {
+        expect(graph).to.have.property(key);
+        expect(graph[key].sort()).to.deep.equal(expectedGraph[key].sort());
       });
     });
+    cy.getGraphNode("users").then(fields => {
+      expect(fields.some(([k]) => k === "Storage Size")).to.be.true;
+      expect(fields.some(([k]) => k === "Count")).to.be.true;
+    });
+    cy.goto('graph');
+    cy.get('.react-flow__node', {timeout: 10000}).should('be.visible');
+    cy.get('[role="tab"]').first().click();
+    cy.get('button').filter(':visible').then($buttons => {
+      cy.wrap($buttons[1]).click();
+    });
 
-    // check elasticsearch queries in scratchpad
-    // cy.goto("scratchpad");
-    
-    // For Elasticsearch, we need to select the index context first
-    // Let's start with users index
-    // cy.data("users");
-    // cy.goto("scratchpad");
-    
-    // test successful query - match all in users
-    // cy.writeCode(0, '{"query": {"match_all": {}}}');
-    // cy.runCode(0);
-    // cy.getCellQueryOutput(0).then(({ rows, columns }) => {
-    //   expect(columns).to.deep.equal([
-    //     "#",
-    //     "_id",
-    //     "_score",
-    //     "created_at [date]",
-    //     "email [keyword]",
-    //     "password [text]",
-    //     "username [keyword]"
-    //   ]);
-    //   expect(rows.length).to.equal(3);
-    // });
+    cy.get('[data-testid="rf__node-users"] [data-testid="data-button"]').click({force: true});
+    cy.url().should('include', '/storage-unit/explore');
+    cy.contains('Total Count:').should('be.visible');
+    cy.get('[data-testid="table-search"]').should('be.visible');
 
-    // test term query
-    // cy.writeCode(0, '{"query": {"term": {"username": "john_doe"}}}');
-    // cy.runCode(0);
-    // cy.getCellQueryOutput(0).then(({ rows }) => {
-    //   expect(rows.length).to.equal(1);
-    //   expect(rows[0][6]).to.equal("john_doe");
-    // });
+    // 9) Manage where conditions (edit and sheet)
+    cy.data('users');
+    cy.whereTable([
+      ['username', 'match', 'john_doe'],
+      ['email', 'match', 'john@example.com'],
+    ]);
+    cy.submitTable();
 
-    // Switch to products index
-    // cy.data("products");
-    // cy.goto("scratchpad");
+    cy.get('[data-testid="where-condition-badge"]').should('have.length', 2);
+    cy.get('[data-testid="where-condition-badge"]').eq(0).should('contain.text', 'username match john_doe');
+    cy.get('[data-testid="where-condition-badge"]').eq(1).should('contain.text', 'email match john@example.com');
+    cy.getTableData().then(({rows}) => {
+      const doc = JSON.parse(rows[0][1]);
+      expect(doc.username).to.equal("john_doe");
+    });
 
-    // test range query on products
-    // cy.writeCode(0, '{"query": {"range": {"price": {"gte": 200, "lte": 1000}}}}');
-    // cy.runCode(0);
-    // cy.getCellQueryOutput(0).then(({ rows }) => {
-    //   expect(rows.length).to.equal(1);
-    //   expect(rows[0][5]).to.equal("Smartphone");
-    //   expect(rows[0][6]).to.equal("800");
-    // });
+    cy.get('[data-testid="where-condition-badge"]').first().click();
+    cy.get('[data-testid="field-value"]').clear().type('jane_smith');
+    cy.get('[data-testid="cancel-button"]').click();
+    cy.get('[data-testid="where-condition-badge"]').first().should('contain.text', 'username match john_doe');
 
-    // add cell for aggregation query
-    // cy.addCell(0);
-    // cy.writeCode(1, '{"aggs": {"avg_price": {"avg": {"field": "price"}}}, "size": 0}');
-    // cy.runCode(1);
-    // cy.getCellQueryOutput(1).then(({ rows, columns }) => {
-    //   // Aggregation results show differently
-    //   expect(columns).to.include("#");
-    //   expect(rows.length).to.be.greaterThan(0);
-    // });
+    cy.get('[data-testid="where-condition-badge"]').first().click();
+    cy.get('[data-testid="field-value"]').clear().type('jane_smith');
+    cy.get('[data-testid="update-condition-button"]').click();
+    cy.submitTable();
+    cy.assertNoDataAvailable();
 
-    // test update by query
-    // cy.writeCode(1, '{"script": {"source": "ctx._source.stock_quantity += 5"}, "query": {"term": {"name": "Laptop"}}}');
-    // cy.runCode(1);
-    // cy.getCellActionOutput(1).then(output => expect(output).to.equal('Action Executed'));
+    cy.get('[data-testid="where-condition-badge"]').eq(0).should('contain.text', 'username match jane_smith');
 
-    // verify the update worked
-    // cy.writeCode(1, '{"query": {"term": {"name": "Laptop"}}}');
-    // cy.runCode(1);
-    // cy.getCellQueryOutput(1).then(({ rows }) => {
-    //   expect(rows.length).to.equal(1);
-    //   expect(rows[0][7]).to.equal("15"); // Was 10, added 5
-    // });
+    cy.get('[data-testid="remove-where-condition-button"]').eq(1).click();
+    cy.submitTable();
+    cy.getTableData().then(({rows}) => {
+      const doc = JSON.parse(rows[0][1]);
+      expect(doc.username).to.equal('jane_smith');
+    });
 
-    // revert the change
-    // cy.writeCode(1, '{"script": {"source": "ctx._source.stock_quantity -= 5"}, "query": {"term": {"name": "Laptop"}}}');
-    // cy.runCode(1);
-    // cy.getCellActionOutput(1).then(output => expect(output).to.equal('Action Executed'));
+    cy.get('[data-testid="remove-where-condition-button"]').first().click();
 
-    // remove first cell
-    // cy.removeCell(0);
+    cy.whereTable([
+      ['username', 'match', 'john_doe'],
+      ['email', 'match', 'john@example.com'],
+      ['_id', 'exists', '1']
+    ]);
+    cy.get('[data-testid="more-conditions-button"]').should('be.visible').and('contain.text', '+1 more');
 
-    // ensure the first cell has the second cell data
-    // cy.getCellQueryOutput(0).then(({ rows }) => {
-    //   expect(rows.length).to.equal(1);
-    //   expect(rows[0][7]).to.equal("10"); // Back to original
-    // });
+    cy.get('[data-testid="more-conditions-button"]').click();
+    cy.get('[data-testid="sheet-field-value-0"]').clear().type('john_doe');
+    cy.wait(1000);
+    cy.get('[data-testid^="remove-sheet-filter-"]').then($els => {
+      const count = $els.length;
+      if (count > 1) {
+        for (let i = count - 1; i >= 1; i--) {
+          cy.get(`[data-testid="remove-sheet-filter-${i}"]`).click();
+        }
+      }
+    });
+    cy.contains('button', 'Save Changes').click();
 
-    // logout
+    cy.get('[data-testid="where-condition-badge"]').should('have.length', 1).first().should('contain.text', 'username match john_doe');
+    cy.get('[data-testid="more-conditions-button"]').should('not.exist');
+
+    cy.submitTable();
+    cy.getTableData().then(({rows}) => {
+      const doc = JSON.parse(rows[0][1]);
+      expect(doc.username).to.equal('john_doe');
+    });
+
+    cy.clearWhereConditions();
+    cy.submitTable();
+
+    // 10) Mock data on a table that does not support it
+    cy.data('orders');
+    cy.get('table thead tr').rightclick({force: true});
+    cy.contains('div,button,span', 'Mock Data').click({force: true});
+
+    // Wait for any toasts to clear
+    cy.wait(1000);
+
+    cy.contains('button', 'Generate').click();
+    // Check for toast notification (may be partially covered but should exist)
+    cy.contains('Mock data generation is not allowed for this table').should('exist');
+
     cy.logout();
   });
 });

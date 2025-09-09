@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { DatabaseType } from '@graphql';
-import { getDatabaseTypeDropdownItemsSync } from '../config/database-types';
+import {DatabaseType} from '@graphql';
+import {getDatabaseTypeDropdownItemsSync} from '../config/database-types';
 
 /**
  * Check if a database supports scratchpad/raw query execution
@@ -30,8 +30,8 @@ export function databaseSupportsScratchpad(databaseType: DatabaseType | string |
     // Try to get scratchpad support from the database configuration first
     const dbTypeItems = getDatabaseTypeDropdownItemsSync();
     const dbConfig = dbTypeItems.find(item => item.id === databaseType);
-    
-    if (dbConfig?.supportsScratchpad !== undefined) {
+
+    if (dbConfig?.supportsScratchpad != null) {
         return dbConfig.supportsScratchpad;
     }
     
@@ -51,25 +51,27 @@ export function databaseSupportsScratchpad(databaseType: DatabaseType | string |
  * @returns boolean indicating if the database supports schemas
  */
 export function databaseSupportsSchema(databaseType: DatabaseType | string | undefined): boolean {
-    if (!databaseType) {
+    if (databaseType == null) {
         return false;
     }
     
     // Try to get schema support from the database configuration first
     const dbTypeItems = getDatabaseTypeDropdownItemsSync();
     const dbConfig = dbTypeItems.find(item => item.id === databaseType);
-    
-    if (dbConfig?.supportsSchema !== undefined) {
+
+    if (dbConfig?.supportsSchema != null) {
         return dbConfig.supportsSchema;
     }
-    
+
     // Fall back to checking known databases that don't support schemas
     const databasesThatDontSupportSchema = [
-        DatabaseType.Sqlite3, 
-        DatabaseType.Redis, 
-        DatabaseType.ElasticSearch
+        DatabaseType.Sqlite3,
+        DatabaseType.Redis,
+        DatabaseType.ElasticSearch,
+        DatabaseType.MongoDb,
+        DatabaseType.ClickHouse,
     ];
-    
+
     return !databasesThatDontSupportSchema.includes(databaseType as DatabaseType);
 }
 
@@ -129,4 +131,58 @@ export function getDatabasesThatDontSupportSchema(): DatabaseType[] {
     });
     
     return databasesThatDontSupport;
+}
+
+/**
+ * Check if a database supports switching between databases in the UI
+ * @param databaseType The database type (can be CE or EE type)
+ * @returns boolean indicating if the database supports database switching
+ */
+export function databaseSupportsDatabaseSwitching(databaseType: DatabaseType | string | undefined): boolean {
+    if (!databaseType) {
+        return false;
+    }
+
+    // Try to get database switching support from the database configuration first
+    const dbTypeItems = getDatabaseTypeDropdownItemsSync();
+    const dbConfig = dbTypeItems.find(item => item.id === databaseType);
+
+    if (dbConfig?.supportsDatabaseSwitching !== undefined) {
+        return dbConfig.supportsDatabaseSwitching;
+    }
+
+    // Fall back to checking known databases that support database switching
+    const databasesThatSupportDatabaseSwitching = [
+        DatabaseType.MongoDb,
+        DatabaseType.ClickHouse,
+        DatabaseType.MySql,
+        DatabaseType.MariaDb,
+        DatabaseType.Postgres,
+    ];
+
+    return databasesThatSupportDatabaseSwitching.includes(databaseType as DatabaseType);
+}
+
+/**
+ * Check if a database should use the schema field for graph queries
+ * @param databaseType The database type (can be CE or EE type)
+ * @returns boolean indicating if the database uses schema field (true) or database field (false) for graph queries
+ */
+export function databaseUsesSchemaForGraph(databaseType: DatabaseType | string | undefined): boolean {
+    if (!databaseType) {
+        return true; // Default to schema field if unknown
+    }
+
+    // Try to get graph field preference from the database configuration first
+    const dbTypeItems = getDatabaseTypeDropdownItemsSync();
+    const dbConfig = dbTypeItems.find(item => item.id === databaseType);
+
+    if (dbConfig?.usesSchemaForGraph !== undefined) {
+        return dbConfig.usesSchemaForGraph;
+    }
+
+    // Fall back to using the database switching logic (inverted)
+    // If database supports database switching, it uses database field (false)
+    // If database doesn't support database switching, it uses schema field (true)
+    return !databaseSupportsDatabaseSwitching(databaseType);
 }

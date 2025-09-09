@@ -15,27 +15,17 @@
  */
 
 import {
-  Card as UxCard,
-  CardHeader,
-  CardContent,
   Badge,
+  Card as UxCard,
+  CardContent,
+  CardHeader,
   cn,
   Sheet,
-  SheetTrigger,
   SheetContent,
+  SheetTrigger,
+  Spinner,
 } from "@clidey/ux";
-import {
-  FC,
-  ReactElement,
-  ReactNode,
-  cloneElement,
-  memo,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { Loading } from "./loading";
+import {cloneElement, FC, ReactElement, ReactNode, useEffect, useRef, useState,} from "react";
 
 
 type ICardProps = {
@@ -45,7 +35,6 @@ type ICardProps = {
   children: ReactElement[] | ReactElement | ReactNode;
   loading?: boolean;
   highlight?: boolean;
-  loadingText?: string;
 };
 
 export const Card: FC<ICardProps> = ({
@@ -55,7 +44,6 @@ export const Card: FC<ICardProps> = ({
   tag,
   highlight,
   loading,
-  loadingText,
 }) => {
   const [highlightStatus, setHighlightStatus] = useState(highlight);
 
@@ -79,7 +67,7 @@ export const Card: FC<ICardProps> = ({
         className,
       )}>
       {loading ? (
-        <Loading loadingText={loadingText} />
+          <Spinner/>
       ) : (
         <>
           {(propsIcon || tag) && (

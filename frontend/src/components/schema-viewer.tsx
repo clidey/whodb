@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import {
     SearchInput,
     Sidebar as SidebarComponent,
@@ -8,19 +24,20 @@ import {
     Tree,
     TreeDataItem,
 } from "@clidey/ux";
-import { StorageUnit, useGetStorageUnitsQuery } from "@graphql";
-import { FolderIcon, TableCellsIcon } from "@heroicons/react/24/outline";
-import { FC, useCallback, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { InternalRoutes } from "../config/routes";
-import { useAppSelector } from "../store/hooks";
-import { Loading } from "./loading";
-import { getDatabaseStorageUnitLabel } from "../utils/functions";
+import {StorageUnit, useGetStorageUnitsQuery} from "@graphql";
+import {FolderIcon, TableCellsIcon} from "@heroicons/react/24/outline";
+import {FC, useCallback, useMemo, useState} from "react";
+import {useLocation, useNavigate} from "react-router-dom";
+import {InternalRoutes} from "../config/routes";
+import {useAppSelector} from "../store/hooks";
+import {Loading} from "./loading";
+import {getDatabaseStorageUnitLabel} from "../utils/functions";
 
 function groupByType(units: StorageUnit[]) {
     const groups: Record<string, any[]> = {};
     for (const unit of units) {
         const type = toTitleCase(unit.Attributes.find(a => a.Key === "Type")?.Value ?? "");
+        if (type === "") continue; // Ignore grouping if empty
         if (!groups[type]) groups[type] = [];
         groups[type].push(unit);
     }
@@ -100,8 +117,12 @@ export const SchemaViewer: FC = () => {
         });
     }, [navigate, state, data]);
 
+    if (treeData.length === 0) {
+        return null;
+    }
+
     return (
-        <div className="flex h-full dark">
+        <div className="flex h-full dark" data-testid="schema-viewer">
             <SidebarComponent variant="embed" className="w-64 h-full flex flex-col">
                 <SidebarContent>
                     <SidebarHeader>

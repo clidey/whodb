@@ -14,47 +14,78 @@
  * limitations under the License.
  */
 
-import { FetchResult } from "@apollo/client";
-import { Button, Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle, Input, Label, SearchInput, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Sheet, SheetContent, SheetFooter, toast } from "@clidey/ux";
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+    Button,
+    cn,
+    Drawer,
+    DrawerContent,
+    DrawerHeader,
+    DrawerTitle,
+    Input,
+    Label,
+    SearchInput,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+    Sheet,
+    SheetContent,
+    SheetFooter,
+    toast
+} from "@clidey/ux";
 import {
     DatabaseType,
     RecordInput,
     RowsResult,
+    SortCondition,
+    SortDirection,
     StorageUnit,
-    DeleteRowDocument,
-    DeleteRowMutationResult,
-    UpdateStorageUnitDocument,
-    UpdateStorageUnitMutationResult,
     useAddRowMutation,
     useGetStorageUnitRowsLazyQuery,
     useRawExecuteLazyQuery,
-    WhereCondition,
-    SortCondition,
-    SortDirection,
+    useUpdateStorageUnitMutation,
+    WhereCondition
 } from '@graphql';
-import { CheckCircleIcon, CommandLineIcon, PlayIcon, PlusCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { entries, keys, map } from "lodash";
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
-import { CodeEditor } from "../../components/editor";
-import { Loading, LoadingPage } from "../../components/loading";
-import { InternalPage } from "../../components/page";
-import { getColumnIcons, StorageUnitTable } from "../../components/table";
-import { graphqlClient } from "../../config/graphql-client";
-import { InternalRoutes } from "../../config/routes";
-import { useAppSelector } from "../../store/hooks";
-import { getDatabaseOperators } from "../../utils/database-operators";
-import { getDatabaseStorageUnitLabel } from "../../utils/functions";
-import { ExploreStorageUnitWhereCondition } from "./explore-storage-unit-where-condition";
-import { Tip } from "../../components/tip";
+import {CheckCircleIcon, CommandLineIcon, PlayIcon, PlusCircleIcon, XMarkIcon} from "@heroicons/react/24/outline";
+import {keys} from "lodash";
+import {FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {Navigate, useLocation, useNavigate} from "react-router-dom";
+import {CodeEditor} from "../../components/editor";
+import {LoadingPage} from "../../components/loading";
+import {InternalPage} from "../../components/page";
+import {getColumnIcons, StorageUnitTable} from "../../components/table";
+import {Tip} from "../../components/tip";
+import {InternalRoutes} from "../../config/routes";
+import {useAppSelector} from "../../store/hooks";
+import {getDatabaseOperators} from "../../utils/database-operators";
+import {getDatabaseStorageUnitLabel, isNoSQL} from "../../utils/functions";
+import {ExploreStorageUnitWhereCondition} from "./explore-storage-unit-where-condition";
+import {databaseSupportsScratchpad} from "../../utils/database-features";
+import {BUILD_EDITION} from "../../config/edition";
 
+// Conditionally import EE query utilities
+let generateInitialQuery: ((databaseType: string | undefined, schema: string | undefined, tableName: string | undefined) => string) | undefined;
+
+if (BUILD_EDITION === 'ee') {
+    // Dynamically import EE query utilities when in EE mode
+    import('@ee/pages/storage-unit/query-utils').then(module => {
+        generateInitialQuery = module.generateInitialQuery;
+    }).catch(() => {
+        // EE module not available, use default
+        generateInitialQuery = undefined;
+    });
+}
 
 export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad }) => {
+
     const [bufferPageSize, setBufferPageSize] = useState("100");
     const [currentPage, setCurrentPage] = useState(0);
     const [whereCondition, setWhereCondition] = useState<WhereCondition>();
     const [sortConditions, setSortConditions] = useState<SortCondition[]>([]);
-    const [pageSize, setPageSize] = useState("");
     const unit: StorageUnit = useLocation().state?.unit;
 
     let schema = useAppSelector(state => state.database.schema);
@@ -68,14 +99,14 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     // For add row sheet logic
     const [addRowData, setAddRowData] = useState<Record<string, any>>({});
     const [addRowError, setAddRowError] = useState<string | null>(null);
-    
-    // For scratchpad sheet logic
+
+    const [updateStorageUnit, {loading: updating}] = useUpdateStorageUnitMutation();
+
+    // For databases that don't have schemas (MongoDB, ClickHouse), pass the database name as the schema parameter
     // todo: is there a different way to do this? clickhouse doesn't have schemas as a table is considered a schema. people mainly switch between DB
-    if (current?.Type === DatabaseType.ClickHouse) {
+    if (current?.Type === DatabaseType.ClickHouse || current?.Type === DatabaseType.MongoDb) {
         schema = current.Database
     }
-
-    const [code, setCode] = useState(`SELECT * FROM ${schema}.${unit?.Name}`);
 
     const [getStorageUnitRows, { loading }] = useGetStorageUnitRowsLazyQuery({
         onCompleted(data) {
@@ -89,6 +120,17 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     const unitName = useMemo(() => {
         return unit?.Name;
     }, [unit]);
+
+    const initialScratchpadQuery = useMemo(() => {
+        if (generateInitialQuery && current?.Type) {
+            return generateInitialQuery(current?.Type, schema, unitName);
+        }
+        const qualified = schema ? `${schema}.${unitName}` : unitName;
+        return `SELECT *
+                FROM ${qualified} LIMIT 5`;
+    }, [schema, unitName, current?.Type, generateInitialQuery]);
+
+    const [code, setCode] = useState(initialScratchpadQuery);
 
     const handleSubmitRequest = useCallback(() => {
         getStorageUnitRows({
@@ -129,36 +171,54 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         });
     }, []);
 
-    const handleRowUpdate = useCallback((row: Record<string, string | number>, updatedColumn: string) => {
-        if (current == null) {
-            return Promise.reject();
-        }
-        const values = map(entries(row), ([Key, Value]) => ({
-            Key,
-            Value,
-        }));
-        const updatedColumns = [updatedColumn]
-        return new Promise<void>(async (res, rej) => {
-            try {
-                const { data }: FetchResult<UpdateStorageUnitMutationResult["data"]> = await graphqlClient.mutate({
-                    mutation: UpdateStorageUnitDocument,
+    const handleRowUpdate = useCallback(
+        (
+            row: Record<string, string | number>,
+            originalRow?: Record<string, string | number>
+        ) => {
+            if (!current) {
+                return Promise.resolve();
+            }
+
+            return new Promise<void>((resolve, reject) => {
+                // Figure out which columns to update
+                const changedColumns = originalRow
+                    ? Object.keys(row).filter((col) => row[col] !== originalRow[col])
+                    : Object.keys(row);
+
+                if (changedColumns.length === 0) {
+                    // Nothing changed, skip
+                    return Promise.resolve();
+                }
+
+                // Build values for all columns
+                const allColumns = Object.keys(row);
+                const values = allColumns.map((col) => ({
+                    Key: col,
+                    Value: row[col].toString(),
+                }));
+
+                updateStorageUnit({
                     variables: {
                         schema,
                         storageUnit: unitName,
-                        type: current.Type as DatabaseType,
                         values,
-                        updatedColumns,
+                        updatedColumns: changedColumns,
+                    },
+                    onCompleted: (data) => {
+                        if (!data?.UpdateStorageUnit.Status) {
+                            return reject(new Error("Update failed"));
+                        }
+                        return resolve();
+                    },
+                    onError: (error) => {
+                        return reject(error);
                     },
                 });
-                if (data?.UpdateStorageUnit.Status) {
-                    return res();
-                }
-                return rej();
-            } catch (err) {
-                return rej(err);
-            }
-        });
-    }, [current, schema, unitName]);
+            });
+        },
+        [current, schema, unitName]
+    );
 
     const totalCount = useMemo(() => {
         const count = unit?.Attributes.find(attribute => attribute.Key === "Count")?.Value;
@@ -170,7 +230,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
 
     useEffect(() => {
         handleSubmitRequest();
-        setCode(`SELECT * FROM ${schema}.${unit?.Name}`);
+        setCode(initialScratchpadQuery);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [unit]);
 
@@ -195,14 +255,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     
     const {columns, columnTypes} = useMemo(() => {
         const dataColumns = rows?.Columns.map(c => c.Name) ?? [];
-        if (dataColumns.length !== 1 || dataColumns[0] !== "document") {
-            return {columns: dataColumns, columnTypes: rows?.Columns.map(column => column.Type)};
-        }
-        const firstRow = rows?.Rows?.[0];
-        if (firstRow == null) {
-            return {columns: [], columnTypes: []}
-        }
-        return  { columns: keys(JSON.parse(firstRow[0])), columnTypes: []}
+        return {columns: dataColumns, columnTypes: rows?.Columns.map(column => column.Type)};
     }, [rows?.Columns, rows?.Rows]);
 
     useEffect(() => {
@@ -260,17 +313,32 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     }, []);
 
     const handleAddRowSubmit = useCallback(() => {
-        if (!rows?.Columns) return;
-        // Prepare values as RecordInput[]
+        if (rows?.Columns == null) return;
         let values: RecordInput[] = [];
-        for (const col of rows.Columns) {
-            if (addRowData[col.Name] !== undefined && addRowData[col.Name] !== "") {
-                values.push({
-                    Key: col.Name,
-                    Value: addRowData[col.Name],
-                });
+        if (isNoSQL(current?.Type as DatabaseType) && rows.Columns.length === 1 && rows.Columns[0].Type === "Document") {
+            try {
+                const json = JSON.parse(addRowData.document);
+                for (const key of keys(json)) {
+                    values.push({
+                        Key: key,
+                        Value: json[key],
+                    });
+                }
+            } catch (e) {
+                setAddRowError("Invalid JSON.");
+                return;
+            }
+        } else {
+            for (const col of rows.Columns) {
+                if (addRowData[col.Name] !== undefined && addRowData[col.Name] !== "") {
+                    values.push({
+                        Key: col.Name,
+                        Value: addRowData[col.Name],
+                    });
+                }
             }
         }
+
         if (values.length === 0) {
             setAddRowError("Please fill at least one value.");
             return;
@@ -293,7 +361,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 toast.error(`Unable to add the data row: ${e.message}`);
             },
         });
-    }, [addRow, addRowData, handleSubmitRequest, rows?.Columns, schema, unit?.Name]);
+    }, [addRow, addRowData, handleSubmitRequest, rows?.Columns, schema, unit?.Name, current?.Type]);
 
     const handleScratchpad = useCallback(() => {
         if (current == null) {
@@ -313,7 +381,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
             }
         });
         handleScratchpad();
-        setCode(`SELECT * FROM ${schema}.${unit?.Name}`);
+        setCode(initialScratchpadQuery);
         document.body.classList.add("!pointer-events-auto");
     }, [schema, unit]);
 
@@ -326,6 +394,18 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     }, [unit]);
 
     const columnIcons = useMemo(() => getColumnIcons(columns, columnTypes), [columns, columnTypes]);
+
+    const {whereColumns, whereColumnTypes} = useMemo(() => {
+        if (rows?.Columns == null || rows?.Columns.length === 0 || rows == null || rows.Rows.length === 0) {
+            return {whereColumns: [], whereColumnTypes: []}
+        }
+        if (rows?.Columns.length === 1 && rows?.Columns[0].Type === "Document" && isNoSQL(current?.Type as DatabaseType)) {
+            const whereColumns = keys(JSON.parse(rows?.Rows[0][0]));
+            const whereColumnTypes = whereColumns.map(() => "string");
+            return {whereColumns, whereColumnTypes}
+        }
+        return {whereColumns: columns, whereColumnTypes: columnTypes}
+    }, [rows?.Columns, rows?.Rows, current?.Type])
 
     if (unit == null) {
         return <Navigate to={InternalRoutes.Dashboard.StorageUnit.path} />
@@ -345,7 +425,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 </div>
                 <div className="text-sm"><span className="font-semibold">Total Count:</span> {totalCount}</div>
             </div>
-            <div className="flex w-full relative">
+            <div className="flex w-full relative" data-testid="explore-storage-unit-options">
                 <div className="flex justify-between items-end w-full">
                     <div className="flex gap-2">
                         <div className="flex flex-col gap-2">
@@ -356,6 +436,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                                         searchRef.current?.(search);
                                     }
                                 }}
+                                         data-testid="table-search"
                             />
                         </div>
                         <div className="flex flex-col gap-2">
@@ -365,29 +446,37 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="10">10</SelectItem>
-                                    <SelectItem value="25">25</SelectItem>
-                                    <SelectItem value="50">50</SelectItem>
-                                    <SelectItem value="100">100</SelectItem>
-                                    <SelectItem value="250">250</SelectItem>
-                                    <SelectItem value="500">500</SelectItem>
-                                    <SelectItem value="1000">1000</SelectItem>
+                                    {import.meta.env.VITE_E2E_TEST === "true" &&
+                                        <SelectItem value="1" data-value="1">1</SelectItem>}
+                                    {import.meta.env.VITE_E2E_TEST === "true" &&
+                                        <SelectItem value="2" data-value="2">2</SelectItem>}
+                                    <SelectItem value="10" data-value="10">10</SelectItem>
+                                    <SelectItem value="25" data-value="25">25</SelectItem>
+                                    <SelectItem value="50" data-value="50">50</SelectItem>
+                                    <SelectItem value="100" data-value="100">100</SelectItem>
+                                    <SelectItem value="250" data-value="250">250</SelectItem>
+                                    <SelectItem value="500" data-value="500">500</SelectItem>
+                                    <SelectItem value="1000" data-value="1000">1000</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
-                        { current?.Type !== DatabaseType.Redis && <ExploreStorageUnitWhereCondition defaultWhere={whereCondition} columns={columns} operators={validOperators} onChange={handleFilterChange} columnTypes={columnTypes ?? []} /> }
-                        <Button className="ml-6 self-end" onClick={handleQuery} data-testid="submit-button">
+                        {current?.Type !== DatabaseType.Redis &&
+                            <ExploreStorageUnitWhereCondition defaultWhere={whereCondition} columns={whereColumns}
+                                                              operators={validOperators} onChange={handleFilterChange}
+                                                              columnTypes={whereColumnTypes ?? []}/>}
+                        <Button className="ml-6 mt-[22px]" onClick={handleQuery} data-testid="submit-button">
                             <CheckCircleIcon className="w-4 h-4" /> Query
                         </Button>
                     </div>
                 </div>
                 <Sheet open={showAdd} onOpenChange={setShowAdd}>
-                    <SheetContent side="right" className="p-8">
-                        <div className="flex flex-col gap-4 h-full">
-                            <div className="text-lg font-semibold mb-2">Add new row</div>
+                    <SheetContent side="right" className="flex flex-col p-8">
+                        <div className="text-lg font-semibold mb-4">Add new row</div>
+                        <div className="flex-1 overflow-y-auto pr-2">
                             <div className="flex flex-col gap-4">
                                 {rows?.Columns?.map((col, index) => (
-                                    <div key={col.Name} className="flex flex-col gap-2">
+                                    <div key={col.Name} className="flex flex-col gap-2"
+                                         data-testid={`add-row-field-${col.Name}`}>
                                         <Tip>
                                             <div className="flex items-center gap-1">
                                                 {columnIcons[index]}
@@ -406,11 +495,14 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                                 ))}
                             </div>
                             {addRowError && (
-                                <div className="text-red-500 text-xs">{addRowError}</div>
+                                <Alert variant="destructive" className="mt-4">
+                                    <AlertTitle>Error</AlertTitle>
+                                    <AlertDescription>{addRowError}</AlertDescription>
+                                </Alert>
                             )}
                         </div>
-                        <SheetFooter className="px-0">
-                            <Button onClick={handleAddRowSubmit} data-testid="submit-button" disabled={adding}>
+                        <SheetFooter className="px-0 pt-4 border-t">
+                            <Button onClick={handleAddRowSubmit} data-testid="submit-add-row-button" disabled={adding}>
                                 <CheckCircleIcon className="w-4 h-4" /> Submit
                             </Button>
                         </SheetFooter>
@@ -434,10 +526,13 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                         searchRef={searchRef}
                     >
                         <div className="flex gap-2">
-                            <Button onClick={handleOpenScratchpad} data-testid="scratchpad-button" variant="secondary">
+                            <Button onClick={handleOpenScratchpad} data-testid="scratchpad-button" variant="secondary"
+                                    className={cn({
+                                        "hidden": !databaseSupportsScratchpad(current?.Type),
+                                    })}>
                                 <CommandLineIcon className="w-4 h-4" /> Scratchpad
                             </Button>
-                            <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-button">
+                            <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-row-button">
                                 <PlusCircleIcon className="w-4 h-4" /> Add Row
                             </Button>
                         </div>
@@ -446,7 +541,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
             </div>
         </div>
         <Drawer open={scratchpad} onOpenChange={handleCloseScratchpad}>
-            <DrawerContent className="px-8 max-h-[25vh]">
+            <DrawerContent className="px-8 min-h-[65vh]">
                 <Button variant="ghost" className="absolute top-0 right-0" onClick={handleCloseScratchpad}>
                     <XMarkIcon className="w-4 h-4" />
                 </Button>
@@ -461,21 +556,18 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                         </div>
                     </DrawerTitle>
                 </DrawerHeader>
-                <div className="flex flex-col gap-2 h-[150px]">
+                <div className="flex flex-col gap-2 h-[150px] mb-4">
                     <CodeEditor language="sql" value={code} setValue={setCode} onRun={() => handleScratchpad()} />
                 </div>
-                <DrawerFooter>
-                    <StorageUnitTable
-                        height={300}
-                        columns={rawExecuteData?.RawExecute.Columns.map(c => c.Name) ?? []}
-                        columnTypes={rawExecuteData?.RawExecute.Columns.map(c => c.Type) ?? []}
-                        rows={rawExecuteData?.RawExecute.Rows ?? []}
-                        disableEdit={true}
-                        schema={schema}
-                        storageUnit={unitName}
-                        onRefresh={handleSubmitRequest}
-                    />
-                </DrawerFooter>
+                <StorageUnitTable
+                    columns={rawExecuteData?.RawExecute.Columns.map(c => c.Name) ?? []}
+                    columnTypes={rawExecuteData?.RawExecute.Columns.map(c => c.Type) ?? []}
+                    rows={rawExecuteData?.RawExecute.Rows ?? []}
+                    disableEdit={true}
+                    schema={schema}
+                    storageUnit={unitName}
+                    onRefresh={handleSubmitRequest}
+                />
             </DrawerContent>
         </Drawer>
     </InternalPage>

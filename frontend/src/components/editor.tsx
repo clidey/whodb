@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,20 +14,22 @@
  * limitations under the License.
  */
 
-import { useTheme } from "@clidey/ux";
-import { json } from "@codemirror/lang-json";
-import { markdown } from "@codemirror/lang-markdown";
-import { sql } from "@codemirror/lang-sql";
-import { EditorState, RangeSet } from "@codemirror/state";
-import { oneDark } from "@codemirror/theme-one-dark";
-import { EditorView, GutterMarker, gutter, lineNumbers } from "@codemirror/view";
-import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import {useTheme} from "@clidey/ux";
+import {json} from "@codemirror/lang-json";
+import {markdown} from "@codemirror/lang-markdown";
+import {sql} from "@codemirror/lang-sql";
+import {EditorState, RangeSet} from "@codemirror/state";
+import {oneDark} from "@codemirror/theme-one-dark";
+import {EditorView, gutter, GutterMarker, lineNumbers} from "@codemirror/view";
+import {EyeIcon, EyeSlashIcon} from "@heroicons/react/24/outline";
 import classNames from "classnames";
-import { basicSetup } from "codemirror";
-import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {basicSetup} from "codemirror";
+import React, {FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import ReactJson from "react-json-view";
 import MarkdownPreview from 'react-markdown';
 import remarkGfm from "remark-gfm";
+import {useApolloClient} from "@apollo/client";
+import {createSQLAutocomplete} from "./editor-autocomplete";
 
 // SQL validation function
 const isValidSQLQuery = (text: string): boolean => {
@@ -124,27 +126,26 @@ class PlayButtonMarker extends GutterMarker {
   toDOM() {
     const button = document.createElement("div");
     button.className = "cm-play-button";
-    button.innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" class="w-4 h-4">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347c-.75.412-1.667-.13-1.667-.986V5.653Z" />
-      </svg>
-    `;
-    button.style.cssText = `
-      cursor: pointer;
-      opacity: 0.6;
-      transition: opacity 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 20px;
-      height: 20px;
-      margin: 0;
-      padding: 0;
-      line-height: 1;
-      position: relative;
-      top: 50%;
-      transform: translateY(-50%);
-    `;
+
+    const svgNS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(svgNS, "svg");
+    svg.setAttribute("xmlns", svgNS);
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("stroke-width", "1.5");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("class", "w-4 h-4");
+
+    const path = document.createElementNS(svgNS, "path");
+    path.setAttribute("stroke-linecap", "round");
+    path.setAttribute("stroke-linejoin", "round");
+    path.setAttribute(
+        "d",
+        "M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347c-.75.412-1.667-.13-1.667-.986V5.653Z"
+    );
+
+    svg.appendChild(path);
+    button.appendChild(svg);
     
     button.addEventListener("mouseenter", () => {
       button.style.opacity = "1";
@@ -176,6 +177,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
   const editorRef = useRef<HTMLDivElement>(null);
   const onRunReference = useRef<Function>();
   const darkModeEnabled = useTheme().theme === "dark";
+  const apolloClient = useApolloClient();
 
   useEffect(() => {
     onRunReference.current = onRun;
@@ -260,6 +262,8 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
           }),
             basicSetup,
             languageExtension != null ? languageExtension : [],
+          // Add autocomplete for SQL
+          language === "sql" ? createSQLAutocomplete({apolloClient}) : [],
             darkModeEnabled ? [oneDark, EditorView.theme({
               ".cm-activeLine": { backgroundColor: "rgba(0,0,0,0.05) !important" },
               ".cm-activeLineGutter": { backgroundColor: "rgba(0,0,0,0.05) !important" },
@@ -316,7 +320,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
     return () => {
       view.destroy();
     };
-  }, []);
+  }, [language, apolloClient, darkModeEnabled]);
 
   const handlePreviewToggle = useCallback(() => {
     setShowPreview((prev) => !prev);

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,12 +14,26 @@
  * limitations under the License.
  */
 
-import { Badge, Button, cn, Input, Label, Popover, PopoverContent, PopoverTrigger, SearchSelect } from "@clidey/ux";
-import { AtomicWhereCondition, WhereCondition, WhereConditionType } from '@graphql';
-import { CheckCircleIcon, PlusCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
+import {
+    Badge,
+    Button,
+    cn,
+    Input,
+    Label,
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+    SearchSelect,
+    Sheet,
+    SheetContent,
+    SheetFooter,
+    SheetTitle
+} from "@clidey/ux";
+import {AtomicWhereCondition, WhereCondition, WhereConditionType} from '@graphql';
+import {CheckCircleIcon, PlusCircleIcon, XCircleIcon, XMarkIcon} from "@heroicons/react/24/outline";
 import classNames from "classnames";
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { twMerge } from "tailwind-merge";
+import {FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {twMerge} from "tailwind-merge";
 
 type IPopoverCardProps = {
     open: boolean;
@@ -31,11 +45,37 @@ type IPopoverCardProps = {
     handleOperatorSelector: (item: string) => void;
     handleInputChange: (newValue: string) => void;
     handleAddFilter: () => void;
-    handleClick: () => void;
+    handleSaveFilter?: (index: number) => void;
+    handleCancel: () => void;
     className?: string;
+    isEditing?: boolean;
+    editingIndex?: number;
 }
 
-const PopoverCard: FC<IPopoverCardProps> = ({ open, onOpenChange, currentFilter, fieldsDropdownItems, validOperators, handleFieldSelect, handleOperatorSelector, handleInputChange, handleAddFilter, handleClick, className }) => {
+const PopoverCard: FC<IPopoverCardProps> = ({
+                                                open,
+                                                onOpenChange,
+                                                currentFilter,
+                                                fieldsDropdownItems,
+                                                validOperators,
+                                                handleFieldSelect,
+                                                handleOperatorSelector,
+                                                handleInputChange,
+                                                handleAddFilter,
+                                                handleSaveFilter,
+                                                handleCancel,
+                                                className,
+                                                isEditing = false,
+                                                editingIndex = -1
+                                            }) => {
+    const handleAction = useCallback(() => {
+        if (isEditing && handleSaveFilter && editingIndex !== -1) {
+            handleSaveFilter(editingIndex);
+        } else {
+            handleAddFilter();
+        }
+    }, [isEditing, handleSaveFilter, editingIndex, handleAddFilter]);
+
     return  <Popover open={open} onOpenChange={onOpenChange}>
         <PopoverTrigger asChild>
             <div />
@@ -54,8 +94,10 @@ const PopoverCard: FC<IPopoverCardProps> = ({ open, onOpenChange, currentFilter,
                     value={currentFilter.Key}
                     options={fieldsDropdownItems}
                     onChange={handleFieldSelect}
-                    data-testid="field-key"
                     contentClassName="w-[var(--radix-popover-trigger-width)]"
+                    buttonProps={{
+                        "data-testid": "field-key",
+                    }}
                 />
             </div>
             <div className="flex flex-col gap-2 w-full">
@@ -66,8 +108,10 @@ const PopoverCard: FC<IPopoverCardProps> = ({ open, onOpenChange, currentFilter,
                     value={currentFilter.Operator}
                     options={validOperators}
                     onChange={handleOperatorSelector}
-                    data-testid="field-operator"
                     contentClassName="w-[var(--radix-popover-trigger-width)]"
+                    buttonProps={{
+                        "data-testid": "field-operator",
+                    }}
                 />
             </div>
             <div className="flex flex-col gap-2 w-full">
@@ -84,24 +128,24 @@ const PopoverCard: FC<IPopoverCardProps> = ({ open, onOpenChange, currentFilter,
             </div>
             <div className="flex gap-2 mt-2">
                 <Button
-                    className="dark:bg-white/5 flex-1"
-                    onClick={handleClick}
+                    className="flex-1"
+                    onClick={handleCancel}
                     data-testid="cancel-button"
                     variant="secondary"
                 >
                     <XCircleIcon className="w-4 h-4" /> Cancel
                 </Button>
                 <Button
-                    className="dark:bg-white/5 flex-1"
-                    onClick={handleAddFilter}
+                    className="flex-1"
+                    onClick={handleAction}
                     disabled={
                         !currentFilter.Key ||
                         !currentFilter.Operator ||
                         !currentFilter.Value
                     }
-                    data-testid="add-button"
+                    data-testid={isEditing ? "update-condition-button" : "add-condition-button"}
                 >
-                    <CheckCircleIcon className="w-4 h-4" /> Add
+                    <CheckCircleIcon className="w-4 h-4"/> {isEditing ? "Update" : "Add"}
                 </Button>
             </div>
         </PopoverContent>
@@ -124,8 +168,13 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
     });
     const [newFilter, setNewFilter] = useState(false);
     const [editingFilter, setEditingFilter] = useState(-1);
+    const [sheetOpen, setSheetOpen] = useState(false);
+    const [sheetFilters, setSheetFilters] = useState<AtomicWhereCondition[]>([]);
     const newFilterRef = useRef<HTMLDivElement>(null);
     const editFilterRef = useRef<HTMLDivElement>(null);
+
+    // Maximum number of conditions to show in the main view
+    const MAX_VISIBLE_CONDITIONS = 2;
 
     const handleClick = useCallback(() => {
         const shouldShow = !newFilter;
@@ -135,6 +184,16 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
         }
         setNewFilter(!newFilter);
     }, [newFilter]);
+
+    const handleCancelNewFilter = useCallback(() => {
+        setNewFilter(false);
+        setCurrentFilter({ColumnType: "string", Key: "", Operator: "", Value: ""});
+    }, []);
+
+    const handleCancelEditFilter = useCallback(() => {
+        setEditingFilter(-1);
+        setCurrentFilter({ColumnType: "string", Key: "", Operator: "", Value: ""});
+    }, []);
 
     const fieldsDropdownItems = useMemo(() => columns.map(column => ({ value: column, label: column })), [columns]);
 
@@ -196,7 +255,6 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
     const handleSaveFilter = useCallback((index: number) => {
         const updatedFilters = { ...filters };
         updatedFilters.And!.Children[index] = { Type: WhereConditionType.Atomic, Atomic: { ...currentFilter } };
-
         setFilters(updatedFilters);
         setEditingFilter(-1);
         setCurrentFilter({ ColumnType: "string", Key: "", Operator: "", Value: "" });
@@ -206,6 +264,62 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
     const validOperators = useMemo(() => {
         return operators.map(operator => ({ value: operator, label: operator }));
     }, [operators]);
+
+    // Sheet management functions
+    const handleOpenSheet = useCallback(() => {
+        // Convert filters to sheet format
+        const atomicFilters = filters.And?.Children?.map(child =>
+            child.Type === WhereConditionType.Atomic ? child.Atomic! : {
+                ColumnType: "string",
+                Key: "",
+                Operator: "",
+                Value: ""
+            }
+        ) ?? [];
+        setSheetFilters(atomicFilters);
+        setSheetOpen(true);
+    }, [filters]);
+
+    const handleSheetFieldChange = useCallback((index: number, field: keyof AtomicWhereCondition, value: string) => {
+        setSheetFilters(prev => {
+            const newFilters = [...prev];
+            if (field === 'Key') {
+                newFilters[index] = {
+                    ...newFilters[index],
+                    Key: value,
+                    ColumnType: columnTypes[columns.findIndex(col => col === value)]
+                };
+            } else {
+                newFilters[index] = {...newFilters[index], [field]: value};
+            }
+            return newFilters;
+        });
+    }, [columnTypes, columns]);
+
+    const handleSheetAddFilter = useCallback(() => {
+        setSheetFilters(prev => [...prev, {ColumnType: "string", Key: "", Operator: "", Value: ""}]);
+    }, []);
+
+    const handleSheetRemoveFilter = useCallback((index: number) => {
+        setSheetFilters(prev => prev.filter((_, i) => i !== index));
+    }, []);
+
+    const handleSheetSave = useCallback(() => {
+        const updatedFilters = {
+            Type: WhereConditionType.And,
+            And: {
+                Children: sheetFilters
+                    .filter(filter => filter.Key && filter.Operator && filter.Value)
+                    .map(filter => ({
+                        Type: WhereConditionType.Atomic,
+                        Atomic: filter
+                    }))
+            }
+        };
+        setFilters(updatedFilters);
+        onChange?.(updatedFilters);
+        setSheetOpen(false);
+    }, [sheetFilters, onChange]);
 
     useEffect(() => {
         if (defaultWhere == null) {
@@ -266,11 +380,14 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
         }
     }, [newFilter, editingFilter, handleKeyDown, handleClickOutside]);
 
+    const visibleFilters = filters.And?.Children?.slice(0, MAX_VISIBLE_CONDITIONS) ?? [];
+    const hiddenCount = (filters.And?.Children?.length ?? 0) - MAX_VISIBLE_CONDITIONS;
+
     return (
         <div className="flex flex-col">
             <Label className="mb-2">Where condition</Label>
             <div className="flex flex-row gap-1 max-w-[min(500px,calc(100vw-20px))] flex-wrap">
-                {filters.And?.Children?.map((filter, i) => (
+                {visibleFilters.map((filter, i) => (
                     <div
                         key={`explore-storage-unit-filter-${i}`}
                         className="group/filter-item flex gap-1 items-center text-xs rounded-2xl cursor-pointer h-[36px]"
@@ -309,10 +426,18 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                             handleOperatorSelector={handleOperatorSelector}
                             handleInputChange={handleInputChange}
                             handleAddFilter={handleAddFilter}
-                            handleClick={handleClick}
+                            handleSaveFilter={handleSaveFilter}
+                            handleCancel={handleCancelEditFilter}
+                            isEditing={true}
+                            editingIndex={i}
                         />
                     </div>
                 ))}
+                {hiddenCount > 0 && (
+                    <Button onClick={handleOpenSheet} data-testid="more-conditions-button" variant="secondary">
+                        +{hiddenCount} more
+                    </Button>
+                )}
                 <Button onClick={handleClick} data-testid="where-button" variant="secondary">
                     <PlusCircleIcon className="w-4 h-4" /> Add
                 </Button>
@@ -327,8 +452,75 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                 handleOperatorSelector={handleOperatorSelector}
                 handleInputChange={handleInputChange}
                 handleAddFilter={handleAddFilter}
-                handleClick={handleClick}
+                handleSaveFilter={handleSaveFilter}
+                handleCancel={handleCancelNewFilter}
+                isEditing={false}
+                editingIndex={-1}
             />
+
+            {/* Sheet for managing all conditions */}
+            <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+                <SheetContent side="right" className="w-[500px] max-w-full p-8">
+                    <SheetTitle>Manage Where Conditions</SheetTitle>
+                    <div className="flex flex-col gap-4 mt-6 overflow-y-auto max-h-[calc(100vh-200px)]">
+                        {sheetFilters.map((filter, index) => (
+                            <div key={index} className="flex flex-col gap-4 p-4 border rounded-lg">
+                                <div className="flex items-center justify-between">
+                                    <Label className="text-sm font-medium">Condition {index + 1}</Label>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => handleSheetRemoveFilter(index)}
+                                        data-testid={`remove-sheet-filter-${index}`}
+                                    >
+                                        <XMarkIcon className="w-4 h-4"/>
+                                    </Button>
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <Label className="text-xs">Field</Label>
+                                    <SearchSelect
+                                        value={filter.Key}
+                                        options={fieldsDropdownItems}
+                                        onChange={(value) => handleSheetFieldChange(index, 'Key', value)}
+                                        buttonProps={{
+                                            "data-testid": `sheet-field-key-${index}`,
+                                        }}
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <Label className="text-xs">Operator</Label>
+                                    <SearchSelect
+                                        value={filter.Operator}
+                                        options={validOperators}
+                                        onChange={(value) => handleSheetFieldChange(index, 'Operator', value)}
+                                        buttonProps={{
+                                            "data-testid": `sheet-field-operator-${index}`,
+                                        }}
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <Label className="text-xs">Value</Label>
+                                    <Input
+                                        value={filter.Value}
+                                        onChange={(e) => handleSheetFieldChange(index, 'Value', e.target.value)}
+                                        placeholder="Enter filter value"
+                                        data-testid={`sheet-field-value-${index}`}
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                        <Button onClick={handleSheetAddFilter} data-testid="add-sheet-filter-button" variant="secondary"
+                                className="self-start">
+                            <PlusCircleIcon className="w-4 h-4"/> Add Condition
+                        </Button>
+                    </div>
+                    <SheetFooter className="flex gap-2 px-0 mt-6">
+                        <Button onClick={handleSheetSave}>
+                            Save Changes
+                        </Button>
+                    </SheetFooter>
+                </SheetContent>
+            </Sheet>
         </div>
     );
 };

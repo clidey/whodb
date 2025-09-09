@@ -14,23 +14,31 @@
  * limitations under the License.
  */
 
-import { Badge, Button, cn, Input, Label, SearchSelect, Separator, toast } from '@clidey/ux';
-import { DatabaseType, LoginCredentials, useGetDatabaseLazyQuery, useGetProfilesQuery, useLoginMutation, useLoginWithProfileMutation } from '@graphql';
+import {Badge, Button, cn, Input, Label, ModeToggle, SearchSelect, Separator, toast} from '@clidey/ux';
+import {
+    DatabaseType,
+    LoginCredentials,
+    useGetDatabaseLazyQuery,
+    useGetProfilesQuery,
+    useLoginMutation,
+    useLoginWithProfileMutation
+} from '@graphql';
 import classNames from "classnames";
-import { entries } from "lodash";
-import { FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { Icons } from "../../components/icons";
-import { Loading } from "../../components/loading";
-import { Container } from "../../components/page";
-import { updateProfileLastAccessed } from "../../components/profile-info-tooltip";
-import { baseDatabaseTypes, getDatabaseTypeDropdownItems, IDatabaseDropdownItem } from "../../config/database-types";
-import { extensions } from '../../config/features';
-import { InternalRoutes } from "../../config/routes";
-import { AuthActions } from "../../store/auth";
-import { DatabaseActions } from "../../store/database";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { AdjustmentsHorizontalIcon, CheckCircleIcon, CircleStackIcon } from '@heroicons/react/24/outline';
+import {entries} from "lodash";
+import {FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {useNavigate, useSearchParams} from "react-router-dom";
+import {Icons} from "../../components/icons";
+import {Loading} from "../../components/loading";
+import {Container} from "../../components/page";
+import {updateProfileLastAccessed} from "../../components/profile-info-tooltip";
+import {baseDatabaseTypes, getDatabaseTypeDropdownItems, IDatabaseDropdownItem} from "../../config/database-types";
+import {extensions, sources} from '../../config/features';
+import {InternalRoutes} from "../../config/routes";
+import {AuthActions} from "../../store/auth";
+import {DatabaseActions} from "../../store/database";
+import {useAppDispatch, useAppSelector} from "../../store/hooks";
+import {AdjustmentsHorizontalIcon, CheckCircleIcon, CircleStackIcon} from '@heroicons/react/24/outline';
+
 const logoImage = "/images/logo.png";
 // Embeddable LoginForm component for use in LoginPage and @sidebar.tsx
 
@@ -48,11 +56,11 @@ export interface LoginFormProps {
 }
 
 export const LoginForm: FC<LoginFormProps> = ({
-    onLoginSuccess,
-    hideHeader = false,
-    className = "",
-    advancedDirection = "horizontal",
-}) => {
+                                                  onLoginSuccess,
+                                                  hideHeader = false,
+                                                  className = "",
+                                                  advancedDirection = "horizontal",
+                                              }) => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const currentProfile = useAppSelector(state => state.auth.current);
@@ -222,10 +230,28 @@ export const LoginForm: FC<LoginFormProps> = ({
                 const databaseType = searchParams.get("type")!;
                 setDatabaseType(databaseTypeItems.find(item => item.id === databaseType) ?? databaseTypeItems[0]);
             }
+
             if (searchParams.has("host")) setHostName(searchParams.get("host")!);
             if (searchParams.has("username")) setUsername(searchParams.get("username")!);
             if (searchParams.has("password")) setPassword(searchParams.get("password")!);
             if (searchParams.has("database")) setDatabase(searchParams.get("database")!);
+
+            if (searchParams.has("resource")) {
+                const selectedProfile = availableProfiles.find(profile => profile.value === searchParams.get("resource"));
+                setSelectedAvailableProfile(selectedProfile?.value);
+                setTimeout(() => {
+                    handleLoginWithProfileSubmit();
+                }, 10);
+            } else if (searchParams.has("login")) {
+                setTimeout(() => {
+                    handleSubmit();
+                    searchParams.delete("login");
+                }, 10);
+            } else {
+                setSelectedAvailableProfile(undefined);
+            }
+        } else {
+            setSelectedAvailableProfile(undefined);
         }
     }, [searchParams, databaseTypeItems]);
 
@@ -234,7 +260,7 @@ export const LoginForm: FC<LoginFormProps> = ({
             // Checks the valid postgres URL
             if (databaseType.id === DatabaseType.Postgres && (newHostName.startsWith("postgres://") || newHostName.startsWith("postgresql://"))) {
                 try {
-                    const url = new URL(newHostName); 
+                    const url = new URL(newHostName);
                     const hostname = url.hostname;
                     const username = url.username;
                     const password = url.password;
@@ -296,13 +322,15 @@ export const LoginForm: FC<LoginFormProps> = ({
                             databasesLoading
                                 ? []
                                 : foundDatabases?.Database?.map(db => ({
-                                    value: db,
-                                    label: db,
-                                    icon: <CircleStackIcon className="w-4 h-4" />,
-                                })) ?? []
+                                value: db,
+                                label: db,
+                                icon: <CircleStackIcon className="w-4 h-4"/>,
+                            })) ?? []
                         }
                         placeholder="Select Database"
-                        data-testid="database"
+                        buttonProps={{
+                            "data-testid": "database",
+                        }}
                     />
                 </div>
             </div>
@@ -340,6 +368,7 @@ export const LoginForm: FC<LoginFormProps> = ({
             value: profile.Id,
             label: profile.Alias ?? profile.Id,
             icon: (Icons.Logos as Record<string, ReactElement>)[profile.Type],
+            rightIcon: sources[profile.Source],
         })) ?? [];
     }, [profiles?.Profiles]);
 
@@ -377,6 +406,9 @@ export const LoginForm: FC<LoginFormProps> = ({
         <div className={classNames("w-fit h-fit", className, {
             "w-full h-full": advancedDirection === "vertical",
         })}>
+            <div className="fixed top-4 right-4">
+                <ModeToggle/>
+            </div>
             <div className={classNames("flex flex-col grow gap-4", {
                 "justify-between": advancedDirection === "horizontal",
                 "h-full": advancedDirection === "vertical" && availableProfiles.length === 0,
@@ -389,8 +421,8 @@ export const LoginForm: FC<LoginFormProps> = ({
                         {!hideHeader && (
                             <div className="flex justify-between">
                                 <div className="flex items-center gap-2 text-xl">
-                                {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4" />}
-                                <h1 className="text-brand-foreground">{extensions.AppName ?? "WhoDB"}</h1>
+                                    {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4"/>}
+                                    <h1 className="text-brand-foreground">{extensions.AppName ?? "WhoDB"}</h1>
                                     <h1>Login</h1>
                                 </div>
                                 {
@@ -417,8 +449,10 @@ export const LoginForm: FC<LoginFormProps> = ({
                                         label: item.label,
                                         icon: item.icon,
                                     }))}
-                                    data-testid="database-type-select"
-                                    contentClassName="w-[var(--radix-popover-trigger-width)]"
+                                    buttonProps={{
+                                        "data-testid": "database-type-select",
+                                    }}
+                                    contentClassName="w-[var(--radix-popover-trigger-width)] login-select-popover"
                                 />
                             </div>
                             {fields}
@@ -479,9 +513,11 @@ export const LoginForm: FC<LoginFormProps> = ({
                             value={selectedAvailableProfile}
                             onChange={handleAvailableProfileChange}
                             placeholder="Select a profile"
-                            data-testid="available-profiles-select"
                             contentClassName="w-[var(--radix-popover-trigger-width)]"
                             options={availableProfiles}
+                            buttonProps={{
+                                "data-testid": "available-profiles-select",
+                            }}
                         />
                         <Button onClick={handleLoginWithProfileSubmit} data-testid="login-with-profile-button" variant={loginWithProfileEnabled ? "default" : "secondary"}>
                             <CheckCircleIcon className="w-4 h-4" /> Login

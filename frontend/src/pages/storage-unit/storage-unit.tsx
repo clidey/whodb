@@ -14,23 +14,46 @@
  * limitations under the License.
  */
 
-import { Badge, Button, Checkbox, cn, Input, Label, SearchInput, SearchSelect, Separator, StackList, StackListItem, toast } from '@clidey/ux';
-import { DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useGetStorageUnitsQuery } from '@graphql';
-import { ArrowPathRoundedSquareIcon, CheckCircleIcon, CircleStackIcon, CommandLineIcon, MagnifyingGlassIcon, PlusCircleIcon, TableCellsIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import {
+    Badge,
+    Button,
+    Checkbox,
+    cn,
+    Input,
+    Label,
+    SearchInput,
+    SearchSelect,
+    Separator,
+    StackList,
+    StackListItem,
+    toast
+} from '@clidey/ux';
+import {DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useGetStorageUnitsQuery} from '@graphql';
+import {
+    ArrowPathRoundedSquareIcon,
+    CheckCircleIcon,
+    CircleStackIcon,
+    CommandLineIcon,
+    MagnifyingGlassIcon,
+    PlusCircleIcon,
+    TableCellsIcon,
+    XMarkIcon
+} from '@heroicons/react/24/outline';
 import classNames from "classnames";
-import { clone, cloneDeep, filter } from "lodash";
-import { FC, useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { Handle, Node, Position, useReactFlow } from "reactflow";
-import { Card, ExpandableCard } from "../../components/card";
-import { IGraphCardProps } from "../../components/graph/graph";
-import { Loading, LoadingPage } from "../../components/loading";
-import { InternalPage } from "../../components/page";
-import { InternalRoutes } from "../../config/routes";
-import { useAppSelector } from "../../store/hooks";
-import { databaseSupportsModifiers, getDatabaseDataTypes } from "../../utils/database-data-types";
-import { databaseSupportsScratchpad } from "../../utils/database-features";
-import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
+import {clone, cloneDeep, filter} from "lodash";
+import {FC, useCallback, useEffect, useMemo, useState} from "react";
+import {useNavigate, useSearchParams} from "react-router-dom";
+import {Handle, Node, Position, useReactFlow} from "reactflow";
+import {Card, ExpandableCard} from "../../components/card";
+import {IGraphCardProps} from "../../components/graph/graph";
+import {Loading, LoadingPage} from "../../components/loading";
+import {InternalPage} from "../../components/page";
+import {InternalRoutes} from "../../config/routes";
+import {useAppSelector} from "../../store/hooks";
+import {databaseSupportsModifiers, getDatabaseDataTypes} from "../../utils/database-data-types";
+import {databaseSupportsScratchpad} from "../../utils/database-features";
+import {getDatabaseStorageUnitLabel, isNoSQL} from "../../utils/functions";
+import {Tip} from '../../components/tip';
 
 const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = ({ unit, allTableNames }) => {
     const [expanded, setExpanded] = useState(false);
@@ -63,10 +86,19 @@ const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = (
 
     return (<ExpandableCard key={unit.Name} isExpanded={expanded} setExpanded={setExpanded} icon={<TableCellsIcon className="w-4 h-4" />} className={cn({
         "shadow-2xl": expanded,
-    })}>
+    })} data-testid="storage-unit-card">
         <div className="flex flex-col grow mt-2" data-testid="storage-unit-card">
-            <div className="flex flex-col grow mb-2">
-                <h1 className="text-sm font-semibold mb-2 break-words" data-testid="storage-unit-name">{unit.Name}</h1>
+            <div className="flex flex-col grow mb-2 w-full overflow-x-hidden">
+                <Tip>
+                    <h1
+                        className="text-sm font-semibold mb-2 overflow-hidden text-ellipsis whitespace-nowrap max-w-[190px] mx-auto text-center"
+                        data-testid="storage-unit-name"
+                        title={unit.Name}
+                    >
+                        {unit.Name}
+                    </h1>
+                    <p className="text-xs">{unit.Name}</p>
+                </Tip>
                 {
                     introAttributes.slice(0,2).map(attribute => (
                         <p key={attribute.Key} className="text-xs">{attribute.Key}: {attribute.Value}</p>
@@ -96,7 +128,9 @@ const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = (
                         }
                         {
                             expandedAttributes.map(attribute => (
-                                <StackListItem key={attribute.Key} item={isValidForeignKey(attribute.Key) ? <Badge className="text-lg">{attribute.Key}</Badge> : attribute.Key}>
+                                <StackListItem key={attribute.Key} item={isValidForeignKey(attribute.Key) ?
+                                    <Badge className="text-lg"
+                                           data-testid="foreign-key-attribute">{attribute.Key}</Badge> : attribute.Key}>
                                     {attribute.Value}
                                 </StackListItem>
                             ))
@@ -124,8 +158,9 @@ export const StorageUnitPage: FC = () => {
     const current = useAppSelector(state => state.auth.current);
     const [addStorageUnit,] = useAddStorageUnitMutation();
 
+    // For databases that don't have schemas (MongoDB, ClickHouse), pass the database name as the schema parameter
     // todo: is there a different way to do this? clickhouse doesn't have schemas as a table is considered a schema. people mainly switch between DB
-    if (current?.Type === DatabaseType.ClickHouse) {
+    if (current?.Type === DatabaseType.ClickHouse || current?.Type === DatabaseType.MongoDb) {
         schema = current.Database
     }
 
@@ -276,7 +311,7 @@ export const StorageUnitPage: FC = () => {
                     </Button>
                 </div>
                 <div className="flex grow flex-col my-2 gap-4">
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-4">
                         <h1 className="text-2xl font-bold mb-4">Create a {getDatabaseStorageUnitLabel(current?.Type, true)}</h1>
                         <div className="flex flex-col gap-2">
                             <Label>Name</Label>
@@ -288,7 +323,7 @@ export const StorageUnitPage: FC = () => {
                             <div className="flex flex-col gap-4">
                                 {
                                     fields.map((field, index) => (
-                                        <div className="flex flex-col gap-2" key={`field-${index}`}>
+                                        <div className="flex flex-col gap-4 relative" key={`field-${index}`}>
                                             <Label>Field Name</Label>
                                             <Input value={field.Key} onChange={e => handleFieldValueChange("Key", index, e.target.value)} placeholder="Enter field name"/>
                                             <Label>Field Type</Label>
@@ -301,6 +336,9 @@ export const StorageUnitPage: FC = () => {
                                                 onChange={value => handleFieldValueChange("Value", index, value)}
                                                 placeholder="Select type"
                                                 searchPlaceholder="Search type..."
+                                                buttonProps={{
+                                                    "data-testid": `field-type-${index}`,
+                                                }}
                                             />
 
                                             {showModifiers && (
@@ -317,7 +355,7 @@ export const StorageUnitPage: FC = () => {
                                             {
                                                 fields.length > 1 &&
                                                 <Button variant="destructive" onClick={() => handleRemove(index)} data-testid="remove-field-button" className="w-full mt-1">
-                                                    <XMarkIcon className="w-4 h-4" /> Remove
+                                                    <XMarkIcon className="w-4 h-4"/> <span>Remove</span>
                                                 </Button>
                                             }
                                             {index !== fields.length - 1 && <Separator className="mt-2" />}
@@ -387,7 +425,9 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data })
                         <StackList>
                             {
                                 data.Attributes.map(attribute => (
-                                    <StackListItem key={attribute.Key} item={isValidForeignKey(attribute.Key) ? <Badge className="text-lg">{attribute.Key}</Badge> : attribute.Key}>
+                                    <StackListItem rowClassName="items-start" key={attribute.Key}
+                                                   item={isValidForeignKey(attribute.Key) ? <Badge
+                                                       className="text-lg">{attribute.Key}</Badge> : attribute.Key}>
                                         {attribute.Value}
                                     </StackListItem>
                                 ))

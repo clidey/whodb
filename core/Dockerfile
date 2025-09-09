@@ -26,6 +26,7 @@ RUN mkdir -p ee/frontend/src/components/theme ee/frontend/src/components/charts 
     echo "export default {}; export const AnalyzeGraph = () => null;" > ee/frontend/src/pages/raw-execute/analyze-view.tsx && \
     echo "export default {};" > ee/frontend/src/index.ts && \
     echo "export default {}; export const eeDatabaseTypes = []; export const eeFeatures = {};" > ee/frontend/src/config.ts && \
+    echo "export default {};" > ee/frontend/src/components/export.ts && \
     echo "export default {}; export const EEIcons = { Logos: {} };" > ee/frontend/src/icons.tsx
 
 RUN pnpm run build
@@ -37,7 +38,6 @@ COPY ./core/go.mod ./core/go.sum ./
 RUN go mod download
 COPY ./core/ ./
 
-COPY ./scripts/ ../scripts/
 
 COPY --from=build-stage /app/build/ ./build/
 

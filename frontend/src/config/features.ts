@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-import { FeatureFlags } from './ee-types';
+import {FeatureFlags} from './ee-types';
 
 // Default feature flags (all disabled for open source version)
 const defaultFeatures: FeatureFlags = {
     analyzeView: false,
+    explainView: false,
+    generateView: false,
     customTheme: false,
     dataVisualization: false,
     aiChat: false,
@@ -41,6 +43,7 @@ const checkEEAvailability = (): boolean => {
 // Store the loaded EE feature flags
 export let featureFlags: FeatureFlags = {} as FeatureFlags;
 export let extensions: Record<string, any> = {};
+export let sources: Record<string, any> = {};
 
 // Get feature flags based on environment and EE availability
 export const initialize = () => {
@@ -59,6 +62,9 @@ export const initialize = () => {
             }
             if (eeConfig?.eeExtensions) {
                 extensions = eeConfig.eeExtensions;
+            }
+            if (eeConfig?.eeSources) {
+                sources = eeConfig.eeSources;
             }
         }).catch(() => {
             console.warn('Could not load EE feature flags');

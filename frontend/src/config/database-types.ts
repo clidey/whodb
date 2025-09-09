@@ -1,5 +1,21 @@
-import { ReactElement } from "react";
-import { Icons } from "../components/icons";
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import {ReactElement} from "react";
+import {Icons} from "../components/icons";
 
 // Extended dropdown item type with UI field configuration
 export interface IDatabaseDropdownItem {
@@ -24,6 +40,10 @@ export interface IDatabaseDropdownItem {
     supportsScratchpad?: boolean;
     // Whether this database supports schemas
     supportsSchema?: boolean;
+    // Whether this database supports switching between databases in the UI
+    supportsDatabaseSwitching?: boolean;
+    // Whether this database should use the schema field (true) or database field (false) for graph queries
+    usesSchemaForGraph?: boolean;
 }
 
 export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
@@ -40,6 +60,8 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         },
         supportsScratchpad: true,
         supportsSchema: true,
+        supportsDatabaseSwitching: true,
+        usesSchemaForGraph: true,  // Uses database field for graph queries
     },
     {
         id: "MySQL",
@@ -54,6 +76,8 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         },
         supportsScratchpad: true,
         supportsSchema: true,
+        supportsDatabaseSwitching: true,
+        usesSchemaForGraph: true,  // Uses database field for graph queries
     },
     {
         id: "MariaDB",
@@ -68,6 +92,8 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         },
         supportsScratchpad: true,
         supportsSchema: true,
+        supportsDatabaseSwitching: true,
+        usesSchemaForGraph: true,  // Uses database field for graph queries
     },
     {
         id: "Sqlite3",
@@ -79,6 +105,8 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         },
         supportsScratchpad: true,
         supportsSchema: false,  // SQLite doesn't support schemas
+        supportsDatabaseSwitching: false,
+        usesSchemaForGraph: true,  // Uses schema field for graph queries
     },
     {
         id: "MongoDB",
@@ -89,10 +117,12 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
             hostname: true,
             username: true,
             password: true,
-            // database: false - MongoDB doesn't use database field
+            database: true,
         },
         supportsScratchpad: false,  // MongoDB doesn't support SQL scratchpad
         supportsSchema: false,  // MongoDB doesn't have traditional schemas
+        supportsDatabaseSwitching: true,
+        usesSchemaForGraph: false,  // Uses database field for graph queries
     },
     {
         id: "Redis",
@@ -107,6 +137,8 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         },
         supportsScratchpad: false,  // Redis doesn't support SQL scratchpad
         supportsSchema: false,  // Redis doesn't have schemas
+        supportsDatabaseSwitching: false,
+        usesSchemaForGraph: true,  // Uses schema field for graph queries
     },
     {
         id: "ElasticSearch",
@@ -121,6 +153,8 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         },
         supportsScratchpad: false,  // ElasticSearch doesn't support SQL scratchpad
         supportsSchema: false,  // ElasticSearch doesn't have schemas
+        supportsDatabaseSwitching: false,
+        usesSchemaForGraph: true,  // Uses schema field for graph queries
     },
     {
         id: "ClickHouse",
@@ -140,7 +174,9 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
             database: true,
         },
         supportsScratchpad: true,
-        supportsSchema: true,
+        supportsSchema: false,
+        supportsDatabaseSwitching: true,
+        usesSchemaForGraph: false,  // Uses database field for graph queries
     },
 ];
 
@@ -155,9 +191,6 @@ if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
         import('@ee/config.tsx'),
         import('@ee/icons')
     ]).then(([eeConfig, eeIcons]) => {
-        console.log('Loading EE config:', eeConfig);
-        console.log('Loading EE icons:', eeIcons);
-        
         if (eeConfig?.eeDatabaseTypes && eeIcons?.EEIcons?.Logos) {
             // First merge the icons
             Object.assign(Icons.Logos, eeIcons.EEIcons.Logos);
@@ -175,14 +208,12 @@ if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
                 supportsModifiers: dbType.supportsModifiers,
                 supportsScratchpad: dbType.supportsScratchpad,
                 supportsSchema: dbType.supportsSchema,
+                supportsDatabaseSwitching: dbType.supportsDatabaseSwitching,
+                usesSchemaForGraph: dbType.usesSchemaForGraph,
             }));
             
-            console.log('EE database types loaded:', eeDatabaseTypes);
         } else {
-            console.warn('EE modules loaded but missing expected exports', {
-                hasDatabaseTypes: !!eeConfig?.eeDatabaseTypes,
-                hasIcons: !!eeIcons?.EEIcons?.Logos
-            });
+            console.warn('EE modules loaded but missing expected exports');
         }
     }).catch((error) => {
         console.error('Could not load EE database types:', error);

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package graph
 
 // This file will be automatically regenerated based on the schema, any resolver implementations
@@ -218,14 +234,18 @@ func (r *mutationResolver) DeleteRow(ctx context.Context, schema string, storage
 
 // GenerateMockData is the resolver for the GenerateMockData field.
 func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.MockDataGenerationInput) (*model.MockDataGenerationStatus, error) {
+	log.Logger.WithField("schema", input.Schema).WithField("table", input.StorageUnit).WithField("rowCount", input.RowCount).WithField("overwrite", input.OverwriteExisting).Info("Starting mock data generation")
+
 	// Enforce maximum row limit
 	maxRowLimit := env.GetMockDataGenerationMaxRowCount()
 	if input.RowCount > maxRowLimit {
+		log.Logger.WithField("requested", input.RowCount).WithField("max", maxRowLimit).Error("Row count exceeds maximum limit")
 		return nil, fmt.Errorf("row count exceeds maximum limit of %d", maxRowLimit)
 	}
 
 	// Check if mock data generation is allowed for this table
 	if !env.IsMockDataGenerationAllowed(input.StorageUnit) {
+		log.Logger.WithField("table", input.StorageUnit).Error("Mock data generation not allowed for table")
 		return nil, errors.New("mock data generation is not allowed for this table")
 	}
 
@@ -234,17 +254,23 @@ func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.Moc
 	plugin := src.MainEngine.Choose(engine.DatabaseType(typeArg))
 
 	// Get table columns to understand the schema
+	log.Logger.Debug("Fetching table schema")
 	rowsResult, err := plugin.GetRows(config, input.Schema, input.StorageUnit, nil, []*model.SortCondition{}, 1, 0)
 	if err != nil {
+		log.Logger.WithError(err).Error("Failed to get table schema")
 		return nil, fmt.Errorf("failed to get table schema: %w", err)
 	}
+	log.Logger.WithField("columnCount", len(rowsResult.Columns)).Debug("Got table columns")
 
 	// Get column constraints from the database
+	log.Logger.Debug("Fetching column constraints")
 	constraints, err := plugin.GetColumnConstraints(config, input.Schema, input.StorageUnit)
 	if err != nil {
+		log.Logger.WithError(err).Warn("Failed to get column constraints, using empty constraints")
 		// Use empty constraints on error
 		constraints = make(map[string]map[string]any)
 	}
+	log.Logger.WithField("constraintCount", len(constraints)).Debug("Got column constraints")
 
 	// Pre-generate rows with brute force approach to ensure we get exactly the requested count
 	generator := src.NewMockDataGenerator()
@@ -258,16 +284,21 @@ func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.Moc
 	maxTotalAttempts := maxGenerationAttempts * 10 // Overall safety limit to prevent infinite loops
 
 	// Keep generating until we have enough rows or hit the safety limit
+	log.Logger.WithField("targetRows", maxGenerationAttempts).Info("Starting row generation")
 	for len(generatedRowsBuffer) < maxGenerationAttempts && attemptsCount < maxTotalAttempts {
 		attemptsCount++
 		rowData, genErr := generator.GenerateRowDataWithConstraints(rowsResult.Columns, constraints)
 		if genErr != nil {
+			log.Logger.WithError(genErr).WithField("attempt", attemptsCount).Debug("Failed to generate row")
 			continue
 		}
 		generatedRowsBuffer = append(generatedRowsBuffer, rowData)
 	}
 
+	log.Logger.WithField("generatedRows", len(generatedRowsBuffer)).WithField("attempts", attemptsCount).Info("Completed row generation buffer")
+
 	if len(generatedRowsBuffer) == 0 {
+		log.Logger.Error("Failed to generate any valid rows")
 		return nil, errors.New("failed to generate any valid rows after multiple attempts")
 	}
 
@@ -297,15 +328,20 @@ func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.Moc
 
 				if err := gormPlugin.AddRowInTx(tx, input.Schema, input.StorageUnit, rowData); err != nil {
 					errStr := err.Error()
+					log.Logger.WithError(err).WithField("rowIndex", bufferIndex).WithField("successfulSoFar", successfulRows).Error("Failed to insert row")
 					// If it's a constraint error, try with default values
 					if strings.Contains(errStr, "constraint") || strings.Contains(errStr, "CHECK") || strings.Contains(errStr, "check") {
+						log.Logger.Error("Constraint violation detected, trying with default values")
 						// Try once with defaults
 						if !retryWithDefaults {
 							defaultRow := generator.GenerateRowWithDefaults(rowsResult.Columns)
 							if retryErr := gormPlugin.AddRowInTx(tx, input.Schema, input.StorageUnit, defaultRow); retryErr == nil {
+								log.Logger.Info("Successfully inserted row with default values")
 								successfulRows++
 								retryWithDefaults = false
 								continue
+							} else {
+								log.Logger.WithError(retryErr).Error("Failed to insert row with default values")
 							}
 							retryWithDefaults = true // Mark that we've tried defaults
 						}
@@ -314,16 +350,22 @@ func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.Moc
 					}
 					// For non-constraint errors in overwrite mode, fail the transaction
 					if input.OverwriteExisting {
+						log.Logger.WithError(err).Error("Non-constraint error in overwrite mode, failing transaction")
 						return fmt.Errorf("failed to insert row: %w", err)
 					}
+					log.Logger.WithError(err).Warn("Non-constraint error in append mode, skipping row")
 					// For append mode, skip and continue
 					continue
 				}
 				successfulRows++
 				retryWithDefaults = false
+				if successfulRows%10 == 0 {
+					log.Logger.WithField("progress", successfulRows).WithField("target", input.RowCount).Debug("Mock data insertion progress")
+				}
 			}
 
 			// If we couldn't generate exactly the requested amount, try generating more on the fly
+			log.Logger.WithField("successfulRows", successfulRows).WithField("target", input.RowCount).Debug("Checking if additional generation needed")
 			additionalAttempts := 0
 			maxAdditionalAttempts := input.RowCount * 5 // Safety limit
 
@@ -348,9 +390,11 @@ func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.Moc
 			}
 
 			generatedRows = successfulRows
+			log.Logger.WithField("generatedRows", generatedRows).WithField("target", input.RowCount).Info("Completed mock data insertion in transaction")
 
 			// If overwriting and we couldn't generate enough rows, fail the transaction
 			if input.OverwriteExisting && generatedRows == 0 {
+				log.Logger.Error("Failed to generate any valid rows in overwrite mode")
 				return errors.New("failed to generate any valid rows - existing data preserved")
 			}
 
@@ -410,10 +454,12 @@ func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.Moc
 	}
 
 	if err != nil {
+		log.Logger.WithError(err).WithField("generatedRows", generatedRows).Error("Mock data generation failed")
 		return nil, fmt.Errorf("mock data generation failed: %w", err)
 	}
 
 	// Return success if any rows were generated
+	log.Logger.WithField("generatedRows", generatedRows).Info("Mock data generation completed successfully")
 	return &model.MockDataGenerationStatus{
 		AmountGenerated: generatedRows,
 	}, nil
@@ -434,8 +480,8 @@ func (r *queryResolver) Profiles(ctx context.Context) ([]*model.LoginProfile, er
 			Type:                 model.DatabaseType(profile.Type),
 			Database:             &profile.Database,
 			IsEnvironmentDefined: true,
+			Source:               profile.Source,
 		}
-
 		if len(profile.Alias) > 0 {
 			loginProfile.Alias = &profile.Alias
 		}
@@ -529,6 +575,31 @@ func (r *queryResolver) Row(ctx context.Context, schema string, storageUnit stri
 	}, nil
 }
 
+// Columns is the resolver for the Columns field.
+func (r *queryResolver) Columns(ctx context.Context, schema string, storageUnit string) ([]*model.Column, error) {
+	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	typeArg := config.Credentials.Type
+	columnsResult, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetColumnsForTable(config, schema, storageUnit)
+	if err != nil {
+		log.LogFields(log.Fields{
+			"operation":     "GetColumnsForTable",
+			"schema":        schema,
+			"storage_unit":  storageUnit,
+			"database_type": typeArg,
+			"error":         err.Error(),
+		}).Error("Database operation failed")
+		return nil, err
+	}
+	columns := []*model.Column{}
+	for _, column := range columnsResult {
+		columns = append(columns, &model.Column{
+			Type: column.Type,
+			Name: column.Name,
+		})
+	}
+	return columns, nil
+}
+
 // RawExecute is the resolver for the RawExecute field.
 func (r *queryResolver) RawExecute(ctx context.Context, query string) (*model.RowsResult, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
@@ -604,23 +675,22 @@ func (r *queryResolver) AIProviders(ctx context.Context) ([]*model.AIProvider, e
 // AIModel is the resolver for the AIModel field.
 func (r *queryResolver) AIModel(ctx context.Context, providerID *string, modelType string, token *string) ([]string, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+
+	// Initialize ExternalModel to prevent nil pointer dereference
+	config.ExternalModel = &engine.ExternalModel{
+		Type: modelType,
+	}
+
 	if providerID != nil {
 		providers := env.GetConfiguredChatProviders()
 		for _, provider := range providers {
 			if provider.ProviderId == *providerID {
-				config.ExternalModel = &engine.ExternalModel{
-					Type:  modelType,
-					Token: provider.APIKey,
-				}
+				config.ExternalModel.Token = provider.APIKey
+				break
 			}
 		}
-	} else {
-		config.ExternalModel = &engine.ExternalModel{
-			Type: modelType,
-		}
-		if token != nil {
-			config.ExternalModel.Token = *token
-		}
+	} else if token != nil {
+		config.ExternalModel.Token = *token
 	}
 	models, err := llm.Instance(config).GetSupportedModels()
 	if err != nil {

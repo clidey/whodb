@@ -14,25 +14,32 @@
  * limitations under the License.
  */
 
-import { isEEMode } from "@/config/ee-imports";
-import { Alert, AlertDescription, AlertTitle, Button, Card, cn, EmptyState, Input, toast, toTitleCase } from "@clidey/ux";
-import { AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery } from '@graphql';
-import { ArrowUpCircleIcon, BellAlertIcon, CodeBracketIcon } from "@heroicons/react/24/outline";
-import { CheckCircleIcon, SparklesIcon, TableCellsIcon } from "@heroicons/react/24/outline";
+import {isEEMode} from "@/config/ee-imports";
+import {Alert, AlertDescription, AlertTitle, Button, Card, cn, EmptyState, Input, toast, toTitleCase} from "@clidey/ux";
+import {AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery} from '@graphql';
+import {
+    ArrowUpCircleIcon,
+    BellAlertIcon,
+    CheckCircleIcon,
+    CodeBracketIcon,
+    SparklesIcon,
+    TableCellsIcon
+} from "@heroicons/react/24/outline";
 import classNames from "classnames";
-import { cloneElement, FC, KeyboardEventHandler, useCallback, useMemo, useRef, useState } from "react";
-import { AIProvider, useAI } from "../../components/ai";
-import { CodeEditor } from "../../components/editor";
-import { Loading } from "../../components/loading";
-import { InternalPage } from "../../components/page";
-import { StorageUnitTable } from "../../components/table";
-import { extensions } from "../../config/features";
-import { InternalRoutes } from "../../config/routes";
-import { HoudiniActions } from "../../store/chat";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { isEEFeatureEnabled, loadEEComponent } from "../../utils/ee-loader";
-import { chooseRandomItems } from "../../utils/functions";
-import { chatExamples } from "./examples";
+import {cloneElement, FC, KeyboardEventHandler, useCallback, useMemo, useRef, useState} from "react";
+import {AIProvider, useAI} from "../../components/ai";
+import {CodeEditor} from "../../components/editor";
+import {Loading} from "../../components/loading";
+import {InternalPage} from "../../components/page";
+import {StorageUnitTable} from "../../components/table";
+import {extensions} from "../../config/features";
+import {InternalRoutes} from "../../config/routes";
+import {HoudiniActions} from "../../store/chat";
+import {useAppDispatch, useAppSelector} from "../../store/hooks";
+import {isEEFeatureEnabled, loadEEComponent} from "../../utils/ee-loader";
+import {chooseRandomItems} from "../../utils/functions";
+import {chatExamples} from "./examples";
+
 const logoImage = "/images/logo.png";
 
 // Lazy load chart components if EE is enabled
@@ -291,18 +298,18 @@ export const ChatPage: FC = () => {
                                         chats.map((chat, i) => {
                                             if (chat.Type === "message" || chat.Type === "text") {
                                                 return <div key={`chat-${i}`} className={classNames("flex gap-4 overflow-hidden break-words leading-6 shrink-0 relative", {
-                                                    "self-end": chat.isUserInput,
+                                                    "self-end ml-3": chat.isUserInput,
                                                     "self-start": !chat.isUserInput,
                                                 })}>
                                                     {!chat.isUserInput && chats[i-1]?.isUserInput
                                                         ? extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8 mt-2" />
                                                         : <div className="pl-4" />}
-                                                    <div className={classNames("text-neutral-800 dark:text-neutral-300 px-4 py-2 rounded-xl whitespace-pre-wrap", {
+                                                    <p className={classNames("px-4 py-2 rounded-xl whitespace-pre-wrap", {
                                                         "bg-neutral-600/5 dark:bg-[#2C2F33]": chat.isUserInput,
                                                         "-ml-2": !chat.isUserInput && chats[i-1]?.isUserInput,
                                                     })} data-input-message={chat.isUserInput ? "user" : "system"}>
                                                         {chat.Text}
-                                                    </div>
+                                                    </p>
                                                 </div>
                                             } else if (chat.Type === "error") {
                                                 return (

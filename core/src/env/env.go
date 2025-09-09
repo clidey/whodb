@@ -24,6 +24,7 @@ import (
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/types"
 )
 
 var IsDevelopment = os.Getenv("ENVIRONMENT") == "dev"
@@ -156,20 +157,7 @@ func GetClideyQuickContainerImage() string {
 	return splitImage[1]
 }
 
-type DatabaseCredentials struct {
-	Alias    string            `json:"alias"`
-	Hostname string            `json:"host"`
-	Username string            `json:"user"`
-	Password string            `json:"password"`
-	Database string            `json:"database"`
-	Port     string            `json:"port"`
-	Config   map[string]string `json:"config"`
-
-	IsProfile bool
-	Type      string
-}
-
-func GetDefaultDatabaseCredentials(databaseType string) []DatabaseCredentials {
+func GetDefaultDatabaseCredentials(databaseType string) []types.DatabaseCredentials {
 	uppercaseDatabaseType := strings.ToUpper(databaseType)
 	credEnvVar := fmt.Sprintf("WHODB_%s", uppercaseDatabaseType)
 	credEnvValue := os.Getenv(credEnvVar)
@@ -178,7 +166,7 @@ func GetDefaultDatabaseCredentials(databaseType string) []DatabaseCredentials {
 		return findAllDatabaseCredentials(databaseType)
 	}
 
-	var creds []DatabaseCredentials
+	var creds []types.DatabaseCredentials
 	err := json.Unmarshal([]byte(credEnvValue), &creds)
 	if err != nil {
 		log.Logger.Error("🔴 [Database Error] Failed to parse database credentials from environment variable! Error: ", err)
@@ -188,10 +176,10 @@ func GetDefaultDatabaseCredentials(databaseType string) []DatabaseCredentials {
 	return creds
 }
 
-func findAllDatabaseCredentials(databaseType string) []DatabaseCredentials {
+func findAllDatabaseCredentials(databaseType string) []types.DatabaseCredentials {
 	uppercaseDatabaseType := strings.ToUpper(databaseType)
 	i := 1
-	profiles := []DatabaseCredentials{}
+	profiles := []types.DatabaseCredentials{}
 
 	for {
 		databaseProfile := os.Getenv(fmt.Sprintf("WHODB_%s_%d", uppercaseDatabaseType, i))
@@ -199,7 +187,7 @@ func findAllDatabaseCredentials(databaseType string) []DatabaseCredentials {
 			break
 		}
 
-		var creds DatabaseCredentials
+		var creds types.DatabaseCredentials
 		err := json.Unmarshal([]byte(databaseProfile), &creds)
 		if err != nil {
 			log.Logger.Error("Unable to parse database credential: ", err)

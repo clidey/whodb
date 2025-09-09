@@ -14,21 +14,20 @@
  * limitations under the License.
  */
 
-import {cn, Tooltip, TooltipContent, TooltipTrigger} from "@clidey/ux";
-import {FC, ReactNode} from "react";
+package types
 
-export const Tip: FC<{
-    className?: string;
-    children: [ReactNode, ReactNode]
-}> = ({children, className}) => {
-    return (
-        <Tooltip>
-            <TooltipTrigger className={cn("w-full", className)}>
-                {children[0]}
-            </TooltipTrigger>
-            <TooltipContent>
-                {children[1]}
-            </TooltipContent>
-        </Tooltip>
-    )
+type DatabaseCredentials struct {
+	Alias    string            `json:"alias"`
+	Hostname string            `json:"host"`
+	Username string            `json:"user"`
+	Password string            `json:"password"`
+	Database string            `json:"database"`
+	Port     string            `json:"port"`
+	Config   map[string]string `json:"config"`
+	Extra    map[string]any
+
+	IsProfile bool
+	Type      string
+	CustomId  string
+	Source    string
 }

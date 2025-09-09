@@ -197,7 +197,7 @@ func (p *GormPlugin) GetRows(config *engine.PluginConfig, schema string, storage
 		// SQLite stores dates as TEXT and needs CAST operations for proper sorting
 		// This should ideally be handled by the SQLite plugin override, not here
 		if p.Type == engine.DatabaseType_Sqlite3 {
-			return p.getSQLiteRows(db, schema, storageUnit, sort, pageSize, pageOffset)
+			return p.getSQLiteRows(db, schema, storageUnit, where, sort, pageSize, pageOffset)
 		}
 
 		// General case for other databases
@@ -205,7 +205,27 @@ func (p *GormPlugin) GetRows(config *engine.PluginConfig, schema string, storage
 	})
 }
 
-func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+func (p *GormPlugin) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]engine.Column, error) {
+		columnTypes, err := p.GetColumnTypes(db, schema, storageUnit)
+		if err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get column types for table %s.%s", schema, storageUnit))
+			return nil, err
+		}
+
+		columns := make([]engine.Column, 0, len(columnTypes))
+		for columnName, columnType := range columnTypes {
+			columns = append(columns, engine.Column{
+				Name: columnName,
+				Type: columnType,
+			})
+		}
+
+		return columns, nil
+	})
+}
+
+func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	columnInfo, err := p.GetColumnTypes(db, schema, storageUnit)
 	if err != nil {
 		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get column types for table %s.%s", schema, storageUnit))
@@ -214,8 +234,10 @@ func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, sort
 
 	selects := make([]string, 0, len(columnInfo))
 	columns := make([]string, 0, len(columnInfo))
+	columnTypes := make(map[string]string, len(columnInfo))
 	for col, colType := range columnInfo {
 		columns = append(columns, col)
+		columnTypes[col] = colType
 		colType = strings.ToUpper(colType)
 		if colType == "DATE" || colType == "DATETIME" || colType == "TIMESTAMP" {
 			selects = append(selects, fmt.Sprintf("CAST(%s AS TEXT) AS %s", col, col))
@@ -224,28 +246,40 @@ func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, sort
 		}
 	}
 
-	// Use SQL builder for query construction
-	// This special case is for SQLite date/time handling
 	builder := NewSQLBuilder(db, p)
-	query := builder.BuildExportSelectQuery("", storageUnit, columns)
+	fullTable := builder.BuildFullTableName(schema, storageUnit)
+
+	query := db.Table(fullTable)
+	query, err = p.applyWhereConditions(query, where, columnTypes)
+	if err != nil {
+		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to apply where conditions for table %s.%s", schema, storageUnit))
+		return nil, err
+	}
 
 	// Add ORDER BY clause if sort conditions are provided
 	if len(sort) > 0 {
-		var orderByParts []string
-		for _, s := range sort {
-			direction := "ASC"
-			if s.Direction == model.SortDirectionDesc {
-				direction = "DESC"
+		// Convert to Sort type for builder
+		sortList := make([]plugins.Sort, len(sort))
+		for i, s := range sort {
+			sortList[i] = plugins.Sort{
+				Column:    s.Column,
+				Direction: plugins.Down,
 			}
-			// For raw SQL, we need escaping
-			orderByParts = append(orderByParts, builder.QuoteIdentifier(s.Column)+" "+direction)
+			if s.Direction == model.SortDirectionAsc {
+				sortList[i].Direction = plugins.Up
+			}
 		}
-		query += " ORDER BY " + strings.Join(orderByParts, ", ")
+		query = builder.BuildOrderBy(query, sortList)
+	} else {
+		// Apply custom ordering if specified by the database plugin
+		if orderBy := p.GormPluginFunctions.GetRowsOrderBy(db, schema, storageUnit); orderBy != "" {
+			query = query.Order(orderBy)
+		}
 	}
 
-	query += fmt.Sprintf(" LIMIT %d OFFSET %d", pageSize, pageOffset)
+	query = query.Limit(pageSize).Offset(pageOffset)
 
-	rows, err := db.Raw(query).Rows()
+	rows, err := query.Rows()
 	if err != nil {
 		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to execute SQLite rows query for table %s.%s", schema, storageUnit))
 		return nil, err

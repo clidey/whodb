@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /**
  * Enterprise Edition Type Definitions
  * 
@@ -5,7 +21,7 @@
  * The actual implementations remain in the EE module.
  */
 
-import { ComponentType } from 'react';
+import {ComponentType} from 'react';
 
 // Types from analyze-view component
 type IPlanNode = {
@@ -76,4 +92,6 @@ export interface EEDatabaseType {
     supportsModifiers?: boolean; // Whether this database supports field modifiers (primary, nullable)
     supportsScratchpad?: boolean; // Whether this database supports scratchpad/raw query execution
     supportsSchema?: boolean; // Whether this database supports schemas
+    supportsDatabaseSwitching?: boolean; // Whether this database supports switching between databases in the UI
+    usesSchemaForGraph?: boolean; // Whether this database should use the schema field (true) or database field (false) for graph queries
 }

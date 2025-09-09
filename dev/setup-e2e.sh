@@ -1,4 +1,5 @@
 #!/bin/bash
+#
 # Copyright 2025 Clidey, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +13,27 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
 set -e
+
+# Get edition from parameter (default to CE)
+EDITION="${1:-ce}"
+
+# Check if this is EE-only mode (passed from run-cypress.sh)
+if [ "$EDITION" = "ee-only" ]; then
+    SKIP_CE_DATABASES="true"
+    EDITION="ee"  # Use ee for everything else
+else
+    SKIP_CE_DATABASES="false"
+fi
 
 # Get the script directory (so it works from any location)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 echo "📁 Working from project root: $PROJECT_ROOT"
+echo "🔧 Setting up $EDITION E2E environment..."
 
 
 # Run cleanup first to ensure clean state
@@ -30,13 +44,23 @@ else
     echo "⚠️ cleanup-e2e.sh not found, continuing without cleanup"
 fi
 
-echo "🚀 Setting up complete E2E environment..."
-
-# Build CE test binary with coverage
-echo "🔧 Building CE test binary with coverage..."
-cd "$PROJECT_ROOT/core"
-go test -coverpkg=./... -c -o server.test
-echo "✅ CE test binary built successfully"
+# Build test binary with coverage
+if [ "$EDITION" = "ee" ]; then
+    # Check if EE directory exists
+    if [ ! -d "$PROJECT_ROOT/ee" ]; then
+        echo "❌ EE directory not found. Cannot run EE tests."
+        exit 1
+    fi
+    echo "🔧 Building EE test binary with coverage..."
+    cd "$PROJECT_ROOT/core"
+    GOWORK="$PROJECT_ROOT/go.work.ee" go test -tags ee -coverpkg=./...,../ee/... -c -o server.test
+    echo "✅ EE test binary built successfully"
+else
+    echo "🔧 Building CE test binary with coverage..."
+    cd "$PROJECT_ROOT/core"
+    go test -coverpkg=./... -c -o server.test
+    echo "✅ CE test binary built successfully"
+fi
 
 
 # Setup SQLite
@@ -53,29 +77,55 @@ chmod 644 "$PROJECT_ROOT/core/tmp/e2e_test.db"
 
 echo "✅ SQLite E2E database ready at core/tmp/e2e_test.db"
 
-# Start other database services
-echo "🐳 Starting database services..."
-cd "$SCRIPT_DIR"
-docker-compose -f docker-compose.e2e.yaml up -d
+# Start CE database services (skip if EE-only mode)
+if [ "$SKIP_CE_DATABASES" = "false" ]; then
+    echo "🐳 Starting CE database services..."
+    cd "$SCRIPT_DIR"
+    docker-compose -f docker-compose.e2e.yaml up -d --remove-orphans
 
-# Wait for services to be ready
-echo "⏳ Waiting for services to be ready..."
-sleep 10
+    # Wait for services to be ready
+    echo "⏳ Waiting for services to be ready..."
+    sleep 15
 
-# Check if services are healthy
-echo "🔍 Checking service health..."
-for service in e2e_postgres e2e_mysql e2e_mariadb e2e_mongo e2e_clickhouse; do
-    if docker ps --filter "name=$service" --filter "status=running" | grep -q $service; then
-        echo "✅ $service is running"
+    # Extra wait for MySQL to fully initialize with the init script
+    echo "⏳ Waiting for MySQL to initialize data..."
+    sleep 5
+
+    # Check if CE services are healthy
+    echo "🔍 Checking CE service health..."
+    for service in e2e_postgres e2e_mysql e2e_mariadb e2e_mongo e2e_clickhouse e2e_redis e2e_elasticsearch; do
+        if docker ps --filter "name=$service" --filter "status=running" | grep -q $service; then
+            echo "✅ $service is running"
+        else
+            echo "⚠️ $service may not be running (some services are optional)"
+        fi
+    done
+else
+    echo "⏭️ Skipping CE database services (EE-only mode)"
+fi
+
+# If EE mode, run EE-specific setup (if it exists)
+if [ "$EDITION" = "ee" ]; then
+    EE_SETUP_SCRIPT="$PROJECT_ROOT/ee/dev/setup-ee-databases.sh"
+    if [ -f "$EE_SETUP_SCRIPT" ]; then
+        echo "🔧 Running EE-specific setup..."
+        bash "$EE_SETUP_SCRIPT"
     else
-        echo "❌ $service failed to start"
+        echo "⚠️ EE setup script not found, continuing with CE only"
     fi
-done
+fi
+
+# Clean up old coverage to start fresh each test run
+COVERAGE_FILE="$PROJECT_ROOT/core/coverage.out"
+if [ -f "$COVERAGE_FILE" ]; then
+    echo "🧹 Cleaning previous backend coverage"
+    rm -f "$COVERAGE_FILE"
+fi
 
 # Start the CE test server with coverage
 echo "🚀 Starting CE test server with coverage..."
 cd "$PROJECT_ROOT/core"
-ENVIRONMENT=dev ./server.test -test.run=^TestMain$ -test.coverprofile=coverage.out &
+ENVIRONMENT=dev WHODB_ENABLE_MOCK_DATA_GENERATION='users,REGIONS' ./server.test -test.run=^TestMain$ -test.coverprofile=coverage.out &
 TEST_SERVER_PID=$!
 
 # Save PID for cleanup
@@ -83,7 +133,11 @@ echo $TEST_SERVER_PID > "$PROJECT_ROOT/core/tmp/test-server.pid"
 
 # Wait for server to be ready with health check
 echo "⏳ Waiting for test server to be ready..."
-MAX_WAIT=30
+if [ "$EDITION" = "ee" ]; then
+    MAX_WAIT=60  # More time for EE server startup
+else
+    MAX_WAIT=45  # More time than before for CE too
+fi
 COUNTER=0
 while [ $COUNTER -lt $MAX_WAIT ]; do
     # Check if port 8080 is listening
@@ -105,5 +159,5 @@ if [ $COUNTER -eq $MAX_WAIT ]; then
     exit 1
 fi
 
-echo "🎉 E2E backend environment setup complete!"
+echo "🎉 $EDITION E2E backend environment setup complete!"
 echo "ℹ️  Frontend will be started by the test script"

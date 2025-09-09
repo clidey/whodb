@@ -1,16 +1,18 @@
-// Copyright 2025 Clidey, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package mongodb
 
@@ -33,7 +35,7 @@ func DB(config *engine.PluginConfig) (*mongo.Client, error) {
 	port, err := strconv.Atoi(common.GetRecordValueOrDefault(config.Credentials.Advanced, "Port", "27017"))
 	if err != nil {
 		log.Logger.WithError(err).WithFields(map[string]interface{}{
-			"hostname": config.Credentials.Hostname,
+			"hostname":  config.Credentials.Hostname,
 			"portValue": common.GetRecordValueOrDefault(config.Credentials.Advanced, "Port", "27017"),
 		}).Error("Failed to parse MongoDB port number")
 		return nil, err
@@ -42,7 +44,7 @@ func DB(config *engine.PluginConfig) (*mongo.Client, error) {
 	dnsEnabled, err := strconv.ParseBool(common.GetRecordValueOrDefault(config.Credentials.Advanced, "DNS Enabled", "false"))
 	if err != nil {
 		log.Logger.WithError(err).WithFields(map[string]interface{}{
-			"hostname": config.Credentials.Hostname,
+			"hostname":        config.Credentials.Hostname,
 			"dnsEnabledValue": common.GetRecordValueOrDefault(config.Credentials.Advanced, "DNS Enabled", "false"),
 		}).Error("Failed to parse MongoDB DNS enabled flag")
 		return nil, err
@@ -71,11 +73,11 @@ func DB(config *engine.PluginConfig) (*mongo.Client, error) {
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		log.Logger.WithError(err).WithFields(map[string]interface{}{
-			"hostname": config.Credentials.Hostname,
-			"database": config.Credentials.Database,
-			"username": config.Credentials.Username,
+			"hostname":   config.Credentials.Hostname,
+			"database":   config.Credentials.Database,
+			"username":   config.Credentials.Username,
 			"dnsEnabled": dnsEnabled,
-			"port": port,
+			"port":       port,
 		}).Error("Failed to connect to MongoDB")
 		return nil, err
 	}

@@ -1,16 +1,18 @@
-// Copyright 2025 Clidey, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package mongodb
 
@@ -24,6 +26,7 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -51,7 +54,20 @@ func (p *MongoDBPlugin) IsAvailable(config *engine.PluginConfig) bool {
 }
 
 func (p *MongoDBPlugin) GetDatabases(config *engine.PluginConfig) ([]string, error) {
-	return nil, errors.ErrUnsupported
+	client, err := DB(config)
+	if err != nil {
+		log.Logger.WithError(err).WithField("hostname", config.Credentials.Hostname).Error("Failed to connect to MongoDB for database listing")
+		return nil, err
+	}
+	defer client.Disconnect(context.TODO())
+
+	databases, err := client.ListDatabaseNames(context.TODO(), bson.M{})
+	if err != nil {
+		log.Logger.WithError(err).WithField("hostname", config.Credentials.Hostname).Error("Failed to list MongoDB database names")
+		return nil, err
+	}
+
+	return databases, nil
 }
 
 func (p *MongoDBPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, error) {
@@ -120,8 +136,8 @@ func (p *MongoDBPlugin) GetStorageUnits(config *engine.PluginConfig, database st
 			err := db.RunCommand(context.TODO(), bson.D{{Key: "collStats", Value: collectionName}}).Decode(&stats)
 			if err != nil {
 				log.Logger.WithError(err).WithFields(map[string]interface{}{
-					"hostname": config.Credentials.Hostname,
-					"database": database,
+					"hostname":   config.Credentials.Hostname,
+					"database":   database,
 					"collection": collectionName,
 				}).Error("Failed to get MongoDB collection statistics")
 				return nil, err
@@ -152,8 +168,8 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 	client, err := DB(config)
 	if err != nil {
 		log.Logger.WithError(err).WithFields(map[string]interface{}{
-			"hostname": config.Credentials.Hostname,
-			"database": database,
+			"hostname":   config.Credentials.Hostname,
+			"database":   database,
 			"collection": collection,
 		}).Error("Failed to connect to MongoDB for row retrieval")
 		return nil, err
@@ -166,8 +182,8 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 	bsonFilter, err := convertWhereConditionToMongoDB(where)
 	if err != nil {
 		log.Logger.WithError(err).WithFields(map[string]interface{}{
-			"hostname": config.Credentials.Hostname,
-			"database": database,
+			"hostname":   config.Credentials.Hostname,
+			"database":   database,
 			"collection": collection,
 		}).Error("Failed to convert where condition to MongoDB filter")
 		return nil, fmt.Errorf("error converting where condition: %v", err)
@@ -193,10 +209,10 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 	cursor, err := coll.Find(context.TODO(), bsonFilter, findOptions)
 	if err != nil {
 		log.Logger.WithError(err).WithFields(map[string]interface{}{
-			"hostname": config.Credentials.Hostname,
-			"database": database,
+			"hostname":   config.Credentials.Hostname,
+			"database":   database,
 			"collection": collection,
-			"pageSize": pageSize,
+			"pageSize":   pageSize,
 			"pageOffset": pageOffset,
 		}).Error("Failed to execute MongoDB find query")
 		return nil, err
@@ -206,8 +222,8 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 	var rowsResult []bson.M
 	if err = cursor.All(context.TODO(), &rowsResult); err != nil {
 		log.Logger.WithError(err).WithFields(map[string]interface{}{
-			"hostname": config.Credentials.Hostname,
-			"database": database,
+			"hostname":   config.Credentials.Hostname,
+			"database":   database,
 			"collection": collection,
 		}).Error("Failed to decode MongoDB query results")
 		return nil, err
@@ -224,8 +240,8 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 		jsonBytes, err := json.Marshal(doc)
 		if err != nil {
 			log.Logger.WithError(err).WithFields(map[string]interface{}{
-				"hostname": config.Credentials.Hostname,
-				"database": database,
+				"hostname":   config.Credentials.Hostname,
+				"database":   database,
 				"collection": collection,
 			}).Error("Failed to marshal MongoDB document to JSON")
 			return nil, err
@@ -234,6 +250,13 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 	}
 
 	return result, nil
+}
+
+func (p *MongoDBPlugin) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {
+	// MongoDB doesn't have a traditional column structure, it returns documents
+	return []engine.Column{
+		{Name: "document", Type: "Document"},
+	}, nil
 }
 
 func convertWhereConditionToMongoDB(where *model.WhereCondition) (bson.M, error) {
@@ -261,7 +284,20 @@ func convertWhereConditionToMongoDB(where *model.WhereCondition) (bson.M, error)
 			return nil, fmt.Errorf("unsupported operator: %s", where.Atomic.Operator)
 		}
 
-		return bson.M{where.Atomic.Key: bson.M{mongoOperator: where.Atomic.Value}}, nil
+		// Handle _id field specially - convert string to ObjectID
+		var value any = where.Atomic.Value
+		if where.Atomic.Key == "_id" {
+			objectID, err := primitive.ObjectIDFromHex(where.Atomic.Value)
+			if err != nil {
+				// If it's not a valid ObjectID, use the string value as-is
+				// This allows querying by non-ObjectID _id values if they exist
+				value = where.Atomic.Value
+			} else {
+				value = objectID
+			}
+		}
+
+		return bson.M{where.Atomic.Key: bson.M{mongoOperator: value}}, nil
 
 	case model.WhereConditionTypeAnd:
 		if where.And == nil || len(where.And.Children) == 0 {

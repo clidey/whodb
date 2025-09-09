@@ -103,11 +103,12 @@ type PluginFunctions interface {
 	Chat(config *PluginConfig, schema string, model string, previousConversation string, query string) ([]*ChatMessage, error)
 	ExportData(config *PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error
 	FormatValue(val any) string
+	GetColumnsForTable(config *PluginConfig, schema string, storageUnit string) ([]Column, error)
 
 	// Mock data generation methods
 	GetColumnConstraints(config *PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error)
 	ClearTableData(config *PluginConfig, schema string, storageUnit string) (bool, error)
-	
+
 	// Transaction support
 	WithTransaction(config *PluginConfig, operation func(tx any) error) error
 }

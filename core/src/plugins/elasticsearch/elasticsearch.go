@@ -1,16 +1,18 @@
-// Copyright 2025 Clidey, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package elasticsearch
 
@@ -204,6 +206,13 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 	return result, nil
 }
 
+func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {
+	// Elasticsearch doesn't have a traditional column structure, it returns documents
+	return []engine.Column{
+		{Name: "document", Type: "Document"},
+	}, nil
+}
+
 func convertWhereConditionToES(where *model.WhereCondition) (map[string]interface{}, error) {
 	if where == nil {
 		return map[string]interface{}{}, nil
@@ -228,35 +237,59 @@ func convertWhereConditionToES(where *model.WhereCondition) (map[string]interfac
 
 	case model.WhereConditionTypeAnd:
 		if where.And == nil || len(where.And.Children) == 0 {
-			err := fmt.Errorf("and condition must have children")
-			log.Logger.WithError(err).Error("Invalid AND where condition: missing children")
-			return nil, err
+			return map[string]interface{}{}, nil
 		}
 		mustClauses := []map[string]interface{}{}
 		for _, child := range where.And.Children {
-			childCondition, err := convertWhereConditionToES(child)
-			if err != nil {
-				log.Logger.WithError(err).Error("Failed to convert child condition in AND clause to ElasticSearch query")
-				return nil, err
+			// Handle child conditions based on their type
+			if child.Type == model.WhereConditionTypeAtomic && child.Atomic != nil {
+				// For atomic children, add the match clause directly
+				mustClauses = append(mustClauses, map[string]interface{}{
+					"match": map[string]interface{}{
+						child.Atomic.Key: child.Atomic.Value,
+					},
+				})
+			} else {
+				// For nested AND/OR, we need to wrap them in a bool query
+				childCondition, err := convertWhereConditionToES(child)
+				if err != nil {
+					log.Logger.WithError(err).Error("Failed to convert child condition in AND clause to ElasticSearch query")
+					return nil, err
+				}
+				// Wrap the child condition in a bool query
+				mustClauses = append(mustClauses, map[string]interface{}{
+					"bool": childCondition,
+				})
 			}
-			mustClauses = append(mustClauses, childCondition)
 		}
 		return map[string]interface{}{"must": mustClauses}, nil
 
 	case model.WhereConditionTypeOr:
 		if where.Or == nil || len(where.Or.Children) == 0 {
-			err := fmt.Errorf("or condition must have children")
-			log.Logger.WithError(err).Error("Invalid OR where condition: missing children")
-			return nil, err
+			return map[string]interface{}{}, nil
 		}
 		shouldClauses := []map[string]interface{}{}
 		for _, child := range where.Or.Children {
-			childCondition, err := convertWhereConditionToES(child)
-			if err != nil {
-				log.Logger.WithError(err).Error("Failed to convert child condition in OR clause to ElasticSearch query")
-				return nil, err
+			// Handle child conditions based on their type
+			if child.Type == model.WhereConditionTypeAtomic && child.Atomic != nil {
+				// For atomic children, add the match clause directly
+				shouldClauses = append(shouldClauses, map[string]interface{}{
+					"match": map[string]interface{}{
+						child.Atomic.Key: child.Atomic.Value,
+					},
+				})
+			} else {
+				// For nested AND/OR, we need to wrap them in a bool query
+				childCondition, err := convertWhereConditionToES(child)
+				if err != nil {
+					log.Logger.WithError(err).Error("Failed to convert child condition in OR clause to ElasticSearch query")
+					return nil, err
+				}
+				// Wrap the child condition in a bool query
+				shouldClauses = append(shouldClauses, map[string]interface{}{
+					"bool": childCondition,
+				})
 			}
-			shouldClauses = append(shouldClauses, childCondition)
 		}
 		return map[string]interface{}{
 			"should":               shouldClauses,
