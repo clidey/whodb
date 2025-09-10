@@ -77,10 +77,24 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 	}
 	defer client.Close()
 
-	keys, err := client.Keys(ctx, "*").Result()
-	if err != nil {
-		log.Logger.WithError(err).Error("Failed to retrieve Redis keys")
-		return nil, err
+	// Use SCAN instead of KEYS for better performance
+	var keys []string
+	var cursor uint64
+	
+	for {
+		var scanKeys []string
+		scanKeys, cursor, err = client.Scan(ctx, cursor, "*", 0).Result()
+		if err != nil {
+			log.Logger.WithError(err).Error("Failed to scan Redis keys")
+			return nil, err
+		}
+		
+		keys = append(keys, scanKeys...)
+		
+		// When cursor is 0, we've completed the full scan
+		if cursor == 0 {
+			break
+		}
 	}
 
 	pipe := client.Pipeline()
