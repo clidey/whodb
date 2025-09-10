@@ -213,7 +213,6 @@ export const StorageUnitTable: FC<TableProps> = ({
     
     const [generateMockData, { loading: generatingMockData }] = useGenerateMockDataMutation();
     const [deleteRow, ] = useDeleteRowMutation();
-    const [containerWidth, setContainerWidth] = useState<number>(0);
     const lastSearchState = useRef<{ search: string; matchIdx: number }>({ search: '', matchIdx: 0 });
 
 
@@ -520,11 +519,6 @@ export const StorageUnitTable: FC<TableProps> = ({
 
 
 
-    useEffect(() => {
-        if (tableRef.current) {
-            setContainerWidth(tableRef.current.offsetWidth);
-        }
-    }, [tableRef]);
 
     // Highlight and scroll to the searched cell using document querySelector, no state needed
 
@@ -736,11 +730,10 @@ export const StorageUnitTable: FC<TableProps> = ({
     }, [checked, handleCellClick, handleEdit, handleSelectRow, handleDeleteRow, paginatedRows, disableEdit, onRefresh]);
 
     return (
-        <div ref={tableRef} className="h-full">
-            <div className="flex flex-col h-full space-y-4 w-0" style={{
-                width: `${containerWidth}px`,
-            }}>
-                <TableComponent className="overflow-x-auto">
+        <div ref={tableRef} className="h-full w-full">
+            <div className="flex flex-col h-full space-y-4 w-full">
+                <div className="overflow-x-auto w-full">
+                    <TableComponent className="w-full">
                     <TableHeader>
                         <ContextMenu>
                             <ContextMenuTrigger asChild>
@@ -858,6 +851,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         </VirtualizedTableBody>
                     }
                 </TableComponent>
+                </div>
                 {paginatedRows.length === 0 && (
                     <ContextMenu>
                         <ContextMenuTrigger asChild>

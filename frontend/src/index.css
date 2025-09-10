@@ -52,3 +52,23 @@
   transition: background-color 0.3s ease-in-out;
   border-radius: 0.25rem;
 }
+
+/* Responsive table styles */
+table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+th, td {
+  min-width: 120px;
+  max-width: 500px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Container for table with horizontal scroll */
+.overflow-x-auto {
+  overflow-x: auto;
+  width: 100%;
+}
