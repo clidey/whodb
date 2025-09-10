@@ -64,7 +64,9 @@ func (p *ClickHousePlugin) GetDatabases(config *engine.PluginConfig) ([]string, 
 		var databases []struct {
 			Datname string `gorm:"column:datname"`
 		}
-		if err := db.Raw("SELECT name AS datname FROM system.databases").Scan(&databases).Error; err != nil {
+		if err := db.Table("system.databases").
+			Select("name AS datname").
+			Scan(&databases).Error; err != nil {
 			return nil, err
 		}
 		databaseNames := []string{}
@@ -76,7 +78,10 @@ func (p *ClickHousePlugin) GetDatabases(config *engine.PluginConfig) ([]string, 
 }
 
 func (p *ClickHousePlugin) FormTableName(schema string, storageUnit string) string {
-	return fmt.Sprintf("%s.%s", schema, storageUnit)
+	if schema == "" {
+		return storageUnit
+	}
+	return schema + "." + storageUnit
 }
 
 func (p *ClickHousePlugin) GetSupportedColumnDataTypes() mapset.Set[string] {

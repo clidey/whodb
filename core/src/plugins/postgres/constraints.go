@@ -30,33 +30,32 @@ import (
 // GetColumnConstraints retrieves column constraints for PostgreSQL tables
 func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]interface{}, error) {
 	constraints := make(map[string]map[string]interface{})
-	
+
 	_, err := plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
-		// Get nullability using prepared statement
-		nullabilityQuery := `
-			SELECT column_name, is_nullable 
-			FROM information_schema.columns 
-			WHERE table_schema = ? AND table_name = ?`
-		
-		rows, err := db.Raw(nullabilityQuery, schema, storageUnit).Rows()
+		// Get nullability using GORM's query builder
+		rows, err := db.Table("information_schema.columns").
+			Select("column_name, is_nullable").
+			Where("table_schema = ? AND table_name = ?", schema, storageUnit).
+			Rows()
 		if err != nil {
 			return false, err
 		}
 		defer rows.Close()
-		
+
 		for rows.Next() {
 			var columnName, isNullable string
 			if err := rows.Scan(&columnName, &isNullable); err != nil {
 				continue
 			}
-			
+
 			if constraints[columnName] == nil {
 				constraints[columnName] = map[string]interface{}{}
 			}
 			constraints[columnName]["nullable"] = strings.EqualFold(isNullable, "YES")
 		}
-		
-		// Get unique single-column indexes using prepared statement
+
+		// Get unique single-column indexes using GORM's query builder
+		// Note: ANY() function requires special handling, keeping as Raw for now
 		uniqueQuery := `
 			SELECT a.attname AS column_name 
 			FROM pg_index i 
@@ -67,25 +66,25 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 			AND n.nspname = ? 
 			AND i.indisunique = true 
 			AND i.indnkeyatts = 1`
-		
+
 		uniqueRows, err := db.Raw(uniqueQuery, storageUnit, schema).Rows()
 		if err != nil {
 			return false, err
 		}
 		defer uniqueRows.Close()
-		
+
 		for uniqueRows.Next() {
 			var columnName string
 			if err := uniqueRows.Scan(&columnName); err != nil {
 				continue
 			}
-			
+
 			if constraints[columnName] == nil {
 				constraints[columnName] = map[string]interface{}{}
 			}
 			constraints[columnName]["unique"] = true
 		}
-		
+
 		// Get CHECK constraints
 		checkQuery := `
 			SELECT 
@@ -94,31 +93,31 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 			FROM pg_constraint
 			WHERE contype = 'c'
 			AND conrelid = ?::regclass`
-		
+
 		fullTableName := schema + "." + storageUnit
 		checkRows, err := db.Raw(checkQuery, fullTableName).Rows()
 		if err == nil {
 			defer checkRows.Close()
-			
+
 			for checkRows.Next() {
 				var constraintName, checkClause string
 				if err := checkRows.Scan(&constraintName, &checkClause); err != nil {
 					continue
 				}
-				
+
 				// Parse the CHECK clause to extract column and condition
 				p.parseCheckConstraint(checkClause, constraints)
 			}
 		}
 		// Ignore error if query fails
-		
+
 		return true, nil
 	})
-	
+
 	if err != nil {
 		return constraints, err
 	}
-	
+
 	return constraints, nil
 }
 
@@ -129,11 +128,11 @@ func (p *PostgresPlugin) parseCheckConstraint(checkClause string, constraints ma
 	// - CHECK ((stock_quantity >= 0))
 	// - CHECK ((age >= 18) AND (age <= 120))
 	// - CHECK ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text]))
-	
+
 	// Remove CHECK keyword and outer parentheses
 	clause := strings.TrimPrefix(checkClause, "CHECK ")
 	clause = strings.Trim(clause, "()")
-	
+
 	// Pattern for >= or > constraints
 	minPattern := regexp.MustCompile(`\(?(\w+)\)?\s*>=?\s*\(?([\-]?\d+(?:\.\d+)?)\)?`)
 	if matches := minPattern.FindStringSubmatch(clause); len(matches) > 2 {
@@ -153,7 +152,7 @@ func (p *PostgresPlugin) parseCheckConstraint(checkClause string, constraints ma
 			}
 		}
 	}
-	
+
 	// Pattern for <= or < constraints
 	maxPattern := regexp.MustCompile(`\(?(\w+)\)?\s*<=?\s*\(?([\-]?\d+(?:\.\d+)?)\)?`)
 	if matches := maxPattern.FindStringSubmatch(clause); len(matches) > 2 {
@@ -173,7 +172,7 @@ func (p *PostgresPlugin) parseCheckConstraint(checkClause string, constraints ma
 			}
 		}
 	}
-	
+
 	// Pattern for ANY (ARRAY[...]) constraints (PostgreSQL's way of doing IN)
 	anyArrayPattern := regexp.MustCompile(`\(?(\w+)\)?.*?ANY\s*\(ARRAY\[(.*?)\]`)
 	if matches := anyArrayPattern.FindStringSubmatch(clause); len(matches) > 2 {

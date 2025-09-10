@@ -460,7 +460,7 @@ describe('MySQL E2E test', () => {
 
         // 13) Open Mock Data sheet, enforce limits, and show overwrite confirmation
         cy.data('users');
-        cy.get('table thead tr').rightclick({force: true});
+        cy.get('table thead tr').eq(0).rightclick({force: true});
         cy.contains('div,button,span', 'Mock Data').click({force: true});
 
         // UI: sheet title and note visible

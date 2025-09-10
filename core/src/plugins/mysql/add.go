@@ -24,10 +24,8 @@ import (
 	"gorm.io/gorm"
 )
 
-func (p *MySQLPlugin) GetCreateTableQuery(schema string, storageUnit string, columns []engine.Record) string {
-	// Create a dummy DB session for the SQL builder
-	db := &gorm.DB{Config: &gorm.Config{}}
-	builder := gorm_plugin.NewSQLBuilder(db, p)
+func (p *MySQLPlugin) GetCreateTableQuery(db *gorm.DB, schema string, storageUnit string, columns []engine.Record) string {
+	builder := p.GormPluginFunctions.CreateSQLBuilder(db)
 
 	// Convert engine.Record to ColumnDef
 	columnDefs := make([]gorm_plugin.ColumnDef, len(columns))

@@ -42,22 +42,7 @@ var (
 	// geometryTypes = common.GeometryTypes // not defined yet
 )
 
-func (p *GormPlugin) EscapeIdentifier(identifier string) string {
-	// Remove common dangerous characters
-	identifier = strings.NewReplacer(
-		"\x00", "", // Null byte
-		"\n", "", // Newline
-		"\r", "", // Carriage return
-		"\x1a", "", // Windows EOF
-		"\\", "\\\\", // Backslash
-		"--", "", // SQL inline comment
-		"/*", "", // SQL multi-line comment start
-		"*/", "", // SQL multi-line comment end
-		"#", "", // MySQL comment
-	).Replace(identifier)
-
-	return p.EscapeSpecificIdentifier(identifier)
-}
+// Identifier quoting and escaping is handled by GORM Dialector via SQLBuilder.
 
 func (p *GormPlugin) ConvertRecordValuesToMap(values []engine.Record) (map[string]interface{}, error) {
 	data := make(map[string]interface{}, len(values))
@@ -76,36 +61,20 @@ func (p *GormPlugin) ConvertRecordValuesToMap(values []engine.Record) (map[strin
 	return data, nil
 }
 
-// GetPrimaryKeyColumns uses GORM's Migrator when possible, falls back to raw SQL
+// GetPrimaryKeyColumns returns the primary key columns for a table using raw SQL
 func (p *GormPlugin) GetPrimaryKeyColumns(db *gorm.DB, schema string, tableName string) ([]string, error) {
-	// Try using Migrator first
-	migrator := NewMigratorHelper(db, p)
+	var primaryKeys []string
+	query := p.GetPrimaryKeyColQuery()
 
-	// Build full table name for Migrator
-	var fullTableName string
-	if schema != "" && p.Type != engine.DatabaseType_Sqlite3 {
-		fullTableName = schema + "." + tableName
-	} else {
-		fullTableName = tableName
-	}
-
-	// Attempt to get primary keys using Migrator
-	primaryKeys, err := migrator.GetPrimaryKeys(fullTableName)
-	if err == nil && len(primaryKeys) > 0 {
+	// If no query is provided by the plugin, return empty (no primary keys)
+	if query == "" {
 		return primaryKeys, nil
 	}
 
-	// Fall back to raw SQL if Migrator didn't work
-	log.Logger.Debug("Migrator failed to get primary keys, falling back to raw SQL")
-
-	// Reset for raw SQL approach
-	primaryKeys = []string{}
-	query := p.GetPrimaryKeyColQuery()
-
 	var rows *sql.Rows
+	var err error
 
-	// TODO: BIG EDGE CASE - SQLite doesn't use schema in queries
-	// This should be handled by each plugin's override of GetPrimaryKeyColQuery
+	// SQLite doesn't use schema in queries
 	if p.Type == engine.DatabaseType_Sqlite3 {
 		rows, err = db.Raw(query, tableName).Rows()
 	} else {
@@ -113,29 +82,22 @@ func (p *GormPlugin) GetPrimaryKeyColumns(db *gorm.DB, schema string, tableName 
 	}
 
 	if err != nil {
-		log.Logger.WithError(err).WithField("schema", schema).WithField("tableName", tableName).Error("Failed to execute primary key query")
-		return nil, err
+		// Primary keys might not exist, which is ok - return empty array
+		log.Logger.Debug(fmt.Sprintf("No primary keys found for table %s.%s: %v", schema, tableName, err))
+		return primaryKeys, nil
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		var pkColumn string
-		if err := rows.Scan(&pkColumn); err != nil {
-			log.Logger.WithError(err).WithField("schema", schema).WithField("tableName", tableName).Error("Failed to scan primary key column")
-			return nil, err
+		var columnName string
+		if err := rows.Scan(&columnName); err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to scan primary key column name for table %s.%s", schema, tableName))
+			continue
 		}
-		primaryKeys = append(primaryKeys, pkColumn)
+		primaryKeys = append(primaryKeys, columnName)
 	}
 
-	if err := rows.Err(); err != nil {
-		log.Logger.WithError(err).WithField("schema", schema).WithField("tableName", tableName).Error("Row iteration error while getting primary keys")
-		return nil, err
-	}
-
-	if len(primaryKeys) == 0 {
-		return nil, fmt.Errorf("no primary key found for table %s", tableName)
-	}
-
+	// It's ok if there are no primary keys - return empty array
 	return primaryKeys, nil
 }
 

@@ -1,11 +1,35 @@
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package gorm_plugin
 
 import (
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // Query Scopes - Reusable query patterns for GORM
 // These can be used with db.Scopes() to chain common query patterns
+//
+// NOTE: These helper functions are currently unused but are kept for future use.
+// They provide clean, reusable patterns for common database operations.
+//
+// Example usage:
+//   db.Scopes(Paginate(1, 10), OrderBy("created_at", true)).Find(&results)
+//   db.Scopes(WhereMap(conditions), SelectColumns(cols)).Find(&results)
 
 // Paginate creates a scope for pagination
 func Paginate(page, pageSize int) func(db *gorm.DB) *gorm.DB {
@@ -24,10 +48,10 @@ func Paginate(page, pageSize int) func(db *gorm.DB) *gorm.DB {
 // OrderBy creates a scope for dynamic ordering
 func OrderBy(column string, desc bool) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		if desc {
-			return db.Order(column + " DESC")
-		}
-		return db.Order(column + " ASC")
+		return db.Order(clause.OrderByColumn{
+			Column: clause.Column{Name: column},
+			Desc:   desc,
+		})
 	}
 }
 

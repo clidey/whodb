@@ -25,9 +25,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func (p *ClickHousePlugin) GetCreateTableQuery(schema string, storageUnit string, columns []engine.Record) string {
-	// Create a dummy DB session for the SQL builder
-	db := &gorm.DB{Config: &gorm.Config{}}
+func (p *ClickHousePlugin) GetCreateTableQuery(db *gorm.DB, schema string, storageUnit string, columns []engine.Record) string {
 	builder := gorm_plugin.NewSQLBuilder(db, p)
 
 	// Convert engine.Record to ColumnDef

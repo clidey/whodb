@@ -75,7 +75,7 @@ func (p *GormPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, 
 			})
 		}
 
-		createTableQuery := p.GetCreateTableQuery(schema, storageUnit, columns)
+		createTableQuery := p.GetCreateTableQuery(db, schema, storageUnit, columns)
 
 		if err := db.Exec(createTableQuery).Error; err != nil {
 			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to create table %s.%s with query: %s", schema, storageUnit, createTableQuery))
@@ -91,8 +91,12 @@ func (p *GormPlugin) addRowWithDB(db *gorm.DB, schema string, storageUnit string
 		return errors.New("no values provided to insert into the table")
 	}
 
+	if storageUnit == "" {
+		return fmt.Errorf("storage unit name cannot be empty")
+	}
+
 	// Use SQL builder for consistent insert operations
-	builder := NewSQLBuilder(db, p)
+	builder := p.GormPluginFunctions.CreateSQLBuilder(db)
 
 	valuesToAdd, err := p.ConvertRecordValuesToMap(values)
 	if err != nil {
@@ -107,6 +111,12 @@ func (p *GormPlugin) AddRow(config *engine.PluginConfig, schema string, storageU
 	// Initialize error handler if needed
 	if p.errorHandler == nil {
 		p.InitPlugin()
+	}
+
+	// Log for debugging
+	if storageUnit == "" {
+		log.Logger.Error("AddRow called with empty storageUnit name")
+		return false, fmt.Errorf("storage unit name cannot be empty")
 	}
 
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {

@@ -29,7 +29,7 @@ import (
 
 func (p *GormPlugin) DeleteRow(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
-		pkColumns, err := p.GetPrimaryKeyColumns(db, schema, storageUnit)
+		pkColumns, err := p.GormPluginFunctions.GetPrimaryKeyColumns(db, schema, storageUnit)
 		if err != nil {
 			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get primary key columns for table %s.%s during delete operation", schema, storageUnit))
 			pkColumns = []string{}
@@ -64,7 +64,7 @@ func (p *GormPlugin) DeleteRow(config *engine.PluginConfig, schema string, stora
 		}
 
 		// Use SQL builder for consistent delete operations
-		builder := NewSQLBuilder(db, p)
+		builder := p.GormPluginFunctions.CreateSQLBuilder(db)
 
 		var whereConditions map[string]any
 		if len(conditions) == 0 {

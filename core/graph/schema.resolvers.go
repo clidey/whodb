@@ -179,6 +179,16 @@ func (r *mutationResolver) UpdateStorageUnit(ctx context.Context, schema string,
 func (r *mutationResolver) AddRow(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
 	typeArg := config.Credentials.Type
+
+	// Debug logging
+	log.LogFields(log.Fields{
+		"operation":     "AddRow-Resolver",
+		"schema":        schema,
+		"storage_unit":  storageUnit,
+		"database_type": typeArg,
+		"values_count":  len(values),
+	}).Debug("AddRow resolver called")
+
 	valuesRecords := []engine.Record{}
 	for _, field := range values {
 		extraFields := map[string]string{}

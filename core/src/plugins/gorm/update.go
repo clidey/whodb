@@ -29,7 +29,7 @@ import (
 
 func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string, updatedColumns []string) (bool, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
-		pkColumns, err := p.GetPrimaryKeyColumns(db, schema, storageUnit)
+		pkColumns, err := p.GormPluginFunctions.GetPrimaryKeyColumns(db, schema, storageUnit)
 		if err != nil {
 			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get primary key columns for table %s.%s during update operation", schema, storageUnit))
 			pkColumns = []string{}
@@ -73,31 +73,10 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 			return true, nil
 		}
 
-		// Use SQL builder for table name construction
-		builder := NewSQLBuilder(db, p)
-		tableName := builder.BuildFullTableName(schema, storageUnit)
+		// Use SQL builder for update query
+		builder := p.GormPluginFunctions.CreateSQLBuilder(db)
 
-		// TODO: BIG EDGE CASE - MySQL/MariaDB have escaping issues with WHERE clause
-		// This needs manual investigation - the driver doesn't properly escape WHERE conditions
-		// For now, keeping the workaround with executeUpdateWithWhereMap
-		/*
-			var result *gorm.DB
-			if len(conditions) == 0 {
-				if p.Type == engine.DatabaseType_MySQL || p.Type == engine.DatabaseType_MariaDB {
-					result = p.executeUpdateWithWhereMap(db, tableName, unchangedValues, convertedValues)
-				} else {
-					result = db.Table(tableName).Where(unchangedValues).Updates(convertedValues)
-				}
-			} else {
-				if p.Type == engine.DatabaseType_MySQL || p.Type == engine.DatabaseType_MariaDB {
-					result = p.executeUpdateWithWhereMap(db, tableName, conditions, convertedValues)
-				} else {
-					result = db.Table(tableName).Where(conditions, nil).Updates(convertedValues)
-				}
-			}
-		*/
-
-		// Use SQLBuilder for consistent behavior
+		// Use SQLBuilder for consistent behavior for all database types.
 		var whereConditions map[string]any
 		if len(conditions) == 0 {
 			whereConditions = unchangedValues
@@ -105,14 +84,7 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 			whereConditions = conditions
 		}
 
-		var result *gorm.DB
-		if p.Type == engine.DatabaseType_MySQL || p.Type == engine.DatabaseType_MariaDB {
-			// Keep the workaround for MySQL/MariaDB
-			result = p.executeUpdateWithWhereMap(db, tableName, whereConditions, convertedValues)
-		} else {
-			// Use SQLBuilder for other databases
-			result = builder.UpdateQuery(schema, storageUnit, convertedValues, whereConditions)
-		}
+		result := builder.UpdateQuery(schema, storageUnit, convertedValues, whereConditions)
 
 		if result.Error != nil {
 			log.Logger.WithError(result.Error).Error(fmt.Sprintf("Failed to update rows in table %s.%s", schema, storageUnit))
@@ -141,26 +113,4 @@ func (p *GormPlugin) GetErrorHandler() *ErrorHandler {
 		p.InitPlugin()
 	}
 	return p.errorHandler
-}
-
-// executeUpdateWithWhereMap handles updates with WHERE conditions
-// MySQL/MariaDB have a specific edge case with identifier escaping in WHERE clauses
-// that requires manual handling for now
-func (p *GormPlugin) executeUpdateWithWhereMap(db *gorm.DB, tableName string, whereConditions map[string]interface{}, updateValues map[string]interface{}) *gorm.DB {
-	query := db.Table(tableName)
-
-	// MySQL/MariaDB edge case: requires manual escaping for WHERE clause identifiers
-	// This is a known issue with the driver, other databases should use GORM's native Where()
-	if p.Type == engine.DatabaseType_MySQL || p.Type == engine.DatabaseType_MariaDB {
-		builder := NewSQLBuilder(db, p)
-		for column, value := range whereConditions {
-			escapedColumn := builder.QuoteIdentifier(column)
-			query = query.Where(fmt.Sprintf("%s = ?", escapedColumn), value)
-		}
-	} else {
-		// For other databases, use GORM's native WHERE handling
-		query = query.Where(whereConditions)
-	}
-
-	return query.Updates(updateValues)
 }

@@ -68,11 +68,16 @@ func (p *ClickHousePlugin) ExportData(config *engine.PluginConfig, schema string
 		return fmt.Errorf("failed to write headers: %v", err)
 	}
 
-	// Use SQL builder for query construction
+	// Use GORM query builder for export
 	builder := gorm_plugin.NewSQLBuilder(db, p)
-	selectQuery := builder.BuildExportSelectQuery(schema, storageUnit, columns)
+	fullTable := builder.BuildFullTableName(schema, storageUnit)
 
-	dataRows, err := db.Raw(selectQuery).Rows()
+	exportQuery := db.Table(fullTable)
+	if len(columns) > 0 {
+		exportQuery = exportQuery.Select(columns)
+	}
+
+	dataRows, err := exportQuery.Rows()
 	if err != nil {
 		return fmt.Errorf("failed to query data: %v", err)
 	}

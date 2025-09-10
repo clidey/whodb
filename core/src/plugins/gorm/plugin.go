@@ -44,6 +44,12 @@ func (p *GormPlugin) InitPlugin() {
 	}
 }
 
+// CreateSQLBuilder creates a SQL builder instance - default implementation
+// Can be overridden by specific database plugins (e.g., MySQL)
+func (p *GormPlugin) CreateSQLBuilder(db *gorm.DB) SQLBuilderInterface {
+	return NewSQLBuilder(db, p)
+}
+
 type GormPluginFunctions interface {
 	// these below are meant to be generic-ish implementations by the base gorm plugin
 	ParseConnectionConfig(config *engine.PluginConfig) (*ConnectionInput, error)
@@ -52,25 +58,22 @@ type GormPluginFunctions interface {
 	ConvertRawToRows(raw *sql.Rows) (*engine.GetRowsResult, error)
 	ConvertRecordValuesToMap(values []engine.Record) (map[string]interface{}, error)
 
-	EscapeIdentifier(identifier string) string
+	// CreateSQLBuilder creates a SQL builder instance - can be overridden by specific plugins
+	CreateSQLBuilder(db *gorm.DB) SQLBuilderInterface
 
 	// these below are meant to be implemented by the specific database plugins
 	DB(config *engine.PluginConfig) (*gorm.DB, error)
 	GetSupportedColumnDataTypes() mapset.Set[string]
 	GetPlaceholder(index int) string
-	// Deprecated: GORM handles identifier escaping automatically
-	// This method is kept for backward compatibility but should not be used
-	ShouldQuoteIdentifiers() bool
 
 	GetTableInfoQuery() string
 	GetSchemaTableQuery() string
 	GetPrimaryKeyColQuery() string
 	GetColTypeQuery() string
 	GetAllSchemasQuery() string
-	GetCreateTableQuery(schema string, storageUnit string, columns []engine.Record) string
+	GetCreateTableQuery(db *gorm.DB, schema string, storageUnit string, columns []engine.Record) string
 
 	FormTableName(schema string, storageUnit string) string
-	EscapeSpecificIdentifier(identifier string) string
 	ConvertStringValueDuringMap(value, columnType string) (interface{}, error)
 
 	GetSupportedOperators() map[string]string
@@ -158,6 +161,8 @@ func (p *GormPlugin) GetTableSchema(db *gorm.DB, schema string) (map[string][]en
 		DataType   string `gorm:"column:DATA_TYPE"`
 	}
 
+	// Most plugins use information_schema.columns, but query structure varies
+	// Keep using Raw query since it's defined by each plugin
 	query := p.GetSchemaTableQuery()
 
 	if err := db.Raw(query, schema).Scan(&result).Error; err != nil {
@@ -193,14 +198,7 @@ func (p *GormPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, error
 
 func (p *GormPlugin) GetRows(config *engine.PluginConfig, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
-		// TODO: BIG EDGE CASE - SQLite requires special handling for date/time columns
-		// SQLite stores dates as TEXT and needs CAST operations for proper sorting
-		// This should ideally be handled by the SQLite plugin override, not here
-		if p.Type == engine.DatabaseType_Sqlite3 {
-			return p.getSQLiteRows(db, schema, storageUnit, where, sort, pageSize, pageOffset)
-		}
-
-		// General case for other databases
+		// Use generic implementation; database-specific behavior should be handled in each plugin
 		return p.getGenericRows(db, schema, storageUnit, where, sort, pageSize, pageOffset)
 	})
 }
@@ -225,69 +223,7 @@ func (p *GormPlugin) GetColumnsForTable(config *engine.PluginConfig, schema stri
 	})
 }
 
-func (p *GormPlugin) getSQLiteRows(db *gorm.DB, schema, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
-	columnInfo, err := p.GetColumnTypes(db, schema, storageUnit)
-	if err != nil {
-		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get column types for table %s.%s", schema, storageUnit))
-		return nil, err
-	}
-
-	selects := make([]string, 0, len(columnInfo))
-	columns := make([]string, 0, len(columnInfo))
-	columnTypes := make(map[string]string, len(columnInfo))
-	for col, colType := range columnInfo {
-		columns = append(columns, col)
-		columnTypes[col] = colType
-		colType = strings.ToUpper(colType)
-		if colType == "DATE" || colType == "DATETIME" || colType == "TIMESTAMP" {
-			selects = append(selects, fmt.Sprintf("CAST(%s AS TEXT) AS %s", col, col))
-		} else {
-			selects = append(selects, col)
-		}
-	}
-
-	builder := NewSQLBuilder(db, p)
-	fullTable := builder.BuildFullTableName(schema, storageUnit)
-
-	query := db.Table(fullTable)
-	query, err = p.applyWhereConditions(query, where, columnTypes)
-	if err != nil {
-		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to apply where conditions for table %s.%s", schema, storageUnit))
-		return nil, err
-	}
-
-	// Add ORDER BY clause if sort conditions are provided
-	if len(sort) > 0 {
-		// Convert to Sort type for builder
-		sortList := make([]plugins.Sort, len(sort))
-		for i, s := range sort {
-			sortList[i] = plugins.Sort{
-				Column:    s.Column,
-				Direction: plugins.Down,
-			}
-			if s.Direction == model.SortDirectionAsc {
-				sortList[i].Direction = plugins.Up
-			}
-		}
-		query = builder.BuildOrderBy(query, sortList)
-	} else {
-		// Apply custom ordering if specified by the database plugin
-		if orderBy := p.GormPluginFunctions.GetRowsOrderBy(db, schema, storageUnit); orderBy != "" {
-			query = query.Order(orderBy)
-		}
-	}
-
-	query = query.Limit(pageSize).Offset(pageOffset)
-
-	rows, err := query.Rows()
-	if err != nil {
-		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to execute SQLite rows query for table %s.%s", schema, storageUnit))
-		return nil, err
-	}
-	defer rows.Close()
-
-	return p.ConvertRawToRows(rows)
-}
+// SQLite-specific row retrieval is implemented in the sqlite3 plugin override.
 
 func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	var columnTypes map[string]string
@@ -296,11 +232,11 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 	}
 
 	// Use SQL builder for table name construction
-	builder := NewSQLBuilder(db, p)
+	builder := p.GormPluginFunctions.CreateSQLBuilder(db)
 	fullTable := builder.BuildFullTableName(schema, storageUnit)
 
 	query := db.Table(fullTable)
-	query, err := p.applyWhereConditions(query, where, columnTypes)
+	query, err := p.ApplyWhereConditions(query, where, columnTypes)
 	if err != nil {
 		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to apply where conditions for table %s.%s", schema, storageUnit))
 		return nil, err
@@ -352,7 +288,7 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 	return result, nil
 }
 
-func (p *GormPlugin) applyWhereConditions(query *gorm.DB, condition *model.WhereCondition, columnTypes map[string]string) (*gorm.DB, error) {
+func (p *GormPlugin) ApplyWhereConditions(query *gorm.DB, condition *model.WhereCondition, columnTypes map[string]string) (*gorm.DB, error) {
 	if condition == nil {
 		return query, nil
 	}
@@ -368,24 +304,85 @@ func (p *GormPlugin) applyWhereConditions(query *gorm.DB, condition *model.Where
 				}
 			}
 
-			value, err := p.GormPluginFunctions.ConvertStringValue(condition.Atomic.Value, columnType)
-			if err != nil {
-				log.Logger.WithError(err).Error(fmt.Sprintf("Failed to convert string value '%s' for column type '%s'", condition.Atomic.Value, columnType))
-				return nil, err
-			}
 			operator, ok := p.GetSupportedOperators()[condition.Atomic.Operator]
 			if !ok {
 				return nil, fmt.Errorf("invalid SQL operator: %s", condition.Atomic.Operator)
 			}
-			builder := NewSQLBuilder(query.Session(&gorm.Session{NewDB: true}), p)
-			query = query.Where(builder.QuoteIdentifier(condition.Atomic.Key)+" "+operator+" ?", value)
+
+			builder := p.GormPluginFunctions.CreateSQLBuilder(query.Session(&gorm.Session{NewDB: true}))
+			col := builder.QuoteIdentifier(condition.Atomic.Key)
+
+			// Handle operators that don't take values
+			switch operator {
+			case "IS NULL", "IS NOT NULL":
+				query = query.Where(col + " " + operator)
+				return query, nil
+			}
+
+			// Convert value for typed comparison
+			// Special handling for operators with multiple values
+			switch operator {
+			case "IN", "NOT IN":
+				// Expect comma-separated list; split and convert each
+				raw := strings.TrimSpace(condition.Atomic.Value)
+				if raw == "" {
+					// empty IN list should return no rows; use a false predicate
+					query = query.Where("1 = 0")
+					return query, nil
+				}
+				parts := strings.Split(raw, ",")
+				vals := make([]interface{}, 0, len(parts))
+				for _, part := range parts {
+					v := strings.TrimSpace(part)
+					cv, err := p.GormPluginFunctions.ConvertStringValue(v, columnType)
+					if err != nil {
+						log.Logger.WithError(err).Error(fmt.Sprintf("Failed to convert IN value '%s' for column type '%s'", v, columnType))
+						return nil, err
+					}
+					vals = append(vals, cv)
+				}
+				query = query.Where(col+" "+operator+" ?", vals)
+				return query, nil
+
+			case "BETWEEN", "NOT BETWEEN":
+				// Expect two values separated by comma: min,max
+				raw := strings.TrimSpace(condition.Atomic.Value)
+				parts := strings.Split(raw, ",")
+				if len(parts) != 2 {
+					return nil, fmt.Errorf("invalid BETWEEN value; expected 'min,max'")
+				}
+				v1, err1 := p.GormPluginFunctions.ConvertStringValue(strings.TrimSpace(parts[0]), columnType)
+				if err1 != nil {
+					log.Logger.WithError(err1).Error("Failed to convert BETWEEN min value")
+					return nil, err1
+				}
+				v2, err2 := p.GormPluginFunctions.ConvertStringValue(strings.TrimSpace(parts[1]), columnType)
+				if err2 != nil {
+					log.Logger.WithError(err2).Error("Failed to convert BETWEEN max value")
+					return nil, err2
+				}
+				if operator == "BETWEEN" {
+					query = query.Where(col+" BETWEEN ? AND ?", v1, v2)
+				} else {
+					query = query.Where(col+" NOT BETWEEN ? AND ?", v1, v2)
+				}
+				return query, nil
+			default:
+				// Single value operators (=, <, >, LIKE, etc.)
+				value, err := p.GormPluginFunctions.ConvertStringValue(condition.Atomic.Value, columnType)
+				if err != nil {
+					log.Logger.WithError(err).Error(fmt.Sprintf("Failed to convert string value '%s' for column type '%s'", condition.Atomic.Value, columnType))
+					return nil, err
+				}
+				query = query.Where(col+" "+operator+" ?", value)
+			}
 		}
 
 	case model.WhereConditionTypeAnd:
 		if condition.And != nil {
 			for _, child := range condition.And.Children {
 				var err error
-				query, err = p.applyWhereConditions(query, child, columnTypes)
+				query, err = p.ApplyWhereConditions(query, child, columnTypes)
 				if err != nil {
 					log.Logger.WithError(err).Error("Failed to apply AND where condition")
 					return nil, err
@@ -397,7 +394,7 @@ func (p *GormPlugin) applyWhereConditions(query *gorm.DB, condition *model.Where
 		if condition.Or != nil {
 			orQueries := query
 			for _, child := range condition.Or.Children {
-				childQuery, err := p.applyWhereConditions(query, child, columnTypes)
+				childQuery, err := p.ApplyWhereConditions(query, child, columnTypes)
 				if err != nil {
 					log.Logger.WithError(err).Error("Failed to apply OR where condition")
 					return nil, err
@@ -545,19 +542,16 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 func (p *GormPlugin) FindMissingDataType(db *gorm.DB, columnType string) string {
 	if p.Type == engine.DatabaseType_Postgres {
 		var typname string
-		if err := db.Raw("SELECT typname FROM pg_type WHERE oid = ?", columnType).Scan(&typname).Error; err != nil {
+		if err := db.Table("pg_type").
+			Select("typname").
+			Where("oid = ?", columnType).
+			Scan(&typname).Error; err != nil {
 			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to find PostgreSQL type name for OID: %s", columnType))
 			typname = columnType
 		}
 		return strings.ToUpper(typname)
 	}
 	return columnType
-}
-
-// ShouldQuoteIdentifiers is deprecated - GORM handles identifier escaping automatically
-// This method is kept for backward compatibility with existing plugins
-func (p *GormPlugin) ShouldQuoteIdentifiers() bool {
-	return false
 }
 
 // GetRowsOrderBy returns the ORDER BY clause for pagination queries

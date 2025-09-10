@@ -115,7 +115,7 @@ func (p *GormPlugin) getColumnConstraintsRaw(db *gorm.DB, schema string, storage
 // clearTableDataWithDB performs the actual table data clearing using the provided database connection
 func (p *GormPlugin) clearTableDataWithDB(db *gorm.DB, schema string, storageUnit string) error {
 	// Use SQL builder for consistent delete operations
-	builder := NewSQLBuilder(db, p)
+	builder := p.GormPluginFunctions.CreateSQLBuilder(db)
 	// Delete all rows (empty conditions map means delete all)
 	result := builder.DeleteQuery(schema, storageUnit, map[string]any{"1": 1})
 	return result.Error

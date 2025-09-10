@@ -22,7 +22,24 @@ import (
 
 	"github.com/clidey/whodb/core/src/plugins"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
+
+// SQLBuilderInterface defines the methods that can be overridden by database-specific implementations
+type SQLBuilderInterface interface {
+	QuoteIdentifier(identifier string) string
+	BuildFullTableName(schema, table string) string
+	GetTableQuery(schema, table string) *gorm.DB
+	SelectQuery(schema, table string, columns []string, conditions map[string]any) *gorm.DB
+	BuildOrderBy(query *gorm.DB, sortList []plugins.Sort) *gorm.DB
+	CreateTableQuery(schema, table string, columns []ColumnDef) string
+	CreateTableQueryWithSuffix(schema, table string, columns []ColumnDef, suffix string) string
+	InsertRow(schema, table string, data map[string]any) error
+	UpdateQuery(schema, table string, updates map[string]any, conditions map[string]any) *gorm.DB
+	DeleteQuery(schema, table string, conditions map[string]any) *gorm.DB
+	CountQuery(schema, table string) (int64, error)
+	PragmaQuery(pragma, table string) string
+}
 
 // SQLBuilder provides SQL query building functionality
 // IMPORTANT: This builder prioritizes GORM's native methods for all operations where possible.
@@ -33,37 +50,69 @@ import (
 type SQLBuilder struct {
 	db     *gorm.DB
 	plugin GormPluginFunctions
+	self   SQLBuilderInterface // Reference to the actual implementation
 }
 
 // NewSQLBuilder creates a new SQL builder
 func NewSQLBuilder(db *gorm.DB, plugin GormPluginFunctions) *SQLBuilder {
-	return &SQLBuilder{
+	sb := &SQLBuilder{
 		db:     db,
 		plugin: plugin,
 	}
+	sb.self = sb // Default to self, will be overridden if wrapped
+	return sb
+}
+
+// SetSelf sets the reference to the actual implementation (used by subclasses)
+func (sb *SQLBuilder) SetSelf(self SQLBuilderInterface) {
+	sb.self = self
+}
+
+// GetDB returns the underlying GORM DB instance
+func (sb *SQLBuilder) GetDB() *gorm.DB {
+	return sb.db
 }
 
 // QuoteIdentifier quotes an identifier (column/table name) ONLY for DDL operations
 // For DML operations (SELECT, INSERT, UPDATE, DELETE), use GORM's native methods
 // which handle escaping automatically
 func (sb *SQLBuilder) QuoteIdentifier(identifier string) string {
-	return sb.plugin.EscapeIdentifier(identifier)
+	// Prefer GORM dialect quoting when available
+	if sb.db != nil && sb.db.Dialector != nil {
+		var b strings.Builder
+		sb.db.Dialector.QuoteTo(&b, identifier)
+		return b.String()
+	}
+	// If no dialect is available (should be rare), return as-is
+	return identifier
 }
 
 // BuildFullTableName builds a fully qualified table name for GORM operations
 // GORM handles escaping internally, so we just build the string
 func (sb *SQLBuilder) BuildFullTableName(schema, table string) string {
-	if schema == "" {
-		return table
+	// Validate table name
+	if table == "" {
+		// Return empty string, let the caller handle the error
+		return ""
 	}
-	return schema + "." + table
+	// Quote identifiers for safety; db.Table() uses this string verbatim
+	if schema == "" {
+		return sb.QuoteIdentifier(table)
+	}
+	return sb.QuoteIdentifier(schema) + "." + sb.QuoteIdentifier(table)
+}
+
+// GetTableQuery creates a GORM query with the appropriate table reference
+// This method can be overridden by database-specific implementations
+func (sb *SQLBuilder) GetTableQuery(schema, table string) *gorm.DB {
+	fullTableName := sb.BuildFullTableName(schema, table)
+	return sb.db.Table(fullTableName)
 }
 
 // SelectQuery builds a SELECT query using GORM's query builder
 // GORM handles all escaping automatically
 func (sb *SQLBuilder) SelectQuery(schema, table string, columns []string, conditions map[string]any) *gorm.DB {
-	fullTableName := sb.BuildFullTableName(schema, table)
-	query := sb.db.Table(fullTableName)
+	query := sb.self.GetTableQuery(schema, table)
 
 	// GORM handles column name escaping automatically
 	if len(columns) > 0 {
@@ -82,12 +131,10 @@ func (sb *SQLBuilder) SelectQuery(schema, table string, columns []string, condit
 // GORM handles column name escaping automatically
 func (sb *SQLBuilder) BuildOrderBy(query *gorm.DB, sortList []plugins.Sort) *gorm.DB {
 	for _, sort := range sortList {
-		direction := "ASC"
-		if sort.Direction == plugins.Down {
-			direction = "DESC"
-		}
-		// GORM's Order method handles column name escaping automatically
-		query = query.Order(sort.Column + " " + direction)
+		query = query.Order(clause.OrderByColumn{
+			Column: clause.Column{Name: sort.Column},
+			Desc:   sort.Direction == plugins.Down,
+		})
 	}
 	return query
 }
@@ -96,7 +143,7 @@ func (sb *SQLBuilder) BuildOrderBy(query *gorm.DB, sortList []plugins.Sort) *gor
 // DDL requires manual SQL building as GORM doesn't support dynamic table creation
 func (sb *SQLBuilder) CreateTableQuery(schema, table string, columns []ColumnDef) string {
 	columnDefs := make([]string, len(columns))
-	primaryKeys := []string{}
+	var primaryKeys []string
 
 	for i, col := range columns {
 		def := sb.QuoteIdentifier(col.Name) + " " + col.Type
@@ -139,15 +186,37 @@ func (sb *SQLBuilder) CreateTableQueryWithSuffix(schema, table string, columns [
 // InsertRow inserts a row using GORM's Create method
 // GORM handles all escaping automatically
 func (sb *SQLBuilder) InsertRow(schema, table string, data map[string]any) error {
-	fullTableName := sb.BuildFullTableName(schema, table)
-	return sb.db.Table(fullTableName).Create(data).Error
+	if table == "" {
+		return fmt.Errorf("table name cannot be empty when inserting row")
+	}
+
+	// Let GORM handle the table name formatting
+	// GORM's dialect will properly escape and format the table name
+	tableName := table
+	if schema != "" {
+		// For databases that support schemas, use schema.table format
+		// GORM will handle this appropriately for each dialect
+		tableName = schema + "." + table
+	}
+
+	result := sb.db.Table(tableName).Create(data)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	return nil
 }
 
 // UpdateQuery builds an UPDATE query using GORM's Update methods
 // GORM handles all escaping automatically
 func (sb *SQLBuilder) UpdateQuery(schema, table string, updates map[string]any, conditions map[string]any) *gorm.DB {
-	fullTableName := sb.BuildFullTableName(schema, table)
-	query := sb.db.Table(fullTableName)
+	// Let GORM handle the table name formatting
+	tableName := table
+	if schema != "" {
+		tableName = schema + "." + table
+	}
+
+	query := sb.db.Table(tableName)
 
 	// Add WHERE conditions using GORM's native support
 	if len(conditions) > 0 {
@@ -161,8 +230,13 @@ func (sb *SQLBuilder) UpdateQuery(schema, table string, updates map[string]any, 
 // DeleteQuery builds a DELETE query using GORM's Delete method
 // GORM handles all escaping automatically
 func (sb *SQLBuilder) DeleteQuery(schema, table string, conditions map[string]any) *gorm.DB {
-	fullTableName := sb.BuildFullTableName(schema, table)
-	query := sb.db.Table(fullTableName)
+	// Let GORM handle the table name formatting
+	tableName := table
+	if schema != "" {
+		tableName = schema + "." + table
+	}
+
+	query := sb.db.Table(tableName)
 
 	// Add WHERE conditions using GORM's native support
 	if len(conditions) > 0 {
@@ -176,32 +250,14 @@ func (sb *SQLBuilder) DeleteQuery(schema, table string, conditions map[string]an
 // GORM handles all escaping automatically
 func (sb *SQLBuilder) CountQuery(schema, table string) (int64, error) {
 	var count int64
-	fullTableName := sb.BuildFullTableName(schema, table)
-	err := sb.db.Table(fullTableName).Count(&count).Error
+	// Let GORM handle the table name formatting
+	tableName := table
+	if schema != "" {
+		tableName = schema + "." + table
+	}
+
+	err := sb.db.Table(tableName).Count(&count).Error
 	return count, err
-}
-
-// BuildExportSelectQuery builds a SELECT query for export
-// This is only used for SQLite special case where GORM doesn't handle date casting
-// For normal exports, use GORM's query builder instead
-func (sb *SQLBuilder) BuildExportSelectQuery(schema, table string, columns []string) string {
-	columnList := "*"
-	if len(columns) > 0 {
-		quotedColumns := make([]string, len(columns))
-		for i, col := range columns {
-			quotedColumns[i] = sb.QuoteIdentifier(col)
-		}
-		columnList = strings.Join(quotedColumns, ", ")
-	}
-
-	// For raw SQL, we need proper identifier escaping
-	var fullTableName string
-	if schema == "" {
-		fullTableName = sb.QuoteIdentifier(table)
-	} else {
-		fullTableName = sb.QuoteIdentifier(schema) + "." + sb.QuoteIdentifier(table)
-	}
-	return fmt.Sprintf("SELECT %s FROM %s", columnList, fullTableName)
 }
 
 // PragmaQuery builds a SQLite PRAGMA query
