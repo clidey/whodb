@@ -67,13 +67,10 @@ export const Export: FC<IExportProps> = ({
 
     // Convert selected rows data to the format expected by the hook
     const selectedRowsForExport = useMemo(() => {
-        if (!hasSelectedRows || !selectedRowsData) return undefined;
-        return selectedRowsData.map(row => 
-            row.reduce((acc, cell, index) => {
-                acc[`column_${index}`] = cell;
-                return acc;
-            }, {} as Record<string, any>)
-        );
+        if (!hasSelectedRows || !selectedRowsData) {
+            return undefined;
+        }
+        return selectedRowsData;
     }, [hasSelectedRows, selectedRowsData]);
 
     // Always call the hook, but use conditional logic inside

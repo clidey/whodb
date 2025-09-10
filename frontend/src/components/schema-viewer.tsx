@@ -16,6 +16,7 @@ import { InternalRoutes } from "../config/routes";
 import { useAppSelector } from "../store/hooks";
 import { Loading } from "./loading";
 import { getDatabaseStorageUnitLabel } from "../utils/functions";
+import { databaseSupportsDatabaseSwitching } from "../utils/database-features";
 
 function groupByType(units: StorageUnit[]) {
     const groups: Record<string, any[]> = {};
@@ -33,7 +34,6 @@ export const SchemaViewer: FC = () => {
     const selectedSchema = useAppSelector(state => state.database.schema);
     const navigate = useNavigate();
     const state = useLocation().state as { unit: StorageUnit } | undefined;
-    const pathname = useLocation().pathname;
 
     // Search state
     const [search, setSearch] = useState("");
@@ -41,7 +41,7 @@ export const SchemaViewer: FC = () => {
     // Query for storage units (tables, views, etc.)
     const { data, loading } = useGetStorageUnitsQuery({
         variables: {
-            schema: selectedSchema,
+            schema: databaseSupportsDatabaseSwitching(current?.Type) ? current?.Database ?? "" : selectedSchema ?? "",
         },
         skip: !current || !selectedSchema,
     });

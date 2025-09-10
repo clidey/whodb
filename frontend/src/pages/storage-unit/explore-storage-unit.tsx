@@ -126,8 +126,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
             return generateInitialQuery(current?.Type, schema, unitName);
         }
         const qualified = schema ? `${schema}.${unitName}` : unitName;
-        return `SELECT *
-                FROM ${qualified} LIMIT 5`;
+        return `SELECT * FROM ${qualified} LIMIT 5`;
     }, [schema, unitName, current?.Type, generateInitialQuery]);
 
     const [code, setCode] = useState(initialScratchpadQuery);
