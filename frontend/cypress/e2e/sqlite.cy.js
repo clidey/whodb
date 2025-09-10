@@ -16,23 +16,23 @@
 
 describe('Sqlite3 E2E test', () => {
     it('runs full Sqlite3 E2E flow', () => {
-    // login and setup
-    cy.login('Sqlite3', undefined, undefined, undefined, 'e2e_test.db');
+        // login and setup
+        cy.login('Sqlite3', undefined, undefined, undefined, 'e2e_test.db');
 
         // 1) Lists tables
-    cy.getTables().then(storageUnitNames => {
-      expect(storageUnitNames).to.be.an('array');
-      expect(storageUnitNames).to.deep.equal([
-        "order_items",
-        "orders",
-        "payments",
-        "products",
-        "users"
-      ]);
-    });
+        cy.getTables().then(storageUnitNames => {
+            expect(storageUnitNames).to.be.an('array');
+            expect(storageUnitNames).to.deep.equal([
+                "order_items",
+                "orders",
+                "payments",
+                "products",
+                "users"
+            ]);
+        });
 
         // 2) Explore users table metadata
-    cy.explore("users");
+        cy.explore("users");
         cy.getExploreFields().then(fields => {
             expect(fields.some(([k, v]) => k === "Type" && v === "table")).to.be.true;
             expect(fields.some(([k]) => k === "Count")).to.be.true;
@@ -42,15 +42,15 @@ describe('Sqlite3 E2E test', () => {
                 ["email", "TEXT"],
                 ["password", "TEXT"],
                 ["created_at", "DATETIME"]
-      ];
+            ];
             expectedColumns.forEach(([col, type]) => {
                 expect(fields.some(([k, v]) => k === col && v === type)).to.be.true;
-      });
-    });
+            });
+        });
 
         // 3) Data: add a row then delete and verify table data
-    cy.data("users");
-    cy.sortBy(0);
+        cy.data("users");
+        cy.sortBy(0);
         cy.addRow({
             id: "5",
             username: "alice_wonder",
@@ -60,60 +60,60 @@ describe('Sqlite3 E2E test', () => {
         });
         cy.deleteRow(3);
         cy.getTableData().then(({columns, rows}) => {
-      expect(columns).to.deep.equal([
-          "",
-          "id",
-          "username",
-          "email",
-          "password",
-          "created_at"
-      ]);
-      expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
-          ['', '1', 'john_doe', 'john@example.com', 'securepassword1'],
-          ['', '2', 'jane_smith', 'jane@example.com', 'securepassword2'],
-          ['', '3', 'admin_user', 'admin@example.com', 'adminpass1']
-      ]);
-    });
+            expect(columns).to.deep.equal([
+                "",
+                "id",
+                "username",
+                "email",
+                "password",
+                "created_at"
+            ]);
+            expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
+                ['', '1', 'john_doe', 'john@example.com', 'securepassword1'],
+                ['', '2', 'jane_smith', 'jane@example.com', 'securepassword2'],
+                ['', '3', 'admin_user', 'admin@example.com', 'adminpass1']
+            ]);
+        });
 
         // 4) Respects page size pagination
-    cy.setTablePageSize(1);
-    cy.submitTable();
-    cy.getTableData().then(({ rows }) => {
-      expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
-          ['', '1', 'john_doe', 'john@example.com', 'securepassword1'],
-      ]);
-    });
+        cy.setTablePageSize(1);
+        cy.submitTable();
+        cy.getTableData().then(({rows}) => {
+            expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
+                ['', '1', 'john_doe', 'john@example.com', 'securepassword1'],
+            ]);
+        });
 
         // 5) Applies where condition id=3 and clears it
         cy.setTablePageSize(10);
         cy.whereTable([['id', '=', '3']]);
-    cy.submitTable();
-    cy.getTableData().then(({ rows }) => {
-      expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
-          ['', '3', 'admin_user', 'admin@example.com', 'adminpass1']
-      ]);
-    });
-    cy.clearWhereConditions();
-    cy.submitTable();
+        cy.submitTable();
         cy.getTableData().then(({rows}) => {
-      expect(rows.length).to.equal(3);
-    });
+            expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
+                ['', '3', 'admin_user', 'admin@example.com', 'adminpass1']
+            ]);
+        });
+        cy.clearWhereConditions();
+        cy.submitTable();
+        cy.getTableData().then(({rows}) => {
+            expect(rows.length).to.equal(3);
+        });
 
         // 6) Edit row: save, revert, and cancel
-    cy.setTablePageSize(2);
-    cy.submitTable();
+        cy.setTablePageSize(2);
+        cy.submitTable();
         cy.updateRow(1, 1, 'jane_smith1', false);
         cy.getTableData().then(({rows}) => {
             expect(rows[1][2]).to.equal('jane_smith1');
-    });
+        });
         cy.updateRow(1, 1, 'jane_smith', false);
         cy.getTableData().then(({rows}) => {
             expect(rows[1][2]).to.equal('jane_smith');
-    });
+        });
         cy.updateRow(1, 1, 'jane_smith_temp');
         cy.getTableData().then(({rows}) => {
             expect(rows[1][2]).to.equal('jane_smith');
-    });
+        });
 
         // 7) Search highlights multiple matches in sequence
         cy.searchTable('john');
@@ -123,20 +123,20 @@ describe('Sqlite3 E2E test', () => {
         cy.getHighlightedCell().first().should('have.text', 'john@example.com');
 
         // 8) Graph topology and node fields
-    cy.goto("graph");
-    cy.getGraph().then(graph => {
-      const expectedGraph = {
-        "users": ["orders"],
-        "orders": ["order_items", "payments"],
-        "order_items": [],
-        "products": ["order_items"],
-        "payments": [],
-      };
-      Object.keys(expectedGraph).forEach(key => {
-        expect(graph).to.have.property(key);
-        expect(graph[key].sort()).to.deep.equal(expectedGraph[key].sort());
-      });
-    });
+        cy.goto("graph");
+        cy.getGraph().then(graph => {
+            const expectedGraph = {
+                "users": ["orders"],
+                "orders": ["order_items", "payments"],
+                "order_items": [],
+                "products": ["order_items"],
+                "payments": [],
+            };
+            Object.keys(expectedGraph).forEach(key => {
+                expect(graph).to.have.property(key);
+                expect(graph[key].sort()).to.deep.equal(expectedGraph[key].sort());
+            });
+        });
         cy.getGraphNode("users").then(fields => {
             expect(fields.some(([k, v]) => k === "Type" && v === "table")).to.be.true;
             expect(fields.some(([k]) => k === "Count")).to.be.true;
@@ -146,7 +146,7 @@ describe('Sqlite3 E2E test', () => {
                 ["email", "TEXT"],
                 ["password", "TEXT"],
                 ["created_at", "DATETIME"]
-      ];
+            ];
             expectedColumns.forEach(([col, type]) => {
                 expect(fields.some(([k, v]) => k === col && v === type)).to.be.true;
             });
@@ -156,7 +156,7 @@ describe('Sqlite3 E2E test', () => {
         cy.get('[role="tab"]').first().click();
         cy.get('button').filter(':visible').then($buttons => {
             cy.wrap($buttons[1]).click();
-    });
+        });
 
         cy.get('[data-testid="rf__node-users"] [data-testid="data-button"]').click({force: true});
         cy.url().should('include', '/storage-unit/explore');
@@ -164,7 +164,7 @@ describe('Sqlite3 E2E test', () => {
         cy.get('[data-testid="table-search"]').should('be.visible');
 
         // 9) Scratchpad page runs queries and manages cells
-    cy.goto("scratchpad");
+        cy.goto("scratchpad");
         cy.addScratchpadPage();
         cy.getScratchpadPages().then(pages => {
             expect(pages).to.deep.equal(["Page 1", "Page 2"]);
@@ -178,67 +178,67 @@ describe('Sqlite3 E2E test', () => {
             expect(pages).to.deep.equal(["Page 2"]);
         });
 
-    cy.writeCode(0, "SELECT * FROM users1;");
-    cy.runCode(0);
-    cy.getCellError(0).then(err => expect(err).to.equal('no such table: users1'));
+        cy.writeCode(0, "SELECT * FROM users1;");
+        cy.runCode(0);
+        cy.getCellError(0).then(err => expect(err).to.equal('no such table: users1'));
 
-    cy.writeCode(0, "SELECT * FROM users ORDER BY id;");
-    cy.runCode(0);
-    cy.getCellQueryOutput(0).then(({ rows, columns }) => {
-      expect(columns).to.deep.equal([
-          "",
-          "id",
-          "username",
-          "email",
-          "password",
-          "created_at"
-      ]);
-      expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
-          ['', '1', 'john_doe', 'john@example.com', 'securepassword1'],
-          ['', '2', 'jane_smith', 'jane@example.com', 'securepassword2'],
-          ['', '3', 'admin_user', 'admin@example.com', 'adminpass1']
-      ]);
-    });
+        cy.writeCode(0, "SELECT * FROM users ORDER BY id;");
+        cy.runCode(0);
+        cy.getCellQueryOutput(0).then(({rows, columns}) => {
+            expect(columns).to.deep.equal([
+                "",
+                "id",
+                "username",
+                "email",
+                "password",
+                "created_at"
+            ]);
+            expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
+                ['', '1', 'john_doe', 'john@example.com', 'securepassword1'],
+                ['', '2', 'jane_smith', 'jane@example.com', 'securepassword2'],
+                ['', '3', 'admin_user', 'admin@example.com', 'adminpass1']
+            ]);
+        });
 
-    cy.writeCode(0, "UPDATE users SET username='john_doe1' WHERE id=1");
-    cy.runCode(0);
-    cy.getCellActionOutput(0).then(output => expect(output).to.equal('Action Executed'));
+        cy.writeCode(0, "UPDATE users SET username='john_doe1' WHERE id=1");
+        cy.runCode(0);
+        cy.getCellActionOutput(0).then(output => expect(output).to.equal('Action Executed'));
 
-    cy.writeCode(0, "UPDATE users SET username='john_doe' WHERE id=1");
-    cy.runCode(0);
-    cy.getCellActionOutput(0).then(output => expect(output).to.equal('Action Executed'));
+        cy.writeCode(0, "UPDATE users SET username='john_doe' WHERE id=1");
+        cy.runCode(0);
+        cy.getCellActionOutput(0).then(output => expect(output).to.equal('Action Executed'));
 
-    cy.addCell(0);
-    cy.writeCode(1, "SELECT * FROM users WHERE id=1;");
-    cy.runCode(1);
-    cy.getCellQueryOutput(1).then(({ rows, columns }) => {
-      expect(columns).to.deep.equal([
-          "",
-          "id",
-          "username",
-          "email",
-          "password",
-          "created_at"
-      ]);
-      expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
-          ['', '1', 'john_doe', 'john@example.com', 'securepassword1'],
-      ]);
-    });
+        cy.addCell(0);
+        cy.writeCode(1, "SELECT * FROM users WHERE id=1;");
+        cy.runCode(1);
+        cy.getCellQueryOutput(1).then(({rows, columns}) => {
+            expect(columns).to.deep.equal([
+                "",
+                "id",
+                "username",
+                "email",
+                "password",
+                "created_at"
+            ]);
+            expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
+                ['', '1', 'john_doe', 'john@example.com', 'securepassword1'],
+            ]);
+        });
 
-    cy.removeCell(0);
-    cy.getCellQueryOutput(0).then(({ rows, columns }) => {
-      expect(columns).to.deep.equal([
-          "",
-          "id",
-          "username",
-          "email",
-          "password",
-          "created_at"
-      ]);
-      expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
-          ['', '1', 'john_doe', 'john@example.com', 'securepassword1'],
-      ]);
-    });
+        cy.removeCell(0);
+        cy.getCellQueryOutput(0).then(({rows, columns}) => {
+            expect(columns).to.deep.equal([
+                "",
+                "id",
+                "username",
+                "email",
+                "password",
+                "created_at"
+            ]);
+            expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
+                ['', '1', 'john_doe', 'john@example.com', 'securepassword1'],
+            ]);
+        });
 
         // 10) Manage where conditions (edit and sheet)
         cy.data('users');
@@ -443,6 +443,7 @@ describe('Sqlite3 E2E test', () => {
         cy.get('[data-testid="table-search"]').should('be.visible');
 
         // 13) Open Mock Data sheet, enforce limits, and show overwrite confirmation
+        cy.data('users');
         cy.get('table thead tr').eq(0).rightclick({force: true});
         cy.contains('div,button,span', 'Mock Data').click({force: true});
 
@@ -497,5 +498,5 @@ describe('Sqlite3 E2E test', () => {
 
         cy.get('body').type('{esc}');
         cy.logout()
-  });
+    });
 });

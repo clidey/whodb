@@ -222,7 +222,7 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, schema string, stor
 		}
 
 		// For non-STRICT tables, use custom handling with CAST for date/time types
-		columnInfo, err := p.GetColumnTypes(db, schema, storageUnit)
+		orderedColumns, columnTypes, err := p.GetOrderedColumnsWithTypes(db, schema, storageUnit)
 		if err != nil {
 			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get column types for table %s.%s", schema, storageUnit))
 			return nil, err
@@ -231,18 +231,16 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, schema string, stor
 		builder := gorm_plugin.NewSQLBuilder(db, p)
 		fullTable := builder.BuildFullTableName("", storageUnit)
 
-		selects := make([]string, 0, len(columnInfo))
-		columns := make([]string, 0, len(columnInfo))
-		columnTypes := make(map[string]string, len(columnInfo))
-		for col, colType := range columnInfo {
-			columns = append(columns, col)
-			columnTypes[col] = colType
-			upper := strings.ToUpper(colType)
+		selects := make([]string, 0, len(orderedColumns))
+		columns := make([]string, 0, len(orderedColumns))
+		for _, col := range orderedColumns {
+			columns = append(columns, col.Name)
+			upper := strings.ToUpper(col.Type)
 			// Only apply CAST for non-STRICT tables
 			if upper == "DATE" || upper == "DATETIME" || upper == "TIMESTAMP" {
-				selects = append(selects, fmt.Sprintf("CAST(%s AS TEXT) AS %s", builder.QuoteIdentifier(col), builder.QuoteIdentifier(col)))
+				selects = append(selects, fmt.Sprintf("CAST(%s AS TEXT) AS %s", builder.QuoteIdentifier(col.Name), builder.QuoteIdentifier(col.Name)))
 			} else {
-				selects = append(selects, builder.QuoteIdentifier(col))
+				selects = append(selects, builder.QuoteIdentifier(col.Name))
 			}
 		}
 

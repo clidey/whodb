@@ -205,18 +205,21 @@ func (p *GormPlugin) GetRows(config *engine.PluginConfig, schema string, storage
 
 func (p *GormPlugin) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]engine.Column, error) {
-		columnTypes, err := p.GetColumnTypes(db, schema, storageUnit)
-		if err != nil {
-			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get column types for table %s.%s", schema, storageUnit))
-			return nil, err
+		migrator := NewMigratorHelper(db, p)
+
+		// Build full table name for Migrator
+		var fullTableName string
+		if schema != "" && p.Type != engine.DatabaseType_Sqlite3 {
+			fullTableName = schema + "." + storageUnit
+		} else {
+			fullTableName = storageUnit
 		}
 
-		columns := make([]engine.Column, 0, len(columnTypes))
-		for columnName, columnType := range columnTypes {
-			columns = append(columns, engine.Column{
-				Name: columnName,
-				Type: columnType,
-			})
+		// Get ordered columns
+		columns, err := migrator.GetOrderedColumns(fullTableName)
+		if err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get columns for table %s.%s", schema, storageUnit))
+			return nil, err
 		}
 
 		return columns, nil

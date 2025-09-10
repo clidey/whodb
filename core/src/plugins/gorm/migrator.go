@@ -91,6 +91,72 @@ func (m *MigratorHelper) GetColumnTypes(tableName string) (map[string]string, er
 	return columnTypes, nil
 }
 
+// GetOrderedColumns returns columns in their definition order
+func (m *MigratorHelper) GetOrderedColumns(tableName string) ([]engine.Column, error) {
+	// Try to use GORM's Migrator ColumnTypes method
+	types, err := m.migrator.ColumnTypes(tableName)
+	if err != nil {
+		// Fall back to raw SQL if Migrator doesn't work
+		return m.getOrderedColumnsRaw(tableName)
+	}
+
+	columns := make([]engine.Column, 0, len(types))
+	for _, col := range types {
+		columns = append(columns, engine.Column{
+			Name: col.Name(),
+			Type: strings.ToUpper(col.DatabaseTypeName()),
+		})
+	}
+
+	return columns, nil
+}
+
+// getOrderedColumnsRaw falls back to raw SQL for ordered columns
+func (m *MigratorHelper) getOrderedColumnsRaw(tableName string) ([]engine.Column, error) {
+	var columns []engine.Column
+
+	// Extract schema and table name
+	parts := strings.Split(tableName, ".")
+	var schema, table string
+	if len(parts) == 2 {
+		schema = parts[0]
+		table = parts[1]
+	} else {
+		table = tableName
+	}
+
+	query := m.plugin.GetColTypeQuery()
+
+	var rows *sql.Rows
+	var err error
+
+	if m.plugin.GetDatabaseType() == engine.DatabaseType_Sqlite3 {
+		rows, err = m.db.Raw(query, table).Rows()
+	} else {
+		rows, err = m.db.Raw(query, schema, table).Rows()
+	}
+
+	if err != nil {
+		log.Logger.WithError(err).WithField("table", tableName).Error("Failed to execute column types query")
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var columnName, dataType string
+		if err := rows.Scan(&columnName, &dataType); err != nil {
+			log.Logger.WithError(err).Error("Failed to scan column type")
+			return nil, err
+		}
+		columns = append(columns, engine.Column{
+			Name: columnName,
+			Type: strings.ToUpper(dataType),
+		})
+	}
+
+	return columns, nil
+}
+
 // getColumnTypesRaw falls back to raw SQL for column types
 func (m *MigratorHelper) getColumnTypesRaw(tableName string) (map[string]string, error) {
 	columnTypes := make(map[string]string)
@@ -138,25 +204,3 @@ func (m *MigratorHelper) getColumnTypesRaw(tableName string) (map[string]string,
 
 	return columnTypes, nil
 }
-
-//// GetPrimaryKeys gets primary key columns using Migrator
-//func (m *MigratorHelper) GetPrimaryKeys(tableName string) ([]string, error) {
-//	var primaryKeys []string
-//
-//	// Try to get column types which includes primary key info
-//	columnTypes, err := m.migrator.ColumnTypes(tableName)
-//	if err != nil {
-//		// Fall back to raw SQL if Migrator doesn't work
-//		return m.getPrimaryKeysRaw(tableName)
-//	}
-//
-//	for _, col := range columnTypes {
-//		isPrimary, ok := col.PrimaryKey()
-//		if ok && isPrimary {
-//			primaryKeys = append(primaryKeys, col.Name())
-//		}
-//	}
-//
-//	// Return whatever we found (could be empty)
-//	return primaryKeys, nil
-//}

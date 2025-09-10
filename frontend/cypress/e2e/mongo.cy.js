@@ -23,25 +23,25 @@ describe('MongoDB E2E test', () => {
 
 
     it('runs full MongoDB E2E flow', () => {
-    // login and setup
+        // login and setup
         cy.login('MongoDB', dbHost, dbUser, dbPassword, dbName);
 
         // 1) Lists collections
-    cy.getTables().then(storageUnitNames => {
-      expect(storageUnitNames).to.be.an('array');
-      expect(storageUnitNames).to.deep.equal([
-        "order_items",
-        "order_summary",
-        "orders",
-        "payments",
-        "products",
-        "system.views",
-          "users"
-      ]);
-    });
+        cy.getTables().then(storageUnitNames => {
+            expect(storageUnitNames).to.be.an('array');
+            expect(storageUnitNames).to.deep.equal([
+                "order_items",
+                "order_summary",
+                "orders",
+                "payments",
+                "products",
+                "system.views",
+                "users"
+            ]);
+        });
 
         // 2) Explore users collection metadata
-    cy.explore("users");
+        cy.explore("users");
         cy.getExploreFields().then(fields => {
             const arr = Array.isArray(fields) ? fields : (typeof fields === "string" ? fields.split("\n").map(line => {
                 const idx = line.indexOf(": ");
@@ -51,25 +51,25 @@ describe('MongoDB E2E test', () => {
             expect(arr.some(([k, v]) => k === "Type" && v === "Collection")).to.be.true;
             expect(arr.some(([k]) => k === "Storage Size")).to.be.true;
             expect(arr.some(([k]) => k === "Count")).to.be.true;
-    });
+        });
 
         // 3) Data: verify collection data
-    cy.data("users");
-    cy.sortBy(0);
-    cy.getTableData().then(({ columns, rows }) => {
-        expect(columns).to.deep.equal(["", "document"]);
-        const expectedRows = [
-            {email: "john@example.com", password: "securepassword1", username: "john_doe"},
-            {email: "jane@example.com", password: "securepassword2", username: "jane_smith"},
-            {email: "admin@example.com", password: "adminpass", username: "admin_user"}
-        ];
-        rows.forEach((row, idx) => {
-            const json = JSON.parse(row[1]);
-            expect(json.email).to.equal(expectedRows[idx].email);
-            expect(json.password).to.equal(expectedRows[idx].password);
-            expect(json.username).to.equal(expectedRows[idx].username);
+        cy.data("users");
+        cy.sortBy(0);
+        cy.getTableData().then(({columns, rows}) => {
+            expect(columns).to.deep.equal(["", "document"]);
+            const expectedRows = [
+                {email: "john@example.com", password: "securepassword1", username: "john_doe"},
+                {email: "jane@example.com", password: "securepassword2", username: "jane_smith"},
+                {email: "admin@example.com", password: "adminpass", username: "admin_user"}
+            ];
+            rows.forEach((row, idx) => {
+                const json = JSON.parse(row[1]);
+                expect(json.email).to.equal(expectedRows[idx].email);
+                expect(json.password).to.equal(expectedRows[idx].password);
+                expect(json.username).to.equal(expectedRows[idx].username);
+            });
         });
-    });
 
         // 4) Respects page size pagination
         cy.setTablePageSize(1);
@@ -88,8 +88,8 @@ describe('MongoDB E2E test', () => {
                 expect(filteredRows.length).to.equal(1);
                 expect(JSON.parse(filteredRows[0][1])._id).to.equal(firstDocId);
             });
-      cy.clearWhereConditions();
-      cy.submitTable();
+            cy.clearWhereConditions();
+            cy.submitTable();
             cy.getTableData().then(({rows: clearedRows}) => {
                 expect(clearedRows.length).to.equal(3);
             });
@@ -197,7 +197,7 @@ describe('MongoDB E2E test', () => {
             cy.submitTable();
             cy.getTableData().then(({rows}) => {
                 expect(JSON.parse(rows[0][1]).username).to.equal('jane_smith');
-      });
+            });
 
             cy.get('[data-testid="remove-where-condition-button"]').first().click();
 
@@ -243,5 +243,5 @@ describe('MongoDB E2E test', () => {
         cy.contains('Mock data generation is not allowed for this table').should('exist');
 
         cy.logout();
-  });
+    });
 });
