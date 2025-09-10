@@ -65,6 +65,11 @@ func (p *GormPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, 
 				nullable = false
 			}
 
+			// Validate: Primary keys cannot be nullable
+			if primaryKey && nullable {
+				return false, fmt.Errorf("column %s cannot be both primary key and nullable", fieldType.Key)
+			}
+
 			columns = append(columns, engine.Record{
 				Key:   fieldName,
 				Value: fieldType.Value,
