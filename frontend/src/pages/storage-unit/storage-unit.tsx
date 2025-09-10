@@ -67,9 +67,9 @@ const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = (
     })} data-testid="storage-unit-card">
         <div className="flex flex-col grow mt-2" data-testid="storage-unit-card">
             <div className="flex flex-col grow mb-2 w-full overflow-x-hidden">
-                <Tip>
+                <Tip className="w-fit">
                     <h1
-                        className="text-sm font-semibold mb-2 overflow-hidden text-ellipsis whitespace-nowrap max-w-[190px] mx-auto text-center"
+                        className="text-sm font-semibold mb-2 overflow-hidden text-ellipsis whitespace-nowrap max-w-[190px]"
                         data-testid="storage-unit-name"
                         title={unit.Name}
                     >
