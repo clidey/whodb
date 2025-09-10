@@ -14,9 +14,9 @@ import { FC, useCallback, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { InternalRoutes } from "../config/routes";
 import { useAppSelector } from "../store/hooks";
-import { Loading } from "./loading";
+import { databasesUsesDatabaseInsteadOfSchema } from "../utils/database-features";
 import { getDatabaseStorageUnitLabel } from "../utils/functions";
-import { databaseSupportsDatabaseSwitching } from "../utils/database-features";
+import { Loading } from "./loading";
 
 function groupByType(units: StorageUnit[]) {
     const groups: Record<string, any[]> = {};
@@ -41,7 +41,7 @@ export const SchemaViewer: FC = () => {
     // Query for storage units (tables, views, etc.)
     const { data, loading } = useGetStorageUnitsQuery({
         variables: {
-            schema: databaseSupportsDatabaseSwitching(current?.Type) ? current?.Database ?? "" : selectedSchema ?? "",
+            schema: databasesUsesDatabaseInsteadOfSchema(current?.Type) ? current?.Database ?? selectedSchema : selectedSchema,
         },
         skip: !current || !selectedSchema,
     });

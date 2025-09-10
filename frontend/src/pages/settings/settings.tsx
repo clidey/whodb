@@ -20,14 +20,19 @@ import { InternalRoutes } from "../../config/routes";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { SettingsActions } from "../../store/settings";
 import { isEEMode } from "@/config/ee-imports";
-import { Label, Switch, Separator } from "@clidey/ux";
+import { Label, Switch, Separator, DropdownMenu, DropdownMenuTrigger, Button, DropdownMenuContent, DropdownMenuItem, SelectTrigger, Select, SelectContent, SelectItem, SelectValue } from "@clidey/ux";
 
 export const SettingsPage: FC = () => {
     const dispatch = useAppDispatch();
     const metricsEnabled = useAppSelector(state => state.settings.metricsEnabled);
+    const storageUnitView = useAppSelector(state => state.settings.storageUnitView);
 
     const handleMetricsToggle = useCallback((enabled: boolean) => {
         dispatch(SettingsActions.setMetricsEnabled(enabled));
+    }, [dispatch]);
+
+    const handleStorageUnitViewToggle = useCallback((view: 'list' | 'card') => {
+        dispatch(SettingsActions.setStorageUnitView(view));
     }, [dispatch]);
 
     return (
@@ -66,9 +71,22 @@ export const SettingsPage: FC = () => {
                                     If you know of a tool that might serve us better, we’d love to hear from you! Just reach out via the
                                     "Contact Us" option in the bottom left corner of the screen.
                                 </h3>
-                                <div className="flex gap-2">
-                                    <Label>{metricsEnabled ? "Enabled" : "Disabled"}</Label>
+                                <div className="flex justify-between">
+                                    <Label>{metricsEnabled ? "Enable Telemetry" : "Disable Telemetry"}</Label>
                                     <Switch checked={metricsEnabled} onChange={() => handleMetricsToggle(!metricsEnabled)}/>
+                                </div>
+                                <Separator />
+                                <div className="flex justify-between">
+                                    <Label>Storage Unit Default View</Label>
+                                    <Select value={storageUnitView} onValueChange={handleStorageUnitViewToggle}>
+                                        <SelectTrigger id="storage-unit-view">
+                                            <SelectValue placeholder="Select a view" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="list">List</SelectItem>
+                                            <SelectItem value="card">Card</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             </div>
                         )}
