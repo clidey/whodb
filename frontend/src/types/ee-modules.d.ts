@@ -55,6 +55,11 @@ declare module '@ee/components/charts/pie-chart' {
   export default PieChart;
 }
 
+declare module '@ee/components/export' {
+  export const Export: any;
+  export default Export;
+}
+
 declare module '@ee/pages/raw-execute/index' {
   export const plugins: any;
   export const ActionOptions: any;

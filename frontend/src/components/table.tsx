@@ -53,6 +53,7 @@ import {
     TableCell,
     TableHead,
     TableHeader,
+    TableHeadRow,
     TableRow,
     TextArea,
     toast,
@@ -88,10 +89,12 @@ import {useDeleteRowMutation, useGenerateMockDataMutation, useMockDataMaxRowCoun
 import {Tip} from "./tip";
 
 // Dynamically load EE Export component
-const EEExport = loadEEComponent(
-    () => import('@ee/components/export').then(mod => ({default: mod.Export})),
-    null,
-);
+// const EEExport = loadEEComponent(
+//     () => import('@ee/components/export').then(mod => ({ default: mod.Export })),
+//     null,
+// );
+
+const EEExport = null;
 
 // Dynamic Export component that uses EE version if available, otherwise CE version
 const DynamicExport: FC<{
@@ -169,6 +172,7 @@ interface TableProps {
     onColumnSort?: (column: string) => void;
     sortedColumns?: Map<string, 'asc' | 'desc'>;
     searchRef?: React.MutableRefObject<(search: string) => void>;
+    pageSize?: number;
 }
 
 export const StorageUnitTable: FC<TableProps> = ({
@@ -186,6 +190,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     onColumnSort,
     sortedColumns,
     searchRef,
+    pageSize = 100,
 }) => {
     const [editIndex, setEditIndex] = useState<number | null>(null);
     const [editRow, setEditRow] = useState<string[] | null>(null);
@@ -205,7 +210,6 @@ export const StorageUnitTable: FC<TableProps> = ({
     const { data: maxRowData } = useMockDataMaxRowCountQuery();
     const maxRowCount = maxRowData?.MockDataMaxRowCount || 200;
     
-    const pageSize = 20;
     const totalRows = rows.length;
     const totalPages = Math.ceil(totalRows / pageSize);
     
@@ -213,9 +217,6 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [deleteRow, ] = useDeleteRowMutation();
     const [containerWidth, setContainerWidth] = useState<number>(0);
     const lastSearchState = useRef<{ search: string; matchIdx: number }>({search: '', matchIdx: 0});
-
-
-
 
     const handleEdit = (index: number) => {
         setEditIndex(index);
@@ -747,8 +748,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     <TableHeader>
                         <ContextMenu>
                             <ContextMenuTrigger asChild>
-                                <TableRow className="group cursor-context-menu hover:bg-muted/50 transition-colors"
-                                          title="Right-click for table options">
+                                <TableHeadRow className="group cursor-context-menu hover:bg-muted/50 transition-colors" title="Right-click for table options">
                                     <TableHead className={cn({
                                         "hidden": disableEdit,
                                     })}>
@@ -783,7 +783,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                             </Tip>
                                         </TableHead>
                                     ))}
-                                </TableRow>
+                                </TableHeadRow>
                             </ContextMenuTrigger>
                             <ContextMenuContent className="w-64">
                                 <ContextMenuItem onSelect={() => setShowMockDataSheet(true)}>
@@ -855,9 +855,10 @@ export const StorageUnitTable: FC<TableProps> = ({
                     </TableHeader>
                     {
                         paginatedRows.length > 0 &&
-                        <VirtualizedTableBody rowCount={paginatedRows.length} rowHeight={rowHeight} height={height}>
+                        <VirtualizedTableBody rowCount={paginatedRows.length} rowHeight={rowHeight} height={500} className="overflow-y-auto">
                             {(index) => {
                                 const globalIndex = (currentPage - 1) * pageSize + index;
+                                console.log(globalIndex, index);
                                 return contextMenu(globalIndex, index);
                             }}
                         </VirtualizedTableBody>
@@ -879,7 +880,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                             </ContextMenuItem>
                             <ContextMenuSub>
                                 <ContextMenuSubTrigger>
-                                    <ArrowDownCircleIcon className="w-4 h-4"/>
+                                    <ArrowDownCircleIcon className="w-4 h-4 mr-2" />
                                     Export
                                 </ContextMenuSubTrigger>
                                 <ContextMenuSubContent>
@@ -902,7 +903,6 @@ export const StorageUnitTable: FC<TableProps> = ({
                         </ContextMenuContent>
                     </ContextMenu>
                 )}
-
                 <div className={cn("flex justify-between items-center mb-2", {
                     "justify-end": children == null,
                 })}>

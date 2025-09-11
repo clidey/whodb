@@ -26,21 +26,20 @@ import {
     TableCellsIcon
 } from "@heroicons/react/24/outline";
 import classNames from "classnames";
-import {cloneElement, FC, KeyboardEventHandler, useCallback, useMemo, useRef, useState} from "react";
-import {AIProvider, useAI} from "../../components/ai";
-import {CodeEditor} from "../../components/editor";
-import {Loading} from "../../components/loading";
-import {InternalPage} from "../../components/page";
-import {StorageUnitTable} from "../../components/table";
-import {extensions} from "../../config/features";
-import {InternalRoutes} from "../../config/routes";
-import {HoudiniActions} from "../../store/chat";
-import {useAppDispatch, useAppSelector} from "../../store/hooks";
-import {isEEFeatureEnabled, loadEEComponent} from "../../utils/ee-loader";
-import {chooseRandomItems} from "../../utils/functions";
-import {chatExamples} from "./examples";
-
-const logoImage = "/images/logo.png";
+import { cloneElement, FC, KeyboardEventHandler, useCallback, useMemo, useRef, useState } from "react";
+import { AIProvider, useAI } from "../../components/ai";
+import { CodeEditor } from "../../components/editor";
+import { Loading } from "../../components/loading";
+import { InternalPage } from "../../components/page";
+import { StorageUnitTable } from "../../components/table";
+import { extensions } from "../../config/features";
+import { InternalRoutes } from "../../config/routes";
+import { HoudiniActions } from "../../store/chat";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { isEEFeatureEnabled, loadEEComponent } from "../../utils/ee-loader";
+import { chooseRandomItems } from "../../utils/functions";
+import { chatExamples } from "./examples";
+import logoImage from "../../../public/images/logo.png";
 
 // Lazy load chart components if EE is enabled
 const LineChart = isEEFeatureEnabled('dataVisualization') ? loadEEComponent(

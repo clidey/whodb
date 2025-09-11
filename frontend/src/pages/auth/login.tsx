@@ -38,8 +38,9 @@ import {AuthActions} from "../../store/auth";
 import {DatabaseActions} from "../../store/database";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {AdjustmentsHorizontalIcon, CheckCircleIcon, CircleStackIcon} from '@heroicons/react/24/outline';
+import logoImage from "../../../public/images/logo.png";
 
-const logoImage = "/images/logo.png";
+
 // Embeddable LoginForm component for use in LoginPage and @sidebar.tsx
 
 // Embeddable LoginForm component
