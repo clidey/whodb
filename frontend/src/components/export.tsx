@@ -49,7 +49,7 @@ interface IExportProps {
     schema: string;
     storageUnit: string;
     hasSelectedRows: boolean;
-    selectedRowsData?: string[][];
+    selectedRowsData?: Record<string, any>[];
     checkedRowsCount: number;
 }
 
@@ -65,15 +65,12 @@ export const Export: FC<IExportProps> = ({
     const [exportDelimiter, setExportDelimiter] = useState(',');
     const [exportFormat, setExportFormat] = useState<'csv' | 'excel'>('csv');
 
-    // Convert selected rows data to the format expected by the hook
+    // Selected rows are already in the correct format for the hook.
     const selectedRowsForExport = useMemo(() => {
-        if (!hasSelectedRows || !selectedRowsData) return undefined;
-        return selectedRowsData.map(row =>
-            row.reduce((acc, cell, index) => {
-                acc[`column_${index}`] = cell;
-                return acc;
-            }, {} as Record<string, any>)
-        );
+        if (!hasSelectedRows || !selectedRowsData) {
+            return undefined;
+        }
+        return selectedRowsData;
     }, [hasSelectedRows, selectedRowsData]);
 
     // Always call the hook, but use conditional logic inside
