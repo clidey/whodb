@@ -517,6 +517,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                         onColumnSort={handleColumnSort}
                         sortedColumns={sortedColumnsMap}
                         searchRef={searchRef}
+                        pageSize={Number.parseInt(bufferPageSize)}
                     >
                         <div className="flex gap-2">
                             <Button onClick={handleOpenScratchpad} data-testid="scratchpad-button" variant="secondary" className={cn({
