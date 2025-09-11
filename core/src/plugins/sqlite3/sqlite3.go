@@ -34,6 +34,11 @@ import (
 	"gorm.io/gorm"
 )
 
+// CreateSQLBuilder creates a SQLite-specific SQL builder.
+func (p *Sqlite3Plugin) CreateSQLBuilder(db *gorm.DB) gorm_plugin.SQLBuilderInterface {
+	return NewSQLiteSQLBuilder(db, p)
+}
+
 var (
 	supportedColumnDataTypes = mapset.NewSet(
 		"NULL", "INTEGER", "REAL", "TEXT", "BLOB",

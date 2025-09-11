@@ -35,14 +35,12 @@ func (p *ClickHousePlugin) ExportData(config *engine.PluginConfig, schema string
 		return err
 	}
 
-	// Get column information
-	query := `
-		SELECT name, type 
-		FROM system.columns 
-		WHERE database = ? AND table = ?
-		ORDER BY position`
-
-	rows, err := db.Raw(query, schema, storageUnit).Rows()
+	// Get column information using GORM's query builder
+	rows, err := db.Table("system.columns").
+		Select("name, type").
+		Where("database = ? AND table = ?", schema, storageUnit).
+		Order("position").
+		Rows()
 	if err != nil {
 		return fmt.Errorf("failed to get columns: %v", err)
 	}

@@ -133,6 +133,10 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     const [code, setCode] = useState(initialScratchpadQuery);
 
     const handleSubmitRequest = useCallback((pageOffset: number | null = null) => {
+        const tableNameToUse = unitName || currentTableName;
+        if (tableNameToUse) {
+            setCurrentTableName(tableNameToUse);
+        }
         getStorageUnitRows({
             variables: {
                 schema,

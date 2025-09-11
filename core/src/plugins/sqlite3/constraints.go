@@ -17,13 +17,13 @@
 package sqlite3
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
-	"github.com/clidey/whodb/core/src/plugins/gorm"
 	"gorm.io/gorm"
 )
 
@@ -32,12 +32,18 @@ func (p *Sqlite3Plugin) GetColumnConstraints(config *engine.PluginConfig, schema
 	constraints := make(map[string]map[string]interface{})
 
 	_, err := plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
-		// Use SQL builder for PRAGMA query
-		builder := gorm_plugin.NewSQLBuilder(db, p)
+		// Use SQLite-specific SQL builder.
+		builder, ok := p.CreateSQLBuilder(db).(*SQLiteSQLBuilder)
+		if !ok {
+			return false, fmt.Errorf("failed to create SQLite SQL builder")
+		}
 
 		// Get table schema including nullability
 		// SQLite PRAGMA commands don't support placeholders
-		tableInfoQuery := builder.PragmaQuery("table_info", storageUnit)
+		tableInfoQuery, err := builder.PragmaQuery("table_info", storageUnit)
+		if err != nil {
+			return false, err
+		}
 
 		rows, err := db.Raw(tableInfoQuery).Rows()
 		if err != nil {
@@ -69,8 +75,11 @@ func (p *Sqlite3Plugin) GetColumnConstraints(config *engine.PluginConfig, schema
 		}
 
 		// Get unique indexes
-		// Using SQL builder for PRAGMA query
-		indexListQuery := builder.PragmaQuery("index_list", storageUnit)
+		indexListQuery, err := builder.PragmaQuery("index_list", storageUnit)
+		if err != nil {
+			// This is not a critical error? table might not have indexes.
+			return true, nil
+		}
 
 		indexRows, err := db.Raw(indexListQuery).Rows()
 		if err != nil {
@@ -93,7 +102,10 @@ func (p *Sqlite3Plugin) GetColumnConstraints(config *engine.PluginConfig, schema
 			// Only process unique indexes
 			if unique == 1 {
 				// Get columns in this index
-				indexInfoQuery := builder.PragmaQuery("index_info", name)
+				indexInfoQuery, err := builder.PragmaQuery("index_info", name)
+				if err != nil {
+					return false, err
+				}
 				infoRows, err := db.Raw(indexInfoQuery).Rows()
 				if err != nil {
 					continue

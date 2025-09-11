@@ -38,15 +38,10 @@ type SQLBuilderInterface interface {
 	UpdateQuery(schema, table string, updates map[string]any, conditions map[string]any) *gorm.DB
 	DeleteQuery(schema, table string, conditions map[string]any) *gorm.DB
 	CountQuery(schema, table string) (int64, error)
-	PragmaQuery(pragma, table string) string
 }
 
 // SQLBuilder provides SQL query building functionality
-// IMPORTANT: This builder prioritizes GORM's native methods for all operations where possible.
-// Manual SQL building is ONLY used for:
-//   - DDL statements (CREATE TABLE, ALTER TABLE) - GORM doesn't support dynamic DDL
-//   - SQLite PRAGMA commands - These don't support placeholders
-//   - Export queries with specific column formatting needs
+// This builder prioritizes GORM's native methods for all operations where possible.
 type SQLBuilder struct {
 	db     *gorm.DB
 	plugin GormPluginFunctions
@@ -255,13 +250,6 @@ func (sb *SQLBuilder) CountQuery(schema, table string) (int64, error) {
 
 	err := sb.db.Table(tableName).Count(&count).Error
 	return count, err
-}
-
-// PragmaQuery builds a SQLite PRAGMA query
-// PRAGMA commands don't support placeholders, so we must escape identifiers
-// This is a SQLite-specific edge case
-func (sb *SQLBuilder) PragmaQuery(pragma, table string) string {
-	return fmt.Sprintf("PRAGMA %s(%s)", pragma, sb.QuoteIdentifier(table))
 }
 
 // ColumnDef represents a column definition for CREATE TABLE
