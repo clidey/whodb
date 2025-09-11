@@ -55,19 +55,13 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 		}
 
 		// Get unique single-column indexes using GORM's query builder
-		// Note: ANY() function requires special handling, keeping as Raw for now
-		uniqueQuery := `
-			SELECT a.attname AS column_name 
-			FROM pg_index i 
-			JOIN pg_class c ON c.oid = i.indrelid 
-			JOIN pg_namespace n ON n.oid = c.relnamespace 
-			JOIN pg_attribute a ON a.attrelid = c.oid AND a.attnum = ANY(i.indkey) 
-			WHERE c.relname = ? 
-			AND n.nspname = ? 
-			AND i.indisunique = true 
-			AND i.indnkeyatts = 1`
-
-		uniqueRows, err := db.Raw(uniqueQuery, storageUnit, schema).Rows()
+		uniqueRows, err := db.Table("pg_index i").
+			Select("a.attname AS column_name").
+			Joins("JOIN pg_class c ON c.oid = i.indrelid").
+			Joins("JOIN pg_namespace n ON n.oid = c.relnamespace").
+			Joins("JOIN pg_attribute a ON a.attrelid = c.oid AND a.attnum = ANY(i.indkey)").
+			Where("c.relname = ? AND n.nspname = ? AND i.indisunique = true AND i.indnkeyatts = 1", storageUnit, schema).
+			Rows()
 		if err != nil {
 			return false, err
 		}
@@ -85,17 +79,12 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 			constraints[columnName]["unique"] = true
 		}
 
-		// Get CHECK constraints
-		checkQuery := `
-			SELECT 
-				conname AS constraint_name,
-				pg_get_constraintdef(oid) AS check_clause
-			FROM pg_constraint
-			WHERE contype = 'c'
-			AND conrelid = ?::regclass`
-
+		// Get CHECK constraints using GORM's query builder
 		fullTableName := schema + "." + storageUnit
-		checkRows, err := db.Raw(checkQuery, fullTableName).Rows()
+		checkRows, err := db.Table("pg_constraint").
+			Select("conname AS constraint_name, pg_get_constraintdef(oid) AS check_clause").
+			Where("contype = 'c' AND conrelid = ?::regclass", fullTableName).
+			Rows()
 		if err == nil {
 			defer checkRows.Close()
 
@@ -186,7 +175,7 @@ func (p *PostgresPlugin) parseCheckConstraint(checkClause string, constraints ma
 		}
 		// Extract values from ARRAY
 		valuesStr := matches[2]
-		values := []string{}
+		var values []string
 		// Split by comma and clean up
 		parts := strings.Split(valuesStr, ",")
 		for _, part := range parts {
@@ -195,11 +184,9 @@ func (p *PostgresPlugin) parseCheckConstraint(checkClause string, constraints ma
 			cleaned = regexp.MustCompile(`::\w+`).ReplaceAllString(cleaned, "")
 			cleaned = strings.Trim(cleaned, "'\"")
 			if cleaned != "" {
-				// Validate the value to prevent SQL injection
 				if sanitized, ok := common.SanitizeConstraintValue(cleaned); ok {
 					values = append(values, sanitized)
 				}
-				// Skip malicious values silently
 			}
 		}
 		if len(values) > 0 {
