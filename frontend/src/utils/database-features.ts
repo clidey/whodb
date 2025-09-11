@@ -187,7 +187,7 @@ export function databaseUsesSchemaForGraph(databaseType: DatabaseType | string |
     return !databaseSupportsDatabaseSwitching(databaseType);
 }
 
-export function databasesUsesDatabaseInsteadOfSchema(databaseType: DatabaseType | string | undefined): boolean {
+export function databaseTypesThatUseDatabaseInsteadOfSchema(databaseType: DatabaseType | string | undefined): boolean {
     if (!databaseType) {
         return false;
     }

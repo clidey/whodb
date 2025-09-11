@@ -14,7 +14,7 @@ import { FC, useCallback, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { InternalRoutes } from "../config/routes";
 import { useAppSelector } from "../store/hooks";
-import { databasesUsesDatabaseInsteadOfSchema } from "../utils/database-features";
+import { databaseTypesThatUseDatabaseInsteadOfSchema } from "../utils/database-features";
 import { getDatabaseStorageUnitLabel } from "../utils/functions";
 import { Loading } from "./loading";
 
@@ -41,7 +41,7 @@ export const SchemaViewer: FC = () => {
     // Query for storage units (tables, views, etc.)
     const { data, loading } = useGetStorageUnitsQuery({
         variables: {
-            schema: databasesUsesDatabaseInsteadOfSchema(current?.Type) ? current?.Database ?? selectedSchema : selectedSchema,
+            schema: databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type) ? current?.Database ?? selectedSchema : selectedSchema,
         },
         skip: !current || !selectedSchema,
     });
