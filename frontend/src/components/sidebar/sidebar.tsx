@@ -57,27 +57,22 @@ import {
     TableCellsIcon
 } from "@heroicons/react/24/outline";
 import classNames from "classnames";
-import {FC, ReactElement, useCallback, useEffect, useMemo, useState} from "react";
-import {useDispatch} from "react-redux";
-import {Link, useLocation, useNavigate} from "react-router-dom";
-import {extensions} from "../../config/features";
-import {InternalRoutes} from "../../config/routes";
-import {LoginForm} from "../../pages/auth/login";
-import {AuthActions, LocalLoginProfile} from "../../store/auth";
-import {DatabaseActions} from "../../store/database";
-import {useAppSelector} from "../../store/hooks";
-import {
-    databaseSupportsDatabaseSwitching,
-    databaseSupportsSchema,
-    databaseSupportsScratchpad
-} from "../../utils/database-features";
-import {isEEFeatureEnabled} from "../../utils/ee-loader";
-import {getDatabaseStorageUnitLabel, isNoSQL} from "../../utils/functions";
-import {Icons} from "../icons";
-import {Loading} from "../loading";
-import {updateProfileLastAccessed} from "../profile-info-tooltip";
-
-const logoImage = "/images/logo.png";
+import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
+import { useDispatch } from "react-redux";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import logoImage from "../../../public/images/logo.png";
+import { extensions } from "../../config/features";
+import { InternalRoutes } from "../../config/routes";
+import { LoginForm } from "../../pages/auth/login";
+import { AuthActions, LocalLoginProfile } from "../../store/auth";
+import { DatabaseActions } from "../../store/database";
+import { useAppSelector } from "../../store/hooks";
+import { databaseSupportsDatabaseSwitching, databaseSupportsSchema, databaseSupportsScratchpad, databasesUsesDatabaseInsteadOfSchema } from "../../utils/database-features";
+import { isEEFeatureEnabled } from "../../utils/ee-loader";
+import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
+import { Icons } from "../icons";
+import { Loading } from "../loading";
+import { updateProfileLastAccessed } from "../profile-info-tooltip";
 
 function getProfileLabel(profile: LocalLoginProfile) {
     if (profile.Saved) return profile.Id;
@@ -100,7 +95,7 @@ export const Sidebar: FC = () => {
         variables: {
             type: current?.Type as DatabaseType,
         },
-        skip: current == null || !databaseSupportsDatabaseSwitching(current?.Type),
+        skip: current == null || !databasesUsesDatabaseInsteadOfSchema(current?.Type),
     });
     const { data: availableSchemas, loading: availableSchemasLoading, refetch: getSchemas } = useGetSchemaQuery({
         onCompleted(data) {
@@ -336,7 +331,7 @@ export const Sidebar: FC = () => {
                                 {/* Database Select */}
                                 <div className={cn("flex flex-col gap-2 w-full", {
                                     "opacity-0 pointer-events-none": !open,
-                                    "hidden": !current || !databaseSupportsDatabaseSwitching(current?.Type),
+                                    "hidden": !current || !databasesUsesDatabaseInsteadOfSchema(current?.Type),
                                 })}>
                                     <h2 className="text-sm">Database</h2>
                                     <SearchSelect

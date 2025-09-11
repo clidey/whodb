@@ -64,7 +64,7 @@ import {useAppSelector} from "../../store/hooks";
 import {getDatabaseOperators} from "../../utils/database-operators";
 import {getDatabaseStorageUnitLabel, isNoSQL} from "../../utils/functions";
 import {ExploreStorageUnitWhereCondition} from "./explore-storage-unit-where-condition";
-import {databaseSupportsScratchpad} from "../../utils/database-features";
+import {databaseSupportsScratchpad, databasesUsesDatabaseInsteadOfSchema} from "../../utils/database-features";
 import {BUILD_EDITION} from "../../config/edition";
 
 // Conditionally import EE query utilities
@@ -105,7 +105,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
 
     // For databases that don't have schemas (MongoDB, ClickHouse), pass the database name as the schema parameter
     // todo: is there a different way to do this? clickhouse doesn't have schemas as a table is considered a schema. people mainly switch between DB
-    if (current?.Type === DatabaseType.ClickHouse || current?.Type === DatabaseType.MongoDb) {
+    if (databasesUsesDatabaseInsteadOfSchema(current?.Type) && current?.Database) {
         schema = current.Database
     }
 
@@ -127,8 +127,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
             return generateInitialQuery(current?.Type, schema, unitName);
         }
         const qualified = schema ? `${schema}.${unitName}` : unitName;
-        return `SELECT *
-                FROM ${qualified} LIMIT 5`;
+        return `SELECT * FROM ${qualified} LIMIT 5`;
     }, [schema, unitName, current?.Type, generateInitialQuery]);
 
     const [code, setCode] = useState(initialScratchpadQuery);
@@ -536,6 +535,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                         onColumnSort={handleColumnSort}
                         sortedColumns={sortedColumnsMap}
                         searchRef={searchRef}
+                        pageSize={Number.parseInt(bufferPageSize)}
                     >
                         <div className="flex gap-2">
                             <Button onClick={handleOpenScratchpad} data-testid="scratchpad-button" variant="secondary"

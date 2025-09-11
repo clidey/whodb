@@ -14,46 +14,25 @@
  * limitations under the License.
  */
 
-import {
-    Badge,
-    Button,
-    Checkbox,
-    cn,
-    Input,
-    Label,
-    SearchInput,
-    SearchSelect,
-    Separator,
-    StackList,
-    StackListItem,
-    toast
-} from '@clidey/ux';
-import {DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useGetStorageUnitsQuery} from '@graphql';
-import {
-    ArrowPathRoundedSquareIcon,
-    CheckCircleIcon,
-    CircleStackIcon,
-    CommandLineIcon,
-    MagnifyingGlassIcon,
-    PlusCircleIcon,
-    TableCellsIcon,
-    XMarkIcon
-} from '@heroicons/react/24/outline';
+import { Badge, Button, Checkbox, cn, Input, Label, SearchInput, SearchSelect, Separator, StackList, StackListItem, Table, TableCell, TableBody, TableHead, Tabs, TabsContent, TabsList, TabsTrigger, toast, TableRow, VirtualizedTableBody, TableHeader } from '@clidey/ux';
+import { DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useGetStorageUnitsQuery } from '@graphql';
+import { ArrowPathRoundedSquareIcon, CheckCircleIcon, CircleStackIcon, CommandLineIcon, ListBulletIcon, MagnifyingGlassIcon, PlusCircleIcon, TableCellsIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import classNames from "classnames";
-import {clone, cloneDeep, filter} from "lodash";
-import {FC, useCallback, useEffect, useMemo, useState} from "react";
-import {useNavigate, useSearchParams} from "react-router-dom";
-import {Handle, Node, Position, useReactFlow} from "reactflow";
-import {Card, ExpandableCard} from "../../components/card";
-import {IGraphCardProps} from "../../components/graph/graph";
-import {Loading, LoadingPage} from "../../components/loading";
-import {InternalPage} from "../../components/page";
-import {InternalRoutes} from "../../config/routes";
-import {useAppSelector} from "../../store/hooks";
-import {databaseSupportsModifiers, getDatabaseDataTypes} from "../../utils/database-data-types";
-import {databaseSupportsScratchpad} from "../../utils/database-features";
-import {getDatabaseStorageUnitLabel, isNoSQL} from "../../utils/functions";
-import {Tip} from '../../components/tip';
+import { clone, cloneDeep, filter } from "lodash";
+import { FC, useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Handle, Node, Position, useReactFlow } from "reactflow";
+import { Card, ExpandableCard } from "../../components/card";
+import { IGraphCardProps } from "../../components/graph/graph";
+import { Loading, LoadingPage } from "../../components/loading";
+import { InternalPage } from "../../components/page";
+import { InternalRoutes } from "../../config/routes";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { databaseSupportsModifiers, getDatabaseDataTypes } from "../../utils/database-data-types";
+import { databaseSupportsScratchpad } from "../../utils/database-features";
+import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
+import { Tip } from '../../components/tip';
+import { SettingsActions } from '../../store/settings';
 
 const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = ({ unit, allTableNames }) => {
     const [expanded, setExpanded] = useState(false);
@@ -89,9 +68,9 @@ const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = (
     })} data-testid="storage-unit-card">
         <div className="flex flex-col grow mt-2" data-testid="storage-unit-card">
             <div className="flex flex-col grow mb-2 w-full overflow-x-hidden">
-                <Tip>
+                <Tip className="w-fit">
                     <h1
-                        className="text-sm font-semibold mb-2 overflow-hidden text-ellipsis whitespace-nowrap max-w-[190px] mx-auto text-center"
+                        className="text-sm font-semibold mb-2 overflow-hidden text-ellipsis whitespace-nowrap max-w-[190px]"
                         data-testid="storage-unit-name"
                         title={unit.Name}
                     >
@@ -107,7 +86,7 @@ const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = (
             </div>
             <div className="flex flex-row justify-end gap-1">
                 <Button onClick={handleExpand} data-testid="explore-button" variant="secondary">
-                    <MagnifyingGlassIcon className="w-4 h-4" /> Explore
+                    <MagnifyingGlassIcon className="w-4 h-4" /> Describe
                 </Button>
                 <Button onClick={handleNavigateToDatabase} data-testid="data-button" variant="secondary">
                     <CircleStackIcon className="w-4 h-4" /> Data
@@ -156,7 +135,10 @@ export const StorageUnitPage: FC = () => {
     const [error, setError] = useState<string>();
     let schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
+    const view = useAppSelector(state => state.settings.storageUnitView);
     const [addStorageUnit,] = useAddStorageUnitMutation();
+    const [expandedUnit, setExpandedUnit] = useState<string | null>(null);
+    const dispatch = useAppDispatch();
 
     // For databases that don't have schemas (MongoDB, ClickHouse), pass the database name as the schema parameter
     // todo: is there a different way to do this? clickhouse doesn't have schemas as a table is considered a schema. people mainly switch between DB
@@ -280,6 +262,30 @@ export const StorageUnitPage: FC = () => {
         return new Set(Array.isArray(data?.StorageUnit) ? data.StorageUnit.map(unit => unit.Name) : []);
     }, [data?.StorageUnit]);
 
+    const sharedAttributeKeys = useMemo(() => {
+        if (!data?.StorageUnit || data.StorageUnit.length === 0) {
+            return [];
+        }
+        
+        // Get attributes that exist in ALL storage units (intersection of all attributes)
+        const firstUnitAttributeKeys = new Set(data.StorageUnit[0].Attributes.map(attr => attr.Key));
+        
+        return Array.from(firstUnitAttributeKeys).filter(key => 
+            data.StorageUnit.every(unit => 
+                unit.Attributes.some(attr => attr.Key === key)
+            )
+        ).sort();
+    }, [data?.StorageUnit]);
+
+    const isValidForeignKey = useCallback((key: string) => {
+        // Check for both singular and plural table names
+        if (key.endsWith("_id")) {
+            const base = key.slice(0, -3);
+            return allTableNames.has(base) || allTableNames.has(base + "s");
+        }
+        return false;
+    }, [allTableNames]);
+
     if (loading) {
         return <InternalPage routes={routes}>
             <LoadingPage />
@@ -288,19 +294,27 @@ export const StorageUnitPage: FC = () => {
 
     return <InternalPage routes={routes}>
         <div className="flex w-full h-fit my-2 gap-4 justify-between">
-            <div>
+            <div className="flex justify-between items-center">
                 <SearchInput value={filterValue} onChange={e => setFilterValue(e.target.value)} placeholder="Enter filter value..." />
             </div>
-            <div>
+            <div className="flex items-center gap-2">
                 {
                     databaseSupportsScratchpad(current?.Type) &&
                     <Button onClick={() => navigate(InternalRoutes.RawExecute.path)} data-testid="scratchpad-button" variant="secondary">
                         <CommandLineIcon className="w-4 h-4" /> Scratchpad
                     </Button>
                 }
+                <Tabs value={view} onValueChange={value => dispatch(SettingsActions.setStorageUnitView(value as 'list' | 'card'))}>
+                    <TabsList>
+                        <TabsTrigger value="card"><TableCellsIcon className="w-4 h-4" /></TabsTrigger>
+                        <TabsTrigger value="list"><ListBulletIcon className="w-4 h-4" /></TabsTrigger>
+                    </TabsList>
+                </Tabs>
             </div>
         </div>
-        <div className="flex flex-wrap gap-4">
+        <div className={cn("flex flex-wrap gap-4", {
+            "hidden": view !== "card",
+        })}>
             <ExpandableCard className={classNames("overflow-visible min-w-[200px] max-w-[700px] h-full", {
                 "hidden": current?.Type === DatabaseType.Redis,
             })} icon={<PlusCircleIcon className="w-4 h-4" />} isExpanded={create} setExpanded={setCreate} tag={<Badge variant="destructive">{error}</Badge>}>
@@ -379,6 +393,103 @@ export const StorageUnitPage: FC = () => {
                     <StorageUnitCard key={unit.Name} unit={unit} allTableNames={allTableNames} />
                 ))
             }
+        </div>
+        <div className={cn("flex flex-wrap gap-4 w-full h-[80vh]", {
+            "hidden": view !== "list",
+        })}>
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Name</TableHead>
+                        {/** Dynamically render shared attribute keys as columns */}
+                        {sharedAttributeKeys.map(key => (
+                            <TableHead key={key}>{key}</TableHead>
+                        ))}
+                        <TableHead className="w-32">Actions</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <VirtualizedTableBody
+                    rowCount={filterStorageUnits.length}
+                    rowHeight={40}>
+                    {(rowIndex: number) => {
+                        const unit = filterStorageUnits[rowIndex];
+                        const attrMap = Object.fromEntries(unit.Attributes.map(attr => [attr.Key, attr.Value]));
+                        return (
+                            <TableRow key={unit.Name} className="group">
+                                <TableCell>{unit.Name}</TableCell>
+                                {sharedAttributeKeys.map(key => (
+                                    <TableCell key={key}>{attrMap[key] ?? ""}</TableCell>
+                                ))}
+                                <TableCell className="relative">
+                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Button 
+                                            onClick={() => {
+                                                navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
+                                                    state: { unit },
+                                                });
+                                            }} 
+                                            data-testid="data-button" 
+                                            variant="secondary" 
+                                            size="sm"
+                                        >
+                                            <CircleStackIcon className="w-4 h-4" /> Data
+                                        </Button>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        );
+                    }}
+                </VirtualizedTableBody>
+            </Table>
+            {expandedUnit && (
+                <div className="w-full mt-4">
+                    {(() => {
+                        const unit = filterStorageUnits.find(u => u.Name === expandedUnit);
+                        if (!unit) return null;
+                        
+                        const [introAttributes, expandedAttributes] = [unit.Attributes.slice(0,4), unit.Attributes.slice(4)];
+                        
+                        return (
+                            <Card className="p-6">
+                                <div className="flex flex-col gap-4">
+                                    <h2 className="text-2xl font-bold">{unit.Name}</h2>
+                                    <StackList>
+                                        {introAttributes.map(attribute => (
+                                            <StackListItem key={attribute.Key} item={attribute.Key}>
+                                                {attribute.Value}
+                                            </StackListItem>
+                                        ))}
+                                        {expandedAttributes.map(attribute => (
+                                            <StackListItem key={attribute.Key} item={isValidForeignKey(attribute.Key) ? <Badge className="text-lg" data-testid="foreign-key-attribute">{attribute.Key}</Badge> : attribute.Key}>
+                                                {attribute.Value}
+                                            </StackListItem>
+                                        ))}
+                                    </StackList>
+                                    <div className="flex gap-2 mt-4">
+                                        <Button 
+                                            onClick={() => {
+                                                navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
+                                                    state: { unit },
+                                                });
+                                            }} 
+                                            data-testid="data-button" 
+                                            variant="secondary"
+                                        >
+                                            <CircleStackIcon className="w-4 h-4" /> Data
+                                        </Button>
+                                        <Button 
+                                            onClick={() => setExpandedUnit(null)} 
+                                            variant="outline"
+                                        >
+                                            <XMarkIcon className="w-4 h-4" /> Close
+                                        </Button>
+                                    </div>
+                                </div>
+                            </Card>
+                        );
+                    })()}
+                </div>
+            )}
         </div>
     </InternalPage>
 }

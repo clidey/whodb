@@ -18,10 +18,12 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 type ISettingsState = {
     metricsEnabled: true | false;
+    storageUnitView: 'list' | 'card';
 }
 
 const initialState: ISettingsState = {
     metricsEnabled: true,
+    storageUnitView: 'card',
 }
 
 export const settingsSlice = createSlice({
@@ -30,6 +32,9 @@ export const settingsSlice = createSlice({
     reducers: {
         setMetricsEnabled: (state, action: PayloadAction<ISettingsState["metricsEnabled"]>) => {
             state.metricsEnabled = action.payload;
+        },
+        setStorageUnitView: (state, action: PayloadAction<ISettingsState["storageUnitView"]>) => {
+            state.storageUnitView = action.payload;
         },
     },
 });

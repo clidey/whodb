@@ -186,3 +186,12 @@ export function databaseUsesSchemaForGraph(databaseType: DatabaseType | string |
     // If database doesn't support database switching, it uses schema field (true)
     return !databaseSupportsDatabaseSwitching(databaseType);
 }
+
+export function databasesUsesDatabaseInsteadOfSchema(databaseType: DatabaseType | string | undefined): boolean {
+    if (!databaseType) {
+        return false;
+    }
+
+    // MongoDB mainly uses the database instead of schema
+    return databaseType === DatabaseType.MongoDb || databaseType === DatabaseType.ClickHouse;
+}
