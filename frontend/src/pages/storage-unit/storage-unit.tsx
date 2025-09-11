@@ -107,7 +107,9 @@ const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = (
                         }
                         {
                             expandedAttributes.map(attribute => (
-                                <StackListItem key={attribute.Key} item={isValidForeignKey(attribute.Key) ? <Badge className="text-lg" data-testid="foreign-key-attribute">{attribute.Key}</Badge> : attribute.Key}>
+                                <StackListItem key={attribute.Key} item={isValidForeignKey(attribute.Key) ?
+                                    <Badge className="text-lg"
+                                           data-testid="foreign-key-attribute">{attribute.Key}</Badge> : attribute.Key}>
                                     {attribute.Value}
                                 </StackListItem>
                             ))
@@ -367,7 +369,7 @@ export const StorageUnitPage: FC = () => {
                                             {
                                                 fields.length > 1 &&
                                                 <Button variant="destructive" onClick={() => handleRemove(index)} data-testid="remove-field-button" className="w-full mt-1">
-                                                    <XMarkIcon className="w-4 h-4" /> <span>Remove</span>
+                                                    <XMarkIcon className="w-4 h-4"/> <span>Remove</span>
                                                 </Button>
                                             }
                                             {index !== fields.length - 1 && <Separator className="mt-2" />}
@@ -534,7 +536,9 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data })
                         <StackList>
                             {
                                 data.Attributes.map(attribute => (
-                                    <StackListItem rowClassName="items-start" key={attribute.Key} item={isValidForeignKey(attribute.Key) ? <Badge className="text-lg">{attribute.Key}</Badge> : attribute.Key}>
+                                    <StackListItem rowClassName="items-start" key={attribute.Key}
+                                                   item={isValidForeignKey(attribute.Key) ? <Badge
+                                                       className="text-lg">{attribute.Key}</Badge> : attribute.Key}>
                                         {attribute.Value}
                                     </StackListItem>
                                 ))

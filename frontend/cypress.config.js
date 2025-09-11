@@ -18,16 +18,16 @@ import {defineConfig} from "cypress";
 import codeCoverageTask from "@cypress/code-coverage/task.js";
 
 export default defineConfig({
-  numTestsKeptInMemory: 0,
-  experimentalStudio: true,
+    numTestsKeptInMemory: 0,
+    experimentalStudio: true,
   e2e: {
-    baseUrl: 'http://localhost:3000', // Default for local development
+      baseUrl: 'http://localhost:3000', // Default for local development
     async setupNodeEvents(on, config) {
-      codeCoverageTask(on, config);
+        codeCoverageTask(on, config);
 
-      // Pass Docker flag to tests
-      config.env = config.env || {};
-      config.env.isDocker = process.env.CYPRESS_IN_DOCKER === 'true';
+        // Pass Docker flag to tests
+        config.env = config.env || {};
+        config.env.isDocker = process.env.CYPRESS_IN_DOCKER === 'true';
 
       on("task", {
         async execCommand(command) {

@@ -19,6 +19,60 @@ import (
 	"gorm.io/gorm"
 )
 
+// Sort direction constants
+type SortDirection int
+
+const (
+	Up   SortDirection = iota // ASC
+	Down                      // DESC
+)
+
+// Sort represents a sort condition
+type Sort struct {
+	Column    string
+	Direction SortDirection
+}
+
+// SearchCondition types for WHERE clauses
+type SearchCondition struct {
+	And    *AndCondition
+	Or     *OrCondition
+	Atomic *AtomicCondition
+}
+
+type AndCondition struct {
+	Conditions []SearchCondition
+}
+
+type OrCondition struct {
+	Conditions []SearchCondition
+}
+
+type AtomicCondition struct {
+	Key        string
+	Operator   string
+	Value      any
+	ColumnType string
+}
+
+// AtomicOperator represents comparison operators
+type AtomicOperator string
+
+const (
+	Equal              AtomicOperator = "="
+	NotEqual           AtomicOperator = "!="
+	GreaterThan        AtomicOperator = ">"
+	GreaterThanOrEqual AtomicOperator = ">="
+	LessThan           AtomicOperator = "<"
+	LessThanOrEqual    AtomicOperator = "<="
+	Like               AtomicOperator = "LIKE"
+	NotLike            AtomicOperator = "NOT LIKE"
+	In                 AtomicOperator = "IN"
+	NotIn              AtomicOperator = "NOT IN"
+	IsNull             AtomicOperator = "IS NULL"
+	IsNotNull          AtomicOperator = "IS NOT NULL"
+)
+
 type DBOperation[T any] func(*gorm.DB) (T, error)
 type DBCreationFunc func(pluginConfig *engine.PluginConfig) (*gorm.DB, error)
 

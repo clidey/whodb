@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { FC } from "react";
-import { useNavigate } from "react-router-dom";
-import { IInternalRoute } from "../config/routes";
+import {FC} from "react";
+import {useNavigate} from "react-router-dom";
+import {IInternalRoute} from "../config/routes";
 import {
   Breadcrumb as UxBreadcrumb,
-  BreadcrumbList,
   BreadcrumbItem,
   BreadcrumbLink,
+  BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@clidey/ux";
-import { ChevronRightIcon, HomeIcon } from "@heroicons/react/24/outline";
+import {ChevronRightIcon, HomeIcon} from "@heroicons/react/24/outline";
 
 export type IBreadcrumbRoute = Omit<IInternalRoute, "component">;
 
@@ -44,11 +44,11 @@ export const Breadcrumb: FC<IBreadcrumbProps> = ({ routes, active }) => {
           const isLast = i === routes.length - 1;
           return (
             <BreadcrumbItem key={route.name}>
-              {i > 0 && <BreadcrumbSeparator><ChevronRightIcon className="w-4 h-4 mr-1" /></BreadcrumbSeparator>}
+              {i > 0 && <BreadcrumbSeparator><ChevronRightIcon className="w-4 h-4 mr-1"/></BreadcrumbSeparator>}
               {isLast || isActive ? (
-                <BreadcrumbPage className="flex items-center gap-1">
+                  <BreadcrumbPage className="flex items-center gap-1">
                   {i === 0 && (
-                    <HomeIcon className="w-4 h-4" />
+                      <HomeIcon className="w-4 h-4"/>
                   )}
                   {route.name}
                 </BreadcrumbPage>
@@ -60,7 +60,7 @@ export const Breadcrumb: FC<IBreadcrumbProps> = ({ routes, active }) => {
                 >
                   <span className="flex items-center gap-1">
                     {i === 0 && (
-                      <HomeIcon className="w-4 h-4" />
+                        <HomeIcon className="w-4 h-4"/>
                     )}
                     {route.name}
                   </span>

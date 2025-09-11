@@ -14,11 +14,17 @@
  * limitations under the License.
  */
 
-import { isEEMode } from "@/config/ee-imports";
-import { Alert, AlertDescription, AlertTitle, Button, Card, cn, EmptyState, Input, toast, toTitleCase } from "@clidey/ux";
-import { AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery } from '@graphql';
-import { ArrowUpCircleIcon, BellAlertIcon, CodeBracketIcon } from "@heroicons/react/24/outline";
-import { CheckCircleIcon, SparklesIcon, TableCellsIcon } from "@heroicons/react/24/outline";
+import {isEEMode} from "@/config/ee-imports";
+import {Alert, AlertDescription, AlertTitle, Button, Card, cn, EmptyState, Input, toast, toTitleCase} from "@clidey/ux";
+import {AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery} from '@graphql';
+import {
+    ArrowUpCircleIcon,
+    BellAlertIcon,
+    CheckCircleIcon,
+    CodeBracketIcon,
+    SparklesIcon,
+    TableCellsIcon
+} from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import { cloneElement, FC, KeyboardEventHandler, useCallback, useMemo, useRef, useState } from "react";
 import { AIProvider, useAI } from "../../components/ai";

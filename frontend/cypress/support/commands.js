@@ -33,7 +33,7 @@ Cypress.Commands.add('login', (databaseType, hostname, username, password, datab
     if (databaseType) cy.get('[data-testid="database-type-select"]').click().get(`[data-value="${databaseType}"]`).click();
     if (hostname) cy.get('[data-testid="hostname"]').clear().type(hostname);
     if (username) cy.get('[data-testid="username"]').clear().type(username);
-    if (password) cy.get('[data-testid="password"]').clear().type(password, { log: false });
+    if (password) cy.get('[data-testid="password"]').clear().type(password, {log: false});
     if (databaseType !== "Sqlite3" && database) cy.get('[data-testid="database"]').clear().type(database);
     if (databaseType === "Sqlite3" && database) cy.get('[data-testid="database"]').click().get(`[data-value="${database}"]`).click();
 
@@ -87,13 +87,13 @@ Cypress.Commands.add('data', (tableName) => {
         const index = elements.findIndex(name => name === tableName);
         return cy.get('[data-testid="data-button"]').eq(index).click().then(() => {
             // Wait for the table to be present after clicking data button
-            return cy.get('table', { timeout: 10000 }).should('exist');
+            return cy.get('table', {timeout: 10000}).should('exist');
         });
     });
 });
 
 Cypress.Commands.add('sortBy', (index) => {
-    return cy.get('th').eq(index+1).click();
+    return cy.get('th').eq(index + 1).click();
 });
 
 Cypress.Commands.add('assertNoDataAvailable', () => {
@@ -104,9 +104,9 @@ Cypress.Commands.add('assertNoDataAvailable', () => {
 
 Cypress.Commands.add('getTableData', () => {
     // First wait for the table to exist
-    return cy.get('table', { timeout: 10000 }).should('exist').then(() => {
+    return cy.get('table', {timeout: 10000}).should('exist').then(() => {
         // Wait for at least one table row to be present with proper scoping
-        return cy.get('table tbody tr', { timeout: 10000 })
+        return cy.get('table tbody tr', {timeout: 10000})
             .then(() => {
                 // Additional wait to ensure data is fully rendered
                 cy.wait(100);
@@ -237,7 +237,7 @@ Cypress.Commands.add("updateRow", (rowIndex, columnIndex, text, cancel = true) =
     // Open the context menu for the row at rowIndex, use force since dialogs might be animating
     cy.get('table tbody tr')
       .eq(rowIndex)
-      .rightclick({ force: true });
+        .rightclick({force: true});
 
     // Click the "Edit row" context menu item
     cy.get('[data-testid="context-menu-edit-row"]').click({force: true});
@@ -374,7 +374,7 @@ Cypress.Commands.add("writeCode", (index, text) => {
 
     // Clear content
     cy.get('[data-testid="cell-' + index + '"] .cm-content')
-        .type('{selectall}{backspace}', { delay: 0 });
+        .type('{selectall}{backspace}', {delay: 0});
 
     // Paste the text directly to avoid intellisense
     cy.window().then(win => {
@@ -415,13 +415,13 @@ Cypress.Commands.add("runCode", (index) => {
                     .click();
             }
         });
-    
+
     // Wait for the query to execute
     cy.wait(100);
 });
 
 Cypress.Commands.add("getCellQueryOutput", (index) => {
-    return cy.get(`[data-testid="cell-${index}"] [data-testid="cell-query-output"] table`, { timeout: 10000 }).then($table => {
+    return cy.get(`[data-testid="cell-${index}"] [data-testid="cell-query-output"] table`, {timeout: 10000}).then($table => {
         const columns = Cypress.$.makeArray($table.find('th'))
             .map(el => el.innerText.trim());
 
@@ -434,14 +434,14 @@ Cypress.Commands.add("getCellQueryOutput", (index) => {
 });
 
 Cypress.Commands.add("getCellActionOutput", (index) => {
-    return cy.get(`[data-testid="cell-${index}"] [data-testid="cell-action-output"]`, { timeout: 10000 })
+    return cy.get(`[data-testid="cell-${index}"] [data-testid="cell-action-output"]`, {timeout: 10000})
         .should('exist')
         .then($el => extractText(cy.wrap($el)));
 });
 
 Cypress.Commands.add("getCellError", (index) => {
     // Wait for the error element to appear
-    return cy.get(`[data-testid="cell-${index}"] [data-testid="cell-error"]`, { timeout: 10000 })
+    return cy.get(`[data-testid="cell-${index}"] [data-testid="cell-error"]`, {timeout: 10000})
         .should('exist')
         .should('be.visible')
         .invoke('text')

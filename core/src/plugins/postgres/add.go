@@ -17,35 +17,39 @@
 package postgres
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/plugins/gorm"
+	"gorm.io/gorm"
 )
 
-func (p *PostgresPlugin) GetCreateTableQuery(schema string, storageUnit string, columns []engine.Record) string {
-	var columnDefs []string
-	for _, column := range columns {
-		columnDef := fmt.Sprintf("%s %s", column.Key, column.Value)
+func (p *PostgresPlugin) GetCreateTableQuery(db *gorm.DB, schema string, storageUnit string, columns []engine.Record) string {
+	builder := gorm_plugin.NewSQLBuilder(db, p)
+
+	// Convert engine.Record to ColumnDef
+	columnDefs := make([]gorm_plugin.ColumnDef, len(columns))
+	for i, column := range columns {
+		def := gorm_plugin.ColumnDef{
+			Name: column.Key,
+			Type: column.Value,
+		}
 
 		if primary, ok := column.Extra["primary"]; ok && primary == "true" {
 			lowerType := strings.ToLower(column.Value)
 			if strings.Contains(lowerType, "int") || strings.Contains(lowerType, "integer") {
-				columnDef = fmt.Sprintf("%s %s", columnDef, "PRIMARY KEY GENERATED ALWAYS AS IDENTITY")
+				def.Extra = "PRIMARY KEY GENERATED ALWAYS AS IDENTITY"
 			} else {
-				columnDef = fmt.Sprintf("%s %s", columnDef, "PRIMARY KEY")
+				def.Primary = true
 			}
 		} else {
 			if nullable, ok := column.Extra["nullable"]; ok && nullable == "false" {
-				columnDef = fmt.Sprintf("%s %s", columnDef, "NOT NULL")
+				def.NotNull = true
 			}
 		}
 
-		columnDefs = append(columnDefs, columnDef)
+		columnDefs[i] = def
 	}
 
-	columnDefsStr := strings.Join(columnDefs, ", ")
-
-	createTableQuery := "CREATE TABLE %s.%s (%s)"
-	return fmt.Sprintf(createTableQuery, schema, storageUnit, columnDefsStr)
+	return builder.CreateTableQuery(schema, storageUnit, columnDefs)
 }

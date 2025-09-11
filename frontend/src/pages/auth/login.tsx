@@ -408,7 +408,7 @@ export const LoginForm: FC<LoginFormProps> = ({
             "w-full h-full": advancedDirection === "vertical",
         })}>
             <div className="fixed top-4 right-4">
-                <ModeToggle />
+                <ModeToggle/>
             </div>
             <div className={classNames("flex flex-col grow gap-4", {
                 "justify-between": advancedDirection === "horizontal",

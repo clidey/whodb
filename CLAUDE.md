@@ -45,7 +45,8 @@ These are non-negotiable principles. Follow them at all times.
    everywhere.
 10. When updating dependencies, ensure versions are identical between Community Edition (`core/go.mod`) and Enterprise
     Edition (`ee/go.mod`) for shared dependencies
-11. Never log sensitive data such as passwords, API keys, tokens, or full connection strings
+11. Never log sensitive data such as passwords, API keys, tokens, or full connection strings.
+12. Always use PNPM instead of NPM.
 
 ## Architecture Overview
 
@@ -271,7 +272,7 @@ cd core && go run .
 cd frontend && pnpm start
 
 # Frontend E2E tests
-cd frontend && npm run cypress:ce
+cd frontend && pnpm run cypress:ce
 
 # GraphQL Generation
 # Backend:
@@ -290,7 +291,7 @@ GOWORK=$PWD/go.work.ee go run -tags ee ./core
 cd frontend && pnpm start:ee
 
 # Frontend E2E tests
-cd frontend && npm run cypress:ee
+cd frontend && pnpm run cypress:ee
 
 # GraphQL Generation
 # Backend:

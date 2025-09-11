@@ -14,18 +14,49 @@
  * limitations under the License.
  */
 
-import { AlertDialogCancel, AlertDialogFooter, AlertDialogDescription, AlertDialogHeader, AlertDialog, AlertDialogContent, AlertDialogTrigger, Button, cn, CommandItem, Input, Label, SearchSelect, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Sheet, SheetContent, SheetFooter, toast, AlertDialogTitle, AlertDialogAction } from "@clidey/ux";
-import { ArrowTopRightOnSquareIcon, CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { map } from "lodash";
-import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
-import { v4 } from "uuid";
-import { useGetAiModelsLazyQuery, useGetAiProvidersLazyQuery } from "../generated/graphql";
-import { reduxStore } from "../store";
-import { AIModelsActions, availableExternalModelTypes } from "../store/ai-models";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { ensureModelsArray, ensureModelTypesArray } from "../utils/ai-models-helper";
-import { Icons } from "./icons";
-import { ArrowPathIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+    Button,
+    cn,
+    CommandItem,
+    Input,
+    Label,
+    SearchSelect,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+    Sheet,
+    SheetContent,
+    SheetFooter,
+    toast
+} from "@clidey/ux";
+import {
+    ArrowPathIcon,
+    ArrowTopRightOnSquareIcon,
+    CheckCircleIcon,
+    PlusIcon,
+    TrashIcon,
+    XMarkIcon
+} from "@heroicons/react/24/outline";
+import {map} from "lodash";
+import {FC, ReactElement, useCallback, useEffect, useMemo, useState} from "react";
+import {v4} from "uuid";
+import {useGetAiModelsLazyQuery, useGetAiProvidersLazyQuery} from "../generated/graphql";
+import {reduxStore} from "../store";
+import {AIModelsActions, availableExternalModelTypes} from "../store/ai-models";
+import {useAppDispatch, useAppSelector} from "../store/hooks";
+import {ensureModelsArray, ensureModelTypesArray} from "../utils/ai-models-helper";
+import {Icons} from "./icons";
 
 export const externalModelTypes = map(availableExternalModelTypes, (model) => ({
     id: model,

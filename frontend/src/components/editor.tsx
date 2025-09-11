@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-import { useTheme } from "@clidey/ux";
-import { json } from "@codemirror/lang-json";
-import { markdown } from "@codemirror/lang-markdown";
-import { sql } from "@codemirror/lang-sql";
-import { EditorState, RangeSet } from "@codemirror/state";
-import { oneDark } from "@codemirror/theme-one-dark";
-import { EditorView, GutterMarker, gutter, lineNumbers } from "@codemirror/view";
-import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import {useTheme} from "@clidey/ux";
+import {json} from "@codemirror/lang-json";
+import {markdown} from "@codemirror/lang-markdown";
+import {sql} from "@codemirror/lang-sql";
+import {EditorState, RangeSet} from "@codemirror/state";
+import {oneDark} from "@codemirror/theme-one-dark";
+import {EditorView, gutter, GutterMarker, lineNumbers} from "@codemirror/view";
+import {EyeIcon, EyeSlashIcon} from "@heroicons/react/24/outline";
 import classNames from "classnames";
-import { basicSetup } from "codemirror";
-import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {basicSetup} from "codemirror";
+import React, {FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import ReactJson from "react-json-view";
 import MarkdownPreview from 'react-markdown';
 import remarkGfm from "remark-gfm";
-import { useApolloClient } from "@apollo/client";
-import { createSQLAutocomplete } from "./editor-autocomplete";
+import {useApolloClient} from "@apollo/client";
+import {createSQLAutocomplete} from "./editor-autocomplete";
 
 // SQL validation function
 const isValidSQLQuery = (text: string): boolean => {
@@ -140,8 +140,8 @@ class PlayButtonMarker extends GutterMarker {
     path.setAttribute("stroke-linecap", "round");
     path.setAttribute("stroke-linejoin", "round");
     path.setAttribute(
-      "d",
-      "M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347c-.75.412-1.667-.13-1.667-.986V5.653Z"
+        "d",
+        "M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347c-.75.412-1.667-.13-1.667-.986V5.653Z"
     );
 
     svg.appendChild(path);
@@ -262,8 +262,8 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
           }),
             basicSetup,
             languageExtension != null ? languageExtension : [],
-            // Add autocomplete for SQL
-            language === "sql" ? createSQLAutocomplete({ apolloClient }) : [],
+          // Add autocomplete for SQL
+          language === "sql" ? createSQLAutocomplete({apolloClient}) : [],
             darkModeEnabled ? [oneDark, EditorView.theme({
               ".cm-activeLine": { backgroundColor: "rgba(0,0,0,0.05) !important" },
               ".cm-activeLineGutter": { backgroundColor: "rgba(0,0,0,0.05) !important" },

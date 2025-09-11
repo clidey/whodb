@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,34 +14,34 @@
  * limitations under the License.
  */
 
-import { FC } from "react";
-import { Container } from "./page";
+import {FC} from "react";
+import {Container} from "./page";
 
-import { Spinner } from "@clidey/ux";
+import {Spinner} from "@clidey/ux";
 
 type ILoadingProps = {
   className?: string;
-  size?: "sm" | "md" | "lg";
+    size?: "sm" | "md" | "lg";
   hideText?: boolean;
   loadingText?: string;
 }
 
-export const Loading: FC<ILoadingProps> = ({ className, size = "md", hideText, loadingText }) => {
-  let textSize = "text-base";
+export const Loading: FC<ILoadingProps> = ({className, size = "md", hideText, loadingText}) => {
+    let textSize = "text-base";
   if (size === "sm") {
-    textSize = "text-xs";
+      textSize = "text-xs";
   } else if (size === "md") {
-    textSize = "text-sm";
+      textSize = "text-sm";
   } else if (size === "lg") {
-    textSize = "text-base";
+      textSize = "text-base";
   }
 
-  return (
-    <div className="flex justify-center items-center w-fit h-fit gap-2">
-      <Spinner className={className} size={size} />
-      {!hideText && <p className={textSize}>{loadingText}</p>}
-    </div>
-  );
+    return (
+        <div className="flex justify-center items-center w-fit h-fit gap-2">
+            <Spinner className={className} size={size}/>
+            {!hideText && <p className={textSize}>{loadingText}</p>}
+        </div>
+    );
 };
 
 

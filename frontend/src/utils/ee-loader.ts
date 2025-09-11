@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { ComponentType, lazy, LazyExoticComponent } from 'react';
-import { featureFlags } from '../config/features';
+import {ComponentType, lazy, LazyExoticComponent} from 'react';
+import {featureFlags} from '../config/features';
 
 // Type for EE components that may or may not be available
 export type OptionalComponent<T = any> = ComponentType<T> | null;
@@ -55,8 +55,8 @@ export const loadEEComponent = <T extends ComponentType<any>>(
                 } else {
                     console.warn('EE component not available');
                 }
-                
-                return { default: fallback };
+
+                return {default: fallback};
             }
         });
     } catch (error) {

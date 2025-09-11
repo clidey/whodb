@@ -18,42 +18,50 @@ package clickhouse
 
 import (
 	"fmt"
-	"github.com/clidey/whodb/core/src/engine"
 	"strings"
+
+	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/plugins/gorm"
+	"gorm.io/gorm"
 )
 
-func (p *ClickHousePlugin) GetCreateTableQuery(schema string, storageUnit string, columns []engine.Record) string {
-	var columnDefs []string
+func (p *ClickHousePlugin) GetCreateTableQuery(db *gorm.DB, schema string, storageUnit string, columns []engine.Record) string {
+	builder := gorm_plugin.NewSQLBuilder(db, p)
+
+	// Convert engine.Record to ColumnDef
+	columnDefs := make([]gorm_plugin.ColumnDef, len(columns))
 	var primaryKeys []string
 
-	for _, column := range columns {
-		parts := []string{column.Key, column.Value}
-
-		if nullable, ok := column.Extra["nullable"]; ok && nullable == "false" {
-			parts = append(parts, "NOT NULL")
+	for i, column := range columns {
+		def := gorm_plugin.ColumnDef{
+			Name: column.Key,
+			Type: column.Value,
 		}
 
-		columnDefs = append(columnDefs, strings.Join(parts, " "))
+		if nullable, ok := column.Extra["nullable"]; ok && nullable == "false" {
+			def.NotNull = true
+		}
 
 		if primary, ok := column.Extra["primary"]; ok && primary == "true" {
 			primaryKeys = append(primaryKeys, column.Key)
 		}
+
+		columnDefs[i] = def
 	}
 
 	// Determine ORDER BY clause
 	orderByClause := ""
 	if len(primaryKeys) > 0 {
-		orderByClause = strings.Join(primaryKeys, ", ")
-	} else if len(columnDefs) > 0 {
-		firstColParts := strings.SplitN(columnDefs[0], " ", 2)
-		if len(firstColParts) > 0 {
-			orderByClause = firstColParts[0]
+		quotedKeys := make([]string, len(primaryKeys))
+		for i, key := range primaryKeys {
+			quotedKeys[i] = builder.QuoteIdentifier(key)
 		}
+		orderByClause = strings.Join(quotedKeys, ", ")
+	} else if len(columns) > 0 {
+		orderByClause = builder.QuoteIdentifier(columns[0].Key)
 	}
 
-	return fmt.Sprintf(`
-		CREATE TABLE %s.%s 
-		(%s) 
-		ENGINE = MergeTree()
-		ORDER BY (%s)`, schema, storageUnit, strings.Join(columnDefs, ", "), orderByClause)
+	// Build the CREATE TABLE with ClickHouse-specific ENGINE and ORDER BY
+	suffix := fmt.Sprintf("ENGINE = MergeTree() ORDER BY (%s)", orderByClause)
+	return builder.CreateTableQueryWithSuffix(schema, storageUnit, columnDefs, suffix)
 }

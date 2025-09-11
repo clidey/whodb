@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { Badge, Button, Label, Separator } from "@clidey/ux";
-import { ChatBubbleLeftRightIcon, EnvelopeIcon, GlobeAltIcon } from "@heroicons/react/24/outline";
-import { FC } from "react";
-import { InternalPage } from "../../components/page";
-import { InternalRoutes } from "../../config/routes";
+import {Badge, Button, Label, Separator} from "@clidey/ux";
+import {ChatBubbleLeftRightIcon, EnvelopeIcon, GlobeAltIcon} from "@heroicons/react/24/outline";
+import {FC} from "react";
+import {InternalPage} from "../../components/page";
+import {InternalRoutes} from "../../config/routes";
 
 export const ContactUsPage: FC = () => {
     return (
@@ -27,12 +27,12 @@ export const ContactUsPage: FC = () => {
                 <div className="w-full flex flex-col gap-0">
                     <div className="flex flex-col gap-2 mb-4">
                         <div className="text-2xl font-bold flex items-center gap-2">
-                            <EnvelopeIcon className="w-6 h-6" />
+                            <EnvelopeIcon className="w-6 h-6"/>
                             Contact Us
                         </div>
                         <p className="mt-2">We're here to help! Reach out to us for support, questions, or feedback.</p>
                     </div>
-                    <Separator />
+                    <Separator/>
                     <div className="flex flex-col gap-6 py-6">
                         <div className="flex flex-col gap-2">
                             <Label className="text-lg font-semibold">Email</Label>
@@ -47,7 +47,7 @@ export const ContactUsPage: FC = () => {
                             </Badge>
                             <p className="text-sm">Our support team typically responds within 1 business day.</p>
                         </div>
-                        <Separator />
+                        <Separator/>
                         <div className="flex flex-col gap-2">
                             <Label className="text-lg font-semibold">Community & Issues</Label>
                             <Button
@@ -61,13 +61,14 @@ export const ContactUsPage: FC = () => {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                 >
-                                    <GlobeAltIcon className="w-5 h-5" />
+                                    <GlobeAltIcon className="w-5 h-5"/>
                                     Submit an Issue on GitHub
                                 </a>
                             </Button>
-                            <p className="text-sm">For bug reports, feature requests, or to join the discussion, visit our GitHub issues page.</p>
+                            <p className="text-sm">For bug reports, feature requests, or to join the discussion, visit
+                                our GitHub issues page.</p>
                         </div>
-                        <Separator />
+                        <Separator/>
                         <div className="flex flex-col gap-2">
                             <Label className="text-lg font-semibold">Live Chat (Coming Soon)</Label>
                             <Button
@@ -75,7 +76,7 @@ export const ContactUsPage: FC = () => {
                                 className="w-fit gap-2 cursor-not-allowed opacity-60"
                                 disabled
                             >
-                                <ChatBubbleLeftRightIcon className="w-5 h-5" />
+                                <ChatBubbleLeftRightIcon className="w-5 h-5"/>
                                 Chat with Support
                             </Button>
                             <p className="text-sm">Live chat support will be available soon. Stay tuned!</p>
@@ -83,10 +84,12 @@ export const ContactUsPage: FC = () => {
                     </div>
                     <div className="flex flex-col items-start gap-2 text-xs text-gray-500 py-4">
                         <div>
-                            <span className="font-semibold">Clidey, Inc.</span> &middot; 2025 &middot; All rights reserved.
+                            <span className="font-semibold">Clidey, Inc.</span> &middot; 2025 &middot; All rights
+                            reserved.
                         </div>
                         <div>
-                            For urgent matters, please mention <span className="font-mono bg-gray-100 px-1 rounded">[URGENT]</span> in your email subject.
+                            For urgent matters, please mention <span
+                            className="font-mono bg-gray-100 px-1 rounded">[URGENT]</span> in your email subject.
                         </div>
                     </div>
                 </div>

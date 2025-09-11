@@ -31,13 +31,11 @@ func (p *MySQLPlugin) GetColumnConstraints(config *engine.PluginConfig, schema s
 	constraints := make(map[string]map[string]any)
 
 	_, err := plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
-		// Get nullability using prepared statement
-		nullabilityQuery := `
-			SELECT COLUMN_NAME, IS_NULLABLE 
-			FROM information_schema.columns 
-			WHERE table_schema = DATABASE() AND table_name = ?`
-
-		rows, err := db.Raw(nullabilityQuery, storageUnit).Rows()
+		// Get nullability using GORM's query builder
+		rows, err := db.Table("information_schema.columns").
+			Select("COLUMN_NAME, IS_NULLABLE").
+			Where("table_schema = DATABASE() AND table_name = ?", storageUnit).
+			Rows()
 		if err != nil {
 			return false, err
 		}
@@ -55,17 +53,13 @@ func (p *MySQLPlugin) GetColumnConstraints(config *engine.PluginConfig, schema s
 			constraints[columnName]["nullable"] = strings.EqualFold(isNullable, "YES")
 		}
 
-		// Get unique single-column indexes using prepared statement
-		uniqueQuery := `
-			SELECT COLUMN_NAME 
-			FROM information_schema.statistics 
-			WHERE table_schema = DATABASE() 
-			AND table_name = ? 
-			AND NON_UNIQUE = 0 
-			GROUP BY COLUMN_NAME, INDEX_NAME 
-			HAVING COUNT(*) = 1`
-
-		uniqueRows, err := db.Raw(uniqueQuery, storageUnit).Rows()
+		// Get unique single-column indexes using GORM's query builder
+		uniqueRows, err := db.Table("information_schema.statistics").
+			Select("COLUMN_NAME").
+			Where("table_schema = DATABASE() AND table_name = ? AND NON_UNIQUE = 0", storageUnit).
+			Group("COLUMN_NAME, INDEX_NAME").
+			Having("COUNT(*) = 1").
+			Rows()
 		if err != nil {
 			return false, err
 		}
@@ -86,18 +80,11 @@ func (p *MySQLPlugin) GetColumnConstraints(config *engine.PluginConfig, schema s
 		// Get CHECK constraints (MySQL 8.0.16+)
 		// We'll parse simple patterns like >= 0, <= 100, etc.
 		// MySQL's CHECK_CONSTRAINTS table does not have TABLE_NAME; need to join with TABLE_CONSTRAINTS to get table name
-		checkQuery := `
-			SELECT 
-				cc.CONSTRAINT_NAME,
-				cc.CHECK_CLAUSE
-			FROM information_schema.CHECK_CONSTRAINTS cc
-			JOIN information_schema.TABLE_CONSTRAINTS tc
-				ON cc.CONSTRAINT_SCHEMA = tc.CONSTRAINT_SCHEMA
-				AND cc.CONSTRAINT_NAME = tc.CONSTRAINT_NAME
-			WHERE cc.CONSTRAINT_SCHEMA = DATABASE()
-				AND tc.TABLE_NAME = ?`
-
-		checkRows, err := db.Raw(checkQuery, storageUnit).Rows()
+		checkRows, err := db.Table("information_schema.CHECK_CONSTRAINTS cc").
+			Select("cc.CONSTRAINT_NAME, cc.CHECK_CLAUSE").
+			Joins("JOIN information_schema.TABLE_CONSTRAINTS tc ON cc.CONSTRAINT_SCHEMA = tc.CONSTRAINT_SCHEMA AND cc.CONSTRAINT_NAME = tc.CONSTRAINT_NAME").
+			Where("cc.CONSTRAINT_SCHEMA = DATABASE() AND tc.TABLE_NAME = ?", storageUnit).
+			Rows()
 		if err == nil {
 			defer checkRows.Close()
 
@@ -143,7 +130,7 @@ func (p *MySQLPlugin) parseCheckConstraint(checkClause string, constraints map[s
 	}
 
 	columnName := tokens[0]
-	
+
 	// Validate column name to prevent SQL injection
 	if !common.ValidateColumnName(columnName) {
 		return

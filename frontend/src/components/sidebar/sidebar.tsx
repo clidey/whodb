@@ -37,8 +37,25 @@ import {
     toast,
     useSidebar
 } from "@clidey/ux";
-import { DatabaseType, useGetDatabaseQuery, useGetSchemaQuery, useGetVersionQuery, useLoginMutation, useLoginWithProfileMutation } from '@graphql';
-import { ArrowLeftStartOnRectangleIcon, ChevronDownIcon, CogIcon, CommandLineIcon, PlusIcon, QuestionMarkCircleIcon, RectangleGroupIcon, SparklesIcon, TableCellsIcon } from "@heroicons/react/24/outline";
+import {
+    DatabaseType,
+    useGetDatabaseQuery,
+    useGetSchemaQuery,
+    useGetVersionQuery,
+    useLoginMutation,
+    useLoginWithProfileMutation
+} from '@graphql';
+import {
+    ArrowLeftStartOnRectangleIcon,
+    ChevronDownIcon,
+    CogIcon,
+    CommandLineIcon,
+    PlusIcon,
+    QuestionMarkCircleIcon,
+    RectangleGroupIcon,
+    SparklesIcon,
+    TableCellsIcon
+} from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";

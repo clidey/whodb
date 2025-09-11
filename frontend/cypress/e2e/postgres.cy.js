@@ -69,7 +69,7 @@ describe('Postgres E2E test', () => {
       created_at: '2022-02-02'
     });
     cy.deleteRow(3);
-    cy.getTableData().then(({ columns, rows }) => {
+    cy.getTableData().then(({columns, rows}) => {
       expect(columns).to.deep.equal(['', 'id', 'username', 'email', 'password', 'created_at']);
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         ['', '1', 'john_doe', 'john@example.com', 'securepassword1'],
@@ -81,7 +81,7 @@ describe('Postgres E2E test', () => {
     // 4) Respects page size pagination
     cy.setTablePageSize(1);
     cy.submitTable();
-    cy.getTableData().then(({ rows }) => {
+    cy.getTableData().then(({rows}) => {
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([['', '1', 'john_doe', 'john@example.com', 'securepassword1']]);
     });
 
@@ -89,7 +89,7 @@ describe('Postgres E2E test', () => {
     cy.setTablePageSize(10);
     cy.whereTable([['id', '=', '3']]);
     cy.submitTable();
-    cy.getTableData().then(({ rows }) => {
+    cy.getTableData().then(({rows}) => {
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([['', '3', 'admin_user', 'admin@example.com', 'adminpass']]);
     });
     cy.clearWhereConditions();
@@ -186,7 +186,7 @@ describe('Postgres E2E test', () => {
 
     cy.writeCode(0, 'SELECT * FROM test_schema.users ORDER BY id;');
     cy.runCode(0);
-    cy.getCellQueryOutput(0).then(({ rows, columns }) => {
+    cy.getCellQueryOutput(0).then(({rows, columns}) => {
       expect(columns).to.deep.equal(['', 'id', 'username', 'email', 'password', 'created_at']);
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         ['', '1', 'john_doe', 'john@example.com', 'securepassword1'],
@@ -206,13 +206,13 @@ describe('Postgres E2E test', () => {
     cy.addCell(0);
     cy.writeCode(1, 'SELECT * FROM test_schema.users WHERE id=1;');
     cy.runCode(1);
-    cy.getCellQueryOutput(1).then(({ rows, columns }) => {
+    cy.getCellQueryOutput(1).then(({rows, columns}) => {
       expect(columns).to.deep.equal(['', 'id', 'username', 'email', 'password', 'created_at']);
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([['', '1', 'john_doe', 'john@example.com', 'securepassword1']]);
     });
 
     cy.removeCell(0);
-    cy.getCellQueryOutput(0).then(({ rows, columns }) => {
+    cy.getCellQueryOutput(0).then(({rows, columns}) => {
       expect(columns).to.deep.equal(['', 'id', 'username', 'email', 'password', 'created_at']);
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([['', '1', 'john_doe', 'john@example.com', 'securepassword1']]);
     });
@@ -459,6 +459,7 @@ describe('Postgres E2E test', () => {
     cy.get('[data-testid="table-search"]').should('be.visible');
 
     // 13) Open Mock Data sheet, enforce limits, and show overwrite confirmation
+    cy.data('users');
     cy.get('table thead tr').rightclick({force: true});
     cy.contains('div,button,span', 'Mock Data').click({force: true});
 

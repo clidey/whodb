@@ -59,7 +59,11 @@ func (p *PostgresPlugin) GetSupportedOperators() map[string]string {
 }
 
 func (p *PostgresPlugin) FormTableName(schema string, storageUnit string) string {
-	return fmt.Sprintf("%s.%s", schema, storageUnit)
+	// Keep raw concatenation; actual SQL builders will quote via GORM Dialector
+	if schema == "" {
+		return storageUnit
+	}
+	return schema + "." + storageUnit
 }
 
 func (p *PostgresPlugin) GetAllSchemasQuery() string {
@@ -129,7 +133,10 @@ func (p *PostgresPlugin) GetDatabases(config *engine.PluginConfig) ([]string, er
 		var databases []struct {
 			Datname string `gorm:"column:datname"`
 		}
-		if err := db.Raw("SELECT datname AS datname FROM pg_database WHERE datistemplate = false").Scan(&databases).Error; err != nil {
+		if err := db.Table("pg_database").
+			Select("datname").
+			Where("datistemplate = ?", false).
+			Scan(&databases).Error; err != nil {
 			return nil, err
 		}
 		databaseNames := []string{}

@@ -145,7 +145,7 @@ const PopoverCard: FC<IPopoverCardProps> = ({
                     }
                     data-testid={isEditing ? "update-condition-button" : "add-condition-button"}
                 >
-                    <CheckCircleIcon className="w-4 h-4" /> {isEditing ? "Update" : "Add"}
+                    <CheckCircleIcon className="w-4 h-4"/> {isEditing ? "Update" : "Add"}
                 </Button>
             </div>
         </PopoverContent>
@@ -268,8 +268,13 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
     // Sheet management functions
     const handleOpenSheet = useCallback(() => {
         // Convert filters to sheet format
-        const atomicFilters = filters.And?.Children?.map(child => 
-            child.Type === WhereConditionType.Atomic ? child.Atomic! : { ColumnType: "string", Key: "", Operator: "", Value: "" }
+        const atomicFilters = filters.And?.Children?.map(child =>
+            child.Type === WhereConditionType.Atomic ? child.Atomic! : {
+                ColumnType: "string",
+                Key: "",
+                Operator: "",
+                Value: ""
+            }
         ) ?? [];
         setSheetFilters(atomicFilters);
         setSheetOpen(true);
@@ -279,20 +284,20 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
         setSheetFilters(prev => {
             const newFilters = [...prev];
             if (field === 'Key') {
-                newFilters[index] = { 
-                    ...newFilters[index], 
-                    Key: value, 
-                    ColumnType: columnTypes[columns.findIndex(col => col === value)] 
+                newFilters[index] = {
+                    ...newFilters[index],
+                    Key: value,
+                    ColumnType: columnTypes[columns.findIndex(col => col === value)]
                 };
             } else {
-                newFilters[index] = { ...newFilters[index], [field]: value };
+                newFilters[index] = {...newFilters[index], [field]: value};
             }
             return newFilters;
         });
     }, [columnTypes, columns]);
 
     const handleSheetAddFilter = useCallback(() => {
-        setSheetFilters(prev => [...prev, { ColumnType: "string", Key: "", Operator: "", Value: "" }]);
+        setSheetFilters(prev => [...prev, {ColumnType: "string", Key: "", Operator: "", Value: ""}]);
     }, []);
 
     const handleSheetRemoveFilter = useCallback((index: number) => {
@@ -302,7 +307,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
     const handleSheetSave = useCallback(() => {
         const updatedFilters = {
             Type: WhereConditionType.And,
-            And: { 
+            And: {
                 Children: sheetFilters
                     .filter(filter => filter.Key && filter.Operator && filter.Value)
                     .map(filter => ({
@@ -452,7 +457,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                 isEditing={false}
                 editingIndex={-1}
             />
-            
+
             {/* Sheet for managing all conditions */}
             <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                 <SheetContent side="right" className="w-[500px] max-w-full p-8">
@@ -462,13 +467,13 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                             <div key={index} className="flex flex-col gap-4 p-4 border rounded-lg">
                                 <div className="flex items-center justify-between">
                                     <Label className="text-sm font-medium">Condition {index + 1}</Label>
-                                    <Button 
-                                        variant="ghost" 
-                                        size="icon" 
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
                                         onClick={() => handleSheetRemoveFilter(index)}
                                         data-testid={`remove-sheet-filter-${index}`}
                                     >
-                                        <XMarkIcon className="w-4 h-4" />
+                                        <XMarkIcon className="w-4 h-4"/>
                                     </Button>
                                 </div>
                                 <div className="flex flex-col gap-2">
@@ -504,8 +509,9 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                                 </div>
                             </div>
                         ))}
-                        <Button onClick={handleSheetAddFilter} data-testid="add-sheet-filter-button" variant="secondary" className="self-start">
-                            <PlusCircleIcon className="w-4 h-4" /> Add Condition
+                        <Button onClick={handleSheetAddFilter} data-testid="add-sheet-filter-button" variant="secondary"
+                                className="self-start">
+                            <PlusCircleIcon className="w-4 h-4"/> Add Condition
                         </Button>
                     </div>
                     <SheetFooter className="flex gap-2 px-0 mt-6">

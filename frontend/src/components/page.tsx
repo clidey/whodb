@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-import { ModeToggle, SidebarProvider } from "@clidey/ux";
+import {ModeToggle, SidebarProvider} from "@clidey/ux";
 import classNames from "classnames";
-import { AnimatePresence, motion } from "framer-motion";
-import { FC, ReactNode } from "react";
-import { twMerge } from "tailwind-merge";
-import { IInternalRoute } from "../config/routes";
-import { useAppSelector } from "../store/hooks";
-import { Breadcrumb } from "./breadcrumbs";
-import { Loading } from "./loading";
-import { Sidebar } from "./sidebar/sidebar";
-import { SchemaViewer } from "./schema-viewer";
-import { useLocation, useParams } from "react-router-dom";
-import { StorageUnit } from "../generated/graphql";
+import {AnimatePresence, motion} from "framer-motion";
+import {FC, ReactNode} from "react";
+import {twMerge} from "tailwind-merge";
+import {IInternalRoute} from "../config/routes";
+import {useAppSelector} from "../store/hooks";
+import {Breadcrumb} from "./breadcrumbs";
+import {Loading} from "./loading";
+import {Sidebar} from "./sidebar/sidebar";
+import {SchemaViewer} from "./schema-viewer";
+import {useLocation} from "react-router-dom";
+import {StorageUnit} from "../generated/graphql";
 
 type IPageProps = {
     wrapperClassName?: string;
@@ -75,7 +75,8 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
                     {
                         current == null
                         ? <Loading />
-                        : <div className="flex grow flex-wrap gap-2 py-4 content-start relative px-8" data-testid="page-content">
+                            : <div className="flex grow flex-wrap gap-2 py-4 content-start relative px-8"
+                                   data-testid="page-content">
                             {props.children}
                         </div>
                     }

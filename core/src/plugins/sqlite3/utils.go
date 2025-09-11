@@ -89,7 +89,4 @@ func (p *Sqlite3Plugin) GetColTypeQuery() string {
 	return `SELECT name AS column_name, type AS data_type FROM pragma_table_info(?) ORDER BY cid`
 }
 
-func (p *Sqlite3Plugin) EscapeSpecificIdentifier(identifier string) string {
-	identifier = strings.Replace(identifier, "\"", "\"\"", -1)
-	return identifier
-}
+// Identifier quoting handled by GORM Dialector

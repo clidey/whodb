@@ -1,6 +1,6 @@
 query Columns($schema: String!, $storageUnit: String!) {
-  Columns(schema: $schema, storageUnit: $storageUnit) {
-    Name
-    Type
-  }
+    Columns(schema: $schema, storageUnit: $storageUnit) {
+        Name
+        Type
+    }
 }

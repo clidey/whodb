@@ -135,6 +135,7 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 			case portKey, parseTimeKey, locKey, allowClearTextPasswordsKey, sslModeKey, httpProtocolKey, readOnlyKey, debugKey, connectionTimeoutKey:
 				continue
 			default:
+				// TODO: BIG EDGE CASE - PostgreSQL doesn't need URL escaping for params?
 				if p.Type == engine.DatabaseType_Postgres {
 					params[record.Key] = record.Value
 				} else {

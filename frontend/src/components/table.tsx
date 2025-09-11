@@ -83,8 +83,10 @@ import {
     XMarkIcon,
 } from "@heroicons/react/24/outline";
 import {FC, Suspense, useCallback, useEffect, useMemo, useRef, useState} from "react";
-import { Export } from "./export";
-import { loadEEComponent } from "../utils/ee-loader";
+import {Export} from "./export";
+import {loadEEComponent} from "../utils/ee-loader";
+import {useDeleteRowMutation, useGenerateMockDataMutation, useMockDataMaxRowCountQuery} from '@graphql';
+import {Tip} from "./tip";
 
 // Dynamically load EE Export component
 // const EEExport = loadEEComponent(
@@ -108,8 +110,6 @@ const DynamicExport: FC<{
     const ExportComponent = EEExport || Export;
     return <ExportComponent {...props} />;
 };
-import {useDeleteRowMutation, useGenerateMockDataMutation, useMockDataMaxRowCountQuery} from '@graphql';
-import {Tip} from "./tip";
 
 // Type sets based on core/src/plugins/gorm/utils.go
 const stringTypes = new Set([
@@ -227,7 +227,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [generateMockData, { loading: generatingMockData }] = useGenerateMockDataMutation();
     const [deleteRow, ] = useDeleteRowMutation();
     const [containerWidth, setContainerWidth] = useState<number>(0);
-    const lastSearchState = useRef<{ search: string; matchIdx: number }>({ search: '', matchIdx: 0 });
+    const lastSearchState = useRef<{ search: string; matchIdx: number }>({search: '', matchIdx: 0});
 
     const handleEdit = (index: number) => {
         setEditIndex(index);
@@ -564,7 +564,7 @@ export const StorageUnitTable: FC<TableProps> = ({
             }
 
             if (!search || !rows || !columns) {
-                lastSearchState.current = { search: '', matchIdx: 0 };
+                lastSearchState.current = {search: '', matchIdx: 0};
                 return;
             }
 
@@ -590,9 +590,9 @@ export const StorageUnitTable: FC<TableProps> = ({
                     matchIdx = (lastSearchState.current.matchIdx + 1) % matches.length;
                 }
                 // Update last search state
-                lastSearchState.current = { search, matchIdx };
+                lastSearchState.current = {search, matchIdx};
 
-                const { rowIdx, colIdx } = matches[matchIdx];
+                const {rowIdx, colIdx} = matches[matchIdx];
                 // Compose a unique selector for the cell
                 const selector = `[data-row-idx="${rowIdx}"] [data-col-idx="${colIdx}"]`;
                 const cell = document.querySelector(selector) as HTMLElement | null;
@@ -613,7 +613,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 }
             } else {
                 // No matches, reset state
-                lastSearchState.current = { search, matchIdx: 0 };
+                lastSearchState.current = {search, matchIdx: 0};
             }
         };
 
@@ -660,13 +660,13 @@ export const StorageUnitTable: FC<TableProps> = ({
                 <ContextMenuItem onSelect={() => handleSelectRow(index)}>
                     {checked.includes(index) ? (
                         <>
-                            <CheckCircleIcon className="w-4 h-4 text-primary" />
+                            <CheckCircleIcon className="w-4 h-4 text-primary"/>
                             Deselect Row
                             <ContextMenuShortcut>⌘D</ContextMenuShortcut>
                         </>
                     ) : (
                         <>
-                            <CheckCircleIcon className="w-4 h-4 text-primary" />
+                            <CheckCircleIcon className="w-4 h-4 text-primary"/>
                             Select Row
                             <ContextMenuShortcut>⌘S</ContextMenuShortcut>
                         </>
@@ -679,30 +679,30 @@ export const StorageUnitTable: FC<TableProps> = ({
                 </ContextMenuItem>
                 <ContextMenuSub>
                     <ContextMenuSubTrigger>
-                        <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
+                        <ArrowDownTrayIcon className="w-4 h-4 mr-2"/>
                         Export
                     </ContextMenuSubTrigger>
                     <ContextMenuSubContent>
                         <ContextMenuItem
                             onSelect={() => setShowExportConfirm(true)}
                         >
-                            <DocumentIcon className="w-4 h-4" />
+                            <DocumentIcon className="w-4 h-4"/>
                             Export All as CSV
                             <ContextMenuShortcut>⌘⇧C</ContextMenuShortcut>
                         </ContextMenuItem>
                         <ContextMenuItem
                             onSelect={() => setShowExportConfirm(true)}
                         >
-                            <DocumentIcon className="w-4 h-4" />
+                            <DocumentIcon className="w-4 h-4"/>
                             Export All as Excel
                             <ContextMenuShortcut>⌘⇧X</ContextMenuShortcut>
                         </ContextMenuItem>
-                        <ContextMenuSeparator />
+                        <ContextMenuSeparator/>
                         <ContextMenuItem
                             onSelect={() => setShowExportConfirm(true)}
                             disabled={checked.length === 0}
                         >
-                            <DocumentIcon className="w-4 h-4" />
+                            <DocumentIcon className="w-4 h-4"/>
                             Export Selected as CSV
                             <ContextMenuShortcut>⌘C</ContextMenuShortcut>
                         </ContextMenuItem>
@@ -710,7 +710,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                             onSelect={() => setShowExportConfirm(true)}
                             disabled={checked.length === 0}
                         >
-                            <DocumentIcon className="w-4 h-4" />
+                            <DocumentIcon className="w-4 h-4"/>
                             Export Selected as Excel
                             <ContextMenuShortcut>⌘X</ContextMenuShortcut>
                         </ContextMenuItem>
@@ -719,13 +719,13 @@ export const StorageUnitTable: FC<TableProps> = ({
                 <ContextMenuItem
                     onSelect={() => setShowMockDataSheet(true)}
                 >
-                    <DocumentDuplicateIcon className="w-4 h-4" />
+                    <DocumentDuplicateIcon className="w-4 h-4"/>
                     Mock Data
                     <ContextMenuShortcut>⌘M</ContextMenuShortcut>
                 </ContextMenuItem>
                 <ContextMenuSub>
                     <ContextMenuSubTrigger data-testid="context-menu-more-actions">
-                        <EllipsisHorizontalIcon className="w-4 h-4 mr-2" />
+                        <EllipsisHorizontalIcon className="w-4 h-4 mr-2"/>
                         More Actions
                     </ContextMenuSubTrigger>
                     <ContextMenuSubContent className="w-44">
@@ -737,15 +737,15 @@ export const StorageUnitTable: FC<TableProps> = ({
                             }}
                             data-testid="context-menu-delete-row"
                         >
-                            <TrashIcon className="w-4 h-4 text-destructive" />
+                            <TrashIcon className="w-4 h-4 text-destructive"/>
                             Delete Row
                             <ContextMenuShortcut>⌘⌫</ContextMenuShortcut>
                         </ContextMenuItem>
                     </ContextMenuSubContent>
                 </ContextMenuSub>
-                <ContextMenuSeparator />
+                <ContextMenuSeparator/>
                 <ContextMenuItem disabled={true}>
-                    <ShareIcon className="w-4 h-4" />
+                    <ShareIcon className="w-4 h-4"/>
                     Open in Graph
                     <ContextMenuShortcut>⌘G</ContextMenuShortcut>
                 </ContextMenuItem>
@@ -788,7 +788,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                     </TableHead>
                                     {columns.map((col, idx) => (
                                         <TableHead
-                                            key={col + idx} 
+                                            key={col + idx}
                                             icon={columnIcons?.[idx]}
                                             className={cn({
                                                 "cursor-pointer select-none": onColumnSort,
@@ -799,9 +799,9 @@ export const StorageUnitTable: FC<TableProps> = ({
                                                 <p className="flex items-center gap-1">
                                                     {col}
                                                     {onColumnSort && sortedColumns?.has(col) && (
-                                                        sortedColumns.get(col) === 'asc' 
-                                                            ? <ChevronUpIcon className="w-4 h-4" />
-                                                            : <ChevronDownIcon className="w-4 h-4" />
+                                                        sortedColumns.get(col) === 'asc'
+                                                            ? <ChevronUpIcon className="w-4 h-4"/>
+                                                            : <ChevronDownIcon className="w-4 h-4"/>
                                                     )}
                                                 </p>
                                                 <p className="text-xs">{columnTypes?.[idx]}</p>
@@ -812,49 +812,49 @@ export const StorageUnitTable: FC<TableProps> = ({
                             </ContextMenuTrigger>
                             <ContextMenuContent className="w-64">
                                 <ContextMenuItem onSelect={() => setShowMockDataSheet(true)}>
-                                    <DocumentDuplicateIcon className="w-4 h-4" />
+                                    <DocumentDuplicateIcon className="w-4 h-4"/>
                                     Mock Data
                                     <ContextMenuShortcut>⌘M</ContextMenuShortcut>
                                 </ContextMenuItem>
-                                <ContextMenuSeparator />
+                                <ContextMenuSeparator/>
                                 <ContextMenuSub>
                                     <ContextMenuSubTrigger>
-                                        <ArrowDownCircleIcon className="w-4 h-4 mr-2" />
+                                        <ArrowDownCircleIcon className="w-4 h-4 mr-2"/>
                                         Export Data
                                     </ContextMenuSubTrigger>
                                     <ContextMenuSubContent>
                                         <ContextMenuItem
                                             onSelect={() => setShowExportConfirm(true)}
                                         >
-                                            <DocumentIcon className="w-4 h-4" />
+                                            <DocumentIcon className="w-4 h-4"/>
                                             Export All as CSV
                                         </ContextMenuItem>
                                         <ContextMenuItem
                                             onSelect={() => setShowExportConfirm(true)}
                                         >
-                                            <DocumentIcon className="w-4 h-4" />
+                                            <DocumentIcon className="w-4 h-4"/>
                                             Export All as Excel
                                         </ContextMenuItem>
-                                        <ContextMenuSeparator />
+                                        <ContextMenuSeparator/>
                                         <ContextMenuItem
                                             onSelect={() => setShowExportConfirm(true)}
                                             disabled={checked.length === 0}
                                         >
-                                            <DocumentIcon className="w-4 h-4" />
+                                            <DocumentIcon className="w-4 h-4"/>
                                             Export Selected as CSV
                                         </ContextMenuItem>
                                         <ContextMenuItem
                                             onSelect={() => setShowExportConfirm(true)}
                                             disabled={checked.length === 0}
                                         >
-                                            <DocumentIcon className="w-4 h-4" />
+                                            <DocumentIcon className="w-4 h-4"/>
                                             Export Selected as Excel
                                         </ContextMenuItem>
                                     </ContextMenuSubContent>
                                 </ContextMenuSub>
-                                <ContextMenuSeparator />
+                                <ContextMenuSeparator/>
                                 <ContextMenuItem onSelect={() => onRefresh?.()}>
-                                    <CircleStackIcon className="w-4 h-4" />
+                                    <CircleStackIcon className="w-4 h-4"/>
                                     Refresh Data
                                     <ContextMenuShortcut>⌘R</ContextMenuShortcut>
                                 </ContextMenuItem>
@@ -863,18 +863,18 @@ export const StorageUnitTable: FC<TableProps> = ({
                                         setChecked(checked.length === paginatedRows.length ? [] : paginatedRows.map((_, index) => index));
                                     }}
                                 >
-                                    <CheckCircleIcon className="w-4 h-4" />
+                                    <CheckCircleIcon className="w-4 h-4"/>
                                     {checked.length === paginatedRows.length ? "Deselect All" : "Select All"}
                                     <ContextMenuShortcut>⌘A</ContextMenuShortcut>
                                 </ContextMenuItem>
-                                <ContextMenuSeparator />
+                                <ContextMenuSeparator/>
                                 <ContextMenuItem disabled={true}>
-                                    <CalculatorIcon className="w-4 h-4" />
+                                    <CalculatorIcon className="w-4 h-4"/>
                                     Column Statistics
                                     <ContextMenuShortcut>⌘S</ContextMenuShortcut>
                                 </ContextMenuItem>
                                 <ContextMenuItem disabled={true}>
-                                    <DocumentTextIcon className="w-4 h-4" />
+                                    <DocumentTextIcon className="w-4 h-4"/>
                                     Schema Information
                                 </ContextMenuItem>
                             </ContextMenuContent>
@@ -895,12 +895,13 @@ export const StorageUnitTable: FC<TableProps> = ({
                     <ContextMenu>
                         <ContextMenuTrigger asChild>
                             <div className="flex items-center justify-center h-full min-h-[500px] cursor-pointer">
-                                <EmptyState title="No data available" description="No data available" icon={<DocumentTextIcon className="w-4 h-4" />} />
+                                <EmptyState title="No data available" description="No data available"
+                                            icon={<DocumentTextIcon className="w-4 h-4"/>}/>
                             </div>
                         </ContextMenuTrigger>
                         <ContextMenuContent className="w-52">
                             <ContextMenuItem onSelect={() => setShowMockDataSheet(true)}>
-                                <CalculatorIcon className="w-4 h-4" />
+                                <CalculatorIcon className="w-4 h-4"/>
                                 Mock Data
                                 <ContextMenuShortcut>⌘G</ContextMenuShortcut>
                             </ContextMenuItem>
@@ -913,14 +914,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                                     <ContextMenuItem
                                         onSelect={() => setShowExportConfirm(true)}
                                     >
-                                        <DocumentIcon className="w-4 h-4" />
+                                        <DocumentIcon className="w-4 h-4"/>
                                         Export All as CSV
                                         <ContextMenuShortcut>⌘C</ContextMenuShortcut>
                                     </ContextMenuItem>
                                     <ContextMenuItem
                                         onSelect={() => setShowExportConfirm(true)}
                                     >
-                                        <DocumentIcon className="w-4 h-4" />
+                                        <DocumentIcon className="w-4 h-4"/>
                                         Export All as Excel
                                         <ContextMenuShortcut>⌘E</ContextMenuShortcut>
                                     </ContextMenuItem>
@@ -1019,10 +1020,10 @@ export const StorageUnitTable: FC<TableProps> = ({
             </div>
             <Sheet open={showMockDataSheet} onOpenChange={(open) => {
                 setShowMockDataSheet(open);
-                    if (!open) {
-                        setShowMockDataConfirmation(false);
-                    }
-                }}>
+                if (!open) {
+                    setShowMockDataConfirmation(false);
+                }
+            }}>
                 <SheetContent side="right" className="p-8">
                     <div className="flex flex-col gap-4 h-full">
                         <div className="text-lg font-semibold mb-2">Mock Data for {storageUnit}</div>

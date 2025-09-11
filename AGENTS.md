@@ -29,6 +29,7 @@ These are non-negotiable principles. Follow them at all times.
 10. **Be clean**: Do not leave unused code lying around. Make sure code is easy to follow and understand.
 11. **Separation between CE and EE versions**: All EE code and related functionality MUST be in the ee submodule. No
     excuses.
+12. **Avoid shell scripts or adhoc solutions**: Never use shell scripts or adhoc solutions UNLESS absolutely necessary.
 
 ## Development Requirements
 
@@ -44,17 +45,16 @@ These are non-negotiable principles. Follow them at all times.
    everywhere.
 10. When updating dependencies, ensure versions are identical between Community Edition (`core/go.mod`) and Enterprise
     Edition (`ee/go.mod`) for shared dependencies
-11. Never log sensitive data such as passwords, API keys, tokens, or full connection strings
+11. Never log sensitive data such as passwords, API keys, tokens, or full connection strings.
+12. Always use PNPM instead of NPM.
 
 ## Architecture Overview
 
 WhoDB is a database management tool with a **dual-edition architecture**:
-
 - **Community Edition (CE)**: Open source core features
 - **Enterprise Edition (EE)**: Extended features without modifying CE code
 
 ### Backend Structure (Go)
-
 - **Location**: `/core/`
 - **Main Entry**: `core/src/main.go`
 - **Plugin System**: Database connectors in `core/src/plugins/`
@@ -72,24 +72,24 @@ WhoDB is a database management tool with a **dual-edition architecture**:
 ### Key Architectural Patterns
 
 1. **Plugin-Based Database Support**
-    - Each database type implements the Plugin interface
-    - Plugins register themselves with the engine
-    - GraphQL resolvers dispatch to appropriate plugin
+   - Each database type implements the Plugin interface
+   - Plugins register themselves with the engine
+   - GraphQL resolvers dispatch to appropriate plugin
 
 2. **Unified GraphQL API**
-    - All database operations go through a single GraphQL schema
-    - Database-agnostic queries that work across all supported databases
-    - Type safety through code generation
+   - All database operations go through a single GraphQL schema
+   - Database-agnostic queries that work across all supported databases
+   - Type safety through code generation
 
 3. **AI Integration**
-    - Multiple LLM providers (Ollama, OpenAI, Anthropic)
-    - Natural language to SQL conversion
-    - Schema-aware query generation
+   - Multiple LLM providers (Ollama, OpenAI, Anthropic)
+   - Natural language to SQL conversion
+   - Schema-aware query generation
 
 4. **Embedded Frontend**
-    - Go embeds the React build using `//go:embed`
-    - Single binary deployment
-    - Development mode runs separate servers
+   - Go embeds the React build using `//go:embed`
+   - Single binary deployment
+   - Development mode runs separate servers
 
 ## Plugin Architecture Principles
 
@@ -218,7 +218,6 @@ defer rows.Close()
 ### GraphQL First Architecture
 
 **Important: GraphQL is the Default API**
-
 - **Always use GraphQL** for new API endpoints unless explicitly instructed otherwise
 - **Do NOT modify or add HTTP resolvers** in `http.resolvers.go` unless specifically requested
 - The codebase follows a GraphQL-first approach for all data operations
@@ -257,7 +256,6 @@ The project uses a dual-resolver architecture to maintain separation between CE 
 - Build tags control which resolver is used at compile time
 
 ### Backend GraphQL Development
-
 - Add new queries/mutations to `core/graph/schema.graphqls`
 - Implement resolvers in appropriate resolver files (e.g., `core/graph/model.resolvers.go`)
 - HTTP endpoints should only be used for special cases like file downloads that can't be handled via GraphQL
@@ -274,7 +272,7 @@ cd core && go run .
 cd frontend && pnpm start
 
 # Frontend E2E tests
-cd frontend && npm run cypress:ce
+cd frontend && pnpm run cypress:ce
 
 # GraphQL Generation
 # Backend:
@@ -293,7 +291,7 @@ GOWORK=$PWD/go.work.ee go run -tags ee ./core
 cd frontend && pnpm start:ee
 
 # Frontend E2E tests
-cd frontend && npm run cypress:ee
+cd frontend && pnpm run cypress:ee
 
 # GraphQL Generation
 # Backend:

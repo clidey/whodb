@@ -63,7 +63,7 @@ describe('Clickhouse E2E test', () => {
     // 3) Data: verify table data
     cy.data("users");
     cy.sortBy(0);
-    cy.getTableData().then(({ columns, rows }) => {
+    cy.getTableData().then(({columns, rows}) => {
       expect(columns).to.deep.equal([
         "",
         "id",
@@ -82,7 +82,7 @@ describe('Clickhouse E2E test', () => {
     // 4) Respects page size pagination
     cy.setTablePageSize(1);
     cy.submitTable();
-    cy.getTableData().then(({ rows }) => {
+    cy.getTableData().then(({rows}) => {
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         ['', '1', 'john_doe', 'john@example.com', 'securepassword1'],
       ]);
@@ -92,7 +92,7 @@ describe('Clickhouse E2E test', () => {
     cy.setTablePageSize(10);
     cy.whereTable([['id', '=', '3']]);
     cy.submitTable();
-    cy.getTableData().then(({ rows }) => {
+    cy.getTableData().then(({rows}) => {
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         ['', '3', 'admin_user', 'admin@example.com', 'adminpass']
       ]);
@@ -190,7 +190,7 @@ describe('Clickhouse E2E test', () => {
 
     cy.writeCode(0, "SELECT * FROM test_db.users ORDER BY id;");
     cy.runCode(0);
-    cy.getCellQueryOutput(0).then(({ rows, columns }) => {
+    cy.getCellQueryOutput(0).then(({rows, columns}) => {
       expect(columns).to.deep.equal([
         "",
         "id",
@@ -209,7 +209,7 @@ describe('Clickhouse E2E test', () => {
     cy.addCell(0);
     cy.writeCode(1, "SELECT * FROM test_db.users WHERE id=1;");
     cy.runCode(1);
-    cy.getCellQueryOutput(1).then(({ rows, columns }) => {
+    cy.getCellQueryOutput(1).then(({rows, columns}) => {
       expect(columns).to.deep.equal([
         "",
         "id",
@@ -224,7 +224,7 @@ describe('Clickhouse E2E test', () => {
     });
 
     cy.removeCell(0);
-    cy.getCellQueryOutput(0).then(({ rows, columns }) => {
+    cy.getCellQueryOutput(0).then(({rows, columns}) => {
       expect(columns).to.deep.equal([
         "",
         "id",
@@ -442,7 +442,7 @@ describe('Clickhouse E2E test', () => {
 
     // 13) Mock data on a table that does not support it
     cy.data('orders');
-    cy.get('table thead tr').rightclick({force: true});
+    cy.get('table thead tr').eq(0).rightclick({force: true});
     cy.contains('div,button,span', 'Mock Data').click({force: true});
     // Wait for any toasts to clear
     cy.wait(1000);

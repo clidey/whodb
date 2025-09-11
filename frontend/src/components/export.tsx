@@ -14,33 +14,33 @@
  * limitations under the License.
  */
 
-import { 
-    Button, 
-    Label, 
-    Select, 
-    SelectContent, 
-    SelectItem, 
-    SelectTrigger, 
-    SelectValue, 
-    Sheet, 
-    SheetContent, 
-    SheetFooter, 
-    SheetHeader, 
-    toast 
+import {
+    Button,
+    Label,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+    Sheet,
+    SheetContent,
+    SheetFooter,
+    SheetHeader,
+    toast
 } from "@clidey/ux";
-import { FC, useCallback, useMemo, useState } from "react";
-import { useExportToCSV } from "./hooks";
+import {FC, useCallback, useMemo, useState} from "react";
+import {useExportToCSV} from "./hooks";
 
 // Export options as lists - CE version only has basic download
 const exportFormatOptions = [
-    { value: 'csv', label: 'CSV - Comma Separated Values' },
-    { value: 'excel', label: 'Excel - XLSX Format' },
+    {value: 'csv', label: 'CSV - Comma Separated Values'},
+    {value: 'excel', label: 'Excel - XLSX Format'},
 ] as const;
 
 const exportDelimiterOptions = [
-    { value: ',', label: 'Comma (,) - Standard CSV' },
-    { value: ';', label: 'Semicolon (;) - Excel in some locales' },
-    { value: '|', label: 'Pipe (|) - Less common in data' },
+    {value: ',', label: 'Comma (,) - Standard CSV'},
+    {value: ';', label: 'Semicolon (;) - Excel in some locales'},
+    {value: '|', label: 'Pipe (|) - Less common in data'},
 ] as const;
 
 interface IExportProps {
@@ -54,18 +54,18 @@ interface IExportProps {
 }
 
 export const Export: FC<IExportProps> = ({
-    open,
-    onOpenChange,
-    schema,
-    storageUnit,
-    hasSelectedRows,
-    selectedRowsData,
-    checkedRowsCount,
-}) => {
+                                             open,
+                                             onOpenChange,
+                                             schema,
+                                             storageUnit,
+                                             hasSelectedRows,
+                                             selectedRowsData,
+                                             checkedRowsCount,
+                                         }) => {
     const [exportDelimiter, setExportDelimiter] = useState(',');
     const [exportFormat, setExportFormat] = useState<'csv' | 'excel'>('csv');
 
-    // Convert selected rows data to the format expected by the hook
+    // Selected rows are already in the correct format for the hook.
     const selectedRowsForExport = useMemo(() => {
         if (!hasSelectedRows || !selectedRowsData) {
             return undefined;
@@ -75,11 +75,11 @@ export const Export: FC<IExportProps> = ({
 
     // Always call the hook, but use conditional logic inside
     const backendExport = useExportToCSV(
-        schema || '', 
-        storageUnit || '', 
-        hasSelectedRows, 
-        exportDelimiter, 
-        selectedRowsForExport, 
+        schema || '',
+        storageUnit || '',
+        hasSelectedRows,
+        exportDelimiter,
+        selectedRowsForExport,
         exportFormat
     );
 
@@ -151,7 +151,8 @@ export const Export: FC<IExportProps> = ({
                                                 ))}
                                             </SelectContent>
                                         </Select>
-                                        <p className="text-sm mt-2">Choose a delimiter that doesn't appear in your data</p>
+                                        <p className="text-sm mt-2">Choose a delimiter that doesn't appear in your
+                                            data</p>
                                     </>
                                 )}
                             </div>
@@ -162,7 +163,8 @@ export const Export: FC<IExportProps> = ({
                                 <ul className="list-disc list-inside space-y-1">
                                     {exportFormat === 'csv' ? (
                                         <>
-                                            <li><p className="inline-block">Headers include column names and data types</p></li>
+                                            <li><p className="inline-block">Headers include column names and data
+                                                types</p></li>
                                             <li><p className="inline-block">UTF-8 encoding</p></li>
                                             <li><p className="inline-block">Customizable delimiter</p></li>
                                         </>
