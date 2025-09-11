@@ -83,7 +83,7 @@ if (BUILD_EDITION === 'ee') {
 export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad }) => {
 
     const [bufferPageSize, setBufferPageSize] = useState("100");
-    const [currentPage, setCurrentPage] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
     const [whereCondition, setWhereCondition] = useState<WhereCondition>();
     const [sortConditions, setSortConditions] = useState<SortCondition[]>([]);
     const unit: StorageUnit = useLocation().state?.unit;
@@ -131,7 +131,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
 
     const [code, setCode] = useState(initialScratchpadQuery);
 
-    const handleSubmitRequest = useCallback(() => {
+    const handleSubmitRequest = useCallback((pageOffset: number | null = null) => {
         getStorageUnitRows({
             variables: {
                 schema,
@@ -139,15 +139,20 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 where: whereCondition,
                 sort: sortConditions.length > 0 ? sortConditions : undefined,
                 pageSize: Number.parseInt(bufferPageSize),
-                pageOffset: currentPage,
+                pageOffset: pageOffset ?? currentPage - 1,
             },
         });
     }, [getStorageUnitRows, schema, unitName, whereCondition, sortConditions, bufferPageSize, currentPage]);
 
     const handleQuery = useCallback(() => {
         handleSubmitRequest();
-        setCurrentPage(0);
+        setCurrentPage(1);
     }, [handleSubmitRequest]);
+
+    const handlePageChange = useCallback((page: number) => {
+        setCurrentPage(page);
+        handleSubmitRequest(page - 1);
+    }, []);
 
     const handleColumnSort = useCallback((columnName: string) => {
         setSortConditions(prev => {
@@ -518,6 +523,11 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                         sortedColumns={sortedColumnsMap}
                         searchRef={searchRef}
                         pageSize={Number.parseInt(bufferPageSize)}
+                        // Server-side pagination props
+                        totalCount={Number.parseInt(totalCount)}
+                        currentPage={currentPage}
+                        onPageChange={handlePageChange}
+                        showPagination={true}
                     >
                         <div className="flex gap-2">
                             <Button onClick={handleOpenScratchpad} data-testid="scratchpad-button" variant="secondary" className={cn({
@@ -560,6 +570,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                     schema={schema}
                     storageUnit={unitName}
                     onRefresh={handleSubmitRequest}
+                    showPagination={false}
                 />
             </DrawerContent>
         </Drawer>

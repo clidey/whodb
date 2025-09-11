@@ -101,7 +101,7 @@ const DynamicExport: FC<{
     schema: string;
     storageUnit: string;
     hasSelectedRows: boolean;
-    selectedRowsData?: string[][];
+    selectedRowsData?: Record<string, any>[];
     checkedRowsCount: number;
 }> = (props) => {
     // Use EE Export if available, otherwise fall back to CE Export
@@ -173,6 +173,11 @@ interface TableProps {
     sortedColumns?: Map<string, 'asc' | 'desc'>;
     searchRef?: React.MutableRefObject<(search: string) => void>;
     pageSize?: number;
+    // Server-side pagination props
+    totalCount?: number;
+    currentPage?: number;
+    onPageChange?: (page: number) => void;
+    showPagination?: boolean;
 }
 
 export const StorageUnitTable: FC<TableProps> = ({
@@ -191,13 +196,17 @@ export const StorageUnitTable: FC<TableProps> = ({
     sortedColumns,
     searchRef,
     pageSize = 100,
+    // Server-side pagination props
+    totalCount,
+    currentPage: serverCurrentPage,
+    onPageChange,
+    showPagination = false,
 }) => {
     const [editIndex, setEditIndex] = useState<number | null>(null);
     const [editRow, setEditRow] = useState<string[] | null>(null);
     const [editRowInitialLengths, setEditRowInitialLengths] = useState<number[]>([]);
     const [deleting, setDeleting] = useState(false);
     const [checked, setChecked] = useState<number[]>([]);
-    const [currentPage, setCurrentPage] = useState(1);
     const [showExportConfirm, setShowExportConfirm] = useState(false);
     const tableRef = useRef<HTMLDivElement>(null);
     
@@ -210,9 +219,11 @@ export const StorageUnitTable: FC<TableProps> = ({
     const { data: maxRowData } = useMockDataMaxRowCountQuery();
     const maxRowCount = maxRowData?.MockDataMaxRowCount || 200;
     
-    const totalRows = rows.length;
+    // Use server-side pagination
+    const currentPage = serverCurrentPage || 1;
+    const totalRows = totalCount || 0;
     const totalPages = Math.ceil(totalRows / pageSize);
-    
+
     const [generateMockData, { loading: generatingMockData }] = useGenerateMockDataMutation();
     const [deleteRow, ] = useDeleteRowMutation();
     const [containerWidth, setContainerWidth] = useState<number>(0);
@@ -322,7 +333,14 @@ export const StorageUnitTable: FC<TableProps> = ({
         onRefresh?.();
     }, [deleteRow, schema, storageUnit, rows, columns, selectedRowsData, onRefresh]);
 
-    const paginatedRows = useMemo(() => rows.slice((currentPage - 1) * pageSize, currentPage * pageSize), [rows, currentPage, pageSize]);
+    const paginatedRows = useMemo(() => {
+        // For server-side pagination, rows are already paginated
+        return rows;
+    }, [rows]);
+
+    const handlePageChange = useCallback((newPage: number) => {
+        onPageChange?.(newPage);
+    }, [onPageChange]);
 
     const renderPaginationLinks = () => {
         const links = [];
@@ -333,7 +351,7 @@ export const StorageUnitTable: FC<TableProps> = ({
         if (start > 1) {
             links.push(
                 <PaginationItem key={1}>
-                    <PaginationLink href="#" onClick={e => { e.preventDefault(); setCurrentPage(1); }} size="sm">1</PaginationLink>
+                    <PaginationLink href="#" onClick={e => { e.preventDefault(); handlePageChange(1); }} size="sm">1</PaginationLink>
                 </PaginationItem>
             );
             if (start > 2) {
@@ -347,7 +365,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     <PaginationLink
                         href="#"
                         isActive={i === currentPage}
-                        onClick={e => { e.preventDefault(); setCurrentPage(i); }}
+                        onClick={e => { e.preventDefault(); handlePageChange(i); }}
                         size="sm"
                     >
                         {i}
@@ -362,7 +380,7 @@ export const StorageUnitTable: FC<TableProps> = ({
             }
             links.push(
                 <PaginationItem key={totalPages}>
-                    <PaginationLink href="#" onClick={e => { e.preventDefault(); setCurrentPage(totalPages); }} size="sm">{totalPages}</PaginationLink>
+                    <PaginationLink href="#" onClick={e => { e.preventDefault(); handlePageChange(totalPages); }} size="sm">{totalPages}</PaginationLink>
                 </PaginationItem>
             );
         }
@@ -503,7 +521,8 @@ export const StorageUnitTable: FC<TableProps> = ({
                         break;
                     case 'a':
                         event.preventDefault();
-                        setChecked(checked.length === paginatedRows.length ? [] : paginatedRows.map((_, index) => index + (currentPage - 1) * pageSize));
+                        // For server-side pagination, select all visible rows
+                        setChecked(checked.length === paginatedRows.length ? [] : paginatedRows.map((_, index) => index));
                         break;
                     case 'e':
                         event.preventDefault();
@@ -607,39 +626,39 @@ export const StorageUnitTable: FC<TableProps> = ({
         };
     }, [searchRef, rows, columns]);
 
-    const contextMenu = useCallback((globalIndex: number, index: number) => {
-        return <ContextMenu key={globalIndex}>
+    const contextMenu = useCallback((index: number, style: React.CSSProperties) => {
+        return <ContextMenu key={index}>
             <ContextMenuTrigger className="contents">
-                <TableRow data-row-idx={index} className="group">
-                    <TableCell className={cn({
+                <TableRow data-row-idx={index} className="group relative" style={style}>
+                    <TableCell className={cn("min-w-[40px] w-[40px]", {
                         "hidden": disableEdit,
                     })}>
                         <Checkbox
-                            checked={checked.includes(globalIndex)}
-                            onCheckedChange={() => setChecked(checked.includes(globalIndex) ? checked.filter(i => i !== globalIndex) : [...checked, globalIndex])}
+                            checked={checked.includes(index)}
+                            onCheckedChange={() => setChecked(checked.includes(index) ? checked.filter(i => i !== index) : [...checked, index])}
                         />
+                        <Button variant="secondary" className="opacity-0 group-hover:opacity-100 absolute right-2 w-0 top-1.5" onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            // Manually trigger context menu on this row
+                            const event = new MouseEvent("contextmenu", {
+                                bubbles: true,
+                                clientX: e.clientX,
+                                clientY: e.clientY,
+                            });
+                            e.currentTarget.dispatchEvent(event);
+                            }} data-testid="icon-button">
+                            <EllipsisVerticalIcon className="w-4 h-4" />
+                        </Button>
                     </TableCell>
                     {paginatedRows[index]?.map((cell, cellIdx) => (
-                        <TableCell key={cellIdx} className="cursor-pointer" onClick={() => handleCellClick(globalIndex, cellIdx)} data-col-idx={cellIdx}>{cell}</TableCell>
+                        <TableCell key={cellIdx} className="cursor-pointer" onClick={() => handleCellClick(index, cellIdx)} data-col-idx={cellIdx}>{cell}</TableCell>
                     ))}
-                    <Button variant="secondary" className="absolute right-6 opacity-0 group-hover:opacity-100 border border-input" onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        // Manually trigger context menu on this row
-                        const event = new MouseEvent("contextmenu", {
-                            bubbles: true,
-                            clientX: e.clientX,
-                            clientY: e.clientY,
-                        });
-                        e.currentTarget.dispatchEvent(event);
-                        }} data-testid="icon-button">
-                        <EllipsisVerticalIcon className="w-4 h-4" />
-                    </Button>
                 </TableRow>
             </ContextMenuTrigger>
             <ContextMenuContent className="w-52">
-                <ContextMenuItem onSelect={() => handleSelectRow(globalIndex)}>
-                    {checked.includes(globalIndex) ? (
+                <ContextMenuItem onSelect={() => handleSelectRow(index)}>
+                    {checked.includes(index) ? (
                         <>
                             <CheckCircleIcon className="w-4 h-4 text-primary" />
                             Deselect Row
@@ -653,7 +672,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         </>
                     )}
                 </ContextMenuItem>
-                <ContextMenuItem onSelect={() => handleEdit(globalIndex)} disabled={checked.length > 0} data-testid="context-menu-edit-row">
+                <ContextMenuItem onSelect={() => handleEdit(index)} disabled={checked.length > 0} data-testid="context-menu-edit-row">
                     <PencilSquareIcon className="w-4 h-4" />
                     Edit Row
                     <ContextMenuShortcut>⌘E</ContextMenuShortcut>
@@ -714,7 +733,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                             variant="destructive"
                             disabled={deleting}
                             onSelect={async () => {
-                                await handleDeleteRow(globalIndex);
+                                await handleDeleteRow(index);
                             }}
                             data-testid="context-menu-delete-row"
                         >
@@ -739,21 +758,33 @@ export const StorageUnitTable: FC<TableProps> = ({
             <div className="flex flex-col h-full space-y-4 w-0" style={{
                 width: `${containerWidth}px`,
             }}>
-                <TableComponent className="overflow-x-auto">
+                <TableComponent>
                     <TableHeader>
                         <ContextMenu>
                             <ContextMenuTrigger asChild>
-                                <TableHeadRow className="group cursor-context-menu hover:bg-muted/50 transition-colors" title="Right-click for table options">
-                                    <TableHead className={cn({
+                                <TableHeadRow className="group relative cursor-context-menu hover:bg-muted/50 transition-colors" title="Right-click for table options">
+                                    <TableHead className={cn("min-w-[40px] w-[40px] relative", {
                                         "hidden": disableEdit,
                                     })}>
-                                        <div className="flex items-center gap-2">
-                                            <Checkbox
-                                                checked={checked.length === paginatedRows.length}
-                                                onCheckedChange={() => setChecked(checked.length === paginatedRows.length ? [] : paginatedRows.map((_, index) => index + (currentPage - 1) * pageSize))}
-                                            />
-                                            <EllipsisVerticalIcon className="w-3 h-3 opacity-0 group-hover:opacity-50 transition-opacity" />
-                                        </div>
+                                        <Checkbox
+                                            checked={checked.length === paginatedRows.length}
+                                            onCheckedChange={() => {
+                                                setChecked(checked.length === paginatedRows.length ? [] : paginatedRows.map((_, index) => index));
+                                            }}
+                                        />
+                                        <Button variant="secondary" className="opacity-0 group-hover:opacity-100 absolute right-2 top-1.5 w-0" onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            // Manually trigger context menu on this row
+                                            const event = new MouseEvent("contextmenu", {
+                                                bubbles: true,
+                                                clientX: e.clientX,
+                                                clientY: e.clientY,
+                                            });
+                                            e.currentTarget.dispatchEvent(event);
+                                            }} data-testid="icon-button">
+                                            <EllipsisVerticalIcon className="w-4 h-4" />
+                                        </Button>
                                     </TableHead>
                                     {columns.map((col, idx) => (
                                         <TableHead
@@ -828,7 +859,9 @@ export const StorageUnitTable: FC<TableProps> = ({
                                     <ContextMenuShortcut>⌘R</ContextMenuShortcut>
                                 </ContextMenuItem>
                                 <ContextMenuItem 
-                                    onSelect={() => setChecked(checked.length === paginatedRows.length ? [] : paginatedRows.map((_, index) => index + (currentPage - 1) * pageSize))}
+                                    onSelect={() => {
+                                        setChecked(checked.length === paginatedRows.length ? [] : paginatedRows.map((_, index) => index));
+                                    }}
                                 >
                                     <CheckCircleIcon className="w-4 h-4" />
                                     {checked.length === paginatedRows.length ? "Deselect All" : "Select All"}
@@ -847,16 +880,16 @@ export const StorageUnitTable: FC<TableProps> = ({
                             </ContextMenuContent>
                         </ContextMenu>
                     </TableHeader>
-                    {
-                        paginatedRows.length > 0 &&
-                        <VirtualizedTableBody rowCount={paginatedRows.length} rowHeight={rowHeight} height={500} className="overflow-y-auto">
-                            {(index) => {
-                                const globalIndex = (currentPage - 1) * pageSize + index;
-                                console.log(globalIndex, index);
-                                return contextMenu(globalIndex, index);
-                            }}
+                    {paginatedRows.length > 0 && (
+                        <VirtualizedTableBody
+                            rowCount={paginatedRows.length}
+                            rowHeight={rowHeight}
+                            height={height}
+                            overscan={10}
+                        >
+                            {(rowIdx: number, rowStyle: React.CSSProperties) => contextMenu(rowIdx, rowStyle)}
                         </VirtualizedTableBody>
-                    }
+                    )}
                 </TableComponent>
                 {paginatedRows.length === 0 && (
                     <ContextMenu>
@@ -896,22 +929,12 @@ export const StorageUnitTable: FC<TableProps> = ({
                         </ContextMenuContent>
                     </ContextMenu>
                 )}
-                <div className={cn("flex justify-between items-center mb-2", {
+                <div className={cn("flex justify-between items-center mt-4", {
                     "justify-end": children == null,
                 })}>
                     {children}
-                    <Button
-                        variant="secondary"
-                        onClick={() => setShowExportConfirm(true)}
-                        className="flex gap-2"
-                    >
-                        <ArrowDownCircleIcon className="w-4 h-4" />
-                        {hasSelectedRows ? `Export ${checked.length} selected` : "Export all"}
-                    </Button>
-                </div>
-                <div className="flex mt-4">
                     <Pagination className={cn("flex justify-end", {
-                        "hidden": totalPages <= 1,
+                        "hidden": !showPagination || totalPages <= 1,
                     })}>
                         <PaginationContent>
                             <PaginationItem>
@@ -919,7 +942,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                     href="#"
                                     onClick={e => {
                                         e.preventDefault();
-                                        if (currentPage > 1) setCurrentPage(currentPage - 1);
+                                        if (currentPage > 1) handlePageChange(currentPage - 1);
                                     }}
                                     aria-disabled={currentPage === 1}
                                     size="sm"
@@ -931,7 +954,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                     href="#"
                                     onClick={e => {
                                         e.preventDefault();
-                                        if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                                        if (currentPage < totalPages) handlePageChange(currentPage + 1);
                                     }}
                                     aria-disabled={currentPage === totalPages}
                                     size="sm"
@@ -939,6 +962,16 @@ export const StorageUnitTable: FC<TableProps> = ({
                             </PaginationItem>
                         </PaginationContent>
                     </Pagination>
+                </div>
+                <div className="flex justify-end items-center mb-2">
+                    <Button
+                        variant="secondary"
+                        onClick={() => setShowExportConfirm(true)}
+                        className="flex gap-2"
+                    >
+                        <ArrowDownCircleIcon className="w-4 h-4" />
+                        {hasSelectedRows ? `Export ${checked.length} selected` : "Export all"}
+                    </Button>
                 </div>
                 <Sheet open={editIndex !== null} onOpenChange={open => { 
                     if (!open) {

@@ -49,7 +49,7 @@ interface IExportProps {
     schema: string;
     storageUnit: string;
     hasSelectedRows: boolean;
-    selectedRowsData?: string[][];
+    selectedRowsData?: Record<string, any>[];
     checkedRowsCount: number;
 }
 
