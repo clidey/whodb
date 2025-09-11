@@ -165,7 +165,7 @@ type Query {
   Schema: [String!]!
   StorageUnit(schema: String!): [StorageUnit!]!
   Row(schema: String!, storageUnit: String!, where: WhereCondition, sort: [SortCondition!], pageSize: Int!, pageOffset: Int!): RowsResult!
-    Columns(schema: String!, storageUnit: String!): [Column!]!
+  Columns(schema: String!, storageUnit: String!): [Column!]!
   RawExecute(query: String!): RowsResult!
   Graph(schema: String!): [GraphUnit!]!
   AIProviders: [AIProvider!]!

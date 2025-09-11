@@ -88,18 +88,15 @@ func (sb *SQLBuilder) QuoteIdentifier(identifier string) string {
 }
 
 // BuildFullTableName builds a fully qualified table name for GORM operations
-// GORM handles escaping internally, so we just build the string
+// GORM's dialector handles identifier quoting internally via QuoteTo method.
 func (sb *SQLBuilder) BuildFullTableName(schema, table string) string {
-	// Validate table name
 	if table == "" {
-		// Return empty string, let the caller handle the error
 		return ""
 	}
-	// Quote identifiers for safety; db.Table() uses this string verbatim
 	if schema == "" {
-		return sb.QuoteIdentifier(table)
+		return table
 	}
-	return sb.QuoteIdentifier(schema) + "." + sb.QuoteIdentifier(table)
+	return schema + "." + table
 }
 
 // GetTableQuery creates a GORM query with the appropriate table reference

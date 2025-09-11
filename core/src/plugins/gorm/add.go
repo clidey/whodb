@@ -100,6 +100,26 @@ func (p *GormPlugin) addRowWithDB(db *gorm.DB, schema string, storageUnit string
 		return fmt.Errorf("storage unit name cannot be empty")
 	}
 
+	// Fetch column types to ensure proper type conversion
+	columnTypes, err := p.GetColumnTypes(db, schema, storageUnit)
+	if err != nil {
+		log.Logger.WithError(err).WithField("schema", schema).WithField("storageUnit", storageUnit).
+			Warn("Failed to fetch column types, continuing without type information")
+		columnTypes = make(map[string]string)
+	}
+
+	// Populate type information in values if not already present
+	for i, value := range values {
+		if values[i].Extra == nil {
+			values[i].Extra = make(map[string]string)
+		}
+		if values[i].Extra["Type"] == "" {
+			if colType, ok := columnTypes[value.Key]; ok {
+				values[i].Extra["Type"] = colType
+			}
+		}
+	}
+
 	// Use SQL builder for consistent insert operations
 	builder := p.GormPluginFunctions.CreateSQLBuilder(db)
 

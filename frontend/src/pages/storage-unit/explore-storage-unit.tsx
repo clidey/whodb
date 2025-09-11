@@ -95,6 +95,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     const [showAdd, setShowAdd] = useState(false);
     const searchRef = useRef<(search: string) => void>(() => {});
     const [search, setSearch] = useState("");
+    const [currentTableName, setCurrentTableName] = useState<string>("");
     
     // For add row sheet logic
     const [addRowData, setAddRowData] = useState<Record<string, any>>({});
@@ -133,17 +134,21 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     const [code, setCode] = useState(initialScratchpadQuery);
 
     const handleSubmitRequest = useCallback(() => {
+        const tableNameToUse = unitName || currentTableName;
+        if (tableNameToUse) {
+            setCurrentTableName(tableNameToUse);
+        }
         getStorageUnitRows({
             variables: {
                 schema,
-                storageUnit: unitName,
+                storageUnit: tableNameToUse,
                 where: whereCondition,
                 sort: sortConditions.length > 0 ? sortConditions : undefined,
                 pageSize: Number.parseInt(bufferPageSize),
                 pageOffset: currentPage,
             },
         });
-    }, [getStorageUnitRows, schema, unitName, whereCondition, sortConditions, bufferPageSize, currentPage]);
+    }, [getStorageUnitRows, schema, unitName, currentTableName, whereCondition, sortConditions, bufferPageSize, currentPage]);
 
     const handleQuery = useCallback(() => {
         handleSubmitRequest();
@@ -259,10 +264,10 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     }, [rows?.Columns, rows?.Rows]);
 
     useEffect(() => {
-        if (unit == null) {
+        if (unit == null && !currentTableName) {
             navigate(InternalRoutes.Dashboard.StorageUnit.path);
         }
-    }, [navigate, unit]);
+    }, [navigate, unit, currentTableName]);
 
     const handleFilterChange = useCallback((filters: WhereCondition) => {
         setWhereCondition(filters);
@@ -346,7 +351,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         addRow({
             variables: {
                 schema,
-                storageUnit: unit.Name,
+                storageUnit: unit?.Name || unitName || currentTableName || "",
                 values,
             },
             onCompleted() {
@@ -414,6 +419,13 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     if (loading) {
         return <InternalPage routes={routes}>
             <LoadingPage />
+        </InternalPage>
+    }
+
+    // Prevent rendering if unit is not available and we don't have a table name
+    if (!unit && !currentTableName) {
+        return <InternalPage routes={routes}>
+            <LoadingPage/>
         </InternalPage>
     }
 
