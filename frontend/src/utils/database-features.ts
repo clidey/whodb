@@ -76,64 +76,6 @@ export function databaseSupportsSchema(databaseType: DatabaseType | string | und
 }
 
 /**
- * Get databases that don't support scratchpad (for backward compatibility)
- * @returns Array of database types that don't support scratchpad
- */
-export function getDatabasesThatDontSupportScratchpad(): DatabaseType[] {
-    const dbTypeItems = getDatabaseTypeDropdownItemsSync();
-    const databasesThatDontSupport: DatabaseType[] = [];
-    
-    // Check all configured databases
-    dbTypeItems.forEach(dbConfig => {
-        if (dbConfig.supportsScratchpad === false) {
-            databasesThatDontSupport.push(dbConfig.id as DatabaseType);
-        }
-    });
-    
-    // Include default databases if not found in config
-    const defaults = [DatabaseType.MongoDb, DatabaseType.Redis, DatabaseType.ElasticSearch];
-    defaults.forEach(dbType => {
-        if (!databasesThatDontSupport.includes(dbType)) {
-            const dbConfig = dbTypeItems.find(item => item.id === dbType);
-            if (!dbConfig || dbConfig.supportsScratchpad !== true) {
-                databasesThatDontSupport.push(dbType);
-            }
-        }
-    });
-    
-    return databasesThatDontSupport;
-}
-
-/**
- * Get databases that don't support schemas (for backward compatibility)
- * @returns Array of database types that don't support schemas
- */
-export function getDatabasesThatDontSupportSchema(): DatabaseType[] {
-    const dbTypeItems = getDatabaseTypeDropdownItemsSync();
-    const databasesThatDontSupport: DatabaseType[] = [];
-    
-    // Check all configured databases
-    dbTypeItems.forEach(dbConfig => {
-        if (dbConfig.supportsSchema === false) {
-            databasesThatDontSupport.push(dbConfig.id as DatabaseType);
-        }
-    });
-    
-    // Include default databases if not found in config
-    const defaults = [DatabaseType.Sqlite3, DatabaseType.Redis, DatabaseType.ElasticSearch];
-    defaults.forEach(dbType => {
-        if (!databasesThatDontSupport.includes(dbType)) {
-            const dbConfig = dbTypeItems.find(item => item.id === dbType);
-            if (!dbConfig || dbConfig.supportsSchema !== true) {
-                databasesThatDontSupport.push(dbType);
-            }
-        }
-    });
-    
-    return databasesThatDontSupport;
-}
-
-/**
  * Check if a database supports switching between databases in the UI
  * @param databaseType The database type (can be CE or EE type)
  * @returns boolean indicating if the database supports database switching
@@ -159,7 +101,6 @@ export function databaseSupportsDatabaseSwitching(databaseType: DatabaseType | s
         DatabaseType.MariaDb,
         DatabaseType.Postgres,
     ];
-
     return databasesThatSupportDatabaseSwitching.includes(databaseType as DatabaseType);
 }
 
