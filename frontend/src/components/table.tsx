@@ -84,7 +84,6 @@ import {
 } from "@heroicons/react/24/outline";
 import {FC, Suspense, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {Export} from "./export";
-import {loadEEComponent} from "../utils/ee-loader";
 import {useDeleteRowMutation, useGenerateMockDataMutation, useMockDataMaxRowCountQuery} from '@graphql';
 import {Tip} from "./tip";
 
@@ -162,7 +161,7 @@ interface TableProps {
     columnTypes?: string[];
     rows: string[][];
     rowHeight?: number;
-    height?: number;
+    height?: number | string;
     onRowUpdate?: (row: Record<string, string | number>, originalRow?: Record<string, string | number>) => Promise<void>;
     disableEdit?: boolean;
     schema?: string;
@@ -178,6 +177,9 @@ interface TableProps {
     currentPage?: number;
     onPageChange?: (page: number) => void;
     showPagination?: boolean;
+    // Checked rows management
+    checkedRows?: number[];
+    onCheckedChange?: (checked: number[]) => void;
 }
 
 export const StorageUnitTable: FC<TableProps> = ({
@@ -185,7 +187,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     columnTypes,
     rows,
     rowHeight = 48,
-    height = 500,
+                                                     height = "calc(100vh - 300px)",
     onRowUpdate,
     disableEdit = false,
     schema,
@@ -201,6 +203,9 @@ export const StorageUnitTable: FC<TableProps> = ({
     currentPage: serverCurrentPage,
     onPageChange,
     showPagination = false,
+                                                     // Checked rows management
+                                                     checkedRows = [],
+                                                     onCheckedChange,
 }) => {
     const [editIndex, setEditIndex] = useState<number | null>(null);
     const [editRow, setEditRow] = useState<string[] | null>(null);
@@ -476,6 +481,13 @@ export const StorageUnitTable: FC<TableProps> = ({
     }, [generateMockData, schema, storageUnit, mockDataRowCount, mockDataMethod, mockDataOverwriteExisting, showMockDataConfirmation, maxRowCount]);
 
     const columnIcons = useMemo(() => getColumnIcons(columns, columnTypes), [columns, columnTypes]);
+
+    // Update checked state when checkedRows prop changes
+    useEffect(() => {
+        if (checkedRows !== undefined) {
+            setChecked(checkedRows);
+        }
+    }, [checkedRows]);
 
     // Refresh page when it is resized and it settles
     useEffect(() => {
@@ -753,13 +765,15 @@ export const StorageUnitTable: FC<TableProps> = ({
         </ContextMenu>
     }, [checked, handleCellClick, handleEdit, handleSelectRow, handleDeleteRow, paginatedRows, disableEdit, onRefresh]);
 
+    const tableHeight = typeof height === 'string' ? height : `${height}px`;
+
     return (
-        <div ref={tableRef} className="h-full">
-            <div className="flex flex-col h-full space-y-4 w-0" style={{
+        <div ref={tableRef} className="h-full flex flex-col">
+            <div className="flex flex-col h-full w-0" style={{
                 width: `${containerWidth}px`,
             }}>
-                <TableComponent>
-                    <TableHeader>
+                <TableComponent className="flex-1 flex flex-col min-h-0">
+                    <TableHeader className="flex-shrink-0">
                         <ContextMenu>
                             <ContextMenuTrigger asChild>
                                 <TableHeadRow className="group relative cursor-context-menu hover:bg-muted/50 transition-colors" title="Right-click for table options">
@@ -884,7 +898,9 @@ export const StorageUnitTable: FC<TableProps> = ({
                         <VirtualizedTableBody
                             rowCount={paginatedRows.length}
                             rowHeight={rowHeight}
-                            height={height}
+                            height={typeof height === 'number' ? height : undefined}
+                            className="flex-1"
+                            style={{height: tableHeight}}
                             overscan={10}
                         >
                             {(rowIdx: number, rowStyle: React.CSSProperties) => contextMenu(rowIdx, rowStyle)}
@@ -930,50 +946,37 @@ export const StorageUnitTable: FC<TableProps> = ({
                         </ContextMenuContent>
                     </ContextMenu>
                 )}
-                <div className={cn("flex justify-between items-center mt-4", {
-                    "justify-end": children == null,
-                })}>
-                    {children}
-                    <Pagination className={cn("flex justify-end", {
-                        "hidden": !showPagination || totalPages <= 1,
-                    })}>
-                        <PaginationContent>
-                            <PaginationItem>
-                                <PaginationPrevious
-                                    href="#"
-                                    onClick={e => {
-                                        e.preventDefault();
-                                        if (currentPage > 1) handlePageChange(currentPage - 1);
-                                    }}
-                                    aria-disabled={currentPage === 1}
-                                    size="sm"
-                                />
-                            </PaginationItem>
-                            {renderPaginationLinks()}
-                            <PaginationItem>
-                                <PaginationNext
-                                    href="#"
-                                    onClick={e => {
-                                        e.preventDefault();
-                                        if (currentPage < totalPages) handlePageChange(currentPage + 1);
-                                    }}
-                                    aria-disabled={currentPage === totalPages}
-                                    size="sm"
-                                />
-                            </PaginationItem>
-                        </PaginationContent>
-                    </Pagination>
-                </div>
-                <div className="flex justify-end items-center mb-2">
-                    <Button
-                        variant="secondary"
-                        onClick={() => setShowExportConfirm(true)}
-                        className="flex gap-2"
-                    >
-                        <ArrowDownCircleIcon className="w-4 h-4" />
-                        {hasSelectedRows ? `Export ${checked.length} selected` : "Export all"}
-                    </Button>
-                </div>
+                {showPagination && totalPages > 1 && (
+                    <div className="flex justify-end items-center p-4 border-t">
+                        <Pagination>
+                            <PaginationContent>
+                                <PaginationItem>
+                                    <PaginationPrevious
+                                        href="#"
+                                        onClick={e => {
+                                            e.preventDefault();
+                                            if (currentPage > 1) handlePageChange(currentPage - 1);
+                                        }}
+                                        aria-disabled={currentPage === 1}
+                                        size="sm"
+                                    />
+                                </PaginationItem>
+                                {renderPaginationLinks()}
+                                <PaginationItem>
+                                    <PaginationNext
+                                        href="#"
+                                        onClick={e => {
+                                            e.preventDefault();
+                                            if (currentPage < totalPages) handlePageChange(currentPage + 1);
+                                        }}
+                                        aria-disabled={currentPage === totalPages}
+                                        size="sm"
+                                    />
+                                </PaginationItem>
+                            </PaginationContent>
+                        </Pagination>
+                    </div>
+                )}
                 <Sheet open={editIndex !== null} onOpenChange={open => { 
                     if (!open) {
                         setEditIndex(null);
