@@ -26,6 +26,7 @@ import (
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/types"
 )
 
 var (
@@ -336,6 +337,20 @@ func (p *ElasticSearchPlugin) WithTransaction(config *engine.PluginConfig, opera
 
 func (p *ElasticSearchPlugin) GetSupportedOperators() map[string]string {
 	return supportedOperators
+}
+
+// GetTypeConverter returns a basic type converter for Elasticsearch
+func (p *ElasticSearchPlugin) GetTypeConverter() types.TypeConverter {
+	// Elasticsearch doesn't use SQL types, but we provide a basic implementation
+	registry := types.NewTypeRegistry()
+	types.InitializeDefaultTypes(registry)
+	return types.NewUniversalTypeConverter("elasticsearch", registry)
+}
+
+// RegisterTypes registers Elasticsearch-specific types (if any)
+func (p *ElasticSearchPlugin) RegisterTypes(registry *types.TypeRegistry) error {
+	// Elasticsearch uses JSON documents, no SQL type system
+	return nil
 }
 
 func NewElasticSearchPlugin() *engine.Plugin {

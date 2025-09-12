@@ -20,11 +20,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
+	"github.com/clidey/whodb/core/src/types"
 	mapset "github.com/deckarep/golang-set/v2"
 	"gorm.io/gorm"
 )
@@ -147,11 +149,75 @@ func (p *MySQLPlugin) CreateSQLBuilder(db *gorm.DB) gorm_plugin.SQLBuilderInterf
 	return NewMySQLSQLBuilder(db, p)
 }
 
+// RegisterTypes registers MySQL-specific types
+func (p *MySQLPlugin) RegisterTypes(registry *types.TypeRegistry) error {
+	// MySQL JSON type - properly parse JSON strings
+	err := registry.RegisterType(&types.TypeDefinition{
+		Name:     "MySQLJSON",
+		Category: types.TypeCategoryJSON,
+		SQLTypes: []string{"JSON"},
+		FromString: func(s string) (any, error) {
+			// MySQL returns JSON as a string, keep it for proper display
+			return s, nil
+		},
+		ToString: func(v any) (string, error) {
+			if s, ok := v.(string); ok {
+				return s, nil
+			}
+			return fmt.Sprintf("%v", v), nil
+		},
+		InputType: "json",
+		Icon:      "json",
+	})
+	if err != nil {
+		return err
+	}
+
+	// MySQL SET type - comma-separated values
+	err = registry.RegisterType(&types.TypeDefinition{
+		Name:     "MySQLSet",
+		Category: types.TypeCategoryText,
+		SQLTypes: []string{"SET"},
+		FromString: func(s string) (any, error) {
+			// Return as string array for better handling
+			if s == "" {
+				return []string{}, nil
+			}
+			return strings.Split(s, ","), nil
+		},
+		ToString: func(v any) (string, error) {
+			if arr, ok := v.([]string); ok {
+				return strings.Join(arr, ","), nil
+			}
+			return fmt.Sprintf("%v", v), nil
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	// Register database-specific handler
+	converter := p.GetTypeConverter()
+	if converter != nil {
+		handler := types.NewMySQLHandler()
+		converter.RegisterDatabaseHandler("mysql", handler)
+	}
+
+	return nil
+}
+
 func NewMySQLPlugin() *engine.Plugin {
 	mysqlPlugin := &MySQLPlugin{}
 	mysqlPlugin.Type = engine.DatabaseType_MySQL
 	mysqlPlugin.PluginFunctions = mysqlPlugin
 	mysqlPlugin.GormPluginFunctions = mysqlPlugin
+
+	// Initialize type converter with MySQL-specific types
+	registry := types.NewTypeRegistry()
+	types.InitializeDefaultTypes(registry)
+	mysqlPlugin.RegisterTypes(registry)
+	mysqlPlugin.SetTypeConverter(types.NewUniversalTypeConverter("mysql", registry))
+
 	return &mysqlPlugin.Plugin
 }
 
@@ -160,5 +226,12 @@ func NewMyMariaDBPlugin() *engine.Plugin {
 	mysqlPlugin.Type = engine.DatabaseType_MariaDB
 	mysqlPlugin.PluginFunctions = mysqlPlugin
 	mysqlPlugin.GormPluginFunctions = mysqlPlugin
+
+	// Initialize type converter with MySQL-specific types (MariaDB uses same types)
+	registry := types.NewTypeRegistry()
+	types.InitializeDefaultTypes(registry)
+	mysqlPlugin.RegisterTypes(registry)
+	mysqlPlugin.SetTypeConverter(types.NewUniversalTypeConverter("mysql", registry))
+
 	return &mysqlPlugin.Plugin
 }

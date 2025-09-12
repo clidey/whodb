@@ -30,6 +30,7 @@ import (
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
+	"github.com/clidey/whodb/core/src/types"
 	mapset "github.com/deckarep/golang-set/v2"
 	"gorm.io/gorm"
 )
@@ -406,10 +407,71 @@ func (p *Sqlite3Plugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult,
 	return result, nil
 }
 
+// RegisterTypes registers SQLite-specific types
+func (p *Sqlite3Plugin) RegisterTypes(registry *types.TypeRegistry) error {
+	// SQLite BLOB type - display as hex
+	err := registry.RegisterType(&types.TypeDefinition{
+		Name:     "SQLiteBLOB",
+		Category: types.TypeCategoryBinary,
+		SQLTypes: []string{"BLOB"},
+		FromString: func(s string) (any, error) {
+			// Convert hex string to bytes if needed
+			if strings.HasPrefix(s, "0x") {
+				s = s[2:]
+				return hex.DecodeString(s)
+			}
+			return []byte(s), nil
+		},
+		ToString: func(v any) (string, error) {
+			if b, ok := v.([]byte); ok {
+				return "0x" + hex.EncodeToString(b), nil
+			}
+			return fmt.Sprintf("%v", v), nil
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	// SQLite's flexible typing means we should handle TEXT that looks like dates
+	err = registry.RegisterType(&types.TypeDefinition{
+		Name:     "SQLiteFlexDate",
+		Category: types.TypeCategoryDate,
+		SQLTypes: []string{"DATE", "DATETIME", "TIMESTAMP"},
+		FromString: func(s string) (any, error) {
+			// Keep as string to preserve SQLite's flexibility
+			// The DateTimeString type handles this in ConvertRawToRows
+			return s, nil
+		},
+		ToString: func(v any) (string, error) {
+			return fmt.Sprintf("%v", v), nil
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	// Register database-specific handler
+	converter := p.GetTypeConverter()
+	if converter != nil {
+		handler := types.NewSQLiteHandler()
+		converter.RegisterDatabaseHandler("sqlite", handler)
+	}
+
+	return nil
+}
+
 func NewSqlite3Plugin() *engine.Plugin {
 	plugin := &Sqlite3Plugin{}
 	plugin.Type = engine.DatabaseType_Sqlite3
 	plugin.PluginFunctions = plugin
 	plugin.GormPluginFunctions = plugin
+
+	// Initialize type converter with SQLite-specific types
+	registry := types.NewTypeRegistry()
+	types.InitializeDefaultTypes(registry)
+	plugin.RegisterTypes(registry)
+	plugin.SetTypeConverter(types.NewUniversalTypeConverter("sqlite", registry))
+
 	return &plugin.Plugin
 }

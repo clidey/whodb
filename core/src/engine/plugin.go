@@ -16,7 +16,10 @@
 
 package engine
 
-import "github.com/clidey/whodb/core/graph/model"
+import (
+	"github.com/clidey/whodb/core/graph/model"
+	"github.com/clidey/whodb/core/src/types"
+)
 
 type Credentials struct {
 	Id          *string
@@ -111,6 +114,10 @@ type PluginFunctions interface {
 
 	// Transaction support
 	WithTransaction(config *PluginConfig, operation func(tx any) error) error
+
+	// Type system methods
+	GetTypeConverter() types.TypeConverter
+	RegisterTypes(registry *types.TypeRegistry) error
 }
 
 type Plugin struct {

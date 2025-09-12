@@ -24,6 +24,7 @@ import (
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
+	"github.com/clidey/whodb/core/src/types"
 	mapset "github.com/deckarep/golang-set/v2"
 	"gorm.io/gorm"
 )
@@ -139,7 +140,7 @@ func (p *PostgresPlugin) GetDatabases(config *engine.PluginConfig) ([]string, er
 			Scan(&databases).Error; err != nil {
 			return nil, err
 		}
-		databaseNames := []string{}
+		var databaseNames []string
 		for _, database := range databases {
 			databaseNames = append(databaseNames, database.Datname)
 		}
@@ -163,10 +164,146 @@ func (p *PostgresPlugin) RawExecute(config *engine.PluginConfig, query string) (
 	return p.executeRawSQL(config, query)
 }
 
+// RegisterTypes registers PostgreSQL-specific types
+func (p *PostgresPlugin) RegisterTypes(registry *types.TypeRegistry) error {
+	// Create parser for proper conversion using pgx
+	parser := types.NewPostgreSQLArrayParserSimple()
+
+	// Register PostgreSQL array types with pgx-based parsing
+	err := registry.RegisterType(&types.TypeDefinition{
+		Name:     "PostgresIntArray",
+		Category: types.TypeCategoryArray,
+		SQLTypes: []string{"_INT2", "_INT4", "_INT8"},
+		FromString: func(s string) (any, error) {
+			// Use pgx parser for proper integer array handling
+			return parser.ParseArraySimple(s, "_INT4")
+		},
+		ToString: func(v any) (string, error) {
+			return parser.FormatArraySimple(v), nil
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	// Register float array types
+	err = registry.RegisterType(&types.TypeDefinition{
+		Name:     "PostgresFloatArray",
+		Category: types.TypeCategoryArray,
+		SQLTypes: []string{"_FLOAT4", "_FLOAT8", "_NUMERIC", "_DECIMAL"},
+		FromString: func(s string) (any, error) {
+			return parser.ParseArraySimple(s, "_FLOAT8")
+		},
+		ToString: func(v any) (string, error) {
+			return parser.FormatArraySimple(v), nil
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	err = registry.RegisterType(&types.TypeDefinition{
+		Name:     "PostgresTextArray",
+		Category: types.TypeCategoryArray,
+		SQLTypes: []string{"_TEXT", "_VARCHAR", "_CHAR"},
+		FromString: func(s string) (any, error) {
+			return parser.ParseArraySimple(s, "_TEXT")
+		},
+		ToString: func(v any) (string, error) {
+			return parser.FormatArraySimple(v), nil
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	// Register boolean array type
+	err = registry.RegisterType(&types.TypeDefinition{
+		Name:     "PostgresBoolArray",
+		Category: types.TypeCategoryArray,
+		SQLTypes: []string{"_BOOL"},
+		FromString: func(s string) (any, error) {
+			return parser.ParseArraySimple(s, "_BOOL")
+		},
+		ToString: func(v any) (string, error) {
+			return parser.FormatArraySimple(v), nil
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	err = registry.RegisterType(&types.TypeDefinition{
+		Name:     "PostgresUUIDArray",
+		Category: types.TypeCategoryArray,
+		SQLTypes: []string{"_UUID"},
+		FromString: func(s string) (any, error) {
+			return parser.ParseArraySimple(s, "_UUID")
+		},
+		ToString: func(v any) (string, error) {
+			return parser.FormatArraySimple(v), nil
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	// Register date/time array types
+	err = registry.RegisterType(&types.TypeDefinition{
+		Name:     "PostgresDateTimeArray",
+		Category: types.TypeCategoryArray,
+		SQLTypes: []string{"_DATE", "_TIMESTAMP", "_TIMESTAMPTZ", "_TIME", "_TIMETZ"},
+		FromString: func(s string) (any, error) {
+			return parser.ParseArraySimple(s, "_TIMESTAMP")
+		},
+		ToString: func(v any) (string, error) {
+			return parser.FormatArraySimple(v), nil
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	// Register JSON array types
+	err = registry.RegisterType(&types.TypeDefinition{
+		Name:     "PostgresJSONArray",
+		Category: types.TypeCategoryArray,
+		SQLTypes: []string{"_JSON", "_JSONB"},
+		FromString: func(s string) (any, error) {
+			return parser.ParseArraySimple(s, "_JSON")
+		},
+		ToString: func(v any) (string, error) {
+			return parser.FormatArraySimple(v), nil
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	// Register database-specific handler
+	converter := p.GetTypeConverter()
+	if converter != nil {
+		handler := types.NewPostgreSQLHandler()
+		converter.RegisterDatabaseHandler("postgresql", handler)
+	}
+
+	return nil
+}
+
 func NewPostgresPlugin() *engine.Plugin {
 	plugin := &PostgresPlugin{}
 	plugin.Type = engine.DatabaseType_Postgres
 	plugin.PluginFunctions = plugin
 	plugin.GormPluginFunctions = plugin
+
+	// Initialize type converter with PostgreSQL-specific types
+	registry := types.NewTypeRegistry()
+	types.InitializeDefaultTypes(registry)
+	err := plugin.RegisterTypes(registry)
+	if err != nil {
+		return nil
+	}
+	plugin.SetTypeConverter(types.NewUniversalTypeConverter("postgresql", registry))
+
 	return &plugin.Plugin
 }

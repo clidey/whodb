@@ -19,14 +19,12 @@ package gorm_plugin
 import (
 	"database/sql"
 	"fmt"
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
-	"github.com/google/uuid"
+	"github.com/clidey/whodb/core/src/types"
 	"gorm.io/gorm"
 )
 
@@ -184,194 +182,40 @@ func (p *GormPlugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[
 	return columnTypes, nil
 }
 
-// todo: test this thouroughly for each DB to ensure that the casting is correct and there's no data loss
-// todo: how do we handle if user doesn't pass in a value, or it's null
+// ConvertStringValue uses the new type converter system with vetted libraries
 func (p *GormPlugin) ConvertStringValue(value, columnType string) (interface{}, error) {
-	// handle nullable type. clickhouse specific
-	isNullable := false
-	if strings.HasPrefix(columnType, "Nullable(") {
-		isNullable = true
-		columnType = strings.TrimPrefix(columnType, "Nullable(")
-		columnType = strings.TrimSuffix(columnType, ")")
+	// Initialize converter if needed
+	if p.typeConverter == nil {
+		p.InitPlugin()
 	}
 
-	columnType = strings.ToUpper(columnType)
+	// First check if plugin wants to handle this data type with custom logic
+	isNullable := p.typeConverter.IsNullable(columnType)
+	baseType := p.typeConverter.GetBaseType(columnType)
 
-	// Check if plugin wants to handle this data type
-	if customValue, handled, err := p.GormPluginFunctions.HandleCustomDataType(value, columnType, isNullable); handled {
+	if customValue, handled, err := p.GormPluginFunctions.HandleCustomDataType(value, baseType, isNullable); handled {
 		return customValue, err
 	}
 
-	// Handle NULL values
-	if isNullable && (value == "" || strings.EqualFold(value, "NULL")) {
-		switch {
-		case intTypes.Contains(columnType):
-			return sql.NullInt64{Valid: false}, nil
-		case uintTypes.Contains(columnType):
-			return nil, nil // Go's sql package does not have sql.NullUint64
-		case floatTypes.Contains(columnType):
-			return sql.NullFloat64{Valid: false}, nil
-		case boolTypes.Contains(columnType):
-			return sql.NullBool{Valid: false}, nil
-		case dateTypes.Contains(columnType), dateTimeTypes.Contains(columnType):
-			return sql.NullTime{Valid: false}, nil
-		case binaryTypes.Contains(columnType):
-			fallthrough // treat null binary as null string
-		default: // Assume text
-			return sql.NullString{Valid: false}, nil
-		}
-	}
-
-	// Handle Array type. clickhouse specific
-	if strings.HasPrefix(columnType, "Array(") {
+	// Handle Array type (ClickHouse specific)
+	if strings.HasPrefix(strings.ToUpper(columnType), "ARRAY(") {
 		return p.convertArrayValue(value, columnType)
 	}
 
-	// Remove any LowCardinality() wrapper. clickhouse specific
-	if strings.HasPrefix(columnType, "LowCardinality(") {
-		columnType = strings.TrimPrefix(columnType, "LowCardinality(")
-		columnType = strings.TrimSuffix(columnType, ")")
-	}
-
-	switch {
-	case intTypes.Contains(columnType):
-		parsedValue, err := strconv.ParseInt(value, 10, 64)
-		if err != nil {
-			log.Logger.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse integer value")
-			return nil, err
-		}
-		if isNullable {
-			return sql.NullInt64{Int64: parsedValue, Valid: true}, nil
-		}
-		return parsedValue, nil
-	case uintTypes.Contains(columnType): //todo: this unsigned stuff is meant to be for clickhouse, double check if it's needed
-		bitSize := 64
-		if len(columnType) > 4 {
-			if size, err := strconv.Atoi(columnType[4:]); err == nil {
-				bitSize = size
-			}
-		}
-		parsedValue, err := strconv.ParseUint(value, 10, bitSize)
-		if err != nil {
-			log.Logger.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse unsigned integer value")
-			return nil, err
-		}
-		if isNullable {
-			return &parsedValue, nil
-		}
-		return parsedValue, nil
-	case floatTypes.Contains(columnType):
-		parsedValue, err := strconv.ParseFloat(value, 64)
-		if err != nil {
-			log.Logger.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse float value")
-			return nil, err
-		}
-		if isNullable {
-			return sql.NullFloat64{Float64: parsedValue, Valid: true}, nil
-		}
-		return parsedValue, nil
-	case boolTypes.Contains(columnType):
-		parsedValue, err := strconv.ParseBool(value)
-		if err != nil {
-			log.Logger.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse boolean value")
-			return nil, err
-		}
-		if isNullable {
-			return sql.NullBool{Bool: parsedValue, Valid: true}, nil
-		}
-		return parsedValue, nil
-	case dateTypes.Contains(columnType):
-		date, err := p.parseDate(value)
-		if err != nil {
-			log.Logger.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse date value")
-			return nil, fmt.Errorf("invalid date format: %v", err)
-		}
-		if isNullable {
-			return sql.NullTime{Time: date, Valid: true}, nil
-		}
-		return date, nil
-	case dateTimeTypes.Contains(columnType):
-		datetime, err := p.parseDateTime(value)
-		if err != nil {
-			log.Logger.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse datetime value")
-			return nil, fmt.Errorf("invalid datetime format: %v", err)
-		}
-		if isNullable {
-			return sql.NullTime{Time: datetime, Valid: true}, nil
-		}
-		return datetime, nil
-	case binaryTypes.Contains(columnType):
-		blobData := []byte(value)
-		if isNullable && len(blobData) == 0 {
-			return sql.NullString{Valid: false}, nil
-		}
-		return blobData, nil
-	// todo: geometry types need to be sorted out more thoughtfully
-	// case geometryTypes.Contains(columnType):
-	// 	geom, err := wkt.Unmarshal(value)
-	// 	if err != nil {
-	// 		return nil, fmt.Errorf("invalid geometry format: %v", err)
-	// 	}
-	// 	return geom, nil
-	case uuidTypes.Contains(columnType):
-		_, err := uuid.Parse(value)
-		if err != nil {
-			log.Logger.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse UUID value")
-			return nil, fmt.Errorf("invalid UUID format: %v", err)
-		}
-		fallthrough // let it be handled as a string for now
-	default: // should be always string/text/etc
-		if isNullable {
-			return sql.NullString{String: value, Valid: true}, nil
-		}
-		return value, nil
-	}
-}
-
-func (p *GormPlugin) parseDateTime(value string) (time.Time, error) {
-	// List of formats to try
-	formats := []string{
-		time.RFC3339,           // "2006-01-02T15:04:05Z07:00"
-		"2006-01-02T15:04:05Z", // UTC timezone
-		"2006-01-02 15:04:05",  // No timezone
-		"2006-01-02T15:04:05",  // No timezone with T
-	}
-
-	var lastErr error
-	for _, format := range formats {
-		t, err := time.Parse(format, value)
-		if err == nil {
-			return t, nil
-		}
-		lastErr = err
-	}
-
-	return time.Time{}, fmt.Errorf("could not parse datetime '%s': %v", value, lastErr)
-}
-
-// parseDate converts a string to a time.Time object for ClickHouse Date
-func (p *GormPlugin) parseDate(value string) (time.Time, error) {
-	formats := []string{
-		"2006-01-02", // Standard date format
-		time.RFC3339, // Try full datetime format and truncate to date
-		"2006-01-02T15:04:05",
-		"2006-01-02 15:04:05",
-	}
-
-	var lastErr error
-	for _, format := range formats {
-		t, err := time.Parse(format, value)
-		if err == nil {
-			// Truncate to date only (no time component)
-			return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location()), nil
-		}
-		lastErr = err
-	}
-
-	return time.Time{}, fmt.Errorf("could not parse date '%s': %v", value, lastErr)
+	// Use the new type converter for all standard conversions
+	return p.typeConverter.ConvertFromString(value, columnType)
 }
 
 func (p *GormPlugin) convertArrayValue(value string, columnType string) (interface{}, error) {
+	// For ClickHouse, use the improved parser if available
+	if p.Type == engine.DatabaseType_ClickHouse && p.typeConverter != nil {
+		parser := &types.ClickHouseArrayParser{}
+		elementType := strings.TrimPrefix(columnType, "Array(")
+		elementType = strings.TrimSuffix(elementType, ")")
+		return parser.ParseArray(value, elementType)
+	}
+
+	// Fallback to simple parsing for other databases
 	// Extract the element type from Array(Type)
 	elementType := strings.TrimPrefix(columnType, "Array(")
 	elementType = strings.TrimSuffix(elementType, ")")

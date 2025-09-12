@@ -25,6 +25,7 @@ import (
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/types"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -372,6 +373,21 @@ func (p *MongoDBPlugin) WithTransaction(config *engine.PluginConfig, operation f
 	// MongoDB doesn't support transactions in the same way as SQL databases
 	// For now, just execute the operation directly
 	return operation(nil)
+}
+
+// GetTypeConverter returns a basic type converter for MongoDB
+func (p *MongoDBPlugin) GetTypeConverter() types.TypeConverter {
+	// MongoDB doesn't need SQL type conversion, but we provide a basic implementation
+	registry := types.NewTypeRegistry()
+	types.InitializeDefaultTypes(registry)
+	return types.NewUniversalTypeConverter("mongodb", registry)
+}
+
+// RegisterTypes registers MongoDB-specific types (if any)
+func (p *MongoDBPlugin) RegisterTypes(registry *types.TypeRegistry) error {
+	// MongoDB uses BSON types, which are handled differently
+	// For now, return nil as MongoDB doesn't use SQL types
+	return nil
 }
 
 func NewMongoDBPlugin() *engine.Plugin {

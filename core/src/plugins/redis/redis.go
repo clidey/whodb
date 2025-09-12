@@ -26,6 +26,7 @@ import (
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/types"
 	"github.com/go-redis/redis/v8"
 )
 
@@ -451,6 +452,20 @@ func (p *RedisPlugin) WithTransaction(config *engine.PluginConfig, operation fun
 	// Redis doesn't support transactions in the same way as SQL databases
 	// For now, just execute the operation directly
 	return operation(nil)
+}
+
+// GetTypeConverter returns a basic type converter for Redis
+func (p *RedisPlugin) GetTypeConverter() types.TypeConverter {
+	// Redis doesn't use SQL types, but we provide a basic implementation
+	registry := types.NewTypeRegistry()
+	types.InitializeDefaultTypes(registry)
+	return types.NewUniversalTypeConverter("redis", registry)
+}
+
+// RegisterTypes registers Redis-specific types (if any)
+func (p *RedisPlugin) RegisterTypes(registry *types.TypeRegistry) error {
+	// Redis uses simple key-value pairs, no SQL type system
+	return nil
 }
 
 func NewRedisPlugin() *engine.Plugin {

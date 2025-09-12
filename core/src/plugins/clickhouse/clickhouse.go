@@ -30,6 +30,7 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
+	"github.com/clidey/whodb/core/src/types"
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
@@ -269,10 +270,66 @@ func (p *ClickHousePlugin) FormatColumnValue(typeName string, value interface{})
 	return fmt.Sprintf("%v", value), nil
 }
 
+// RegisterTypes registers ClickHouse-specific types
+func (p *ClickHousePlugin) RegisterTypes(registry *types.TypeRegistry) error {
+	// Register ClickHouse array types
+	registry.RegisterType(&types.TypeDefinition{
+		Name:     "ClickHouseArray",
+		Category: types.TypeCategoryArray,
+		SQLTypes: []string{
+			"ARRAY(INT8)", "ARRAY(INT16)", "ARRAY(INT32)", "ARRAY(INT64)",
+			"ARRAY(UINT8)", "ARRAY(UINT16)", "ARRAY(UINT32)", "ARRAY(UINT64)",
+			"ARRAY(FLOAT32)", "ARRAY(FLOAT64)",
+			"ARRAY(STRING)", "ARRAY(DATE)", "ARRAY(DATETIME)", "ARRAY(UUID)",
+		},
+		FromString: func(s string) (any, error) {
+			parser := &types.ClickHouseArrayParser{}
+			// For now, parse as generic array
+			return parser.ParseArray(s, "")
+		},
+		ToString: func(v any) (string, error) {
+			parser := &types.ClickHouseArrayParser{}
+			return parser.FormatArray(v), nil
+		},
+	})
+
+	// Register ClickHouse-specific numeric types
+	registry.RegisterType(&types.TypeDefinition{
+		Name:     "ClickHouseDecimal",
+		Category: types.TypeCategoryNumeric,
+		SQLTypes: []string{"DECIMAL32", "DECIMAL64", "DECIMAL128", "DECIMAL256"},
+		FromString: func(s string) (any, error) {
+			return decimal.NewFromString(s)
+		},
+		ToString: func(v any) (string, error) {
+			if d, ok := v.(decimal.Decimal); ok {
+				return d.String(), nil
+			}
+			return fmt.Sprintf("%v", v), nil
+		},
+	})
+
+	// Register database-specific handler
+	converter := p.GetTypeConverter()
+	if converter != nil {
+		handler := types.NewClickHouseHandler()
+		converter.RegisterDatabaseHandler("clickhouse", handler)
+	}
+
+	return nil
+}
+
 func NewClickHousePlugin() *engine.Plugin {
 	clickhousePlugin := &ClickHousePlugin{}
 	clickhousePlugin.Type = engine.DatabaseType_ClickHouse
 	clickhousePlugin.PluginFunctions = clickhousePlugin
 	clickhousePlugin.GormPluginFunctions = clickhousePlugin
+
+	// Initialize type converter with ClickHouse-specific types
+	registry := types.NewTypeRegistry()
+	types.InitializeDefaultTypes(registry)
+	clickhousePlugin.RegisterTypes(registry)
+	clickhousePlugin.SetTypeConverter(types.NewUniversalTypeConverter("clickhouse", registry))
+
 	return &clickhousePlugin.Plugin
 }

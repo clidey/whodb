@@ -27,6 +27,7 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
+	"github.com/clidey/whodb/core/src/types"
 	mapset "github.com/deckarep/golang-set/v2"
 	"gorm.io/gorm"
 )
@@ -34,14 +35,40 @@ import (
 type GormPlugin struct {
 	engine.Plugin
 	GormPluginFunctions
-	errorHandler *ErrorHandler
+	errorHandler  *ErrorHandler
+	typeConverter types.TypeConverter
 }
 
-// InitPlugin initializes the plugin with an error handler
+// InitPlugin initializes the plugin with an error handler and type converter
 func (p *GormPlugin) InitPlugin() {
 	if p.errorHandler == nil {
 		p.errorHandler = NewErrorHandler(p)
 	}
+	if p.typeConverter == nil {
+		// Initialize with default type converter
+		registry := types.NewTypeRegistry()
+		types.InitializeDefaultTypes(registry)
+		p.typeConverter = types.NewUniversalTypeConverter(string(p.Type), registry)
+	}
+}
+
+// GetTypeConverter returns the type converter for this plugin
+func (p *GormPlugin) GetTypeConverter() types.TypeConverter {
+	if p.typeConverter == nil {
+		p.InitPlugin()
+	}
+	return p.typeConverter
+}
+
+// SetTypeConverter allows setting a custom type converter
+func (p *GormPlugin) SetTypeConverter(converter types.TypeConverter) {
+	p.typeConverter = converter
+}
+
+// RegisterTypes allows plugins to register custom types
+func (p *GormPlugin) RegisterTypes(registry *types.TypeRegistry) error {
+	// Base implementation - plugins can override to add custom types
+	return nil
 }
 
 // CreateSQLBuilder creates a SQL builder instance - default implementation
