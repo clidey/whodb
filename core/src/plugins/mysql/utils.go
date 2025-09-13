@@ -17,7 +17,10 @@
 package mysql
 
 func (p *MySQLPlugin) ConvertStringValueDuringMap(value, columnType string) (interface{}, error) {
-	return value, nil
+	// Let the base GORM plugin handle the conversion
+	// This will convert string values to proper Go types (int64, float64, etc.)
+	// which prevents GORM from generating CAST statements
+	return p.ConvertStringValue(value, columnType)
 }
 
 // Identifier quoting handled by GORM Dialector
