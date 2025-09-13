@@ -56,7 +56,7 @@ var AllowedOrigins = common.FilterList(strings.Split(os.Getenv("WHODB_ALLOWED_OR
 })
 
 var LogLevel = getLogLevel()
-var EnableMockDataGeneration = os.Getenv("WHODB_ENABLE_MOCK_DATA_GENERATION")
+var DisableMockDataGeneration = os.Getenv("WHODB_DISABLE_MOCK_DATA_GENERATION")
 
 type ChatProvider struct {
 	Type       string
@@ -67,7 +67,7 @@ type ChatProvider struct {
 
 // TODO: need to make this more dynamic so users can configure more than one key for each provider
 func GetConfiguredChatProviders() []ChatProvider {
-	providers := []ChatProvider{}
+	var providers []ChatProvider
 
 	if len(OpenAIAPIKey) > 0 {
 		providers = append(providers, ChatProvider{
@@ -179,7 +179,7 @@ func GetDefaultDatabaseCredentials(databaseType string) []types.DatabaseCredenti
 func findAllDatabaseCredentials(databaseType string) []types.DatabaseCredentials {
 	uppercaseDatabaseType := strings.ToUpper(databaseType)
 	i := 1
-	profiles := []types.DatabaseCredentials{}
+	var profiles []types.DatabaseCredentials
 
 	for {
 		databaseProfile := os.Getenv(fmt.Sprintf("WHODB_%s_%d", uppercaseDatabaseType, i))
@@ -216,22 +216,23 @@ func getLogLevel() string {
 }
 
 func IsMockDataGenerationAllowed(tableName string) bool {
-	if EnableMockDataGeneration == "" {
-		return false
-	}
-
-	if EnableMockDataGeneration == "*" {
+	if DisableMockDataGeneration == "" {
 		return true
 	}
 
-	allowedTables := strings.SplitSeq(EnableMockDataGeneration, ",")
-	for allowed := range allowedTables {
-		if strings.TrimSpace(allowed) == tableName {
-			return true
+	// If all tables are disabled
+	if DisableMockDataGeneration == "*" {
+		return false
+	}
+
+	disabledTables := strings.Split(DisableMockDataGeneration, ",")
+	for _, disabled := range disabledTables {
+		if strings.TrimSpace(disabled) == tableName {
+			return false
 		}
 	}
 
-	return false
+	return true
 }
 
 func GetMockDataGenerationMaxRowCount() int {

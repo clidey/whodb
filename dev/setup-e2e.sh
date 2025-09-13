@@ -125,7 +125,7 @@ fi
 # Start the CE test server with coverage
 echo "🚀 Starting CE test server with coverage..."
 cd "$PROJECT_ROOT/core"
-ENVIRONMENT=dev WHODB_ENABLE_MOCK_DATA_GENERATION='users,REGIONS' ./server.test -test.run=^TestMain$ -test.coverprofile=coverage.out &
+ENVIRONMENT=dev WHODB_DISABLE_MOCK_DATA_GENERATION='orders,DEPARTMENTS' ./server.test -test.run=^TestMain$ -test.coverprofile=coverage.out &
 TEST_SERVER_PID=$!
 
 # Save PID for cleanup
