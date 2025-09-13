@@ -571,7 +571,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                     <DrawerTitle className="flex justify-between items-center">
                         <h2 className="text-lg font-semibold">Scratchpad</h2>
                         <div className="flex gap-2 items-center">
-                            <Button onClick={handleScratchpad} data-testid="submit-button">
+                            <Button onClick={() => handleScratchpad()} data-testid="run-submit-button">
                                 <PlayIcon className="w-4 h-4" />
                                 Run
                             </Button>

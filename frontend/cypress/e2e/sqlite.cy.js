@@ -432,7 +432,7 @@ describe('Sqlite3 E2E test', () => {
         cy.get('[data-testid="code-editor"]').should('exist');
         cy.get('[data-testid="code-editor"]').should('contain', 'SELECT * FROM users');
 
-        cy.get('[data-testid="submit-button"]').filter(':contains("Run")').first().click();
+        cy.get('[data-testid="run-submit-button"]').filter(':contains("Run")').first().click();
 
         cy.get('[role="dialog"] table', {timeout: 500}).should('be.visible');
         cy.get('[role="dialog"] table thead th').should('contain', 'id');

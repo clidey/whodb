@@ -446,7 +446,7 @@ describe('MariaDB E2E test', () => {
         cy.get('[data-testid="code-editor"]').should('contain', 'SELECT * FROM test_db.users');
 
         // Run the query and check results appear
-        cy.get('[data-testid="submit-button"]').filter(':contains("Run")').first().click();
+        cy.get('[data-testid="run-submit-button"]').filter(':contains("Run")').first().click();
 
         // Wait for results to load and verify table appears in the drawer
         cy.get('[role="dialog"] table', {timeout: 500}).should('be.visible');

@@ -439,6 +439,7 @@ describe('Postgres E2E test', () => {
     // 12) Open scratchpad drawer from Explore and run query
     cy.data('users');
     cy.get('[data-testid="scratchpad-button"]').click();
+    cy.wait(1000);
     cy.contains('h2', 'Scratchpad').should('be.visible');
 
     // The drawer should have the default query populated
@@ -446,7 +447,7 @@ describe('Postgres E2E test', () => {
     cy.get('[data-testid="code-editor"]').should('contain', 'SELECT * FROM test_schema.users');
 
     // Run the query and check results appear
-    cy.get('[data-testid="submit-button"]').filter(':contains("Run")').first().click();
+    cy.get('[data-testid="run-submit-button"]').filter(':contains("Run")').first().click();
 
     // Wait for results to load and verify table appears in the drawer
     cy.get('[role="dialog"] table', {timeout: 500}).should('be.visible');
