@@ -21,13 +21,13 @@ import {Spinner} from "@clidey/ux";
 
 type ILoadingProps = {
   className?: string;
-    size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg";
   hideText?: boolean;
   loadingText?: string;
 }
 
 export const Loading: FC<ILoadingProps> = ({className, size = "md", hideText, loadingText}) => {
-    let textSize = "text-base";
+  let textSize = "text-base";
   if (size === "sm") {
       textSize = "text-xs";
   } else if (size === "md") {

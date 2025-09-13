@@ -50,19 +50,11 @@ import {
     useUpdateStorageUnitMutation,
     WhereCondition
 } from '@graphql';
-import {
-    ArrowDownCircleIcon,
-    CheckCircleIcon,
-    CommandLineIcon,
-    PlayIcon,
-    PlusCircleIcon,
-    XMarkIcon
-} from "@heroicons/react/24/outline";
+import {CheckCircleIcon, CommandLineIcon, PlayIcon, PlusCircleIcon, XMarkIcon} from "@heroicons/react/24/outline";
 import {keys} from "lodash";
 import {FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {Navigate, useLocation, useNavigate} from "react-router-dom";
 import {CodeEditor} from "../../components/editor";
-import {Export} from "../../components/export";
 import {LoadingPage} from "../../components/loading";
 import {InternalPage} from "../../components/page";
 import {getColumnIcons, StorageUnitTable} from "../../components/table";
@@ -104,8 +96,6 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     const searchRef = useRef<(search: string) => void>(() => {});
     const [search, setSearch] = useState("");
     const [currentTableName, setCurrentTableName] = useState<string>("");
-    const [checked, setChecked] = useState<number[]>([]);
-    const [showExportConfirm, setShowExportConfirm] = useState(false);
     
     // For add row sheet logic
     const [addRowData, setAddRowData] = useState<Record<string, any>>({});
@@ -142,39 +132,32 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
 
     const [code, setCode] = useState(initialScratchpadQuery);
 
-    const handleSubmitRequest = useCallback((pageNumber: number | null = null) => {
+    const handleSubmitRequest = useCallback((pageOffset: number | null = null) => {
         const tableNameToUse = unitName || currentTableName;
         if (tableNameToUse) {
             setCurrentTableName(tableNameToUse);
         }
-        const pageSizeNum = Number.parseInt(bufferPageSize);
-        const actualPage = pageNumber ?? currentPage;
-        // Calculate proper offset: (page - 1) * pageSize
-        const offset = (actualPage - 1) * pageSizeNum;
-        
         getStorageUnitRows({
             variables: {
                 schema,
                 storageUnit: tableNameToUse,
                 where: whereCondition,
                 sort: sortConditions.length > 0 ? sortConditions : undefined,
-                pageSize: pageSizeNum,
-                pageOffset: offset,
+                pageSize: Number.parseInt(bufferPageSize),
+                pageOffset: pageOffset ?? currentPage - 1,
             },
         });
     }, [getStorageUnitRows, schema, unitName, currentTableName, whereCondition, sortConditions, bufferPageSize, currentPage]);
 
     const handleQuery = useCallback(() => {
+        handleSubmitRequest();
         setCurrentPage(1);
-        setChecked([]); // Clear selections when submitting new query
-        handleSubmitRequest(1); // Explicitly pass page 1
     }, [handleSubmitRequest]);
 
     const handlePageChange = useCallback((page: number) => {
         setCurrentPage(page);
-        setChecked([]); // Clear selections when changing pages
-        handleSubmitRequest(page); // Pass the page number, not page - 1
-    }, [handleSubmitRequest]);
+        handleSubmitRequest(page - 1);
+    }, []);
 
     const handleColumnSort = useCallback((columnName: string) => {
         setSortConditions(prev => {
@@ -450,9 +433,9 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         </InternalPage>
     }
 
-    return <InternalPage routes={routes} className="relative flex flex-col h-full">
-        <div className="flex flex-col flex-1 gap-4 min-h-0">
-            <div className="flex items-center justify-between flex-shrink-0">
+    return <InternalPage routes={routes} className="relative">
+        <div className="flex flex-col grow gap-4 h-[calc(100%-100px)]">
+            <div className="flex items-center justify-between">
                 <div className="flex gap-2 items-center">
                     <h1 className="text-xl font-bold mr-4">{unitName}</h1>
                 </div>
@@ -474,22 +457,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                         </div>
                         <div className="flex flex-col gap-2">
                             <Label>Page Size</Label>
-                            <Select value={bufferPageSize} onValueChange={(value) => {
-                                setBufferPageSize(value);
-                                setCurrentPage(1); // Reset to page 1 when page size changes
-                                setChecked([]); // Clear selections
-                                // Automatically fetch data with new page size
-                                getStorageUnitRows({
-                                    variables: {
-                                        schema,
-                                        storageUnit: unitName || currentTableName,
-                                        where: whereCondition,
-                                        sort: sortConditions.length > 0 ? sortConditions : undefined,
-                                        pageSize: Number.parseInt(value),
-                                        pageOffset: 0, // Start from first page
-                                    },
-                                });
-                            }}>
+                            <Select value={bufferPageSize} onValueChange={setBufferPageSize}>
                                 <SelectTrigger className="w-32" data-testid="table-page-size">
                                     <SelectValue />
                                 </SelectTrigger>
@@ -558,56 +526,39 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 </Sheet>
 
             </div>
-            <div className="flex flex-col flex-1 min-h-0">
+            <div className="grow">
                 {
-                    rows != null && (
-                        <>
-                            <div className="flex-1 min-h-0 overflow-hidden">
-                                <StorageUnitTable
-                                    columns={columns}
-                                    rows={rows.Rows}
-                                    onRowUpdate={handleRowUpdate}
-                                    columnTypes={columnTypes}
-                                    schema={schema}
-                                    storageUnit={unitName}
-                                    onRefresh={handleSubmitRequest}
-                                    onColumnSort={handleColumnSort}
-                                    sortedColumns={sortedColumnsMap}
-                                    searchRef={searchRef}
-                                    pageSize={Number.parseInt(bufferPageSize)}
-                                    // Server-side pagination props
-                                    totalCount={Number.parseInt(totalCount)}
-                                    currentPage={currentPage}
-                                    onPageChange={handlePageChange}
-                                    showPagination={true}
-                                    height="100%"
-                                    onCheckedChange={setChecked}
-                                    checkedRows={checked}
-                                />
-                            </div>
-                            <div className="flex gap-2 p-4 border-t bg-background sticky bottom-0 z-10">
-                                <Button onClick={handleOpenScratchpad} data-testid="scratchpad-button" variant="secondary"
-                                        className={cn({
-                                            "hidden": !databaseSupportsScratchpad(current?.Type),
-                                        })}>
-                                    <CommandLineIcon className="w-4 h-4"/> Scratchpad
-                                </Button>
-                                <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-row-button">
-                                    <PlusCircleIcon className="w-4 h-4"/> Add Row
-                                </Button>
-                                <div className="ml-auto">
-                                    <Button
-                                        variant="secondary"
-                                        onClick={() => setShowExportConfirm(true)}
-                                        className="flex gap-2"
-                                    >
-                                        <ArrowDownCircleIcon className="w-4 h-4"/>
-                                        {checked.length > 0 ? `Export ${checked.length} selected` : "Export all"}
-                                    </Button>
-                                </div>
-                            </div>
-                        </>
-                    )
+                    rows != null &&
+                    <StorageUnitTable
+                        columns={columns} 
+                        rows={rows.Rows} 
+                        onRowUpdate={handleRowUpdate} 
+                        columnTypes={columnTypes}
+                        schema={schema}
+                        storageUnit={unitName}
+                        onRefresh={handleSubmitRequest}
+                        onColumnSort={handleColumnSort}
+                        sortedColumns={sortedColumnsMap}
+                        searchRef={searchRef}
+                        pageSize={Number.parseInt(bufferPageSize)}
+                        // Server-side pagination props
+                        totalCount={Number.parseInt(totalCount)}
+                        currentPage={currentPage}
+                        onPageChange={handlePageChange}
+                        showPagination={true}
+                    >
+                        <div className="flex gap-2">
+                            <Button onClick={handleOpenScratchpad} data-testid="scratchpad-button" variant="secondary"
+                                    className={cn({
+                                        "hidden": !databaseSupportsScratchpad(current?.Type),
+                                    })}>
+                                <CommandLineIcon className="w-4 h-4" /> Scratchpad
+                            </Button>
+                            <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-row-button">
+                                <PlusCircleIcon className="w-4 h-4" /> Add Row
+                            </Button>
+                        </div>
+                    </StorageUnitTable>
                 }
             </div>
         </div>
@@ -642,21 +593,5 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 />
             </DrawerContent>
         </Drawer>
-        <Export
-            open={showExportConfirm}
-            onOpenChange={setShowExportConfirm}
-            schema={schema || ''}
-            storageUnit={unitName || ''}
-            hasSelectedRows={checked.length > 0}
-            selectedRowsData={checked.length > 0 && rows ? checked.map(idx => {
-                const row = rows.Rows[idx];
-                const rowObj: Record<string, any> = {};
-                columns.forEach((col, colIdx) => {
-                    rowObj[col] = row[colIdx];
-                });
-                return rowObj;
-            }) : undefined}
-            checkedRowsCount={checked.length}
-        />
     </InternalPage>
 }
