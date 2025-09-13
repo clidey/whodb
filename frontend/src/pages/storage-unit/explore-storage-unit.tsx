@@ -372,13 +372,13 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         });
     }, [addRow, addRowData, handleSubmitRequest, rows?.Columns, schema, unit?.Name, current?.Type]);
 
-    const handleScratchpad = useCallback(() => {
+    const handleScratchpad = useCallback((specificCode?: string) => {
         if (current == null) {
             return;
         }
         rawExecute({
             variables: {
-                query: code,
+                query: specificCode ?? code,
             },
         });
     }, [code, current, rawExecute]);
@@ -406,7 +406,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
 
     const {whereColumns, whereColumnTypes} = useMemo(() => {
         if (rows?.Columns == null || rows?.Columns.length === 0 || rows == null || rows.Rows.length === 0) {
-            return {whereColumns: [], whereColumnTypes: []}
+            return {whereColumns: [], whereColumnTypes: []};
         }
         if (rows?.Columns.length === 1 && rows?.Columns[0].Type === "Document" && isNoSQL(current?.Type as DatabaseType)) {
             const whereColumns = keys(JSON.parse(rows?.Rows[0][0]));
@@ -579,7 +579,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                     </DrawerTitle>
                 </DrawerHeader>
                 <div className="flex flex-col gap-2 h-[150px] mb-4">
-                    <CodeEditor language="sql" value={code} setValue={setCode} onRun={() => handleScratchpad()} />
+                    <CodeEditor language="sql" value={code} setValue={setCode} onRun={handleScratchpad} />
                 </div>
                 <StorageUnitTable
                     columns={rawExecuteData?.RawExecute.Columns.map(c => c.Name) ?? []}

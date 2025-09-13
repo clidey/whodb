@@ -46,7 +46,6 @@ const isValidSQLQuery = (text: string): boolean => {
   return sqlKeywords.some(keyword => upperText.startsWith(keyword));
 };
 
-// Find all valid SQL queries and their starting line numbers
 const findValidQueriesWithPositions = (doc: any): Array<{query: string, startLine: number}> => {
   const fullText = doc.toString();
   const lines = fullText.split('\n');
@@ -104,7 +103,6 @@ const findValidQueriesWithPositions = (doc: any): Array<{query: string, startLin
       });
     }
   }
-  
   return results;
 };
 
@@ -262,8 +260,8 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
           }),
             basicSetup,
             languageExtension != null ? languageExtension : [],
-          // Add autocomplete for SQL
-          language === "sql" ? createSQLAutocomplete({apolloClient}) : [],
+            // Add autocomplete for SQL
+            language === "sql" ? createSQLAutocomplete({apolloClient}) : [],
             darkModeEnabled ? [oneDark, EditorView.theme({
               ".cm-activeLine": { backgroundColor: "rgba(0,0,0,0.05) !important" },
               ".cm-activeLineGutter": { backgroundColor: "rgba(0,0,0,0.05) !important" },

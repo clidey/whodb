@@ -754,7 +754,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     }, [checked, handleCellClick, handleEdit, handleSelectRow, handleDeleteRow, paginatedRows, disableEdit, onRefresh]);
 
     return (
-        <div ref={tableRef} className="h-full">
+        <div ref={tableRef} className="h-full flex">
             <div className="flex flex-col h-full space-y-4 w-0" style={{
                 width: `${containerWidth}px`,
             }}>
@@ -929,8 +929,9 @@ export const StorageUnitTable: FC<TableProps> = ({
                         </ContextMenuContent>
                     </ContextMenu>
                 )}
-                <div className={cn("flex justify-between items-center mt-4", {
+                <div className={cn("flex justify-between items-center", {
                     "justify-end": children == null,
+                    "mt-4": children != null,
                 })}>
                     {children}
                     <Pagination className={cn("flex justify-end", {

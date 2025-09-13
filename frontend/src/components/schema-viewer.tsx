@@ -115,6 +115,7 @@ export const SchemaViewer: FC = () => {
                 unit,
             },
         });
+        window.location.reload();
     }, [navigate, state, data]);
 
     if (treeData.length === 0) {
