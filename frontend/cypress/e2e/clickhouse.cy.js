@@ -24,7 +24,7 @@ describe('Clickhouse E2E test', () => {
   it('runs full Clickhouse E2E flow', () => {
     // login and setup
     cy.login('ClickHouse', dbHost, dbUser, dbPassword, 'test_db');
-    cy.selectDatabase("test_db");
+    // cy.selectDatabase("test_db");
 
     // 1) Lists tables
     cy.getTables().then(storageUnitNames => {
@@ -207,6 +207,9 @@ describe('Clickhouse E2E test', () => {
     });
 
     cy.addCell(0);
+    // annoying hack to get the page to scroll. todo: look into putting a data-testid on this exact element cause this is flaky af
+    cy.get('#whodb-app-container > div.flex.grow.h-full.w-full > div.flex.grow.flex-col.h-full.w-full.p-0 > div')
+        .scrollTo('bottom');
     cy.writeCode(1, "SELECT * FROM test_db.users WHERE id=1;");
     cy.runCode(1);
     cy.getCellQueryOutput(1).then(({rows, columns}) => {
@@ -442,8 +445,7 @@ describe('Clickhouse E2E test', () => {
 
     // 13) Mock data on a table that does not support it
     cy.data('orders');
-    cy.get('table thead tr').eq(0).rightclick({force: true});
-    cy.contains('div,button,span', 'Mock Data').click({force: true});
+    cy.selectMockData();
     // Wait for any toasts to clear
     cy.wait(1000);
     cy.contains('button', 'Generate').click();

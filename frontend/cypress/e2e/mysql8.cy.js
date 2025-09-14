@@ -460,8 +460,7 @@ describe('MySQL 8 E2E test', () => {
 
         // 13) Open Mock Data sheet, enforce limits, and show overwrite confirmation
         cy.data('users');
-        cy.get('table thead tr').eq(0).rightclick({force: true});
-        cy.contains('div,button,span', 'Mock Data').click({force: true});
+        cy.selectMockData();
 
         // UI: sheet title and note visible
         cy.contains('div', 'Mock Data for users').should('be.visible');
@@ -490,8 +489,8 @@ describe('MySQL 8 E2E test', () => {
         });
 
         // Switch to Overwrite and click Generate to show confirmation
-        cy.get('table thead tr').rightclick({force: true});
-        cy.contains('div,button,span', 'Mock Data').click({force: true});
+        cy.data('users');
+        cy.selectMockData();
         cy.get('@rowsInput').clear().type('10')
         cy.contains('label', 'Data Handling').parent().find('[role="combobox"]').eq(-1).click();
         cy.contains('[role="option"]', 'Overwrite existing data').click();
@@ -508,8 +507,7 @@ describe('MySQL 8 E2E test', () => {
 
         // 14) Mock data on a table that does not support it
         cy.data('orders');
-        cy.get('table thead tr').rightclick({force: true});
-        cy.contains('div,button,span', 'Mock Data').click({force: true});
+        cy.selectMockData();
         // Wait for any toasts to clear
         cy.wait(1000);
         cy.contains('button', 'Generate').click();

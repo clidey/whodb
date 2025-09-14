@@ -220,8 +220,7 @@ describe('ElasticSearch E2E test', () => {
 
         // 10) Mock data on a table that does not support it
         cy.data('orders');
-        cy.get('table thead tr').rightclick({force: true});
-        cy.contains('div,button,span', 'Mock Data').click({force: true});
+        cy.selectMockData();
 
         // Wait for any toasts to clear
         cy.wait(1000);

@@ -444,8 +444,8 @@ describe('Sqlite3 E2E test', () => {
 
         // 13) Open Mock Data sheet, enforce limits, and show overwrite confirmation
         cy.data('users');
-        cy.get('table thead tr').eq(0).rightclick({force: true});
-        cy.contains('div,button,span', 'Mock Data').click({force: true});
+        cy.wait(1000);
+        cy.selectMockData();
 
         cy.contains('div', 'Mock Data for users').should('be.visible');
         cy.contains('Note').should('be.visible');
@@ -469,8 +469,8 @@ describe('Sqlite3 E2E test', () => {
             // expect(count).to.be.at.least(50); // TODO: fix this when we can sync the Total Count on update
         });
 
-        cy.get('table thead tr').rightclick({force: true});
-        cy.contains('div,button,span', 'Mock Data').click({force: true});
+        cy.data('users');
+        cy.selectMockData();
         cy.get('@rowsInput').clear().type('10')
         cy.contains('label', 'Data Handling').parent().find('[role="combobox"]').eq(-1).click();
         cy.contains('[role="option"]', 'Overwrite existing data').click();
@@ -487,8 +487,7 @@ describe('Sqlite3 E2E test', () => {
 
         // 14) Mock data on a table that does not support it
         cy.data('orders');
-        cy.get('table thead tr').rightclick({force: true});
-        cy.contains('div,button,span', 'Mock Data').click({force: true});
+        cy.selectMockData();
 
         // Wait for any toasts to clear
         cy.wait(1000);

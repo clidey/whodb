@@ -506,3 +506,34 @@ Cypress.Commands.add('deleteScratchpadPage', (index, cancel = true) => {
         cy.get('[data-testid="delete-page-button-confirm"]').click();
     }
 });
+
+Cypress.Commands.add('dismissContextMenu', () => {
+    cy.get('body').then($body => {
+        const contextMenus = $body.find('[role="menu"]:visible');
+        if (contextMenus.length > 0) {
+            cy.get('body').click(0, 0);
+            cy.wait(100);
+        }
+    });
+});
+
+Cypress.Commands.add('selectMockData', () => {
+    cy.dismissContextMenu();
+    cy.wait(200);
+    cy.get('table thead tr').first().rightclick({force: true});
+    cy.wait(300);
+    cy.get('body').then($body => {
+        const mockDataElements = [...$body.find('*:contains("Mock Data")')].filter(el => {
+            const text = el.textContent || '';
+            return text.trim() === 'Mock Data' &&
+                $(el).is(':visible') &&
+                !$(el).children().length;
+        });
+        if (mockDataElements.length > 0) {
+            cy.wrap(mockDataElements[0]).click({force: true});
+        } else {
+            cy.contains('Mock Data').click({force: true});
+        }
+    });
+    cy.wait(100);
+});
