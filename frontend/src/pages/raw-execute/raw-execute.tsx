@@ -15,8 +15,6 @@
  */
 
 import {
-    Alert,
-    AlertDescription,
     AlertDialog,
     AlertDialogAction,
     AlertDialogCancel,
@@ -26,7 +24,6 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
     AlertDialogTrigger,
-    AlertTitle,
     Badge,
     Button,
     Card,
@@ -51,10 +48,9 @@ import {
     TabsTrigger,
     toast
 } from "@clidey/ux";
-import {DatabaseType, RowsResult} from '@graphql';
+import { DatabaseType, RowsResult } from '@graphql';
 import {
     ArrowPathIcon,
-    BellAlertIcon,
     CheckCircleIcon,
     CircleStackIcon,
     ClipboardDocumentIcon,
@@ -66,8 +62,8 @@ import {
     XMarkIcon
 } from "@heroicons/react/24/outline";
 import classNames from "classnames";
-import {AnimatePresence, motion} from "framer-motion";
-import {indexOf} from "lodash";
+import { AnimatePresence, motion } from "framer-motion";
+import { indexOf } from "lodash";
 import {
     ChangeEvent,
     cloneElement,
@@ -81,16 +77,17 @@ import {
     useRef,
     useState
 } from "react";
-import {v4} from "uuid";
-import {AIProvider, useAI} from "../../components/ai";
-import {CodeEditor} from "../../components/editor";
-import {Loading} from "../../components/loading";
-import {InternalPage} from "../../components/page";
-import {Tip} from "../../components/tip";
-import {InternalRoutes} from "../../config/routes";
-import {useAppDispatch, useAppSelector} from "../../store/hooks";
-import {isEEFeatureEnabled, loadEEModule} from "../../utils/ee-loader";
-import {IPluginProps, QueryView} from "./query-view";
+import { v4 } from "uuid";
+import { AIProvider, useAI } from "../../components/ai";
+import { CodeEditor } from "../../components/editor";
+import { ErrorState } from "../../components/error-state";
+import { Loading } from "../../components/loading";
+import { InternalPage } from "../../components/page";
+import { Tip } from "../../components/tip";
+import { InternalRoutes } from "../../config/routes";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { isEEFeatureEnabled, loadEEModule } from "../../utils/ee-loader";
+import { IPluginProps, QueryView } from "./query-view";
 
 type EEExports = {
     plugins: any[];
@@ -381,11 +378,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
             {
                 error != null &&
                 <div className="flex items-center justify-between mt-8" data-testid="cell-error">
-                    <Alert variant="destructive" title="Error" description={error?.message ?? ""}>
-                        <BellAlertIcon className="w-4 h-4" />
-                        <AlertTitle>Error</AlertTitle>
-                        <AlertDescription>{error?.message ?? ""}</AlertDescription>
-                    </Alert>
+                    <ErrorState error={error} />
                 </div>
             }
             {loading && <div className="flex justify-center items-center h-full my-16">

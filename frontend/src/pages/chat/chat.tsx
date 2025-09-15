@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-import {isEEMode} from "@/config/ee-imports";
-import {Alert, AlertDescription, AlertTitle, Button, Card, cn, EmptyState, Input, toast, toTitleCase} from "@clidey/ux";
-import {AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery} from '@graphql';
+import { isEEMode } from "@/config/ee-imports";
+import { Alert, AlertDescription, AlertTitle, Button, Card, cn, EmptyState, Input, toast, toTitleCase } from "@clidey/ux";
+import { AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery } from '@graphql';
 import {
     ArrowUpCircleIcon,
-    BellAlertIcon,
     CheckCircleIcon,
     CodeBracketIcon,
     SparklesIcon,
@@ -27,8 +26,10 @@ import {
 } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import { cloneElement, FC, KeyboardEventHandler, useCallback, useMemo, useRef, useState } from "react";
+import logoImage from "../../../public/images/logo.png";
 import { AIProvider, useAI } from "../../components/ai";
 import { CodeEditor } from "../../components/editor";
+import { ErrorState } from "../../components/error-state";
 import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { StorageUnitTable } from "../../components/table";
@@ -39,7 +40,6 @@ import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { isEEFeatureEnabled, loadEEComponent } from "../../utils/ee-loader";
 import { chooseRandomItems } from "../../utils/functions";
 import { chatExamples } from "./examples";
-import logoImage from "../../../public/images/logo.png";
 
 // Lazy load chart components if EE is enabled
 const LineChart = isEEFeatureEnabled('dataVisualization') ? loadEEComponent(
@@ -316,11 +316,7 @@ export const ChatPage: FC = () => {
                                                         {!chat.isUserInput && chats[i-1]?.isUserInput
                                                             ? extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
                                                             : <div className="pl-4" />}
-                                                        <Alert variant="destructive" title="Error" description={chat.Text}>
-                                                            <BellAlertIcon className="w-4 h-4" />
-                                                            <AlertTitle>Error</AlertTitle>
-                                                            <AlertDescription>{toTitleCase(chat.Text.replaceAll("ERROR: ", ""))}</AlertDescription>
-                                                        </Alert>
+                                                        <ErrorState error={toTitleCase(chat.Text.replaceAll("ERROR: ", ""))} />
                                                     </div>
                                                 );
                                             } else if (isEEFeatureEnabled('dataVisualization') && (chat.Type === "sql:pie-chart" || chat.Type === "sql:line-chart")) {

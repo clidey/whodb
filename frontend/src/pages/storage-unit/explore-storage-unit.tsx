@@ -15,9 +15,6 @@
  */
 
 import {
-    Alert,
-    AlertDescription,
-    AlertTitle,
     Button,
     cn,
     Drawer,
@@ -50,22 +47,23 @@ import {
     useUpdateStorageUnitMutation,
     WhereCondition
 } from '@graphql';
-import {CheckCircleIcon, CommandLineIcon, PlayIcon, PlusCircleIcon, XMarkIcon} from "@heroicons/react/24/outline";
-import {keys} from "lodash";
-import {FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
-import {Navigate, useLocation, useNavigate} from "react-router-dom";
-import {CodeEditor} from "../../components/editor";
-import {LoadingPage} from "../../components/loading";
-import {InternalPage} from "../../components/page";
-import {getColumnIcons, StorageUnitTable} from "../../components/table";
-import {Tip} from "../../components/tip";
-import {InternalRoutes} from "../../config/routes";
-import {useAppSelector} from "../../store/hooks";
-import {getDatabaseOperators} from "../../utils/database-operators";
-import {getDatabaseStorageUnitLabel, isNoSQL} from "../../utils/functions";
-import {ExploreStorageUnitWhereCondition} from "./explore-storage-unit-where-condition";
-import {databaseSupportsScratchpad, databaseTypesThatUseDatabaseInsteadOfSchema} from "../../utils/database-features";
-import {BUILD_EDITION} from "../../config/edition";
+import { CheckCircleIcon, CommandLineIcon, PlayIcon, PlusCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { keys } from "lodash";
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { CodeEditor } from "../../components/editor";
+import { ErrorState } from "../../components/error-state";
+import { LoadingPage } from "../../components/loading";
+import { InternalPage } from "../../components/page";
+import { getColumnIcons, StorageUnitTable } from "../../components/table";
+import { Tip } from "../../components/tip";
+import { BUILD_EDITION } from "../../config/edition";
+import { InternalRoutes } from "../../config/routes";
+import { useAppSelector } from "../../store/hooks";
+import { databaseSupportsScratchpad, databaseTypesThatUseDatabaseInsteadOfSchema } from "../../utils/database-features";
+import { getDatabaseOperators } from "../../utils/database-operators";
+import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
+import { ExploreStorageUnitWhereCondition } from "./explore-storage-unit-where-condition";
 
 // Conditionally import EE query utilities
 let generateInitialQuery: ((databaseType: string | undefined, schema: string | undefined, tableName: string | undefined) => string) | undefined;
@@ -511,10 +509,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                                 ))}
                             </div>
                             {addRowError && (
-                                <Alert variant="destructive" className="mt-4">
-                                    <AlertTitle>Error</AlertTitle>
-                                    <AlertDescription>{addRowError}</AlertDescription>
-                                </Alert>
+                                <ErrorState error={addRowError} />
                             )}
                         </div>
                         <SheetFooter className="px-0 pt-4 border-t">
