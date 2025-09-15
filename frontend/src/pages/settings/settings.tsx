@@ -20,12 +20,15 @@ import { InternalRoutes } from "../../config/routes";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { SettingsActions } from "../../store/settings";
 import { isEEMode } from "@/config/ee-imports";
-import { Label, Switch, Separator, DropdownMenu, DropdownMenuTrigger, Button, DropdownMenuContent, DropdownMenuItem, SelectTrigger, Select, SelectContent, SelectItem, SelectValue } from "@clidey/ux";
+import { Label, Switch, Separator, DropdownMenu, DropdownMenuTrigger, Button, DropdownMenuContent, DropdownMenuItem, SelectTrigger, Select, SelectContent, SelectItem, SelectValue, Card, CardContent, CardHeader, Badge } from "@clidey/ux";
 
 export const SettingsPage: FC = () => {
     const dispatch = useAppDispatch();
     const metricsEnabled = useAppSelector(state => state.settings.metricsEnabled);
     const storageUnitView = useAppSelector(state => state.settings.storageUnitView);
+    const fontSize = useAppSelector(state => state.settings.fontSize);
+    const borderRadius = useAppSelector(state => state.settings.borderRadius);
+    const spacing = useAppSelector(state => state.settings.spacing);
 
     const handleMetricsToggle = useCallback((enabled: boolean) => {
         dispatch(SettingsActions.setMetricsEnabled(enabled));
@@ -35,19 +38,31 @@ export const SettingsPage: FC = () => {
         dispatch(SettingsActions.setStorageUnitView(view));
     }, [dispatch]);
 
+    const handleFontSizeChange = useCallback((size: 'small' | 'medium' | 'large') => {
+        dispatch(SettingsActions.setFontSize(size));
+    }, [dispatch]);
+
+    const handleBorderRadiusChange = useCallback((radius: 'none' | 'small' | 'medium' | 'large') => {
+        dispatch(SettingsActions.setBorderRadius(radius));
+    }, [dispatch]);
+
+    const handleSpacingChange = useCallback((space: 'compact' | 'comfortable' | 'spacious') => {
+        dispatch(SettingsActions.setSpacing(space));
+    }, [dispatch]);
+
+
     return (
         <InternalPage routes={[InternalRoutes.Settings!]}>
             <div className="flex flex-col items-center w-full max-w-2xl mx-auto py-10 gap-8">
                 <div className="w-full flex flex-col gap-0">
-                    <div className="flex flex-col gap-2 mb-4">
+                    <div className="flex flex-col gap-2">
                         <p className="text-2xl font-bold flex items-center gap-2">
                             Telemetry and Performance Metrics
                         </p>
                     </div>
-                    <Separator/>
-                    <div className="flex flex-col gap-6 py-6">
+                    <div className="flex flex-col gap-xl py-6">
                         {isEEMode ? (
-                            <div className="flex flex-col gap-2 items-center">
+                            <div className="flex flex-col gap-sm items-center">
                                 <h3 className="text-base">
                                     WhoDB Enterprise does not collect telemetry and performance metrics.
                                 </h3>
@@ -81,21 +96,69 @@ export const SettingsPage: FC = () => {
                                     <Label>{metricsEnabled ? "Enable Telemetry" : "Disable Telemetry"}</Label>
                                     <Switch checked={metricsEnabled} onChange={() => handleMetricsToggle(!metricsEnabled)}/>
                                 </div>
-                                <Separator />
-                                <div className="flex justify-between">
-                                    <Label>Storage Unit Default View</Label>
-                                    <Select value={storageUnitView} onValueChange={handleStorageUnitViewToggle}>
-                                        <SelectTrigger id="storage-unit-view">
-                                            <SelectValue placeholder="Select a view" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="list">List</SelectItem>
-                                            <SelectItem value="card">Card</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                                <Separator className="mt-4" />
                             </div>
                         )}
+                        <div className="flex flex-col gap-sm mb-2">
+                            <p className="text-lg font-bold">
+                                Personalize Your Experience
+                            </p>
+                            <p className="text-base">
+                                Make WhoDB your own by customizing the appearance and feel of the WhoDB interface
+                            </p>
+                        </div>
+                        <div className="flex justify-between">
+                            <Label>Storage Unit Default View</Label>
+                            <Select value={storageUnitView} onValueChange={handleStorageUnitViewToggle}>
+                                <SelectTrigger id="storage-unit-view" className="w-[135px]">
+                                    <SelectValue placeholder="Select a view" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="list">List</SelectItem>
+                                    <SelectItem value="card">Card</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="flex justify-between">
+                            <Label>Font Size</Label>
+                            <Select value={fontSize} onValueChange={handleFontSizeChange}>
+                                <SelectTrigger id="font-size" className="w-[135px]">
+                                    <SelectValue placeholder="Select font size" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="small">Small</SelectItem>
+                                    <SelectItem value="medium">Medium</SelectItem>
+                                    <SelectItem value="large">Large</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="flex justify-between">
+                            <Label>Border Radius</Label>
+                            <Select value={borderRadius} onValueChange={handleBorderRadiusChange}>
+                                <SelectTrigger id="border-radius" className="w-[135px]">
+                                    <SelectValue placeholder="Select border radius" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">None</SelectItem>
+                                    <SelectItem value="small">Small</SelectItem>
+                                    <SelectItem value="medium">Medium</SelectItem>
+                                    <SelectItem value="large">Large</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="flex justify-between">
+                            <Label>Spacing</Label>
+                            <Select value={spacing} onValueChange={handleSpacingChange}>
+                                <SelectTrigger id="spacing" className="w-[135px]">
+                                    <SelectValue placeholder="Select spacing" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="compact">Compact</SelectItem>
+                                    <SelectItem value="comfortable">Comfortable</SelectItem>
+                                    <SelectItem value="spacious">Spacious</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
                 </div>
             </div>

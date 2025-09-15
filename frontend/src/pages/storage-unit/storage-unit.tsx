@@ -84,7 +84,7 @@ const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = (
                     ))
                 }
             </div>
-            <div className="flex flex-row justify-end gap-1">
+            <div className="flex flex-row justify-end gap-xs">
                 <Button onClick={handleExpand} data-testid="explore-button" variant="secondary">
                     <MagnifyingGlassIcon className="w-4 h-4" /> Describe
                 </Button>
@@ -93,9 +93,9 @@ const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = (
                 </Button>
             </div>
         </div>
-        <div className="flex flex-col grow gap-4 justify-between h-full">
+        <div className="flex flex-col grow gap-lg justify-between h-full">
             <div className="w-full" data-testid="explore-fields">
-                <div className="flex flex-col gap-12">
+                <div className="flex flex-col gap-xs2">
                     <h1 className="text-2xl font-bold mb-4 break-all">{unit.Name}</h1>
                     <StackList>
                         {
@@ -293,7 +293,7 @@ export const StorageUnitPage: FC = () => {
     }
 
     return <InternalPage routes={routes}>
-        <div className="flex w-full h-fit my-2 gap-4 justify-between">
+        <div className="flex w-full h-fit my-2 gap-lg justify-between">
             <div className="flex justify-between items-center">
                 <SearchInput value={filterValue} onChange={e => setFilterValue(e.target.value)} placeholder="Enter filter value..." />
             </div>
@@ -331,13 +331,13 @@ export const StorageUnitPage: FC = () => {
                             <Label>Name</Label>
                             <Input value={storageUnitName} onChange={e => setStorageUnitName(e.target.value)} />
                         </div>
-                        <div className={classNames("flex flex-col gap-2 overflow-y-auto max-h-[75vh]", {
+                        <div className={classNames("flex flex-col gap-sm overflow-y-auto max-h-[75vh]", {
                             "hidden": isNoSQL(current?.Type as DatabaseType),
                         })}>
                             <div className="flex flex-col gap-4">
                                 {
                                     fields.map((field, index) => (
-                                        <div className="flex flex-col gap-4 relative" key={`field-${index}`}>
+                                        <div className="flex flex-col gap-lg relative" key={`field-${index}`}>
                                             <Label>Field Name</Label>
                                             <Input value={field.Key} onChange={e => handleFieldValueChange("Key", index, e.target.value)} placeholder="Enter field name"/>
                                             <Label>Field Type</Label>
@@ -394,7 +394,7 @@ export const StorageUnitPage: FC = () => {
                 ))
             }
         </div>
-        <div className={cn("flex flex-wrap gap-4 w-full h-[80vh]", {
+        <div className={cn("flex flex-wrap gap-lg w-full h-[80vh]", {
             "hidden": view !== "list",
         })}>
             <Table>
@@ -421,7 +421,7 @@ export const StorageUnitPage: FC = () => {
                                     <TableCell key={key}>{attrMap[key] ?? ""}</TableCell>
                                 ))}
                                 <TableCell className="relative">
-                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="flex gap-xs opacity-0 group-hover:opacity-100 transition-opacity">
                                         <Button 
                                             onClick={() => {
                                                 navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
@@ -465,7 +465,7 @@ export const StorageUnitPage: FC = () => {
                                             </StackListItem>
                                         ))}
                                     </StackList>
-                                    <div className="flex gap-2 mt-4">
+                                    <div className="flex gap-sm mt-4">
                                         <Button 
                                             onClick={() => {
                                                 navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {

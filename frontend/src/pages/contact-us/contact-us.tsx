@@ -25,7 +25,7 @@ export const ContactUsPage: FC = () => {
         <InternalPage routes={[InternalRoutes.ContactUs!]}>
             <div className="flex flex-col items-center w-full max-w-2xl mx-auto py-10 gap-8">
                 <div className="w-full flex flex-col gap-0">
-                    <div className="flex flex-col gap-2 mb-4">
+                    <div className="flex flex-col gap-sm mb-4">
                         <div className="text-2xl font-bold flex items-center gap-2">
                             <EnvelopeIcon className="w-6 h-6"/>
                             Contact Us
@@ -33,7 +33,7 @@ export const ContactUsPage: FC = () => {
                         <p className="mt-2">We're here to help! Reach out to us for support, questions, or feedback.</p>
                     </div>
                     <Separator/>
-                    <div className="flex flex-col gap-6 py-6">
+                    <div className="flex flex-col gap-xl py-6">
                         <div className="flex flex-col gap-2">
                             <Label className="text-lg font-semibold">Email</Label>
                             <Badge>
@@ -73,7 +73,7 @@ export const ContactUsPage: FC = () => {
                             <Label className="text-lg font-semibold">Live Chat (Coming Soon)</Label>
                             <Button
                                 variant="ghost"
-                                className="w-fit gap-2 cursor-not-allowed opacity-60"
+                                className="w-fit gap-sm cursor-not-allowed opacity-60"
                                 disabled
                             >
                                 <ChatBubbleLeftRightIcon className="w-5 h-5"/>
@@ -82,7 +82,7 @@ export const ContactUsPage: FC = () => {
                             <p className="text-sm">Live chat support will be available soon. Stay tuned!</p>
                         </div>
                     </div>
-                    <div className="flex flex-col items-start gap-2 text-xs text-gray-500 py-4">
+                    <div className="flex flex-col items-start gap-sm text-xs text-gray-500 py-4">
                         <div>
                             <span className="font-semibold">Clidey, Inc.</span> &middot; 2025 &middot; All rights
                             reserved.

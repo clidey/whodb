@@ -312,8 +312,8 @@ export const LoginForm: FC<LoginFormProps> = ({
 
     const fields = useMemo(() => {
         if (databaseType.id === DatabaseType.Sqlite3) {
-            return <div className="flex flex-col gap-4 w-full">
-                <div className="flex flex-col gap-1 w-full">
+            return <div className="flex flex-col gap-lg w-full">
+                <div className="flex flex-col gap-xs w-full">
                     <Label>Database</Label>
                     <SearchSelect
                         value={database}
@@ -336,27 +336,27 @@ export const LoginForm: FC<LoginFormProps> = ({
                 </div>
             </div>
         }
-        return <div className="flex flex-col gap-4 w-full">
+        return <div className="flex flex-col gap-lg w-full">
             { databaseType.fields?.hostname && (
-                <div className="flex flex-col gap-2 w-full">
+                <div className="flex flex-col gap-sm w-full">
                     <Label>{databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Postgres ? "Host Name (or paste Connection URL)" : "Host Name"}</Label>
                     <Input value={hostName} onChange={(e) => handleHostNameChange(e.target.value)} data-testid="hostname" placeholder="Enter host name" />
                 </div>
             )}
             { databaseType.fields?.username && (
-                <div className="flex flex-col gap-2 w-full">
+                <div className="flex flex-col gap-sm w-full">
                     <Label>Username</Label>
                     <Input value={username} onChange={(e) => setUsername(e.target.value)} data-testid="username" placeholder="Enter username" />
                 </div>
             )}
             { databaseType.fields?.password && (
-                <div className="flex flex-col gap-2 w-full">
+                <div className="flex flex-col gap-sm w-full">
                     <Label>Password</Label>
                     <Input value={password} onChange={(e) => setPassword(e.target.value)} type="password" data-testid="password" placeholder="Enter password" />
                 </div>
             )}
             { databaseType.fields?.database && (
-                <div className="flex flex-col gap-2 w-full">
+                <div className="flex flex-col gap-sm w-full">
                     <Label>Database</Label>
                     <Input value={database} onChange={(e) => setDatabase(e.target.value)} data-testid="database" placeholder="Enter database" />
                 </div>
@@ -392,7 +392,7 @@ export const LoginForm: FC<LoginFormProps> = ({
 
     if (loading || profilesLoading)  {
         return (
-            <div className={classNames("flex flex-col justify-center items-center gap-4 w-full", className)}>
+            <div className={classNames("flex flex-col justify-center items-center gap-lg w-full", className)}>
                 <div>
                     <Loading hideText={true} />
                 </div>
@@ -418,10 +418,10 @@ export const LoginForm: FC<LoginFormProps> = ({
                     "flex-row grow": advancedDirection === "horizontal",
                     "flex-col w-full gap-4": advancedDirection === "vertical",
                 })}>
-                    <div className={classNames("flex flex-col gap-4 grow", advancedDirection === "vertical" ? "w-full" : "w-[350px]")}>
+                    <div className={classNames("flex flex-col gap-lg grow", advancedDirection === "vertical" ? "w-full" : "w-[350px]")}>
                         {!hideHeader && (
                             <div className="flex justify-between">
-                                <div className="flex items-center gap-2 text-xl">
+                                <div className="flex items-center gap-sm text-xl">
                                     {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4"/>}
                                     <h1 className="text-brand-foreground">{extensions.AppName ?? "WhoDB"}</h1>
                                     <h1>Login</h1>
@@ -437,7 +437,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                         <div className={cn("flex flex-col grow gap-4", {
                             "justify-center": advancedDirection === "horizontal",
                         })}>
-                            <div className="flex flex-col gap-2 w-full">
+                            <div className="flex flex-col gap-sm w-full">
                                 <Label>Database Type</Label>
                                 <SearchSelect
                                     value={databaseType?.id || ""}
@@ -461,12 +461,12 @@ export const LoginForm: FC<LoginFormProps> = ({
                     </div>
                     {
                         (showAdvanced && advancedForm != null) &&
-                        <div className={classNames("transition-all h-full overflow-hidden flex flex-col gap-1", {
+                        <div className={classNames("transition-all h-full overflow-hidden flex flex-col gap-xs", {
                             "w-[350px] ml-4 mt-[43px]": advancedDirection === "horizontal",
                             "w-full": advancedDirection === "vertical",
                         })}>
                             {entries(advancedForm).map(([key, value]) => (
-                                <div className="flex flex-col gap-1" key={key}>
+                                <div className="flex flex-col gap-xs" key={key}>
                                     <Label htmlFor={`${key}-input`}>{key}</Label>
                                     <Input
                                         id={`${key}-input`}

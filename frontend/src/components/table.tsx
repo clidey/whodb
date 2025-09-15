@@ -796,7 +796,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                             onClick={() => onColumnSort?.(col)}
                                         >
                                             <Tip>
-                                                <p className="flex items-center gap-1">
+                                                <p className="flex items-center gap-xs">
                                                     {col}
                                                     {onColumnSort && sortedColumns?.has(col) && (
                                                         sortedColumns.get(col) === 'asc' 
@@ -884,7 +884,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         <VirtualizedTableBody
                             rowCount={paginatedRows.length}
                             rowHeight={rowHeight}
-                            height={height}
+                            height={Math.min(height, window.innerHeight*0.5)}
                             overscan={10}
                         >
                             {(rowIdx: number, rowStyle: React.CSSProperties) => contextMenu(rowIdx, rowStyle)}
@@ -935,7 +935,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 })}>
                     {children}
                     <Pagination className={cn("flex justify-end", {
-                        "hidden": !showPagination || totalPages <= 1,
+                        // "hidden": !showPagination || totalPages <= 1,
                     })}>
                         <PaginationContent>
                             <PaginationItem>
@@ -947,6 +947,9 @@ export const StorageUnitTable: FC<TableProps> = ({
                                     }}
                                     aria-disabled={currentPage === 1}
                                     size="sm"
+                                    className={cn({
+                                        "opacity-50 pointer-events-none": currentPage === 1,
+                                    })}
                                 />
                             </PaginationItem>
                             {renderPaginationLinks()}
@@ -959,6 +962,9 @@ export const StorageUnitTable: FC<TableProps> = ({
                                     }}
                                     aria-disabled={currentPage === totalPages}
                                     size="sm"
+                                    className={cn({
+                                        "opacity-50 pointer-events-none": currentPage === totalPages,
+                                    })}
                                 />
                             </PaginationItem>
                         </PaginationContent>
@@ -968,7 +974,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     <Button
                         variant="secondary"
                         onClick={() => setShowExportConfirm(true)}
-                        className="flex gap-2"
+                        className="flex gap-sm"
                     >
                         <ArrowDownCircleIcon className="w-4 h-4" />
                         {hasSelectedRows ? `Export ${checked.length} selected` : "Export all"}
@@ -984,7 +990,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     <SheetContent side="right" className="w-[400px] max-w-full p-8 flex flex-col">
                         <SheetTitle>Edit Row</SheetTitle>
                         <div className="flex-1 overflow-y-auto mt-4">
-                            <div className="flex flex-col gap-4 pr-2">
+                            <div className="flex flex-col gap-lg pr-2">
                                 {editRow &&
                                     columns.map((col, idx) => (
                                         <div key={col} className="flex flex-col gap-2">
@@ -1010,7 +1016,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                     ))}
                             </div>
                         </div>
-                        <SheetFooter className="flex gap-2 px-0 mt-4">
+                        <SheetFooter className="flex gap-sm px-0 mt-4">
                             <Button onClick={handleUpdate} disabled={!editRow} data-testid="update-button">
                                 Update
                             </Button>
@@ -1025,7 +1031,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     }
                 }}>
                 <SheetContent side="right" className="p-8">
-                    <div className="flex flex-col gap-4 h-full">
+                    <div className="flex flex-col gap-lg h-full">
                         <div className="text-lg font-semibold mb-2">Mock Data for {storageUnit}</div>
                         {!showMockDataConfirmation ? (
                             <div className="space-y-4">

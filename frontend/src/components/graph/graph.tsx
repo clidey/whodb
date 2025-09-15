@@ -147,7 +147,7 @@ export const Graph: FC<IGraphProps> = (props) => {
         {
             !downloading && <Controls />
         }
-        <div className={classNames("flex flex-row gap-2 absolute bottom-4 right-4 z-10", {
+        <div className={classNames("flex flex-row gap-sm absolute bottom-4 right-4 z-10", {
             "hidden": downloading,
         })}>
             <div className="flex flex-col gap-2">

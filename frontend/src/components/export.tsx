@@ -97,7 +97,7 @@ export const Export: FC<IExportProps> = ({
             <Sheet open={open} onOpenChange={onOpenChange}>
                 <SheetContent side="right" className="max-w-md w-full p-8">
                     <h2 className="text-xl font-semibold mb-4">Export Data</h2>
-                    <div className="flex flex-col gap-4 grow">
+                    <div className="flex flex-col gap-lg grow">
                         <div className="space-y-4 grow">
                             <p>
                                 {hasSelectedRows

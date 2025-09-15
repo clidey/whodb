@@ -279,8 +279,8 @@ export const Sidebar: FC = () => {
                 <SidebarHeader className={cn({
                     "ml-4": open,
                 })}>
-                    <div className="flex items-center gap-2 justify-between">
-                        <div className={cn("flex items-center gap-2 mt-2", {
+                    <div className="flex items-center gap-sm justify-between">
+                        <div className={cn("flex items-center gap-sm mt-2", {
                             "hidden": !open,
                         })}>
                             {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4" />}
@@ -300,7 +300,7 @@ export const Sidebar: FC = () => {
                         <SidebarGroup className="grow">
                             <div className="flex flex-col gap-4">
                                 {/* Profile Select */}
-                                <div className="flex flex-col gap-2 w-full">
+                                <div className="flex flex-col gap-sm w-full">
                                     <h2 className={cn("text-sm", !open &&  "hidden")}>Profile</h2>
                                     <SearchSelect
                                         label="Profile"
@@ -316,7 +316,7 @@ export const Sidebar: FC = () => {
                                                 value="__add__"
                                                 onSelect={handleAddProfile}
                                             >
-                                                <span className="flex items-center gap-2 text-green-500">
+                                                <span className="flex items-center gap-sm text-green-500">
                                                     <PlusIcon className="w-4 h-4 stroke-green-500" />
                                                     Add another profile
                                                 </span>
@@ -329,7 +329,7 @@ export const Sidebar: FC = () => {
                                     />
                                 </div>
                                 {/* Database Select */}
-                                <div className={cn("flex flex-col gap-2 w-full", {
+                                <div className={cn("flex flex-col gap-sm w-full", {
                                     "opacity-0 pointer-events-none": !open,
                                     "hidden": !current || databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type),
                                 })}>
@@ -347,7 +347,7 @@ export const Sidebar: FC = () => {
                                         }}
                                     />
                                 </div>
-                                <div className={cn("flex flex-col gap-2 w-full", {
+                                <div className={cn("flex flex-col gap-sm w-full", {
                                     "opacity-0 pointer-events-none": !open || pathname.includes(InternalRoutes.RawExecute.path),
                                     "hidden": !databaseSupportsSchema(current?.Type),
                                 })}>
@@ -413,7 +413,7 @@ export const Sidebar: FC = () => {
                                     <SidebarMenuItem className="flex justify-between items-center w-full">
                                     {/* Logout Profile button */}
                                     <SidebarMenuButton asChild>
-                                        <div className="flex items-center gap-2 text-nowrap w-fit cursor-pointer" onClick={handleLogout}>
+                                        <div className="flex items-center gap-sm text-nowrap w-fit cursor-pointer" onClick={handleLogout}>
                                             <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />
                                             {open && <span>Logout Profile</span>}
                                         </div>

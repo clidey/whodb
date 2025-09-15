@@ -434,9 +434,9 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     }
 
     return <InternalPage routes={routes} className="relative">
-        <div className="flex flex-col grow gap-4 h-[calc(100%-100px)]">
+        <div className="flex flex-col grow gap-lg h-[calc(100%-100px)]">
             <div className="flex items-center justify-between">
-                <div className="flex gap-2 items-center">
+                <div className="flex gap-sm items-center">
                     <h1 className="text-xl font-bold mr-4">{unitName}</h1>
                 </div>
                 <div className="text-sm"><span className="font-semibold">Total Count:</span> {totalCount}</div>
@@ -494,7 +494,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                                     <div key={col.Name} className="flex flex-col gap-2"
                                          data-testid={`add-row-field-${col.Name}`}>
                                         <Tip>
-                                            <div className="flex items-center gap-1">
+                                            <div className="flex items-center gap-xs">
                                                 {columnIcons[index]}
                                                 <Label className="w-fit">
                                                     {col.Name}
@@ -570,7 +570,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 <DrawerHeader className="px-0">
                     <DrawerTitle className="flex justify-between items-center">
                         <h2 className="text-lg font-semibold">Scratchpad</h2>
-                        <div className="flex gap-2 items-center">
+                        <div className="flex gap-sm items-center">
                             <Button onClick={() => handleScratchpad()} data-testid="run-submit-button">
                                 <PlayIcon className="w-4 h-4" />
                                 Run
@@ -578,7 +578,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                         </div>
                     </DrawerTitle>
                 </DrawerHeader>
-                <div className="flex flex-col gap-2 h-[150px] mb-4">
+                <div className="flex flex-col gap-sm h-[150px] mb-4">
                     <CodeEditor language="sql" value={code} setValue={setCode} onRun={handleScratchpad} />
                 </div>
                 <StorageUnitTable

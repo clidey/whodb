@@ -97,7 +97,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
         return type.toUpperCase().split(":")?.[1];
     }, [data, type]);
 
-    return <div className="flex flex-col w-[calc(100%-50px)] group/table-preview gap-2 relative">
+    return <div className="flex flex-col w-[calc(100%-50px)] group/table-preview gap-sm relative">
         <div className="absolute -top-3 -left-3 opacity-0 group-hover/table-preview:opacity-100 transition-all z-[1]">
             <Button containerClassName="w-8 h-8" className="w-5 h-5" onClick={handleCodeToggle} data-testid="table-preview-code-toggle">
                 {cloneElement(showSQL ? <TableCellsIcon className="w-6 h-6" /> : <CodeBracketIcon className="w-6 h-6" />, {
@@ -105,7 +105,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
                 })}
             </Button>
         </div>
-        <div className="flex items-center gap-4 overflow-hidden break-all leading-6 shrink-0 h-full w-full">
+        <div className="flex items-center gap-lg overflow-hidden break-all leading-6 shrink-0 h-full w-full">
             {
                 showSQL
                 ? <div className="h-[150px] w-full">
@@ -281,7 +281,7 @@ export const ChatPage: FC = () => {
                             <div className="flex flex-wrap justify-center items-center gap-4">
                                 {
                                     examples.map((example, i) => (
-                                        <Card key={`chat-${i}`} className="flex flex-col gap-2 w-[250px] h-[120px] p-4 text-sm cursor-pointer hover:opacity-80 transition-all"
+                                        <Card key={`chat-${i}`} className="flex flex-col gap-sm w-[250px] h-[120px] p-4 text-sm cursor-pointer hover:opacity-80 transition-all"
                                             onClick={() => handleSelectExample(example.description)}>
                                             {example.icon}
                                             {example.description}
@@ -296,7 +296,7 @@ export const ChatPage: FC = () => {
                                     {
                                         chats.map((chat, i) => {
                                             if (chat.Type === "message" || chat.Type === "text") {
-                                                return <div key={`chat-${i}`} className={classNames("flex gap-4 overflow-hidden break-words leading-6 shrink-0 relative", {
+                                                return <div key={`chat-${i}`} className={classNames("flex gap-lg overflow-hidden break-words leading-6 shrink-0 relative", {
                                                     "self-end ml-3": chat.isUserInput,
                                                     "self-start": !chat.isUserInput,
                                                 })}>
@@ -312,7 +312,7 @@ export const ChatPage: FC = () => {
                                                 </div>
                                             } else if (chat.Type === "error") {
                                                 return (
-                                                    <div key={`chat-${i}`} className="flex items-center gap-4 overflow-hidden break-words leading-6 shrink-0 self-start">
+                                                    <div key={`chat-${i}`} className="flex items-center gap-lg overflow-hidden break-words leading-6 shrink-0 self-start">
                                                         {!chat.isUserInput && chats[i-1]?.isUserInput
                                                             ? extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
                                                             : <div className="pl-4" />}
@@ -332,7 +332,7 @@ export const ChatPage: FC = () => {
                                                     {chat.Type === "sql:line-chart" && LineChart && <LineChart columns={chat.Result?.Columns.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} />}
                                                 </div>
                                             }
-                                            return <div key={`chat-${i}`} className="flex gap-4 w-full overflow-hidden pt-4">
+                                            return <div key={`chat-${i}`} className="flex gap-lg w-full overflow-hidden pt-4">
                                                 {!chat.isUserInput && chats[i-1]?.isUserInput
                                                     ? (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)
                                                     : <div className="pl-4" />}

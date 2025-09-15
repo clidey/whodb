@@ -81,12 +81,12 @@ const PopoverCard: FC<IPopoverCardProps> = ({
             <div />
         </PopoverTrigger>
         <PopoverContent
-            className={cn("flex flex-col gap-3 z-[5] py-4 px-6 mt-1 rounded-lg shadow-md min-w-[260px]", className)}
+            className={cn("flex flex-col gap-md z-[5] py-4 px-6 mt-1 rounded-lg shadow-md min-w-[260px]", className)}
             side="bottom"
             align="center"
             tabIndex={0}
         >
-            <div className="flex flex-col gap-2 w-full">
+            <div className="flex flex-col gap-sm w-full">
                 <Label className="text-xs">
                     Field
                 </Label>
@@ -100,7 +100,7 @@ const PopoverCard: FC<IPopoverCardProps> = ({
                     }}
                 />
             </div>
-            <div className="flex flex-col gap-2 w-full">
+            <div className="flex flex-col gap-sm w-full">
                 <Label className="text-xs">
                     Operator
                 </Label>
@@ -114,7 +114,7 @@ const PopoverCard: FC<IPopoverCardProps> = ({
                     }}
                 />
             </div>
-            <div className="flex flex-col gap-2 w-full">
+            <div className="flex flex-col gap-sm w-full">
                 <Label className="text-xs">
                     Value
                 </Label>
@@ -126,7 +126,7 @@ const PopoverCard: FC<IPopoverCardProps> = ({
                     data-testid="field-value"
                 />
             </div>
-            <div className="flex gap-2 mt-2">
+            <div className="flex gap-sm mt-2">
                 <Button
                     className="flex-1"
                     onClick={handleCancel}
@@ -386,17 +386,17 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
     return (
         <div className="flex flex-col">
             <Label className="mb-2">Where condition</Label>
-            <div className="flex flex-row gap-1 max-w-[min(500px,calc(100vw-20px))] flex-wrap">
+            <div className="flex flex-row gap-xs max-w-[min(500px,calc(100vw-20px))] flex-wrap">
                 {visibleFilters.map((filter, i) => (
                     <div
                         key={`explore-storage-unit-filter-${i}`}
-                        className="group/filter-item flex gap-1 items-center text-xs rounded-2xl cursor-pointer h-[36px]"
+                        className="group/filter-item flex gap-xs items-center text-xs rounded-2xl cursor-pointer h-[36px]"
                         data-testid="where-condition"
                     >
                         <Badge
                             className={twMerge(
                                 classNames(
-                                    "flex items-center gap-1 pl-4 pr-2 h-full max-w-[350px] truncate cursor-pointer py-0",
+                                    "flex items-center gap-xs pl-4 pr-2 h-full max-w-[350px] truncate cursor-pointer py-0",
                                     { "ring-2 ring-primary-500 dark:ring-primary-400": editingFilter === i }
                                 )
                             )}
@@ -404,7 +404,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                             data-testid="where-condition-badge"
                             variant="secondary"
                         >
-                            <div className="flex items-center gap-1 h-full">
+                            <div className="flex items-center gap-xs h-full">
                                 {filter.Atomic?.Key} {filter.Atomic?.Operator} {filter.Atomic?.Value}
                                 <Button className="size-8 h-full" onClick={() => handleRemove(i)} data-testid="remove-where-condition-button" variant="ghost" size="icon">
                                     <XCircleIcon />
@@ -462,9 +462,9 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
             <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                 <SheetContent side="right" className="w-[500px] max-w-full p-8">
                     <SheetTitle>Manage Where Conditions</SheetTitle>
-                    <div className="flex flex-col gap-4 mt-6 overflow-y-auto max-h-[calc(100vh-200px)]">
+                    <div className="flex flex-col gap-lg mt-6 overflow-y-auto max-h-[calc(100vh-200px)]">
                         {sheetFilters.map((filter, index) => (
-                            <div key={index} className="flex flex-col gap-4 p-4 border rounded-lg">
+                            <div key={index} className="flex flex-col gap-lg p-4 border rounded-lg">
                                 <div className="flex items-center justify-between">
                                     <Label className="text-sm font-medium">Condition {index + 1}</Label>
                                     <Button
@@ -514,7 +514,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                             <PlusCircleIcon className="w-4 h-4"/> Add Condition
                         </Button>
                     </div>
-                    <SheetFooter className="flex gap-2 px-0 mt-6">
+                    <SheetFooter className="flex gap-sm px-0 mt-6">
                         <Button onClick={handleSheetSave}>
                             Save Changes
                         </Button>

@@ -46,7 +46,7 @@ export const Breadcrumb: FC<IBreadcrumbProps> = ({ routes, active }) => {
             <BreadcrumbItem key={route.name}>
               {i > 0 && <BreadcrumbSeparator><ChevronRightIcon className="w-4 h-4 mr-1"/></BreadcrumbSeparator>}
               {isLast || isActive ? (
-                  <BreadcrumbPage className="flex items-center gap-1">
+                  <BreadcrumbPage className="flex items-center gap-xs">
                   {i === 0 && (
                       <HomeIcon className="w-4 h-4"/>
                   )}
@@ -58,7 +58,7 @@ export const Breadcrumb: FC<IBreadcrumbProps> = ({ routes, active }) => {
                   className="cursor-pointer"
                   onClick={() => navigate(route.path)}
                 >
-                  <span className="flex items-center gap-1">
+                  <span className="flex items-center gap-xs">
                     {i === 0 && (
                         <HomeIcon className="w-4 h-4"/>
                     )}

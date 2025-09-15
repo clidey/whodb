@@ -331,7 +331,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         />
                     </div>
                 </div>
-                <div className="flex items-center gap-2 self-end">
+                <div className="flex items-center gap-sm self-end">
                     <Button
                         onClick={handleAddExternalModel}
                         data-testid="external-model-cancel"
@@ -393,7 +393,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                             value="__add__"
                             onSelect={handleAddExternalModel}
                         >
-                            <span className="flex items-center gap-2 text-green-500">
+                            <span className="flex items-center gap-sm text-green-500">
                                 <PlusIcon className="w-4 h-4 stroke-green-500" />
                                 Add a provider
                             </span>
@@ -421,7 +421,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                 <AlertDialogTrigger asChild>
                     <Button
                         data-testid="chat-delete-provider"
-                        variant="destructive"
+                        variant="secondary"
                         className={cn({
                             "hidden": disableNewChat,
                         })}

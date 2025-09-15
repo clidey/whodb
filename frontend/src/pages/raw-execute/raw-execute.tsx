@@ -267,7 +267,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                 <div className="flex grow h-[150px] border border-gray-200 rounded-md overflow-hidden dark:bg-white/10 dark:border-white/5">
                     <CodeEditor language="sql" value={code} setValue={setCode} onRun={(c) => handleRawExecute(c)} />
                 </div>
-                <div className="absolute top-2 right-2 z-10" data-testid="scratchpad-cell-options">
+                <div className="absolute top-1 right-1 z-10" data-testid="scratchpad-cell-options">
                     <DropdownMenu>
                         <DropdownMenuTrigger>
                             <Button
@@ -292,7 +292,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                 <div className={classNames("absolute -bottom-3 z-20 flex justify-between px-3 pr-8 w-full opacity-0 transition-all duration-500 group-hover/cell:opacity-100 pointer-events-none", {
                     "opacity-100": showTools,
                 })}>
-                    <div className="flex gap-2 pointer-events-auto">
+                    <div className="flex gap-sm pointer-events-auto">
                         {actionOptions.length > 1 && <Select
                             value={mode}
                             onValueChange={(val) => setMode(val as string)}
@@ -300,7 +300,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                             <SelectTrigger style={{
                                 background: "var(--secondary)",
                             }}>
-                                <div className="flex items-center gap-2 w-full">
+                                <div className="flex items-center gap-sm w-full">
                                     {mergedActionOptionIcons[mode] && cloneElement(mergedActionOptionIcons[mode], { className: "w-4 h-4" })}
                                     <span>{mode}</span>
                                 </div>
@@ -347,7 +347,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                             </Tip>
                         }
                     </div>
-                    <div className="flex gap-2 items-center">
+                    <div className="flex gap-sm items-center">
                         <Button
                             onClick={() => setHistoryOpen(true)}
                             data-testid="history-button"
@@ -395,7 +395,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                             {history.length === 0 ? (
                                 <EmptyState title="No history yet" description="Run a query to see your history" icon={<ClockIcon className="w-10 h-10" />} />
                             ) : (
-                                <div className="flex flex-col gap-4 p-4">
+                                <div className="flex flex-col gap-lg p-4">
                                     {history.map(({ id, item, status, date }) => (
                                         <Card className="w-full p-4 relative" key={id}>
                                             <Badge
@@ -408,11 +408,11 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                                 <div className="whitespace-pre-wrap break-words text-sm pr-12">
                                                     {item}
                                                 </div>
-                                                <div className="flex gap-2 mt-4 justify-between items-center">
+                                                <div className="flex gap-sm mt-4 justify-between items-center">
                                                     <div className="text-xs text-muted-foreground">
                                                         {formatDate(date)}
                                                     </div>
-                                                    <div className="flex gap-2 items-center">
+                                                    <div className="flex gap-sm items-center">
                                                         <CopyButton text={item} />
                                                         <Button
                                                             size="icon"
@@ -616,7 +616,7 @@ export const RawExecutePage: FC = () => {
                     <div className="w-full flex flex-col gap-4">
                         <div className="flex justify-between items-center">
                             <Tabs defaultValue="buttons" className="w-full h-full" value={activePage}>
-                                <div className="flex gap-2 w-full justify-between">
+                                <div className="flex gap-sm w-full justify-between">
                                     <TabsList className="grid" style={{
                                         gridTemplateColumns: `repeat(${pages.length+1}, minmax(0, 1fr))`
                                     }} defaultValue={activePage} data-testid="page-tabs">
