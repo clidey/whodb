@@ -884,7 +884,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         <VirtualizedTableBody
                             rowCount={paginatedRows.length}
                             rowHeight={rowHeight}
-                            height={Math.min(height, window.innerHeight*0.5)}
+                            height={Math.min(Math.min(height, window.innerHeight * 0.5), paginatedRows.length * rowHeight)}
                             overscan={10}
                         >
                             {(rowIdx: number, rowStyle: React.CSSProperties) => contextMenu(rowIdx, rowStyle)}
@@ -935,7 +935,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 })}>
                     {children}
                     <Pagination className={cn("flex justify-end", {
-                        // "hidden": !showPagination || totalPages <= 1,
+                        "hidden": !showPagination,
                     })}>
                         <PaginationContent>
                             <PaginationItem>
@@ -1102,7 +1102,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     </SheetFooter>
                 </SheetContent>
             </Sheet>
-            <Suspense fallback={<div>Loading export...</div>}>
+            <Suspense fallback={<Spinner />}>
                 <DynamicExport
                     open={showExportConfirm}
                     onOpenChange={setShowExportConfirm}
