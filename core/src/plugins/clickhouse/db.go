@@ -1,16 +1,18 @@
-// Copyright 2025 Clidey, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package clickhouse
 
@@ -25,6 +27,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 	gorm_clickhouse "gorm.io/driver/clickhouse"
 )
 
@@ -86,10 +89,32 @@ func (p *ClickHousePlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 
 	err = conn.PingContext(context.Background())
 	if err != nil {
+		log.Logger.WithError(err).WithFields(map[string]any{
+			"hostname": connectionInput.Hostname,
+			"port":     connectionInput.Port,
+			"database": connectionInput.Database,
+			"username": connectionInput.Username,
+			"protocol": func() string {
+				if connectionInput.HTTPProtocol != "disable" {
+					return "HTTP"
+				}
+				return "Native"
+			}(),
+		}).Error("Failed to ping ClickHouse server")
 		return nil, err
 	}
 
-	return gorm.Open(gorm_clickhouse.New(gorm_clickhouse.Config{
+	db, err := gorm.Open(gorm_clickhouse.New(gorm_clickhouse.Config{
 		Conn: conn,
 	}))
+	if err != nil {
+		log.Logger.WithError(err).WithFields(map[string]any{
+			"hostname": connectionInput.Hostname,
+			"port":     connectionInput.Port,
+			"database": connectionInput.Database,
+			"username": connectionInput.Username,
+		}).Error("Failed to open ClickHouse GORM connection")
+		return nil, err
+	}
+	return db, nil
 }

@@ -24,6 +24,7 @@ import (
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
+	"github.com/clidey/whodb/core/src/log"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -47,16 +48,33 @@ func (p *Sqlite3Plugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	fileNameDatabase := filepath.Join(getDefaultDirectory(), database)
 	fileNameDatabase, err = filepath.EvalSymlinks(fileNameDatabase)
 	if err != nil {
+		log.Logger.WithError(err).WithFields(map[string]any{
+			"database": database,
+			"path":     fileNameDatabase,
+		}).Error("Failed to evaluate SQLite database symlinks")
 		return nil, err
 	}
 	if !strings.HasPrefix(fileNameDatabase, getDefaultDirectory()) {
+		log.Logger.WithFields(map[string]any{
+			"database":         database,
+			"path":             fileNameDatabase,
+			"defaultDirectory": getDefaultDirectory(),
+		}).Error("SQLite database path is outside allowed directory")
 		return nil, errDoesNotExist
 	}
 	if _, err := os.Stat(fileNameDatabase); errors.Is(err, os.ErrNotExist) {
+		log.Logger.WithError(err).WithFields(map[string]any{
+			"database": database,
+			"path":     fileNameDatabase,
+		}).Error("SQLite database file does not exist")
 		return nil, errDoesNotExist
 	}
 	db, err := gorm.Open(sqlite.Open(fileNameDatabase), &gorm.Config{})
 	if err != nil {
+		log.Logger.WithError(err).WithFields(map[string]any{
+			"database": database,
+			"path":     fileNameDatabase,
+		}).Error("Failed to connect to SQLite database")
 		return nil, err
 	}
 	return db, nil
