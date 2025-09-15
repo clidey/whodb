@@ -55,6 +55,7 @@ import {
     CircleStackIcon,
     ClipboardDocumentIcon,
     ClockIcon,
+    EllipsisHorizontalIcon,
     EllipsisVerticalIcon,
     PencilIcon,
     PlayIcon,
@@ -146,7 +147,13 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     const [error, setError] = useState<Error | null>(null);
     const [loading, setLoading] = useState(false);
     const [rows, setRows] = useState<RowsResult | null>(null);
-    const { modelType } = useAI();
+    const { modelType } = useAI();    
+    const [editorHeight, setEditorHeight] = useState(150);
+    const [resultsHeight, setResultsHeight] = useState(250);
+    const [isResizing, setIsResizing] = useState(false);
+    const [isResizingResults, setIsResizingResults] = useState(false);
+    const [allowResultsResize, setAllowResultsResize] = useState(false);
+    const resultsContainerRef = useRef<HTMLDivElement | null>(null);
 
     // State for all plugins, action options, and action option icons (not just EE)
     const [allPlugins, setAllPlugins] = useState<{ type: string, component: FC<IPluginProps> }[]>([
@@ -222,6 +229,52 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
         onDelete?.(cellId);
     }, [cellId, onDelete]);
 
+    const handleEditorResize = useCallback((e: React.MouseEvent) => {
+        e.preventDefault();
+        setIsResizing(true);
+        
+        const startY = e.clientY;
+        const startHeight = editorHeight;
+        
+        const handleMouseMove = (e: MouseEvent) => {
+            const deltaY = e.clientY - startY;
+            const newHeight = Math.max(100, Math.min(500, startHeight + deltaY));
+            setEditorHeight(newHeight);
+        };
+        
+        const handleMouseUp = () => {
+            setIsResizing(false);
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+        
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+    }, [editorHeight]);
+
+    const handleResultsResize = useCallback((e: React.MouseEvent) => {
+        e.preventDefault();
+        setIsResizingResults(true);
+        
+        const startY = e.clientY;
+        const startHeight = resultsHeight;
+        
+        const handleMouseMove = (e: MouseEvent) => {
+            const deltaY = e.clientY - startY;
+            const newHeight = Math.max(100, Math.min(800, startHeight + deltaY));
+            setResultsHeight(newHeight);
+        };
+        
+        const handleMouseUp = () => {
+            setIsResizingResults(false);
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+        
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+    }, [resultsHeight]);
+
     // Use all plugins
     const output = useMemo(() => {
         const selectedPlugin = allPlugins.find((p: any) => p.type === mode);
@@ -229,13 +282,78 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
             return null;
         }
         const Component = selectedPlugin.component as FC<IPluginProps>;
-        return <div className="flex mt-4 w-full">
-            <Suspense fallback={<Loading />}>
-                <Component code={code} handleExecuteRef={handleExecute} modelType={modelType?.modelType || ''}
-                           schema={current.Database} token={modelType?.token} providerId={current.Id}/>
-            </Suspense>
-        </div>
-    }, [mode, allActionOptions, allPlugins, code, modelType, current]);
+        return (
+            <div className="flex flex-col mt-4 w-full group relative">
+                <div
+                    className={cn("h-2 cursor-row-resize transition-all duration-200 group-hover:border-b border-muted", {
+                        "hidden": rows == null || !allowResultsResize,
+                    })}
+                    onMouseDown={handleResultsResize}
+                >
+                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+                        <EllipsisHorizontalIcon className="w-4 h-4 text-gray-400" />
+                    </div>
+                </div>
+                <div 
+                    ref={resultsContainerRef}
+                    className={cn({
+                        "overflow-auto": allowResultsResize,
+                        "overflow-visible": !allowResultsResize,
+                    })}
+                    style={{
+                        minHeight: "fit-content",
+                        height: allowResultsResize ? `${resultsHeight}px` : "auto",
+                    }}
+                >
+                    <Suspense fallback={<Loading />}>
+                        <Component code={code} handleExecuteRef={handleExecute} modelType={modelType?.modelType || ''}
+                                   schema={current.Database} token={modelType?.token} providerId={current.Id}/>
+                    </Suspense>
+                </div>
+            </div>
+        );
+    }, [mode, allActionOptions, allPlugins, code, modelType, current, resultsHeight, isResizingResults, handleResultsResize, rows, allowResultsResize]);
+
+    // Measure results on first mount to fit content
+    useEffect(() => {
+        if (allowResultsResize) {
+            return;
+        }
+        const raf = requestAnimationFrame(() => {
+            const el = resultsContainerRef.current;
+            if (el == null) {
+                return;
+            }
+            const measured = el.scrollHeight;
+            if (measured > 0) {
+                setResultsHeight(Math.min(800, Math.max(100, measured)));
+                setAllowResultsResize(true);
+            }
+        });
+        return () => cancelAnimationFrame(raf);
+    }, [allowResultsResize]);
+
+    // Re-measure whenever results change (e.g., query re-run) to fit new content
+    useEffect(() => {
+        if (rows == null) {
+            return;
+        }
+        // Temporarily allow content to define height, then measure and lock
+        setAllowResultsResize(false);
+        const raf = requestAnimationFrame(() => {
+            const el = resultsContainerRef.current;
+            if (el == null) {
+                setAllowResultsResize(true);
+                return;
+            }
+            const measured = el.scrollHeight;
+            if (measured > 0) {
+                setResultsHeight(Math.min(800, Math.max(100, measured)));
+            }
+            setAllowResultsResize(true);
+        });
+        return () => cancelAnimationFrame(raf);
+    }, [rows, mode]);
 
     const isAnalyzeAvailable = useMemo(() => {
         if (!isEEFeatureEnabled('analyzeView')) {
@@ -263,8 +381,20 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     return (
         <div className="flex flex-col grow group/cell relative">
             <div className="relative">
-                <div className="flex grow h-[150px] border border-gray-200 rounded-md overflow-hidden dark:bg-white/10 dark:border-white/5">
+                <div 
+                    className="flex grow border border-gray-200 rounded-md overflow-hidden dark:bg-white/10 dark:border-white/5"
+                    style={{ height: `${editorHeight}px` }}
+                >
                     <CodeEditor language="sql" value={code} setValue={setCode} onRun={(c) => handleRawExecute(c)} />
+                </div>
+                <div 
+                    className="h-2 cursor-row-resize transition-all duration-200 relative group"
+                    onMouseDown={handleEditorResize}
+                    style={{ cursor: isResizing ? 'row-resize' : 'row-resize' }}
+                >
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+                        <EllipsisHorizontalIcon className="w-8 text-gray-400" />
+                    </div>
                 </div>
                 <div className="absolute top-1 right-1 z-10" data-testid="scratchpad-cell-options">
                     <DropdownMenu>
