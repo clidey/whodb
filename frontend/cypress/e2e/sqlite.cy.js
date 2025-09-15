@@ -470,33 +470,40 @@ describe('Sqlite3 E2E test', () => {
             expect(rows.length).to.equal(4, 'Should have 4 rows before second addition');
         });
 
-        // Test edge cases: zero and negative numbers
-        cy.addRow({
-            bigint_col: '0',
-            integer_col: '-42',
-            smallint_col: '-100',
-            numeric_col: '-1234.56',
-            description: 'Zero and negative values'
-        });
-
-        // Verify the second row was added successfully
+        // Test edge cases: zero and negative numbers, and verify the row was added successfully
         cy.getTableData().then(({rows}) => {
-            // After adding both test rows, we should have 5 rows total
-            expect(rows.length).to.equal(5, 'Should have 5 rows after both additions');
-            // Row at index 4 (5th row) should be "Zero and negative values"
-            const lastRow = rows[4];
-            expect(lastRow[2]).to.equal('0');
-            expect(lastRow[3]).to.equal('-42');
-            expect(lastRow[4]).to.equal('-100');
-            expect(lastRow[5]).to.equal('-1234.56');
-            expect(lastRow[6]).to.equal('Zero and negative values');
+            const initialRowCount = rows.length;
+            cy.addRow({
+                bigint_col: '0',
+                integer_col: '-42',
+                smallint_col: '-100',
+                numeric_col: '-1234.56',
+                description: 'Zero and negative values'
+            });
+
+            cy.getTableData().then(({rows: newRows}) => {
+                expect(newRows.length).to.equal(initialRowCount + 1, 'Should have one new row');
+                const lastRow = newRows[newRows.length - 1];
+                expect(lastRow[2]).to.equal('0');
+                expect(lastRow[3]).to.equal('-42');
+                expect(lastRow[4]).to.equal('-100');
+                expect(lastRow[5]).to.equal('-1234.56');
+                expect(lastRow[6]).to.equal('Zero and negative values');
+            });
         });
 
-        // Clean up: delete the test rows we added (in reverse order to maintain indices)
-        cy.deleteRow(4); // Delete "Zero and negative values" (5th row)
-        cy.wait(500); // Wait for delete to complete
-        cy.deleteRow(3); // Delete "Test casting from strings" (4th row)
-        cy.wait(500); // Wait for delete to complete
+        // Clean up: delete the test rows we added
+        cy.getTableData().then(({rows}) => {
+            const initialRowCount = rows.length;
+            cy.deleteRow(initialRowCount - 1); // Delete the last row
+            cy.getTableData().its('rows.length').should('eq', initialRowCount - 1);
+        });
+
+        cy.getTableData().then(({rows}) => {
+            const initialRowCount = rows.length;
+            cy.deleteRow(initialRowCount - 1); // Delete the last row again
+            cy.getTableData().its('rows.length').should('eq', initialRowCount - 1);
+        });
 
         // Verify cleanup
         cy.getTableData().then(({rows}) => {
