@@ -157,6 +157,55 @@ INSERT INTO order_items (order_id, product_id, quantity, price_at_purchase) VALU
 (2, 3, 1, 150.00);
 
 -- Sample Payments
-INSERT INTO payments (order_id, amount, payment_method) VALUES 
+INSERT INTO payments (order_id, amount, payment_method)
+VALUES
 (1, 2000.00, 'credit_card'),
 (2, 150.00, 'paypal');
+
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+-- Test Casting Table for type casting validation
+CREATE TABLE IF NOT EXISTS test_casting
+(
+    id
+    INTEGER
+    PRIMARY
+    KEY
+    AUTOINCREMENT,
+    bigint_col
+    INTEGER
+    NOT
+    NULL,
+    integer_col
+    INTEGER
+    NOT
+    NULL,
+    smallint_col
+    INTEGER
+    NOT
+    NULL,
+    numeric_col
+    REAL,
+    description
+    TEXT
+);
+
+-- Insert sample data for test_casting
+INSERT INTO test_casting (bigint_col, integer_col, smallint_col, numeric_col, description)
+VALUES (9223372036854775807, 2147483647, 32767, 99999999.99, 'Maximum values'),
+       (1000000, 1000, 100, 1234.56, 'Regular values'),
+       (-9223372036854775808, -2147483648, -32768, -99999999.99, 'Minimum values');

@@ -35,6 +35,7 @@ describe('Postgres E2E test', () => {
         'orders',
         'payments',
         'products',
+        'test_casting',
         'users'
       ]);
     });
@@ -459,7 +460,85 @@ describe('Postgres E2E test', () => {
     cy.get('body').type('{esc}');
     cy.get('[data-testid="table-search"]').should('be.visible');
 
-    // 13) Open Mock Data sheet, enforce limits, and show overwrite confirmation
+    // 13) Test type casting behavior (related to issue #613)
+    // Navigate back to tables list first
+    cy.goto('storage-unit');
+    cy.data('test_casting');
+
+    // Test adding a row with various numeric types that require casting
+    cy.addRow({
+      bigint_col: '5000000000',  // Large number as string
+      integer_col: '42',          // Regular integer as string
+      smallint_col: '256',        // Small integer as string
+      numeric_col: '9876.54',     // Decimal as string
+      description: 'Test casting from strings'
+    });
+
+    // Verify the row was added - should now have 4 rows
+    cy.getTableData().then(({rows}) => {
+      expect(rows.length).to.equal(4, 'Should have 4 rows after first addition');
+    });
+
+    // Verify the data was inserted correctly
+    cy.sortBy(0); // Sort by id to get consistent ordering
+    cy.getTableData().then(({columns, rows}) => {
+      // Find the row we just added (should be the last one with id=4)
+      const addedRow = rows[rows.length - 1];
+      expect(addedRow[1]).to.match(/^\d+$/); // id should be a number
+      expect(addedRow[2]).to.equal('5000000000');
+      expect(addedRow[3]).to.equal('42');
+      expect(addedRow[4]).to.equal('256');
+      expect(addedRow[5]).to.equal('9876.54');
+      expect(addedRow[6]).to.equal('Test casting from strings');
+    });
+
+    // Test editing a row with type casting
+    cy.updateRow(1, 1, '7500000000', false); // Update bigint_col
+    cy.getTableData().then(({rows}) => {
+      expect(rows[1][2]).to.equal('7500000000');
+    });
+
+    // Restore original value
+    cy.updateRow(1, 1, '1000000', false);
+
+    // Verify we still have 4 rows before adding the second test row
+    cy.getTableData().then(({rows}) => {
+      expect(rows.length).to.equal(4, 'Should have 4 rows before second addition');
+    });
+
+    // Test edge cases: zero and negative numbers
+    cy.addRow({
+      bigint_col: '0',
+      integer_col: '-42',
+      smallint_col: '-100',
+      numeric_col: '-1234.56',
+      description: 'Zero and negative values'
+    });
+
+    // Verify the second row was added successfully
+    cy.getTableData().then(({rows}) => {
+      // After adding both test rows, we should have 5 rows total
+      expect(rows.length).to.equal(5, 'Should have 5 rows after both additions');
+      const lastRow = rows[4];
+      expect(lastRow[2]).to.equal('0');
+      expect(lastRow[3]).to.equal('-42');
+      expect(lastRow[4]).to.equal('-100');
+      expect(lastRow[5]).to.equal('-1234.56');
+      expect(lastRow[6]).to.equal('Zero and negative values');
+    });
+
+    // Clean up: delete the test rows we added (in reverse order to maintain indices)
+    cy.deleteRow(4); // Delete "Zero and negative values" (5th row)
+    cy.wait(500); // Wait for delete to complete
+    cy.deleteRow(3); // Delete "Test casting from strings" (4th row)
+    cy.wait(500); // Wait for delete to complete
+
+    // Verify cleanup
+    cy.getTableData().then(({rows}) => {
+      expect(rows.length).to.equal(3); // Should be back to original 3 rows
+    });
+
+    // 14) Open Mock Data sheet, enforce limits, and show overwrite confirmation
     cy.data('users');
     cy.selectMockData();
 

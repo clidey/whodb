@@ -211,8 +211,10 @@ Cypress.Commands.add("addRow", (data, isSingleInput = false) => {
     cy.get('[data-testid="submit-add-row-button"]').click();
     // Wait for the sheet/dialog to close - the submit button should no longer be visible
     cy.get('[data-testid="submit-add-row-button"]').should('not.exist');
-    // Additional wait to ensure animations complete
-    cy.wait(100);
+    // Increased wait for headless mode - ensures GraphQL mutation completes and UI updates
+    cy.wait(500);
+    // Additional check to ensure the table has been refreshed
+    cy.get('table tbody').should('be.visible');
 });
 
 Cypress.Commands.add("deleteRow", (rowIndex) => {
