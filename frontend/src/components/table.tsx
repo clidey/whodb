@@ -392,16 +392,53 @@ export const StorageUnitTable: FC<TableProps> = ({
         setChecked(checked.includes(rowIndex) ? checked.filter(i => i !== rowIndex) : [...checked, rowIndex]);
     }, [checked]);
 
-    const handleCellClick = (rowIndex: number, cellIndex: number) => {
-        const cell = paginatedRows[rowIndex][cellIndex];
-        if (cell !== undefined && cell !== null) {
-            if (typeof navigator !== "undefined" && navigator.clipboard) {
-                navigator.clipboard.writeText(String(cell));
-                toast.success("Copied to clipboard");
+    // Track click timeouts to prevent single-click when double-click occurs
+    const clickTimeouts = useRef<Map<string, number>>(new Map());
+
+    const handleCellClick = useCallback((rowIndex: number, cellIndex: number) => {
+        const cellKey = `${rowIndex}-${cellIndex}`;
+        
+        // Clear any existing timeout for this cell
+        const existingTimeout = clickTimeouts.current.get(cellKey);
+        if (existingTimeout) {
+            clearTimeout(existingTimeout);
+        }
+        
+        // Set a new timeout for the single-click action
+        const timeout = setTimeout(() => {
+            const cell = paginatedRows[rowIndex][cellIndex];
+            if (cell !== undefined && cell !== null) {
+                if (typeof navigator !== "undefined" && navigator.clipboard) {
+                    navigator.clipboard.writeText(String(cell));
+                    toast.success("Copied to clipboard");
+                }
+            }
+            clickTimeouts.current.delete(cellKey);
+        }, 200); // 200ms delay to detect double-click
+        
+        clickTimeouts.current.set(cellKey, timeout);
+    }, [paginatedRows]);
+
+    const handleCellDoubleClick = useCallback((rowIndex: number) => {
+        // Clear any pending single-click timeouts for all cells in this row
+        for (let cellIdx = 0; cellIdx < columns.length; cellIdx++) {
+            const cellKey = `${rowIndex}-${cellIdx}`;
+            const timeout = clickTimeouts.current.get(cellKey);
+            if (timeout) {
+                clearTimeout(timeout);
+                clickTimeouts.current.delete(cellKey);
             }
         }
-    };
-
+        
+        const row = paginatedRows[rowIndex];
+        if (row && Array.isArray(row)) {
+            const rowString = row.map(cell => cell ?? "").join("\t");
+            if (typeof navigator !== "undefined" && navigator.clipboard) {
+                navigator.clipboard.writeText(rowString);
+                toast.success("Row copied to clipboard");
+            }
+        }
+    }, [paginatedRows, columns.length]);
 
 
     // --- End export logic ---
@@ -476,6 +513,15 @@ export const StorageUnitTable: FC<TableProps> = ({
     }, [generateMockData, schema, storageUnit, mockDataRowCount, mockDataMethod, mockDataOverwriteExisting, showMockDataConfirmation, maxRowCount]);
 
     const columnIcons = useMemo(() => getColumnIcons(columns, columnTypes), [columns, columnTypes]);
+
+    // Cleanup click timeouts on unmount
+    useEffect(() => {
+        return () => {
+            // Clear all pending timeouts
+            clickTimeouts.current.forEach(timeout => clearTimeout(timeout));
+            clickTimeouts.current.clear();
+        };
+    }, []);
 
     // Refresh page when it is resized and it settles
     useEffect(() => {
@@ -652,7 +698,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         </Button>
                     </TableCell>
                     {paginatedRows[index]?.map((cell, cellIdx) => (
-                        <TableCell key={cellIdx} className="cursor-pointer" onClick={() => handleCellClick(index, cellIdx)} data-col-idx={cellIdx}>{cell}</TableCell>
+                        <TableCell key={cellIdx} className="cursor-pointer" onClick={() => handleCellClick(index, cellIdx)} onDoubleClick={() => handleCellDoubleClick(index)} data-col-idx={cellIdx}>{cell}</TableCell>
                     ))}
                 </TableRow>
             </ContextMenuTrigger>

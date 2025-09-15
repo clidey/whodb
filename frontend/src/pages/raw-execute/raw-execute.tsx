@@ -44,10 +44,12 @@ import {
     Separator,
     Sheet,
     SheetContent,
+    SheetFooter,
     Tabs,
     TabsContent,
     TabsList,
-    TabsTrigger
+    TabsTrigger,
+    toast
 } from "@clidey/ux";
 import {DatabaseType, RowsResult} from '@graphql';
 import {
@@ -282,6 +284,14 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                 <ArrowPathIcon className="w-4 h-4"/>
                                 Clear
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                                navigator.clipboard.writeText(code).then(() => {
+                                    toast.success("Code copied to clipboard");
+                                });
+                            }}>
+                                <ClipboardDocumentIcon className="w-4 h-4"/>
+                                Copy Code
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setHistoryOpen(true)}>
                                 <ClockIcon className="w-4 h-4"/>
                                 Query History
@@ -446,6 +456,42 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                             )}
                         </div>
                     </div>
+                    <SheetFooter>
+                        {history.length > 0 && (
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        data-testid="clear-history-button"
+                                    >
+                                        <ArrowPathIcon className="w-4 h-4 mr-1" />
+                                        Clear History
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Clear Query History</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            Are you sure you want to clear all query history? This action cannot be undone.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel data-testid="clear-history-cancel">Cancel</AlertDialogCancel>
+                                        <AlertDialogAction asChild>
+                                            <Button
+                                                variant="destructive"
+                                                onClick={() => setHistory([])}
+                                                data-testid="clear-history-confirm"
+                                            >
+                                                Clear History
+                                            </Button>
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        )}
+                    </SheetFooter>
                 </SheetContent>
             </Sheet>
         </div>
