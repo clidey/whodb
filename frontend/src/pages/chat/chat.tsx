@@ -292,7 +292,7 @@ export const ChatPage: FC = () => {
                         </div>
                         : <div className="h-full w-full py-8 max-h-[calc(75vh-25px)] overflow-y-auto" ref={scrollContainerRef}>
                             <div className="flex justify-center w-full">
-                                <div className="flex w-[max(65%,450px)] flex-col gap-2">
+                                <div className="flex w-full flex-col gap-2">
                                     {
                                         chats.map((chat, i) => {
                                             if (chat.Type === "message" || chat.Type === "text") {

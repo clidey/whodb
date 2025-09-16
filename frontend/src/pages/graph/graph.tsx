@@ -275,29 +275,27 @@ export const GraphPage: FC = () => {
             unitsLoading={unitsLoading}
         />
     }>
-        <SidebarProvider>
-            <div className="flex-1 h-full">
-                <ReactFlowProvider>
-                    {
-                        !graphLoading && nodes.length === 0
-                            ? <EmptyState
-                                icon={<CircleStackIcon className="w-4 h-4" />}
-                                title={`No nodes selected`}
-                                description={`Select ${getDatabaseStorageUnitLabel(current?.Type).toLowerCase()} on the left to add them to the graph.`}>
-                                <Button
-                                    onClick={() => navigate(InternalRoutes.Dashboard.StorageUnit.path + "?create=true")}
-                                >
-                                    Create {getDatabaseStorageUnitLabel(current?.Type, true)}
-                                </Button>
-                            </EmptyState>
-                            : <Graph nodes={nodes} edges={edges} nodeTypes={nodeTypes}
-                                    setNodes={setNodes} setEdges={setEdges}
-                                    onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
-                                    minZoom={0.1}
-                                    onReady={handleOnReady} />
-                    }
-                </ReactFlowProvider>
-            </div>
-        </SidebarProvider>
+        <div className="flex-1 h-full">
+            <ReactFlowProvider>
+                {
+                    !graphLoading && nodes.length === 0
+                        ? <EmptyState
+                            icon={<CircleStackIcon className="w-4 h-4" />}
+                            title={`No nodes selected`}
+                            description={`Select ${getDatabaseStorageUnitLabel(current?.Type).toLowerCase()} on the left to add them to the graph.`}>
+                            <Button
+                                onClick={() => navigate(InternalRoutes.Dashboard.StorageUnit.path + "?create=true")}
+                            >
+                                Create {getDatabaseStorageUnitLabel(current?.Type, true)}
+                            </Button>
+                        </EmptyState>
+                        : <Graph nodes={nodes} edges={edges} nodeTypes={nodeTypes}
+                                setNodes={setNodes} setEdges={setEdges}
+                                onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
+                                minZoom={0.1}
+                                onReady={handleOnReady} />
+                }
+            </ReactFlowProvider>
+        </div>
     </InternalPage>
 }

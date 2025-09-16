@@ -55,7 +55,7 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
     return (
         <Container>
             <div className="flex flex-row grow">
-                <SidebarProvider defaultOpen={props.sidebar != null}>
+                <SidebarProvider defaultOpen={props.sidebar == null}>
                     <Sidebar />
                 </SidebarProvider>
                 {props.sidebar && <SidebarProvider>
