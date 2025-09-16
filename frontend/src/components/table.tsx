@@ -71,6 +71,7 @@ import {
     ChevronUpIcon,
     CircleStackIcon,
     ClockIcon,
+    CursorArrowRaysIcon,
     DocumentDuplicateIcon,
     DocumentIcon,
     DocumentTextIcon,
@@ -209,6 +210,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [checked, setChecked] = useState<number[]>([]);
     const [showExportConfirm, setShowExportConfirm] = useState(false);
     const tableRef = useRef<HTMLDivElement>(null);
+    const [contextMenuCellIdx, setContextMenuCellIdx] = useState<number | null>(null);
     
     // Mock data state
     const [showMockDataSheet, setShowMockDataSheet] = useState(false);
@@ -698,11 +700,54 @@ export const StorageUnitTable: FC<TableProps> = ({
                         </Button>
                     </TableCell>
                     {paginatedRows[index]?.map((cell, cellIdx) => (
-                        <TableCell key={cellIdx} className="cursor-pointer" onClick={() => handleCellClick(index, cellIdx)} onDoubleClick={() => handleCellDoubleClick(index)} data-col-idx={cellIdx}>{cell}</TableCell>
+                        <TableCell
+                            key={cellIdx}
+                            className="cursor-pointer"
+                            onClick={() => handleCellClick(index, cellIdx)}
+                            onDoubleClick={() => handleCellDoubleClick(index)}
+                            onContextMenu={() => setContextMenuCellIdx(cellIdx)}
+                            data-col-idx={cellIdx}
+                        >
+                            {cell}
+                        </TableCell>
                     ))}
                 </TableRow>
             </ContextMenuTrigger>
             <ContextMenuContent className="w-52">
+                <ContextMenuItem
+                    onSelect={() => {
+                        if (contextMenuCellIdx == null) return;
+                        const cell = paginatedRows[index]?.[contextMenuCellIdx];
+                        if (cell !== undefined && cell !== null) {
+                            if (typeof navigator !== "undefined" && navigator.clipboard) {
+                                navigator.clipboard.writeText(String(cell));
+                                toast.success("Copied cell to clipboard");
+                            }
+                        }
+                    }}
+                    disabled={contextMenuCellIdx == null}
+                >
+                    <DocumentDuplicateIcon className="w-4 h-4" />
+                    Copy Cell
+                    <ContextMenuShortcut><CursorArrowRaysIcon className="w-4 h-4" /></ContextMenuShortcut>
+                </ContextMenuItem>
+                <ContextMenuItem
+                    onSelect={() => {
+                        const row = paginatedRows[index];
+                        if (row && Array.isArray(row)) {
+                            const rowString = row.map(cell => cell ?? "").join("\t");
+                            if (typeof navigator !== "undefined" && navigator.clipboard) {
+                                navigator.clipboard.writeText(rowString);
+                                toast.success("Copied row to clipboard");
+                            }
+                        }
+                    }}
+                    className="[&>[data-slot='context-menu-shortcut']]:flex"
+                >
+                    <DocumentTextIcon className="w-4 h-4" />
+                    Copy Row
+                    <ContextMenuShortcut><CursorArrowRaysIcon className="w-4 h-4" /><CursorArrowRaysIcon className="w-4 h-4" /></ContextMenuShortcut>
+                </ContextMenuItem>
                 <ContextMenuItem onSelect={() => handleSelectRow(index)}>
                     {checked.includes(index) ? (
                         <>

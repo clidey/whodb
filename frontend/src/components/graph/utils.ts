@@ -17,17 +17,27 @@
 import { EdgeMarker, MarkerType, Node, Position, Viewport, XYPosition } from "reactflow";
 
 function getNodeIntersection(node: Node, otherNode: Node, padding = 1) {
-  const nodeCenterX = node.positionAbsolute!.x + node.width! / 2;
-  const nodeCenterY = node.positionAbsolute!.y + node.height! / 2;
-  const otherCenterX = otherNode.positionAbsolute!.x + otherNode.width! / 2;
-  const otherCenterY = otherNode.positionAbsolute!.y + otherNode.height! / 2;
+  // Add fallbacks for missing dimensions and positions
+  const nodePos = node.positionAbsolute || { x: 0, y: 0 };
+  const otherPos = otherNode.positionAbsolute || { x: 0, y: 0 };
+  const nodeWidth = node.width || 100;
+  const nodeHeight = node.height || 50;
+  const otherWidth = otherNode.width || 100;
+  const otherHeight = otherNode.height || 50;
+
+  const nodeCenterX = nodePos.x + nodeWidth / 2;
+  const nodeCenterY = nodePos.y + nodeHeight / 2;
+  const otherCenterX = otherPos.x + otherWidth / 2;
+  const otherCenterY = otherPos.y + otherHeight / 2;
 
   const dx = otherCenterX - nodeCenterX;
   const dy = otherCenterY - nodeCenterY;
 
+  // Avoid division by zero
   const scale = Math.max(
-    Math.abs(dx) / ((node.width! + padding * 2) / 2),
-    Math.abs(dy) / ((node.height! + padding * 2) / 2)
+    Math.abs(dx) / ((nodeWidth + padding * 2) / 2),
+    Math.abs(dy) / ((nodeHeight + padding * 2) / 2),
+    1 // minimum scale to avoid division by zero
   );
 
   return {
@@ -37,18 +47,18 @@ function getNodeIntersection(node: Node, otherNode: Node, padding = 1) {
 }
 
 function getEdgePosition(node: Node, intersectionPoint: { x: number; y: number }) {
-    const nodeX = node.positionAbsolute!.x;
-    const nodeY = node.positionAbsolute!.y;
-    const nodeWidth = node.width!;
-    const nodeHeight = node.height!;
+    // Add fallbacks for missing dimensions and positions
+    const nodePos = node.positionAbsolute || { x: 0, y: 0 };
+    const nodeWidth = node.width || 100;
+    const nodeHeight = node.height || 50;
 
     const px = intersectionPoint.x;
     const py = intersectionPoint.y;
 
-    const isLeft = Math.abs(px - nodeX) <= 1;
-    const isRight = Math.abs(px - (nodeX + nodeWidth)) <= 1;
-    const isTop = Math.abs(py - nodeY) <= 1;
-    const isBottom = Math.abs(py - (nodeY + nodeHeight)) <= 1;
+    const isLeft = Math.abs(px - nodePos.x) <= 1;
+    const isRight = Math.abs(px - (nodePos.x + nodeWidth)) <= 1;
+    const isTop = Math.abs(py - nodePos.y) <= 1;
+    const isBottom = Math.abs(py - (nodePos.y + nodeHeight)) <= 1;
 
     if (isLeft) return Position.Left;
     if (isRight) return Position.Right;
@@ -69,8 +79,9 @@ export function getEdgeParams(source: Node, target: Node, padding = 10) {
   const dy = targetIntersectionPoint.y - sourceIntersectionPoint.y;
   const length = Math.sqrt(dx * dx + dy * dy);
 
-  const paddingX = (dx / length) * padding;
-  const paddingY = (dy / length) * padding;
+  // Avoid division by zero when nodes are at the same position
+  const paddingX = length > 0 ? (dx / length) * padding : 0;
+  const paddingY = length > 0 ? (dy / length) * padding : 0;
 
   return {
     sx: sourceIntersectionPoint.x + paddingX,

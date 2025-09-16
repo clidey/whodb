@@ -64,6 +64,7 @@ import { databaseSupportsScratchpad, databaseTypesThatUseDatabaseInsteadOfSchema
 import { getDatabaseOperators } from "../../utils/database-operators";
 import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
 import { ExploreStorageUnitWhereCondition } from "./explore-storage-unit-where-condition";
+import { SchemaViewer } from "../../components/schema-viewer";
 
 // Conditionally import EE query utilities
 let generateInitialQuery: ((databaseType: string | undefined, schema: string | undefined, tableName: string | undefined) => string) | undefined;
@@ -431,7 +432,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         </InternalPage>
     }
 
-    return <InternalPage routes={routes} className="relative">
+    return <InternalPage routes={routes} className="relative" sidebar={<SchemaViewer />}>
         <div className="flex flex-col grow gap-lg h-[calc(100%-100px)]">
             <div className="flex items-center justify-between">
                 <div className="flex gap-sm items-center">
@@ -444,7 +445,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                     <div className="flex gap-2">
                         <div className="flex flex-col gap-2">
                             <Label>Search</Label>
-                            <SearchInput placeholder="Enter search query" className="w-64" value={search} onChange={e => setSearch(e.target.value)}
+                            <SearchInput placeholder="Search query..." className="w-64" value={search} onChange={e => setSearch(e.target.value)}
                                 onKeyDown={e => {
                                     if (e.key === "Enter") {
                                         searchRef.current?.(search);
@@ -460,10 +461,12 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {import.meta.env.VITE_E2E_TEST === "true" &&
-                                        <SelectItem value="1" data-value="1">1</SelectItem>}
-                                    {import.meta.env.VITE_E2E_TEST === "true" &&
-                                        <SelectItem value="2" data-value="2">2</SelectItem>}
+                                    <SelectItem value="1" data-value="1">1</SelectItem>
+                                    {/* {import.meta.env.VITE_E2E_TEST === "true" &&
+                                        } */}
+                                    {/* {import.meta.env.VITE_E2E_TEST === "true" && */}
+                                        <SelectItem value="2" data-value="2">2</SelectItem>
+                                        {/* } */}
                                     <SelectItem value="10" data-value="10">10</SelectItem>
                                     <SelectItem value="25" data-value="25">25</SelectItem>
                                     <SelectItem value="50" data-value="50">50</SelectItem>

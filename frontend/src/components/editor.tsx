@@ -14,7 +14,17 @@
  * limitations under the License.
  */
 
-import {useTheme} from "@clidey/ux";
+import {Button, useTheme} from "@clidey/ux";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@clidey/ux";
 import {json} from "@codemirror/lang-json";
 import {markdown} from "@codemirror/lang-markdown";
 import {sql} from "@codemirror/lang-sql";
@@ -44,6 +54,41 @@ const isValidSQLQuery = (text: string): boolean => {
   
   const upperText = trimmed.toUpperCase();
   return sqlKeywords.some(keyword => upperText.startsWith(keyword));
+};
+
+// Function to detect if a query is destructive (modifies data)
+const isDestructiveQuery = (text: string): boolean => {
+  const trimmed = text.trim();
+  if (!trimmed) return false;
+  
+  const upperText = trimmed.toUpperCase();
+  
+  // Safe read-only operations
+  const safeKeywords = [
+    'SELECT', 'WITH', 'EXPLAIN', 'DESCRIBE', 'SHOW', 'USE'
+  ];
+  
+  // Destructive operations that modify data or schema
+  const destructiveKeywords = [
+    'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'ALTER', 
+    'TRUNCATE', 'REPLACE', 'MERGE', 'CALL', 'EXEC', 'EXECUTE'
+  ];
+  
+  // Check if query starts with a destructive keyword
+  const isDestructive = destructiveKeywords.some(keyword => upperText.startsWith(keyword));
+  
+  // Check if query starts with a safe keyword
+  const isSafe = safeKeywords.some(keyword => upperText.startsWith(keyword));
+  
+  // If it's explicitly safe, it's not destructive
+  if (isSafe) return false;
+  
+  // If it's explicitly destructive, it is destructive
+  if (isDestructive) return true;
+  
+  // For other cases (like SET statements), consider them potentially destructive
+  // as they can modify session state or configuration
+  return true;
 };
 
 const findValidQueriesWithPositions = (doc: any): Array<{query: string, startLine: number}> => {
@@ -172,6 +217,8 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
   disabled,
 }) => {
   const [showPreview, setShowPreview] = useState(defaultShowPreview);
+  const [showDestructiveDialog, setShowDestructiveDialog] = useState(false);
+  const [pendingQuery, setPendingQuery] = useState<string>("");
   const editorRef = useRef<HTMLDivElement>(null);
   const onRunReference = useRef<Function>();
   const darkModeEnabled = useTheme().theme === "dark";
@@ -180,6 +227,30 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
   useEffect(() => {
     onRunReference.current = onRun;
   }, [onRun]);
+
+  // Handler for executing queries with destructive confirmation
+  const handleQueryExecution = useCallback((queryText: string) => {
+    if (language === "sql" && isDestructiveQuery(queryText)) {
+      setPendingQuery(queryText);
+      setShowDestructiveDialog(true);
+    } else {
+      // Safe query, execute directly
+      onRun?.(queryText);
+    }
+  }, [language, onRun]);
+
+  // Handler for confirming destructive query execution
+  const handleConfirmDestructiveQuery = useCallback(() => {
+    onRun?.(pendingQuery);
+    setShowDestructiveDialog(false);
+    setPendingQuery("");
+  }, [onRun, pendingQuery]);
+
+  // Handler for canceling destructive query execution
+  const handleCancelDestructiveQuery = useCallback(() => {
+    setShowDestructiveDialog(false);
+    setPendingQuery("");
+  }, []);
 
   useEffect(() => {
     if (editorRef.current == null) {
@@ -219,8 +290,8 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
               if (startLineObj && startLineObj.text.trim().length > 0) {
                 // Create a unique marker for each query with the specific query text
                 const playMarker = new PlayButtonMarker((lineText) => {
-                  if (onRunReference.current) {
-                    onRunReference.current(lineText);
+                  if (lineText) {
+                    handleQueryExecution(lineText);
                   }
                 }, query);
                 
@@ -252,7 +323,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
                         textToExecute = view.state.sliceDoc(selection.main.from, selection.main.to);
                       }
                       
-                      onRunReference.current(textToExecute);
+                      handleQueryExecution(textToExecute);
                       event.preventDefault();
                       event.stopPropagation();
                   }
@@ -381,6 +452,31 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
         })}>
         {actionButtons}
       </div>
+      
+      {/* Destructive Query Confirmation Dialog */}
+      <AlertDialog open={showDestructiveDialog} onOpenChange={setShowDestructiveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Operation</AlertDialogTitle>
+            <AlertDialogDescription>
+              This query will modify data or schema. Are you sure you want to execute it? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelDestructiveQuery}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction asChild>
+              <Button
+                onClick={handleConfirmDestructiveQuery}
+                variant="destructive"
+              >
+                Execute Query
+              </Button>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

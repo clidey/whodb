@@ -111,6 +111,157 @@ export const ActionOptionIcons: Record<string, ReactElement> = {
     [ActionOptions.Query]: <CircleStackIcon className="w-4 h-4" />,
 }
 
+// Lightweight, dependency-free SQL highlighter
+
+// Safe SQL syntax highlighter component that renders React elements
+const SQLHighlighter: FC<{ code: string }> = ({ code }) => {
+    const keywords = [
+        'SELECT','FROM','WHERE','AND','OR','NOT','INSERT','INTO','VALUES','UPDATE','SET','DELETE','CREATE','TABLE','PRIMARY','KEY','FOREIGN','REFERENCES','DROP','ALTER','ADD','COLUMN','JOIN','LEFT','RIGHT','FULL','OUTER','INNER','ON','GROUP','BY','ORDER','HAVING','LIMIT','OFFSET','DISTINCT','AS','IN','IS','NULL','LIKE','BETWEEN','UNION','ALL','EXISTS','CASE','WHEN','THEN','ELSE','END','WITH','EXPLAIN','DESCRIBE','SHOW'
+    ];
+
+    const parseSQL = (sql: string): React.ReactNode[] => {
+        const tokens: Array<{ type: string; value: string; className?: string }> = [];
+        let remaining = sql;
+        let position = 0;
+
+        while (remaining.length > 0) {
+            let matched = false;
+
+            // Block comments
+            const blockCommentMatch = remaining.match(/^\/\*[\s\S]*?\*\//);
+            if (blockCommentMatch) {
+                tokens.push({
+                    type: 'comment',
+                    value: blockCommentMatch[0],
+                    className: 'text-muted-foreground'
+                });
+                remaining = remaining.slice(blockCommentMatch[0].length);
+                matched = true;
+            }
+            // Line comments
+            else if (remaining.match(/^--/)) {
+                const lineEnd = remaining.indexOf('\n');
+                const comment = lineEnd === -1 ? remaining : remaining.slice(0, lineEnd);
+                tokens.push({
+                    type: 'comment',
+                    value: comment,
+                    className: 'text-muted-foreground'
+                });
+                remaining = remaining.slice(comment.length);
+                matched = true;
+            }
+            // Single quoted strings
+            else if (remaining.startsWith("'")) {
+                let stringValue = "'";
+                let i = 1;
+                while (i < remaining.length) {
+                    if (remaining[i] === "'" && remaining[i-1] !== '\\') {
+                        stringValue += "'";
+                        break;
+                    }
+                    stringValue += remaining[i];
+                    i++;
+                }
+                tokens.push({
+                    type: 'string',
+                    value: stringValue,
+                    className: 'text-amber-600 dark:text-amber-400'
+                });
+                remaining = remaining.slice(stringValue.length);
+                matched = true;
+            }
+            // Double quoted strings
+            else if (remaining.startsWith('"')) {
+                let stringValue = '"';
+                let i = 1;
+                while (i < remaining.length) {
+                    if (remaining[i] === '"' && remaining[i-1] !== '\\') {
+                        stringValue += '"';
+                        break;
+                    }
+                    stringValue += remaining[i];
+                    i++;
+                }
+                tokens.push({
+                    type: 'string',
+                    value: stringValue,
+                    className: 'text-amber-600 dark:text-amber-400'
+                });
+                remaining = remaining.slice(stringValue.length);
+                matched = true;
+            }
+            // Numbers
+            else if (remaining.match(/^\d+(?:\.\d+)?/)) {
+                const numberMatch = remaining.match(/^\d+(?:\.\d+)?/);
+                if (numberMatch) {
+                    tokens.push({
+                        type: 'number',
+                        value: numberMatch[0],
+                        className: 'text-blue-600 dark:text-blue-400'
+                    });
+                    remaining = remaining.slice(numberMatch[0].length);
+                    matched = true;
+                }
+            }
+            // Keywords and identifiers
+            else if (remaining.match(/^[a-zA-Z_][a-zA-Z0-9_]*/)) {
+                const wordMatch = remaining.match(/^[a-zA-Z_][a-zA-Z0-9_]*/);
+                if (wordMatch) {
+                    const word = wordMatch[0];
+                    const upperWord = word.toUpperCase();
+                    if (keywords.includes(upperWord)) {
+                        tokens.push({
+                            type: 'keyword',
+                            value: word,
+                            className: 'text-purple-700 dark:text-purple-400 font-medium'
+                        });
+                    } else {
+                        tokens.push({
+                            type: 'identifier',
+                            value: word
+                        });
+                    }
+                    remaining = remaining.slice(word.length);
+                    matched = true;
+                }
+            }
+            // Whitespace and other characters
+            else {
+                const char = remaining[0];
+                tokens.push({
+                    type: 'text',
+                    value: char
+                });
+                remaining = remaining.slice(1);
+                matched = true;
+            }
+
+            if (!matched) {
+                // Fallback to prevent infinite loop
+                const char = remaining[0];
+                tokens.push({
+                    type: 'text',
+                    value: char
+                });
+                remaining = remaining.slice(1);
+            }
+        }
+
+        return tokens.map((token, index) => {
+            if (token.className) {
+                return (
+                    <span key={index} className={token.className}>
+                        {token.value}
+                    </span>
+                );
+            }
+            return token.value;
+        });
+    };
+
+    return <>{parseSQL(code)}</>;
+};
+
 const CopyButton: FC<{ text: string }> = ({text}) => {
     const [copied, setCopied] = useState(false);
 
@@ -516,7 +667,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
             </div>}
             {output}
             <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
-                <SheetContent className="w-[350px] max-w-full p-0">
+                <SheetContent className="min-w-[50vw] max-w-[50vw] p-0">
                     <div className="flex flex-col h-full">
                         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                             <div className="flex items-center gap-2">
@@ -538,8 +689,14 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                                 {status ? "Success" : "Error"}
                                             </Badge>
                                             <div className="flex flex-col min-h-[60px]">
-                                                <div className="whitespace-pre-wrap break-words text-sm pr-12">
-                                                    {item}
+                                                <div className="pr-12">
+                                                    <div className="rounded-md overflow-hidden bg-neutral-50 dark:bg-[#1f1f1f]">
+                                                        <pre className="text-xs p-3 overflow-x-auto">
+                                                            <code>
+                                                                <SQLHighlighter code={item} />
+                                                            </code>
+                                                        </pre>
+                                                    </div>
                                                 </div>
                                                 <div className="flex gap-sm mt-4 justify-between items-center">
                                                     <div className="text-xs text-muted-foreground">
@@ -585,8 +742,8 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                 <AlertDialogTrigger asChild>
                                     <Button
                                         variant="outline"
-                                        size="sm"
                                         data-testid="clear-history-button"
+                                        className="self-end"
                                     >
                                         <ArrowPathIcon className="w-4 h-4 mr-1" />
                                         Clear History

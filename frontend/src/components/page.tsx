@@ -14,19 +14,16 @@
  * limitations under the License.
  */
 
-import {ModeToggle, SidebarProvider} from "@clidey/ux";
+import { ModeToggle, SidebarProvider } from "@clidey/ux";
 import classNames from "classnames";
-import {AnimatePresence, motion} from "framer-motion";
-import {FC, ReactNode} from "react";
-import {twMerge} from "tailwind-merge";
-import {IInternalRoute} from "../config/routes";
-import {useAppSelector} from "../store/hooks";
-import {Breadcrumb} from "./breadcrumbs";
-import {Loading} from "./loading";
-import {Sidebar} from "./sidebar/sidebar";
-import {SchemaViewer} from "./schema-viewer";
-import {useLocation} from "react-router-dom";
-import {StorageUnit} from "../generated/graphql";
+import { AnimatePresence, motion } from "framer-motion";
+import { FC, ReactNode } from "react";
+import { twMerge } from "tailwind-merge";
+import { IInternalRoute } from "../config/routes";
+import { useAppSelector } from "../store/hooks";
+import { Breadcrumb } from "./breadcrumbs";
+import { Loading } from "./loading";
+import { Sidebar } from "./sidebar/sidebar";
 
 type IPageProps = {
     wrapperClassName?: string;
@@ -48,22 +45,21 @@ export const Page: FC<IPageProps> = (props) => {
 }
 
 type IInternalPageProps = IPageProps & {
+    sidebar?: ReactNode;
     children: ReactNode;
     routes?: IInternalRoute[];
 }
 
 export const InternalPage: FC<IInternalPageProps> = (props) => {
     const current = useAppSelector(state => state.auth.current);
-    const state = useLocation().state as { unit: StorageUnit } | undefined;
-
     return (
         <Container>
             <div className="flex flex-row grow">
-                <SidebarProvider defaultOpen={state?.unit == null}>
+                <SidebarProvider defaultOpen={props.sidebar != null}>
                     <Sidebar />
                 </SidebarProvider>
-                {state?.unit && <SidebarProvider>
-                    <SchemaViewer />
+                {props.sidebar && <SidebarProvider>
+                    {props.sidebar}
                 </SidebarProvider>}
             </div>
             <Page wrapperClassName="p-0" {...props}>
