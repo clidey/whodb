@@ -30,6 +30,8 @@ These are non-negotiable principles. Follow them at all times.
 11. **Separation between CE and EE versions**: All EE code and related functionality MUST be in the ee submodule. No
     excuses.
 12. **Avoid shell scripts or adhoc solutions**: Never use shell scripts or adhoc solutions UNLESS absolutely necessary.
+13. **Avoid simple comments**: Never add comments that are simple or basic - only edge cases, complicated actions, or
+    proccesses can have comments explaining them.
 
 ## Development Requirements
 
