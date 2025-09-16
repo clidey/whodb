@@ -158,6 +158,18 @@ export function getColumnIcons(columns: string[], columnTypes?: string[]) {
     });
 }
 
+// Render platform-specific shortcut labels: ⌘ on macOS, Ctrl on others
+const isMacPlatform = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+function renderShortcut(parts: ("Mod" | "Shift" | "Delete" | string)[]) {
+    const mapMac: Record<string, string> = { Mod: "⌘", Shift: "⇧", Delete: "⌫" };
+    const mapWin: Record<string, string> = { Mod: "Ctrl", Shift: "Shift", Delete: "Del" };
+    const map = isMacPlatform ? mapMac : mapWin;
+    if (isMacPlatform) {
+        return parts.map(p => map[p] || p).join("");
+    }
+    return parts.map(p => map[p] || p).join("+");
+}
+
 interface TableProps {
     columns: string[];
     columnTypes?: string[];
@@ -753,20 +765,20 @@ export const StorageUnitTable: FC<TableProps> = ({
                         <>
                             <CheckCircleIcon className="w-4 h-4 text-primary" />
                             Deselect Row
-                            <ContextMenuShortcut>⌘D</ContextMenuShortcut>
+                            <ContextMenuShortcut>{renderShortcut(["Mod", "D"])}</ContextMenuShortcut>
                         </>
                     ) : (
                         <>
                             <CheckCircleIcon className="w-4 h-4 text-primary" />
                             Select Row
-                            <ContextMenuShortcut>⌘S</ContextMenuShortcut>
+                            <ContextMenuShortcut>{renderShortcut(["Mod", "S"])}</ContextMenuShortcut>
                         </>
                     )}
                 </ContextMenuItem>
                 <ContextMenuItem onSelect={() => handleEdit(index)} disabled={checked.length > 0} data-testid="context-menu-edit-row">
                     <PencilSquareIcon className="w-4 h-4" />
                     Edit Row
-                    <ContextMenuShortcut>⌘E</ContextMenuShortcut>
+                    <ContextMenuShortcut>{renderShortcut(["Mod", "E"])}</ContextMenuShortcut>
                 </ContextMenuItem>
                 <ContextMenuSub>
                     <ContextMenuSubTrigger>
@@ -779,14 +791,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                         >
                             <DocumentIcon className="w-4 h-4" />
                             Export All as CSV
-                            <ContextMenuShortcut>⌘⇧C</ContextMenuShortcut>
+                            <ContextMenuShortcut>{renderShortcut(["Mod", "Shift", "C"])}</ContextMenuShortcut>
                         </ContextMenuItem>
                         <ContextMenuItem
                             onSelect={() => setShowExportConfirm(true)}
                         >
                             <DocumentIcon className="w-4 h-4" />
                             Export All as Excel
-                            <ContextMenuShortcut>⌘⇧X</ContextMenuShortcut>
+                            <ContextMenuShortcut>{renderShortcut(["Mod", "Shift", "X"])}</ContextMenuShortcut>
                         </ContextMenuItem>
                         <ContextMenuSeparator />
                         <ContextMenuItem
@@ -795,7 +807,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         >
                             <DocumentIcon className="w-4 h-4" />
                             Export Selected as CSV
-                            <ContextMenuShortcut>⌘C</ContextMenuShortcut>
+                            <ContextMenuShortcut>{renderShortcut(["Mod", "C"])}</ContextMenuShortcut>
                         </ContextMenuItem>
                         <ContextMenuItem
                             onSelect={() => setShowExportConfirm(true)}
@@ -803,7 +815,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         >
                             <DocumentIcon className="w-4 h-4" />
                             Export Selected as Excel
-                            <ContextMenuShortcut>⌘X</ContextMenuShortcut>
+                            <ContextMenuShortcut>{renderShortcut(["Mod", "X"])}</ContextMenuShortcut>
                         </ContextMenuItem>
                     </ContextMenuSubContent>
                 </ContextMenuSub>
@@ -812,7 +824,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 >
                     <DocumentDuplicateIcon className="w-4 h-4" />
                     Mock Data
-                    <ContextMenuShortcut>⌘M</ContextMenuShortcut>
+                    <ContextMenuShortcut>{renderShortcut(["Mod", "M"])}</ContextMenuShortcut>
                 </ContextMenuItem>
                 <ContextMenuSub>
                     <ContextMenuSubTrigger data-testid="context-menu-more-actions">
@@ -830,7 +842,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         >
                             <TrashIcon className="w-4 h-4 text-destructive" />
                             Delete Row
-                            <ContextMenuShortcut>⌘⌫</ContextMenuShortcut>
+                            <ContextMenuShortcut>{renderShortcut(["Mod", "Delete"])}</ContextMenuShortcut>
                         </ContextMenuItem>
                     </ContextMenuSubContent>
                 </ContextMenuSub>
@@ -838,7 +850,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 <ContextMenuItem disabled={true}>
                     <ShareIcon className="w-4 h-4" />
                     Open in Graph
-                    <ContextMenuShortcut>⌘G</ContextMenuShortcut>
+                    <ContextMenuShortcut>{renderShortcut(["Mod", "G"])}</ContextMenuShortcut>
                 </ContextMenuItem>
             </ContextMenuContent>
         </ContextMenu>
@@ -905,7 +917,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                 <ContextMenuItem onSelect={() => setShowMockDataSheet(true)}>
                                     <DocumentDuplicateIcon className="w-4 h-4" />
                                     Mock Data
-                                    <ContextMenuShortcut>⌘M</ContextMenuShortcut>
+                                    <ContextMenuShortcut>{renderShortcut(["Mod", "M"])}</ContextMenuShortcut>
                                 </ContextMenuItem>
                                 <ContextMenuSeparator />
                                 <ContextMenuSub>
@@ -947,7 +959,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                 <ContextMenuItem onSelect={() => onRefresh?.()}>
                                     <CircleStackIcon className="w-4 h-4" />
                                     Refresh Data
-                                    <ContextMenuShortcut>⌘R</ContextMenuShortcut>
+                                    <ContextMenuShortcut>{renderShortcut(["Mod", "R"])}</ContextMenuShortcut>
                                 </ContextMenuItem>
                                 <ContextMenuItem 
                                     onSelect={() => {
@@ -956,13 +968,13 @@ export const StorageUnitTable: FC<TableProps> = ({
                                 >
                                     <CheckCircleIcon className="w-4 h-4" />
                                     {checked.length === paginatedRows.length ? "Deselect All" : "Select All"}
-                                    <ContextMenuShortcut>⌘A</ContextMenuShortcut>
+                                    <ContextMenuShortcut>{renderShortcut(["Mod", "A"])}</ContextMenuShortcut>
                                 </ContextMenuItem>
                                 <ContextMenuSeparator />
                                 <ContextMenuItem disabled={true}>
                                     <CalculatorIcon className="w-4 h-4" />
                                     Column Statistics
-                                    <ContextMenuShortcut>⌘S</ContextMenuShortcut>
+                                    <ContextMenuShortcut>{renderShortcut(["Mod", "S"])}</ContextMenuShortcut>
                                 </ContextMenuItem>
                                 <ContextMenuItem disabled={true}>
                                     <DocumentTextIcon className="w-4 h-4" />
@@ -993,7 +1005,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                             <ContextMenuItem onSelect={() => setShowMockDataSheet(true)}>
                                 <CalculatorIcon className="w-4 h-4" />
                                 Mock Data
-                                <ContextMenuShortcut>⌘G</ContextMenuShortcut>
+                                <ContextMenuShortcut>{renderShortcut(["Mod", "G"])}</ContextMenuShortcut>
                             </ContextMenuItem>
                             <ContextMenuSub>
                                 <ContextMenuSubTrigger>

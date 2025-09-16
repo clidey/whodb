@@ -843,7 +843,7 @@ const EditableInput: FC<{ page: Page; setValue: (value: string) => void }> = ({ 
             onChange={handleChange}
             onBlur={handleBlur}
             autoFocus
-            className="w-full border-b border-gray-400 focus:outline-none focus:border-blue-500 transition-colors text-inherit"
+            className="w-auto max-w-[40ch] border-b border-gray-400 focus:outline-none focus:border-blue-500 transition-colors text-inherit"
           />
         ) : (
           <span className="text-sm text-nowrap">
@@ -868,6 +868,8 @@ export const RawExecutePage: FC = () => {
 
     const [activePage, setActivePage] = useState(pages[0].id);
     const [pageStates, setPageStates] = useState<{ [key: string]: ReactNode }>({});
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const [pageToDelete, setPageToDelete] = useState<string | null>(null);
 
     const aiState = useAI();
     const dispatch = useAppDispatch();
@@ -908,6 +910,11 @@ export const RawExecutePage: FC = () => {
         });
     }, [activePage]);
 
+    const promptDelete = useCallback((pageId: string) => {
+        setPageToDelete(pageId);
+        setConfirmOpen(true);
+    }, []);
+
     const handleUpdatePageName = useCallback((changedPage: Page, newName: string) => {
         setPages(prevPages => {
             const foundPageIndex = prevPages.findIndex(page => page.id === changedPage.id);
@@ -943,15 +950,31 @@ export const RawExecutePage: FC = () => {
                         <div className="flex justify-between items-center">
                             <Tabs defaultValue="buttons" className="w-full h-full" value={activePage}>
                                 <div className="flex gap-sm w-full justify-between">
-                                    <TabsList className="grid" style={{
-                                        gridTemplateColumns: `repeat(${pages.length+1}, minmax(0, 1fr))`
-                                    }} defaultValue={activePage} data-testid="page-tabs">
+                                    <TabsList className="flex flex-wrap gap-sm" defaultValue={activePage} data-testid="page-tabs">
                                         {
                                             pages.map((page, index) => (
                                                 <TabsTrigger value={page.id} key={page.id}
                                                              onClick={() => handleSelect(page.id)}
                                                              data-testid={`page-tab-${index}`}>
-                                                    <EditableInput page={page} setValue={(newName) => handleUpdatePageName(page, newName)} />
+                                                    <div className="flex items-center gap-2 group">
+                                                        <EditableInput page={page} setValue={(newName) => handleUpdatePageName(page, newName)} />
+                                                        <button
+                                                            type="button"
+                                                            title="Delete page"
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                e.stopPropagation();
+                                                                promptDelete(page.id);
+                                                            }}
+                                                            className={cn("opacity-0 group-hover:opacity-100 transition-opacity", {
+                                                                "hidden": pages.length <= 1,
+                                                            })}
+                                                            aria-label="Delete page"
+                                                            data-testid={`delete-page-tab-${index}`}
+                                                        >
+                                                            <XMarkIcon className="w-3 h-3" />
+                                                        </button>
+                                                    </div>
                                                 </TabsTrigger>
                                             ))
                                         }
@@ -959,40 +982,6 @@ export const RawExecutePage: FC = () => {
                                             <PlusCircleIcon className="w-4 h-4" />
                                         </TabsTrigger>
                                     </TabsList>
-                                    <AlertDialog>
-                                      <AlertDialogTrigger asChild>
-                                        <Button
-                                          className={classNames({
-                                            "hidden": pages.length <= 1,
-                                          })}
-                                          variant="secondary"
-                                          data-testid="delete-page-button"
-                                        >
-                                          <XMarkIcon className="w-4 h-4" /> Delete page
-                                        </Button>
-                                      </AlertDialogTrigger>
-                                      <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                          <AlertDialogDescription>
-                                            This action cannot be undone. This will permanently delete this page and remove its data.
-                                          </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel
-                                                data-testid="delete-page-button-cancel">Cancel</AlertDialogCancel>
-                                          <AlertDialogAction asChild>
-                                            <Button
-                                              variant="destructive"
-                                              onClick={() => handleDelete(activePage)}
-                                              data-testid="delete-page-button-confirm"
-                                            >
-                                              Continue
-                                            </Button>
-                                          </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                      </AlertDialogContent>
-                                    </AlertDialog>
                                 </div>
                                 <TabsContent value={activePage} className="h-full w-full mt-4">
                                     <AnimatePresence mode="wait">
@@ -1017,6 +1006,36 @@ export const RawExecutePage: FC = () => {
                     </div>
                 </div>
             </div>
+            <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    {`Delete ${pages.find(p => p.id === pageToDelete)?.name ?? 'page'}?`}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {`This action cannot be undone. This will permanently delete "${pages.find(p => p.id === pageToDelete)?.name ?? 'this page'}" and remove its data.`}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel data-testid="delete-page-button-cancel">Cancel</AlertDialogCancel>
+                  <AlertDialogAction asChild>
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        if (pageToDelete) {
+                          handleDelete(pageToDelete);
+                        }
+                        setConfirmOpen(false);
+                        setPageToDelete(null);
+                      }}
+                      data-testid="delete-page-button-confirm"
+                    >
+                      Continue
+                    </Button>
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
         </InternalPage>
     );
 };

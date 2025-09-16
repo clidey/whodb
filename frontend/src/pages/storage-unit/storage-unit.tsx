@@ -93,7 +93,7 @@ const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = (
                 </Button>
             </div>
         </div>
-        <div className="flex flex-col grow gap-lg justify-between h-full">
+        <div className="flex flex-col grow gap-lg justify-between h-full overflow-y-auto">
             <div className="w-full" data-testid="explore-fields">
                 <div className="flex flex-col gap-xs2">
                     <h1 className="text-2xl font-bold mb-4 break-all">{unit.Name}</h1>

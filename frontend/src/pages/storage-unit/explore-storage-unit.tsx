@@ -156,7 +156,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     const handlePageChange = useCallback((page: number) => {
         setCurrentPage(page);
         handleSubmitRequest(page - 1);
-    }, []);
+    }, [handleSubmitRequest]);
 
     const handleColumnSort = useCallback((columnName: string) => {
         setSortConditions(prev => {
@@ -461,12 +461,12 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="1" data-value="1">1</SelectItem>
-                                    {/* {import.meta.env.VITE_E2E_TEST === "true" &&
-                                        } */}
-                                    {/* {import.meta.env.VITE_E2E_TEST === "true" && */}
+                                    {import.meta.env.VITE_E2E_TEST === "true" &&
+                                        <SelectItem value="1" data-value="1">1</SelectItem>
+                                    }
+                                    {import.meta.env.VITE_E2E_TEST === "true" &&
                                         <SelectItem value="2" data-value="2">2</SelectItem>
-                                        {/* } */}
+                                    }
                                     <SelectItem value="10" data-value="10">10</SelectItem>
                                     <SelectItem value="25" data-value="25">25</SelectItem>
                                     <SelectItem value="50" data-value="50">50</SelectItem>
@@ -485,6 +485,12 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                             <CheckCircleIcon className="w-4 h-4" /> Query
                         </Button>
                     </div>
+                    <Button onClick={handleOpenScratchpad} data-testid="scratchpad-button" variant="secondary"
+                        className={cn({
+                            "hidden": !databaseSupportsScratchpad(current?.Type),
+                        })}>
+                        <CommandLineIcon className="w-4 h-4" /> Scratchpad
+                    </Button>
                 </div>
                 <Sheet open={showAdd} onOpenChange={setShowAdd}>
                     <SheetContent side="right" className="flex flex-col p-8">
@@ -546,12 +552,6 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                         showPagination={true}
                     >
                         <div className="flex gap-2">
-                            <Button onClick={handleOpenScratchpad} data-testid="scratchpad-button" variant="secondary"
-                                    className={cn({
-                                        "hidden": !databaseSupportsScratchpad(current?.Type),
-                                    })}>
-                                <CommandLineIcon className="w-4 h-4" /> Scratchpad
-                            </Button>
                             <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-row-button">
                                 <PlusCircleIcon className="w-4 h-4" /> Add Row
                             </Button>
