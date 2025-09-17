@@ -495,13 +495,15 @@ Cypress.Commands.add('addScratchpadPage', () => {
 
 Cypress.Commands.add('getScratchpadPages', () => {
     return cy.get('[data-testid="page-tabs"] [data-testid*="page-tab"]').then(($els) => {
-        return $els.toArray().map(el => el.innerText.trim());
+        return $els.toArray().map(el => el.innerText.trim()).filter(el => el.length > 0);
     });
 });
 
 Cypress.Commands.add('deleteScratchpadPage', (index, cancel = true) => {
-    cy.get(`[data-testid="page-tab-${index}"]`).click();
-    cy.get('[data-testid="delete-page-button"]').click();
+    // Click the delete button on the specific page tab
+    cy.get(`[data-testid="delete-page-tab-${index}"]`).click();
+    
+    // Handle the confirmation dialog
     if (cancel) {
         cy.get('[data-testid="delete-page-button-cancel"]').click();
     } else {
