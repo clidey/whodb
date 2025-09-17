@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Badge, Button, Checkbox, cn, Input, Label, SearchInput, SearchSelect, Separator, StackList, StackListItem, Table, TableCell, TableBody, TableHead, Tabs, TabsContent, TabsList, TabsTrigger, toast, TableRow, VirtualizedTableBody, TableHeader } from '@clidey/ux';
+import { Badge, Button, Checkbox, cn, Input, Label, SearchInput, SearchSelect, Separator, StackList, StackListItem, Table, TableCell, TableHead, Tabs, TabsContent, TabsList, TabsTrigger, toast, TableRow, VirtualizedTableBody, TableHeader, TableHeadRow } from '@clidey/ux';
 import { DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useGetStorageUnitsQuery } from '@graphql';
 import { ArrowPathRoundedSquareIcon, CheckCircleIcon, CircleStackIcon, CommandLineIcon, ListBulletIcon, MagnifyingGlassIcon, PlusCircleIcon, TableCellsIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import classNames from "classnames";
@@ -399,14 +399,14 @@ export const StorageUnitPage: FC = () => {
         })}>
             <Table>
                 <TableHeader>
-                    <TableRow>
+                    <TableHeadRow>
                         <TableHead>Name</TableHead>
                         {/** Dynamically render shared attribute keys as columns */}
                         {sharedAttributeKeys.map(key => (
                             <TableHead key={key}>{key}</TableHead>
                         ))}
                         <TableHead className="w-32">Actions</TableHead>
-                    </TableRow>
+                    </TableHeadRow>
                 </TableHeader>
                 <VirtualizedTableBody
                     rowCount={filterStorageUnits.length}
