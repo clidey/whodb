@@ -22,7 +22,7 @@
     "@types/react-dom": "^18.3.7",
     "classnames": "^2.5.1",
     "codemirror": "^6.0.2",
-    "framer-motion": "^12.23.6",
+    "framer-motion": "^12.23.13",
     "graphql": "^16.11.0",
     "html-to-image": "^1.11.13",
     "lodash": "^4.17.21",
