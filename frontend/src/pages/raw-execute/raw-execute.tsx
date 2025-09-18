@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,21 +14,78 @@
  * limitations under the License.
  */
 
-import { Alert, AlertDescription, AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertTitle, Badge, Button, Card, cn, ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, EmptyState, formatDate, Select, SelectContent, SelectItem, SelectTrigger, Separator, Sheet, SheetContent, Tabs, TabsContent, TabsList, TabsTrigger } from "@clidey/ux";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+    Badge,
+    Button,
+    Card,
+    cn,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+    EmptyState,
+    formatDate,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    Separator,
+    Sheet,
+    SheetContent,
+    SheetFooter,
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger,
+    toast
+} from "@clidey/ux";
 import { DatabaseType, RowsResult } from '@graphql';
-import { ArrowPathIcon, BellAlertIcon, CheckCircleIcon, CircleStackIcon, ClipboardDocumentIcon, ClockIcon, EllipsisVerticalIcon, PencilIcon, PlayIcon, PlusCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import {
+    ArrowPathIcon,
+    CheckCircleIcon,
+    CircleStackIcon,
+    ClipboardDocumentIcon,
+    ClockIcon,
+    EllipsisHorizontalIcon,
+    EllipsisVerticalIcon,
+    PencilIcon,
+    PlayIcon,
+    PlusCircleIcon,
+    XMarkIcon
+} from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import { indexOf } from "lodash";
-import { ChangeEvent, cloneElement, FC, ReactElement, ReactNode, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+    ChangeEvent,
+    cloneElement,
+    FC,
+    ReactElement,
+    ReactNode,
+    Suspense,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState
+} from "react";
 import { v4 } from "uuid";
 import { AIProvider, useAI } from "../../components/ai";
 import { CodeEditor } from "../../components/editor";
+import { ErrorState } from "../../components/error-state";
 import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { Tip } from "../../components/tip";
 import { InternalRoutes } from "../../config/routes";
-import { LocalLoginProfile } from "../../store/auth";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { isEEFeatureEnabled, loadEEModule } from "../../utils/ee-loader";
 import { IPluginProps, QueryView } from "./query-view";
@@ -54,17 +111,158 @@ export const ActionOptionIcons: Record<string, ReactElement> = {
     [ActionOptions.Query]: <CircleStackIcon className="w-4 h-4" />,
 }
 
-function getModeCommand(mode: string, current?: LocalLoginProfile, eeActionOptions?: Record<string, string>) {
-    if (current == null || !eeActionOptions || mode !== eeActionOptions.Analyze) {
-         return "";
-    }
-    if (current.Type === DatabaseType.Postgres) {
-        return "EXPLAIN (ANALYZE, FORMAT JSON)"
-    }
-    return "";
-}
+// Lightweight, dependency-free SQL highlighter
 
-const CopyButton: FC<{ text: string }> = ({ text }) => {
+// Safe SQL syntax highlighter component that renders React elements
+const SQLHighlighter: FC<{ code: string }> = ({ code }) => {
+    const keywords = [
+        'SELECT','FROM','WHERE','AND','OR','NOT','INSERT','INTO','VALUES','UPDATE','SET','DELETE','CREATE','TABLE','PRIMARY','KEY','FOREIGN','REFERENCES','DROP','ALTER','ADD','COLUMN','JOIN','LEFT','RIGHT','FULL','OUTER','INNER','ON','GROUP','BY','ORDER','HAVING','LIMIT','OFFSET','DISTINCT','AS','IN','IS','NULL','LIKE','BETWEEN','UNION','ALL','EXISTS','CASE','WHEN','THEN','ELSE','END','WITH','EXPLAIN','DESCRIBE','SHOW'
+    ];
+
+    const parseSQL = (sql: string): React.ReactNode[] => {
+        const tokens: Array<{ type: string; value: string; className?: string }> = [];
+        let remaining = sql;
+        let position = 0;
+
+        while (remaining.length > 0) {
+            let matched = false;
+
+            // Block comments
+            const blockCommentMatch = remaining.match(/^\/\*[\s\S]*?\*\//);
+            if (blockCommentMatch) {
+                tokens.push({
+                    type: 'comment',
+                    value: blockCommentMatch[0],
+                    className: 'text-muted-foreground'
+                });
+                remaining = remaining.slice(blockCommentMatch[0].length);
+                matched = true;
+            }
+            // Line comments
+            else if (remaining.match(/^--/)) {
+                const lineEnd = remaining.indexOf('\n');
+                const comment = lineEnd === -1 ? remaining : remaining.slice(0, lineEnd);
+                tokens.push({
+                    type: 'comment',
+                    value: comment,
+                    className: 'text-muted-foreground'
+                });
+                remaining = remaining.slice(comment.length);
+                matched = true;
+            }
+            // Single quoted strings
+            else if (remaining.startsWith("'")) {
+                let stringValue = "'";
+                let i = 1;
+                while (i < remaining.length) {
+                    if (remaining[i] === "'" && remaining[i-1] !== '\\') {
+                        stringValue += "'";
+                        break;
+                    }
+                    stringValue += remaining[i];
+                    i++;
+                }
+                tokens.push({
+                    type: 'string',
+                    value: stringValue,
+                    className: 'text-amber-600 dark:text-amber-400'
+                });
+                remaining = remaining.slice(stringValue.length);
+                matched = true;
+            }
+            // Double quoted strings
+            else if (remaining.startsWith('"')) {
+                let stringValue = '"';
+                let i = 1;
+                while (i < remaining.length) {
+                    if (remaining[i] === '"' && remaining[i-1] !== '\\') {
+                        stringValue += '"';
+                        break;
+                    }
+                    stringValue += remaining[i];
+                    i++;
+                }
+                tokens.push({
+                    type: 'string',
+                    value: stringValue,
+                    className: 'text-amber-600 dark:text-amber-400'
+                });
+                remaining = remaining.slice(stringValue.length);
+                matched = true;
+            }
+            // Numbers
+            else if (remaining.match(/^\d+(?:\.\d+)?/)) {
+                const numberMatch = remaining.match(/^\d+(?:\.\d+)?/);
+                if (numberMatch) {
+                    tokens.push({
+                        type: 'number',
+                        value: numberMatch[0],
+                        className: 'text-blue-600 dark:text-blue-400'
+                    });
+                    remaining = remaining.slice(numberMatch[0].length);
+                    matched = true;
+                }
+            }
+            // Keywords and identifiers
+            else if (remaining.match(/^[a-zA-Z_][a-zA-Z0-9_]*/)) {
+                const wordMatch = remaining.match(/^[a-zA-Z_][a-zA-Z0-9_]*/);
+                if (wordMatch) {
+                    const word = wordMatch[0];
+                    const upperWord = word.toUpperCase();
+                    if (keywords.includes(upperWord)) {
+                        tokens.push({
+                            type: 'keyword',
+                            value: word,
+                            className: 'text-purple-700 dark:text-purple-400 font-medium'
+                        });
+                    } else {
+                        tokens.push({
+                            type: 'identifier',
+                            value: word
+                        });
+                    }
+                    remaining = remaining.slice(word.length);
+                    matched = true;
+                }
+            }
+            // Whitespace and other characters
+            else {
+                const char = remaining[0];
+                tokens.push({
+                    type: 'text',
+                    value: char
+                });
+                remaining = remaining.slice(1);
+                matched = true;
+            }
+
+            if (!matched) {
+                // Fallback to prevent infinite loop
+                const char = remaining[0];
+                tokens.push({
+                    type: 'text',
+                    value: char
+                });
+                remaining = remaining.slice(1);
+            }
+        }
+
+        return tokens.map((token, index) => {
+            if (token.className) {
+                return (
+                    <span key={index} className={token.className}>
+                        {token.value}
+                    </span>
+                );
+            }
+            return token.value;
+        });
+    };
+
+    return <>{parseSQL(code)}</>;
+};
+
+const CopyButton: FC<{ text: string }> = ({text}) => {
     const [copied, setCopied] = useState(false);
 
     const handleCopyToClipboard = useCallback(() => {
@@ -84,7 +282,7 @@ const CopyButton: FC<{ text: string }> = ({ text }) => {
             type="button"
             data-testid="copy-to-clipboard-button"
         >
-            {copied ? <CheckCircleIcon className="w-4 h-4" /> : <ClipboardDocumentIcon className="w-4 h-4" />}
+            {copied ? <CheckCircleIcon className="w-4 h-4"/> : <ClipboardDocumentIcon className="w-4 h-4"/>}
         </Button>
     );
 }
@@ -100,7 +298,13 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     const [error, setError] = useState<Error | null>(null);
     const [loading, setLoading] = useState(false);
     const [rows, setRows] = useState<RowsResult | null>(null);
-    const { modelType } = useAI();
+    const { modelType } = useAI();    
+    const [editorHeight, setEditorHeight] = useState(150);
+    const [resultsHeight, setResultsHeight] = useState(250);
+    const [isResizing, setIsResizing] = useState(false);
+    const [isResizingResults, setIsResizingResults] = useState(false);
+    const [allowResultsResize, setAllowResultsResize] = useState(false);
+    const resultsContainerRef = useRef<HTMLDivElement | null>(null);
 
     // State for all plugins, action options, and action option icons (not just EE)
     const [allPlugins, setAllPlugins] = useState<{ type: string, component: FC<IPluginProps> }[]>([
@@ -153,7 +357,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
             return;
         }
         const currentCode = historyCode ?? code;
-        const historyItem = { id: v4(), item: currentCode, status: false, date: new Date() };
+        const historyItem = {id: v4(), item: currentCode, status: false, date: new Date()};
         setSubmittedCode(currentCode);
         setError(null);
         setLoading(true);
@@ -164,7 +368,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
             setError(err);
         }).finally(() => {
             setLoading(false);
-            setHistory(h => [historyItem , ...h]);
+            setHistory(h => [historyItem, ...h]);
         });
     }, [code, current, mode, allActionOptions, handleExecute]);
 
@@ -176,6 +380,52 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
         onDelete?.(cellId);
     }, [cellId, onDelete]);
 
+    const handleEditorResize = useCallback((e: React.MouseEvent) => {
+        e.preventDefault();
+        setIsResizing(true);
+        
+        const startY = e.clientY;
+        const startHeight = editorHeight;
+        
+        const handleMouseMove = (e: MouseEvent) => {
+            const deltaY = e.clientY - startY;
+            const newHeight = Math.max(100, Math.min(500, startHeight + deltaY));
+            setEditorHeight(newHeight);
+        };
+        
+        const handleMouseUp = () => {
+            setIsResizing(false);
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+        
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+    }, [editorHeight]);
+
+    const handleResultsResize = useCallback((e: React.MouseEvent) => {
+        e.preventDefault();
+        setIsResizingResults(true);
+        
+        const startY = e.clientY;
+        const startHeight = resultsHeight;
+        
+        const handleMouseMove = (e: MouseEvent) => {
+            const deltaY = e.clientY - startY;
+            const newHeight = Math.max(100, Math.min(800, startHeight + deltaY));
+            setResultsHeight(newHeight);
+        };
+        
+        const handleMouseUp = () => {
+            setIsResizingResults(false);
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+        
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+    }, [resultsHeight]);
+
     // Use all plugins
     const output = useMemo(() => {
         const selectedPlugin = allPlugins.find((p: any) => p.type === mode);
@@ -183,12 +433,78 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
             return null;
         }
         const Component = selectedPlugin.component as FC<IPluginProps>;
-        return <div className="flex mt-4 w-full">
-            <Suspense fallback={<Loading />}>
-                <Component code={code} handleExecuteRef={handleExecute} modelType={modelType?.modelType || ''} schema={current.Database} token={modelType?.token} providerId={current.Id} />
-            </Suspense>
-        </div>
-    }, [mode, allActionOptions, allPlugins, code, modelType, current]);
+        return (
+            <div className="flex flex-col mt-4 w-full group relative">
+                <div
+                    className={cn("h-2 cursor-row-resize transition-all duration-200 group-hover:border-b border-muted", {
+                        "hidden": rows == null || !allowResultsResize,
+                    })}
+                    onMouseDown={handleResultsResize}
+                >
+                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+                        <EllipsisHorizontalIcon className="w-4 h-4 text-gray-400" />
+                    </div>
+                </div>
+                <div 
+                    ref={resultsContainerRef}
+                    className={cn({
+                        "overflow-auto": allowResultsResize,
+                        "overflow-visible": !allowResultsResize,
+                    })}
+                    style={{
+                        minHeight: "fit-content",
+                        height: allowResultsResize ? `${resultsHeight}px` : "auto",
+                    }}
+                >
+                    <Suspense fallback={<Loading />}>
+                        <Component code={code} handleExecuteRef={handleExecute} modelType={modelType?.modelType || ''}
+                                   schema={current.Database} token={modelType?.token} providerId={current.Id}/>
+                    </Suspense>
+                </div>
+            </div>
+        );
+    }, [mode, allActionOptions, allPlugins, code, modelType, current, resultsHeight, isResizingResults, handleResultsResize, rows, allowResultsResize]);
+
+    // Measure results on first mount to fit content
+    useEffect(() => {
+        if (allowResultsResize) {
+            return;
+        }
+        const raf = requestAnimationFrame(() => {
+            const el = resultsContainerRef.current;
+            if (el == null) {
+                return;
+            }
+            const measured = el.scrollHeight;
+            if (measured > 0) {
+                setResultsHeight(Math.min(800, Math.max(100, measured)));
+                setAllowResultsResize(true);
+            }
+        });
+        return () => cancelAnimationFrame(raf);
+    }, [allowResultsResize]);
+
+    // Re-measure whenever results change (e.g., query re-run) to fit new content
+    useEffect(() => {
+        if (rows == null) {
+            return;
+        }
+        // Temporarily allow content to define height, then measure and lock
+        setAllowResultsResize(false);
+        const raf = requestAnimationFrame(() => {
+            const el = resultsContainerRef.current;
+            if (el == null) {
+                setAllowResultsResize(true);
+                return;
+            }
+            const measured = el.scrollHeight;
+            if (measured > 0) {
+                setResultsHeight(Math.min(800, Math.max(100, measured)));
+            }
+            setAllowResultsResize(true);
+        });
+        return () => cancelAnimationFrame(raf);
+    }, [rows, mode]);
 
     const isAnalyzeAvailable = useMemo(() => {
         if (!isEEFeatureEnabled('analyzeView')) {
@@ -216,26 +532,46 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     return (
         <div className="flex flex-col grow group/cell relative">
             <div className="relative">
-                <div className="flex grow h-[150px] border border-gray-200 rounded-md overflow-hidden dark:bg-white/10 dark:border-white/5">
+                <div 
+                    className="flex grow border border-gray-200 rounded-md overflow-hidden dark:bg-white/10 dark:border-white/5"
+                    style={{ height: `${editorHeight}px` }}
+                >
                     <CodeEditor language="sql" value={code} setValue={setCode} onRun={(c) => handleRawExecute(c)} />
                 </div>
-                <div className="absolute top-2 right-2 z-10" data-testid="scratchpad-cell-options">
+                <div 
+                    className="h-2 cursor-row-resize transition-all duration-200 relative group"
+                    onMouseDown={handleEditorResize}
+                    style={{ cursor: isResizing ? 'row-resize' : 'row-resize' }}
+                >
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+                        <EllipsisHorizontalIcon className="w-8 text-gray-400" />
+                    </div>
+                </div>
+                <div className="absolute top-1 right-1 z-10" data-testid="scratchpad-cell-options">
                     <DropdownMenu>
                         <DropdownMenuTrigger>
                             <Button
                                 variant="ghost"
                                 className="flex justify-center items-center"
                                 data-testid="icon-button">
-                                <EllipsisVerticalIcon className="w-4 h-4" />
+                                <EllipsisVerticalIcon className="w-4 h-4"/>
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => setCode("")}>
-                                <ArrowPathIcon className="w-4 h-4" />
+                                <ArrowPathIcon className="w-4 h-4"/>
                                 Clear
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                                navigator.clipboard.writeText(code).then(() => {
+                                    toast.success("Code copied to clipboard");
+                                });
+                            }}>
+                                <ClipboardDocumentIcon className="w-4 h-4"/>
+                                Copy Code
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setHistoryOpen(true)}>
-                                <ClockIcon className="w-4 h-4" />
+                                <ClockIcon className="w-4 h-4"/>
                                 Query History
                             </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -244,7 +580,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                 <div className={classNames("absolute -bottom-3 z-20 flex justify-between px-3 pr-8 w-full opacity-0 transition-all duration-500 group-hover/cell:opacity-100 pointer-events-none", {
                     "opacity-100": showTools,
                 })}>
-                    <div className="flex gap-2 pointer-events-auto">
+                    <div className="flex gap-sm pointer-events-auto">
                         {actionOptions.length > 1 && <Select
                             value={mode}
                             onValueChange={(val) => setMode(val as string)}
@@ -252,7 +588,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                             <SelectTrigger style={{
                                 background: "var(--secondary)",
                             }}>
-                                <div className="flex items-center gap-2 w-full">
+                                <div className="flex items-center gap-sm w-full">
                                     {mergedActionOptionIcons[mode] && cloneElement(mergedActionOptionIcons[mode], { className: "w-4 h-4" })}
                                     <span>{mode}</span>
                                 </div>
@@ -275,13 +611,15 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                             </SelectContent>
                         </Select>}
                         <Tip>
-                            <Button onClick={handleAdd} data-testid="add-cell-button" variant="secondary" className="border border-input">
+                            <Button onClick={handleAdd} data-testid="add-cell-button" variant="secondary"
+                                    className="border border-input">
                                 <PlusCircleIcon className="w-4 h-4" />
                             </Button>
                                 <p>Add a new cell</p>
                         </Tip>
                         <Tip>
-                            <Button onClick={() => setCode("")} data-testid="clear-cell-button" variant="secondary" className="border border-input">
+                            <Button onClick={() => setCode("")} data-testid="clear-cell-button" variant="secondary"
+                                    className="border border-input">
                                 <ArrowPathIcon className="w-4 h-4" />
                             </Button>
                             <p>Clear the editor</p>
@@ -289,14 +627,15 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                         {
                             onDelete != null &&
                             <Tip>
-                                <Button variant="destructive" onClick={handleDelete} data-testid="delete-cell-button" className="border border-input bg-white hover:bg-white/95">
-                                    <XMarkIcon className="w-4 h-4 text-destructive" />
+                                <Button variant="destructive" onClick={handleDelete} data-testid="delete-cell-button"
+                                        className="border border-input bg-white hover:bg-white/95">
+                                    <XMarkIcon className="w-4 h-4 text-destructive"/>
                                 </Button>
                                 <p>Delete the cell</p>
                             </Tip>
                         }
                     </div>
-                    <div className="flex gap-2 items-center">
+                    <div className="flex gap-sm items-center">
                         <Button
                             onClick={() => setHistoryOpen(true)}
                             data-testid="history-button"
@@ -308,7 +647,8 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                         >
                             <ClockIcon className="w-4 h-4" />
                         </Button>
-                        <Button onClick={() => handleRawExecute()} data-testid="query-cell-button" className={cn("pointer-events-auto", {
+                        <Button onClick={() => handleRawExecute()} data-testid="query-cell-button"
+                                className={cn("pointer-events-auto", {
                             "hidden": code.length === 0,
                         })} disabled={code.length === 0}>
                             {<CheckCircleIcon className="w-4 h-4" />}
@@ -319,19 +659,15 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
             {
                 error != null &&
                 <div className="flex items-center justify-between mt-8" data-testid="cell-error">
-                    <Alert variant="destructive" title="Error" description={error?.message ?? ""}>
-                        <BellAlertIcon className="w-4 h-4" />
-                        <AlertTitle>Error</AlertTitle>
-                        <AlertDescription>{error?.message ?? ""}</AlertDescription>
-                    </Alert>
+                    <ErrorState error={error} />
                 </div>
             }
-            { loading && <div className="flex justify-center items-center h-full my-16">
-                <Loading />
+            {loading && <div className="flex justify-center items-center h-full my-16">
+                <Loading/>
             </div>}
             {output}
             <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
-                <SheetContent className="w-[350px] max-w-full p-0">
+                <SheetContent className="min-w-[50vw] max-w-[50vw] p-0">
                     <div className="flex flex-col h-full">
                         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                             <div className="flex items-center gap-2">
@@ -343,7 +679,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                             {history.length === 0 ? (
                                 <EmptyState title="No history yet" description="Run a query to see your history" icon={<ClockIcon className="w-10 h-10" />} />
                             ) : (
-                                <div className="flex flex-col gap-4 p-4">
+                                <div className="flex flex-col gap-lg p-4">
                                     {history.map(({ id, item, status, date }) => (
                                         <Card className="w-full p-4 relative" key={id}>
                                             <Badge
@@ -353,14 +689,20 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                                 {status ? "Success" : "Error"}
                                             </Badge>
                                             <div className="flex flex-col min-h-[60px]">
-                                                <div className="whitespace-pre-wrap break-words text-sm pr-12">
-                                                    {item}
+                                                <div className="pr-12">
+                                                    <div className="rounded-md overflow-hidden bg-neutral-50 dark:bg-[#1f1f1f]">
+                                                        <pre className="text-xs p-3 overflow-x-auto">
+                                                            <code>
+                                                                <SQLHighlighter code={item} />
+                                                            </code>
+                                                        </pre>
+                                                    </div>
                                                 </div>
-                                                <div className="flex gap-2 mt-4 justify-between items-center">
+                                                <div className="flex gap-sm mt-4 justify-between items-center">
                                                     <div className="text-xs text-muted-foreground">
                                                         {formatDate(date)}
                                                     </div>
-                                                    <div className="flex gap-2 items-center">
+                                                    <div className="flex gap-sm items-center">
                                                         <CopyButton text={item} />
                                                         <Button
                                                             size="icon"
@@ -394,6 +736,42 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                             )}
                         </div>
                     </div>
+                    <SheetFooter>
+                        {history.length > 0 && (
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        data-testid="clear-history-button"
+                                        className="self-end"
+                                    >
+                                        <ArrowPathIcon className="w-4 h-4 mr-1" />
+                                        Clear History
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Clear Query History</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            Are you sure you want to clear all query history? This action cannot be undone.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel data-testid="clear-history-cancel">Cancel</AlertDialogCancel>
+                                        <AlertDialogAction asChild>
+                                            <Button
+                                                variant="destructive"
+                                                onClick={() => setHistory([])}
+                                                data-testid="clear-history-confirm"
+                                            >
+                                                Clear History
+                                            </Button>
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        )}
+                    </SheetFooter>
                 </SheetContent>
             </Sheet>
         </div>
@@ -465,7 +843,7 @@ const EditableInput: FC<{ page: Page; setValue: (value: string) => void }> = ({ 
             onChange={handleChange}
             onBlur={handleBlur}
             autoFocus
-            className="w-full border-b border-gray-400 focus:outline-none focus:border-blue-500 transition-colors text-inherit"
+            className="w-auto max-w-[40ch] border-b border-gray-400 focus:outline-none focus:border-blue-500 transition-colors text-inherit"
           />
         ) : (
           <span className="text-sm text-nowrap">
@@ -490,6 +868,8 @@ export const RawExecutePage: FC = () => {
 
     const [activePage, setActivePage] = useState(pages[0].id);
     const [pageStates, setPageStates] = useState<{ [key: string]: ReactNode }>({});
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const [pageToDelete, setPageToDelete] = useState<string | null>(null);
 
     const aiState = useAI();
     const dispatch = useAppDispatch();
@@ -530,6 +910,11 @@ export const RawExecutePage: FC = () => {
         });
     }, [activePage]);
 
+    const promptDelete = useCallback((pageId: string) => {
+        setPageToDelete(pageId);
+        setConfirmOpen(true);
+    }, []);
+
     const handleUpdatePageName = useCallback((changedPage: Page, newName: string) => {
         setPages(prevPages => {
             const foundPageIndex = prevPages.findIndex(page => page.id === changedPage.id);
@@ -564,14 +949,32 @@ export const RawExecutePage: FC = () => {
                     <div className="w-full flex flex-col gap-4">
                         <div className="flex justify-between items-center">
                             <Tabs defaultValue="buttons" className="w-full h-full" value={activePage}>
-                                <div className="flex gap-2 w-full justify-between">
-                                    <TabsList className="grid" style={{
-                                        gridTemplateColumns: `repeat(${pages.length+1}, minmax(0, 1fr))`
-                                    }} defaultValue={activePage} data-testid="page-tabs">
+                                <div className="flex gap-sm w-full justify-between">
+                                    <TabsList className="flex flex-wrap gap-sm" defaultValue={activePage} data-testid="page-tabs">
                                         {
                                             pages.map((page, index) => (
-                                                <TabsTrigger value={page.id} key={page.id} onClick={() => handleSelect(page.id)} data-testid={`page-tab-${index}`}>
-                                                    <EditableInput page={page} setValue={(newName) => handleUpdatePageName(page, newName)} />
+                                                <TabsTrigger value={page.id} key={page.id}
+                                                             onClick={() => handleSelect(page.id)}
+                                                             data-testid={`page-tab-${index}`}>
+                                                    <div className="flex items-center gap-2 group">
+                                                        <EditableInput page={page} setValue={(newName) => handleUpdatePageName(page, newName)} />
+                                                        <button
+                                                            type="button"
+                                                            title="Delete page"
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                e.stopPropagation();
+                                                                promptDelete(page.id);
+                                                            }}
+                                                            className={cn("opacity-0 group-hover:opacity-100 transition-opacity", {
+                                                                "hidden": pages.length <= 1,
+                                                            })}
+                                                            aria-label="Delete page"
+                                                            data-testid={`delete-page-tab-${index}`}
+                                                        >
+                                                            <XMarkIcon className="w-3 h-3" />
+                                                        </button>
+                                                    </div>
                                                 </TabsTrigger>
                                             ))
                                         }
@@ -579,39 +982,6 @@ export const RawExecutePage: FC = () => {
                                             <PlusCircleIcon className="w-4 h-4" />
                                         </TabsTrigger>
                                     </TabsList>
-                                    <AlertDialog>
-                                      <AlertDialogTrigger asChild>
-                                        <Button
-                                          className={classNames({
-                                            "hidden": pages.length <= 1,
-                                          })}
-                                          variant="secondary"
-                                          data-testid="delete-page-button"
-                                        >
-                                          <XMarkIcon className="w-4 h-4" /> Delete page
-                                        </Button>
-                                      </AlertDialogTrigger>
-                                      <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                          <AlertDialogDescription>
-                                            This action cannot be undone. This will permanently delete this page and remove its data.
-                                          </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                          <AlertDialogCancel data-testid="delete-page-button-cancel">Cancel</AlertDialogCancel>
-                                          <AlertDialogAction asChild>
-                                            <Button
-                                              variant="destructive"
-                                              onClick={() => handleDelete(activePage)}
-                                              data-testid="delete-page-button-confirm"
-                                            >
-                                              Continue
-                                            </Button>
-                                          </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                      </AlertDialogContent>
-                                    </AlertDialog>
                                 </div>
                                 <TabsContent value={activePage} className="h-full w-full mt-4">
                                     <AnimatePresence mode="wait">
@@ -636,6 +1006,36 @@ export const RawExecutePage: FC = () => {
                     </div>
                 </div>
             </div>
+            <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    {`Delete ${pages.find(p => p.id === pageToDelete)?.name ?? 'page'}?`}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {`This action cannot be undone. This will permanently delete "${pages.find(p => p.id === pageToDelete)?.name ?? 'this page'}" and remove its data.`}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel data-testid="delete-page-button-cancel">Cancel</AlertDialogCancel>
+                  <AlertDialogAction asChild>
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        if (pageToDelete) {
+                          handleDelete(pageToDelete);
+                        }
+                        setConfirmOpen(false);
+                        setPageToDelete(null);
+                      }}
+                      data-testid="delete-page-button-confirm"
+                    >
+                      Continue
+                    </Button>
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
         </InternalPage>
     );
 };

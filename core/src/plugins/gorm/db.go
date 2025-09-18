@@ -111,13 +111,6 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 	password := config.Credentials.Password
 	hostname := config.Credentials.Hostname
 
-	if p.Type != engine.DatabaseType_Sqlite3 && p.Type != engine.DatabaseType_Postgres {
-		database = url.PathEscape(database)
-		username = url.PathEscape(username)
-		password = url.PathEscape(password)
-		hostname = url.PathEscape(hostname)
-	}
-
 	input := &ConnectionInput{
 		Username:                username,
 		Password:                password,
@@ -142,6 +135,7 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 			case portKey, parseTimeKey, locKey, allowClearTextPasswordsKey, sslModeKey, httpProtocolKey, readOnlyKey, debugKey, connectionTimeoutKey:
 				continue
 			default:
+				// TODO: BIG EDGE CASE - PostgreSQL doesn't need URL escaping for params?
 				if p.Type == engine.DatabaseType_Postgres {
 					params[record.Key] = record.Value
 				} else {

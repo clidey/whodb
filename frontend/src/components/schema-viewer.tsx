@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import {
     SearchInput,
     Sidebar as SidebarComponent,
@@ -14,8 +30,9 @@ import { FC, useCallback, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { InternalRoutes } from "../config/routes";
 import { useAppSelector } from "../store/hooks";
-import { Loading } from "./loading";
+import { databaseTypesThatUseDatabaseInsteadOfSchema } from "../utils/database-features";
 import { getDatabaseStorageUnitLabel } from "../utils/functions";
+import { Loading } from "./loading";
 
 function groupByType(units: StorageUnit[]) {
     const groups: Record<string, any[]> = {};
@@ -33,7 +50,6 @@ export const SchemaViewer: FC = () => {
     const selectedSchema = useAppSelector(state => state.database.schema);
     const navigate = useNavigate();
     const state = useLocation().state as { unit: StorageUnit } | undefined;
-    const pathname = useLocation().pathname;
 
     // Search state
     const [search, setSearch] = useState("");
@@ -41,7 +57,7 @@ export const SchemaViewer: FC = () => {
     // Query for storage units (tables, views, etc.)
     const { data, loading } = useGetStorageUnitsQuery({
         variables: {
-            schema: selectedSchema,
+            schema: databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type) ? current?.Database ?? selectedSchema : selectedSchema,
         },
         skip: !current || !selectedSchema,
     });
@@ -99,6 +115,7 @@ export const SchemaViewer: FC = () => {
                 unit,
             },
         });
+        window.location.reload();
     }, [navigate, state, data]);
 
     if (treeData.length === 0) {
@@ -106,7 +123,7 @@ export const SchemaViewer: FC = () => {
     }
 
     return (
-        <div className="flex h-full dark">
+        <div className="flex h-full dark" data-testid="schema-viewer">
             <SidebarComponent variant="embed" className="w-64 h-full flex flex-col">
                 <SidebarContent>
                     <SidebarHeader>

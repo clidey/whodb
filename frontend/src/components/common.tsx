@@ -24,7 +24,7 @@ type IEmptyMessageProps = {
 
 export const EmptyMessage: FC<IEmptyMessageProps> = ({ icon, label }) => {
     return (
-        <div className="flex gap-2 items-center justify-center absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 dark:text-neutral-300">
+        <div className="flex gap-sm items-center justify-center absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 dark:text-neutral-300">
             {icon}
             {label}
         </div>

@@ -27,6 +27,11 @@ These are non-negotiable principles. Follow them at all times.
    without unnecessary enthusiasm.
 9. **Ask questions**: You must ask as many questions as you have to in order to understand.
 10. **Be clean**: Do not leave unused code lying around. Make sure code is easy to follow and understand.
+11. **Separation between CE and EE versions**: All EE code and related functionality MUST be in the ee submodule. No
+    excuses.
+12. **Avoid shell scripts or adhoc solutions**: Never use shell scripts or adhoc solutions UNLESS absolutely necessary.
+13. **Avoid simple comments**: Never add comments that are simple or basic - only edge cases, complicated actions, or
+    proccesses can have comments explaining them.
 
 ## Development Requirements
 
@@ -42,7 +47,8 @@ These are non-negotiable principles. Follow them at all times.
    everywhere.
 10. When updating dependencies, ensure versions are identical between Community Edition (`core/go.mod`) and Enterprise
     Edition (`ee/go.mod`) for shared dependencies
-11. Never log sensitive data such as passwords, API keys, tokens, or full connection strings
+11. Never log sensitive data such as passwords, API keys, tokens, or full connection strings.
+12. Always use PNPM instead of NPM.
 
 ## Architecture Overview
 
@@ -268,7 +274,7 @@ cd core && go run .
 cd frontend && pnpm start
 
 # Frontend E2E tests
-cd frontend && npm run cypress:ce
+cd frontend && pnpm run cypress:ce
 
 # GraphQL Generation
 # Backend:
@@ -287,7 +293,7 @@ GOWORK=$PWD/go.work.ee go run -tags ee ./core
 cd frontend && pnpm start:ee
 
 # Frontend E2E tests
-cd frontend && npm run cypress:ee
+cd frontend && pnpm run cypress:ee
 
 # GraphQL Generation
 # Backend:

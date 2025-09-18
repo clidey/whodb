@@ -35,6 +35,7 @@ describe('MySQL 8 E2E test', () => {
                 'orders',
                 'payments',
                 'products',
+                'test_casting',
                 'users'
             ]);
         });
@@ -436,7 +437,92 @@ describe('MySQL 8 E2E test', () => {
 
         cy.get('[role="dialog"]').should('not.exist');
 
-        // 12) Open scratchpad drawer from Explore and run query
+        // 12) Test type casting behavior (related to issue #613 - MySQL 8 specific)
+        cy.data('test_casting');
+
+        // Test adding a row with various numeric types that require casting
+        // This is specifically testing the MySQL 8 CAST AS SIGNED issue
+        cy.getTableData().then(({rows}) => {
+            const initialRowCount = rows.length;
+            cy.addRow({
+                bigint_col: '5000000000',  // Large number as string
+                integer_col: '42',          // Regular integer as string
+                smallint_col: '256',        // Small integer as string
+                numeric_col: '9876.54',     // Decimal as string
+                description: 'Test casting from strings'
+            });
+            cy.getTableData().its('rows.length').should('eq', initialRowCount + 1);
+        });
+
+        // Verify the data was inserted correctly
+        cy.sortBy(0); // Sort by id to get consistent ordering
+        cy.getTableData().then(({columns, rows}) => {
+            expect(rows.length).to.equal(4, 'Should still have 4 rows');
+            // Find the row we just added (should be the last one with id=4)
+            const addedRow = rows[rows.length - 1];
+            expect(addedRow[1]).to.match(/^\d+$/); // id should be a number
+            expect(addedRow[2]).to.equal('5000000000');
+            expect(addedRow[3]).to.equal('42');
+            expect(addedRow[4]).to.equal('256');
+            expect(addedRow[5]).to.equal('9876.54');
+            expect(addedRow[6]).to.equal('Test casting from strings');
+        });
+
+        // Test editing a row with type casting
+        cy.updateRow(1, 1, '7500000000', false); // Update bigint_col
+        cy.getTableData().then(({rows}) => {
+            expect(rows[1][2]).to.equal('7500000000');
+        });
+
+        // Restore original value
+        cy.updateRow(1, 1, '1000000', false);
+
+        // Verify we still have 4 rows before adding the second test row
+        cy.getTableData().then(({rows}) => {
+            expect(rows.length).to.equal(4, 'Should have 4 rows before second addition');
+        });
+
+        // Test edge cases: zero and negative numbers, and verify the row was added successfully
+        cy.getTableData().then(({rows}) => {
+            const initialRowCount = rows.length;
+            cy.addRow({
+                bigint_col: '0',
+                integer_col: '-42',
+                smallint_col: '-100',
+                numeric_col: '-1234.56',
+                description: 'Zero and negative values'
+            });
+
+            cy.getTableData().then(({rows: newRows}) => {
+                expect(newRows.length).to.equal(initialRowCount + 1, 'Should have one new row');
+                const lastRow = newRows[newRows.length - 1];
+                expect(lastRow[2]).to.equal('0');
+                expect(lastRow[3]).to.equal('-42');
+                expect(lastRow[4]).to.equal('-100');
+                expect(lastRow[5]).to.equal('-1234.56');
+                expect(lastRow[6]).to.equal('Zero and negative values');
+            });
+        });
+
+        // Clean up: delete the test rows we added
+        cy.getTableData().then(({rows}) => {
+            const initialRowCount = rows.length;
+            cy.deleteRow(initialRowCount - 1); // Delete the last row
+            cy.getTableData().its('rows.length').should('eq', initialRowCount - 1);
+        });
+
+        cy.getTableData().then(({rows}) => {
+            const initialRowCount = rows.length;
+            cy.deleteRow(initialRowCount - 1); // Delete the last row again
+            cy.getTableData().its('rows.length').should('eq', initialRowCount - 1);
+        });
+
+        // Verify cleanup
+        cy.getTableData().then(({rows}) => {
+            expect(rows.length).to.equal(3); // Should be back to original 3 rows
+        });
+
+        // 13) Open scratchpad drawer from Explore and run query
         cy.data('users');
         cy.get('[data-testid="scratchpad-button"]').click();
         cy.contains('h2', 'Scratchpad').should('be.visible');
@@ -446,7 +532,7 @@ describe('MySQL 8 E2E test', () => {
         cy.get('[data-testid="code-editor"]').should('contain', 'SELECT * FROM test_db.users');
 
         // Run the query and check results appear
-        cy.get('[data-testid="submit-button"]').filter(':contains("Run")').first().click();
+        cy.get('[data-testid="run-submit-button"]').filter(':contains("Run")').first().click();
 
         // Wait for results to load and verify table appears in the drawer
         cy.get('[role="dialog"] table', {timeout: 500}).should('be.visible');
@@ -458,9 +544,9 @@ describe('MySQL 8 E2E test', () => {
         cy.get('body').type('{esc}');
         cy.get('[data-testid="table-search"]').should('be.visible');
 
-        // 13) Open Mock Data sheet, enforce limits, and show overwrite confirmation
-        cy.get('table thead tr').rightclick({force: true});
-        cy.contains('div,button,span', 'Mock Data').click({force: true});
+        // 14) Open Mock Data sheet, enforce limits, and show overwrite confirmation
+        cy.data('users');
+        cy.selectMockData();
 
         // UI: sheet title and note visible
         cy.contains('div', 'Mock Data for users').should('be.visible');
@@ -480,7 +566,7 @@ describe('MySQL 8 E2E test', () => {
         cy.contains('button', 'Generate').click();
 
         // Wait for mock data generation to complete and verify the total count
-        cy.wait(2000); // Give time for data generation
+        cy.wait(5000); // Give time for data generation
         cy.contains(/Total Count:\s*\d+/).should(($el) => {
             const text = $el.text();
             const match = text.match(/Total Count:\s*(\d+)/);
@@ -489,8 +575,8 @@ describe('MySQL 8 E2E test', () => {
         });
 
         // Switch to Overwrite and click Generate to show confirmation
-        cy.get('table thead tr').rightclick({force: true});
-        cy.contains('div,button,span', 'Mock Data').click({force: true});
+        cy.data('users');
+        cy.selectMockData();
         cy.get('@rowsInput').clear().type('10')
         cy.contains('label', 'Data Handling').parent().find('[role="combobox"]').eq(-1).click();
         cy.contains('[role="option"]', 'Overwrite existing data').click();
@@ -505,10 +591,9 @@ describe('MySQL 8 E2E test', () => {
         });
         cy.get('body').type('{esc}');
 
-        // 14) Mock data on a table that does not support it
+        // 15) Mock data on a table that does not support it
         cy.data('orders');
-        cy.get('table thead tr').rightclick({force: true});
-        cy.contains('div,button,span', 'Mock Data').click({force: true});
+        cy.selectMockData();
         // Wait for any toasts to clear
         cy.wait(1000);
         cy.contains('button', 'Generate').click();

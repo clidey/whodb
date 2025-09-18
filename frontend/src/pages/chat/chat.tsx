@@ -17,12 +17,19 @@
 import { isEEMode } from "@/config/ee-imports";
 import { Alert, AlertDescription, AlertTitle, Button, Card, cn, EmptyState, Input, toast, toTitleCase } from "@clidey/ux";
 import { AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery } from '@graphql';
-import { ArrowUpCircleIcon, BellAlertIcon, CodeBracketIcon } from "@heroicons/react/24/outline";
-import { CheckCircleIcon, SparklesIcon, TableCellsIcon } from "@heroicons/react/24/outline";
+import {
+    ArrowUpCircleIcon,
+    CheckCircleIcon,
+    CodeBracketIcon,
+    SparklesIcon,
+    TableCellsIcon
+} from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import { cloneElement, FC, KeyboardEventHandler, useCallback, useMemo, useRef, useState } from "react";
+import logoImage from "../../../public/images/logo.png";
 import { AIProvider, useAI } from "../../components/ai";
 import { CodeEditor } from "../../components/editor";
+import { ErrorState } from "../../components/error-state";
 import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { StorageUnitTable } from "../../components/table";
@@ -33,7 +40,6 @@ import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { isEEFeatureEnabled, loadEEComponent } from "../../utils/ee-loader";
 import { chooseRandomItems } from "../../utils/functions";
 import { chatExamples } from "./examples";
-const logoImage = "/images/logo.png";
 
 // Lazy load chart components if EE is enabled
 const LineChart = isEEFeatureEnabled('dataVisualization') ? loadEEComponent(
@@ -91,7 +97,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
         return type.toUpperCase().split(":")?.[1];
     }, [data, type]);
 
-    return <div className="flex flex-col w-[calc(100%-50px)] group/table-preview gap-2 relative">
+    return <div className="flex flex-col w-[calc(100%-50px)] group/table-preview gap-sm relative">
         <div className="absolute -top-3 -left-3 opacity-0 group-hover/table-preview:opacity-100 transition-all z-[1]">
             <Button containerClassName="w-8 h-8" className="w-5 h-5" onClick={handleCodeToggle} data-testid="table-preview-code-toggle">
                 {cloneElement(showSQL ? <TableCellsIcon className="w-6 h-6" /> : <CodeBracketIcon className="w-6 h-6" />, {
@@ -99,7 +105,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
                 })}
             </Button>
         </div>
-        <div className="flex items-center gap-4 overflow-hidden break-all leading-6 shrink-0 h-full w-full">
+        <div className="flex items-center gap-lg overflow-hidden break-all leading-6 shrink-0 h-full w-full">
             {
                 showSQL
                 ? <div className="h-[150px] w-full">
@@ -275,7 +281,7 @@ export const ChatPage: FC = () => {
                             <div className="flex flex-wrap justify-center items-center gap-4">
                                 {
                                     examples.map((example, i) => (
-                                        <Card key={`chat-${i}`} className="flex flex-col gap-2 w-[250px] h-[120px] p-4 text-sm cursor-pointer hover:opacity-80 transition-all"
+                                        <Card key={`chat-${i}`} className="flex flex-col gap-sm w-[250px] h-[120px] p-4 text-sm cursor-pointer hover:opacity-80 transition-all"
                                             onClick={() => handleSelectExample(example.description)}>
                                             {example.icon}
                                             {example.description}
@@ -286,11 +292,11 @@ export const ChatPage: FC = () => {
                         </div>
                         : <div className="h-full w-full py-8 max-h-[calc(75vh-25px)] overflow-y-auto" ref={scrollContainerRef}>
                             <div className="flex justify-center w-full">
-                                <div className="flex w-[max(65%,450px)] flex-col gap-2">
+                                <div className="flex w-full flex-col gap-2">
                                     {
                                         chats.map((chat, i) => {
                                             if (chat.Type === "message" || chat.Type === "text") {
-                                                return <div key={`chat-${i}`} className={classNames("flex gap-4 overflow-hidden break-words leading-6 shrink-0 relative", {
+                                                return <div key={`chat-${i}`} className={classNames("flex gap-lg overflow-hidden break-words leading-6 shrink-0 relative", {
                                                     "self-end ml-3": chat.isUserInput,
                                                     "self-start": !chat.isUserInput,
                                                 })}>
@@ -306,15 +312,11 @@ export const ChatPage: FC = () => {
                                                 </div>
                                             } else if (chat.Type === "error") {
                                                 return (
-                                                    <div key={`chat-${i}`} className="flex items-center gap-4 overflow-hidden break-words leading-6 shrink-0 self-start">
+                                                    <div key={`chat-${i}`} className="flex items-center gap-lg overflow-hidden break-words leading-6 shrink-0 self-start">
                                                         {!chat.isUserInput && chats[i-1]?.isUserInput
                                                             ? extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
                                                             : <div className="pl-4" />}
-                                                        <Alert variant="destructive" title="Error" description={chat.Text}>
-                                                            <BellAlertIcon className="w-4 h-4" />
-                                                            <AlertTitle>Error</AlertTitle>
-                                                            <AlertDescription>{toTitleCase(chat.Text.replaceAll("ERROR: ", ""))}</AlertDescription>
-                                                        </Alert>
+                                                        <ErrorState error={toTitleCase(chat.Text.replaceAll("ERROR: ", ""))} />
                                                     </div>
                                                 );
                                             } else if (isEEFeatureEnabled('dataVisualization') && (chat.Type === "sql:pie-chart" || chat.Type === "sql:line-chart")) {
@@ -326,7 +328,7 @@ export const ChatPage: FC = () => {
                                                     {chat.Type === "sql:line-chart" && LineChart && <LineChart columns={chat.Result?.Columns.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} />}
                                                 </div>
                                             }
-                                            return <div key={`chat-${i}`} className="flex gap-4 w-full overflow-hidden pt-4">
+                                            return <div key={`chat-${i}`} className="flex gap-lg w-full overflow-hidden pt-4">
                                                 {!chat.isUserInput && chats[i-1]?.isUserInput
                                                     ? (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)
                                                     : <div className="pl-4" />}

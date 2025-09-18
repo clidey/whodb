@@ -47,6 +47,16 @@ if [ -f "$PROJECT_ROOT/core/coverage.out" ]; then
     echo "✅ Backend coverage saved to core/coverage.out"
 fi
 
+# Clean up frontend coverage artifacts for next run
+echo "🧹 Cleaning frontend coverage artifacts..."
+if [ -d "$PROJECT_ROOT/frontend/.nyc_output" ]; then
+    # Save the coverage report before cleaning if it exists
+    if [ -f "$PROJECT_ROOT/frontend/.nyc_output/out.json" ]; then
+        echo "✅ Frontend coverage data preserved in .nyc_output/out.json"
+    fi
+fi
+# Note: We keep the coverage artifacts for review but they will be cleared on next setup
+
 # If EE mode, run EE-specific cleanup first (if it exists)
 if [ "$EDITION" = "ee" ]; then
     EE_CLEANUP_SCRIPT="$PROJECT_ROOT/ee/dev/cleanup-ee-databases.sh"

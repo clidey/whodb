@@ -40,7 +40,7 @@ export const LogoutPage: FC = () => {
   }, [dispatch, logout]);
 
   return <Container>
-      <div className="flex flex-col justify-center items-center gap-4 w-full">
+      <div className="flex flex-col justify-center items-center gap-lg w-full">
           <div>
               <Loading hideText={true} />
           </div>

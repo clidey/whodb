@@ -18,10 +18,20 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 type ISettingsState = {
     metricsEnabled: true | false;
+    storageUnitView: 'list' | 'card';
+    // UI Customization settings
+    fontSize: 'small' | 'medium' | 'large';
+    borderRadius: 'none' | 'small' | 'medium' | 'large';
+    spacing: 'compact' | 'comfortable' | 'spacious';
 }
 
 const initialState: ISettingsState = {
     metricsEnabled: true,
+    storageUnitView: 'card',
+    // UI Customization defaults
+    fontSize: 'medium',
+    borderRadius: 'medium',
+    spacing: 'comfortable',
 }
 
 export const settingsSlice = createSlice({
@@ -30,6 +40,19 @@ export const settingsSlice = createSlice({
     reducers: {
         setMetricsEnabled: (state, action: PayloadAction<ISettingsState["metricsEnabled"]>) => {
             state.metricsEnabled = action.payload;
+        },
+        setStorageUnitView: (state, action: PayloadAction<ISettingsState["storageUnitView"]>) => {
+            state.storageUnitView = action.payload;
+        },
+        // UI Customization actions
+        setFontSize: (state, action: PayloadAction<ISettingsState["fontSize"]>) => {
+            state.fontSize = action.payload;
+        },
+        setBorderRadius: (state, action: PayloadAction<ISettingsState["borderRadius"]>) => {
+            state.borderRadius = action.payload;
+        },
+        setSpacing: (state, action: PayloadAction<ISettingsState["spacing"]>) => {
+            state.spacing = action.payload;
         },
     },
 });

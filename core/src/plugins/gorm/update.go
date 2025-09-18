@@ -29,7 +29,7 @@ import (
 
 func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string, updatedColumns []string) (bool, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
-		pkColumns, err := p.GetPrimaryKeyColumns(db, schema, storageUnit)
+		pkColumns, err := p.GormPluginFunctions.GetPrimaryKeyColumns(db, schema, storageUnit)
 		if err != nil {
 			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get primary key columns for table %s.%s during update operation", schema, storageUnit))
 			pkColumns = []string{}
@@ -57,18 +57,14 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 				convertedValue = strValue
 			}
 
-			targetColumn := column
-			if p.GormPluginFunctions.ShouldQuoteIdentifiers() {
-				targetColumn = fmt.Sprintf("\"%s\"", column)
-			}
-
+			// GORM handles identifier escaping automatically
 			if common.ContainsString(pkColumns, column) {
-				conditions[targetColumn] = convertedValue
+				conditions[column] = convertedValue
 			} else if common.ContainsString(updatedColumns, column) {
-				convertedValues[targetColumn] = convertedValue
+				convertedValues[column] = convertedValue
 			} else {
 				// Store unchanged values for WHERE clause if no PKs
-				unchangedValues[targetColumn] = convertedValue
+				unchangedValues[column] = convertedValue
 			}
 		}
 
@@ -77,31 +73,32 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 			return true, nil
 		}
 
-		schema = p.EscapeIdentifier(schema)
-		storageUnit = p.EscapeIdentifier(storageUnit)
-		tableName := p.FormTableName(schema, storageUnit)
+		// Use SQL builder for update query
+		builder := p.GormPluginFunctions.CreateSQLBuilder(db)
 
-		var result *gorm.DB
+		// Use SQLBuilder for consistent behavior for all database types.
+		var whereConditions map[string]any
 		if len(conditions) == 0 {
-			if p.Type == engine.DatabaseType_MySQL || p.Type == engine.DatabaseType_MariaDB {
-				result = p.executeUpdateWithWhereMap(db, tableName, unchangedValues, convertedValues)
-			} else {
-				result = db.Table(tableName).Where(unchangedValues).Updates(convertedValues)
-			}
+			whereConditions = unchangedValues
 		} else {
-			if p.Type == engine.DatabaseType_MySQL || p.Type == engine.DatabaseType_MariaDB {
-				result = p.executeUpdateWithWhereMap(db, tableName, conditions, convertedValues)
-			} else {
-				result = db.Table(tableName).Where(conditions, nil).Updates(convertedValues)
-			}
+			whereConditions = conditions
 		}
+
+		result := builder.UpdateQuery(schema, storageUnit, convertedValues, whereConditions)
 
 		if result.Error != nil {
 			log.Logger.WithError(result.Error).Error(fmt.Sprintf("Failed to update rows in table %s.%s", schema, storageUnit))
 			return false, result.Error
 		}
 
-		// todo: investigate why the clickhouse driver doesnt show any updated rows after an update
+		// TODO: BIG EDGE CASE - ClickHouse driver doesn't report affected rows properly
+		// Need to investigate the ClickHouse GORM driver behavior
+		/*
+			if p.Type != engine.DatabaseType_ClickHouse && result.RowsAffected == 0 {
+				return false, errors.New("no rows were updated")
+			}
+		*/
+		// For now, only check affected rows for non-ClickHouse databases
 		if p.Type != engine.DatabaseType_ClickHouse && result.RowsAffected == 0 {
 			return false, errors.New("no rows were updated")
 		}
@@ -110,16 +107,10 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 	})
 }
 
-// weird bug for mysql/mariadb driver where the where clause is not properly escaped, so have to do it manually below
-// should be fine as it still uses the query builder
-// todo: need to investigate underlying driver to see what's going on
-func (p *GormPlugin) executeUpdateWithWhereMap(db *gorm.DB, tableName string, whereConditions map[string]interface{}, updateValues map[string]interface{}) *gorm.DB {
-	query := db.Table(tableName)
-
-	for column, value := range whereConditions {
-		escapedColumn := p.EscapeIdentifier(column)
-		query = query.Where(fmt.Sprintf("%s = ?", escapedColumn), value)
+// GetErrorHandler returns the error handler (initializing if needed)
+func (p *GormPlugin) GetErrorHandler() *ErrorHandler {
+	if p.errorHandler == nil {
+		p.InitPlugin()
 	}
-
-	return query.Updates(updateValues)
+	return p.errorHandler
 }

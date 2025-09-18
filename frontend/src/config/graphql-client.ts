@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
-import { onError } from '@apollo/client/link/error';
-import { toast } from '@clidey/ux';
-import { reduxStore } from '../store';
+import {ApolloClient, createHttpLink, InMemoryCache} from '@apollo/client';
+import {onError} from '@apollo/client/link/error';
+import {toast} from '@clidey/ux';
+import {reduxStore} from '../store';
 
 let uri = "/api/query"
 if (window.location.port === "3000") {
@@ -31,7 +31,7 @@ const httpLink = createHttpLink({
 
 /**
  * Global error handling for unauthorized responses.
- * 
+ *
  * When a GraphQL operation returns an "unauthorized" error, this handler will:
  * 1. Check if there's a current profile stored in Redux store
  * 2. If a profile exists, automatically attempt to login using that profile
@@ -39,119 +39,119 @@ const httpLink = createHttpLink({
  *    - Otherwise, use Login mutation with credentials
  * 3. If login is successful, refresh the page to reload with correct values
  * 4. If no profile exists or login fails, redirect to the login page
- * 
+ *
  * This ensures seamless user experience when sessions expire.
  */
-const errorLink = onError(({ networkError }) => {
-  if (networkError && 'statusCode' in networkError && networkError.statusCode === 401) {
-    // @ts-ignore
-    const authState = reduxStore.getState().auth;
-    const currentProfile = authState.current;
+const errorLink = onError(({networkError}) => {
+    if (networkError && 'statusCode' in networkError && networkError.statusCode === 401) {
+        // @ts-ignore
+        const authState = reduxStore.getState().auth;
+        const currentProfile = authState.current;
 
-    if (currentProfile) {
-      handleAutoLogin(currentProfile);
-    } else {
-      toast.error("Session expired. Please login again.");
-      window.location.href = '/login';
+        if (currentProfile) {
+            handleAutoLogin(currentProfile);
+        } else {
+            toast.error("Session expired. Please login again.");
+            window.location.href = '/login';
+        }
+    } else if (networkError) {
+        console.error('Network error:', networkError);
     }
-  } else if (networkError) {
-    console.error('Network error:', networkError);
-  }
 });
 
 /**
  * Handles automatic login using the current profile.
- * 
+ *
  * If the profile is a saved profile, use LoginWithProfile mutation.
  * Otherwise, use Login mutation with credentials.
- * 
+ *
  * @param currentProfile - The current user profile from Redux store
  */
 async function handleAutoLogin(currentProfile: any) {
-  try {
-    let response, result;
-    if (currentProfile.Saved) {
-      // Login with profile
-      response = await fetch(uri, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          query: `
+    try {
+        let response, result;
+        if (currentProfile.Saved) {
+            // Login with profile
+            response = await fetch(uri, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    query: `
             mutation LoginWithProfile($profile: LoginProfileInput!) {
               LoginWithProfile(profile: $profile) {
                 Status
               }
             }
           `,
-          variables: {
-            profile: {
-              Id: currentProfile.Id,
-              Type: currentProfile.Type,
-            },
-          },
-        }),
-      });
-      result = await response.json();
-      if (result.data?.LoginWithProfile?.Status) {
-        toast.success("Automatically re-authenticated");
-        window.location.reload();
-        return;
-      } else {
-        toast.error("Auto-login failed. Please login manually.");
-        window.location.href = '/login';
-        return;
-      }
-    } else {
-      // Normal login with credentials
-      response = await fetch(uri, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          query: `
+                    variables: {
+                        profile: {
+                            Id: currentProfile.Id,
+                            Type: currentProfile.Type,
+                        },
+                    },
+                }),
+            });
+            result = await response.json();
+            if (result.data?.LoginWithProfile?.Status) {
+                toast.success("Automatically re-authenticated");
+                window.location.reload();
+                return;
+            } else {
+                toast.error("Auto-login failed. Please login manually.");
+                window.location.href = '/login';
+                return;
+            }
+        } else {
+            // Normal login with credentials
+            response = await fetch(uri, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    query: `
             mutation Login($credentials: LoginCredentials!) {
               Login(credentials: $credentials) {
                 Status
               }
             }
           `,
-          variables: {
-            credentials: {
-              Type: currentProfile.Type,
-              Hostname: currentProfile.Hostname,
-              Database: currentProfile.Database,
-              Username: currentProfile.Username,
-              Password: currentProfile.Password,
-              Advanced: currentProfile.Advanced || [],
-            },
-          },
-        }),
-      });
-      result = await response.json();
-      if (result.data?.Login?.Status) {
-        toast.success("Automatically re-authenticated");
-        window.location.reload();
-        return;
-      } else {
+                    variables: {
+                        credentials: {
+                            Type: currentProfile.Type,
+                            Hostname: currentProfile.Hostname,
+                            Database: currentProfile.Database,
+                            Username: currentProfile.Username,
+                            Password: currentProfile.Password,
+                            Advanced: currentProfile.Advanced || [],
+                        },
+                    },
+                }),
+            });
+            result = await response.json();
+            if (result.data?.Login?.Status) {
+                toast.success("Automatically re-authenticated");
+                window.location.reload();
+                return;
+            } else {
+                toast.error("Auto-login failed. Please login manually.");
+                window.location.href = '/login';
+                return;
+            }
+        }
+    } catch (error) {
+        console.error('Auto-login error:', error);
         toast.error("Auto-login failed. Please login manually.");
         window.location.href = '/login';
-        return;
-      }
     }
-  } catch (error) {
-    console.error('Auto-login error:', error);
-    toast.error("Auto-login failed. Please login manually.");
-    window.location.href = '/login';
-  }
 }
 
 export const graphqlClient = new ApolloClient({
-  link: errorLink.concat(httpLink),
+    link: errorLink.concat(httpLink),
   cache: new InMemoryCache(),
   defaultOptions: {
       query: {

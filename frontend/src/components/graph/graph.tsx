@@ -53,7 +53,7 @@ export type IGraphProps<NodeData extends unknown = any, EdgeData extends unknown
 export const Graph: FC<IGraphProps> = (props) => {
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
     const { fitView } = useReactFlow();
-    const [isLayingOut, setIsLayingOut] = useState(false);
+    const [isLayingOut, setIsLayingOut] = useState(true);
     const { getNodes, getEdges, setNodes, setEdges } = useReactFlow();
     const [downloading, setDownloading] = useState(false);
 
@@ -66,6 +66,13 @@ export const Graph: FC<IGraphProps> = (props) => {
         const edges = getEdges();
 
         if (nodes.length === 0) {
+            return;
+        }
+
+        // Check if nodes have dimensions, if not, wait a bit more
+        const nodesWithoutDimensions = nodes.some(node => !node.width || !node.height);
+        if (nodesWithoutDimensions) {
+            setTimeout(() => onLayout(type, padding), 100);
             return;
         }
 
@@ -124,8 +131,9 @@ export const Graph: FC<IGraphProps> = (props) => {
 
     return <ReactFlow
         ref={reactFlowWrapper}
-        className={classNames("group rounded-lg", {
-            "laying-out": isLayingOut,
+        className={classNames("group rounded-lg transition-all", {
+            "laying-out opacity-0": isLayingOut,
+            "opacity-100": !isLayingOut,
         })}
         {...props}
         nodeTypes={props.nodeTypes}
@@ -147,7 +155,7 @@ export const Graph: FC<IGraphProps> = (props) => {
         {
             !downloading && <Controls />
         }
-        <div className={classNames("flex flex-row gap-2 absolute bottom-4 right-4 z-10", {
+        <div className={classNames("flex flex-row gap-sm absolute bottom-4 right-4 z-10", {
             "hidden": downloading,
         })}>
             <div className="flex flex-col gap-2">

@@ -17,35 +17,44 @@
 package sqlite3
 
 import (
-	"fmt"
-	"github.com/clidey/whodb/core/src/engine"
 	"strings"
+
+	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/plugins/gorm"
+	"gorm.io/gorm"
 )
 
-func (p *Sqlite3Plugin) GetCreateTableQuery(schema string, storageUnit string, columns []engine.Record) string {
-	var columnDefs []string
+func (p *Sqlite3Plugin) GetCreateTableQuery(db *gorm.DB, schema string, storageUnit string, columns []engine.Record) string {
+	builder := gorm_plugin.NewSQLBuilder(db, p)
 
-	for _, column := range columns {
-		parts := []string{p.EscapeIdentifier(column.Key)}
+	// Convert engine.Record to ColumnDef
+	columnDefs := make([]gorm_plugin.ColumnDef, len(columns))
+	for i, column := range columns {
+		def := gorm_plugin.ColumnDef{
+			Name: column.Key,
+		}
 
 		// Handle primary key with INTEGER type for auto-increment
 		if primary, ok := column.Extra["primary"]; ok && primary == "true" {
 			if strings.Contains(strings.ToLower(column.Value), "int") {
-				parts = append(parts, "INTEGER PRIMARY KEY")
+				def.Type = "INTEGER"
+				def.Primary = true
 			} else {
-				parts = append(parts, column.Value, "PRIMARY KEY")
+				def.Type = column.Value
+				def.Primary = true
 			}
 		} else {
-			parts = append(parts, column.Value)
+			def.Type = column.Value
 
 			// Add NOT NULL constraint if specified
 			if nullable, ok := column.Extra["nullable"]; ok && nullable == "false" {
-				parts = append(parts, "NOT NULL")
+				def.NotNull = true
 			}
 		}
 
-		columnDefs = append(columnDefs, strings.Join(parts, " "))
+		columnDefs[i] = def
 	}
 
-	return fmt.Sprintf("CREATE TABLE %s (%s)", p.EscapeIdentifier(storageUnit), strings.Join(columnDefs, ", "))
+	// SQLite doesn't use schema, only table name
+	return builder.CreateTableQuery("", storageUnit, columnDefs)
 }

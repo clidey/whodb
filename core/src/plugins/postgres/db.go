@@ -20,6 +20,7 @@ import (
 	"maps"
 
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/stdlib"
 	"gorm.io/driver/postgres"
@@ -34,6 +35,12 @@ func (p *PostgresPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 
 	pgxConfig, err := pgx.ParseConfig("")
 	if err != nil {
+		log.Logger.WithError(err).WithFields(map[string]any{
+			"hostname": connectionInput.Hostname,
+			"port":     connectionInput.Port,
+			"database": connectionInput.Database,
+			"username": connectionInput.Username,
+		}).Error("Failed to parse PostgreSQL configuration")
 		return nil, err
 	}
 
@@ -53,6 +60,12 @@ func (p *PostgresPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	db, err := gorm.Open(postgres.New(postgres.Config{Conn: stdlib.OpenDB(*pgxConfig)}), &gorm.Config{})
 
 	if err != nil {
+		log.Logger.WithError(err).WithFields(map[string]any{
+			"hostname": connectionInput.Hostname,
+			"port":     connectionInput.Port,
+			"database": connectionInput.Database,
+			"username": connectionInput.Username,
+		}).Error("Failed to connect to PostgreSQL database")
 		return nil, err
 	}
 	return db, nil

@@ -31,8 +31,9 @@ type tableRelations struct {
 
 func (p *GormPlugin) GetGraph(config *engine.PluginConfig, schema string) ([]engine.GraphUnit, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]engine.GraphUnit, error) {
-		tableRelations := []tableRelations{}
+		var tableRelations []tableRelations
 
+		// TODO: BIG EDGE CASE - ClickHouse uses database name instead of schema
 		if p.Type == engine.DatabaseType_ClickHouse {
 			schema = config.Credentials.Database
 		}
@@ -57,7 +58,7 @@ func (p *GormPlugin) GetGraph(config *engine.PluginConfig, schema string) ([]eng
 			storageUnitsMap[storageUnit.Name] = storageUnit
 		}
 
-		tables := []engine.GraphUnit{}
+		var tables []engine.GraphUnit
 		for _, storageUnit := range storageUnits {
 			foundTable, ok := tableMap[storageUnit.Name]
 			var relations []engine.GraphUnitRelationship

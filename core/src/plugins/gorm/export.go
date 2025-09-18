@@ -19,7 +19,6 @@ package gorm_plugin
 import (
 	"database/sql"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/clidey/whodb/core/src/common"
@@ -90,8 +89,6 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 		columnTypes[i] = col.Value // Data type
 	}
 
-	tableName := p.FormTableName(schema, storageUnit)
-
 	// Write headers with type information
 	headers := make([]string, len(columns))
 	for i, col := range columns {
@@ -102,60 +99,44 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 		return fmt.Errorf("failed to write headers: %v", err)
 	}
 
-	// Build query with proper escaping
-	columnList := make([]string, len(columns))
-	for i, col := range columns {
-		columnList[i] = p.EscapeIdentifier(col)
-	}
-	// Ensure table name is properly escaped
-	escapedTableName := tableName
-	if !strings.Contains(tableName, ".") {
-		escapedTableName = p.EscapeIdentifier(tableName)
-	} else {
-		// Handle schema.table format
-		parts := strings.Split(tableName, ".")
-		if len(parts) == 2 {
-			escapedTableName = p.EscapeIdentifier(parts[0]) + "." + p.EscapeIdentifier(parts[1])
-		}
-	}
-	query := fmt.Sprintf("SELECT %s FROM %s", strings.Join(columnList, ", "), escapedTableName)
+	// Use batch processor for efficient export
+	processor := NewBatchProcessor(p, p.Type, &BatchConfig{
+		BatchSize:   10000, // Larger batch size for exports
+		LogProgress: true,  // Log export progress
+	})
 
-	// Execute query
-	rows, err := db.Raw(query).Rows()
+	// Export data in batches to avoid memory issues
+	totalRows := 0
+	err = processor.ExportInBatches(db, schema, storageUnit, columns, func(batch []map[string]any) error {
+		// Process each batch
+		for _, record := range batch {
+			row := make([]string, len(columns))
+			for i, col := range columns {
+				if val, exists := record[col]; exists {
+					row[i] = p.FormatValue(val)
+				} else {
+					row[i] = ""
+				}
+			}
+
+			if err := writer(row); err != nil {
+				log.Logger.WithError(err).Error(fmt.Sprintf("Failed to write row %d during export of table %s.%s", totalRows+1, schema, storageUnit))
+				return fmt.Errorf("failed to write row %d: %v", totalRows+1, err)
+			}
+			totalRows++
+		}
+		return nil
+	})
+
 	if err != nil {
-		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to execute export query for table %s.%s: %s", schema, storageUnit, query))
-		return fmt.Errorf("failed to query data: %v", err)
-	}
-	defer rows.Close()
-
-	// Stream results
-	rowCount := 0
-	values := make([]any, len(columns))
-	valuePtrs := make([]any, len(columns))
-	for i := range values {
-		valuePtrs[i] = &values[i]
+		return fmt.Errorf("export failed after %d rows: %v", totalRows, err)
 	}
 
-	for rows.Next() {
-		if err := rows.Scan(valuePtrs...); err != nil {
-			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to scan row during export of table %s.%s", schema, storageUnit))
-			return fmt.Errorf("failed to scan row: %v", err)
-		}
+	log.Logger.WithField("totalRows", totalRows).
+		WithField("table", fmt.Sprintf("%s.%s", schema, storageUnit)).
+		Info("Export completed successfully")
 
-		row := make([]string, len(columns))
-		for i, val := range values {
-			row[i] = p.FormatValue(val)
-		}
-
-		if err := writer(row); err != nil {
-			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to write row %d during export of table %s.%s", rowCount+1, schema, storageUnit))
-			return fmt.Errorf("failed to write row: %v", err)
-		}
-
-		rowCount++
-	}
-
-	return rows.Err()
+	return nil
 }
 
 // FormatValue converts interface{} values to strings appropriately for CSV

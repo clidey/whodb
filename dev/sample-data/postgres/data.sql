@@ -107,6 +107,22 @@ INSERT INTO test_schema.users (username, email, password) VALUES
 ('jane_smith', 'jane@example.com', 'securepassword2'),
 ('admin_user', 'admin@example.com', 'adminpass');
 
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 -- Sample Data for Products
 INSERT INTO test_schema.products (name, description, price, stock_quantity) VALUES 
 ('Laptop', 'High-performance laptop', 1200.00, 10),
@@ -126,6 +142,44 @@ INSERT INTO test_schema.order_items (order_id, product_id, quantity, price_at_pu
 (2, 3, 1, 150.00);  -- Headphones
 
 -- Sample Payments
-INSERT INTO test_schema.payments (order_id, amount, payment_method) VALUES 
+INSERT INTO test_schema.payments (order_id, amount, payment_method)
+VALUES
 (1, 2000.00, 'credit_card'),
 (2, 150.00, 'paypal');
+
+-- Test Casting Table for type casting validation
+CREATE TABLE IF NOT EXISTS test_schema.test_casting
+(
+    id
+    SERIAL
+    PRIMARY
+    KEY,
+    bigint_col
+    BIGINT
+    NOT
+    NULL,
+    integer_col
+    INTEGER
+    NOT
+    NULL,
+    smallint_col
+    SMALLINT
+    NOT
+    NULL,
+    numeric_col
+    NUMERIC
+(
+    10,
+    2
+),
+    description VARCHAR
+(
+    100
+)
+    );
+
+-- Insert sample data for test_casting
+INSERT INTO test_schema.test_casting (bigint_col, integer_col, smallint_col, numeric_col, description)
+VALUES (9223372036854775807, 2147483647, 32767, 99999999.99, 'Maximum values'),
+       (1000000, 1000, 100, 1234.56, 'Regular values'),
+       (-9223372036854775808, -2147483648, -32768, -99999999.99, 'Minimum values');
