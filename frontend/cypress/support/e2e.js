@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,3 +32,30 @@
 // Import commands.js using ES2015 syntax:
 import './commands'
 import '@cypress/code-coverage/support'
+
+// Clear browser state before each test to ensure isolation
+beforeEach(() => {
+    // Clear cookies for the current domain
+    cy.clearCookies();
+
+    // Clear all localStorage
+    cy.window().then((win) => {
+        win.localStorage.clear();
+    });
+
+    // Clear all sessionStorage
+    cy.window().then((win) => {
+        win.sessionStorage.clear();
+    });
+
+    // Clear IndexedDB if used (common for state persistence)
+    cy.window().then((win) => {
+        if (win.indexedDB && win.indexedDB.databases) {
+            win.indexedDB.databases().then(databases => {
+                databases.forEach(db => {
+                    win.indexedDB.deleteDatabase(db.name);
+                });
+            });
+        }
+    });
+});

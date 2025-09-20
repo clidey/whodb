@@ -22,6 +22,7 @@ export default defineConfig({
     experimentalStudio: true,
   e2e: {
       baseUrl: 'http://localhost:3000', // Default for local development
+      testIsolation: true, // Ensure clean state between tests
     async setupNodeEvents(on, config) {
         codeCoverageTask(on, config);
 
