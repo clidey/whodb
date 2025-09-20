@@ -79,3 +79,8 @@
 .gap-xl { gap: var(--spacing-xl); }
 .gap-2xl { gap: var(--spacing-2xl); }
 .gap-3xl { gap: var(--spacing-3xl); }
+
+
+[data-slot="table-container"] {
+  width: 100%;
+}

@@ -257,13 +257,13 @@ export const GraphPage: FC = () => {
     }), []);
 
     if (graphLoading) {
-        return <InternalPage routes={[InternalRoutes.Graph]}>
+        return <InternalPage key="graph-loading" routes={[InternalRoutes.Graph]}>
             <LoadingPage />
         </InternalPage>
     }
 
 
-    return <InternalPage routes={[InternalRoutes.Graph]} sidebar={
+    return <InternalPage key="graph" routes={[InternalRoutes.Graph]} sidebar={
         <GraphSidebar
             current={current}
             search={search}

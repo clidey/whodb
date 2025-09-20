@@ -289,7 +289,7 @@ export const Sidebar: FC = () => {
                         <SidebarTrigger className="px-0" />
                     </div>
                 </SidebarHeader>
-                <SidebarContent className={cn("mt-8 mb-16", {
+                <SidebarContent className={cn("mt-8 mb-16 overflow-y-auto", {
                     "mx-4": open,
                 })}>
                     {loading ? (
@@ -368,7 +368,7 @@ export const Sidebar: FC = () => {
                             </div>
                             
                             {/* Main navigation */}
-                            <SidebarMenu className="grow mt-16 gap-4">
+                            <SidebarMenu className="grow mt-8 gap-4">
                                 {sidebarRoutes.map(route => (
                                     <SidebarMenuItem key={route.title}>
                                         <SidebarMenuButton asChild>
@@ -385,7 +385,7 @@ export const Sidebar: FC = () => {
                                     </SidebarMenuItem>
                                 ))}
 
-                                <SidebarSeparator className={cn("my-16", {
+                                <SidebarSeparator className={cn("my-2", {
                                     "mx-0": !open,
                                 })} />
 
