@@ -29,6 +29,7 @@ export const SettingsPage: FC = () => {
     const fontSize = useAppSelector(state => state.settings.fontSize);
     const borderRadius = useAppSelector(state => state.settings.borderRadius);
     const spacing = useAppSelector(state => state.settings.spacing);
+    const whereConditionMode = useAppSelector(state => state.settings.whereConditionMode);
 
     const handleMetricsToggle = useCallback((enabled: boolean) => {
         dispatch(SettingsActions.setMetricsEnabled(enabled));
@@ -48,6 +49,10 @@ export const SettingsPage: FC = () => {
 
     const handleSpacingChange = useCallback((space: 'compact' | 'comfortable' | 'spacious') => {
         dispatch(SettingsActions.setSpacing(space));
+    }, [dispatch]);
+
+    const handleWhereConditionModeChange = useCallback((mode: 'popover' | 'sheet') => {
+        dispatch(SettingsActions.setWhereConditionMode(mode));
     }, [dispatch]);
 
 
@@ -156,6 +161,18 @@ export const SettingsPage: FC = () => {
                                     <SelectItem value="compact">Compact</SelectItem>
                                     <SelectItem value="comfortable">Comfortable</SelectItem>
                                     <SelectItem value="spacious">Spacious</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="flex justify-between">
+                            <Label>Where Condition Mode</Label>
+                            <Select value={whereConditionMode} onValueChange={handleWhereConditionModeChange}>
+                                <SelectTrigger id="where-condition-mode" className="w-[135px]">
+                                    <SelectValue placeholder="Select mode" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="popover">Popover</SelectItem>
+                                    <SelectItem value="sheet">Sheet</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

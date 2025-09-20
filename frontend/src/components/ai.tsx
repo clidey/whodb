@@ -44,6 +44,7 @@ import {
     ArrowPathIcon,
     ArrowTopRightOnSquareIcon,
     CheckCircleIcon,
+    LockClosedIcon,
     PlusIcon,
     TrashIcon,
     XMarkIcon
@@ -181,6 +182,7 @@ export const useAI = () => {
             icon: (Icons.Logos as Record<string, ReactElement>)[modelType.modelType.replace("-", "")],
             extra: {
                 token: modelType.token,
+                isEnvironmentDefined: modelType.isEnvironmentDefined,
             }
         }));
     }, [modelTypes]);
@@ -378,6 +380,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         value: item.id,
                         label: item.label,
                         icon: item.icon,
+                        rightIcon: item.extra?.isEnvironmentDefined ? <LockClosedIcon className="w-3 h-3 text-muted-foreground" /> : undefined,
                     }))}
                     value={modelType?.id}
                     onChange={id => {

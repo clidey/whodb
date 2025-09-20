@@ -1002,7 +1002,9 @@ export const StorageUnitTable: FC<TableProps> = ({
                             </div>
                         </ContextMenuTrigger>
                         <ContextMenuContent className="w-52">
-                            <ContextMenuItem onSelect={() => setShowMockDataSheet(true)}>
+                            <ContextMenuItem onSelect={() => setShowMockDataSheet(true)} className={cn({
+                                "hidden": disableEdit,
+                            })}>
                                 <CalculatorIcon className="w-4 h-4" />
                                 Mock Data
                                 <ContextMenuShortcut>{renderShortcut(["Mod", "G"])}</ContextMenuShortcut>

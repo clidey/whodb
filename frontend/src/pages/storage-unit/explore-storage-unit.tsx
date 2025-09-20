@@ -64,6 +64,7 @@ import { databaseSupportsScratchpad, databaseTypesThatUseDatabaseInsteadOfSchema
 import { getDatabaseOperators } from "../../utils/database-operators";
 import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
 import { ExploreStorageUnitWhereCondition } from "./explore-storage-unit-where-condition";
+import { ExploreStorageUnitWhereConditionSheet } from "./explore-storage-unit-where-condition-sheet";
 import { SchemaViewer } from "../../components/schema-viewer";
 
 // Conditionally import EE query utilities
@@ -89,6 +90,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
 
     let schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
+    const whereConditionMode = useAppSelector(state => state.settings.whereConditionMode);
     const navigate = useNavigate();
     const [rows, setRows] = useState<RowsResult>();
     const [showAdd, setShowAdd] = useState(false);
@@ -477,10 +479,25 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                                 </SelectContent>
                             </Select>
                         </div>
-                        {current?.Type !== DatabaseType.Redis &&
-                            <ExploreStorageUnitWhereCondition defaultWhere={whereCondition} columns={whereColumns}
-                                                              operators={validOperators} onChange={handleFilterChange}
-                                                              columnTypes={whereColumnTypes ?? []}/>}
+                        {current?.Type !== DatabaseType.Redis && (
+                            whereConditionMode === 'sheet' ? (
+                                <ExploreStorageUnitWhereConditionSheet 
+                                    defaultWhere={whereCondition} 
+                                    columns={whereColumns}
+                                    operators={validOperators} 
+                                    onChange={handleFilterChange}
+                                    columnTypes={whereColumnTypes ?? []}
+                                />
+                            ) : (
+                                <ExploreStorageUnitWhereCondition 
+                                    defaultWhere={whereCondition} 
+                                    columns={whereColumns}
+                                    operators={validOperators} 
+                                    onChange={handleFilterChange}
+                                    columnTypes={whereColumnTypes ?? []}
+                                />
+                            )
+                        )}
                         <Button className="ml-6 mt-[22px]" onClick={handleQuery} data-testid="submit-button">
                             <CheckCircleIcon className="w-4 h-4" /> Query
                         </Button>

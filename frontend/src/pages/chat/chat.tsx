@@ -15,14 +15,15 @@
  */
 
 import { isEEMode } from "@/config/ee-imports";
-import { Alert, AlertDescription, AlertTitle, Button, Card, cn, EmptyState, Input, toast, toTitleCase } from "@clidey/ux";
+import { Alert, AlertDescription, AlertTitle, Button, Card, cn, EmptyState, Input, toast, toTitleCase, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@clidey/ux";
 import { AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery } from '@graphql';
 import {
     ArrowUpCircleIcon,
     CheckCircleIcon,
     CodeBracketIcon,
     SparklesIcon,
-    TableCellsIcon
+    TableCellsIcon,
+    CommandLineIcon
 } from "../../components/heroicons";
 import classNames from "classnames";
 import { cloneElement, FC, KeyboardEventHandler, useCallback, useMemo, useRef, useState } from "react";
@@ -37,8 +38,11 @@ import { extensions } from "../../config/features";
 import { InternalRoutes } from "../../config/routes";
 import { HoudiniActions } from "../../store/chat";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { ScratchpadActions } from "../../store/scratchpad";
 import { isEEFeatureEnabled, loadEEComponent } from "../../utils/ee-loader";
 import { chooseRandomItems } from "../../utils/functions";
+import { databaseSupportsScratchpad } from "../../utils/database-features";
+import { useNavigate } from "react-router-dom";
 import { chatExamples } from "./examples";
 
 // Lazy load chart components if EE is enabled
@@ -84,11 +88,68 @@ const thinkingPhrases = [
 type TableData = GetAiChatQuery["AIChat"][0]["Result"];
 
 const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ type, data, text }) => {
+    const dispatch = useAppDispatch();
     const [showSQL, setShowSQL] = useState(false);
+    const [showScratchpadDialog, setShowScratchpadDialog] = useState(false);
+    const [selectedPage, setSelectedPage] = useState<string>("new");
+    const [newPageName, setNewPageName] = useState<string>("");
+    const navigate = useNavigate();
+    const current = useAppSelector(state => state.auth.current);
+    const { pages, activePageId } = useAppSelector(state => state.scratchpad);
 
     const handleCodeToggle = useCallback(() => {
         setShowSQL(status => !status);
     }, []);
+
+    // Create page options excluding current page
+    const pageOptions = useMemo(() => {
+        return [
+            ...pages.map(page => ({ value: page.id, label: page.name })),
+            { value: "new", label: "Create new page" }
+        ];
+    }, [pages, activePageId]);
+
+    const handleMoveToScratchpad = useCallback(() => {
+        if (!databaseSupportsScratchpad(current?.Type)) {
+            toast.error("Scratchpad is not supported for this database type");
+            return;
+        }
+        // Initialize scratchpad if needed
+        if (pages.length === 0) {
+            dispatch(ScratchpadActions.ensurePagesHaveCells());
+        }
+        setShowScratchpadDialog(true);
+    }, [current?.Type, pages.length, dispatch]);
+
+    const handleScratchpadConfirm = useCallback(() => {
+        if (selectedPage === "new") {
+            // Create new page with the query
+            const pageName = newPageName.trim() || `Page ${pages.length + 1}`;
+            dispatch(ScratchpadActions.addPage({ name: pageName, initialQuery: text }));
+            // Navigate to scratchpad - the new page will be created with the query
+            navigate(InternalRoutes.RawExecute.path, {
+                state: {
+                    targetPage: "new"
+                }
+            });
+        } else {
+            // Add to existing page and set it as active
+            dispatch(ScratchpadActions.addCellToPageAndActivate({ 
+                pageId: selectedPage, 
+                initialQuery: text 
+            }));
+            // Navigate to scratchpad and highlight the target page
+            navigate(InternalRoutes.RawExecute.path, {
+                state: {
+                    targetPage: selectedPage
+                }
+            });
+        }
+        setShowScratchpadDialog(false);
+        setSelectedPage("new");
+        setNewPageName("");
+        toast.success("Query moved to scratchpad");
+    }, [navigate, text, selectedPage, newPageName, pages.length, dispatch]);
 
     const previewResult = useMemo(() => {
         if (data == null || data.Rows.length === 0) {
@@ -97,13 +158,27 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
         return type.toUpperCase().split(":")?.[1];
     }, [data, type]);
 
-    return <div className="flex flex-col w-[calc(100%-50px)] group/table-preview gap-sm relative">
-        <div className="absolute -top-3 -left-3 opacity-0 group-hover/table-preview:opacity-100 transition-all z-[1]">
-            <Button containerClassName="w-8 h-8" className="w-5 h-5" onClick={handleCodeToggle} data-testid="table-preview-code-toggle">
+    const canMoveToScratchpad = useMemo(() => {
+        return databaseSupportsScratchpad(current?.Type) && type.startsWith("sql:");
+    }, [current?.Type, type]);
+
+    return <div className="flex flex-col w-[calc(100%-50px)] group/table-preview gap-sm">
+        <div className="opacity-0 group-hover/table-preview:opacity-100 transition-all z-[1] flex gap-1 -transalte-y-full h-0">
+            <Button onClick={handleCodeToggle} data-testid="table-preview-code-toggle" variant="outline">
                 {cloneElement(showSQL ? <TableCellsIcon className="w-6 h-6" /> : <CodeBracketIcon className="w-6 h-6" />, {
                     className: "w-6 h-6",
                 })}
             </Button>
+            {canMoveToScratchpad && (
+                <Button 
+                    variant="outline"
+                    onClick={handleMoveToScratchpad} 
+                    data-testid="move-to-scratchpad-button"
+                    title="Move to Scratchpad"
+                >
+                    <CommandLineIcon className="w-6 h-6" />
+                </Button>
+            )}
         </div>
         <div className="flex items-center gap-lg overflow-hidden break-all leading-6 shrink-0 h-full w-full">
             {
@@ -129,6 +204,56 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
                     </Alert>
             }
         </div>
+        
+        <Dialog open={showScratchpadDialog} onOpenChange={setShowScratchpadDialog}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Move to Scratchpad</DialogTitle>
+                    <DialogDescription>
+                        Choose which scratchpad page to add this query to.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4 space-y-4">
+                    <div>
+                        <label className="text-sm font-medium mb-2 block">Select a page</label>
+                        <Select value={selectedPage} onValueChange={setSelectedPage}>
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Choose a page..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {pageOptions.map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                        {option.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    {selectedPage === "new" && (
+                        <div>
+                            <label className="text-sm font-medium mb-2 block">New page name</label>
+                            <Input
+                                value={newPageName}
+                                onChange={(e) => setNewPageName(e.target.value)}
+                                placeholder="Enter page name"
+                            />
+                        </div>
+                    )}
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => {
+                        setShowScratchpadDialog(false);
+                        setSelectedPage("new");
+                        setNewPageName("");
+                    }}>
+                        Cancel
+                    </Button>
+                    <Button onClick={handleScratchpadConfirm}>
+                        Move to Scratchpad
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </div>
 }
 

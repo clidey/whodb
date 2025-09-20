@@ -60,6 +60,7 @@ export {
   InformationCircleIcon,
   KeyIcon,
   LinkIcon,
+  LockClosedIcon,
   ListBulletIcon,
   MagnifyingGlassIcon,
   PencilIcon,

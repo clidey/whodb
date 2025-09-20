@@ -23,6 +23,8 @@ type ISettingsState = {
     fontSize: 'small' | 'medium' | 'large';
     borderRadius: 'none' | 'small' | 'medium' | 'large';
     spacing: 'compact' | 'comfortable' | 'spacious';
+    // Where condition mode
+    whereConditionMode: 'popover' | 'sheet';
 }
 
 const initialState: ISettingsState = {
@@ -32,6 +34,8 @@ const initialState: ISettingsState = {
     fontSize: 'medium',
     borderRadius: 'medium',
     spacing: 'comfortable',
+    // Where condition mode default
+    whereConditionMode: 'popover',
 }
 
 export const settingsSlice = createSlice({
@@ -53,6 +57,9 @@ export const settingsSlice = createSlice({
         },
         setSpacing: (state, action: PayloadAction<ISettingsState["spacing"]>) => {
             state.spacing = action.payload;
+        },
+        setWhereConditionMode: (state, action: PayloadAction<ISettingsState["whereConditionMode"]>) => {
+            state.whereConditionMode = action.payload;
         },
     },
 });

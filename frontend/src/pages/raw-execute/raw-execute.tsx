@@ -87,7 +87,9 @@ import { InternalPage } from "../../components/page";
 import { Tip } from "../../components/tip";
 import { InternalRoutes } from "../../config/routes";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { ScratchpadActions } from "../../store/scratchpad";
 import { isEEFeatureEnabled, loadEEModule } from "../../utils/ee-loader";
+import { useLocation } from "react-router-dom";
 import { IPluginProps, QueryView } from "./query-view";
 
 type EEExports = {
@@ -101,6 +103,7 @@ type IRawExecuteCellProps = {
     onAdd: (cellId: string) => void;
     onDelete?: (cellId: string) => void;
     showTools?: boolean;
+    cellData?: any;
 }
 
 enum ActionOptions {
@@ -287,11 +290,19 @@ const CopyButton: FC<{ text: string }> = ({text}) => {
     );
 }
 
-const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, showTools }) => {
-    const [mode, setMode] = useState<string>(ActionOptions.Query);
-    const [code, setCode] = useState("");
+const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, showTools, cellData }) => {
+    const dispatch = useAppDispatch();
+    const [mode, setMode] = useState<string>(cellData?.mode || ActionOptions.Query);
+    const [code, setCode] = useState(cellData?.code || "");
     const [submittedCode, setSubmittedCode] = useState("");
-    const [history, setHistory] = useState<{id: string, item: string, status: boolean, date: Date}[]>([]);
+    const [history, setHistory] = useState<{id: string, item: string, status: boolean, date: Date}[]>(() => {
+        if (!cellData?.history) return [];
+        // Ensure all dates are proper Date objects
+        return cellData.history.map((item: any) => ({
+            ...item,
+            date: item.date instanceof Date ? item.date : new Date(item.date)
+        }));
+    });
     const current = useAppSelector(state => state.auth.current);
     const handleExecute = useRef<(code: string) => Promise<any>>(() => Promise.resolve());
     const [historyOpen, setHistoryOpen] = useState(false);
@@ -305,6 +316,44 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     const [isResizingResults, setIsResizingResults] = useState(false);
     const [allowResultsResize, setAllowResultsResize] = useState(false);
     const resultsContainerRef = useRef<HTMLDivElement | null>(null);
+
+    // Sync local state with Redux state
+    useEffect(() => {
+        if (cellData) {
+            setCode(cellData.code || "");
+            setMode(cellData.mode || ActionOptions.Query);
+            // Ensure all dates are proper Date objects
+            const processedHistory = (cellData.history || []).map((item: any) => ({
+                ...item,
+                date: item.date instanceof Date ? item.date : new Date(item.date)
+            }));
+            setHistory(processedHistory);
+        }
+    }, [cellData]);
+
+    // Update Redux when code changes (but not on initial load)
+    const isInitialLoad = useRef(true);
+    useEffect(() => {
+        if (isInitialLoad.current) {
+            isInitialLoad.current = false;
+            return;
+        }
+        if (cellData && code !== cellData.code) {
+            dispatch(ScratchpadActions.updateCellCode({ cellId, code }));
+        }
+    }, [code, cellId, dispatch, cellData]);
+
+    // Update Redux when mode changes (but not on initial load)
+    const isInitialModeLoad = useRef(true);
+    useEffect(() => {
+        if (isInitialModeLoad.current) {
+            isInitialModeLoad.current = false;
+            return;
+        }
+        if (cellData && mode !== cellData.mode) {
+            dispatch(ScratchpadActions.updateCellMode({ cellId, mode }));
+        }
+    }, [mode, cellId, dispatch, cellData]);
 
     // State for all plugins, action options, and action option icons (not just EE)
     const [allPlugins, setAllPlugins] = useState<{ type: string, component: FC<IPluginProps> }[]>([
@@ -369,8 +418,13 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
         }).finally(() => {
             setLoading(false);
             setHistory(h => [historyItem, ...h]);
+            dispatch(ScratchpadActions.addCellHistory({ 
+                cellId, 
+                item: currentCode, 
+                status: historyItem.status 
+            }));
         });
-    }, [code, current, mode, allActionOptions, handleExecute]);
+    }, [code, current, mode, allActionOptions, handleExecute, cellId, dispatch]);
 
     const handleAdd = useCallback(() => {
         onAdd(cellId);
@@ -544,7 +598,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                     style={{ cursor: isResizing ? 'row-resize' : 'row-resize' }}
                 >
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
-                        <EllipsisHorizontalIcon className="w-8 text-gray-400" />
+                        <EllipsisHorizontalIcon className="w-4 h-4 text-gray-400" />
                     </div>
                 </div>
                 <div className="absolute top-1 right-1 z-10" data-testid="scratchpad-cell-options">
@@ -691,7 +745,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                             <div className="flex flex-col min-h-[60px]">
                                                 <div className="pr-12">
                                                     <div className="rounded-md overflow-hidden bg-neutral-50 dark:bg-[#1f1f1f]">
-                                                        <pre className="text-xs p-3 overflow-x-auto">
+                                                        <pre className="text-xs p-3 whitespace-pre-wrap">
                                                             <code>
                                                                 <SQLHighlighter code={item} />
                                                             </code>
@@ -700,7 +754,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                                 </div>
                                                 <div className="flex gap-sm mt-4 justify-between items-center">
                                                     <div className="text-xs text-muted-foreground">
-                                                        {formatDate(date)}
+                                                        {date instanceof Date ? formatDate(date) : 'Invalid date'}
                                                     </div>
                                                     <div className="flex gap-sm items-center">
                                                         <CopyButton text={item} />
@@ -761,7 +815,10 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                         <AlertDialogAction asChild>
                                             <Button
                                                 variant="destructive"
-                                                onClick={() => setHistory([])}
+                                                onClick={() => {
+                                                    setHistory([]);
+                                                    dispatch(ScratchpadActions.clearCellHistory({ cellId }));
+                                                }}
                                                 data-testid="clear-history-confirm"
                                             >
                                                 Clear History
@@ -778,32 +835,42 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     )
 }
 
-const RawExecuteSubPage: FC = () => {
-    const [cellIds, setCellIds] = useState<string[]>([v4()]);
+const RawExecuteSubPage: FC<{ 
+    pageId: string; 
+    cellIds: string[]; 
+    cells: Record<string, any>;
+}> = ({ pageId, cellIds = [], cells = {} }) => {
+    // Ensure cellIds is always an array
+    const safeCellIds = cellIds || [];
+    const dispatch = useAppDispatch();
     
     const handleAdd = useCallback((id: string) => {
-        const index = indexOf(cellIds, id);
-        const newCellIds = [...cellIds];
-        newCellIds.splice(index+1, 0, v4());
-        setCellIds(newCellIds);
-    }, [cellIds]);
+        dispatch(ScratchpadActions.addCell({ pageId, afterCellId: id }));
+    }, [dispatch, pageId]);
 
     const handleDelete = useCallback((cellId: string) => {
-        if (cellIds.length <= 1) {
+        if (safeCellIds.length <= 1) {
             return;
         }
-        setCellIds(ids => ids.filter(id => id !== cellId));
-    }, [cellIds.length]);
+        dispatch(ScratchpadActions.deleteCell({ pageId, cellId }));
+    }, [safeCellIds.length, dispatch, pageId]);
+
 
     return (
         <div className="flex justify-center items-center w-full">
             <div className="w-full flex flex-col gap-2">
                 {
-                    cellIds.map((cellId, index) => (
+                    safeCellIds.map((cellId, index) => (
                         <div key={cellId} data-testid={`cell-${index}`}>
                             {index > 0 && <Separator className="my-4" />}
-                            <RawExecuteCell key={cellId} cellId={cellId} onAdd={handleAdd} onDelete={cellIds.length <= 1 ? undefined : handleDelete}
-                                showTools={cellIds.length === 1} />
+                            <RawExecuteCell 
+                                key={cellId} 
+                                cellId={cellId} 
+                                onAdd={handleAdd} 
+                                onDelete={safeCellIds.length <= 1 ? undefined : handleDelete}
+                                showTools={safeCellIds.length === 1}
+                                cellData={cells[cellId]}
+                            />
                         </div>
                     ))
                 }
@@ -861,54 +928,71 @@ type Page = {
 }
 
 export const RawExecutePage: FC = () => {
-    const [pages, setPages] = useState<Page[]>(() => {
-        const newId = v4();
-        return [{ id: newId, name: "Page 1" }];
-    });
-
-    const [activePage, setActivePage] = useState(pages[0].id);
-    const [pageStates, setPageStates] = useState<{ [key: string]: ReactNode }>({});
+    const location = useLocation();
+    const dispatch = useAppDispatch();
+    const { pages = [], cells = {}, activePageId } = useAppSelector(state => state.scratchpad);
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [pageToDelete, setPageToDelete] = useState<string | null>(null);
 
     const aiState = useAI();
-    const dispatch = useAppDispatch();
+
+    // Initialize scratchpad and ensure all pages have cells
+    const hasInitialized = useRef(false);
+    useEffect(() => {
+        console.log('Initialization check:', { pagesLength: pages.length, hasInitialized: hasInitialized.current });
+        if (!hasInitialized.current) {
+            console.log('Ensuring scratchpad has proper structure...');
+            hasInitialized.current = true;
+            dispatch(ScratchpadActions.ensurePagesHaveCells());
+        }
+    }, [dispatch]);
+
+    // Handle navigation state from chat
+    const hasProcessedInitialQuery = useRef(false);
+    useEffect(() => {
+        const state = location.state as { initialQuery?: string; targetPage?: string } | null;
+        if (state?.initialQuery && !hasProcessedInitialQuery.current && activePageId) {
+            hasProcessedInitialQuery.current = true;
+            if (state.targetPage === "new") {
+                // Page was already created with the query in chat.tsx, no need to add anything
+                // The new page should already be active and contain the query
+            } else if (state.targetPage && state.targetPage !== "new") {
+                // Add to specific existing page and set it as active
+                dispatch(ScratchpadActions.addCellToPageAndActivate({ 
+                    pageId: state.targetPage, 
+                    initialQuery: state.initialQuery 
+                }));
+            } else {
+                // Add to current page
+                dispatch(ScratchpadActions.addCell({ 
+                    pageId: activePageId, 
+                    initialQuery: state.initialQuery 
+                }));
+            }
+        }
+    }, [location.state, activePageId, dispatch, pages.length]);
+
+    // Handle target page highlighting (when no initial query, just highlighting)
+    useEffect(() => {
+        const state = location.state as { initialQuery?: string; targetPage?: string } | null;
+        if (state?.targetPage && !state.initialQuery && state.targetPage !== "new") {
+            // Just highlight the target page without adding content
+            dispatch(ScratchpadActions.setActivePage({ pageId: state.targetPage }));
+        }
+    }, [location.state, dispatch]);
+
 
     const handleAdd = useCallback(() => {
-        const newId = v4();
-        setPages((prevPages) => [
-            ...prevPages,
-            { id: newId, name: `Page ${prevPages.length + 1}` },
-        ]);
-
-        setPageStates((prevStates) => ({
-            ...prevStates,
-            [newId]: <RawExecuteSubPage key={newId} />,
-        }));
-    }, []);
+        dispatch(ScratchpadActions.addPage({ name: `Page ${pages.length + 1}` }));
+    }, [dispatch, pages.length]);
 
     const handleSelect = useCallback((pageId: string) => {
-        setActivePage(pageId);
-    }, []);
+        dispatch(ScratchpadActions.setActivePage({ pageId }));
+    }, [dispatch]);
 
     const handleDelete = useCallback((pageId: string) => {
-        setPages((prevPages) => {
-            if (prevPages.length <= 1) return prevPages;
-            const updatedPages = prevPages.filter((page) => page.id !== pageId);
-
-            if (pageId === activePage) {
-                setActivePage(updatedPages[0].id);
-            }
-
-            return updatedPages;
-        });
-
-        setPageStates((prevStates) => {
-            const newStates = { ...prevStates };
-            delete newStates[pageId];
-            return newStates;
-        });
-    }, [activePage]);
+        dispatch(ScratchpadActions.deletePage({ pageId }));
+    }, [dispatch]);
 
     const promptDelete = useCallback((pageId: string) => {
         setPageToDelete(pageId);
@@ -916,27 +1000,9 @@ export const RawExecutePage: FC = () => {
     }, []);
 
     const handleUpdatePageName = useCallback((changedPage: Page, newName: string) => {
-        setPages(prevPages => {
-            const foundPageIndex = prevPages.findIndex(page => page.id === changedPage.id);
-            if (foundPageIndex === -1) {
-                return prevPages;
-            }
-            prevPages[foundPageIndex].name = newName;
-            return prevPages;
-        });
-    }, []);
+        dispatch(ScratchpadActions.updatePageName({ pageId: changedPage.id, name: newName }));
+    }, [dispatch]);
 
-    useEffect(() => {
-        setPageStates((prevStates) => {
-            const newStates = { ...prevStates };
-            pages.forEach((page) => {
-                if (newStates[page.id] == null) {
-                    newStates[page.id] = <RawExecuteSubPage key={page.id} />;
-                }
-            });
-            return newStates;
-        });
-    }, [pages]);
 
     return (
         <InternalPage routes={[InternalRoutes.RawExecute]}>
@@ -948,34 +1014,34 @@ export const RawExecutePage: FC = () => {
                 <div className="flex justify-center items-center w-full mt-4">
                     <div className="w-full flex flex-col gap-4">
                         <div className="flex justify-between items-center">
-                            <Tabs defaultValue="buttons" className="w-full h-full" value={activePage}>
+                            <Tabs className="w-full h-full" value={activePageId || ""}>
                                 <div className="flex gap-sm w-full justify-between">
-                                    <TabsList className="flex flex-wrap gap-sm" defaultValue={activePage} data-testid="page-tabs">
+                                    <TabsList className="flex flex-wrap gap-sm" data-testid="page-tabs">
                                         {
                                             pages.map((page, index) => (
-                                                <TabsTrigger value={page.id} key={page.id}
-                                                             onClick={() => handleSelect(page.id)}
-                                                             data-testid={`page-tab-${index}`}>
-                                                    <div className="flex items-center gap-2 group">
-                                                        <EditableInput page={page} setValue={(newName) => handleUpdatePageName(page, newName)} />
-                                                        <button
-                                                            type="button"
-                                                            title="Delete page"
-                                                            onClick={(e) => {
-                                                                e.preventDefault();
-                                                                e.stopPropagation();
-                                                                promptDelete(page.id);
-                                                            }}
-                                                            className={cn("opacity-0 group-hover:opacity-100 transition-opacity", {
-                                                                "hidden": pages.length <= 1,
-                                                            })}
-                                                            aria-label="Delete page"
-                                                            data-testid={`delete-page-tab-${index}`}
-                                                        >
-                                                            <XMarkIcon className="w-3 h-3" />
-                                                        </button>
-                                                    </div>
-                                                </TabsTrigger>
+                                                    <TabsTrigger value={page.id} key={page.id}
+                                                                 onClick={() => handleSelect(page.id)}
+                                                                 data-testid={`page-tab-${index}`}>
+                                                        <div className="flex items-center gap-2 group">
+                                                            <EditableInput page={page} setValue={(newName) => handleUpdatePageName(page, newName)} />
+                                                            <button
+                                                                type="button"
+                                                                title="Delete page"
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    promptDelete(page.id);
+                                                                }}
+                                                                className={cn("opacity-0 group-hover:opacity-100 transition-opacity", {
+                                                                    "hidden": pages.length <= 1,
+                                                                })}
+                                                                aria-label="Delete page"
+                                                                data-testid={`delete-page-tab-${index}`}
+                                                            >
+                                                                <XMarkIcon className="w-3 h-3" />
+                                                            </button>
+                                                        </div>
+                                                    </TabsTrigger>
                                             ))
                                         }
                                         <TabsTrigger value="add" onClick={handleAdd} data-testid="add-page-button">
@@ -983,20 +1049,25 @@ export const RawExecutePage: FC = () => {
                                         </TabsTrigger>
                                     </TabsList>
                                 </div>
-                                <TabsContent value={activePage} className="h-full w-full mt-4">
+                                <TabsContent value={activePageId || ""} className="h-full w-full mt-4">
                                     <AnimatePresence mode="wait">
-                                        {Object.entries(pageStates).map(([id, component]) => (
+                                        {pages.map((page) => (
                                             <motion.div
-                                                key={id}
+                                                key={page.id}
                                                 className={classNames({
-                                                    "hidden": id !== activePage,
+                                                    "hidden": page.id !== activePageId,
                                                 })}
                                                 // todo this animation
                                                 initial={{ opacity: 0, y: 10 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 exit={{ opacity: 0, y: -10 }}
                                             >
-                                                {component}
+                                                <RawExecuteSubPage 
+                                                    key={page.id} 
+                                                    pageId={page.id}
+                                                    cellIds={page.cellIds || []}
+                                                    cells={cells}
+                                                />
                                             </motion.div>
                                         ))}
                                     </AnimatePresence>
