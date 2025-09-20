@@ -1,94 +1,100 @@
-# Copyright 2025 Clidey, Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 #!/bin/bash
 
-# Simple prebuild script for current platform
-# Builds backend and frontend for current platform only
+# WhoDB Desktop Prebuild Script for Current Platform
+# This script builds the Go backend only for the current platform
 
 set -e
 
 # Colors for output
+RED='\033[0;31m'
 GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+YELLOW='\033[1;33m'
+NC='\033[0m'
 
-print_status() {
-    echo -e "${BLUE}[INFO]${NC} $1"
-}
+echo -e "${GREEN}WhoDB Desktop Prebuild Script (Current Platform)${NC}"
+echo "================================================"
 
-print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
+# Detect current platform
+CURRENT_OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+CURRENT_ARCH=$(uname -m)
 
-# Default values
-BUILD_EE=false
+# Convert to Go naming
+case $CURRENT_OS in
+    darwin) GOOS="darwin" ;;
+    linux) GOOS="linux" ;;
+    mingw*|msys*|cygwin*) GOOS="windows" ;;
+    *) echo -e "${RED}Unsupported OS: $CURRENT_OS${NC}"; exit 1 ;;
+esac
 
-# Parse arguments
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        --ee)
-            BUILD_EE=true
-            shift
-            ;;
-        -h|--help)
-            echo "Usage: $0 [OPTIONS]"
-            echo ""
-            echo "Options:"
-            echo "  --ee         Build Enterprise Edition"
-            echo "  -h, --help   Show this help message"
-            exit 0
-            ;;
-        *)
-            echo "Unknown option: $1"
-            exit 1
-            ;;
-    esac
-done
+case $CURRENT_ARCH in
+    x86_64) GOARCH="amd64" ;;
+    aarch64|arm64) GOARCH="arm64" ;;
+    *) echo -e "${RED}Unsupported architecture: $CURRENT_ARCH${NC}"; exit 1 ;;
+esac
 
-print_status "Building WhoDB for current platform..."
+echo -e "${YELLOW}Building for $GOOS/$GOARCH${NC}"
 
-# Build frontend
-print_status "Building frontend..."
+# Determine if building EE or CE
+IS_EE=false
+if [ -n "$GOWORK" ] && [[ "$GOWORK" == *"go.work.ee"* ]]; then
+    IS_EE=true
+    echo -e "${YELLOW}Building Enterprise Edition${NC}"
+else
+    echo -e "${YELLOW}Building Community Edition${NC}"
+fi
+
+# Create binaries directory
+mkdir -p src-tauri/binaries
+
+# Step 1: Build frontend
+echo -e "\n${GREEN}Step 1: Building frontend...${NC}"
 cd ../frontend
-
-if [ "$BUILD_EE" = true ]; then
+if [ "$IS_EE" = true ]; then
     pnpm run build:ee
 else
     pnpm run build
 fi
+echo -e "${GREEN}Frontend build complete${NC}"
 
-# Copy frontend build to core
-print_status "Copying frontend build to core..."
+# Step 2: Copy frontend build to core
+echo -e "\n${GREEN}Step 2: Copying frontend build to core...${NC}"
 rm -rf ../core/build
 cp -r build ../core/
+echo -e "${GREEN}Frontend copied to core/build${NC}"
 
-cd ../desktop
-
-# Build backend
-print_status "Building backend..."
+# Step 3: Build Go backend
 cd ../core
+echo -e "\n${GREEN}Step 3: Building Go backend...${NC}"
 
-# Determine build command
-if [ "$BUILD_EE" = true ]; then
-    GOWORK=$PWD/../go.work.ee go build -tags ee -o dist/whodb .
+# Set output name
+if [ "$GOOS" = "windows" ]; then
+    OUTPUT="../desktop/src-tauri/binaries/whodb.exe"
 else
-    go build -o dist/whodb .
+    OUTPUT="../desktop/src-tauri/binaries/whodb"
 fi
 
-cd ../desktop
+# Set build tags
+BUILD_TAGS=""
+if [ "$IS_EE" = true ]; then
+    BUILD_TAGS="-tags ee"
+fi
 
-print_success "Backend and frontend built successfully!"
-print_status "Current platform executable is now available in ../core/dist/whodb"
+# Build command
+if [ "$IS_EE" = true ]; then
+    GOWORK=$GOWORK go build $BUILD_TAGS -o "$OUTPUT" .
+else
+    go build -o "$OUTPUT" .
+fi
 
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}✓ Built successfully${NC}"
+    if [ "$GOOS" != "windows" ]; then
+        chmod +x "$OUTPUT"
+    fi
+    ls -lh "$OUTPUT"
+else
+    echo -e "${RED}✗ Build failed${NC}"
+    exit 1
+fi
+
+echo -e "\n${GREEN}Prebuild complete!${NC}"

@@ -1,19 +1,26 @@
 {
-  "name": "whodb-workspace",
-  "version": "1.0.0",
-  "description": "WhoDB - Database Management Tool",
+  "name": "whodb",
+  "version": "0.1.0",
   "private": true,
+  "description": "WhoDB - Open source database management tool",
   "scripts": {
     "desktop:install": "cd desktop && npm install",
-    "desktop:dev": "concurrently \"cd core && go run .\" \"cd desktop && npm run dev\"",
-    "desktop:build-backend": "cd core && go build -o ../desktop/whodb",
-    "desktop:build": "npm run desktop:build-backend && cd desktop && npm run build",
-    "desktop:dist": "npm run desktop:build-backend && cd desktop && npm run dist",
-    "desktop:dist:win": "npm run desktop:build-backend && cd desktop && npm run dist:win",
-    "desktop:dist:mac": "npm run desktop:build-backend && cd desktop && npm run dist:mac",
-    "desktop:dist:linux": "npm run desktop:build-backend && cd desktop && npm run dist:linux"
+    "desktop:dev": "cd desktop && npm run dev",
+    "desktop:build": "cd desktop && npm run build:current",
+    "desktop:build:all": "cd desktop && npm run build:all",
+    "desktop:dist": "cd desktop && npm run build:all",
+    "desktop:icon": "cd desktop && ./generate-icons.sh",
+    "frontend:dev": "cd frontend && pnpm start",
+    "frontend:build": "cd frontend && pnpm build",
+    "backend:dev": "cd core && go run .",
+    "dev": "concurrently \"npm:backend:dev\" \"npm:frontend:dev\""
   },
   "devDependencies": {
-    "concurrently": "^9.0.0"
-  }
+    "concurrently": "^7.6.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/clidey/whodb.git"
+  },
+  "license": "MIT"
 }

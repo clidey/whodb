@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhoDB</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background-color: #1e1e1e;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        
+        .loading-container {
+            text-align: center;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #333;
+            border-radius: 50%;
+            border-top-color: #007acc;
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .status {
+            font-size: 16px;
+            opacity: 0.8;
+        }
+        
+        iframe {
+            width: 100vw;
+            height: 100vh;
+            border: none;
+            display: none;
+        }
+        
+        .error {
+            color: #ff6b6b;
+            margin-top: 20px;
+            padding: 20px;
+            background-color: rgba(255, 107, 107, 0.1);
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-container">
+        <div class="spinner"></div>
+        <div class="status">Starting WhoDB backend...</div>
+    </div>
+    <iframe id="app-frame" title="WhoDB"></iframe>
+    
+    <script type="module" src="./main.js"></script>
+</body>
+</html>

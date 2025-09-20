@@ -1,95 +1,20 @@
 {
-  "name": "WhoDB",
-  "version": "1.0.0",
-  "description": "WhoDB Desktop Application",
-  "main": "main.js",
+  "name": "whodb-desktop",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
   "scripts": {
-    "start": "electron .",
-    "dev": "electron . --dev",
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "build:current": "./prebuild-current.sh && tauri build --target current",
+    "build:all": "./prebuild.sh && tauri build",
     "prebuild": "./prebuild.sh",
-    "prebuild:current": "./prebuild-current.sh",
-    "prebuild:ee": "./prebuild.sh --ee",
-    "prebuild:current:ee": "./prebuild-current.sh --ee",
-    "build": "npm run prebuild && electron-builder --mac --win --linux",
-    "build:current": "npm run prebuild:current && electron-builder",
-    "build:ee": "npm run prebuild:ee && electron-builder --mac --win --linux",
-    "build:current:ee": "npm run prebuild:current:ee && electron-builder",
-    "dist": "npm run prebuild && electron-builder --mac --win --linux --publish=never",
-    "dist:current": "npm run prebuild:current && electron-builder --publish=never",
-    "dist:ee": "npm run prebuild:ee && electron-builder --mac --win --linux --publish=never",
-    "dist:current:ee": "npm run prebuild:current:ee && electron-builder --publish=never",
-    "dist:win": "npm run prebuild && electron-builder --win",
-    "dist:mac": "npm run prebuild && electron-builder --mac",
-    "dist:linux": "npm run prebuild && electron-builder --linux"
-  },
-  "build": {
-    "appId": "com.clidey.whodb",
-    "productName": "WhoDB",
-    "directories": {
-      "output": "dist"
-    },
-    "files": [
-      "main.js",
-      "preload.js",
-      "icon.*"
-    ],
-    "extraFiles": [
-      {
-        "from": "../core/dist",
-        "to": "resources/dist"
-      },
-      {
-        "from": "../core/build",
-        "to": "resources/build"
-      }
-    ],
-    "mac": {
-      "category": "public.app-category.developer-tools",
-      "icon": "icon.icns",
-      "target": [
-        {
-          "target": "dmg",
-          "arch": ["x64", "arm64"]
-        },
-        {
-          "target": "zip",
-          "arch": ["x64", "arm64"]
-        }
-      ]
-    },
-    "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": ["x64"]
-        },
-        {
-          "target": "portable",
-          "arch": ["x64"]
-        }
-      ],
-      "icon": "icon.ico"
-    },
-    "linux": {
-      "target": [
-        {
-          "target": "AppImage",
-          "arch": ["x64", "arm64"]
-        },
-        {
-          "target": "deb",
-          "arch": ["x64", "arm64"]
-        }
-      ],
-      "category": "Development",
-      "icon": "icon.png"
-    }
-  },
-  "devDependencies": {
-    "electron": "^33.0.0",
-    "electron-builder": "^25.1.8"
+    "prebuild:current": "./prebuild-current.sh"
   },
   "dependencies": {
-    "electron-is-dev": "^3.0.1"
+    "@tauri-apps/api": "^1.5.3"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^1.5.11"
   }
 }
