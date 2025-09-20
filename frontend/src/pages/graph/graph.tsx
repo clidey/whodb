@@ -29,9 +29,8 @@ import {getDatabaseStorageUnitLabel} from "../../utils/functions";
 import {StorageUnitGraphCard} from "../storage-unit/storage-unit";
 import {Button, EmptyState, SearchInput, Sidebar as SidebarComponent, SidebarContent, SidebarGroup, SidebarHeader, SidebarProvider, toTitleCase} from "@clidey/ux";
 import {useNavigate} from "react-router-dom";
-import {CircleStackIcon} from "@heroicons/react/24/outline";
+import {CircleStackIcon, FolderIcon, TableCellsIcon} from "../../components/heroicons";
 import {databaseUsesSchemaForGraph} from "../../utils/database-features";
-import {FolderIcon, TableCellsIcon} from "@heroicons/react/24/outline";
 
 // Helper function to group storage units by type
 function groupByType(units: StorageUnit[]) {

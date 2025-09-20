@@ -17,7 +17,7 @@
 import React, { FC, useEffect, useMemo } from "react";
 import { StorageUnitTable } from "../../components/table";
 import { useRawExecuteLazyQuery } from "../../generated/graphql";
-import { CheckCircleIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon } from "../../components/heroicons";
 
 type PromiseFunction = (code: string) => Promise<any>;
 

@@ -61,7 +61,7 @@ import {
     PlayIcon,
     PlusCircleIcon,
     XMarkIcon
-} from "@heroicons/react/24/outline";
+} from "../../components/heroicons";
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import { indexOf } from "lodash";

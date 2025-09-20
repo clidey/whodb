@@ -541,3 +541,70 @@ Cypress.Commands.add('selectMockData', () => {
     });
     cy.wait(100);
 });
+
+// Query History Commands
+Cypress.Commands.add('openQueryHistory', () => {
+    // Click the options menu (three dots) in the scratchpad cell
+    cy.get('[data-testid="icon-button"]').click();
+    // Click on "Query History" option
+    cy.contains('Query History').click();
+    // Wait for the history dialog to open
+    cy.get('[role="dialog"]').should('be.visible');
+    cy.contains('h2', 'Query History').should('be.visible');
+});
+
+Cypress.Commands.add('getQueryHistoryItems', () => {
+    // Returns an array of query history items with their text content
+    return cy.get('[role="dialog"] [data-testid^="query-history-item-"]').then($items => {
+        const items = [];
+        $items.each((index, item) => {
+            const text = item.textContent || '';
+            const queryText = text.split('\n')[0]; // Get the first line (query text)
+            items.push(queryText.trim());
+        });
+        return items;
+    });
+});
+
+Cypress.Commands.add('copyQueryFromHistory', (index = 0) => {
+    // Click the copy button for the specified history item
+    cy.get('[role="dialog"] [data-testid^="query-history-item-"]').eq(index)
+        .within(() => {
+            cy.get('[data-testid="copy-button"]').click();
+        });
+    // Verify toast notification appears
+    cy.contains('Code copied to clipboard').should('be.visible');
+});
+
+Cypress.Commands.add('cloneQueryToEditor', (index = 0) => {
+    // Click the clone to editor button for the specified history item
+    cy.get('[role="dialog"] [data-testid^="query-history-item-"]').eq(index)
+        .within(() => {
+            cy.get('[data-testid="clone-to-editor-button"]').click();
+        });
+    // Dialog should close automatically
+    cy.get('[role="dialog"]').should('not.exist');
+});
+
+Cypress.Commands.add('executeQueryFromHistory', (index = 0) => {
+    // Click the run button for the specified history item
+    cy.get('[role="dialog"] [data-testid^="query-history-item-"]').eq(index)
+        .within(() => {
+            cy.get('[data-testid="run-history-button"]').click();
+        });
+    // Dialog should close automatically
+    cy.get('[role="dialog"]').should('not.exist');
+    // Wait for query execution
+    cy.wait(500);
+});
+
+Cypress.Commands.add('closeQueryHistory', () => {
+    // Close the query history dialog
+    cy.get('body').type('{esc}');
+    cy.get('[role="dialog"]').should('not.exist');
+});
+
+Cypress.Commands.add('verifyQueryInEditor', (expectedQuery) => {
+    // Verify that the editor contains the expected query text
+    cy.get('[data-testid="code-editor"] .cm-content').should('contain.text', expectedQuery);
+});

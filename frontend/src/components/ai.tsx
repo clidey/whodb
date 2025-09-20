@@ -47,7 +47,7 @@ import {
     PlusIcon,
     TrashIcon,
     XMarkIcon
-} from "@heroicons/react/24/outline";
+} from "./heroicons";
 import {map} from "lodash";
 import {FC, ReactElement, useCallback, useEffect, useMemo, useState} from "react";
 import {v4} from "uuid";

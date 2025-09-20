@@ -25,7 +25,7 @@ import {
     TreeDataItem,
 } from "@clidey/ux";
 import { StorageUnit, useGetStorageUnitsQuery } from "@graphql";
-import { FolderIcon, TableCellsIcon } from "@heroicons/react/24/outline";
+import { FolderIcon, TableCellsIcon } from "./heroicons";
 import { FC, useCallback, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { InternalRoutes } from "../config/routes";

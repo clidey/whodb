@@ -31,7 +31,7 @@ import {sql} from "@codemirror/lang-sql";
 import {EditorState, RangeSet} from "@codemirror/state";
 import {oneDark} from "@codemirror/theme-one-dark";
 import {EditorView, gutter, GutterMarker, lineNumbers} from "@codemirror/view";
-import {EyeIcon, EyeSlashIcon} from "@heroicons/react/24/outline";
+import {EyeIcon, EyeSlashIcon} from "./heroicons";
 import classNames from "classnames";
 import {basicSetup} from "codemirror";
 import React, {FC, useCallback, useEffect, useMemo, useRef, useState} from "react";

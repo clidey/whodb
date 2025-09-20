@@ -15,7 +15,7 @@
  */
 
 import { Alert, AlertTitle, AlertDescription, Button, toast } from "@clidey/ux";
-import { BellAlertIcon, CheckCircleIcon, ClipboardDocumentIcon } from "@heroicons/react/24/outline";
+import { BellAlertIcon, CheckCircleIcon, ClipboardDocumentIcon } from "./heroicons";
 import { useState } from "react";
 
 interface ErrorStateProps {

@@ -84,7 +84,7 @@ import {
     ShareIcon,
     TrashIcon,
     XMarkIcon,
-} from "@heroicons/react/24/outline";
+} from "./heroicons";
 import { FC, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Export } from "./export";
 import { Tip } from "./tip";

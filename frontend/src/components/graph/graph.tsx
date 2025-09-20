@@ -15,7 +15,7 @@
  */
 
 import { Tabs, TabsList, TabsTrigger } from '@clidey/ux';
-import { ArrowDownTrayIcon, RectangleGroupIcon } from '@heroicons/react/24/outline';
+import { ArrowDownTrayIcon, RectangleGroupIcon } from '../heroicons';
 import classNames from 'classnames';
 import { toPng } from 'html-to-image';
 import { Dispatch, FC, ReactNode, SetStateAction, useCallback, useMemo, useRef, useState } from "react";

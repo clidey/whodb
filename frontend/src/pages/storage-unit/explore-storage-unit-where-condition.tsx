@@ -30,7 +30,7 @@ import {
     SheetTitle
 } from "@clidey/ux";
 import {AtomicWhereCondition, WhereCondition, WhereConditionType} from '@graphql';
-import {CheckCircleIcon, PlusCircleIcon, XCircleIcon, XMarkIcon} from "@heroicons/react/24/outline";
+import {CheckCircleIcon, PlusCircleIcon, XCircleIcon, XMarkIcon} from "../../components/heroicons";
 import classNames from "classnames";
 import {FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {twMerge} from "tailwind-merge";

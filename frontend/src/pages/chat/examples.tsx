@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { CircleStackIcon, UsersIcon, UserGroupIcon, InformationCircleIcon, PresentationChartLineIcon, ShoppingBagIcon, BuildingStorefrontIcon, BanknotesIcon, PresentationChartBarIcon } from "@heroicons/react/24/outline";
+import { CircleStackIcon, UsersIcon, UserGroupIcon, InformationCircleIcon, PresentationChartLineIcon, ShoppingBagIcon, BuildingStorefrontIcon, BanknotesIcon, PresentationChartBarIcon } from "../../components/heroicons";
 
 export const chatExamples = [
     {

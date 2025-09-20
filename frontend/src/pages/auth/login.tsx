@@ -37,7 +37,7 @@ import {InternalRoutes} from "../../config/routes";
 import {AuthActions} from "../../store/auth";
 import {DatabaseActions} from "../../store/database";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
-import {AdjustmentsHorizontalIcon, CheckCircleIcon, CircleStackIcon} from '@heroicons/react/24/outline';
+import {AdjustmentsHorizontalIcon, CheckCircleIcon, CircleStackIcon} from '../../components/heroicons';
 import logoImage from "../../../public/images/logo.png";
 
 

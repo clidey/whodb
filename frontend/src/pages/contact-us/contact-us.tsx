@@ -15,7 +15,7 @@
  */
 
 import {Badge, Button, Label, Separator} from "@clidey/ux";
-import {ChatBubbleLeftRightIcon, EnvelopeIcon, GlobeAltIcon} from "@heroicons/react/24/outline";
+import {ChatBubbleLeftRightIcon, EnvelopeIcon, GlobeAltIcon} from "../../components/heroicons";
 import {FC} from "react";
 import {InternalPage} from "../../components/page";
 import {InternalRoutes} from "../../config/routes";

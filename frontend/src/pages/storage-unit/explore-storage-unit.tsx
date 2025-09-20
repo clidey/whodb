@@ -47,7 +47,7 @@ import {
     useUpdateStorageUnitMutation,
     WhereCondition
 } from '@graphql';
-import { CheckCircleIcon, CommandLineIcon, PlayIcon, PlusCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon, CommandLineIcon, PlayIcon, PlusCircleIcon, XMarkIcon } from "../../components/heroicons";
 import { keys } from "lodash";
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";

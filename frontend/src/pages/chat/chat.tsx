@@ -23,7 +23,7 @@ import {
     CodeBracketIcon,
     SparklesIcon,
     TableCellsIcon
-} from "@heroicons/react/24/outline";
+} from "../../components/heroicons";
 import classNames from "classnames";
 import { cloneElement, FC, KeyboardEventHandler, useCallback, useMemo, useRef, useState } from "react";
 import logoImage from "../../../public/images/logo.png";

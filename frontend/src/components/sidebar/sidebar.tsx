@@ -55,7 +55,7 @@ import {
     RectangleGroupIcon,
     SparklesIcon,
     TableCellsIcon
-} from "@heroicons/react/24/outline";
+} from "../heroicons";
 import classNames from "classnames";
 import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
