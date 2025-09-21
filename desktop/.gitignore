@@ -1,1 +1,10 @@
 whodb-core
+dist/
+src-tauri/target/
+src-tauri/binaries/
+src-tauri/icons/icon.iconset/
+src-tauri/WixTools/
+src-tauri/*.log
+*.log
+Cargo.lock
+node_modules

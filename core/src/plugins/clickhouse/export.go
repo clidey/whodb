@@ -18,10 +18,10 @@ package clickhouse
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/plugins/gorm"
 )
 
 // ExportData exports ClickHouse table data to tabular format
@@ -35,14 +35,12 @@ func (p *ClickHousePlugin) ExportData(config *engine.PluginConfig, schema string
 		return err
 	}
 
-	// Get column information
-	query := `
-		SELECT name, type 
-		FROM system.columns 
-		WHERE database = ? AND table = ?
-		ORDER BY position`
-
-	rows, err := db.Raw(query, schema, storageUnit).Rows()
+	// Get column information using GORM's query builder
+	rows, err := db.Table("system.columns").
+		Select("name, type").
+		Where("database = ? AND table = ?", schema, storageUnit).
+		Order("position").
+		Rows()
 	if err != nil {
 		return fmt.Errorf("failed to get columns: %v", err)
 	}
@@ -68,16 +66,16 @@ func (p *ClickHousePlugin) ExportData(config *engine.PluginConfig, schema string
 		return fmt.Errorf("failed to write headers: %v", err)
 	}
 
-	// Export data with proper identifier escaping
-	// Escape column names
-	escapedColumns := make([]string, len(columns))
-	for i, col := range columns {
-		escapedColumns[i] = EscapeIdentifier(col)
-	}
-	selectQuery := fmt.Sprintf("SELECT %s FROM %s.%s",
-		strings.Join(escapedColumns, ", "), EscapeIdentifier(schema), EscapeIdentifier(storageUnit))
+	// Use GORM query builder for export
+	builder := gorm_plugin.NewSQLBuilder(db, p)
+	fullTable := builder.BuildFullTableName(schema, storageUnit)
 
-	dataRows, err := db.Raw(selectQuery).Rows()
+	exportQuery := db.Table(fullTable)
+	if len(columns) > 0 {
+		exportQuery = exportQuery.Select(columns)
+	}
+
+	dataRows, err := exportQuery.Rows()
 	if err != nil {
 		return fmt.Errorf("failed to query data: %v", err)
 	}
@@ -107,10 +105,8 @@ func (p *ClickHousePlugin) ExportData(config *engine.PluginConfig, schema string
 		rowCount++
 	}
 
-
 	return dataRows.Err()
 }
-
 
 // Helper functions
 
@@ -128,15 +124,7 @@ func (p *ClickHousePlugin) formatValue(val any) string {
 	default:
 		strVal = fmt.Sprintf("%v", v)
 	}
-	
+
 	// Apply formula injection protection
 	return common.EscapeFormula(strVal)
 }
-
-// EscapeIdentifier escapes ClickHouse identifiers to prevent SQL injection
-func EscapeIdentifier(identifier string) string {
-	// ClickHouse uses backticks for identifier escaping
-	// Replace any backticks in the identifier with doubled backticks
-	return "`" + strings.ReplaceAll(identifier, "`", "``") + "`"
-}
-

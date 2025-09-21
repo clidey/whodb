@@ -17,35 +17,41 @@
 package mysql
 
 import (
-	"fmt"
-	"github.com/clidey/whodb/core/src/engine"
 	"strings"
+
+	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/plugins/gorm"
+	"gorm.io/gorm"
 )
 
-func (p *MySQLPlugin) GetCreateTableQuery(schema string, storageUnit string, columns []engine.Record) string {
-	var columnDefs []string
-	for _, column := range columns {
-		columnDef := fmt.Sprintf("%s %s", column.Key, column.Value)
+func (p *MySQLPlugin) GetCreateTableQuery(db *gorm.DB, schema string, storageUnit string, columns []engine.Record) string {
+	builder := p.GormPluginFunctions.CreateSQLBuilder(db)
+
+	// Convert engine.Record to ColumnDef
+	columnDefs := make([]gorm_plugin.ColumnDef, len(columns))
+	for i, column := range columns {
+		def := gorm_plugin.ColumnDef{
+			Name: column.Key,
+			Type: column.Value,
+		}
 
 		if primary, ok := column.Extra["primary"]; ok && primary == "true" {
 			lowerType := strings.ToLower(column.Value)
 			if strings.Contains(lowerType, "int") {
-				columnDef = fmt.Sprintf("%s PRIMARY KEY AUTO_INCREMENT", columnDef)
+				def.Primary = true
+				def.Extra = "AUTO_INCREMENT"
 			} else {
-				columnDef = fmt.Sprintf("%s PRIMARY KEY", columnDef)
+				def.Primary = true
 			}
 		} else {
 			if nullable, ok := column.Extra["nullable"]; ok && nullable == "false" {
-				columnDef = fmt.Sprintf("%s NOT NULL", columnDef)
+				def.NotNull = true
 			}
 		}
 
-		columnDefs = append(columnDefs, columnDef)
+		columnDefs[i] = def
 	}
 
-	columnDefsStr := strings.Join(columnDefs, ", ")
-
 	// MySQL/MariaDB syntax uses database.table rather than schema.table
-	createTableQuery := "CREATE TABLE %s.%s (%s)"
-	return fmt.Sprintf(createTableQuery, schema, storageUnit, columnDefsStr)
+	return builder.CreateTableQuery(schema, storageUnit, columnDefs)
 }

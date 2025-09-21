@@ -122,10 +122,21 @@ if [ -f "$COVERAGE_FILE" ]; then
     rm -f "$COVERAGE_FILE"
 fi
 
+# Clean up frontend coverage artifacts to start fresh
+echo "🧹 Cleaning previous frontend coverage artifacts..."
+if [ -d "$PROJECT_ROOT/frontend/.nyc_output" ]; then
+    rm -rf "$PROJECT_ROOT/frontend/.nyc_output"
+    echo "✅ Removed .nyc_output directory"
+fi
+if [ -d "$PROJECT_ROOT/frontend/coverage" ]; then
+    rm -rf "$PROJECT_ROOT/frontend/coverage"
+    echo "✅ Removed coverage directory"
+fi
+
 # Start the CE test server with coverage
 echo "🚀 Starting CE test server with coverage..."
 cd "$PROJECT_ROOT/core"
-ENVIRONMENT=dev WHODB_ENABLE_MOCK_DATA_GENERATION='users' ./server.test -test.run=^TestMain$ -test.coverprofile=coverage.out &
+ENVIRONMENT=dev WHODB_DISABLE_MOCK_DATA_GENERATION='orders,DEPARTMENTS' ./server.test -test.run=^TestMain$ -test.coverprofile=coverage.out &
 TEST_SERVER_PID=$!
 
 # Save PID for cleanup

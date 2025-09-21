@@ -19,12 +19,14 @@ package mockdata
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 )
 
 const (
@@ -122,17 +124,17 @@ func (g *Generator) generateByType(dbType string, columnType string, constraints
 		lowerType := strings.ToLower(columnType)
 		switch {
 		case strings.Contains(lowerType, "tinyint"):
-			return int8(g.faker.Int8())
+			return g.faker.Int8()
 		case strings.Contains(lowerType, "smallint"):
-			return int16(g.faker.Int16())
+			return g.faker.Int16()
 		case strings.Contains(lowerType, "bigint"):
-			return int64(g.faker.Int64())
+			return g.faker.Int64()
 		case strings.Contains(lowerType, "int32"):
-			return int32(g.faker.Int32())
+			return g.faker.Int32()
 		case strings.Contains(lowerType, "int16"):
-			return int16(g.faker.Int16())
+			return g.faker.Int16()
 		case strings.Contains(lowerType, "int8"):
-			return int8(g.faker.Int8())
+			return g.faker.Int8()
 		default:
 			return int(g.faker.Int8())
 		}
@@ -141,17 +143,17 @@ func (g *Generator) generateByType(dbType string, columnType string, constraints
 		lowerType := strings.ToLower(columnType)
 		switch {
 		case strings.Contains(lowerType, "tinyint unsigned") || strings.Contains(lowerType, "uint8"):
-			return uint8(g.faker.Uint8())
+			return g.faker.Uint8()
 		case strings.Contains(lowerType, "smallint unsigned") || strings.Contains(lowerType, "uint16"):
-			return uint16(g.faker.Uint16())
+			return g.faker.Uint16()
 		case strings.Contains(lowerType, "bigint unsigned") || strings.Contains(lowerType, "uint64"):
-			return uint64(g.faker.Uint64())
+			return g.faker.Uint64()
 		case strings.Contains(lowerType, "uint32"):
-			return uint32(g.faker.Uint32())
+			return g.faker.Uint32()
 		case strings.Contains(lowerType, "uint16"):
-			return uint16(g.faker.Uint16())
+			return g.faker.Uint16()
 		case strings.Contains(lowerType, "uint8"):
-			return uint8(g.faker.Uint8())
+			return g.faker.Uint8()
 		default:
 			return uint(g.faker.Uint8())
 		}
@@ -215,6 +217,7 @@ func (g *Generator) generateByType(dbType string, columnType string, constraints
 // Returns properly typed values that the database driver can handle
 func (g *Generator) GenerateValue(columnName string, columnType string, constraints map[string]any) (any, error) {
 	columnTypeLower := strings.ToLower(columnType)
+	log.Logger.WithField("column", columnName).WithField("type", columnType).Debug("Generating value for column")
 
 	// Check constraints
 	allowNull := false
@@ -235,7 +238,9 @@ func (g *Generator) GenerateValue(columnName string, columnType string, constrai
 
 	// Generate value based on database type and constraints
 	dbType := detectDatabaseType(columnTypeLower)
+	log.Logger.WithField("column", columnName).WithField("dbType", dbType).Debug("Detected database type")
 	value := g.generateByType(dbType, columnTypeLower, constraints)
+	log.Logger.WithField("column", columnName).WithField("value", value).Debug("Generated value")
 
 	// For columns that require uniqueness, use inherently unique generators
 	if requireUnique {
@@ -255,6 +260,7 @@ func (g *Generator) GenerateValue(columnName string, columnType string, constrai
 
 // GenerateRowDataWithConstraints generates mock data for a complete row
 func (g *Generator) GenerateRowDataWithConstraints(columns []engine.Column, colConstraints map[string]map[string]any) ([]engine.Record, error) {
+	log.Logger.WithField("columnCount", len(columns)).Debug("Starting row data generation")
 
 	records := make([]engine.Record, 0, len(columns))
 
@@ -273,6 +279,7 @@ func (g *Generator) GenerateRowDataWithConstraints(columns []engine.Column, colC
 
 		value, err := g.GenerateValue(col.Name, col.Type, constraints)
 		if err != nil {
+			log.Logger.WithError(err).WithField("column", col.Name).WithField("type", col.Type).Error("Failed to generate value for column")
 			return nil, fmt.Errorf("failed to generate value for column %s: %w", col.Name, err)
 		}
 
@@ -322,11 +329,13 @@ func (g *Generator) GenerateRowData(columns []engine.Column) ([]engine.Record, e
 // GenerateRowWithDefaults generates a row using safe default values
 // This is used as a fallback when constraint violations occur
 func (g *Generator) GenerateRowWithDefaults(columns []engine.Column) []engine.Record {
+	log.Logger.WithField("columnCount", len(columns)).Info("Generating row with defaults")
 	records := make([]engine.Record, 0, len(columns))
 
 	for _, col := range columns {
 		// Skip serial/auto-increment columns
 		if strings.Contains(strings.ToLower(col.Type), "serial") {
+			log.Logger.WithField("column", col.Name).WithField("type", col.Type).Debug("Skipping serial column")
 			continue
 		}
 
@@ -336,25 +345,107 @@ func (g *Generator) GenerateRowWithDefaults(columns []engine.Column) []engine.Re
 			"Type": col.Type,
 		}
 
+		log.Logger.WithField("column", col.Name).WithField("type", col.Type).WithField("lowerType", colType).Debug("Processing column for default value")
+
 		// Use safe defaults based on column type
 		switch {
 		case strings.Contains(colType, "int"):
 			valueStr = "0"
-		case strings.Contains(colType, "float") || strings.Contains(colType, "decimal") || strings.Contains(colType, "numeric"):
+		case strings.Contains(colType, "float") || strings.Contains(colType, "decimal") ||
+			strings.Contains(colType, "numeric") || strings.Contains(colType, "number") ||
+			strings.Contains(colType, "money") || strings.Contains(colType, "real") ||
+			strings.Contains(colType, "double"):
 			valueStr = "0.0"
-		case strings.Contains(colType, "bool"):
+		case strings.Contains(colType, "bool") || strings.Contains(colType, "bit"):
 			valueStr = "false"
 		case strings.Contains(colType, "date"):
 			valueStr = time.Now().Format("2006-01-02")
 		case strings.Contains(colType, "time"):
 			valueStr = time.Now().Format("2006-01-02 15:04:05")
-		case strings.Contains(colType, "uuid"):
+		case strings.Contains(colType, "uuid") || strings.Contains(colType, "uniqueidentifier"):
 			valueStr = g.faker.UUID()
-		case strings.Contains(colType, "json"):
+		case strings.Contains(colType, "json") || strings.Contains(colType, "jsonb"):
 			valueStr = "{}"
+		case strings.Contains(colType, "xml"):
+			valueStr = "<root></root>"
+		case strings.Contains(colType, "blob") || strings.Contains(colType, "bytea") ||
+			strings.Contains(colType, "binary") || strings.Contains(colType, "varbinary") ||
+			strings.Contains(colType, "image"):
+			// Return hex representation of empty bytes for binary types
+			valueStr = "\\x00"
+		case strings.Contains(colType, "array"):
+			valueStr = "{}"
+		case strings.Contains(colType, "enum"):
+			// Default enum value todo: make this actually work for enum as the db will likely enforce it to be one of the possible values
+			valueStr = "value1"
+		case strings.Contains(colType, "inet") || strings.Contains(colType, "cidr"):
+			valueStr = "192.168.1.1"
+		case strings.Contains(colType, "ipv4"):
+			valueStr = "192.168.1.1"
+		case strings.Contains(colType, "ipv6"):
+			valueStr = "::1"
+		case strings.Contains(colType, "geometry") || strings.Contains(colType, "geography") ||
+			strings.Contains(colType, "point"):
+			// Basic WKT format for a point
+			valueStr = "POINT(0 0)"
+		case strings.Contains(colType, "text") || strings.Contains(colType, "char") ||
+			strings.Contains(colType, "varchar") || strings.Contains(colType, "string") ||
+			strings.Contains(colType, "clob") || strings.Contains(colType, "long"):
+			// For CHAR(n) or VARCHAR(n) types, try to respect the length constraint
+			// This handles CHAR(2), VARCHAR(255), CHARACTER(10), etc.
+			if strings.Contains(colType, "(") && strings.Contains(colType, ")") {
+				// Extract the length from type(n)
+				start := strings.Index(colType, "(")
+				end := strings.Index(colType, ")")
+				if start > -1 && end > start {
+					lengthStr := colType[start+1 : end]
+					// Handle potential comma (e.g., DECIMAL(10,2))
+					if commaIdx := strings.Index(lengthStr, ","); commaIdx > -1 {
+						lengthStr = lengthStr[:commaIdx]
+					}
+					lengthStr = strings.TrimSpace(lengthStr)
+					if length, err := strconv.Atoi(lengthStr); err == nil && length > 0 {
+						// Generate a random string of the appropriate length
+						if length == 1 {
+							valueStr = g.faker.Letter()
+						} else if length == 2 {
+							// For 2-char fields like country codes, use uppercase letters
+							valueStr = g.faker.LetterN(2)
+							valueStr = strings.ToUpper(valueStr)
+						} else if length <= 10 {
+							// For short strings, use random letters
+							valueStr = g.faker.LetterN(uint(length))
+						} else {
+							// For longer strings, use Lorem Ipsum text
+							valueStr = g.faker.LoremIpsumWord()
+							if len(valueStr) > length {
+								valueStr = valueStr[:length]
+							} else {
+								// If word is too short, pad with more text
+								for len(valueStr) < length {
+									valueStr += g.faker.Letter()
+								}
+							}
+						}
+					} else {
+						// If we can't parse the length, use a random word
+						valueStr = g.faker.LoremIpsumWord()
+					}
+				} else {
+					// No length specified, use a random word
+					valueStr = g.faker.LoremIpsumWord()
+				}
+			} else {
+				// No parentheses, use a random word
+				valueStr = g.faker.LoremIpsumWord()
+			}
 		default:
-			valueStr = "default"
+			// For any unknown type, use a random word
+			valueStr = g.faker.LoremIpsumWord()
+			log.Logger.WithField("column", col.Name).WithField("type", col.Type).Warn("Using random word for unknown column type")
 		}
+
+		log.Logger.WithField("column", col.Name).WithField("value", valueStr).WithField("type", col.Type).Info("Generated default value for column")
 
 		records = append(records, engine.Record{
 			Key:   col.Name,
@@ -362,6 +453,8 @@ func (g *Generator) GenerateRowWithDefaults(columns []engine.Column) []engine.Re
 			Extra: extra,
 		})
 	}
+
+	log.Logger.WithField("recordCount", len(records)).Info("Completed generating row with defaults")
 
 	return records
 }

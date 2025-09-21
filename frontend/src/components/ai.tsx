@@ -14,18 +14,50 @@
  * limitations under the License.
  */
 
-import { AlertDialogCancel, AlertDialogFooter, AlertDialogDescription, AlertDialogHeader, AlertDialog, AlertDialogContent, AlertDialogTrigger, Button, cn, CommandItem, Input, Label, SearchSelect, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Sheet, SheetContent, SheetFooter, toast, AlertDialogTitle, AlertDialogAction } from "@clidey/ux";
-import { ArrowTopRightOnSquareIcon, CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { map } from "lodash";
-import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
-import { v4 } from "uuid";
-import { useGetAiModelsLazyQuery, useGetAiProvidersLazyQuery } from "../generated/graphql";
-import { reduxStore } from "../store";
-import { AIModelsActions, availableExternalModelTypes } from "../store/ai-models";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { ensureModelsArray, ensureModelTypesArray } from "../utils/ai-models-helper";
-import { Icons } from "./icons";
-import { ArrowPathIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+    Button,
+    cn,
+    CommandItem,
+    Input,
+    Label,
+    SearchSelect,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+    Sheet,
+    SheetContent,
+    SheetFooter,
+    toast
+} from "@clidey/ux";
+import {
+    ArrowPathIcon,
+    ArrowTopRightOnSquareIcon,
+    CheckCircleIcon,
+    LockClosedIcon,
+    PlusIcon,
+    TrashIcon,
+    XMarkIcon
+} from "./heroicons";
+import {map} from "lodash";
+import {FC, ReactElement, useCallback, useEffect, useMemo, useState} from "react";
+import {v4} from "uuid";
+import {useGetAiModelsLazyQuery, useGetAiProvidersLazyQuery} from "../generated/graphql";
+import {reduxStore} from "../store";
+import {AIModelsActions, availableExternalModelTypes} from "../store/ai-models";
+import {useAppDispatch, useAppSelector} from "../store/hooks";
+import {ensureModelsArray, ensureModelTypesArray} from "../utils/ai-models-helper";
+import {Icons} from "./icons";
 
 export const externalModelTypes = map(availableExternalModelTypes, (model) => ({
     id: model,
@@ -150,6 +182,7 @@ export const useAI = () => {
             icon: (Icons.Logos as Record<string, ReactElement>)[modelType.modelType.replace("-", "")],
             extra: {
                 token: modelType.token,
+                isEnvironmentDefined: modelType.isEnvironmentDefined,
             }
         }));
     }, [modelTypes]);
@@ -300,7 +333,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         />
                     </div>
                 </div>
-                <div className="flex items-center gap-2 self-end">
+                <div className="flex items-center gap-sm self-end">
                     <Button
                         onClick={handleAddExternalModel}
                         data-testid="external-model-cancel"
@@ -347,6 +380,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         value: item.id,
                         label: item.label,
                         icon: item.icon,
+                        rightIcon: item.extra?.isEnvironmentDefined ? <LockClosedIcon className="w-3 h-3 text-muted-foreground" /> : undefined,
                     }))}
                     value={modelType?.id}
                     onChange={id => {
@@ -362,7 +396,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                             value="__add__"
                             onSelect={handleAddExternalModel}
                         >
-                            <span className="flex items-center gap-2 text-green-500">
+                            <span className="flex items-center gap-sm text-green-500">
                                 <PlusIcon className="w-4 h-4 stroke-green-500" />
                                 Add a provider
                             </span>
@@ -390,7 +424,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                 <AlertDialogTrigger asChild>
                     <Button
                         data-testid="chat-delete-provider"
-                        variant="destructive"
+                        variant="secondary"
                         className={cn({
                             "hidden": disableNewChat,
                         })}

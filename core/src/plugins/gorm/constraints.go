@@ -22,20 +22,102 @@ import (
 	"gorm.io/gorm"
 )
 
-// GetColumnConstraints is the base implementation - plugins should override for database-specific logic
+// GetColumnConstraints gets column constraints using GORM's Migrator
 func (p *GormPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error) {
-	constraints := make(map[string]map[string]any)
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (map[string]map[string]any, error) {
+		// Build full table name
+		var fullTableName string
+		if schema != "" && p.Type != engine.DatabaseType_Sqlite3 {
+			fullTableName = schema + "." + storageUnit
+		} else {
+			fullTableName = storageUnit
+		}
 
-	// Default implementation - just return empty constraints
-	// Each database plugin should override this with their specific implementation
-	return constraints, nil
+		// Use Migrator to get constraints
+		migrator := NewMigratorHelper(db, p)
+		migratorConstraints, err := migrator.GetConstraints(fullTableName)
+		if err != nil {
+			// Fall back to empty constraints if Migrator fails
+			// This maintains backward compatibility
+			return make(map[string]map[string]any), nil
+		}
+
+		// Convert Migrator constraints to the expected format
+		constraints := make(map[string]map[string]any)
+
+		// Process each constraint type
+		for constraintType, columns := range migratorConstraints {
+			for _, col := range columns {
+				columnName := col.Name()
+				if constraints[columnName] == nil {
+					constraints[columnName] = make(map[string]any)
+				}
+
+				// Map constraint types to properties
+				switch constraintType {
+				case "PRIMARY":
+					constraints[columnName]["primary"] = true
+				case "UNIQUE":
+					constraints[columnName]["unique"] = true
+				case "NOT_NULL":
+					constraints[columnName]["nullable"] = false
+				}
+
+				// Add data type information
+				constraints[columnName]["type"] = col.DatabaseTypeName()
+
+				// Add additional constraint info if available
+				if nullable, ok := col.Nullable(); ok {
+					constraints[columnName]["nullable"] = nullable
+				}
+				if unique, ok := col.Unique(); ok {
+					constraints[columnName]["unique"] = unique
+				}
+				if autoIncrement, ok := col.AutoIncrement(); ok && autoIncrement {
+					constraints[columnName]["auto_increment"] = true
+				}
+				if defaultValue, ok := col.DefaultValue(); ok && defaultValue != "" {
+					constraints[columnName]["default"] = defaultValue
+				}
+				if comment, ok := col.Comment(); ok && comment != "" {
+					constraints[columnName]["comment"] = comment
+				}
+				if length, ok := col.Length(); ok && length > 0 {
+					constraints[columnName]["length"] = length
+				}
+				if precision, scale, ok := col.DecimalSize(); ok {
+					constraints[columnName]["precision"] = precision
+					if scale > 0 {
+						constraints[columnName]["scale"] = scale
+					}
+				}
+			}
+		}
+
+		// If no constraints found via Migrator, try database-specific implementation
+		if len(constraints) == 0 {
+			// Each database plugin can still override this method for custom logic
+			return p.getColumnConstraintsRaw(db, schema, storageUnit)
+		}
+
+		return constraints, nil
+	})
+}
+
+// getColumnConstraintsRaw is a fallback for when Migrator doesn't provide constraints
+func (p *GormPlugin) getColumnConstraintsRaw(db *gorm.DB, schema string, storageUnit string) (map[string]map[string]any, error) {
+	// Default implementation - return empty constraints
+	// Database-specific plugins should override this method
+	return make(map[string]map[string]any), nil
 }
 
 // ClearTableData clears all data from a table
 // clearTableDataWithDB performs the actual table data clearing using the provided database connection
 func (p *GormPlugin) clearTableDataWithDB(db *gorm.DB, schema string, storageUnit string) error {
-	tableName := p.FormTableName(schema, storageUnit)
-	result := db.Table(tableName).Where("1=1").Delete(nil)
+	// Use SQL builder for consistent delete operations
+	builder := p.GormPluginFunctions.CreateSQLBuilder(db)
+	// Delete all rows (empty conditions map means delete all)
+	result := builder.DeleteQuery(schema, storageUnit, map[string]any{"1": 1})
 	return result.Error
 }
 

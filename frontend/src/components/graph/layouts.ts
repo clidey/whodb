@@ -27,23 +27,40 @@ export const getDagreLayoutedElements = (nodes: Node[] = [], edges: Edge[] = [],
 }) => {
     g.setGraph({
         rankdir: options.direction,
-        edgesep: 10,
-        nodesep: 20,
-        ranksep: 50,
-        marginx: 20,
-        marginy: 20,
+        edgesep: 60,
+        nodesep: 100,
+        ranksep: 180,
+        marginx: 80,
+        marginy: 80,
         align: "UL",
+        acyclicer: "greedy",
+        ranker: "tight-tree",
     });
 
     edges.forEach((edge) => g.setEdge(edge.source, edge.target));
-    nodes.forEach((node) => g.setNode(node.id, node as any));
+    
+    // Ensure nodes have proper dimensions before layout
+    nodes.forEach((node) => {
+        const nodeWithDimensions = {
+            ...node,
+            width: node.width || 250,
+            height: node.height || 120,
+        };
+        g.setNode(node.id, nodeWithDimensions as any);
+    });
 
     Dagre.layout(g);
 
     return {
         nodes: nodes.map((node) => {
-            const { x, y } = g.node(node.id);
-            return { ...node, position: { x, y } };
+            const dagreNode = g.node(node.id);
+            return { 
+                ...node, 
+                position: { 
+                    x: dagreNode?.x || 0, 
+                    y: dagreNode?.y || 0 
+                } 
+            };
         }),
         edges,
     };

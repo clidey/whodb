@@ -119,7 +119,7 @@ type LoginProfile {
   Type: DatabaseType!
   Database: String
   IsEnvironmentDefined: Boolean!
-  Source: String!
+    Source: String!
 }
 
 type StatusResponse {

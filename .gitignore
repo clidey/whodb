@@ -12,15 +12,6 @@ ee/frontend/node_modules/
 worktree/
 frontend/cypress/screenshots/
 frontend/cypress/downloads/
-
-# Desktop application
-desktop/node_modules/
-desktop/dist/
-desktop/src-tauri/target/
-desktop/src-tauri/binaries/
-desktop/src-tauri/icons/icon.iconset/
-desktop/src-tauri/WixTools/
-desktop/src-tauri/*.log
-desktop/*.log
-desktop/Cargo.lock
-node_modules/
+.gemini/
+gha-creds-*.json
+cypress-results/

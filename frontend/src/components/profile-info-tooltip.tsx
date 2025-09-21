@@ -3,7 +3,7 @@ import { FC, useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { LocalLoginProfile } from "../store/auth";
 import { databaseTypeDropdownItems } from "../config/database-types";
-import { InformationCircleIcon } from "@heroicons/react/24/outline";
+import { InformationCircleIcon } from "./heroicons";
 
 interface ProfileInfoTooltipProps {
   profile: LocalLoginProfile;

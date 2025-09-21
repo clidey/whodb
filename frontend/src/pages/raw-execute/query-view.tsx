@@ -17,7 +17,7 @@
 import React, { FC, useEffect, useMemo } from "react";
 import { StorageUnitTable } from "../../components/table";
 import { useRawExecuteLazyQuery } from "../../generated/graphql";
-import { CheckCircleIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon } from "../../components/heroicons";
 
 type PromiseFunction = (code: string) => Promise<any>;
 
@@ -93,7 +93,7 @@ export const QueryView: FC<IPluginProps> = ({ code, handleExecuteRef }) => {
     }
 
     return (
-        <div className="bg-white/10 text-neutral-800 dark:text-neutral-300 rounded-lg p-2 flex gap-2 self-start items-center my-4" data-testid="cell-action-output">
+        <div className="bg-white/10 text-neutral-800 dark:text-neutral-300 rounded-lg p-2 flex gap-sm self-start items-center my-4" data-testid="cell-action-output">
             Action Executed
             <CheckCircleIcon className="w-4 h-4" />
         </div>

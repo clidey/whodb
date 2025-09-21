@@ -5,6 +5,6 @@ query GetProfiles {
     Type
     Database
     IsEnvironmentDefined
-    Source
+      Source
   }
 }

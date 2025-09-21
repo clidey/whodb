@@ -29,7 +29,7 @@ import (
 
 func (p *GormPlugin) DeleteRow(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
-		pkColumns, err := p.GetPrimaryKeyColumns(db, schema, storageUnit)
+		pkColumns, err := p.GormPluginFunctions.GetPrimaryKeyColumns(db, schema, storageUnit)
 		if err != nil {
 			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get primary key columns for table %s.%s during delete operation", schema, storageUnit))
 			pkColumns = []string{}
@@ -55,39 +55,32 @@ func (p *GormPlugin) DeleteRow(config *engine.PluginConfig, schema string, stora
 				convertedValue = strValue // use string value if conversion fails?
 			}
 
-			targetColumn := column
-			if p.GormPluginFunctions.ShouldQuoteIdentifiers() {
-				targetColumn = fmt.Sprintf("\"%s\"", column)
-			}
-
+			// GORM handles identifier escaping automatically
 			if common.ContainsString(pkColumns, column) {
-				conditions[targetColumn] = convertedValue
+				conditions[column] = convertedValue
 			} else {
-				convertedValues[targetColumn] = convertedValue
+				convertedValues[column] = convertedValue
 			}
 		}
 
-		// todo: mysql seems to break with the below, so skip it for now. need to refactor and fix data handling at an earlier stage
-		if p.Type != engine.DatabaseType_MySQL && p.Type != engine.DatabaseType_MariaDB {
-			schema = p.EscapeIdentifier(schema)
-			storageUnit = p.EscapeIdentifier(storageUnit)
-		}
+		// Use SQL builder for consistent delete operations
+		builder := p.GormPluginFunctions.CreateSQLBuilder(db)
 
-		tableName := p.FormTableName(schema, storageUnit)
-
-		var result *gorm.DB
+		var whereConditions map[string]any
 		if len(conditions) == 0 {
-			result = db.Table(tableName).Where(convertedValues).Delete(nil)
+			whereConditions = convertedValues
 		} else {
-			result = db.Table(tableName).Where(conditions).Delete(nil)
+			whereConditions = conditions
 		}
+
+		result := builder.DeleteQuery(schema, storageUnit, whereConditions)
 
 		if result.Error != nil {
 			log.Logger.WithError(result.Error).Error(fmt.Sprintf("Failed to delete rows from table %s.%s", schema, storageUnit))
 			return false, result.Error
 		}
 
-		// todo: investigate why the clickhouse driver doesnt show any updated rows after a delete
+		// TODO: BIG EDGE CASE - ClickHouse driver doesn't report affected rows properly for DELETE
 		if p.Type != engine.DatabaseType_ClickHouse && result.RowsAffected == 0 {
 			return false, errors.New("no rows were deleted")
 		}

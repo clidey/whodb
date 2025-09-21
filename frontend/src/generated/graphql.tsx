@@ -1,5 +1,22 @@
-import { gql } from '@apollo/client';
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import * as Apollo from '@apollo/client';
+import {gql} from '@apollo/client';
+
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -323,7 +340,18 @@ export enum WhereConditionType {
 export type GetProfilesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetProfilesQuery = { __typename?: 'Query', Profiles: Array<{ __typename?: 'LoginProfile', Alias?: string | null, Id: string, Type: DatabaseType, Database?: string | null, IsEnvironmentDefined: boolean, Source: string }> };
+export type GetProfilesQuery = {
+  __typename?: 'Query',
+  Profiles: Array<{
+    __typename?: 'LoginProfile',
+    Alias?: string | null,
+    Id: string,
+    Type: DatabaseType,
+    Database?: string | null,
+    IsEnvironmentDefined: boolean,
+    Source: string
+  }>
+};
 
 export type GetSchemaQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -413,7 +441,10 @@ export type ColumnsQueryVariables = Exact<{
 }>;
 
 
-export type ColumnsQuery = { __typename?: 'Query', Columns: Array<{ __typename?: 'Column', Name: string, Type: string }> };
+export type ColumnsQuery = {
+  __typename?: 'Query',
+  Columns: Array<{ __typename?: 'Column', Name: string, Type: string }>
+};
 
 export type RawExecuteQueryVariables = Exact<{
   query: Scalars['String']['input'];
@@ -1007,13 +1038,13 @@ export type GetGraphLazyQueryHookResult = ReturnType<typeof useGetGraphLazyQuery
 export type GetGraphSuspenseQueryHookResult = ReturnType<typeof useGetGraphSuspenseQuery>;
 export type GetGraphQueryResult = Apollo.QueryResult<GetGraphQuery, GetGraphQueryVariables>;
 export const ColumnsDocument = gql`
-    query Columns($schema: String!, $storageUnit: String!) {
-  Columns(schema: $schema, storageUnit: $storageUnit) {
-    Name
-    Type
+  query Columns($schema: String!, $storageUnit: String!) {
+    Columns(schema: $schema, storageUnit: $storageUnit) {
+      Name
+      Type
+    }
   }
-}
-    `;
+`;
 
 /**
  * __useColumnsQuery__
@@ -1032,18 +1063,24 @@ export const ColumnsDocument = gql`
  *   },
  * });
  */
-export function useColumnsQuery(baseOptions: Apollo.QueryHookOptions<ColumnsQuery, ColumnsQueryVariables> & ({ variables: ColumnsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<ColumnsQuery, ColumnsQueryVariables>(ColumnsDocument, options);
-      }
+export function useColumnsQuery(baseOptions: Apollo.QueryHookOptions<ColumnsQuery, ColumnsQueryVariables> & ({
+  variables: ColumnsQueryVariables;
+  skip?: boolean;
+} | { skip: boolean; })) {
+  const options = {...defaultOptions, ...baseOptions}
+  return Apollo.useQuery<ColumnsQuery, ColumnsQueryVariables>(ColumnsDocument, options);
+}
+
 export function useColumnsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ColumnsQuery, ColumnsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<ColumnsQuery, ColumnsQueryVariables>(ColumnsDocument, options);
-        }
+  const options = {...defaultOptions, ...baseOptions}
+  return Apollo.useLazyQuery<ColumnsQuery, ColumnsQueryVariables>(ColumnsDocument, options);
+}
+
 export function useColumnsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ColumnsQuery, ColumnsQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<ColumnsQuery, ColumnsQueryVariables>(ColumnsDocument, options);
-        }
+  const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+  return Apollo.useSuspenseQuery<ColumnsQuery, ColumnsQueryVariables>(ColumnsDocument, options);
+}
+
 export type ColumnsQueryHookResult = ReturnType<typeof useColumnsQuery>;
 export type ColumnsLazyQueryHookResult = ReturnType<typeof useColumnsLazyQuery>;
 export type ColumnsSuspenseQueryHookResult = ReturnType<typeof useColumnsSuspenseQuery>;

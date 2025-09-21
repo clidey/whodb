@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { FeatureFlags } from './ee-types';
+import {FeatureFlags} from './ee-types';
 
 // Default feature flags (all disabled for open source version)
 const defaultFeatures: FeatureFlags = {

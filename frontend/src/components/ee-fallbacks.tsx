@@ -16,7 +16,7 @@
 
 import React from 'react';
 import { Card } from './card';
-import { StarIcon } from '@heroicons/react/24/outline';
+import { StarIcon } from './heroicons';
 
 export const EEFeatureCard: React.FC<{ feature: string; description?: string }> = ({ feature, description }) => {
     return (

@@ -24,7 +24,7 @@ describe('Clickhouse E2E test', () => {
   it('runs full Clickhouse E2E flow', () => {
     // login and setup
     cy.login('ClickHouse', dbHost, dbUser, dbPassword, 'test_db');
-    cy.selectDatabase("test_db");
+    // cy.selectDatabase("test_db");
 
     // 1) Lists tables
     cy.getTables().then(storageUnitNames => {
@@ -63,7 +63,7 @@ describe('Clickhouse E2E test', () => {
     // 3) Data: verify table data
     cy.data("users");
     cy.sortBy(0);
-    cy.getTableData().then(({ columns, rows }) => {
+    cy.getTableData().then(({columns, rows}) => {
       expect(columns).to.deep.equal([
         "",
         "id",
@@ -82,7 +82,7 @@ describe('Clickhouse E2E test', () => {
     // 4) Respects page size pagination
     cy.setTablePageSize(1);
     cy.submitTable();
-    cy.getTableData().then(({ rows }) => {
+    cy.getTableData().then(({rows}) => {
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         ['', '1', 'john_doe', 'john@example.com', 'securepassword1'],
       ]);
@@ -92,7 +92,7 @@ describe('Clickhouse E2E test', () => {
     cy.setTablePageSize(10);
     cy.whereTable([['id', '=', '3']]);
     cy.submitTable();
-    cy.getTableData().then(({ rows }) => {
+    cy.getTableData().then(({rows}) => {
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         ['', '3', 'admin_user', 'admin@example.com', 'adminpass']
       ]);
@@ -190,7 +190,7 @@ describe('Clickhouse E2E test', () => {
 
     cy.writeCode(0, "SELECT * FROM test_db.users ORDER BY id;");
     cy.runCode(0);
-    cy.getCellQueryOutput(0).then(({ rows, columns }) => {
+    cy.getCellQueryOutput(0).then(({rows, columns}) => {
       expect(columns).to.deep.equal([
         "",
         "id",
@@ -207,9 +207,12 @@ describe('Clickhouse E2E test', () => {
     });
 
     cy.addCell(0);
+    // annoying hack to get the page to scroll. todo: look into putting a data-testid on this exact element cause this is flaky af
+    cy.get('#whodb-app-container > div.flex.grow.h-full.w-full > div.flex.grow.flex-col.h-full.w-full.p-0 > div')
+        .scrollTo('bottom');
     cy.writeCode(1, "SELECT * FROM test_db.users WHERE id=1;");
     cy.runCode(1);
-    cy.getCellQueryOutput(1).then(({ rows, columns }) => {
+    cy.getCellQueryOutput(1).then(({rows, columns}) => {
       expect(columns).to.deep.equal([
         "",
         "id",
@@ -224,7 +227,7 @@ describe('Clickhouse E2E test', () => {
     });
 
     cy.removeCell(0);
-    cy.getCellQueryOutput(0).then(({ rows, columns }) => {
+    cy.getCellQueryOutput(0).then(({rows, columns}) => {
       expect(columns).to.deep.equal([
         "",
         "id",
@@ -236,6 +239,55 @@ describe('Clickhouse E2E test', () => {
       expect(rows.map(row => row.slice(0, -1))).to.deep.equal([
         ['', '1', 'john_doe', 'john@example.com', 'securepassword1'],
       ]);
+    });
+
+    // 9.5) Test Query History functionality
+    // First, run a few more queries to build up history
+    cy.writeCode(0, 'SELECT COUNT(*) as user_count FROM test_db.users;');
+    cy.runCode(0);
+    cy.getCellQueryOutput(0).then(({rows}) => {
+      expect(rows[0][1]).to.equal('3'); // Should have 3 users
+    });
+
+    cy.writeCode(0, 'SELECT username, email FROM test_db.users WHERE id > 1;');
+    cy.runCode(0);
+    cy.getCellQueryOutput(0).then(({rows}) => {
+      expect(rows.length).to.equal(2); // Should have 2 users with id > 1
+    });
+
+    // Test Query History - Copy functionality
+    cy.openQueryHistory();
+    cy.getQueryHistoryItems().then(items => {
+      expect(items.length).to.be.greaterThan(0);
+      // Verify the most recent queries are in history
+      expect(items[0]).to.include('SELECT username, email FROM test_db.users WHERE id > 1');
+      expect(items[1]).to.include('SELECT COUNT(*) as user_count FROM test_db.users');
+    });
+
+    // Test copy functionality
+    cy.copyQueryFromHistory(0);
+    cy.closeQueryHistory();
+
+    // Test Query History - Clone to editor functionality
+    cy.openQueryHistory();
+    cy.cloneQueryToEditor(1); // Clone the COUNT query
+    cy.verifyQueryInEditor('SELECT COUNT(*) as user_count FROM test_db.users');
+    
+    // Run the cloned query to verify it works
+    cy.runCode(0);
+    cy.getCellQueryOutput(0).then(({rows}) => {
+      expect(rows[0][1]).to.equal('3');
+    });
+
+    // Test Query History - Execute from history functionality
+    cy.openQueryHistory();
+    cy.executeQueryFromHistory(0); // Execute the username/email query from history
+    
+    // Verify the query executed and results are shown
+    cy.getCellQueryOutput(0).then(({rows}) => {
+      expect(rows.length).to.equal(2);
+      expect(rows[0][1]).to.equal('jane_smith');
+      expect(rows[1][1]).to.equal('admin_user');
     });
 
     // 10) Manage where conditions (edit and sheet)
@@ -430,7 +482,7 @@ describe('Clickhouse E2E test', () => {
     cy.get('[data-testid="code-editor"]').should('exist');
     cy.get('[data-testid="code-editor"]').should('contain', 'SELECT * FROM test_db.users');
 
-    cy.get('[data-testid="submit-button"]').filter(':contains("Run")').first().click();
+    cy.get('[data-testid="run-submit-button"]').filter(':contains("Run")').first().click();
 
     cy.get('[role="dialog"] table', {timeout: 500}).should('be.visible');
     cy.get('[role="dialog"] table thead th').should('contain', 'id');
@@ -442,8 +494,7 @@ describe('Clickhouse E2E test', () => {
 
     // 13) Mock data on a table that does not support it
     cy.data('orders');
-    cy.get('table thead tr').rightclick({force: true});
-    cy.contains('div,button,span', 'Mock Data').click({force: true});
+    cy.selectMockData();
     // Wait for any toasts to clear
     cy.wait(1000);
     cy.contains('button', 'Generate').click();

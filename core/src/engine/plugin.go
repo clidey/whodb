@@ -108,7 +108,7 @@ type PluginFunctions interface {
 	// Mock data generation methods
 	GetColumnConstraints(config *PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error)
 	ClearTableData(config *PluginConfig, schema string, storageUnit string) (bool, error)
-	
+
 	// Transaction support
 	WithTransaction(config *PluginConfig, operation func(tx any) error) error
 }

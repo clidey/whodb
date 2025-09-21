@@ -30,7 +30,7 @@ export function databaseSupportsScratchpad(databaseType: DatabaseType | string |
     // Try to get scratchpad support from the database configuration first
     const dbTypeItems = getDatabaseTypeDropdownItemsSync();
     const dbConfig = dbTypeItems.find(item => item.id === databaseType);
-    
+
     if (dbConfig?.supportsScratchpad != null) {
         return dbConfig.supportsScratchpad;
     }
@@ -58,7 +58,7 @@ export function databaseSupportsSchema(databaseType: DatabaseType | string | und
     // Try to get schema support from the database configuration first
     const dbTypeItems = getDatabaseTypeDropdownItemsSync();
     const dbConfig = dbTypeItems.find(item => item.id === databaseType);
-    
+
     if (dbConfig?.supportsSchema != null) {
         return dbConfig.supportsSchema;
     }
@@ -73,64 +73,6 @@ export function databaseSupportsSchema(databaseType: DatabaseType | string | und
     ];
 
     return !databasesThatDontSupportSchema.includes(databaseType as DatabaseType);
-}
-
-/**
- * Get databases that don't support scratchpad (for backward compatibility)
- * @returns Array of database types that don't support scratchpad
- */
-export function getDatabasesThatDontSupportScratchpad(): DatabaseType[] {
-    const dbTypeItems = getDatabaseTypeDropdownItemsSync();
-    const databasesThatDontSupport: DatabaseType[] = [];
-    
-    // Check all configured databases
-    dbTypeItems.forEach(dbConfig => {
-        if (dbConfig.supportsScratchpad === false) {
-            databasesThatDontSupport.push(dbConfig.id as DatabaseType);
-        }
-    });
-    
-    // Include default databases if not found in config
-    const defaults = [DatabaseType.MongoDb, DatabaseType.Redis, DatabaseType.ElasticSearch];
-    defaults.forEach(dbType => {
-        if (!databasesThatDontSupport.includes(dbType)) {
-            const dbConfig = dbTypeItems.find(item => item.id === dbType);
-            if (!dbConfig || dbConfig.supportsScratchpad !== true) {
-                databasesThatDontSupport.push(dbType);
-            }
-        }
-    });
-    
-    return databasesThatDontSupport;
-}
-
-/**
- * Get databases that don't support schemas (for backward compatibility)
- * @returns Array of database types that don't support schemas
- */
-export function getDatabasesThatDontSupportSchema(): DatabaseType[] {
-    const dbTypeItems = getDatabaseTypeDropdownItemsSync();
-    const databasesThatDontSupport: DatabaseType[] = [];
-    
-    // Check all configured databases
-    dbTypeItems.forEach(dbConfig => {
-        if (dbConfig.supportsSchema === false) {
-            databasesThatDontSupport.push(dbConfig.id as DatabaseType);
-        }
-    });
-    
-    // Include default databases if not found in config
-    const defaults = [DatabaseType.Sqlite3, DatabaseType.Redis, DatabaseType.ElasticSearch];
-    defaults.forEach(dbType => {
-        if (!databasesThatDontSupport.includes(dbType)) {
-            const dbConfig = dbTypeItems.find(item => item.id === dbType);
-            if (!dbConfig || dbConfig.supportsSchema !== true) {
-                databasesThatDontSupport.push(dbType);
-            }
-        }
-    });
-    
-    return databasesThatDontSupport;
 }
 
 /**
@@ -159,7 +101,6 @@ export function databaseSupportsDatabaseSwitching(databaseType: DatabaseType | s
         DatabaseType.MariaDb,
         DatabaseType.Postgres,
     ];
-
     return databasesThatSupportDatabaseSwitching.includes(databaseType as DatabaseType);
 }
 
@@ -185,4 +126,13 @@ export function databaseUsesSchemaForGraph(databaseType: DatabaseType | string |
     // If database supports database switching, it uses database field (false)
     // If database doesn't support database switching, it uses schema field (true)
     return !databaseSupportsDatabaseSwitching(databaseType);
+}
+
+export function databaseTypesThatUseDatabaseInsteadOfSchema(databaseType: DatabaseType | string | undefined): boolean {
+    if (!databaseType) {
+        return false;
+    }
+
+    // MongoDB mainly uses the database instead of schema
+    return databaseType === DatabaseType.MongoDb || databaseType === DatabaseType.ClickHouse;
 }
