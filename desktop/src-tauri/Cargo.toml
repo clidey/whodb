@@ -1,33 +1,23 @@
 [package]
-name = "whodb"
+name = "whodb-desktop"
 version = "0.1.0"
-description = "WhoDB Desktop App"
-authors = ["WhoDB Contributors"]
-license = "MIT"
-repository = "https://github.com/clidey/whodb"
-default-run = "whodb"
+description = "WhoDB Desktop Application"
+authors = ["you"]
+license = ""
+repository = ""
 edition = "2021"
-rust-version = "1.70"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-tauri-build = { version = "1.5", features = [] }
+tauri-build = { version = "1.5.0", features = [] }
 
 [dependencies]
-tauri = { version = "1.6", features = [ "dialog-all", "fs-all", "path-all", "process-all", "protocol-all", "shell-all", "window-all" ] }
-serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tokio = { version = "1", features = ["full"] }
-reqwest = { version = "0.11", features = ["json"] }
+serde = { version = "1.0", features = ["derive"] }
+tauri = { version = "1.5.0", features = [ "shell-open"] }
 
 [features]
-# this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.
-# If you use cargo directly instead of tauri's cli you can use this feature flag to switch between tauri's `dev` and `build` modes.
+# this feature is used for production builds or when `devPath` points to the filesystem
 # DO NOT REMOVE!!
-default = [ "custom-protocol" ]
-# this feature is in use by the `tauri dev` and `tauri build` commands!
-custom-protocol = [ "tauri/custom-protocol" ]
-
-[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
-tauri-plugin-single-instance = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
+custom-protocol = ["tauri/custom-protocol"]

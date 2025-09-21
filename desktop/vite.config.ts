@@ -51,75 +51,56 @@ const eeModulePlugin = () => ({
 
 // https://vitejs.dev/config/
 export default defineConfig(async () => {
-  // Dynamically import istanbul plugin only in test mode
-  let istanbulPlugin = null;
-  if (process.env.NODE_ENV === 'test') {
-    try {
-      const { default: istanbul } = await import('vite-plugin-istanbul');
-      // @ts-ignore
-      istanbulPlugin = istanbul({
-        cypress: true,
-        requireEnv: false,
-        include: [
-          'src/**/*.{js,jsx,ts,tsx}',
-          // Include EE sources when testing EE edition
-          ...(process.env.VITE_BUILD_EDITION === 'ee' && eeExists ? [
-            '../ee/frontend/src/**/*.{js,jsx,ts,tsx}'
-          ] : [])
-        ],
-        exclude: [
-          'node_modules',
-          'cypress',
-          '**/*.d.ts',
-          '**/*.test.{js,jsx,ts,tsx}',
-          '**/*.spec.{js,jsx,ts,tsx}',
-          'src/generated/**',
-          '../ee/frontend/src/generated/**',
-          'src/index.tsx'
-        ],
-        cwd: process.cwd(),
-      });
-    } catch (e) {
-      console.warn('Failed to load vite-plugin-istanbul:', e);
-    }
-  }
-
   return {
     plugins: [
       react(),
       tailwindcss(),
       eeModulePlugin(),
-      istanbulPlugin
-    ].filter(Boolean),
+    ],
 
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-      ...(eeExists ? { '@ee': eeDir } : {}),
-      // Dynamic GraphQL import based on build edition
-      '@graphql': process.env.VITE_BUILD_EDITION === 'ee' 
-        ? path.resolve(__dirname, '../ee/frontend/src/generated/graphql.tsx')
-        : path.resolve(__dirname, './src/generated/graphql.tsx'),
-      // Handle relative imports from EE to frontend
-      '../../../../../frontend/src': path.resolve(__dirname, './src'),
-      '../../../frontend/src': path.resolve(__dirname, './src'),
-    },
-  },
-  server: {
-    port: 3000,
-    open: true,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
+    resolve: {
+      alias: {
+        // Reference frontend directly instead of copying
+        '@': path.resolve(__dirname, '../frontend/src'),
+        ...(eeExists ? { '@ee': eeDir } : {}),
+        // Dynamic GraphQL import based on build edition
+        '@graphql': process.env.VITE_BUILD_EDITION === 'ee' 
+          ? path.resolve(__dirname, '../ee/frontend/src/generated/graphql.tsx')
+          : path.resolve(__dirname, '../frontend/src/generated/graphql.tsx'),
+        // Handle relative imports from EE to frontend
+        '../../../../../frontend/src': path.resolve(__dirname, '../frontend/src'),
+        '../../../frontend/src': path.resolve(__dirname, '../frontend/src'),
       },
     },
-  },
-  publicDir: eeExists ? path.resolve(__dirname, '../ee/frontend/public') : undefined,
-  build: {
-    outDir: 'build',
-    sourcemap: true,
-  },
+
+    // Configure public directory to resolve assets from frontend
+    publicDir: path.resolve(__dirname, '../frontend/public'),
+
+    // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
+    //
+    // 1. prevent vite from obscuring rust errors
+    clearScreen: false,
+    // 2. tauri expects a fixed port, fail if that port is not available
+    server: {
+      port: 1420,
+      strictPort: true,
+      watch: {
+        // 3. tell vite to ignore watching `src-tauri`
+        ignored: ["**/src-tauri/**"],
+      },
+      proxy: {
+        '/api': {
+          target: 'http://localhost:8080',
+          changeOrigin: true,
+        },
+      },
+    },
+
+    build: {
+      outDir: 'dist',
+      sourcemap: true,
+    },
+
     define: {
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
       'process.env.BUILD_EDITION': JSON.stringify(process.env.VITE_BUILD_EDITION),
