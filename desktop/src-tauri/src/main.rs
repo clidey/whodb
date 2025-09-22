@@ -59,8 +59,20 @@ fn start_backend() -> Result<BackendInfo, Box<dyn std::error::Error>> {
         .ok_or("Could not get executable directory")?;
 
     // Try different possible locations for the core binary across platforms
+    // On Windows during development, prefer the bin directory over target directory
     let exe_candidates = ["whodb-core", "whodb-core.exe", "bin/whodb-core", "bin/whodb-core.exe"];
     let mut possible_paths = Vec::new();
+
+    // First check the bin directory relative to src-tauri
+    if cfg!(debug_assertions) {
+        // In debug mode, look in src-tauri/bin first
+        if let Some(manifest_dir) = option_env!("CARGO_MANIFEST_DIR") {
+            let manifest_path = std::path::Path::new(manifest_dir);
+            possible_paths.push(manifest_path.join("bin").join("whodb-core.exe"));
+            possible_paths.push(manifest_path.join("bin").join("whodb-core"));
+        }
+    }
+
     for name in &exe_candidates {
         possible_paths.push(exe_dir.join(name));
         possible_paths.push(exe_dir.join("resources").join(name));

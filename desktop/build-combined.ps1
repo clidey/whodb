@@ -113,6 +113,25 @@ if ($Debug) {
     Write-Host ""
 }
 
+# Clean up any stale binaries in Tauri target directories
+Write-Host ">>> Cleaning up stale binaries in target directories..." -ForegroundColor Yellow
+$TargetDirs = @(
+    "$ScriptDir\src-tauri\target\debug",
+    "$ScriptDir\src-tauri\target\release",
+    "$ScriptDir\src-tauri\target\x86_64-pc-windows-msvc\debug",
+    "$ScriptDir\src-tauri\target\x86_64-pc-windows-msvc\release"
+)
+
+foreach ($dir in $TargetDirs) {
+    if (Test-Path $dir) {
+        $staleFiles = Get-ChildItem -Path $dir -Filter "whodb-core*.exe" -ErrorAction SilentlyContinue
+        foreach ($file in $staleFiles) {
+            Write-Host "  Removing stale binary: $($file.FullName)" -ForegroundColor Yellow
+            Remove-Item $file.FullName -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
 # Build Tauri app
 Write-Host ">>> Building Tauri app..." -ForegroundColor Yellow
 Set-Location $ScriptDir
