@@ -1,16 +1,18 @@
-// Copyright 2025 Clidey, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package auth
 
@@ -95,20 +97,33 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		// Debug logging
+		println("[DEBUG] Auth check - URL:", r.URL.Path)
+		println("[DEBUG] Auth check - Origin:", r.Header.Get("Origin"))
+		println("[DEBUG] Auth check - Cookies count:", len(r.Cookies()))
+		for _, c := range r.Cookies() {
+			println("[DEBUG]   Cookie name:", c.Name)
+		}
+
 		var token string
 		if env.IsAPIGatewayEnabled {
 			authHeader := r.Header.Get("Authorization")
 			if strings.HasPrefix(authHeader, "Bearer ") {
 				token = strings.TrimPrefix(authHeader, "Bearer ")
+				println("[DEBUG] Got token from Authorization header")
 			}
 		} else {
 			dbCookie, err := r.Cookie(string(AuthKey_Token))
 			if err == nil {
 				token = dbCookie.Value
+				println("[DEBUG] Got token from cookie:", string(AuthKey_Token))
+			} else {
+				println("[DEBUG] Cookie error:", err.Error())
 			}
 		}
 
 		if token == "" {
+			println("[DEBUG] No token found - returning 401")
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}

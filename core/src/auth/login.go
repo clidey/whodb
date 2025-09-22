@@ -37,18 +37,23 @@ func Login(ctx context.Context, input *model.LoginCredentials) (*model.StatusRes
 
 	// Check if this is a desktop app request (Tauri)
 	var sameSiteMode http.SameSite
+	var origin string
 	if req, ok := ctx.Value(common.RouterKey_Request).(*http.Request); ok {
-		origin := req.Header.Get("Origin")
+		origin = req.Header.Get("Origin")
 		if origin == "https://tauri.localhost" || origin == "tauri://localhost" {
 			// For Tauri desktop app, use None mode to allow cross-origin cookies
 			sameSiteMode = http.SameSiteNoneMode
+			// Debug logging
+			println("[DEBUG] Tauri desktop app detected, using SameSite=None for origin:", origin)
 		} else {
 			// For regular web app, use Strict mode for better security
 			sameSiteMode = http.SameSiteStrictMode
+			println("[DEBUG] Regular web app, using SameSite=Strict for origin:", origin)
 		}
 	} else {
 		// Default to Strict if we can't get the request
 		sameSiteMode = http.SameSiteStrictMode
+		println("[DEBUG] Could not get request from context, defaulting to SameSite=Strict")
 	}
 
 	cookie := &http.Cookie{
