@@ -18,6 +18,20 @@ pnpm install --prefer-offline
 Write-Host ">>> Building frontend..." -ForegroundColor Yellow
 pnpm run build
 
+# Copy frontend build to core/build directory for Go embedding
+Write-Host ">>> Copying frontend build to core/build..." -ForegroundColor Yellow
+$DistDir = "$ScriptDir\dist"
+if (-not (Test-Path $DistDir)) {
+    Write-Error "Frontend build directory not found at $DistDir"
+    exit 1
+}
+
+$CoreBuildDir = "$ProjectRoot\core\build"
+if (Test-Path $CoreBuildDir) {
+    Remove-Item -Recurse -Force $CoreBuildDir
+}
+Copy-Item -Recurse $DistDir $CoreBuildDir
+
 # Build Go backend FIRST (before Tauri needs it)
 Write-Host ">>> Building backend..." -ForegroundColor Yellow
 Set-Location "$ProjectRoot\core"
