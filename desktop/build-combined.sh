@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#
 # Copyright 2025 Clidey, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,92 +13,81 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+
+# Simple build script for Linux/Mac and Windows (via WSL)
 
 set -euo pipefail
 
-TARGET="darwin-x64"
-if [[ ${1:-} == "--target" && -n ${2:-} ]]; then
-  TARGET="$2"
-fi
+TARGET="${1:-linux-x64}"
 
-echo "🎯 Target: $TARGET"
-
-echo "🚀 Building WhoDB Desktop Application..."
+echo "🚀 Building WhoDB Desktop for $TARGET..."
 
 # Get the directory of this script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
+# Install dependencies
 echo "📦 Installing dependencies..."
 cd "$SCRIPT_DIR"
 pnpm install
 
-echo "📦 Installing frontend dependencies..."
-cd "$PROJECT_ROOT/frontend"
-pnpm install
-
+# Build frontend
 echo "🔨 Building frontend..."
-cd "$SCRIPT_DIR"
 pnpm run build
 
-echo "🦀 Building backend (Go)..."
+# Build Go backend FIRST (before Tauri needs it)
+echo "🦀 Building backend..."
 cd "$PROJECT_ROOT/core"
 
 BIN_DIR="$SCRIPT_DIR/src-tauri/bin"
 mkdir -p "$BIN_DIR"
 
-build_go() {
-  local goos="$1"; local goarch="$2"; local out="$3"; local tags=""
-  echo "  - $goos/$goarch -> $out"
-  GOOS="$goos" GOARCH="$goarch" CGO_ENABLED=0 go build -o "$out" .
-}
+# Clear old binaries
+rm -f "$BIN_DIR"/*
 
 case "$TARGET" in
-  darwin-x64)
-    build_go darwin amd64 "$BIN_DIR/whodb-core"
+  win-x64|windows)
+    GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -o "$BIN_DIR/whodb-core-x86_64-pc-windows-msvc.exe" .
+    # Also copy with the expected name
+    cp "$BIN_DIR/whodb-core-x86_64-pc-windows-msvc.exe" "$BIN_DIR/whodb-core.exe"
     ;;
-  darwin-arm64)
-    build_go darwin arm64 "$BIN_DIR/whodb-core"
+  linux-x64|linux)
+    GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o "$BIN_DIR/whodb-core" .
+    touch "$BIN_DIR/.keep"
     ;;
-  win-x64)
-    build_go windows amd64 "$BIN_DIR/whodb-core.exe"
-    ;;
-  linux-x64)
-    build_go linux amd64 "$BIN_DIR/whodb-core"
-    ;;
-  linux-arm64)
-    build_go linux arm64 "$BIN_DIR/whodb-core"
-    ;;
-  linux-all)
-    build_go linux amd64 "$BIN_DIR/whodb-core"
-    build_go linux arm64 "$BIN_DIR/whodb-core-arm64"
-    ;;
-  all)
-    build_go darwin amd64 "$BIN_DIR/whodb-core"
-    build_go darwin arm64 "$BIN_DIR/whodb-core-arm64"
-    build_go windows amd64 "$BIN_DIR/whodb-core.exe"
-    build_go linux amd64 "$BIN_DIR/whodb-core"
-    build_go linux arm64 "$BIN_DIR/whodb-core-arm64"
+  darwin|mac)
+    # Build universal binary for Mac
+    GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -o "$BIN_DIR/whodb-core-x64" .
+    GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -o "$BIN_DIR/whodb-core-arm64" .
+    lipo -create -output "$BIN_DIR/whodb-core" "$BIN_DIR/whodb-core-x64" "$BIN_DIR/whodb-core-arm64"
+    rm "$BIN_DIR/whodb-core-x64" "$BIN_DIR/whodb-core-arm64"
+    touch "$BIN_DIR/.keep"
     ;;
   *)
-    echo "Unknown target: $TARGET" >&2
+    echo "Unknown target: $TARGET. Use: win-x64, linux-x64, or darwin"
     exit 1
     ;;
 esac
 
+# Verify the binary exists
+echo "Binary created:"
+ls -la "$BIN_DIR"
+
+# Build Tauri app
 echo "📱 Building Tauri app..."
 cd "$SCRIPT_DIR"
 
-TAURI_TARGETS=""
 case "$TARGET" in
-  darwin-*) TAURI_TARGETS="--target aarch64-apple-darwin --target x86_64-apple-darwin" ;;
-  win-*) TAURI_TARGETS="--target x86_64-pc-windows-msvc" ;;
-  linux-x64) TAURI_TARGETS="--target x86_64-unknown-linux-gnu" ;;
-  linux-arm64) TAURI_TARGETS="--target aarch64-unknown-linux-gnu" ;;
-  linux-all) TAURI_TARGETS="--target x86_64-unknown-linux-gnu --target aarch64-unknown-linux-gnu" ;;
-  all) TAURI_TARGETS="--target aarch64-apple-darwin --target x86_64-apple-darwin --target x86_64-pc-windows-msvc --target x86_64-unknown-linux-gnu --target aarch64-unknown-linux-gnu" ;;
+  win-x64|windows)
+    pnpm run tauri:build -- --target x86_64-pc-windows-msvc
+    ;;
+  linux-x64|linux)
+    pnpm run tauri:build -- --target x86_64-unknown-linux-gnu
+    ;;
+  darwin|mac)
+    pnpm run tauri:build -- --target universal-apple-darwin
+    ;;
 esac
 
-pnpm run tauri:build -- $TAURI_TARGETS
-
-echo "✅ Build complete! The desktop app is ready in src-tauri/target/release/"
+echo "✅ Build complete!"

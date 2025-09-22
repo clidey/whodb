@@ -25,7 +25,10 @@
     "active": true,
     "targets": "app",
     "resources": [
-      "bin/**"
+      "bin/*"
+    ],
+    "externalBin": [
+      "bin/whodb-core"
     ],
     "icon": [
       "icon.icns"
