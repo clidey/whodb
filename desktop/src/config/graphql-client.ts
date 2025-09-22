@@ -30,6 +30,7 @@ let cachedPort: number | null = null;
 
 async function getBackendPort(): Promise<number> {
   console.log('[DEBUG] getBackendPort called, cached:', cachedPort);
+  console.trace('[DEBUG] Call stack for getBackendPort');
 
   // Return cached port if we already have it
   if (cachedPort !== null) {

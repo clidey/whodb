@@ -206,10 +206,26 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![greet, get_backend_port])
-        .on_window_event(|_, event| {
+        .on_window_event(|window, event| {
             if matches!(event, tauri::WindowEvent::CloseRequested { .. }) {
                 cleanup_backend();
             }
+            // Open dev tools on F12 in debug builds
+            #[cfg(debug_assertions)]
+            if matches!(event, tauri::WindowEvent::KeyDown { key, .. }) {
+                // This is a placeholder - Tauri doesn't have direct key event handling here
+                // We'll need to handle this differently
+            }
+        })
+        .setup(|app| {
+            #[cfg(debug_assertions)]
+            {
+                // Open developer tools in debug builds
+                if let Some(window) = app.get_webview_window("main") {
+                    window.open_devtools();
+                }
+            }
+            Ok(())
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
