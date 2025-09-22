@@ -18,11 +18,11 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import { ApolloProvider } from "@apollo/client";
-import { graphqlClient } from '@/config/graphql-client';
+import { createGraphqlClient } from './config/graphql-client';
 import { Provider } from "react-redux";
 import { reduxStore, reduxStorePersistor } from '@/store';
 import { App } from '@/app';
-import { BrowserRouter } from "react-router-dom";
+import { HashRouter } from "react-router-dom";
 import { PersistGate } from 'redux-persist/integration/react';
 import { PostHogProvider } from 'posthog-js/react';
 import {initPosthog} from "@/config/posthog";
@@ -58,16 +58,21 @@ const AppWithProviders = () => {
   return app;
 };
 
-root.render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <ApolloProvider client={graphqlClient}>
-        <Provider store={reduxStore}>
-          <PersistGate loading={null} persistor={reduxStorePersistor}>
-            <AppWithProviders />
-          </PersistGate>
-        </Provider>
-      </ApolloProvider>
-    </BrowserRouter>
-  </React.StrictMode>
-);
+async function boot() {
+  const graphqlClient = await createGraphqlClient();
+  root.render(
+    <React.StrictMode>
+      <HashRouter>
+        <ApolloProvider client={graphqlClient as any}>
+          <Provider store={reduxStore}>
+            <PersistGate loading={null} persistor={reduxStorePersistor}>
+              <AppWithProviders />
+            </PersistGate>
+          </Provider>
+        </ApolloProvider>
+      </HashRouter>
+    </React.StrictMode>
+  );
+}
+
+boot();

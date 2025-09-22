@@ -1,12 +1,12 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::process::{Command, Stdio, Child};
+use serde::{Deserialize, Serialize};
+use std::net::TcpListener;
+use std::process::{Child, Command, Stdio};
 use std::sync::Mutex;
 use std::thread;
 use std::time::Duration;
-use std::net::TcpListener;
-use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct BackendInfo {
@@ -43,18 +43,20 @@ fn find_available_port() -> Result<u16, Box<dyn std::error::Error>> {
 fn start_backend() -> Result<BackendInfo, Box<dyn std::error::Error>> {
     // Find an available port
     let port = find_available_port()?;
-    
+
     // Get the path to the core binary
     let exe_path = std::env::current_exe()?;
-    let exe_dir = exe_path.parent().ok_or("Could not get executable directory")?;
-    
+    let exe_dir = exe_path
+        .parent()
+        .ok_or("Could not get executable directory")?;
+
     // Try different possible locations for the core binary
     let possible_paths = vec![
-        exe_dir.join("whodb-core"), // Development mode
+        exe_dir.join("whodb-core"),                   // Development mode
         exe_dir.join("resources").join("whodb-core"), // Bundled mode
         exe_dir.join("..").join("resources").join("whodb-core"), // Alternative bundled location
     ];
-    
+
     let mut core_binary = None;
     for path in possible_paths {
         if path.exists() {
@@ -62,32 +64,42 @@ fn start_backend() -> Result<BackendInfo, Box<dyn std::error::Error>> {
             break;
         }
     }
-    
+
     let core_binary = core_binary.ok_or("Core binary not found in any expected location")?;
-    
+
     // Start the backend process with the random port
     let child = Command::new(&core_binary)
         .env("PORT", port.to_string())
+        .env(
+            "WHODB_ALLOWED_ORIGINS",
+            // Allow Tauri custom protocols and local dev origins
+            // Include variants to cover potential scheme differences across platforms
+            "tauri://*,taur://*,app://*,http://localhost:1420,http://localhost:*,https://*",
+        )
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()?;
-    
+
     let pid = child.id();
-    
+
     // Store the child process globally
     if let Ok(mut child_guard) = BACKEND_CHILD.lock() {
         *child_guard = Some(child);
     }
-    
+
     // Give the process a moment to start
     thread::sleep(Duration::from_millis(1000));
-    
+
     // Check if the process is still running
     if let Ok(mut child_guard) = BACKEND_CHILD.lock() {
         if let Some(ref mut child) = *child_guard {
             match child.try_wait() {
                 Ok(Some(status)) => {
-                    return Err(format!("Backend process exited immediately with status: {:?}", status).into());
+                    return Err(format!(
+                        "Backend process exited immediately with status: {:?}",
+                        status
+                    )
+                    .into());
                 }
                 Ok(None) => {
                     // Process is still running, which is good
@@ -98,7 +110,7 @@ fn start_backend() -> Result<BackendInfo, Box<dyn std::error::Error>> {
             }
         }
     }
-    
+
     Ok(BackendInfo {
         port,
         pid: Some(pid),
@@ -122,12 +134,12 @@ fn main() {
     let _cleanup_handler = || {
         cleanup_backend();
     };
-    
+
     // Start the backend process
     match start_backend() {
         Ok(backend_info) => {
             println!("🚀 Started WhoDB backend on port {}", backend_info.port);
-            
+
             // Store the backend info globally
             if let Ok(mut info) = BACKEND_INFO.lock() {
                 *info = Some(backend_info);
@@ -138,11 +150,12 @@ fn main() {
             // Continue anyway - the frontend might be able to connect to an external backend
         }
     }
-    
+
     tauri::Builder::default()
+        .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![greet, get_backend_port])
-        .on_window_event(|event| {
-            if let tauri::WindowEvent::CloseRequested { .. } = event.event() {
+        .on_window_event(|_, event| {
+            if matches!(event, tauri::WindowEvent::CloseRequested { .. }) {
                 cleanup_backend();
             }
         })

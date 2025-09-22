@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import fs from 'fs';
+// @ts-ignore – TS sometimes fails to resolve this package under bundler resolution
 import tailwindcss from '@tailwindcss/vite'
 import copyCssFromFrontend from './vite-plugin-copy-css'
 
@@ -73,6 +74,8 @@ export default defineConfig(async () => {
         '../../../../../frontend/src': path.resolve(__dirname, '../frontend/src'),
         '../../../frontend/src': path.resolve(__dirname, '../frontend/src'),
       },
+      // Ensure singletons for React and React Router across desktop and frontend to prevent context mismatches
+      dedupe: ['react', 'react-dom', 'react-router', 'react-router-dom'],
     },
 
     // Configure public directory to resolve assets from frontend
@@ -107,7 +110,7 @@ export default defineConfig(async () => {
 
     build: {
       outDir: 'dist',
-      sourcemap: true,
+      sourcemap: false,
     },
 
     define: {

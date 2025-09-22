@@ -14,28 +14,25 @@
  * limitations under the License.
  */
 
-import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
+import { ApolloClient, InMemoryCache, createHttpLink, from } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
 import { toast } from '@clidey/ux';
 import { reduxStore } from '@/store';
 
 // Function to get the backend port from Tauri
-async function getBackendPort(): Promise<number> {
-  try {
-    // Check if we're running in Tauri
-    if (window.__TAURI__) {
-      const { invoke } = window.__TAURI__.tauri;
-      const port = await invoke('get_backend_port');
-      if (port && typeof port === 'number') {
-        return port;
-      }
-    }
-  } catch (error) {
-    console.warn('Failed to get backend port from Tauri:', error);
+declare global {
+  interface Window {
+    __TAURI__?: any;
   }
-  
-  // Fallback to default port
-  return 8080;
+}
+
+async function getBackendPort(): Promise<number> {
+  if (!window.__TAURI__ || !window.__TAURI__.core?.invoke) {
+    throw new Error('Tauri API is not available in this environment');
+  }
+  const port = await window.__TAURI__.core.invoke('get_backend_port');
+  if (typeof port === 'number' && port > 0) return port;
+  throw new Error('Failed to get backend port from Tauri');
 }
 
 // Create a dynamic URI function
@@ -44,11 +41,14 @@ async function getGraphQLUri(): Promise<string> {
   return `http://localhost:${port}/api/query`;
 }
 
-// Create the HTTP link with dynamic URI
-const httpLink = createHttpLink({
-  uri: async () => await getGraphQLUri(),
-  credentials: "include",
-});
+// Single HTTP link built with the correct backend port (no per-request override)
+async function buildHttpLink() {
+  const uri = await getGraphQLUri();
+  return createHttpLink({
+    uri,
+    credentials: "include",
+  });
+}
 
 /**
  * Global error handling for unauthorized responses.
@@ -172,15 +172,18 @@ async function handleAutoLogin(currentProfile: any) {
   }
 }
 
-export const graphqlClient = new ApolloClient({
-  link: errorLink.concat(httpLink),
-  cache: new InMemoryCache(),
-  defaultOptions: {
-      query: {
-        fetchPolicy: "no-cache",
-      },
-      mutate: {
-        fetchPolicy: "no-cache",
-      },
-  }
-});
+export async function createGraphqlClient() {
+  const httpLink = await buildHttpLink();
+  return new ApolloClient({
+    link: from([errorLink, httpLink]),
+    cache: new InMemoryCache(),
+    defaultOptions: {
+        query: {
+          fetchPolicy: "no-cache",
+        },
+        mutate: {
+          fetchPolicy: "no-cache",
+        },
+    }
+  });
+}

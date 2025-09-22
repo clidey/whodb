@@ -16,8 +16,6 @@
 
 // Import the frontend app directly
 import { App as FrontendApp } from '@/app';
-import { ApolloProvider } from "@apollo/client";
-import { graphqlClient } from '@/config/graphql-client';
 import { Provider } from "react-redux";
 import { reduxStore, reduxStorePersistor } from '@/store';
 import { BrowserRouter } from "react-router-dom";
@@ -53,13 +51,11 @@ const AppWithProviders = () => {
 export function App() {
   return (
     <BrowserRouter>
-      <ApolloProvider client={graphqlClient}>
-        <Provider store={reduxStore}>
-          <PersistGate loading={null} persistor={reduxStorePersistor}>
-            <AppWithProviders />
-          </PersistGate>
-        </Provider>
-      </ApolloProvider>
+      <Provider store={reduxStore}>
+        <PersistGate loading={null} persistor={reduxStorePersistor}>
+          <AppWithProviders />
+        </PersistGate>
+      </Provider>
     </BrowserRouter>
   );
 }
