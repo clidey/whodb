@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import fs from 'fs';
 import tailwindcss from '@tailwindcss/vite'
+import copyCssFromFrontend from './vite-plugin-copy-css'
 
 // Check if EE directory exists
 const eeDir = path.resolve(__dirname, '../ee/frontend/src');
@@ -55,6 +56,7 @@ export default defineConfig(async () => {
     plugins: [
       react(),
       tailwindcss(),
+      copyCssFromFrontend(),
       eeModulePlugin(),
     ],
 
@@ -87,6 +89,13 @@ export default defineConfig(async () => {
       watch: {
         // 3. tell vite to ignore watching `src-tauri`
         ignored: ["**/src-tauri/**"],
+      },
+      fs: {
+        // allow importing CSS assets from the frontend build directory
+        allow: [
+          path.resolve(__dirname, '..'),
+          path.resolve(__dirname, '../frontend/build')
+        ],
       },
       proxy: {
         '/api': {

@@ -28,6 +28,7 @@ import { PostHogProvider } from 'posthog-js/react';
 import {initPosthog} from "@/config/posthog";
 import { ThemeProvider } from '@clidey/ux'
 import { isEEMode } from '@/config/ee-imports';
+import 'virtual:frontend-build-css';
 
 if (isEEMode) {
   import("@ee/index.css");
