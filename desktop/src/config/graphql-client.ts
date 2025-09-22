@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { ApolloClient, InMemoryCache, createHttpLink, from } from '@apollo/client';
-import { onError } from '@apollo/client/link/error';
-import { toast } from '@clidey/ux';
-import { reduxStore } from '@/store';
+import {ApolloClient, createHttpLink, from, InMemoryCache} from '@apollo/client';
+import {onError} from '@apollo/client/link/error';
+import {toast} from '@clidey/ux';
+import {reduxStore} from '@/store';
 
 // Function to get the backend port from Tauri
 declare global {
@@ -27,18 +27,25 @@ declare global {
 }
 
 async function getBackendPort(): Promise<number> {
+  console.log('[DEBUG] getBackendPort called');
   if (!window.__TAURI__ || !window.__TAURI__.core?.invoke) {
+    console.error('[ERROR] Tauri API is not available');
     throw new Error('Tauri API is not available in this environment');
   }
+  console.log('[DEBUG] Invoking get_backend_port from Tauri');
   const port = await window.__TAURI__.core.invoke('get_backend_port');
+  console.log('[DEBUG] Received port from Tauri:', port);
   if (typeof port === 'number' && port > 0) return port;
+  console.error('[ERROR] Invalid port received:', port);
   throw new Error('Failed to get backend port from Tauri');
 }
 
 // Create a dynamic URI function
 async function getGraphQLUri(): Promise<string> {
   const port = await getBackendPort();
-  return `http://localhost:${port}/api/query`;
+  const uri = `http://localhost:${port}/api/query`;
+  console.log('[DEBUG] GraphQL URI:', uri);
+  return uri;
 }
 
 // Single HTTP link built with the correct backend port (no per-request override)

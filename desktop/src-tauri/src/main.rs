@@ -1,4 +1,5 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
+// Comment out the line below to see console output in release builds
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use serde::{Deserialize, Serialize};
@@ -26,9 +27,13 @@ fn greet(name: &str) -> String {
 
 #[tauri::command]
 fn get_backend_port() -> Option<u16> {
+    println!("[DEBUG] get_backend_port called");
     if let Ok(info) = BACKEND_INFO.lock() {
-        info.as_ref().map(|i| i.port)
+        let port = info.as_ref().map(|i| i.port);
+        println!("[DEBUG] Returning port: {:?}", port);
+        port
     } else {
+        println!("[DEBUG] Failed to lock BACKEND_INFO");
         None
     }
 }
@@ -41,8 +46,11 @@ fn find_available_port() -> Result<u16, Box<dyn std::error::Error>> {
 }
 
 fn start_backend() -> Result<BackendInfo, Box<dyn std::error::Error>> {
+    println!("[DEBUG] Starting backend process...");
+
     // Find an available port
     let port = find_available_port()?;
+    println!("[DEBUG] Found available port: {}", port);
 
     // Get the path to the core binary
     let exe_path = std::env::current_exe()?;
@@ -67,9 +75,21 @@ fn start_backend() -> Result<BackendInfo, Box<dyn std::error::Error>> {
         }
     }
 
-    let core_binary = core_binary.ok_or("Core binary not found in any expected location")?;
+    let core_binary = core_binary.ok_or_else(|| {
+        eprintln!("[ERROR] Core binary not found. Searched paths:");
+        for path in &possible_paths {
+            eprintln!("  - {}", path.display());
+        }
+        "Core binary not found in any expected location"
+    })?;
+
+    println!("[DEBUG] Found core binary at: {}", core_binary.display());
 
     // Start the backend process with the random port
+    println!("[DEBUG] Starting command: {:?}", &core_binary);
+    println!("[DEBUG] With PORT={}", port);
+    println!("[DEBUG] With WHODB_ALLOWED_ORIGINS=tauri://*,taur://*,app://*,http://localhost:1420,http://localhost:*,https://*");
+
     let child = Command::new(&core_binary)
         .env("PORT", port.to_string())
         .env(
@@ -83,6 +103,7 @@ fn start_backend() -> Result<BackendInfo, Box<dyn std::error::Error>> {
         .spawn()?;
 
     let pid = child.id();
+    println!("[DEBUG] Backend process started with PID: {}", pid);
 
     // Store the child process globally
     if let Ok(mut child_guard) = BACKEND_CHILD.lock() {
@@ -97,6 +118,23 @@ fn start_backend() -> Result<BackendInfo, Box<dyn std::error::Error>> {
         if let Some(ref mut child) = *child_guard {
             match child.try_wait() {
                 Ok(Some(status)) => {
+                    eprintln!("[ERROR] Backend process exited immediately!");
+                    eprintln!("[ERROR] Exit status: {:?}", status);
+
+                    // Try to read stderr output if available
+                    if let Ok(child_guard) = BACKEND_CHILD.lock() {
+                        if let Some(ref mut child) = *child_guard {
+                            if let Some(ref mut stderr) = child.stderr {
+                                use std::io::Read;
+                                let mut error_output = String::new();
+                                let _ = stderr.read_to_string(&mut error_output);
+                                if !error_output.is_empty() {
+                                    eprintln!("[ERROR] Backend stderr: {}", error_output);
+                                }
+                            }
+                        }
+                    }
+
                     return Err(format!(
                         "Backend process exited immediately with status: {:?}",
                         status
@@ -104,7 +142,7 @@ fn start_backend() -> Result<BackendInfo, Box<dyn std::error::Error>> {
                     .into());
                 }
                 Ok(None) => {
-                    // Process is still running, which is good
+                    println!("[DEBUG] Backend process is running successfully");
                 }
                 Err(e) => {
                     return Err(format!("Error checking backend process: {}", e).into());

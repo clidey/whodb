@@ -1,9 +1,20 @@
-# Simple Windows build script
-# Run from a regular Windows path (not WSL UNC path)
+# Windows build script with optional debug mode
+# Usage:
+#   Normal build: powershell -ExecutionPolicy Bypass -File build-combined.ps1
+#   Debug build:  powershell -ExecutionPolicy Bypass -File build-combined.ps1 -Debug
+
+param(
+    [switch]$Debug = $false
+)
 
 $ErrorActionPreference = "Stop"
 
-Write-Host ">>> Building WhoDB Desktop for Windows..." -ForegroundColor Green
+if ($Debug) {
+    Write-Host "=== WhoDB Desktop Debug Build for Windows ===" -ForegroundColor Cyan
+    Write-Host ""
+} else {
+    Write-Host ">>> Building WhoDB Desktop for Windows..." -ForegroundColor Green
+}
 
 # Get the directory of this script
 $ScriptDir = $PSScriptRoot
@@ -43,7 +54,13 @@ $env:GOOS = "windows"
 $env:GOARCH = "amd64"
 $env:CGO_ENABLED = "0"
 
-go build -o (Join-Path $BinDir "whodb-core-x86_64-pc-windows-msvc.exe") .
+if ($Debug) {
+    Write-Host "Building Go binary with verbose output..." -ForegroundColor Cyan
+    go build -v -o (Join-Path $BinDir "whodb-core-x86_64-pc-windows-msvc.exe") .
+} else {
+    go build -o (Join-Path $BinDir "whodb-core-x86_64-pc-windows-msvc.exe") .
+}
+
 # Also copy with the expected name
 Copy-Item (Join-Path $BinDir "whodb-core-x86_64-pc-windows-msvc.exe") (Join-Path $BinDir "whodb-core.exe")
 
@@ -55,9 +72,57 @@ Remove-Item Env:CGO_ENABLED -ErrorAction SilentlyContinue
 Write-Host "Binary created:" -ForegroundColor Cyan
 Get-ChildItem $BinDir
 
+if ($Debug) {
+    # Test the backend binary directly
+    Write-Host ""
+    Write-Host ">>> Testing backend binary directly..." -ForegroundColor Yellow
+    Write-Host "Starting backend on port 8081 for 5 seconds..." -ForegroundColor Cyan
+
+    $backendProcess = Start-Process -FilePath (Join-Path $BinDir "whodb-core.exe") `
+        -ArgumentList "" `
+        -EnvironmentVariables @{
+            "PORT"="8081"
+            "WHODB_ALLOWED_ORIGINS"="*"
+        } `
+        -PassThru `
+        -NoNewWindow
+
+    Start-Sleep -Seconds 5
+
+    if ($backendProcess.HasExited) {
+        Write-Host "Backend exited with code: $($backendProcess.ExitCode)" -ForegroundColor Red
+    } else {
+        Write-Host "Backend is running successfully!" -ForegroundColor Green
+        $backendProcess | Stop-Process -Force
+    }
+    Write-Host ""
+}
+
 # Build Tauri app
 Write-Host ">>> Building Tauri app..." -ForegroundColor Yellow
 Set-Location $ScriptDir
-pnpm run tauri:build -- --target x86_64-pc-windows-msvc
+
+if ($Debug) {
+    # Set environment variables for debugging
+    $env:RUST_BACKTRACE = "full"
+    $env:RUST_LOG = "debug"
+    $env:TAURI_LOG = "true"
+
+    Write-Host "Building with debug logging enabled..." -ForegroundColor Cyan
+    pnpm run tauri:build -- --target x86_64-pc-windows-msvc --debug
+
+    # Clean up env vars
+    Remove-Item Env:RUST_BACKTRACE -ErrorAction SilentlyContinue
+    Remove-Item Env:RUST_LOG -ErrorAction SilentlyContinue
+    Remove-Item Env:TAURI_LOG -ErrorAction SilentlyContinue
+} else {
+    pnpm run tauri:build -- --target x86_64-pc-windows-msvc
+}
 
 Write-Host ">>> Build complete!" -ForegroundColor Green
+
+if ($Debug) {
+    Write-Host ""
+    Write-Host "Debug build created with console logging enabled." -ForegroundColor Cyan
+    Write-Host "Check the console output when running the app for debug messages." -ForegroundColor Cyan
+}

@@ -13,7 +13,8 @@
     "build:mac": "./build-combined.sh darwin",
     "build:win": "./build-combined.sh win-x64",
     "build:linux": "./build-combined.sh linux-x64",
-    "build:win:ps": "powershell -ExecutionPolicy Bypass -File build-combined.ps1"
+    "build:win:ps": "powershell -ExecutionPolicy Bypass -File build-combined.ps1",
+    "build:win:ps:debug": "powershell -ExecutionPolicy Bypass -File build-combined.ps1 -Debug"
   },
   "dependencies": {
     "@apollo/client": "^3.13.8",
