@@ -8,6 +8,7 @@ use std::process::{Child, Command, Stdio};
 use std::sync::Mutex;
 use std::thread;
 use std::time::Duration;
+use tauri::Manager;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct BackendInfo {
@@ -206,15 +207,9 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![greet, get_backend_port])
-        .on_window_event(|window, event| {
+        .on_window_event(|_, event| {
             if matches!(event, tauri::WindowEvent::CloseRequested { .. }) {
                 cleanup_backend();
-            }
-            // Open dev tools on F12 in debug builds
-            #[cfg(debug_assertions)]
-            if matches!(event, tauri::WindowEvent::KeyDown { key, .. }) {
-                // This is a placeholder - Tauri doesn't have direct key event handling here
-                // We'll need to handle this differently
             }
         })
         .setup(|app| {
