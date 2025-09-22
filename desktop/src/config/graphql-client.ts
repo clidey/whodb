@@ -107,7 +107,8 @@ const errorLink = onError(({ networkError }) => {
       handleAutoLogin(currentProfile);
     } else {
       toast.error("Session expired. Please login again.");
-      window.location.href = '/login';
+      // Don't redirect in desktop app - let the app handle navigation
+      // window.location.href = '/login';
     }
   } else if (networkError) {
     console.error('Network error:', networkError);
@@ -157,7 +158,8 @@ async function handleAutoLogin(currentProfile: any) {
         return;
       } else {
         toast.error("Auto-login failed. Please login manually.");
-        window.location.href = '/login';
+        // Don't redirect in desktop app - let the app handle navigation
+        // window.location.href = '/login';
         return;
       }
     } else {
@@ -195,14 +197,16 @@ async function handleAutoLogin(currentProfile: any) {
         return;
       } else {
         toast.error("Auto-login failed. Please login manually.");
-        window.location.href = '/login';
+        // Don't redirect in desktop app - let the app handle navigation
+        // window.location.href = '/login';
         return;
       }
     }
   } catch (error) {
     console.error('Auto-login error:', error);
     toast.error("Auto-login failed. Please login manually.");
-    window.location.href = '/login';
+    // Don't redirect in desktop app - let the app handle navigation
+    // window.location.href = '/login';
   }
 }
 
