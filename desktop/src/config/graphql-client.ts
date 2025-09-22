@@ -26,8 +26,17 @@ declare global {
   }
 }
 
+let cachedPort: number | null = null;
+
 async function getBackendPort(): Promise<number> {
-  console.log('[DEBUG] getBackendPort called');
+  console.log('[DEBUG] getBackendPort called, cached:', cachedPort);
+
+  // Return cached port if we already have it
+  if (cachedPort !== null) {
+    console.log('[DEBUG] Returning cached port:', cachedPort);
+    return cachedPort;
+  }
+
   if (!window.__TAURI__ || !window.__TAURI__.core?.invoke) {
     console.error('[ERROR] Tauri API is not available');
     throw new Error('Tauri API is not available in this environment');
@@ -35,7 +44,10 @@ async function getBackendPort(): Promise<number> {
   console.log('[DEBUG] Invoking get_backend_port from Tauri');
   const port = await window.__TAURI__.core.invoke('get_backend_port');
   console.log('[DEBUG] Received port from Tauri:', port);
-  if (typeof port === 'number' && port > 0) return port;
+  if (typeof port === 'number' && port > 0) {
+    cachedPort = port; // Cache the port
+    return port;
+  }
   console.error('[ERROR] Invalid port received:', port);
   throw new Error('Failed to get backend port from Tauri');
 }
@@ -179,9 +191,18 @@ async function handleAutoLogin(currentProfile: any) {
   }
 }
 
+let apolloClientInstance: ApolloClient<any> | null = null;
+
 export async function createGraphqlClient() {
+  // Return existing client if already created
+  if (apolloClientInstance) {
+    console.log('[DEBUG] Returning existing Apollo Client instance');
+    return apolloClientInstance;
+  }
+
+  console.log('[DEBUG] Creating new Apollo Client instance');
   const httpLink = await buildHttpLink();
-  return new ApolloClient({
+  apolloClientInstance = new ApolloClient({
     link: from([errorLink, httpLink]),
     cache: new InMemoryCache(),
     defaultOptions: {
@@ -193,4 +214,6 @@ export async function createGraphqlClient() {
         },
     }
   });
+
+  return apolloClientInstance;
 }
