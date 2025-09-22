@@ -105,6 +105,37 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			println("[DEBUG]   Cookie name:", c.Name)
 		}
 
+		// Check if this is a desktop app request - bypass auth for local desktop connections
+		origin := r.Header.Get("Origin")
+		userAgent := r.Header.Get("User-Agent")
+		isDesktopApp := false
+
+		// Check for Tauri desktop app indicators
+		if strings.Contains(origin, "tauri://") || strings.Contains(origin, "tauri.localhost") ||
+			strings.Contains(origin, "app://") || strings.Contains(userAgent, "Tauri") {
+			isDesktopApp = true
+			println("[DEBUG] Desktop app detected - bypassing authentication")
+		}
+
+		// Also check if running on localhost without API gateway (desktop mode)
+		if !env.IsAPIGatewayEnabled && (strings.HasPrefix(origin, "http://localhost:") ||
+			origin == "http://localhost" || origin == "") {
+			isDesktopApp = true
+			println("[DEBUG] Local desktop mode detected - bypassing authentication")
+		}
+
+		// If desktop app, create a default credential and proceed
+		if isDesktopApp {
+			credentials := &engine.Credentials{
+				// Provide minimal credentials for desktop app
+				Database: "",
+			}
+			ctx := r.Context()
+			ctx = context.WithValue(ctx, AuthKey_Credentials, credentials)
+			next.ServeHTTP(w, r.WithContext(ctx))
+			return
+		}
+
 		var token string
 		if env.IsAPIGatewayEnabled {
 			authHeader := r.Header.Get("Authorization")
