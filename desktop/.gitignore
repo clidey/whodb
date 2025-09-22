@@ -8,3 +8,4 @@ src-tauri/*.log
 *.log
 Cargo.lock
 node_modules
+bin

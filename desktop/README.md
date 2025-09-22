@@ -24,6 +24,15 @@ pnpm run dev:combined
 ```bash
 # Build the complete desktop application
 pnpm run build:combined
+
+# Build for Windows (from macOS/Linux with proper cross toolchains)
+pnpm run build:win
+
+# Build for Linux (x64 and arm64)
+pnpm run build:linux
+
+# Build for all supported targets (macOS, Windows, Linux)
+pnpm run build:all
 ```
 
 This will:

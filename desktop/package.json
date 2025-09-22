@@ -10,7 +10,10 @@
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
-    "build:combined": "./build-combined.sh"
+    "build:mac": "./build-combined.sh --target darwin-x64",
+    "build:win": "./build-combined.sh --target win-x64",
+    "build:linux": "./build-combined.sh --target linux-all",
+    "build:all": "./build-combined.sh --target all"
   },
   "dependencies": {
     "@apollo/client": "^3.13.8",

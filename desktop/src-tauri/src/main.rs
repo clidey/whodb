@@ -50,12 +50,14 @@ fn start_backend() -> Result<BackendInfo, Box<dyn std::error::Error>> {
         .parent()
         .ok_or("Could not get executable directory")?;
 
-    // Try different possible locations for the core binary
-    let possible_paths = vec![
-        exe_dir.join("whodb-core"),                   // Development mode
-        exe_dir.join("resources").join("whodb-core"), // Bundled mode
-        exe_dir.join("..").join("resources").join("whodb-core"), // Alternative bundled location
-    ];
+    // Try different possible locations for the core binary across platforms
+    let exe_candidates = ["whodb-core", "whodb-core.exe", "bin/whodb-core", "bin/whodb-core.exe"];
+    let mut possible_paths = Vec::new();
+    for name in &exe_candidates {
+        possible_paths.push(exe_dir.join(name));
+        possible_paths.push(exe_dir.join("resources").join(name));
+        possible_paths.push(exe_dir.join("..").join("resources").join(name));
+    }
 
     let mut core_binary = None;
     for path in possible_paths {
