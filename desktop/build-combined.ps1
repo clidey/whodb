@@ -34,9 +34,9 @@ $env:GOOS = "windows"
 $env:GOARCH = "amd64"
 $env:CGO_ENABLED = "0"
 
-go build -o (Join-Path $BinDir "whodb-core-x86_64-pc-windows-gnu.exe") .
+go build -o (Join-Path $BinDir "whodb-core-x86_64-pc-windows-msvc.exe") .
 # Also copy with the expected name
-Copy-Item (Join-Path $BinDir "whodb-core-x86_64-pc-windows-gnu.exe") (Join-Path $BinDir "whodb-core.exe")
+Copy-Item (Join-Path $BinDir "whodb-core-x86_64-pc-windows-msvc.exe") (Join-Path $BinDir "whodb-core.exe")
 
 Remove-Item Env:GOOS -ErrorAction SilentlyContinue
 Remove-Item Env:GOARCH -ErrorAction SilentlyContinue
@@ -49,6 +49,6 @@ Get-ChildItem $BinDir
 # Build Tauri app
 Write-Host ">>> Building Tauri app..." -ForegroundColor Yellow
 Set-Location $ScriptDir
-pnpm run tauri:build -- --target x86_64-pc-windows-gnu
+pnpm run tauri:build -- --target x86_64-pc-windows-msvc
 
 Write-Host ">>> Build complete!" -ForegroundColor Green
