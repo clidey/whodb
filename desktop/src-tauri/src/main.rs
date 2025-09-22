@@ -68,9 +68,9 @@ fn start_backend() -> Result<BackendInfo, Box<dyn std::error::Error>> {
     }
 
     let mut core_binary = None;
-    for path in possible_paths {
+    for path in &possible_paths {
         if path.exists() {
-            core_binary = Some(path);
+            core_binary = Some(path.clone());
             break;
         }
     }
@@ -122,7 +122,7 @@ fn start_backend() -> Result<BackendInfo, Box<dyn std::error::Error>> {
                     eprintln!("[ERROR] Exit status: {:?}", status);
 
                     // Try to read stderr output if available
-                    if let Ok(child_guard) = BACKEND_CHILD.lock() {
+                    if let Ok(mut child_guard) = BACKEND_CHILD.lock() {
                         if let Some(ref mut child) = *child_guard {
                             if let Some(ref mut stderr) = child.stderr {
                                 use std::io::Read;
