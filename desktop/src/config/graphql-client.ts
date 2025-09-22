@@ -63,9 +63,23 @@ async function getGraphQLUri(): Promise<string> {
 // Single HTTP link built with the correct backend port (no per-request override)
 async function buildHttpLink() {
   const uri = await getGraphQLUri();
+  console.log('[DEBUG] Creating HTTP link with URI:', uri);
+
+  // Create a custom fetch that doesn't re-resolve the URI
+  const customFetch = (input: RequestInfo | URL, init?: RequestInit) => {
+    // If input is a relative path, use our resolved URI
+    if (typeof input === 'string' && input.startsWith('/')) {
+      const fullUrl = `http://localhost:${cachedPort}${input}`;
+      console.log('[DEBUG] Fetch request to:', fullUrl);
+      return fetch(fullUrl, init);
+    }
+    return fetch(input, init);
+  };
+
   return createHttpLink({
     uri,
     credentials: "include",
+    fetch: customFetch as any,
   });
 }
 
