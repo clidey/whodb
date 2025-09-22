@@ -35,7 +35,6 @@
     ]
   },
   "productName": "WhoDB Desktop",
-  "mainBinaryName": "WhoDB Desktop",
   "version": "0.1.0",
   "identifier": "com.whodb.desktop",
   "plugins": {}

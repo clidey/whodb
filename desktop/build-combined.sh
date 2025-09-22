@@ -48,9 +48,9 @@ rm -f "$BIN_DIR"/*
 
 case "$TARGET" in
   win-x64|windows)
-    GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -o "$BIN_DIR/whodb-core-x86_64-pc-windows-msvc.exe" .
+    GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -o "$BIN_DIR/whodb-core-x86_64-pc-windows-gnu.exe" .
     # Also copy with the expected name
-    cp "$BIN_DIR/whodb-core-x86_64-pc-windows-msvc.exe" "$BIN_DIR/whodb-core.exe"
+    cp "$BIN_DIR/whodb-core-x86_64-pc-windows-gnu.exe" "$BIN_DIR/whodb-core.exe"
     ;;
   linux-x64|linux)
     GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o "$BIN_DIR/whodb-core" .
@@ -80,7 +80,7 @@ cd "$SCRIPT_DIR"
 
 case "$TARGET" in
   win-x64|windows)
-    pnpm run tauri:build -- --target x86_64-pc-windows-msvc
+    pnpm run tauri:build -- --target x86_64-pc-windows-gnu
     ;;
   linux-x64|linux)
     pnpm run tauri:build -- --target x86_64-unknown-linux-gnu
