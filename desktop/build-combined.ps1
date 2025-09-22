@@ -78,23 +78,38 @@ if ($Debug) {
     Write-Host ">>> Testing backend binary directly..." -ForegroundColor Yellow
     Write-Host "Starting backend on port 8081 for 5 seconds..." -ForegroundColor Cyan
 
+    $env:PORT = "8081"
+    $env:WHODB_ALLOWED_ORIGINS = "*"
+
     $backendProcess = Start-Process -FilePath (Join-Path $BinDir "whodb-core.exe") `
-        -ArgumentList "" `
-        -EnvironmentVariables @{
-            "PORT"="8081"
-            "WHODB_ALLOWED_ORIGINS"="*"
-        } `
         -PassThru `
-        -NoNewWindow
+        -NoNewWindow `
+        -RedirectStandardOutput "$env:TEMP\whodb-backend-stdout.log" `
+        -RedirectStandardError "$env:TEMP\whodb-backend-stderr.log"
 
     Start-Sleep -Seconds 5
 
     if ($backendProcess.HasExited) {
         Write-Host "Backend exited with code: $($backendProcess.ExitCode)" -ForegroundColor Red
+        Write-Host ""
+        Write-Host "Backend stderr output:" -ForegroundColor Yellow
+        Get-Content "$env:TEMP\whodb-backend-stderr.log" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_ }
+        Write-Host ""
+        Write-Host "Backend stdout output:" -ForegroundColor Yellow
+        Get-Content "$env:TEMP\whodb-backend-stdout.log" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_ }
     } else {
         Write-Host "Backend is running successfully!" -ForegroundColor Green
         $backendProcess | Stop-Process -Force
     }
+
+    # Clean up temp files
+    Remove-Item "$env:TEMP\whodb-backend-stdout.log" -ErrorAction SilentlyContinue
+    Remove-Item "$env:TEMP\whodb-backend-stderr.log" -ErrorAction SilentlyContinue
+
+    # Clean up environment variables
+    Remove-Item Env:PORT -ErrorAction SilentlyContinue
+    Remove-Item Env:WHODB_ALLOWED_ORIGINS -ErrorAction SilentlyContinue
+
     Write-Host ""
 }
 
