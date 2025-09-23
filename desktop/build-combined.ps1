@@ -20,14 +20,85 @@ if ($Debug) {
 $ScriptDir = $PSScriptRoot
 $ProjectRoot = Split-Path -Parent $ScriptDir
 
-# Install dependencies
-Write-Host ">>> Installing dependencies..." -ForegroundColor Yellow
+# Build main frontend first (desktop app depends on its CSS)
+Write-Host ">>> Building main frontend application..." -ForegroundColor Yellow
+Set-Location "$ProjectRoot\frontend"
+
+# Clean ALL old frontend build artifacts
+Write-Host ">>> Cleaning frontend build artifacts..." -ForegroundColor Yellow
+if (Test-Path "build") {
+    Remove-Item -Recurse -Force "build"
+}
+if (Test-Path ".cache") {
+    Remove-Item -Recurse -Force ".cache"
+}
+if (Test-Path "node_modules/.cache") {
+    Remove-Item -Recurse -Force "node_modules/.cache"
+}
+
+if (-not (Test-Path "node_modules")) {
+    Write-Host "Installing frontend dependencies..." -ForegroundColor Yellow
+    pnpm install --prefer-offline
+}
+
+# Force clean build
+$env:NODE_ENV = "production"
+pnpm run build
+Remove-Item Env:NODE_ENV -ErrorAction SilentlyContinue
+
+# Verify frontend build succeeded
+if (-not (Test-Path "build/index.html")) {
+    Write-Host "ERROR: Frontend build failed - build/index.html not found!" -ForegroundColor Red
+    exit 1
+}
+$cssFiles = Get-ChildItem "build/assets/*.css" -ErrorAction SilentlyContinue
+if ($cssFiles.Count -eq 0) {
+    Write-Host "ERROR: Frontend build failed - no CSS files found in build/assets!" -ForegroundColor Red
+    exit 1
+}
+Write-Host "✓ Frontend build verified - found $($cssFiles.Count) CSS file(s)" -ForegroundColor Green
+
+# Install desktop dependencies
+Write-Host ">>> Installing desktop dependencies..." -ForegroundColor Yellow
 Set-Location $ScriptDir
+
+# Clean ALL old desktop build artifacts
+Write-Host ">>> Cleaning desktop build artifacts..." -ForegroundColor Yellow
+if (Test-Path "dist") {
+    Remove-Item -Recurse -Force "dist"
+}
+if (Test-Path ".cache") {
+    Remove-Item -Recurse -Force ".cache"
+}
+if (Test-Path "node_modules/.cache") {
+    Remove-Item -Recurse -Force "node_modules/.cache"
+}
+# Clean Tauri build directories
+if (Test-Path "src-tauri\target") {
+    Write-Host ">>> Cleaning Tauri target directory (this may take a moment)..." -ForegroundColor Yellow
+    Remove-Item -Recurse -Force "src-tauri\target"
+}
+
 pnpm install --prefer-offline
 
-# Build frontend
-Write-Host ">>> Building frontend..." -ForegroundColor Yellow
+# Build desktop frontend with clean cache
+Write-Host ">>> Building desktop frontend..." -ForegroundColor Yellow
+$env:NODE_ENV = "production"
 pnpm run build
+Remove-Item Env:NODE_ENV -ErrorAction SilentlyContinue
+
+# Verify desktop build succeeded and CSS was copied
+if (-not (Test-Path "dist/index.html")) {
+    Write-Host "ERROR: Desktop build failed - dist/index.html not found!" -ForegroundColor Red
+    exit 1
+}
+$desktopCssFiles = Get-ChildItem "dist/assets/*.css" -ErrorAction SilentlyContinue
+if ($desktopCssFiles.Count -eq 0) {
+    Write-Host "ERROR: Desktop build failed - no CSS files found in dist/assets!" -ForegroundColor Red
+    Write-Host "This usually means the frontend CSS wasn't copied properly." -ForegroundColor Red
+    exit 1
+}
+Write-Host "✓ Desktop build verified - found $($desktopCssFiles.Count) CSS file(s)" -ForegroundColor Green
 
 # Create empty build directory for Go embedding (desktop doesn't need frontend)
 Write-Host ">>> Creating empty build directory for backend..." -ForegroundColor Yellow
@@ -42,13 +113,22 @@ New-Item -ItemType File -Path "$CoreBuildDir\.keep" | Out-Null
 Write-Host ">>> Building backend..." -ForegroundColor Yellow
 Set-Location "$ProjectRoot\core"
 
-$BinDir = "$ScriptDir\src-tauri\bin"
-if (-not (Test-Path $BinDir)) {
-    New-Item -ItemType Directory -Path $BinDir | Out-Null
-}
+# Clean Go build cache to ensure fresh build (but keep module cache for speed)
+Write-Host ">>> Cleaning Go build cache..." -ForegroundColor Yellow
+go clean -cache -testcache
 
-# Clear old binaries
-Get-ChildItem $BinDir -File | Remove-Item -Force
+# Clean any existing binaries
+$BinDir = "$ScriptDir\src-tauri\bin"
+if (Test-Path $BinDir) {
+    Write-Host ">>> Cleaning old backend binaries..." -ForegroundColor Yellow
+    Remove-Item -Recurse -Force $BinDir
+}
+New-Item -ItemType Directory -Path $BinDir | Out-Null
+
+# Ensure fresh module downloads
+Write-Host ">>> Downloading Go modules..." -ForegroundColor Yellow
+go mod download
+go mod verify
 
 $env:GOOS = "windows"
 $env:GOARCH = "amd64"
@@ -68,9 +148,17 @@ Remove-Item Env:GOOS -ErrorAction SilentlyContinue
 Remove-Item Env:GOARCH -ErrorAction SilentlyContinue
 Remove-Item Env:CGO_ENABLED -ErrorAction SilentlyContinue
 
-# Verify the binary exists
+# Verify the binaries exist and are fresh
 Write-Host "Binary created:" -ForegroundColor Cyan
-Get-ChildItem $BinDir
+$binaries = Get-ChildItem $BinDir
+if ($binaries.Count -lt 2) {
+    Write-Host "ERROR: Backend build failed - expected 2 binaries but found $($binaries.Count)" -ForegroundColor Red
+    exit 1
+}
+foreach ($binary in $binaries) {
+    Write-Host "  - $($binary.Name) ($([math]::Round($binary.Length / 1MB, 2)) MB)" -ForegroundColor Cyan
+}
+Write-Host "✓ Backend build verified" -ForegroundColor Green
 
 if ($Debug) {
     # Test the backend binary directly
