@@ -27,24 +27,86 @@ echo "🚀 Building WhoDB Desktop for $TARGET..."
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
-# Install dependencies
-echo "📦 Installing dependencies..."
+# Build main frontend first (desktop app depends on its CSS)
+echo "📦 Building main frontend application..."
+cd "$PROJECT_ROOT/frontend"
+
+# Clean ALL old frontend build artifacts
+echo "🧹 Cleaning frontend build artifacts..."
+rm -rf build .cache node_modules/.cache
+
+if [ ! -d "node_modules" ]; then
+  echo "Installing frontend dependencies..."
+  pnpm install
+fi
+
+# Force clean build
+NODE_ENV=production pnpm run build
+
+# Verify frontend build succeeded
+if [ ! -f "build/index.html" ]; then
+  echo "ERROR: Frontend build failed - build/index.html not found!"
+  exit 1
+fi
+CSS_COUNT=$(find build/assets -name "*.css" 2>/dev/null | wc -l)
+if [ "$CSS_COUNT" -eq 0 ]; then
+  echo "ERROR: Frontend build failed - no CSS files found in build/assets!"
+  exit 1
+fi
+echo "✓ Frontend build verified - found $CSS_COUNT CSS file(s)"
+
+# Install desktop dependencies
+echo "📦 Installing desktop dependencies..."
 cd "$SCRIPT_DIR"
+
+# Clean ALL old desktop build artifacts
+echo "🧹 Cleaning desktop build artifacts..."
+rm -rf dist .cache node_modules/.cache
+# Clean Tauri build directories
+if [ -d "src-tauri/target" ]; then
+  echo "🧹 Cleaning Tauri target directory (this may take a moment)..."
+  rm -rf src-tauri/target
+fi
+
 pnpm install
 
-# Build frontend
-echo "🔨 Building frontend..."
-pnpm run build
+# Build desktop frontend with clean cache
+echo "🔨 Building desktop frontend..."
+NODE_ENV=production pnpm run build
+
+# Verify desktop build succeeded and CSS was copied
+if [ ! -f "dist/index.html" ]; then
+  echo "ERROR: Desktop build failed - dist/index.html not found!"
+  exit 1
+fi
+DESKTOP_CSS_COUNT=$(find dist/assets -name "*.css" 2>/dev/null | wc -l)
+if [ "$DESKTOP_CSS_COUNT" -eq 0 ]; then
+  echo "ERROR: Desktop build failed - no CSS files found in dist/assets!"
+  echo "This usually means the frontend CSS wasn't copied properly."
+  exit 1
+fi
+echo "✓ Desktop build verified - found $DESKTOP_CSS_COUNT CSS file(s)"
 
 # Build Go backend FIRST (before Tauri needs it)
 echo "🦀 Building backend..."
 cd "$PROJECT_ROOT/core"
 
+# Clean Go build cache to ensure fresh build (but keep module cache for speed)
+echo "🧹 Cleaning Go build cache..."
+go clean -cache -testcache
+
+# Clean any existing binaries
 BIN_DIR="$SCRIPT_DIR/src-tauri/bin"
+if [ -d "$BIN_DIR" ]; then
+  echo "🧹 Cleaning old backend binaries..."
+  rm -rf "$BIN_DIR"
+fi
 mkdir -p "$BIN_DIR"
 
-# Clear old binaries
-rm -f "$BIN_DIR"/*
+# Ensure fresh module downloads
+echo "📦 Downloading Go modules..."
+go mod download
+go mod verify
 
 case "$TARGET" in
   win-x64|windows)
@@ -70,9 +132,17 @@ case "$TARGET" in
     ;;
 esac
 
-# Verify the binary exists
+# Verify the binary exists and is fresh
 echo "Binary created:"
 ls -la "$BIN_DIR"
+
+# Count binaries to ensure build succeeded
+BIN_COUNT=$(find "$BIN_DIR" -type f -name "whodb-core*" | wc -l)
+if [ "$BIN_COUNT" -eq 0 ]; then
+  echo "ERROR: Backend build failed - no binaries found in $BIN_DIR"
+  exit 1
+fi
+echo "✓ Backend build verified - found $BIN_COUNT binary file(s)"
 
 # Build Tauri app
 echo "📱 Building Tauri app..."

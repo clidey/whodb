@@ -97,64 +97,20 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// Debug logging
-		println("[DEBUG] Auth check - URL:", r.URL.Path)
-		println("[DEBUG] Auth check - Origin:", r.Header.Get("Origin"))
-		println("[DEBUG] Auth check - Cookies count:", len(r.Cookies()))
-		for _, c := range r.Cookies() {
-			println("[DEBUG]   Cookie name:", c.Name)
-		}
-
-		// Check if this is a desktop app request - bypass auth for local desktop connections
-		origin := r.Header.Get("Origin")
-		userAgent := r.Header.Get("User-Agent")
-		isDesktopApp := false
-
-		// Check for Tauri desktop app indicators
-		if strings.Contains(origin, "tauri://") || strings.Contains(origin, "tauri.localhost") ||
-			strings.Contains(origin, "app://") || strings.Contains(userAgent, "Tauri") {
-			isDesktopApp = true
-			println("[DEBUG] Desktop app detected - bypassing authentication")
-		}
-
-		// Also check if running on localhost without API gateway (desktop mode)
-		if !env.IsAPIGatewayEnabled && (strings.HasPrefix(origin, "http://localhost:") ||
-			origin == "http://localhost" || origin == "") {
-			isDesktopApp = true
-			println("[DEBUG] Local desktop mode detected - bypassing authentication")
-		}
-
-		// If desktop app, create a default credential and proceed
-		if isDesktopApp {
-			credentials := &engine.Credentials{
-				// Provide minimal credentials for desktop app
-				Database: "",
-			}
-			ctx := r.Context()
-			ctx = context.WithValue(ctx, AuthKey_Credentials, credentials)
-			next.ServeHTTP(w, r.WithContext(ctx))
-			return
-		}
-
 		var token string
 		if env.IsAPIGatewayEnabled {
 			authHeader := r.Header.Get("Authorization")
 			if strings.HasPrefix(authHeader, "Bearer ") {
 				token = strings.TrimPrefix(authHeader, "Bearer ")
-				println("[DEBUG] Got token from Authorization header")
 			}
 		} else {
 			dbCookie, err := r.Cookie(string(AuthKey_Token))
 			if err == nil {
 				token = dbCookie.Value
-				println("[DEBUG] Got token from cookie:", string(AuthKey_Token))
-			} else {
-				println("[DEBUG] Cookie error:", err.Error())
 			}
 		}
 
 		if token == "" {
-			println("[DEBUG] No token found - returning 401")
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
