@@ -161,4 +161,91 @@ foreach ($binary in $binaries) {
 }
 Write-Host "Backend build verified" -ForegroundColor Green
 
-# (rest of the script continues with stale binary cleanup + Tauri build, using Clear-DirSafe where appropriate)
+# Test the backend binary if in debug mode
+if ($Debug) {
+    Write-Host ""
+    Write-Host "Testing backend binary directly..." -ForegroundColor Yellow
+    Write-Host "Starting backend on port 8081 for 5 seconds..." -ForegroundColor Cyan
+
+    $env:PORT = "8081"
+    $env:WHODB_ALLOWED_ORIGINS = "*"
+
+    $backendProcess = Start-Process -FilePath $aliasBinary `
+        -PassThru `
+        -NoNewWindow `
+        -RedirectStandardOutput "$env:TEMP\whodb-backend-stdout.log" `
+        -RedirectStandardError "$env:TEMP\whodb-backend-stderr.log"
+
+    Start-Sleep -Seconds 5
+
+    if ($backendProcess.HasExited) {
+        Write-Host "Backend exited with code: $($backendProcess.ExitCode)" -ForegroundColor Red
+        Write-Host ""
+        Write-Host "Backend stderr output:" -ForegroundColor Yellow
+        Get-Content "$env:TEMP\whodb-backend-stderr.log" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_ }
+        Write-Host ""
+        Write-Host "Backend stdout output:" -ForegroundColor Yellow
+        Get-Content "$env:TEMP\whodb-backend-stdout.log" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_ }
+    } else {
+        Write-Host "Backend is running successfully!" -ForegroundColor Green
+        $backendProcess | Stop-Process -Force
+    }
+
+    # Clean up temp files
+    Remove-Item "$env:TEMP\whodb-backend-stdout.log" -ErrorAction SilentlyContinue
+    Remove-Item "$env:TEMP\whodb-backend-stderr.log" -ErrorAction SilentlyContinue
+
+    # Clean up environment variables
+    Remove-Item Env:PORT -ErrorAction SilentlyContinue
+    Remove-Item Env:WHODB_ALLOWED_ORIGINS -ErrorAction SilentlyContinue
+
+    Write-Host ""
+}
+
+# Clean up stale binaries in target directories
+Write-Host "Cleaning up stale binaries in target directories..." -ForegroundColor Yellow
+$TargetDirs = @(
+    "$ScriptDir\src-tauri\target\debug",
+    "$ScriptDir\src-tauri\target\release",
+    "$ScriptDir\src-tauri\target\x86_64-pc-windows-msvc\debug",
+    "$ScriptDir\src-tauri\target\x86_64-pc-windows-msvc\release"
+)
+
+foreach ($dir in $TargetDirs) {
+    if (Test-Path $dir) {
+        $staleFiles = Get-ChildItem -Path $dir -Filter "whodb-core*.exe" -ErrorAction SilentlyContinue
+        foreach ($file in $staleFiles) {
+            Write-Host "  Removing stale binary: $($file.FullName)" -ForegroundColor Yellow
+            Remove-Item $file.FullName -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+# Build Tauri app
+Write-Host "Building Tauri app..." -ForegroundColor Yellow
+Set-Location $ScriptDir
+
+if ($Debug) {
+    # Set environment variables for debugging
+    $env:RUST_BACKTRACE = "full"
+    $env:RUST_LOG = "debug"
+    $env:TAURI_LOG = "true"
+
+    Write-Host "Building with debug logging enabled..." -ForegroundColor Cyan
+    pnpm run tauri:build -- --target x86_64-pc-windows-msvc --debug
+
+    # Clean up env vars
+    Remove-Item Env:RUST_BACKTRACE -ErrorAction SilentlyContinue
+    Remove-Item Env:RUST_LOG -ErrorAction SilentlyContinue
+    Remove-Item Env:TAURI_LOG -ErrorAction SilentlyContinue
+} else {
+    pnpm run tauri:build -- --target x86_64-pc-windows-msvc
+}
+
+Write-Host "Build complete!" -ForegroundColor Green
+
+if ($Debug) {
+    Write-Host ""
+    Write-Host "Debug build created with console logging enabled." -ForegroundColor Cyan
+    Write-Host 'Check the console output when running the app for debug messages.' -ForegroundColor Cyan
+}
