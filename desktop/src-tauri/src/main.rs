@@ -103,7 +103,7 @@ fn start_backend() -> Result<BackendInfo, Box<dyn std::error::Error>> {
     println!("[DEBUG] With PORT={}", port);
     println!("[DEBUG] With WHODB_ALLOWED_ORIGINS=tauri://*,taur://*,app://*,http://localhost:1420,http://localhost:*,https://*");
 
-    let mut child = Command::new(&core_binary)
+    let child = Command::new(&core_binary)
         .env("PORT", port.to_string())
         .env(
             "WHODB_ALLOWED_ORIGINS",
@@ -194,29 +194,6 @@ fn main() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
-        .plugin(tauri_plugin_stronghold::Builder::new(|password| {
-            // Use argon2 to hash the password for Stronghold
-            use argon2::{Config, Variant, Version};
-
-            let salt = b"whodb-stronghold-salt-v1"; // Fixed salt for deterministic hashing
-            let config = Config {
-                lanes: 4,
-                mem_cost: 10_000,
-                time_cost: 10,
-                variant: Variant::Argon2id,
-                version: Version::Version13,
-                ..Default::default()
-            };
-
-            let hash = argon2::hash_raw(password.as_bytes(), salt, &config)
-                .expect("Failed to hash password");
-
-            // Stronghold requires exactly 32 bytes
-            let mut key = [0u8; 32];
-            key.copy_from_slice(&hash[0..32]);
-            key.to_vec()
-        })
-        .build())
         .invoke_handler(tauri::generate_handler![greet, get_backend_port])
         .on_window_event(|_, event| {
             if matches!(event, tauri::WindowEvent::CloseRequested { .. }) {
@@ -224,6 +201,17 @@ fn main() {
             }
         })
         .setup(|app| {
+            // Set up Stronghold with built-in Argon2
+            let salt_path = app
+                .path()
+                .app_local_data_dir()
+                .expect("could not resolve app local data path")
+                .join("salt.txt");
+
+            app.handle().plugin(
+                tauri_plugin_stronghold::Builder::with_argon2(&salt_path).build()
+            )?;
+
             #[cfg(debug_assertions)]
             {
                 // Open developer tools in debug builds
