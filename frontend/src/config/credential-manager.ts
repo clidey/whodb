@@ -30,6 +30,7 @@ class CredentialManager {
     private isDesktop: boolean;
     private strongholdClient: any = null;
     private stronghold: any = null;
+    private strongholdStore: any = null;
     private masterPasswordSet: boolean = false;
 
     constructor() {
@@ -59,6 +60,7 @@ class CredentialManager {
             // Initialize or load existing Stronghold
             this.stronghold = await Stronghold.load(vaultPath, masterPassword || 'default-password');
             this.strongholdClient = await this.stronghold.createClient('whodb-client');
+            this.strongholdStore = this.strongholdClient.getStore();
             this.masterPasswordSet = !!masterPassword;
 
             console.log('[CredentialManager] Stronghold initialized successfully');
@@ -78,15 +80,14 @@ class CredentialManager {
             timestamp: Date.now()
         };
 
-        if (this.isDesktop && this.strongholdClient) {
-            // Desktop: Use Stronghold
+        if (this.isDesktop && this.strongholdStore) {
+            // Desktop: Use Stronghold Store
             try {
-                const location = {
-                    vault: 'credentials',
-                    record: 'whodb-db-credentials'
-                };
+                const key = 'whodb-db-credentials';
+                const encoder = new TextEncoder();
+                const dataBytes = Array.from(encoder.encode(JSON.stringify(data)));
 
-                await this.strongholdClient.insert(location, JSON.stringify(data));
+                await this.strongholdStore.insert(key, dataBytes);
                 await this.stronghold.save();
                 console.log('[CredentialManager] Credentials stored in Stronghold');
             } catch (error) {
@@ -104,16 +105,15 @@ class CredentialManager {
      * Retrieve stored credentials
      */
     async getCredentials(): Promise<any | null> {
-        if (this.isDesktop && this.strongholdClient) {
-            // Desktop: Get from Stronghold
+        if (this.isDesktop && this.strongholdStore) {
+            // Desktop: Get from Stronghold Store
             try {
-                const location = {
-                    vault: 'credentials',
-                    record: 'whodb-db-credentials'
-                };
+                const key = 'whodb-db-credentials';
+                const dataBytes = await this.strongholdStore.get(key);
 
-                const dataStr = await this.strongholdClient.get(location);
-                if (dataStr) {
+                if (dataBytes && dataBytes.length > 0) {
+                    const decoder = new TextDecoder();
+                    const dataStr = decoder.decode(new Uint8Array(dataBytes));
                     const data: StoredCredentials = JSON.parse(dataStr);
 
                     // Check if credentials are expired (24 hours)
@@ -143,15 +143,12 @@ class CredentialManager {
      * Clear stored credentials
      */
     async clearCredentials(): Promise<void> {
-        if (this.isDesktop && this.strongholdClient) {
-            // Desktop: Clear from Stronghold
+        if (this.isDesktop && this.strongholdStore) {
+            // Desktop: Clear from Stronghold Store
             try {
-                const location = {
-                    vault: 'credentials',
-                    record: 'whodb-db-credentials'
-                };
+                const key = 'whodb-db-credentials';
 
-                await this.strongholdClient.delete(location);
+                await this.strongholdStore.delete(key);
                 await this.stronghold.save();
                 console.log('[CredentialManager] Credentials cleared from Stronghold');
             } catch (error) {
@@ -179,7 +176,7 @@ class CredentialManager {
      * Check if running in desktop mode with Stronghold available
      */
     isStrongholdAvailable(): boolean {
-        return this.isDesktop && !!this.strongholdClient;
+        return this.isDesktop && !!this.strongholdStore;
     }
 
     /**
