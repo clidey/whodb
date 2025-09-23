@@ -103,7 +103,7 @@ fn start_backend() -> Result<BackendInfo, Box<dyn std::error::Error>> {
     println!("[DEBUG] With PORT={}", port);
     println!("[DEBUG] With WHODB_ALLOWED_ORIGINS=tauri://*,taur://*,app://*,http://localhost:1420,http://localhost:*,https://*");
 
-    let child = Command::new(&core_binary)
+    let mut child = Command::new(&core_binary)
         .env("PORT", port.to_string())
         .env(
             "WHODB_ALLOWED_ORIGINS",
@@ -111,8 +111,8 @@ fn start_backend() -> Result<BackendInfo, Box<dyn std::error::Error>> {
             // Include variants to cover potential scheme differences across platforms
             "tauri://*,taur://*,app://*,http://localhost:1420,http://localhost:*,https://*",
         )
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
+        .stdout(Stdio::inherit())  // Changed to inherit to see output
+        .stderr(Stdio::inherit())  // Changed to inherit to see output
         .spawn()?;
 
     let pid = child.id();
@@ -134,19 +134,7 @@ fn start_backend() -> Result<BackendInfo, Box<dyn std::error::Error>> {
                     eprintln!("[ERROR] Backend process exited immediately!");
                     eprintln!("[ERROR] Exit status: {:?}", status);
 
-                    // Try to read stderr output if available
-                    if let Ok(mut child_guard) = BACKEND_CHILD.lock() {
-                        if let Some(ref mut child) = *child_guard {
-                            if let Some(ref mut stderr) = child.stderr {
-                                use std::io::Read;
-                                let mut error_output = String::new();
-                                let _ = stderr.read_to_string(&mut error_output);
-                                if !error_output.is_empty() {
-                                    eprintln!("[ERROR] Backend stderr: {}", error_output);
-                                }
-                            }
-                        }
-                    }
+                    // Note: Can't read stderr since we're using inherit mode
 
                     return Err(format!(
                         "Backend process exited immediately with status: {:?}",
