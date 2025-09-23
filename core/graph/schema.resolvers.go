@@ -120,9 +120,13 @@ func (r *mutationResolver) UpdateSettings(ctx context.Context, newSettings model
 
 // AddStorageUnit is the resolver for the AddStorageUnit field.
 func (r *mutationResolver) AddStorageUnit(ctx context.Context, schema string, storageUnit string, fields []*model.RecordInput) (*model.StatusResponse, error) {
-	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	credentials := auth.GetCredentials(ctx)
+	if credentials == nil {
+		return &model.StatusResponse{Status: false}, fmt.Errorf("no credentials found")
+	}
+	config := engine.NewPluginConfig(credentials)
 	typeArg := config.Credentials.Type
-	fieldsMap := []engine.Record{}
+	var fieldsMap []engine.Record
 	for _, field := range fields {
 		extraFields := map[string]string{}
 		for _, extraField := range field.Extra {
@@ -152,7 +156,11 @@ func (r *mutationResolver) AddStorageUnit(ctx context.Context, schema string, st
 
 // UpdateStorageUnit is the resolver for the UpdateStorageUnit field.
 func (r *mutationResolver) UpdateStorageUnit(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput, updatedColumns []string) (*model.StatusResponse, error) {
-	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	credentials := auth.GetCredentials(ctx)
+	if credentials == nil {
+		return &model.StatusResponse{Status: false}, fmt.Errorf("no credentials found")
+	}
+	config := engine.NewPluginConfig(credentials)
 	typeArg := config.Credentials.Type
 	valuesMap := map[string]string{}
 	for _, value := range values {
@@ -177,7 +185,11 @@ func (r *mutationResolver) UpdateStorageUnit(ctx context.Context, schema string,
 
 // AddRow is the resolver for the AddRow field.
 func (r *mutationResolver) AddRow(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error) {
-	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	credentials := auth.GetCredentials(ctx)
+	if credentials == nil {
+		return &model.StatusResponse{Status: false}, fmt.Errorf("no credentials found")
+	}
+	config := engine.NewPluginConfig(credentials)
 	typeArg := config.Credentials.Type
 
 	// Debug logging
@@ -189,7 +201,7 @@ func (r *mutationResolver) AddRow(ctx context.Context, schema string, storageUni
 		"values_count":  len(values),
 	}).Debug("AddRow resolver called")
 
-	valuesRecords := []engine.Record{}
+	var valuesRecords []engine.Record
 	for _, field := range values {
 		extraFields := map[string]string{}
 		for _, extraField := range field.Extra {
@@ -220,7 +232,11 @@ func (r *mutationResolver) AddRow(ctx context.Context, schema string, storageUni
 
 // DeleteRow is the resolver for the DeleteRow field.
 func (r *mutationResolver) DeleteRow(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error) {
-	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	credentials := auth.GetCredentials(ctx)
+	if credentials == nil {
+		return &model.StatusResponse{Status: false}, fmt.Errorf("no credentials found")
+	}
+	config := engine.NewPluginConfig(credentials)
 	typeArg := config.Credentials.Type
 	valuesMap := map[string]string{}
 	for _, value := range values {
@@ -259,7 +275,11 @@ func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.Moc
 		return nil, errors.New("mock data generation is not allowed for this table")
 	}
 
-	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	credentials := auth.GetCredentials(ctx)
+	if credentials == nil {
+		return &model.MockDataGenerationStatus{AmountGenerated: 0}, fmt.Errorf("no credentials found")
+	}
+	config := engine.NewPluginConfig(credentials)
 	typeArg := config.Credentials.Type
 	plugin := src.MainEngine.Choose(engine.DatabaseType(typeArg))
 
@@ -482,7 +502,7 @@ func (r *queryResolver) Version(ctx context.Context) (string, error) {
 
 // Profiles is the resolver for the Profiles field.
 func (r *queryResolver) Profiles(ctx context.Context) ([]*model.LoginProfile, error) {
-	profiles := []*model.LoginProfile{}
+	var profiles []*model.LoginProfile
 	for i, profile := range src.GetLoginProfiles() {
 		profileName := src.GetLoginProfileId(i, profile)
 		loginProfile := &model.LoginProfile{
@@ -536,7 +556,15 @@ func (r *queryResolver) Database(ctx context.Context, typeArg string) ([]string,
 
 // Schema is the resolver for the Schema field.
 func (r *queryResolver) Schema(ctx context.Context) ([]string, error) {
-	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	credentials := auth.GetCredentials(ctx)
+	if credentials == nil {
+		log.LogFields(log.Fields{
+			"operation": "GetAllSchemas",
+			"error":     "No credentials found in context",
+		}).Debug("No credentials in context for Schema resolver")
+		return []string{}, nil
+	}
+	config := engine.NewPluginConfig(credentials)
 	typeArg := config.Credentials.Type
 	schemas, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetAllSchemas(config)
 	if err != nil {
@@ -552,7 +580,16 @@ func (r *queryResolver) Schema(ctx context.Context) ([]string, error) {
 
 // StorageUnit is the resolver for the StorageUnit field.
 func (r *queryResolver) StorageUnit(ctx context.Context, schema string) ([]*model.StorageUnit, error) {
-	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	credentials := auth.GetCredentials(ctx)
+	if credentials == nil {
+		log.LogFields(log.Fields{
+			"operation": "GetStorageUnits",
+			"schema":    schema,
+			"error":     "No credentials found in context",
+		}).Debug("No credentials in context for StorageUnit resolver")
+		return []*model.StorageUnit{}, nil
+	}
+	config := engine.NewPluginConfig(credentials)
 	typeArg := config.Credentials.Type
 	units, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetStorageUnits(config, schema)
 	if err != nil {
@@ -575,7 +612,11 @@ func (r *queryResolver) StorageUnit(ctx context.Context, schema string) ([]*mode
 
 // Row is the resolver for the Row field.
 func (r *queryResolver) Row(ctx context.Context, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) (*model.RowsResult, error) {
-	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	credentials := auth.GetCredentials(ctx)
+	if credentials == nil {
+		return &model.RowsResult{Rows: [][]string{}, Columns: []*model.Column{}}, nil
+	}
+	config := engine.NewPluginConfig(credentials)
 	typeArg := config.Credentials.Type
 	rowsResult, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetRows(config, schema, storageUnit, where, sort, pageSize, pageOffset)
 	if err != nil {
@@ -606,7 +647,11 @@ func (r *queryResolver) Row(ctx context.Context, schema string, storageUnit stri
 
 // Columns is the resolver for the Columns field.
 func (r *queryResolver) Columns(ctx context.Context, schema string, storageUnit string) ([]*model.Column, error) {
-	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	credentials := auth.GetCredentials(ctx)
+	if credentials == nil {
+		return []*model.Column{}, nil
+	}
+	config := engine.NewPluginConfig(credentials)
 	typeArg := config.Credentials.Type
 	columnsResult, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetColumnsForTable(config, schema, storageUnit)
 	if err != nil {
@@ -631,7 +676,11 @@ func (r *queryResolver) Columns(ctx context.Context, schema string, storageUnit 
 
 // RawExecute is the resolver for the RawExecute field.
 func (r *queryResolver) RawExecute(ctx context.Context, query string) (*model.RowsResult, error) {
-	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	credentials := auth.GetCredentials(ctx)
+	if credentials == nil {
+		return nil, fmt.Errorf("no credentials found")
+	}
+	config := engine.NewPluginConfig(credentials)
 	typeArg := config.Credentials.Type
 	rowsResult, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).RawExecute(config, query)
 	if err != nil {
@@ -658,7 +707,11 @@ func (r *queryResolver) RawExecute(ctx context.Context, query string) (*model.Ro
 
 // Graph is the resolver for the Graph field.
 func (r *queryResolver) Graph(ctx context.Context, schema string) ([]*model.GraphUnit, error) {
-	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	credentials := auth.GetCredentials(ctx)
+	if credentials == nil {
+		return []*model.GraphUnit{}, nil
+	}
+	config := engine.NewPluginConfig(credentials)
 	typeArg := config.Credentials.Type
 	graphUnits, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetGraph(config, schema)
 	if err != nil {
@@ -703,7 +756,11 @@ func (r *queryResolver) AIProviders(ctx context.Context) ([]*model.AIProvider, e
 
 // AIModel is the resolver for the AIModel field.
 func (r *queryResolver) AIModel(ctx context.Context, providerID *string, modelType string, token *string) ([]string, error) {
-	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	credentials := auth.GetCredentials(ctx)
+	if credentials == nil {
+		return []string{}, nil
+	}
+	config := engine.NewPluginConfig(credentials)
 
 	// Initialize ExternalModel to prevent nil pointer dereference
 	config.ExternalModel = &engine.ExternalModel{
@@ -736,7 +793,11 @@ func (r *queryResolver) AIModel(ctx context.Context, providerID *string, modelTy
 
 // AIChat is the resolver for the AIChat field.
 func (r *queryResolver) AIChat(ctx context.Context, providerID *string, modelType string, token *string, schema string, input model.ChatInput) ([]*model.AIChatMessage, error) {
-	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	credentials := auth.GetCredentials(ctx)
+	if credentials == nil {
+		return nil, fmt.Errorf("no credentials found")
+	}
+	config := engine.NewPluginConfig(credentials)
 	typeArg := config.Credentials.Type
 	if providerID != nil {
 		providers := env.GetConfiguredChatProviders()
