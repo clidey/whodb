@@ -131,27 +131,28 @@ export const LoginForm: FC<LoginFormProps> = ({
         });
     }, [databaseType.id, hostName, database, username, password, advancedForm, login, dispatch, navigate, onLoginSuccess]);
 
-    const handleLoginWithProfileSubmit = useCallback(() => {
-        if (selectedAvailableProfile == null) {
+    const handleLoginWithProfileSubmit = useCallback((overrideProfileId?: string) => {
+        const profileId = overrideProfileId ?? selectedAvailableProfile;
+        if (profileId == null) {
             return setError("Select a profile");
         }
         setError(undefined);
 
-        const profile = profiles?.Profiles.find(p => p.Id === selectedAvailableProfile);
+        const profile = profiles?.Profiles.find(p => p.Id === profileId);
 
         loginWithProfile({
             variables: {
                 profile: {
-                    Id:  selectedAvailableProfile,
+                    Id:  profileId,
                     Type: profile?.Type as DatabaseType,
                 },
             },
             onCompleted(data) {
                 if (data.LoginWithProfile.Status) {
-                    updateProfileLastAccessed(selectedAvailableProfile);
+                    updateProfileLastAccessed(profileId);
                     dispatch(AuthActions.login({
                         Type: profile?.Type as DatabaseType,
-                        Id: selectedAvailableProfile,
+                        Id: profileId,
                         Database: profile?.Database ?? "",
                         Hostname: "",
                         Password: "",
@@ -225,6 +226,15 @@ export const LoginForm: FC<LoginFormProps> = ({
         }
     }, [currentProfile]);
 
+    const availableProfiles = useMemo(() => {
+        return profiles?.Profiles.map(profile => ({
+            value: profile.Id,
+            label: profile.Alias ?? profile.Id,
+            icon: (Icons.Logos as Record<string, ReactElement>)[profile.Type],
+            rightIcon: sources[profile.Source],
+        })) ?? [];
+    }, [profiles?.Profiles]);
+    
     useEffect(() => {
         if (searchParams.size > 0) {
             if (searchParams.has("type")) {
@@ -240,9 +250,11 @@ export const LoginForm: FC<LoginFormProps> = ({
             if (searchParams.has("resource")) {
                 const selectedProfile = availableProfiles.find(profile => profile.value === searchParams.get("resource"));
                 setSelectedAvailableProfile(selectedProfile?.value);
-                setTimeout(() => {
-                    handleLoginWithProfileSubmit();
-                }, 10);
+                if (selectedProfile?.value) {
+                    setTimeout(() => {
+                        handleLoginWithProfileSubmit(selectedProfile.value);
+                    }, 10);
+                }
             } else if (searchParams.has("login")) {
                 setTimeout(() => {
                     handleSubmit();
@@ -254,7 +266,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         } else {
             setSelectedAvailableProfile(undefined);
         }
-    }, [searchParams, databaseTypeItems]);
+    }, [searchParams, databaseTypeItems, profiles?.Profiles, availableProfiles]);
 
     const handleHostNameChange = useCallback((newHostName: string) => {
         if (databaseType.id !== DatabaseType.MongoDb || !newHostName.startsWith("mongodb+srv://")) {
@@ -363,15 +375,6 @@ export const LoginForm: FC<LoginFormProps> = ({
             )}
         </div>
     }, [database, databaseType.id, databaseType.fields, databasesLoading, foundDatabases?.Database, handleHostNameChange, hostName, password, username]);
-
-    const availableProfiles = useMemo(() => {
-        return profiles?.Profiles.map(profile => ({
-            value: profile.Id,
-            label: profile.Alias ?? profile.Id,
-            icon: (Icons.Logos as Record<string, ReactElement>)[profile.Type],
-            rightIcon: sources[profile.Source],
-        })) ?? [];
-    }, [profiles?.Profiles]);
 
     const loginWithCredentialsEnabled = useMemo(() => {
         if (databaseType.id === DatabaseType.Sqlite3) {
@@ -520,7 +523,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                                 "data-testid": "available-profiles-select",
                             }}
                         />
-                        <Button onClick={handleLoginWithProfileSubmit} data-testid="login-with-profile-button" variant={loginWithProfileEnabled ? "default" : "secondary"}>
+                        <Button onClick={() => handleLoginWithProfileSubmit()} data-testid="login-with-profile-button" variant={loginWithProfileEnabled ? "default" : "secondary"}>
                             <CheckCircleIcon className="w-4 h-4" /> Login
                         </Button>
                     </div>
