@@ -324,6 +324,7 @@ export const Sidebar: FC = () => {
                                         }
                                         side="left" align="start"
                                         buttonProps={{
+                                            "data-collapsed": open,
                                             "data-testid": "sidebar-profile",
                                         }}
                                     />
