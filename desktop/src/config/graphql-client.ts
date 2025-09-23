@@ -67,11 +67,6 @@ async function buildHttpLink() {
   const uri = await getGraphQLUri();
   console.log('[DEBUG] Creating HTTP link with URI:', uri);
 
-  // Initialize credential manager for desktop app
-  if (window.__TAURI__) {
-    await credentialManager.initialize();
-  }
-
   // Create a custom fetch that adds credentials header for desktop
   const customFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const headers = new Headers(init?.headers || {});

@@ -32,6 +32,7 @@ class CredentialManager {
     private stronghold: any = null;
     private strongholdStore: any = null;
     private masterPasswordSet: boolean = false;
+    private isInitialized: boolean = false;
 
     constructor() {
         // Check if running in Tauri desktop environment
@@ -49,6 +50,12 @@ class CredentialManager {
             return;
         }
 
+        // Skip if already initialized
+        if (this.isInitialized) {
+            console.log('[CredentialManager] Already initialized, skipping');
+            return;
+        }
+
         try {
             // Dynamically import Stronghold only in desktop environment
             const {Client, Stronghold} = await import('@tauri-apps/plugin-stronghold');
@@ -62,12 +69,14 @@ class CredentialManager {
             this.strongholdClient = await this.stronghold.createClient('whodb-client');
             this.strongholdStore = this.strongholdClient.getStore();
             this.masterPasswordSet = !!masterPassword;
+            this.isInitialized = true;
 
             console.log('[CredentialManager] Stronghold initialized successfully');
         } catch (error) {
             console.error('[CredentialManager] Failed to initialize Stronghold:', error);
             // Fall back to sessionStorage
             this.isDesktop = false;
+            this.isInitialized = false;
         }
     }
 
