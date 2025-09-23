@@ -101,7 +101,7 @@ fn start_backend() -> Result<BackendInfo, Box<dyn std::error::Error>> {
     // Start the backend process with the random port
     println!("[DEBUG] Starting command: {:?}", &core_binary);
     println!("[DEBUG] With PORT={}", port);
-    println!("[DEBUG] With WHODB_ALLOWED_ORIGINS=tauri://*,taur://*,app://*,http://localhost:1420,http://localhost:*,https://*");
+    println!("[DEBUG] With WHODB_ALLOWED_ORIGINS=https://tauri.localhost,tauri://*,taur://*,app://*,http://localhost:1420,http://localhost:*,https://*");
 
     let child = Command::new(&core_binary)
         .env("PORT", port.to_string())
@@ -109,7 +109,7 @@ fn start_backend() -> Result<BackendInfo, Box<dyn std::error::Error>> {
             "WHODB_ALLOWED_ORIGINS",
             // Allow Tauri custom protocols and local dev origins
             // Include variants to cover potential scheme differences across platforms
-            "tauri://*,taur://*,app://*,http://localhost:1420,http://localhost:*,https://*",
+            "https://tauri.localhost,tauri://*,taur://*,app://*,http://localhost:1420,http://localhost:*,https://*",
         )
         .stdout(Stdio::inherit())  // Changed to inherit to see output
         .stderr(Stdio::inherit())  // Changed to inherit to see output
