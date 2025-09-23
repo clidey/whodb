@@ -97,8 +97,6 @@ export function databaseSupportsDatabaseSwitching(databaseType: DatabaseType | s
     const databasesThatSupportDatabaseSwitching = [
         DatabaseType.MongoDb,
         DatabaseType.ClickHouse,
-        DatabaseType.MySql,
-        DatabaseType.MariaDb,
         DatabaseType.Postgres,
     ];
     return databasesThatSupportDatabaseSwitching.includes(databaseType as DatabaseType);
