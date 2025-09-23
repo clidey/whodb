@@ -95,7 +95,7 @@ if (-not (Test-Path "dist/index.html")) {
 $desktopCssFiles = Get-ChildItem "dist/assets/*.css" -ErrorAction SilentlyContinue
 if ($desktopCssFiles.Count -eq 0) {
     Write-Host "ERROR: Desktop build failed - no CSS files found in dist/assets!" -ForegroundColor Red
-    Write-Host "This usually means the frontend CSS wasn't copied properly." -ForegroundColor Red
+    Write-Host "This usually means the frontend CSS was not copied properly." -ForegroundColor Red
     exit 1
 }
 Write-Host "✓ Desktop build verified - found $($desktopCssFiles.Count) CSS file(s)" -ForegroundColor Green
