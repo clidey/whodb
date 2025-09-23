@@ -1,0 +1,41 @@
+{
+  "app": {
+    "windows": [
+      {
+        "fullscreen": false,
+        "resizable": true,
+        "title": "WhoDB Desktop",
+        "width": 1200,
+        "height": 800,
+        "useHttpsScheme": true
+      }
+    ],
+    "security": {
+      "csp": null
+    },
+    "withGlobalTauri": true
+  },
+  "build": {
+    "beforeDevCommand": "pnpm run dev",
+    "beforeBuildCommand": "pnpm run build",
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1420"
+  },
+  "bundle": {
+    "active": true,
+    "targets": "app",
+    "resources": [
+      "bin/*"
+    ],
+    "externalBin": [
+      "bin/whodb-core"
+    ],
+    "icon": [
+      "icon.icns"
+    ]
+  },
+  "productName": "WhoDB Desktop",
+  "version": "0.1.0",
+  "identifier": "com.whodb.desktop",
+  "plugins": {}
+}

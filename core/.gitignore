@@ -27,3 +27,5 @@ build/
 gorm.db
 
 tmp/
+
+dist/

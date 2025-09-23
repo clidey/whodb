@@ -24,19 +24,43 @@ import tailwindcss from '@tailwindcss/vite'
 const eeDir = path.resolve(__dirname, '../ee/frontend/src');
 const eeExists = fs.existsSync(eeDir);
 
-// Plugin to handle missing EE modules
+// Plugin to handle EE modules in CE builds
 const eeModulePlugin = () => ({
   name: 'ee-module-fallback',
   resolveId(id: string) {
-    if (id.startsWith('@ee/') && !eeExists) {
-      // Return a virtual module ID for missing EE modules
+    if (id.startsWith('@ee/') && process.env.VITE_BUILD_EDITION !== 'ee') {
+      // Return a virtual module ID for EE modules in CE builds
       return '\0virtual:ee-fallback:' + id;
     }
   },
   load(id: string) {
     if (id.startsWith('\0virtual:ee-fallback:')) {
-      // Return minimal module code
-      return '';
+      // Return minimal module code for CE builds
+      const modulePath = id.replace('\0virtual:ee-fallback:', '');
+      
+      if (modulePath.includes('charts/line-chart')) {
+        return 'export const LineChart = () => null; export default LineChart;';
+      }
+      if (modulePath.includes('charts/pie-chart')) {
+        return 'export const PieChart = () => null; export default PieChart;';
+      }
+      if (modulePath.includes('pages/raw-execute/index')) {
+        return 'export default { ActionOptions: {}, ActionOptionIcons: {}, plugins: [] };';
+      }
+      if (modulePath.includes('config.tsx')) {
+        return 'export const eeDatabaseTypes = []; export const eeFeatures = {}; export default {};';
+      }
+      if (modulePath.includes('icons')) {
+        return 'export const EEIcons = { Logos: {} }; export default EEIcons;';
+      }
+      if (modulePath.includes('index')) {
+        return 'export const isEENoSQLDatabase = () => false; export const getEEDatabaseStorageUnitLabel = () => ""; export const EEDatabaseType = {}; export type EEDatabaseTypeValue = string;';
+      }
+      if (modulePath.includes('index.css')) {
+        return '/* EE styles not available in CE */';
+      }
+      
+      return 'export default {};';
     }
   }
 });

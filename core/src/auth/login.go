@@ -35,13 +35,24 @@ func Login(ctx context.Context, input *model.LoginCredentials) (*model.StatusRes
 
 	cookieValue := base64.StdEncoding.EncodeToString(loginInfoJSON)
 
+	// Check if this is a Tauri desktop app request
+	sameSite := http.SameSiteStrictMode
+	if req, ok := ctx.Value(common.RouterKey_Request).(*http.Request); ok {
+		origin := req.Header.Get("Origin")
+		if origin == "https://tauri.localhost" || origin == "tauri://localhost" {
+			// For Tauri desktop app, use Lax mode to allow some cross-origin access
+			// Note: None mode would require Secure=true which doesn't work with http://localhost
+			sameSite = http.SameSiteLaxMode
+		}
+	}
+
 	cookie := &http.Cookie{
 		Name:     string(AuthKey_Token),
 		Value:    cookieValue,
 		Path:     "/",
 		HttpOnly: true,
 		Expires:  time.Now().Add(7 * 24 * time.Hour),
-		SameSite: http.SameSiteStrictMode,
+		SameSite: sameSite,
 	}
 
 	http.SetCookie(ctx.Value(common.RouterKey_ResponseWriter).(http.ResponseWriter), cookie)

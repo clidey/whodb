@@ -1,0 +1,238 @@
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import {ApolloClient, createHttpLink, from, InMemoryCache} from '@apollo/client';
+import {onError} from '@apollo/client/link/error';
+import {toast} from '@clidey/ux';
+import {reduxStore} from '@/store';
+
+// Function to get the backend port from Tauri
+declare global {
+  interface Window {
+    __TAURI__?: any;
+  }
+}
+
+let cachedPort: number | null = null;
+
+async function getBackendPort(): Promise<number> {
+  console.log('[DEBUG] getBackendPort called, cached:', cachedPort);
+  console.trace('[DEBUG] Call stack for getBackendPort');
+
+  // Return cached port if we already have it
+  if (cachedPort !== null) {
+    console.log('[DEBUG] Returning cached port:', cachedPort);
+    return cachedPort;
+  }
+
+  if (!window.__TAURI__ || !window.__TAURI__.core?.invoke) {
+    console.error('[ERROR] Tauri API is not available');
+    throw new Error('Tauri API is not available in this environment');
+  }
+  console.log('[DEBUG] Invoking get_backend_port from Tauri');
+  const port = await window.__TAURI__.core.invoke('get_backend_port');
+  console.log('[DEBUG] Received port from Tauri:', port);
+  if (typeof port === 'number' && port > 0) {
+    cachedPort = port; // Cache the port
+    return port;
+  }
+  console.error('[ERROR] Invalid port received:', port);
+  throw new Error('Failed to get backend port from Tauri');
+}
+
+// Create a dynamic URI function
+async function getGraphQLUri(): Promise<string> {
+  const port = await getBackendPort();
+  const uri = `http://localhost:${port}/api/query`;
+  console.log('[DEBUG] GraphQL URI:', uri);
+  return uri;
+}
+
+// Single HTTP link built with the correct backend port (no per-request override)
+async function buildHttpLink() {
+  const uri = await getGraphQLUri();
+  console.log('[DEBUG] Creating HTTP link with URI:', uri);
+
+  // Create a custom fetch that doesn't re-resolve the URI
+  const customFetch = (input: RequestInfo | URL, init?: RequestInit) => {
+    // If input is a relative path, use our resolved URI
+    if (typeof input === 'string' && input.startsWith('/')) {
+      const fullUrl = `http://localhost:${cachedPort}${input}`;
+      console.log('[DEBUG] Fetch request to:', fullUrl);
+      return fetch(fullUrl, init);
+    }
+    return fetch(input, init);
+  };
+
+  return createHttpLink({
+    uri,
+    credentials: "include",
+    fetch: customFetch as any,
+  });
+}
+
+/**
+ * Global error handling for unauthorized responses.
+ * 
+ * When a GraphQL operation returns an "unauthorized" error, this handler will:
+ * 1. Check if there's a current profile stored in Redux store
+ * 2. If a profile exists, automatically attempt to login using that profile
+ *    - If the profile is a saved profile, use LoginWithProfile mutation
+ *    - Otherwise, use Login mutation with credentials
+ * 3. If login is successful, refresh the page to reload with correct values
+ * 4. If no profile exists or login fails, redirect to the login page
+ * 
+ * This ensures seamless user experience when sessions expire.
+ */
+const errorLink = onError(({ networkError }) => {
+  if (networkError && 'statusCode' in networkError && networkError.statusCode === 401) {
+    // @ts-ignore
+    const authState = reduxStore.getState().auth;
+    const currentProfile = authState.current;
+
+    if (currentProfile) {
+      handleAutoLogin(currentProfile);
+    } else {
+      toast.error("Session expired. Please login again.");
+      // Don't redirect in desktop app - let the app handle navigation
+      // window.location.href = '/login';
+    }
+  } else if (networkError) {
+    console.error('Network error:', networkError);
+  }
+});
+
+/**
+ * Handles automatic login using the current profile.
+ * 
+ * If the profile is a saved profile, use LoginWithProfile mutation.
+ * Otherwise, use Login mutation with credentials.
+ * 
+ * @param currentProfile - The current user profile from Redux store
+ */
+async function handleAutoLogin(currentProfile: any) {
+  try {
+    const uri = await getGraphQLUri();
+    let response, result;
+    if (currentProfile.Saved) {
+      // Login with profile
+      response = await fetch(uri, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          query: `
+            mutation LoginWithProfile($profile: LoginProfileInput!) {
+              LoginWithProfile(profile: $profile) {
+                Status
+              }
+            }
+          `,
+          variables: {
+            profile: {
+              Id: currentProfile.Id,
+              Type: currentProfile.Type,
+            },
+          },
+        }),
+      });
+      result = await response.json();
+      if (result.data?.LoginWithProfile?.Status) {
+        toast.success("Automatically re-authenticated");
+        window.location.reload();
+        return;
+      } else {
+        toast.error("Auto-login failed. Please login manually.");
+        // Don't redirect in desktop app - let the app handle navigation
+        // window.location.href = '/login';
+        return;
+      }
+    } else {
+      // Normal login with credentials
+      response = await fetch(uri, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          query: `
+            mutation Login($credentials: LoginCredentials!) {
+              Login(credentials: $credentials) {
+                Status
+              }
+            }
+          `,
+          variables: {
+            credentials: {
+              Type: currentProfile.Type,
+              Hostname: currentProfile.Hostname,
+              Database: currentProfile.Database,
+              Username: currentProfile.Username,
+              Password: currentProfile.Password,
+              Advanced: currentProfile.Advanced || [],
+            },
+          },
+        }),
+      });
+      result = await response.json();
+      if (result.data?.Login?.Status) {
+        toast.success("Automatically re-authenticated");
+        window.location.reload();
+        return;
+      } else {
+        toast.error("Auto-login failed. Please login manually.");
+        // Don't redirect in desktop app - let the app handle navigation
+        // window.location.href = '/login';
+        return;
+      }
+    }
+  } catch (error) {
+    console.error('Auto-login error:', error);
+    toast.error("Auto-login failed. Please login manually.");
+    // Don't redirect in desktop app - let the app handle navigation
+    // window.location.href = '/login';
+  }
+}
+
+let apolloClientInstance: ApolloClient<any> | null = null;
+
+export async function createGraphqlClient() {
+  // Return existing client if already created
+  if (apolloClientInstance) {
+    console.log('[DEBUG] Returning existing Apollo Client instance');
+    return apolloClientInstance;
+  }
+
+  console.log('[DEBUG] Creating new Apollo Client instance');
+  const httpLink = await buildHttpLink();
+  apolloClientInstance = new ApolloClient({
+    link: from([errorLink, httpLink]),
+    cache: new InMemoryCache(),
+    defaultOptions: {
+        query: {
+          fetchPolicy: "no-cache",
+        },
+        mutate: {
+          fetchPolicy: "no-cache",
+        },
+    }
+  });
+
+  return apolloClientInstance;
+}
