@@ -67,7 +67,7 @@ import { LoginForm } from "../../pages/auth/login";
 import { AuthActions, LocalLoginProfile } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
 import { useAppSelector } from "../../store/hooks";
-import { databaseSupportsSchema, databaseSupportsScratchpad, databaseTypesThatUseDatabaseInsteadOfSchema } from "../../utils/database-features";
+import { databaseSupportsSchema, databaseSupportsScratchpad, databaseSupportsDatabaseSwitching, databaseTypesThatUseDatabaseInsteadOfSchema } from "../../utils/database-features";
 import { isEEFeatureEnabled } from "../../utils/ee-loader";
 import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
 import { Icons } from "../icons";
@@ -324,7 +324,6 @@ export const Sidebar: FC = () => {
                                         }
                                         side="left" align="start"
                                         buttonProps={{
-                                            "data-collapsed": open,
                                             "data-testid": "sidebar-profile",
                                         }}
                                     />
@@ -332,7 +331,7 @@ export const Sidebar: FC = () => {
                                 {/* Database Select */}
                                 <div className={cn("flex flex-col gap-sm w-full", {
                                     "opacity-0 pointer-events-none": !open,
-                                    "hidden": !current || databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type),
+                                    "hidden": !databaseSupportsDatabaseSwitching(current?.Type),
                                 })}>
                                     <h2 className="text-sm">Database</h2>
                                     <SearchSelect
