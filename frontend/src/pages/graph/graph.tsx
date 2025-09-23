@@ -282,9 +282,7 @@ export const GraphPage: FC = () => {
                             icon={<CircleStackIcon className="w-4 h-4" />}
                             title={`No nodes selected`}
                             description={`Select ${getDatabaseStorageUnitLabel(current?.Type).toLowerCase()} on the left to add them to the graph.`}>
-                            <Button
-                                onClick={() => navigate(InternalRoutes.Dashboard.StorageUnit.path + "?create=true")}
-                            >
+                            <Button onClick={() => navigate(InternalRoutes.Dashboard.StorageUnit.path + "?create=true")}>
                                 Create {getDatabaseStorageUnitLabel(current?.Type, true)}
                             </Button>
                         </EmptyState>

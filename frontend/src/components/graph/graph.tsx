@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Tabs, TabsList, TabsTrigger } from '@clidey/ux';
+import { Button, Tabs, TabsList, TabsTrigger } from '@clidey/ux';
 import { ArrowDownTrayIcon, RectangleGroupIcon } from '../heroicons';
 import classNames from 'classnames';
 import { toPng } from 'html-to-image';
@@ -160,16 +160,20 @@ export const Graph: FC<IGraphProps> = (props) => {
         })}>
             <div className="flex flex-col gap-2">
                 <Tabs value={undefined} onValueChange={() => {}}>
-                    <TabsList dir="column">
-                        <TabsTrigger value="download" onClick={handleDownloadImage}>
-                            <Tip>
-                                <ArrowDownTrayIcon className="w-4 h-4" />
+                    <TabsList dir="column" className="px-1">
+                        <TabsTrigger value="download" onClick={handleDownloadImage} asChild>
+                            <Tip className="w-[30px]">
+                                <Button data-testid="icon-button" variant="ghost">
+                                    <ArrowDownTrayIcon className="w-4 h-4 dark:text-white" />
+                                </Button>
                                 Download
                             </Tip>
                         </TabsTrigger>
-                        <TabsTrigger value="layout" onClick={() => onLayout("dagre")}>
-                            <Tip>
-                                <RectangleGroupIcon className="w-4 h-4" />
+                        <TabsTrigger value="layout" onClick={() => onLayout("dagre")} asChild>
+                            <Tip className="w-[30px]">
+                                <Button data-testid="icon-button" variant="ghost">
+                                    <RectangleGroupIcon className="w-4 h-4 dark:text-white" />
+                                </Button>
                                 Layout
                             </Tip>
                         </TabsTrigger>

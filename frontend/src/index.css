@@ -84,3 +84,24 @@
 [data-slot="table-container"] {
   width: 100%;
 }
+
+.react-flow__controls {
+  border: 0;
+  box-shadow: none;
+}
+
+.react-flow__controls > button:first-child {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.react-flow__controls > button:last-child {
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.react-flow__controls-button {
+  padding: 8px;
+  background: var(--secondary) !important;
+  border-bottom: 0;
+}
