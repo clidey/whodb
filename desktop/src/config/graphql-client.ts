@@ -18,6 +18,7 @@ import {ApolloClient, createHttpLink, from, InMemoryCache} from '@apollo/client'
 import {onError} from '@apollo/client/link/error';
 import {toast} from '@clidey/ux';
 import {reduxStore} from '@/store';
+import {credentialManager} from '@/config/credential-manager';
 
 // Function to get the backend port from Tauri
 declare global {
@@ -66,15 +67,39 @@ async function buildHttpLink() {
   const uri = await getGraphQLUri();
   console.log('[DEBUG] Creating HTTP link with URI:', uri);
 
-  // Create a custom fetch that doesn't re-resolve the URI
-  const customFetch = (input: RequestInfo | URL, init?: RequestInit) => {
+  // Initialize credential manager for desktop app
+  if (window.__TAURI__) {
+    await credentialManager.initialize();
+  }
+
+  // Create a custom fetch that adds credentials header for desktop
+  const customFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+    const headers = new Headers(init?.headers || {});
+
+    // Add credentials header for desktop app
+    if (window.__TAURI__) {
+      const credsHeader = await credentialManager.getCredentialsHeader();
+      if (credsHeader) {
+        headers.set('X-Desktop-Credentials', credsHeader);
+        console.log('[DEBUG] Added X-Desktop-Credentials header');
+      }
+    }
+
     // If input is a relative path, use our resolved URI
     if (typeof input === 'string' && input.startsWith('/')) {
       const fullUrl = `http://localhost:${cachedPort}${input}`;
       console.log('[DEBUG] Fetch request to:', fullUrl);
-      return fetch(fullUrl, init);
+      return fetch(fullUrl, {
+        ...init,
+        headers,
+        credentials: "include", // Still include for web/cookie fallback
+      });
     }
-    return fetch(input, init);
+    return fetch(input, {
+      ...init,
+      headers,
+      credentials: "include", // Still include for web/cookie fallback
+    });
   };
 
   return createHttpLink({

@@ -194,6 +194,29 @@ fn main() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_stronghold::Builder::new(|password| {
+            // Use argon2 to hash the password for Stronghold
+            use argon2::{Config, Variant, Version};
+
+            let salt = b"whodb-stronghold-salt-v1"; // Fixed salt for deterministic hashing
+            let config = Config {
+                lanes: 4,
+                mem_cost: 10_000,
+                time_cost: 10,
+                variant: Variant::Argon2id,
+                version: Version::Version13,
+                ..Default::default()
+            };
+
+            let hash = argon2::hash_raw(password.as_bytes(), salt, &config)
+                .expect("Failed to hash password");
+
+            // Stronghold requires exactly 32 bytes
+            let mut key = [0u8; 32];
+            key.copy_from_slice(&hash[0..32]);
+            key.to_vec()
+        })
+        .build())
         .invoke_handler(tauri::generate_handler![greet, get_backend_port])
         .on_window_event(|_, event| {
             if matches!(event, tauri::WindowEvent::CloseRequested { .. }) {

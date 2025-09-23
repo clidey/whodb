@@ -102,7 +102,32 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		if origin == "https://tauri.localhost" || origin == "tauri://localhost" {
 			println("[DEBUG] Tauri desktop app detected, origin:", origin)
 			println("[DEBUG] Request path:", r.URL.Path)
-			// For Tauri desktop app, bypass auth but still try to get credentials from cookie
+
+			// First try to get credentials from custom header (for Windows compatibility)
+			desktopCreds := r.Header.Get("X-Desktop-Credentials")
+			if desktopCreds != "" {
+				println("[DEBUG] Found X-Desktop-Credentials header")
+				decodedValue, err := base64.StdEncoding.DecodeString(desktopCreds)
+				if err == nil {
+					credentials := &engine.Credentials{}
+					err = json.Unmarshal(decodedValue, credentials)
+					if err == nil {
+						println("[DEBUG] Successfully decoded credentials from header")
+						println("  Has Username:", credentials.Username != "")
+						println("  Has Hostname:", credentials.Hostname != "")
+						ctx := r.Context()
+						ctx = context.WithValue(ctx, AuthKey_Credentials, credentials)
+						next.ServeHTTP(w, r.WithContext(ctx))
+						return
+					} else {
+						println("[DEBUG] Failed to unmarshal credentials from header:", err.Error())
+					}
+				} else {
+					println("[DEBUG] Failed to decode header credentials:", err.Error())
+				}
+			}
+
+			// Fallback to cookie-based auth (works on macOS)
 			dbCookie, err := r.Cookie(string(AuthKey_Token))
 			if err == nil && dbCookie.Value != "" {
 				println("[DEBUG] Found token cookie for Tauri app")
@@ -125,7 +150,11 @@ func AuthMiddleware(next http.Handler) http.Handler {
 					println("[DEBUG] Failed to decode cookie:", err.Error())
 				}
 			} else {
-				println("[DEBUG] No token cookie found for Tauri app, err:", err)
+				if err != nil {
+					println("[DEBUG] No token cookie found for Tauri app, err:", err.Error())
+				} else {
+					println("[DEBUG] No token cookie found for Tauri app")
+				}
 			}
 			// Allow access even without credentials for Tauri (for login page)
 			println("[DEBUG] Allowing Tauri access without credentials")

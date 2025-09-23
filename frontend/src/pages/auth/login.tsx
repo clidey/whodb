@@ -111,11 +111,23 @@ export const LoginForm: FC<LoginFormProps> = ({
             variables: {
                 credentials,
             },
-            onCompleted(data) {
+            onCompleted: async (data) => {
                 if (data.Login.Status) {
                     const profileData = { ...credentials };
                     shouldUpdateLastAccessed.current = true;
                     dispatch(AuthActions.login(profileData));
+
+                    // Store credentials in desktop app
+                    if ((window as any).__TAURI__) {
+                        try {
+                            const {credentialManager} = await import('@/config/credential-manager');
+                            await credentialManager.storeCredentials(credentials);
+                            console.log('[Login] Stored credentials for desktop app');
+                        } catch (error) {
+                            console.error('[Login] Failed to store credentials:', error);
+                        }
+                    }
+
                     if (onLoginSuccess) {
                         onLoginSuccess();
                     } else {
@@ -146,10 +158,13 @@ export const LoginForm: FC<LoginFormProps> = ({
                     Type: profile?.Type as DatabaseType,
                 },
             },
-            onCompleted(data) {
+            onCompleted: async (data) => {
                 if (data.LoginWithProfile.Status) {
                     updateProfileLastAccessed(selectedAvailableProfile);
-                    dispatch(AuthActions.login({
+
+                    // For desktop app with profiles, we need to store profile ID for backend to resolve
+                    // The backend will look up the actual credentials from the profile
+                    const profileData = {
                         Type: profile?.Type as DatabaseType,
                         Id: selectedAvailableProfile,
                         Database: profile?.Database ?? "",
@@ -158,7 +173,26 @@ export const LoginForm: FC<LoginFormProps> = ({
                         Username: "",
                         Saved: true,
                         IsEnvironmentDefined: profile?.IsEnvironmentDefined ?? false,
-                    }));
+                    };
+
+                    dispatch(AuthActions.login(profileData));
+
+                    // Store profile reference for desktop app
+                    if ((window as any).__TAURI__) {
+                        try {
+                            const {credentialManager} = await import('@/config/credential-manager');
+                            // Store profile ID so backend can resolve it
+                            await credentialManager.storeCredentials({
+                                Id: selectedAvailableProfile,
+                                Type: profile?.Type,
+                                Database: profile?.Database ?? "",
+                            });
+                            console.log('[Login] Stored profile reference for desktop app');
+                        } catch (error) {
+                            console.error('[Login] Failed to store profile reference:', error);
+                        }
+                    }
+
                     if (onLoginSuccess) {
                         onLoginSuccess();
                     } else {

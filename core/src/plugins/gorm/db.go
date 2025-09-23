@@ -66,6 +66,11 @@ type ConnectionInput struct {
 }
 
 func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*ConnectionInput, error) {
+	// Check if credentials are nil
+	if config == nil || config.Credentials == nil {
+		return nil, fmt.Errorf("no credentials provided for database connection")
+	}
+
 	//common
 	defaultPort, ok := plugins.GetDefaultPort(p.Type)
 	if !ok {
