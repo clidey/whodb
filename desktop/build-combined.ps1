@@ -13,7 +13,7 @@ if ($Debug) {
     Write-Host "=== WhoDB Desktop Debug Build for Windows ===" -ForegroundColor Cyan
     Write-Host ""
 } else {
-    Write-Host ">>> Building WhoDB Desktop for Windows..." -ForegroundColor Green
+    Write-Host "Building WhoDB Desktop for Windows..." -ForegroundColor Green
 }
 
 # Get the directory of this script
@@ -21,11 +21,11 @@ $ScriptDir = $PSScriptRoot
 $ProjectRoot = Split-Path -Parent $ScriptDir
 
 # Build main frontend first (desktop app depends on its CSS)
-Write-Host ">>> Building main frontend application..." -ForegroundColor Yellow
+Write-Host "Building main frontend application..." -ForegroundColor Yellow
 Set-Location "$ProjectRoot\frontend"
 
 # Clean ALL old frontend build artifacts
-Write-Host ">>> Cleaning frontend build artifacts..." -ForegroundColor Yellow
+Write-Host "Cleaning frontend build artifacts..." -ForegroundColor Yellow
 if (Test-Path "build") {
     Remove-Item -Recurse -Force "build"
 }
@@ -59,11 +59,11 @@ if ($cssFiles.Count -eq 0) {
 Write-Host "✓ Frontend build verified - found $($cssFiles.Count) CSS file(s)" -ForegroundColor Green
 
 # Install desktop dependencies
-Write-Host ">>> Installing desktop dependencies..." -ForegroundColor Yellow
+Write-Host "Installing desktop dependencies..." -ForegroundColor Yellow
 Set-Location $ScriptDir
 
 # Clean ALL old desktop build artifacts
-Write-Host ">>> Cleaning desktop build artifacts..." -ForegroundColor Yellow
+Write-Host "Cleaning desktop build artifacts..." -ForegroundColor Yellow
 if (Test-Path "dist") {
     Remove-Item -Recurse -Force "dist"
 }
@@ -75,14 +75,14 @@ if (Test-Path "node_modules/.cache") {
 }
 # Clean Tauri build directories
 if (Test-Path "src-tauri\target") {
-    Write-Host ">>> Cleaning Tauri target directory (this may take a moment)..." -ForegroundColor Yellow
+    Write-Host "Cleaning Tauri target directory (this may take a moment)..." -ForegroundColor Yellow
     Remove-Item -Recurse -Force "src-tauri\target"
 }
 
 pnpm install --prefer-offline
 
 # Build desktop frontend with clean cache
-Write-Host ">>> Building desktop frontend..." -ForegroundColor Yellow
+Write-Host "Building desktop frontend..." -ForegroundColor Yellow
 $env:NODE_ENV = "production"
 pnpm run build
 Remove-Item Env:NODE_ENV -ErrorAction SilentlyContinue
@@ -100,8 +100,8 @@ if ($desktopCssFiles.Count -eq 0) {
 }
 Write-Host "✓ Desktop build verified - found $($desktopCssFiles.Count) CSS file(s)" -ForegroundColor Green
 
-# Create empty build directory for Go embedding (desktop doesn't need frontend)
-Write-Host ">>> Creating empty build directory for backend..." -ForegroundColor Yellow
+# Create empty build directory for Go embedding - desktop does not need frontend
+Write-Host "Creating empty build directory for backend..." -ForegroundColor Yellow
 $CoreBuildDir = "$ProjectRoot\core\build"
 if (Test-Path $CoreBuildDir) {
     Remove-Item -Recurse -Force $CoreBuildDir
@@ -110,23 +110,23 @@ New-Item -ItemType Directory -Path $CoreBuildDir | Out-Null
 New-Item -ItemType File -Path "$CoreBuildDir\.keep" | Out-Null
 
 # Build Go backend FIRST (before Tauri needs it)
-Write-Host ">>> Building backend..." -ForegroundColor Yellow
+Write-Host "Building backend..." -ForegroundColor Yellow
 Set-Location "$ProjectRoot\core"
 
 # Clean Go build cache to ensure fresh build (but keep module cache for speed)
-Write-Host ">>> Cleaning Go build cache..." -ForegroundColor Yellow
+Write-Host "Cleaning Go build cache..." -ForegroundColor Yellow
 go clean -cache -testcache
 
 # Clean any existing binaries
 $BinDir = "$ScriptDir\src-tauri\bin"
 if (Test-Path $BinDir) {
-    Write-Host ">>> Cleaning old backend binaries..." -ForegroundColor Yellow
+    Write-Host "Cleaning old backend binaries..." -ForegroundColor Yellow
     Remove-Item -Recurse -Force $BinDir
 }
 New-Item -ItemType Directory -Path $BinDir | Out-Null
 
 # Ensure fresh module downloads
-Write-Host ">>> Downloading Go modules..." -ForegroundColor Yellow
+Write-Host "Downloading Go modules..." -ForegroundColor Yellow
 go mod download
 go mod verify
 
@@ -163,7 +163,7 @@ Write-Host "✓ Backend build verified" -ForegroundColor Green
 if ($Debug) {
     # Test the backend binary directly
     Write-Host ""
-    Write-Host ">>> Testing backend binary directly..." -ForegroundColor Yellow
+    Write-Host "Testing backend binary directly..." -ForegroundColor Yellow
     Write-Host "Starting backend on port 8081 for 5 seconds..." -ForegroundColor Cyan
 
     $env:PORT = "8081"
@@ -202,7 +202,7 @@ if ($Debug) {
 }
 
 # Clean up any stale binaries in Tauri target directories
-Write-Host ">>> Cleaning up stale binaries in target directories..." -ForegroundColor Yellow
+Write-Host "Cleaning up stale binaries in target directories..." -ForegroundColor Yellow
 $TargetDirs = @(
     "$ScriptDir\src-tauri\target\debug",
     "$ScriptDir\src-tauri\target\release",
@@ -221,7 +221,7 @@ foreach ($dir in $TargetDirs) {
 }
 
 # Build Tauri app
-Write-Host ">>> Building Tauri app..." -ForegroundColor Yellow
+Write-Host "Building Tauri app..." -ForegroundColor Yellow
 Set-Location $ScriptDir
 
 if ($Debug) {
@@ -241,7 +241,7 @@ if ($Debug) {
     pnpm run tauri:build -- --target x86_64-pc-windows-msvc
 }
 
-Write-Host ">>> Build complete!" -ForegroundColor Green
+Write-Host "Build complete!" -ForegroundColor Green
 
 if ($Debug) {
     Write-Host ""
