@@ -7,14 +7,19 @@
   ],
   "permissions": [
     "core:default",
+    "core:path:default",
     "shell:allow-open",
     "shell:default",
+    "stronghold:default",
     "stronghold:allow-initialize",
     "stronghold:allow-create-client",
-    "stronghold:allow-destroy-client",
-    "stronghold:allow-load-stronghold",
+    "stronghold:allow-load-client",
+    "stronghold:allow-destroy",
     "stronghold:allow-save",
+    "stronghold:allow-save-secret",
     "stronghold:allow-execute-procedure",
-    "stronghold:default"
+    "stronghold:allow-get-store-record",
+    "stronghold:allow-save-store-record",
+    "stronghold:allow-remove-store-record"
   ]
 }
