@@ -18,6 +18,7 @@ package postgres
 
 import (
 	"maps"
+	"time"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
@@ -49,6 +50,19 @@ func (p *PostgresPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	pgxConfig.User = connectionInput.Username
 	pgxConfig.Password = connectionInput.Password
 	pgxConfig.Database = connectionInput.Database
+
+	// Add connection timeout to prevent hanging
+	pgxConfig.ConnectTimeout = 10 * time.Second
+
+	// Debug logging for connection attempt
+	log.Logger.WithFields(map[string]any{
+		"hostname": connectionInput.Hostname,
+		"port":     connectionInput.Port,
+		"database": connectionInput.Database,
+		"username": connectionInput.Username,
+		"has_user": connectionInput.Username != "",
+		"has_pass": connectionInput.Password != "",
+	}).Debug("Attempting PostgreSQL connection")
 
 	if connectionInput.ExtraOptions != nil {
 		if pgxConfig.RuntimeParams == nil {
