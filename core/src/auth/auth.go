@@ -97,6 +97,30 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		// Check if this is a Tauri desktop app request
+		origin := r.Header.Get("Origin")
+		if origin == "https://tauri.localhost" || origin == "tauri://localhost" {
+			// For Tauri desktop app, bypass auth but still try to get credentials from cookie
+			dbCookie, err := r.Cookie(string(AuthKey_Token))
+			if err == nil && dbCookie.Value != "" {
+				decodedValue, err := base64.StdEncoding.DecodeString(dbCookie.Value)
+				if err == nil {
+					credentials := &engine.Credentials{}
+					err = json.Unmarshal(decodedValue, credentials)
+					if err == nil {
+						ctx := r.Context()
+						ctx = context.WithValue(ctx, AuthKey_Credentials, credentials)
+						next.ServeHTTP(w, r.WithContext(ctx))
+						return
+					}
+				}
+			}
+			// Allow access even without credentials for Tauri (for login page)
+			ctx := r.Context()
+			next.ServeHTTP(w, r.WithContext(ctx))
+			return
+		}
+
 		var token string
 		if env.IsAPIGatewayEnabled {
 			authHeader := r.Header.Get("Authorization")
