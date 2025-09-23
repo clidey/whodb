@@ -354,7 +354,7 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                     )}
                     
                     {/* Page Selection */}
-                    <div className="flex flex-col gap-2 mt-6">
+                    {/* <div className="flex flex-col gap-2 mt-6">
                         <Label className="text-sm font-medium">Add condition to page</Label>
                         <Select value={selectedPageId} onValueChange={setSelectedPageId}>
                             <SelectTrigger className="w-full" data-testid="page-select">
@@ -379,7 +379,7 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                 />
                             </div>
                         )}
-                    </div>
+                    </div> */}
                     
                     <div className="flex flex-col gap-lg mt-6 overflow-y-auto h-full">
                         {sheetFilters.map((filter, index) => (
