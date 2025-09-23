@@ -8,6 +8,13 @@
   "permissions": [
     "core:default",
     "shell:allow-open",
-    "shell:default"
+    "shell:default",
+    "stronghold:allow-initialize",
+    "stronghold:allow-create-client",
+    "stronghold:allow-destroy-client",
+    "stronghold:allow-load-stronghold",
+    "stronghold:allow-save",
+    "stronghold:allow-execute-procedure",
+    "stronghold:default"
   ]
 }
