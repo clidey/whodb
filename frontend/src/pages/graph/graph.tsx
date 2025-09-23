@@ -104,7 +104,7 @@ const GraphSidebar: FC<GraphSidebarProps> = ({
 
     return (
         <SidebarComponent variant="embed" className="w-64 h-full flex flex-col">
-            <SidebarContent>
+            <SidebarContent data-testid="graph-sidebar-content">
                 <SidebarHeader>
                     <h1 className="text-lg font-semibold pt-8 px-4">
                         {getDatabaseStorageUnitLabel(current?.Type)}

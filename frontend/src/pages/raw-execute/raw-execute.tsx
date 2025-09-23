@@ -49,6 +49,25 @@ import {
     toast
 } from "@clidey/ux";
 import { DatabaseType, RowsResult } from '@graphql';
+import classNames from "classnames";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+    ChangeEvent,
+    cloneElement,
+    FC,
+    ReactElement,
+    Suspense,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState
+} from "react";
+import { useLocation } from "react-router-dom";
+import { v4 } from "uuid";
+import { AIProvider, useAI } from "../../components/ai";
+import { CodeEditor } from "../../components/editor";
+import { ErrorState } from "../../components/error-state";
 import {
     ArrowPathIcon,
     CheckCircleIcon,
@@ -60,28 +79,9 @@ import {
     PencilIcon,
     PlayIcon,
     PlusCircleIcon,
+    PlusIcon,
     XMarkIcon
 } from "../../components/heroicons";
-import classNames from "classnames";
-import { AnimatePresence, motion } from "framer-motion";
-import { indexOf } from "lodash";
-import {
-    ChangeEvent,
-    cloneElement,
-    FC,
-    ReactElement,
-    ReactNode,
-    Suspense,
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState
-} from "react";
-import { v4 } from "uuid";
-import { AIProvider, useAI } from "../../components/ai";
-import { CodeEditor } from "../../components/editor";
-import { ErrorState } from "../../components/error-state";
 import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { Tip } from "../../components/tip";
@@ -89,7 +89,6 @@ import { InternalRoutes } from "../../config/routes";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { ScratchpadActions } from "../../store/scratchpad";
 import { isEEFeatureEnabled, loadEEModule } from "../../utils/ee-loader";
-import { useLocation } from "react-router-dom";
 import { IPluginProps, QueryView } from "./query-view";
 
 type EEExports = {
@@ -667,7 +666,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                         <Tip>
                             <Button onClick={handleAdd} data-testid="add-cell-button" variant="secondary"
                                     className="border border-input">
-                                <PlusCircleIcon className="w-4 h-4" />
+                                <PlusIcon className="w-4 h-4" />
                             </Button>
                                 <p>Add a new cell</p>
                         </Tip>

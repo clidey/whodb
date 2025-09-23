@@ -278,10 +278,11 @@ export const StorageUnitPage: FC = () => {
     }, [data?.StorageUnit]);
 
     const isValidForeignKey = useCallback((key: string) => {
-        // Check for both singular and plural table names
-        if (key.endsWith("_id")) {
-            const base = key.slice(0, -3);
-            return allTableNames.has(base) || allTableNames.has(base + "s");
+        // Check for both singular and plural table names, case-insensitive
+        if (key.toLowerCase().endsWith("_id")) {
+            const base = key.slice(0, -3).toLowerCase();
+            const allNamesLower = new Set(Array.from(allTableNames, name => name.toLowerCase()));
+            return allNamesLower.has(base) || allNamesLower.has(base + "s");
         }
         return false;
     }, [allTableNames]);
@@ -306,15 +307,15 @@ export const StorageUnitPage: FC = () => {
                 }
                 <Tabs value={view} onValueChange={value => dispatch(SettingsActions.setStorageUnitView(value as 'list' | 'card'))}>
                     <TabsList>
-                        <TabsTrigger value="card"><TableCellsIcon className="w-4 h-4" /></TabsTrigger>
-                        <TabsTrigger value="list"><ListBulletIcon className="w-4 h-4" /></TabsTrigger>
+                        <TabsTrigger value="card" data-testid="icon-button"><TableCellsIcon className="w-4 h-4" /></TabsTrigger>
+                        <TabsTrigger value="list" data-testid="icon-button"><ListBulletIcon className="w-4 h-4" /></TabsTrigger>
                     </TabsList>
                 </Tabs>
             </div>
         </div>
         <div className={cn("flex flex-wrap gap-4", {
             "hidden": view !== "card",
-        })}>
+        })} data-testid="storage-unit-card-list">
             <ExpandableCard className={classNames("overflow-visible min-w-[200px] max-w-[700px] h-full", {
                 "hidden": current?.Type === DatabaseType.Redis,
             })} icon={<PlusCircleIcon className="w-4 h-4" />} isExpanded={create} setExpanded={setCreate} tag={<Badge variant="destructive">{error}</Badge>}>

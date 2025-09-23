@@ -162,9 +162,9 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
         return databaseSupportsScratchpad(current?.Type) && type.startsWith("sql:");
     }, [current?.Type, type]);
 
-    return <div className="flex flex-col w-[calc(100%-50px)] group/table-preview gap-sm">
+    return <div className="flex flex-col w-[calc(100%-50px)] group/table-preview">
         <div className="opacity-0 group-hover/table-preview:opacity-100 transition-all z-[1] flex gap-1 -transalte-y-full h-0">
-            <Button onClick={handleCodeToggle} data-testid="table-preview-code-toggle" variant="outline">
+            <Button onClick={handleCodeToggle} data-testid="icon-button" variant="outline">
                 {cloneElement(showSQL ? <TableCellsIcon className="w-6 h-6" /> : <CodeBracketIcon className="w-6 h-6" />, {
                     className: "w-6 h-6",
                 })}
@@ -173,7 +173,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
                 <Button 
                     variant="outline"
                     onClick={handleMoveToScratchpad} 
-                    data-testid="move-to-scratchpad-button"
+                    data-testid="icon-button"
                     title="Move to Scratchpad"
                 >
                     <CommandLineIcon className="w-6 h-6" />
@@ -416,7 +416,7 @@ export const ChatPage: FC = () => {
                             </div>
                         </div>
                         : <div className="h-full w-full py-8 max-h-[calc(75vh-25px)] overflow-y-auto" ref={scrollContainerRef}>
-                            <div className="flex justify-center w-full">
+                            <div className="flex justify-center w-full h-full">
                                 <div className="flex w-full flex-col gap-2">
                                     {
                                         chats.map((chat, i) => {
@@ -437,7 +437,7 @@ export const ChatPage: FC = () => {
                                                 </div>
                                             } else if (chat.Type === "error") {
                                                 return (
-                                                    <div key={`chat-${i}`} className="flex items-center gap-lg overflow-hidden break-words leading-6 shrink-0 self-start">
+                                                    <div key={`chat-${i}`} className="flex gap-lg overflow-hidden break-words leading-6 shrink-0 self-start pt-6">
                                                         {!chat.isUserInput && chats[i-1]?.isUserInput
                                                             ? extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
                                                             : <div className="pl-4" />}
@@ -453,7 +453,7 @@ export const ChatPage: FC = () => {
                                                     {chat.Type === "sql:line-chart" && LineChart && <LineChart columns={chat.Result?.Columns.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} />}
                                                 </div>
                                             }
-                                            return <div key={`chat-${i}`} className="flex gap-lg w-full overflow-hidden pt-4">
+                                            return <div key={`chat-${i}`} className="flex gap-lg w-full pt-4">
                                                 {!chat.isUserInput && chats[i-1]?.isUserInput
                                                     ? (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)
                                                     : <div className="pl-4" />}
