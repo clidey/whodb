@@ -100,22 +100,35 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		// Check if this is a Tauri desktop app request
 		origin := r.Header.Get("Origin")
 		if origin == "https://tauri.localhost" || origin == "tauri://localhost" {
+			println("[DEBUG] Tauri desktop app detected, origin:", origin)
+			println("[DEBUG] Request path:", r.URL.Path)
 			// For Tauri desktop app, bypass auth but still try to get credentials from cookie
 			dbCookie, err := r.Cookie(string(AuthKey_Token))
 			if err == nil && dbCookie.Value != "" {
+				println("[DEBUG] Found token cookie for Tauri app")
 				decodedValue, err := base64.StdEncoding.DecodeString(dbCookie.Value)
 				if err == nil {
 					credentials := &engine.Credentials{}
 					err = json.Unmarshal(decodedValue, credentials)
 					if err == nil {
+						println("[DEBUG] Successfully decoded credentials from cookie")
+						println("  Has Username:", credentials.Username != "")
+						println("  Has Hostname:", credentials.Hostname != "")
 						ctx := r.Context()
 						ctx = context.WithValue(ctx, AuthKey_Credentials, credentials)
 						next.ServeHTTP(w, r.WithContext(ctx))
 						return
+					} else {
+						println("[DEBUG] Failed to unmarshal credentials:", err.Error())
 					}
+				} else {
+					println("[DEBUG] Failed to decode cookie:", err.Error())
 				}
+			} else {
+				println("[DEBUG] No token cookie found for Tauri app, err:", err)
 			}
 			// Allow access even without credentials for Tauri (for login page)
+			println("[DEBUG] Allowing Tauri access without credentials")
 			ctx := r.Context()
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return

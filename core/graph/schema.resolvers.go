@@ -504,22 +504,21 @@ func (r *queryResolver) Profiles(ctx context.Context) ([]*model.LoginProfile, er
 func (r *queryResolver) Database(ctx context.Context, typeArg string) ([]string, error) {
 	credentials := auth.GetCredentials(ctx)
 
-	// Debug logging for desktop app
+	// Debug logging for desktop app - using println for immediate visibility
 	if credentials == nil {
+		println("[DEBUG] GetDatabases - No credentials in context for type:", typeArg)
 		log.LogFields(log.Fields{
 			"operation":     "GetDatabases",
 			"database_type": typeArg,
 			"error":         "No credentials in context",
 		}).Error("No credentials found for desktop app")
 	} else {
-		log.LogFields(log.Fields{
-			"operation":     "GetDatabases",
-			"database_type": typeArg,
-			"has_username":  credentials.Username != "",
-			"has_password":  credentials.Password != "",
-			"has_hostname":  credentials.Hostname != "",
-			"has_database":  credentials.Database != "",
-		}).Info("GetDatabases called with credentials")
+		println("[DEBUG] GetDatabases - Credentials found:")
+		println("  Username:", credentials.Username)
+		println("  Password: [REDACTED]")
+		println("  Hostname:", credentials.Hostname)
+		println("  Database:", credentials.Database)
+		println("  Type:", credentials.Type)
 	}
 
 	config := engine.NewPluginConfig(credentials)

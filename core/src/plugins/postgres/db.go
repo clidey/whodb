@@ -54,15 +54,13 @@ func (p *PostgresPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	// Add connection timeout to prevent hanging
 	pgxConfig.ConnectTimeout = 10 * time.Second
 
-	// Debug logging for connection attempt
-	log.Logger.WithFields(map[string]any{
-		"hostname": connectionInput.Hostname,
-		"port":     connectionInput.Port,
-		"database": connectionInput.Database,
-		"username": connectionInput.Username,
-		"has_user": connectionInput.Username != "",
-		"has_pass": connectionInput.Password != "",
-	}).Debug("Attempting PostgreSQL connection")
+	// Debug logging for connection attempt - using println for visibility
+	println("[DEBUG] PostgreSQL connection attempt:")
+	println("  Hostname:", connectionInput.Hostname)
+	println("  Port:", connectionInput.Port)
+	println("  Username:", connectionInput.Username)
+	println("  Password: [REDACTED]")
+	println("  Database:", connectionInput.Database)
 
 	if connectionInput.ExtraOptions != nil {
 		if pgxConfig.RuntimeParams == nil {
