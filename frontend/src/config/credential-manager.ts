@@ -33,6 +33,8 @@ class CredentialManager {
     private strongholdStore: any = null;
     private masterPasswordSet: boolean = false;
     private isInitialized: boolean = false;
+    private cachedCredentials: any = null;
+    private cachedHeader: string | null = null;
 
     constructor() {
         // Check if running in Tauri desktop environment
@@ -84,6 +86,10 @@ class CredentialManager {
      * Store credentials securely
      */
     async storeCredentials(credentials: any): Promise<void> {
+        // Clear caches when storing new credentials
+        this.cachedCredentials = null;
+        this.cachedHeader = null;
+
         const data: StoredCredentials = {
             credentials,
             timestamp: Date.now()
@@ -114,6 +120,12 @@ class CredentialManager {
      * Retrieve stored credentials
      */
     async getCredentials(): Promise<any | null> {
+        // Return cached credentials if available
+        if (this.cachedCredentials) {
+            console.log('[CredentialManager] Using cached credentials');
+            return this.cachedCredentials;
+        }
+
         if (this.isDesktop && this.strongholdStore) {
             // Desktop: Get from Stronghold Store
             try {
@@ -133,16 +145,26 @@ class CredentialManager {
                     }
 
                     console.log('[CredentialManager] Retrieved credentials from Stronghold');
+                    // Cache the credentials for future use
+                    this.cachedCredentials = data.credentials;
                     return data.credentials;
                 }
             } catch (error) {
                 console.error('[CredentialManager] Stronghold retrieval failed:', error);
                 // Fallback to sessionStorage
-                return this.getFromSession();
+                const sessionCreds = this.getFromSession();
+                if (sessionCreds) {
+                    this.cachedCredentials = sessionCreds;
+                }
+                return sessionCreds;
             }
         } else {
             // Web or fallback: Get from sessionStorage
-            return this.getFromSession();
+            const sessionCreds = this.getFromSession();
+            if (sessionCreds) {
+                this.cachedCredentials = sessionCreds;
+            }
+            return sessionCreds;
         }
 
         return null;
@@ -152,6 +174,10 @@ class CredentialManager {
      * Clear stored credentials
      */
     async clearCredentials(): Promise<void> {
+        // Clear caches
+        this.cachedCredentials = null;
+        this.cachedHeader = null;
+
         if (this.isDesktop && this.strongholdStore) {
             // Desktop: Clear from Stronghold Store
             try {
@@ -174,9 +200,18 @@ class CredentialManager {
      * Get credentials as base64-encoded string for header
      */
     async getCredentialsHeader(): Promise<string | null> {
+        // Return cached header if available
+        if (this.cachedHeader) {
+            console.log('[CredentialManager] Using cached header');
+            return this.cachedHeader;
+        }
+
         const credentials = await this.getCredentials();
         if (credentials) {
-            return btoa(JSON.stringify(credentials));
+            // Cache the encoded header
+            this.cachedHeader = btoa(JSON.stringify(credentials));
+            console.log('[CredentialManager] Cached credentials header');
+            return this.cachedHeader;
         }
         return null;
     }
