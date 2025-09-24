@@ -84,6 +84,9 @@ func GetLoginProfiles() []types.DatabaseCredentials {
 }
 
 func GetLoginProfileId(index int, profile types.DatabaseCredentials) string {
+	if len(profile.CustomId) > 0 {
+		return profile.CustomId
+	}
 	if len(profile.Alias) > 0 {
 		return profile.Alias
 	}
