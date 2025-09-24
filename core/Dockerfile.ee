@@ -32,7 +32,7 @@ COPY ./ee/ ../ee/
 RUN pnpm run build:ee
 
 # Build backend with EE modules
-FROM golang:1.24.1-alpine AS backend-stage
+FROM golang:alpine AS backend-stage
 RUN apk update && apk add --no-cache gcc musl-dev git bash
 WORKDIR /app
 
@@ -63,7 +63,7 @@ WORKDIR /app/core
 RUN GOWORK=/app/go.work.ee CGO_ENABLED=1 GOOS=linux go build -tags ee -o /core
 
 # Final stage
-FROM alpine:3.22.1
+FROM alpine:3.22
 RUN apk update && apk add --no-cache ca-certificates
 WORKDIR /app
 COPY --from=backend-stage /core /core
