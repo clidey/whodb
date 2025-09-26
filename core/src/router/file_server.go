@@ -15,22 +15,43 @@
 package router
 
 import (
-	"embed"
-	"io"
-	"io/fs"
-	"net/http"
-	"path"
-	"strings"
+    "embed"
+    "io"
+    "io/fs"
+    "net/http"
+    "path"
+    "strings"
 
-	"github.com/clidey/whodb/core/src/log"
-	"github.com/go-chi/chi/v5"
+    "github.com/clidey/whodb/core/src/log"
+    "github.com/go-chi/chi/v5"
 )
 
 func fileServer(r chi.Router, staticFiles embed.FS) {
-	staticFS, err := fs.Sub(staticFiles, "build")
-	if err != nil {
-		log.Logger.Fatal("Failed to create sub filesystem:", err)
-	}
+    // Support assets embedded under different roots (server: "build", desktop: "frontend/dist").
+    // Prefer a root that actually contains index.html.
+    candidates := []string{"build", "frontend/dist", "dist", "."}
+    var staticFS fs.FS
+    var err error
+    for _, base := range candidates {
+        if base == "." {
+            staticFS = staticFiles
+        } else {
+            var sub fs.FS
+            sub, err = fs.Sub(staticFiles, base)
+            if err != nil {
+                continue
+            }
+            staticFS = sub
+        }
+        if f, openErr := staticFS.Open("index.html"); openErr == nil {
+            _ = f.Close()
+            break
+        }
+        staticFS = nil
+    }
+    if staticFS == nil {
+        log.Logger.Fatal("Failed to locate embedded frontend assets (index.html not found in any known root)")
+    }
 
 	server := http.FileServer(http.FS(staticFS))
 
