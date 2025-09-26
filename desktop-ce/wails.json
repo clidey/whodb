@@ -18,7 +18,7 @@
     "comments": "Database Management Tool"
   },
   "debounceMS": 100,
-  "devServer": "http://localhost:3000",
+  "devServer": "localhost:3000",
   "appargs": "",
   "runNonNativeBuildHooks": false
 }
