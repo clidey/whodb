@@ -41,7 +41,7 @@ build-mac: prepare
 	@mkdir -p build/darwin/universal
 	GOWORK=$$PWD/../go.work.desktop-ce ~/go/bin/wails build -clean -platform darwin/universal \
 		-skipbindings -ldflags="-s -w" -o whodb-ce
-	@mv build/bin/whodb-ce.app build/darwin/universal/ 2>/dev/null || mv build/bin/whodb-ce build/darwin/universal/
+	@mv "build/bin/WhoDB CE.app" build/darwin/universal/ 2>/dev/null || mv build/bin/whodb-ce build/darwin/universal/
 
 # Linux builds
 build-linux: prepare
@@ -82,7 +82,7 @@ build-prod-mac: prepare
 	@mkdir -p build/darwin/universal
 	GOWORK=$$PWD/../go.work.desktop-ce ~/go/bin/wails build -clean -platform darwin/universal \
 		-pkg -skipbindings -ldflags="-s -w" -o whodb-ce
-	@mv build/bin/whodb-ce.pkg build/darwin/universal/ 2>/dev/null || mv build/bin/whodb-ce.app build/darwin/universal/
+	@mv build/bin/whodb-ce.pkg build/darwin/universal/ 2>/dev/null || mv "build/bin/WhoDB CE.app" build/darwin/universal/
 
 build-prod-linux: prepare
 	@echo "Building WhoDB CE Linux AppImage for AMD64..."
