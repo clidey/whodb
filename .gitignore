@@ -15,3 +15,11 @@ frontend/cypress/downloads/
 .gemini/
 gha-creds-*.json
 cypress-results/
+desktop-ce/frontend/
+desktop-ce/build/
+desktop-ee/frontend/
+desktop-ee/build/
+*.bak
+frontend/package.json.md5
+frontend/wailsjs/
+go.work.*.sum

@@ -95,18 +95,17 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		var token string
-		if env.IsAPIGatewayEnabled {
-			authHeader := r.Header.Get("Authorization")
-			if strings.HasPrefix(authHeader, "Bearer ") {
-				token = strings.TrimPrefix(authHeader, "Bearer ")
-			}
-		} else {
-			dbCookie, err := r.Cookie(string(AuthKey_Token))
-			if err == nil {
-				token = dbCookie.Value
-			}
-		}
+    var token string
+    // Prefer Authorization header if present to support desktop/webview environments
+    if authHeader := r.Header.Get("Authorization"); strings.HasPrefix(authHeader, "Bearer ") {
+        token = strings.TrimPrefix(authHeader, "Bearer ")
+    }
+    // Fallback to cookie when header is not provided
+    if token == "" {
+        if dbCookie, err := r.Cookie(string(AuthKey_Token)); err == nil {
+            token = dbCookie.Value
+        }
+    }
 
 		if token == "" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -126,10 +125,10 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		if env.IsAPIGatewayEnabled && (credentials.AccessToken == nil || (credentials.AccessToken != nil && !isTokenValid(*credentials.AccessToken))) {
-			http.Error(w, "Bad Request", http.StatusBadRequest)
-			return
-		}
+    if env.IsAPIGatewayEnabled && (credentials.AccessToken == nil || (credentials.AccessToken != nil && !isTokenValid(*credentials.AccessToken))) {
+        http.Error(w, "Bad Request", http.StatusBadRequest)
+        return
+    }
 
 		if credentials.Id != nil {
 			profiles := src.GetLoginProfiles()

@@ -15,18 +15,55 @@
  */
 
 import {ApolloClient, createHttpLink, InMemoryCache} from '@apollo/client';
+import { setContext } from '@apollo/client/link/context';
 import {onError} from '@apollo/client/link/error';
 import {toast} from '@clidey/ux';
 import {reduxStore} from '../store';
 
-let uri = "/api/query"
-if (window.location.port === "3000") {
-  uri = "http://localhost:8080/api/query";
-}
+// Always use a relative URI so that:
+// - Desktop/Wails uses the embedded router handler
+// - Dev server (vite) proxies to the backend via server.proxy in vite.config.ts
+const uri = "/api/query";
 
 const httpLink = createHttpLink({
   uri,
   credentials: "include",
+});
+
+// Add Authorization header in desktop/webview environments where cookies are not supported.
+const authLink = setContext((_, { headers }) => {
+  try {
+    // Only attach for non-HTTP(s) schemes (e.g., wails://) to minimize exposure
+    const isDesktopScheme = typeof window !== 'undefined' && !['http:', 'https:'].includes(window.location.protocol);
+    if (!isDesktopScheme) {
+      return { headers };
+    }
+    // @ts-ignore
+    const authState = reduxStore.getState().auth;
+    const current = authState?.current;
+    if (!current) {
+      return { headers };
+    }
+    const tokenPayload = {
+      Id: current.Id,
+      Type: current.Type,
+      Hostname: current.Hostname,
+      Username: current.Username,
+      Password: current.Password,
+      Database: current.Database,
+      Advanced: current.Advanced || [],
+      IsProfile: !!current.Saved,
+    };
+    const bearer = btoa(unescape(encodeURIComponent(JSON.stringify(tokenPayload))));
+    return {
+      headers: {
+        ...headers,
+        Authorization: `Bearer ${bearer}`,
+      },
+    };
+  } catch {
+    return { headers };
+  }
 });
 
 /**
@@ -79,6 +116,7 @@ async function handleAutoLogin(currentProfile: any) {
                 },
                 credentials: 'include',
                 body: JSON.stringify({
+                    operationName: 'LoginWithProfile',
                     query: `
             mutation LoginWithProfile($profile: LoginProfileInput!) {
               LoginWithProfile(profile: $profile) {
@@ -113,6 +151,7 @@ async function handleAutoLogin(currentProfile: any) {
                 },
                 credentials: 'include',
                 body: JSON.stringify({
+                    operationName: 'Login',
                     query: `
             mutation Login($credentials: LoginCredentials!) {
               Login(credentials: $credentials) {
@@ -151,7 +190,7 @@ async function handleAutoLogin(currentProfile: any) {
 }
 
 export const graphqlClient = new ApolloClient({
-    link: errorLink.concat(httpLink),
+    link: errorLink.concat(authLink.concat(httpLink)),
   cache: new InMemoryCache(),
   defaultOptions: {
       query: {

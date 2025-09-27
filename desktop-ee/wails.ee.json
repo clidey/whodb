@@ -1,0 +1,24 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "WhoDB EE",
+  "outputfilename": "whodb-ee",
+  "frontend:dir": "frontend",
+  "frontend:install": "echo 'Frontend already built'",
+  "frontend:build": "echo 'Frontend already built'",
+  "frontend:dev:watcher": "pnpm run start:ee",
+  "author": {
+    "name": "Clidey Inc",
+    "email": "support@whodb.com"
+  },
+  "info": {
+    "companyName": "Clidey Inc",
+    "productName": "WhoDB Enterprise",
+    "productVersion": "1.0.0",
+    "copyright": "Copyright 2025 Clidey, Inc.",
+    "comments": "Enterprise Database Management Tool"
+  },
+  "debounceMS": 100,
+  "devServer": "localhost:3000",
+  "appargs": "",
+  "runNonNativeBuildHooks": false
+}
