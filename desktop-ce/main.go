@@ -25,6 +25,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/auth"
@@ -49,6 +50,12 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+}
+
+// OpenURL opens a URL in the system's default browser
+func (a *App) OpenURL(url string) error {
+	runtime.BrowserOpenURL(a.ctx, url)
+	return nil
 }
 
 func main() {

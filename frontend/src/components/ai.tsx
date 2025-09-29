@@ -58,6 +58,7 @@ import {AIModelsActions, availableExternalModelTypes} from "../store/ai-models";
 import {useAppDispatch, useAppSelector} from "../store/hooks";
 import {ensureModelsArray, ensureModelTypesArray} from "../utils/ai-models-helper";
 import {Icons} from "./icons";
+import {ExternalLink} from "../utils/external-links";
 
 export const externalModelTypes = map(availableExternalModelTypes, (model) => ({
     id: model,
@@ -353,11 +354,11 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                     <div className="text-xs text-neutral-500 mt-4 flex flex-col gap-2">
                         <div className="font-bold">Local Setup</div>
                         <div>
-                            Go to <a href="https://ollama.com/" target="_blank" rel="noopener noreferrer" className="font-semibold underline text-blue-600 hover:text-blue-800">Ollama</a> and follow the installation instructions.
+                            Go to <ExternalLink href="https://ollama.com/" className="font-semibold underline text-blue-600 hover:text-blue-800">Ollama</ExternalLink> and follow the installation instructions.
                         </div>
                         <div className="font-semibold">Downloading the Ollama Model</div>
                         <div>
-                            Once installed, install the desired model you would like to use. In this guide, we will use <a href="https://ollama.com/library/llama3.1" target="_blank" rel="noopener noreferrer" className="font-semibold underline text-blue-600 hover:text-blue-800">Llama3.1 8b</a>. To install this model, run:
+                            Once installed, install the desired model you would like to use. In this guide, we will use <ExternalLink href="https://ollama.com/library/llama3.1" className="font-semibold underline text-blue-600 hover:text-blue-800">Llama3.1 8b</ExternalLink>. To install this model, run:
                         </div>
                         <div className="font-mono bg-neutral-100 dark:bg-neutral-900 rounded px-2 py-1 mb-1">
                             ollama run llama3.1

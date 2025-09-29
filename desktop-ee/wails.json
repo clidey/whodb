@@ -1,6 +1,6 @@
 {
   "$schema": "https://wails.io/schemas/config.v2.json",
-  "name": "WhoDB EE",
+  "name": "WhoDB - Enterprise",
   "outputfilename": "whodb-ee",
   "frontend:dir": "frontend",
   "frontend:install": "echo 'Frontend already built'",

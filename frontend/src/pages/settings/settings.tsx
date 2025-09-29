@@ -21,6 +21,7 @@ import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { SettingsActions } from "../../store/settings";
 import { isEEMode } from "@/config/ee-imports";
 import { Label, Switch, Separator, DropdownMenu, DropdownMenuTrigger, Button, DropdownMenuContent, DropdownMenuItem, SelectTrigger, Select, SelectContent, SelectItem, SelectValue, Card, CardContent, CardHeader, Badge } from "@clidey/ux";
+import { ExternalLink } from "../../utils/external-links";
 
 export const SettingsPage: FC = () => {
     const dispatch = useAppDispatch();
@@ -77,17 +78,17 @@ export const SettingsPage: FC = () => {
                                 <h3 className="text-base">
                                     We use this information solely to enhance the performance of WhoDB.
                                     For details on what data we collect, how it's collected, stored, and used, please
-                                    refer to our <a
-                                    href={"https://clidey.com/privacy-policy"} target={"_blank"}
-                                    rel="noreferrer" className={"underline text-blue-500"}>Privacy Policy.</a>
+                                    refer to our <ExternalLink
+                                    href={"https://clidey.com/privacy-policy"}
+                                    className={"underline text-blue-500"}>Privacy Policy.</ExternalLink>
                                     <br/>
                                     <br/>
-                                    WhoDB uses <a href={"https://posthog.com/"} target={"_blank"} rel="noreferrer"
-                                                  className={"underline text-blue-500"}>Posthog</a> to collect and
+                                    WhoDB uses <ExternalLink href={"https://posthog.com/"}
+                                                  className={"underline text-blue-500"}>Posthog</ExternalLink> to collect and
                                     manage this
-                                    data. More information about this tool can be found on its <a
-                                    href={"https://github.com/PostHog/posthog"} target={"_blank"} rel="noreferrer"
-                                    className={"underline text-blue-500"}>Github</a>.
+                                    data. More information about this tool can be found on its <ExternalLink
+                                    href={"https://github.com/PostHog/posthog"}
+                                    className={"underline text-blue-500"}>Github</ExternalLink>.
                                     We have taken measures to redact as much sensitive information as we can and will
                                     continuously
                                     evaluate to make sure that it fits yours and our needs without sacrificing anything.
@@ -99,7 +100,7 @@ export const SettingsPage: FC = () => {
                                 </h3>
                                 <div className="flex justify-between">
                                     <Label>{metricsEnabled ? "Enable Telemetry" : "Disable Telemetry"}</Label>
-                                    <Switch checked={metricsEnabled} onChange={() => handleMetricsToggle(!metricsEnabled)}/>
+                                    <Switch checked={metricsEnabled} onCheckedChange={handleMetricsToggle}/>
                                 </div>
                                 <Separator className="mt-4" />
                             </div>

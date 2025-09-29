@@ -25,6 +25,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/auth"
@@ -51,6 +52,12 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 }
 
+// OpenURL opens a URL in the system's default browser
+func (a *App) OpenURL(url string) error {
+	runtime.BrowserOpenURL(a.ctx, url)
+	return nil
+}
+
 func main() {
 	// Initialize WhoDB engine (same as server.go)
 	src.InitializeEngine()
@@ -64,7 +71,7 @@ func main() {
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:     "WhoDB",
+        Title:     "WhoDB - Enterprise",
 		Width:     1400,
 		Height:    900,
 		MinWidth:  1024,

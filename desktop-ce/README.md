@@ -42,12 +42,40 @@ make build-all
 make dev
 ```
 
-## Production Builds (with installers)
+## Production Builds and Packaging
 
 ```bash
+# Build production binaries
 make build-prod-windows  # Windows NSIS installer
-make build-prod-mac      # macOS .pkg installer
+make build-prod-mac      # macOS app (.app)
 make build-prod-linux    # Linux AppImage
+
+# Package macOS app into a .pkg (unsigned)
+make package-mac
+
+# Package & sign macOS app and .pkg (GitHub Releases)
+# You can pass identities on the command or via environment variables.
+make package-mac-signed \
+  VERSION=1.2.3 \
+  CODESIGN_ID="Developer ID Application: Your Name (TEAMID)" \
+  INSTALLER_ID="Developer ID Installer: Your Name (TEAMID)"
+
+# Alternatively, set env vars and run
+export CODESIGN_ID="Developer ID Application: Your Name (TEAMID)"
+export INSTALLER_ID="Developer ID Installer: Your Name (TEAMID)"
+make package-mac-signed VERSION=1.2.3
+
+# Notarize (required for Gatekeeper to trust downloads)
+make notarize-mac \
+  NOTARY_PROFILE="WhoDBNotary" \
+  VERSION=1.2.3
+# or
+make notarize-mac \
+  APPLE_ID="appleid@example.com" TEAM_ID="TEAMID" APPLE_APP_PASSWORD="app-specific-password" \
+  VERSION=1.2.3
+
+# One-shot GitHub Release artifact (build+sign+notarize)
+make release-mac VERSION=1.2.3 CODESIGN_ID="…" INSTALLER_ID="…" NOTARY_PROFILE="WhoDBNotary"
 ```
 
 ## Alternative: Using Shell Scripts
@@ -68,12 +96,43 @@ GOWORK=$PWD/../go.work.desktop-ce go mod tidy
 GOWORK=$PWD/../go.work.desktop-ce wails build -o whodb-ce
 ```
 
+## Versioning
+
+- You can set a version for macOS builds and packages via `VERSION`. If not set, a timestamp is used.
+
+```bash
+# Build the macOS app with a specific version embedded in Info.plist
+make build-mac VERSION=1.2.3
+
+# Package to .pkg with a specific version
+make package-mac VERSION=1.2.3
+
+## Mac App Store build (MAS)
+
+```bash
+# Required:
+#   MAS_CODESIGN_ID   = Apple Distribution: Your Name (TEAMID)
+#   MAS_INSTALLER_ID  = 3rd Party Mac Developer Installer: Your Name (TEAMID)
+#   MAS_PROFILE       = path to .provisionprofile
+#   MAS_ENTITLEMENTS  = path to entitlements.plist (with sandbox)
+
+make macstore-mac \
+  VERSION=1.2.3 \
+  MAS_CODESIGN_ID="Apple Distribution: Your Name (TEAMID)" \
+  MAS_INSTALLER_ID="3rd Party Mac Developer Installer: Your Name (TEAMID)" \
+  MAS_PROFILE=/path/to/embedded.provisionprofile \
+  MAS_ENTITLEMENTS=/path/to/entitlements.plist
+
+# Upload the resulting whodb-ce-mas.pkg via Transporter/Xcode to App Store Connect
+```
+```
+
 ## Output Files
 
 Binaries are generated in `desktop-ce/build/` organized by platform:
 
 - Windows: `build/windows/[arch]/whodb-ce.exe`
-- macOS: `build/darwin/universal/whodb-ce.app`
+- macOS: `build/darwin/universal/WhoDB.app`
 - Linux: `build/linux/[arch]/whodb-ce`
 
 ## Other Useful Commands
