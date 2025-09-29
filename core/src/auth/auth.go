@@ -15,17 +15,19 @@
 package auth
 
 import (
-	"bytes"
-	"context"
-	"encoding/base64"
-	"encoding/json"
-	"io"
-	"net/http"
-	"strings"
+    "bytes"
+    "context"
+    "encoding/base64"
+    "encoding/json"
+    "io"
+    "net/http"
+    "strings"
+    "sync"
 
-	"github.com/clidey/whodb/core/src"
-	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/env"
+    "github.com/clidey/whodb/core/src"
+    "github.com/clidey/whodb/core/src/engine"
+    "github.com/clidey/whodb/core/src/env"
+    "github.com/clidey/whodb/core/src/log"
 )
 
 type AuthKey string
@@ -71,7 +73,13 @@ func isPublicRoute(r *http.Request) bool {
 }
 
 func AuthMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    var onceHeader sync.Once
+    var onceCookie sync.Once
+    var onceKeyring sync.Once
+    var onceInline sync.Once
+    var onceProfile sync.Once
+    const maxAuthHeaderLen = 16 * 1024
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if isPublicRoute(r) {
 			next.ServeHTTP(w, r)
 			return
@@ -90,22 +98,28 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 		// this is to ensure that it can be re-read by the GraphQL layer
 		r.Body = io.NopCloser(bytes.NewBuffer(body))
-		if isAllowed(r, body) {
-			next.ServeHTTP(w, r)
-			return
-		}
+        if isAllowed(r, body) {
+            next.ServeHTTP(w, r)
+            return
+        }
 
     var token string
-    // Prefer Authorization header if present to support desktop/webview environments
-    if authHeader := r.Header.Get("Authorization"); strings.HasPrefix(authHeader, "Bearer ") {
-        token = strings.TrimPrefix(authHeader, "Bearer ")
-    }
-    // Fallback to cookie when header is not provided
-    if token == "" {
-        if dbCookie, err := r.Cookie(string(AuthKey_Token)); err == nil {
-            token = dbCookie.Value
+        // Prefer Authorization header if present to support desktop/webview environments
+        if authHeader := r.Header.Get("Authorization"); strings.HasPrefix(authHeader, "Bearer ") {
+            token = strings.TrimPrefix(authHeader, "Bearer ")
+            if len(token) > maxAuthHeaderLen {
+                http.Error(w, "Bad Request", http.StatusBadRequest)
+                return
+            }
+            onceHeader.Do(func() { log.Logger.Info("Auth: using Authorization header") })
         }
-    }
+        // Fallback to cookie when header is not provided
+        if token == "" {
+            if dbCookie, err := r.Cookie(string(AuthKey_Token)); err == nil {
+                token = dbCookie.Value
+                onceCookie.Do(func() { log.Logger.Info("Auth: using cookie-based auth") })
+            }
+        }
 
 		if token == "" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -130,20 +144,42 @@ func AuthMiddleware(next http.Handler) http.Handler {
         return
     }
 
-		if credentials.Id != nil {
-			profiles := src.GetLoginProfiles()
-			for i, loginProfile := range profiles {
-				profileId := src.GetLoginProfileId(i, loginProfile)
-				if *credentials.Id == profileId {
-					profile := *src.GetLoginCredentials(loginProfile)
-					if credentials.Database != "" {
-						profile.Database = credentials.Database
-					}
-					credentials = &profile
-					break
-				}
-			}
-		}
+        inline := true
+        if credentials.Id != nil {
+            matched := false
+            profiles := src.GetLoginProfiles()
+            for i, loginProfile := range profiles {
+                profileId := src.GetLoginProfileId(i, loginProfile)
+                if *credentials.Id == profileId {
+                    profile := *src.GetLoginCredentials(loginProfile)
+                    // Preserve the original profile Id so Logout can clear keyring
+                    profile.Id = credentials.Id
+                    if credentials.Database != "" {
+                        profile.Database = credentials.Database
+                    }
+                    credentials = &profile
+                    matched = true
+                    inline = false
+                    onceProfile.Do(func() { log.Logger.Info("Auth: credentials resolved via saved profile") })
+                    break
+                }
+            }
+            if !matched {
+                if stored, err := LoadCredentials(*credentials.Id); err == nil && stored != nil {
+                    if credentials.Database != "" {
+                        stored.Database = credentials.Database
+                    }
+                    // ensure Id is set on the loaded creds
+                    stored.Id = credentials.Id
+                    credentials = stored
+                    inline = false
+                    onceKeyring.Do(func() { log.Logger.Info("Auth: credentials resolved via OS keyring") })
+                }
+            }
+        }
+        if inline {
+            onceInline.Do(func() { log.Logger.Info("Auth: credentials supplied inline") })
+        }
 
 		ctx := r.Context()
 		ctx = context.WithValue(ctx, AuthKey_Credentials, credentials)
@@ -179,11 +215,11 @@ func isAllowed(r *http.Request, body []byte) bool {
 		return query.Variables["type"] == string(engine.DatabaseType_Sqlite3)
 	}
 
-	switch query.OperationName {
-	case "Login", "LoginWithProfile", "Logout", "GetProfiles", "UpdateSettings", "SettingsConfig":
-		return true
-	}
-	return false
+    switch query.OperationName {
+    case "Login", "LoginWithProfile", "GetProfiles", "UpdateSettings", "SettingsConfig":
+        return true
+    }
+    return false
 }
 
 func isTokenValid(token string) bool {

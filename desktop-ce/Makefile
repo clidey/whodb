@@ -12,7 +12,7 @@ prepare:
 
 # Development mode
 dev: prepare
-	GOWORK=$$PWD/../go.work.desktop-ce ~/go/bin/wails dev
+	ENVIRONMENT=dev GOWORK=$$PWD/../go.work.desktop-ce ~/go/bin/wails dev
 
 # Build for current platform
 build: prepare

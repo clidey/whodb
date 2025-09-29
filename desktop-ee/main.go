@@ -27,6 +27,8 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 
 	"github.com/clidey/whodb/core/src"
+	"github.com/clidey/whodb/core/src/auth"
+	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/router"
 )
 
@@ -52,6 +54,7 @@ func (a *App) startup(ctx context.Context) {
 func main() {
 	// Initialize WhoDB engine (same as server.go)
 	src.InitializeEngine()
+	log.Logger.Infof("Auth configured: sources=[Authorization header, Cookie]; keyring service=%s", auth.GetKeyringServiceName())
 
 	// Get the Chi router with embedded assets
 	r := router.InitializeRouter(assets)

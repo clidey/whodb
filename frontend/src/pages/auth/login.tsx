@@ -39,6 +39,7 @@ import {DatabaseActions} from "../../store/database";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {AdjustmentsHorizontalIcon, CheckCircleIcon, CircleStackIcon} from '../../components/heroicons';
 import logoImage from "../../../public/images/logo.png";
+import { v4 } from 'uuid';
 
 
 // Embeddable LoginForm component for use in LoginPage and @sidebar.tsx
@@ -99,6 +100,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         setError(undefined);
 
         const credentials: LoginCredentials = {
+            Id: v4(),
             Type: databaseType.id,
             Hostname: hostName,
             Database: database,
@@ -116,6 +118,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                     const profileData = { ...credentials };
                     shouldUpdateLastAccessed.current = true;
                     dispatch(AuthActions.login(profileData));
+                    try { localStorage.setItem(`whodb:idOnly:${profileData.Id}`, '1'); } catch {}
                     if (onLoginSuccess) {
                         onLoginSuccess();
                     } else {
@@ -160,6 +163,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                         Saved: true,
                         IsEnvironmentDefined: profile?.IsEnvironmentDefined ?? false,
                     }));
+                    try { localStorage.setItem(`whodb:idOnly:${profileId}`, '1'); } catch {}
                     if (onLoginSuccess) {
                         onLoginSuccess();
                     } else {

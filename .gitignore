@@ -22,4 +22,4 @@ desktop-ee/build/
 *.bak
 frontend/package.json.md5
 frontend/wailsjs/
-go.work.*.sum
+# go.work.*.sum

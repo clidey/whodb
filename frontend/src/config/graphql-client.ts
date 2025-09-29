@@ -44,7 +44,12 @@ const authLink = setContext((_, { headers }) => {
     if (!current) {
       return { headers };
     }
-    const tokenPayload = {
+    // Prefer sending only Id+Database for saved profiles or after first login when id-only flag set
+    const idOnlyFlag = (() => { try { return current.Id && localStorage.getItem(`whodb:idOnly:${current.Id}`) === '1'; } catch { return false; } })();
+    const tokenPayload = (current.Saved || idOnlyFlag) ? {
+      Id: current.Id,
+      Database: current.Database,
+    } : {
       Id: current.Id,
       Type: current.Type,
       Hostname: current.Hostname,
