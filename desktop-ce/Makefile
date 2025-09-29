@@ -78,10 +78,10 @@ build-prod-windows: prepare
 	@mv build/bin/whodb-ce-installer.exe build/windows/amd64/
 
 build-prod-mac: prepare
-	@echo "Building WhoDB CE macOS app package..."
+	@echo "Building WhoDB CE macOS app (no pkg flag)..."
 	@mkdir -p build/darwin/universal
 	GOWORK=$$PWD/../go.work.desktop-ce ~/go/bin/wails build -clean -platform darwin/universal \
-		-pkg -skipbindings -ldflags="-s -w" -o whodb-ce
+		-skipbindings -ldflags="-s -w" -o whodb-ce
 	@mv build/bin/whodb-ce.pkg build/darwin/universal/ 2>/dev/null || mv "build/bin/WhoDB CE.app" build/darwin/universal/
 
 build-prod-linux: prepare
