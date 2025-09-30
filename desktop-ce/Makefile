@@ -81,13 +81,26 @@ build-linux-arm64: prepare
 	@mv build/bin/whodb-ce build/linux/arm64/
 
 # Production builds with installers
-build-prod-windows: prepare
+build-prod-windows: build-prod-windows-amd64 build-prod-windows-arm64
+	@echo "Built WhoDB CE Windows installers for both AMD64 and ARM64"
+
+# Production build specifically for Windows AMD64
+build-prod-windows-amd64: prepare
 	@echo "Building WhoDB CE Windows installer for AMD64..."
 	@mkdir -p build/windows/amd64
 	GOWORK=$$PWD/../go.work.desktop-ce ~/go/bin/wails build -clean -platform windows/amd64 \
 		-nsis -obfuscated -upx -windowsconsole=false -ldflags="-s -w -H windowsgui" \
 		-o whodb-ce-installer.exe
 	@mv build/bin/whodb-ce-installer.exe build/windows/amd64/
+
+# Production build specifically for Windows ARM64
+build-prod-windows-arm64: prepare
+	@echo "Building WhoDB CE Windows installer for ARM64..."
+	@mkdir -p build/windows/arm64
+	GOWORK=$$PWD/../go.work.desktop-ce ~/go/bin/wails build -clean -platform windows/arm64 \
+		-nsis -obfuscated -upx -windowsconsole=false -ldflags="-s -w -H windowsgui" \
+		-o whodb-ce-installer.exe
+	@mv build/bin/whodb-ce-installer.exe build/windows/arm64/
 
 build-prod-mac: prepare
 	@echo "Building WhoDB CE macOS app (no pkg flag)..."
@@ -217,11 +230,27 @@ macstore-mac: build-prod-mac
 	@echo "MAS package created at build/darwin/universal/whodb-ce-mas.pkg (upload via Transporter/Xcode)."
 
 build-prod-linux: prepare
-	@echo "Building WhoDB CE Linux AppImage for AMD64..."
+	@echo "Building WhoDB CE Linux binary for native architecture ($$(uname -m))..."
+	@mkdir -p build/linux/$$(uname -m)
+	GOWORK=$$PWD/../go.work.desktop-ce ~/go/bin/wails build -clean \
+		-tags webkit2_41 -obfuscated -upx -ldflags="-s -w" -o whodb-ce
+	@mv build/bin/whodb-ce build/linux/$$(uname -m)/
+
+# Production build specifically for Linux AMD64
+build-prod-linux-amd64: prepare
+	@echo "Building WhoDB CE Linux binary for AMD64..."
 	@mkdir -p build/linux/amd64
 	GOWORK=$$PWD/../go.work.desktop-ce ~/go/bin/wails build -clean -platform linux/amd64 \
 		-tags webkit2_41 -obfuscated -upx -ldflags="-s -w" -o whodb-ce
 	@mv build/bin/whodb-ce build/linux/amd64/
+
+# Production build specifically for Linux ARM64
+build-prod-linux-arm64: prepare
+	@echo "Building WhoDB CE Linux binary for ARM64..."
+	@mkdir -p build/linux/arm64
+	GOWORK=$$PWD/../go.work.desktop-ce ~/go/bin/wails build -clean -platform linux/arm64 \
+		-tags webkit2_41 -obfuscated -upx -ldflags="-s -w" -o whodb-ce
+	@mv build/bin/whodb-ce build/linux/arm64/
 
 # Backup Linux builds (without webkit2_41 tag - for compatibility)
 build-linux-compat: prepare
@@ -270,9 +299,13 @@ help:
 	@echo "  make macstore-mac    - Build package for Mac App Store (requires MAS_* vars)"
 	@echo ""
 	@echo "Production Builds (with installers):"
-	@echo "  make build-prod-windows  - Windows installer"
-	@echo "  make build-prod-mac      - macOS app (.app)"
-	@echo "  make build-prod-linux    - Linux AppImage"
+	@echo "  make build-prod-windows     - Windows installers (both AMD64 & ARM64)"
+	@echo "  make build-prod-windows-amd64 - Windows installer for AMD64 only"
+	@echo "  make build-prod-windows-arm64 - Windows installer for ARM64 only"
+	@echo "  make build-prod-mac         - macOS app (.app) - Universal binary"
+	@echo "  make build-prod-linux       - Linux binary (native architecture)"
+	@echo "  make build-prod-linux-amd64 - Linux binary for AMD64"
+	@echo "  make build-prod-linux-arm64 - Linux binary for ARM64"
 	@echo ""
 	@echo "Utilities:"
 	@echo "  make clean          - Remove build artifacts"
