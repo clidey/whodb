@@ -93,7 +93,7 @@ build-prod-mac: prepare
 	@echo "Building WhoDB CE macOS app (no pkg flag)..."
 	@mkdir -p build/darwin/universal
 	GOWORK=$$PWD/../go.work.desktop-ce ~/go/bin/wails build -clean -platform darwin/universal \
-		-obfuscated -upx -ldflags="-s -w" -o whodb-ce
+		-ldflags="-s -w" -o whodb-ce
 	@mv build/bin/whodb-ce.pkg build/darwin/universal/ 2>/dev/null || mv "build/bin/WhoDB.app" build/darwin/universal/
 	@if [ -f "build/darwin/universal/WhoDB.app/Contents/Info.plist" ]; then \
 		/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $(VERSION)" "build/darwin/universal/WhoDB.app/Contents/Info.plist" || true; \

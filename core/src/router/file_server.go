@@ -28,28 +28,28 @@ import (
 
 func fileServer(r chi.Router, staticFiles embed.FS) {
     // Support assets embedded under different roots (server: "build", desktop: "frontend/dist").
-    // Prefer a root that actually contains index.html.
+    // Prefer a root that actually contains index.html. If not found (e.g., during build-time), proceed without fatal.
     candidates := []string{"build", "frontend/dist", "dist", "."}
     var staticFS fs.FS
     var err error
+    found := false
     for _, base := range candidates {
+        var sub fs.FS
         if base == "." {
-            staticFS = staticFiles
+            sub = staticFiles
         } else {
-            var sub fs.FS
-            sub, err = fs.Sub(staticFiles, base)
-            if err != nil {
+            if sub, err = fs.Sub(staticFiles, base); err != nil {
                 continue
             }
-            staticFS = sub
         }
-        if f, openErr := staticFS.Open("index.html"); openErr == nil {
+        if f, openErr := sub.Open("index.html"); openErr == nil {
             _ = f.Close()
+            staticFS = sub
+            found = true
             break
         }
-        staticFS = nil
     }
-    if staticFS == nil {
+    if !found {
         log.Logger.Fatal("Failed to locate embedded frontend assets (index.html not found in any known root)")
     }
 

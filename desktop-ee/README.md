@@ -212,16 +212,9 @@ The build system uses Go workspace `go.work.desktop-ee` which includes:
    GOWORK=$PWD/../go.work.desktop-ee go mod tidy
    ```
 
-2. **Frontend assets missing:**
-   ```bash
-   cd ../frontend
-   pnpm install
-   pnpm run build:ee
-   ```
-
-3. **Platform-specific issues:**
-    - Run `wails doctor` to check dependencies
-    - Ensure you have the correct platform tools installed
+2. **Platform-specific issues:**
+   - Run `wails doctor` to check dependencies
+   - Ensure you have the correct platform tools installed
 
 ### Development Tips
 
