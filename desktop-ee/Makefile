@@ -1,5 +1,8 @@
 .PHONY: build build-windows build-mac build-linux clean prepare dev
 
+# NOTE: The -obfuscated flag is currently not working as it hangs indefinitely
+# Do not use -obfuscated in any build targets until this is resolved
+
 # Package metadata (override via environment if desired)
 VERSION ?= $(shell date +%Y.%m.%d.%H%M%S)
 PKG_ID ?= com.clidey.whodb.ee
@@ -89,7 +92,7 @@ build-prod-windows-amd64: prepare
 	@echo "Building WhoDB EE Windows installer for AMD64..."
 	@mkdir -p build/windows/amd64
 	GOWORK=$$PWD/../go.work.desktop-ee ~/go/bin/wails build -clean -platform windows/amd64 \
-		-tags ee -nsis -obfuscated -upx -windowsconsole=false -ldflags="-s -w -H windowsgui" \
+		-tags ee -nsis -upx -windowsconsole=false -ldflags="-s -w -H windowsgui" \
 		-o whodb-ee-installer.exe
 	@mv build/bin/whodb-ee-installer.exe build/windows/amd64/
 
@@ -98,7 +101,7 @@ build-prod-windows-arm64: prepare
 	@echo "Building WhoDB EE Windows installer for ARM64..."
 	@mkdir -p build/windows/arm64
 	GOWORK=$$PWD/../go.work.desktop-ee ~/go/bin/wails build -clean -platform windows/arm64 \
-		-tags ee -nsis -obfuscated -upx -windowsconsole=false -ldflags="-s -w -H windowsgui" \
+		-tags ee -nsis -upx -windowsconsole=false -ldflags="-s -w -H windowsgui" \
 		-o whodb-ee-installer.exe
 	@mv build/bin/whodb-ee-installer.exe build/windows/arm64/
 
@@ -233,7 +236,7 @@ build-prod-linux: prepare
 	@echo "Building WhoDB EE Linux binary for native architecture ($$(uname -m))..."
 	@mkdir -p build/linux/$$(uname -m)
 	GOWORK=$$PWD/../go.work.desktop-ee ~/go/bin/wails build -clean \
-		-tags "ee webkit2_41" -obfuscated -upx -ldflags="-s -w" -o whodb-ee
+		-tags "ee webkit2_41" -upx -ldflags="-s -w" -o whodb-ee
 	@mv build/bin/whodb-ee build/linux/$$(uname -m)/
 
 # Production build specifically for Linux AMD64
@@ -241,7 +244,7 @@ build-prod-linux-amd64: prepare
 	@echo "Building WhoDB EE Linux binary for AMD64..."
 	@mkdir -p build/linux/amd64
 	GOWORK=$$PWD/../go.work.desktop-ee ~/go/bin/wails build -clean -platform linux/amd64 \
-		-tags "ee webkit2_41" -obfuscated -upx -ldflags="-s -w" -o whodb-ee
+		-tags "ee webkit2_41" -upx -ldflags="-s -w" -o whodb-ee
 	@mv build/bin/whodb-ee build/linux/amd64/
 
 # Production build specifically for Linux ARM64
@@ -249,7 +252,7 @@ build-prod-linux-arm64: prepare
 	@echo "Building WhoDB EE Linux binary for ARM64..."
 	@mkdir -p build/linux/arm64
 	GOWORK=$$PWD/../go.work.desktop-ee ~/go/bin/wails build -clean -platform linux/arm64 \
-		-tags "ee webkit2_41" -obfuscated -upx -ldflags="-s -w" -o whodb-ee
+		-tags "ee webkit2_41" -upx -ldflags="-s -w" -o whodb-ee
 	@mv build/bin/whodb-ee build/linux/arm64/
 
 # Backup Linux builds (without webkit2_41 tag - for compatibility)
