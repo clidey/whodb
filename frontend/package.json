@@ -101,7 +101,7 @@
     "@vitejs/plugin-react": "^4.7.0",
     "cypress": "^15.1.0",
     "nyc": "^17.1.0",
-    "typescript": "^5.8.3",
+    "typescript": "^5.9.3",
     "vite": "^7.1.6",
     "vite-plugin-istanbul": "^7.1.0"
   },
