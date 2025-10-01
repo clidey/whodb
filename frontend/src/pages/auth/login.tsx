@@ -40,7 +40,42 @@ import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {AdjustmentsHorizontalIcon, CheckCircleIcon, CircleStackIcon} from '../../components/heroicons';
 import logoImage from "../../../public/images/logo.png";
 import { v4 } from 'uuid';
+import { isDesktopApp } from '../../utils/external-links';
 
+/**
+ * Generate a consistent ID for desktop credentials based on connection details.
+ * This ensures the same credentials always produce the same ID, preventing duplicate keyring entries.
+ * For browser environments, returns undefined to rely on cookie-based auth.
+ */
+function generateCredentialId(type: string, hostname: string, username: string, database: string): string | undefined {
+    // Only generate IDs for desktop environments
+    if (!isDesktopApp()) {
+        return undefined;
+    }
+
+    // Create a deterministic ID based on connection details
+    // Using a simple concatenation with separators that won't appear in normal values
+    const parts = [
+        'whodb',
+        type || 'unknown',
+        hostname || 'localhost',
+        username || 'default',
+        database || 'default'
+    ];
+
+    // Create a stable hash-like ID from the parts
+    // We use btoa to create a base64 string that's URL-safe and consistent
+    const combined = parts.join('::');
+    try {
+        // Create a more compact ID by encoding and taking a portion
+        const encoded = btoa(combined).replace(/[+/=]/g, '');
+        // Take first 16 chars for a manageable ID length
+        return encoded.substring(0, 16).toLowerCase();
+    } catch {
+        // Fallback to UUID if encoding fails
+        return v4();
+    }
+}
 
 // Embeddable LoginForm component for use in LoginPage and @sidebar.tsx
 
@@ -99,8 +134,11 @@ export const LoginForm: FC<LoginFormProps> = ({
         }
         setError(undefined);
 
+        // Generate ID only for desktop apps, using consistent ID for same credentials
+        const credentialId = generateCredentialId(databaseType.id, hostName, username, database);
+
         const credentials: LoginCredentials = {
-            Id: v4(),
+            Id: credentialId,
             Type: databaseType.id,
             Hostname: hostName,
             Database: database,
@@ -118,7 +156,10 @@ export const LoginForm: FC<LoginFormProps> = ({
                     const profileData = { ...credentials };
                     shouldUpdateLastAccessed.current = true;
                     dispatch(AuthActions.login(profileData));
-                    try { localStorage.setItem(`whodb:idOnly:${profileData.Id}`, '1'); } catch {}
+                    // Only set idOnly flag if we have an ID (desktop mode)
+                    if (profileData.Id) {
+                        try { localStorage.setItem(`whodb:idOnly:${profileData.Id}`, '1'); } catch {}
+                    }
                     if (onLoginSuccess) {
                         onLoginSuccess();
                     } else {
