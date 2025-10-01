@@ -2,11 +2,7 @@ module github.com/clidey/whodb/desktop-ce
 
 go 1.25.1
 
-require (
-	github.com/clidey/whodb/core v0.0.0
-	github.com/clidey/whodb/desktop-common v0.0.0
-	github.com/wailsapp/wails/v2 v2.10.2
-)
+require github.com/clidey/whodb/desktop-common v0.0.0
 
 require (
 	al.essio.dev/pkg/shellescape v1.5.1 // indirect
@@ -19,6 +15,7 @@ require (
 	github.com/bep/debounce v1.2.1 // indirect
 	github.com/brianvoe/gofakeit/v7 v7.6.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/clidey/whodb/core v0.0.0 // indirect
 	github.com/clidey/whodb/ee v0.0.0-00010101000000-000000000000 // indirect
 	github.com/danieljoos/wincred v1.2.2 // indirect
 	github.com/deckarep/golang-set/v2 v2.8.0 // indirect
@@ -78,6 +75,7 @@ require (
 	github.com/vektah/gqlparser/v2 v2.5.30 // indirect
 	github.com/wailsapp/go-webview2 v1.0.19 // indirect
 	github.com/wailsapp/mimetype v1.4.1 // indirect
+	github.com/wailsapp/wails/v2 v2.10.2 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect

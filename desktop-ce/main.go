@@ -19,16 +19,6 @@ package main
 import (
 	"embed"
 
-	"github.com/wailsapp/wails/v2"
-	"github.com/wailsapp/wails/v2/pkg/options"
-	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
-	"github.com/wailsapp/wails/v2/pkg/options/mac"
-	"github.com/wailsapp/wails/v2/pkg/options/windows"
-
-	"github.com/clidey/whodb/core/src"
-	"github.com/clidey/whodb/core/src/auth"
-	"github.com/clidey/whodb/core/src/log"
-	"github.com/clidey/whodb/core/src/router"
 	"github.com/clidey/whodb/desktop-common"
 )
 
@@ -36,47 +26,5 @@ import (
 var assets embed.FS
 
 func main() {
-	// Initialize WhoDB engine (same as server.go)
-	src.InitializeEngine()
-	log.Logger.Infof("Auth configured: sources=[Authorization header, Cookie]; keyring service=%s", auth.GetKeyringServiceName())
-
-	// Get the Chi router with embedded assets
-	r := router.InitializeRouter(assets)
-
-	// Create an instance of the app structure using common package
-	app := common.NewApp("ce")
-
-	// Create application with options
-	err := wails.Run(&options.App{
-		Title:     "WhoDB",
-		Width:     1400,
-		Height:    900,
-		MinWidth:  1024,
-		MinHeight: 768,
-		AssetServer: &assetserver.Options{
-			Assets:  assets,
-			Handler: r, // Pass entire Chi router - handles GraphQL and all routes
-		},
-		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
-		OnStartup:        app.Startup,
-		OnShutdown:       app.Shutdown,
-		OnDomReady:       app.DomReady,
-		Bind: []any{
-			app,
-		},
-		Windows: &windows.Options{
-			WebviewIsTransparent: false,
-			WindowIsTranslucent:  false,
-			DisableWindowIcon:    false,
-		},
-		Mac: &mac.Options{
-			TitleBar:             mac.TitleBarDefault(),
-			WebviewIsTransparent: false,
-			WindowIsTranslucent:  false,
-		},
-	})
-
-	if err != nil {
-		println("Error:", err.Error())
-	}
+	common.RunApp("ce", "WhoDB", assets)
 }
