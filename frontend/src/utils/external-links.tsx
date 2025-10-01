@@ -25,23 +25,10 @@ export const isDesktopApp = (): boolean => {
     return false;
   }
 
-  // Primary check: Wails runtime is available
-  if ((window as any).go && (window as any).go.main && (window as any).go.main.App) {
-    return true;
-  }
-
-  const protocol = window.location.protocol;
-  const hostname = window.location.hostname;
-
-  // Fallback checks for other indicators
-  return (
-    protocol === 'wails:' ||
-    hostname === 'wails.localhost' ||
-    // Check for the embedded flag that desktop apps might set
-    (window as any).__WAILS__ !== undefined ||
-    // Check if running on a non-standard port (desktop apps often use unique ports)
-    (hostname === 'localhost' && window.location.port !== '' && window.location.port !== '3000')
-  );
+  // For Wails apps, we MUST have the go bindings available
+  // If they're not there, we're not really in a desktop app
+  // even if other indicators suggest we might be
+  return !!(window as any).go?.common?.App;
 };
 
 /**

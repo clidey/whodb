@@ -1,0 +1,13 @@
+github.com/leaanthony/slicer v1.6.0 h1:1RFP5uiPJvT93TAHi+ipd3NACobkW53yUiBqZheE/Js=
+github.com/leaanthony/slicer v1.6.0/go.mod h1:o/Iz29g7LN0GqH3aMjWAe90381nyZlDNquK+mtH2Fj8=
+github.com/leaanthony/u v1.1.1 h1:TUFjwDGlNX+WuwVEzDqQwC2lOv0P4uhTQw7CMFdiK7M=
+github.com/leaanthony/u v1.1.1/go.mod h1:9+o6hejoRljvZ3BzdYlVL0JYCwtnAsVuN9pVTQcaRfI=
+github.com/matryer/is v1.4.0/go.mod h1:8I/i5uYgLzgsgEloJE1U6xx5HkBQpAZvepWuujKwMRU=
+github.com/matryer/is v1.4.1 h1:55ehd8zaGABKLXQUe2awZ99BD/PTc2ls+KV/dXphgEQ=
+github.com/matryer/is v1.4.1/go.mod h1:8I/i5uYgLzgsgEloJE1U6xx5HkBQpAZvepWuujKwMRU=
+github.com/samber/lo v1.49.1 h1:4BIFyVfuQSEpluc7Fua+j1NolZHiEHEpaSEKdsH0tew=
+github.com/samber/lo v1.49.1/go.mod h1:dO6KHFzUKXgP8LDhU0oI8d2hekjXnGOu0DB8Jecxd6o=
+github.com/wailsapp/wails/v2 v2.10.2 h1:29U+c5PI4K4hbx8yFbFvwpCuvqK9VgNv8WGobIlKlXk=
+github.com/wailsapp/wails/v2 v2.10.2/go.mod h1:XuN4IUOPpzBrHUkEd7sCU5ln4T/p1wQedfxP7fKik+4=
+golang.org/x/text v0.29.0 h1:1neNs90w9YzJ9BocxfsQNHKuAT4pkghyXc4nhZ6sJvk=
+golang.org/x/text v0.29.0/go.mod h1:7MhJOA9CD2qZyOKYazxdYMF85OwPdEr9jTtBpO7ydH4=

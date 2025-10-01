@@ -252,6 +252,21 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
     setPendingQuery("");
   }, []);
 
+  // Listen for menu execute query trigger
+  useEffect(() => {
+    const handleExecuteTrigger = () => {
+      // Execute the entire content when triggered from menu
+      if (onRun && value) {
+        handleQueryExecution(value);
+      }
+    };
+
+    window.addEventListener('menu:trigger-execute-query', handleExecuteTrigger);
+    return () => {
+      window.removeEventListener('menu:trigger-execute-query', handleExecuteTrigger);
+    };
+  }, [value, handleQueryExecution, onRun]);
+
   useEffect(() => {
     if (editorRef.current == null) {
         return;

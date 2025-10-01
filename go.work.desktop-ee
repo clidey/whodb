@@ -4,4 +4,5 @@ use (
     ./core
     ./ee
     ./desktop-ee
+    ./desktop-common
 )

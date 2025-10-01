@@ -25,6 +25,7 @@ import {
     SearchSelect,
     Sheet,
     SheetContent,
+    SheetTitle,
     Sidebar as SidebarComponent,
     SidebarContent,
     SidebarGroup,
@@ -37,6 +38,7 @@ import {
     toast,
     useSidebar
 } from "@clidey/ux";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import {
     DatabaseType,
     useGetDatabaseQuery,
@@ -273,6 +275,29 @@ export const Sidebar: FC = () => {
         }
     }, []);
 
+    // Listen for menu event to open add profile form
+    useEffect(() => {
+        const handleOpenAddProfile = () => {
+            // Open the sidebar if it's closed
+            if (!open) {
+                toggleSidebar();
+            }
+            // Open the add profile sheet
+            setShowLoginCard(true);
+        };
+
+        const handleToggleSidebar = () => {
+            toggleSidebar();
+        };
+
+        window.addEventListener('menu:open-add-profile', handleOpenAddProfile);
+        window.addEventListener('menu:toggle-sidebar', handleToggleSidebar);
+        return () => {
+            window.removeEventListener('menu:open-add-profile', handleOpenAddProfile);
+            window.removeEventListener('menu:toggle-sidebar', handleToggleSidebar);
+        };
+    }, [open, toggleSidebar]);
+
     return (
         <div className="dark">
             <SidebarComponent variant="sidebar" collapsible="icon" className="dark:group-data-[side=left]:border-r-neutral-800 z-[50]">
@@ -455,6 +480,9 @@ export const Sidebar: FC = () => {
             </SidebarComponent>
             <Sheet open={showLoginCard} onOpenChange={setShowLoginCard}>
                 <SheetContent side="right" className="p-8">
+                    <VisuallyHidden>
+                        <SheetTitle>Database Login</SheetTitle>
+                    </VisuallyHidden>
                     <LoginForm advancedDirection="vertical" />
                 </SheetContent>
             </Sheet>

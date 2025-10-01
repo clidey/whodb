@@ -4,4 +4,5 @@ use (
     ./core
     ./ee-stub
     ./desktop-ce
+    ./desktop-common
 )

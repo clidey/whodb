@@ -537,6 +537,18 @@ export const StorageUnitTable: FC<TableProps> = ({
         };
     }, []);
 
+    // Listen for menu export trigger
+    useEffect(() => {
+        const handleExportTrigger = () => {
+            setShowExportConfirm(true);
+        };
+
+        window.addEventListener('menu:trigger-export', handleExportTrigger);
+        return () => {
+            window.removeEventListener('menu:trigger-export', handleExportTrigger);
+        };
+    }, []);
+
     // Refresh page when it is resized and it settles
     useEffect(() => {
         let resizeTimeout: ReturnType<typeof setTimeout> | null = null;

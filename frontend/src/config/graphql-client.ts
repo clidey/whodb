@@ -19,6 +19,7 @@ import { setContext } from '@apollo/client/link/context';
 import {onError} from '@apollo/client/link/error';
 import {toast} from '@clidey/ux';
 import {reduxStore} from '../store';
+import { addAuthHeader } from '../utils/auth-headers';
 
 // Always use a relative URI so that:
 // - Desktop/Wails uses the embedded router handler
@@ -32,43 +33,9 @@ const httpLink = createHttpLink({
 
 // Add Authorization header in desktop/webview environments where cookies are not supported.
 const authLink = setContext((_, { headers }) => {
-  try {
-    // Only attach for non-HTTP(s) schemes (e.g., wails://) to minimize exposure
-    const isDesktopScheme = typeof window !== 'undefined' && !['http:', 'https:'].includes(window.location.protocol);
-    if (!isDesktopScheme) {
-      return { headers };
-    }
-    // @ts-ignore
-    const authState = reduxStore.getState().auth;
-    const current = authState?.current;
-    if (!current) {
-      return { headers };
-    }
-    // Prefer sending only Id+Database for saved profiles or after first login when id-only flag set
-    const idOnlyFlag = (() => { try { return current.Id && localStorage.getItem(`whodb:idOnly:${current.Id}`) === '1'; } catch { return false; } })();
-    const tokenPayload = (current.Saved || idOnlyFlag) ? {
-      Id: current.Id,
-      Database: current.Database,
-    } : {
-      Id: current.Id,
-      Type: current.Type,
-      Hostname: current.Hostname,
-      Username: current.Username,
-      Password: current.Password,
-      Database: current.Database,
-      Advanced: current.Advanced || [],
-      IsProfile: !!current.Saved,
-    };
-    const bearer = btoa(unescape(encodeURIComponent(JSON.stringify(tokenPayload))));
-    return {
-      headers: {
-        ...headers,
-        Authorization: `Bearer ${bearer}`,
-      },
-    };
-  } catch {
-    return { headers };
-  }
+  return {
+    headers: addAuthHeader(headers)
+  };
 });
 
 /**
