@@ -112,12 +112,29 @@ run_tests() {
         CYPRESS_CONFIG=""
     fi
     
+    # Detect available browser
+    # Check for chromium first (common on Linux/Mac), then chrome
+    if command -v chromium >/dev/null 2>&1 || command -v chromium-browser >/dev/null 2>&1; then
+        BROWSER="chromium"
+    elif command -v google-chrome >/dev/null 2>&1 || command -v google-chrome-stable >/dev/null 2>&1; then
+        BROWSER="chrome"
+    else
+        # Let Cypress use its default
+        BROWSER=""
+    fi
+
     # Run Cypress
     if [ "$HEADLESS" = "true" ]; then
-        if [ -n "$CYPRESS_CONFIG" ]; then
-            NODE_ENV=test npx cypress run --browser chrome --config "$CYPRESS_CONFIG" || { echo "❌ Cypress tests failed"; return 1; }
+        if [ -n "$BROWSER" ]; then
+            BROWSER_ARG="--browser $BROWSER"
         else
-            NODE_ENV=test npx cypress run --browser chrome || { echo "❌ Cypress tests failed"; return 1; }
+            BROWSER_ARG=""
+        fi
+
+        if [ -n "$CYPRESS_CONFIG" ]; then
+            NODE_ENV=test npx cypress run $BROWSER_ARG --config "$CYPRESS_CONFIG" || { echo "❌ Cypress tests failed"; return 1; }
+        else
+            NODE_ENV=test npx cypress run $BROWSER_ARG || { echo "❌ Cypress tests failed"; return 1; }
         fi
     else
         if [ -n "$CYPRESS_CONFIG" ]; then

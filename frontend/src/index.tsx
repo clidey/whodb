@@ -22,12 +22,13 @@ import { graphqlClient } from './config/graphql-client';
 import { Provider } from "react-redux";
 import { reduxStore, reduxStorePersistor } from './store';
 import { App } from './app';
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter, HashRouter } from "react-router-dom";
 import { PersistGate } from 'redux-persist/integration/react';
 import { PostHogProvider } from 'posthog-js/react';
 import {initPosthog} from "./config/posthog";
 import { ThemeProvider } from '@clidey/ux'
 import { isEEMode } from './config/ee-imports';
+import { isDesktopApp } from './utils/external-links';
 
 if (isEEMode) {
   import("@ee/index.css");
@@ -57,9 +58,13 @@ const AppWithProviders = () => {
   return app;
 };
 
+// Use HashRouter for desktop app (avoids full page reloads)
+// Use BrowserRouter for web version
+const Router = isDesktopApp() ? HashRouter : BrowserRouter;
+
 root.render(
   <React.StrictMode>
-    <BrowserRouter>
+    <Router>
       <ApolloProvider client={graphqlClient}>
         <Provider store={reduxStore}>
           <PersistGate loading={null} persistor={reduxStorePersistor}>
@@ -67,6 +72,6 @@ root.render(
           </PersistGate>
         </Provider>
       </ApolloProvider>
-    </BrowserRouter>
+    </Router>
   </React.StrictMode>
 );

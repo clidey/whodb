@@ -208,7 +208,14 @@ export const useDesktopMenu = () => {
       //   window.dispatchEvent(new CustomEvent('desktop:find'));
       // }),
       'menu:refresh': safeHandler(() => {
-        window.location.reload();
+        // For HashRouter, we should refresh data not reload the page
+        // Emit an event that components can listen to for refreshing their data
+        window.dispatchEvent(new CustomEvent('app:refresh-data'));
+        // Alternatively, if we need to reload the window properly with Wails:
+        // const wailsGo = (window as any).go;
+        // if (wailsGo?.main?.App?.ReloadWindow) {
+        //   wailsGo.main.App.ReloadWindow();
+        // }
       }),
       'menu:toggle-sidebar': safeHandler(() => {
         // Use the proper sidebar toggle mechanism - click the trigger button
