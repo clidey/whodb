@@ -49,15 +49,19 @@ make build            # Build for current platform
 make build-all        # Build for all platforms
 make build-windows    # Windows AMD64 & ARM64
 make build-mac        # macOS Universal Binary
+make build-mac-arm64  # macOS ARM64 only (Apple Silicon)
+make build-mac-amd64  # macOS AMD64 only (Intel)
 make build-linux      # Linux AMD64 & ARM64
 ```
 
 ### Production Builds
 
 ```bash
-make build-prod-windows    # Windows NSIS installer
-make build-prod-mac        # macOS app (.app)
-make build-prod-linux      # Linux binary with UPX compression
+make build-prod-windows     # Windows NSIS installer with UPX
+make build-prod-mac         # macOS Universal Binary
+make build-prod-mac-arm64   # macOS ARM64 only
+make build-prod-mac-amd64   # macOS AMD64 only
+make build-prod-linux       # Linux binary with UPX compression
 ```
 
 ### macOS Packaging & Signing
@@ -107,13 +111,19 @@ Binaries are generated in `build/` organized by platform:
 
 ### Community Edition (desktop-ce)
 - Windows: `build/windows/[arch]/whodb-ce.exe`
-- macOS: `build/darwin/universal/WhoDB.app`
+- macOS Universal: `build/darwin/universal/WhoDB.app`
+- macOS ARM64: `build/darwin/arm64/WhoDB.app`
+- macOS AMD64: `build/darwin/amd64/WhoDB.app`
 - Linux: `build/linux/[arch]/whodb-ce`
 
 ### Enterprise Edition (desktop-ee)
 - Windows: `build/windows/[arch]/whodb-ee.exe`
-- macOS: `build/darwin/universal/WhoDB - Enterprise.app`
+- macOS Universal: `build/darwin/universal/WhoDB - Enterprise.app`
+- macOS ARM64: `build/darwin/arm64/WhoDB - Enterprise.app`
+- macOS AMD64: `build/darwin/amd64/WhoDB - Enterprise.app`
 - Linux: `build/linux/[arch]/whodb-ee`
+
+**Note:** Architecture-specific macOS builds (`arm64`/`amd64`) are optimized single-architecture builds that will be smaller than the universal binary (~50% size reduction) since they only contain code for one architecture.
 
 ## Manual Build (Advanced)
 
