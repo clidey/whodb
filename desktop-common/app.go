@@ -23,6 +23,7 @@ import (
 	"os"
 	"path/filepath"
 	goruntime "runtime"
+	"strings"
 
 	"github.com/wailsapp/wails/v2/pkg/menu"
 	"github.com/wailsapp/wails/v2/pkg/menu/keys"
@@ -184,6 +185,29 @@ func (a *App) SelectSQLiteDatabase() (string, error) {
 	filepath, err := runtime.OpenFileDialog(a.ctx, options)
 	if err != nil {
 		return "", err
+	}
+
+	if filepath == "" {
+		return "", nil
+	}
+
+	// Validate file extension
+	ext := strings.ToLower(filepath)
+	dotIndex := strings.LastIndex(ext, ".")
+	if dotIndex == -1 || dotIndex == len(ext)-1 {
+		return "", fmt.Errorf("invalid file type: only .db, .sqlite, .sqlite3, and .db3 files are allowed")
+	}
+	ext = ext[dotIndex+1:]
+
+	validExtensions := map[string]bool{
+		"db":      true,
+		"sqlite":  true,
+		"sqlite3": true,
+		"db3":     true,
+	}
+
+	if !validExtensions[ext] {
+		return "", fmt.Errorf("invalid file type: only .db, .sqlite, .sqlite3, and .db3 files are allowed")
 	}
 
 	return filepath, nil
