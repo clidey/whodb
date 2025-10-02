@@ -76,7 +76,7 @@ func (p *Sqlite3Plugin) FormTableName(schema string, storageUnit string) string 
 
 func (p *Sqlite3Plugin) GetDatabases(config *engine.PluginConfig) ([]string, error) {
 	// In desktop mode, return empty list - users will browse for files
-	if env.IsDesktopMode {
+	if env.GetIsDesktopMode() {
 		return []string{}, nil
 	}
 

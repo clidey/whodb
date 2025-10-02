@@ -41,6 +41,7 @@ import {AdjustmentsHorizontalIcon, CheckCircleIcon, CircleStackIcon} from '../..
 import logoImage from "../../../public/images/logo.png";
 import { v4 } from 'uuid';
 import { isDesktopApp } from '../../utils/external-links';
+import { useDesktopFile } from '../../hooks/useDesktop';
 
 /**
  * Generate a consistent ID for desktop credentials based on connection details.
@@ -121,6 +122,8 @@ export const LoginForm: FC<LoginFormProps> = ({
     );
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [selectedAvailableProfile, setSelectedAvailableProfile] = useState<string>();
+
+    const { isDesktop, selectSQLiteDatabase } = useDesktopFile();
 
     const loading = useMemo(() => {
         return loginLoading || loginWithProfileLoading;
@@ -247,6 +250,18 @@ export const LoginForm: FC<LoginFormProps> = ({
         setSelectedAvailableProfile(itemId);
     }, []);
 
+    const handleBrowseSQLiteFile = useCallback(async () => {
+        try {
+            const filePath = await selectSQLiteDatabase();
+            if (filePath) {
+                setDatabase(filePath);
+            }
+        } catch (error) {
+            console.error('Failed to select SQLite database:', error);
+            toast.error('Failed to select database file');
+        }
+    }, [selectSQLiteDatabase]);
+
     useEffect(() => {
         dispatch(DatabaseActions.setSchema(""));
     }, [dispatch]);
@@ -365,24 +380,42 @@ export const LoginForm: FC<LoginFormProps> = ({
             return <div className="flex flex-col gap-lg w-full">
                 <div className="flex flex-col gap-xs w-full">
                     <Label>Database</Label>
-                    <SearchSelect
-                        value={database}
-                        onChange={setDatabase}
-                        disabled={databasesLoading}
-                        options={
-                            databasesLoading
-                                ? []
-                                : foundDatabases?.Database?.map(db => ({
-                                value: db,
-                                label: db,
-                                icon: <CircleStackIcon className="w-4 h-4"/>,
-                            })) ?? []
-                        }
-                        placeholder="Select Database"
-                        buttonProps={{
-                            "data-testid": "database",
-                        }}
-                    />
+                    {isDesktop ? (
+                        <div className="flex flex-col gap-sm w-full">
+                            <Input
+                                value={database}
+                                onChange={(e) => setDatabase(e.target.value)}
+                                placeholder="Select or enter database file path"
+                                data-testid="database"
+                            />
+                            <Button
+                                onClick={handleBrowseSQLiteFile}
+                                variant="outline"
+                                className="w-full"
+                            >
+                                Browse for SQLite File
+                            </Button>
+                        </div>
+                    ) : (
+                        <SearchSelect
+                            value={database}
+                            onChange={setDatabase}
+                            disabled={databasesLoading}
+                            options={
+                                databasesLoading
+                                    ? []
+                                    : foundDatabases?.Database?.map(db => ({
+                                    value: db,
+                                    label: db,
+                                    icon: <CircleStackIcon className="w-4 h-4"/>,
+                                })) ?? []
+                            }
+                            placeholder="Select Database"
+                            buttonProps={{
+                                "data-testid": "database",
+                            }}
+                        />
+                    )}
                 </div>
             </div>
         }
@@ -412,7 +445,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 </div>
             )}
         </div>
-    }, [database, databaseType.id, databaseType.fields, databasesLoading, foundDatabases?.Database, handleHostNameChange, hostName, password, username]);
+    }, [database, databaseType.id, databaseType.fields, databasesLoading, foundDatabases?.Database, handleHostNameChange, hostName, password, username, isDesktop, handleBrowseSQLiteFile]);
 
     const loginWithCredentialsEnabled = useMemo(() => {
         if (databaseType.id === DatabaseType.Sqlite3) {
