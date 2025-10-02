@@ -30,6 +30,7 @@ export const SettingsPage: FC = () => {
     const borderRadius = useAppSelector(state => state.settings.borderRadius);
     const spacing = useAppSelector(state => state.settings.spacing);
     const whereConditionMode = useAppSelector(state => state.settings.whereConditionMode);
+    const voiceRecognitionLanguage = useAppSelector(state => state.settings.voiceRecognitionLanguage);
 
     const handleMetricsToggle = useCallback((enabled: boolean) => {
         dispatch(SettingsActions.setMetricsEnabled(enabled));
@@ -53,6 +54,10 @@ export const SettingsPage: FC = () => {
 
     const handleWhereConditionModeChange = useCallback((mode: 'popover' | 'sheet') => {
         dispatch(SettingsActions.setWhereConditionMode(mode));
+    }, [dispatch]);
+
+    const handleVoiceRecognitionLanguageChange = useCallback((language: string) => {
+        dispatch(SettingsActions.setVoiceRecognitionLanguage(language));
     }, [dispatch]);
 
 
@@ -173,6 +178,42 @@ export const SettingsPage: FC = () => {
                                 <SelectContent>
                                     <SelectItem value="popover">Popover</SelectItem>
                                     <SelectItem value="sheet">Sheet</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <Separator className="mt-4" />
+                        <div className="flex flex-col gap-sm mb-2">
+                            <p className="text-lg font-bold">
+                                Voice Recognition
+                            </p>
+                            <p className="text-base">
+                                Configure voice input settings for Houdini chat
+                            </p>
+                        </div>
+                        <div className="flex justify-between">
+                            <Label>Voice Recognition Language</Label>
+                            <Select value={voiceRecognitionLanguage} onValueChange={handleVoiceRecognitionLanguageChange}>
+                                <SelectTrigger id="voice-recognition-language" className="w-[135px]">
+                                    <SelectValue placeholder="Select language" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="en-US">English (US)</SelectItem>
+                                    <SelectItem value="en-GB">English (UK)</SelectItem>
+                                    <SelectItem value="es-ES">Spanish</SelectItem>
+                                    <SelectItem value="fr-FR">French</SelectItem>
+                                    <SelectItem value="de-DE">German</SelectItem>
+                                    <SelectItem value="it-IT">Italian</SelectItem>
+                                    <SelectItem value="pt-BR">Portuguese</SelectItem>
+                                    <SelectItem value="ru-RU">Russian</SelectItem>
+                                    <SelectItem value="ja-JP">Japanese</SelectItem>
+                                    <SelectItem value="ko-KR">Korean</SelectItem>
+                                    <SelectItem value="zh-CN">Chinese (Simplified)</SelectItem>
+                                    <SelectItem value="zh-TW">Chinese (Traditional)</SelectItem>
+                                    <SelectItem value="ar-SA">Arabic</SelectItem>
+                                    <SelectItem value="hi-IN">Hindi</SelectItem>
+                                    <SelectItem value="nl-NL">Dutch</SelectItem>
+                                    <SelectItem value="pl-PL">Polish</SelectItem>
+                                    <SelectItem value="tr-TR">Turkish</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

@@ -63,6 +63,7 @@ import {
   LockClosedIcon as LockClosedIconCE,
   ListBulletIcon as ListBulletIconCE,
   MagnifyingGlassIcon as MagnifyingGlassIconCE,
+  MicrophoneIcon as MicrophoneIconCE,
   PencilIcon as PencilIconCE,
   PencilSquareIcon as PencilSquareIconCE,
   PlayIcon as PlayIconCE,
@@ -135,6 +136,7 @@ export const LinkIcon = EEOverrides.LinkIcon ?? LinkIconCE;
 export const LockClosedIcon = EEOverrides.LockClosedIcon ?? LockClosedIconCE;
 export const ListBulletIcon = EEOverrides.ListBulletIcon ?? ListBulletIconCE;
 export const MagnifyingGlassIcon = EEOverrides.MagnifyingGlassIcon ?? MagnifyingGlassIconCE;
+export const MicrophoneIcon = EEOverrides.MicrophoneIcon ?? MicrophoneIconCE;
 export const PencilIcon = EEOverrides.PencilIcon ?? PencilIconCE;
 export const PencilSquareIcon = EEOverrides.PencilSquareIcon ?? PencilSquareIconCE;
 export const PlayIcon = EEOverrides.PlayIcon ?? PlayIconCE;

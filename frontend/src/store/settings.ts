@@ -25,6 +25,8 @@ type ISettingsState = {
     spacing: 'compact' | 'comfortable' | 'spacious';
     // Where condition mode
     whereConditionMode: 'popover' | 'sheet';
+    // Voice recognition language
+    voiceRecognitionLanguage: string;
 }
 
 const initialState: ISettingsState = {
@@ -36,6 +38,8 @@ const initialState: ISettingsState = {
     spacing: 'comfortable',
     // Where condition mode default
     whereConditionMode: 'popover',
+    // Voice recognition default to English
+    voiceRecognitionLanguage: 'en-US',
 }
 
 export const settingsSlice = createSlice({
@@ -60,6 +64,9 @@ export const settingsSlice = createSlice({
         },
         setWhereConditionMode: (state, action: PayloadAction<ISettingsState["whereConditionMode"]>) => {
             state.whereConditionMode = action.payload;
+        },
+        setVoiceRecognitionLanguage: (state, action: PayloadAction<ISettingsState["voiceRecognitionLanguage"]>) => {
+            state.voiceRecognitionLanguage = action.payload;
         },
     },
 });

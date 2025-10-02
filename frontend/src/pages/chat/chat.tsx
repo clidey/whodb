@@ -23,10 +23,11 @@ import {
     CodeBracketIcon,
     SparklesIcon,
     TableCellsIcon,
-    CommandLineIcon
+    CommandLineIcon,
+    MicrophoneIcon
 } from "../../components/heroicons";
 import classNames from "classnames";
-import { cloneElement, FC, KeyboardEventHandler, useCallback, useMemo, useRef, useState } from "react";
+import { cloneElement, FC, KeyboardEventHandler, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import logoImage from "../../../public/images/logo.png";
 import { AIProvider, useAI } from "../../components/ai";
 import { CodeEditor } from "../../components/editor";
@@ -44,6 +45,7 @@ import { chooseRandomItems } from "../../utils/functions";
 import { databaseSupportsScratchpad } from "../../utils/database-features";
 import { useNavigate } from "react-router-dom";
 import { chatExamples } from "./examples";
+import { useVoiceInput } from "../../hooks/useVoiceInput";
 
 // Lazy load chart components if EE is enabled
 const LineChart = isEEFeatureEnabled('dataVisualization') ? loadEEComponent(
@@ -268,8 +270,23 @@ export const ChatPage: FC = () => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const schema = useAppSelector(state => state.database.schema);
     const [currentSearchIndex, setCurrentSearchIndex] = useState<number>();
+    const voiceRecognitionLanguage = useAppSelector(state => state.settings.voiceRecognitionLanguage);
 
     const dispatch = useAppDispatch();
+
+    const { isSupported: isVoiceSupported, isListening, transcript, error: voiceError, startListening, stopListening } = useVoiceInput(voiceRecognitionLanguage);
+
+    useEffect(() => {
+        if (transcript) {
+            setQuery(prev => prev + transcript);
+        }
+    }, [transcript]);
+
+    useEffect(() => {
+        if (voiceError) {
+            toast.error(`Voice recognition error: ${voiceError}`);
+        }
+    }, [voiceError]);
 
     const aiState = useAI();
     const { modelType, currentModel, modelAvailable, models } = aiState;
@@ -385,6 +402,14 @@ export const ChatPage: FC = () => {
         dispatch(HoudiniActions.clear());
     }, [dispatch]);
 
+    const handleVoiceToggle = useCallback(() => {
+        if (isListening) {
+            stopListening();
+        } else {
+            startListening();
+        }
+    }, [isListening, startListening, stopListening]);
+
     const disableAll = useMemo(() => {
         return models.length === 0 || !modelAvailable;
     }, [modelAvailable, models.length]);
@@ -485,6 +510,21 @@ export const ChatPage: FC = () => {
                         disabled={disableAll}
                         onKeyUp={handleKeyUp}
                     />
+                    {isVoiceSupported && (
+                        <Button
+                            tabIndex={0}
+                            onClick={handleVoiceToggle}
+                            className={cn("rounded-full", {
+                                "opacity-50": loading,
+                                "bg-red-500 hover:bg-red-600": isListening,
+                            })}
+                            disabled={disableAll}
+                            variant={isListening ? undefined : "outline"}
+                            title={isListening ? "Stop recording" : "Start voice input"}
+                        >
+                            <MicrophoneIcon className="w-6 h-6" />
+                        </Button>
+                    )}
                     <Button tabIndex={0} onClick={loading ? undefined : handleSubmitQuery} className={cn("rounded-full", {
                         "opacity-50": loading,
                     })} disabled={disableChat} variant={disableChat ? "secondary" : undefined}>
