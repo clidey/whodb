@@ -26,19 +26,25 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 echo "📁 Working from project root: $PROJECT_ROOT"
 
-# Cleanup SQLite and tmp directory
+# Cleanup SQLite and tmp directory (but preserve hash file for caching)
 echo "🧹 Cleaning up tmp directory..."
 if [ -d "$PROJECT_ROOT/core/tmp" ]; then
-    rm -rf "$PROJECT_ROOT/core/tmp"
-    echo "✅ tmp directory cleaned up"
+    # Clean specific files but preserve the hash file
+    rm -f "$PROJECT_ROOT/core/tmp/e2e_test.db"
+    rm -f "$PROJECT_ROOT/core/tmp/test-server.pid"
+    # Only delete other files, keep .test-binary-hash
+    find "$PROJECT_ROOT/core/tmp" -type f ! -name '.test-binary-hash' -delete 2>/dev/null || true
+    echo "✅ tmp directory cleaned (preserved hash cache)"
 else
     echo "ℹ️ No tmp directory to clean up"
 fi
 
-# Clean up test binary
+# Keep test binary for caching (comment out deletion)
+# The binary will be rebuilt only when source changes are detected
 if [ -f "$PROJECT_ROOT/core/server.test" ]; then
-    rm "$PROJECT_ROOT/core/server.test"
-    echo "✅ Test binary cleaned up"
+    echo "ℹ️  Test binary preserved for caching: server.test"
+    echo "   Size: $(du -h "$PROJECT_ROOT/core/server.test" | cut -f1)"
+    echo "   To force rebuild, delete: rm $PROJECT_ROOT/core/server.test"
 fi
 
 # Coverage is already written by the test server to coverage.out
@@ -69,6 +75,11 @@ fi
 # Stop and remove CE Docker services
 echo "🐳 Stopping CE database services..."
 cd "$SCRIPT_DIR"
+
+# First, force remove all containers (even if they're not running)
+docker-compose -f docker-compose.e2e.yaml rm -f -s -v 2>/dev/null || true
+
+# Then do a full teardown with volumes
 # Use --volumes to ensure volumes are removed, and --remove-orphans for cleanup
 # The --timeout 0 forces immediate stop without graceful shutdown
 docker-compose -f docker-compose.e2e.yaml down --volumes --remove-orphans --timeout 0

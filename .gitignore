@@ -12,6 +12,7 @@ ee/frontend/node_modules/
 worktree/
 frontend/cypress/screenshots/
 frontend/cypress/downloads/
+frontend/cypress/logs/
 .gemini/
 gha-creds-*.json
 cypress-results/

@@ -97,6 +97,9 @@ export const Export: FC<IExportProps> = ({
         <>
             <Sheet open={open} onOpenChange={onOpenChange}>
                 <SheetContent side="right" className="max-w-md w-full p-8">
+                    <div className="mb-6">
+                        <h2 className="text-foreground font-semibold text-lg">Export Data</h2>
+                    </div>
                     <VisuallyHidden>
                         <SheetTitle>Export Data</SheetTitle>
                     </VisuallyHidden>

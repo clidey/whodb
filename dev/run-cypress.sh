@@ -42,7 +42,7 @@ cleanup() {
     sleep 1
     
     # Run cleanup script with edition parameter (ee-only uses ee cleanup)
-    echo "   Running cleanup script..."
+    echo "   Running cleanup script (preserving test binary cache)..."
     if [ "$EDITION" = "ee-only" ]; then
         bash "$SCRIPT_DIR/cleanup-e2e.sh" "ee"
     else
@@ -67,23 +67,26 @@ run_tests() {
     echo "🚀 Setting up $EDITION test environment..."
     bash "$SCRIPT_DIR/setup-e2e.sh" "$EDITION" || { echo "❌ Backend setup failed"; return 1; }
 
-    # Start frontend with appropriate edition
+    # Start frontend with appropriate edition and optimizations
     echo "🚀 Starting frontend ($EDITION mode)..."
     cd "$PROJECT_ROOT/frontend"
-    
+
+    # Vite optimizations for faster startup
+    VITE_FLAGS="--port 3000 --clearScreen false --logLevel warn"
+
     if [ "$EDITION" = "ee" ] || [ "$EDITION" = "ee-only" ]; then
-        VITE_BUILD_EDITION=ee NODE_ENV=test vite --port 3000 &
+        VITE_BUILD_EDITION=ee NODE_ENV=test vite $VITE_FLAGS &
     else
-        NODE_ENV=test vite --port 3000 &
+        NODE_ENV=test vite $VITE_FLAGS &
     fi
     FRONTEND_PID=$!
 
     # Wait for services
     echo "⏳ Waiting for services..."
     if [ "$EDITION" = "ee" ] || [ "$EDITION" = "ee-only" ]; then
-        MAX_WAIT=180 bash "$SCRIPT_DIR/wait-for-services.sh" || { echo "❌ Services failed to start"; return 1; }
+        MAX_WAIT=90 bash "$SCRIPT_DIR/wait-for-services.sh" || { echo "❌ Services failed to start"; return 1; }
     else
-        MAX_WAIT=150 bash "$SCRIPT_DIR/wait-for-services.sh" || { echo "❌ Services failed to start"; return 1; }
+        MAX_WAIT=60 bash "$SCRIPT_DIR/wait-for-services.sh" || { echo "❌ Services failed to start"; return 1; }
     fi
 
     # Configure Cypress based on edition

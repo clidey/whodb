@@ -31,7 +31,7 @@ services:
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: jio53$*(@nfe)
-      PGDATA: /var/lib/postgresql/data
+      PGDATA: /data/postgres
       POSTGRES_DB: test_db
     volumes:
       - e2e_postgres:/data/postgres
@@ -117,7 +117,7 @@ services:
 
   clickhouse-init:
     image: clickhouse/clickhouse-client
-    depends_on: 
+    depends_on:
       - e2e_clickhouse
     entrypoint: >
       sh -c "
