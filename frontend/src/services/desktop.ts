@@ -24,8 +24,6 @@ declare global {
         App: {
           SaveFile: (data: string, defaultName: string) => Promise<string>;
           SaveBinaryFile: (data: number[], defaultName: string) => Promise<string>;
-          OpenFile: () => Promise<{ filepath: string; content: string; type: string; action: string }>;
-          OpenFiles: () => Promise<Array<{ path: string; content: string; name: string }>>;
           SelectDirectory: () => Promise<string>;
           CopyToClipboard: (text: string) => Promise<void>;
           GetFromClipboard: () => Promise<string>;
@@ -47,19 +45,6 @@ declare global {
 }
 
 const isDesktop = isDesktopApp();
-
-// Debug Wails bindings availability
-if (typeof window !== 'undefined') {
-  console.log('Desktop service initialization:', {
-    protocol: window.location.protocol,
-    isDesktop,
-    hasWindow: typeof window !== 'undefined',
-    hasGo: typeof window.go !== 'undefined',
-    hasMain: typeof window.go?.common !== 'undefined',
-    hasApp: typeof window.go?.common?.App !== 'undefined',
-    availableMethods: window.go?.common?.App ? Object.keys(window.go.common.App) : []
-  });
-}
 
 // File Operations - Desktop only, no browser fallbacks needed
 export async function saveFile(data: string, defaultName: string): Promise<string | null> {
@@ -84,12 +69,7 @@ export async function saveBinaryFile(data: Uint8Array, defaultName: string): Pro
   }
 
   if (!window.go?.common?.App?.SaveBinaryFile) {
-    console.error('Save binary file: Wails binding not available', {
-      go: !!window.go,
-      main: !!window.go?.common,
-      App: !!window.go?.common?.App,
-      SaveBinaryFile: !!window.go?.common?.App?.SaveBinaryFile
-    });
+    console.error('Save binary file: Wails binding not available');
     return null;
   }
 
@@ -97,14 +77,7 @@ export async function saveBinaryFile(data: Uint8Array, defaultName: string): Pro
     // Convert Uint8Array to regular array for Wails
     // Wails doesn't handle typed arrays properly in JSON serialization
     const dataArray = Array.from(data);
-
-    console.log('Save binary file: Calling Wails SaveBinaryFile', {
-      dataType: 'Array',
-      dataLength: dataArray.length,
-      defaultName
-    });
     const filepath = await window.go.common.App.SaveBinaryFile(dataArray as any, defaultName);
-    console.log('Save binary file: Wails returned', filepath);
     return filepath || null;
   } catch (error) {
     console.error('Failed to save binary file:', error);
@@ -112,35 +85,6 @@ export async function saveBinaryFile(data: Uint8Array, defaultName: string): Pro
   }
 }
 
-export async function openFile(): Promise<{ filepath: string; content: string; type: string; action: string } | null> {
-  if (!isDesktop || !window.go?.common?.App?.OpenFile) {
-    console.warn('Open file not available in browser mode');
-    return null;
-  }
-
-  try {
-    const result = await window.go.common.App.OpenFile();
-    return result || null;
-  } catch (error) {
-    console.error('Failed to open file:', error);
-    return null;
-  }
-}
-
-export async function openFiles(): Promise<Array<{ path: string; content: string; name: string }> | null> {
-  if (!isDesktop || !window.go?.common?.App?.OpenFiles) {
-    console.warn('Open files not available in browser mode');
-    return null;
-  }
-
-  try {
-    const files = await window.go.common.App.OpenFiles();
-    return files || null;
-  } catch (error) {
-    console.error('Failed to open files:', error);
-    return null;
-  }
-}
 
 export async function selectDirectory(): Promise<string | null> {
   if (!isDesktop || !window.go?.common?.App?.SelectDirectory) {

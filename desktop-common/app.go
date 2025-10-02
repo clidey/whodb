@@ -23,11 +23,16 @@ import (
 	"os"
 	"path/filepath"
 	goruntime "runtime"
-	"strings"
 
 	"github.com/wailsapp/wails/v2/pkg/menu"
 	"github.com/wailsapp/wails/v2/pkg/menu/keys"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+)
+
+const (
+	// File permissions
+	filePermissionUserRW  = 0644 // User read/write, group/others read
+	dirPermissionUserRWX  = 0755 // User read/write/execute, group/others read/execute
 )
 
 // App struct
@@ -118,7 +123,7 @@ func (a *App) SaveFile(data string, defaultName string) (string, error) {
 	}
 
 	// Write the data to file
-	err = os.WriteFile(filepath, []byte(data), 0644)
+	err = os.WriteFile(filepath, []byte(data), filePermissionUserRW)
 	if err != nil {
 		return "", err
 	}
@@ -142,7 +147,7 @@ func (a *App) SaveBinaryFile(data []byte, defaultName string) (string, error) {
 		return "", nil // User cancelled
 	}
 
-	err = os.WriteFile(filepath, data, 0644)
+	err = os.WriteFile(filepath, data, filePermissionUserRW)
 	if err != nil {
 		return "", err
 	}
@@ -150,114 +155,6 @@ func (a *App) SaveBinaryFile(data []byte, defaultName string) (string, error) {
 	return filepath, nil
 }
 
-// OpenFile shows native open dialog and returns file content with smart routing
-func (a *App) OpenFile() (map[string]interface{}, error) {
-	options := runtime.OpenDialogOptions{
-		Title: "Open File",
-		Filters: []runtime.FileFilter{
-			{
-				DisplayName: "Database Files (*.db,*.sqlite,*.sqlite3)",
-				Pattern:     "*.db;*.sqlite;*.sqlite3",
-			},
-			{
-				DisplayName: "SQL Files (*.sql)",
-				Pattern:     "*.sql",
-			},
-			{
-				DisplayName: "CSV Files (*.csv)",
-				Pattern:     "*.csv",
-			},
-			{
-				DisplayName: "JSON Files (*.json)",
-				Pattern:     "*.json",
-			},
-			{
-				DisplayName: "All Files (*.*)",
-				Pattern:     "*.*",
-			},
-		},
-	}
-
-	filepath, err := runtime.OpenFileDialog(a.ctx, options)
-	if err != nil {
-		return nil, err
-	}
-
-	if filepath == "" {
-		return nil, nil // User cancelled
-	}
-
-	// Read the file content
-	content, err := os.ReadFile(filepath)
-	if err != nil {
-		return nil, err
-	}
-
-	// Determine file type and action
-	ext := strings.ToLower(filepath[strings.LastIndex(filepath, ".")+1:])
-	result := map[string]interface{}{
-		"filepath": filepath,
-		"content":  string(content),
-		"type":     ext,
-	}
-
-	// Add routing hint based on file type
-	switch ext {
-	case "db", "sqlite", "sqlite3":
-		result["action"] = "open-database"
-	case "sql":
-		result["action"] = "open-sql"
-	case "csv":
-		result["action"] = "import-csv"
-	case "json":
-		result["action"] = "import-json"
-	default:
-		result["action"] = "unknown"
-	}
-
-	return result, nil
-}
-
-// OpenFiles shows native dialog for multiple file selection
-func (a *App) OpenFiles() ([]map[string]string, error) {
-	options := runtime.OpenDialogOptions{
-		Title: "Open Files",
-		Filters: []runtime.FileFilter{
-			{
-				DisplayName: "SQL Files (*.sql)",
-				Pattern:     "*.sql",
-			},
-			{
-				DisplayName: "CSV Files (*.csv)",
-				Pattern:     "*.csv",
-			},
-			{
-				DisplayName: "All Files (*.*)",
-				Pattern:     "*.*",
-			},
-		},
-	}
-
-	filepaths, err := runtime.OpenMultipleFilesDialog(a.ctx, options)
-	if err != nil {
-		return nil, err
-	}
-
-	var files []map[string]string
-	for _, filepath := range filepaths {
-		content, err := os.ReadFile(filepath)
-		if err != nil {
-			continue
-		}
-		files = append(files, map[string]string{
-			"path":    filepath,
-			"content": string(content),
-			"name":    filepath,
-		})
-	}
-
-	return files, nil
-}
 
 // SelectDirectory shows native directory selection dialog
 func (a *App) SelectDirectory() (string, error) {
@@ -309,7 +206,7 @@ func (a *App) SaveWindowState() error {
 		return err
 	}
 
-	return os.WriteFile(settingsPath, data, 0644)
+	return os.WriteFile(settingsPath, data, filePermissionUserRW)
 }
 
 // RestoreWindowState restores window position, size, and zoom
@@ -379,13 +276,17 @@ Documentation: https://whodb.com/docs`,
 
 // getSettingsPath returns the path to store window settings
 func (a *App) getSettingsPath() string {
-	homeDir, _ := os.UserHomeDir()
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		// Fallback to temp directory if home directory cannot be determined
+		homeDir = os.TempDir()
+	}
 	suffix := ""
 	if a.edition == "ee" {
 		suffix = "-ee"
 	}
 	configDir := filepath.Join(homeDir, ".whodb"+suffix)
-	os.MkdirAll(configDir, 0755)
+	os.MkdirAll(configDir, dirPermissionUserRWX)
 	return filepath.Join(configDir, "window-settings.json")
 }
 

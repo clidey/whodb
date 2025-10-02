@@ -156,10 +156,6 @@ export const LoginForm: FC<LoginFormProps> = ({
                     const profileData = { ...credentials };
                     shouldUpdateLastAccessed.current = true;
                     dispatch(AuthActions.login(profileData));
-                    // Only set idOnly flag if we have an ID (desktop mode)
-                    if (profileData.Id) {
-                        try { localStorage.setItem(`whodb:idOnly:${profileData.Id}`, '1'); } catch {}
-                    }
                     if (onLoginSuccess) {
                         onLoginSuccess();
                     } else {
@@ -204,7 +200,6 @@ export const LoginForm: FC<LoginFormProps> = ({
                         Saved: true,
                         IsEnvironmentDefined: profile?.IsEnvironmentDefined ?? false,
                     }));
-                    try { localStorage.setItem(`whodb:idOnly:${profileId}`, '1'); } catch {}
                     if (onLoginSuccess) {
                         onLoginSuccess();
                     } else {

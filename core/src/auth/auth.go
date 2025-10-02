@@ -145,14 +145,16 @@ func AuthMiddleware(next http.Handler) http.Handler {
     }
 
         inline := true
-        if credentials.Id != nil {
+        isIdOnly := credentials.Id != nil && credentials.Type == "" && credentials.Hostname == ""
+
+        if credentials.Id != nil && isIdOnly {
+            // Client sent only ID - must match a saved profile or keyring entry
             matched := false
             profiles := src.GetLoginProfiles()
             for i, loginProfile := range profiles {
                 profileId := src.GetLoginProfileId(i, loginProfile)
                 if *credentials.Id == profileId {
                     profile := *src.GetLoginCredentials(loginProfile)
-                    // Preserve the original profile Id so Logout can clear keyring
                     profile.Id = credentials.Id
                     if credentials.Database != "" {
                         profile.Database = credentials.Database
@@ -169,14 +171,22 @@ func AuthMiddleware(next http.Handler) http.Handler {
                     if credentials.Database != "" {
                         stored.Database = credentials.Database
                     }
-                    // ensure Id is set on the loaded creds
                     stored.Id = credentials.Id
                     credentials = stored
                     inline = false
                     onceKeyring.Do(func() { log.Logger.Info("Auth: credentials resolved via OS keyring") })
+                } else {
+                    // ID-only request but no stored credentials found
+                    http.Error(w, "Unauthorized", http.StatusUnauthorized)
+                    return
                 }
             }
+        } else if credentials.Id != nil && !isIdOnly {
+            // Client sent full credentials with ID - validate or store for future use
+            // This is the initial login case for desktop apps
+            onceInline.Do(func() { log.Logger.Info("Auth: credentials supplied inline with ID") })
         }
+
         if inline {
             onceInline.Do(func() { log.Logger.Info("Auth: credentials supplied inline") })
         }

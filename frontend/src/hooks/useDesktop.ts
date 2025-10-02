@@ -33,14 +33,6 @@ export const useDesktopFile = () => {
     return await desktopService.saveBinaryFile(data, defaultName);
   }, []);
 
-  const openFile = useCallback(async () => {
-    return await desktopService.openFile();
-  }, []);
-
-  const openFiles = useCallback(async () => {
-    return await desktopService.openFiles();
-  }, []);
-
   const selectDirectory = useCallback(async () => {
     return await desktopService.selectDirectory();
   }, []);
@@ -49,8 +41,6 @@ export const useDesktopFile = () => {
     isDesktop,
     saveFile,
     saveBinaryFile,
-    openFile,
-    openFiles,
     selectDirectory,
   };
 };

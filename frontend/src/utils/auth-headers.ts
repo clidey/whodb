@@ -45,16 +45,9 @@ export function getAuthorizationHeader(): string | null {
       return null;
     }
 
-    // Prefer sending only Id+Database for saved profiles or after first login when id-only flag set
-    const idOnlyFlag = (() => {
-      try {
-        return current.Id && localStorage.getItem(`whodb:idOnly:${current.Id}`) === '1';
-      } catch {
-        return false;
-      }
-    })();
-
-    const tokenPayload = (current.Saved || idOnlyFlag) ? {
+    // For saved profiles, send only Id+Database (credentials stored server-side)
+    // For inline credentials, always send full credentials for validation
+    const tokenPayload = current.Saved ? {
       Id: current.Id,
       Database: current.Database,
     } : {
@@ -65,7 +58,7 @@ export function getAuthorizationHeader(): string | null {
       Password: current.Password,
       Database: current.Database,
       Advanced: current.Advanced || [],
-      IsProfile: !!current.Saved,
+      IsProfile: false,
     };
 
     // Convert to base64 - handling Unicode properly

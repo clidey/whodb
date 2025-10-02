@@ -85,14 +85,38 @@ func (p *ElasticSearchPlugin) GetStorageUnits(config *engine.PluginConfig, datab
 		return nil, err
 	}
 
-	indicesStats := stats["indices"].(map[string]any)
+	indicesStats, ok := stats["indices"].(map[string]any)
+	if !ok {
+		log.Logger.Error("Unexpected indices stats format from ElasticSearch")
+		return nil, fmt.Errorf("unexpected indices stats format")
+	}
+
 	storageUnits := make([]engine.StorageUnit, 0, len(indicesStats))
 
 	for indexName, indexStatsInterface := range indicesStats {
-		indexStats := indexStatsInterface.(map[string]any)
-		primaries := indexStats["primaries"].(map[string]any)
-		docs := primaries["docs"].(map[string]any)
-		store := primaries["store"].(map[string]any)
+		indexStats, ok := indexStatsInterface.(map[string]any)
+		if !ok {
+			log.Logger.Warnf("Skipping index %s: unexpected stats format", indexName)
+			continue
+		}
+
+		primaries, ok := indexStats["primaries"].(map[string]any)
+		if !ok {
+			log.Logger.Warnf("Skipping index %s: missing primaries data", indexName)
+			continue
+		}
+
+		docs, ok := primaries["docs"].(map[string]any)
+		if !ok {
+			log.Logger.Warnf("Skipping index %s: missing docs data", indexName)
+			continue
+		}
+
+		store, ok := primaries["store"].(map[string]any)
+		if !ok {
+			log.Logger.Warnf("Skipping index %s: missing store data", indexName)
+			continue
+		}
 
 		storageUnit := engine.StorageUnit{
 			Name: indexName,
