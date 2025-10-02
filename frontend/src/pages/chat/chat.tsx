@@ -521,8 +521,10 @@ export const ChatPage: FC = () => {
                             disabled={disableAll}
                             variant={isListening ? undefined : "outline"}
                             title={isListening ? "Stop recording" : "Start voice input"}
+                            aria-label={isListening ? "Stop voice recording" : "Start voice input"}
+                            aria-pressed={isListening}
                         >
-                            <MicrophoneIcon className="w-6 h-6" />
+                            <MicrophoneIcon className="w-6 h-6" aria-hidden="true" />
                         </Button>
                     )}
                     <Button tabIndex={0} onClick={loading ? undefined : handleSubmitQuery} className={cn("rounded-full", {

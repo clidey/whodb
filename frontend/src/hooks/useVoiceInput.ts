@@ -18,13 +18,41 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 type SpeechRecognitionType = typeof SpeechRecognition;
 
+interface SpeechRecognitionResultList {
+  length: number;
+  item(index: number): SpeechRecognitionResult;
+  [index: number]: SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionResult {
+  length: number;
+  item(index: number): SpeechRecognitionAlternative;
+  isFinal: boolean;
+  [index: number]: SpeechRecognitionAlternative;
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
+}
+
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList;
+  resultIndex: number;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+  message: string;
+}
+
 interface ISpeechRecognition extends EventTarget {
   continuous: boolean;
   interimResults: boolean;
   lang: string;
-  onresult: ((this: ISpeechRecognition, ev: any) => any) | null;
-  onerror: ((this: ISpeechRecognition, ev: any) => any) | null;
-  onend: ((this: ISpeechRecognition, ev: Event) => any) | null;
+  onresult: ((this: ISpeechRecognition, ev: SpeechRecognitionEvent) => void) | null;
+  onerror: ((this: ISpeechRecognition, ev: SpeechRecognitionErrorEvent) => void) | null;
+  onend: ((this: ISpeechRecognition, ev: Event) => void) | null;
   start: () => void;
   stop: () => void;
   abort: () => void;
@@ -51,6 +79,7 @@ export const useVoiceInput = (language: string = 'en-US'): IUseVoiceInputResult 
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<ISpeechRecognition | null>(null);
+  const transcriptRef = useRef<string>('');
 
   const isSupported = typeof window !== 'undefined' &&
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
@@ -60,34 +89,50 @@ export const useVoiceInput = (language: string = 'en-US'): IUseVoiceInputResult 
       return;
     }
 
-    const SpeechRecognitionAPI = (window.SpeechRecognition || window.webkitSpeechRecognition) as any;
+    const SpeechRecognitionAPI = (window.SpeechRecognition || window.webkitSpeechRecognition) as SpeechRecognitionType;
     const recognition = new SpeechRecognitionAPI() as ISpeechRecognition;
 
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = language;
 
-    recognition.onresult = (event: any) => {
-      let interimTranscript = '';
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
       let finalTranscript = '';
 
       for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcriptPiece = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
-          finalTranscript += transcriptPiece + ' ';
-        } else {
-          interimTranscript += transcriptPiece;
+          finalTranscript += event.results[i][0].transcript + ' ';
         }
       }
 
-      setTranscript((prev) => {
-        const newText = finalTranscript || interimTranscript;
-        return prev + newText;
-      });
+      if (finalTranscript) {
+        transcriptRef.current += finalTranscript;
+        setTranscript(transcriptRef.current);
+      }
     };
 
-    recognition.onerror = (event: any) => {
-      setError(event.error);
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      let errorMessage = 'Voice recognition error';
+
+      switch (event.error) {
+        case 'not-allowed':
+        case 'permission-denied':
+          errorMessage = 'Microphone permission denied. Please allow microphone access in your browser settings.';
+          break;
+        case 'no-speech':
+          errorMessage = 'No speech detected. Please try again.';
+          break;
+        case 'audio-capture':
+          errorMessage = 'No microphone found. Please ensure a microphone is connected.';
+          break;
+        case 'network':
+          errorMessage = 'Network error. Please check your internet connection.';
+          break;
+        default:
+          errorMessage = `Voice recognition error: ${event.error}`;
+      }
+
+      setError(errorMessage);
       setIsListening(false);
     };
 
@@ -100,6 +145,7 @@ export const useVoiceInput = (language: string = 'en-US'): IUseVoiceInputResult 
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.abort();
+        recognitionRef.current = null;
       }
     };
   }, [isSupported, language]);
@@ -110,13 +156,14 @@ export const useVoiceInput = (language: string = 'en-US'): IUseVoiceInputResult 
     }
 
     setError(null);
+    transcriptRef.current = '';
     setTranscript('');
 
     try {
       recognitionRef.current.start();
       setIsListening(true);
     } catch (err) {
-      setError('Failed to start voice recognition');
+      setError('Failed to start voice recognition. Please try again.');
     }
   }, [isListening]);
 
@@ -128,7 +175,7 @@ export const useVoiceInput = (language: string = 'en-US'): IUseVoiceInputResult 
     try {
       recognitionRef.current.stop();
     } catch (err) {
-      setError('Failed to stop voice recognition');
+      setError('Failed to stop voice recognition.');
     }
   }, [isListening]);
 
