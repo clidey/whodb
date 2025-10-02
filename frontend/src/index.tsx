@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import { ApolloProvider } from "@apollo/client";
@@ -34,27 +34,46 @@ if (isEEMode) {
   import("@ee/index.css");
 }
 
-
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 
-const posthogClient = initPosthog()
-
-// Conditionally wrap with PostHogProvider only for CE builds
+// Component to handle async PostHog initialization
 const AppWithProviders = () => {
+  const [posthogClient, setPosthogClient] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(!isEEMode); // Only load for CE
+
+  useEffect(() => {
+    if (!isEEMode) {
+      initPosthog().then(client => {
+        setPosthogClient(client);
+        setIsLoading(false);
+      });
+    }
+  }, []);
+
   const app = (
     <ThemeProvider>
       <App />
     </ThemeProvider>
   );
 
-  // Only wrap with PostHogProvider if we have a client (CE builds)
+  // For EE mode, no PostHog provider needed
+  if (isEEMode) {
+    return app;
+  }
+
+  // For CE mode, wait for PostHog to initialize
+  if (isLoading) {
+    return app; // Show app without PostHog while loading
+  }
+
+  // Wrap with PostHogProvider once loaded (CE builds)
   if (posthogClient) {
     // @ts-ignore
     return <PostHogProvider client={posthogClient}>{app}</PostHogProvider>;
   }
-  
+
   return app;
 };
 

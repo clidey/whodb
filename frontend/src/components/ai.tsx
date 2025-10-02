@@ -49,7 +49,7 @@ import {
     TrashIcon,
     XMarkIcon
 } from "./heroicons";
-import {map} from "lodash";
+import map from "lodash/map";
 import {FC, ReactElement, useCallback, useEffect, useMemo, useState} from "react";
 import {v4} from "uuid";
 import {useGetAiModelsLazyQuery, useGetAiProvidersLazyQuery} from "../generated/graphql";

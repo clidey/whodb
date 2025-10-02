@@ -24,7 +24,7 @@ import {
     useLoginWithProfileMutation
 } from '@graphql';
 import classNames from "classnames";
-import {entries} from "lodash";
+import entries from "lodash/entries";
 import {FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {useNavigate, useSearchParams} from "react-router-dom";
 import {Icons} from "../../components/icons";

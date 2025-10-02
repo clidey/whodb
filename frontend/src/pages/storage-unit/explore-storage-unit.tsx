@@ -48,7 +48,7 @@ import {
     WhereCondition
 } from '@graphql';
 import { CheckCircleIcon, CommandLineIcon, PlayIcon, PlusCircleIcon, XMarkIcon } from "../../components/heroicons";
-import { keys } from "lodash";
+import keys from "lodash/keys";
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { CodeEditor } from "../../components/editor";

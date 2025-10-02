@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { isNaN } from "lodash";
+import isNaN from "lodash/isNaN";
 import { DatabaseType } from '@graphql';
 
 export function isNumeric(str: string) {

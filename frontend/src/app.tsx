@@ -16,7 +16,7 @@
 
 import { Toaster } from "@clidey/ux";
 import { useUpdateSettingsMutation } from '@graphql';
-import { map } from "lodash";
+import map from "lodash/map";
 import { useCallback, useEffect } from "react";
 import { Route, Routes } from "react-router-dom";
 import { optInUser, optOutUser } from "./config/posthog";
