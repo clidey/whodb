@@ -350,6 +350,7 @@ export const Sidebar: FC = () => {
                                         side="left" align="start"
                                         buttonProps={{
                                             "data-testid": "sidebar-profile",
+                                            "data-collapsed": !open,
                                         }}
                                     />
                                 </div>

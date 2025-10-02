@@ -494,6 +494,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                         "hidden": rows == null || !allowResultsResize,
                     })}
                     onMouseDown={handleResultsResize}
+                    data-testid="output-resize-button"
                 >
                     <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
                         <EllipsisHorizontalIcon className="w-4 h-4 text-gray-400" />
@@ -596,6 +597,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                     className="h-2 cursor-row-resize transition-all duration-200 relative group"
                     onMouseDown={handleEditorResize}
                     style={{ cursor: isResizing ? 'row-resize' : 'row-resize' }}
+                    data-testid="editor-resize-button"
                 >
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
                         <EllipsisHorizontalIcon className="w-4 h-4 text-gray-400" />

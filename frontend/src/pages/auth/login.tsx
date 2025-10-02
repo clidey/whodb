@@ -294,11 +294,9 @@ export const LoginForm: FC<LoginFormProps> = ({
 
             if (searchParams.has("resource")) {
                 const selectedProfile = availableProfiles.find(profile => profile.value === searchParams.get("resource"));
-                setSelectedAvailableProfile(selectedProfile?.value);
                 if (selectedProfile?.value) {
-                    setTimeout(() => {
-                        handleLoginWithProfileSubmit(selectedProfile.value);
-                    }, 10);
+                    setSelectedAvailableProfile(selectedProfile?.value);
+                    handleLoginWithProfileSubmit(selectedProfile.value);
                 }
             } else if (searchParams.has("login")) {
                 setTimeout(() => {
@@ -509,12 +507,12 @@ export const LoginForm: FC<LoginFormProps> = ({
                     </div>
                     {
                         (showAdvanced && advancedForm != null) &&
-                        <div className={classNames("transition-all h-full overflow-hidden flex flex-col gap-xs", {
+                        <div className={classNames("transition-all h-full overflow-hidden flex flex-col gap-lg pt-[5px]", {
                             "w-[350px] ml-4 mt-[43px]": advancedDirection === "horizontal",
                             "w-full": advancedDirection === "vertical",
                         })}>
                             {entries(advancedForm).map(([key, value]) => (
-                                <div className="flex flex-col gap-xs" key={key}>
+                                <div className="flex flex-col gap-sm" key={key}>
                                     <Label htmlFor={`${key}-input`}>{key}</Label>
                                     <Input
                                         id={`${key}-input`}

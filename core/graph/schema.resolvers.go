@@ -493,6 +493,9 @@ func (r *queryResolver) Profiles(ctx context.Context) ([]*model.LoginProfile, er
 		if len(profile.Alias) > 0 {
 			loginProfile.Alias = &profile.Alias
 		}
+		if len(profile.CustomId) > 0 {
+			loginProfile.ID = profile.CustomId
+		}
 		profiles = append(profiles, loginProfile)
 	}
 	return profiles, nil

@@ -15,7 +15,7 @@
  */
 import {FC} from "react";
 import {useNavigate} from "react-router-dom";
-import {IInternalRoute} from "../config/routes";
+import {IInternalRoute, InternalRoutes} from "../config/routes";
 import {
   Breadcrumb as UxBreadcrumb,
   BreadcrumbItem,
@@ -48,7 +48,7 @@ export const Breadcrumb: FC<IBreadcrumbProps> = ({ routes, active }) => {
               {isLast || isActive ? (
                   <BreadcrumbPage className="flex items-center gap-xs">
                   {i === 0 && (
-                      <HomeIcon className="w-4 h-4"/>
+                      <HomeIcon className="w-4 h-4" onClick={() => navigate(InternalRoutes.Dashboard.StorageUnit.path)} />
                   )}
                   {route.name}
                 </BreadcrumbPage>
@@ -58,12 +58,12 @@ export const Breadcrumb: FC<IBreadcrumbProps> = ({ routes, active }) => {
                   className="cursor-pointer"
                   onClick={() => navigate(route.path)}
                 >
-                  <span className="flex items-center gap-xs">
+                  <div className="flex items-center gap-xs" onClick={() => navigate(InternalRoutes.Dashboard.StorageUnit.path)}>
                     {i === 0 && (
                         <HomeIcon className="w-4 h-4"/>
                     )}
                     {route.name}
-                  </span>
+                  </div>
                 </BreadcrumbLink>
               )}
             </BreadcrumbItem>

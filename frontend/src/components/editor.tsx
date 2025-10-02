@@ -357,14 +357,14 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
                 borderRight: "1px solid rgba(0,0,0,0.1)",
               },
               ".cm-play-button": {
-                color: "#10b981", // teal-500
+                color: "#10b981",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 height: "100%",
               },
               ".dark .cm-play-button": {
-                color: "#14b8a6", // teal-400 for dark mode
+                color: "#14b8a6",
               },
               ".dark .cm-play-gutter": {
                 borderRight: "1px solid rgba(255,255,255,0.1)",
@@ -378,7 +378,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
                 borderRight: "1px solid rgba(0,0,0,0.1)",
               },
               ".cm-play-button": {
-                color: "#10b981", // teal-500
+                color: "#10b981",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
