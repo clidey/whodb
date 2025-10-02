@@ -36,6 +36,7 @@ var IsEnterpriseEdition = false // Set to true by EE build
 func GetIsDesktopMode() bool {
 	return os.Getenv("WHODB_DESKTOP") == "true"
 }
+
 var Tokens = common.FilterList(strings.Split(os.Getenv("WHODB_TOKENS"), ","), func(item string) bool {
 	return item != ""
 })

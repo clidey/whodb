@@ -25,8 +25,10 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/plugins"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func getDefaultDirectory() string {
@@ -89,7 +91,7 @@ func (p *Sqlite3Plugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 		}
 	}
 
-	db, err := gorm.Open(sqlite.Open(fileNameDatabase), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(fileNameDatabase), &gorm.Config{Logger: logger.Default.LogMode(plugins.GetGormLogConfig())})
 	if err != nil {
 		log.Logger.WithError(err).WithFields(map[string]any{
 			"database": database,
