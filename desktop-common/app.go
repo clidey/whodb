@@ -31,8 +31,8 @@ import (
 
 const (
 	// File permissions
-	filePermissionUserRW  = 0644 // User read/write, group/others read
-	dirPermissionUserRWX  = 0755 // User read/write/execute, group/others read/execute
+	filePermissionUserRW = 0644 // User read/write, group/others read
+	dirPermissionUserRWX = 0755 // User read/write/execute, group/others read/execute
 )
 
 // App struct
@@ -155,7 +155,6 @@ func (a *App) SaveBinaryFile(data []byte, defaultName string) (string, error) {
 	return filepath, nil
 }
 
-
 // SelectDirectory shows native directory selection dialog
 func (a *App) SelectDirectory() (string, error) {
 	options := runtime.OpenDialogOptions{
@@ -168,6 +167,26 @@ func (a *App) SelectDirectory() (string, error) {
 	}
 
 	return dir, nil
+}
+
+// SelectSQLiteDatabase shows native file dialog for selecting SQLite database files
+func (a *App) SelectSQLiteDatabase() (string, error) {
+	options := runtime.OpenDialogOptions{
+		Title: "Select SQLite Database",
+		Filters: []runtime.FileFilter{
+			{
+				DisplayName: "SQLite Database Files (*.db,*.sqlite,*.sqlite3,*.db3)",
+				Pattern:     "*.db;*.sqlite;*.sqlite3;*.db3",
+			},
+		},
+	}
+
+	filepath, err := runtime.OpenFileDialog(a.ctx, options)
+	if err != nil {
+		return "", err
+	}
+
+	return filepath, nil
 }
 
 // Clipboard Operations

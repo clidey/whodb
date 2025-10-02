@@ -34,8 +34,8 @@ import (
 
 // RunApp starts the Wails application with the given configuration
 func RunApp(edition string, title string, assets embed.FS) error {
-	// Set desktop mode for the frontend to handle auth persistence
-	os.Setenv("WHODB_DESKTOP_APP", "true")
+	// Set desktop mode for backend (SQLite path handling, auth, etc.)
+	os.Setenv("WHODB_DESKTOP", "true")
 
 	// Initialize WhoDB engine (same as server.go)
 	src.InitializeEngine()

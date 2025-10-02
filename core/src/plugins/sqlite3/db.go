@@ -45,30 +45,50 @@ func (p *Sqlite3Plugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 		return nil, err
 	}
 	database := connectionInput.Database
-	fileNameDatabase := filepath.Join(getDefaultDirectory(), database)
-	fileNameDatabase, err = filepath.EvalSymlinks(fileNameDatabase)
-	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
-			"database": database,
-			"path":     fileNameDatabase,
-		}).Error("Failed to evaluate SQLite database symlinks")
-		return nil, err
+
+	var fileNameDatabase string
+
+	// Desktop mode: treat database field as full path
+	if env.IsDesktopMode {
+		// In desktop mode, the database field contains the full path
+		fileNameDatabase = database
+
+		// Verify file exists
+		if _, err := os.Stat(fileNameDatabase); errors.Is(err, os.ErrNotExist) {
+			log.Logger.WithError(err).WithFields(map[string]any{
+				"database": database,
+				"path":     fileNameDatabase,
+			}).Error("SQLite database file does not exist")
+			return nil, errDoesNotExist
+		}
+	} else {
+		// Server mode: use default directory restriction
+		fileNameDatabase = filepath.Join(getDefaultDirectory(), database)
+		fileNameDatabase, err = filepath.EvalSymlinks(fileNameDatabase)
+		if err != nil {
+			log.Logger.WithError(err).WithFields(map[string]any{
+				"database": database,
+				"path":     fileNameDatabase,
+			}).Error("Failed to evaluate SQLite database symlinks")
+			return nil, err
+		}
+		if !strings.HasPrefix(fileNameDatabase, getDefaultDirectory()) {
+			log.Logger.WithFields(map[string]any{
+				"database":         database,
+				"path":             fileNameDatabase,
+				"defaultDirectory": getDefaultDirectory(),
+			}).Error("SQLite database path is outside allowed directory")
+			return nil, errDoesNotExist
+		}
+		if _, err := os.Stat(fileNameDatabase); errors.Is(err, os.ErrNotExist) {
+			log.Logger.WithError(err).WithFields(map[string]any{
+				"database": database,
+				"path":     fileNameDatabase,
+			}).Error("SQLite database file does not exist")
+			return nil, errDoesNotExist
+		}
 	}
-	if !strings.HasPrefix(fileNameDatabase, getDefaultDirectory()) {
-		log.Logger.WithFields(map[string]any{
-			"database":         database,
-			"path":             fileNameDatabase,
-			"defaultDirectory": getDefaultDirectory(),
-		}).Error("SQLite database path is outside allowed directory")
-		return nil, errDoesNotExist
-	}
-	if _, err := os.Stat(fileNameDatabase); errors.Is(err, os.ErrNotExist) {
-		log.Logger.WithError(err).WithFields(map[string]any{
-			"database": database,
-			"path":     fileNameDatabase,
-		}).Error("SQLite database file does not exist")
-		return nil, errDoesNotExist
-	}
+
 	db, err := gorm.Open(sqlite.Open(fileNameDatabase), &gorm.Config{})
 	if err != nil {
 		log.Logger.WithError(err).WithFields(map[string]any{

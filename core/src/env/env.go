@@ -29,6 +29,7 @@ import (
 
 var IsDevelopment = os.Getenv("ENVIRONMENT") == "dev"
 var IsEnterpriseEdition = false // Set to true by EE build
+var IsDesktopMode = os.Getenv("WHODB_DESKTOP") == "true" // Set by desktop builds
 var Tokens = common.FilterList(strings.Split(os.Getenv("WHODB_TOKENS"), ","), func(item string) bool {
 	return item != ""
 })

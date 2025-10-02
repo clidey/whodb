@@ -37,11 +37,16 @@ export const useDesktopFile = () => {
     return await desktopService.selectDirectory();
   }, []);
 
+  const selectSQLiteDatabase = useCallback(async () => {
+    return await desktopService.selectSQLiteDatabase();
+  }, []);
+
   return {
     isDesktop,
     saveFile,
     saveBinaryFile,
     selectDirectory,
+    selectSQLiteDatabase,
   };
 };
 
