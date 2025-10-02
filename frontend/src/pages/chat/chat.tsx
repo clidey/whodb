@@ -275,16 +275,19 @@ export const ChatPage: FC = () => {
     const dispatch = useAppDispatch();
 
     const { isSupported: isVoiceSupported, isListening, transcript, error: voiceError, startListening, stopListening } = useVoiceInput(voiceRecognitionLanguage);
+    const lastTranscriptRef = useRef('');
 
     useEffect(() => {
-        if (transcript) {
-            setQuery(prev => prev + transcript);
+        if (transcript && transcript !== lastTranscriptRef.current) {
+            const newText = transcript.slice(lastTranscriptRef.current.length);
+            setQuery(prev => prev + newText);
+            lastTranscriptRef.current = transcript;
         }
     }, [transcript]);
 
     useEffect(() => {
         if (voiceError) {
-            toast.error(`Voice recognition error: ${voiceError}`);
+            toast.error(voiceError);
         }
     }, [voiceError]);
 

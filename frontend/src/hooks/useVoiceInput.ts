@@ -72,6 +72,7 @@ export interface IUseVoiceInputResult {
   error: string | null;
   startListening: () => void;
   stopListening: () => void;
+  resetTranscript: () => void;
 }
 
 export const useVoiceInput = (language: string = 'en-US'): IUseVoiceInputResult => {
@@ -80,13 +81,30 @@ export const useVoiceInput = (language: string = 'en-US'): IUseVoiceInputResult 
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<ISpeechRecognition | null>(null);
   const transcriptRef = useRef<string>('');
+  const errorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isListeningRef = useRef<boolean>(false);
 
   const isSupported = typeof window !== 'undefined' &&
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
 
   useEffect(() => {
+    isListeningRef.current = isListening;
+  }, [isListening]);
+
+  useEffect(() => {
     if (!isSupported) {
       return;
+    }
+
+    if (isListeningRef.current) {
+      setIsListening(false);
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (err) {
+          // Ignore errors during language change
+        }
+      }
     }
 
     const SpeechRecognitionAPI = (window.SpeechRecognition || window.webkitSpeechRecognition) as SpeechRecognitionType;
@@ -134,6 +152,13 @@ export const useVoiceInput = (language: string = 'en-US'): IUseVoiceInputResult 
 
       setError(errorMessage);
       setIsListening(false);
+
+      if (errorTimeoutRef.current) {
+        clearTimeout(errorTimeoutRef.current);
+      }
+      errorTimeoutRef.current = setTimeout(() => {
+        setError(null);
+      }, 5000);
     };
 
     recognition.onend = () => {
@@ -146,6 +171,9 @@ export const useVoiceInput = (language: string = 'en-US'): IUseVoiceInputResult 
       if (recognitionRef.current) {
         recognitionRef.current.abort();
         recognitionRef.current = null;
+      }
+      if (errorTimeoutRef.current) {
+        clearTimeout(errorTimeoutRef.current);
       }
     };
   }, [isSupported, language]);
@@ -179,6 +207,11 @@ export const useVoiceInput = (language: string = 'en-US'): IUseVoiceInputResult 
     }
   }, [isListening]);
 
+  const resetTranscript = useCallback(() => {
+    transcriptRef.current = '';
+    setTranscript('');
+  }, []);
+
   return {
     isSupported,
     isListening,
@@ -186,5 +219,6 @@ export const useVoiceInput = (language: string = 'en-US'): IUseVoiceInputResult 
     error,
     startListening,
     stopListening,
+    resetTranscript,
   };
 };

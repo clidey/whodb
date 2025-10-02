@@ -29,6 +29,24 @@ type ISettingsState = {
     voiceRecognitionLanguage: string;
 }
 
+const getDefaultVoiceLanguage = (): string => {
+    if (typeof navigator === 'undefined') {
+        return 'en-US';
+    }
+    const browserLang = navigator.language || 'en-US';
+    const supportedLanguages = [
+        'en-US', 'en-GB', 'es-ES', 'fr-FR', 'de-DE', 'it-IT', 'pt-BR',
+        'ru-RU', 'ja-JP', 'ko-KR', 'zh-CN', 'zh-TW', 'ar-SA', 'hi-IN',
+        'nl-NL', 'pl-PL', 'tr-TR'
+    ];
+    if (supportedLanguages.includes(browserLang)) {
+        return browserLang;
+    }
+    const langPrefix = browserLang.split('-')[0];
+    const match = supportedLanguages.find(lang => lang.startsWith(langPrefix));
+    return match || 'en-US';
+};
+
 const initialState: ISettingsState = {
     metricsEnabled: true,
     storageUnitView: 'card',
@@ -38,8 +56,8 @@ const initialState: ISettingsState = {
     spacing: 'comfortable',
     // Where condition mode default
     whereConditionMode: 'popover',
-    // Voice recognition default to English
-    voiceRecognitionLanguage: 'en-US',
+    // Voice recognition default to browser language or English
+    voiceRecognitionLanguage: getDefaultVoiceLanguage(),
 }
 
 export const settingsSlice = createSlice({

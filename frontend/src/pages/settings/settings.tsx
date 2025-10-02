@@ -193,7 +193,7 @@ export const SettingsPage: FC = () => {
                         <div className="flex justify-between">
                             <Label>Voice Recognition Language</Label>
                             <Select value={voiceRecognitionLanguage} onValueChange={handleVoiceRecognitionLanguageChange}>
-                                <SelectTrigger id="voice-recognition-language" className="w-[135px]">
+                                <SelectTrigger id="voice-recognition-language" className="min-w-[135px]">
                                     <SelectValue placeholder="Select language" />
                                 </SelectTrigger>
                                 <SelectContent>
