@@ -60,7 +60,11 @@ export const QueryView: FC<IPluginProps> = ({ code, handleExecuteRef }) => {
                         query: code,
                     },
                     onCompleted: (data) => {
-                        resolve(data.RawExecute);
+                        if (isSQLQueryAction(code) || (data?.RawExecute?.Rows?.length || 0) > 0) {
+                            resolve(data.RawExecute);
+                        } else {
+                            resolve(null);
+                        }
                     },
                     onError: (error) => {
                         reject(error);
@@ -68,7 +72,7 @@ export const QueryView: FC<IPluginProps> = ({ code, handleExecuteRef }) => {
                 });
             });
         };
-    }, [rawExecute, handleExecuteRef]);
+    }, [rawExecute, handleExecuteRef, code]);
 
     if (data == null) {
         return null;

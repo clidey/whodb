@@ -1,19 +1,3 @@
-/*
- * Copyright 2025 Clidey, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package graph
 
 // This file will be automatically regenerated based on the schema, any resolver implementations
@@ -71,28 +55,42 @@ func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCre
 
 // LoginWithProfile is the resolver for the LoginWithProfile field.
 func (r *mutationResolver) LoginWithProfile(ctx context.Context, profile model.LoginProfileInput) (*model.StatusResponse, error) {
-	profiles := src.GetLoginProfiles()
-	for i, loginProfile := range profiles {
-		profileId := src.GetLoginProfileId(i, loginProfile)
-		if profile.ID == profileId {
-			if !src.MainEngine.Choose(engine.DatabaseType(loginProfile.Type)).IsAvailable(&engine.PluginConfig{
-				Credentials: src.GetLoginCredentials(loginProfile),
-			}) {
+    profiles := src.GetLoginProfiles()
+    for i, loginProfile := range profiles {
+        profileId := src.GetLoginProfileId(i, loginProfile)
+        if profile.ID == profileId {
+            if !src.MainEngine.Choose(engine.DatabaseType(loginProfile.Type)).IsAvailable(&engine.PluginConfig{
+                Credentials: src.GetLoginCredentials(loginProfile),
+            }) {
 				log.LogFields(log.Fields{
 					"profile_id": profile.ID,
 					"type":       loginProfile.Type,
 				}).Error("Database connection failed for login profile - credentials unauthorized")
 				return nil, errors.New("unauthorized")
 			}
-			credentials := &model.LoginCredentials{
-				ID: &profile.ID,
-			}
-			if profile.Database != nil {
-				credentials.Database = *profile.Database
-			}
-			return auth.Login(ctx, credentials)
-		}
-	}
+            // Build full credentials so the auth layer can persist them to keyring
+            resolved := src.GetLoginCredentials(loginProfile)
+            credentials := &model.LoginCredentials{
+                ID:       &profile.ID,
+                Type:     resolved.Type,
+                Hostname: resolved.Hostname,
+                Username: resolved.Username,
+                Password: resolved.Password,
+                Database: resolved.Database,
+                Advanced: func() []*model.RecordInput {
+                    var out []*model.RecordInput
+                    for _, rec := range resolved.Advanced {
+                        out = append(out, &model.RecordInput{Key: rec.Key, Value: rec.Value})
+                    }
+                    return out
+                }(),
+            }
+            if profile.Database != nil && *profile.Database != "" {
+                credentials.Database = *profile.Database
+            }
+            return auth.Login(ctx, credentials)
+        }
+    }
 	log.LogFields(log.Fields{
 		"profile_id": profile.ID,
 	}).Error("Login profile not found or not authorized")

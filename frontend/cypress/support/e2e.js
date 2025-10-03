@@ -31,6 +31,7 @@
 
 // Import commands.js using ES2015 syntax:
 import './commands'
+
 import '@cypress/code-coverage/support'
 
 // Clear browser state before each test to ensure isolation
@@ -57,5 +58,27 @@ beforeEach(() => {
                 });
             });
         }
+    });
+
+    // Inject CSS to disable animations on every page visit
+    cy.on('window:before:load', (win) => {
+        const style = win.document.createElement('style');
+        style.innerHTML = `
+            *,
+            *::before,
+            *::after {
+                -moz-animation: none !important;
+                -moz-transition: none !important;
+                -webkit-animation: none !important;
+                -webkit-transition: none !important;
+                animation: none !important;
+                transition: none !important;
+                animation-duration: 0ms !important;
+                animation-delay: 0ms !important;
+                transition-duration: 0ms !important;
+                transition-delay: 0ms !important;
+            }
+        `;
+        win.document.head.appendChild(style);
     });
 });

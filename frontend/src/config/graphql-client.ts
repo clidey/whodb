@@ -15,18 +15,27 @@
  */
 
 import {ApolloClient, createHttpLink, InMemoryCache} from '@apollo/client';
+import { setContext } from '@apollo/client/link/context';
 import {onError} from '@apollo/client/link/error';
 import {toast} from '@clidey/ux';
 import {reduxStore} from '../store';
+import { addAuthHeader } from '../utils/auth-headers';
 
-let uri = "/api/query"
-if (window.location.port === "3000") {
-  uri = "http://localhost:8080/api/query";
-}
+// Always use a relative URI so that:
+// - Desktop/Wails uses the embedded router handler
+// - Dev server (vite) proxies to the backend via server.proxy in vite.config.ts
+const uri = "/api/query";
 
 const httpLink = createHttpLink({
   uri,
   credentials: "include",
+});
+
+// Add Authorization header in desktop/webview environments where cookies are not supported.
+const authLink = setContext((_, { headers }) => {
+  return {
+    headers: addAuthHeader(headers)
+  };
 });
 
 /**
@@ -79,6 +88,7 @@ async function handleAutoLogin(currentProfile: any) {
                 },
                 credentials: 'include',
                 body: JSON.stringify({
+                    operationName: 'LoginWithProfile',
                     query: `
             mutation LoginWithProfile($profile: LoginProfileInput!) {
               LoginWithProfile(profile: $profile) {
@@ -113,6 +123,7 @@ async function handleAutoLogin(currentProfile: any) {
                 },
                 credentials: 'include',
                 body: JSON.stringify({
+                    operationName: 'Login',
                     query: `
             mutation Login($credentials: LoginCredentials!) {
               Login(credentials: $credentials) {
@@ -151,7 +162,7 @@ async function handleAutoLogin(currentProfile: any) {
 }
 
 export const graphqlClient = new ApolloClient({
-    link: errorLink.concat(httpLink),
+    link: errorLink.concat(authLink.concat(httpLink)),
   cache: new InMemoryCache(),
   defaultOptions: {
       query: {

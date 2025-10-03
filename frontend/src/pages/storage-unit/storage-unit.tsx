@@ -18,7 +18,9 @@ import { Badge, Button, Checkbox, cn, Input, Label, SearchInput, SearchSelect, S
 import { DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useGetStorageUnitsQuery } from '@graphql';
 import { ArrowPathRoundedSquareIcon, CheckCircleIcon, CircleStackIcon, CommandLineIcon, ListBulletIcon, MagnifyingGlassIcon, PlusCircleIcon, TableCellsIcon, XMarkIcon } from '../../components/heroicons';
 import classNames from "classnames";
-import { clone, cloneDeep, filter } from "lodash";
+import clone from "lodash/clone";
+import cloneDeep from "lodash/cloneDeep";
+import filter from "lodash/filter";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Handle, Node, Position, useReactFlow } from "reactflow";

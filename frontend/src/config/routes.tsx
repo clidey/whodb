@@ -14,20 +14,36 @@
  * limitations under the License.
  */
 
-import { values } from "lodash";
-import { FC, ReactNode } from "react";
+import values from "lodash/values";
+import { FC, lazy, ReactNode, Suspense } from "react";
 import { Navigate, Outlet } from "react-router-dom";
-import { GraphPage } from "../pages/graph/graph";
 import { LoginPage } from "../pages/auth/login";
-import { ExploreStorageUnit } from "../pages/storage-unit/explore-storage-unit";
-import { StorageUnitPage } from "../pages/storage-unit/storage-unit";
 import { useAppSelector } from "../store/hooks";
-import { RawExecutePage } from "../pages/raw-execute/raw-execute";
 import { LogoutPage } from "../pages/auth/logout";
-import { ChatPage } from "../pages/chat/chat";
-import {SettingsPage} from "../pages/settings/settings";
-import {ContactUsPage} from "../pages/contact-us/contact-us";
 import { isEEFeatureEnabled } from "../utils/ee-loader";
+
+// Lazy load heavy components
+const GraphPage = lazy(() => import("../pages/graph/graph").then(m => ({ default: m.GraphPage })));
+const ExploreStorageUnit = lazy(() => import("../pages/storage-unit/explore-storage-unit").then(m => ({ default: m.ExploreStorageUnit })));
+const StorageUnitPage = lazy(() => import("../pages/storage-unit/storage-unit").then(m => ({ default: m.StorageUnitPage })));
+const RawExecutePage = lazy(() => import("../pages/raw-execute/raw-execute").then(m => ({ default: m.RawExecutePage })));
+const ChatPage = lazy(() => import("../pages/chat/chat").then(m => ({ default: m.ChatPage })));
+const SettingsPage = lazy(() => import("../pages/settings/settings").then(m => ({ default: m.SettingsPage })));
+const ContactUsPage = lazy(() => import("../pages/contact-us/contact-us").then(m => ({ default: m.ContactUsPage })));
+
+// Loading component
+const PageLoader = () => (
+  <div className="flex h-full w-full items-center justify-center">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div>
+  </div>
+);
+
+// Wrapper component for lazy loaded routes
+const LazyRoute: FC<{ component: React.ComponentType<any> }> = ({ component: Component }) => (
+  <Suspense fallback={<PageLoader />}>
+    <Component />
+  </Suspense>
+);
 
 export type IInternalRoute = {
     name: string;
@@ -49,33 +65,33 @@ export const InternalRoutes = {
         StorageUnit: {
             name: "Storage Unit", // should update on the page
             path: "/storage-unit",
-            component: <StorageUnitPage />,
+            component: <LazyRoute component={StorageUnitPage} />,
         },
         ExploreStorageUnit: {
             name: "Explore",
             path: "/storage-unit/explore",
-            component: <ExploreStorageUnit />,
+            component: <LazyRoute component={ExploreStorageUnit} />,
         },
         ExploreStorageUnitWithScratchpad: {
             name: "Explore",
             path: "/storage-unit/explore/scratchpad",
-            component: <ExploreStorageUnit scratchpad={true} />,
+            component: <LazyRoute component={() => <ExploreStorageUnit scratchpad={true} />} />,
         },
     },
     Graph: {
         name: "Graph",
         path: "/graph",
-        component: <GraphPage />,
+        component: <LazyRoute component={GraphPage} />,
     },
     RawExecute: {
         name: "Scratchpad",
         path: "/scratchpad",
-        component: <RawExecutePage />,
+        component: <LazyRoute component={RawExecutePage} />,
     },
     Chat: {
         name: "Chat",
         path: "/chat",
-        component: <ChatPage />,
+        component: <LazyRoute component={ChatPage} />,
     },
     Logout: {
         name: "Logout",
@@ -86,14 +102,14 @@ export const InternalRoutes = {
         Settings: {
             name: "Settings",
             path: "/settings",
-            component: <SettingsPage />
+            component: <LazyRoute component={SettingsPage} />
         }
     } : {}),
     ...(isEEFeatureEnabled('contactUsPage') ? {
         ContactUs: {
             name: "Contact Us",
             path: "/contact-us",
-            component: <ContactUsPage />
+            component: <LazyRoute component={ContactUsPage} />
         }
     } : {})
 }

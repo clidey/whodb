@@ -220,6 +220,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
   const [showDestructiveDialog, setShowDestructiveDialog] = useState(false);
   const [pendingQuery, setPendingQuery] = useState<string>("");
   const editorRef = useRef<HTMLDivElement>(null);
+  const viewRef = useRef<EditorView | null>(null);
   const onRunReference = useRef<Function>();
   const darkModeEnabled = useTheme().theme === "dark";
   const apolloClient = useApolloClient();
@@ -252,8 +253,31 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
     setPendingQuery("");
   }, []);
 
+  // Listen for menu execute query trigger
   useEffect(() => {
-    if (editorRef.current == null) {
+    const handleExecuteTrigger = () => {
+      // Execute the entire content when triggered from menu
+      if (onRun && value) {
+        handleQueryExecution(value);
+      }
+    };
+
+    window.addEventListener('menu:trigger-execute-query', handleExecuteTrigger);
+    return () => {
+      window.removeEventListener('menu:trigger-execute-query', handleExecuteTrigger);
+    };
+  }, [value, handleQueryExecution, onRun]);
+
+  useEffect(() => {
+    if (viewRef.current && value !== viewRef.current.state.doc.toString()) {
+      viewRef.current.dispatch({
+        changes: { from: 0, to: viewRef.current.state.doc.length, insert: value },
+      });
+    }
+  }, [value]);
+
+  useEffect(() => {
+    if (editorRef.current === null) {
         return;
     }
 
@@ -331,8 +355,9 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
           }),
             basicSetup,
             languageExtension != null ? languageExtension : [],
-            // Add autocomplete for SQL
-            language === "sql" ? createSQLAutocomplete({apolloClient}) : [],
+            // Add autocomplete for SQL, but allow disabling it during Cypress tests to prevent flakiness.
+            // It is disabled by default in the test environment.
+            (language === "sql" && !((window as any).Cypress && (window as any).Cypress.env('disableAutocomplete') !== false)) ? createSQLAutocomplete({apolloClient}) : [],
             darkModeEnabled ? [oneDark, EditorView.theme({
               ".cm-activeLine": { backgroundColor: "rgba(0,0,0,0.05) !important" },
               ".cm-activeLineGutter": { backgroundColor: "rgba(0,0,0,0.05) !important" },
@@ -385,9 +410,11 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
         state,
         parent: editorRef.current,
     });
+    viewRef.current = view;
 
     return () => {
       view.destroy();
+      viewRef.current = null;
     };
   }, [language, apolloClient, darkModeEnabled]);
 

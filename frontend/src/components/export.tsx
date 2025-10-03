@@ -25,9 +25,10 @@ import {
     Sheet,
     SheetContent,
     SheetFooter,
-    SheetHeader,
+    SheetTitle,
     toast
 } from "@clidey/ux";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import {FC, useCallback, useMemo, useState} from "react";
 import {useExportToCSV} from "./hooks";
 
@@ -96,7 +97,12 @@ export const Export: FC<IExportProps> = ({
         <>
             <Sheet open={open} onOpenChange={onOpenChange}>
                 <SheetContent side="right" className="max-w-md w-full p-8">
-                    <h2 className="text-xl font-semibold mb-4">Export Data</h2>
+                    <div className="mb-6">
+                        <h2 className="text-foreground font-semibold text-lg">Export Data</h2>
+                    </div>
+                    <VisuallyHidden>
+                        <SheetTitle>Export Data</SheetTitle>
+                    </VisuallyHidden>
                     <div className="flex flex-col gap-lg grow">
                         <div className="space-y-4 grow">
                             <p>

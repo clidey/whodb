@@ -537,6 +537,18 @@ export const StorageUnitTable: FC<TableProps> = ({
         };
     }, []);
 
+    // Listen for menu export trigger
+    useEffect(() => {
+        const handleExportTrigger = () => {
+            setShowExportConfirm(true);
+        };
+
+        window.addEventListener('menu:trigger-export', handleExportTrigger);
+        return () => {
+            window.removeEventListener('menu:trigger-export', handleExportTrigger);
+        };
+    }, []);
+
     // Refresh page when it is resized and it settles
     useEffect(() => {
         let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -725,7 +737,10 @@ export const StorageUnitTable: FC<TableProps> = ({
                     ))}
                 </TableRow>
             </ContextMenuTrigger>
-            <ContextMenuContent className="w-52">
+            <ContextMenuContent
+                className="w-52 max-h-[calc(100vh-2rem)] overflow-y-auto"
+                collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
+            >
                 <ContextMenuItem
                     onSelect={() => {
                         if (contextMenuCellIdx == null) return;
@@ -785,7 +800,9 @@ export const StorageUnitTable: FC<TableProps> = ({
                         <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
                         Export
                     </ContextMenuSubTrigger>
-                    <ContextMenuSubContent>
+                    <ContextMenuSubContent
+                        collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
+                    >
                         <ContextMenuItem
                             onSelect={() => setShowExportConfirm(true)}
                         >
@@ -831,7 +848,10 @@ export const StorageUnitTable: FC<TableProps> = ({
                         <EllipsisHorizontalIcon className="w-4 h-4 mr-2" />
                         More Actions
                     </ContextMenuSubTrigger>
-                    <ContextMenuSubContent className="w-44">
+                    <ContextMenuSubContent
+                        className="w-44"
+                        collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
+                    >
                         <ContextMenuItem
                             variant="destructive"
                             disabled={deleting}
@@ -913,8 +933,11 @@ export const StorageUnitTable: FC<TableProps> = ({
                                     ))}
                                 </TableHeadRow>
                             </ContextMenuTrigger>
-                            <ContextMenuContent className="w-64">
-                                <ContextMenuItem onSelect={() => setShowMockDataSheet(true)}>
+                            <ContextMenuContent
+                className="w-64 max-h-[calc(100vh-2rem)] overflow-y-auto"
+                collisionPadding={{ top: 16, right: 16, bottom: 16, left: 16 }}
+            >
+                                <ContextMenuItem onSelect={() => setShowMockDataSheet(true)} data-testid="context-menu-mock-data">
                                     <DocumentDuplicateIcon className="w-4 h-4" />
                                     Mock Data
                                     <ContextMenuShortcut>{renderShortcut(["Mod", "M"])}</ContextMenuShortcut>
@@ -925,7 +948,9 @@ export const StorageUnitTable: FC<TableProps> = ({
                                         <ArrowDownCircleIcon className="w-4 h-4 mr-2" />
                                         Export Data
                                     </ContextMenuSubTrigger>
-                                    <ContextMenuSubContent>
+                                    <ContextMenuSubContent
+                        collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
+                    >
                                         <ContextMenuItem
                                             onSelect={() => setShowExportConfirm(true)}
                                         >
@@ -1001,7 +1026,10 @@ export const StorageUnitTable: FC<TableProps> = ({
                                 <EmptyState title="No data available" description="No data available" icon={<DocumentTextIcon className="w-4 h-4" />} />
                             </div>
                         </ContextMenuTrigger>
-                        <ContextMenuContent className="w-52">
+                        <ContextMenuContent
+                className="w-52 max-h-[calc(100vh-2rem)] overflow-y-auto"
+                collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
+            >
                             <ContextMenuItem onSelect={() => setShowMockDataSheet(true)} className={cn({
                                 "hidden": disableEdit,
                             })}>
@@ -1014,7 +1042,9 @@ export const StorageUnitTable: FC<TableProps> = ({
                                     <ArrowDownCircleIcon className="w-4 h-4 mr-2" />
                                     Export
                                 </ContextMenuSubTrigger>
-                                <ContextMenuSubContent>
+                                <ContextMenuSubContent
+                        collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
+                    >
                                     <ContextMenuItem
                                         onSelect={() => setShowExportConfirm(true)}
                                     >

@@ -18,7 +18,7 @@ set -e
 # Default URLs
 BACKEND_URL="${BACKEND_URL:-http://localhost:8080}"
 FRONTEND_URL="${FRONTEND_URL:-http://localhost:3000}"
-MAX_WAIT="${MAX_WAIT:-120}"
+MAX_WAIT="${MAX_WAIT:-60}"
 
 echo "⏳ Waiting for services to be ready..."
 echo "   Backend:  $BACKEND_URL"
@@ -38,52 +38,54 @@ BACKEND_PORT=$(echo "$BACKEND_URL" | sed -e 's|.*:||' -e 's|/.*||')
 BACKEND_HOST=${BACKEND_HOST:-localhost}
 BACKEND_PORT=${BACKEND_PORT:-8080}
 
-# Wait for backend
-echo -n "⏳ Waiting for backend (${BACKEND_HOST}:${BACKEND_PORT})..."
-COUNTER=0
-while [ $COUNTER -lt $MAX_WAIT ]; do
-    if check_port "$BACKEND_HOST" "$BACKEND_PORT"; then
-        echo " ✅ Ready!"
-        break
-    fi
-    echo -n "."
-    sleep 1
-    COUNTER=$((COUNTER + 1))
-done
-
-if [ $COUNTER -eq $MAX_WAIT ]; then
-    echo " ❌ Timeout!"
-    echo "Backend failed to start within ${MAX_WAIT} seconds"
-    exit 1
-fi
-
 # Extract host and port from frontend URL
 FRONTEND_HOST=$(echo "$FRONTEND_URL" | sed -e 's|^[^/]*//||' -e 's|:.*||')
 FRONTEND_PORT=$(echo "$FRONTEND_URL" | sed -e 's|.*:||' -e 's|/.*||')
 FRONTEND_HOST=${FRONTEND_HOST:-localhost}
 FRONTEND_PORT=${FRONTEND_PORT:-3000}
 
-# Wait for frontend
-echo -n "⏳ Waiting for frontend (${FRONTEND_HOST}:${FRONTEND_PORT})..."
-COUNTER=0
-while [ $COUNTER -lt $MAX_WAIT ]; do
-    if check_port "$FRONTEND_HOST" "$FRONTEND_PORT"; then
-        echo " ✅ Ready!"
-        break
-    fi
-    echo -n "."
-    sleep 1
-    COUNTER=$((COUNTER + 1))
-done
+# Function to wait for a specific port
+wait_for_port_async() {
+    local name=$1
+    local host=$2
+    local port=$3
+    local max_wait=$4
+    local counter=0
 
-if [ $COUNTER -eq $MAX_WAIT ]; then
-    echo " ❌ Timeout!"
-    echo "Frontend failed to start within ${MAX_WAIT} seconds"
-    exit 1
+    echo "⏳ Waiting for $name ($host:$port)..."
+    while [ $counter -lt $max_wait ]; do
+        if check_port "$host" "$port"; then
+            echo "✅ $name is ready!"
+            return 0
+        fi
+        sleep 1
+        counter=$((counter + 1))
+    done
+    echo "❌ $name timeout after ${max_wait}s"
+    return 1
+}
+
+# Start parallel waits
+wait_for_port_async "Backend" "$BACKEND_HOST" "$BACKEND_PORT" "$MAX_WAIT" &
+PID_BACKEND=$!
+
+wait_for_port_async "Frontend" "$FRONTEND_HOST" "$FRONTEND_PORT" "$MAX_WAIT" &
+PID_FRONTEND=$!
+
+# Wait for both processes
+FAILED=false
+if ! wait $PID_BACKEND; then
+    echo "Backend failed to start within ${MAX_WAIT} seconds"
+    FAILED=true
 fi
 
-# Additional wait for stabilization
-echo "⏳ Waiting for services to stabilize..."
-sleep 3
+if ! wait $PID_FRONTEND; then
+    echo "Frontend failed to start within ${MAX_WAIT} seconds"
+    FAILED=true
+fi
+
+if [ "$FAILED" = "true" ]; then
+    exit 1
+fi
 
 echo "🎉 All services are ready!"

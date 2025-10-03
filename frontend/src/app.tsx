@@ -16,7 +16,7 @@
 
 import { Toaster } from "@clidey/ux";
 import { useUpdateSettingsMutation } from '@graphql';
-import { map } from "lodash";
+import map from "lodash/map";
 import { useCallback, useEffect } from "react";
 import { Route, Routes } from "react-router-dom";
 import { optInUser, optOutUser } from "./config/posthog";
@@ -24,13 +24,17 @@ import { PrivateRoute, PublicRoutes, getRoutes } from './config/routes';
 import { NavigateToDefault } from "./pages/chat/default-chat-route";
 import { useAppSelector } from "./store/hooks";
 import { useThemeCustomization } from "./hooks/use-theme-customization";
+import { useDesktopMenu } from "./hooks/useDesktop";
 
 export const App = () => {
   const [updateSettings, ] = useUpdateSettingsMutation();
   const metricsEnabled = useAppSelector(state => state.settings.metricsEnabled);
-  
+
   // Apply UI customization settings
   useThemeCustomization();
+
+  // Setup desktop menu and keyboard shortcuts
+  useDesktopMenu();
 
   useEffect(() => {
       if (metricsEnabled) {
