@@ -241,7 +241,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
     const dispatch = useAppDispatch();
     const [addExternalModel, setAddExternalModel] = useState(false);
     const [externalModelType, setExternalModel] = useState<string>(externalModelTypes[0].id);
-    const [externalModelToken, setExternalModelToken] = useState<string>();
+    const [externalModelToken, setExternalModelToken] = useState<string>("");
 
     const handleAddExternalModel = useCallback(() => {
         setAddExternalModel(status => !status);

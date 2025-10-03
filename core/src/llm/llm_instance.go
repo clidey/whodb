@@ -27,8 +27,10 @@ func Instance(config *engine.PluginConfig) *LLMClient {
 
 	llmType := LLMType(config.ExternalModel.Type)
 
-	if _, ok := llmInstance[llmType]; ok {
-		return llmInstance[llmType]
+	if instance, ok := llmInstance[llmType]; ok {
+		// Update the API key if it has changed
+		instance.APIKey = config.ExternalModel.Token
+		return instance
 	}
 	instance := &LLMClient{
 		Type:   llmType,
