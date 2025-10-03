@@ -79,20 +79,44 @@ func (p *ElasticSearchPlugin) GetStorageUnits(config *engine.PluginConfig, datab
 		return nil, err
 	}
 
-	var stats map[string]interface{}
+	var stats map[string]any
 	if err := json.NewDecoder(res.Body).Decode(&stats); err != nil {
 		log.Logger.WithError(err).Error("Failed to decode ElasticSearch indices stats response")
 		return nil, err
 	}
 
-	indicesStats := stats["indices"].(map[string]interface{})
+	indicesStats, ok := stats["indices"].(map[string]any)
+	if !ok {
+		log.Logger.Error("Unexpected indices stats format from ElasticSearch")
+		return nil, fmt.Errorf("unexpected indices stats format")
+	}
+
 	storageUnits := make([]engine.StorageUnit, 0, len(indicesStats))
 
 	for indexName, indexStatsInterface := range indicesStats {
-		indexStats := indexStatsInterface.(map[string]interface{})
-		primaries := indexStats["primaries"].(map[string]interface{})
-		docs := primaries["docs"].(map[string]interface{})
-		store := primaries["store"].(map[string]interface{})
+		indexStats, ok := indexStatsInterface.(map[string]any)
+		if !ok {
+			log.Logger.Warnf("Skipping index %s: unexpected stats format", indexName)
+			continue
+		}
+
+		primaries, ok := indexStats["primaries"].(map[string]any)
+		if !ok {
+			log.Logger.Warnf("Skipping index %s: missing primaries data", indexName)
+			continue
+		}
+
+		docs, ok := primaries["docs"].(map[string]any)
+		if !ok {
+			log.Logger.Warnf("Skipping index %s: missing docs data", indexName)
+			continue
+		}
+
+		store, ok := primaries["store"].(map[string]any)
+		if !ok {
+			log.Logger.Warnf("Skipping index %s: missing store data", indexName)
+			continue
+		}
 
 		storageUnit := engine.StorageUnit{
 			Name: indexName,
@@ -121,24 +145,24 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 		return nil, fmt.Errorf("error converting where condition: %v", err)
 	}
 
-	query := map[string]interface{}{
+	query := map[string]any{
 		"from": pageOffset,
 		"size": pageSize,
-		"query": map[string]interface{}{
+		"query": map[string]any{
 			"bool": elasticSearchConditions,
 		},
 	}
 
 	// Apply sorting if provided
 	if len(sort) > 0 {
-		sortArray := []map[string]interface{}{}
+		sortArray := []map[string]any{}
 		for _, s := range sort {
 			order := "asc"
 			if s.Direction == model.SortDirectionDesc {
 				order = "desc"
 			}
-			sortArray = append(sortArray, map[string]interface{}{
-				s.Column: map[string]interface{}{
+			sortArray = append(sortArray, map[string]any{
+				s.Column: map[string]any{
 					"order": order,
 				},
 			})
@@ -170,13 +194,13 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 		return nil, err
 	}
 
-	var searchResult map[string]interface{}
+	var searchResult map[string]any
 	if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
 		log.Logger.WithError(err).WithField("collection", collection).Error("Failed to decode ElasticSearch search response")
 		return nil, err
 	}
 
-	hits, ok := searchResult["hits"].(map[string]interface{})["hits"].([]interface{})
+	hits, ok := searchResult["hits"].(map[string]any)["hits"].([]any)
 	if !ok {
 		err := fmt.Errorf("invalid response structure")
 		log.Logger.WithError(err).WithField("collection", collection).Error("ElasticSearch search response has invalid structure")
@@ -191,8 +215,8 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 	}
 
 	for _, hit := range hits {
-		hitMap := hit.(map[string]interface{})
-		source := hitMap["_source"].(map[string]interface{})
+		hitMap := hit.(map[string]any)
+		source := hitMap["_source"].(map[string]any)
 		id := hitMap["_id"]
 		source["_id"] = id
 		jsonBytes, err := json.Marshal(source)
@@ -213,9 +237,138 @@ func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, sc
 	}, nil
 }
 
-func convertWhereConditionToES(where *model.WhereCondition) (map[string]interface{}, error) {
+// convertAtomicConditionToES converts an atomic where condition to an Elasticsearch query clause
+func convertAtomicConditionToES(atomic *model.AtomicWhereCondition) (map[string]any, error) {
+	if atomic == nil {
+		return nil, fmt.Errorf("atomic condition is nil")
+	}
+
+	// Handle different operators
+	switch atomic.Operator {
+	case "match", "MATCH":
+		// Full-text search
+		return map[string]any{
+			"match": map[string]any{
+				atomic.Key: atomic.Value,
+			},
+		}, nil
+
+	case "=", "eq", "EQ", "equals", "EQUALS":
+		// Exact match
+		return map[string]any{
+			"term": map[string]any{
+				atomic.Key: atomic.Value,
+			},
+		}, nil
+
+	case "!=", "ne", "NE", "not equals", "NOT EQUALS":
+		// Not equal
+		return map[string]any{
+			"bool": map[string]any{
+				"must_not": []map[string]any{
+					{
+						"term": map[string]any{
+							atomic.Key: atomic.Value,
+						},
+					},
+				},
+			},
+		}, nil
+
+	case "exists", "EXISTS":
+		// Field exists
+		return map[string]any{
+			"exists": map[string]any{
+				"field": atomic.Key,
+			},
+		}, nil
+
+	case "not exists", "NOT EXISTS":
+		// Field does not exist
+		return map[string]any{
+			"bool": map[string]any{
+				"must_not": []map[string]any{
+					{
+						"exists": map[string]any{
+							"field": atomic.Key,
+						},
+					},
+				},
+			},
+		}, nil
+
+	case ">", "gt", "GT":
+		// Greater than
+		return map[string]any{
+			"range": map[string]any{
+				atomic.Key: map[string]any{
+					"gt": atomic.Value,
+				},
+			},
+		}, nil
+
+	case ">=", "gte", "GTE":
+		// Greater than or equal
+		return map[string]any{
+			"range": map[string]any{
+				atomic.Key: map[string]any{
+					"gte": atomic.Value,
+				},
+			},
+		}, nil
+
+	case "<", "lt", "LT":
+		// Less than
+		return map[string]any{
+			"range": map[string]any{
+				atomic.Key: map[string]any{
+					"lt": atomic.Value,
+				},
+			},
+		}, nil
+
+	case "<=", "lte", "LTE":
+		// Less than or equal
+		return map[string]any{
+			"range": map[string]any{
+				atomic.Key: map[string]any{
+					"lte": atomic.Value,
+				},
+			},
+		}, nil
+
+	case "like", "LIKE", "contains", "CONTAINS":
+		// Wildcard search
+		return map[string]any{
+			"wildcard": map[string]any{
+				atomic.Key: map[string]any{
+					"value": fmt.Sprintf("*%v*", atomic.Value),
+				},
+			},
+		}, nil
+
+	case "prefix", "PREFIX", "starts with", "STARTS WITH":
+		// Prefix search
+		return map[string]any{
+			"prefix": map[string]any{
+				atomic.Key: atomic.Value,
+			},
+		}, nil
+
+	default:
+		// Default to match query for unknown operators
+		log.Logger.WithField("operator", atomic.Operator).Warn("Unknown operator, defaulting to match query")
+		return map[string]any{
+			"match": map[string]any{
+				atomic.Key: atomic.Value,
+			},
+		}, nil
+	}
+}
+
+func convertWhereConditionToES(where *model.WhereCondition) (map[string]any, error) {
 	if where == nil {
-		return map[string]interface{}{}, nil
+		return map[string]any{}, nil
 	}
 
 	switch where.Type {
@@ -225,30 +378,32 @@ func convertWhereConditionToES(where *model.WhereCondition) (map[string]interfac
 			log.Logger.WithError(err).Error("Invalid atomic where condition: missing atomic condition")
 			return nil, err
 		}
-		return map[string]interface{}{
-			"must": []map[string]interface{}{
-				{
-					"match": map[string]interface{}{
-						where.Atomic.Key: where.Atomic.Value,
-					},
-				},
-			},
+
+		// Convert atomic condition based on operator
+		clause, err := convertAtomicConditionToES(where.Atomic)
+		if err != nil {
+			return nil, err
+		}
+
+		return map[string]any{
+			"must": []map[string]any{clause},
 		}, nil
 
 	case model.WhereConditionTypeAnd:
 		if where.And == nil || len(where.And.Children) == 0 {
-			return map[string]interface{}{}, nil
+			return map[string]any{}, nil
 		}
-		mustClauses := []map[string]interface{}{}
+		mustClauses := []map[string]any{}
 		for _, child := range where.And.Children {
 			// Handle child conditions based on their type
 			if child.Type == model.WhereConditionTypeAtomic && child.Atomic != nil {
-				// For atomic children, add the match clause directly
-				mustClauses = append(mustClauses, map[string]interface{}{
-					"match": map[string]interface{}{
-						child.Atomic.Key: child.Atomic.Value,
-					},
-				})
+				// For atomic children, convert based on operator
+				clause, err := convertAtomicConditionToES(child.Atomic)
+				if err != nil {
+					log.Logger.WithError(err).Error("Failed to convert atomic condition in AND clause to ElasticSearch query")
+					return nil, err
+				}
+				mustClauses = append(mustClauses, clause)
 			} else {
 				// For nested AND/OR, we need to wrap them in a bool query
 				childCondition, err := convertWhereConditionToES(child)
@@ -257,27 +412,28 @@ func convertWhereConditionToES(where *model.WhereCondition) (map[string]interfac
 					return nil, err
 				}
 				// Wrap the child condition in a bool query
-				mustClauses = append(mustClauses, map[string]interface{}{
+				mustClauses = append(mustClauses, map[string]any{
 					"bool": childCondition,
 				})
 			}
 		}
-		return map[string]interface{}{"must": mustClauses}, nil
+		return map[string]any{"must": mustClauses}, nil
 
 	case model.WhereConditionTypeOr:
 		if where.Or == nil || len(where.Or.Children) == 0 {
-			return map[string]interface{}{}, nil
+			return map[string]any{}, nil
 		}
-		shouldClauses := []map[string]interface{}{}
+		shouldClauses := []map[string]any{}
 		for _, child := range where.Or.Children {
 			// Handle child conditions based on their type
 			if child.Type == model.WhereConditionTypeAtomic && child.Atomic != nil {
-				// For atomic children, add the match clause directly
-				shouldClauses = append(shouldClauses, map[string]interface{}{
-					"match": map[string]interface{}{
-						child.Atomic.Key: child.Atomic.Value,
-					},
-				})
+				// For atomic children, convert based on operator
+				clause, err := convertAtomicConditionToES(child.Atomic)
+				if err != nil {
+					log.Logger.WithError(err).Error("Failed to convert atomic condition in OR clause to ElasticSearch query")
+					return nil, err
+				}
+				shouldClauses = append(shouldClauses, clause)
 			} else {
 				// For nested AND/OR, we need to wrap them in a bool query
 				childCondition, err := convertWhereConditionToES(child)
@@ -286,12 +442,12 @@ func convertWhereConditionToES(where *model.WhereCondition) (map[string]interfac
 					return nil, err
 				}
 				// Wrap the child condition in a bool query
-				shouldClauses = append(shouldClauses, map[string]interface{}{
+				shouldClauses = append(shouldClauses, map[string]any{
 					"bool": childCondition,
 				})
 			}
 		}
-		return map[string]interface{}{
+		return map[string]any{
 			"should":               shouldClauses,
 			"minimum_should_match": 1, // Ensures at least one condition matches
 		}, nil
@@ -310,7 +466,7 @@ func (p *ElasticSearchPlugin) Chat(config *engine.PluginConfig, schema string, m
 	return nil, errors.ErrUnsupported
 }
 
-func (p *ElasticSearchPlugin) FormatValue(val interface{}) string {
+func (p *ElasticSearchPlugin) FormatValue(val any) string {
 	if val == nil {
 		return ""
 	}
@@ -318,8 +474,8 @@ func (p *ElasticSearchPlugin) FormatValue(val interface{}) string {
 }
 
 // GetColumnConstraints - not supported for ElasticSearch
-func (p *ElasticSearchPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]interface{}, error) {
-	return make(map[string]map[string]interface{}), nil
+func (p *ElasticSearchPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error) {
+	return make(map[string]map[string]any), nil
 }
 
 // ClearTableData - not supported for ElasticSearch
@@ -328,13 +484,13 @@ func (p *ElasticSearchPlugin) ClearTableData(config *engine.PluginConfig, schema
 }
 
 // WithTransaction executes the operation directly since ElasticSearch doesn't support transactions
-func (p *ElasticSearchPlugin) WithTransaction(config *engine.PluginConfig, operation func(tx any) error) error {
+func (p *ElasticSearchPlugin) WithTransaction(config *engine.PluginConfig, operation func(tx any) error) error { //nolint:unused
 	// ElasticSearch doesn't support transactions
 	// For now, just execute the operation directly
 	return operation(nil)
 }
 
-func (p *ElasticSearchPlugin) GetSupportedOperators() map[string]string {
+func (p *ElasticSearchPlugin) GetSupportedOperators() map[string]string { //nolint:unused
 	return supportedOperators
 }
 

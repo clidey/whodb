@@ -1,0 +1,370 @@
+# Common Makefile for WhoDB Desktop (CE and EE)
+# This file contains all shared build logic
+# Edition-specific Makefiles should include this file and set:
+#   EDITION, PKG_ID, GOWORK, BUILD_TAGS, OUTPUT_PREFIX, FRONTEND_BUILD_CMD, APP_NAME
+
+# NOTE: The -obfuscated flag is currently not working as it hangs indefinitely
+# Do not use -obfuscated in any build targets until this is resolved
+
+# Package metadata (override via environment if desired)
+VERSION ?= $(shell date +%Y.%m.%d.%H%M%S)
+NOTARY_PROFILE ?=
+APPLE_ID ?=
+TEAM_ID ?=
+APPLE_APP_PASSWORD ?=
+
+# Prepare frontend assets
+prepare:
+	@echo "Cleaning previous build artifacts..."
+	@rm -rf build/windows build/darwin build/linux build/bin build/assets build/index.html wails.lock frontend/dist
+	@echo "Preparing $(EDITION_NAME) build environment..."
+	@mkdir -p frontend/dist
+	@echo "Building frontend..."
+	@cd ../frontend && pnpm run $(FRONTEND_BUILD_CMD)
+	@cp -r ../frontend/build/* frontend/dist/
+
+# Development mode
+dev: prepare
+	ENVIRONMENT=dev GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails dev $(BUILD_TAGS)
+
+# Build for current platform
+build: prepare
+	@echo "Building WhoDB $(EDITION_NAME) Desktop for current platform..."
+	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean $(BUILD_TAGS) -ldflags="-s -w" -o $(OUTPUT_PREFIX)
+
+# Build for all platforms
+build-all: build-windows build-mac build-linux
+
+# Windows builds
+build-windows: prepare
+	@echo "Building WhoDB $(EDITION_NAME) for Windows AMD64..."
+	@mkdir -p build/windows/amd64
+	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean -platform windows/amd64 \
+		$(BUILD_TAGS) -windowsconsole=false -ldflags="-s -w" -o $(OUTPUT_PREFIX).exe
+	@mv build/bin/$(OUTPUT_PREFIX).exe build/windows/amd64/
+	@echo "Building WhoDB $(EDITION_NAME) for Windows ARM64..."
+	@mkdir -p build/windows/arm64
+	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean -platform windows/arm64 \
+		$(BUILD_TAGS) -windowsconsole=false -ldflags="-s -w" -o $(OUTPUT_PREFIX).exe
+	@mv build/bin/$(OUTPUT_PREFIX).exe build/windows/arm64/
+
+# macOS builds
+build-mac: prepare
+	@echo "Building WhoDB $(EDITION_NAME) for macOS Universal..."
+	@mkdir -p build/darwin/universal
+	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean -platform darwin/universal \
+		$(BUILD_TAGS) -ldflags="-s -w" -o $(OUTPUT_PREFIX)
+	@mv "build/bin/$(APP_NAME)" build/darwin/universal/ 2>/dev/null || mv build/bin/$(OUTPUT_PREFIX) build/darwin/universal/
+	@if [ -f "build/darwin/universal/$(APP_NAME)/Contents/Info.plist" ]; then \
+		/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $(VERSION)" "build/darwin/universal/$(APP_NAME)/Contents/Info.plist" || true; \
+		/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(VERSION)" "build/darwin/universal/$(APP_NAME)/Contents/Info.plist" || true; \
+	fi
+
+# macOS ARM64 build (Apple Silicon)
+build-mac-arm64: prepare
+	@echo "Building WhoDB $(EDITION_NAME) for macOS ARM64..."
+	@mkdir -p build/darwin/arm64
+	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean -platform darwin/arm64 \
+		$(BUILD_TAGS) -ldflags="-s -w" -o $(OUTPUT_PREFIX)
+	@mv "build/bin/$(APP_NAME)" build/darwin/arm64/ 2>/dev/null || mv build/bin/$(OUTPUT_PREFIX) build/darwin/arm64/
+	@if [ -f "build/darwin/arm64/$(APP_NAME)/Contents/Info.plist" ]; then \
+		/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $(VERSION)" "build/darwin/arm64/$(APP_NAME)/Contents/Info.plist" || true; \
+		/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(VERSION)" "build/darwin/arm64/$(APP_NAME)/Contents/Info.plist" || true; \
+	fi
+
+# macOS AMD64 build (Intel)
+build-mac-amd64: prepare
+	@echo "Building WhoDB $(EDITION_NAME) for macOS AMD64..."
+	@mkdir -p build/darwin/amd64
+	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean -platform darwin/amd64 \
+		$(BUILD_TAGS) -ldflags="-s -w" -o $(OUTPUT_PREFIX)
+	@mv "build/bin/$(APP_NAME)" build/darwin/amd64/ 2>/dev/null || mv build/bin/$(OUTPUT_PREFIX) build/darwin/amd64/
+	@if [ -f "build/darwin/amd64/$(APP_NAME)/Contents/Info.plist" ]; then \
+		/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $(VERSION)" "build/darwin/amd64/$(APP_NAME)/Contents/Info.plist" || true; \
+		/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(VERSION)" "build/darwin/amd64/$(APP_NAME)/Contents/Info.plist" || true; \
+	fi
+
+# Linux builds
+build-linux: prepare
+	@echo "Building WhoDB $(EDITION_NAME) for Linux (native architecture)..."
+	@mkdir -p build/linux/$$(uname -m)
+	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean \
+		$(BUILD_TAGS) $(LINUX_TAGS) -ldflags="-s -w" -o $(OUTPUT_PREFIX)
+	@mv build/bin/$(OUTPUT_PREFIX) build/linux/$$(uname -m)/
+	@echo "Note: Cross-compilation for other architectures requires proper toolchain setup"
+
+# Linux AMD64 build (use on AMD64 systems only)
+build-linux-amd64: prepare
+	@echo "Building WhoDB $(EDITION_NAME) for Linux AMD64..."
+	@mkdir -p build/linux/amd64
+	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean -platform linux/amd64 \
+		$(BUILD_TAGS) $(LINUX_TAGS) -ldflags="-s -w" -o $(OUTPUT_PREFIX)
+	@mv build/bin/$(OUTPUT_PREFIX) build/linux/amd64/
+
+# Linux ARM64 build (use on ARM64 systems only)
+build-linux-arm64: prepare
+	@echo "Building WhoDB $(EDITION_NAME) for Linux ARM64..."
+	@mkdir -p build/linux/arm64
+	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean -platform linux/arm64 \
+		$(BUILD_TAGS) $(LINUX_TAGS) -ldflags="-s -w" -o $(OUTPUT_PREFIX)
+	@mv build/bin/$(OUTPUT_PREFIX) build/linux/arm64/
+
+# Production builds with installers
+build-prod-windows: build-prod-windows-amd64 build-prod-windows-arm64
+	@echo "Built WhoDB $(EDITION_NAME) Windows installers for both AMD64 and ARM64"
+
+# Production build specifically for Windows AMD64
+build-prod-windows-amd64: prepare
+	@echo "Building WhoDB $(EDITION_NAME) Windows installer for AMD64..."
+	@mkdir -p build/windows/amd64
+	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean -platform windows/amd64 \
+		$(BUILD_TAGS) -nsis -upx -windowsconsole=false -ldflags="-s -w -H windowsgui" \
+		-o $(OUTPUT_PREFIX)-installer.exe
+	@mv build/bin/$(OUTPUT_PREFIX)-installer.exe build/windows/amd64/
+
+# Production build specifically for Windows ARM64
+build-prod-windows-arm64: prepare
+	@echo "Building WhoDB $(EDITION_NAME) Windows installer for ARM64..."
+	@mkdir -p build/windows/arm64
+	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean -platform windows/arm64 \
+		$(BUILD_TAGS) -nsis -upx -windowsconsole=false -ldflags="-s -w -H windowsgui" \
+		-o $(OUTPUT_PREFIX)-installer.exe
+	@mv build/bin/$(OUTPUT_PREFIX)-installer.exe build/windows/arm64/
+
+build-prod-mac: prepare
+	@echo "Building WhoDB $(EDITION_NAME) macOS app (no pkg flag)..."
+	@mkdir -p build/darwin/universal
+	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean -platform darwin/universal \
+		$(BUILD_TAGS) -ldflags="-s -w" -o $(OUTPUT_PREFIX)
+	@mv build/bin/$(OUTPUT_PREFIX).pkg build/darwin/universal/ 2>/dev/null || mv "build/bin/$(APP_NAME)" build/darwin/universal/
+	@if [ -f "build/darwin/universal/$(APP_NAME)/Contents/Info.plist" ]; then \
+		/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $(VERSION)" "build/darwin/universal/$(APP_NAME)/Contents/Info.plist" || true; \
+		/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(VERSION)" "build/darwin/universal/$(APP_NAME)/Contents/Info.plist" || true; \
+	fi
+
+# Production build for macOS ARM64 (optimized, no compression - UPX doesn't work well on macOS)
+build-prod-mac-arm64: prepare
+	@echo "Building WhoDB $(EDITION_NAME) macOS app for ARM64 (optimized)..."
+	@mkdir -p build/darwin/arm64
+	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean -platform darwin/arm64 \
+		$(BUILD_TAGS) -ldflags="-s -w" -o $(OUTPUT_PREFIX)
+	@mv "build/bin/$(APP_NAME)" build/darwin/arm64/ 2>/dev/null || mv build/bin/$(OUTPUT_PREFIX) build/darwin/arm64/
+	@if [ -f "build/darwin/arm64/$(APP_NAME)/Contents/Info.plist" ]; then \
+		/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $(VERSION)" "build/darwin/arm64/$(APP_NAME)/Contents/Info.plist" || true; \
+		/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(VERSION)" "build/darwin/arm64/$(APP_NAME)/Contents/Info.plist" || true; \
+	fi
+
+# Production build for macOS AMD64 (optimized, no compression - UPX doesn't work well on macOS)
+build-prod-mac-amd64: prepare
+	@echo "Building WhoDB $(EDITION_NAME) macOS app for AMD64 (optimized)..."
+	@mkdir -p build/darwin/amd64
+	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean -platform darwin/amd64 \
+		$(BUILD_TAGS) -ldflags="-s -w" -o $(OUTPUT_PREFIX)
+	@mv "build/bin/$(APP_NAME)" build/darwin/amd64/ 2>/dev/null || mv build/bin/$(OUTPUT_PREFIX) build/darwin/amd64/
+	@if [ -f "build/darwin/amd64/$(APP_NAME)/Contents/Info.plist" ]; then \
+		/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $(VERSION)" "build/darwin/amd64/$(APP_NAME)/Contents/Info.plist" || true; \
+		/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(VERSION)" "build/darwin/amd64/$(APP_NAME)/Contents/Info.plist" || true; \
+	fi
+
+# Create an unsigned .pkg that installs the app into /Applications
+package-mac: build-prod-mac
+	@echo "Packaging WhoDB $(EDITION_NAME) .app into unsigned .pkg (component)…"
+	@pkgbuild --component "build/darwin/universal/$(APP_NAME)" \
+		--install-location /Applications \
+		--identifier $(PKG_ID) --version $(VERSION) \
+		"build/darwin/universal/$(OUTPUT_PREFIX)-unsigned.pkg"
+	@echo "Unsigned package created at build/darwin/universal/$(OUTPUT_PREFIX)-unsigned.pkg"
+
+# Optionally sign the app and package if identities are provided
+# Env vars:
+#   CODESIGN_ID   = "Developer ID Application: Your Name (TEAMID)" (optional)
+#   INSTALLER_ID  = "Developer ID Installer: Your Name (TEAMID)" (required to sign .pkg)
+package-mac-signed: build-prod-mac
+	@echo "Preparing signed package (requires macOS signing identities)..."
+	@if [ -z "$$CODESIGN_ID" ]; then \
+		echo "ERROR: CODESIGN_ID is required. Set it as an environment variable or pass on the make command: make package-mac-signed CODESIGN_ID=\"Developer ID Application: Name (TEAMID)\" INSTALLER_ID=\"Developer ID Installer: Name (TEAMID)\""; \
+		exit 1; \
+	fi
+	@if [ -z "$$INSTALLER_ID" ]; then \
+		echo "ERROR: INSTALLER_ID is required. Set it as an environment variable or pass on the make command: make package-mac-signed INSTALLER_ID=\"Developer ID Installer: Name (TEAMID)\" CODESIGN_ID=\"Developer ID Application: Name (TEAMID)\""; \
+		exit 1; \
+	fi
+	@echo "Codesigning app with '$$CODESIGN_ID'..."
+	@codesign --deep --force --options runtime --timestamp --sign "$$CODESIGN_ID" "build/darwin/universal/$(APP_NAME)"
+	@$(MAKE) package-mac VERSION=$(VERSION) PKG_ID=$(PKG_ID)
+	@echo "Signing package with '$$INSTALLER_ID'..."
+	@productbuild --sign "$$INSTALLER_ID" --package "build/darwin/universal/$(OUTPUT_PREFIX)-unsigned.pkg" \
+		"build/darwin/universal/$(OUTPUT_PREFIX).pkg"
+	@echo "Signed package created at build/darwin/universal/$(OUTPUT_PREFIX).pkg"
+
+# Notarize signed package (requires either NOTARY_PROFILE or APPLE_ID/TEAM_ID/APPLE_APP_PASSWORD)
+notarize-mac: package-mac-signed
+	@if [ -n "$(NOTARY_PROFILE)" ]; then \
+		echo "Submitting for notarization using profile '$(NOTARY_PROFILE)'..."; \
+		xcrun notarytool submit "build/darwin/universal/$(OUTPUT_PREFIX).pkg" --keychain-profile "$(NOTARY_PROFILE)" --wait; \
+	else \
+		if [ -n "$(APPLE_ID)" ] && [ -n "$(TEAM_ID)" ] && [ -n "$(APPLE_APP_PASSWORD)" ]; then \
+			echo "Submitting for notarization using Apple ID credentials..."; \
+			xcrun notarytool submit "build/darwin/universal/$(OUTPUT_PREFIX).pkg" --apple-id "$(APPLE_ID)" --team-id "$(TEAM_ID)" --password "$(APPLE_APP_PASSWORD)" --wait; \
+		else \
+			echo "ERROR: Provide NOTARY_PROFILE, or APPLE_ID + TEAM_ID + APPLE_APP_PASSWORD"; \
+			exit 1; \
+		fi; \
+	fi
+	@echo "Stapling notarization ticket..."
+	@xcrun stapler staple "build/darwin/universal/$(OUTPUT_PREFIX).pkg" || true
+	@xcrun stapler staple "build/darwin/universal/$(APP_NAME)" || true
+	@echo "Notarization complete. Package ready for distribution."
+
+# One-shot target for GitHub Release: build, sign, notarize and staple
+release-mac: notarize-mac
+	@echo "GitHub release artifact ready: build/darwin/universal/$(OUTPUT_PREFIX).pkg"
+
+# Create a DMG containing the .app (drag-and-drop install UX)
+dmg-mac: build-prod-mac
+	@echo "Creating DMG for WhoDB $(EDITION_NAME)..."
+	@rm -rf build/dmgroot && mkdir -p build/dmgroot
+	@cp -R "build/darwin/universal/$(APP_NAME)" build/dmgroot/
+	@ln -sf /Applications build/dmgroot/Applications
+	@hdiutil create -volname "$(DMG_VOLNAME)" -srcfolder build/dmgroot -ov -format UDZO \
+		"build/darwin/universal/$(OUTPUT_PREFIX).dmg"
+	@echo "DMG created at build/darwin/universal/$(OUTPUT_PREFIX).dmg"
+
+# One-shot DMG release: codesign app (if provided), create DMG, notarize & staple DMG
+release-dmg: build-prod-mac
+	@if [ -z "$$CODESIGN_ID" ]; then \
+		echo "INFO: CODESIGN_ID not set; proceeding without app/DMG codesign"; \
+	else \
+		echo "Codesigning app with '$$CODESIGN_ID'..."; \
+		codesign --deep --force --options runtime --timestamp --sign "$$CODESIGN_ID" "build/darwin/universal/$(APP_NAME)"; \
+	fi
+	@$(MAKE) dmg-mac VERSION=$(VERSION)
+	@if [ -n "$$CODESIGN_ID" ]; then \
+		echo "Codesigning DMG with '$$CODESIGN_ID'..."; \
+		codesign --force --timestamp --sign "$$CODESIGN_ID" "build/darwin/universal/$(OUTPUT_PREFIX).dmg"; \
+	fi
+	@if [ -n "$(NOTARY_PROFILE)" ]; then \
+		echo "Submitting DMG for notarization using profile '$(NOTARY_PROFILE)'..."; \
+		xcrun notarytool submit "build/darwin/universal/$(OUTPUT_PREFIX).dmg" --keychain-profile "$(NOTARY_PROFILE)" --wait; \
+	elif [ -n "$(APPLE_ID)" ] && [ -n "$(TEAM_ID)" ] && [ -n "$(APPLE_APP_PASSWORD)" ]; then \
+		echo "Submitting DMG for notarization using Apple ID credentials..."; \
+		xcrun notarytool submit "build/darwin/universal/$(OUTPUT_PREFIX).dmg" --apple-id "$(APPLE_ID)" --team-id "$(TEAM_ID)" --password "$(APPLE_APP_PASSWORD)" --wait; \
+	else \
+		echo "ERROR: Provide NOTARY_PROFILE, or APPLE_ID + TEAM_ID + APPLE_APP_PASSWORD"; \
+		exit 1; \
+	fi
+	@echo "Stapling notarization ticket to DMG..."
+	@xcrun stapler staple "build/darwin/universal/$(OUTPUT_PREFIX).dmg" || true
+	@echo "DMG release artifact ready: build/darwin/universal/$(OUTPUT_PREFIX).dmg"
+
+# Build for Mac App Store (MAS) - requires MAS provisioning & entitlements
+# Required vars:
+#   MAS_CODESIGN_ID    = Apple Distribution: Name (TEAMID)
+#   MAS_INSTALLER_ID   = 3rd Party Mac Developer Installer: Name (TEAMID)
+#   MAS_PROFILE        = path to .provisionprofile
+#   MAS_ENTITLEMENTS   = path to entitlements.plist (with sandbox)
+MAS_CODESIGN_ID ?=
+MAS_INSTALLER_ID ?=
+MAS_PROFILE ?=
+MAS_ENTITLEMENTS ?=
+
+macstore-mac: build-prod-mac
+	@if [ -z "$(MAS_CODESIGN_ID)" ] || [ -z "$(MAS_INSTALLER_ID)" ] || [ -z "$(MAS_PROFILE)" ] || [ -z "$(MAS_ENTITLEMENTS)" ]; then \
+		echo "ERROR: MAS_CODESIGN_ID, MAS_INSTALLER_ID, MAS_PROFILE, MAS_ENTITLEMENTS are required"; \
+		exit 1; \
+	fi
+	@echo "Embedding provisioning profile..."
+	@cp "$(MAS_PROFILE)" "build/darwin/universal/$(APP_NAME)/Contents/embedded.provisionprofile"
+	@echo "Codesigning app for Mac App Store..."
+	@codesign --deep --force --options runtime --timestamp --entitlements "$(MAS_ENTITLEMENTS)" --sign "$(MAS_CODESIGN_ID)" "build/darwin/universal/$(APP_NAME)"
+	@echo "Creating signed MAS package..."
+	@productbuild --component "build/darwin/universal/$(APP_NAME)" /Applications --sign "$(MAS_INSTALLER_ID)" \
+		"build/darwin/universal/$(OUTPUT_PREFIX)-mas.pkg"
+	@echo "MAS package created at build/darwin/universal/$(OUTPUT_PREFIX)-mas.pkg (upload via Transporter/Xcode)."
+
+build-prod-linux: prepare
+	@echo "Building WhoDB $(EDITION_NAME) Linux binary for native architecture ($$(uname -m))..."
+	@mkdir -p build/linux/$$(uname -m)
+	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean \
+		$(BUILD_TAGS) $(LINUX_TAGS) -upx -ldflags="-s -w" -o $(OUTPUT_PREFIX)
+	@mv build/bin/$(OUTPUT_PREFIX) build/linux/$$(uname -m)/
+
+# Production build specifically for Linux AMD64
+build-prod-linux-amd64: prepare
+	@echo "Building WhoDB $(EDITION_NAME) Linux binary for AMD64..."
+	@mkdir -p build/linux/amd64
+	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean -platform linux/amd64 \
+		$(BUILD_TAGS) $(LINUX_TAGS) -upx -ldflags="-s -w" -o $(OUTPUT_PREFIX)
+	@mv build/bin/$(OUTPUT_PREFIX) build/linux/amd64/
+
+# Production build specifically for Linux ARM64
+build-prod-linux-arm64: prepare
+	@echo "Building WhoDB $(EDITION_NAME) Linux binary for ARM64..."
+	@mkdir -p build/linux/arm64
+	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean -platform linux/arm64 \
+		$(BUILD_TAGS) $(LINUX_TAGS) -upx -ldflags="-s -w" -o $(OUTPUT_PREFIX)
+	@mv build/bin/$(OUTPUT_PREFIX) build/linux/arm64/
+
+# Backup Linux builds (without webkit2_41 tag - for compatibility)
+build-linux-compat: prepare
+	@echo "Building WhoDB $(EDITION_NAME) for Linux (native architecture, compatibility mode)..."
+	@mkdir -p build/linux/$$(uname -m)-compat
+	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean \
+		$(BUILD_TAGS) -ldflags="-s -w" -o $(OUTPUT_PREFIX)-compat
+	@mv build/bin/$(OUTPUT_PREFIX)-compat build/linux/$$(uname -m)-compat/
+
+# Clean build artifacts (standalone clean command)
+clean:
+	@echo "Cleaning all build artifacts..."
+	@# On macOS, clear immutable/locked flags and ensure write perms before deleting
+	@if [ -d build ]; then \
+		(command -v chflags >/dev/null 2>&1 && chflags -R -f nouchg,noschg build) || true; \
+		chmod -R u+rwX build || true; \
+	fi
+	@rm -rf build/windows build/darwin build/linux build/bin build/assets build/index.html wails.lock frontend/dist || true
+
+# Install Wails CLI
+install-wails:
+	go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+# Check Wails dependencies
+doctor:
+	~/go/bin/wails doctor
+
+# Help target
+help:
+	@echo "WhoDB $(EDITION_NAME) Desktop Build System"
+	@echo "============================="
+	@echo ""
+	@echo "Targets:"
+	@echo "  make build           - Build for current platform"
+	@echo "  make build-all       - Build for all platforms"
+	@echo "  make build-windows   - Build for Windows (AMD64 & ARM64)"
+	@echo "  make build-mac       - Build for macOS (Universal)"
+	@echo "  make build-mac-arm64 - Build for macOS ARM64 only (Apple Silicon)"
+	@echo "  make build-mac-amd64 - Build for macOS AMD64 only (Intel)"
+	@echo "  make build-linux     - Build for Linux (AMD64 & ARM64)"
+	@echo "  make dev            - Run in development mode"
+	@echo "  make package-mac     - Create unsigned .pkg for macOS"
+	@echo "  make package-mac-signed - Sign app/.pkg using macOS identities"
+	@echo "  make notarize-mac    - Notarize & staple signed .pkg (uses NOTARY_PROFILE or APPLE_ID/TEAM_ID/APPLE_APP_PASSWORD)"
+	@echo "  make release-mac     - Build, sign, notarize (.pkg) for GitHub release"
+	@echo "  make dmg-mac         - Create DMG (drag-and-drop)"
+	@echo "  make release-dmg     - Build, (codesign), notarize & staple DMG for GitHub release"
+	@echo "  make macstore-mac    - Build package for Mac App Store (requires MAS_* vars)"
+	@echo ""
+	@echo "Production Builds (with installers):"
+	@echo "  make build-prod-windows     - Windows installers (both AMD64 & ARM64)"
+	@echo "  make build-prod-windows-amd64 - Windows installer for AMD64 only"
+	@echo "  make build-prod-windows-arm64 - Windows installer for ARM64 only"
+	@echo "  make build-prod-mac         - macOS app (.app) - Universal binary"
+	@echo "  make build-prod-mac-arm64   - macOS app for ARM64 only (optimized)"
+	@echo "  make build-prod-mac-amd64   - macOS app for AMD64 only (optimized)"
+	@echo "  make build-prod-linux       - Linux binary (native architecture)"
+	@echo "  make build-prod-linux-amd64 - Linux binary for AMD64"
+	@echo "  make build-prod-linux-arm64 - Linux binary for ARM64"
+	@echo ""
+	@echo "Utilities:"
+	@echo "  make clean          - Remove build artifacts"
+	@echo "  make doctor         - Check Wails dependencies"
+	@echo "  make help           - Show this help message"

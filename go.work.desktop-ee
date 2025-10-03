@@ -1,0 +1,8 @@
+go 1.25.1
+
+use (
+    ./core
+    ./ee
+    ./desktop-ee
+    ./desktop-common
+)

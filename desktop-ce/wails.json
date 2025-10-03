@@ -1,0 +1,24 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "WhoDB",
+  "outputfilename": "whodb-ce",
+  "frontend:dir": "frontend",
+  "frontend:install": "echo 'Frontend already built'",
+  "frontend:build": "echo 'Frontend already built'",
+  "frontend:dev:watcher": "pnpm run start",
+  "author": {
+    "name": "Clidey Inc",
+    "email": "support@whodb.com"
+  },
+  "info": {
+    "companyName": "Clidey Inc",
+    "productName": "WhoDB",
+    "productVersion": "1.0.0",
+    "copyright": "Copyright 2025 Clidey, Inc.",
+    "comments": "Database Management Tool"
+  },
+  "debounceMS": 100,
+  "devServer": "localhost:3000",
+  "appargs": "",
+  "runNonNativeBuildHooks": false
+}

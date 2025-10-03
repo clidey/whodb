@@ -12,6 +12,16 @@ ee/frontend/node_modules/
 worktree/
 frontend/cypress/screenshots/
 frontend/cypress/downloads/
+frontend/cypress/logs/
 .gemini/
 gha-creds-*.json
 cypress-results/
+desktop-ce/frontend/
+desktop-ce/build/*
+!desktop-ce/build/appicon.png
+desktop-ee/frontend/
+desktop-ee/build/*
+!desktop-ee/build/appicon.png
+*.bak
+frontend/package.json.md5
+frontend/wailsjs/

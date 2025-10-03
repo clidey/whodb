@@ -27,6 +27,7 @@ import (
 
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
@@ -74,6 +75,12 @@ func (p *Sqlite3Plugin) FormTableName(schema string, storageUnit string) string 
 }
 
 func (p *Sqlite3Plugin) GetDatabases(config *engine.PluginConfig) ([]string, error) {
+	// In desktop mode, return empty list - users will browse for files
+	if env.GetIsDesktopMode() {
+		return []string{}, nil
+	}
+
+	// Server mode: scan default directory
 	directory := getDefaultDirectory()
 	entries, err := os.ReadDir(directory)
 	if err != nil {

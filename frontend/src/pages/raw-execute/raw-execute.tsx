@@ -89,6 +89,7 @@ import { InternalRoutes } from "../../config/routes";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { ScratchpadActions } from "../../store/scratchpad";
 import { isEEFeatureEnabled, loadEEModule } from "../../utils/ee-loader";
+import { isDesktopApp } from "../../utils/external-links";
 import { IPluginProps, QueryView } from "./query-view";
 
 type EEExports = {
@@ -982,6 +983,20 @@ export const RawExecutePage: FC = () => {
         }
     }, [location.state, dispatch]);
 
+    // Listen for menu event to create new Scratchpad page
+    useEffect(() => {
+        if (!isDesktopApp()) return;
+
+        const handleNewScratchpadPage = () => {
+            dispatch(ScratchpadActions.addPage({ name: `Page ${pages.length + 1}` }));
+        };
+
+        window.addEventListener('menu:new-scratchpad-page', handleNewScratchpadPage);
+
+        return () => {
+            window.removeEventListener('menu:new-scratchpad-page', handleNewScratchpadPage);
+        };
+    }, [dispatch, pages.length]);
 
     const handleAdd = useCallback(() => {
         dispatch(ScratchpadActions.addPage({ name: `Page ${pages.length + 1}` }));

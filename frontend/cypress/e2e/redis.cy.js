@@ -22,7 +22,7 @@ describe('Redis E2E test', () => {
 
     it('runs full Redis E2E flow', () => {
         // login and setup
-        cy.login('Redis', dbHost, '', dbPassword, '');
+        cy.login('Redis', dbHost, undefined, dbPassword, undefined);
 
         // 1) Lists keys
         cy.getTables().then(storageUnitNames => {
@@ -118,7 +118,6 @@ describe('Redis E2E test', () => {
 
         // 6) Search highlights multiple matches in sequence
         cy.searchTable("john");
-        cy.wait(100);
         cy.getHighlightedCell().first().should('contain.text', 'john');
 
         // logout

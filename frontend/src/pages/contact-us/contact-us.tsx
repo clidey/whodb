@@ -19,6 +19,7 @@ import {ChatBubbleLeftRightIcon, EnvelopeIcon, GlobeAltIcon} from "../../compone
 import {FC} from "react";
 import {InternalPage} from "../../components/page";
 import {InternalRoutes} from "../../config/routes";
+import {openExternalLink} from "../../utils/external-links";
 
 export const ContactUsPage: FC = () => {
     return (
@@ -51,19 +52,13 @@ export const ContactUsPage: FC = () => {
                         <div className="flex flex-col gap-2">
                             <Label className="text-lg font-semibold">Community & Issues</Label>
                             <Button
-                                asChild
                                 variant="secondary"
                                 className="w-fit gap-2"
                                 data-testid="github-issue-button"
+                                onClick={(e) => openExternalLink("https://github.com/clidey/whodb/issues", e)}
                             >
-                                <a
-                                    href="https://github.com/clidey/whodb/issues"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    <GlobeAltIcon className="w-5 h-5"/>
-                                    Submit an Issue on GitHub
-                                </a>
+                                <GlobeAltIcon className="w-5 h-5"/>
+                                Submit an Issue on GitHub
                             </Button>
                             <p className="text-sm">For bug reports, feature requests, or to join the discussion, visit
                                 our GitHub issues page.</p>

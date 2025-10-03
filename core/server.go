@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/clidey/whodb/core/src"
+	"github.com/clidey/whodb/core/src/auth"
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
@@ -47,6 +48,7 @@ func main() {
 	if settingsCfg.MetricsEnabled {
 	}
 	src.InitializeEngine()
+	log.Logger.Infof("Auth configured: sources=[Authorization header, Cookie]; keyring service=%s", auth.GetKeyringServiceName())
 	r := router.InitializeRouter(staticFiles)
 
 	port := os.Getenv("PORT")

@@ -163,7 +163,7 @@ export const Graph: FC<IGraphProps> = (props) => {
                     <TabsList dir="column" className="px-1">
                         <TabsTrigger value="download" onClick={handleDownloadImage} asChild>
                             <Tip className="w-[30px]">
-                                <Button data-testid="icon-button" variant="ghost">
+                                <Button data-testid="graph-download-button" variant="ghost">
                                     <ArrowDownTrayIcon className="w-4 h-4 dark:text-white" />
                                 </Button>
                                 Download
@@ -171,7 +171,7 @@ export const Graph: FC<IGraphProps> = (props) => {
                         </TabsTrigger>
                         <TabsTrigger value="layout" onClick={() => onLayout("dagre")} asChild>
                             <Tip className="w-[30px]">
-                                <Button data-testid="icon-button" variant="ghost">
+                                <Button data-testid="graph-layout-button" variant="ghost">
                                     <RectangleGroupIcon className="w-4 h-4 dark:text-white" />
                                 </Button>
                                 Layout

@@ -111,6 +111,60 @@ export default defineConfig(async () => {
   build: {
     outDir: 'build',
     sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          // Core vendor libraries
+          if (id.includes('node_modules')) {
+            // React ecosystem
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              return 'react-vendor';
+            }
+
+            // Apollo and GraphQL
+            if (id.includes('@apollo') || id.includes('graphql')) {
+              return 'graphql-vendor';
+            }
+
+            // Large visualization libraries
+            if (id.includes('reactflow') || id.includes('@dagrejs/dagre')) {
+              return 'visualization';
+            }
+
+            // Code editor libraries
+            if (id.includes('codemirror') || id.includes('@codemirror')) {
+              return 'editor';
+            }
+
+            // Utility libraries
+            if (id.includes('lodash')) {
+              return 'utils';
+            }
+
+            // Analytics (PostHog)
+            if (id.includes('posthog')) {
+              return 'analytics';
+            }
+
+            // UI libraries
+            if (id.includes('@clidey/ux') || id.includes('@radix-ui') || id.includes('framer-motion')) {
+              return 'ui-vendor';
+            }
+
+            // Everything else in node_modules
+            return 'vendor';
+          }
+        },
+        chunkFileNames: (chunkInfo) => {
+          const facadeModuleId = chunkInfo.facadeModuleId ? chunkInfo.facadeModuleId.split('/').pop() : '';
+          if (chunkInfo.name.includes('vendor') || chunkInfo.name === 'utils' || chunkInfo.name === 'visualization' || chunkInfo.name === 'editor' || chunkInfo.name === 'analytics' || chunkInfo.name === 'ui-vendor') {
+            return `assets/[name]-[hash].js`;
+          }
+          return `assets/[name]-[hash].js`;
+        }
+      }
+    },
+    chunkSizeWarningLimit: 600, // Increase warning limit to 600KB since we're splitting properly
   },
     define: {
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),

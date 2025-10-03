@@ -16,7 +16,9 @@ package plugins
 
 import (
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/env"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 // Sort direction constants
@@ -75,6 +77,17 @@ const (
 
 type DBOperation[T any] func(*gorm.DB) (T, error)
 type DBCreationFunc func(pluginConfig *engine.PluginConfig) (*gorm.DB, error)
+
+func GetGormLogConfig() logger.LogLevel {
+	switch env.LogLevel {
+	case "warning":
+		return logger.Warn
+	case "error":
+		return logger.Error
+	default:
+		return logger.Silent
+	}
+}
 
 // WithConnection handles database connection lifecycle and executes the operation
 func WithConnection[T any](config *engine.PluginConfig, DB DBCreationFunc, operation DBOperation[T]) (T, error) {
