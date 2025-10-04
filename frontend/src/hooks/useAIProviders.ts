@@ -56,59 +56,40 @@ export const useAIProviders = () => {
     return providers.find(p => p.id === currentProviderId);
   }, [providers, currentProviderId]);
 
-  // Load providers on mount and reconcile with locally persisted providers
+  // Load providers on mount
   useEffect(() => {
     getAiProviders({
       onCompleted(data) {
         const serverProviders = data.AIProviders || [];
 
-        // Create maps for quick lookup
-        const byId = new Map<string, (typeof serverProviders)[number]>();
-        const byKey = new Map<string, (typeof serverProviders)[number]>(); // name|type
-        const keyFn = (name?: string | null, type?: string | null) => `${name || ''}|${type || ''}`;
-        for (const sp of serverProviders) {
-          byId.set(sp.Id, sp);
-          byKey.set(keyFn(sp.Name, sp.Type), sp);
-        }
-
-        // Union: take server providers and add any local user-defined providers missing on server
-        const localUserDefined = (providers || []).filter(lp => lp.isUserDefined && !lp.isEnvironmentDefined);
-
-        const finalServerSide = serverProviders.map(sp => {
-          const localMatch = providers.find(lp => lp.id === sp.Id) ||
-            providers.find(lp => keyFn(lp.name, lp.type) === keyFn(sp.Name, sp.Type));
+        // Map server providers and preserve API keys from localStorage
+        const finalProviders = serverProviders.map(sp => {
+          const localMatch = providers.find(lp => lp.id === sp.Id);
           return {
             id: sp.Id,
             name: sp.Name,
             type: sp.Type,
             baseURL: sp.BaseURL || undefined,
-            apiKey: localMatch?.apiKey || '',
+            apiKey: sp.IsUserDefined && localMatch?.apiKey ? localMatch.apiKey : '',
             isEnvironmentDefined: sp.IsEnvironmentDefined,
             isUserDefined: sp.IsUserDefined,
             settings: sp.Settings ? JSON.parse(sp.Settings) : (localMatch?.settings || {}),
           };
         });
 
-        const localOnly = localUserDefined.filter(lp => !byId.has(lp.id) && !byKey.has(keyFn(lp.name, lp.type)));
-        const finalProviders = [...finalServerSide, ...localOnly];
-
         dispatch(AIProvidersActions.setProviders(finalProviders));
 
-        // Maintain current selection where possible, repairing if the selected one was recreated
-        let nextCurrent = currentProviderId;
-        if (currentProviderId) {
-          const exists = finalProviders.some(p => p.id === currentProviderId);
-          if (!exists) nextCurrent = undefined;
-        }
-        if (!nextCurrent && finalProviders.length > 0) {
-          nextCurrent = finalProviders[0].id;
-        }
-        if (nextCurrent) {
-          dispatch(AIProvidersActions.setCurrentProvider({ id: nextCurrent }));
+        // Maintain current selection
+        if (currentProviderId && !finalProviders.some(p => p.id === currentProviderId)) {
+          if (finalProviders.length > 0) {
+            dispatch(AIProvidersActions.setCurrentProvider({ id: finalProviders[0].id }));
+          }
+        } else if (!currentProviderId && finalProviders.length > 0) {
+          dispatch(AIProvidersActions.setCurrentProvider({ id: finalProviders[0].id }));
         }
       },
     });
-  }, []);
+  }, []); // Only run on mount
 
   // Load models when provider changes
   useEffect(() => {
@@ -197,13 +178,12 @@ export const useAIProviders = () => {
       });
 
       if (data?.UpdateAIProvider) {
-        const existingProvider = providers.find(p => p.id === id);
         const updatedProvider = {
           id: data.UpdateAIProvider.Id,
           name: data.UpdateAIProvider.Name,
           type: data.UpdateAIProvider.Type,
           baseURL: data.UpdateAIProvider.BaseURL || undefined,
-          apiKey: apiKey || existingProvider?.apiKey || '',
+          apiKey: apiKey || '', // Always use the provided apiKey
           isEnvironmentDefined: data.UpdateAIProvider.IsEnvironmentDefined,
           isUserDefined: data.UpdateAIProvider.IsUserDefined,
           settings: data.UpdateAIProvider.Settings ? JSON.parse(data.UpdateAIProvider.Settings) : {}
@@ -214,7 +194,7 @@ export const useAIProviders = () => {
     } catch (error) {
       throw error;
     }
-  }, [updateProvider, dispatch, providers]);
+  }, [updateProvider, dispatch]);
 
   const handleDeleteProvider = useCallback(async (id: string) => {
     try {
