@@ -1,0 +1,14 @@
+query GetAIChat($providerId: String!, $schema: String!, $input: ChatInput!) {
+  AIChat(providerId: $providerId, schema: $schema, input: $input) {
+    Type
+    Result {
+      Columns {
+        Type
+        Name
+      }
+      Rows
+      DisableUpdate
+    }
+    Text
+  }
+}

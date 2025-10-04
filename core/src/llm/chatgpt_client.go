@@ -24,42 +24,56 @@ import (
 	"io"
 	"strings"
 
-	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
 )
 
-func prepareChatGPTRequest(c *LLMClient, prompt string, model LLMModel, receiverChan *chan string, isOpenAICompatible bool) (string, []byte, map[string]string, error) {
-	requestBody, err := json.Marshal(map[string]interface{}{
-		"model":    string(model),
+
+func prepareChatGPTRequestWithConfig(config *ProviderConfig, prompt string, model string, settings *ProviderSettings, receiverChan *chan string) (string, []byte, map[string]string, error) {
+	// Build request body with settings
+	requestData := map[string]interface{}{
+		"model":    model,
 		"messages": []map[string]string{{"role": "user", "content": prompt}},
 		"stream":   receiverChan != nil,
-	})
+	}
+
+	// Apply provider-specific settings
+	if settings.Temperature != nil {
+		requestData["temperature"] = *settings.Temperature
+	}
+	if settings.MaxTokens != nil {
+		requestData["max_tokens"] = *settings.MaxTokens
+	}
+	if settings.TopP != nil {
+		requestData["top_p"] = *settings.TopP
+	}
+	if settings.FrequencyPenalty != nil {
+		requestData["frequency_penalty"] = *settings.FrequencyPenalty
+	}
+	if settings.PresencePenalty != nil {
+		requestData["presence_penalty"] = *settings.PresencePenalty
+	}
+
+	requestBody, err := json.Marshal(requestData)
 	if err != nil {
 		log.Logger.WithError(err).Errorf("Failed to marshal ChatGPT request body for model %s", model)
 		return "", nil, nil, err
 	}
-	url := fmt.Sprintf("%v/chat/completions", env.GetOpenAIEndpoint())
-	if isOpenAICompatible {
-		url = fmt.Sprintf("%v/chat/completions", env.GetOpenAICompatibleEndpoint())
-	}
+
+	url := fmt.Sprintf("%v/chat/completions", config.BaseURL)
 	headers := map[string]string{
-		"Authorization": fmt.Sprintf("Bearer %s", c.APIKey),
+		"Authorization": fmt.Sprintf("Bearer %s", config.APIKey),
 		"Content-Type":  "application/json",
 	}
 	return url, requestBody, headers, nil
 }
 
-func prepareChatGPTModelsRequest(apiKey string) (string, map[string]string) {
-	url := fmt.Sprintf("%v/models", env.GetOpenAIEndpoint())
-	headers := map[string]string{
-		"Authorization": fmt.Sprintf("Bearer %s", apiKey),
-		"Content-Type":  "application/json",
-	}
-	return url, headers
+func prepareOpenAICompatibleRequestWithConfig(config *ProviderConfig, prompt string, model string, settings *ProviderSettings, receiverChan *chan string) (string, []byte, map[string]string, error) {
+	// Use the same logic as ChatGPT but with custom base URL
+	return prepareChatGPTRequestWithConfig(config, prompt, model, settings, receiverChan)
 }
 
+
 func parseChatGPTResponse(body io.ReadCloser, receiverChan *chan string, responseBuilder *strings.Builder) (*string, error) {
-	defer body.Close()
 
 	if receiverChan != nil {
 		reader := bufio.NewReader(body)
@@ -129,7 +143,6 @@ func parseChatGPTResponse(body io.ReadCloser, receiverChan *chan string, respons
 }
 
 func parseChatGPTModelsResponse(body io.ReadCloser) ([]string, error) {
-	defer body.Close()
 
 	var modelsResp struct {
 		Models []struct {

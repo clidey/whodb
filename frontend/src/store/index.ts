@@ -21,7 +21,7 @@ import { authReducers } from './auth';
 import { databaseReducers } from './database';
 import { settingsReducers } from "./settings";
 import { houdiniReducers } from './chat';
-import { aiModelsReducers } from './ai-models';
+import { aiProvidersReducers } from './ai-providers';
 import { scratchpadReducers, IScratchpadState } from './scratchpad';
 import { runMigrations } from './migrations';
 
@@ -112,10 +112,10 @@ const persistedReducer = combineReducers({
   database: persistReducer({ key: "database", storage, }, databaseReducers),
   settings: persistReducer({ key: "settings", storage }, settingsReducers),
   houdini: persistReducer({ key: "houdini", storage }, houdiniReducers),
-  aiModels: persistReducer({ key: "aiModels", storage }, aiModelsReducers),
-  scratchpad: persistReducer({ 
-    key: "scratchpad", 
-    storage, 
+  aiProviders: persistReducer({ key: "aiProviders", storage }, aiProvidersReducers),
+  scratchpad: persistReducer({
+    key: "scratchpad",
+    storage,
     transforms: [scratchpadTransform]
   }, scratchpadReducers),
 });

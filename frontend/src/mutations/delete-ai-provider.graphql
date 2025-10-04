@@ -1,0 +1,5 @@
+mutation DeleteAIProvider($Id: String!) {
+  DeleteAIProvider(Id: $Id) {
+    Status
+  }
+}

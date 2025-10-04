@@ -31,8 +31,7 @@ type Credentials struct {
 }
 
 type ExternalModel struct {
-	Type  string
-	Token string
+	ProviderId string // Provider ID is now the primary way to specify AI model
 }
 
 type PluginConfig struct {

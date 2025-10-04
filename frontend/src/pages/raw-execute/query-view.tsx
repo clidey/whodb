@@ -24,7 +24,6 @@ type PromiseFunction = (code: string) => Promise<any>;
 export type IPluginProps = {
     code: string;
     handleExecuteRef: React.MutableRefObject<PromiseFunction | null>;
-    providerId?: string;
     modelType: string;
     token?: string;
     schema: string;

@@ -17,12 +17,44 @@
 package llm
 
 import (
-	"github.com/clidey/whodb/core/src/env"
+    "fmt"
+    "io"
+
+    "github.com/clidey/whodb/core/src/env"
+    "github.com/clidey/whodb/core/src/log"
 )
 
-func getOpenAICompatibleModels() ([]string, error) {
-	if len(env.CustomModels) > 0 {
-		return env.CustomModels, nil
-	}
-	return []string{}, nil
+// getOpenAICompatibleModelsForConfig attempts to fetch models from the provider's /models endpoint.
+// Falls back to env.CustomModels if request fails or returns non-200.
+func getOpenAICompatibleModelsForConfig(config *ProviderConfig) ([]string, error) {
+    // Best-effort request to the provider's models endpoint
+    if config != nil && config.BaseURL != "" {
+        url := fmt.Sprintf("%v/models", config.BaseURL)
+        headers := map[string]string{
+            "Content-Type": "application/json",
+        }
+        if config.APIKey != "" {
+            headers["Authorization"] = fmt.Sprintf("Bearer %s", config.APIKey)
+        }
+
+        resp, err := sendHTTPRequest("GET", url, nil, headers)
+        if err == nil {
+            defer resp.Body.Close()
+            if resp.StatusCode == 200 {
+                // Reuse OpenAI models response parser
+                return parseChatGPTModelsResponse(resp.Body)
+            }
+            // Drain body for logging clarity
+            body, _ := io.ReadAll(resp.Body)
+            log.Logger.WithField("status", resp.StatusCode).Warnf("OpenAI-compatible models endpoint returned non-OK; falling back. Body: %s", string(body))
+        } else {
+            log.Logger.WithError(err).Warn("Failed to fetch OpenAI-compatible models; falling back to env models")
+        }
+    }
+
+    // Fallback to environment models if configured
+    if len(env.CustomModels) > 0 {
+        return env.CustomModels, nil
+    }
+    return []string{}, nil
 }

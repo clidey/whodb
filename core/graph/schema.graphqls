@@ -152,9 +152,21 @@ type AIChatMessage {
 }
 
 type AIProvider {
+  Id: String!
+  Name: String!
   Type: String!
-  ProviderId: String!
+  BaseURL: String
   IsEnvironmentDefined: Boolean!
+  IsUserDefined: Boolean!
+  Settings: String
+}
+
+input AIProviderInput {
+  Name: String!
+  Type: String!
+  BaseURL: String
+  APIKey: String
+  Settings: String
 }
 
 
@@ -169,8 +181,9 @@ type Query {
   RawExecute(query: String!): RowsResult!
   Graph(schema: String!): [GraphUnit!]!
   AIProviders: [AIProvider!]!
-  AIModel(providerId: String, modelType: String!, token: String): [String!]!
-  AIChat(providerId: String, modelType: String!, token: String, schema: String!, input: ChatInput!): [AIChatMessage!]!
+  AIProvider(Id: String!): AIProvider
+  AIModel(providerId: String!): [String!]!
+  AIChat(providerId: String!, schema: String!, input: ChatInput!): [AIChatMessage!]!
   SettingsConfig: SettingsConfig!
   MockDataMaxRowCount: Int!
 }
@@ -180,6 +193,11 @@ type Mutation {
   LoginWithProfile(profile: LoginProfileInput!): StatusResponse!
   Logout: StatusResponse!
   UpdateSettings(newSettings: SettingsConfigInput!): StatusResponse!
+
+  # AI Provider management
+  CreateAIProvider(Provider: AIProviderInput!): AIProvider!
+  UpdateAIProvider(Id: String!, Provider: AIProviderInput!): AIProvider!
+  DeleteAIProvider(Id: String!): StatusResponse!
 
   AddStorageUnit(schema: String!, storageUnit: String!, fields: [RecordInput!]!): StatusResponse!
   UpdateStorageUnit(schema: String!, storageUnit: String!, values: [RecordInput!]!, updatedColumns: [String!]!): StatusResponse!

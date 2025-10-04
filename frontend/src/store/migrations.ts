@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { IAIModelType } from './ai-models';
+import { IAIModelType } from '../types/ai';
 import { ensureModelTypesArray, ensureModelsArray } from '../utils/ai-models-helper';
 
 // Define the old database state structure for migration purposes
@@ -210,23 +210,114 @@ function setMigrationVersion(version: number): void {
 }
 
 /**
+ * Migrate from old AI models system to new provider-based system
+ */
+function migrateToAIProviders(): void {
+  try {
+    // Check if migration has already been performed
+    const migrationKey = 'aiProviders_migration_v2_completed';
+    if (localStorage.getItem(migrationKey) === 'true') {
+      return;
+    }
+
+    // Get the persisted aiModels state
+    const persistedAIModelsState = localStorage.getItem('persist:aiModels');
+    if (!persistedAIModelsState) {
+      // No AI models state to migrate, create empty providers state
+      const aiProvidersState = {
+        providers: JSON.stringify([]),
+        models: JSON.stringify([]),
+        _persist: JSON.stringify({ version: -1, rehydrated: true })
+      };
+      localStorage.setItem('persist:aiProviders', JSON.stringify(aiProvidersState));
+      localStorage.setItem(migrationKey, 'true');
+      return;
+    }
+
+    // Parse the persisted state
+    const aiModelsState = JSON.parse(persistedAIModelsState);
+
+    // Parse individual fields
+    let current, modelTypes, currentModel, models;
+    try {
+      current = aiModelsState.current ? JSON.parse(aiModelsState.current) : undefined;
+      modelTypes = aiModelsState.modelTypes ? JSON.parse(aiModelsState.modelTypes) : [];
+      currentModel = aiModelsState.currentModel ? JSON.parse(aiModelsState.currentModel) : undefined;
+      models = aiModelsState.models ? JSON.parse(aiModelsState.models) : [];
+    } catch (e) {
+      modelTypes = [];
+      models = [];
+    }
+
+    // Convert old modelTypes to new providers format
+    const providers: any[] = [];
+    let currentProviderId: string | undefined;
+
+    if (Array.isArray(modelTypes)) {
+      modelTypes.forEach((modelType: any) => {
+        if (modelType && modelType.id && modelType.modelType) {
+          // Create a provider from the old model type
+          const provider = {
+            id: modelType.id,
+            name: modelType.modelType + (modelType.isEnvironmentDefined ? ' (Environment)' : ''),
+            type: modelType.modelType,
+            isEnvironmentDefined: modelType.isEnvironmentDefined || false,
+            isUserDefined: !modelType.isEnvironmentDefined,
+            settings: {}
+          };
+
+          // If this was the current model type, save its ID
+          if (current && current.id === modelType.id) {
+            currentProviderId = provider.id;
+          }
+
+          providers.push(provider);
+        }
+      });
+    }
+
+    // Create the new aiProviders state
+    const aiProvidersState: any = {
+      providers: JSON.stringify(providers),
+      models: JSON.stringify(models || []),
+      currentModel: JSON.stringify(currentModel || null),
+      _persist: JSON.stringify({ version: -1, rehydrated: true })
+    };
+
+    if (currentProviderId) {
+      aiProvidersState.currentProviderId = JSON.stringify(currentProviderId);
+    }
+
+    // Save the new aiProviders state
+    localStorage.setItem('persist:aiProviders', JSON.stringify(aiProvidersState));
+
+    // Remove the old aiModels state
+    localStorage.removeItem('persist:aiModels');
+
+    // Mark migration as completed
+    localStorage.setItem(migrationKey, 'true');
+  } catch (error) {
+    console.error('Error during AI providers migration:', error);
+  }
+}
+
+/**
  * Run all necessary migrations
  */
 export function runMigrations(): void {
   const currentVersion = getMigrationVersion();
-  
+
   // Run migrations in order based on version
   if (currentVersion < 1) {
     migrateAIModelsFromDatabase();
     setMigrationVersion(1);
   }
-  
-  // Future migrations can be added here
-  // if (currentVersion < 2) {
-  //   runMigrationV2();
-  //   setMigrationVersion(2);
-  // }
-  
+
+  if (currentVersion < 2) {
+    migrateToAIProviders();
+    setMigrationVersion(2);
+  }
+
   // Always ensure AI models state is valid
   ensureValidAIModelsState();
 }

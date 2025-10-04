@@ -26,9 +26,21 @@ export type AiChatMessage = {
 
 export type AiProvider = {
   __typename?: 'AIProvider';
+  BaseURL?: Maybe<Scalars['String']['output']>;
+  Id: Scalars['String']['output'];
   IsEnvironmentDefined: Scalars['Boolean']['output'];
-  ProviderId: Scalars['String']['output'];
+  IsUserDefined: Scalars['Boolean']['output'];
+  Name: Scalars['String']['output'];
+  Settings?: Maybe<Scalars['String']['output']>;
   Type: Scalars['String']['output'];
+};
+
+export type AiProviderInput = {
+  APIKey?: InputMaybe<Scalars['String']['input']>;
+  BaseURL?: InputMaybe<Scalars['String']['input']>;
+  Name: Scalars['String']['input'];
+  Settings?: InputMaybe<Scalars['String']['input']>;
+  Type: Scalars['String']['input'];
 };
 
 export type AtomicWhereCondition = {
@@ -125,11 +137,14 @@ export type Mutation = {
   __typename?: 'Mutation';
   AddRow: StatusResponse;
   AddStorageUnit: StatusResponse;
+  CreateAIProvider: AiProvider;
+  DeleteAIProvider: StatusResponse;
   DeleteRow: StatusResponse;
   GenerateMockData: MockDataGenerationStatus;
   Login: StatusResponse;
   LoginWithProfile: StatusResponse;
   Logout: StatusResponse;
+  UpdateAIProvider: AiProvider;
   UpdateSettings: StatusResponse;
   UpdateStorageUnit: StatusResponse;
 };
@@ -146,6 +161,16 @@ export type MutationAddStorageUnitArgs = {
   fields: Array<RecordInput>;
   schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
+};
+
+
+export type MutationCreateAiProviderArgs = {
+  Provider: AiProviderInput;
+};
+
+
+export type MutationDeleteAiProviderArgs = {
+  Id: Scalars['String']['input'];
 };
 
 
@@ -171,6 +196,12 @@ export type MutationLoginWithProfileArgs = {
 };
 
 
+export type MutationUpdateAiProviderArgs = {
+  Id: Scalars['String']['input'];
+  Provider: AiProviderInput;
+};
+
+
 export type MutationUpdateSettingsArgs = {
   newSettings: SettingsConfigInput;
 };
@@ -191,6 +222,7 @@ export type Query = {
   __typename?: 'Query';
   AIChat: Array<AiChatMessage>;
   AIModel: Array<Scalars['String']['output']>;
+  AIProvider?: Maybe<AiProvider>;
   AIProviders: Array<AiProvider>;
   Columns: Array<Column>;
   Database: Array<Scalars['String']['output']>;
@@ -208,17 +240,18 @@ export type Query = {
 
 export type QueryAiChatArgs = {
   input: ChatInput;
-  modelType: Scalars['String']['input'];
-  providerId?: InputMaybe<Scalars['String']['input']>;
+  providerId: Scalars['String']['input'];
   schema: Scalars['String']['input'];
-  token?: InputMaybe<Scalars['String']['input']>;
 };
 
 
 export type QueryAiModelArgs = {
-  modelType: Scalars['String']['input'];
-  providerId?: InputMaybe<Scalars['String']['input']>;
-  token?: InputMaybe<Scalars['String']['input']>;
+  providerId: Scalars['String']['input'];
+};
+
+
+export type QueryAiProviderArgs = {
+  Id: Scalars['String']['input'];
 };
 
 
@@ -335,6 +368,20 @@ export type GetVersionQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type GetVersionQuery = { __typename?: 'Query', Version: string };
 
+export type CreateAiProviderMutationVariables = Exact<{
+  provider: AiProviderInput;
+}>;
+
+
+export type CreateAiProviderMutation = { __typename?: 'Mutation', CreateAIProvider: { __typename?: 'AIProvider', Id: string, Name: string, Type: string, BaseURL?: string | null, IsEnvironmentDefined: boolean, IsUserDefined: boolean, Settings?: string | null } };
+
+export type DeleteAiProviderMutationVariables = Exact<{
+  Id: Scalars['String']['input'];
+}>;
+
+
+export type DeleteAiProviderMutation = { __typename?: 'Mutation', DeleteAIProvider: { __typename?: 'StatusResponse', Status: boolean } };
+
 export type MockDataMaxRowCountQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -346,6 +393,14 @@ export type GenerateMockDataMutationVariables = Exact<{
 
 
 export type GenerateMockDataMutation = { __typename?: 'Mutation', GenerateMockData: { __typename?: 'MockDataGenerationStatus', AmountGenerated: number } };
+
+export type UpdateAiProviderMutationVariables = Exact<{
+  Id: Scalars['String']['input'];
+  provider: AiProviderInput;
+}>;
+
+
+export type UpdateAiProviderMutation = { __typename?: 'Mutation', UpdateAIProvider: { __typename?: 'AIProvider', Id: string, Name: string, Type: string, BaseURL?: string | null, IsEnvironmentDefined: boolean, IsUserDefined: boolean, Settings?: string | null } };
 
 export type GetDatabaseQueryVariables = Exact<{
   type: Scalars['String']['input'];
@@ -376,29 +431,7 @@ export type LogoutMutation = { __typename?: 'Mutation', Logout: { __typename?: '
 export type GetAiProvidersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetAiProvidersQuery = { __typename?: 'Query', AIProviders: Array<{ __typename?: 'AIProvider', Type: string, ProviderId: string, IsEnvironmentDefined: boolean }> };
-
-export type GetAiChatQueryVariables = Exact<{
-  providerId?: InputMaybe<Scalars['String']['input']>;
-  modelType: Scalars['String']['input'];
-  token?: InputMaybe<Scalars['String']['input']>;
-  schema: Scalars['String']['input'];
-  previousConversation: Scalars['String']['input'];
-  query: Scalars['String']['input'];
-  model: Scalars['String']['input'];
-}>;
-
-
-export type GetAiChatQuery = { __typename?: 'Query', AIChat: Array<{ __typename?: 'AIChatMessage', Type: string, Text: string, Result?: { __typename?: 'RowsResult', Rows: Array<Array<string>>, Columns: Array<{ __typename?: 'Column', Type: string, Name: string }> } | null }> };
-
-export type GetAiModelsQueryVariables = Exact<{
-  providerId?: InputMaybe<Scalars['String']['input']>;
-  modelType: Scalars['String']['input'];
-  token?: InputMaybe<Scalars['String']['input']>;
-}>;
-
-
-export type GetAiModelsQuery = { __typename?: 'Query', AIModel: Array<string> };
+export type GetAiProvidersQuery = { __typename?: 'Query', AIProviders: Array<{ __typename?: 'AIProvider', Id: string, Name: string, Type: string, BaseURL?: string | null, IsEnvironmentDefined: boolean, IsUserDefined: boolean, Settings?: string | null }> };
 
 export type GetGraphQueryVariables = Exact<{
   schema: Scalars['String']['input'];
@@ -489,6 +522,22 @@ export type UpdateStorageUnitMutationVariables = Exact<{
 
 
 export type UpdateStorageUnitMutation = { __typename?: 'Mutation', UpdateStorageUnit: { __typename?: 'StatusResponse', Status: boolean } };
+
+export type GetAiChatQueryVariables = Exact<{
+  providerId: Scalars['String']['input'];
+  schema: Scalars['String']['input'];
+  input: ChatInput;
+}>;
+
+
+export type GetAiChatQuery = { __typename?: 'Query', AIChat: Array<{ __typename?: 'AIChatMessage', Type: string, Text: string, Result?: { __typename?: 'RowsResult', Rows: Array<Array<string>>, DisableUpdate: boolean, Columns: Array<{ __typename?: 'Column', Type: string, Name: string }> } | null }> };
+
+export type GetAiModelsQueryVariables = Exact<{
+  providerId: Scalars['String']['input'];
+}>;
+
+
+export type GetAiModelsQuery = { __typename?: 'Query', AIModel: Array<string> };
 
 
 export const GetProfilesDocument = gql`
@@ -609,6 +658,78 @@ export type GetVersionQueryHookResult = ReturnType<typeof useGetVersionQuery>;
 export type GetVersionLazyQueryHookResult = ReturnType<typeof useGetVersionLazyQuery>;
 export type GetVersionSuspenseQueryHookResult = ReturnType<typeof useGetVersionSuspenseQuery>;
 export type GetVersionQueryResult = Apollo.QueryResult<GetVersionQuery, GetVersionQueryVariables>;
+export const CreateAiProviderDocument = gql`
+    mutation CreateAIProvider($provider: AIProviderInput!) {
+  CreateAIProvider(Provider: $provider) {
+    Id
+    Name
+    Type
+    BaseURL
+    IsEnvironmentDefined
+    IsUserDefined
+    Settings
+  }
+}
+    `;
+export type CreateAiProviderMutationFn = Apollo.MutationFunction<CreateAiProviderMutation, CreateAiProviderMutationVariables>;
+
+/**
+ * __useCreateAiProviderMutation__
+ *
+ * To run a mutation, you first call `useCreateAiProviderMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateAiProviderMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createAiProviderMutation, { data, loading, error }] = useCreateAiProviderMutation({
+ *   variables: {
+ *      provider: // value for 'provider'
+ *   },
+ * });
+ */
+export function useCreateAiProviderMutation(baseOptions?: Apollo.MutationHookOptions<CreateAiProviderMutation, CreateAiProviderMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateAiProviderMutation, CreateAiProviderMutationVariables>(CreateAiProviderDocument, options);
+      }
+export type CreateAiProviderMutationHookResult = ReturnType<typeof useCreateAiProviderMutation>;
+export type CreateAiProviderMutationResult = Apollo.MutationResult<CreateAiProviderMutation>;
+export type CreateAiProviderMutationOptions = Apollo.BaseMutationOptions<CreateAiProviderMutation, CreateAiProviderMutationVariables>;
+export const DeleteAiProviderDocument = gql`
+    mutation DeleteAIProvider($Id: String!) {
+  DeleteAIProvider(Id: $Id) {
+    Status
+  }
+}
+    `;
+export type DeleteAiProviderMutationFn = Apollo.MutationFunction<DeleteAiProviderMutation, DeleteAiProviderMutationVariables>;
+
+/**
+ * __useDeleteAiProviderMutation__
+ *
+ * To run a mutation, you first call `useDeleteAiProviderMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteAiProviderMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteAiProviderMutation, { data, loading, error }] = useDeleteAiProviderMutation({
+ *   variables: {
+ *      Id: // value for 'Id'
+ *   },
+ * });
+ */
+export function useDeleteAiProviderMutation(baseOptions?: Apollo.MutationHookOptions<DeleteAiProviderMutation, DeleteAiProviderMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteAiProviderMutation, DeleteAiProviderMutationVariables>(DeleteAiProviderDocument, options);
+      }
+export type DeleteAiProviderMutationHookResult = ReturnType<typeof useDeleteAiProviderMutation>;
+export type DeleteAiProviderMutationResult = Apollo.MutationResult<DeleteAiProviderMutation>;
+export type DeleteAiProviderMutationOptions = Apollo.BaseMutationOptions<DeleteAiProviderMutation, DeleteAiProviderMutationVariables>;
 export const MockDataMaxRowCountDocument = gql`
     query MockDataMaxRowCount {
   MockDataMaxRowCount
@@ -679,6 +800,46 @@ export function useGenerateMockDataMutation(baseOptions?: Apollo.MutationHookOpt
 export type GenerateMockDataMutationHookResult = ReturnType<typeof useGenerateMockDataMutation>;
 export type GenerateMockDataMutationResult = Apollo.MutationResult<GenerateMockDataMutation>;
 export type GenerateMockDataMutationOptions = Apollo.BaseMutationOptions<GenerateMockDataMutation, GenerateMockDataMutationVariables>;
+export const UpdateAiProviderDocument = gql`
+    mutation UpdateAIProvider($Id: String!, $provider: AIProviderInput!) {
+  UpdateAIProvider(Id: $Id, Provider: $provider) {
+    Id
+    Name
+    Type
+    BaseURL
+    IsEnvironmentDefined
+    IsUserDefined
+    Settings
+  }
+}
+    `;
+export type UpdateAiProviderMutationFn = Apollo.MutationFunction<UpdateAiProviderMutation, UpdateAiProviderMutationVariables>;
+
+/**
+ * __useUpdateAiProviderMutation__
+ *
+ * To run a mutation, you first call `useUpdateAiProviderMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateAiProviderMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateAiProviderMutation, { data, loading, error }] = useUpdateAiProviderMutation({
+ *   variables: {
+ *      Id: // value for 'Id'
+ *      provider: // value for 'provider'
+ *   },
+ * });
+ */
+export function useUpdateAiProviderMutation(baseOptions?: Apollo.MutationHookOptions<UpdateAiProviderMutation, UpdateAiProviderMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateAiProviderMutation, UpdateAiProviderMutationVariables>(UpdateAiProviderDocument, options);
+      }
+export type UpdateAiProviderMutationHookResult = ReturnType<typeof useUpdateAiProviderMutation>;
+export type UpdateAiProviderMutationResult = Apollo.MutationResult<UpdateAiProviderMutation>;
+export type UpdateAiProviderMutationOptions = Apollo.BaseMutationOptions<UpdateAiProviderMutation, UpdateAiProviderMutationVariables>;
 export const GetDatabaseDocument = gql`
     query GetDatabase($type: String!) {
   Database(type: $type)
@@ -818,9 +979,13 @@ export type LogoutMutationOptions = Apollo.BaseMutationOptions<LogoutMutation, L
 export const GetAiProvidersDocument = gql`
     query GetAIProviders {
   AIProviders {
+    Id
+    Name
     Type
-    ProviderId
+    BaseURL
     IsEnvironmentDefined
+    IsUserDefined
+    Settings
   }
 }
     `;
@@ -856,106 +1021,6 @@ export type GetAiProvidersQueryHookResult = ReturnType<typeof useGetAiProvidersQ
 export type GetAiProvidersLazyQueryHookResult = ReturnType<typeof useGetAiProvidersLazyQuery>;
 export type GetAiProvidersSuspenseQueryHookResult = ReturnType<typeof useGetAiProvidersSuspenseQuery>;
 export type GetAiProvidersQueryResult = Apollo.QueryResult<GetAiProvidersQuery, GetAiProvidersQueryVariables>;
-export const GetAiChatDocument = gql`
-    query GetAIChat($providerId: String, $modelType: String!, $token: String, $schema: String!, $previousConversation: String!, $query: String!, $model: String!) {
-  AIChat(
-    providerId: $providerId
-    modelType: $modelType
-    token: $token
-    schema: $schema
-    input: {PreviousConversation: $previousConversation, Query: $query, Model: $model}
-  ) {
-    Type
-    Result {
-      Columns {
-        Type
-        Name
-      }
-      Rows
-    }
-    Text
-  }
-}
-    `;
-
-/**
- * __useGetAiChatQuery__
- *
- * To run a query within a React component, call `useGetAiChatQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetAiChatQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetAiChatQuery({
- *   variables: {
- *      providerId: // value for 'providerId'
- *      modelType: // value for 'modelType'
- *      token: // value for 'token'
- *      schema: // value for 'schema'
- *      previousConversation: // value for 'previousConversation'
- *      query: // value for 'query'
- *      model: // value for 'model'
- *   },
- * });
- */
-export function useGetAiChatQuery(baseOptions: Apollo.QueryHookOptions<GetAiChatQuery, GetAiChatQueryVariables> & ({ variables: GetAiChatQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetAiChatQuery, GetAiChatQueryVariables>(GetAiChatDocument, options);
-      }
-export function useGetAiChatLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetAiChatQuery, GetAiChatQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetAiChatQuery, GetAiChatQueryVariables>(GetAiChatDocument, options);
-        }
-export function useGetAiChatSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAiChatQuery, GetAiChatQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetAiChatQuery, GetAiChatQueryVariables>(GetAiChatDocument, options);
-        }
-export type GetAiChatQueryHookResult = ReturnType<typeof useGetAiChatQuery>;
-export type GetAiChatLazyQueryHookResult = ReturnType<typeof useGetAiChatLazyQuery>;
-export type GetAiChatSuspenseQueryHookResult = ReturnType<typeof useGetAiChatSuspenseQuery>;
-export type GetAiChatQueryResult = Apollo.QueryResult<GetAiChatQuery, GetAiChatQueryVariables>;
-export const GetAiModelsDocument = gql`
-    query GetAIModels($providerId: String, $modelType: String!, $token: String) {
-  AIModel(providerId: $providerId, modelType: $modelType, token: $token)
-}
-    `;
-
-/**
- * __useGetAiModelsQuery__
- *
- * To run a query within a React component, call `useGetAiModelsQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetAiModelsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetAiModelsQuery({
- *   variables: {
- *      providerId: // value for 'providerId'
- *      modelType: // value for 'modelType'
- *      token: // value for 'token'
- *   },
- * });
- */
-export function useGetAiModelsQuery(baseOptions: Apollo.QueryHookOptions<GetAiModelsQuery, GetAiModelsQueryVariables> & ({ variables: GetAiModelsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetAiModelsQuery, GetAiModelsQueryVariables>(GetAiModelsDocument, options);
-      }
-export function useGetAiModelsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetAiModelsQuery, GetAiModelsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetAiModelsQuery, GetAiModelsQueryVariables>(GetAiModelsDocument, options);
-        }
-export function useGetAiModelsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAiModelsQuery, GetAiModelsQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetAiModelsQuery, GetAiModelsQueryVariables>(GetAiModelsDocument, options);
-        }
-export type GetAiModelsQueryHookResult = ReturnType<typeof useGetAiModelsQuery>;
-export type GetAiModelsLazyQueryHookResult = ReturnType<typeof useGetAiModelsLazyQuery>;
-export type GetAiModelsSuspenseQueryHookResult = ReturnType<typeof useGetAiModelsSuspenseQuery>;
-export type GetAiModelsQueryResult = Apollo.QueryResult<GetAiModelsQuery, GetAiModelsQueryVariables>;
 export const GetGraphDocument = gql`
     query GetGraph($schema: String!) {
   Graph(schema: $schema) {
@@ -1412,3 +1477,92 @@ export function useUpdateStorageUnitMutation(baseOptions?: Apollo.MutationHookOp
 export type UpdateStorageUnitMutationHookResult = ReturnType<typeof useUpdateStorageUnitMutation>;
 export type UpdateStorageUnitMutationResult = Apollo.MutationResult<UpdateStorageUnitMutation>;
 export type UpdateStorageUnitMutationOptions = Apollo.BaseMutationOptions<UpdateStorageUnitMutation, UpdateStorageUnitMutationVariables>;
+export const GetAiChatDocument = gql`
+    query GetAIChat($providerId: String!, $schema: String!, $input: ChatInput!) {
+  AIChat(providerId: $providerId, schema: $schema, input: $input) {
+    Type
+    Result {
+      Columns {
+        Type
+        Name
+      }
+      Rows
+      DisableUpdate
+    }
+    Text
+  }
+}
+    `;
+
+/**
+ * __useGetAiChatQuery__
+ *
+ * To run a query within a React component, call `useGetAiChatQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetAiChatQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetAiChatQuery({
+ *   variables: {
+ *      providerId: // value for 'providerId'
+ *      schema: // value for 'schema'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useGetAiChatQuery(baseOptions: Apollo.QueryHookOptions<GetAiChatQuery, GetAiChatQueryVariables> & ({ variables: GetAiChatQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetAiChatQuery, GetAiChatQueryVariables>(GetAiChatDocument, options);
+      }
+export function useGetAiChatLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetAiChatQuery, GetAiChatQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetAiChatQuery, GetAiChatQueryVariables>(GetAiChatDocument, options);
+        }
+export function useGetAiChatSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAiChatQuery, GetAiChatQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetAiChatQuery, GetAiChatQueryVariables>(GetAiChatDocument, options);
+        }
+export type GetAiChatQueryHookResult = ReturnType<typeof useGetAiChatQuery>;
+export type GetAiChatLazyQueryHookResult = ReturnType<typeof useGetAiChatLazyQuery>;
+export type GetAiChatSuspenseQueryHookResult = ReturnType<typeof useGetAiChatSuspenseQuery>;
+export type GetAiChatQueryResult = Apollo.QueryResult<GetAiChatQuery, GetAiChatQueryVariables>;
+export const GetAiModelsDocument = gql`
+    query GetAIModels($providerId: String!) {
+  AIModel(providerId: $providerId)
+}
+    `;
+
+/**
+ * __useGetAiModelsQuery__
+ *
+ * To run a query within a React component, call `useGetAiModelsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetAiModelsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetAiModelsQuery({
+ *   variables: {
+ *      providerId: // value for 'providerId'
+ *   },
+ * });
+ */
+export function useGetAiModelsQuery(baseOptions: Apollo.QueryHookOptions<GetAiModelsQuery, GetAiModelsQueryVariables> & ({ variables: GetAiModelsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetAiModelsQuery, GetAiModelsQueryVariables>(GetAiModelsDocument, options);
+      }
+export function useGetAiModelsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetAiModelsQuery, GetAiModelsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetAiModelsQuery, GetAiModelsQueryVariables>(GetAiModelsDocument, options);
+        }
+export function useGetAiModelsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAiModelsQuery, GetAiModelsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetAiModelsQuery, GetAiModelsQueryVariables>(GetAiModelsDocument, options);
+        }
+export type GetAiModelsQueryHookResult = ReturnType<typeof useGetAiModelsQuery>;
+export type GetAiModelsLazyQueryHookResult = ReturnType<typeof useGetAiModelsLazyQuery>;
+export type GetAiModelsSuspenseQueryHookResult = ReturnType<typeof useGetAiModelsSuspenseQuery>;
+export type GetAiModelsQueryResult = Apollo.QueryResult<GetAiModelsQuery, GetAiModelsQueryVariables>;

@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -55,42 +56,42 @@ func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCre
 
 // LoginWithProfile is the resolver for the LoginWithProfile field.
 func (r *mutationResolver) LoginWithProfile(ctx context.Context, profile model.LoginProfileInput) (*model.StatusResponse, error) {
-    profiles := src.GetLoginProfiles()
-    for i, loginProfile := range profiles {
-        profileId := src.GetLoginProfileId(i, loginProfile)
-        if profile.ID == profileId {
-            if !src.MainEngine.Choose(engine.DatabaseType(loginProfile.Type)).IsAvailable(&engine.PluginConfig{
-                Credentials: src.GetLoginCredentials(loginProfile),
-            }) {
+	profiles := src.GetLoginProfiles()
+	for i, loginProfile := range profiles {
+		profileId := src.GetLoginProfileId(i, loginProfile)
+		if profile.ID == profileId {
+			if !src.MainEngine.Choose(engine.DatabaseType(loginProfile.Type)).IsAvailable(&engine.PluginConfig{
+				Credentials: src.GetLoginCredentials(loginProfile),
+			}) {
 				log.LogFields(log.Fields{
 					"profile_id": profile.ID,
 					"type":       loginProfile.Type,
 				}).Error("Database connection failed for login profile - credentials unauthorized")
 				return nil, errors.New("unauthorized")
 			}
-            // Build full credentials so the auth layer can persist them to keyring
-            resolved := src.GetLoginCredentials(loginProfile)
-            credentials := &model.LoginCredentials{
-                ID:       &profile.ID,
-                Type:     resolved.Type,
-                Hostname: resolved.Hostname,
-                Username: resolved.Username,
-                Password: resolved.Password,
-                Database: resolved.Database,
-                Advanced: func() []*model.RecordInput {
-                    var out []*model.RecordInput
-                    for _, rec := range resolved.Advanced {
-                        out = append(out, &model.RecordInput{Key: rec.Key, Value: rec.Value})
-                    }
-                    return out
-                }(),
-            }
-            if profile.Database != nil && *profile.Database != "" {
-                credentials.Database = *profile.Database
-            }
-            return auth.Login(ctx, credentials)
-        }
-    }
+			// Build full credentials so the auth layer can persist them to keyring
+			resolved := src.GetLoginCredentials(loginProfile)
+			credentials := &model.LoginCredentials{
+				ID:       &profile.ID,
+				Type:     resolved.Type,
+				Hostname: resolved.Hostname,
+				Username: resolved.Username,
+				Password: resolved.Password,
+				Database: resolved.Database,
+				Advanced: func() []*model.RecordInput {
+					var out []*model.RecordInput
+					for _, rec := range resolved.Advanced {
+						out = append(out, &model.RecordInput{Key: rec.Key, Value: rec.Value})
+					}
+					return out
+				}(),
+			}
+			if profile.Database != nil && *profile.Database != "" {
+				credentials.Database = *profile.Database
+			}
+			return auth.Login(ctx, credentials)
+		}
+	}
 	log.LogFields(log.Fields{
 		"profile_id": profile.ID,
 	}).Error("Login profile not found or not authorized")
@@ -113,6 +114,133 @@ func (r *mutationResolver) UpdateSettings(ctx context.Context, newSettings model
 	updated := settings.UpdateSettings(fields...)
 	return &model.StatusResponse{
 		Status: updated,
+	}, nil
+}
+
+// CreateAIProvider is the resolver for the CreateAIProvider field.
+func (r *mutationResolver) CreateAIProvider(ctx context.Context, provider model.AIProviderInput) (*model.AIProvider, error) {
+	registry := llm.GetProviderRegistry()
+
+	// Parse settings from JSON string
+	var settingsMap map[string]interface{}
+	if provider.Settings != nil && *provider.Settings != "" {
+		if err := json.Unmarshal([]byte(*provider.Settings), &settingsMap); err != nil {
+			return nil, fmt.Errorf("invalid settings JSON: %v", err)
+		}
+	}
+
+	// Create provider configuration
+	config := &llm.ProviderConfig{
+		Name:          provider.Name,
+		Type:          llm.LLMType(provider.Type),
+		IsUserDefined: true,
+		Settings:      settingsMap,
+	}
+
+	if provider.BaseURL != nil {
+		config.BaseURL = *provider.BaseURL
+	}
+	if provider.APIKey != nil {
+		config.APIKey = *provider.APIKey
+	}
+
+	// Create the provider
+	createdProvider, err := registry.CreateProvider(config)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert to GraphQL model
+	var settings *string
+	if createdProvider.Settings != nil {
+		settingsData, _ := json.Marshal(createdProvider.Settings)
+		s := string(settingsData)
+		settings = &s
+	}
+	var baseURL *string
+	if createdProvider.BaseURL != "" {
+		baseURL = &createdProvider.BaseURL
+	}
+
+	return &model.AIProvider{
+		ID:                   createdProvider.ID,
+		Name:                 createdProvider.Name,
+		Type:                 string(createdProvider.Type),
+		BaseURL:              baseURL,
+		IsEnvironmentDefined: createdProvider.IsEnvironmentDefined,
+		IsUserDefined:        createdProvider.IsUserDefined,
+		Settings:             settings,
+	}, nil
+}
+
+// UpdateAIProvider is the resolver for the UpdateAIProvider field.
+func (r *mutationResolver) UpdateAIProvider(ctx context.Context, id string, provider model.AIProviderInput) (*model.AIProvider, error) {
+	registry := llm.GetProviderRegistry()
+
+	// Parse settings from JSON string
+	var settingsMap map[string]interface{}
+	if provider.Settings != nil && *provider.Settings != "" {
+		if err := json.Unmarshal([]byte(*provider.Settings), &settingsMap); err != nil {
+			return nil, fmt.Errorf("invalid settings JSON: %v", err)
+		}
+	}
+
+	// Create provider configuration
+	config := &llm.ProviderConfig{
+		Name:          provider.Name,
+		Type:          llm.LLMType(provider.Type),
+		IsUserDefined: true,
+		Settings:      settingsMap,
+	}
+
+	if provider.BaseURL != nil {
+		config.BaseURL = *provider.BaseURL
+	}
+	if provider.APIKey != nil {
+		config.APIKey = *provider.APIKey
+	}
+
+	// Update the provider
+	updatedProvider, err := registry.UpdateProvider(id, config)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert to GraphQL model
+	var settings *string
+	if updatedProvider.Settings != nil {
+		settingsData, _ := json.Marshal(updatedProvider.Settings)
+		s := string(settingsData)
+		settings = &s
+	}
+	var baseURL *string
+	if updatedProvider.BaseURL != "" {
+		baseURL = &updatedProvider.BaseURL
+	}
+
+	return &model.AIProvider{
+		ID:                   updatedProvider.ID,
+		Name:                 updatedProvider.Name,
+		Type:                 string(updatedProvider.Type),
+		BaseURL:              baseURL,
+		IsEnvironmentDefined: updatedProvider.IsEnvironmentDefined,
+		IsUserDefined:        updatedProvider.IsUserDefined,
+		Settings:             settings,
+	}, nil
+}
+
+// DeleteAIProvider is the resolver for the DeleteAIProvider field.
+func (r *mutationResolver) DeleteAIProvider(ctx context.Context, id string) (*model.StatusResponse, error) {
+	registry := llm.GetProviderRegistry()
+
+	if err := registry.DeleteProvider(id); err != nil {
+		return &model.StatusResponse{
+			Status: false,
+		}, err
+	}
+
+	return &model.StatusResponse{
+		Status: true,
 	}, nil
 }
 
@@ -671,43 +799,76 @@ func (r *queryResolver) Graph(ctx context.Context, schema string) ([]*model.Grap
 
 // AIProviders is the resolver for the AIProviders field.
 func (r *queryResolver) AIProviders(ctx context.Context) ([]*model.AIProvider, error) {
-	providers := env.GetConfiguredChatProviders()
+	registry := llm.GetProviderRegistry()
+	providers := registry.GetAllProviders()
 	aiProviders := []*model.AIProvider{}
 	for _, provider := range providers {
+		var settings *string
+		if provider.Settings != nil {
+			settingsData, _ := json.Marshal(provider.Settings)
+			s := string(settingsData)
+			settings = &s
+		}
+		var baseURL *string
+		if provider.BaseURL != "" {
+			baseURL = &provider.BaseURL
+		}
 		aiProviders = append(aiProviders, &model.AIProvider{
-			Type:                 provider.Type,
-			ProviderID:           provider.ProviderId,
-			IsEnvironmentDefined: true,
+			ID:                   provider.ID,
+			Name:                 provider.Name,
+			Type:                 string(provider.Type),
+			BaseURL:              baseURL,
+			IsEnvironmentDefined: provider.IsEnvironmentDefined,
+			IsUserDefined:        provider.IsUserDefined,
+			Settings:             settings,
 		})
 	}
 	return aiProviders, nil
 }
 
+// AIProvider is the resolver for the AIProvider field.
+func (r *queryResolver) AIProvider(ctx context.Context, id string) (*model.AIProvider, error) {
+	registry := llm.GetProviderRegistry()
+	provider, err := registry.GetProvider(id)
+	if err != nil {
+		return nil, err
+	}
+
+	var settings *string
+	if provider.Settings != nil {
+		settingsData, _ := json.Marshal(provider.Settings)
+		s := string(settingsData)
+		settings = &s
+	}
+	var baseURL *string
+	if provider.BaseURL != "" {
+		baseURL = &provider.BaseURL
+	}
+
+	return &model.AIProvider{
+		ID:                   provider.ID,
+		Name:                 provider.Name,
+		Type:                 string(provider.Type),
+		BaseURL:              baseURL,
+		IsEnvironmentDefined: provider.IsEnvironmentDefined,
+		IsUserDefined:        provider.IsUserDefined,
+		Settings:             settings,
+	}, nil
+}
+
 // AIModel is the resolver for the AIModel field.
-func (r *queryResolver) AIModel(ctx context.Context, providerID *string, modelType string, token *string) ([]string, error) {
+func (r *queryResolver) AIModel(ctx context.Context, providerID string) ([]string, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
 
-	// Initialize ExternalModel to prevent nil pointer dereference
+	// Use provider system exclusively
 	config.ExternalModel = &engine.ExternalModel{
-		Type: modelType,
+		ProviderId: providerID,
 	}
 
-	if providerID != nil {
-		providers := env.GetConfiguredChatProviders()
-		for _, provider := range providers {
-			if provider.ProviderId == *providerID {
-				config.ExternalModel.Token = provider.APIKey
-				break
-			}
-		}
-	} else if token != nil {
-		config.ExternalModel.Token = *token
-	}
 	models, err := llm.Instance(config).GetSupportedModels()
 	if err != nil {
 		log.LogFields(log.Fields{
 			"operation":   "GetSupportedModels",
-			"model_type":  modelType,
 			"provider_id": providerID,
 			"error":       err.Error(),
 		}).Error("AI operation failed")
@@ -717,27 +878,15 @@ func (r *queryResolver) AIModel(ctx context.Context, providerID *string, modelTy
 }
 
 // AIChat is the resolver for the AIChat field.
-func (r *queryResolver) AIChat(ctx context.Context, providerID *string, modelType string, token *string, schema string, input model.ChatInput) ([]*model.AIChatMessage, error) {
+func (r *queryResolver) AIChat(ctx context.Context, providerID string, schema string, input model.ChatInput) ([]*model.AIChatMessage, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
 	typeArg := config.Credentials.Type
-	if providerID != nil {
-		providers := env.GetConfiguredChatProviders()
-		for _, provider := range providers {
-			if provider.ProviderId == *providerID {
-				config.ExternalModel = &engine.ExternalModel{
-					Type:  modelType,
-					Token: provider.APIKey,
-				}
-			}
-		}
-	} else {
-		config.ExternalModel = &engine.ExternalModel{
-			Type: modelType,
-		}
-		if token != nil {
-			config.ExternalModel.Token = *token
-		}
+
+	// Use provider system exclusively
+	config.ExternalModel = &engine.ExternalModel{
+		ProviderId: providerID,
 	}
+
 	messages, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).Chat(config, schema, input.Model, input.PreviousConversation, input.Query)
 
 	if err != nil {
@@ -746,7 +895,6 @@ func (r *queryResolver) AIChat(ctx context.Context, providerID *string, modelTyp
 			"schema":        schema,
 			"database_type": typeArg,
 			"model":         input.Model,
-			"model_type":    modelType,
 			"provider_id":   providerID,
 			"query":         input.Query,
 			"error":         err.Error(),

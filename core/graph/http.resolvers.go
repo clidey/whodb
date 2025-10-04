@@ -150,9 +150,14 @@ func getGraphHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getAIModelsHandler(w http.ResponseWriter, r *http.Request) {
-	modelType := r.URL.Query().Get("modelType")
-	token := r.URL.Query().Get("token")
-	models, err := resolver.Query().AIModel(r.Context(), nil, modelType, &token)
+	providerId := r.URL.Query().Get("providerId")
+
+	if providerId == "" {
+		http.Error(w, "providerId is required", http.StatusBadRequest)
+		return
+	}
+
+	models, err := resolver.Query().AIModel(r.Context(), providerId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -165,10 +170,9 @@ func getAIModelsHandler(w http.ResponseWriter, r *http.Request) {
 
 func aiChatHandler(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		ModelType string          `json:"modelType"`
-		Token     string          `json:"token"`
-		Schema    string          `json:"schema"`
-		Input     model.ChatInput `json:"input"`
+		ProviderId string          `json:"providerId"`
+		Schema     string          `json:"schema"`
+		Input      model.ChatInput `json:"input"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -176,7 +180,12 @@ func aiChatHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	messages, err := resolver.Query().AIChat(r.Context(), nil, req.ModelType, &req.Token, req.Schema, req.Input)
+	if req.ProviderId == "" {
+		http.Error(w, "providerId is required", http.StatusBadRequest)
+		return
+	}
+
+	messages, err := resolver.Query().AIChat(r.Context(), req.ProviderId, req.Schema, req.Input)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -28,7 +28,8 @@ import {
 import classNames from "classnames";
 import { cloneElement, FC, KeyboardEventHandler, useCallback, useMemo, useRef, useState } from "react";
 import logoImage from "../../../public/images/logo.png";
-import { AIProvider, useAI } from "../../components/ai";
+import { AIProviderSelect } from "../../components/ai-provider-select";
+import { useAIProviders } from "../../hooks/useAIProviders";
 import { CodeEditor } from "../../components/editor";
 import { ErrorState } from "../../components/error-state";
 import { Loading } from "../../components/loading";
@@ -271,8 +272,13 @@ export const ChatPage: FC = () => {
 
     const dispatch = useAppDispatch();
 
-    const aiState = useAI();
-    const { modelType, currentModel, modelAvailable, models } = aiState;
+    const {
+        currentProviderId,
+        currentProvider,
+        currentModel,
+        models,
+        modelAvailable
+    } = useAIProviders();
 
     const loading = useMemo(() => {
         return getAIChatLoading;
@@ -284,7 +290,7 @@ export const ChatPage: FC = () => {
 
     const handleSubmitQuery = useCallback(() => {
         const sanitizedQuery = query.trim();
-        if (modelType == null || sanitizedQuery.length === 0) {
+        if (currentProviderId == null || sanitizedQuery.length === 0) {
             return;
         }
 
@@ -299,12 +305,13 @@ export const ChatPage: FC = () => {
         }, 250);
         getAIChat({
             variables: {
-                modelType: modelType.modelType,
-                token: modelType.token,
-                query: sanitizedQuery,
-                model: currentModel ?? "",
-                previousConversation: chats.map(chat => `${chat.isUserInput ? "<User>" : "<System>"}${chat.Text}${chat.isUserInput ? "</User>" : "</System>"}`).join("\n"),
+                providerId: currentProviderId || '',
                 schema,
+                input: {
+                    Query: sanitizedQuery,
+                    Model: currentModel ?? "",
+                    PreviousConversation: chats.map(chat => `${chat.isUserInput ? "<User>" : "<System>"}${chat.Text}${chat.isUserInput ? "</User>" : "</System>"}`).join("\n"),
+                },
             },
             onCompleted(data) {
                 const systemChats: IChatMessage[] = data.AIChat.map(chat => {
@@ -337,7 +344,7 @@ export const ChatPage: FC = () => {
             },
         });
         setQuery("");
-    }, [chats, currentModel, getAIChat, modelType, query, schema, dispatch]);
+    }, [chats, currentModel, getAIChat, currentProviderId, query, schema, dispatch]);
 
     const disableChat = useMemo(() => {
         return loading || models.length === 0 || !modelAvailable || query.trim().length === 0;
@@ -392,8 +399,7 @@ export const ChatPage: FC = () => {
     return (
         <InternalPage routes={[InternalRoutes.Chat]} className="h-full">
             <div className="flex flex-col w-full h-full gap-2">
-                <AIProvider 
-                    {...aiState}
+                <AIProviderSelect
                     onClear={handleClear}
                 />
                 <div className={classNames("flex grow w-full rounded-xl overflow-hidden", {
