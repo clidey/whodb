@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { FC, ReactElement, useCallback, useState } from 'react';
+import { FC, ReactElement, useCallback, useMemo, useState } from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,7 +37,6 @@ import {
   SelectValue,
   Sheet,
   SheetContent,
-  SheetFooter,
   toast
 } from "@clidey/ux";
 import {
@@ -67,9 +66,7 @@ export const AIProviderSelect: FC<AIProviderSelectProps> = ({
     providers,
     currentModel,
     models,
-    modelAvailable,
     loadingProviders,
-    loadingModels,
     handleProviderChange,
     handleModelChange,
     handleCreateProvider,
@@ -100,6 +97,71 @@ export const AIProviderSelect: FC<AIProviderSelectProps> = ({
     { id: 'Anthropic', label: 'Anthropic', icon: (Icons.Logos as Record<string, ReactElement>)['Anthropic'] },
     { id: 'OpenAI-Compatible', label: 'OpenAI Compatible', icon: (Icons.Logos as Record<string, ReactElement>)['ChatGPT'] },
   ];
+
+  const getProviderInstructions = useMemo(() => {
+    switch (providerType) {
+      case 'Ollama':
+        return (
+          <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+            <p className="text-xs font-medium">To use Ollama:</p>
+            <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+              <li>Install Ollama from <span className="font-mono">ollama.ai</span></li>
+              <li>Run <span className="font-mono bg-muted px-1 py-0.5 rounded">ollama serve</span> in your terminal</li>
+              <li>Pull a model: <span className="font-mono bg-muted px-1 py-0.5 rounded">ollama pull llama3</span></li>
+              <li>Default URL is <span className="font-mono">http://localhost:11434</span></li>
+              <li>No API key required for local usage</li>
+            </ol>
+          </div>
+        );
+
+      case 'ChatGPT':
+        return (
+          <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+            <p className="text-xs font-medium">To use OpenAI ChatGPT:</p>
+            <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+              <li>Visit <span className="font-mono">platform.openai.com</span></li>
+              <li>Sign in or create an account</li>
+              <li>Go to API Keys section</li>
+              <li>Create a new API key and copy it</li>
+              <li>Default URL is <span className="font-mono">https://api.openai.com/v1</span></li>
+              <li>Billing required for API usage</li>
+            </ol>
+          </div>
+        );
+
+      case 'Anthropic':
+        return (
+          <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+            <p className="text-xs font-medium">To use Anthropic Claude:</p>
+            <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+              <li>Visit <span className="font-mono">console.anthropic.com</span></li>
+              <li>Sign in or create an account</li>
+              <li>Navigate to API Keys</li>
+              <li>Generate a new API key and save it</li>
+              <li>Default URL is <span className="font-mono">https://api.anthropic.com/v1</span></li>
+              <li>API usage requires credits or billing</li>
+            </ol>
+          </div>
+        );
+
+      case 'OpenAI-Compatible':
+        return (
+          <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+            <p className="text-xs font-medium">For OpenAI-compatible providers:</p>
+            <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+              <li>Works with any OpenAI API-compatible service</li>
+              <li>Examples: Azure OpenAI, Groq, Together AI, etc.</li>
+              <li>Provide your service's base URL</li>
+              <li>Use the API key from your provider</li>
+              <li>Endpoint must be OpenAI-compatible</li>
+            </ol>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  }, [providerType]);
 
   const handleSubmitProvider = useCallback(async () => {
     const nameExists = providers.some(p =>
@@ -217,6 +279,8 @@ export const AIProviderSelect: FC<AIProviderSelectProps> = ({
               </Select>
             </div>
 
+            {getProviderInstructions}
+
             {providerType !== 'Ollama' && (
               <div className="flex flex-col gap-2">
                 <Label>API Key</Label>
@@ -256,6 +320,9 @@ export const AIProviderSelect: FC<AIProviderSelectProps> = ({
                   temperature: parseFloat(e.target.value)
                 }))}
               />
+              <span className="text-xs text-muted-foreground">
+                Controls randomness: 0 = deterministic, 2 = very random
+              </span>
             </div>
 
             <div className="flex flex-col gap-2">
@@ -270,6 +337,17 @@ export const AIProviderSelect: FC<AIProviderSelectProps> = ({
                   max_tokens: parseInt(e.target.value)
                 }))}
               />
+              <span className="text-xs text-muted-foreground">
+                Maximum number of tokens to generate in response
+              </span>
+            </div>
+
+            <div className="bg-muted/50 rounded-lg p-3">
+              <p className="text-xs font-medium mb-2">Settings explained:</p>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                <li><span className="font-medium">Temperature:</span> Controls the creativity of responses. Lower values (0-0.5) produce focused, deterministic outputs. Higher values (0.7-2.0) generate more creative and varied responses.</li>
+                <li><span className="font-medium">Max Tokens:</span> Sets the maximum length of the AI's response. One token ≈ 4 characters or 0.75 words. Higher values allow longer responses but may increase costs.</li>
+              </ul>
             </div>
           </div>
 
