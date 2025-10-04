@@ -44,16 +44,53 @@ export const aiProvidersSlice = createSlice({
   initialState,
   reducers: {
     setProviders: (state, action: PayloadAction<IAIProvider[]>) => {
-      state.providers = Array.isArray(action.payload) ? action.payload : [];
+      if (!Array.isArray(action.payload)) {
+        state.providers = [];
+        return;
+      }
+
+      // Deduplicate providers by name+type
+      const uniqueProviders = new Map<string, IAIProvider>();
+      action.payload.forEach(p => {
+        const key = `${p.name.toLowerCase().trim()}_${p.type.toLowerCase().trim()}`;
+        // If duplicate, keep the one with the backend ID (not the temp localStorage ID)
+        const existing = uniqueProviders.get(key);
+        if (!existing || (existing.id.startsWith('temp-') && !p.id.startsWith('temp-'))) {
+          uniqueProviders.set(key, p);
+        }
+      });
+
+      state.providers = Array.from(uniqueProviders.values());
     },
     setCurrentProvider: (state, action: PayloadAction<{ id: string }>) => {
       state.currentProviderId = action.payload.id;
     },
     addProvider(state, action: PayloadAction<IAIProvider>) {
-      state.providers.push(action.payload);
+      // Check for duplicates by name+type before adding
+      const key = `${action.payload.name.toLowerCase().trim()}_${action.payload.type.toLowerCase().trim()}`;
+      const existingIndex = state.providers.findIndex(p =>
+        `${p.name.toLowerCase().trim()}_${p.type.toLowerCase().trim()}` === key
+      );
+
+      if (existingIndex !== -1) {
+        // Replace existing provider instead of adding duplicate
+        state.providers[existingIndex] = action.payload;
+      } else {
+        state.providers.push(action.payload);
+      }
     },
     updateProvider(state, action: PayloadAction<IAIProvider>) {
-      const index = state.providers.findIndex(p => p.id === action.payload.id);
+      // First try to find by ID
+      let index = state.providers.findIndex(p => p.id === action.payload.id);
+
+      // If not found by ID, find by name+type (for ID changes)
+      if (index === -1) {
+        const key = `${action.payload.name.toLowerCase().trim()}_${action.payload.type.toLowerCase().trim()}`;
+        index = state.providers.findIndex(p =>
+          `${p.name.toLowerCase().trim()}_${p.type.toLowerCase().trim()}` === key
+        );
+      }
+
       if (index !== -1) {
         state.providers[index] = action.payload;
       }
