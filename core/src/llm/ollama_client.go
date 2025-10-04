@@ -23,30 +23,52 @@ import (
 	"io"
 	"strings"
 
-	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
 )
 
-func prepareOllamaRequest(prompt string, model LLMModel) (string, []byte, map[string]string, error) {
-	requestBody, err := json.Marshal(map[string]interface{}{
-		"model":  string(model),
+
+func prepareOllamaRequestWithConfig(config *ProviderConfig, prompt string, model string, settings *ProviderSettings, receiverChan *chan string) (string, []byte, map[string]string, error) {
+	// Build request body with settings
+	requestData := map[string]interface{}{
+		"model":  model,
 		"prompt": prompt,
-	})
+		"stream": receiverChan != nil,
+	}
+
+	// Build options object for Ollama-specific settings
+	options := make(map[string]interface{})
+
+	// Apply provider-specific settings
+	if settings.Temperature != nil {
+		options["temperature"] = *settings.Temperature
+	}
+	if settings.TopP != nil {
+		options["top_p"] = *settings.TopP
+	}
+	if settings.TopK != nil {
+		options["top_k"] = *settings.TopK
+	}
+	if settings.RepeatPenalty != nil {
+		options["repeat_penalty"] = *settings.RepeatPenalty
+	}
+
+	// Add options to request if any were set
+	if len(options) > 0 {
+		requestData["options"] = options
+	}
+
+	requestBody, err := json.Marshal(requestData)
 	if err != nil {
 		log.Logger.WithError(err).Errorf("Failed to marshal Ollama request body for model %s", model)
 		return "", nil, nil, err
 	}
-	url := fmt.Sprintf("%v/generate", env.GetOllamaEndpoint())
+
+	url := fmt.Sprintf("%v/generate", config.BaseURL)
 	return url, requestBody, nil, nil
 }
 
-func prepareOllamaModelsRequest() (string, map[string]string) {
-	url := fmt.Sprintf("%v/tags", env.GetOllamaEndpoint())
-	return url, nil
-}
 
 func parseOllamaResponse(body io.ReadCloser, receiverChan *chan string, responseBuilder *strings.Builder) (*string, error) {
-	defer body.Close()
 	reader := bufio.NewReader(body)
 
 	for {
@@ -87,7 +109,6 @@ func parseOllamaResponse(body io.ReadCloser, receiverChan *chan string, response
 }
 
 func parseOllamaModelsResponse(body io.ReadCloser) ([]string, error) {
-	defer body.Close()
 
 	var modelsResp struct {
 		Models []struct {

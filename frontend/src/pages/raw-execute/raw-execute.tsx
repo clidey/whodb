@@ -513,7 +513,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                 >
                     <Suspense fallback={<Loading />}>
                         <Component code={code} handleExecuteRef={handleExecute} modelType={modelType?.modelType || ''}
-                                   schema={current.Database} token={modelType?.token} providerId={current.Id}/>
+                                   schema={current.Database} token={modelType?.token}/>
                     </Suspense>
                 </div>
             </div>

@@ -15,27 +15,68 @@
 package llm
 
 import (
-	"github.com/clidey/whodb/core/src/engine"
+    "sync"
+
+    "github.com/clidey/whodb/core/src/engine"
 )
 
-var llmInstance map[LLMType]*LLMClient
+var (
+    llmInstance map[string]*LLMClient
+    llmMu       sync.Mutex
+)
 
 func Instance(config *engine.PluginConfig) *LLMClient {
-	if llmInstance == nil {
-		llmInstance = make(map[LLMType]*LLMClient)
+    llmMu.Lock()
+    if llmInstance == nil {
+        llmInstance = make(map[string]*LLMClient)
+    }
+    llmMu.Unlock()
+
+	// Always use provider system
+	if config.ExternalModel == nil || config.ExternalModel.ProviderId == "" {
+		// Return a default Ollama instance if no provider specified
+		registry := GetProviderRegistry()
+		providers := registry.GetProvidersByType(Ollama_LLMType)
+		if len(providers) > 0 {
+			return &LLMClient{
+				Config: providers[0],
+			}
+		}
+		// Return empty client if no providers available
+		return &LLMClient{}
 	}
 
-	llmType := LLMType(config.ExternalModel.Type)
+	return InstanceWithProvider(config.ExternalModel.ProviderId)
+}
 
-	if instance, ok := llmInstance[llmType]; ok {
-		// Update the API key if it has changed
-		instance.APIKey = config.ExternalModel.Token
-		return instance
-	}
-	instance := &LLMClient{
-		Type:   llmType,
-		APIKey: config.ExternalModel.Token,
-	}
-	llmInstance[llmType] = instance
-	return instance
+// InstanceWithProvider creates an LLMClient using a provider configuration
+func InstanceWithProvider(providerId string) *LLMClient {
+    llmMu.Lock()
+    if llmInstance == nil {
+        llmInstance = make(map[string]*LLMClient)
+    }
+
+	// Use provider ID as cache key
+	cacheKey := "provider:" + providerId
+
+    if instance, ok := llmInstance[cacheKey]; ok {
+        llmMu.Unlock()
+        return instance
+    }
+
+	// Get provider from registry
+    registry := GetProviderRegistry()
+    providerConfig, err := registry.GetProvider(providerId)
+    if err != nil {
+        // Return empty client if provider not found
+        llmMu.Unlock()
+        return &LLMClient{}
+    }
+
+    instance := &LLMClient{
+        Config: providerConfig,
+    }
+    llmInstance[cacheKey] = instance
+    llmMu.Unlock()
+    return instance
 }

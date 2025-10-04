@@ -1,7 +1,11 @@
 query GetAIProviders {
   AIProviders {
+    Id
+    Name
     Type
-    ProviderId
+    BaseURL
     IsEnvironmentDefined
+    IsUserDefined
+    Settings
   }
 }

@@ -16,9 +16,21 @@ type AIChatMessage struct {
 }
 
 type AIProvider struct {
-	Type                 string `json:"Type"`
-	ProviderID           string `json:"ProviderId"`
-	IsEnvironmentDefined bool   `json:"IsEnvironmentDefined"`
+	ID                   string  `json:"Id"`
+	Name                 string  `json:"Name"`
+	Type                 string  `json:"Type"`
+	BaseURL              *string `json:"BaseURL,omitempty"`
+	IsEnvironmentDefined bool    `json:"IsEnvironmentDefined"`
+	IsUserDefined        bool    `json:"IsUserDefined"`
+	Settings             *string `json:"Settings,omitempty"`
+}
+
+type AIProviderInput struct {
+	Name     string  `json:"Name"`
+	Type     string  `json:"Type"`
+	BaseURL  *string `json:"BaseURL,omitempty"`
+	APIKey   *string `json:"APIKey,omitempty"`
+	Settings *string `json:"Settings,omitempty"`
 }
 
 type AtomicWhereCondition struct {

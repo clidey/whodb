@@ -18,6 +18,7 @@ package llm
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -37,85 +38,48 @@ const (
 type LLMModel string
 
 type LLMClient struct {
-	Type      LLMType
-	APIKey    string
-	ProfileId string
+	Config *ProviderConfig // Provider configuration is now required
 }
 
 func (c *LLMClient) Complete(prompt string, model LLMModel, receiverChan *chan string) (*string, error) {
-	// Validate API key for services that require it
-	if err := c.validateAPIKey(); err != nil {
-		return nil, err
+	// Always use provider config
+	if c.Config == nil {
+		return nil, errors.New("provider configuration is required")
 	}
 
-	var url string
-	var headers map[string]string
-	var requestBody []byte
-	var err error
-
-	switch c.Type {
-	case Ollama_LLMType:
-		url, requestBody, headers, err = prepareOllamaRequest(prompt, model)
-	case ChatGPT_LLMType:
-		url, requestBody, headers, err = prepareChatGPTRequest(c, prompt, model, receiverChan, false)
-	case Anthropic_LLMType:
-		url, requestBody, headers, err = prepareAnthropicRequest(c, prompt, model)
-	case OpenAICompatible_LLMType:
-		url, requestBody, headers, err = prepareChatGPTRequest(c, prompt, model, receiverChan, true)
-	default:
-		return nil, errors.New("unsupported LLM type")
-	}
-
-	if err != nil {
-		log.Logger.WithError(err).Errorf("Failed to prepare %s LLM request for model %s", c.Type, model)
-		return nil, err
-	}
-
-	resp, err := sendHTTPRequest("POST", url, requestBody, headers)
-	if err != nil {
-		log.Logger.WithError(err).Errorf("Failed to send HTTP request to %s LLM service at %s", c.Type, url)
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			log.Logger.WithError(err).Errorf("Failed to read error response body from %s LLM service (status: %d)", c.Type, resp.StatusCode)
-			return nil, err
-		}
-		log.Logger.Errorf("%s LLM service returned non-OK status: %d, body: %s", c.Type, resp.StatusCode, string(body))
-		return nil, errors.New(string(body))
-	}
-
-	return c.parseResponse(resp.Body, receiverChan)
+	return c.CompleteWithConfig(prompt, string(model), receiverChan)
 }
 
 func (c *LLMClient) GetSupportedModels() ([]string, error) {
-	// Validate API key for services that require it
-	if err := c.validateAPIKey(); err != nil {
-		return nil, err
+	// Always use provider config
+	if c.Config == nil {
+		return nil, errors.New("provider configuration is required")
 	}
 
 	var url string
 	var headers map[string]string
 
-	switch c.Type {
+	switch c.Config.Type {
 	case Ollama_LLMType:
-		url, headers = prepareOllamaModelsRequest()
+		url = fmt.Sprintf("%v/tags", c.Config.BaseURL)
+		headers = nil
 	case ChatGPT_LLMType:
-		url, headers = prepareChatGPTModelsRequest(c.APIKey)
+		url = fmt.Sprintf("%v/models", c.Config.BaseURL)
+		headers = map[string]string{
+			"Authorization": fmt.Sprintf("Bearer %s", c.Config.APIKey),
+			"Content-Type":  "application/json",
+		}
 	case Anthropic_LLMType:
-		return getAnthropicModels(c.APIKey)
+		return getAnthropicModels(c.Config.APIKey)
 	case OpenAICompatible_LLMType:
-		return getOpenAICompatibleModels()
+		return getOpenAICompatibleModelsForConfig(c.Config)
 	default:
 		return nil, errors.New("unsupported LLM type")
 	}
 
 	resp, err := sendHTTPRequest("GET", url, nil, headers)
 	if err != nil {
-		log.Logger.WithError(err).Errorf("Failed to fetch models from %s LLM service at %s", c.Type, url)
+		log.Logger.WithError(err).Errorf("Failed to fetch models from %s LLM service at %s", c.Config.Type, url)
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -123,10 +87,10 @@ func (c *LLMClient) GetSupportedModels() ([]string, error) {
 	if resp.StatusCode != http.StatusOK {
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			log.Logger.WithError(err).Errorf("Failed to read models error response body from %s LLM service (status: %d)", c.Type, resp.StatusCode)
+			log.Logger.WithError(err).Errorf("Failed to read models error response body from %s LLM service (status: %d)", c.Config.Type, resp.StatusCode)
 			return nil, err
 		}
-		log.Logger.Errorf("%s LLM service models endpoint returned non-OK status: %d, body: %s", c.Type, resp.StatusCode, string(body))
+		log.Logger.Errorf("%s LLM service models endpoint returned non-OK status: %d, body: %s", c.Config.Type, resp.StatusCode, string(body))
 		return nil, errors.New(string(body))
 	}
 
@@ -134,8 +98,12 @@ func (c *LLMClient) GetSupportedModels() ([]string, error) {
 }
 
 func (c *LLMClient) parseResponse(body io.ReadCloser, receiverChan *chan string) (*string, error) {
+	if c.Config == nil {
+		return nil, errors.New("provider configuration is required")
+	}
+
 	responseBuilder := strings.Builder{}
-	switch c.Type {
+	switch c.Config.Type {
 	case Ollama_LLMType:
 		return parseOllamaResponse(body, receiverChan, &responseBuilder)
 	case ChatGPT_LLMType:
@@ -150,7 +118,11 @@ func (c *LLMClient) parseResponse(body io.ReadCloser, receiverChan *chan string)
 }
 
 func (c *LLMClient) parseModelsResponse(body io.ReadCloser) ([]string, error) {
-	switch c.Type {
+	if c.Config == nil {
+		return nil, errors.New("provider configuration is required")
+	}
+
+	switch c.Config.Type {
 	case Ollama_LLMType:
 		return parseOllamaModelsResponse(body)
 	case ChatGPT_LLMType:
@@ -160,11 +132,66 @@ func (c *LLMClient) parseModelsResponse(body io.ReadCloser) ([]string, error) {
 	}
 }
 
-// validateAPIKey checks if API key is present for services that require it
-func (c *LLMClient) validateAPIKey() error {
-	requiresAPIKey := c.Type == ChatGPT_LLMType || c.Type == Anthropic_LLMType
-	if requiresAPIKey && strings.TrimSpace(c.APIKey) == "" {
-		return errors.New("API key is required for " + string(c.Type))
+// CompleteWithConfig performs completion using provider configuration
+func (c *LLMClient) CompleteWithConfig(prompt string, modelOverride string, receiverChan *chan string) (*string, error) {
+	if c.Config == nil {
+		return nil, errors.New("provider configuration is required")
 	}
-	return nil
+
+	if err := c.Config.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Get provider settings
+	settings, err := c.Config.GetSettings()
+	if err != nil {
+		return nil, err
+	}
+
+	// Use model override if provided, otherwise use settings model
+	model := modelOverride
+	if model == "" {
+		model = settings.Model
+	}
+
+	var url string
+	var headers map[string]string
+	var requestBody []byte
+
+	switch c.Config.Type {
+	case Ollama_LLMType:
+		url, requestBody, headers, err = prepareOllamaRequestWithConfig(c.Config, prompt, model, settings, receiverChan)
+	case ChatGPT_LLMType:
+		url, requestBody, headers, err = prepareChatGPTRequestWithConfig(c.Config, prompt, model, settings, receiverChan)
+	case Anthropic_LLMType:
+		url, requestBody, headers, err = prepareAnthropicRequestWithConfig(c.Config, prompt, model, settings, receiverChan)
+	case OpenAICompatible_LLMType:
+		url, requestBody, headers, err = prepareOpenAICompatibleRequestWithConfig(c.Config, prompt, model, settings, receiverChan)
+	default:
+		return nil, errors.New("unsupported LLM type: " + string(c.Config.Type))
+	}
+
+	if err != nil {
+		log.Logger.WithError(err).Errorf("Failed to prepare %s LLM request for model %s", c.Config.Type, model)
+		return nil, err
+	}
+
+	resp, err := sendHTTPRequest("POST", url, requestBody, headers)
+	if err != nil {
+		log.Logger.WithError(err).Errorf("Failed to send HTTP request to %s LLM service at %s", c.Config.Type, url)
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			log.Logger.WithError(err).Errorf("Failed to read error response body from %s LLM service (status: %d)", c.Config.Type, resp.StatusCode)
+			return nil, err
+		}
+		log.Logger.Errorf("%s LLM service returned non-OK status: %d, body: %s", c.Config.Type, resp.StatusCode, string(body))
+		return nil, errors.New(string(body))
+	}
+
+	return c.parseResponse(resp.Body, receiverChan)
 }

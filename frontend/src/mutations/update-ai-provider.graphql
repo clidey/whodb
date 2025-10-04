@@ -1,0 +1,11 @@
+mutation UpdateAIProvider($Id: String!, $provider: AIProviderInput!) {
+  UpdateAIProvider(Id: $Id, Provider: $provider) {
+    Id
+    Name
+    Type
+    BaseURL
+    IsEnvironmentDefined
+    IsUserDefined
+    Settings
+  }
+}

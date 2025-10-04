@@ -1,0 +1,11 @@
+mutation CreateAIProvider($provider: AIProviderInput!) {
+  CreateAIProvider(Provider: $provider) {
+    Id
+    Name
+    Type
+    BaseURL
+    IsEnvironmentDefined
+    IsUserDefined
+    Settings
+  }
+}

@@ -23,43 +23,65 @@ import (
 	"io"
 	"strings"
 
-	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
 )
 
-func prepareAnthropicRequest(c *LLMClient, prompt string, model LLMModel) (string, []byte, map[string]string, error) {
-	maxTokens := 4096 // conservative default for unknown models
-	modelName := string(model)
 
-	switch modelName {
-	case "claude-3-7-sonnet-20250219", "claude-sonnet-4-20250514":
-		maxTokens = 64000
-	case "claude-opus-4-20250514":
-		maxTokens = 32000
-	case "claude-3-5-sonnet-20241022", "claude-3-5-sonnet-20240620", "claude-3-5-opus-20241022", "claude-3-5-haiku-20241022":
-		maxTokens = 8192
-	case "claude-3-opus-20240229", "claude-3-haiku-20240307":
-		maxTokens = 4096
+func prepareAnthropicRequestWithConfig(config *ProviderConfig, prompt string, model string, settings *ProviderSettings, receiverChan *chan string) (string, []byte, map[string]string, error) {
+	maxTokens := 4096 // conservative default for unknown models
+
+	// Use settings max tokens if provided
+	if settings.MaxTokens != nil {
+		maxTokens = *settings.MaxTokens
+	} else {
+		// Auto-detect based on model
+		switch model {
+		case "claude-3-7-sonnet-20250219", "claude-sonnet-4-20250514":
+			maxTokens = 64000
+		case "claude-opus-4-20250514":
+			maxTokens = 32000
+		case "claude-3-5-sonnet-20241022", "claude-3-5-sonnet-20240620", "claude-3-5-opus-20241022", "claude-3-5-haiku-20241022":
+			maxTokens = 8192
+		case "claude-3-opus-20240229", "claude-3-haiku-20240307":
+			maxTokens = 4096
+		}
 	}
 
-	requestBody, err := json.Marshal(map[string]interface{}{
-		"model":      modelName,
+	// Build request body with settings
+	requestData := map[string]interface{}{
+		"model":      model,
 		"max_tokens": maxTokens,
 		"messages": []map[string]string{
 			{"role": "user", "content": prompt},
 		},
-	})
+	}
+
+	// Apply provider-specific settings
+	if settings.Temperature != nil {
+		requestData["temperature"] = *settings.Temperature
+	}
+	if settings.TopP != nil {
+		requestData["top_p"] = *settings.TopP
+	}
+	if settings.TopK != nil {
+		requestData["top_k"] = *settings.TopK
+	}
+
+	// Note: Anthropic doesn't support streaming in the same way as OpenAI
+	// Stream support would require different handling
+
+	requestBody, err := json.Marshal(requestData)
 	if err != nil {
 		log.Logger.WithError(err).Errorf("Failed to marshal Anthropic request body for model %s", model)
 		return "", nil, nil, err
 	}
 
-	url := fmt.Sprintf("%v/messages", env.GetAnthropicEndpoint())
+	url := fmt.Sprintf("%v/messages", config.BaseURL)
 
 	headers := map[string]string{
-		"x-api-key":         c.APIKey,
+		"x-api-key":         config.APIKey,
 		"anthropic-version": "2023-06-01",
-		"content-type":      "application/json",
+		"Content-Type":      "application/json",
 	}
 
 	return url, requestBody, headers, nil
@@ -81,7 +103,6 @@ func getAnthropicModels(_ string) ([]string, error) {
 }
 
 func parseAnthropicResponse(body io.ReadCloser, receiverChan *chan string, responseBuilder *strings.Builder) (*string, error) {
-	defer body.Close()
 	reader := bufio.NewReader(body)
 
 	for {

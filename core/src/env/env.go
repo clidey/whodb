@@ -17,10 +17,10 @@
 package env
 
 import (
-	"encoding/json"
-	"fmt"
-	"os"
-	"strings"
+    "encoding/json"
+    "fmt"
+    "os"
+    "strings"
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/log"
@@ -67,49 +67,133 @@ var LogLevel = getLogLevel()
 var DisableMockDataGeneration = os.Getenv("WHODB_DISABLE_MOCK_DATA_GENERATION")
 
 type ChatProvider struct {
-	Type       string
-	APIKey     string
-	Endpoint   string
-	ProviderId string
+    Type       string
+    APIKey     string
+    Endpoint   string
+    ProviderId string
 }
 
-// TODO: need to make this more dynamic so users can configure more than one key for each provider
 func GetConfiguredChatProviders() []ChatProvider {
-	var providers []ChatProvider
+    var providers []ChatProvider
 
-	if len(OpenAIAPIKey) > 0 {
-		providers = append(providers, ChatProvider{
-			Type:       "ChatGPT",
-			APIKey:     OpenAIAPIKey,
-			Endpoint:   GetOpenAIEndpoint(),
-			ProviderId: "chatgpt-1",
-		})
-	}
+    // ChatGPT (OpenAI)
+    if len(OpenAIAPIKey) > 0 {
+        providers = append(providers, ChatProvider{
+            Type:       "ChatGPT",
+            APIKey:     OpenAIAPIKey,
+            Endpoint:   GetOpenAIEndpoint(),
+            ProviderId: "chatgpt-1",
+        })
+    } else if k := os.Getenv("WHODB_OPENAI_API_KEY_1"); k != "" {
+        endpoint := os.Getenv("WHODB_OPENAI_ENDPOINT_1")
+        if endpoint == "" {
+            endpoint = "https://api.openai.com/v1"
+        }
+        providers = append(providers, ChatProvider{
+            Type:       "ChatGPT",
+            APIKey:     k,
+            Endpoint:   endpoint,
+            ProviderId: "chatgpt-1",
+        })
+    }
+    for i := 2; ; i++ {
+        k := os.Getenv(fmt.Sprintf("WHODB_OPENAI_API_KEY_%d", i))
+        if k == "" {
+            break
+        }
+        endpoint := os.Getenv(fmt.Sprintf("WHODB_OPENAI_ENDPOINT_%d", i))
+        if endpoint == "" {
+            endpoint = "https://api.openai.com/v1"
+        }
+        providers = append(providers, ChatProvider{
+            Type:       "ChatGPT",
+            APIKey:     k,
+            Endpoint:   endpoint,
+            ProviderId: fmt.Sprintf("chatgpt-%d", i),
+        })
+    }
 
-	if len(AnthropicAPIKey) > 0 {
-		providers = append(providers, ChatProvider{
-			Type:       "Anthropic",
-			APIKey:     AnthropicAPIKey,
-			Endpoint:   GetAnthropicEndpoint(),
-			ProviderId: "anthropic-1",
-		})
-	}
+    // Anthropic
+    if len(AnthropicAPIKey) > 0 {
+        providers = append(providers, ChatProvider{
+            Type:       "Anthropic",
+            APIKey:     AnthropicAPIKey,
+            Endpoint:   GetAnthropicEndpoint(),
+            ProviderId: "anthropic-1",
+        })
+    } else if k := os.Getenv("WHODB_ANTHROPIC_API_KEY_1"); k != "" {
+        endpoint := os.Getenv("WHODB_ANTHROPIC_ENDPOINT_1")
+        if endpoint == "" {
+            endpoint = "https://api.anthropic.com/v1"
+        }
+        providers = append(providers, ChatProvider{
+            Type:       "Anthropic",
+            APIKey:     k,
+            Endpoint:   endpoint,
+            ProviderId: "anthropic-1",
+        })
+    }
+    for i := 2; ; i++ {
+        k := os.Getenv(fmt.Sprintf("WHODB_ANTHROPIC_API_KEY_%d", i))
+        if k == "" {
+            break
+        }
+        endpoint := os.Getenv(fmt.Sprintf("WHODB_ANTHROPIC_ENDPOINT_%d", i))
+        if endpoint == "" {
+            endpoint = "https://api.anthropic.com/v1"
+        }
+        providers = append(providers, ChatProvider{
+            Type:       "Anthropic",
+            APIKey:     k,
+            Endpoint:   endpoint,
+            ProviderId: fmt.Sprintf("anthropic-%d", i),
+        })
+    }
 
-	if len(OpenAICompatibleAPIKey) > 0 && len(OpenAICompatibleEndpoint) > 0 && len(CustomModels) > 0 {
-		providers = append(providers, ChatProvider{
-			Type:       "OpenAI-Compatible",
-			APIKey:     OpenAICompatibleAPIKey,
-			Endpoint:   GetOpenAICompatibleEndpoint(),
-			ProviderId: "openai-compatible-1",
-		})
-	}
+    // OpenAI-Compatible
+    if len(OpenAICompatibleAPIKey) > 0 && len(OpenAICompatibleEndpoint) > 0 {
+        providers = append(providers, ChatProvider{
+            Type:       "OpenAI-Compatible",
+            APIKey:     OpenAICompatibleAPIKey,
+            Endpoint:   OpenAICompatibleEndpoint,
+            ProviderId: "openai-compatible-1",
+        })
+    } else if k := os.Getenv("WHODB_OPENAI_COMPATIBLE_API_KEY_1"); k != "" {
+        endpoint := os.Getenv("WHODB_OPENAI_COMPATIBLE_ENDPOINT_1")
+        if endpoint != "" {
+            providers = append(providers, ChatProvider{
+                Type:       "OpenAI-Compatible",
+                APIKey:     k,
+                Endpoint:   endpoint,
+                ProviderId: "openai-compatible-1",
+            })
+        }
+    }
+    for i := 2; ; i++ {
+        k := os.Getenv(fmt.Sprintf("WHODB_OPENAI_COMPATIBLE_API_KEY_%d", i))
+        if k == "" {
+            break
+        }
+        endpoint := os.Getenv(fmt.Sprintf("WHODB_OPENAI_COMPATIBLE_ENDPOINT_%d", i))
+        if endpoint == "" {
+            // No endpoint, skip as it's required for compatibility
+            continue
+        }
+        providers = append(providers, ChatProvider{
+            Type:       "OpenAI-Compatible",
+            APIKey:     k,
+            Endpoint:   endpoint,
+            ProviderId: fmt.Sprintf("openai-compatible-%d", i),
+        })
+    }
 
-	providers = append(providers, ChatProvider{
-		Type:       "Ollama",
-		APIKey:     "",
-		Endpoint:   GetOllamaEndpoint(),
-		ProviderId: "ollama-1",
-	})
+    // Ollama (single local instance support for now)
+    providers = append(providers, ChatProvider{
+        Type:       "Ollama",
+        APIKey:     "",
+        Endpoint:   GetOllamaEndpoint(),
+        ProviderId: "ollama-1",
+    })
 
 	return providers
 }
@@ -146,12 +230,7 @@ func GetOpenAIEndpoint() string {
 	return "https://api.openai.com/v1"
 }
 
-func GetOpenAICompatibleEndpoint() string {
-	if OpenAICompatibleEndpoint != "" && OpenAICompatibleAPIKey != "" && len(CustomModels) > 0 {
-		return OpenAICompatibleEndpoint
-	}
-	return "https://api.openai.com/v1"
-}
+// GetOpenAICompatibleEndpoint is unused; OpenAI-compatible endpoints are read directly from env.
 
 func GetClideyQuickContainerImage() string {
 	image := os.Getenv("CLIDEY_QUICK_CONTAINER_IMAGE")

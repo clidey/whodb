@@ -14,30 +14,25 @@
  * limitations under the License.
  */
 
-import { FC } from "react";
-import { DatabaseType, useGetAiModelsQuery } from '@graphql';
+import { FC, useEffect } from "react";
+import { DatabaseType, useGetAiProvidersQuery } from '@graphql';
 import { Loading } from "../../components/loading";
 import { Navigate } from "react-router-dom";
 import { InternalRoutes } from "../../config/routes";
 import { InternalPage } from "../../components/page";
 import { useAppSelector } from "../../store/hooks";
 import { isNoSQL } from "../../utils/functions";
-import { availableInternalModelTypes } from "../../store/ai-models";
 
 export const NavigateToDefault: FC = () => {
     const current = useAppSelector(state => state.auth.current);
-    const { data, error } = useGetAiModelsQuery({
-        variables: {
-            modelType: availableInternalModelTypes[0],
-        }
-    });
+    const { data, error } = useGetAiProvidersQuery();
 
     if (isNoSQL(current?.Type as DatabaseType) ||  error != null) {
         return <Navigate to={InternalRoutes.Dashboard.StorageUnit.path} />
     }
 
-    if (data?.AIModel != null) {
-        if (data.AIModel.length > 0) {
+    if (data?.AIProviders != null) {
+        if (data.AIProviders.length > 0) {
             return <Navigate to={InternalRoutes.Chat.path} />
         }
         return <Navigate to={InternalRoutes.Dashboard.StorageUnit.path} />

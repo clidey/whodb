@@ -42,6 +42,7 @@ import {
   ClipboardIcon as ClipboardIconCE,
   ClockIcon as ClockIconCE,
   CogIcon as CogIconCE,
+  Cog6ToothIcon as Cog6ToothIconCE,
   CodeBracketIcon as CodeBracketIconCE,
   CommandLineIcon as CommandLineIconCE,
   CursorArrowRaysIcon as CursorArrowRaysIconCE,
@@ -114,6 +115,7 @@ export const ClipboardDocumentIcon = EEOverrides.ClipboardDocumentIcon ?? Clipbo
 export const ClipboardIcon = EEOverrides.ClipboardIcon ?? ClipboardIconCE;
 export const ClockIcon = EEOverrides.ClockIcon ?? ClockIconCE;
 export const CogIcon = EEOverrides.CogIcon ?? CogIconCE;
+export const Cog6ToothIcon = EEOverrides.Cog6ToothIcon ?? Cog6ToothIconCE;
 export const CodeBracketIcon = EEOverrides.CodeBracketIcon ?? CodeBracketIconCE;
 export const CommandLineIcon = EEOverrides.CommandLineIcon ?? CommandLineIconCE;
 export const CursorArrowRaysIcon = EEOverrides.CursorArrowRaysIcon ?? CursorArrowRaysIconCE;
