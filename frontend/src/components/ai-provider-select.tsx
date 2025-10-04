@@ -90,6 +90,10 @@ export const AIProviderSelect: FC<AIProviderSelectProps> = ({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [editingSettings, setEditingSettings] = useState<Record<string, any>>({});
 
+  const providerNameExists = providers.some(p =>
+    p.name.toLowerCase().trim() === providerName.toLowerCase().trim()
+  );
+
   const providerTypes = [
     { id: 'Ollama', label: 'Ollama', icon: (Icons.Logos as Record<string, ReactElement>)['Ollama'] },
     { id: 'ChatGPT', label: 'ChatGPT', icon: (Icons.Logos as Record<string, ReactElement>)['ChatGPT'] },
@@ -98,6 +102,15 @@ export const AIProviderSelect: FC<AIProviderSelectProps> = ({
   ];
 
   const handleSubmitProvider = useCallback(async () => {
+    const nameExists = providers.some(p =>
+      p.name.toLowerCase().trim() === providerName.toLowerCase().trim()
+    );
+
+    if (nameExists) {
+      toast.error(`A provider with the name "${providerName}" already exists`);
+      return;
+    }
+
     try {
       await handleCreateProvider(
         providerName,
@@ -119,7 +132,7 @@ export const AIProviderSelect: FC<AIProviderSelectProps> = ({
     } catch (error: any) {
       toast.error(`Failed to add provider: ${error.message}`);
     }
-  }, [handleCreateProvider, providerName, providerType, providerApiKey, providerBaseURL, providerSettings]);
+  }, [handleCreateProvider, providerName, providerType, providerApiKey, providerBaseURL, providerSettings, providers]);
 
   const providerDropdownItems = providers.map(provider => ({
     value: provider.id,
@@ -176,7 +189,13 @@ export const AIProviderSelect: FC<AIProviderSelectProps> = ({
                 value={providerName}
                 onChange={e => setProviderName(e.target.value)}
                 placeholder="e.g., My ChatGPT Provider"
+                className={providerNameExists ? "border-destructive" : ""}
               />
+              {providerNameExists && (
+                <span className="text-xs text-destructive">
+                  A provider with this name already exists
+                </span>
+              )}
             </div>
 
             <div className="flex flex-col gap-2">
@@ -263,7 +282,7 @@ export const AIProviderSelect: FC<AIProviderSelectProps> = ({
             </Button>
             <Button
               onClick={handleSubmitProvider}
-              disabled={!providerName || (providerType !== 'Ollama' && !providerApiKey)}
+              disabled={!providerName || (providerType !== 'Ollama' && !providerApiKey) || providerNameExists}
             >
               <CheckCircleIcon className="w-4 h-4" /> Add Provider
             </Button>
