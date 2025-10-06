@@ -49,13 +49,12 @@ import { useDesktopFile } from '../../hooks/useDesktop';
  * For browser environments, returns undefined to rely on cookie-based auth.
  */
 function generateCredentialId(type: string, hostname: string, username: string, database: string): string | undefined {
-    // Only generate IDs for desktop environments
+    // browser environment just uses a random ID
     if (!isDesktopApp()) {
-        return undefined;
+        return v4();
     }
 
-    // Create a deterministic ID based on connection details
-    // Using a simple concatenation with separators that won't appear in normal values
+    // desktop environment uses a deterministic ID based on connection details
     const parts = [
         'whodb',
         type || 'unknown',
@@ -64,21 +63,15 @@ function generateCredentialId(type: string, hostname: string, username: string, 
         database || 'default'
     ];
 
-    // Create a stable hash-like ID from the parts
-    // We use btoa to create a base64 string that's URL-safe and consistent
     const combined = parts.join('::');
     try {
-        // Create a more compact ID by encoding and taking a portion
         const encoded = btoa(combined).replace(/[+/=]/g, '');
-        // Take first 16 chars for a manageable ID length
         return encoded.substring(0, 16).toLowerCase();
     } catch {
-        // Fallback to UUID if encoding fails
         return v4();
     }
 }
 
-// Embeddable LoginForm component for use in LoginPage and @sidebar.tsx
 
 // Embeddable LoginForm component
 export interface LoginFormProps {
