@@ -38,7 +38,6 @@ import {
     toast,
     useSidebar
 } from "@clidey/ux";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import {
     DatabaseType,
     useGetDatabaseQuery,
@@ -481,9 +480,7 @@ export const Sidebar: FC = () => {
             </SidebarComponent>
             <Sheet open={showLoginCard} onOpenChange={setShowLoginCard}>
                 <SheetContent side="right" className="p-8">
-                    <VisuallyHidden>
-                        <SheetTitle>Database Login</SheetTitle>
-                    </VisuallyHidden>
+                    <SheetTitle>Database Login</SheetTitle>
                     <LoginForm advancedDirection="vertical" />
                 </SheetContent>
             </Sheet>

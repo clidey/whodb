@@ -28,7 +28,6 @@ import {
     SheetTitle,
     toast
 } from "@clidey/ux";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import {FC, useCallback, useMemo, useState} from "react";
 import {useExportToCSV} from "./hooks";
 
@@ -100,9 +99,7 @@ export const Export: FC<IExportProps> = ({
                     <div className="mb-6">
                         <h2 className="text-foreground font-semibold text-lg">Export Data</h2>
                     </div>
-                    <VisuallyHidden>
-                        <SheetTitle>Export Data</SheetTitle>
-                    </VisuallyHidden>
+                    <SheetTitle>Export Data</SheetTitle>
                     <div className="flex flex-col gap-lg grow">
                         <div className="space-y-4 grow">
                             <p>

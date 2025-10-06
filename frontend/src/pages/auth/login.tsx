@@ -94,11 +94,11 @@ export interface LoginFormProps {
 }
 
 export const LoginForm: FC<LoginFormProps> = ({
-                                                  onLoginSuccess,
-                                                  hideHeader = false,
-                                                  className = "",
-                                                  advancedDirection = "horizontal",
-                                              }) => {
+    onLoginSuccess,
+    hideHeader = false,
+    className = "",
+    advancedDirection = "horizontal",
+}) => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const currentProfile = useAppSelector(state => state.auth.current);

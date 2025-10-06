@@ -32,7 +32,10 @@ import {
     Sheet,
     SheetContent,
     SheetFooter,
-    toast
+    toast,
+    Badge,
+    StackList,
+    StackListItem
 } from "@clidey/ux";
 import {
     DatabaseType,
@@ -43,9 +46,11 @@ import {
     StorageUnit,
     useAddRowMutation,
     useGetStorageUnitRowsLazyQuery,
+    useGetStorageUnitsLazyQuery,
     useRawExecuteLazyQuery,
     useUpdateStorageUnitMutation,
-    WhereCondition
+    WhereCondition,
+    WhereConditionType
 } from '@graphql';
 import { CheckCircleIcon, CommandLineIcon, PlayIcon, PlusCircleIcon, XMarkIcon } from "../../components/heroicons";
 import keys from "lodash/keys";
@@ -102,6 +107,15 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     const [addRowData, setAddRowData] = useState<Record<string, any>>({});
     const [addRowError, setAddRowError] = useState<string | null>(null);
 
+    // Entity search sheet state
+    const [showEntitySearchSheet, setShowEntitySearchSheet] = useState(false);
+    const [entitySearchData, setEntitySearchData] = useState<{
+        columnName: string;
+        value: string;
+        targetTable: string;
+    } | null>(null);
+    const [entitySearchResults, setEntitySearchResults] = useState<RowsResult | null>(null);
+
     const [updateStorageUnit, {loading: updating}] = useUpdateStorageUnitMutation();
 
     // For databases that don't have schemas (MongoDB, ClickHouse), pass the database name as the schema parameter
@@ -116,6 +130,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         },
         fetchPolicy: "no-cache",
     });
+    const [getStorageUnits] = useGetStorageUnitsLazyQuery();
     const [addRow, { loading: adding }] = useAddRowMutation();
     const [rawExecute, { data: rawExecuteData }] = useRawExecuteLazyQuery();
 
@@ -417,6 +432,90 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         return {whereColumns: columns, whereColumnTypes: columnTypes}
     }, [rows?.Columns, rows?.Rows, current?.Type])
 
+    // Foreign key detection logic
+    const [allTableNames, setAllTableNames] = useState<Set<string>>(new Set());
+    
+    const isValidForeignKey = useCallback((columnName: string) => {
+        // Check for both singular and plural table names
+        if (columnName.endsWith("_id")) {
+            const base = columnName.slice(0, -3);
+            return allTableNames.has(base) || allTableNames.has(base + "s");
+        }
+        return false;
+    }, [allTableNames]);
+
+    const getTargetTableName = useCallback((columnName: string) => {
+        if (columnName.endsWith("_id")) {
+            const base = columnName.slice(0, -3);
+            if (allTableNames.has(base)) {
+                return base;
+            } else if (allTableNames.has(base + "s")) {
+                return base + "s";
+            }
+        }
+        return null;
+    }, [allTableNames]);
+
+    // Load all table names for foreign key detection
+    useEffect(() => {
+        if (schema) {
+            getStorageUnits({
+                variables: { schema },
+                onCompleted: (data) => {
+                    const tableNames = new Set(data.StorageUnit?.map(unit => unit.Name) || []);
+                    setAllTableNames(tableNames);
+                }
+            });
+        }
+    }, [schema, getStorageUnits]);
+
+    // Entity search functionality
+    const handleEntitySearch = useCallback((columnName: string, value: string) => {
+        const targetTable = getTargetTableName(columnName);
+        if (!targetTable) {
+            toast.error("Could not determine target table for foreign key");
+            return;
+        }
+
+        setEntitySearchData({
+            columnName,
+            value,
+            targetTable
+        });
+
+        // Search for the entity in the target table
+        getStorageUnitRows({
+            variables: {
+                schema,
+                storageUnit: targetTable,
+                where: {
+                    Type: WhereConditionType.Atomic,
+                    Atomic: {
+                        Key: "id", // Assuming the target table has an 'id' column
+                        Operator: "=",
+                        Value: value,
+                        ColumnType: "string"
+                    }
+                },
+                pageSize: 1,
+                pageOffset: 0
+            },
+            onCompleted: (data) => {
+                setEntitySearchResults(data.Row);
+                setShowEntitySearchSheet(true);
+            },
+            onError: (error) => {
+                toast.error(`Failed to search for entity: ${error.message}`);
+            }
+        });
+    }, [getStorageUnitRows, getTargetTableName, schema]);
+
+    const handleCloseEntitySearchSheet = useCallback(() => {
+        setShowEntitySearchSheet(false);
+        setEntitySearchData(null);
+        setEntitySearchResults(null);
+    }, []);
+
     if (unit == null) {
         return <Navigate to={InternalRoutes.Dashboard.StorageUnit.path} />
     }
@@ -567,6 +666,9 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                         currentPage={currentPage}
                         onPageChange={handlePageChange}
                         showPagination={true}
+                        // Foreign key functionality
+                        isValidForeignKey={isValidForeignKey}
+                        onEntitySearch={handleEntitySearch}
                     >
                         <div className="flex gap-2">
                             <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-row-button">
@@ -608,5 +710,48 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 />
             </DrawerContent>
         </Drawer>
+        <Sheet open={showEntitySearchSheet} onOpenChange={setShowEntitySearchSheet}>
+            <SheetContent side="right" className="flex flex-col p-8">
+                <div className="text-lg font-semibold mb-4">
+                    Entity Details
+                    {entitySearchData && (
+                        <div className="text-sm text-gray-500 mt-1">
+                            {entitySearchData.targetTable} (ID: {entitySearchData.value})
+                        </div>
+                    )}
+                </div>
+                <div className="flex-1 overflow-y-auto pr-2">
+                    {entitySearchResults && entitySearchResults.Rows.length > 0 ? (
+                        <div className="flex flex-col gap-4">
+                            <StackList>
+                                {entitySearchResults.Columns.map((column, index) => (
+                                    <StackListItem 
+                                        key={column.Name} 
+                                        item={
+                                            isValidForeignKey(column.Name) ? (
+                                                <Badge className="text-lg" data-testid="foreign-key-attribute">
+                                                    {column.Name}
+                                                </Badge>
+                                            ) : column.Name
+                                        }
+                                    >
+                                        {entitySearchResults.Rows[0][index]}
+                                    </StackListItem>
+                                ))}
+                            </StackList>
+                        </div>
+                    ) : (
+                        <div className="text-center text-gray-500 py-8">
+                            No entity found with the specified ID
+                        </div>
+                    )}
+                </div>
+                <SheetFooter className="px-0 pt-4 border-t">
+                    <Button onClick={handleCloseEntitySearchSheet} variant="outline">
+                        Close
+                    </Button>
+                </SheetFooter>
+            </SheetContent>
+        </Sheet>
     </InternalPage>
 }

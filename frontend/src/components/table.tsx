@@ -80,6 +80,7 @@ import {
     HashtagIcon,
     KeyIcon,
     ListBulletIcon,
+    MagnifyingGlassIcon,
     PencilSquareIcon,
     ShareIcon,
     TrashIcon,
@@ -191,6 +192,9 @@ interface TableProps {
     currentPage?: number;
     onPageChange?: (page: number) => void;
     showPagination?: boolean;
+    // Foreign key functionality
+    isValidForeignKey?: (columnName: string) => boolean;
+    onEntitySearch?: (columnName: string, value: string) => void;
 }
 
 export const StorageUnitTable: FC<TableProps> = ({
@@ -214,6 +218,9 @@ export const StorageUnitTable: FC<TableProps> = ({
     currentPage: serverCurrentPage,
     onPageChange,
     showPagination = false,
+    // Foreign key functionality
+    isValidForeignKey,
+    onEntitySearch,
 }) => {
     const [editIndex, setEditIndex] = useState<number | null>(null);
     const [editRow, setEditRow] = useState<string[] | null>(null);
@@ -758,6 +765,21 @@ export const StorageUnitTable: FC<TableProps> = ({
                     Copy Cell
                     <ContextMenuShortcut><CursorArrowRaysIcon className="w-4 h-4" /></ContextMenuShortcut>
                 </ContextMenuItem>
+                {isValidForeignKey && onEntitySearch && contextMenuCellIdx !== null && isValidForeignKey(columns[contextMenuCellIdx]) && (
+                    <ContextMenuItem
+                        onSelect={() => {
+                            if (contextMenuCellIdx == null) return;
+                            const cell = paginatedRows[index]?.[contextMenuCellIdx];
+                            const columnName = columns[contextMenuCellIdx];
+                            if (cell !== undefined && cell !== null && columnName) {
+                                onEntitySearch(columnName, String(cell));
+                            }
+                        }}
+                    >
+                        <MagnifyingGlassIcon className="w-4 h-4" />
+                        Search for Entity
+                    </ContextMenuItem>
+                )}
                 <ContextMenuItem
                     onSelect={() => {
                         const row = paginatedRows[index];
