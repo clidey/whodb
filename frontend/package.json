@@ -94,7 +94,7 @@
     "@cypress/code-coverage": "^3.14.5",
     "@graphql-codegen/cli": "^5.0.7",
     "@graphql-codegen/typescript": "^4.1.6",
-    "@graphql-codegen/typescript-operations": "^4.6.1",
+    "@graphql-codegen/typescript-operations": "^5.0.2",
     "@graphql-codegen/typescript-react-apollo": "^4.3.3",
     "@types/lodash": "^4.17.20",
     "@types/react-window": "^1.8.8",
