@@ -61,6 +61,8 @@ import {
     VirtualizedTableBody
 } from "@clidey/ux";
 import { useDeleteRowMutation, useGenerateMockDataMutation, useMockDataMaxRowCountQuery } from '@graphql';
+import { FC, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Export } from "./export";
 import {
     ArrowDownCircleIcon,
     ArrowDownTrayIcon,
@@ -83,10 +85,8 @@ import {
     PencilSquareIcon,
     ShareIcon,
     TrashIcon,
-    XMarkIcon,
+    XMarkIcon
 } from "./heroicons";
-import { FC, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Export } from "./export";
 import { Tip } from "./tip";
 
 // Dynamically load EE Export component
@@ -938,7 +938,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 collisionPadding={{ top: 16, right: 16, bottom: 16, left: 16 }}
             >
                                 <ContextMenuItem onSelect={() => setShowMockDataSheet(true)} data-testid="context-menu-mock-data">
-                                    <DocumentDuplicateIcon className="w-4 h-4" />
+                                    <CalculatorIcon className="w-4 h-4" />
                                     Mock Data
                                     <ContextMenuShortcut>{renderShortcut(["Mod", "M"])}</ContextMenuShortcut>
                                 </ContextMenuItem>
@@ -1167,7 +1167,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 }}>
                 <SheetContent side="right" className="p-8">
                     <div className="flex flex-col gap-lg h-full">
-                        <div className="text-lg font-semibold mb-2">Mock Data for {storageUnit}</div>
+                        <SheetTitle className="flex items-center gap-2"><CalculatorIcon className="w-4 h-4" /> Mock Data</SheetTitle>
                         {!showMockDataConfirmation ? (
                             <div className="space-y-4">
                                 <Label>Number of Rows (max: {maxRowCount})</Label>

@@ -16,7 +16,7 @@
 
 import { Badge, Button, Checkbox, cn, Input, Label, SearchInput, SearchSelect, Separator, StackList, StackListItem, Table, TableCell, TableHead, Tabs, TabsContent, TabsList, TabsTrigger, toast, TableRow, VirtualizedTableBody, TableHeader, TableHeadRow } from '@clidey/ux';
 import { DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useGetStorageUnitsQuery } from '@graphql';
-import { ArrowPathRoundedSquareIcon, CheckCircleIcon, CircleStackIcon, CommandLineIcon, ListBulletIcon, MagnifyingGlassIcon, PlusCircleIcon, TableCellsIcon, XMarkIcon } from '../../components/heroicons';
+import { ArrowPathRoundedSquareIcon, CheckCircleIcon, CircleStackIcon, CommandLineIcon, ListBulletIcon, MagnifyingGlassIcon, PlusCircleIcon, TableCellsIcon, XCircleIcon, XMarkIcon } from '../../components/heroicons';
 import classNames from "classnames";
 import clone from "lodash/clone";
 import cloneDeep from "lodash/cloneDeep";
@@ -98,7 +98,10 @@ const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = (
         <div className="flex flex-col grow gap-lg justify-between h-full overflow-y-auto">
             <div className="w-full" data-testid="explore-fields">
                 <div className="flex flex-col gap-xs2">
-                    <h1 className="text-2xl font-bold mb-4 break-all">{unit.Name}</h1>
+                    <div className="flex items-center gap-2 mb-4">
+                        <TableCellsIcon className="w-5 h-5" />
+                        <h1 className="text-2xl font-bold break-all">{unit.Name}</h1>
+                    </div>
                     <StackList>
                         {
                             introAttributes.map(attribute => (
@@ -329,7 +332,10 @@ export const StorageUnitPage: FC = () => {
                 </div>
                 <div className="flex grow flex-col my-2 gap-4">
                     <div className="flex flex-col gap-4">
-                        <h1 className="text-2xl font-bold mb-4">Create a {getDatabaseStorageUnitLabel(current?.Type, true)}</h1>
+                        <div className="flex items-center gap-2 mb-4">
+                            <PlusCircleIcon className="w-5 h-5" />
+                            <h1 className="text-2xl font-bold">Create a {getDatabaseStorageUnitLabel(current?.Type, true)}</h1>
+                        </div>
                         <div className="flex flex-col gap-2">
                             <Label>Name</Label>
                             <Input value={storageUnitName} onChange={e => setStorageUnitName(e.target.value)} />
@@ -372,7 +378,7 @@ export const StorageUnitPage: FC = () => {
                                             {
                                                 fields.length > 1 &&
                                                 <Button variant="destructive" onClick={() => handleRemove(index)} data-testid="remove-field-button" className="w-full mt-1">
-                                                    <XMarkIcon className="w-4 h-4"/> <span>Remove</span>
+                                                    <XCircleIcon className="w-4 h-4"/> <span>Remove</span>
                                                 </Button>
                                             }
                                             {index !== fields.length - 1 && <Separator className="mt-2" />}

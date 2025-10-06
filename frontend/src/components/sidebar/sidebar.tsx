@@ -38,7 +38,6 @@ import {
     toast,
     useSidebar
 } from "@clidey/ux";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import {
     DatabaseType,
     useGetDatabaseQuery,
@@ -47,17 +46,7 @@ import {
     useLoginMutation,
     useLoginWithProfileMutation
 } from '@graphql';
-import {
-    ArrowLeftStartOnRectangleIcon,
-    ChevronDownIcon,
-    CogIcon,
-    CommandLineIcon,
-    PlusIcon,
-    QuestionMarkCircleIcon,
-    RectangleGroupIcon,
-    SparklesIcon,
-    TableCellsIcon
-} from "../heroicons";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import classNames from "classnames";
 import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
@@ -69,9 +58,20 @@ import { LoginForm } from "../../pages/auth/login";
 import { AuthActions, LocalLoginProfile } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
 import { useAppSelector } from "../../store/hooks";
-import { databaseSupportsSchema, databaseSupportsScratchpad, databaseSupportsDatabaseSwitching, databaseTypesThatUseDatabaseInsteadOfSchema } from "../../utils/database-features";
+import { databaseSupportsDatabaseSwitching, databaseSupportsSchema, databaseSupportsScratchpad, databaseTypesThatUseDatabaseInsteadOfSchema } from "../../utils/database-features";
 import { isEEFeatureEnabled } from "../../utils/ee-loader";
 import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
+import {
+    ArrowLeftStartOnRectangleIcon,
+    ChevronDownIcon,
+    CogIcon,
+    CommandLineIcon,
+    PlusCircleIcon,
+    QuestionMarkCircleIcon,
+    RectangleGroupIcon,
+    SparklesIcon,
+    TableCellsIcon
+} from "../heroicons";
 import { Icons } from "../icons";
 import { Loading } from "../loading";
 import { updateProfileLastAccessed } from "../profile-info-tooltip";
@@ -342,7 +342,7 @@ export const Sidebar: FC = () => {
                                                 onSelect={handleAddProfile}
                                             >
                                                 <span className="flex items-center gap-sm text-green-500">
-                                                    <PlusIcon className="w-4 h-4 stroke-green-500" />
+                                                    <PlusCircleIcon className="w-4 h-4 stroke-green-500" />
                                                     Add another profile
                                                 </span>
                                             </CommandItem>

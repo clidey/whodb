@@ -32,6 +32,7 @@ import {
     Sheet,
     SheetContent,
     SheetFooter,
+    SheetTitle,
     toast
 } from "@clidey/ux";
 import {
@@ -47,14 +48,15 @@ import {
     useUpdateStorageUnitMutation,
     WhereCondition
 } from '@graphql';
-import { CheckCircleIcon, CommandLineIcon, PlayIcon, PlusCircleIcon, XMarkIcon } from "../../components/heroicons";
 import keys from "lodash/keys";
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { CodeEditor } from "../../components/editor";
 import { ErrorState } from "../../components/error-state";
+import { CheckCircleIcon, CommandLineIcon, PlayIcon, PlusCircleIcon, TableCellsIcon, XMarkIcon } from "../../components/heroicons";
 import { LoadingPage } from "../../components/loading";
 import { InternalPage } from "../../components/page";
+import { SchemaViewer } from "../../components/schema-viewer";
 import { getColumnIcons, StorageUnitTable } from "../../components/table";
 import { Tip } from "../../components/tip";
 import { BUILD_EDITION } from "../../config/edition";
@@ -65,7 +67,6 @@ import { getDatabaseOperators } from "../../utils/database-operators";
 import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
 import { ExploreStorageUnitWhereCondition } from "./explore-storage-unit-where-condition";
 import { ExploreStorageUnitWhereConditionSheet } from "./explore-storage-unit-where-condition-sheet";
-import { SchemaViewer } from "../../components/schema-viewer";
 
 // Conditionally import EE query utilities
 let generateInitialQuery: ((databaseType: string | undefined, schema: string | undefined, tableName: string | undefined) => string) | undefined;
@@ -511,7 +512,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 </div>
                 <Sheet open={showAdd} onOpenChange={setShowAdd}>
                     <SheetContent side="right" className="flex flex-col p-8">
-                        <div className="text-lg font-semibold mb-4">Add new row</div>
+                        <SheetTitle className="flex items-center gap-2"><TableCellsIcon className="w-5 h-5" /> Add new row</SheetTitle>
                         <div className="flex-1 overflow-y-auto pr-2">
                             <div className="flex flex-col gap-4">
                                 {rows?.Columns?.map((col, index) => (

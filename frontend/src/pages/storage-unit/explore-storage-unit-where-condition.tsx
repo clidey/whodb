@@ -30,7 +30,7 @@ import {
     SheetTitle
 } from "@clidey/ux";
 import {AtomicWhereCondition, WhereCondition, WhereConditionType} from '@graphql';
-import {CheckCircleIcon, PlusCircleIcon, XCircleIcon, XMarkIcon} from "../../components/heroicons";
+import {AdjustmentsVerticalIcon, CheckCircleIcon, PlusCircleIcon, XCircleIcon, XMarkIcon} from "../../components/heroicons";
 import classNames from "classnames";
 import {FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {twMerge} from "tailwind-merge";
@@ -461,7 +461,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
             {/* Sheet for managing all conditions */}
             <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                 <SheetContent side="right" className="w-[500px] max-w-full p-8">
-                    <SheetTitle>Manage Where Conditions</SheetTitle>
+                    <SheetTitle><AdjustmentsVerticalIcon className="w-5 h-5" /> Manage Where Conditions</SheetTitle>
                     <div className="flex flex-col gap-lg mt-6 overflow-y-auto max-h-[calc(100vh-200px)]">
                         {sheetFilters.map((filter, index) => (
                             <div key={index} className="flex flex-col gap-lg p-4 border rounded-lg">

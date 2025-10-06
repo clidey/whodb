@@ -31,6 +31,7 @@ import {
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import {FC, useCallback, useMemo, useState} from "react";
 import {useExportToCSV} from "./hooks";
+import { ShareIcon } from "./heroicons";
 
 // Export options as lists - CE version only has basic download
 const exportFormatOptions = [
@@ -97,9 +98,7 @@ export const Export: FC<IExportProps> = ({
         <>
             <Sheet open={open} onOpenChange={onOpenChange}>
                 <SheetContent side="right" className="max-w-md w-full p-8">
-                    <div className="mb-6">
-                        <h2 className="text-foreground font-semibold text-lg">Export Data</h2>
-                    </div>
+                    <SheetTitle className="flex items-center gap-2"><ShareIcon className="w-4 h-4" /> Export Data</SheetTitle>
                     <VisuallyHidden>
                         <SheetTitle>Export Data</SheetTitle>
                     </VisuallyHidden>

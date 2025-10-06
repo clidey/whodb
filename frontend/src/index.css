@@ -105,3 +105,11 @@
   background: var(--secondary) !important;
   border-bottom: 0;
 }
+
+[role="tree"] [data-radix-collection-item] > svg:first-child {
+  transform: rotateZ(270deg);
+}
+
+[data-testid="mode-toggle"] {
+  z-index: 5;
+}

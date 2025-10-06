@@ -40,25 +40,25 @@ import {
     SheetFooter,
     toast
 } from "@clidey/ux";
+import map from "lodash/map";
+import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
+import { v4 } from "uuid";
+import { useGetAiModelsLazyQuery, useGetAiProvidersLazyQuery } from "../generated/graphql";
+import { reduxStore } from "../store";
+import { AIModelsActions, availableExternalModelTypes } from "../store/ai-models";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { ensureModelsArray, ensureModelTypesArray } from "../utils/ai-models-helper";
+import { ExternalLink } from "../utils/external-links";
 import {
     ArrowPathIcon,
     ArrowTopRightOnSquareIcon,
     CheckCircleIcon,
     LockClosedIcon,
-    PlusIcon,
+    PlusCircleIcon,
     TrashIcon,
     XMarkIcon
 } from "./heroicons";
-import map from "lodash/map";
-import {FC, ReactElement, useCallback, useEffect, useMemo, useState} from "react";
-import {v4} from "uuid";
-import {useGetAiModelsLazyQuery, useGetAiProvidersLazyQuery} from "../generated/graphql";
-import {reduxStore} from "../store";
-import {AIModelsActions, availableExternalModelTypes} from "../store/ai-models";
-import {useAppDispatch, useAppSelector} from "../store/hooks";
-import {ensureModelsArray, ensureModelTypesArray} from "../utils/ai-models-helper";
-import {Icons} from "./icons";
-import {ExternalLink} from "../utils/external-links";
+import { Icons } from "./icons";
 
 export const externalModelTypes = map(availableExternalModelTypes, (model) => ({
     id: model,
@@ -398,7 +398,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                             onSelect={handleAddExternalModel}
                         >
                             <span className="flex items-center gap-sm text-green-500">
-                                <PlusIcon className="w-4 h-4 stroke-green-500" />
+                                <PlusCircleIcon className="w-4 h-4 stroke-green-500" />
                                 Add a provider
                             </span>
                         </CommandItem>
