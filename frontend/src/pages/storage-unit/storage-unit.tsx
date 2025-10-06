@@ -332,13 +332,13 @@ export const StorageUnitPage: FC = () => {
                 </div>
                 <div className="flex grow flex-col my-2 gap-4">
                     <div className="flex flex-col gap-4">
-                        <div className="flex items-center gap-2 mb-4">
+                        <SheetTitle className="flex items-center gap-2">
                             <PlusCircleIcon className="w-5 h-5" />
-                            <h1 className="text-2xl font-bold">Create a {getDatabaseStorageUnitLabel(current?.Type, true)}</h1>
-                        </div>
+                            Create a {getDatabaseStorageUnitLabel(current?.Type, true)}
+                        </SheetTitle>
                         <div className="flex flex-col gap-2">
                             <Label>Name</Label>
-                            <Input value={storageUnitName} onChange={e => setStorageUnitName(e.target.value)} />
+                            <Input value={storageUnitName} onChange={e => setStorageUnitName(e.target.value)} placeholder="Enter name..." />
                         </div>
                         <div className={classNames("flex flex-col gap-sm overflow-y-auto max-h-[75vh]", {
                             "hidden": isNoSQL(current?.Type as DatabaseType),
@@ -346,7 +346,7 @@ export const StorageUnitPage: FC = () => {
                             <div className="flex flex-col gap-4">
                                 {
                                     fields.map((field, index) => (
-                                        <div className="flex flex-col gap-lg relative" key={`field-${index}`}>
+                                        <div className="flex flex-col gap-lg relative" key={`field-${index}`} data-testid="create-field-card">
                                             <Label>Field Name</Label>
                                             <Input value={field.Key} onChange={e => handleFieldValueChange("Key", index, e.target.value)} placeholder="Enter field name"/>
                                             <Label>Field Type</Label>
