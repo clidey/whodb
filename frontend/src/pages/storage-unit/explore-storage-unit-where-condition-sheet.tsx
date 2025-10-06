@@ -454,17 +454,6 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                     
                     {/* Add new conditions section */}
                     <div className="flex flex-col gap-lg mt-6 overflow-y-auto h-full">
-                        <div className="flex items-center justify-end">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={handleSheetAddFilter}
-                                data-testid="add-new-condition-button"
-                            >
-                                <PlusCircleIcon className="w-4 h-4" />
-                                Add Another
-                            </Button>
-                        </div>
                         {sheetFilters.map((filter, index) => (
                             <div 
                                 key={index} 
@@ -523,6 +512,17 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                 </div>
                             </div>
                         ))}
+                        <div className="flex items-center justify-end">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleSheetAddFilter}
+                                data-testid="add-new-condition-button"
+                            >
+                                <PlusCircleIcon className="w-4 h-4" />
+                                Add Another
+                            </Button>
+                        </div>
                     </div>
                     <SheetFooter className="flex gap-sm px-0 mt-6">
                         <Button

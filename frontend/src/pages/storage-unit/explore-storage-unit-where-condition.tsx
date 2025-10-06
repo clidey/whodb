@@ -29,11 +29,11 @@ import {
     SheetFooter,
     SheetTitle
 } from "@clidey/ux";
-import {AtomicWhereCondition, WhereCondition, WhereConditionType} from '@graphql';
-import {AdjustmentsVerticalIcon, CheckCircleIcon, PlusCircleIcon, XCircleIcon, XMarkIcon} from "../../components/heroicons";
+import { AtomicWhereCondition, WhereCondition, WhereConditionType } from '@graphql';
 import classNames from "classnames";
-import {FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
-import {twMerge} from "tailwind-merge";
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { twMerge } from "tailwind-merge";
+import { AdjustmentsVerticalIcon, CheckCircleIcon, PlusCircleIcon, XCircleIcon, XMarkIcon } from "../../components/heroicons";
 
 type IPopoverCardProps = {
     open: boolean;
