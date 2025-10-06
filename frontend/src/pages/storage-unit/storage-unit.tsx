@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { Badge, Button, Checkbox, cn, Input, Label, SearchInput, SearchSelect, Separator, StackList, StackListItem, Table, TableCell, TableHead, Tabs, TabsContent, TabsList, TabsTrigger, toast, TableRow, VirtualizedTableBody, TableHeader, TableHeadRow } from '@clidey/ux';
+import { Badge, Button, Checkbox, cn, Input, Label, SearchInput, SearchSelect, Separator, StackList, StackListItem, Table, TableCell, TableHead, Tabs, TabsContent, TabsList, TabsTrigger, toast, TableRow, VirtualizedTableBody, TableHeader, TableHeadRow, SheetTitle } from '@clidey/ux';
 import { DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useGetStorageUnitsQuery } from '@graphql';
-import { ArrowPathRoundedSquareIcon, CheckCircleIcon, CircleStackIcon, CommandLineIcon, ListBulletIcon, MagnifyingGlassIcon, PlusCircleIcon, TableCellsIcon, XMarkIcon } from '../../components/heroicons';
+import { ArrowPathRoundedSquareIcon, CheckCircleIcon, CircleStackIcon, CommandLineIcon, ListBulletIcon, MagnifyingGlassIcon, PlusCircleIcon, TableCellsIcon, XCircleIcon, XMarkIcon } from '../../components/heroicons';
 import classNames from "classnames";
 import clone from "lodash/clone";
 import cloneDeep from "lodash/cloneDeep";
@@ -96,9 +96,12 @@ const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = (
             </div>
         </div>
         <div className="flex flex-col grow gap-lg justify-between h-full overflow-y-auto">
+            <SheetTitle className="flex items-center gap-2 mb-4">
+                <TableCellsIcon className="w-5 h-5" />
+                {unit.Name}
+            </SheetTitle>
             <div className="w-full" data-testid="explore-fields">
                 <div className="flex flex-col gap-xs2">
-                    <h1 className="text-2xl font-bold mb-4 break-all">{unit.Name}</h1>
                     <StackList>
                         {
                             introAttributes.map(attribute => (
@@ -329,10 +332,13 @@ export const StorageUnitPage: FC = () => {
                 </div>
                 <div className="flex grow flex-col my-2 gap-4">
                     <div className="flex flex-col gap-4">
-                        <h1 className="text-2xl font-bold mb-4">Create a {getDatabaseStorageUnitLabel(current?.Type, true)}</h1>
+                        <SheetTitle className="flex items-center gap-2">
+                            <PlusCircleIcon className="w-5 h-5" />
+                            Create a {getDatabaseStorageUnitLabel(current?.Type, true)}
+                        </SheetTitle>
                         <div className="flex flex-col gap-2">
                             <Label>Name</Label>
-                            <Input value={storageUnitName} onChange={e => setStorageUnitName(e.target.value)} />
+                            <Input value={storageUnitName} onChange={e => setStorageUnitName(e.target.value)} placeholder="Enter name..." />
                         </div>
                         <div className={classNames("flex flex-col gap-sm overflow-y-auto max-h-[75vh]", {
                             "hidden": isNoSQL(current?.Type as DatabaseType),
@@ -340,7 +346,7 @@ export const StorageUnitPage: FC = () => {
                             <div className="flex flex-col gap-4">
                                 {
                                     fields.map((field, index) => (
-                                        <div className="flex flex-col gap-lg relative" key={`field-${index}`}>
+                                        <div className="flex flex-col gap-lg relative" key={`field-${index}`} data-testid="create-field-card">
                                             <Label>Field Name</Label>
                                             <Input value={field.Key} onChange={e => handleFieldValueChange("Key", index, e.target.value)} placeholder="Enter field name"/>
                                             <Label>Field Type</Label>
@@ -372,7 +378,7 @@ export const StorageUnitPage: FC = () => {
                                             {
                                                 fields.length > 1 &&
                                                 <Button variant="destructive" onClick={() => handleRemove(index)} data-testid="remove-field-button" className="w-full mt-1">
-                                                    <XMarkIcon className="w-4 h-4"/> <span>Remove</span>
+                                                    <XCircleIcon className="w-4 h-4"/> <span>Remove</span>
                                                 </Button>
                                             }
                                             {index !== fields.length - 1 && <Separator className="mt-2" />}

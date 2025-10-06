@@ -26,6 +26,7 @@ import {
   SheetTrigger,
   Spinner,
 } from "@clidey/ux";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import {cloneElement, FC, ReactElement, ReactNode, useEffect, useRef, useState,} from "react";
 
 
@@ -128,7 +129,9 @@ export const ExpandableCard: FC<IExpandableCardProps> = (props) => {
           </div>
         </SheetTrigger>
         <SheetContent side="right" className="p-0">
-          <SheetTitle>Card Details</SheetTitle>
+          <VisuallyHidden>
+            <SheetTitle>Card Details</SheetTitle>
+          </VisuallyHidden>
           <div className="flex flex-col w-full justify-center p-8 h-full">
             {props.loading ? null : props.children[1]}
           </div>

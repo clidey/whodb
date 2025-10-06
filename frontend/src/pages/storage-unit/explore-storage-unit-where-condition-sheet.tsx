@@ -15,25 +15,20 @@
  */
 
 import {
-    Badge,
     Button,
+    cn,
     Input,
     Label,
     SearchSelect,
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
     Sheet,
     SheetContent,
     SheetFooter,
     SheetTitle
 } from "@clidey/ux";
-import {AtomicWhereCondition, WhereCondition, WhereConditionType} from '@graphql';
-import {PlusCircleIcon, XCircleIcon} from "../../components/heroicons";
-import React, {FC, useCallback, useEffect, useMemo, useState} from "react";
-import { useAppSelector, useAppDispatch } from "../../store/hooks";
+import { AtomicWhereCondition, WhereCondition, WhereConditionType } from '@graphql';
+import React, { FC, useCallback, useEffect, useMemo, useState } from "react";
+import { AdjustmentsHorizontalIcon, PlusCircleIcon, XCircleIcon } from "../../components/heroicons";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { ScratchpadActions } from "../../store/scratchpad";
 
 type IExploreStorageUnitWhereConditionSheetProps = {
@@ -79,22 +74,16 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
         ];
     }, [pages, activePageId]);
 
-    // Convert filters to sheet format when opening
+    // Open sheet with a clean "add new" section; existing conditions are listed separately
     const handleOpenSheet = useCallback(() => {
-        const atomicFilters = filters.And?.Children?.map(child =>
-            child.Type === WhereConditionType.Atomic ? child.Atomic! : {
-                ColumnType: "string",
-                Key: "",
-                Operator: "",
-                Value: ""
-            }
-        ) ?? [];
-        // If no filters exist, start with one empty filter
-        const filtersToShow = atomicFilters.length > 0 ? atomicFilters : [{ColumnType: "string", Key: "", Operator: "", Value: ""}];
-        setSheetFilters(filtersToShow);
-        setEditingIndex(filtersToShow.length - 1); // Edit the last (empty) filter
+        setSheetFilters([{ ColumnType: "string", Key: "", Operator: "", Value: "" }]);
+        setEditingIndex(0);
+        setSelectedPageId("");
+        setNewPageName("");
+        setEditingExistingIndex(-1);
+        setEditingExistingFilter(null);
         setSheetOpen(true);
-    }, [filters]);
+    }, []);
 
     const handleSheetFieldChange = useCallback((index: number, field: keyof AtomicWhereCondition, value: string) => {
         setSheetFilters(prev => {
@@ -271,9 +260,8 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
         }
     }, [dispatch, pages.length]);
 
-    // Get visible filters for badges display inside sheet
-    const visibleFilters = filters.And?.Children?.slice(0, 3) ?? [];
-    const hiddenCount = (filters.And?.Children?.length ?? 0) - 3;
+    // Existing conditions list
+    const existingFilters = filters.And?.Children ?? [];
     
     // Calculate total condition count for button text
     const totalConditions = filters.And?.Children?.length ?? 0;
@@ -295,61 +283,144 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                     <PlusCircleIcon className="w-4 h-4" /> {getConditionButtonText()}
                 </Button>
             </div>
-
             {/* Sheet for managing all conditions */}
             <Sheet open={sheetOpen} onOpenChange={handleCloseSheet}>
                 <SheetContent side="right" className="w-[500px] max-w-full p-8 h-full">
-                    <SheetTitle>Conditions</SheetTitle>
-                    
-                    {/* Display existing conditions as badges */}
-                    {visibleFilters.length > 0 && (
-                        <div className="flex flex-row gap-xs mt-4 flex-wrap">
-                            {visibleFilters.map((filter, i) => (
-                                <Badge
-                                    key={`sheet-condition-badge-${i}`}
-                                    className="flex items-center gap-xs pl-4 pr-2 h-8 max-w-[350px] truncate py-0"
-                                    data-testid="sheet-condition-badge"
-                                    variant="secondary"
-                                >
-                                    <div className="flex items-center gap-xs h-full">
-                                        {filter.Atomic?.Key} {filter.Atomic?.Operator} {filter.Atomic?.Value}
-                                        <Button 
-                                            className="size-6 h-full ml-1" 
-                                            onClick={(e: React.MouseEvent) => {
-                                                e.stopPropagation();
-                                                handleEditExistingFilter(i);
-                                            }} 
-                                            data-testid={`edit-existing-filter-${i}`} 
-                                            variant="ghost" 
-                                            size="icon"
-                                        >
-                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                            </svg>
-                                        </Button>
-                                        <Button 
-                                            className="size-6 h-full" 
-                                            onClick={(e: React.MouseEvent) => {
-                                                e.stopPropagation();
-                                                handleDeleteExistingFilter(i);
-                                            }} 
-                                            data-testid={`delete-existing-filter-${i}`} 
-                                            variant="ghost" 
-                                            size="icon"
-                                        >
-                                            <XCircleIcon className="w-3 h-3" />
-                                        </Button>
+                    <SheetTitle className="flex items-center gap-2"><AdjustmentsHorizontalIcon className="w-5 h-5" /> Conditions</SheetTitle>
+                    {/* Display existing conditions as editable cards */}
+                    {existingFilters.length > 0 && (
+                        <div className="flex flex-col gap-sm mt-4">
+                            {existingFilters.map((filter, i) => {
+                                const isEditing = editingExistingIndex === i;
+                                return (
+                                    <div
+                                        key={`existing-condition-card-${i}`}
+                                        className="flex flex-col gap-2 p-4 border rounded-lg"
+                                        data-testid={`existing-condition-card-${i}`}
+                                    >
+                                        {isEditing ? (
+                                            // Editing mode - show form fields
+                                            <div className="flex flex-col gap-2">
+                                                <div className="flex items-center justify-between">
+                                                    <Label className="text-sm font-medium">Editing Condition</Label>
+                                                </div>
+                                                <div className="flex flex-col gap-2">
+                                                    <Label className="text-xs">Field</Label>
+                                                    <SearchSelect
+                                                        value={editingExistingFilter?.Key || ""}
+                                                        options={fieldsDropdownItems}
+                                                        onChange={(value) => handleEditExistingFilterChange('Key', value)}
+                                                        buttonProps={{
+                                                            "data-testid": `edit-existing-field-key-${i}`,
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="flex flex-col gap-2">
+                                                    <Label className="text-xs">Operator</Label>
+                                                    <SearchSelect
+                                                        value={editingExistingFilter?.Operator || ""}
+                                                        options={validOperators}
+                                                        onChange={(value) => handleEditExistingFilterChange('Operator', value)}
+                                                        buttonProps={{
+                                                            "data-testid": `edit-existing-field-operator-${i}`,
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="flex flex-col gap-2">
+                                                    <Label className="text-xs">Value</Label>
+                                                    <Input
+                                                        value={editingExistingFilter?.Value || ""}
+                                                        onChange={(e) => handleEditExistingFilterChange('Value', e.target.value)}
+                                                        placeholder="Enter filter value"
+                                                        data-testid={`edit-existing-field-value-${i}`}
+                                                    />
+                                                </div>
+                                                <div className="flex gap-2 mt-2 w-full">
+                                                    <Button
+                                                        variant="secondary"
+                                                        onClick={() => {
+                                                            setEditingExistingIndex(-1);
+                                                            setEditingExistingFilter(null);
+                                                        }}
+                                                        data-testid={`cancel-edit-existing-filter-${i}`}
+                                                        size="sm"
+                                                        className="flex-1"
+                                                    >
+                                                        Cancel
+                                                    </Button>
+                                                    <Button
+                                                        className="flex-1"
+                                                        onClick={() => {
+                                                            if (editingExistingFilter && editingExistingIndex >= 0) {
+                                                                // Update existing filter
+                                                                const currentFilters = filters.And?.Children ?? [];
+                                                                const updatedFilters = [...currentFilters];
+                                                                updatedFilters[editingExistingIndex] = {
+                                                                    Type: WhereConditionType.Atomic,
+                                                                    Atomic: editingExistingFilter
+                                                                };
+                                                                
+                                                                const newWhereCondition = {
+                                                                    Type: WhereConditionType.And,
+                                                                    And: {
+                                                                        Children: updatedFilters
+                                                                    }
+                                                                };
+                                                                
+                                                                setFilters(newWhereCondition);
+                                                                onChange?.(newWhereCondition);
+                                                                
+                                                                // Reset editing state
+                                                                setEditingExistingIndex(-1);
+                                                                setEditingExistingFilter(null);
+                                                            }
+                                                        }}
+                                                        data-testid={`update-existing-filter-${i}`}
+                                                        size="sm"
+                                                    >
+                                                        Update
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            // View mode - show condition and action buttons
+                                            <div className="flex items-center justify-between">
+                                                <div className="text-sm">
+                                                    {filter.Atomic?.Key} {filter.Atomic?.Operator} {filter.Atomic?.Value}
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <Button 
+                                                        className="size-6 h-full ml-1" 
+                                                        onClick={(e: React.MouseEvent) => {
+                                                            e.stopPropagation();
+                                                            handleEditExistingFilter(i);
+                                                        }} 
+                                                        data-testid={`edit-existing-filter-${i}`} 
+                                                        variant="ghost" 
+                                                        size="icon"
+                                                    >
+                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                        </svg>
+                                                    </Button>
+                                                    <Button 
+                                                        className="size-6 h-full" 
+                                                        onClick={(e: React.MouseEvent) => {
+                                                            e.stopPropagation();
+                                                            handleDeleteExistingFilter(i);
+                                                        }} 
+                                                        data-testid={`delete-existing-filter-${i}`} 
+                                                        variant="ghost" 
+                                                        size="icon"
+                                                    >
+                                                        <XCircleIcon className="w-3 h-3" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
-                                </Badge>
-                            ))}
-                            {hiddenCount > 0 && (
-                                <Badge 
-                                    variant="secondary"
-                                    data-testid="sheet-more-conditions-badge"
-                                >
-                                    +{hiddenCount} more
-                                </Badge>
-                            )}
+                                );
+                            })}
                         </div>
                     )}
                     
@@ -381,6 +452,7 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                         )}
                     </div> */}
                     
+                    {/* Add new conditions section */}
                     <div className="flex flex-col gap-lg mt-6 overflow-y-auto h-full">
                         {sheetFilters.map((filter, index) => (
                             <div 
@@ -389,8 +461,23 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                             >
                                 <div className="flex items-center justify-between">
                                     <Label className="text-sm font-medium">
-                                        {editingExistingFilter && editingExistingIndex !== -1 ? "Update" : "New"} Condition
+                                        Condition {index + 1}
                                     </Label>
+                                    {sheetFilters.length > 1 && (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => {
+                                                setSheetFilters(prev => prev.filter((_, i) => i !== index));
+                                                if (editingIndex >= index) {
+                                                    setEditingIndex(Math.max(0, editingIndex - 1));
+                                                }
+                                            }}
+                                            data-testid={`remove-condition-${index}`}
+                                        >
+                                            <XCircleIcon className="w-4 h-4" />
+                                        </Button>
+                                    )}
                                 </div>
                                 <div className="flex flex-col gap-2">
                                     <Label className="text-xs">Field</Label>
@@ -425,64 +512,33 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                 </div>
                             </div>
                         ))}
-                        {/* Edit existing filter form */}
-                        {editingExistingFilter && (
-                            <div className="flex flex-col gap-lg p-4 border rounded-lg">
-                                <div className="flex items-center justify-between">
-                                    <Label className="text-sm font-medium">Edit Condition</Label>
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    <Label className="text-xs">Field</Label>
-                                    <SearchSelect
-                                        value={editingExistingFilter.Key}
-                                        options={fieldsDropdownItems}
-                                        onChange={(value) => handleEditExistingFilterChange('Key', value)}
-                                        buttonProps={{
-                                            "data-testid": "edit-existing-field-key",
-                                        }}
-                                    />
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    <Label className="text-xs">Operator</Label>
-                                    <SearchSelect
-                                        value={editingExistingFilter.Operator}
-                                        options={validOperators}
-                                        onChange={(value) => handleEditExistingFilterChange('Operator', value)}
-                                        buttonProps={{
-                                            "data-testid": "edit-existing-field-operator",
-                                        }}
-                                    />
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    <Label className="text-xs">Value</Label>
-                                    <Input
-                                        value={editingExistingFilter.Value}
-                                        onChange={(e) => handleEditExistingFilterChange('Value', e.target.value)}
-                                        placeholder="Enter filter value"
-                                        data-testid="edit-existing-field-value"
-                                    />
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                    <SheetFooter className="flex gap-sm px-0 mt-6">
-                        {editingExistingIndex >= 0 && (
+                        <div className="flex items-center justify-end">
                             <Button
-                                variant="secondary"
-                                onClick={() => {
-                                    setEditingExistingIndex(-1);
-                                    setEditingExistingFilter(null);
-                                    setSheetFilters([{ColumnType: "string", Key: "", Operator: "", Value: ""}]);
-                                    setEditingIndex(0);
-                                }}
-                                className="mr-2"
-                                data-testid="cancel-edit-existing-filter"
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleSheetAddFilter}
+                                data-testid="add-new-condition-button"
                             >
-                                Cancel
+                                <PlusCircleIcon className="w-4 h-4" />
+                                Add Another
                             </Button>
-                        )}
-                        <Button onClick={handleSheetSave}>
-                            {editingExistingIndex >= 0 ? 'Update' : (selectedPageId ? 'Add to Page' : 'Add')}
+                        </div>
+                    </div>
+                    <SheetFooter className="flex flex-row w-full gap-sm px-0 mt-6">
+                        <Button
+                            className="flex-1"
+                            variant="secondary"
+                            onClick={handleCloseSheet}
+                            data-testid="cancel-add-conditions"
+                        >
+                            Cancel
+                        </Button>
+                        <Button 
+                            className="flex-1"
+                            onClick={handleSheetSave}
+                            data-testid="add-conditions-button"
+                        >
+                            {selectedPageId ? 'Add to Page' : 'Add Condition'}
                         </Button>
                     </SheetFooter>
                 </SheetContent>

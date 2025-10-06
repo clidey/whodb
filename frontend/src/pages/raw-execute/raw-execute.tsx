@@ -79,7 +79,7 @@ import {
     PencilIcon,
     PlayIcon,
     PlusCircleIcon,
-    PlusIcon,
+    XCircleIcon,
     XMarkIcon
 } from "../../components/heroicons";
 import { Loading } from "../../components/loading";
@@ -669,7 +669,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                         <Tip>
                             <Button onClick={handleAdd} data-testid="add-cell-button" variant="secondary"
                                     className="border border-input">
-                                <PlusIcon className="w-4 h-4" />
+                                <PlusCircleIcon className="w-4 h-4" />
                             </Button>
                                 <p>Add a new cell</p>
                         </Tip>
@@ -685,7 +685,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                             <Tip>
                                 <Button variant="destructive" onClick={handleDelete} data-testid="delete-cell-button"
                                         className="border border-input bg-white hover:bg-white/95">
-                                    <XMarkIcon className="w-4 h-4 text-destructive"/>
+                                    <XCircleIcon className="w-4 h-4 text-destructive"/>
                                 </Button>
                                 <p>Delete the cell</p>
                             </Tip>

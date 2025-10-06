@@ -67,7 +67,9 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
                 <div className="flex flex-col grow py-6">
                     <div className="flex w-full justify-between items-center px-8">
                         <Breadcrumb routes={props.routes ?? []} active={props.routes?.at(-1)} />
-                        <ModeToggle />
+                        <div data-testid="mode-toggle">
+                            <ModeToggle />
+                        </div>
                     </div>
                     {
                         current == null
