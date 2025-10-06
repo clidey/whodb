@@ -162,7 +162,7 @@ export const Export: FC<IExportProps> = ({
                                 )}
                             </div>
                         </div>
-                        <SheetFooter className="px-0">
+                        <SheetFooter className="flex gap-sm px-0">
                             <div className="text-xs text-muted-foreground mb-8">
                                 <p className="font-medium mb-1">Export Details:</p>
                                 <ul className="list-disc list-inside space-y-1">
@@ -182,9 +182,19 @@ export const Export: FC<IExportProps> = ({
                                     )}
                                 </ul>
                             </div>
-                            <Button onClick={handleExportConfirm}>
-                                Export
-                            </Button>
+                            <div className="flex flex-row gap-sm">
+                                <Button
+                                    className="flex-1"
+                                    variant="secondary"
+                                    onClick={() => onOpenChange(false)}
+                                    data-testid="cancel-export"
+                                >
+                                    Cancel
+                                </Button>
+                                <Button className="flex-1" onClick={handleExportConfirm}>
+                                    Export
+                                </Button>
+                            </div>
                         </SheetFooter>
                     </div>
                 </SheetContent>

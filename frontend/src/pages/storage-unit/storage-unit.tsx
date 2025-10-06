@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Badge, Button, Checkbox, cn, Input, Label, SearchInput, SearchSelect, Separator, StackList, StackListItem, Table, TableCell, TableHead, Tabs, TabsContent, TabsList, TabsTrigger, toast, TableRow, VirtualizedTableBody, TableHeader, TableHeadRow } from '@clidey/ux';
+import { Badge, Button, Checkbox, cn, Input, Label, SearchInput, SearchSelect, Separator, StackList, StackListItem, Table, TableCell, TableHead, Tabs, TabsContent, TabsList, TabsTrigger, toast, TableRow, VirtualizedTableBody, TableHeader, TableHeadRow, SheetTitle } from '@clidey/ux';
 import { DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useGetStorageUnitsQuery } from '@graphql';
 import { ArrowPathRoundedSquareIcon, CheckCircleIcon, CircleStackIcon, CommandLineIcon, ListBulletIcon, MagnifyingGlassIcon, PlusCircleIcon, TableCellsIcon, XCircleIcon, XMarkIcon } from '../../components/heroicons';
 import classNames from "classnames";
@@ -96,12 +96,12 @@ const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = (
             </div>
         </div>
         <div className="flex flex-col grow gap-lg justify-between h-full overflow-y-auto">
+            <SheetTitle className="flex items-center gap-2 mb-4">
+                <TableCellsIcon className="w-5 h-5" />
+                {unit.Name}
+            </SheetTitle>
             <div className="w-full" data-testid="explore-fields">
                 <div className="flex flex-col gap-xs2">
-                    <div className="flex items-center gap-2 mb-4">
-                        <TableCellsIcon className="w-5 h-5" />
-                        <h1 className="text-2xl font-bold break-all">{unit.Name}</h1>
-                    </div>
                     <StackList>
                         {
                             introAttributes.map(attribute => (

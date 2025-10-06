@@ -471,7 +471,7 @@ export const ChatPage: FC = () => {
                 </div>
                 {
                     (!modelAvailable || models.length === 0) &&
-                    <EmptyState title="No Model Available" description="Please choose an available model to start chatting with your data." icon={<SparklesIcon className="w-4 h-4" />} />
+                    <EmptyState title="No Model Available" description="Please choose an available model to start chatting with your data." icon={<SparklesIcon className="w-16 h-16" data-testid="empty-state-sparkles-icon" />} />
                 }
                 <div className={classNames("flex justify-between items-center gap-2", {
                     "opacity-80": disableChat,

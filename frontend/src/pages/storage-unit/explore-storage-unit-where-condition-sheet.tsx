@@ -524,8 +524,9 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                             </Button>
                         </div>
                     </div>
-                    <SheetFooter className="flex gap-sm px-0 mt-6">
+                    <SheetFooter className="flex flex-row w-full gap-sm px-0 mt-6">
                         <Button
+                            className="flex-1"
                             variant="secondary"
                             onClick={handleCloseSheet}
                             data-testid="cancel-add-conditions"
@@ -533,10 +534,11 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                             Cancel
                         </Button>
                         <Button 
+                            className="flex-1"
                             onClick={handleSheetSave}
                             data-testid="add-conditions-button"
                         >
-                            {selectedPageId ? 'Add to Page' : 'Add Conditions'}
+                            {selectedPageId ? 'Add to Page' : 'Add Condition'}
                         </Button>
                     </SheetFooter>
                 </SheetContent>

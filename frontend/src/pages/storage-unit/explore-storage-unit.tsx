@@ -539,8 +539,16 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                                 <ErrorState error={addRowError} />
                             )}
                         </div>
-                        <SheetFooter className="px-0 pt-4 border-t">
-                            <Button onClick={handleAddRowSubmit} data-testid="submit-add-row-button" disabled={adding}>
+                        <SheetFooter className="flex flex-row gap-sm px-0 pt-4 border-t">
+                            <Button
+                                className="flex-1"
+                                variant="secondary"
+                                onClick={() => setShowAdd(false)}
+                                data-testid="cancel-add-row"
+                            >
+                                Cancel
+                            </Button>
+                            <Button className="flex-1" onClick={handleAddRowSubmit} data-testid="submit-add-row-button" disabled={adding}>
                                 <CheckCircleIcon className="w-4 h-4" /> Submit
                             </Button>
                         </SheetFooter>
@@ -580,7 +588,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         </div>
         <Drawer open={scratchpad} onOpenChange={handleCloseScratchpad}>
             <DrawerContent className="px-8 min-h-[65vh]">
-                <Button variant="ghost" className="absolute top-0 right-0" onClick={handleCloseScratchpad}>
+                <Button variant="ghost" className="absolute top-0 right-0" onClick={handleCloseScratchpad} data-testid="icon-button">
                     <XMarkIcon className="w-4 h-4" />
                 </Button>
                 <DrawerHeader className="px-0">

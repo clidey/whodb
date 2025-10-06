@@ -1152,7 +1152,19 @@ export const StorageUnitTable: FC<TableProps> = ({
                             </div>
                         </div>
                         <SheetFooter className="flex gap-sm px-0 mt-4">
-                            <Button onClick={handleUpdate} disabled={!editRow} data-testid="update-button">
+                            <Button
+                                className="flex-1"
+                                variant="secondary"
+                                onClick={() => {
+                                    setEditIndex(null);
+                                    setEditRow(null);
+                                    setEditRowInitialLengths([]);
+                                }}
+                                data-testid="cancel-edit-row"
+                            >
+                                Cancel
+                            </Button>
+                            <Button className="flex-1" onClick={handleUpdate} disabled={!editRow} data-testid="update-button">
                                 Update
                             </Button>
                         </SheetFooter>
@@ -1218,19 +1230,27 @@ export const StorageUnitTable: FC<TableProps> = ({
                             </div>
                         )}
                     </div>
-                    <SheetFooter className="px-0">
+                    <SheetFooter className="flex gap-sm px-0">
                         <Alert variant="info" className="mb-4">
                             <AlertTitle>Note</AlertTitle>
                             <AlertDescription>
                                 Mock data generation does not yet fully support foreign keys and all constraints. You may experience some errors or missing data.
                             </AlertDescription>
                         </Alert>
+                        <Button
+                            className="flex-1"
+                            variant="secondary"
+                            onClick={() => setShowMockDataSheet(false)}
+                            data-testid="cancel-mock-data"
+                        >
+                            Cancel
+                        </Button>
                         {!showMockDataConfirmation ? (
-                            <Button onClick={handleMockDataGenerate} disabled={generatingMockData}>
+                            <Button className="flex-1" onClick={handleMockDataGenerate} disabled={generatingMockData}>
                                 Generate
                             </Button>
                         ) : (
-                            <Button onClick={handleMockDataGenerate} disabled={generatingMockData} variant="destructive">
+                            <Button className="flex-1" onClick={handleMockDataGenerate} disabled={generatingMockData} variant="destructive">
                                 Yes, Overwrite
                             </Button>
                         )}

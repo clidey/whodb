@@ -515,7 +515,15 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                         </Button>
                     </div>
                     <SheetFooter className="flex gap-sm px-0 mt-6">
-                        <Button onClick={handleSheetSave}>
+                        <Button
+                            className="flex-1"
+                            variant="secondary"
+                            onClick={() => setSheetOpen(false)}
+                            data-testid="cancel-manage-conditions"
+                        >
+                            Cancel
+                        </Button>
+                        <Button className="flex-1" onClick={handleSheetSave}>
                             Save Changes
                         </Button>
                     </SheetFooter>
