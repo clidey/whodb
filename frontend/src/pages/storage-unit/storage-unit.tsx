@@ -66,7 +66,7 @@ const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = (
     }, [allTableNames]);
 
     return (<ExpandableCard key={unit.Name} isExpanded={expanded} setExpanded={setExpanded} icon={<TableCellsIcon className="w-4 h-4" />} className={cn({
-        "shadow-2xl": expanded,
+        "shadow-2xl exploring-storage-unit": expanded,
     })} data-testid="storage-unit-card">
         <div className="flex flex-col grow mt-2" data-testid="storage-unit-card">
             <div className="flex flex-col grow mb-2 w-full overflow-x-hidden">
@@ -414,7 +414,7 @@ export const StorageUnitPage: FC = () => {
                         {sharedAttributeKeys.map(key => (
                             <TableHead key={key}>{key}</TableHead>
                         ))}
-                        <TableHead className="w-32">Actions</TableHead>
+                        <TableHead>Actions</TableHead>
                     </TableHeadRow>
                 </TableHeader>
                 <VirtualizedTableBody
