@@ -9,6 +9,22 @@ updates:
     directory: "/core" # Location of package manifests
     schedule:
       interval: "daily"
+  - package-ecosystem: "gomod" # See documentation for possible values
+    directory: "/ee-stub" # Location of package manifests
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gomod" # See documentation for possible values
+    directory: "/desktop-ce" # Location of package manifests
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gomod" # See documentation for possible values
+    directory: "/desktop-ee" # Location of package manifests
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gomod" # See documentation for possible values
+    directory: "/desktop-common" # Location of package manifests
+    schedule:
+      interval: "daily"
   - package-ecosystem: "npm"
     directory: "/frontend"
     schedule:
