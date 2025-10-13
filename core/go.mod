@@ -5,7 +5,7 @@ go 1.25.1
 require (
 	github.com/99designs/gqlgen v0.17.80
 	github.com/ClickHouse/clickhouse-go/v2 v2.40.3
-	github.com/brianvoe/gofakeit/v7 v7.6.0
+	github.com/brianvoe/gofakeit/v7 v7.8.0
 	github.com/deckarep/golang-set/v2 v2.8.0
 	github.com/elastic/go-elasticsearch/v8 v8.19.0
 	github.com/go-chi/chi/v5 v5.2.3
