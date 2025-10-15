@@ -291,6 +291,7 @@ jobs:
         run: |
           cp -r linux desktop-ce/linux
           cp -r frontend desktop-ce/frontend-src
+          cp go.work.desktop-ce desktop-ce/
 
       - name: Build snap from source
         uses: snapcore/action-build@v1

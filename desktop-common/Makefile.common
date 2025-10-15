@@ -44,7 +44,7 @@ build-windows: prepare
 	@mv build/bin/$(OUTPUT_PREFIX).exe build/windows/amd64/
 	@echo "Building WhoDB for Windows ARM64..."
 	@mkdir -p build/windows/arm64
-	CGO_ENABLED=0 GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean -platform windows/arm64 \
+	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean -platform windows/arm64 \
 		$(BUILD_TAGS) -windowsconsole=false -ldflags="-s -w" -o $(OUTPUT_PREFIX).exe
 	@mv build/bin/$(OUTPUT_PREFIX).exe build/windows/arm64/
 
@@ -126,8 +126,8 @@ build-prod-windows-amd64: prepare
 build-prod-windows-arm64: prepare
 	@echo "Building WhoDB Windows installer for ARM64..."
 	@mkdir -p build/windows/arm64
-	CGO_ENABLED=0 GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean -platform windows/arm64 \
-		$(BUILD_TAGS) -nsis -windowsconsole=false -ldflags="-s -w -H windowsgui" \
+	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean -platform windows/arm64 \
+		$(BUILD_TAGS) -nsis -upx -windowsconsole=false -ldflags="-s -w -H windowsgui" \
 		-o $(OUTPUT_PREFIX)-installer.exe
 	@mv build/bin/$(OUTPUT_PREFIX)-installer.exe build/windows/arm64/
 
