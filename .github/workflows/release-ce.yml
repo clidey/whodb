@@ -400,10 +400,18 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ sign-with-sigstore, build-docker-ce ]
     steps:
-      - name: Download all artifacts
+      - name: Download required artifacts for validation
         uses: actions/download-artifact@v4
         with:
           path: artifacts/
+        # Continue even if dockerbuild metadata artifacts fail
+        continue-on-error: true
+
+      - name: Clean up Docker metadata artifacts
+        run: |
+          # Remove any dockerbuild artifacts that may have partially downloaded
+          rm -rf artifacts/*dockerbuild* || true
+          echo "Cleaned up Docker metadata artifacts (not required for validation)"
 
       - name: Validate artifacts
         run: |
