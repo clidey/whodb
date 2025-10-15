@@ -274,7 +274,14 @@ jobs:
 
   build-snap:
     name: Build Snap Package
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            arch: amd64
+          - runner: ubuntu-24.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
     needs: [ calculate-version ]
     steps:
       - name: Checkout
@@ -286,43 +293,25 @@ jobs:
         with:
           path: desktop-ce
 
+      - name: Rename snap with architecture
+        run: |
+          SNAP_FILE="${{ steps.build.outputs.snap }}"
+          NEW_NAME="${SNAP_FILE%.snap}_${{ matrix.arch }}.snap"
+          mv "$SNAP_FILE" "$NEW_NAME"
+          echo "SNAP_FILE=$NEW_NAME" >> $GITHUB_ENV
+
       - name: Upload snap artifact
         uses: actions/upload-artifact@v4
         with:
-          name: snap-package
-          path: ${{ steps.build.outputs.snap }}
+          name: snap-package-${{ matrix.arch }}
+          path: ${{ env.SNAP_FILE }}
           retention-days: 1
 
-  build-flatpak:
-    name: Build Flatpak Package
-    runs-on: ubuntu-latest
-    needs: [ calculate-version ]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install flatpak
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y flatpak flatpak-builder
-
-      - name: Build flatpak from source
-        uses: flatpak/flatpak-github-actions/flatpak-builder@v6
-        with:
-          bundle: WhoDB-${{ needs.calculate-version.outputs.version }}.flatpak
-          manifest-path: flatpak/com.clidey.whodb.ce.yml
-
-      - name: Upload flatpak artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: flatpak-package
-          path: WhoDB-*.flatpak
-          retention-days: 1
 
   sign-with-sigstore:
     name: Sign Artifacts with Sigstore
     runs-on: ubuntu-latest
-    needs: [ calculate-version, package-windows-msix, package-mac-app-store, build-snap, build-flatpak, build-desktop-ce ]
+    needs: [ calculate-version, package-windows-msix, package-mac-app-store, build-snap, build-desktop-ce ]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -371,8 +360,8 @@ jobs:
           [ -f "artifacts/docker-image-arm64/whodb-docker-arm64.tar" ] || (echo "Docker arm64 image missing" && exit 1)
           [ -f "artifacts/windows-msix/"*.msixbundle ] || (echo "Windows MSIX bundle missing" && exit 1)
           [ -f "artifacts/mac-app-store/"*.pkg ] || (echo "Mac App Store package missing" && exit 1)
-          [ -f "artifacts/snap-package/"*.snap ] || (echo "Snap package missing" && exit 1)
-          [ -f "artifacts/flatpak-package/"*.flatpak ] || (echo "Flatpak package missing" && exit 1)
+          [ -f "artifacts/snap-package-amd64/"*.snap ] || (echo "Snap amd64 package missing" && exit 1)
+          [ -f "artifacts/snap-package-arm64/"*.snap ] || (echo "Snap arm64 package missing" && exit 1)
           echo "✓ All artifacts present"
 
       - name: Initialize deployment manifest
@@ -480,10 +469,15 @@ jobs:
       - name: Checkout for scripts
         uses: actions/checkout@v4
 
-      - name: Download snap artifact
+      - name: Download snap amd64 artifact
         uses: actions/download-artifact@v4
         with:
-          name: snap-package
+          name: snap-package-amd64
+
+      - name: Download snap arm64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: snap-package-arm64
 
       - name: Download deployment manifest
         uses: actions/download-artifact@v4
@@ -500,12 +494,14 @@ jobs:
 
       - name: Publish to Snap Store
         if: needs.calculate-version.outputs.dry_run == 'false'
-        uses: snapcore/action-publish@v1
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
-        with:
-          snap: '*.snap'
-          release: stable
+        run: |
+          # Snap Store automatically handles multi-arch packages when uploaded separately
+          for snap in *.snap; do
+            echo "Publishing $snap to Snap Store..."
+            snapcraft upload "$snap" --release=stable
+          done
 
       - name: Track Snap deployment
         if: needs.calculate-version.outputs.dry_run == 'false'
@@ -516,7 +512,7 @@ jobs:
         if: needs.calculate-version.outputs.dry_run == 'true'
         run: |
           echo "🏃 DRY RUN MODE - Would have published:"
-          echo "  - Snap package to stable channel"
+          echo "  - Snap packages (amd64 and arm64) to stable channel"
           ls -lh *.snap
 
       - name: Upload updated manifest
@@ -596,7 +592,7 @@ jobs:
             ```
 
             **Flatpak:**
-            Manual installation - See Flathub for updates
+            Available on [Flathub](https://flathub.org/apps/com.clidey.whodb)
 
             **Windows:**
             Available on Microsoft Store
