@@ -52,33 +52,39 @@ jobs:
 
   build-docker-ce:
     name: Build Docker Images (CE)
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            platform: linux/amd64
+            arch: amd64
+          - runner: ubuntu-24.04-arm64  # Native ARM64 build
+            platform: linux/arm64
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
     needs: calculate-version
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker images
+      - name: Build Docker image for ${{ matrix.platform }}
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./core/Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ matrix.platform }}
           push: false
-          tags: clidey/whodb:${{ needs.calculate-version.outputs.version }},clidey/whodb:latest
-          outputs: type=oci,dest=/tmp/whodb-docker.tar
+          tags: clidey/whodb:${{ needs.calculate-version.outputs.version }}-${{ matrix.arch }}
+          outputs: type=oci,dest=/tmp/whodb-docker-${{ matrix.arch }}.tar
 
       - name: Upload Docker artifact
         uses: actions/upload-artifact@v4
         with:
-          name: docker-image
-          path: /tmp/whodb-docker.tar
+          name: docker-image-${{ matrix.arch }}
+          path: /tmp/whodb-docker-${{ matrix.arch }}.tar
           retention-days: 1
 
   build-desktop-ce:
@@ -88,15 +94,23 @@ jobs:
         include:
           - os: ubuntu-latest
             platform: linux
-            make-target-amd64: build-prod-linux-amd64
-            make-target-arm64: build-prod-linux-arm64
+            arch: amd64
+            make-target: build-prod-linux-amd64
+          - os: ubuntu-24.04-arm64  # Use native ARM64 runner for Linux ARM64
+            platform: linux
+            arch: arm64
+            make-target: build-prod-linux-arm64
           - os: macos-latest
             platform: darwin
             make-target-universal: build-prod-mac
           - os: windows-latest
             platform: windows
-            make-target-amd64: build-prod-windows-amd64
-            make-target-arm64: build-prod-windows-arm64
+            arch: amd64
+            make-target: build-prod-windows-amd64
+          - os: windows-11-arm  # Use native ARM64 runner for Windows ARM64
+            platform: windows
+            arch: arm64
+            make-target: build-prod-windows-arm64
     runs-on: ${{ matrix.os }}
     needs: calculate-version
     steps:
@@ -128,37 +142,26 @@ jobs:
         if: matrix.platform == 'linux'
         run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev upx-ucl
 
-      - name: Build Linux amd64
+      - name: Build Linux
         if: matrix.platform == 'linux'
         working-directory: ./desktop-ce
-        run: make ${{ matrix.make-target-amd64 }} VERSION=${{ needs.calculate-version.outputs.version }}
-
-      - name: Build Linux arm64
-        if: matrix.platform == 'linux'
-        working-directory: ./desktop-ce
-        run: make ${{ matrix.make-target-arm64 }} VERSION=${{ needs.calculate-version.outputs.version }}
+        run: make ${{ matrix.make-target }} VERSION=${{ needs.calculate-version.outputs.version }}
 
       - name: Build macOS universal
         if: matrix.platform == 'darwin'
         working-directory: ./desktop-ce
         run: make ${{ matrix.make-target-universal }} VERSION=${{ needs.calculate-version.outputs.version }}
 
-      - name: Build Windows amd64
+      - name: Build Windows
         if: matrix.platform == 'windows'
         working-directory: ./desktop-ce
         shell: pwsh
-        run: make ${{ matrix.make-target-amd64 }} VERSION=${{ needs.calculate-version.outputs.version }}
-
-      - name: Build Windows arm64
-        if: matrix.platform == 'windows'
-        working-directory: ./desktop-ce
-        shell: pwsh
-        run: make ${{ matrix.make-target-arm64 }} VERSION=${{ needs.calculate-version.outputs.version }}
+        run: make ${{ matrix.make-target }} VERSION=${{ needs.calculate-version.outputs.version }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: desktop-${{ matrix.platform }}
+          name: desktop-${{ matrix.platform }}-${{ matrix.arch || 'all' }}
           path: |
             desktop-ce/build/
           retention-days: 1
@@ -171,10 +174,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download Linux builds
+      - name: Download Linux amd64 builds
         uses: actions/download-artifact@v4
         with:
-          name: desktop-linux
+          name: desktop-linux-amd64
+          path: desktop-ce/
+
+      - name: Download Linux arm64 builds
+        uses: actions/download-artifact@v4
+        with:
+          name: desktop-linux-arm64
           path: desktop-ce/
 
       - name: Build AppImage amd64
@@ -201,7 +210,7 @@ jobs:
       - name: Download macOS build
         uses: actions/download-artifact@v4
         with:
-          name: desktop-darwin
+          name: desktop-darwin-all
           path: desktop-ce/
 
       - name: Create DMG
@@ -228,10 +237,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download Windows builds
+      - name: Download Windows amd64 builds
         uses: actions/download-artifact@v4
         with:
-          name: desktop-windows
+          name: desktop-windows-amd64
+          path: desktop-ce/
+
+      - name: Download Windows arm64 builds
+        uses: actions/download-artifact@v4
+        with:
+          name: desktop-windows-arm64
           path: desktop-ce/
 
       - name: Skip MSIX packaging in dry run
@@ -281,10 +296,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download Linux builds
+      - name: Download Linux amd64 builds
         uses: actions/download-artifact@v4
         with:
-          name: desktop-linux
+          name: desktop-linux-amd64
+          path: desktop-ce/
+
+      - name: Download Linux arm64 builds
+        uses: actions/download-artifact@v4
+        with:
+          name: desktop-linux-arm64
           path: desktop-ce/
 
       - name: Build snap
@@ -308,10 +329,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download Linux builds
+      - name: Download Linux amd64 builds
         uses: actions/download-artifact@v4
         with:
-          name: desktop-linux
+          name: desktop-linux-amd64
+          path: desktop-ce/
+
+      - name: Download Linux arm64 builds
+        uses: actions/download-artifact@v4
+        with:
+          name: desktop-linux-arm64
           path: desktop-ce/
 
       - name: Install flatpak
@@ -362,7 +389,7 @@ jobs:
 
       - name: Sign Windows NSIS installers
         run: |
-          for file in artifacts/desktop-windows/build/windows/*/*.exe; do
+          for file in artifacts/desktop-windows-*/build/windows/*/*.exe; do
             [ -f "$file" ] && cosign sign-blob --yes "$file" --output-signature="${file}.sig" --output-certificate="${file}.pem"
           done
 
@@ -374,7 +401,7 @@ jobs:
 
       - name: Sign Linux executables
         run: |
-          for file in artifacts/desktop-linux/build/linux/*/whodb; do
+          for file in artifacts/desktop-linux-*/build/linux/*/whodb; do
             [ -f "$file" ] && cosign sign-blob --yes "$file" --output-signature="${file}.sig" --output-certificate="${file}.pem"
           done
 
@@ -398,7 +425,8 @@ jobs:
       - name: Validate artifacts
         run: |
           echo "Checking for required artifacts..."
-          [ -f "artifacts/docker-image/whodb-docker.tar" ] || (echo "Docker image missing" && exit 1)
+          [ -f "artifacts/docker-image-amd64/whodb-docker-amd64.tar" ] || (echo "Docker amd64 image missing" && exit 1)
+          [ -f "artifacts/docker-image-arm64/whodb-docker-arm64.tar" ] || (echo "Docker arm64 image missing" && exit 1)
           [ -f "artifacts/appimages/"*.AppImage ] || (echo "AppImages missing" && exit 1)
           [ -f "artifacts/macos-dmg/"*.dmg ] || (echo "macOS DMG missing" && exit 1)
           [ -f "artifacts/windows-msix/"*.msix ] || (echo "Windows MSIX missing" && exit 1)
@@ -425,10 +453,16 @@ jobs:
       - name: Checkout for scripts
         uses: actions/checkout@v4
 
-      - name: Download Docker artifact
+      - name: Download Docker amd64 artifact
         uses: actions/download-artifact@v4
         with:
-          name: docker-image
+          name: docker-image-amd64
+          path: /tmp
+
+      - name: Download Docker arm64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image-arm64
           path: /tmp
 
       - name: Download deployment manifest
@@ -437,8 +471,10 @@ jobs:
           name: deployment-manifest
           path: .
 
-      - name: Load Docker image
-        run: docker load --input /tmp/whodb-docker.tar
+      - name: Load Docker images
+        run: |
+          docker load --input /tmp/whodb-docker-amd64.tar
+          docker load --input /tmp/whodb-docker-arm64.tar
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -450,11 +486,25 @@ jobs:
         if: needs.calculate-version.outputs.dry_run == 'false'
         uses: sigstore/cosign-installer@v3
 
-      - name: Push Docker images
+      - name: Set up Docker Buildx for manifest
+        uses: docker/setup-buildx-action@v3
+
+      - name: Push Docker images and create manifest
         if: needs.calculate-version.outputs.dry_run == 'false'
         run: |
-          docker push clidey/whodb:${{ needs.calculate-version.outputs.version }} || exit 1
-          docker push clidey/whodb:latest || exit 1
+          # Push individual platform images
+          docker push clidey/whodb:${{ needs.calculate-version.outputs.version }}-amd64 || exit 1
+          docker push clidey/whodb:${{ needs.calculate-version.outputs.version }}-arm64 || exit 1
+
+          # Create and push multi-platform manifests
+          docker buildx imagetools create -t clidey/whodb:${{ needs.calculate-version.outputs.version }} \
+            clidey/whodb:${{ needs.calculate-version.outputs.version }}-amd64 \
+            clidey/whodb:${{ needs.calculate-version.outputs.version }}-arm64
+
+          docker buildx imagetools create -t clidey/whodb:latest \
+            clidey/whodb:${{ needs.calculate-version.outputs.version }}-amd64 \
+            clidey/whodb:${{ needs.calculate-version.outputs.version }}-arm64
+
           bash scripts/track-deployment.sh docker deployed ${{ needs.calculate-version.outputs.version }}
 
       - name: Sign Docker images
@@ -579,13 +629,13 @@ jobs:
           cp release-assets/macos-dmg/*.sig final-assets/ || true
 
           # Copy Windows installers and MSIX
-          cp release-assets/desktop-windows/build/windows/*/*.exe final-assets/ || true
+          cp release-assets/desktop-windows-*/build/windows/*/*.exe final-assets/ || true
           cp release-assets/windows-msix/*.msix final-assets/ || true
           cp release-assets/windows-msix/*.sig final-assets/ || true
 
           # Copy Linux executables
-          cp release-assets/desktop-linux/build/linux/amd64/whodb final-assets/whodb-linux-amd64 || true
-          cp release-assets/desktop-linux/build/linux/arm64/whodb final-assets/whodb-linux-arm64 || true
+          cp release-assets/desktop-linux-amd64/build/linux/amd64/whodb final-assets/whodb-linux-amd64 || true
+          cp release-assets/desktop-linux-arm64/build/linux/arm64/whodb final-assets/whodb-linux-arm64 || true
 
       - name: Generate checksums
         working-directory: final-assets
