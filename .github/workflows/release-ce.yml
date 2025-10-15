@@ -72,7 +72,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: false
           tags: clidey/whodb:${{ needs.calculate-version.outputs.version }},clidey/whodb:latest
-          outputs: type=docker,dest=/tmp/whodb-docker.tar
+          outputs: type=oci,dest=/tmp/whodb-docker.tar
 
       - name: Upload Docker artifact
         uses: actions/upload-artifact@v4
@@ -119,7 +119,7 @@ jobs:
 
       - name: Install frontend dependencies
         working-directory: ./frontend
-        run: pnpm i --prod
+        run: pnpm i
 
       - name: Install Wails CLI
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
