@@ -439,96 +439,11 @@ jobs:
           path: deployment_manifest.json
           retention-days: 1
 
-  deploy-docker:
-    name: Deploy Docker Images
-    runs-on: ubuntu-latest
-    needs: [ calculate-version, validate-all-builds ]
-    steps:
-      - name: Checkout for scripts
-        uses: actions/checkout@v4
-
-      - name: Download Docker amd64 artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: docker-image-amd64
-          path: /tmp
-
-      - name: Download Docker arm64 artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: docker-image-arm64
-          path: /tmp
-
-      - name: Download deployment manifest
-        uses: actions/download-artifact@v4
-        with:
-          name: deployment-manifest
-          path: .
-
-      - name: Load Docker images
-        run: |
-          docker load --input /tmp/whodb-docker-amd64.tar
-          docker load --input /tmp/whodb-docker-arm64.tar
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Install Cosign
-        if: needs.calculate-version.outputs.dry_run == 'false'
-        uses: sigstore/cosign-installer@v3
-
-      - name: Set up Docker Buildx for manifest
-        uses: docker/setup-buildx-action@v3
-
-      - name: Push Docker images and create manifest
-        if: needs.calculate-version.outputs.dry_run == 'false'
-        run: |
-          # Push individual platform images
-          docker push clidey/whodb:${{ needs.calculate-version.outputs.version }}-amd64 || exit 1
-          docker push clidey/whodb:${{ needs.calculate-version.outputs.version }}-arm64 || exit 1
-
-          # Create and push multi-platform manifests
-          docker buildx imagetools create -t clidey/whodb:${{ needs.calculate-version.outputs.version }} \
-            clidey/whodb:${{ needs.calculate-version.outputs.version }}-amd64 \
-            clidey/whodb:${{ needs.calculate-version.outputs.version }}-arm64
-
-          docker buildx imagetools create -t clidey/whodb:latest \
-            clidey/whodb:${{ needs.calculate-version.outputs.version }}-amd64 \
-            clidey/whodb:${{ needs.calculate-version.outputs.version }}-arm64
-
-          bash scripts/track-deployment.sh docker deployed ${{ needs.calculate-version.outputs.version }}
-
-      - name: Sign Docker images
-        if: needs.calculate-version.outputs.dry_run == 'false'
-        run: |
-          cosign sign --yes clidey/whodb:${{ needs.calculate-version.outputs.version }}
-          cosign sign --yes clidey/whodb:latest
-
-      - name: Dry run summary
-        if: needs.calculate-version.outputs.dry_run == 'true'
-        run: |
-          echo "🏃 DRY RUN MODE"
-          echo "✅ Successfully logged in to Docker Hub"
-          echo "📦 Would have pushed:"
-          echo "  - clidey/whodb:${{ needs.calculate-version.outputs.version }}"
-          echo "  - clidey/whodb:latest"
-          echo "🔏 Would have signed both images with Sigstore"
-
-      - name: Upload updated manifest
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: deployment-manifest-docker
-          path: deployment_manifest.json
-          retention-days: 1
-
+  # Deploy to stores first (these can be reviewed/rolled back before going live)
   deploy-snap:
     name: Deploy to Snap Store
     runs-on: ubuntu-latest
-    needs: [ calculate-version, create-github-release ]
+    needs: [ calculate-version, validate-all-builds ]
     steps:
       - name: Checkout for scripts
         uses: actions/checkout@v4
@@ -546,7 +461,7 @@ jobs:
       - name: Download deployment manifest
         uses: actions/download-artifact@v4
         with:
-          name: deployment-manifest-github
+          name: deployment-manifest
           path: .
 
       - name: Capture current Snap Store state
@@ -595,10 +510,155 @@ jobs:
           path: store_state.json
           retention-days: 1
 
+  deploy-microsoft-store:
+    name: Deploy to Microsoft Store
+    runs-on: windows-latest
+    needs: [ calculate-version, package-windows-msix, deploy-snap ]
+    if: needs.calculate-version.outputs.dry_run == 'false'
+    steps:
+      - name: Checkout for scripts
+        uses: actions/checkout@v4
+
+      - name: Download MSIX package
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-msix
+          path: .
+
+      - name: Download deployment manifest
+        uses: actions/download-artifact@v4
+        with:
+          name: deployment-manifest-snap
+          path: .
+
+      - name: Setup Microsoft Store CLI
+        shell: pwsh
+        run: |
+          # Install Windows Store CLI tools
+          Install-Module -Name StoreBroker -Force -Scope CurrentUser
+          Import-Module StoreBroker
+
+      - name: Authenticate to Microsoft Store
+        shell: pwsh
+        env:
+          MS_TENANT_ID: ${{ secrets.MS_TENANT_ID }}
+          MS_CLIENT_ID: ${{ secrets.MS_CLIENT_ID }}
+          MS_CLIENT_SECRET: ${{ secrets.MS_CLIENT_SECRET }}
+        run: |
+          $securePassword = ConvertTo-SecureString $env:MS_CLIENT_SECRET -AsPlainText -Force
+          $credential = New-Object System.Management.Automation.PSCredential($env:MS_CLIENT_ID, $securePassword)
+
+          # Authenticate to Partner Center
+          Set-StoreBrokerAuthentication -TenantId $env:MS_TENANT_ID -Credential $credential
+
+      - name: Create and submit Microsoft Store submission
+        shell: pwsh
+        env:
+          MS_APP_ID: ${{ secrets.MS_APP_ID }}
+        run: |
+          $appId = $env:MS_APP_ID
+          $msixPath = Get-ChildItem -Path "." -Filter "*.msixbundle" | Select-Object -First 1
+
+          # Create new submission
+          $submission = New-ApplicationSubmission -AppId $appId -Force
+
+          # Update submission with new package
+          Update-ApplicationSubmission -AppId $appId -SubmissionDataPath $submission -PackagePath $msixPath.FullName
+
+          # Submit to Store (as draft initially)
+          $submissionId = Submit-ApplicationSubmission -AppId $appId -SubmissionDataPath $submission -TargetPublishMode Immediate
+
+          Write-Host "Submission created with ID: $submissionId"
+          Write-Host "Check Partner Center to review and publish the submission"
+
+      - name: Upload updated manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-manifest-msstore
+          path: deployment_manifest.json
+          retention-days: 1
+
+  deploy-apple-store:
+    name: Deploy to Apple App Store
+    runs-on: macos-latest
+    needs: [ calculate-version, package-mac-app-store, deploy-snap ]
+    if: needs.calculate-version.outputs.dry_run == 'false'
+    steps:
+      - name: Checkout for scripts
+        uses: actions/checkout@v4
+
+      - name: Download Mac App Store package
+        uses: actions/download-artifact@v4
+        with:
+          name: mac-app-store
+          path: .
+
+      - name: Download deployment manifest
+        uses: actions/download-artifact@v4
+        with:
+          name: deployment-manifest-snap
+          path: .
+        continue-on-error: true
+
+      - name: Setup App Store Connect API Key
+        env:
+          APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          # Create private keys directory
+          mkdir -p ~/.appstoreconnect/private_keys
+
+          # Save API key
+          echo "$APP_STORE_CONNECT_API_KEY" > ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8
+
+          # Set proper permissions
+          chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8
+
+      - name: Upload to App Store Connect
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+        run: |
+          # Find the .pkg file
+          PKG_FILE=$(find . -name "*.pkg" -type f | head -1)
+
+          echo "Uploading $PKG_FILE to App Store Connect..."
+
+          # Upload using Transporter (altool is deprecated)
+          xcrun iTMSTransporter -m upload \
+            -assetFile "$PKG_FILE" \
+            -apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
+            -apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
+            -v detailed \
+            -verboseLogging
+
+          echo "✅ Package uploaded to App Store Connect"
+          echo "📝 Review and submit for review in App Store Connect"
+
+      - name: Create TestFlight release (optional)
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          echo "Package is now available in App Store Connect for TestFlight distribution"
+          echo "Manual review and release required via App Store Connect dashboard"
+
+      - name: Upload updated manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-manifest-appstore
+          path: deployment_manifest.json
+          retention-days: 1
+
+  # Create GitHub release after stores are deployed
   create-github-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [ calculate-version, deploy-docker ]
+    needs: [ calculate-version, deploy-snap, deploy-microsoft-store, deploy-apple-store ]
     permissions:
       contents: write
     steps:
@@ -608,8 +668,9 @@ jobs:
       - name: Download deployment manifest
         uses: actions/download-artifact@v4
         with:
-          name: deployment-manifest-docker
+          name: deployment-manifest-snap
           path: .
+        continue-on-error: true
 
       - name: Download all signed artifacts
         uses: actions/download-artifact@v4
@@ -697,120 +758,92 @@ jobs:
           path: deployment_manifest.json
           retention-days: 1
 
-  deploy-microsoft-store:
-    name: Deploy to Microsoft Store
-    runs-on: windows-latest
-    needs: [ calculate-version, package-windows-msix, create-github-release ]
-    if: needs.calculate-version.outputs.dry_run == 'false'
+  # Deploy Docker images last (hardest to rollback)
+  deploy-docker:
+    name: Deploy Docker Images
+    runs-on: ubuntu-latest
+    needs: [ calculate-version, create-github-release ]
     steps:
       - name: Checkout for scripts
         uses: actions/checkout@v4
 
-      - name: Download MSIX package
+      - name: Download Docker amd64 artifact
         uses: actions/download-artifact@v4
         with:
-          name: windows-msix
-          path: .
+          name: docker-image-amd64
+          path: /tmp
 
-      - name: Setup Microsoft Store CLI
-        shell: pwsh
-        run: |
-          # Install Windows Store CLI tools
-          Install-Module -Name StoreBroker -Force -Scope CurrentUser
-          Import-Module StoreBroker
-
-      - name: Authenticate to Microsoft Store
-        shell: pwsh
-        env:
-          MS_TENANT_ID: ${{ secrets.MS_TENANT_ID }}
-          MS_CLIENT_ID: ${{ secrets.MS_CLIENT_ID }}
-          MS_CLIENT_SECRET: ${{ secrets.MS_CLIENT_SECRET }}
-        run: |
-          $securePassword = ConvertTo-SecureString $env:MS_CLIENT_SECRET -AsPlainText -Force
-          $credential = New-Object System.Management.Automation.PSCredential($env:MS_CLIENT_ID, $securePassword)
-
-          # Authenticate to Partner Center
-          Set-StoreBrokerAuthentication -TenantId $env:MS_TENANT_ID -Credential $credential
-
-      - name: Create and submit Microsoft Store submission
-        shell: pwsh
-        env:
-          MS_APP_ID: ${{ secrets.MS_APP_ID }}
-        run: |
-          $appId = $env:MS_APP_ID
-          $msixPath = Get-ChildItem -Path "." -Filter "*.msixbundle" | Select-Object -First 1
-
-          # Create new submission
-          $submission = New-ApplicationSubmission -AppId $appId -Force
-
-          # Update submission with new package
-          Update-ApplicationSubmission -AppId $appId -SubmissionDataPath $submission -PackagePath $msixPath.FullName
-
-          # Submit to Store (as draft initially)
-          $submissionId = Submit-ApplicationSubmission -AppId $appId -SubmissionDataPath $submission -TargetPublishMode Immediate
-
-          Write-Host "Submission created with ID: $submissionId"
-          Write-Host "Check Partner Center to review and publish the submission"
-
-  deploy-apple-store:
-    name: Deploy to Apple App Store
-    runs-on: macos-latest
-    needs: [ calculate-version, package-mac-app-store, create-github-release ]
-    if: needs.calculate-version.outputs.dry_run == 'false'
-    steps:
-      - name: Checkout for scripts
-        uses: actions/checkout@v4
-
-      - name: Download Mac App Store package
+      - name: Download Docker arm64 artifact
         uses: actions/download-artifact@v4
         with:
-          name: mac-app-store
+          name: docker-image-arm64
+          path: /tmp
+
+      - name: Download deployment manifest
+        uses: actions/download-artifact@v4
+        with:
+          name: deployment-manifest-github
           path: .
 
-      - name: Setup App Store Connect API Key
-        env:
-          APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
-          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
-          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      - name: Load Docker images
         run: |
-          # Create private keys directory
-          mkdir -p ~/.appstoreconnect/private_keys
+          docker load --input /tmp/whodb-docker-amd64.tar
+          docker load --input /tmp/whodb-docker-arm64.tar
 
-          # Save API key
-          echo "$APP_STORE_CONNECT_API_KEY" > ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-          # Set proper permissions
-          chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8
+      - name: Install Cosign
+        if: needs.calculate-version.outputs.dry_run == 'false'
+        uses: sigstore/cosign-installer@v3
 
-      - name: Upload to App Store Connect
-        env:
-          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
-          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
+      - name: Set up Docker Buildx for manifest
+        uses: docker/setup-buildx-action@v3
+
+      - name: Push Docker images and create manifest
+        if: needs.calculate-version.outputs.dry_run == 'false'
         run: |
-          # Find the .pkg file
-          PKG_FILE=$(find . -name "*.pkg" -type f | head -1)
+          # Push individual platform images
+          docker push clidey/whodb:${{ needs.calculate-version.outputs.version }}-amd64 || exit 1
+          docker push clidey/whodb:${{ needs.calculate-version.outputs.version }}-arm64 || exit 1
 
-          echo "Uploading $PKG_FILE to App Store Connect..."
+          # Create and push multi-platform manifests
+          docker buildx imagetools create -t clidey/whodb:${{ needs.calculate-version.outputs.version }} \
+            clidey/whodb:${{ needs.calculate-version.outputs.version }}-amd64 \
+            clidey/whodb:${{ needs.calculate-version.outputs.version }}-arm64
 
-          # Upload using Transporter (altool is deprecated)
-          xcrun iTMSTransporter -m upload \
-            -assetFile "$PKG_FILE" \
-            -apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
-            -apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
-            -v detailed \
-            -verboseLogging
+          docker buildx imagetools create -t clidey/whodb:latest \
+            clidey/whodb:${{ needs.calculate-version.outputs.version }}-amd64 \
+            clidey/whodb:${{ needs.calculate-version.outputs.version }}-arm64
 
-          echo "✅ Package uploaded to App Store Connect"
-          echo "📝 Review and submit for review in App Store Connect"
+          bash scripts/track-deployment.sh docker deployed ${{ needs.calculate-version.outputs.version }}
 
-      - name: Create TestFlight release (optional)
-        env:
-          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
-          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      - name: Sign Docker images
+        if: needs.calculate-version.outputs.dry_run == 'false'
         run: |
-          echo "Package is now available in App Store Connect for TestFlight distribution"
-          echo "Manual review and release required via App Store Connect dashboard"
+          cosign sign --yes clidey/whodb:${{ needs.calculate-version.outputs.version }}
+          cosign sign --yes clidey/whodb:latest
+
+      - name: Dry run summary
+        if: needs.calculate-version.outputs.dry_run == 'true'
+        run: |
+          echo "🏃 DRY RUN MODE"
+          echo "✅ Successfully logged in to Docker Hub"
+          echo "📦 Would have pushed:"
+          echo "  - clidey/whodb:${{ needs.calculate-version.outputs.version }}"
+          echo "  - clidey/whodb:latest"
+          echo "🔏 Would have signed both images with Sigstore"
+
+      - name: Upload updated manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-manifest-docker
+          path: deployment_manifest.json
+          retention-days: 1
 
   rollback:
     name: Rollback on Failure
@@ -824,7 +857,7 @@ jobs:
       - name: Download deployment manifest
         uses: actions/download-artifact@v4
         with:
-          name: deployment-manifest-snap
+          name: deployment-manifest-docker
           path: .
         continue-on-error: true
 
@@ -869,7 +902,7 @@ jobs:
   verify-deployment:
     name: Verify Deployment Success
     runs-on: ubuntu-latest
-    needs: [ calculate-version, deploy-snap ]
+    needs: [ calculate-version, deploy-docker ]
     if: needs.calculate-version.outputs.dry_run == 'false'
     steps:
       - name: Checkout
@@ -878,7 +911,7 @@ jobs:
       - name: Download final deployment manifest
         uses: actions/download-artifact@v4
         with:
-          name: deployment-manifest-snap
+          name: deployment-manifest-docker
           path: .
 
       - name: Verify all deployments successful
