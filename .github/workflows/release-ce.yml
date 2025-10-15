@@ -351,6 +351,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts/
+        # Continue even if dockerbuild metadata artifacts fail to download
+        continue-on-error: true
 
       - name: Sign Windows MSIX bundle
         run: |
@@ -390,7 +392,8 @@ jobs:
           [ -f "artifacts/mac-app-store/"*.pkg ] || (echo "Mac App Store package missing" && exit 1)
           [ -f "artifacts/snap-package-amd64/"*.snap ] || (echo "Snap amd64 package missing" && exit 1)
           [ -f "artifacts/snap-package-arm64/"*.snap ] || (echo "Snap arm64 package missing" && exit 1)
-          echo "✓ All artifacts present"
+          echo "✓ All required artifacts present"
+          echo "Note: Windows ARM64 build is temporarily disabled"
 
       - name: Initialize deployment manifest
         run: |
