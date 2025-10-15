@@ -66,7 +66,6 @@ parts:
     source-type: local
     build-environment:
       - CGO_ENABLED: "1"
-      - GOWORK: "$SNAPCRAFT_PROJECT_DIR/go.work.desktop-ce"
       - PATH: "/snap/go/current/bin:$PATH"
       - GOPATH: "$HOME/go"
     build-snaps:
@@ -88,8 +87,20 @@ parts:
       go install github.com/wailsapp/wails/v2/cmd/wails@latest
       export PATH=$PATH:$HOME/go/bin
 
-      # Build the desktop app
-      wails build -clean -tags desktop,production,!ee -ldflags="-s -w" -o whodb
+      # Debug: Check current directory and GOWORK path
+      echo "Current directory: $(pwd)"
+      echo "SNAPCRAFT_PROJECT_DIR: $SNAPCRAFT_PROJECT_DIR"
+      echo "Checking if go.work.desktop-ce exists: $(ls -la $SNAPCRAFT_PROJECT_DIR/go.work.desktop-ce 2>&1)"
+
+      # Set GOWORK to use the workspace file from project root (absolute path)
+      export GOWORK=$SNAPCRAFT_PROJECT_DIR/go.work.desktop-ce
+      echo "GOWORK set to: $GOWORK"
+
+      # Verify Go recognizes the workspace
+      go env GOWORK
+
+      # Build the desktop app (GOWORK should override go.mod replace directives)
+      GOWORK=$SNAPCRAFT_PROJECT_DIR/go.work.desktop-ce wails build -clean -tags desktop,production,!ee -ldflags="-s -w" -o whodb
 
       # Install the binary
       install -D -m755 build/bin/whodb $SNAPCRAFT_PART_INSTALL/bin/whodb
