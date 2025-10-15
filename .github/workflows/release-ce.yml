@@ -134,10 +134,26 @@ jobs:
       - name: Install Wails CLI
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
+      - name: Setup ARM64 compiler on Windows ARM
+        if: matrix.platform == 'windows' && matrix.arch == 'arm64'
+        shell: pwsh
+        run: |
+          Write-Host "Checking available GCC compilers..."
+          Get-Command gcc -ErrorAction SilentlyContinue | Format-List
+          Write-Host "Go environment:"
+          go env GOARCH
+          go env CC
+          Write-Host "Setting GOARCH=arm64 explicitly..."
+          $env:GOARCH = "arm64"
+          Write-Host "Updated GOARCH:"
+          go env GOARCH
+
       - name: Build Windows
         if: matrix.platform == 'windows'
         working-directory: ./desktop-ce
         shell: pwsh
+        env:
+          GOARCH: ${{ matrix.arch }}
         run: make ${{ matrix.make-target }} VERSION=${{ needs.calculate-version.outputs.version }}
 
       - name: Build macOS
@@ -289,8 +305,14 @@ jobs:
 
       - name: Copy required assets for snap build
         run: |
+          # Copy assets
           cp -r linux desktop-ce/linux
           cp -r frontend desktop-ce/frontend-src
+
+          # Copy all Go modules referenced in go.work
+          cp -r core desktop-ce/
+          cp -r ee-stub desktop-ce/
+          cp -r desktop-common desktop-ce/
           cp go.work.desktop-ce desktop-ce/
 
       - name: Build snap from source
