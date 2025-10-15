@@ -38,7 +38,7 @@ parts:
   # Build Node/frontend dependencies first
   frontend:
     plugin: nil
-    source: ../frontend
+    source: frontend-src
     source-type: local
     build-packages:
       - curl
