@@ -664,11 +664,126 @@ jobs:
           path: deployment_manifest.json
           retention-days: 1
 
+  deploy-microsoft-store:
+    name: Deploy to Microsoft Store
+    runs-on: windows-latest
+    needs: [ calculate-version, package-windows-msix, create-github-release ]
+    if: needs.calculate-version.outputs.dry_run == 'false'
+    steps:
+      - name: Checkout for scripts
+        uses: actions/checkout@v4
+
+      - name: Download MSIX package
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-msix
+          path: .
+
+      - name: Setup Microsoft Store CLI
+        shell: pwsh
+        run: |
+          # Install Windows Store CLI tools
+          Install-Module -Name StoreBroker -Force -Scope CurrentUser
+          Import-Module StoreBroker
+
+      - name: Authenticate to Microsoft Store
+        shell: pwsh
+        env:
+          MS_TENANT_ID: ${{ secrets.MS_TENANT_ID }}
+          MS_CLIENT_ID: ${{ secrets.MS_CLIENT_ID }}
+          MS_CLIENT_SECRET: ${{ secrets.MS_CLIENT_SECRET }}
+        run: |
+          $securePassword = ConvertTo-SecureString $env:MS_CLIENT_SECRET -AsPlainText -Force
+          $credential = New-Object System.Management.Automation.PSCredential($env:MS_CLIENT_ID, $securePassword)
+
+          # Authenticate to Partner Center
+          Set-StoreBrokerAuthentication -TenantId $env:MS_TENANT_ID -Credential $credential
+
+      - name: Create and submit Microsoft Store submission
+        shell: pwsh
+        env:
+          MS_APP_ID: ${{ secrets.MS_APP_ID }}
+        run: |
+          $appId = $env:MS_APP_ID
+          $msixPath = Get-ChildItem -Path "." -Filter "*.msixbundle" | Select-Object -First 1
+
+          # Create new submission
+          $submission = New-ApplicationSubmission -AppId $appId -Force
+
+          # Update submission with new package
+          Update-ApplicationSubmission -AppId $appId -SubmissionDataPath $submission -PackagePath $msixPath.FullName
+
+          # Submit to Store (as draft initially)
+          $submissionId = Submit-ApplicationSubmission -AppId $appId -SubmissionDataPath $submission -TargetPublishMode Immediate
+
+          Write-Host "Submission created with ID: $submissionId"
+          Write-Host "Check Partner Center to review and publish the submission"
+
+  deploy-apple-store:
+    name: Deploy to Apple App Store
+    runs-on: macos-latest
+    needs: [ calculate-version, package-mac-app-store, create-github-release ]
+    if: needs.calculate-version.outputs.dry_run == 'false'
+    steps:
+      - name: Checkout for scripts
+        uses: actions/checkout@v4
+
+      - name: Download Mac App Store package
+        uses: actions/download-artifact@v4
+        with:
+          name: mac-app-store
+          path: .
+
+      - name: Setup App Store Connect API Key
+        env:
+          APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          # Create private keys directory
+          mkdir -p ~/.appstoreconnect/private_keys
+
+          # Save API key
+          echo "$APP_STORE_CONNECT_API_KEY" > ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8
+
+          # Set proper permissions
+          chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8
+
+      - name: Upload to App Store Connect
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+        run: |
+          # Find the .pkg file
+          PKG_FILE=$(find . -name "*.pkg" -type f | head -1)
+
+          echo "Uploading $PKG_FILE to App Store Connect..."
+
+          # Upload using Transporter (altool is deprecated)
+          xcrun iTMSTransporter -m upload \
+            -assetFile "$PKG_FILE" \
+            -apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
+            -apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
+            -v detailed \
+            -verboseLogging
+
+          echo "✅ Package uploaded to App Store Connect"
+          echo "📝 Review and submit for review in App Store Connect"
+
+      - name: Create TestFlight release (optional)
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          echo "Package is now available in App Store Connect for TestFlight distribution"
+          echo "Manual review and release required via App Store Connect dashboard"
+
   rollback:
     name: Rollback on Failure
     runs-on: ubuntu-latest
     if: failure() && needs.calculate-version.outputs.dry_run == 'false'
-    needs: [ calculate-version, deploy-docker, create-github-release, deploy-snap ]
+    needs: [ calculate-version, deploy-docker, create-github-release, deploy-snap, deploy-microsoft-store, deploy-apple-store ]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
