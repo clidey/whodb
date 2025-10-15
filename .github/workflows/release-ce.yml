@@ -87,22 +87,14 @@ jobs:
           path: /tmp/whodb-docker-${{ matrix.arch }}.tar
           retention-days: 1
 
+  # Only build Windows executables for MSIX packaging
+  # Skip Linux/macOS raw executables as they're not distributed
   build-desktop-ce:
     name: Build Desktop Executables (CE)
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
-            platform: linux
-            arch: amd64
-            make-target: build-prod-linux-amd64
-          - os: ubuntu-24.04-arm64  # Use native ARM64 runner for Linux ARM64
-            platform: linux
-            arch: arm64
-            make-target: build-prod-linux-arm64
-          - os: macos-latest
-            platform: darwin
-            make-target-universal: build-prod-mac
+          # Windows builds still needed for MSIX store packaging
           - os: windows-latest
             platform: windows
             arch: amd64
@@ -138,20 +130,6 @@ jobs:
       - name: Install Wails CLI
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
-      - name: Install Linux dependencies
-        if: matrix.platform == 'linux'
-        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev upx-ucl
-
-      - name: Build Linux
-        if: matrix.platform == 'linux'
-        working-directory: ./desktop-ce
-        run: make ${{ matrix.make-target }} VERSION=${{ needs.calculate-version.outputs.version }}
-
-      - name: Build macOS universal
-        if: matrix.platform == 'darwin'
-        working-directory: ./desktop-ce
-        run: make ${{ matrix.make-target-universal }} VERSION=${{ needs.calculate-version.outputs.version }}
-
       - name: Build Windows
         if: matrix.platform == 'windows'
         working-directory: ./desktop-ce
@@ -166,68 +144,7 @@ jobs:
             desktop-ce/build/
           retention-days: 1
 
-  package-linux-appimage:
-    name: Package Linux AppImages
-    runs-on: ubuntu-latest
-    needs: [ calculate-version, build-desktop-ce ]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Download Linux amd64 builds
-        uses: actions/download-artifact@v4
-        with:
-          name: desktop-linux-amd64
-          path: desktop-ce/
-
-      - name: Download Linux arm64 builds
-        uses: actions/download-artifact@v4
-        with:
-          name: desktop-linux-arm64
-          path: desktop-ce/
-
-      - name: Build AppImage amd64
-        run: bash scripts/build-appimage.sh amd64 ${{ needs.calculate-version.outputs.version }}
-
-      - name: Build AppImage arm64
-        run: bash scripts/build-appimage.sh arm64 ${{ needs.calculate-version.outputs.version }}
-
-      - name: Upload AppImage artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: appimages
-          path: WhoDB-*.AppImage
-          retention-days: 1
-
-  package-mac-dmg:
-    name: Package macOS DMG
-    runs-on: macos-latest
-    needs: [ calculate-version, build-desktop-ce ]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Download macOS build
-        uses: actions/download-artifact@v4
-        with:
-          name: desktop-darwin-all
-          path: desktop-ce/
-
-      - name: Create DMG
-        working-directory: ./desktop-ce
-        run: |
-          rm -rf build/dmgroot && mkdir -p build/dmgroot
-          cp -R "build/darwin/universal/WhoDB.app" build/dmgroot/
-          ln -sf /Applications build/dmgroot/Applications
-          hdiutil create -volname "WhoDB" -srcfolder build/dmgroot -ov -format UDZO \
-            "WhoDB-${{ needs.calculate-version.outputs.version }}.dmg"
-
-      - name: Upload DMG artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-dmg
-          path: desktop-ce/WhoDB-*.dmg
-          retention-days: 1
+  # AppImage and DMG packaging removed - not needed for store distribution
 
   package-windows-msix:
     name: Package Windows MSIX
@@ -291,24 +208,12 @@ jobs:
   build-snap:
     name: Build Snap Package
     runs-on: ubuntu-latest
-    needs: [ calculate-version, build-desktop-ce ]
+    needs: [ calculate-version ]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download Linux amd64 builds
-        uses: actions/download-artifact@v4
-        with:
-          name: desktop-linux-amd64
-          path: desktop-ce/
-
-      - name: Download Linux arm64 builds
-        uses: actions/download-artifact@v4
-        with:
-          name: desktop-linux-arm64
-          path: desktop-ce/
-
-      - name: Build snap
+      - name: Build snap from source
         uses: snapcore/action-build@v1
         id: build
         with:
@@ -324,29 +229,17 @@ jobs:
   build-flatpak:
     name: Build Flatpak Package
     runs-on: ubuntu-latest
-    needs: [ calculate-version, build-desktop-ce ]
+    needs: [ calculate-version ]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Download Linux amd64 builds
-        uses: actions/download-artifact@v4
-        with:
-          name: desktop-linux-amd64
-          path: desktop-ce/
-
-      - name: Download Linux arm64 builds
-        uses: actions/download-artifact@v4
-        with:
-          name: desktop-linux-arm64
-          path: desktop-ce/
 
       - name: Install flatpak
         run: |
           sudo apt-get update
           sudo apt-get install -y flatpak flatpak-builder
 
-      - name: Build flatpak
+      - name: Build flatpak from source
         uses: flatpak/flatpak-github-actions/flatpak-builder@v6
         with:
           bundle: WhoDB-${{ needs.calculate-version.outputs.version }}.flatpak
@@ -362,7 +255,7 @@ jobs:
   sign-with-sigstore:
     name: Sign Artifacts with Sigstore
     runs-on: ubuntu-latest
-    needs: [ calculate-version, package-linux-appimage, package-mac-dmg, package-windows-msix, build-snap, build-flatpak, build-desktop-ce ]
+    needs: [ calculate-version, package-windows-msix, build-snap, build-flatpak, build-desktop-ce ]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -375,18 +268,6 @@ jobs:
         with:
           path: artifacts/
 
-      - name: Sign Linux AppImages
-        run: |
-          for file in artifacts/appimages/*.AppImage; do
-            cosign sign-blob --yes "$file" --output-signature="${file}.sig" --output-certificate="${file}.pem"
-          done
-
-      - name: Sign macOS DMG
-        run: |
-          for file in artifacts/macos-dmg/*.dmg; do
-            cosign sign-blob --yes "$file" --output-signature="${file}.sig" --output-certificate="${file}.pem"
-          done
-
       - name: Sign Windows NSIS installers
         run: |
           for file in artifacts/desktop-windows-*/build/windows/*/*.exe; do
@@ -397,12 +278,6 @@ jobs:
         run: |
           for file in artifacts/windows-msix/*.msix; do
             cosign sign-blob --yes "$file" --output-signature="${file}.sig" --output-certificate="${file}.pem"
-          done
-
-      - name: Sign Linux executables
-        run: |
-          for file in artifacts/desktop-linux-*/build/linux/*/whodb; do
-            [ -f "$file" ] && cosign sign-blob --yes "$file" --output-signature="${file}.sig" --output-certificate="${file}.pem"
           done
 
       - name: Upload signed artifacts
@@ -427,8 +302,6 @@ jobs:
           echo "Checking for required artifacts..."
           [ -f "artifacts/docker-image-amd64/whodb-docker-amd64.tar" ] || (echo "Docker amd64 image missing" && exit 1)
           [ -f "artifacts/docker-image-arm64/whodb-docker-arm64.tar" ] || (echo "Docker arm64 image missing" && exit 1)
-          [ -f "artifacts/appimages/"*.AppImage ] || (echo "AppImages missing" && exit 1)
-          [ -f "artifacts/macos-dmg/"*.dmg ] || (echo "macOS DMG missing" && exit 1)
           [ -f "artifacts/windows-msix/"*.msix ] || (echo "Windows MSIX missing" && exit 1)
           [ -f "artifacts/snap-package/"*.snap ] || (echo "Snap package missing" && exit 1)
           [ -f "artifacts/flatpak-package/"*.flatpak ] || (echo "Flatpak package missing" && exit 1)
@@ -620,22 +493,10 @@ jobs:
         run: |
           mkdir -p final-assets
 
-          # Copy AppImages
-          cp release-assets/appimages/*.AppImage final-assets/ || true
-          cp release-assets/appimages/*.sig final-assets/ || true
-
-          # Copy macOS DMG
-          cp release-assets/macos-dmg/*.dmg final-assets/ || true
-          cp release-assets/macos-dmg/*.sig final-assets/ || true
-
-          # Copy Windows installers and MSIX
+          # Copy Windows installers and MSIX (for users who prefer direct download)
           cp release-assets/desktop-windows-*/build/windows/*/*.exe final-assets/ || true
           cp release-assets/windows-msix/*.msix final-assets/ || true
           cp release-assets/windows-msix/*.sig final-assets/ || true
-
-          # Copy Linux executables
-          cp release-assets/desktop-linux-amd64/build/linux/amd64/whodb final-assets/whodb-linux-amd64 || true
-          cp release-assets/desktop-linux-arm64/build/linux/arm64/whodb final-assets/whodb-linux-arm64 || true
 
       - name: Generate checksums
         working-directory: final-assets
