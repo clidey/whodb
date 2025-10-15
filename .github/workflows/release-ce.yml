@@ -149,25 +149,41 @@ jobs:
           go env GOARCH
 
       - name: Build Windows
-        if: matrix.platform == 'windows'
+        if: matrix.platform == 'windows' && matrix.arch == 'amd64'
         working-directory: ./desktop-ce
         shell: pwsh
         env:
           GOARCH: ${{ matrix.arch }}
         run: make ${{ matrix.make-target }} VERSION=${{ needs.calculate-version.outputs.version }}
 
+      - name: Skip Windows ARM64 Build (Temporarily Disabled)
+        if: matrix.platform == 'windows' && matrix.arch == 'arm64'
+        shell: pwsh
+        run: |
+          Write-Host "⚠️ Windows ARM64 build is temporarily disabled due to toolchain issues"
+          Write-Host "Creating placeholder for build artifacts..."
+          New-Item -ItemType Directory -Force -Path "./desktop-ce/build/windows/arm64"
+          Write-Host "Skipping actual build..."
+
       - name: Build macOS
         if: matrix.platform == 'darwin'
         working-directory: ./desktop-ce
         run: make ${{ matrix.make-target }} VERSION=${{ needs.calculate-version.outputs.version }}
 
-      - name: Upload artifacts
+      - name: Upload artifacts (AMD64 and macOS)
+        if: matrix.arch != 'arm64' || matrix.platform != 'windows'
         uses: actions/upload-artifact@v4
         with:
           name: desktop-${{ matrix.platform }}-${{ matrix.arch || 'all' }}
           path: |
             desktop-ce/build/
           retention-days: 1
+
+      - name: Skip ARM64 Artifacts Upload
+        if: matrix.platform == 'windows' && matrix.arch == 'arm64'
+        shell: pwsh
+        run: |
+          Write-Host "⚠️ Skipping ARM64 artifact upload (build was disabled)"
 
   # Package for Mac App Store
   package-mac-app-store:
@@ -228,11 +244,12 @@ jobs:
           name: desktop-windows-amd64
           path: desktop-ce/
 
-      - name: Download Windows arm64 builds
-        uses: actions/download-artifact@v4
-        with:
-          name: desktop-windows-arm64
-          path: desktop-ce/
+      # ARM64 builds temporarily disabled
+      # - name: Download Windows arm64 builds
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: desktop-windows-arm64
+      #     path: desktop-ce/
 
       - name: Skip MSIX packaging in dry run
         if: needs.calculate-version.outputs.dry_run == 'true'
@@ -257,29 +274,21 @@ jobs:
         run: |
           .\scripts\build-msix.ps1 -Architecture amd64 -Version ${{ needs.calculate-version.outputs.version }} -PublisherCN "${{ secrets.WINDOWS_PUBLISHER_CN }}" -CertPath cert.pfx
 
-      - name: Build MSIX arm64
+      # ARM64 build temporarily disabled
+      # - name: Build MSIX arm64
+      #   if: needs.calculate-version.outputs.dry_run == 'false'
+      #   shell: pwsh
+      #   env:
+      #     WINDOWS_PFX_PASSWORD: ${{ secrets.WINDOWS_PFX_PASSWORD }}
+      #   run: |
+      #     .\scripts\build-msix.ps1 -Architecture arm64 -Version ${{ needs.calculate-version.outputs.version }} -PublisherCN "${{ secrets.WINDOWS_PUBLISHER_CN }}" -CertPath cert.pfx
+
+      - name: Create MSIX package (AMD64 only)
         if: needs.calculate-version.outputs.dry_run == 'false'
         shell: pwsh
-        env:
-          WINDOWS_PFX_PASSWORD: ${{ secrets.WINDOWS_PFX_PASSWORD }}
         run: |
-          .\scripts\build-msix.ps1 -Architecture arm64 -Version ${{ needs.calculate-version.outputs.version }} -PublisherCN "${{ secrets.WINDOWS_PUBLISHER_CN }}" -CertPath cert.pfx
-
-      - name: Create MSIX bundle
-        if: needs.calculate-version.outputs.dry_run == 'false'
-        shell: pwsh
-        run: |
-          # Find makeappx.exe path
-          $makeappx = Get-ChildItem -Path "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Filter "makeappx.exe" -Recurse | Select-Object -First 1
-          if (-not $makeappx) {
-            throw "makeappx.exe not found"
-          }
-
-          # Create MSIX bundle containing both architectures
-          & $makeappx.FullName bundle `
-            /d . `
-            /p "WhoDB-${{ needs.calculate-version.outputs.version }}.msixbundle" `
-            /v
+          # Since we only have AMD64 for now, rename it as the bundle
+          Move-Item "WhoDB-${{ needs.calculate-version.outputs.version }}-amd64.msix" "WhoDB-${{ needs.calculate-version.outputs.version }}.msixbundle" -Force
 
       - name: Upload MSIX artifacts
         uses: actions/upload-artifact@v4
@@ -303,23 +312,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Copy required assets for snap build
-        run: |
-          # Copy assets
-          cp -r linux desktop-ce/linux
-          cp -r frontend desktop-ce/frontend-src
-
-          # Copy all Go modules referenced in go.work
-          cp -r core desktop-ce/
-          cp -r ee-stub desktop-ce/
-          cp -r desktop-common desktop-ce/
-          cp go.work.desktop-ce desktop-ce/
-
       - name: Build snap from source
         uses: snapcore/action-build@v1
         id: build
         with:
-          path: desktop-ce
+          snapcraft-yaml: snapcraft-ce.yaml
 
       - name: Rename snap with architecture
         run: |
