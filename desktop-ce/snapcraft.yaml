@@ -61,12 +61,16 @@ parts:
 
   whodb:
     after: [ frontend ]
-    plugin: go
+    plugin: nil
     source: .
     source-type: local
     build-environment:
       - CGO_ENABLED: "1"
       - GOWORK: "../go.work.desktop-ce"
+      - PATH: "/snap/go/current/bin:$PATH"
+      - GOPATH: "$HOME/go"
+    build-snaps:
+      - go/latest/stable
     build-packages:
       - gcc
       - libgtk-3-dev
@@ -82,7 +86,7 @@ parts:
 
       # Install Wails
       go install github.com/wailsapp/wails/v2/cmd/wails@latest
-      export PATH=$PATH:$(go env GOPATH)/bin
+      export PATH=$PATH:$HOME/go/bin
 
       # Build the desktop app
       wails build -clean -tags desktop,production,!ee -ldflags="-s -w" -o whodb
