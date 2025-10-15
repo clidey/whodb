@@ -74,10 +74,13 @@ parts:
     build-packages:
       - gcc
       - libgtk-3-dev
+      - libwebkit2gtk-4.0-dev
       - libwebkit2gtk-4.1-dev
+      - pkg-config
       - upx-ucl
     stage-packages:
       - libgtk-3-0
+      - libwebkit2gtk-4.0-37
       - libwebkit2gtk-4.1-0
     override-build: |
       # Copy frontend build from previous part
