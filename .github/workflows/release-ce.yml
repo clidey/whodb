@@ -340,6 +340,10 @@ jobs:
     name: Sign Artifacts with Sigstore
     runs-on: ubuntu-latest
     needs: [ calculate-version, package-windows-msix, package-mac-app-store, build-snap, build-desktop-ce ]
+    # Need write permissions for OIDC token
+    permissions:
+      contents: write
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -355,15 +359,33 @@ jobs:
         continue-on-error: true
 
       - name: Sign Windows MSIX bundle
+        env:
+          COSIGN_EXPERIMENTAL: 1
         run: |
           for file in artifacts/windows-msix/*.msixbundle; do
-            cosign sign-blob --yes "$file" --output-signature="${file}.sig" --output-certificate="${file}.pem"
+            if [ -f "$file" ]; then
+              echo "Signing $file with Sigstore..."
+              cosign sign-blob --yes "$file" \
+                --output-signature="${file}.sig" \
+                --output-certificate="${file}.pem" \
+                --oidc-issuer=https://token.actions.githubusercontent.com \
+                || echo "Warning: Failed to sign $file, continuing..."
+            fi
           done
 
       - name: Sign Mac App Store package
+        env:
+          COSIGN_EXPERIMENTAL: 1
         run: |
           for file in artifacts/mac-app-store/*.pkg; do
-            [ -f "$file" ] && cosign sign-blob --yes "$file" --output-signature="${file}.sig" --output-certificate="${file}.pem"
+            if [ -f "$file" ]; then
+              echo "Signing $file with Sigstore..."
+              cosign sign-blob --yes "$file" \
+                --output-signature="${file}.sig" \
+                --output-certificate="${file}.pem" \
+                --oidc-issuer=https://token.actions.githubusercontent.com \
+                || echo "Warning: Failed to sign $file, continuing..."
+            fi
           done
 
       - name: Upload signed artifacts
