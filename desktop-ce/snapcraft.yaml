@@ -92,7 +92,7 @@ parts:
 
   desktop-file:
     plugin: dump
-    source: ../linux/
+    source: linux/
     organize:
       whodb.desktop: share/applications/whodb.desktop
       icon.png: share/icons/hicolor/256x256/apps/whodb.png

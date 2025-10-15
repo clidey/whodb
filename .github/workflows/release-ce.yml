@@ -287,6 +287,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Copy Linux assets for snap build
+        run: |
+          cp -r linux desktop-ce/linux
+
       - name: Build snap from source
         uses: snapcore/action-build@v1
         id: build
