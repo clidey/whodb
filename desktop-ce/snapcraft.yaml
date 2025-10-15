@@ -1,0 +1,52 @@
+# Copyright 2025 Clidey, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: whodb
+version: git
+summary: Lightweight database management tool
+description: |
+  WhoDB is a lightweight, next-generation database management tool for
+  developers and database administrators. It provides an intuitive interface
+  for managing multiple database types including PostgreSQL, MySQL, SQLite,
+  MongoDB, Redis, and more.
+
+base: core22
+confinement: classic
+grade: stable
+
+architectures:
+  - build-on: amd64
+  - build-on: arm64
+
+apps:
+  whodb:
+    command: bin/whodb
+    desktop: share/applications/whodb.desktop
+
+parts:
+  whodb:
+    plugin: dump
+    source: build/linux/$CRAFT_TARGET_ARCH/
+    organize:
+      whodb: bin/whodb
+    stage-packages:
+      - libgtk-3-0
+      - libwebkit2gtk-4.1-0
+
+  desktop-file:
+    plugin: dump
+    source: ../linux/
+    organize:
+      whodb.desktop: share/applications/whodb.desktop
+      icon.png: share/icons/hicolor/256x256/apps/whodb.png
