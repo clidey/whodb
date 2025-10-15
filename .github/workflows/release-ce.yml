@@ -205,7 +205,8 @@ jobs:
         run: |
           echo "🏃 DRY RUN MODE - Skipping Mac App Store packaging (requires certificates)"
           echo "Creating dummy pkg for validation..."
-          touch "WhoDB-${{ needs.calculate-version.outputs.version }}.pkg"
+          mkdir -p desktop-ce
+          touch "desktop-ce/WhoDB-${{ needs.calculate-version.outputs.version }}.pkg"
 
       - name: Package for Mac App Store
         if: needs.calculate-version.outputs.dry_run == 'false'
@@ -257,7 +258,9 @@ jobs:
         run: |
           echo "🏃 DRY RUN MODE - Skipping MSIX packaging (requires certificate)"
           echo "Creating dummy MSIX bundle for validation..."
-          New-Item -ItemType File -Path "WhoDB-${{ needs.calculate-version.outputs.version }}.msixbundle" -Force
+          # Create dummy file in the same location where the actual build would place it
+          New-Item -ItemType Directory -Force -Path "." | Out-Null
+          New-Item -ItemType File -Path "./WhoDB-${{ needs.calculate-version.outputs.version }}.msixbundle" -Force
 
       - name: Decode certificate
         if: needs.calculate-version.outputs.dry_run == 'false'
