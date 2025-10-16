@@ -185,7 +185,27 @@ jobs:
         shell: pwsh
         env:
           GOARCH: ${{ matrix.arch }}
-        run: make ${{ matrix.make-target }} VERSION=${{ needs.calculate-version.outputs.version }}
+        run: |
+          # Build raw exe for MSIX packaging (not NSIS installer)
+          # Override the make target to build without NSIS
+          Write-Host "Building raw Windows executable for MSIX packaging..."
+          $env:GOWORK = "$PWD/../go.work.desktop-ce"
+          # Clean previous build
+          Remove-Item -Path build -Recurse -Force -ErrorAction SilentlyContinue
+          # Prepare frontend
+          New-Item -ItemType Directory -Path frontend/dist -Force | Out-Null
+          Set-Location ../frontend
+          pnpm run build:ce
+          Copy-Item -Path build/* -Destination ../desktop-ce/frontend/dist/ -Recurse
+          Set-Location ../desktop-ce
+          # Build without NSIS flag to get raw exe
+          New-Item -ItemType Directory -Path build/windows/amd64 -Force | Out-Null
+          $wailsPath = Join-Path $env:USERPROFILE "go\bin\wails.exe"
+          & $wailsPath build -clean -platform windows/amd64 `
+            -windowsconsole=false -ldflags="-s -w -H windowsgui" `
+            -o whodb.exe
+          Move-Item build/bin/whodb.exe build/windows/amd64/
+          Write-Host "Raw executable built at build/windows/amd64/whodb.exe"
 
       - name: Skip Windows ARM64 Build (Temporarily Disabled)
         if: matrix.platform == 'windows' && matrix.arch == 'arm64'
@@ -315,6 +335,39 @@ jobs:
       #     name: desktop-windows-arm64
       #     path: desktop-ce/
 
+      - name: List downloaded Windows build artifacts
+        shell: pwsh
+        run: |
+          Write-Host "📁 Contents of desktop-ce directory:"
+          Get-ChildItem -Path "desktop-ce" -Recurse | Format-Table Name, FullName
+          Write-Host ""
+          Write-Host "🔍 Looking for .exe files:"
+          Get-ChildItem -Path "desktop-ce" -Filter "*.exe" -Recurse | Format-Table Name, FullName
+
+      - name: Verify Windows SDK tools
+        shell: pwsh
+        run: |
+          Write-Host "🔧 Checking for Windows SDK tools..."
+
+          # Check for makeappx
+          $makeappx = Get-Command makeappx -ErrorAction SilentlyContinue
+          if ($makeappx) {
+              Write-Host "✅ makeappx found at: $($makeappx.Path)"
+          } else {
+              Write-Host "⚠️ makeappx not found in PATH, will search Windows SDK locations"
+              $sdkPaths = @(
+                  "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\makeappx.exe"
+              )
+              $found = Get-ChildItem -Path $sdkPaths -ErrorAction SilentlyContinue | Select-Object -First 1
+              if ($found) {
+                  Write-Host "✅ Found makeappx at: $($found.FullName)"
+                  # Add to PATH for this session
+                  $env:PATH = "$($found.DirectoryName);$env:PATH"
+              } else {
+                  Write-Host "❌ makeappx not found - MSIX build may fail"
+              }
+          }
+
       - name: Build unsigned MSIX for Microsoft Store
         shell: pwsh
         run: |
@@ -324,6 +377,13 @@ jobs:
             echo "📦 Building unsigned MSIX package for Microsoft Store"
           }
           echo "ℹ️ Microsoft will sign this package when uploaded to Partner Center"
+
+          # Ensure Windows SDK tools are in PATH
+          $sdkPath = Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits\10\bin\*\x64" -Directory -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($sdkPath) {
+              $env:PATH = "$($sdkPath.FullName);$env:PATH"
+              Write-Host "Added Windows SDK tools to PATH: $($sdkPath.FullName)"
+          }
 
           # Build unsigned MSIX package (Microsoft will sign it)
           .\scripts\build-msix.ps1 -Architecture amd64 -Version ${{ needs.calculate-version.outputs.version }} -SkipSigning

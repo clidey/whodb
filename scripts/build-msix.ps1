@@ -20,7 +20,7 @@ param(
     [string]$Version,
 
     [Parameter(Mandatory=$false)]
-    [string]$PublisherCN = "CN=TempPublisher",
+    [string]$PublisherCN = "TempPublisher",
 
     [Parameter(Mandatory=$false)]
     [string]$CertPath,
@@ -45,24 +45,41 @@ Remove-Item -Path $PackageDir -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Path $PackageDir -Force | Out-Null
 New-Item -ItemType Directory -Path $AssetsDir -Force | Out-Null
 
-# Copy executable from NSIS build (extract from installer)
-$InstallerPath = "desktop-ce\build\windows\$Architecture\whodb-installer.exe"
-if (-not (Test-Path $InstallerPath)) {
-    Write-Error "Installer not found: $InstallerPath"
-    exit 1
+# Find the executable from Wails build output
+# The workflow now builds raw exe (without NSIS) for MSIX packaging
+$PossiblePaths = @(
+    "desktop-ce\build\windows\$Architecture\whodb.exe",   # Raw exe from workflow build
+    "desktop-ce\build\bin\whodb.exe",                     # Alternative location
+    "desktop-ce\build\whodb.exe"                          # Fallback location
+)
+
+$ExePath = $null
+foreach ($Path in $PossiblePaths) {
+    if (Test-Path $Path) {
+        $ExePath = $Path
+        Write-Host "Found executable at: $ExePath"
+        break
+    }
 }
 
-# For simplicity, we'll use the non-installer exe if available, or extract from NSIS
-# In production, you'd extract the exe from the NSIS installer or build without NSIS
-$ExePath = "desktop-ce\build\windows\$Architecture\whodb.exe"
-if (-not (Test-Path $ExePath)) {
-    Write-Host "Warning: Non-installer exe not found, will need to extract from NSIS"
-    # This would require nsis extraction tools
-    # For now, copy the installer as-is (this won't work for Store, but sets up the structure)
-    Copy-Item $InstallerPath "$PackageDir\whodb.exe"
-} else {
-    Copy-Item $ExePath "$PackageDir\whodb.exe"
+if (-not $ExePath) {
+    Write-Host "Could not find executable in expected locations."
+    Write-Host "Searching for any .exe file in desktop-ce\build..."
+
+    $FoundExe = Get-ChildItem -Path "desktop-ce\build" -Filter "*.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($FoundExe) {
+        $ExePath = $FoundExe.FullName
+        Write-Host "Found executable at: $ExePath"
+    } else {
+        Write-Error "No executable found in desktop-ce\build directory"
+        Write-Host "Expected one of:"
+        $PossiblePaths | ForEach-Object { Write-Host "  - $_" }
+        exit 1
+    }
 }
+
+Copy-Item $ExePath "$PackageDir\whodb.exe"
+Write-Host "Copied executable to package directory"
 
 # Copy and resize icon for Store assets
 $IconPath = "linux\icon.png"
@@ -82,7 +99,35 @@ $Manifest | Out-File -FilePath "$PackageDir\AppxManifest.xml" -Encoding utf8
 
 # Create MSIX package using makeappx
 Write-Host "Creating MSIX package..."
-& makeappx pack /d $PackageDir /p "WhoDB-$Version-$Architecture.msix" /o
+
+# Check if makeappx is available
+$makeappxPath = Get-Command makeappx -ErrorAction SilentlyContinue
+if (-not $makeappxPath) {
+    # Try to find it in Windows SDK locations
+    $possiblePaths = @(
+        "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\makeappx.exe",
+        "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22000.0\x64\makeappx.exe",
+        "C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64\makeappx.exe",
+        "C:\Program Files (x86)\Windows Kits\10\bin\x64\makeappx.exe"
+    )
+
+    foreach ($path in $possiblePaths) {
+        if (Test-Path $path) {
+            $makeappxPath = $path
+            Write-Host "Found makeappx at: $makeappxPath"
+            break
+        }
+    }
+
+    if (-not $makeappxPath) {
+        Write-Error "makeappx.exe not found. Please install Windows SDK."
+        exit 1
+    }
+
+    & $makeappxPath pack /d $PackageDir /p "WhoDB-$Version-$Architecture.msix" /o
+} else {
+    & makeappx pack /d $PackageDir /p "WhoDB-$Version-$Architecture.msix" /o
+}
 
 # Sign the package if certificate is provided
 if (-not $SkipSigning -and $CertPath) {
