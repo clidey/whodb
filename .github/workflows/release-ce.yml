@@ -203,13 +203,8 @@ jobs:
 
           # Build without NSIS flag to get raw exe
           Write-Host "Building with wails..."
-          $wailsPath = Join-Path $env:USERPROFILE "go\bin\wails.exe"
-          if (-not (Test-Path $wailsPath)) {
-              Write-Host "Wails not found at $wailsPath, trying PATH..."
-              $wailsPath = "wails"
-          }
 
-          & $wailsPath build -clean -platform windows/amd64 `
+          wails build -clean -platform windows/amd64 `
             -windowsconsole=false -ldflags="-s -w -H windowsgui" `
             -o whodb.exe
 
