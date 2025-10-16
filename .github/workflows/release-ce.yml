@@ -39,6 +39,37 @@ jobs:
           echo "enabled=$DRY_RUN" >> $GITHUB_OUTPUT
           echo "Dry run mode: $DRY_RUN"
 
+      - name: Check all secrets availability
+        run: |
+          echo "🔐 SECRET AVAILABILITY CHECK"
+          echo "============================"
+          echo ""
+          echo "📦 Docker Hub:"
+          [ -n "${{ secrets.DOCKERHUB_USERNAME }}" ] && echo "  ✅ DOCKERHUB_USERNAME" || echo "  ❌ DOCKERHUB_USERNAME"
+          [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ] && echo "  ✅ DOCKERHUB_TOKEN" || echo "  ❌ DOCKERHUB_TOKEN"
+          echo ""
+          echo "📦 Snap Store:"
+          [ -n "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}" ] && echo "  ✅ SNAPCRAFT_STORE_CREDENTIALS" || echo "  ❌ SNAPCRAFT_STORE_CREDENTIALS"
+          echo ""
+          echo "🪟 Microsoft Store:"
+          [ -n "${{ secrets.MS_TENANT_ID }}" ] && echo "  ✅ MS_TENANT_ID" || echo "  ❌ MS_TENANT_ID"
+          [ -n "${{ secrets.MS_CLIENT_ID }}" ] && echo "  ✅ MS_CLIENT_ID" || echo "  ❌ MS_CLIENT_ID"
+          [ -n "${{ secrets.MS_CLIENT_SECRET }}" ] && echo "  ✅ MS_CLIENT_SECRET" || echo "  ❌ MS_CLIENT_SECRET"
+          [ -n "${{ secrets.MS_APP_ID }}" ] && echo "  ✅ MS_APP_ID" || echo "  ❌ MS_APP_ID"
+          echo ""
+          echo "🍎 Mac App Store:"
+          [ -n "${{ secrets.MAS_CODESIGN_ID }}" ] && echo "  ✅ MAS_CODESIGN_ID" || echo "  ❌ MAS_CODESIGN_ID"
+          [ -n "${{ secrets.MAS_INSTALLER_ID }}" ] && echo "  ✅ MAS_INSTALLER_ID" || echo "  ❌ MAS_INSTALLER_ID"
+          echo ""
+          echo "🍎 Apple Store Connect API:"
+          [ -n "${{ secrets.APP_STORE_CONNECT_API_KEY }}" ] && echo "  ✅ APP_STORE_CONNECT_API_KEY" || echo "  ❌ APP_STORE_CONNECT_API_KEY"
+          [ -n "${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}" ] && echo "  ✅ APP_STORE_CONNECT_API_KEY_ID" || echo "  ❌ APP_STORE_CONNECT_API_KEY_ID"
+          [ -n "${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" ] && echo "  ✅ APP_STORE_CONNECT_ISSUER_ID" || echo "  ❌ APP_STORE_CONNECT_ISSUER_ID"
+          [ -n "${{ secrets.APPLE_ID }}" ] && echo "  ✅ APPLE_ID" || echo "  ❌ APPLE_ID"
+          echo ""
+          echo "============================"
+          echo ""
+
       - name: Calculate version
         id: version
         run: |
@@ -203,6 +234,19 @@ jobs:
       - name: Check certificate availability
         id: check_mac_cert
         run: |
+          echo "🔍 Checking Mac App Store certificates..."
+          if [ -n "${{ secrets.MAS_CODESIGN_ID }}" ]; then
+            echo "  ✅ MAS_CODESIGN_ID is configured"
+          else
+            echo "  ❌ MAS_CODESIGN_ID is NOT configured"
+          fi
+
+          if [ -n "${{ secrets.MAS_INSTALLER_ID }}" ]; then
+            echo "  ✅ MAS_INSTALLER_ID is configured"
+          else
+            echo "  ❌ MAS_INSTALLER_ID is NOT configured"
+          fi
+
           if [ -n "${{ secrets.MAS_CODESIGN_ID }}" ] && [ -n "${{ secrets.MAS_INSTALLER_ID }}" ]; then
             echo "has_cert=true" >> $GITHUB_OUTPUT
             echo "✅ Mac certificates available - will build pkg package"
@@ -457,6 +501,19 @@ jobs:
       - name: Checkout for scripts
         uses: actions/checkout@v4
 
+      - name: Check Snapcraft credentials
+        run: |
+          echo "🔍 Checking Snapcraft credentials..."
+          if [ -n "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}" ]; then
+            echo "  ✅ SNAPCRAFT_STORE_CREDENTIALS is configured"
+          else
+            echo "  ❌ SNAPCRAFT_STORE_CREDENTIALS is NOT configured"
+            if [ "${{ needs.calculate-version.outputs.dry_run }}" = "false" ]; then
+              echo "::error::Production deployment requires SNAPCRAFT_STORE_CREDENTIALS"
+              exit 1
+            fi
+          fi
+
       - name: Download snap amd64 artifact
         uses: actions/download-artifact@v4
         with:
@@ -528,6 +585,47 @@ jobs:
       - name: Checkout for scripts
         uses: actions/checkout@v4
 
+      - name: Check Microsoft Store credentials
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Checking Microsoft Store credentials..."
+
+          if ("${{ secrets.MS_TENANT_ID }}" -ne "") {
+            Write-Host "  ✅ MS_TENANT_ID is configured"
+          } else {
+            Write-Host "  ❌ MS_TENANT_ID is NOT configured"
+          }
+
+          if ("${{ secrets.MS_CLIENT_ID }}" -ne "") {
+            Write-Host "  ✅ MS_CLIENT_ID is configured"
+          } else {
+            Write-Host "  ❌ MS_CLIENT_ID is NOT configured"
+          }
+
+          if ("${{ secrets.MS_CLIENT_SECRET }}" -ne "") {
+            Write-Host "  ✅ MS_CLIENT_SECRET is configured"
+          } else {
+            Write-Host "  ❌ MS_CLIENT_SECRET is NOT configured"
+          }
+
+          if ("${{ secrets.MS_APP_ID }}" -ne "") {
+            Write-Host "  ✅ MS_APP_ID is configured"
+          } else {
+            Write-Host "  ❌ MS_APP_ID is NOT configured"
+          }
+
+          $allConfigured = ("${{ secrets.MS_TENANT_ID }}" -ne "") -and
+                          ("${{ secrets.MS_CLIENT_ID }}" -ne "") -and
+                          ("${{ secrets.MS_CLIENT_SECRET }}" -ne "") -and
+                          ("${{ secrets.MS_APP_ID }}" -ne "")
+
+          if ($allConfigured) {
+            Write-Host "✅ All Microsoft Store credentials are configured"
+          } else {
+            Write-Host "⚠️ Some Microsoft Store credentials are missing"
+            Write-Host "::warning::Microsoft Store deployment may fail due to missing credentials"
+          }
+
       - name: Download MSIX package
         uses: actions/download-artifact@v4
         with:
@@ -596,6 +694,41 @@ jobs:
     steps:
       - name: Checkout for scripts
         uses: actions/checkout@v4
+
+      - name: Check Apple Store credentials
+        run: |
+          echo "🔍 Checking Apple Store credentials..."
+
+          if [ -n "${{ secrets.APP_STORE_CONNECT_API_KEY }}" ]; then
+            echo "  ✅ APP_STORE_CONNECT_API_KEY is configured"
+          else
+            echo "  ❌ APP_STORE_CONNECT_API_KEY is NOT configured"
+          fi
+
+          if [ -n "${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}" ]; then
+            echo "  ✅ APP_STORE_CONNECT_API_KEY_ID is configured"
+          else
+            echo "  ❌ APP_STORE_CONNECT_API_KEY_ID is NOT configured"
+          fi
+
+          if [ -n "${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" ]; then
+            echo "  ✅ APP_STORE_CONNECT_ISSUER_ID is configured"
+          else
+            echo "  ❌ APP_STORE_CONNECT_ISSUER_ID is NOT configured"
+          fi
+
+          if [ -n "${{ secrets.APPLE_ID }}" ]; then
+            echo "  ✅ APPLE_ID is configured"
+          else
+            echo "  ❌ APPLE_ID is NOT configured"
+          fi
+
+          if [ -n "${{ secrets.APP_STORE_CONNECT_API_KEY }}" ] && [ -n "${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}" ] && [ -n "${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" ]; then
+            echo "✅ All Apple Store credentials are configured"
+          else
+            echo "⚠️ Some Apple Store credentials are missing"
+            echo "::warning::Apple Store deployment may fail due to missing credentials"
+          fi
 
       - name: Download Mac App Store package
         uses: actions/download-artifact@v4
@@ -775,6 +908,32 @@ jobs:
     steps:
       - name: Checkout for scripts
         uses: actions/checkout@v4
+
+      - name: Check Docker Hub credentials
+        run: |
+          echo "🔍 Checking Docker Hub credentials..."
+
+          if [ -n "${{ secrets.DOCKERHUB_USERNAME }}" ]; then
+            echo "  ✅ DOCKERHUB_USERNAME is configured"
+          else
+            echo "  ❌ DOCKERHUB_USERNAME is NOT configured"
+          fi
+
+          if [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
+            echo "  ✅ DOCKERHUB_TOKEN is configured"
+          else
+            echo "  ❌ DOCKERHUB_TOKEN is NOT configured"
+          fi
+
+          if [ -n "${{ secrets.DOCKERHUB_USERNAME }}" ] && [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
+            echo "✅ All Docker Hub credentials are configured"
+          else
+            echo "❌ Docker Hub credentials are missing"
+            if [ "${{ needs.calculate-version.outputs.dry_run }}" = "false" ]; then
+              echo "::error::Production deployment requires Docker Hub credentials"
+              exit 1
+            fi
+          fi
 
       - name: Download Docker amd64 artifact
         uses: actions/download-artifact@v4
