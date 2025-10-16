@@ -121,84 +121,62 @@ $Manifest | Out-File -FilePath "$PackageDir\AppxManifest.xml" -Encoding utf8
 
 # Create MSIX package using makeappx
 Write-Host "Creating MSIX package..."
-Write-Host "Looking for makeappx.exe..."
 
-# First try to find it in Windows SDK locations
-$makeappxPath = $null
+# Try to run makeappx directly first (it should be in PATH if SDK is installed properly)
+try {
+    Write-Host "Running: makeappx pack /d $PackageDir /p WhoDB-$Version-$Architecture.msix /o"
+    makeappx pack /d $PackageDir /p "WhoDB-$Version-$Architecture.msix" /o
 
-# Search for any Windows SDK version
-$sdkRoot = "C:\Program Files (x86)\Windows Kits\10\bin"
-if (Test-Path $sdkRoot) {
-    Write-Host "Searching in Windows SDK directory: $sdkRoot"
-
-    # Get all SDK versions and sort by version number (newest first)
-    $sdkVersions = Get-ChildItem -Path $sdkRoot -Directory |
-        Where-Object { $_.Name -match "^10\.\d+\.\d+\.\d+$" } |
-        Sort-Object { [version]($_.Name -replace "^10\.", "") } -Descending
-
-    Write-Host "Found SDK versions: $($sdkVersions.Name -join ', ')"
-
-    foreach ($version in $sdkVersions) {
-        $candidatePath = Join-Path $version.FullName "x64\makeappx.exe"
-        if (Test-Path $candidatePath) {
-            $makeappxPath = $candidatePath
-            Write-Host "✅ Found makeappx at: $makeappxPath"
-            break
-        }
-        $candidatePath = Join-Path $version.FullName "x86\makeappx.exe"
-        if (Test-Path $candidatePath) {
-            $makeappxPath = $candidatePath
-            Write-Host "✅ Found makeappx at: $makeappxPath"
-            break
-        }
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "✅ MSIX package created successfully"
+    } else {
+        throw "makeappx failed with exit code: $LASTEXITCODE"
     }
-}
-
-# If not found, try common locations
-if (-not $makeappxPath) {
-    $possiblePaths = @(
-        "C:\Program Files (x86)\Windows Kits\10\App Certification Kit\makeappx.exe",
-        "C:\Program Files\Windows Kits\10\bin\x64\makeappx.exe",
-        "C:\Program Files\Windows Kits\10\bin\x86\makeappx.exe"
-    )
-
-    foreach ($path in $possiblePaths) {
-        if (Test-Path $path) {
-            $makeappxPath = $path
-            Write-Host "✅ Found makeappx at: $makeappxPath"
-            break
-        }
-    }
-}
-
-# Last resort - check if it's in PATH
-if (-not $makeappxPath) {
-    $cmdPath = Get-Command makeappx -ErrorAction SilentlyContinue
-    if ($cmdPath) {
-        $makeappxPath = $cmdPath.Source
-        Write-Host "✅ Found makeappx in PATH: $makeappxPath"
-    }
-}
-
-if (-not $makeappxPath) {
-    Write-Error "makeappx.exe not found. Please install Windows SDK."
+} catch {
+    Write-Host "Failed to run makeappx directly: $_"
     Write-Host ""
-    Write-Host "Searched locations:"
-    Write-Host "  - $sdkRoot\*\x64\makeappx.exe"
-    Write-Host "  - $sdkRoot\*\x86\makeappx.exe"
-    Write-Host "  - C:\Program Files (x86)\Windows Kits\10\App Certification Kit\makeappx.exe"
-    Write-Host ""
-    Write-Host "Please install Windows SDK from:"
-    Write-Host "https://developer.microsoft.com/windows/downloads/windows-sdk/"
-    exit 1
-}
 
-Write-Host "Using makeappx from: $makeappxPath"
-& $makeappxPath pack /d $PackageDir /p "WhoDB-$Version-$Architecture.msix" /o
+    # If direct call fails, try to find and add to PATH
+    Write-Host "Searching for makeappx.exe in Windows SDK..."
 
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "makeappx failed with exit code: $LASTEXITCODE"
-    exit 1
+    $makeappxFound = $false
+    $sdkRoot = "C:\Program Files (x86)\Windows Kits\10\bin"
+
+    if (Test-Path $sdkRoot) {
+        # Get all SDK versions
+        $sdkVersions = Get-ChildItem -Path $sdkRoot -Directory |
+            Where-Object { $_.Name -match "^10\.\d+\.\d+\.\d+$" } |
+            Sort-Object { [version]($_.Name -replace "^10\.", "") } -Descending
+
+        foreach ($version in $sdkVersions) {
+            $makeappxPath = Join-Path $version.FullName "x64\makeappx.exe"
+            if (Test-Path $makeappxPath) {
+                Write-Host "Found makeappx at: $makeappxPath"
+                Write-Host "Running with full path..."
+
+                & $makeappxPath pack /d $PackageDir /p "WhoDB-$Version-$Architecture.msix" /o
+
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Host "✅ MSIX package created successfully"
+                    $makeappxFound = $true
+                } else {
+                    Write-Error "makeappx failed with exit code: $LASTEXITCODE"
+                    exit 1
+                }
+                break
+            }
+        }
+    }
+
+    if (-not $makeappxFound) {
+        Write-Error "makeappx.exe not found. Please install Windows SDK."
+        Write-Host ""
+        Write-Host "Install Windows SDK from:"
+        Write-Host "https://developer.microsoft.com/windows/downloads/windows-sdk/"
+        Write-Host ""
+        Write-Host "After installation, makeappx should be available in PATH."
+        exit 1
+    }
 }
 
 # Sign the package if certificate is provided

@@ -385,41 +385,42 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Windows SDK
+      - name: Check Windows SDK availability
         shell: pwsh
         run: |
-          Write-Host "Checking for Windows SDK and makeappx..."
+          Write-Host "🔍 Checking for Windows SDK..."
 
-          # Check if makeappx exists in any SDK version
-          $makeappxFound = $false
-          $sdkRoot = "C:\Program Files (x86)\Windows Kits\10\bin"
-
-          if (Test-Path $sdkRoot) {
-              $versions = Get-ChildItem -Path $sdkRoot -Directory | Where-Object { $_.Name -match "^10\.\d+\.\d+\.\d+$" }
-              foreach ($version in $versions) {
-                  $makeappxPath = Join-Path $version.FullName "x64\makeappx.exe"
-                  if (Test-Path $makeappxPath) {
-                      Write-Host "✅ makeappx.exe found in SDK $($version.Name)"
-                      $makeappxFound = $true
-                      break
-                  }
-              }
-          }
-
-          if (-not $makeappxFound) {
-              Write-Host "⚠️ makeappx.exe not found in existing SDK installations"
-              Write-Host "Installing Windows SDK via Chocolatey..."
-
-              # Try to install Windows SDK with makeappx using Chocolatey
-              try {
-                  choco install windows-sdk-10-version-2004-all --yes --no-progress --limitoutput
-                  Write-Host "✅ Windows SDK installed via Chocolatey"
-              } catch {
-                  Write-Host "⚠️ Could not install Windows SDK via Chocolatey"
-                  Write-Host "Will attempt to create dummy MSIX for dry run if needed"
-              }
+          # Check if makeappx is directly available
+          $makeappxCmd = Get-Command makeappx -ErrorAction SilentlyContinue
+          if ($makeappxCmd) {
+              Write-Host "✅ makeappx is available in PATH: $($makeappxCmd.Source)"
           } else {
-              Write-Host "Windows SDK with makeappx is already available"
+              # Check if makeappx exists in any SDK version
+              $sdkRoot = "C:\Program Files (x86)\Windows Kits\10\bin"
+              if (Test-Path $sdkRoot) {
+                  $versions = Get-ChildItem -Path $sdkRoot -Directory |
+                      Where-Object { $_.Name -match "^10\.\d+\.\d+\.\d+$" } |
+                      Sort-Object { [version]($_.Name -replace "^10\.", "") } -Descending
+
+                  Write-Host "Found Windows SDK versions:"
+                  $versions | ForEach-Object { Write-Host "  - $($_.Name)" }
+
+                  $makeappxFound = $false
+                  foreach ($version in $versions) {
+                      if (Test-Path (Join-Path $version.FullName "x64\makeappx.exe")) {
+                          Write-Host "✅ makeappx.exe available in SDK $($version.Name)"
+                          $makeappxFound = $true
+                          break
+                      }
+                  }
+
+                  if (-not $makeappxFound) {
+                      Write-Host "⚠️ makeappx.exe not found in any SDK version"
+                      Write-Host "Note: Will attempt to use makeappx directly or create dummy for dry run"
+                  }
+              } else {
+                  Write-Host "⚠️ Windows SDK not found at expected location"
+              }
           }
 
       - name: Download Windows amd64 builds
@@ -452,62 +453,6 @@ jobs:
           Write-Host "🔍 Looking for .exe files anywhere:"
           Get-ChildItem -Path . -Filter "*.exe" -Recurse -ErrorAction SilentlyContinue | Format-Table Name, FullName, Length
 
-      - name: Verify Windows SDK tools
-        shell: pwsh
-        run: |
-          Write-Host "🔧 Checking for Windows SDK tools..."
-
-          # Check for makeappx in Windows SDK
-          $sdkRoot = "C:\Program Files (x86)\Windows Kits\10\bin"
-          if (Test-Path $sdkRoot) {
-              Write-Host "Windows SDK root found: $sdkRoot"
-
-              # List all SDK versions
-              $versions = Get-ChildItem -Path $sdkRoot -Directory | Where-Object { $_.Name -match "^10\.\d+\.\d+\.\d+$" }
-              Write-Host "Installed SDK versions:"
-              $versions | ForEach-Object { Write-Host "  - $($_.Name)" }
-
-              # Find makeappx.exe in any version
-              $makeappxFound = $false
-              foreach ($version in $versions) {
-                  $makeappxPath = Join-Path $version.FullName "x64\makeappx.exe"
-                  if (Test-Path $makeappxPath) {
-                      Write-Host "✅ Found makeappx.exe in SDK $($version.Name) at: $makeappxPath"
-                      $makeappxFound = $true
-                      # Add to PATH for this session
-                      $env:PATH = "$($version.FullName)\x64;$env:PATH"
-                      break
-                  }
-                  # Also check x86 version
-                  $makeappxPath = Join-Path $version.FullName "x86\makeappx.exe"
-                  if (Test-Path $makeappxPath) {
-                      Write-Host "✅ Found makeappx.exe (x86) in SDK $($version.Name) at: $makeappxPath"
-                      $makeappxFound = $true
-                      $env:PATH = "$($version.FullName)\x86;$env:PATH"
-                      break
-                  }
-              }
-
-              if (-not $makeappxFound) {
-                  Write-Host "⚠️ makeappx.exe not found in any SDK version"
-                  Write-Host "Attempting to install Windows SDK tools..."
-
-                  # Try to use VS Installer to add SDK tools
-                  $vsWhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
-                  if (Test-Path $vsWhere) {
-                      $vsPath = & $vsWhere -latest -property installationPath
-                      Write-Host "Visual Studio found at: $vsPath"
-                  }
-
-                  # Alternative: Download makeappx directly (if available)
-                  Write-Host "Note: makeappx.exe is required for MSIX packaging"
-                  Write-Host "You may need to install Windows SDK from:"
-                  Write-Host "https://developer.microsoft.com/windows/downloads/windows-sdk/"
-              }
-          } else {
-              Write-Host "❌ Windows SDK not found at expected location"
-          }
-
       - name: Build unsigned MSIX for Microsoft Store
         shell: pwsh
         run: |
@@ -518,38 +463,36 @@ jobs:
           }
           echo "ℹ️ Microsoft will sign this package when uploaded to Partner Center"
 
-          # Try to ensure makeappx is available
-          $makeappxFound = $false
-
-          # Search all SDK versions for makeappx
+          # Add Windows SDK to PATH if available
           $sdkVersions = Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits\10\bin" -Directory -ErrorAction SilentlyContinue |
-              Where-Object { $_.Name -match "^10\.\d+\.\d+\.\d+$" }
+              Where-Object { $_.Name -match "^10\.\d+\.\d+\.\d+$" } |
+              Sort-Object { [version]($_.Name -replace "^10\.", "") } -Descending
 
           foreach ($version in $sdkVersions) {
-              $makeappxPath = Join-Path $version.FullName "x64\makeappx.exe"
-              if (Test-Path $makeappxPath) {
-                  $env:PATH = "$($version.FullName)\x64;$env:PATH"
-                  Write-Host "Added to PATH: $($version.FullName)\x64"
-                  $makeappxFound = $true
+              $binPath = Join-Path $version.FullName "x64"
+              if (Test-Path (Join-Path $binPath "makeappx.exe")) {
+                  $env:PATH = "$binPath;$env:PATH"
+                  Write-Host "Added Windows SDK to PATH: $binPath"
                   break
               }
           }
 
-          if (-not $makeappxFound) {
-              Write-Host "⚠️ makeappx.exe not found in Windows SDK"
-              Write-Host "Creating dummy MSIX bundle for dry run..."
+          # Try to build MSIX package
+          $ErrorActionPreference = "Stop"
+          try {
+              .\scripts\build-msix.ps1 -Architecture amd64 -Version ${{ needs.calculate-version.outputs.version }} -SkipSigning
+              Write-Host "✅ MSIX build script completed"
+          } catch {
+              Write-Host "Failed to build MSIX: $_"
 
               if ("${{ needs.calculate-version.outputs.dry_run }}" -eq "true") {
-                  # Create a dummy file for dry run
+                  Write-Host "Creating dummy MSIX bundle for dry run validation..."
                   New-Item -ItemType File -Path "WhoDB-${{ needs.calculate-version.outputs.version }}.msixbundle" -Force | Out-Null
-                  Write-Host "✅ Created dummy MSIX bundle for dry run validation"
+                  Write-Host "✅ Created dummy MSIX bundle for dry run"
               } else {
-                  Write-Error "Cannot create MSIX package without makeappx.exe"
+                  Write-Error "Failed to create MSIX package: $_"
                   exit 1
               }
-          } else {
-              # Build unsigned MSIX package (Microsoft will sign it)
-              .\scripts\build-msix.ps1 -Architecture amd64 -Version ${{ needs.calculate-version.outputs.version }} -SkipSigning
           }
 
       # ARM64 build temporarily disabled
