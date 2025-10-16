@@ -200,21 +200,40 @@ jobs:
           name: desktop-darwin-universal
           path: desktop-ce/
 
-      - name: Skip Mac App Store packaging in dry run
-        if: needs.calculate-version.outputs.dry_run == 'true'
+      - name: Check certificate availability
+        id: check_mac_cert
         run: |
-          echo "🏃 DRY RUN MODE - Skipping Mac App Store packaging (requires certificates)"
+          if [ -n "${{ secrets.MAS_CODESIGN_ID }}" ] && [ -n "${{ secrets.MAS_INSTALLER_ID }}" ]; then
+            echo "has_cert=true" >> $GITHUB_OUTPUT
+            echo "✅ Mac certificates available - will build pkg package"
+          else
+            echo "has_cert=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Mac certificates not configured - will create dummy package"
+          fi
+
+      - name: Create dummy pkg for validation (no certs)
+        if: steps.check_mac_cert.outputs.has_cert != 'true'
+        run: |
+          if [ "${{ needs.calculate-version.outputs.dry_run }}" = "true" ]; then
+            echo "🏃 DRY RUN MODE - No certificates available"
+          else
+            echo "⚠️ PRODUCTION MODE - No certificates available"
+          fi
           echo "Creating dummy pkg for validation..."
           mkdir -p desktop-ce
           touch "desktop-ce/WhoDB-${{ needs.calculate-version.outputs.version }}.pkg"
 
       - name: Package for Mac App Store
-        if: needs.calculate-version.outputs.dry_run == 'false'
+        if: steps.check_mac_cert.outputs.has_cert == 'true'
         working-directory: ./desktop-ce
         env:
           MAS_CODESIGN_ID: ${{ secrets.MAS_CODESIGN_ID }}
           MAS_INSTALLER_ID: ${{ secrets.MAS_INSTALLER_ID }}
         run: |
+          if [ "${{ needs.calculate-version.outputs.dry_run }}" = "true" ]; then
+            echo "🏃 DRY RUN MODE - Building Mac App Store package (will not publish)"
+          fi
+
           # Sign the app for Mac App Store
           codesign --deep --force --options runtime --sign "$MAS_CODESIGN_ID" \
             "build/darwin/universal/WhoDB.app"
@@ -252,29 +271,47 @@ jobs:
       #     name: desktop-windows-arm64
       #     path: desktop-ce/
 
-      - name: Skip MSIX packaging in dry run
-        if: needs.calculate-version.outputs.dry_run == 'true'
+      - name: Check certificate availability
+        id: check_windows_cert
         shell: pwsh
         run: |
-          echo "🏃 DRY RUN MODE - Skipping MSIX packaging (requires certificate)"
+          $hasCert = ("${{ secrets.WINDOWS_PFX_BASE64 }}" -ne "" -and "${{ secrets.WINDOWS_PUBLISHER_CN }}" -ne "")
+          echo "has_cert=$hasCert" >> $env:GITHUB_OUTPUT
+          if ($hasCert -eq "True") {
+            echo "✅ Windows certificates available - will build MSIX package"
+          } else {
+            echo "⚠️ Windows certificates not configured - will create dummy package"
+          }
+
+      - name: Create dummy MSIX for validation (no certs)
+        if: steps.check_windows_cert.outputs.has_cert != 'True'
+        shell: pwsh
+        run: |
+          if ("${{ needs.calculate-version.outputs.dry_run }}" -eq "true") {
+            echo "🏃 DRY RUN MODE - No certificates available"
+          } else {
+            echo "⚠️ PRODUCTION MODE - No certificates available"
+          }
           echo "Creating dummy MSIX bundle for validation..."
-          # Create dummy file in the same location where the actual build would place it
           New-Item -ItemType Directory -Force -Path "." | Out-Null
           New-Item -ItemType File -Path "./WhoDB-${{ needs.calculate-version.outputs.version }}.msixbundle" -Force
 
       - name: Decode certificate
-        if: needs.calculate-version.outputs.dry_run == 'false'
+        if: steps.check_windows_cert.outputs.has_cert == 'True'
         shell: pwsh
         run: |
           $bytes = [Convert]::FromBase64String("${{ secrets.WINDOWS_PFX_BASE64 }}")
           [IO.File]::WriteAllBytes("cert.pfx", $bytes)
 
       - name: Build MSIX amd64
-        if: needs.calculate-version.outputs.dry_run == 'false'
+        if: steps.check_windows_cert.outputs.has_cert == 'True'
         shell: pwsh
         env:
           WINDOWS_PFX_PASSWORD: ${{ secrets.WINDOWS_PFX_PASSWORD }}
         run: |
+          if ("${{ needs.calculate-version.outputs.dry_run }}" -eq "true") {
+            echo "🏃 DRY RUN MODE - Building MSIX package (will not publish)"
+          }
           .\scripts\build-msix.ps1 -Architecture amd64 -Version ${{ needs.calculate-version.outputs.version }} -PublisherCN "${{ secrets.WINDOWS_PUBLISHER_CN }}" -CertPath cert.pfx
 
       # ARM64 build temporarily disabled
@@ -287,7 +324,7 @@ jobs:
       #     .\scripts\build-msix.ps1 -Architecture arm64 -Version ${{ needs.calculate-version.outputs.version }} -PublisherCN "${{ secrets.WINDOWS_PUBLISHER_CN }}" -CertPath cert.pfx
 
       - name: Create MSIX package (AMD64 only)
-        if: needs.calculate-version.outputs.dry_run == 'false'
+        if: steps.check_windows_cert.outputs.has_cert == 'True'
         shell: pwsh
         run: |
           # Since we only have AMD64 for now, rename it as the bundle
