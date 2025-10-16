@@ -21,6 +21,7 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       previous_version: ${{ steps.version.outputs.previous_version }}
       dry_run: ${{ steps.dry_run.outputs.enabled }}
+      pr_body: ${{ steps.pr_details.outputs.body }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -80,6 +81,24 @@ jobs:
           echo "previous_version=$PREVIOUS_VERSION" >> $GITHUB_OUTPUT
           echo "Next version: $NEXT_VERSION"
           echo "Previous version: $PREVIOUS_VERSION"
+
+      - name: Capture PR details
+        id: pr_details
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            # PR event - capture the PR body
+            PR_BODY="${{ github.event.pull_request.body }}"
+          else
+            # Manual trigger - provide default release notes
+            PR_BODY="Manual release deployment for v${{ steps.version.outputs.version }}"
+          fi
+
+          # Escape special characters and prepare for multi-line output
+          PR_BODY="${PR_BODY//'%'/'%25'}"
+          PR_BODY="${PR_BODY//$'\n'/'%0A'}"
+          PR_BODY="${PR_BODY//$'\r'/'%0D'}"
+
+          echo "body=$PR_BODY" >> $GITHUB_OUTPUT
 
   build-docker-ce:
     name: Build Docker Images (CE)
@@ -1005,9 +1024,12 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ needs.calculate-version.outputs.version }}
-          name: Release v${{ needs.calculate-version.outputs.version }}
+          name: v${{ needs.calculate-version.outputs.version }}
           body: |
             # WhoDB v${{ needs.calculate-version.outputs.version }}
+
+            ## Release Notes
+            ${{ needs.calculate-version.outputs.pr_body }}
 
             ## Docker Images
             - `docker pull clidey/whodb:${{ needs.calculate-version.outputs.version }}`
@@ -1028,9 +1050,6 @@ jobs:
 
             **macOS:**
             Available on Mac App Store
-
-            ## Release Notes
-            [TODO: Add release notes here]
 
             ## Verification
             All binaries are signed with Sigstore. Verify signatures using cosign:
