@@ -271,48 +271,18 @@ jobs:
       #     name: desktop-windows-arm64
       #     path: desktop-ce/
 
-      - name: Check certificate availability
-        id: check_windows_cert
-        shell: pwsh
-        run: |
-          $hasCert = ("${{ secrets.WINDOWS_PFX_BASE64 }}" -ne "" -and "${{ secrets.WINDOWS_PUBLISHER_CN }}" -ne "")
-          echo "has_cert=$hasCert" >> $env:GITHUB_OUTPUT
-          if ($hasCert -eq "True") {
-            echo "✅ Windows certificates available - will build MSIX package"
-          } else {
-            echo "⚠️ Windows certificates not configured - will create dummy package"
-          }
-
-      - name: Create dummy MSIX for validation (no certs)
-        if: steps.check_windows_cert.outputs.has_cert != 'True'
+      - name: Build unsigned MSIX for Microsoft Store
         shell: pwsh
         run: |
           if ("${{ needs.calculate-version.outputs.dry_run }}" -eq "true") {
-            echo "🏃 DRY RUN MODE - No certificates available"
+            echo "🏃 DRY RUN MODE - Building unsigned MSIX package (will not publish)"
           } else {
-            echo "⚠️ PRODUCTION MODE - No certificates available"
+            echo "📦 Building unsigned MSIX package for Microsoft Store"
           }
-          echo "Creating dummy MSIX bundle for validation..."
-          New-Item -ItemType Directory -Force -Path "." | Out-Null
-          New-Item -ItemType File -Path "./WhoDB-${{ needs.calculate-version.outputs.version }}.msixbundle" -Force
+          echo "ℹ️ Microsoft will sign this package when uploaded to Partner Center"
 
-      - name: Decode certificate
-        if: steps.check_windows_cert.outputs.has_cert == 'True'
-        shell: pwsh
-        run: |
-          $bytes = [Convert]::FromBase64String("${{ secrets.WINDOWS_PFX_BASE64 }}")
-          [IO.File]::WriteAllBytes("cert.pfx", $bytes)
-
-      - name: Build MSIX amd64
-        if: steps.check_windows_cert.outputs.has_cert == 'True'
-        shell: pwsh
-        env:
-          WINDOWS_PFX_PASSWORD: ${{ secrets.WINDOWS_PFX_PASSWORD }}
-        run: |
-          if ("${{ needs.calculate-version.outputs.dry_run }}" -eq "true") {
-            echo "🏃 DRY RUN MODE - Building MSIX package (will not publish)"
-          }
-          .\scripts\build-msix.ps1 -Architecture amd64 -Version ${{ needs.calculate-version.outputs.version }} -PublisherCN "${{ secrets.WINDOWS_PUBLISHER_CN }}" -CertPath cert.pfx
+          # Build unsigned MSIX package (Microsoft will sign it)
+          .\scripts\build-msix.ps1 -Architecture amd64 -Version ${{ needs.calculate-version.outputs.version }} -SkipSigning
 
       # ARM64 build temporarily disabled
       # - name: Build MSIX arm64
@@ -323,8 +293,7 @@ jobs:
       #   run: |
       #     .\scripts\build-msix.ps1 -Architecture arm64 -Version ${{ needs.calculate-version.outputs.version }} -PublisherCN "${{ secrets.WINDOWS_PUBLISHER_CN }}" -CertPath cert.pfx
 
-      - name: Create MSIX package (AMD64 only)
-        if: steps.check_windows_cert.outputs.has_cert == 'True'
+      - name: Create MSIX bundle (AMD64 only for now)
         shell: pwsh
         run: |
           # Since we only have AMD64 for now, rename it as the bundle
@@ -915,10 +884,10 @@ jobs:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          WINDOWS_TENANT_ID: ${{ secrets.WINDOWS_TENANT_ID }}
-          WINDOWS_CLIENT_ID: ${{ secrets.WINDOWS_CLIENT_ID }}
-          WINDOWS_CLIENT_SECRET: ${{ secrets.WINDOWS_CLIENT_SECRET }}
-          WINDOWS_APP_ID: ${{ secrets.WINDOWS_APP_ID }}
+          MS_TENANT_ID: ${{ secrets.MS_TENANT_ID }}
+          MS_CLIENT_ID: ${{ secrets.MS_CLIENT_ID }}
+          MS_CLIENT_SECRET: ${{ secrets.MS_CLIENT_SECRET }}
+          MS_APP_ID: ${{ secrets.MS_APP_ID }}
         run: |
           bash scripts/rollback-all.sh \
             ${{ needs.calculate-version.outputs.version }} \

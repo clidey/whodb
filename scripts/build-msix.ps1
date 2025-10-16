@@ -19,16 +19,24 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$Version,
 
-    [Parameter(Mandatory=$true)]
-    [string]$PublisherCN,
+    [Parameter(Mandatory=$false)]
+    [string]$PublisherCN = "CN=TempPublisher",
 
-    [Parameter(Mandatory=$true)]
-    [string]$CertPath
+    [Parameter(Mandatory=$false)]
+    [string]$CertPath,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$SkipSigning
 )
 
 $ErrorActionPreference = "Stop"
 
 Write-Host "Building MSIX package for $Architecture..."
+if ($SkipSigning -or -not $CertPath) {
+    Write-Host "Building unsigned package (Microsoft will sign when uploaded to Partner Center)"
+} else {
+    Write-Host "Building signed package with provided certificate"
+}
 
 # Create package directory structure
 $PackageDir = "msix-package-$Architecture"
@@ -76,8 +84,16 @@ $Manifest | Out-File -FilePath "$PackageDir\AppxManifest.xml" -Encoding utf8
 Write-Host "Creating MSIX package..."
 & makeappx pack /d $PackageDir /p "WhoDB-$Version-$Architecture.msix" /o
 
-# Sign the package
-Write-Host "Signing MSIX package..."
-& signtool sign /fd SHA256 /a /f $CertPath /p $env:WINDOWS_PFX_PASSWORD "WhoDB-$Version-$Architecture.msix"
-
-Write-Host "✓ MSIX package created: WhoDB-$Version-$Architecture.msix"
+# Sign the package if certificate is provided
+if (-not $SkipSigning -and $CertPath) {
+    if (-not (Test-Path $CertPath)) {
+        Write-Error "Certificate file not found: $CertPath"
+        exit 1
+    }
+    Write-Host "Signing MSIX package..."
+    & signtool sign /fd SHA256 /a /f $CertPath /p $env:WINDOWS_PFX_PASSWORD "WhoDB-$Version-$Architecture.msix"
+    Write-Host "✓ Signed MSIX package created: WhoDB-$Version-$Architecture.msix"
+} else {
+    Write-Host "✓ Unsigned MSIX package created: WhoDB-$Version-$Architecture.msix"
+    Write-Host "ℹ️ This package will be signed by Microsoft when uploaded to Partner Center"
+}
