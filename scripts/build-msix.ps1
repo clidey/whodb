@@ -47,33 +47,55 @@ New-Item -ItemType Directory -Path $AssetsDir -Force | Out-Null
 
 # Find the executable from Wails build output
 # The workflow now builds raw exe (without NSIS) for MSIX packaging
+Write-Host "Current directory: $PWD"
+Write-Host "Searching for whodb.exe..."
+
 $PossiblePaths = @(
-    "desktop-ce\build\windows\$Architecture\whodb.exe",   # Raw exe from workflow build
+    "desktop-ce\build\windows\$Architecture\whodb.exe",   # Expected location from workflow
     "desktop-ce\build\bin\whodb.exe",                     # Alternative location
-    "desktop-ce\build\whodb.exe"                          # Fallback location
+    "desktop-ce\build\whodb.exe",                         # Fallback location
+    "build\windows\$Architecture\whodb.exe",              # If run from desktop-ce directory
+    "build\bin\whodb.exe",                                # If run from desktop-ce directory
+    "windows\$Architecture\whodb.exe"                     # Direct path
 )
+
+Write-Host "Checking these locations:"
+$PossiblePaths | ForEach-Object { Write-Host "  - $_" }
 
 $ExePath = $null
 foreach ($Path in $PossiblePaths) {
     if (Test-Path $Path) {
         $ExePath = $Path
-        Write-Host "Found executable at: $ExePath"
+        Write-Host "✅ Found executable at: $ExePath"
+        $fileInfo = Get-Item $ExePath
+        Write-Host "   Size: $($fileInfo.Length) bytes"
         break
     }
 }
 
 if (-not $ExePath) {
     Write-Host "Could not find executable in expected locations."
-    Write-Host "Searching for any .exe file in desktop-ce\build..."
+    Write-Host "Searching recursively for any whodb.exe file..."
 
-    $FoundExe = Get-ChildItem -Path "desktop-ce\build" -Filter "*.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-    if ($FoundExe) {
-        $ExePath = $FoundExe.FullName
-        Write-Host "Found executable at: $ExePath"
-    } else {
-        Write-Error "No executable found in desktop-ce\build directory"
-        Write-Host "Expected one of:"
-        $PossiblePaths | ForEach-Object { Write-Host "  - $_" }
+    # Search more broadly
+    $searchPaths = @("desktop-ce", "build", ".")
+    foreach ($searchPath in $searchPaths) {
+        if (Test-Path $searchPath) {
+            Write-Host "Searching in: $searchPath"
+            $FoundExe = Get-ChildItem -Path $searchPath -Filter "whodb*.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($FoundExe) {
+                $ExePath = $FoundExe.FullName
+                Write-Host "✅ Found executable at: $ExePath"
+                break
+            }
+        }
+    }
+
+    if (-not $ExePath) {
+        Write-Error "No executable found! Build may have failed."
+        Write-Host ""
+        Write-Host "Directory listing:"
+        Get-ChildItem -Path . -Recurse -ErrorAction SilentlyContinue | Where-Object { -not $_.PSIsContainer } | Select-Object FullName, Length | Format-Table
         exit 1
     }
 }

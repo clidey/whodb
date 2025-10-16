@@ -187,25 +187,76 @@ jobs:
           GOARCH: ${{ matrix.arch }}
         run: |
           # Build raw exe for MSIX packaging (not NSIS installer)
-          # Override the make target to build without NSIS
           Write-Host "Building raw Windows executable for MSIX packaging..."
           $env:GOWORK = "$PWD/../go.work.desktop-ce"
+
           # Clean previous build
           Remove-Item -Path build -Recurse -Force -ErrorAction SilentlyContinue
+
           # Prepare frontend
+          Write-Host "Preparing frontend..."
           New-Item -ItemType Directory -Path frontend/dist -Force | Out-Null
           Set-Location ../frontend
           pnpm run build:ce
           Copy-Item -Path build/* -Destination ../desktop-ce/frontend/dist/ -Recurse
           Set-Location ../desktop-ce
+
           # Build without NSIS flag to get raw exe
-          New-Item -ItemType Directory -Path build/windows/amd64 -Force | Out-Null
+          Write-Host "Building with wails..."
           $wailsPath = Join-Path $env:USERPROFILE "go\bin\wails.exe"
+          if (-not (Test-Path $wailsPath)) {
+              Write-Host "Wails not found at $wailsPath, trying PATH..."
+              $wailsPath = "wails"
+          }
+
           & $wailsPath build -clean -platform windows/amd64 `
             -windowsconsole=false -ldflags="-s -w -H windowsgui" `
             -o whodb.exe
-          Move-Item build/bin/whodb.exe build/windows/amd64/
-          Write-Host "Raw executable built at build/windows/amd64/whodb.exe"
+
+          if ($LASTEXITCODE -ne 0) {
+              Write-Error "Wails build failed with exit code: $LASTEXITCODE"
+              exit 1
+          }
+
+          # Find where wails actually put the exe
+          Write-Host "Looking for built executable..."
+          Write-Host "Contents of build directory:"
+          Get-ChildItem -Path build -Recurse -ErrorAction SilentlyContinue | Format-Table Name, FullName
+
+          # Check common locations
+          $possibleLocations = @(
+              "build\bin\whodb.exe",
+              "build\bin\whodb-amd64.exe",
+              "build\whodb.exe"
+          )
+
+          $foundExe = $null
+          foreach ($location in $possibleLocations) {
+              if (Test-Path $location) {
+                  $foundExe = $location
+                  Write-Host "Found exe at: $foundExe"
+                  break
+              }
+          }
+
+          if (-not $foundExe) {
+              Write-Error "Could not find whodb.exe after build"
+              exit 1
+          }
+
+          # Move to expected location
+          New-Item -ItemType Directory -Path build/windows/amd64 -Force | Out-Null
+          Move-Item $foundExe build/windows/amd64/whodb.exe -Force
+
+          Write-Host "Raw executable moved to: build/windows/amd64/whodb.exe"
+          Write-Host "Verifying final location..."
+          if (Test-Path "build/windows/amd64/whodb.exe") {
+              $fileInfo = Get-Item "build/windows/amd64/whodb.exe"
+              Write-Host "✅ Executable ready: $($fileInfo.FullName) (Size: $($fileInfo.Length) bytes)"
+          } else {
+              Write-Error "Failed to move executable to expected location"
+              exit 1
+          }
 
       - name: Skip Windows ARM64 Build (Temporarily Disabled)
         if: matrix.platform == 'windows' && matrix.arch == 'arm64'
@@ -220,6 +271,18 @@ jobs:
         if: matrix.platform == 'darwin'
         working-directory: ./desktop-ce
         run: make ${{ matrix.make-target }} VERSION=${{ needs.calculate-version.outputs.version }}
+
+      - name: List build outputs before upload
+        if: matrix.platform == 'windows' && matrix.arch == 'amd64'
+        shell: pwsh
+        working-directory: ./desktop-ce
+        run: |
+          Write-Host "📦 Listing build outputs before upload:"
+          if (Test-Path "build") {
+              Get-ChildItem -Path build -Recurse | Format-Table Name, FullName, Length
+          } else {
+              Write-Host "❌ Build directory does not exist!"
+          }
 
       - name: Upload artifacts (AMD64 and macOS)
         if: matrix.arch != 'arm64' || matrix.platform != 'windows'
@@ -322,6 +385,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install Windows SDK
+        shell: pwsh
+        run: |
+          Write-Host "Checking for Windows SDK..."
+          $sdkInstalled = Get-ItemProperty "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows Kits\Installed Roots" -ErrorAction SilentlyContinue
+          if ($sdkInstalled) {
+              Write-Host "Windows SDK is already installed"
+          } else {
+              Write-Host "Installing Windows SDK components..."
+              # The GitHub Windows runners should have SDK pre-installed
+              Write-Host "Note: GitHub Actions Windows runners come with Windows SDK pre-installed"
+          }
+
       - name: Download Windows amd64 builds
         uses: actions/download-artifact@v4
         with:
@@ -338,11 +414,19 @@ jobs:
       - name: List downloaded Windows build artifacts
         shell: pwsh
         run: |
-          Write-Host "📁 Contents of desktop-ce directory:"
-          Get-ChildItem -Path "desktop-ce" -Recurse | Format-Table Name, FullName
+          Write-Host "📁 Current directory: $PWD"
           Write-Host ""
-          Write-Host "🔍 Looking for .exe files:"
-          Get-ChildItem -Path "desktop-ce" -Filter "*.exe" -Recurse | Format-Table Name, FullName
+          Write-Host "📁 Contents of desktop-ce directory:"
+          if (Test-Path "desktop-ce") {
+              Get-ChildItem -Path "desktop-ce" -Recurse | Format-Table Name, FullName, Length
+          } else {
+              Write-Host "❌ desktop-ce directory does not exist!"
+              Write-Host "Looking for any build directories..."
+              Get-ChildItem -Path . | Format-Table Name, FullName
+          }
+          Write-Host ""
+          Write-Host "🔍 Looking for .exe files anywhere:"
+          Get-ChildItem -Path . -Filter "*.exe" -Recurse -ErrorAction SilentlyContinue | Format-Table Name, FullName, Length
 
       - name: Verify Windows SDK tools
         shell: pwsh
