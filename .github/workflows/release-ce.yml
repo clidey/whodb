@@ -822,25 +822,39 @@ jobs:
             echo "📦 PRODUCTION MODE - Releasing to stable channel"
           fi
 
-          # Authenticate with Snap Store
           echo "Authenticating with Snap Store..."
 
-          # Write credentials to a temporary file
-          echo "$SNAPCRAFT_STORE_CREDENTIALS" > snap-login.txt
+          # The SNAPCRAFT_STORE_CREDENTIALS environment variable is automatically used by snapcraft
+          # No explicit login needed when the env var is set
+          echo "✅ Using SNAPCRAFT_STORE_CREDENTIALS from environment"
 
-          # Login using the credentials file
-          snapcraft login --with snap-login.txt
-
-          # Remove the credentials file for security
-          rm snap-login.txt
-
-          echo "✅ Successfully authenticated to Snap Store"
+          # Test authentication by running whoami
+          echo "Verifying authentication..."
+          snapcraft whoami || {
+            echo "❌ Failed to authenticate with Snap Store"
+            echo "Please ensure SNAPCRAFT_STORE_CREDENTIALS contains valid exported credentials"
+            echo "Generate with: snapcraft export-login --snaps=whodb --acls=package_upload,package_release -"
+            if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
+              echo "Continuing in stage-only mode despite authentication failure..."
+              exit 0
+            else
+              exit 1
+            fi
+          }
 
           # Snap Store automatically handles multi-arch packages when uploaded separately
           for snap in *.snap; do
             if [ -f "$snap" ]; then
               echo "Publishing $snap to Snap Store ($CHANNEL channel)..."
-              snapcraft upload "$snap" --release="$CHANNEL"
+              snapcraft upload "$snap" --release="$CHANNEL" || {
+                echo "❌ Failed to upload $snap"
+                if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
+                  echo "Continuing in stage-only mode despite upload failure..."
+                  continue
+                else
+                  exit 1
+                fi
+              }
             else
               echo "Warning: No snap file found matching pattern"
             fi
