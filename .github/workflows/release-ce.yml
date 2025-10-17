@@ -801,6 +801,18 @@ jobs:
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
         run: |
+          # Check if credentials are available
+          if [ -z "$SNAPCRAFT_STORE_CREDENTIALS" ]; then
+            echo "❌ SNAPCRAFT_STORE_CREDENTIALS is not set"
+            if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
+              echo "Skipping Snap Store upload in stage-only mode due to missing credentials"
+              exit 0
+            else
+              echo "::error::Production deployment requires SNAPCRAFT_STORE_CREDENTIALS"
+              exit 1
+            fi
+          fi
+
           # Determine release channel based on stage_only flag
           if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
             CHANNEL="candidate"
@@ -810,8 +822,19 @@ jobs:
             echo "📦 PRODUCTION MODE - Releasing to stable channel"
           fi
 
-          # The SNAPCRAFT_STORE_CREDENTIALS env var automatically authenticates snapcraft
-          echo "Authenticating with Snap Store using credentials..."
+          # Authenticate with Snap Store
+          echo "Authenticating with Snap Store..."
+
+          # Write credentials to a temporary file
+          echo "$SNAPCRAFT_STORE_CREDENTIALS" > snap-login.txt
+
+          # Login using the credentials file
+          snapcraft login --with snap-login.txt
+
+          # Remove the credentials file for security
+          rm snap-login.txt
+
+          echo "✅ Successfully authenticated to Snap Store"
 
           # Snap Store automatically handles multi-arch packages when uploaded separately
           for snap in *.snap; do
