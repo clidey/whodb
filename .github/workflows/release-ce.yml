@@ -1,5 +1,10 @@
 name: Build, Stage, and Deploy Release
 
+# Workflow supports three modes:
+# 1. Production mode (PR merge to release): Full deployment to all stores and Docker Hub
+# 2. Stage-only mode (manual trigger): Creates draft/candidate releases in stores, skips Docker push
+# 3. Dry-run mode (manual trigger): Builds everything but doesn't deploy anywhere
+
 on:
   pull_request:
     types: [ closed ]
@@ -11,6 +16,11 @@ on:
         required: false
         type: boolean
         default: true
+      stage_only:
+        description: 'Stage to stores without publishing (draft/candidate releases)'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   calculate-version:
@@ -21,6 +31,7 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       previous_version: ${{ steps.version.outputs.previous_version }}
       dry_run: ${{ steps.dry_run.outputs.enabled }}
+      stage_only: ${{ steps.stage_only.outputs.enabled }}
       pr_body: ${{ steps.pr_details.outputs.body }}
     steps:
       - name: Checkout
@@ -39,6 +50,18 @@ jobs:
           fi
           echo "enabled=$DRY_RUN" >> $GITHUB_OUTPUT
           echo "Dry run mode: $DRY_RUN"
+
+      - name: Set stage only mode
+        id: stage_only
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            STAGE_ONLY="${{ inputs.stage_only }}"
+          else
+            # PR merges to release branch are always production (not stage-only)
+            STAGE_ONLY="false"
+          fi
+          echo "enabled=$STAGE_ONLY" >> $GITHUB_OUTPUT
+          echo "Stage only mode: $STAGE_ONLY"
 
       - name: Check all secrets availability
         run: |
@@ -318,6 +341,7 @@ jobs:
     name: Package for Mac App Store
     runs-on: macos-latest
     needs: [ calculate-version, build-desktop-ce ]
+    continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -395,6 +419,7 @@ jobs:
     name: Package Windows MSIX
     runs-on: windows-latest
     needs: [ calculate-version, build-desktop-ce ]
+    continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -542,6 +567,7 @@ jobs:
             arch: arm64
     runs-on: ${{ matrix.runner }}
     needs: [ calculate-version ]
+    continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -574,6 +600,7 @@ jobs:
     name: Sign Artifacts with Sigstore
     runs-on: ubuntu-latest
     needs: [ calculate-version, package-windows-msix, package-mac-app-store, build-snap, build-desktop-ce ]
+    continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
     # Need write permissions for OIDC token
     permissions:
       contents: write
@@ -678,6 +705,7 @@ jobs:
     name: Deploy to Snap Store
     runs-on: ubuntu-latest
     needs: [ calculate-version, validate-all-builds ]
+    continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
     steps:
       - name: Checkout for scripts
         uses: actions/checkout@v4
@@ -723,10 +751,19 @@ jobs:
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
         run: |
+          # Determine release channel based on stage_only flag
+          if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
+            CHANNEL="candidate"
+            echo "📦 STAGE ONLY MODE - Uploading to candidate channel (not releasing to stable)"
+          else
+            CHANNEL="stable"
+            echo "📦 PRODUCTION MODE - Releasing to stable channel"
+          fi
+
           # Snap Store automatically handles multi-arch packages when uploaded separately
           for snap in *.snap; do
-            echo "Publishing $snap to Snap Store..."
-            snapcraft upload "$snap" --release=stable
+            echo "Publishing $snap to Snap Store ($CHANNEL channel)..."
+            snapcraft upload "$snap" --release="$CHANNEL"
           done
 
       - name: Track Snap deployment
@@ -738,7 +775,11 @@ jobs:
         if: needs.calculate-version.outputs.dry_run == 'true'
         run: |
           echo "🏃 DRY RUN MODE - Would have published:"
-          echo "  - Snap packages (amd64 and arm64) to stable channel"
+          if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
+            echo "  - Snap packages (amd64 and arm64) to candidate channel (stage only)"
+          else
+            echo "  - Snap packages (amd64 and arm64) to stable channel"
+          fi
           ls -lh *.snap
 
       - name: Upload updated manifest
@@ -761,7 +802,10 @@ jobs:
     name: Deploy to Microsoft Store
     runs-on: windows-latest
     needs: [ calculate-version, package-windows-msix, deploy-snap ]
-    if: needs.calculate-version.outputs.dry_run == 'false'
+    if: |
+      needs.calculate-version.outputs.dry_run == 'false' &&
+      (needs.calculate-version.outputs.stage_only == 'true' || needs.deploy-snap.result == 'success')
+    continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
     steps:
       - name: Checkout for scripts
         uses: actions/checkout@v4
@@ -853,11 +897,24 @@ jobs:
           # Update submission with new package
           Update-ApplicationSubmission -AppId $appId -SubmissionDataPath $submission -PackagePath $msixPath.FullName
 
-          # Submit to Store (as draft initially)
-          $submissionId = Submit-ApplicationSubmission -AppId $appId -SubmissionDataPath $submission -TargetPublishMode Immediate
+          # Determine publish mode based on stage_only flag
+          if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") {
+            Write-Host "📦 STAGE ONLY MODE - Creating draft submission (not publishing)"
+            $publishMode = "Manual"
+          } else {
+            Write-Host "📦 PRODUCTION MODE - Submitting for immediate publication"
+            $publishMode = "Immediate"
+          }
+
+          # Submit to Store
+          $submissionId = Submit-ApplicationSubmission -AppId $appId -SubmissionDataPath $submission -TargetPublishMode $publishMode
 
           Write-Host "Submission created with ID: $submissionId"
-          Write-Host "Check Partner Center to review and publish the submission"
+          if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") {
+            Write-Host "Draft submission created. Manual review and publish required in Partner Center"
+          } else {
+            Write-Host "Submission will be published after Partner Center review"
+          }
 
       - name: Upload updated manifest
         if: always()
@@ -871,7 +928,10 @@ jobs:
     name: Deploy to Apple App Store
     runs-on: macos-latest
     needs: [ calculate-version, package-mac-app-store, deploy-snap ]
-    if: needs.calculate-version.outputs.dry_run == 'false'
+    if: |
+      needs.calculate-version.outputs.dry_run == 'false' &&
+      (needs.calculate-version.outputs.stage_only == 'true' || needs.deploy-snap.result == 'success')
+    continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
     steps:
       - name: Checkout for scripts
         uses: actions/checkout@v4
@@ -948,6 +1008,12 @@ jobs:
           # Find the .pkg file
           PKG_FILE=$(find . -name "*.pkg" -type f | head -1)
 
+          if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
+            echo "📦 STAGE ONLY MODE - Uploading for TestFlight only (not for App Store review)"
+          else
+            echo "📦 PRODUCTION MODE - Uploading for App Store release"
+          fi
+
           echo "Uploading $PKG_FILE to App Store Connect..."
 
           # Upload using Transporter (altool is deprecated)
@@ -959,15 +1025,26 @@ jobs:
             -verboseLogging
 
           echo "✅ Package uploaded to App Store Connect"
-          echo "📝 Review and submit for review in App Store Connect"
+
+          if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
+            echo "📝 Package available for TestFlight distribution only"
+            echo "📝 Manual submission required for App Store release"
+          else
+            echo "📝 Review and submit for App Store review in App Store Connect"
+          fi
 
       - name: Create TestFlight release (optional)
         env:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
-          echo "Package is now available in App Store Connect for TestFlight distribution"
-          echo "Manual review and release required via App Store Connect dashboard"
+          if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
+            echo "📦 Stage only mode: Package uploaded for TestFlight testing only"
+            echo "TestFlight distribution can be configured in App Store Connect"
+          else
+            echo "Package is now available in App Store Connect for TestFlight distribution"
+            echo "Manual review and release required via App Store Connect dashboard"
+          fi
 
       - name: Upload updated manifest
         if: always()
@@ -982,6 +1059,14 @@ jobs:
     name: Create GitHub Release
     runs-on: ubuntu-latest
     needs: [ calculate-version, deploy-snap, deploy-microsoft-store, deploy-apple-store ]
+    if: |
+      always() &&
+      needs.calculate-version.result == 'success' &&
+      (needs.calculate-version.outputs.stage_only == 'true' ||
+       (needs.deploy-snap.result == 'success' &&
+        needs.deploy-microsoft-store.result == 'success' &&
+        needs.deploy-apple-store.result == 'success'))
+    continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
     permissions:
       contents: write
     steps:
@@ -1057,7 +1142,7 @@ jobs:
             cosign verify-blob --signature <file>.sig --certificate <file>.pem <file>
             ```
           files: final-assets/*
-          draft: false
+          draft: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
           prerelease: false
 
       - name: Track GitHub release
@@ -1070,6 +1155,11 @@ jobs:
         run: |
           echo "🏃 DRY RUN MODE - Would have created GitHub release:"
           echo "  - Tag: v${{ needs.calculate-version.outputs.version }}"
+          if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
+            echo "  - Status: Draft (stage only)"
+          else
+            echo "  - Status: Published"
+          fi
           echo "  - Files:"
           ls -lh final-assets/
 
@@ -1086,6 +1176,12 @@ jobs:
     name: Deploy Docker Images
     runs-on: ubuntu-latest
     needs: [ calculate-version, create-github-release ]
+    if: |
+      always() &&
+      needs.calculate-version.result == 'success' &&
+      (needs.calculate-version.outputs.stage_only == 'true' ||
+       needs.create-github-release.result == 'success')
+    continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
     steps:
       - name: Checkout for scripts
         uses: actions/checkout@v4
@@ -1153,7 +1249,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Push Docker images and create manifest
-        if: needs.calculate-version.outputs.dry_run == 'false'
+        if: needs.calculate-version.outputs.dry_run == 'false' && needs.calculate-version.outputs.stage_only != 'true'
         run: |
           # Push individual platform images
           docker push clidey/whodb:${{ needs.calculate-version.outputs.version }}-amd64 || exit 1
@@ -1171,10 +1267,21 @@ jobs:
           bash scripts/track-deployment.sh docker deployed ${{ needs.calculate-version.outputs.version }}
 
       - name: Sign Docker images
-        if: needs.calculate-version.outputs.dry_run == 'false'
+        if: needs.calculate-version.outputs.dry_run == 'false' && needs.calculate-version.outputs.stage_only != 'true'
         run: |
           cosign sign --yes clidey/whodb:${{ needs.calculate-version.outputs.version }}
           cosign sign --yes clidey/whodb:latest
+
+      - name: Stage only summary
+        if: needs.calculate-version.outputs.stage_only == 'true'
+        run: |
+          echo "📦 STAGE ONLY MODE"
+          echo "✅ Successfully logged in to Docker Hub"
+          echo "✅ Docker images built and loaded locally"
+          echo "⏸️  Docker push skipped (stage-only mode behaves like dry run for Docker)"
+          echo "📝 Images ready but not published:"
+          echo "  - clidey/whodb:${{ needs.calculate-version.outputs.version }}"
+          echo "  - clidey/whodb:latest"
 
       - name: Dry run summary
         if: needs.calculate-version.outputs.dry_run == 'true'
@@ -1197,7 +1304,7 @@ jobs:
   rollback:
     name: Rollback on Failure
     runs-on: ubuntu-latest
-    if: failure() && needs.calculate-version.outputs.dry_run == 'false'
+    if: failure() && needs.calculate-version.outputs.dry_run == 'false' && needs.calculate-version.outputs.stage_only != 'true'
     needs: [ calculate-version, deploy-docker, create-github-release, deploy-snap, deploy-microsoft-store, deploy-apple-store ]
     steps:
       - name: Checkout
@@ -1252,7 +1359,7 @@ jobs:
     name: Verify Deployment Success
     runs-on: ubuntu-latest
     needs: [ calculate-version, deploy-docker ]
-    if: needs.calculate-version.outputs.dry_run == 'false'
+    if: needs.calculate-version.outputs.dry_run == 'false' && needs.calculate-version.outputs.stage_only != 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -1302,3 +1409,93 @@ jobs:
           fi
 
           echo "✓ GitHub release verified"
+
+  # Summary job for stage-only mode to report what worked and what didn't
+  stage-only-summary:
+    name: Stage-Only Mode Summary
+    runs-on: ubuntu-latest
+    if: |
+      always() &&
+      needs.calculate-version.outputs.stage_only == 'true' &&
+      needs.calculate-version.result == 'success'
+    needs: [ calculate-version, deploy-snap, deploy-microsoft-store, deploy-apple-store, create-github-release, deploy-docker, package-mac-app-store, package-windows-msix ]
+    steps:
+      - name: Generate deployment summary
+        run: |
+          echo "📊 STAGE-ONLY MODE DEPLOYMENT SUMMARY"
+          echo "====================================="
+          echo ""
+          echo "Version: ${{ needs.calculate-version.outputs.version }}"
+          echo ""
+          echo "📦 Store Deployments (Best Effort):"
+          echo ""
+
+          # Check each deployment status
+          if [ "${{ needs.deploy-snap.result }}" = "success" ]; then
+            echo "✅ Snap Store: Successfully staged to candidate channel"
+          elif [ "${{ needs.deploy-snap.result }}" = "skipped" ]; then
+            echo "⏭️ Snap Store: Skipped"
+          else
+            echo "❌ Snap Store: Failed (check logs for details)"
+          fi
+
+          if [ "${{ needs.deploy-microsoft-store.result }}" = "success" ]; then
+            echo "✅ Microsoft Store: Successfully created draft submission"
+          elif [ "${{ needs.deploy-microsoft-store.result }}" = "skipped" ]; then
+            echo "⏭️ Microsoft Store: Skipped"
+          else
+            echo "❌ Microsoft Store: Failed (check logs for details)"
+          fi
+
+          if [ "${{ needs.deploy-apple-store.result }}" = "success" ]; then
+            echo "✅ Apple App Store: Successfully uploaded for TestFlight"
+          elif [ "${{ needs.deploy-apple-store.result }}" = "skipped" ]; then
+            echo "⏭️ Apple App Store: Skipped"
+          else
+            echo "❌ Apple App Store: Failed (check logs for details)"
+          fi
+
+          echo ""
+          echo "📄 GitHub Release:"
+          if [ "${{ needs.create-github-release.result }}" = "success" ]; then
+            echo "✅ Draft release created successfully"
+          elif [ "${{ needs.create-github-release.result }}" = "skipped" ]; then
+            echo "⏭️ GitHub Release: Skipped"
+          else
+            echo "❌ Failed to create draft release"
+          fi
+
+          echo ""
+          echo "🐳 Docker:"
+          if [ "${{ needs.deploy-docker.result }}" = "success" ]; then
+            echo "✅ Images built and loaded (not pushed in stage-only mode)"
+          elif [ "${{ needs.deploy-docker.result }}" = "skipped" ]; then
+            echo "⏭️ Docker: Skipped"
+          else
+            echo "❌ Failed to build Docker images"
+          fi
+
+          echo ""
+          echo "📦 Packaging Status:"
+          if [ "${{ needs.package-mac-app-store.result }}" = "success" ]; then
+            echo "✅ Mac App Store package created"
+          elif [ "${{ needs.package-mac-app-store.result }}" = "skipped" ]; then
+            echo "⏭️ Mac App Store package: Skipped"
+          else
+            echo "❌ Mac App Store package failed"
+          fi
+
+          if [ "${{ needs.package-windows-msix.result }}" = "success" ]; then
+            echo "✅ Windows MSIX package created"
+          elif [ "${{ needs.package-windows-msix.result }}" = "skipped" ]; then
+            echo "⏭️ Windows MSIX package: Skipped"
+          else
+            echo "❌ Windows MSIX package failed"
+          fi
+
+          echo ""
+          echo "====================================="
+          echo ""
+          echo "ℹ️ Stage-only mode uses a best-effort approach."
+          echo "ℹ️ Failed deployments did not block other deployments."
+          echo "ℹ️ Check individual job logs for failure details."
