@@ -190,7 +190,7 @@ jobs:
           platforms: ${{ matrix.platform }}
           push: false
           tags: clidey/whodb:${{ needs.calculate-version.outputs.version }}-${{ matrix.arch }}
-          outputs: type=oci,dest=/tmp/whodb-docker-${{ matrix.arch }}.tar
+          outputs: type=docker,dest=/tmp/whodb-docker-${{ matrix.arch }}.tar
 
       - name: Upload Docker artifact
         uses: actions/upload-artifact@v4
@@ -420,12 +420,15 @@ jobs:
         run: |
           if [ "${{ needs.calculate-version.outputs.dry_run }}" = "true" ]; then
             echo "🏃 DRY RUN MODE - No certificates available"
+          elif [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
+            echo "📦 STAGE ONLY MODE - No certificates available"
           else
             echo "⚠️ PRODUCTION MODE - No certificates available"
           fi
           echo "Creating dummy pkg for validation..."
           mkdir -p desktop-ce
-          touch "desktop-ce/WhoDB-${{ needs.calculate-version.outputs.version }}.pkg"
+          # Create a non-empty dummy file (1 byte minimum for GitHub release)
+          echo "dummy-package-placeholder" > "desktop-ce/WhoDB-${{ needs.calculate-version.outputs.version }}.pkg"
 
       - name: Package for Mac App Store
         if: steps.check_mac_cert.outputs.has_cert == 'true'
@@ -917,57 +920,95 @@ jobs:
           name: deployment-manifest-snap
           path: .
 
-      - name: Setup Microsoft Store CLI
-        shell: pwsh
-        run: |
-          # Install Windows Store CLI tools
-          Install-Module -Name StoreBroker -Force -Scope CurrentUser
-          Import-Module StoreBroker
-
-      - name: Authenticate to Microsoft Store
+      - name: Setup and Submit to Microsoft Store
         shell: pwsh
         env:
           MS_TENANT_ID: ${{ secrets.MS_TENANT_ID }}
           MS_CLIENT_ID: ${{ secrets.MS_CLIENT_ID }}
           MS_CLIENT_SECRET: ${{ secrets.MS_CLIENT_SECRET }}
-        run: |
-          $securePassword = ConvertTo-SecureString $env:MS_CLIENT_SECRET -AsPlainText -Force
-          $credential = New-Object System.Management.Automation.PSCredential($env:MS_CLIENT_ID, $securePassword)
-
-          # Authenticate to Partner Center
-          Set-StoreBrokerAuthentication -TenantId $env:MS_TENANT_ID -Credential $credential
-
-      - name: Create and submit Microsoft Store submission
-        shell: pwsh
-        env:
           MS_APP_ID: ${{ secrets.MS_APP_ID }}
         run: |
-          $appId = $env:MS_APP_ID
-          $msixPath = Get-ChildItem -Path "." -Filter "*.msixbundle" | Select-Object -First 1
+          # Install Windows Store CLI tools
+          Write-Host "Installing StoreBroker module..."
+          Install-Module -Name StoreBroker -Force -Scope CurrentUser -AllowClobber
+          Import-Module StoreBroker
 
-          # Create new submission
-          $submission = New-ApplicationSubmission -AppId $appId -Force
-
-          # Update submission with new package
-          Update-ApplicationSubmission -AppId $appId -SubmissionDataPath $submission -PackagePath $msixPath.FullName
-
-          # Determine publish mode based on stage_only flag
-          if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") {
-            Write-Host "📦 STAGE ONLY MODE - Creating draft submission (not publishing)"
-            $publishMode = "Manual"
-          } else {
-            Write-Host "📦 PRODUCTION MODE - Submitting for immediate publication"
-            $publishMode = "Immediate"
+          # Validate credentials are available
+          if ([string]::IsNullOrWhiteSpace($env:MS_TENANT_ID) -or
+              [string]::IsNullOrWhiteSpace($env:MS_CLIENT_ID) -or
+              [string]::IsNullOrWhiteSpace($env:MS_CLIENT_SECRET)) {
+            Write-Error "Missing Microsoft Store credentials. Please check MS_TENANT_ID, MS_CLIENT_ID, and MS_CLIENT_SECRET secrets."
+            exit 1
           }
 
-          # Submit to Store
-          $submissionId = Submit-ApplicationSubmission -AppId $appId -SubmissionDataPath $submission -TargetPublishMode $publishMode
+          # Authenticate to Partner Center
+          Write-Host "Authenticating to Microsoft Partner Center..."
+          Write-Host "Tenant ID: $env:MS_TENANT_ID"
+          Write-Host "Client ID: $env:MS_CLIENT_ID"
 
-          Write-Host "Submission created with ID: $submissionId"
-          if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") {
-            Write-Host "Draft submission created. Manual review and publish required in Partner Center"
-          } else {
-            Write-Host "Submission will be published after Partner Center review"
+          try {
+            $securePassword = ConvertTo-SecureString $env:MS_CLIENT_SECRET -AsPlainText -Force
+            $credential = New-Object System.Management.Automation.PSCredential($env:MS_CLIENT_ID, $securePassword)
+
+            Set-StoreBrokerAuthentication -TenantId $env:MS_TENANT_ID -Credential $credential
+            Write-Host "✅ Successfully authenticated to Microsoft Partner Center"
+          }
+          catch {
+            Write-Error "Failed to authenticate to Microsoft Partner Center: $_"
+            exit 1
+          }
+
+          # Now create and submit the app submission
+          Write-Host "Creating Microsoft Store submission..."
+          $appId = $env:MS_APP_ID
+
+          if ([string]::IsNullOrWhiteSpace($appId)) {
+            Write-Error "MS_APP_ID is not set or is empty"
+            exit 1
+          }
+
+          $msixPath = Get-ChildItem -Path "." -Filter "*.msixbundle" | Select-Object -First 1
+
+          if ($null -eq $msixPath) {
+            Write-Error "No MSIX bundle found in current directory"
+            exit 1
+          }
+
+          Write-Host "Found MSIX bundle: $($msixPath.Name)"
+          Write-Host "App ID: $appId"
+
+          try {
+            # Create new submission
+            Write-Host "Creating new submission..."
+            $submission = New-ApplicationSubmission -AppId $appId -Force
+
+            # Update submission with new package
+            Write-Host "Updating submission with package..."
+            Update-ApplicationSubmission -AppId $appId -SubmissionDataPath $submission -PackagePath $msixPath.FullName
+
+            # Determine publish mode based on stage_only flag
+            if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") {
+              Write-Host "📦 STAGE ONLY MODE - Creating draft submission (not publishing)"
+              $publishMode = "Manual"
+            } else {
+              Write-Host "📦 PRODUCTION MODE - Submitting for immediate publication"
+              $publishMode = "Immediate"
+            }
+
+            # Submit to Store
+            Write-Host "Submitting to store with publish mode: $publishMode"
+            $submissionId = Submit-ApplicationSubmission -AppId $appId -SubmissionDataPath $submission -TargetPublishMode $publishMode
+
+            Write-Host "✅ Submission created successfully with ID: $submissionId"
+            if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") {
+              Write-Host "Draft submission created. Manual review and publish required in Partner Center"
+            } else {
+              Write-Host "Submission will be published after Partner Center review"
+            }
+          }
+          catch {
+            Write-Error "Failed to create Microsoft Store submission: $_"
+            exit 1
           }
 
       - name: Upload updated manifest
@@ -1044,6 +1085,13 @@ jobs:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
+          # Check if credentials are available
+          if [ -z "$APP_STORE_CONNECT_API_KEY" ] || [ -z "$APP_STORE_CONNECT_API_KEY_ID" ] || [ -z "$APP_STORE_CONNECT_ISSUER_ID" ]; then
+            echo "⚠️ Apple Store Connect API credentials are not configured"
+            echo "Skipping API key setup"
+            exit 0
+          fi
+
           # Create private keys directory
           mkdir -p ~/.appstoreconnect/private_keys
 
@@ -1053,14 +1101,39 @@ jobs:
           # Set proper permissions
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8
 
+          echo "✅ Apple Store Connect API key configured"
+
       - name: Upload to App Store Connect
         env:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
         run: |
+          # Check if credentials are available
+          if [ -z "$APP_STORE_CONNECT_API_KEY_ID" ] || [ -z "$APP_STORE_CONNECT_ISSUER_ID" ]; then
+            echo "⚠️ Apple Store Connect API credentials are not configured"
+            echo "Missing one or more of: APP_STORE_CONNECT_API_KEY_ID, APP_STORE_CONNECT_ISSUER_ID"
+
+            if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
+              echo "Skipping Apple Store upload in stage-only mode due to missing credentials"
+              echo "To test Apple Store uploads, please configure the following secrets:"
+              echo "  - APP_STORE_CONNECT_API_KEY"
+              echo "  - APP_STORE_CONNECT_API_KEY_ID"
+              echo "  - APP_STORE_CONNECT_ISSUER_ID"
+              exit 0  # Don't fail in stage-only mode
+            else
+              echo "::error::Production deployment requires Apple Store Connect credentials"
+              exit 1
+            fi
+          fi
+
           # Find the .pkg file
           PKG_FILE=$(find . -name "*.pkg" -type f | head -1)
+
+          if [ -z "$PKG_FILE" ]; then
+            echo "❌ No .pkg file found in the current directory"
+            exit 1
+          fi
 
           if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
             echo "📦 STAGE ONLY MODE - Uploading for TestFlight only (not for App Store review)"
@@ -1144,18 +1217,62 @@ jobs:
         run: |
           mkdir -p final-assets
 
+          echo "📦 Preparing release assets..."
+
+          # Function to copy only non-empty files
+          copy_if_not_empty() {
+            local src="$1"
+            local dest="$2"
+
+            if [ -f "$src" ]; then
+              size=$(stat -c%s "$src" 2>/dev/null || stat -f%z "$src" 2>/dev/null || echo "0")
+              if [ "$size" -gt 0 ]; then
+                echo "  ✅ Including $(basename "$src") (${size} bytes)"
+                cp "$src" "$dest"
+              else
+                echo "  ⚠️ Skipping $(basename "$src") (empty file)"
+              fi
+            fi
+          }
+
           # Copy Windows MSIX bundle (for users who prefer direct download)
-          cp release-assets/windows-msix/*.msixbundle final-assets/ || true
-          cp release-assets/windows-msix/*.sig final-assets/ || true
+          for file in release-assets/windows-msix/*.msixbundle release-assets/windows-msix/*.sig; do
+            [ -f "$file" ] && copy_if_not_empty "$file" final-assets/
+          done || true
 
           # Copy Mac App Store package (for users who prefer direct download)
-          cp release-assets/mac-app-store/*.pkg final-assets/ || true
-          cp release-assets/mac-app-store/*.sig final-assets/ || true
+          for file in release-assets/mac-app-store/*.pkg release-assets/mac-app-store/*.sig; do
+            [ -f "$file" ] && copy_if_not_empty "$file" final-assets/
+          done || true
 
       - name: Generate checksums
         working-directory: final-assets
         run: |
-          sha256sum * > SHA256SUMS.txt
+          if [ "$(ls -A .)" ]; then
+            sha256sum * > SHA256SUMS.txt || true
+          else
+            echo "No files to generate checksums for"
+            echo "No release assets available" > SHA256SUMS.txt
+          fi
+
+      - name: Validate release assets
+        working-directory: final-assets
+        run: |
+          echo "📋 Final release assets:"
+          echo ""
+          for file in *; do
+            if [ -f "$file" ]; then
+              size=$(stat -c%s "$file" 2>/dev/null || stat -f%z "$file" 2>/dev/null || echo "0")
+              if [ "$size" -gt 0 ]; then
+                echo "  ✅ $file (${size} bytes)"
+              else
+                echo "  ❌ $file is empty - removing"
+                rm "$file"
+              fi
+            fi
+          done
+          echo ""
+          echo "Total files: $(ls -1 | wc -l)"
 
       - name: Create Release
         id: create_release
