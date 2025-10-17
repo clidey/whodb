@@ -798,14 +798,76 @@ jobs:
             fi
           fi
 
-      - name: Publish to Snap Store (Official Action)
-        if: needs.calculate-version.outputs.dry_run == 'false' && steps.check_snap_creds.outputs.has_creds == 'true'
+      - name: Find and list snap files
+        if: needs.calculate-version.outputs.dry_run == 'false'
+        id: find_snaps
+        run: |
+          echo "Looking for snap files..."
+          ls -la *.snap || echo "No snap files found"
+
+          # Find all snap files and create a list
+          SNAP_FILES=$(ls *.snap 2>/dev/null | head -1 || echo "")
+          if [ -z "$SNAP_FILES" ]; then
+            echo "❌ No snap files found in current directory"
+            if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
+              echo "Continuing in stage-only mode..."
+              echo "snap_found=false" >> $GITHUB_OUTPUT
+            else
+              exit 1
+            fi
+          else
+            echo "✅ Found snap file: $SNAP_FILES"
+            echo "snap_file=$SNAP_FILES" >> $GITHUB_OUTPUT
+            echo "snap_found=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Publish AMD64 Snap to Store
+        if: needs.calculate-version.outputs.dry_run == 'false' && steps.check_snap_creds.outputs.has_creds == 'true' && steps.find_snaps.outputs.snap_found == 'true'
         uses: snapcore/action-publish@v1
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
         with:
-          snap: whodb_*.snap
+          snap: ${{ steps.find_snaps.outputs.snap_file }}
           release: ${{ needs.calculate-version.outputs.stage_only == 'true' && 'candidate' || 'stable' }}
+
+      - name: Publish ARM64 Snap if exists
+        if: needs.calculate-version.outputs.dry_run == 'false' && steps.check_snap_creds.outputs.has_creds == 'true'
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+        run: |
+          # Find and upload ARM64 snap if it exists
+          ARM_SNAP=$(ls *arm64*.snap 2>/dev/null | head -1 || echo "")
+          if [ -n "$ARM_SNAP" ]; then
+            echo "Found ARM64 snap: $ARM_SNAP"
+
+            # Ensure snapcraft is installed (the action installs it, but we need it for manual upload)
+            if ! command -v snapcraft &> /dev/null; then
+              echo "Installing snapcraft..."
+              sudo snap install snapcraft --classic
+            fi
+
+            # Determine release channel
+            if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
+              CHANNEL="candidate"
+              echo "📦 Uploading ARM64 to candidate channel"
+            else
+              CHANNEL="stable"
+              echo "📦 Uploading ARM64 to stable channel"
+            fi
+
+            # Use snapcraft directly since the action doesn't handle multiple files well
+            echo "Uploading $ARM_SNAP to $CHANNEL channel..."
+            snapcraft upload "$ARM_SNAP" --release "$CHANNEL" || {
+              echo "❌ Failed to upload ARM64 snap"
+              if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
+                echo "Continuing in stage-only mode despite failure..."
+              else
+                exit 1
+              fi
+            }
+          else
+            echo "No ARM64 snap found, skipping"
+          fi
 
       - name: Track Snap deployment
         if: needs.calculate-version.outputs.dry_run == 'false'
