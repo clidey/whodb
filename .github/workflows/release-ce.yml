@@ -1,9 +1,9 @@
 name: Build, Stage, and Deploy Release
 
-# Workflow supports three modes:
-# 1. Production mode (PR merge to release): Full deployment to all stores and Docker Hub
-# 2. Stage-only mode (manual trigger): Creates draft/candidate releases in stores, skips Docker push
-# 3. Dry-run mode (manual trigger): Builds everything but doesn't deploy anywhere
+# Workflow supports three deployment modes (selectable via dropdown when manually triggered):
+# 1. 'production' - Full deployment to all stores and Docker Hub (auto-selected for PR merges)
+# 2. 'stage-only' - Creates draft/candidate releases in stores, skips Docker push
+# 3. 'dry-run' - Builds everything but doesn't deploy anywhere (default for manual triggers)
 
 on:
   pull_request:
@@ -11,16 +11,15 @@ on:
     branches: [ release ]
   workflow_dispatch:
     inputs:
-      dry_run:
-        description: 'Dry run mode (no actual deployments)'
-        required: false
-        type: boolean
-        default: true
-      stage_only:
-        description: 'Stage to stores without publishing (draft/candidate releases)'
-        required: false
-        type: boolean
-        default: false
+      deployment_mode:
+        description: 'Deployment Mode'
+        required: true
+        type: choice
+        default: 'dry-run'
+        options:
+          - 'dry-run'        # Build only, no deployments
+          - 'stage-only'     # Deploy to stores as drafts/candidates, skip Docker
+          - 'production'     # Full production deployment
 
 jobs:
   calculate-version:
@@ -30,6 +29,7 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
       previous_version: ${{ steps.version.outputs.previous_version }}
+      deployment_mode: ${{ steps.deployment_mode.outputs.mode }}
       dry_run: ${{ steps.dry_run.outputs.enabled }}
       stage_only: ${{ steps.stage_only.outputs.enabled }}
       pr_body: ${{ steps.pr_details.outputs.body }}
@@ -39,13 +39,39 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set deployment mode
+        id: deployment_mode
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            MODE="${{ inputs.deployment_mode }}"
+          else
+            # PR merges to release branch are always production
+            MODE="production"
+          fi
+
+          # Set individual flags based on mode
+          if [ "$MODE" = "dry-run" ]; then
+            DRY_RUN="true"
+            STAGE_ONLY="false"
+          elif [ "$MODE" = "stage-only" ]; then
+            DRY_RUN="false"
+            STAGE_ONLY="true"
+          else  # production
+            DRY_RUN="false"
+            STAGE_ONLY="false"
+          fi
+
+          echo "mode=$MODE" >> $GITHUB_OUTPUT
+          echo "Deployment mode: $MODE"
+
       - name: Set dry run mode
         id: dry_run
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            DRY_RUN="${{ inputs.dry_run }}"
+          # Extract from deployment mode
+          MODE="${{ steps.deployment_mode.outputs.mode }}"
+          if [ "$MODE" = "dry-run" ]; then
+            DRY_RUN="true"
           else
-            # PR merges to release branch are always production
             DRY_RUN="false"
           fi
           echo "enabled=$DRY_RUN" >> $GITHUB_OUTPUT
@@ -54,10 +80,11 @@ jobs:
       - name: Set stage only mode
         id: stage_only
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            STAGE_ONLY="${{ inputs.stage_only }}"
+          # Extract from deployment mode
+          MODE="${{ steps.deployment_mode.outputs.mode }}"
+          if [ "$MODE" = "stage-only" ]; then
+            STAGE_ONLY="true"
           else
-            # PR merges to release branch are always production (not stage-only)
             STAGE_ONLY="false"
           fi
           echo "enabled=$STAGE_ONLY" >> $GITHUB_OUTPUT
@@ -65,6 +92,17 @@ jobs:
 
       - name: Check all secrets availability
         run: |
+          echo "🎯 DEPLOYMENT MODE: ${{ steps.deployment_mode.outputs.mode }}"
+          echo "============================"
+          echo ""
+          if [ "${{ steps.deployment_mode.outputs.mode }}" = "dry-run" ]; then
+            echo "🏃 DRY RUN MODE - Building only, no deployments will be made"
+          elif [ "${{ steps.deployment_mode.outputs.mode }}" = "stage-only" ]; then
+            echo "📦 STAGE ONLY MODE - Will create drafts/candidates, no production releases"
+          else
+            echo "🚀 PRODUCTION MODE - Full deployment to all platforms"
+          fi
+          echo ""
           echo "🔐 SECRET AVAILABILITY CHECK"
           echo "============================"
           echo ""
@@ -112,8 +150,9 @@ jobs:
             # PR event - capture the PR body
             PR_BODY="${{ github.event.pull_request.body }}"
           else
-            # Manual trigger - provide default release notes
-            PR_BODY="Manual release deployment for v${{ steps.version.outputs.version }}"
+            # Manual trigger - provide default release notes with mode info
+            MODE="${{ steps.deployment_mode.outputs.mode }}"
+            PR_BODY="Manual release deployment (${MODE} mode) for v${{ steps.version.outputs.version }}"
           fi
 
           # Escape special characters and prepare for multi-line output
@@ -717,7 +756,7 @@ jobs:
             echo "  ✅ SNAPCRAFT_STORE_CREDENTIALS is configured"
           else
             echo "  ❌ SNAPCRAFT_STORE_CREDENTIALS is NOT configured"
-            if [ "${{ needs.calculate-version.outputs.dry_run }}" = "false" ]; then
+            if [ "${{ needs.calculate-version.outputs.dry_run }}" = "false" ] && [ "${{ needs.calculate-version.outputs.stage_only }}" = "false" ]; then
               echo "::error::Production deployment requires SNAPCRAFT_STORE_CREDENTIALS"
               exit 1
             fi
@@ -1206,9 +1245,11 @@ jobs:
             echo "✅ All Docker Hub credentials are configured"
           else
             echo "❌ Docker Hub credentials are missing"
-            if [ "${{ needs.calculate-version.outputs.dry_run }}" = "false" ]; then
+            if [ "${{ needs.calculate-version.outputs.dry_run }}" = "false" ] && [ "${{ needs.calculate-version.outputs.stage_only }}" = "false" ]; then
               echo "::error::Production deployment requires Docker Hub credentials"
               exit 1
+            elif [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
+              echo "ℹ️ Docker Hub credentials not required for stage-only mode (Docker push is skipped)"
             fi
           fi
 
@@ -1425,6 +1466,7 @@ jobs:
           echo "📊 STAGE-ONLY MODE DEPLOYMENT SUMMARY"
           echo "====================================="
           echo ""
+          echo "Deployment Mode: ${{ needs.calculate-version.outputs.deployment_mode }}"
           echo "Version: ${{ needs.calculate-version.outputs.version }}"
           echo ""
           echo "📦 Store Deployments (Best Effort):"
