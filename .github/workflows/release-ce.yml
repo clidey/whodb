@@ -778,6 +778,14 @@ jobs:
           name: deployment-manifest
           path: .
 
+      - name: Install Snapcraft
+        if: needs.calculate-version.outputs.dry_run == 'false'
+        run: |
+          echo "Installing snapcraft..."
+          sudo snap install snapcraft --classic
+          echo "Snapcraft version:"
+          snapcraft --version
+
       - name: Capture current Snap Store state
         if: needs.calculate-version.outputs.dry_run == 'false'
         env:
@@ -799,10 +807,17 @@ jobs:
             echo "📦 PRODUCTION MODE - Releasing to stable channel"
           fi
 
+          # The SNAPCRAFT_STORE_CREDENTIALS env var automatically authenticates snapcraft
+          echo "Authenticating with Snap Store using credentials..."
+
           # Snap Store automatically handles multi-arch packages when uploaded separately
           for snap in *.snap; do
-            echo "Publishing $snap to Snap Store ($CHANNEL channel)..."
-            snapcraft upload "$snap" --release="$CHANNEL"
+            if [ -f "$snap" ]; then
+              echo "Publishing $snap to Snap Store ($CHANNEL channel)..."
+              snapcraft upload "$snap" --release="$CHANNEL"
+            else
+              echo "Warning: No snap file found matching pattern"
+            fi
           done
 
       - name: Track Snap deployment
