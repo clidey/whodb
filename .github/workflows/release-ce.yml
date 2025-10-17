@@ -1015,6 +1015,24 @@ jobs:
           Write-Host "App ID: $appId"
 
           try {
+            # Test API access first
+            Write-Host "Testing Partner Center API access..."
+            try {
+              # This should work if permissions are correct
+              $testApps = Get-Applications
+              Write-Host "✅ Successfully accessed Partner Center API"
+              Write-Host "Found $($testApps.Count) apps in account"
+            }
+            catch {
+              Write-Host "❌ Cannot access Partner Center API"
+              Write-Host "Error details: $_"
+              Write-Host "This usually means:"
+              Write-Host "  1. The Azure AD app doesn't have Partner Center API permissions"
+              Write-Host "  2. Admin consent hasn't been granted for the permissions"
+              Write-Host "  3. The app isn't properly linked in Partner Center"
+              throw
+            }
+
             # Create new submission
             Write-Host "Creating new submission..."
             $submission = New-ApplicationSubmission -AppId $appId -Force
