@@ -319,18 +319,30 @@ Documentation: https://whodb.com/docs`,
 
 // getSettingsPath returns the path to store window settings
 func (a *App) getSettingsPath() string {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		// Fallback to temp directory if home directory cannot be determined
-		homeDir = os.TempDir()
-	}
 	suffix := ""
 	if a.edition == "ee" {
 		suffix = "-ee"
 	}
-	configDir := filepath.Join(homeDir, ".whodb"+suffix)
-	os.MkdirAll(configDir, dirPermissionUserRWX)
-	return filepath.Join(configDir, "window-settings.json")
+
+	if snapUserCommon := os.Getenv("SNAP_USER_COMMON"); snapUserCommon != "" {
+		configDir := filepath.Join(snapUserCommon, "config"+suffix)
+		os.MkdirAll(configDir, dirPermissionUserRWX)
+		return filepath.Join(configDir, "window-settings.json")
+	}
+
+	if configDir, err := os.UserConfigDir(); err == nil && configDir != "" {
+		target := filepath.Join(configDir, "whodb"+suffix)
+		os.MkdirAll(target, dirPermissionUserRWX)
+		return filepath.Join(target, "window-settings.json")
+	}
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		homeDir = os.TempDir()
+	}
+	fallbackDir := filepath.Join(homeDir, ".whodb"+suffix)
+	os.MkdirAll(fallbackDir, dirPermissionUserRWX)
+	return filepath.Join(fallbackDir, "window-settings.json")
 }
 
 // SetupApplicationMenu creates and sets the application menu

@@ -22,7 +22,7 @@ description: |
   MongoDB, Redis, and more.
 
 base: core22
-confinement: classic
+confinement: strict
 grade: stable
 
 architectures:
@@ -33,6 +33,16 @@ apps:
   whodb:
     command: bin/whodb
     desktop: share/applications/whodb.desktop
+    plugs:
+      - desktop
+      - desktop-legacy
+      - wayland
+      - x11
+      - gsettings
+      - network
+      - network-bind
+      - audio-playback
+      - opengl
 
 parts:
   # Build Node/frontend dependencies first
