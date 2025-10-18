@@ -24,6 +24,7 @@ description: |
 base: core22
 confinement: strict
 grade: stable
+adopt-info: whodb
 
 architectures:
   - build-on: amd64
@@ -73,6 +74,11 @@ parts:
     plugin: nil
     source: .
     source-type: local
+    override-pull: |
+      craftctl default
+      if [ -n "$SNAPCRAFT_PROJECT_VERSION" ]; then
+        craftctl set version="$SNAPCRAFT_PROJECT_VERSION"
+      fi
     build-environment:
       - CGO_ENABLED: "1"
       - PATH: "/snap/go/current/bin:$PATH"
@@ -92,10 +98,6 @@ parts:
       - libwebkit2gtk-4.0-37
       - libwebkit2gtk-4.1-0
     override-build: |
-      if [ -n "$SNAPCRAFT_PROJECT_VERSION" ]; then
-        snapcraftctl set-version "$SNAPCRAFT_PROJECT_VERSION"
-      fi
-
       # Copy frontend build from previous part
       mkdir -p desktop-ce/frontend/dist
       cp -r $SNAPCRAFT_STAGE/frontend-dist/* desktop-ce/frontend/dist/
