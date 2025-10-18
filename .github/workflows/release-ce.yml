@@ -620,7 +620,7 @@ jobs:
           cp snapcraft-ce.yaml snapcraft.yaml
 
       - name: Build snap from source
-        uses: snapcore/action-build@v1
+        uses: canonical/action-build@v1
         id: build
 
       - name: Rename snap with architecture
@@ -798,16 +798,29 @@ jobs:
             fi
           fi
 
-      - name: Find and list snap files
+      - name: Determine Snap release channel
         if: needs.calculate-version.outputs.dry_run == 'false'
-        id: find_snaps
+        id: snap_channel
+        run: |
+          if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
+            echo "channel=candidate" >> $GITHUB_OUTPUT
+            echo "📦 Publishing to candidate channel (stage only)"
+          else
+            echo "channel=stable" >> $GITHUB_OUTPUT
+            echo "📦 Publishing to stable channel"
+          fi
+
+      - name: Locate built snaps
+        if: needs.calculate-version.outputs.dry_run == 'false'
+        id: locate_snaps
         run: |
           echo "Looking for snap files..."
           ls -la *.snap || echo "No snap files found"
 
-          # Find all snap files and create a list
-          SNAP_FILES=$(ls *.snap 2>/dev/null | head -1 || echo "")
-          if [ -z "$SNAP_FILES" ]; then
+          AMD64_SNAP=$(ls *amd64*.snap 2>/dev/null | head -1 || echo "")
+          ARM64_SNAP=$(ls *arm64*.snap 2>/dev/null | head -1 || echo "")
+
+          if [ -z "$AMD64_SNAP" ] && [ -z "$ARM64_SNAP" ]; then
             echo "❌ No snap files found in current directory"
             if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
               echo "Continuing in stage-only mode..."
@@ -816,85 +829,30 @@ jobs:
               exit 1
             fi
           else
-            echo "✅ Found snap file: $SNAP_FILES"
-            echo "snap_file=$SNAP_FILES" >> $GITHUB_OUTPUT
+            [ -n "$AMD64_SNAP" ] && echo "✅ Found AMD64 snap: $AMD64_SNAP"
+            [ -n "$ARM64_SNAP" ] && echo "✅ Found ARM64 snap: $ARM64_SNAP"
             echo "snap_found=true" >> $GITHUB_OUTPUT
           fi
+          echo "amd64_snap=$AMD64_SNAP" >> $GITHUB_OUTPUT
+          echo "arm64_snap=$ARM64_SNAP" >> $GITHUB_OUTPUT
 
-      - name: Publish Snaps to Store (Direct Method)
-        if: needs.calculate-version.outputs.dry_run == 'false' && steps.check_snap_creds.outputs.has_creds == 'true' && steps.find_snaps.outputs.snap_found == 'true'
+      - name: Publish AMD64 snap
+        if: needs.calculate-version.outputs.dry_run == 'false' && steps.check_snap_creds.outputs.has_creds == 'true' && steps.locate_snaps.outputs.amd64_snap != ''
+        uses: canonical/action-publish@v1
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
-        run: |
-          # Install snapcraft
-          echo "Installing snapcraft..."
-          sudo snap install snapcraft --classic
+        with:
+          snap: ${{ steps.locate_snaps.outputs.amd64_snap }}
+          release: ${{ steps.snap_channel.outputs.channel }}
 
-          # Determine release channel
-          if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
-            CHANNEL="candidate"
-            echo "📦 Publishing to candidate channel (stage only)"
-          else
-            CHANNEL="stable"
-            echo "📦 Publishing to stable channel"
-          fi
-
-          # Upload AMD64 snap
-          AMD64_SNAP=$(ls *amd64*.snap 2>/dev/null | head -1 || echo "")
-          if [ -n "$AMD64_SNAP" ]; then
-            echo "Found AMD64 snap: $AMD64_SNAP"
-            echo "Uploading $AMD64_SNAP to $CHANNEL channel..."
-            snapcraft upload "$AMD64_SNAP" --release "$CHANNEL" || {
-              echo "❌ Failed to upload AMD64 snap"
-              if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
-                echo "Continuing in stage-only mode despite failure..."
-              else
-                exit 1
-              fi
-            }
-          else
-            echo "❌ No AMD64 snap found"
-            exit 1
-          fi
-
-      - name: Publish ARM64 Snap if exists
-        if: needs.calculate-version.outputs.dry_run == 'false' && steps.check_snap_creds.outputs.has_creds == 'true'
+      - name: Publish ARM64 snap
+        if: needs.calculate-version.outputs.dry_run == 'false' && steps.check_snap_creds.outputs.has_creds == 'true' && steps.locate_snaps.outputs.arm64_snap != ''
+        uses: canonical/action-publish@v1
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
-        run: |
-          # Find and upload ARM64 snap if it exists
-          ARM64_SNAP=$(ls *arm64*.snap 2>/dev/null | head -1 || echo "")
-          if [ -n "$ARM64_SNAP" ]; then
-            echo "Found ARM64 snap: $ARM64_SNAP"
-
-            # Snapcraft should already be installed from previous step
-            if ! command -v snapcraft &> /dev/null; then
-              echo "Installing snapcraft..."
-              sudo snap install snapcraft --classic
-            fi
-
-            # Determine release channel
-            if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
-              CHANNEL="candidate"
-              echo "📦 Uploading ARM64 to candidate channel"
-            else
-              CHANNEL="stable"
-              echo "📦 Uploading ARM64 to stable channel"
-            fi
-
-            # Upload ARM64 snap
-            echo "Uploading $ARM64_SNAP to $CHANNEL channel..."
-            snapcraft upload "$ARM64_SNAP" --release "$CHANNEL" || {
-              echo "❌ Failed to upload ARM64 snap"
-              if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
-                echo "Continuing in stage-only mode despite failure..."
-              else
-                exit 1
-              fi
-            }
-          else
-            echo "No ARM64 snap found, skipping"
-          fi
+        with:
+          snap: ${{ steps.locate_snaps.outputs.arm64_snap }}
+          release: ${{ steps.snap_channel.outputs.channel }}
 
       - name: Track Snap deployment
         if: needs.calculate-version.outputs.dry_run == 'false'
