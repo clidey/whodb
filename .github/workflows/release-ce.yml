@@ -1057,11 +1057,10 @@ jobs:
             $submissionDir = New-Item -ItemType Directory -Path "submission" -Force
             $submissionDataPath = Join-Path $submissionDir.FullName "submission.json"
 
-            # Create a minimal submission configuration
-            # This will be merged with the cloned submission by Update-ApplicationSubmission
-            $submissionConfig = @{
-              applicationPackages = @()  # Will be populated by Update-ApplicationSubmission
-            } | ConvertTo-Json -Depth 10
+            # Create an empty submission configuration
+            # StoreBroker will merge this with the cloned submission
+            # We don't specify applicationPackages to avoid overriding the existing packages
+            $submissionConfig = @{} | ConvertTo-Json -Depth 10
 
             $submissionConfig | Out-File -FilePath $submissionDataPath -Encoding UTF8
             Write-Host "✅ Submission configuration created: $submissionDataPath"
@@ -1079,7 +1078,7 @@ jobs:
               AppId = $appId
               SubmissionDataPath = $submissionDataPath
               PackagePath = $zipPath
-              ReplacePackages = $true
+              AddPackages = $true  # Add packages instead of replacing
               Force = $true
             }
 
