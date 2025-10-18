@@ -672,20 +672,21 @@ jobs:
       - name: Inject Snap version
         run: |
           python3 - <<'PY'
-  import os
-  import pathlib
-  import re
-  
-  version = os.environ["WHODB_RELEASE_VERSION"]
-  path = pathlib.Path("snapcraft.yaml")
-  data = path.read_text()
-data, count = re.subn(r"^version:\s*.*$", f"version: { version }", data, count=1, flags=re.MULTILINE)
-if count != 1:
-    raise SystemExit("Failed to update snapcraft.yaml version field")
-  path.write_text(data)
-  PY
+          import os
+          import pathlib
+          import re
 
-- name: Build snap from source
+          version = os.environ["WHODB_RELEASE_VERSION"]
+          path = pathlib.Path("snapcraft.yaml")
+          data = path.read_text()
+          pattern = re.compile(r"^version:\s*.*$", re.MULTILINE)
+          if not pattern.search(data):
+              raise SystemExit("Failed to locate version field in snapcraft.yaml")
+          data = pattern.sub(f"version: {version}", data, count=1)
+          path.write_text(data)
+          PY
+
+      - name: Build snap from source
         uses: canonical/action-build@v1
         id: build
 
