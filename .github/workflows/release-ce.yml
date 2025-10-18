@@ -1069,13 +1069,27 @@ jobs:
               throw
             }
 
-            # Create new submission
-            Write-Host "Creating new submission..."
-            $submission = New-ApplicationSubmission -AppId $appId -Force
+            # Create submission directory
+            Write-Host "Creating submission directory..."
+            $submissionDir = New-Item -ItemType Directory -Path "submission" -Force
+            $submissionPath = Join-Path $submissionDir.FullName "submission.json"
+
+            # Create new submission and save to file
+            Write-Host "Creating new submission for app ID: $appId"
+            New-ApplicationSubmission -AppId $appId -SubmissionDataPath $submissionPath -Force
+
+            if (-not (Test-Path $submissionPath)) {
+              Write-Error "Failed to create submission file at: $submissionPath"
+              exit 1
+            }
+
+            Write-Host "✅ Submission created and saved to: $submissionPath"
 
             # Update submission with new package
-            Write-Host "Updating submission with package..."
-            Update-ApplicationSubmission -AppId $appId -SubmissionDataPath $submission -PackagePath $msixPath.FullName
+            Write-Host "Updating submission with MSIX package: $($msixPath.Name)"
+            Update-ApplicationSubmission -AppId $appId -SubmissionDataPath $submissionPath -PackagePath $msixPath.FullName
+
+            Write-Host "✅ Submission updated with package"
 
             # Determine publish mode based on stage_only flag
             if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") {
@@ -1088,13 +1102,18 @@ jobs:
 
             # Submit to Store
             Write-Host "Submitting to store with publish mode: $publishMode"
-            $submissionId = Submit-ApplicationSubmission -AppId $appId -SubmissionDataPath $submission -TargetPublishMode $publishMode
+            $submissionResult = Submit-ApplicationSubmission -AppId $appId -SubmissionDataPath $submissionPath -TargetPublishMode $publishMode
 
-            Write-Host "✅ Submission created successfully with ID: $submissionId"
-            if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") {
-              Write-Host "Draft submission created. Manual review and publish required in Partner Center"
+            if ($submissionResult) {
+              Write-Host "✅ Submission completed successfully"
+              if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") {
+                Write-Host "📝 Draft submission created. Manual review and publish required in Partner Center"
+              } else {
+                Write-Host "📝 Submission will be published after Partner Center review"
+              }
             } else {
-              Write-Host "Submission will be published after Partner Center review"
+              Write-Error "Submission failed - check Partner Center for details"
+              exit 1
             }
           }
           catch {
