@@ -32,6 +32,28 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 	constraints := make(map[string]map[string]interface{})
 
 	_, err := plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
+		// Get primary keys using Postgres system catalogs
+		fullTableName := schema + "." + storageUnit
+		primaryRows, err := db.Raw(`
+			SELECT a.attname AS column_name
+			FROM pg_index i
+			JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)
+			WHERE i.indrelid = $1::regclass AND i.indisprimary
+		`, fullTableName).Rows()
+		if err == nil {
+			defer primaryRows.Close()
+			for primaryRows.Next() {
+				var columnName string
+				if err := primaryRows.Scan(&columnName); err != nil {
+					continue
+				}
+				if constraints[columnName] == nil {
+					constraints[columnName] = map[string]interface{}{}
+				}
+				constraints[columnName]["primary"] = true
+			}
+		}
+
 		// Get nullability using GORM's query builder
 		rows, err := db.Table("information_schema.columns").
 			Select("column_name, is_nullable").
@@ -80,7 +102,6 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 		}
 
 		// Get CHECK constraints using GORM's query builder
-		fullTableName := schema + "." + storageUnit
 		checkRows, err := db.Table("pg_constraint").
 			Select("conname AS constraint_name, pg_get_constraintdef(oid) AS check_clause").
 			Where("contype = 'c' AND conrelid = ?::regclass", fullTableName).

@@ -174,6 +174,8 @@ function renderShortcut(parts: ("Mod" | "Shift" | "Delete" | string)[]) {
 interface TableProps {
     columns: string[];
     columnTypes?: string[];
+    columnIsPrimary?: boolean[];
+    columnIsForeignKey?: boolean[];
     rows: string[][];
     rowHeight?: number;
     height?: number;
@@ -200,6 +202,8 @@ interface TableProps {
 export const StorageUnitTable: FC<TableProps> = ({
     columns,
     columnTypes,
+    columnIsPrimary,
+    columnIsForeignKey,
     rows,
     rowHeight = 48,
     height = 500,
@@ -765,7 +769,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     Copy Cell
                     <ContextMenuShortcut><CursorArrowRaysIcon className="w-4 h-4" /></ContextMenuShortcut>
                 </ContextMenuItem>
-                {isValidForeignKey && onEntitySearch && contextMenuCellIdx !== null && isValidForeignKey(columns[contextMenuCellIdx]) && (
+                {onEntitySearch && contextMenuCellIdx !== null && columnIsForeignKey?.[contextMenuCellIdx] && !columnIsPrimary?.[contextMenuCellIdx] && (
                     <ContextMenuItem
                         onSelect={() => {
                             if (contextMenuCellIdx == null) return;
@@ -933,18 +937,21 @@ export const StorageUnitTable: FC<TableProps> = ({
                                     </TableHead>
                                     {columns.map((col, idx) => (
                                         <TableHead
-                                            key={col + idx} 
-                                            icon={columnIcons?.[idx]}
+                                            key={col + idx}
+                                            icon={columnIsPrimary?.[idx] ? <KeyIcon className="w-4 h-4" /> : columnIsForeignKey?.[idx] ? <ShareIcon className="w-4 h-4" /> : columnIcons?.[idx]}
                                             className={cn({
                                                 "cursor-pointer select-none": onColumnSort,
                                             })}
                                             onClick={() => onColumnSort?.(col)}
                                         >
                                             <Tip>
-                                                <p className="flex items-center gap-xs">
+                                                <p className={cn("flex items-center gap-xs", {
+                                                    "font-bold": columnIsPrimary?.[idx],
+                                                    "italic": columnIsForeignKey?.[idx] && !columnIsPrimary?.[idx],
+                                                })}>
                                                     {col}
                                                     {onColumnSort && sortedColumns?.has(col) && (
-                                                        sortedColumns.get(col) === 'asc' 
+                                                        sortedColumns.get(col) === 'asc'
                                                             ? <ChevronUpIcon className="w-4 h-4" />
                                                             : <ChevronDownIcon className="w-4 h-4" />
                                                     )}

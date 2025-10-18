@@ -503,9 +503,10 @@ export const StorageUnitPage: FC = () => {
     </InternalPage>
 }
 
-export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data }) => {
-    const { getNodes } = useReactFlow();
+export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit & { columns?: any[] }>> = ({ data }) => {
     const navigate = useNavigate();
+    const schema = useAppSelector(state => state.database.schema);
+    const current = useAppSelector(state => state.auth.current);
 
     const handleNavigateTo = useCallback(() => {
         if (data == null) {
@@ -518,16 +519,8 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data })
         });
     }, [navigate, data]);
 
-    const isValidForeignKey = useCallback((key: string) => {
-        // Use node ids as table names
-        if (key.endsWith("_id")) {
-            const nodes = getNodes();
-            const base = key.slice(0, -3);
-            const nodeIds = new Set(nodes.map((node: Node) => node.id));
-            return nodeIds.has(base) || nodeIds.has(base + "s");
-        }
-        return false;
-    }, [getNodes]);
+    // Use columns if available (from extended data), otherwise fall back to attributes
+    const displayItems = data?.columns || data?.Attributes || [];
 
     if (data == null) {
         return (<Card icon={<ArrowPathRoundedSquareIcon className="w-4 h-4" />}>
@@ -537,20 +530,45 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data })
 
     return (
         <>
-            <Handle className="dark:border-white/5" type="target" position={Position.Left} />
-            <Card icon={<CircleStackIcon className="w-4 h-4" />} className="h-fit backdrop-blur-[2px] w-[400px] px-2 py-6">
+            <Card icon={<CircleStackIcon className="w-4 h-4" />} className="h-fit backdrop-blur-[2px] w-[400px] px-2 py-6 relative">
                 <div className="flex flex-col grow mt-2 gap-4">
                     <div className="flex flex-col grow">
                         <h2 className="text-3xl font-semibold mb-2 break-words">{data.Name}</h2>
                         <StackList>
                             {
-                                data.Attributes.map(attribute => (
-                                    <StackListItem rowClassName="items-start" key={attribute.Key}
-                                                   item={isValidForeignKey(attribute.Key) ? <Badge
-                                                       className="text-lg">{attribute.Key}</Badge> : attribute.Key}>
-                                        {attribute.Value}
-                                    </StackListItem>
-                                ))
+                                displayItems.map((item: any) => {
+                                    const isColumn = 'IsForeignKey' in item && 'IsPrimary' in item;
+                                    const name = item.Name || item.Key;
+                                    const value = item.Type || item.Value;
+                                    const isFKColumn = isColumn ? item.IsForeignKey : false;
+                                    const isPKColumn = isColumn ? item.IsPrimary : false;
+
+                                    return (
+                                        <div key={name} className="relative">
+                                            {isFKColumn && (
+                                                <Handle
+                                                    type="source"
+                                                    position={Position.Right}
+                                                    id={`${data.Name}-${name}`}
+                                                    className="right-0 translate-x-6 w-3 h-3 border-2 border-border bg-background dark:bg-background"
+                                                />
+                                            )}
+                                            {isPKColumn && (
+                                                <Handle
+                                                    type="target"
+                                                    position={Position.Left}
+                                                    id={`${data.Name}-${name}`}
+                                                    className="left-0 -translate-x-6 w-3 h-3 border-2 border-border bg-background dark:bg-background"
+                                                />
+                                            )}
+                                            <StackListItem rowClassName="items-start"
+                                                           item={isFKColumn ? <Badge
+                                                               className="text-lg">{name}</Badge> : name}>
+                                                {value}
+                                            </StackListItem>
+                                        </div>
+                                    );
+                                })
                             }
                         </StackList>
                     </div>
@@ -559,7 +577,6 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data })
                     </Button>
                 </div>
             </Card>
-            <Handle className="dark:border-white/5" type="source" position={Position.Right} />
         </>
     );
 }

@@ -46,6 +46,7 @@ import {
     SortDirection,
     StorageUnit,
     useAddRowMutation,
+    useColumnsLazyQuery,
     useGetStorageUnitRowsLazyQuery,
     useGetStorageUnitsLazyQuery,
     useRawExecuteLazyQuery,
@@ -132,6 +133,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         fetchPolicy: "no-cache",
     });
     const [getStorageUnits] = useGetStorageUnitsLazyQuery();
+    const [getColumns] = useColumnsLazyQuery();
     const [addRow, { loading: adding }] = useAddRowMutation();
     const [rawExecute, { data: rawExecuteData }] = useRawExecuteLazyQuery();
 
@@ -279,9 +281,14 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         ];
     }, [current]);
     
-    const {columns, columnTypes} = useMemo(() => {
+    const {columns, columnTypes, columnIsPrimary, columnIsForeignKey} = useMemo(() => {
         const dataColumns = rows?.Columns.map(c => c.Name) ?? [];
-        return {columns: dataColumns, columnTypes: rows?.Columns.map(column => column.Type)};
+        return {
+            columns: dataColumns,
+            columnTypes: rows?.Columns.map(column => column.Type),
+            columnIsPrimary: rows?.Columns.map(column => column.IsPrimary),
+            columnIsForeignKey: rows?.Columns.map(column => column.IsForeignKey)
+        };
     }, [rows?.Columns, rows?.Rows]);
 
     useEffect(() => {
@@ -470,6 +477,15 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         }
     }, [schema, getStorageUnits]);
 
+    // Get primary key column name from rows
+    const getPrimaryKeyColumn = useCallback(() => {
+        if (!rows?.Columns) {
+            return null;
+        }
+        const primaryColumn = rows.Columns.find(col => col.IsPrimary);
+        return primaryColumn?.Name || null;
+    }, [rows?.Columns]);
+
     // Entity search functionality
     const handleEntitySearch = useCallback((columnName: string, value: string) => {
         const targetTable = getTargetTableName(columnName);
@@ -484,32 +500,54 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
             targetTable
         });
 
-        // Search for the entity in the target table
-        getStorageUnitRows({
+        // First, fetch the target table's column metadata to find its primary key
+        getColumns({
             variables: {
                 schema,
-                storageUnit: targetTable,
-                where: {
-                    Type: WhereConditionType.Atomic,
-                    Atomic: {
-                        Key: "id", // Assuming the target table has an 'id' column
-                        Operator: "=",
-                        Value: value,
-                        ColumnType: "string"
-                    }
-                },
-                pageSize: 1,
-                pageOffset: 0
+                storageUnit: targetTable
             },
-            onCompleted: (data) => {
-                setEntitySearchResults(data.Row);
-                setShowEntitySearchSheet(true);
+            onCompleted: (columnsData) => {
+                // Find the primary key column in the target table
+                const targetPrimaryKey = columnsData.Columns?.find(col => col.IsPrimary);
+
+                if (!targetPrimaryKey) {
+                    toast.error(`No primary key found for table ${targetTable}`);
+                    return;
+                }
+
+                const primaryKeyName = targetPrimaryKey.Name;
+
+                // Now search for the entity using the correct primary key
+                getStorageUnitRows({
+                    variables: {
+                        schema,
+                        storageUnit: targetTable,
+                        where: {
+                            Type: WhereConditionType.Atomic,
+                            Atomic: {
+                                Key: primaryKeyName,
+                                Operator: "=",
+                                Value: value,
+                                ColumnType: "string"
+                            }
+                        },
+                        pageSize: 1,
+                        pageOffset: 0
+                    },
+                    onCompleted: (data) => {
+                        setEntitySearchResults(data.Row);
+                        setShowEntitySearchSheet(true);
+                    },
+                    onError: (error) => {
+                        toast.error(`Failed to search for entity: ${error.message}`);
+                    }
+                });
             },
             onError: (error) => {
-                toast.error(`Failed to search for entity: ${error.message}`);
+                toast.error(`Failed to get target table structure: ${error.message}`);
             }
         });
-    }, [getStorageUnitRows, getTargetTableName, schema]);
+    }, [getColumns, getStorageUnitRows, getTargetTableName, schema]);
 
     const handleCloseEntitySearchSheet = useCallback(() => {
         setShowEntitySearchSheet(false);
@@ -659,10 +697,12 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 {
                     rows != null &&
                     <StorageUnitTable
-                        columns={columns} 
-                        rows={rows.Rows} 
-                        onRowUpdate={handleRowUpdate} 
+                        columns={columns}
+                        rows={rows.Rows}
+                        onRowUpdate={handleRowUpdate}
                         columnTypes={columnTypes}
+                        columnIsPrimary={columnIsPrimary}
+                        columnIsForeignKey={columnIsForeignKey}
                         schema={schema}
                         storageUnit={unitName}
                         onRefresh={handleSubmitRequest}

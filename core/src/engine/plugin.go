@@ -52,8 +52,10 @@ type StorageUnit struct {
 }
 
 type Column struct {
-	Type string
-	Name string
+	Type         string
+	Name         string
+	IsPrimary    bool
+	IsForeignKey bool
 }
 
 type GetRowsResult struct {
@@ -75,6 +77,8 @@ const (
 type GraphUnitRelationship struct {
 	Name             string
 	RelationshipType GraphUnitRelationshipType
+	SourceColumn     *string
+	TargetColumn     *string
 }
 
 type GraphUnit struct {

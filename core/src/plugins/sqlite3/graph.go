@@ -21,30 +21,30 @@ import (
 const graphQuery = `
 WITH fk_constraints AS (
     SELECT DISTINCT
-        p.name AS table1,
+        m.name AS table1,
         f."table" AS table2,
-        'OneToMany' AS relation
-    FROM 
-        sqlite_master p
-    JOIN 
-        (SELECT m.name AS "table", f."table" AS "table2"
-         FROM sqlite_master m, pragma_foreign_key_list(m.name) f) f
-    ON 
-        p.name = f."table2"
+        'OneToMany' AS relation,
+        f."from" AS source_column,
+        f."to" AS target_column
+    FROM
+        sqlite_master m,
+        pragma_foreign_key_list(m.name) f
 ),
 pk_constraints AS (
     SELECT DISTINCT
         p.name AS table1,
         m.name AS table2,
-        'OneToOne' AS relation
-    FROM 
+        'OneToOne' AS relation,
+        NULL AS source_column,
+        NULL AS target_column
+    FROM
         sqlite_master p,
         pragma_table_info(p.name) t
-    JOIN 
+    JOIN
         sqlite_master m
-    ON 
+    ON
         t.name = m.name
-    WHERE 
+    WHERE
         t.pk = 1
         AND p.name != m.name
 ),
@@ -52,15 +52,17 @@ unique_constraints AS (
     SELECT DISTINCT
         p.name AS table1,
         i."table" AS table2,
-        'ManyToOne' AS relation
-    FROM 
+        'ManyToOne' AS relation,
+        NULL AS source_column,
+        NULL AS target_column
+    FROM
         sqlite_master p
-    JOIN 
+    JOIN
         (SELECT m.name AS "table", i."unique" AS "unique"
          FROM sqlite_master m, pragma_index_list(m.name) i) i
-    ON 
+    ON
         p.name = i."table"
-    WHERE 
+    WHERE
         i."unique" = 1
         AND p.name != i."table"
 ),
@@ -68,16 +70,18 @@ many_to_many_constraints AS (
     SELECT DISTINCT
         k1."table" AS table1,
         k2."table" AS table2,
-        'ManyToMany' AS relation
-    FROM 
+        'ManyToMany' AS relation,
+        NULL AS source_column,
+        NULL AS target_column
+    FROM
         (SELECT f."table", f.seq
          FROM sqlite_master m, pragma_foreign_key_list(m.name) f) k1
-    JOIN 
+    JOIN
         (SELECT f."table", f.seq
          FROM sqlite_master m, pragma_foreign_key_list(m.name) f) k2
-    ON 
+    ON
         k1."table" = k2."table"
-    WHERE 
+    WHERE
         k1.seq = 0 AND k2.seq = 1
 )
 SELECT * FROM fk_constraints
