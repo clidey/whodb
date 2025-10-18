@@ -588,8 +588,36 @@ jobs:
       - name: Create MSIX bundle (AMD64 only for now)
         shell: pwsh
         run: |
-          # Since we only have AMD64 for now, rename it as the bundle
-          Move-Item "WhoDB-${{ needs.calculate-version.outputs.version }}-amd64.msix" "WhoDB-${{ needs.calculate-version.outputs.version }}.msixbundle" -Force
+          $version = "${{ needs.calculate-version.outputs.version }}"
+          $msixFile = "WhoDB-$version-amd64.msix"
+          if (-not (Test-Path $msixFile)) {
+            Write-Error "Expected MSIX package not found: $msixFile"
+            exit 1
+          }
+
+          $bundleRoot = "bundle"
+          if (Test-Path $bundleRoot) {
+            Remove-Item $bundleRoot -Recurse -Force
+          }
+          New-Item -ItemType Directory -Path $bundleRoot | Out-Null
+
+          $x64Dir = Join-Path $bundleRoot "x64"
+          New-Item -ItemType Directory -Path $x64Dir | Out-Null
+
+          Copy-Item $msixFile (Join-Path $x64Dir $msixFile) -Force
+
+          $bundleName = "WhoDB-$version.msixbundle"
+          if (Test-Path $bundleName) {
+            Remove-Item $bundleName -Force
+          }
+
+          makeappx bundle /d $bundleRoot /p $bundleName /o
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "makeappx bundle failed with exit code $LASTEXITCODE"
+            exit 1
+          }
+
+          Remove-Item $bundleRoot -Recurse -Force -ErrorAction SilentlyContinue
 
       - name: Upload MSIX artifacts
         uses: actions/upload-artifact@v4
@@ -1042,36 +1070,34 @@ jobs:
               $autoCommit = $true
             }
 
-            # Create package ZIP for upload
-            Write-Host "Creating package ZIP for upload..."
-            $zipPath = "package.zip"
+            # Create submission package metadata
+            Write-Host "Creating submission package..."
+            $submissionPackage = New-SubmissionPackage -AppxPath $msixPath.FullName
+            Write-Host "✅ Submission package metadata generated"
 
-            # Create a ZIP file containing the MSIX bundle
-            Add-Type -Assembly System.IO.Compression.FileSystem
+            $zipPath = Join-Path $PWD "package.zip"
             if (Test-Path $zipPath) {
               Remove-Item $zipPath -Force
             }
 
-            $zip = [System.IO.Compression.ZipFile]::Open($zipPath, 'Create')
-            $entry = $zip.CreateEntry($msixPath.Name, [System.IO.Compression.CompressionLevel]::Optimal)
-            $entryStream = $entry.Open()
-            $fileStream = [System.IO.File]::OpenRead($msixPath.FullName)
-            $fileStream.CopyTo($entryStream)
-            $fileStream.Close()
-            $entryStream.Close()
-            $zip.Dispose()
+            Save-SubmissionPackage -Package $submissionPackage -OutputPath $zipPath -Force | Out-Null
+            if (-not (Test-Path $zipPath)) {
+              Write-Error "Failed to create submission package archive"
+              exit 1
+            }
 
-            Write-Host "✅ Package ZIP created: $zipPath"
+            Write-Host "✅ Submission package archive created: $zipPath"
 
-            # Create minimal submission config JSON
+            # Create submission config JSON with App ID for safety
             Write-Host "Creating submission configuration..."
             $submissionDir = New-Item -ItemType Directory -Path "submission" -Force
             $submissionDataPath = Join-Path $submissionDir.FullName "submission.json"
 
-            # Create an empty submission configuration
-            # StoreBroker will merge this with the cloned submission
-            # We don't specify applicationPackages to avoid overriding the existing packages
-            $submissionConfig = @{} | ConvertTo-Json -Depth 10
+            $submissionConfig = @{
+              appSubmission = @{
+                appId = $appId
+              }
+            } | ConvertTo-Json -Depth 10
 
             $submissionConfig | Out-File -FilePath $submissionDataPath -Encoding UTF8
             Write-Host "✅ Submission configuration created: $submissionDataPath"
