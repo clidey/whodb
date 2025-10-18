@@ -608,6 +608,8 @@ jobs:
           - runner: ubuntu-24.04-arm
             arch: arm64
     runs-on: ${{ matrix.runner }}
+    env:
+      SNAPCRAFT_PROJECT_VERSION: ${{ needs.calculate-version.outputs.version }}
     needs: [ calculate-version ]
     continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
     steps:
@@ -624,6 +626,15 @@ jobs:
           NEW_NAME="${SNAP_FILE%.snap}_${{ matrix.arch }}.snap"
           mv "$SNAP_FILE" "$NEW_NAME"
           echo "SNAP_FILE=$NEW_NAME" >> $GITHUB_ENV
+
+      - name: Sanity check snap version
+        run: |
+          SNAP_BASENAME=$(basename "$SNAP_FILE")
+          if [[ "$SNAP_BASENAME" != *"_${SNAPCRAFT_PROJECT_VERSION}_"* ]]; then
+            echo "::error::Snap filename $SNAP_BASENAME does not contain version ${SNAPCRAFT_PROJECT_VERSION}"
+            exit 1
+          fi
+          echo "✓ Snap filename includes version ${SNAPCRAFT_PROJECT_VERSION}"
 
       - name: Upload snap artifact
         uses: actions/upload-artifact@v4

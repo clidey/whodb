@@ -92,6 +92,10 @@ parts:
       - libwebkit2gtk-4.0-37
       - libwebkit2gtk-4.1-0
     override-build: |
+      if [ -n "$SNAPCRAFT_PROJECT_VERSION" ]; then
+        snapcraftctl set-version "$SNAPCRAFT_PROJECT_VERSION"
+      fi
+
       # Copy frontend build from previous part
       mkdir -p desktop-ce/frontend/dist
       cp -r $SNAPCRAFT_STAGE/frontend-dist/* desktop-ce/frontend/dist/
