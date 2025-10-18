@@ -1057,16 +1057,32 @@ jobs:
 
             Write-Host "✅ Package ZIP created: $zipPath"
 
-            # Use Update-ApplicationSubmission with the simplified approach
+            # Create minimal submission config JSON
+            Write-Host "Creating submission configuration..."
+            $submissionDir = New-Item -ItemType Directory -Path "submission" -Force
+            $submissionDataPath = Join-Path $submissionDir.FullName "submission.json"
+
+            # Create a minimal submission configuration
+            # This will be merged with the cloned submission by Update-ApplicationSubmission
+            $submissionConfig = @{
+              applicationPackages = @()  # Will be populated by Update-ApplicationSubmission
+            } | ConvertTo-Json -Depth 10
+
+            $submissionConfig | Out-File -FilePath $submissionDataPath -Encoding UTF8
+            Write-Host "✅ Submission configuration created: $submissionDataPath"
+
+            # Use Update-ApplicationSubmission
             Write-Host "Submitting to Microsoft Store..."
 
-            # The Update-ApplicationSubmission cmdlet handles everything:
+            # The Update-ApplicationSubmission cmdlet:
             # 1. Clones the published submission (or uses existing pending if -SubmissionId is specified)
-            # 2. Updates it with the new package
-            # 3. Commits the submission if -AutoCommit is specified
+            # 2. Merges the submission data from the JSON file
+            # 3. Updates packages if -PackagePath is specified
+            # 4. Commits the submission if -AutoCommit is specified
 
             $submissionParams = @{
               AppId = $appId
+              SubmissionDataPath = $submissionDataPath
               PackagePath = $zipPath
               ReplacePackages = $true
               Force = $true
@@ -1084,7 +1100,10 @@ jobs:
 
             if ($submissionResult) {
               Write-Host "✅ Submission completed successfully"
-              Write-Host "Submission ID: $($submissionResult.submissionId)"
+
+              if ($submissionResult.submissionId) {
+                Write-Host "Submission ID: $($submissionResult.submissionId)"
+              }
 
               if (-not $autoCommit) {
                 Write-Host "📝 Draft submission created. To publish:"
