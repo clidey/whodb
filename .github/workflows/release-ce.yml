@@ -614,11 +614,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Prepare snap build
-        run: |
-          # Copy the CE snapcraft file to the expected location
-          cp snapcraft-ce.yaml snapcraft.yaml
-
       - name: Build snap from source
         uses: canonical/action-build@v1
         id: build
