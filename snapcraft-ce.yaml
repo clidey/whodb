@@ -41,7 +41,6 @@ apps:
       - gsettings
       - network
       - network-bind
-      - audio-playback
       - opengl
 
 parts:
