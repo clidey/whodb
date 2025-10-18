@@ -611,7 +611,32 @@ jobs:
             Remove-Item $bundleName -Force
           }
 
-          makeappx bundle /d $bundleRoot /p $bundleName /o
+          $makeappxCmd = Get-Command makeappx -ErrorAction SilentlyContinue
+          if (-not $makeappxCmd) {
+            $sdkRoot = "C:\Program Files (x86)\Windows Kits\10\bin"
+            if (Test-Path $sdkRoot) {
+              $sdkVersions = Get-ChildItem -Path $sdkRoot -Directory |
+                Where-Object { $_.Name -match "^10\.\d+\.\d+\.\d+$" } |
+                Sort-Object { [version]($_.Name -replace "^10\.", "") } -Descending
+
+              foreach ($versionDir in $sdkVersions) {
+                $candidate = Join-Path $versionDir.FullName "x64\makeappx.exe"
+                if (Test-Path $candidate) {
+                  $makeappxCmd = Get-Command $candidate -ErrorAction SilentlyContinue
+                  if ($makeappxCmd) {
+                    break
+                  }
+                }
+              }
+            }
+          }
+
+          if (-not $makeappxCmd) {
+            Write-Error "makeappx.exe not found in PATH or Windows SDK directories"
+            exit 1
+          }
+
+          & $makeappxCmd.Source bundle /d $bundleRoot /p $bundleName /o
           if ($LASTEXITCODE -ne 0) {
             Write-Error "makeappx bundle failed with exit code $LASTEXITCODE"
             exit 1
