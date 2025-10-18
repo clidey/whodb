@@ -1069,50 +1069,74 @@ jobs:
               throw
             }
 
-            # Create submission directory
-            Write-Host "Creating submission directory..."
-            $submissionDir = New-Item -ItemType Directory -Path "submission" -Force
-            $submissionPath = Join-Path $submissionDir.FullName "submission.json"
-
-            # Create new submission and save to file
-            Write-Host "Creating new submission for app ID: $appId"
-            New-ApplicationSubmission -AppId $appId -SubmissionDataPath $submissionPath -Force
-
-            if (-not (Test-Path $submissionPath)) {
-              Write-Error "Failed to create submission file at: $submissionPath"
-              exit 1
-            }
-
-            Write-Host "✅ Submission created and saved to: $submissionPath"
-
-            # Update submission with new package
-            Write-Host "Updating submission with MSIX package: $($msixPath.Name)"
-            Update-ApplicationSubmission -AppId $appId -SubmissionDataPath $submissionPath -PackagePath $msixPath.FullName
-
-            Write-Host "✅ Submission updated with package"
-
             # Determine publish mode based on stage_only flag
             if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") {
               Write-Host "📦 STAGE ONLY MODE - Creating draft submission (not publishing)"
-              $publishMode = "Manual"
+              $autoCommit = $false
             } else {
               Write-Host "📦 PRODUCTION MODE - Submitting for immediate publication"
-              $publishMode = "Immediate"
+              $autoCommit = $true
             }
 
-            # Submit to Store
-            Write-Host "Submitting to store with publish mode: $publishMode"
-            $submissionResult = Submit-ApplicationSubmission -AppId $appId -SubmissionDataPath $submissionPath -TargetPublishMode $publishMode
+            # Create package ZIP for upload
+            Write-Host "Creating package ZIP for upload..."
+            $zipPath = "package.zip"
+
+            # Create a ZIP file containing the MSIX bundle
+            Add-Type -Assembly System.IO.Compression.FileSystem
+            if (Test-Path $zipPath) {
+              Remove-Item $zipPath -Force
+            }
+
+            $zip = [System.IO.Compression.ZipFile]::Open($zipPath, 'Create')
+            $entry = $zip.CreateEntry($msixPath.Name, [System.IO.Compression.CompressionLevel]::Optimal)
+            $entryStream = $entry.Open()
+            $fileStream = [System.IO.File]::OpenRead($msixPath.FullName)
+            $fileStream.CopyTo($entryStream)
+            $fileStream.Close()
+            $entryStream.Close()
+            $zip.Dispose()
+
+            Write-Host "✅ Package ZIP created: $zipPath"
+
+            # Use Update-ApplicationSubmission with the simplified approach
+            Write-Host "Submitting to Microsoft Store..."
+
+            # The Update-ApplicationSubmission cmdlet handles everything:
+            # 1. Clones the published submission (or uses existing pending if -SubmissionId is specified)
+            # 2. Updates it with the new package
+            # 3. Commits the submission if -AutoCommit is specified
+
+            $submissionParams = @{
+              AppId = $appId
+              PackagePath = $zipPath
+              ReplacePackages = $true
+              Force = $true
+            }
+
+            if ($autoCommit) {
+              Write-Host "Will auto-commit submission for certification"
+              $submissionParams.AutoCommit = $true
+            } else {
+              Write-Host "Will create draft submission (manual commit required)"
+            }
+
+            # This single command does everything
+            $submissionResult = Update-ApplicationSubmission @submissionParams
 
             if ($submissionResult) {
               Write-Host "✅ Submission completed successfully"
-              if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") {
-                Write-Host "📝 Draft submission created. Manual review and publish required in Partner Center"
+              Write-Host "Submission ID: $($submissionResult.submissionId)"
+
+              if (-not $autoCommit) {
+                Write-Host "📝 Draft submission created. To publish:"
+                Write-Host "   1. Review in Partner Center"
+                Write-Host "   2. Manually commit the submission"
               } else {
-                Write-Host "📝 Submission will be published after Partner Center review"
+                Write-Host "📝 Submission committed and entering certification"
               }
             } else {
-              Write-Error "Submission failed - check Partner Center for details"
+              Write-Error "Failed to create submission"
               exit 1
             }
           }
