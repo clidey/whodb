@@ -47,6 +47,8 @@ export type ChatInput = {
 
 export type Column = {
   __typename?: 'Column';
+  IsForeignKey: Scalars['Boolean']['output'];
+  IsPrimary: Scalars['Boolean']['output'];
   Name: Scalars['String']['output'];
   Type: Scalars['String']['output'];
 };
@@ -72,6 +74,8 @@ export type GraphUnitRelationship = {
   __typename?: 'GraphUnitRelationship';
   Name: Scalars['String']['output'];
   Relationship: GraphUnitRelationshipType;
+  SourceColumn?: Maybe<Scalars['String']['output']>;
+  TargetColumn?: Maybe<Scalars['String']['output']>;
 };
 
 export enum GraphUnitRelationshipType {
@@ -400,12 +404,20 @@ export type GetAiModelsQueryVariables = Exact<{
 
 export type GetAiModelsQuery = { __typename?: 'Query', AIModel: Array<string> };
 
+export type GetColumnsQueryVariables = Exact<{
+  schema: Scalars['String']['input'];
+  storageUnit: Scalars['String']['input'];
+}>;
+
+
+export type GetColumnsQuery = { __typename?: 'Query', Columns: Array<{ __typename?: 'Column', Name: string, Type: string, IsPrimary: boolean, IsForeignKey: boolean }> };
+
 export type GetGraphQueryVariables = Exact<{
   schema: Scalars['String']['input'];
 }>;
 
 
-export type GetGraphQuery = { __typename?: 'Query', Graph: Array<{ __typename?: 'GraphUnit', Unit: { __typename?: 'StorageUnit', Name: string, Attributes: Array<{ __typename?: 'Record', Key: string, Value: string }> }, Relations: Array<{ __typename?: 'GraphUnitRelationship', Name: string, Relationship: GraphUnitRelationshipType }> }> };
+export type GetGraphQuery = { __typename?: 'Query', Graph: Array<{ __typename?: 'GraphUnit', Unit: { __typename?: 'StorageUnit', Name: string, Attributes: Array<{ __typename?: 'Record', Key: string, Value: string }> }, Relations: Array<{ __typename?: 'GraphUnitRelationship', Name: string, Relationship: GraphUnitRelationshipType, SourceColumn?: string | null, TargetColumn?: string | null }> }> };
 
 export type ColumnsQueryVariables = Exact<{
   schema: Scalars['String']['input'];
@@ -413,7 +425,7 @@ export type ColumnsQueryVariables = Exact<{
 }>;
 
 
-export type ColumnsQuery = { __typename?: 'Query', Columns: Array<{ __typename?: 'Column', Name: string, Type: string }> };
+export type ColumnsQuery = { __typename?: 'Query', Columns: Array<{ __typename?: 'Column', Name: string, Type: string, IsPrimary: boolean, IsForeignKey: boolean }> };
 
 export type RawExecuteQueryVariables = Exact<{
   query: Scalars['String']['input'];
@@ -471,7 +483,7 @@ export type GetStorageUnitRowsQueryVariables = Exact<{
 }>;
 
 
-export type GetStorageUnitRowsQuery = { __typename?: 'Query', Row: { __typename?: 'RowsResult', Rows: Array<Array<string>>, DisableUpdate: boolean, Columns: Array<{ __typename?: 'Column', Type: string, Name: string }> } };
+export type GetStorageUnitRowsQuery = { __typename?: 'Query', Row: { __typename?: 'RowsResult', Rows: Array<Array<string>>, DisableUpdate: boolean, Columns: Array<{ __typename?: 'Column', Type: string, Name: string, IsPrimary: boolean, IsForeignKey: boolean }> } };
 
 export type GetStorageUnitsQueryVariables = Exact<{
   schema: Scalars['String']['input'];
@@ -956,6 +968,50 @@ export type GetAiModelsQueryHookResult = ReturnType<typeof useGetAiModelsQuery>;
 export type GetAiModelsLazyQueryHookResult = ReturnType<typeof useGetAiModelsLazyQuery>;
 export type GetAiModelsSuspenseQueryHookResult = ReturnType<typeof useGetAiModelsSuspenseQuery>;
 export type GetAiModelsQueryResult = Apollo.QueryResult<GetAiModelsQuery, GetAiModelsQueryVariables>;
+export const GetColumnsDocument = gql`
+    query GetColumns($schema: String!, $storageUnit: String!) {
+  Columns(schema: $schema, storageUnit: $storageUnit) {
+    Name
+    Type
+    IsPrimary
+    IsForeignKey
+  }
+}
+    `;
+
+/**
+ * __useGetColumnsQuery__
+ *
+ * To run a query within a React component, call `useGetColumnsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetColumnsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetColumnsQuery({
+ *   variables: {
+ *      schema: // value for 'schema'
+ *      storageUnit: // value for 'storageUnit'
+ *   },
+ * });
+ */
+export function useGetColumnsQuery(baseOptions: Apollo.QueryHookOptions<GetColumnsQuery, GetColumnsQueryVariables> & ({ variables: GetColumnsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetColumnsQuery, GetColumnsQueryVariables>(GetColumnsDocument, options);
+      }
+export function useGetColumnsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetColumnsQuery, GetColumnsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetColumnsQuery, GetColumnsQueryVariables>(GetColumnsDocument, options);
+        }
+export function useGetColumnsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetColumnsQuery, GetColumnsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetColumnsQuery, GetColumnsQueryVariables>(GetColumnsDocument, options);
+        }
+export type GetColumnsQueryHookResult = ReturnType<typeof useGetColumnsQuery>;
+export type GetColumnsLazyQueryHookResult = ReturnType<typeof useGetColumnsLazyQuery>;
+export type GetColumnsSuspenseQueryHookResult = ReturnType<typeof useGetColumnsSuspenseQuery>;
+export type GetColumnsQueryResult = Apollo.QueryResult<GetColumnsQuery, GetColumnsQueryVariables>;
 export const GetGraphDocument = gql`
     query GetGraph($schema: String!) {
   Graph(schema: $schema) {
@@ -969,6 +1025,8 @@ export const GetGraphDocument = gql`
     Relations {
       Name
       Relationship
+      SourceColumn
+      TargetColumn
     }
   }
 }
@@ -1011,6 +1069,8 @@ export const ColumnsDocument = gql`
   Columns(schema: $schema, storageUnit: $storageUnit) {
     Name
     Type
+    IsPrimary
+    IsForeignKey
   }
 }
     `;
@@ -1282,6 +1342,8 @@ export const GetStorageUnitRowsDocument = gql`
     Columns {
       Type
       Name
+      IsPrimary
+      IsForeignKey
     }
     Rows
     DisableUpdate

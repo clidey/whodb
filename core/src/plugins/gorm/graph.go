@@ -24,9 +24,11 @@ import (
 )
 
 type tableRelations struct {
-	Table1   string
-	Table2   string
-	Relation string
+	Table1       string
+	Table2       string
+	Relation     string
+	SourceColumn *string
+	TargetColumn *string
 }
 
 func (p *GormPlugin) GetGraph(config *engine.PluginConfig, schema string) ([]engine.GraphUnit, error) {
@@ -44,7 +46,12 @@ func (p *GormPlugin) GetGraph(config *engine.PluginConfig, schema string) ([]eng
 
 		tableMap := make(map[string][]engine.GraphUnitRelationship)
 		for _, tr := range tableRelations {
-			tableMap[tr.Table1] = append(tableMap[tr.Table1], engine.GraphUnitRelationship{Name: tr.Table2, RelationshipType: engine.GraphUnitRelationshipType(tr.Relation)})
+			tableMap[tr.Table1] = append(tableMap[tr.Table1], engine.GraphUnitRelationship{
+			Name:             tr.Table2,
+			RelationshipType: engine.GraphUnitRelationshipType(tr.Relation),
+			SourceColumn:     tr.SourceColumn,
+			TargetColumn:     tr.TargetColumn,
+		})
 		}
 
 		storageUnits, err := p.GetStorageUnits(config, schema)

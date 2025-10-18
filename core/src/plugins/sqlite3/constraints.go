@@ -68,8 +68,9 @@ func (p *Sqlite3Plugin) GetColumnConstraints(config *engine.PluginConfig, schema
 			}
 			constraints[name]["nullable"] = notNull == 0
 
-			// Primary key columns are unique
+			// Primary key columns
 			if pk == 1 {
+				constraints[name]["primary"] = true
 				constraints[name]["unique"] = true
 			}
 		}

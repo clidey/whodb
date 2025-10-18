@@ -15,6 +15,7 @@
  */
 
 import {
+    Badge,
     Button,
     cn,
     Drawer,
@@ -33,6 +34,8 @@ import {
     SheetContent,
     SheetFooter,
     SheetTitle,
+    StackList,
+    StackListItem,
     toast
 } from "@clidey/ux";
 import {
@@ -43,10 +46,13 @@ import {
     SortDirection,
     StorageUnit,
     useAddRowMutation,
+    useColumnsLazyQuery,
     useGetStorageUnitRowsLazyQuery,
+    useGetStorageUnitsLazyQuery,
     useRawExecuteLazyQuery,
     useUpdateStorageUnitMutation,
-    WhereCondition
+    WhereCondition,
+    WhereConditionType
 } from '@graphql';
 import keys from "lodash/keys";
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -103,6 +109,15 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     const [addRowData, setAddRowData] = useState<Record<string, any>>({});
     const [addRowError, setAddRowError] = useState<string | null>(null);
 
+    // Entity search sheet state
+    const [showEntitySearchSheet, setShowEntitySearchSheet] = useState(false);
+    const [entitySearchData, setEntitySearchData] = useState<{
+        columnName: string;
+        value: string;
+        targetTable: string;
+    } | null>(null);
+    const [entitySearchResults, setEntitySearchResults] = useState<RowsResult | null>(null);
+
     const [updateStorageUnit, {loading: updating}] = useUpdateStorageUnitMutation();
 
     // For databases that don't have schemas (MongoDB, ClickHouse), pass the database name as the schema parameter
@@ -117,6 +132,8 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         },
         fetchPolicy: "no-cache",
     });
+    const [getStorageUnits] = useGetStorageUnitsLazyQuery();
+    const [getColumns] = useColumnsLazyQuery();
     const [addRow, { loading: adding }] = useAddRowMutation();
     const [rawExecute, { data: rawExecuteData }] = useRawExecuteLazyQuery();
 
@@ -264,9 +281,14 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         ];
     }, [current]);
     
-    const {columns, columnTypes} = useMemo(() => {
+    const {columns, columnTypes, columnIsPrimary, columnIsForeignKey} = useMemo(() => {
         const dataColumns = rows?.Columns.map(c => c.Name) ?? [];
-        return {columns: dataColumns, columnTypes: rows?.Columns.map(column => column.Type)};
+        return {
+            columns: dataColumns,
+            columnTypes: rows?.Columns.map(column => column.Type),
+            columnIsPrimary: rows?.Columns.map(column => column.IsPrimary),
+            columnIsForeignKey: rows?.Columns.map(column => column.IsForeignKey)
+        };
     }, [rows?.Columns, rows?.Rows]);
 
     useEffect(() => {
@@ -418,6 +440,121 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         return {whereColumns: columns, whereColumnTypes: columnTypes}
     }, [rows?.Columns, rows?.Rows, current?.Type])
 
+    // Foreign key detection logic
+    const [allTableNames, setAllTableNames] = useState<Set<string>>(new Set());
+    
+    const isValidForeignKey = useCallback((columnName: string) => {
+        // Check for both singular and plural table names
+        if (columnName.endsWith("_id")) {
+            const base = columnName.slice(0, -3);
+            return allTableNames.has(base) || allTableNames.has(base + "s");
+        }
+        return false;
+    }, [allTableNames]);
+
+    const getTargetTableName = useCallback((columnName: string) => {
+        if (columnName.endsWith("_id")) {
+            const base = columnName.slice(0, -3);
+            if (allTableNames.has(base)) {
+                return base;
+            } else if (allTableNames.has(base + "s")) {
+                return base + "s";
+            }
+        }
+        return null;
+    }, [allTableNames]);
+
+    // Load all table names for foreign key detection
+    useEffect(() => {
+        if (schema) {
+            getStorageUnits({
+                variables: { schema },
+                onCompleted: (data) => {
+                    const tableNames = new Set(data.StorageUnit?.map(unit => unit.Name) || []);
+                    setAllTableNames(tableNames);
+                }
+            });
+        }
+    }, [schema, getStorageUnits]);
+
+    // Get primary key column name from rows
+    const getPrimaryKeyColumn = useCallback(() => {
+        if (!rows?.Columns) {
+            return null;
+        }
+        const primaryColumn = rows.Columns.find(col => col.IsPrimary);
+        return primaryColumn?.Name || null;
+    }, [rows?.Columns]);
+
+    // Entity search functionality
+    const handleEntitySearch = useCallback((columnName: string, value: string) => {
+        const targetTable = getTargetTableName(columnName);
+        if (!targetTable) {
+            toast.error("Could not determine target table for foreign key");
+            return;
+        }
+
+        setEntitySearchData({
+            columnName,
+            value,
+            targetTable
+        });
+
+        // First, fetch the target table's column metadata to find its primary key
+        getColumns({
+            variables: {
+                schema,
+                storageUnit: targetTable
+            },
+            onCompleted: (columnsData) => {
+                // Find the primary key column in the target table
+                const targetPrimaryKey = columnsData.Columns?.find(col => col.IsPrimary);
+
+                if (!targetPrimaryKey) {
+                    toast.error(`No primary key found for table ${targetTable}`);
+                    return;
+                }
+
+                const primaryKeyName = targetPrimaryKey.Name;
+
+                // Now search for the entity using the correct primary key
+                getStorageUnitRows({
+                    variables: {
+                        schema,
+                        storageUnit: targetTable,
+                        where: {
+                            Type: WhereConditionType.Atomic,
+                            Atomic: {
+                                Key: primaryKeyName,
+                                Operator: "=",
+                                Value: value,
+                                ColumnType: "string"
+                            }
+                        },
+                        pageSize: 1,
+                        pageOffset: 0
+                    },
+                    onCompleted: (data) => {
+                        setEntitySearchResults(data.Row);
+                        setShowEntitySearchSheet(true);
+                    },
+                    onError: (error) => {
+                        toast.error(`Failed to search for entity: ${error.message}`);
+                    }
+                });
+            },
+            onError: (error) => {
+                toast.error(`Failed to get target table structure: ${error.message}`);
+            }
+        });
+    }, [getColumns, getStorageUnitRows, getTargetTableName, schema]);
+
+    const handleCloseEntitySearchSheet = useCallback(() => {
+        setShowEntitySearchSheet(false);
+        setEntitySearchData(null);
+        setEntitySearchResults(null);
+    }, []);
+
     if (unit == null) {
         return <Navigate to={InternalRoutes.Dashboard.StorageUnit.path} />
     }
@@ -560,10 +697,12 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 {
                     rows != null &&
                     <StorageUnitTable
-                        columns={columns} 
-                        rows={rows.Rows} 
-                        onRowUpdate={handleRowUpdate} 
+                        columns={columns}
+                        rows={rows.Rows}
+                        onRowUpdate={handleRowUpdate}
                         columnTypes={columnTypes}
+                        columnIsPrimary={columnIsPrimary}
+                        columnIsForeignKey={columnIsForeignKey}
                         schema={schema}
                         storageUnit={unitName}
                         onRefresh={handleSubmitRequest}
@@ -576,6 +715,9 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                         currentPage={currentPage}
                         onPageChange={handlePageChange}
                         showPagination={true}
+                        // Foreign key functionality
+                        isValidForeignKey={isValidForeignKey}
+                        onEntitySearch={handleEntitySearch}
                     >
                         <div className="flex gap-2">
                             <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-row-button">
@@ -617,5 +759,48 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 />
             </DrawerContent>
         </Drawer>
+        <Sheet open={showEntitySearchSheet} onOpenChange={setShowEntitySearchSheet}>
+            <SheetContent side="right" className="flex flex-col p-8">
+                <div className="text-lg font-semibold mb-4">
+                    Entity Details
+                    {entitySearchData && (
+                        <div className="text-sm text-gray-500 mt-1">
+                            {entitySearchData.targetTable} (ID: {entitySearchData.value})
+                        </div>
+                    )}
+                </div>
+                <div className="flex-1 overflow-y-auto pr-2">
+                    {entitySearchResults && entitySearchResults.Rows.length > 0 ? (
+                        <div className="flex flex-col gap-4">
+                            <StackList>
+                                {entitySearchResults.Columns.map((column, index) => (
+                                    <StackListItem 
+                                        key={column.Name} 
+                                        item={
+                                            isValidForeignKey(column.Name) ? (
+                                                <Badge className="text-lg" data-testid="foreign-key-attribute">
+                                                    {column.Name}
+                                                </Badge>
+                                            ) : column.Name
+                                        }
+                                    >
+                                        {entitySearchResults.Rows[0][index]}
+                                    </StackListItem>
+                                ))}
+                            </StackList>
+                        </div>
+                    ) : (
+                        <div className="text-center text-gray-500 py-8">
+                            No entity found with the specified ID
+                        </div>
+                    )}
+                </div>
+                <SheetFooter className="px-0 pt-4 border-t">
+                    <Button onClick={handleCloseEntitySearchSheet} variant="outline">
+                        Close
+                    </Button>
+                </SheetFooter>
+            </SheetContent>
+        </Sheet>
     </InternalPage>
 }

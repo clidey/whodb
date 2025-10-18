@@ -15,7 +15,7 @@
  */
 
 import { FC, useCallback } from 'react';
-import { ConnectionLineComponentProps, EdgeProps, Node, getBezierPath, useStore } from 'reactflow';
+import { ConnectionLineComponentProps, EdgeProps, Node, Position, getBezierPath, getSimpleBezierPath, useStore } from 'reactflow';
 import { getEdgeParams } from './utils';
 
 export const GraphEdgeConnectionLine: FC<ConnectionLineComponentProps> = ({ toX, toY, fromPosition, toPosition, fromNode }) => {
@@ -61,7 +61,7 @@ export const GraphEdgeConnectionLine: FC<ConnectionLineComponentProps> = ({ toX,
   );
 }
 
-export const FloatingGraphEdge: FC<EdgeProps> = ({ id, source, target, markerEnd, style }) => {
+export const FloatingGraphEdge: FC<EdgeProps> = ({ id, source, target, sourceHandleId, targetHandleId, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, markerEnd, style }) => {
   const sourceNode = useStore(useCallback((store) => store.nodeInternals.get(source), [source]));
   const targetNode = useStore(useCallback((store) => store.nodeInternals.get(target), [target]));
 
@@ -69,16 +69,32 @@ export const FloatingGraphEdge: FC<EdgeProps> = ({ id, source, target, markerEnd
     return null;
   }
 
-  const { sx, sy, tx, ty, sourcePos, targetPos } = getEdgeParams(sourceNode, targetNode);
+  // If handles are specified and we have coordinates from React Flow, use them
+  // Otherwise fallback to floating edge calculation
+  let edgePath: string;
 
-  const [edgePath] = getBezierPath({
-    sourceX: sx,
-    sourceY: sy,
-    sourcePosition: sourcePos,
-    targetPosition: targetPos,
-    targetX: tx,
-    targetY: ty,
-  });
+  if (sourceHandleId && targetHandleId && sourceX !== undefined && sourceY !== undefined && targetX !== undefined && targetY !== undefined) {
+    // React Flow has calculated handle positions for us
+    [edgePath] = getBezierPath({
+      sourceX,
+      sourceY,
+      sourcePosition: sourcePosition || Position.Right,
+      targetPosition: targetPosition || Position.Left,
+      targetX,
+      targetY,
+    });
+  } else {
+    // Fallback to floating edge calculation
+    const { sx, sy, tx, ty, sourcePos, targetPos } = getEdgeParams(sourceNode, targetNode);
+    [edgePath] = getBezierPath({
+      sourceX: sx,
+      sourceY: sy,
+      sourcePosition: sourcePos,
+      targetPosition: targetPos,
+      targetX: tx,
+      targetY: ty,
+    });
+  }
 
   return (
     <path
