@@ -24,7 +24,14 @@ description: |
 base: core22
 confinement: strict
 grade: stable
-adopt-info: whodb
+title: WhoDB
+license: Apache-2.0
+contact: mailto:support@whodb.com
+website: https://whodb.com
+source-code: https://github.com/clidey/whodb
+issues: https://github.com/clidey/whodb/issues
+donation: https://github.com/sponsors/clidey
+icon: linux/icon.png
 
 architectures:
   - build-on: amd64
@@ -74,11 +81,6 @@ parts:
     plugin: nil
     source: .
     source-type: local
-    override-pull: |
-      craftctl default
-      if [ -n "$SNAPCRAFT_PROJECT_VERSION" ]; then
-        craftctl set version="$SNAPCRAFT_PROJECT_VERSION"
-      fi
     build-environment:
       - CGO_ENABLED: "1"
       - PATH: "/snap/go/current/bin:$PATH"
@@ -97,6 +99,25 @@ parts:
       - libgtk-3-0
       - libwebkit2gtk-4.0-37
       - libwebkit2gtk-4.1-0
+    prime:
+      - -usr/lib/*/caca/libgl_plugin.so.*
+      - -usr/lib/*/libcaca++.so.*
+      - -usr/lib/*/libcolordprivate.so.*
+      - -usr/lib/*/libdconf.so.*
+      - -usr/lib/*/libexslt.so.*
+      - -usr/lib/*/libgstcheck-1.0.so.*
+      - -usr/lib/*/libgstcontroller-1.0.so.*
+      - -usr/lib/*/libicuio.so.*
+      - -usr/lib/*/libicutest.so.*
+      - -usr/lib/*/libjacknet.so.*
+      - -usr/lib/*/libjackserver.so.*
+      - -usr/lib/*/liborc-test-0.4.so.*
+      - -usr/lib/*/libpulse-simple.so.*
+      - -usr/lib/*/libunwind-*.so.*
+      - -usr/lib/*/libwoff2enc.so.*
+      - -usr/lib/*/libEGL_mesa.so.*
+      - -usr/lib/*/libGLESv2.so.*
+      - -usr/lib/*/libGLX_mesa.so.*
     override-build: |
       # Copy frontend build from previous part
       mkdir -p desktop-ce/frontend/dist
@@ -118,6 +139,11 @@ parts:
   desktop-file:
     plugin: dump
     source: linux
-    organize:
-      whodb.desktop: share/applications/whodb.desktop
-      icon.png: share/icons/hicolor/256x256/apps/whodb.png
+    override-build: |
+      install -D whodb.desktop $CRAFT_PART_INSTALL/share/applications/whodb.desktop
+      install -D icon.png $CRAFT_PART_INSTALL/share/icons/hicolor/256x256/apps/whodb.png
+      install -D icon.png $CRAFT_PART_INSTALL/meta/gui/whodb.png
+    prime:
+      - share/applications/whodb.desktop
+      - share/icons/hicolor/256x256/apps/whodb.png
+      - meta/gui/whodb.png
