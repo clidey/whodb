@@ -662,29 +662,12 @@ jobs:
             arch: arm64
     runs-on: ${{ matrix.runner }}
     env:
-      WHODB_RELEASE_VERSION: ${{ needs.calculate-version.outputs.version }}
+      SNAPCRAFT_PROJECT_VERSION: ${{ needs.calculate-version.outputs.version }}
     needs: [ calculate-version ]
     continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Inject Snap version
-        run: |
-          python3 - <<'PY'
-          import os
-          import pathlib
-          import re
-
-          version = os.environ["WHODB_RELEASE_VERSION"]
-          path = pathlib.Path("snapcraft.yaml")
-          data = path.read_text()
-          pattern = re.compile(r"^version:\s*.*$", re.MULTILINE)
-          if not pattern.search(data):
-              raise SystemExit("Failed to locate version field in snapcraft.yaml")
-          data = pattern.sub(f"version: {version}", data, count=1)
-          path.write_text(data)
-          PY
 
       - name: Build snap from source
         uses: canonical/action-build@v1
@@ -700,11 +683,11 @@ jobs:
       - name: Sanity check snap version
         run: |
           SNAP_BASENAME=$(basename "$SNAP_FILE")
-          if [[ "$SNAP_BASENAME" != *"_${WHODB_RELEASE_VERSION}_"* ]]; then
-            echo "::error::Snap filename $SNAP_BASENAME does not contain version ${WHODB_RELEASE_VERSION}"
+          if [[ "$SNAP_BASENAME" != *"_${SNAPCRAFT_PROJECT_VERSION}_"* ]]; then
+            echo "::error::Snap filename $SNAP_BASENAME does not contain version ${SNAPCRAFT_PROJECT_VERSION}"
             exit 1
           fi
-          echo "✓ Snap filename includes version ${WHODB_RELEASE_VERSION}"
+          echo "✓ Snap filename includes version ${SNAPCRAFT_PROJECT_VERSION}"
 
       - name: Upload snap artifact
         uses: actions/upload-artifact@v4

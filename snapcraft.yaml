@@ -24,6 +24,7 @@ description: |
 base: core22
 confinement: strict
 grade: stable
+adopt-info: versioner
 title: WhoDB
 license: Apache-2.0
 contact: mailto:support@whodb.com
@@ -75,6 +76,13 @@ parts:
       # Stage the build output for the next part
       mkdir -p $SNAPCRAFT_PART_INSTALL/frontend-dist
       cp -r build/* $SNAPCRAFT_PART_INSTALL/frontend-dist/
+
+  versioner:
+    plugin: nil
+    override-pull: |
+      craftctl default
+      version="${SNAPCRAFT_PROJECT_VERSION:-$(git describe --tags --dirty --always)}"
+      craftctl set version="$version"
 
   whodb:
     after: [ frontend ]
