@@ -1243,22 +1243,43 @@ jobs:
 
             Write-Host "Preparing to update submission with MSIX package: $($msixPath.Name)"
 
-            $submissionData = @{
-              applicationPackages = @()
+            # Create minimal config for New-SubmissionPackage
+            $configPath = Join-Path $PWD "config.json"
+            $config = @{
+              appSubmission = @{}
             }
+            $config | ConvertTo-Json -Depth 10 | Out-File $configPath -Encoding UTF8
 
-            if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") {
-              $submissionData.targetPublishMode = "Manual"
-            }
+            # Use New-SubmissionPackage to create proper package structure
+            Write-Host "Creating submission package..."
+            New-SubmissionPackage -ConfigPath $configPath -AppxPath $msixPath.FullName -OutPath $PWD -OutName "submission"
 
+            # Load the generated submission JSON
             $submissionDataPath = Join-Path $PWD "submission.json"
-            $submissionData | ConvertTo-Json -Depth 10 | Out-File $submissionDataPath -Encoding UTF8
+            $submissionJson = Get-Content $submissionDataPath -Raw | ConvertFrom-Json
+
+            # Clean bad enum fields
+            Write-Host "Cleaning submission metadata..."
+
+            # Remove applicationCategory if it's NotSet
+            if ($submissionJson.PSObject.Properties["applicationCategory"] -and $submissionJson.applicationCategory -eq "NotSet") {
+              $submissionJson.PSObject.Properties.Remove('applicationCategory')
+            }
+
+            # Remove targetPublishDate if present (not needed for Manual/Immediate)
+            if ($submissionJson.PSObject.Properties["targetPublishDate"]) {
+              $submissionJson.PSObject.Properties.Remove('targetPublishDate')
+            }
+
+            # Set targetPublishMode for stage-only
+            if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") {
+              $submissionJson.targetPublishMode = "Manual"
+            }
+
+            # Save cleaned JSON
+            $submissionJson | ConvertTo-Json -Depth 10 | Out-File $submissionDataPath -Encoding UTF8
 
             $zipPath = Join-Path $PWD "submission.zip"
-            if (Test-Path $zipPath) {
-              Remove-Item $zipPath -Force
-            }
-            Compress-Archive -Path $msixPath.FullName -DestinationPath $zipPath -CompressionLevel Optimal
 
             # Check for and delete any existing pending submission
             Write-Host "Checking for existing pending submission..."
