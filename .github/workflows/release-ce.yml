@@ -669,6 +669,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set snap version
+        run: |
+          echo "Setting snap version to: ${{ needs.calculate-version.outputs.version }}"
+          sed -i "s/^version: git$/version: ${{ needs.calculate-version.outputs.version }}/" snapcraft.yaml
+          echo "Snap version set in snapcraft.yaml"
+
       - name: Build snap from source
         uses: canonical/action-build@v1
         id: build
