@@ -1116,6 +1116,7 @@ jobs:
               }
               appSubmission = @{
                 # Basic submission properties that remain static
+                applicationCategory = "DeveloperTools"
                 targetPublishMode = if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") { "Manual" } else { "Immediate" }
                 targetPublishDate = ""
                 visibility = "Public"
