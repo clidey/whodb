@@ -1061,9 +1061,12 @@ jobs:
     runs-on: windows-latest
     needs: [ calculate-version, package-windows-msix, deploy-snap ]
     if: |
+      always() &&
       needs.calculate-version.outputs.dry_run == 'false' &&
       needs.calculate-version.outputs.deploy_microsoft == 'true' &&
-      (needs.calculate-version.outputs.stage_only == 'true' || needs.deploy-snap.result == 'success')
+      needs.package-windows-msix.result == 'success' &&
+      (needs.calculate-version.outputs.stage_only == 'true' ||
+       (needs.calculate-version.outputs.deployment_mode == 'production' && needs.deploy-snap.result == 'success'))
     continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
     steps:
       - name: Checkout for scripts
@@ -1378,9 +1381,12 @@ jobs:
     runs-on: macos-latest
     needs: [ calculate-version, package-mac-app-store, deploy-snap ]
     if: |
+      always() &&
       needs.calculate-version.outputs.dry_run == 'false' &&
       needs.calculate-version.outputs.deploy_apple == 'true' &&
-      (needs.calculate-version.outputs.stage_only == 'true' || needs.deploy-snap.result == 'success')
+      needs.package-mac-app-store.result == 'success' &&
+      (needs.calculate-version.outputs.stage_only == 'true' ||
+       (needs.calculate-version.outputs.deployment_mode == 'production' && needs.deploy-snap.result == 'success'))
     continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
     steps:
       - name: Checkout for scripts
@@ -1544,10 +1550,18 @@ jobs:
     if: |
       always() &&
       needs.calculate-version.result == 'success' &&
-      (needs.calculate-version.outputs.stage_only == 'true' ||
-       (needs.deploy-snap.result == 'success' &&
-        needs.deploy-microsoft-store.result == 'success' &&
-        needs.deploy-apple-store.result == 'success'))
+      needs.calculate-version.outputs.dry_run == 'false' &&
+      (
+        (needs.calculate-version.outputs.stage_only == 'true' && (
+          (needs.calculate-version.outputs.deploy_snap == 'true' && needs.deploy-snap.result == 'success') ||
+          (needs.calculate-version.outputs.deploy_microsoft == 'true' && needs.deploy-microsoft-store.result == 'success') ||
+          (needs.calculate-version.outputs.deploy_apple == 'true' && needs.deploy-apple-store.result == 'success')
+        )) ||
+        (needs.calculate-version.outputs.deployment_mode == 'production' &&
+         needs.deploy-snap.result == 'success' &&
+         needs.deploy-microsoft-store.result == 'success' &&
+         needs.deploy-apple-store.result == 'success')
+      )
     continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
     permissions:
       contents: write
