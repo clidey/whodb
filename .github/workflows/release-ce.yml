@@ -1116,7 +1116,7 @@ jobs:
               }
               appSubmission = @{
                 # Basic submission properties that remain static
-                applicationCategory = "DeveloperTools"
+                applicationCategory = "DeveloperTools_Database"
                 targetPublishMode = if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") { "Manual" } else { "Immediate" }
                 targetPublishDate = ""
                 visibility = "Public"
@@ -1133,6 +1133,17 @@ jobs:
                 }
                 allowMicrosoftDecideAppAvailabilityToFutureDeviceFamilies = $true
                 enterpriseLicensing = "None"
+
+                # Additional fields that may be required
+                hardwarePreferences = @()  # No specific hardware requirements
+                hasExternalInAppProducts = $false
+                meetAccessibilityGuidelines = $true
+                canInstallOnRemovableMedia = $true
+                automaticBackupEnabled = $false
+                isGameDvrEnabled = $false
+
+                # Ensure package configuration is included
+                applicationPackages = @()  # Will be populated by StoreBroker
               }
             } | ConvertTo-Json -Depth 10
 
