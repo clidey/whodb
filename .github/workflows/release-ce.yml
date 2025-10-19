@@ -1194,6 +1194,8 @@ jobs:
               AppId = $appId
               SubmissionDataPath = $submissionDataPath
               PackagePath = $zipPath
+              UpdateAppProperties = $true  # Required to update applicationCategory and other app properties
+              ReplacePackages = $true      # Replace existing packages with new ones
               Force = $true
             }
 
