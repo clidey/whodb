@@ -1271,13 +1271,20 @@ jobs:
               $submissionJson.PSObject.Properties.Remove('targetPublishDate')
             }
 
-            # Set targetPublishMode for stage-only
+            # Set targetPublishMode based on deployment type
             if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") {
-              # Add the property if it doesn't exist, or update it if it does
+              # Stage-only: Set to Manual
               if ($submissionJson.PSObject.Properties["targetPublishMode"]) {
                 $submissionJson.targetPublishMode = "Manual"
               } else {
                 $submissionJson | Add-Member -NotePropertyName "targetPublishMode" -NotePropertyValue "Manual"
+              }
+            } else {
+              # Production: Set to Immediate
+              if ($submissionJson.PSObject.Properties["targetPublishMode"]) {
+                $submissionJson.targetPublishMode = "Immediate"
+              } else {
+                $submissionJson | Add-Member -NotePropertyName "targetPublishMode" -NotePropertyValue "Immediate"
               }
             }
 
