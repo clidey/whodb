@@ -1029,6 +1029,10 @@ jobs:
           Install-Module -Name StoreBroker -Force -Scope CurrentUser -AllowClobber
           Import-Module StoreBroker
 
+          # Disable StoreBroker telemetry as per their documentation
+          Write-Host "Disabling StoreBroker telemetry..."
+          $global:SBDisableTelemetry = $true
+
           # Validate credentials are available
           if ([string]::IsNullOrWhiteSpace($env:MS_TENANT_ID) -or
               [string]::IsNullOrWhiteSpace($env:MS_CLIENT_ID) -or
@@ -1142,8 +1146,7 @@ jobs:
                 automaticBackupEnabled = $false
                 isGameDvrEnabled = $false
 
-                # Ensure package configuration is included
-                applicationPackages = @()  # Will be populated by StoreBroker
+                # Note: applicationPackages will be added automatically by StoreBroker
               }
             } | ConvertTo-Json -Depth 10
 
