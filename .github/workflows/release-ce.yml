@@ -1273,7 +1273,12 @@ jobs:
 
             # Set targetPublishMode for stage-only
             if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") {
-              $submissionJson.targetPublishMode = "Manual"
+              # Add the property if it doesn't exist, or update it if it does
+              if ($submissionJson.PSObject.Properties["targetPublishMode"]) {
+                $submissionJson.targetPublishMode = "Manual"
+              } else {
+                $submissionJson | Add-Member -NotePropertyName "targetPublishMode" -NotePropertyValue "Manual"
+              }
             }
 
             # Save cleaned JSON
