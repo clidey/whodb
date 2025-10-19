@@ -905,7 +905,7 @@ jobs:
       - name: Upload deployment manifest
         uses: actions/upload-artifact@v4
         with:
-          name: deployment-manifest
+          name: deployment-manifest-validated
           path: deployment_manifest.json
           retention-days: 1
 
@@ -948,8 +948,22 @@ jobs:
       - name: Download deployment manifest
         uses: actions/download-artifact@v4
         with:
-          name: deployment-manifest
+          name: deployment-manifest-validated
           path: .
+        continue-on-error: true
+
+      - name: Initialize manifest if needed
+        run: |
+          if [ ! -f "deployment_manifest.json" ]; then
+            echo "Initializing deployment manifest..."
+            cat > deployment_manifest.json <<EOF
+          {
+            "version": "${{ needs.calculate-version.outputs.version }}",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "deployments": {}
+          }
+          EOF
+          fi
 
       - name: Check Snapcraft credentials availability
         id: check_snap_creds
@@ -1122,8 +1136,21 @@ jobs:
       - name: Download deployment manifest
         uses: actions/download-artifact@v4
         with:
-          name: deployment-manifest-snap
+          name: deployment-manifest-validated
           path: .
+        continue-on-error: true
+
+      - name: Initialize manifest if needed
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "deployment_manifest.json")) {
+            Write-Host "Initializing deployment manifest..."
+            @{
+              version = "${{ needs.calculate-version.outputs.version }}"
+              timestamp = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
+              deployments = @{}
+            } | ConvertTo-Json | Out-File -FilePath "deployment_manifest.json"
+          }
 
       - name: Setup and Submit to Microsoft Store
         shell: pwsh
@@ -1436,9 +1463,22 @@ jobs:
       - name: Download deployment manifest
         uses: actions/download-artifact@v4
         with:
-          name: deployment-manifest-snap
+          name: deployment-manifest-validated
           path: .
         continue-on-error: true
+
+      - name: Initialize manifest if needed
+        run: |
+          if [ ! -f "deployment_manifest.json" ]; then
+            echo "Initializing deployment manifest..."
+            cat > deployment_manifest.json <<EOF
+          {
+            "version": "${{ needs.calculate-version.outputs.version }}",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "deployments": {}
+          }
+          EOF
+          fi
 
       - name: Setup App Store Connect API Key
         env:
@@ -1572,9 +1612,22 @@ jobs:
       - name: Download deployment manifest
         uses: actions/download-artifact@v4
         with:
-          name: deployment-manifest-snap
+          name: deployment-manifest-validated
           path: .
         continue-on-error: true
+
+      - name: Initialize manifest if needed
+        run: |
+          if [ ! -f "deployment_manifest.json" ]; then
+            echo "Initializing deployment manifest..."
+            cat > deployment_manifest.json <<EOF
+          {
+            "version": "${{ needs.calculate-version.outputs.version }}",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "deployments": {}
+          }
+          EOF
+          fi
 
       - name: Download all signed artifacts
         uses: actions/download-artifact@v4
