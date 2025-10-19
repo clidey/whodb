@@ -1241,61 +1241,22 @@ jobs:
               $autoCommit = $true
             }
 
-            # Create StoreBroker configuration file first
-            Write-Host "Creating StoreBroker configuration..."
-            $configPath = Join-Path $PWD "storebroker-config.json"
+            Write-Host "Preparing to update submission with MSIX package: $($msixPath.Name)"
 
-            # Create a minimal StoreBroker configuration
-            # This config is required by New-SubmissionPackage
-            # We keep it absolutely minimal - ONLY updating the MSIX package
-            $storeBrokerConfig = @{
-              packageParameters = @{}  # Empty - no PDP files
-              appSubmission = @{
-                appId = $appId
-                # Only set publish mode - everything else stays unchanged
-                targetPublishMode = if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") { "Manual" } else { "Immediate" }
-              }
+            $submissionData = @{}
+
+            if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") {
+              $submissionData.targetPublishMode = "Manual"
             }
 
-            # Convert to JSON with proper formatting
-            $jsonConfig = $storeBrokerConfig | ConvertTo-Json -Depth 10 -Compress
-
-            # Ensure no BOM and proper encoding
-            [System.IO.File]::WriteAllText($configPath, $jsonConfig, [System.Text.Encoding]::UTF8)
-
-            Write-Host "✅ StoreBroker configuration created: $configPath"
-
-            # Debug: Show the config for verification
-            Write-Host "Config content:"
-            Write-Host $jsonConfig
-
-            # Create submission package using StoreBroker
-            Write-Host "Creating submission package..."
-            try {
-              $packageResult = New-SubmissionPackage -ConfigPath $configPath -AppxPath $msixPath.FullName -OutPath $PWD -OutName "submission"
-              Write-Host "✅ Submission package created successfully"
-            }
-            catch {
-              Write-Error "Failed to create submission package: $_"
-              exit 1
-            }
-
-            # The package creates submission.json and submission.zip
             $submissionDataPath = Join-Path $PWD "submission.json"
+            $submissionData | ConvertTo-Json -Depth 10 | Out-File $submissionDataPath -Encoding UTF8
+
             $zipPath = Join-Path $PWD "submission.zip"
-
-            if (-not (Test-Path $submissionDataPath)) {
-              Write-Error "Submission JSON not found at: $submissionDataPath"
-              exit 1
+            if (Test-Path $zipPath) {
+              Remove-Item $zipPath -Force
             }
-            if (-not (Test-Path $zipPath)) {
-              Write-Error "Submission ZIP not found at: $zipPath"
-              exit 1
-            }
-
-            Write-Host "✅ Submission files verified:"
-            Write-Host "  - JSON: $submissionDataPath"
-            Write-Host "  - ZIP: $zipPath"
+            Compress-Archive -Path $msixPath.FullName -DestinationPath $zipPath -CompressionLevel Optimal
 
             # Check for and delete any existing pending submission
             Write-Host "Checking for existing pending submission..."
@@ -1315,76 +1276,18 @@ jobs:
               Write-Host "No existing pending submission to delete"
             }
 
-            # Use Update-ApplicationSubmission with the generated package
             Write-Host "Creating new submission to Microsoft Store..."
-
-            # Load and sanitize the submission JSON
-            Write-Host "Loading and sanitizing submission JSON..."
-            $submissionJson = Get-Content $submissionDataPath -Raw | ConvertFrom-Json
-
-            # Set the target publish mode explicitly
-            if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") {
-              $submissionJson.targetPublishMode = "Manual"
-              Write-Host "Set targetPublishMode to Manual (stage-only)"
-            } else {
-              $submissionJson.targetPublishMode = "Immediate"
-              Write-Host "Set targetPublishMode to Immediate (production)"
-            }
-
-            # According to Microsoft docs, targetPublishDate should ONLY exist when mode is "SpecificDate"
-            # Remove it for "Immediate" and "Manual" modes
-            if ($submissionJson.targetPublishMode -ne "SpecificDate") {
-              if ($submissionJson.PSObject.Properties["targetPublishDate"]) {
-                $submissionJson.PSObject.Properties.Remove('targetPublishDate')
-                Write-Host "Removed targetPublishDate (not applicable for $($submissionJson.targetPublishMode) mode)"
-              }
-            }
-
-            # Clean up other potential enum fields that might be empty strings
-            # visibility field - if empty, remove it to use default
-            if ($submissionJson.PSObject.Properties["visibility"] -and [string]::IsNullOrWhiteSpace($submissionJson.visibility)) {
-              $submissionJson.PSObject.Properties.Remove('visibility')
-              Write-Host "Removed empty visibility field"
-            }
-
-            # pricing field - if it has schedule with empty values, clean it
-            if ($submissionJson.PSObject.Properties["pricing"]) {
-              if ($submissionJson.pricing.PSObject.Properties["priceId"] -and [string]::IsNullOrWhiteSpace($submissionJson.pricing.priceId)) {
-                # Use default free pricing if priceId is empty
-                $submissionJson.pricing.priceId = "Free"
-                Write-Host "Set default priceId to Free"
-              }
-            }
-
-            # Save the cleaned JSON back with proper formatting
-            $cleanedJson = $submissionJson | ConvertTo-Json -Depth 10
-            [System.IO.File]::WriteAllText($submissionDataPath, $cleanedJson, [System.Text.Encoding]::UTF8)
-            Write-Host "Saved sanitized submission JSON"
-
-            # Log key fields for debugging
-            Write-Host "Key submission fields:"
-            Write-Host "  - targetPublishMode: $($submissionJson.targetPublishMode)"
-            if ($submissionJson.PSObject.Properties["targetPublishDate"]) {
-              Write-Host "  - targetPublishDate: $($submissionJson.targetPublishDate)"
-            }
-            if ($submissionJson.PSObject.Properties["visibility"]) {
-              Write-Host "  - visibility: $($submissionJson.visibility)"
-            }
-
-            # The Update-ApplicationSubmission cmdlet:
-            # 1. Clones the published submission (since we deleted any pending)
-            # 2. Merges the submission data from the JSON file
-            # 3. Updates packages if -PackagePath is specified
-            # 4. Commits the submission if -AutoCommit is specified
 
             $submissionParams = @{
               AppId = $appId
               SubmissionDataPath = $submissionDataPath
               PackagePath = $zipPath
-              UpdateAppProperties = $false     # Don't update any app properties
-              UpdateListings = $false          # Don't update store listings (descriptions, screenshots, etc.)
+              UpdateListings = $false
               UpdatePublishModeAndVisibility = $false
-              ReplacePackages = $true          # Replace the MSIX package - this is the ONLY thing we want to change
+              UpdatePricingAndAvailability = $false
+              UpdateAppProperties = $false
+              UpdateNotesForCertification = $false
+              ReplacePackages = $true
               Force = $true
             }
 
@@ -1395,33 +1298,16 @@ jobs:
               Write-Host "Will create draft submission (manual commit required)"
             }
 
-            # This single command does everything
             try {
-              # Add verbose output for debugging
-              $VerbosePreference = "Continue"
-
-              Write-Host "Calling Update-ApplicationSubmission with parameters:"
-              Write-Host "  AppId: $appId"
-              Write-Host "  SubmissionDataPath: $submissionDataPath"
-              Write-Host "  PackagePath: $zipPath"
-              Write-Host "  ReplacePackages: True"
-              Write-Host "  UpdateAppProperties: False"
-              Write-Host "  UpdateListings: False"
-              Write-Host "  UpdatePublishModeAndVisibility: False"
-
               $submissionResult = Update-ApplicationSubmission @submissionParams
 
               if ($submissionResult) {
                 Write-Host "✅ Submission completed successfully"
-
                 if ($submissionResult.submissionId) {
                   Write-Host "Submission ID: $($submissionResult.submissionId)"
                 }
-
                 if (-not $autoCommit) {
-                  Write-Host "📝 Draft submission created. To publish:"
-                  Write-Host "   1. Review in Partner Center"
-                  Write-Host "   2. Manually commit the submission"
+                  Write-Host "📝 Draft submission created. Review in Partner Center to publish."
                 } else {
                   Write-Host "📝 Submission committed and entering certification"
                 }
@@ -1431,71 +1317,13 @@ jobs:
               }
             }
             catch {
-              Write-Host "⚠️ Initial submission attempt failed. Error: $_"
+              Write-Host "❌ Submission attempt failed. Error: $_"
 
-              # If it's an enum binding error, try a minimal approach
-              if ($_.ToString() -like "*Cannot bind argument to parameter 'EnumValue'*" -or
-                  $_.ToString() -like "*empty string*") {
-
-                Write-Host "Attempting fallback: Minimal package-only update..."
-
-                try {
-                  # Create a minimal submission JSON with only package info
-                  $minimalSubmission = @{
-                    applicationPackages = @()
-                  }
-
-                  # Save minimal JSON
-                  $minimalJsonPath = Join-Path $PWD "minimal-submission.json"
-                  $minimalSubmission | ConvertTo-Json -Depth 10 | Out-File $minimalJsonPath -Encoding UTF8
-
-                  # Try with minimal submission data
-                  $minimalParams = @{
-                    AppId = $appId
-                    SubmissionDataPath = $minimalJsonPath
-                    PackagePath = $zipPath
-                    UpdateAppProperties = $false
-                    UpdateListings = $false
-                    UpdatePublishModeAndVisibility = $false
-                    UpdatePricingAndAvailability = $false
-                    ReplacePackages = $true
-                    Force = $true
-                  }
-
-                  if ($autoCommit) {
-                    $minimalParams.AutoCommit = $true
-                  }
-
-                  Write-Host "Retrying with minimal parameters..."
-                  $submissionResult = Update-ApplicationSubmission @minimalParams
-
-                  if ($submissionResult) {
-                    Write-Host "✅ Fallback submission completed successfully"
-
-                    # Now try to update just the publish mode if needed
-                    if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") {
-                      Write-Host "Note: Publish mode update skipped in fallback. Please set to Manual in Partner Center."
-                    }
-                  } else {
-                    throw "Fallback submission also failed"
-                  }
-                }
-                catch {
-                  Write-Error "Fallback attempt failed: $_"
-                  Write-Host "You may need to complete the submission manually in Partner Center"
-                  Write-Host "The MSIX package has been uploaded but the submission may need manual configuration"
-
-                  # Don't exit with error in stage-only mode
-                  if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") {
-                    Write-Host "⚠️ Continuing despite error (stage-only mode)"
-                  } else {
-                    exit 1
-                  }
-                }
+              if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") {
+                Write-Host "⚠️ Continuing despite error (stage-only mode)"
               } else {
-                # Not an enum error, re-throw
-                Write-Error "Submission failed: $_"
-                throw
+                Write-Error "Failed to create Microsoft Store submission"
+                exit 1
               }
             }
           }
