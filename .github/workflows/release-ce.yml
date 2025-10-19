@@ -230,7 +230,6 @@ jobs:
             platform: linux/arm64
             arch: arm64
     runs-on: ${{ matrix.runner }}
-    needs: calculate-version
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -281,7 +280,6 @@ jobs:
             arch: universal
             make-target: build-prod-mac
     runs-on: ${{ matrix.os }}
-    needs: calculate-version
     steps:
       - name: Checkout
         uses: actions/checkout@v4
