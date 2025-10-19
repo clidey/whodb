@@ -21,6 +21,28 @@ on:
           - 'stage-only'     # Deploy to stores as drafts/candidates, skip Docker
           - 'production'     # Full production deployment
 
+      # Store selection for stage-only and dry-run modes (ignored in production)
+      deploy_docker:
+        description: 'Deploy to Docker Hub (stage-only/dry-run)'
+        required: false
+        type: boolean
+        default: true
+      deploy_snap:
+        description: 'Deploy to Snap Store (stage-only/dry-run)'
+        required: false
+        type: boolean
+        default: true
+      deploy_microsoft:
+        description: 'Deploy to Microsoft Store (stage-only/dry-run)'
+        required: false
+        type: boolean
+        default: true
+      deploy_apple:
+        description: 'Deploy to Apple Store (stage-only/dry-run)'
+        required: false
+        type: boolean
+        default: true
+
 jobs:
   calculate-version:
     name: Calculate Next Version
@@ -33,6 +55,11 @@ jobs:
       dry_run: ${{ steps.dry_run.outputs.enabled }}
       stage_only: ${{ steps.stage_only.outputs.enabled }}
       pr_body: ${{ steps.pr_details.outputs.body }}
+      # Store selection outputs (for selective deployment)
+      deploy_docker: ${{ steps.store_selection.outputs.docker }}
+      deploy_snap: ${{ steps.store_selection.outputs.snap }}
+      deploy_microsoft: ${{ steps.store_selection.outputs.microsoft }}
+      deploy_apple: ${{ steps.store_selection.outputs.apple }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -89,6 +116,31 @@ jobs:
           fi
           echo "enabled=$STAGE_ONLY" >> $GITHUB_OUTPUT
           echo "Stage only mode: $STAGE_ONLY"
+
+      - name: Set store selection
+        id: store_selection
+        run: |
+          MODE="${{ steps.deployment_mode.outputs.mode }}"
+
+          # In production mode, always deploy to all stores
+          if [ "$MODE" = "production" ]; then
+            echo "docker=true" >> $GITHUB_OUTPUT
+            echo "snap=true" >> $GITHUB_OUTPUT
+            echo "microsoft=true" >> $GITHUB_OUTPUT
+            echo "apple=true" >> $GITHUB_OUTPUT
+            echo "Production mode: deploying to all stores"
+          else
+            # In stage-only and dry-run modes, use the input selections
+            echo "docker=${{ inputs.deploy_docker }}" >> $GITHUB_OUTPUT
+            echo "snap=${{ inputs.deploy_snap }}" >> $GITHUB_OUTPUT
+            echo "microsoft=${{ inputs.deploy_microsoft }}" >> $GITHUB_OUTPUT
+            echo "apple=${{ inputs.deploy_apple }}" >> $GITHUB_OUTPUT
+            echo "Selective deployment mode:"
+            echo "  Docker: ${{ inputs.deploy_docker }}"
+            echo "  Snap: ${{ inputs.deploy_snap }}"
+            echo "  Microsoft: ${{ inputs.deploy_microsoft }}"
+            echo "  Apple: ${{ inputs.deploy_apple }}"
+          fi
 
       - name: Check all secrets availability
         run: |
@@ -812,6 +864,9 @@ jobs:
     name: Deploy to Snap Store
     runs-on: ubuntu-latest
     needs: [ calculate-version, validate-all-builds ]
+    if: |
+      needs.calculate-version.outputs.dry_run == 'false' &&
+      needs.calculate-version.outputs.deploy_snap == 'true'
     continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
     steps:
       - name: Checkout for scripts
@@ -957,6 +1012,7 @@ jobs:
     needs: [ calculate-version, package-windows-msix, deploy-snap ]
     if: |
       needs.calculate-version.outputs.dry_run == 'false' &&
+      needs.calculate-version.outputs.deploy_microsoft == 'true' &&
       (needs.calculate-version.outputs.stage_only == 'true' || needs.deploy-snap.result == 'success')
     continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
     steps:
@@ -1147,6 +1203,32 @@ jobs:
                 isGameDvrEnabled = $false
 
                 # Note: applicationPackages will be added automatically by StoreBroker
+
+                # Required: At least one listing with title and description
+                listings = @{
+                  "en-us" = @{
+                    baseListing = @{
+                      copyrightAndTrademarkInfo = "(c) 2025 Clidey Inc."
+                      description = "WhoDB is a powerful, lightweight database management tool designed for developers and database administrators. It provides an intuitive web-based interface for managing multiple database types including PostgreSQL, MySQL, SQLite, MongoDB, Redis, and more. With features like AI-powered query assistance, visual schema exploration, and comprehensive data management capabilities, WhoDB simplifies database operations while maintaining enterprise-grade security and performance."
+                      features = @(
+                        "Support for multiple database types (PostgreSQL, MySQL, SQLite, MongoDB, Redis, and more)",
+                        "AI-powered natural language to SQL conversion",
+                        "Visual schema exploration and management",
+                        "Advanced query editor with syntax highlighting",
+                        "Secure connection management with SSH tunneling support",
+                        "Data export in multiple formats (CSV, JSON, SQL)",
+                        "Real-time database monitoring and statistics",
+                        "Cross-platform support (Windows, macOS, Linux)"
+                      )
+                      keywords = @("database", "sql", "postgresql", "mysql", "mongodb", "redis", "developer tools", "database management", "query editor", "schema explorer")
+                      licenseTerms = ""
+                      privacyPolicy = ""
+                      supportContact = "support@whodb.com"
+                      title = "WhoDB"
+                      websiteUrl = "https://whodb.com"
+                    }
+                  }
+                }
               }
             } | ConvertTo-Json -Depth 10
 
@@ -1247,6 +1329,7 @@ jobs:
     needs: [ calculate-version, package-mac-app-store, deploy-snap ]
     if: |
       needs.calculate-version.outputs.dry_run == 'false' &&
+      needs.calculate-version.outputs.deploy_apple == 'true' &&
       (needs.calculate-version.outputs.stage_only == 'true' || needs.deploy-snap.result == 'success')
     continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
     steps:
@@ -1572,6 +1655,7 @@ jobs:
     if: |
       always() &&
       needs.calculate-version.result == 'success' &&
+      needs.calculate-version.outputs.deploy_docker == 'true' &&
       (needs.calculate-version.outputs.stage_only == 'true' ||
        needs.create-github-release.result == 'success')
     continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
