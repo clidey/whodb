@@ -1247,23 +1247,14 @@ jobs:
 
             # Create a minimal StoreBroker configuration
             # This config is required by New-SubmissionPackage
-            # Note: Most fields will be inherited from the current store submission
+            # We keep it absolutely minimal - ONLY updating the MSIX package
             $storeBrokerConfig = @{
               packageParameters = @{}  # Empty - no PDP files
               appSubmission = @{
                 appId = $appId
-                applicationCategory = "DeveloperTools_Database"
+                # Only set publish mode - everything else stays unchanged
                 targetPublishMode = if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") { "Manual" } else { "Immediate" }
                 targetPublishDate = ""
-                visibility = "Public"
-                priceId = "Free"
-                marketSpecificPricings = @{}
-                hardwarePreferences = @()
-                hasExternalInAppProducts = $false
-                meetAccessibilityGuidelines = $true
-                canInstallOnRemovableMedia = $true
-                automaticBackupEnabled = $false
-                isGameDvrEnabled = $false
               }
             }
 
@@ -1307,11 +1298,29 @@ jobs:
             Write-Host "  - JSON: $submissionDataPath"
             Write-Host "  - ZIP: $zipPath"
 
+            # Check for and delete any existing pending submission
+            Write-Host "Checking for existing pending submission..."
+            try {
+              $existingSubmission = Get-ApplicationSubmission -AppId $appId -SubmissionId PendingSubmission
+              if ($existingSubmission) {
+                Write-Host "⚠️ Found existing pending submission with ID: $($existingSubmission.id)"
+                Write-Host "Deleting existing pending submission to avoid confusion..."
+                Remove-ApplicationSubmission -AppId $appId -SubmissionId $existingSubmission.id -Force
+                Write-Host "✅ Deleted existing pending submission"
+              } else {
+                Write-Host "No existing pending submission found"
+              }
+            }
+            catch {
+              # If no pending submission exists, this is expected
+              Write-Host "No existing pending submission to delete"
+            }
+
             # Use Update-ApplicationSubmission with the generated package
-            Write-Host "Submitting to Microsoft Store..."
+            Write-Host "Creating new submission to Microsoft Store..."
 
             # The Update-ApplicationSubmission cmdlet:
-            # 1. Clones the published submission (or uses existing pending if -SubmissionId is specified)
+            # 1. Clones the published submission (since we deleted any pending)
             # 2. Merges the submission data from the JSON file
             # 3. Updates packages if -PackagePath is specified
             # 4. Commits the submission if -AutoCommit is specified
@@ -1320,8 +1329,10 @@ jobs:
               AppId = $appId
               SubmissionDataPath = $submissionDataPath
               PackagePath = $zipPath
-              UpdateAppProperties = $true  # Required to update applicationCategory and other app properties
-              ReplacePackages = $true      # Replace existing packages with new ones
+              UpdateAppProperties = $false     # Don't update any app properties
+              UpdateListings = $false          # Don't update store listings (descriptions, screenshots, etc.)
+              UpdatePublishModeAndVisibility = $true  # Only update publish mode (Manual/Immediate)
+              ReplacePackages = $true          # Replace the MSIX package - this is the ONLY thing we want to change
               Force = $true
             }
 
