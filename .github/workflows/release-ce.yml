@@ -1247,73 +1247,36 @@ jobs:
 
             # Create a minimal StoreBroker configuration
             # This config is required by New-SubmissionPackage
+            # Note: Most fields will be inherited from the current store submission
             $storeBrokerConfig = @{
-              packageParameters = @{
-                # Keep these minimal - we're not using PDP files
-                PDPRootPath = ""
-                Release = ""
-                MediaFallbackLanguage = "en-us"
-              }
+              packageParameters = @{}  # Empty - no PDP files
               appSubmission = @{
-                # Basic submission properties that remain static
                 applicationCategory = "DeveloperTools_Database"
                 targetPublishMode = if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") { "Manual" } else { "Immediate" }
                 targetPublishDate = ""
                 visibility = "Public"
-                pricing = @{
-                  priceId = "Free"
-                  trialPeriod = ""
-                  marketSpecificPricings = @{}
-                }
-                allowTargetFutureDeviceFamilies = @{
-                  Desktop = $true
-                  Mobile = $true
-                  Holographic = $true
-                  Xbox = $false
-                }
-                allowMicrosoftDecideAppAvailabilityToFutureDeviceFamilies = $true
-                enterpriseLicensing = "None"
-
-                # Additional fields that may be required
-                hardwarePreferences = @()  # No specific hardware requirements
+                priceId = "Free"
+                marketSpecificPricings = @{}
+                hardwarePreferences = @()
                 hasExternalInAppProducts = $false
                 meetAccessibilityGuidelines = $true
                 canInstallOnRemovableMedia = $true
                 automaticBackupEnabled = $false
                 isGameDvrEnabled = $false
-
-                # Note: applicationPackages will be added automatically by StoreBroker
-
-                # Required: At least one listing with title and description
-                listings = @{
-                  "en-us" = @{
-                    baseListing = @{
-                      copyrightAndTrademarkInfo = "(c) 2025 Clidey Inc."
-                      description = "WhoDB is a powerful, lightweight database management tool designed for developers and database administrators. It provides an intuitive web-based interface for managing multiple database types including PostgreSQL, MySQL, SQLite, MongoDB, Redis, and more. With features like AI-powered query assistance, visual schema exploration, and comprehensive data management capabilities, WhoDB simplifies database operations while maintaining enterprise-grade security and performance."
-                      features = @(
-                        "Support for multiple database types (PostgreSQL, MySQL, SQLite, MongoDB, Redis, and more)",
-                        "AI-powered natural language to SQL conversion",
-                        "Visual schema exploration and management",
-                        "Advanced query editor with syntax highlighting",
-                        "Secure connection management with SSH tunneling support",
-                        "Data export in multiple formats (CSV, JSON, SQL)",
-                        "Real-time database monitoring and statistics",
-                        "Cross-platform support (Windows, macOS, Linux)"
-                      )
-                      keywords = @("database", "sql", "postgresql", "mysql", "mongodb", "redis", "developer tools", "database management", "query editor", "schema explorer")
-                      licenseTerms = ""
-                      privacyPolicy = ""
-                      supportContact = "support@whodb.com"
-                      title = "WhoDB"
-                      websiteUrl = "https://whodb.com"
-                    }
-                  }
-                }
               }
-            } | ConvertTo-Json -Depth 10
+            }
 
-            $storeBrokerConfig | Out-File -FilePath $configPath -Encoding UTF8
+            # Convert to JSON with proper formatting
+            $jsonConfig = $storeBrokerConfig | ConvertTo-Json -Depth 10 -Compress
+
+            # Ensure no BOM and proper encoding
+            [System.IO.File]::WriteAllText($configPath, $jsonConfig, [System.Text.Encoding]::UTF8)
+
             Write-Host "✅ StoreBroker configuration created: $configPath"
+
+            # Debug: Show the config for verification
+            Write-Host "Config content:"
+            Write-Host $jsonConfig
 
             # Create submission package using StoreBroker
             Write-Host "Creating submission package..."
