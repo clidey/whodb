@@ -1095,39 +1095,72 @@ jobs:
               $autoCommit = $true
             }
 
-            # Create submission package metadata
-            Write-Host "Creating submission package..."
-            $submissionPackage = New-SubmissionPackage -AppxPath $msixPath.FullName
-            Write-Host "✅ Submission package metadata generated"
+            # Create StoreBroker configuration file first
+            Write-Host "Creating StoreBroker configuration..."
+            $configPath = Join-Path $PWD "storebroker-config.json"
 
-            $zipPath = Join-Path $PWD "package.zip"
-            if (Test-Path $zipPath) {
-              Remove-Item $zipPath -Force
-            }
-
-            Save-SubmissionPackage -Package $submissionPackage -OutputPath $zipPath -Force | Out-Null
-            if (-not (Test-Path $zipPath)) {
-              Write-Error "Failed to create submission package archive"
-              exit 1
-            }
-
-            Write-Host "✅ Submission package archive created: $zipPath"
-
-            # Create submission config JSON with App ID for safety
-            Write-Host "Creating submission configuration..."
-            $submissionDir = New-Item -ItemType Directory -Path "submission" -Force
-            $submissionDataPath = Join-Path $submissionDir.FullName "submission.json"
-
-            $submissionConfig = @{
+            # Create a minimal StoreBroker configuration
+            # This config is required by New-SubmissionPackage
+            $storeBrokerConfig = @{
+              packageParameters = @{
+                # Keep these minimal - we're not using PDP files
+                PDPRootPath = ""
+                Release = ""
+                MediaFallbackLanguage = "en-us"
+              }
               appSubmission = @{
-                appId = $appId
+                # Basic submission properties that remain static
+                targetPublishMode = if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") { "Manual" } else { "Immediate" }
+                targetPublishDate = ""
+                visibility = "Public"
+                pricing = @{
+                  priceId = "Free"
+                  trialPeriod = ""
+                  marketSpecificPricings = @{}
+                }
+                allowTargetFutureDeviceFamilies = @{
+                  Desktop = $true
+                  Mobile = $true
+                  Holographic = $true
+                  Xbox = $false
+                }
+                allowMicrosoftDecideAppAvailabilityToFutureDeviceFamilies = $true
+                enterpriseLicensing = "None"
               }
             } | ConvertTo-Json -Depth 10
 
-            $submissionConfig | Out-File -FilePath $submissionDataPath -Encoding UTF8
-            Write-Host "✅ Submission configuration created: $submissionDataPath"
+            $storeBrokerConfig | Out-File -FilePath $configPath -Encoding UTF8
+            Write-Host "✅ StoreBroker configuration created: $configPath"
 
-            # Use Update-ApplicationSubmission
+            # Create submission package using StoreBroker
+            Write-Host "Creating submission package..."
+            try {
+              $packageResult = New-SubmissionPackage -ConfigPath $configPath -AppxPath $msixPath.FullName -OutPath $PWD -OutName "submission"
+              Write-Host "✅ Submission package created successfully"
+            }
+            catch {
+              Write-Error "Failed to create submission package: $_"
+              exit 1
+            }
+
+            # The package creates submission.json and submission.zip
+            $submissionDataPath = Join-Path $PWD "submission.json"
+            $zipPath = Join-Path $PWD "submission.zip"
+
+            if (-not (Test-Path $submissionDataPath)) {
+              Write-Error "Submission JSON not found at: $submissionDataPath"
+              exit 1
+            }
+            if (-not (Test-Path $zipPath)) {
+              Write-Error "Submission ZIP not found at: $zipPath"
+              exit 1
+            }
+
+            Write-Host "✅ Submission files verified:"
+            Write-Host "  - JSON: $submissionDataPath"
+            Write-Host "  - ZIP: $zipPath"
+
+            # Use Update-ApplicationSubmission with the generated package
             Write-Host "Submitting to Microsoft Store..."
 
             # The Update-ApplicationSubmission cmdlet:
@@ -1140,7 +1173,6 @@ jobs:
               AppId = $appId
               SubmissionDataPath = $submissionDataPath
               PackagePath = $zipPath
-              AddPackages = $true  # Add packages instead of replacing
               Force = $true
             }
 
