@@ -1243,7 +1243,9 @@ jobs:
 
             Write-Host "Preparing to update submission with MSIX package: $($msixPath.Name)"
 
-            $submissionData = @{}
+            $submissionData = @{
+              applicationPackages = @()
+            }
 
             if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") {
               $submissionData.targetPublishMode = "Manual"
