@@ -216,6 +216,10 @@ jobs:
 
   build-docker-ce:
     name: Build Docker Images (CE)
+    needs: [ calculate-version ]
+    if: |
+      needs.calculate-version.outputs.deployment_mode == 'production' ||
+      needs.calculate-version.outputs.deploy_docker == 'true'
     strategy:
       matrix:
         include:
@@ -254,6 +258,11 @@ jobs:
   # Build desktop executables for store packaging
   build-desktop-ce:
     name: Build Desktop Executables (CE)
+    needs: [ calculate-version ]
+    if: |
+      needs.calculate-version.outputs.deployment_mode == 'production' ||
+      needs.calculate-version.outputs.deploy_microsoft == 'true' ||
+      needs.calculate-version.outputs.deploy_apple == 'true'
     strategy:
       matrix:
         include:
@@ -432,6 +441,9 @@ jobs:
     name: Package for Mac App Store
     runs-on: macos-latest
     needs: [ calculate-version, build-desktop-ce ]
+    if: |
+      needs.calculate-version.outputs.deployment_mode == 'production' ||
+      needs.calculate-version.outputs.deploy_apple == 'true'
     continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
     steps:
       - name: Checkout
@@ -513,6 +525,9 @@ jobs:
     name: Package Windows MSIX
     runs-on: windows-latest
     needs: [ calculate-version, build-desktop-ce ]
+    if: |
+      needs.calculate-version.outputs.deployment_mode == 'production' ||
+      needs.calculate-version.outputs.deploy_microsoft == 'true'
     continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
     steps:
       - name: Checkout
@@ -716,6 +731,9 @@ jobs:
     env:
       SNAPCRAFT_PROJECT_VERSION: ${{ needs.calculate-version.outputs.version }}
     needs: [ calculate-version ]
+    if: |
+      needs.calculate-version.outputs.deployment_mode == 'production' ||
+      needs.calculate-version.outputs.deploy_snap == 'true'
     continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
     steps:
       - name: Checkout
@@ -759,6 +777,9 @@ jobs:
     name: Sign Artifacts with Sigstore
     runs-on: ubuntu-latest
     needs: [ calculate-version, package-windows-msix, package-mac-app-store, build-snap, build-desktop-ce ]
+    if: |
+      always() &&
+      needs.calculate-version.result == 'success'
     continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
     # Need write permissions for OIDC token
     permissions:
@@ -819,6 +840,10 @@ jobs:
     name: Validate All Builds
     runs-on: ubuntu-latest
     needs: [ sign-with-sigstore, build-docker-ce, calculate-version ]
+    if: |
+      always() &&
+      needs.calculate-version.result == 'success' &&
+      needs.sign-with-sigstore.result != 'cancelled'
     steps:
       - name: Checkout for scripts
         uses: actions/checkout@v4
@@ -838,15 +863,42 @@ jobs:
 
       - name: Validate artifacts
         run: |
-          echo "Checking for required artifacts..."
-          [ -f "artifacts/docker-image-amd64/whodb-docker-amd64.tar" ] || (echo "Docker amd64 image missing" && exit 1)
-          [ -f "artifacts/docker-image-arm64/whodb-docker-arm64.tar" ] || (echo "Docker arm64 image missing" && exit 1)
-          [ -f "artifacts/windows-msix/"*.msixbundle ] || (echo "Windows MSIX bundle missing" && exit 1)
-          [ -f "artifacts/mac-app-store/"*.pkg ] || (echo "Mac App Store package missing" && exit 1)
-          [ -f "artifacts/snap-package-amd64/"*.snap ] || (echo "Snap amd64 package missing" && exit 1)
-          [ -f "artifacts/snap-package-arm64/"*.snap ] || (echo "Snap arm64 package missing" && exit 1)
-          echo "✓ All required artifacts present"
-          echo "Note: Windows ARM64 build is temporarily disabled"
+          echo "Checking for required artifacts based on deployment targets..."
+          FAILED=false
+
+          # Check Docker artifacts if deploying to Docker
+          if [ "${{ needs.calculate-version.outputs.deploy_docker }}" = "true" ] || [ "${{ needs.calculate-version.outputs.deployment_mode }}" = "production" ]; then
+            echo "Checking Docker artifacts..."
+            [ -f "artifacts/docker-image-amd64/whodb-docker-amd64.tar" ] || (echo "❌ Docker amd64 image missing" && FAILED=true)
+            [ -f "artifacts/docker-image-arm64/whodb-docker-arm64.tar" ] || (echo "❌ Docker arm64 image missing" && FAILED=true)
+          fi
+
+          # Check Microsoft Store artifacts if deploying to Microsoft
+          if [ "${{ needs.calculate-version.outputs.deploy_microsoft }}" = "true" ] || [ "${{ needs.calculate-version.outputs.deployment_mode }}" = "production" ]; then
+            echo "Checking Microsoft Store artifacts..."
+            [ -f "artifacts/windows-msix/"*.msixbundle ] || (echo "❌ Windows MSIX bundle missing" && FAILED=true)
+          fi
+
+          # Check Apple Store artifacts if deploying to Apple
+          if [ "${{ needs.calculate-version.outputs.deploy_apple }}" = "true" ] || [ "${{ needs.calculate-version.outputs.deployment_mode }}" = "production" ]; then
+            echo "Checking Apple Store artifacts..."
+            [ -f "artifacts/mac-app-store/"*.pkg ] || (echo "❌ Mac App Store package missing" && FAILED=true)
+          fi
+
+          # Check Snap artifacts if deploying to Snap
+          if [ "${{ needs.calculate-version.outputs.deploy_snap }}" = "true" ] || [ "${{ needs.calculate-version.outputs.deployment_mode }}" = "production" ]; then
+            echo "Checking Snap artifacts..."
+            [ -f "artifacts/snap-package-amd64/"*.snap ] || (echo "❌ Snap amd64 package missing" && FAILED=true)
+            [ -f "artifacts/snap-package-arm64/"*.snap ] || (echo "❌ Snap arm64 package missing" && FAILED=true)
+          fi
+
+          if [ "$FAILED" = "true" ]; then
+            echo "❌ Some required artifacts are missing"
+            exit 1
+          else
+            echo "✓ All required artifacts present for selected deployment targets"
+            echo "Note: Windows ARM64 build is temporarily disabled"
+          fi
 
       - name: Initialize deployment manifest
         run: |
