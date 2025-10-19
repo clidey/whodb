@@ -1251,6 +1251,7 @@ jobs:
             $storeBrokerConfig = @{
               packageParameters = @{}  # Empty - no PDP files
               appSubmission = @{
+                appId = $appId
                 applicationCategory = "DeveloperTools_Database"
                 targetPublishMode = if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") { "Manual" } else { "Immediate" }
                 targetPublishDate = ""
