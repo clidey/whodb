@@ -20,7 +20,7 @@ param(
     [string]$Version,
 
     [Parameter(Mandatory=$false)]
-    [string]$PublisherCN = "TempPublisher",
+    [string]$PublisherCN = "Test Publisher",
 
     [Parameter(Mandatory=$false)]
     [string]$CertPath,
@@ -143,27 +143,93 @@ try {
     $sdkRoot = "C:\Program Files (x86)\Windows Kits\10\bin"
 
     if (Test-Path $sdkRoot) {
-        # Get all SDK versions
-        $sdkVersions = Get-ChildItem -Path $sdkRoot -Directory |
+        Write-Host "Found SDK root: $sdkRoot"
+
+        # Get all SDK versions and sort by version number (newest first)
+        $sdkVersions = @(Get-ChildItem -Path $sdkRoot -Directory -ErrorAction SilentlyContinue |
             Where-Object { $_.Name -match "^10\.\d+\.\d+\.\d+$" } |
-            Sort-Object { [version]($_.Name -replace "^10\.", "") } -Descending
+            Sort-Object { [version]$_.Name } -Descending)
+
+        if ($null -eq $sdkVersions -or $sdkVersions.Count -eq 0) {
+            Write-Host "No SDK versions found in $sdkRoot"
+        } else {
+            Write-Host "Found $($sdkVersions.Count) SDK version(s) (sorted newest first):"
+            foreach ($v in $sdkVersions) {
+                Write-Host "  - $($v.Name) [Type: $($v.GetType().Name)]"
+            }
+            Write-Host "Will use the newest version that has makeappx.exe"
+        }
 
         foreach ($version in $sdkVersions) {
-            $makeappxPath = Join-Path $version.FullName "x64\makeappx.exe"
+            # Debug what we're getting
+            Write-Host "Processing version object: Type=$($version.GetType().Name), Name=$($version.Name), ToString=$($version.ToString())"
+
+            # Construct path more explicitly - version.Name contains the version number
+            if ($version -is [System.IO.DirectoryInfo]) {
+                $versionFolder = $version.Name
+            } else {
+                $versionFolder = $version.ToString()
+            }
+
+            if ([string]::IsNullOrEmpty($versionFolder)) {
+                Write-Host "Warning: Version folder name is empty, skipping"
+                continue
+            }
+
+            $versionPath = Join-Path $sdkRoot $versionFolder
+            $x64Path = Join-Path $versionPath "x64"
+            $makeappxPath = Join-Path $x64Path "makeappx.exe"
+            Write-Host "Checking SDK $versionFolder : $makeappxPath"
             if (Test-Path $makeappxPath) {
-                Write-Host "Found makeappx at: $makeappxPath"
-                Write-Host "Running with full path..."
+                Write-Host "✅ Found makeappx in SDK version $versionFolder"
+                Write-Host "Using: $makeappxPath"
+                Write-Host "Creating MSIX package..."
 
                 & $makeappxPath pack /d $PackageDir /p "WhoDB-$Version-$Architecture.msix" /o
 
                 if ($LASTEXITCODE -eq 0) {
-                    Write-Host "✅ MSIX package created successfully"
+                    Write-Host "✅ MSIX package created successfully using SDK $versionFolder"
                     $makeappxFound = $true
                 } else {
                     Write-Error "makeappx failed with exit code: $LASTEXITCODE"
                     exit 1
                 }
                 break
+            } else {
+                Write-Host "  Not found"
+            }
+        }
+    } else {
+        Write-Host "SDK root not found at: $sdkRoot"
+    }
+
+    # If still not found, try alternative search
+    if (-not $makeappxFound) {
+        Write-Host "Attempting wider search for makeappx.exe..."
+
+        $searchPaths = @(
+            "C:\Program Files (x86)\Windows Kits",
+            "C:\Program Files\Windows Kits",
+            "C:\Program Files (x86)\Microsoft SDKs",
+            "C:\Program Files\Microsoft SDKs"
+        )
+
+        foreach ($searchPath in $searchPaths) {
+            if (Test-Path $searchPath) {
+                Write-Host "Searching in: $searchPath"
+                $found = Get-ChildItem -Path $searchPath -Filter "makeappx.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+                if ($found) {
+                    Write-Host "Found makeappx at: $($found.FullName)"
+                    if ($found.FullName -like "*App Certification Kit*") {
+                        Write-Host "Note: Using App Certification Kit version (SDK versions not found)"
+                    }
+                    & $found.FullName pack /d $PackageDir /p "WhoDB-$Version-$Architecture.msix" /o
+                    if ($LASTEXITCODE -eq 0) {
+                        Write-Host "MSIX package created successfully"
+                        $makeappxFound = $true
+                        break
+                    }
+                }
             }
         }
     }
@@ -174,7 +240,9 @@ try {
         Write-Host "Install Windows SDK from:"
         Write-Host "https://developer.microsoft.com/windows/downloads/windows-sdk/"
         Write-Host ""
-        Write-Host "After installation, makeappx should be available in PATH."
+        Write-Host "After installation, you may need to:"
+        Write-Host "1. Restart PowerShell"
+        Write-Host "2. Or manually add to PATH: C:\Program Files (x86)\Windows Kits\10\bin\[version]\x64"
         exit 1
     }
 }

@@ -170,6 +170,7 @@ jobs:
           [ -n "${{ secrets.MS_CLIENT_ID }}" ] && echo "  ✅ MS_CLIENT_ID" || echo "  ❌ MS_CLIENT_ID"
           [ -n "${{ secrets.MS_CLIENT_SECRET }}" ] && echo "  ✅ MS_CLIENT_SECRET" || echo "  ❌ MS_CLIENT_SECRET"
           [ -n "${{ secrets.MS_APP_ID }}" ] && echo "  ✅ MS_APP_ID" || echo "  ❌ MS_APP_ID"
+          [ -n "${{ secrets.WINDOWS_PUBLISHER_CN }}" ] && echo "  ✅ WINDOWS_PUBLISHER_CN" || echo "  ❌ WINDOWS_PUBLISHER_CN (Warning: Will use test publisher)"
           echo ""
           echo "🍎 Mac App Store:"
           [ -n "${{ secrets.MAS_CODESIGN_ID }}" ] && echo "  ✅ MAS_CODESIGN_ID" || echo "  ❌ MAS_CODESIGN_ID"
@@ -624,7 +625,14 @@ jobs:
           # Try to build MSIX package
           $ErrorActionPreference = "Stop"
           try {
-              .\scripts\build-msix.ps1 -Architecture amd64 -Version ${{ needs.calculate-version.outputs.version }} -SkipSigning
+              # Use real Publisher CN from secret if available, otherwise use test publisher
+              if ("${{ secrets.WINDOWS_PUBLISHER_CN }}" -ne "") {
+                  Write-Host "Building with Microsoft Store Publisher CN"
+                  .\scripts\build-msix.ps1 -Architecture amd64 -Version ${{ needs.calculate-version.outputs.version }} -PublisherCN "${{ secrets.WINDOWS_PUBLISHER_CN }}" -SkipSigning
+              } else {
+                  Write-Host "Warning: WINDOWS_PUBLISHER_CN secret not set, exiting"
+                  exit 1
+              }
               Write-Host "✅ MSIX build script completed"
           } catch {
               Write-Host "Failed to build MSIX: $_"
