@@ -326,8 +326,7 @@ jobs:
         env:
           GOARCH: ${{ matrix.arch }}
         run: |
-          # Build raw exe for MSIX packaging (not NSIS installer)
-          Write-Host "Building raw Windows executable for MSIX packaging..."
+          Write-Host "Building Windows executable for MSIX packaging..."
           $env:GOWORK = "$PWD/../go.work.desktop-ce"
 
           # Clean previous build
@@ -341,7 +340,6 @@ jobs:
           Copy-Item -Path build/* -Destination ../desktop-ce/frontend/dist/ -Recurse
           Set-Location ../desktop-ce
 
-          # Build without NSIS flag to get raw exe
           Write-Host "Building with wails..."
 
           wails build -clean -platform windows/amd64 `

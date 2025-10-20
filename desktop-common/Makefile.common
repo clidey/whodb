@@ -110,28 +110,28 @@ build-linux-arm64: prepare
 		$(BUILD_TAGS) $(LINUX_TAGS) -ldflags="-s -w" -o $(OUTPUT_PREFIX)
 	@mv build/bin/$(OUTPUT_PREFIX) build/linux/arm64/
 
-# Production builds with installers
+# Production Windows builds
 build-prod-windows: build-prod-windows-amd64 build-prod-windows-arm64
-	@echo "Built WhoDB Windows installers for both AMD64 and ARM64"
+	@echo "Built WhoDB Windows executables for both AMD64 and ARM64"
 
 # Production build specifically for Windows AMD64
 build-prod-windows-amd64: prepare
-	@echo "Building WhoDB Windows installer for AMD64..."
+	@echo "Building WhoDB Windows executable for AMD64..."
 	@mkdir -p build/windows/amd64
 	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean -platform windows/amd64 \
-		$(BUILD_TAGS) -nsis  -windowsconsole=false -ldflags="-s -w -H windowsgui" \
-		-o $(OUTPUT_PREFIX)-installer.exe
-	@mv build/bin/$(OUTPUT_PREFIX)-installer.exe build/windows/amd64/
+		$(BUILD_TAGS) -windowsconsole=false -ldflags="-s -w -H windowsgui" \
+		-o $(OUTPUT_PREFIX).exe
+	@mv build/bin/$(OUTPUT_PREFIX).exe build/windows/amd64/
 
 # Production build specifically for Windows ARM64
 build-prod-windows-arm64: prepare
-	@echo "Building WhoDB Windows installer for ARM64..."
+	@echo "Building WhoDB Windows executable for ARM64..."
 	@mkdir -p build/windows/arm64
 	# When running on native ARM64 Windows, don't specify platform to avoid cross-compilation
 	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean \
-		$(BUILD_TAGS) -nsis  -windowsconsole=false -ldflags="-s -w -H windowsgui" \
-		-o $(OUTPUT_PREFIX)-installer.exe
-	@mv build/bin/$(OUTPUT_PREFIX)-installer.exe build/windows/arm64/
+		$(BUILD_TAGS) -windowsconsole=false -ldflags="-s -w -H windowsgui" \
+		-o $(OUTPUT_PREFIX).exe
+	@mv build/bin/$(OUTPUT_PREFIX).exe build/windows/arm64/
 
 build-prod-mac: prepare
 	@echo "Building WhoDB macOS app (no pkg flag)..."

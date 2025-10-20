@@ -46,7 +46,7 @@ New-Item -ItemType Directory -Path $PackageDir -Force | Out-Null
 New-Item -ItemType Directory -Path $AssetsDir -Force | Out-Null
 
 # Find the executable from Wails build output
-# The workflow now builds raw exe (without NSIS) for MSIX packaging
+# The workflow builds raw exe for MSIX packaging
 Write-Host "Current directory: $PWD"
 Write-Host "Searching for whodb.exe..."
 
