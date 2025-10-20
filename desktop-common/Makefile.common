@@ -119,7 +119,7 @@ build-prod-windows-amd64: prepare
 	@echo "Building WhoDB Windows installer for AMD64..."
 	@mkdir -p build/windows/amd64
 	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean -platform windows/amd64 \
-		$(BUILD_TAGS) -nsis -upx -windowsconsole=false -ldflags="-s -w -H windowsgui" \
+		$(BUILD_TAGS) -nsis  -windowsconsole=false -ldflags="-s -w -H windowsgui" \
 		-o $(OUTPUT_PREFIX)-installer.exe
 	@mv build/bin/$(OUTPUT_PREFIX)-installer.exe build/windows/amd64/
 
@@ -129,7 +129,7 @@ build-prod-windows-arm64: prepare
 	@mkdir -p build/windows/arm64
 	# When running on native ARM64 Windows, don't specify platform to avoid cross-compilation
 	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean \
-		$(BUILD_TAGS) -nsis -upx -windowsconsole=false -ldflags="-s -w -H windowsgui" \
+		$(BUILD_TAGS) -nsis  -windowsconsole=false -ldflags="-s -w -H windowsgui" \
 		-o $(OUTPUT_PREFIX)-installer.exe
 	@mv build/bin/$(OUTPUT_PREFIX)-installer.exe build/windows/arm64/
 
@@ -288,7 +288,7 @@ build-prod-linux: prepare
 	@echo "Building WhoDB Linux binary for native architecture ($$(uname -m))..."
 	@mkdir -p build/linux/$$(uname -m)
 	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean \
-		$(BUILD_TAGS) $(LINUX_TAGS) -upx -ldflags="-s -w" -o $(OUTPUT_PREFIX)
+		$(BUILD_TAGS) $(LINUX_TAGS)  -ldflags="-s -w" -o $(OUTPUT_PREFIX)
 	@mv build/bin/$(OUTPUT_PREFIX) build/linux/$$(uname -m)/
 
 # Production build specifically for Linux AMD64
@@ -296,7 +296,7 @@ build-prod-linux-amd64: prepare
 	@echo "Building WhoDB Linux binary for AMD64..."
 	@mkdir -p build/linux/amd64
 	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean -platform linux/amd64 \
-		$(BUILD_TAGS) $(LINUX_TAGS) -upx -ldflags="-s -w" -o $(OUTPUT_PREFIX)
+		$(BUILD_TAGS) $(LINUX_TAGS)  -ldflags="-s -w" -o $(OUTPUT_PREFIX)
 	@mv build/bin/$(OUTPUT_PREFIX) build/linux/amd64/
 
 # Production build specifically for Linux ARM64
@@ -304,7 +304,7 @@ build-prod-linux-arm64: prepare
 	@echo "Building WhoDB Linux binary for ARM64..."
 	@mkdir -p build/linux/arm64
 	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean -platform linux/arm64 \
-		$(BUILD_TAGS) $(LINUX_TAGS) -upx -ldflags="-s -w" -o $(OUTPUT_PREFIX)
+		$(BUILD_TAGS) $(LINUX_TAGS)  -ldflags="-s -w" -o $(OUTPUT_PREFIX)
 	@mv build/bin/$(OUTPUT_PREFIX) build/linux/arm64/
 
 # Backup Linux builds (without webkit2_41 tag - for compatibility)
