@@ -187,8 +187,8 @@ if (-not $SkipSigning -and $CertPath) {
     }
     Write-Host "Signing MSIX package..."
     & signtool sign /fd SHA256 /a /f $CertPath /p $env:WINDOWS_PFX_PASSWORD "WhoDB-$Version-$Architecture.msix"
-    Write-Host "✓ Signed MSIX package created: WhoDB-$Version-$Architecture.msix"
+    Write-Host "Signed MSIX package created: WhoDB-$Version-$Architecture.msix"
 } else {
-    Write-Host "✓ Unsigned MSIX package created: WhoDB-$Version-$Architecture.msix"
-    Write-Host "ℹ️ This package will be signed by Microsoft when uploaded to Partner Center"
+    Write-Host "Unsigned MSIX package created: WhoDB-$Version-$Architecture.msix"
+    Write-Host "Note: This package will be signed by Microsoft when uploaded to Partner Center"
 }
