@@ -103,12 +103,76 @@ if (-not $ExePath) {
 Copy-Item $ExePath "$PackageDir\whodb.exe"
 Write-Host "Copied executable to package directory"
 
-# Copy and resize icon for Store assets
+# Generate icon sizes using ImageMagick
 $IconPath = "linux\icon.png"
-Copy-Item $IconPath "$AssetsDir\StoreLogo.png"
-Copy-Item $IconPath "$AssetsDir\Square44x44Logo.png"
-Copy-Item $IconPath "$AssetsDir\Square150x150Logo.png"
-Copy-Item $IconPath "$AssetsDir\Wide310x150Logo.png"
+if (Test-Path $IconPath) {
+  Write-Host "Generating icon sizes..."
+
+  # Define icon sizes: @{filename = "WxH"}
+  $iconSizes = @{
+    "icon-1440x2160.png" = "1440x2160"
+    "icon-2160x2160.png" = "2160x2160"
+    "icon-300x300.png" = "300x300"
+    "icon-150x150.png" = "150x150"
+    "icon-71x71.png" = "71x71"
+    "icon-3840x2160.png" = "3840x2160"
+    "icon-584x800.png" = "584x800"
+    "icon-1920x1080.png" = "1920x1080"
+    "icon-1080x1080.png" = "1080x1080"
+  }
+
+  # Check if magick command is available
+  $magickCmd = Get-Command magick -ErrorAction SilentlyContinue
+  if (-not $magickCmd) {
+    Write-Error "ImageMagick (magick) command not found. Please install ImageMagick."
+    exit 1
+  }
+
+  # Generate each icon size
+  foreach ($filename in $iconSizes.Keys) {
+    $size = $iconSizes[$filename]
+    $outputPath = Join-Path $AssetsDir $filename
+    Write-Host "  Generating $filename ($size)..."
+    & magick $IconPath -resize $size -quality 85 $outputPath
+
+    if ($LASTEXITCODE -ne 0) {
+      Write-Error "Failed to generate $filename"
+      exit 1
+    }
+  }
+
+  Write-Host "✅ Icon sizes generated successfully"
+
+  # Create manifest-required icons from the generated sizes
+  Write-Host "Creating manifest-required icon files..."
+
+  # Map generated icons to manifest requirements
+  $manifestIcons = @{
+    "StoreLogo.png" = "icon-300x300.png"
+    "Square44x44Logo.png" = "icon-71x71.png"
+    "Square150x150Logo.png" = "icon-150x150.png"
+    "Wide310x150Logo.png" = "icon-1440x2160.png"
+  }
+
+  foreach ($manifestName in $manifestIcons.Keys) {
+    $sourceFile = $manifestIcons[$manifestName]
+    $sourcePath = Join-Path $AssetsDir $sourceFile
+    $destPath = Join-Path $AssetsDir $manifestName
+
+    if (Test-Path $sourcePath) {
+      Copy-Item $sourcePath $destPath -Force
+      Write-Host "  Created $manifestName from $sourceFile"
+    } else {
+      Write-Error "Source file not found for ${manifestName}: $sourcePath"
+      exit 1
+    }
+  }
+
+  Write-Host "✅ Manifest-required icons created successfully"
+} else {
+  Write-Error "Source icon not found: $IconPath"
+  exit 1
+}
 
 # Generate AppxManifest.xml from template
 $ManifestTemplate = Get-Content "windows\AppxManifest.xml.template" -Raw
