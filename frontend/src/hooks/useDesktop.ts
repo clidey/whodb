@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { useCallback, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import {useCallback, useEffect} from 'react';
+import {useLocation, useNavigate} from 'react-router-dom';
 import * as desktopService from '../services/desktop';
-import { isDesktopApp } from '../utils/external-links';
-import { useAppSelector } from '../store/hooks';
-import { InternalRoutes } from '../config/routes';
+import {isDesktopApp} from '../utils/external-links';
+import {useAppSelector} from '../store/hooks';
+import {InternalRoutes} from '../config/routes';
 
 // Hook for file operations
 export const useDesktopFile = () => {
@@ -322,7 +322,7 @@ export const useDesktopMenu = () => {
         desktopService.offEvent(event);
       });
     };
-  }, [isDesktop, navigate, location.pathname, showConfirm, currentAuth]);
+  }, [isDesktop]);
 };
 
 // Hook for keyboard shortcuts (in addition to menu shortcuts)
