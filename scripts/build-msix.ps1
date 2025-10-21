@@ -121,11 +121,15 @@ $Manifest | Out-File -FilePath "$PackageDir\AppxManifest.xml" -Encoding utf8
 
 # Create MSIX package using makeappx
 Write-Host "Creating MSIX package..."
+Write-Host "Version parameter: $Version"
+Write-Host "Architecture parameter: $Architecture"
 
 # Try to run makeappx directly first (it should be in PATH if SDK is installed properly)
 try {
-    Write-Host "Running: makeappx pack /d $PackageDir /p WhoDB-$Version-$Architecture.msix /o"
-    makeappx pack /d $PackageDir /p "WhoDB-$Version-$Architecture.msix" /o
+    $msixFileName = "WhoDB-$Version-$Architecture.msix"
+    Write-Host "Creating MSIX with filename: $msixFileName"
+    Write-Host "Running: makeappx pack /d $PackageDir /p $msixFileName /o"
+    makeappx pack /d $PackageDir /p $msixFileName /o
 
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✅ MSIX package created successfully"
@@ -160,15 +164,15 @@ try {
             Write-Host "Will use the newest version that has makeappx.exe"
         }
 
-        foreach ($version in $sdkVersions) {
+        foreach ($sdkVersion in $sdkVersions) {
             # Debug what we're getting
-            Write-Host "Processing version object: Type=$($version.GetType().Name), Name=$($version.Name), ToString=$($version.ToString())"
+            Write-Host "Processing version object: Type=$($sdkVersion.GetType().Name), Name=$($sdkVersion.Name), ToString=$($sdkVersion.ToString())"
 
-            # Construct path more explicitly - version.Name contains the version number
-            if ($version -is [System.IO.DirectoryInfo]) {
-                $versionFolder = $version.Name
+            # Construct path more explicitly - sdkVersion.Name contains the version number
+            if ($sdkVersion -is [System.IO.DirectoryInfo]) {
+                $versionFolder = $sdkVersion.Name
             } else {
-                $versionFolder = $version.ToString()
+                $versionFolder = $sdkVersion.ToString()
             }
 
             if ([string]::IsNullOrEmpty($versionFolder)) {
@@ -185,7 +189,9 @@ try {
                 Write-Host "Using: $makeappxPath"
                 Write-Host "Creating MSIX package..."
 
-                & $makeappxPath pack /d $PackageDir /p "WhoDB-$Version-$Architecture.msix" /o
+                $msixFileName = "WhoDB-$Version-$Architecture.msix"
+                Write-Host "Creating MSIX with filename: $msixFileName"
+                & $makeappxPath pack /d $PackageDir /p $msixFileName /o
 
                 if ($LASTEXITCODE -eq 0) {
                     Write-Host "✅ MSIX package created successfully using SDK $versionFolder"
@@ -223,7 +229,9 @@ try {
                     if ($found.FullName -like "*App Certification Kit*") {
                         Write-Host "Note: Using App Certification Kit version (SDK versions not found)"
                     }
-                    & $found.FullName pack /d $PackageDir /p "WhoDB-$Version-$Architecture.msix" /o
+                    $msixFileName = "WhoDB-$Version-$Architecture.msix"
+                    Write-Host "Creating MSIX with filename: $msixFileName"
+                    & $found.FullName pack /d $PackageDir /p $msixFileName /o
                     if ($LASTEXITCODE -eq 0) {
                         Write-Host "MSIX package created successfully"
                         $makeappxFound = $true
