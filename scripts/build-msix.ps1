@@ -133,7 +133,8 @@ if (Test-Path $IconPath) {
     $size = $iconSizes[$filename]
     $outputPath = Join-Path $AssetsDir $filename
     Write-Host "  Generating $filename ($size)..."
-    & magick $IconPath -resize $size -quality 85 $outputPath
+    # Use -resize to fit within bounds, then -extent to pad to exact size with transparent background
+    & magick $IconPath -resize $size -background transparent -gravity center -extent $size -quality 85 $outputPath
 
     if ($LASTEXITCODE -ne 0) {
       Write-Error "Failed to generate $filename"
