@@ -22,9 +22,6 @@ on:
         required: false
         type: boolean
         default: true
-    secrets:
-      SIGSTORE_ID_TOKEN:
-        required: false
 
 jobs:
   sign-with-sigstore:
@@ -46,8 +43,6 @@ jobs:
         uses: sigstore/cosign-installer@v3
 
       - name: Sign artifacts
-        env:
-          SIGSTORE_ID_TOKEN: ${{ secrets.SIGSTORE_ID_TOKEN }}
         run: |
           echo "🔏 Signing artifacts with Sigstore..."
 

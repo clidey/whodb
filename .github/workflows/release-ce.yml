@@ -164,8 +164,6 @@ jobs:
       validate-docker: ${{ needs.build-docker.result == 'success' }}
       validate-snap: ${{ needs.build-snap.result == 'success' }}
       validate-desktop: ${{ needs.build-desktop.result == 'success' }}
-    secrets:
-      SIGSTORE_ID_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # Step 4: Deploy to various platforms (conditionally)
   deploy-snap:
@@ -409,7 +407,7 @@ jobs:
 
       - name: Generate Homebrew cask file
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           VERSION="${{ needs.calculate-version.outputs.version }}"
 
@@ -491,7 +489,6 @@ jobs:
     secrets:
       DOCKER_USERNAME: ${{ vars.DOCKER_USERNAME }}
       DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # Step 10: Final summary
   deployment-summary:

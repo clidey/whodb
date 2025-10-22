@@ -26,8 +26,6 @@ on:
         required: false
       DOCKER_TOKEN:
         required: false
-      GITHUB_TOKEN:
-        required: true
 
 jobs:
   rollback:
@@ -88,7 +86,7 @@ jobs:
       - name: Rollback GitHub Release
         if: inputs.rollback-github
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           echo "🔄 Rolling back GitHub release..."
 
