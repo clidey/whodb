@@ -17,33 +17,53 @@
 
 set -e
 
-# Script to generate a Homebrew Cask formula for WhoDB
-# Usage: ./generate-homebrew-cask.sh <version> <dmg-file-path> <output-file>
+# Script to test Homebrew Cask locally
+# Usage: ./test-homebrew-cask-local.sh <dmg-file-path> [version]
 
-VERSION="${1:?Version is required}"
-DMG_FILE="${2:?DMG file path is required}"
-OUTPUT_FILE="${3:?Output file is required}"
+DMG_FILE="${1:?DMG file path is required}"
+VERSION="${2:-1.0.0-test}"
+TAP_NAME="test/local"
+CASK_NAME="whodb"
 
 if [ ! -f "$DMG_FILE" ]; then
     echo "Error: DMG file not found: $DMG_FILE"
     exit 1
 fi
 
+# Get absolute path of DMG
+DMG_FILE_ABS=$(cd "$(dirname "$DMG_FILE")" && pwd)/$(basename "$DMG_FILE")
+
 # Calculate SHA256
 echo "Calculating SHA256 for DMG file..."
-SHA256=$(shasum -a 256 "$DMG_FILE" | cut -d' ' -f1)
+SHA256=$(shasum -a 256 "$DMG_FILE_ABS" | cut -d' ' -f1)
 
-echo "Version: $VERSION"
-echo "DMG File: $DMG_FILE"
+echo "DMG File: $DMG_FILE_ABS"
 echo "SHA256: $SHA256"
+echo "Version: $VERSION"
+echo ""
 
-# Generate cask formula
-cat > "$OUTPUT_FILE" << EOF
-cask "whodb" do
+# Check if tap exists, create if not
+if ! brew tap | grep -q "^$TAP_NAME$"; then
+    echo "Creating local tap: $TAP_NAME"
+    brew tap-new $TAP_NAME
+fi
+
+# Get tap path
+TAP_PATH=$(brew --repository)/Library/Taps/${TAP_NAME/\///homebrew-}
+
+# Create Casks directory if it doesn't exist
+mkdir -p "$TAP_PATH/Casks"
+
+# Generate local test cask
+CASK_FILE="$TAP_PATH/Casks/$CASK_NAME.rb"
+echo "Generating local test cask: $CASK_FILE"
+
+cat > "$CASK_FILE" << EOF
+cask "$CASK_NAME" do
   version "$VERSION"
   sha256 "$SHA256"
 
-  url "https://github.com/clidey/whodb/releases/download/v#{version}/whodb.dmg"
+  url "file://$DMG_FILE_ABS"
   name "WhoDB"
   desc "Modern database management and visualization tool with AI integration"
   homepage "https://whodb.com/"
@@ -51,12 +71,6 @@ cask "whodb" do
   auto_updates true
 
   app "WhoDB.app"
-
-  livecheck do
-    url "https://github.com/clidey/whodb/releases.atom"
-    regex(/href=.*?\/v?(\d+(?:\.\d+)*)\//i)
-    strategy :github_latest
-  end
 
   uninstall quit:   "com.clidey.whodb.ce",
             signal: ["TERM", "com.clidey.whodb.ce"]
@@ -74,9 +88,12 @@ cask "whodb" do
 end
 EOF
 
-echo "✅ Homebrew Cask formula generated: $OUTPUT_FILE"
+echo "✅ Local test cask generated"
 echo ""
-echo "Next steps:"
-echo "1. Review the generated formula"
-echo "2. Test it locally: brew install --cask ./$(basename $OUTPUT_FILE)"
-echo "3. Submit to https://github.com/Homebrew/homebrew-core/pulls"
+echo "To test the cask:"
+echo "  Install:   brew install --cask $TAP_NAME/$CASK_NAME"
+echo "  Uninstall: brew uninstall --cask $CASK_NAME"
+echo "  Reinstall: brew reinstall --cask $CASK_NAME"
+echo ""
+echo "To remove the test tap when done:"
+echo "  brew untap $TAP_NAME"

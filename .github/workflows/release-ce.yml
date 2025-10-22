@@ -176,6 +176,11 @@ jobs:
           [ -n "${{ secrets.MAS_CODESIGN_ID }}" ] && echo "  ✅ MAS_CODESIGN_ID" || echo "  ❌ MAS_CODESIGN_ID"
           [ -n "${{ secrets.MAS_INSTALLER_ID }}" ] && echo "  ✅ MAS_INSTALLER_ID" || echo "  ❌ MAS_INSTALLER_ID"
           echo ""
+          echo "🍎 Developer ID (for DMG distribution):"
+          [ -n "${{ secrets.APPLE_DEVELOPER_ID_APPLICATION }}" ] && echo "  ✅ APPLE_DEVELOPER_ID_APPLICATION" || echo "  ❌ APPLE_DEVELOPER_ID_APPLICATION (Required for Homebrew)"
+          [ -n "${{ secrets.APPLE_APP_PASSWORD }}" ] && echo "  ✅ APPLE_APP_PASSWORD" || echo "  ❌ APPLE_APP_PASSWORD (Required for notarization)"
+          [ -n "${{ secrets.APPLE_TEAM_ID }}" ] && echo "  ✅ APPLE_TEAM_ID" || echo "  ❌ APPLE_TEAM_ID (Required for notarization)"
+          echo ""
           echo "🍎 Apple Store Connect API:"
           [ -n "${{ secrets.APP_STORE_CONNECT_API_KEY }}" ] && echo "  ✅ APP_STORE_CONNECT_API_KEY" || echo "  ❌ APP_STORE_CONNECT_API_KEY"
           [ -n "${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}" ] && echo "  ✅ APP_STORE_CONNECT_API_KEY_ID" || echo "  ❌ APP_STORE_CONNECT_API_KEY_ID"
@@ -410,6 +415,54 @@ jobs:
         if: matrix.platform == 'darwin'
         working-directory: ./desktop-ce
         run: make dmg-mac VERSION=${{ needs.calculate-version.outputs.version }}
+
+      - name: Sign and Notarize DMG for Distribution
+        if: matrix.platform == 'darwin'
+        env:
+          APPLE_DEVELOPER_ID_APPLICATION: ${{ secrets.APPLE_DEVELOPER_ID_APPLICATION }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        working-directory: ./desktop-ce
+        run: |
+          echo "🔏 Signing DMG for distribution outside Mac App Store..."
+
+          # Check required environment variables
+          if [ -z "$APPLE_DEVELOPER_ID_APPLICATION" ]; then
+            echo "❌ APPLE_DEVELOPER_ID_APPLICATION secret is not configured"
+            echo "This certificate is required for signing DMGs for distribution outside the Mac App Store"
+            exit 1
+          fi
+
+          if [ -z "$APPLE_ID" ] || [ -z "$APPLE_APP_PASSWORD" ] || [ -z "$APPLE_TEAM_ID" ]; then
+            echo "❌ Missing required secrets for notarization:"
+            [ -z "$APPLE_ID" ] && echo "  - APPLE_ID"
+            [ -z "$APPLE_APP_PASSWORD" ] && echo "  - APPLE_APP_PASSWORD"
+            [ -z "$APPLE_TEAM_ID" ] && echo "  - APPLE_TEAM_ID"
+            exit 1
+          fi
+
+          DMG_FILE="build/darwin/universal/whodb.dmg"
+
+          # Sign the DMG with Developer ID
+          echo "Signing DMG with Developer ID certificate..."
+          codesign --force --sign "$APPLE_DEVELOPER_ID_APPLICATION" \
+            --options runtime --timestamp \
+            "$DMG_FILE"
+
+          echo "📤 Submitting DMG for notarization..."
+          # Notarize the DMG
+          xcrun notarytool submit "$DMG_FILE" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_APP_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait
+
+          echo "📎 Stapling notarization ticket..."
+          # Staple the notarization ticket
+          xcrun stapler staple "$DMG_FILE"
+
+          echo "✅ DMG signed and notarized for distribution"
 
       - name: List build outputs before upload
         if: matrix.platform == 'windows' && matrix.arch == 'amd64'
