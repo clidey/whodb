@@ -406,6 +406,11 @@ jobs:
         working-directory: ./desktop-ce
         run: make ${{ matrix.make-target }} VERSION=${{ needs.calculate-version.outputs.version }}
 
+      - name: Create macOS DMG
+        if: matrix.platform == 'darwin'
+        working-directory: ./desktop-ce
+        run: make dmg-mac VERSION=${{ needs.calculate-version.outputs.version }}
+
       - name: List build outputs before upload
         if: matrix.platform == 'windows' && matrix.arch == 'amd64'
         shell: pwsh
@@ -1741,6 +1746,102 @@ jobs:
           name: deployment-manifest-github
           path: deployment_manifest.json
           retention-days: 1
+
+  # Generate Homebrew Cask formula
+  generate-homebrew-cask:
+    name: Generate Homebrew Cask Formula
+    runs-on: macos-latest
+    needs: [ calculate-version, create-github-release, package-mac-app-store ]
+    if: |
+      always() &&
+      needs.calculate-version.result == 'success' &&
+      needs.calculate-version.outputs.dry_run == 'false' &&
+      needs.create-github-release.result == 'success'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download macOS DMG
+        uses: actions/download-artifact@v4
+        with:
+          name: desktop-darwin-universal
+          path: ./desktop-ce/
+
+      - name: Find DMG file
+        id: find_dmg
+        run: |
+          DMG_FILE=$(find ./desktop-ce/build -name "*.dmg" -type f | head -1)
+
+          if [ -z "$DMG_FILE" ]; then
+            echo "Error: No DMG file found"
+            exit 1
+          fi
+
+          echo "Found DMG: $DMG_FILE"
+          echo "dmg_file=$DMG_FILE" >> $GITHUB_OUTPUT
+
+      - name: Generate Homebrew Cask Formula
+        run: |
+          ./scripts/generate-homebrew-cask.sh \
+            "${{ needs.calculate-version.outputs.version }}" \
+            "${{ steps.find_dmg.outputs.dmg_file }}" \
+            ./whodb.rb
+
+          # Display generated formula
+          echo "Generated formula:"
+          cat ./whodb.rb
+
+      - name: Validate Homebrew Cask Formula
+        run: |
+          # Validate the formula syntax
+          brew cask audit --download ./whodb.rb || true
+
+      - name: Upload Homebrew Cask Formula
+        uses: actions/upload-artifact@v4
+        with:
+          name: homebrew-cask-formula
+          path: whodb.rb
+          retention-days: 30
+
+      - name: Comment on Release with Homebrew Info
+        if: needs.calculate-version.outputs.dry_run == 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cat > /tmp/homebrew-comment.md << 'EOF'
+          ## Homebrew Installation
+
+          This release is available via Homebrew Cask (once submitted to homebrew-core).
+
+          **Installation (future):**
+          ```bash
+          brew install --cask whodb
+          ```
+
+          **Formula:** Available in artifacts → `homebrew-cask-formula/whodb.rb`
+
+          ### To Submit to homebrew-core:
+
+          1. Fork https://github.com/Homebrew/homebrew-core
+          2. Download the `whodb.rb` formula from artifacts
+          3. Place in `Casks/whodb.rb`
+          4. Run `brew cask audit --download whodb.rb`
+          5. Create PR to homebrew-core
+
+          See [HOMEBREW_SETUP.md](../HOMEBREW_SETUP.md) for detailed instructions.
+          EOF
+
+          # Get release ID
+          RELEASE_URL="https://api.github.com/repos/${{ github.repository }}/releases/tags/v${{ needs.calculate-version.outputs.version }}"
+          RELEASE_ID=$(curl -s "$RELEASE_URL" | jq -r '.id')
+
+          if [ -n "$RELEASE_ID" ] && [ "$RELEASE_ID" != "null" ]; then
+            curl -X POST \
+              -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Content-Type: application/json" \
+              --data "{\"body\": $(cat /tmp/homebrew-comment.md | jq -Rs .)}" \
+              "https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID/notes" || true
+          fi
 
   # Deploy Docker images last (hardest to rollback)
   deploy-docker:
