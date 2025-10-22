@@ -28,22 +28,22 @@ on:
         description: 'Deploy to Docker Hub (stage-only)'
         required: false
         type: boolean
-        default: true
+        default: false
       deploy_snap:
         description: 'Deploy to Snap Store (stage-only)'
         required: false
         type: boolean
-        default: true
+        default: false
       deploy_microsoft:
         description: 'Deploy to Microsoft Store (stage-only)'
         required: false
         type: boolean
-        default: true
+        default: false
       deploy_apple:
         description: 'Deploy to Apple App Store (stage-only)'
         required: false
         type: boolean
-        default: true
+        default: false
 
 jobs:
   # Step 1: Calculate version and deployment parameters
