@@ -56,22 +56,6 @@ jobs:
           echo "Snapcraft version:"
           snapcraft --version
 
-      - name: Setup LXD
-        run: |
-          sudo snap install lxd
-          sudo lxd init --auto
-          sudo usermod -a -G lxd $USER
-
-          # Fix network connectivity for LXD containers
-          sudo iptables -P FORWARD ACCEPT
-          sudo iptables -F FORWARD
-          sudo systemctl restart snap.lxd.daemon
-
-          # Verify LXD network
-          sudo lxc network show lxdbr0 || sudo lxc network create lxdbr0
-
-          echo "LXD configured"
-
       - name: Set version for snapcraft
         run: |
           # Since snapcraft.yaml uses 'version: git', we need to create a tag
@@ -100,19 +84,13 @@ jobs:
           echo "Building snap with version: ${{ inputs.version }}"
           echo "SNAPCRAFT_PROJECT_VERSION is: $SNAPCRAFT_PROJECT_VERSION"
 
-          # Try to build with LXD first (preferred for clean builds)
-          # Pass the environment variable explicitly to snapcraft
-          if sg lxd -c "SNAPCRAFT_PROJECT_VERSION=${{ inputs.version }} snapcraft --use-lxd --verbosity=debug"; then
-            echo "✅ Snap built successfully with LXD"
-            echo "build_method=lxd" >> $GITHUB_OUTPUT
-          else
-            echo "⚠️ LXD build failed, attempting destructive mode build"
-            # Fallback to destructive mode if LXD fails
-            # This builds directly on the runner without containerization
-            sudo SNAPCRAFT_PROJECT_VERSION=${{ inputs.version }} snapcraft --destructive-mode --verbosity=debug
-            echo "✅ Snap built successfully in destructive mode"
-            echo "build_method=destructive" >> $GITHUB_OUTPUT
-          fi
+          # Use destructive mode - perfectly fine for GitHub runners (ephemeral VMs)
+          # This ensures git tags are visible and version is correct
+          # Pass environment variable to sudo
+          sudo SNAPCRAFT_PROJECT_VERSION=${{ inputs.version }} snapcraft --destructive-mode --verbosity=debug
+
+          echo "✅ Snap built successfully"
+          echo "build_method=destructive" >> $GITHUB_OUTPUT
 
       - name: Verify Snap
         run: |

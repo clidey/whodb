@@ -159,9 +159,16 @@ jobs:
               if [ -n "$SNAP_FILE" ]; then
                 echo "✅ Found Snap ${arch} package: $(basename "$SNAP_FILE")"
 
-                # Verify filename contains version
-                if [[ "$(basename "$SNAP_FILE")" != *"_${{ inputs.version }}_"* ]]; then
-                  echo "::error::Snap filename doesn't contain version ${{ inputs.version }}"
+                # Verify filename contains correct version
+                SNAP_NAME=$(basename "$SNAP_FILE")
+                VERSION="${{ inputs.version }}"
+                VERSION_NO_V="${VERSION#v}"  # Remove leading 'v' if present
+
+                if [[ "$SNAP_NAME" == *"_${VERSION}_"* ]] || [[ "$SNAP_NAME" == *"_${VERSION_NO_V}_"* ]]; then
+                  echo "✅ Snap filename contains correct version: $VERSION"
+                else
+                  echo "::error::Snap filename doesn't contain expected version $VERSION"
+                  echo "::error::Found: $SNAP_NAME"
                   FAILED=true
                 fi
               else
