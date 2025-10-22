@@ -1,9 +1,4 @@
-name: Build, Stage, and Deploy Release
-
-# Workflow supports three deployment modes (selectable via dropdown when manually triggered):
-# 1. 'production' - Full deployment to all stores and Docker Hub (auto-selected for PR merges)
-# 2. 'stage-only' - Creates draft/candidate releases in stores, skips Docker push
-# 3. 'dry-run' - Builds everything but doesn't deploy anywhere (default for manual triggers)
+name: Release CE
 
 on:
   pull_request:
@@ -18,9 +13,8 @@ on:
         default: 'dry-run'
         options:
           - 'dry-run'        # Build only, no deployments
-          - 'stage-only'     # Deploy to stores as drafts/candidates, skip Docker
+          - 'stage-only'     # Deploy to stores as drafts/candidates
           - 'production'     # Full production deployment
-
       # Store selection for stage-only and dry-run modes (ignored in production)
       deploy_docker:
         description: 'Deploy to Docker Hub (stage-only/dry-run)'
@@ -38,35 +32,34 @@ on:
         type: boolean
         default: true
       deploy_apple:
-        description: 'Deploy to Apple Store (stage-only/dry-run)'
+        description: 'Deploy to Apple App Store (stage-only/dry-run)'
         required: false
         type: boolean
         default: true
 
 jobs:
+  # Step 1: Calculate version and deployment parameters
   calculate-version:
-    name: Calculate Next Version
+    name: Calculate Version
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'release')
     outputs:
-      version: ${{ steps.version.outputs.version }}
-      previous_version: ${{ steps.version.outputs.previous_version }}
-      deployment_mode: ${{ steps.deployment_mode.outputs.mode }}
-      dry_run: ${{ steps.dry_run.outputs.enabled }}
-      stage_only: ${{ steps.stage_only.outputs.enabled }}
-      pr_body: ${{ steps.pr_details.outputs.body }}
-      # Store selection outputs (for selective deployment)
-      deploy_docker: ${{ steps.store_selection.outputs.docker }}
-      deploy_snap: ${{ steps.store_selection.outputs.snap }}
-      deploy_microsoft: ${{ steps.store_selection.outputs.microsoft }}
-      deploy_apple: ${{ steps.store_selection.outputs.apple }}
+      version: ${{ steps.calc.outputs.version }}
+      previous_version: ${{ steps.calc.outputs.previous-version }}
+      deployment_mode: ${{ steps.calc.outputs.deployment-mode }}
+      dry_run: ${{ steps.calc.outputs.dry-run }}
+      stage_only: ${{ steps.calc.outputs.stage-only }}
+      deploy_docker: ${{ steps.calc.outputs.deploy-docker }}
+      deploy_snap: ${{ steps.calc.outputs.deploy-snap }}
+      deploy_microsoft: ${{ steps.calc.outputs.deploy-microsoft }}
+      deploy_apple: ${{ steps.calc.outputs.deploy-apple }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set deployment mode
+      - name: Determine deployment mode
         id: deployment_mode
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
@@ -75,1749 +68,334 @@ jobs:
             # PR merges to release branch are always production
             MODE="production"
           fi
-
-          # Set individual flags based on mode
-          if [ "$MODE" = "dry-run" ]; then
-            DRY_RUN="true"
-            STAGE_ONLY="false"
-          elif [ "$MODE" = "stage-only" ]; then
-            DRY_RUN="false"
-            STAGE_ONLY="true"
-          else  # production
-            DRY_RUN="false"
-            STAGE_ONLY="false"
-          fi
-
           echo "mode=$MODE" >> $GITHUB_OUTPUT
-          echo "Deployment mode: $MODE"
 
-      - name: Set dry run mode
-        id: dry_run
+      - name: Calculate version and parameters
+        id: calc
+        uses: ./.github/actions/calculate-version
+        with:
+          deployment-mode: ${{ steps.deployment_mode.outputs.mode }}
+          deploy-docker: ${{ inputs.deploy_docker }}
+          deploy-snap: ${{ inputs.deploy_snap }}
+          deploy-microsoft: ${{ inputs.deploy_microsoft }}
+          deploy-apple: ${{ inputs.deploy_apple }}
+
+      - name: Display configuration
         run: |
-          # Extract from deployment mode
-          MODE="${{ steps.deployment_mode.outputs.mode }}"
-          if [ "$MODE" = "dry-run" ]; then
-            DRY_RUN="true"
-          else
-            DRY_RUN="false"
-          fi
-          echo "enabled=$DRY_RUN" >> $GITHUB_OUTPUT
-          echo "Dry run mode: $DRY_RUN"
+          echo "# 🎯 Release Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Parameter | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Version** | ${{ steps.calc.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Mode** | ${{ steps.calc.outputs.deployment-mode }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Dry Run** | ${{ steps.calc.outputs.dry-run }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Stage Only** | ${{ steps.calc.outputs.stage-only }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Deployment Targets" >> $GITHUB_STEP_SUMMARY
+          echo "| Store | Deploy |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Docker Hub | ${{ steps.calc.outputs.deploy-docker }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Snap Store | ${{ steps.calc.outputs.deploy-snap }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Microsoft Store | ${{ steps.calc.outputs.deploy-microsoft }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Apple App Store | ${{ steps.calc.outputs.deploy-apple }} |" >> $GITHUB_STEP_SUMMARY
 
-      - name: Set stage only mode
-        id: stage_only
-        run: |
-          # Extract from deployment mode
-          MODE="${{ steps.deployment_mode.outputs.mode }}"
-          if [ "$MODE" = "stage-only" ]; then
-            STAGE_ONLY="true"
-          else
-            STAGE_ONLY="false"
-          fi
-          echo "enabled=$STAGE_ONLY" >> $GITHUB_OUTPUT
-          echo "Stage only mode: $STAGE_ONLY"
-
-      - name: Set store selection
-        id: store_selection
-        run: |
-          MODE="${{ steps.deployment_mode.outputs.mode }}"
-
-          # In production mode, always deploy to all stores
-          if [ "$MODE" = "production" ]; then
-            echo "docker=true" >> $GITHUB_OUTPUT
-            echo "snap=true" >> $GITHUB_OUTPUT
-            echo "microsoft=true" >> $GITHUB_OUTPUT
-            echo "apple=true" >> $GITHUB_OUTPUT
-            echo "Production mode: deploying to all stores"
-          elif [ "$MODE" = "stage-only" ]; then
-            # In stage-only mode, always deploy snap to edge channel
-            echo "docker=${{ inputs.deploy_docker }}" >> $GITHUB_OUTPUT
-            echo "snap=true" >> $GITHUB_OUTPUT  # Always deploy snap to edge in stage mode
-            echo "microsoft=${{ inputs.deploy_microsoft }}" >> $GITHUB_OUTPUT
-            echo "apple=${{ inputs.deploy_apple }}" >> $GITHUB_OUTPUT
-            echo "Stage-only mode:"
-            echo "  Docker: ${{ inputs.deploy_docker }}"
-            echo "  Snap: true (always deploys to edge channel)"
-            echo "  Microsoft: ${{ inputs.deploy_microsoft }}"
-            echo "  Apple: ${{ inputs.deploy_apple }}"
-          else
-            # In dry-run mode, use the input selections
-            echo "docker=${{ inputs.deploy_docker }}" >> $GITHUB_OUTPUT
-            echo "snap=${{ inputs.deploy_snap }}" >> $GITHUB_OUTPUT
-            echo "microsoft=${{ inputs.deploy_microsoft }}" >> $GITHUB_OUTPUT
-            echo "apple=${{ inputs.deploy_apple }}" >> $GITHUB_OUTPUT
-            echo "Dry-run mode - selective deployment:"
-            echo "  Docker: ${{ inputs.deploy_docker }}"
-            echo "  Snap: ${{ inputs.deploy_snap }}"
-            echo "  Microsoft: ${{ inputs.deploy_microsoft }}"
-            echo "  Apple: ${{ inputs.deploy_apple }}"
-          fi
-
-      - name: Check all secrets availability
-        run: |
-          echo "🎯 DEPLOYMENT MODE: ${{ steps.deployment_mode.outputs.mode }}"
-          echo "============================"
-          echo ""
-          if [ "${{ steps.deployment_mode.outputs.mode }}" = "dry-run" ]; then
-            echo "🏃 DRY RUN MODE - Building only, no deployments will be made"
-          elif [ "${{ steps.deployment_mode.outputs.mode }}" = "stage-only" ]; then
-            echo "📦 STAGE ONLY MODE - Will create drafts/candidates, no production releases"
-          else
-            echo "🚀 PRODUCTION MODE - Full deployment to all platforms"
-          fi
-          echo ""
-          echo "🔐 SECRET AVAILABILITY CHECK"
-          echo "============================"
-          echo ""
-          echo "📦 Docker Hub:"
-          [ -n "${{ secrets.DOCKERHUB_USERNAME }}" ] && echo "  ✅ DOCKERHUB_USERNAME" || echo "  ❌ DOCKERHUB_USERNAME"
-          [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ] && echo "  ✅ DOCKERHUB_TOKEN" || echo "  ❌ DOCKERHUB_TOKEN"
-          echo ""
-          echo "📦 Snap Store:"
-          [ -n "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}" ] && echo "  ✅ SNAPCRAFT_STORE_CREDENTIALS" || echo "  ❌ SNAPCRAFT_STORE_CREDENTIALS"
-          echo ""
-          echo "🪟 Microsoft Store:"
-          [ -n "${{ secrets.MS_TENANT_ID }}" ] && echo "  ✅ MS_TENANT_ID" || echo "  ❌ MS_TENANT_ID"
-          [ -n "${{ secrets.MS_CLIENT_ID }}" ] && echo "  ✅ MS_CLIENT_ID" || echo "  ❌ MS_CLIENT_ID"
-          [ -n "${{ secrets.MS_CLIENT_SECRET }}" ] && echo "  ✅ MS_CLIENT_SECRET" || echo "  ❌ MS_CLIENT_SECRET"
-          [ -n "${{ secrets.MS_APP_ID }}" ] && echo "  ✅ MS_APP_ID" || echo "  ❌ MS_APP_ID"
-          [ -n "${{ secrets.WINDOWS_PUBLISHER_CN }}" ] && echo "  ✅ WINDOWS_PUBLISHER_CN" || echo "  ❌ WINDOWS_PUBLISHER_CN (Warning: Will use test publisher)"
-          echo ""
-          echo "🍎 Mac App Store:"
-          [ -n "${{ secrets.MAS_CODESIGN_ID }}" ] && echo "  ✅ MAS_CODESIGN_ID" || echo "  ❌ MAS_CODESIGN_ID"
-          [ -n "${{ secrets.MAS_INSTALLER_ID }}" ] && echo "  ✅ MAS_INSTALLER_ID" || echo "  ❌ MAS_INSTALLER_ID"
-          echo ""
-          echo "🍎 Developer ID (for DMG distribution):"
-          [ -n "${{ secrets.APPLE_DEVELOPER_ID_APPLICATION }}" ] && echo "  ✅ APPLE_DEVELOPER_ID_APPLICATION" || echo "  ❌ APPLE_DEVELOPER_ID_APPLICATION (Required for Homebrew)"
-          [ -n "${{ secrets.APPLE_APP_PASSWORD }}" ] && echo "  ✅ APPLE_APP_PASSWORD" || echo "  ❌ APPLE_APP_PASSWORD (Required for notarization)"
-          [ -n "${{ secrets.APPLE_TEAM_ID }}" ] && echo "  ✅ APPLE_TEAM_ID" || echo "  ❌ APPLE_TEAM_ID (Required for notarization)"
-          echo ""
-          echo "🍎 Apple Store Connect API:"
-          [ -n "${{ secrets.APP_STORE_CONNECT_API_KEY }}" ] && echo "  ✅ APP_STORE_CONNECT_API_KEY" || echo "  ❌ APP_STORE_CONNECT_API_KEY"
-          [ -n "${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}" ] && echo "  ✅ APP_STORE_CONNECT_API_KEY_ID" || echo "  ❌ APP_STORE_CONNECT_API_KEY_ID"
-          [ -n "${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" ] && echo "  ✅ APP_STORE_CONNECT_ISSUER_ID" || echo "  ❌ APP_STORE_CONNECT_ISSUER_ID"
-          [ -n "${{ secrets.APPLE_ID }}" ] && echo "  ✅ APPLE_ID" || echo "  ❌ APPLE_ID"
-          echo ""
-          echo "============================"
-          echo ""
-
-      - name: Calculate version
-        id: version
-        run: |
-          NEXT_VERSION=$(bash scripts/version-bump.sh)
-          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-          PREVIOUS_VERSION="${LATEST_TAG#v}"
-          echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
-          echo "previous_version=$PREVIOUS_VERSION" >> $GITHUB_OUTPUT
-          echo "Next version: $NEXT_VERSION"
-          echo "Previous version: $PREVIOUS_VERSION"
-
-      - name: Capture PR details
-        id: pr_details
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            # PR event - capture the PR body
-            PR_BODY="${{ github.event.pull_request.body }}"
-          else
-            # Manual trigger - provide default release notes with mode info
-            MODE="${{ steps.deployment_mode.outputs.mode }}"
-            PR_BODY="Manual release deployment (${MODE} mode) for v${{ steps.version.outputs.version }}"
-          fi
-
-          # Escape special characters and prepare for multi-line output
-          PR_BODY="${PR_BODY//'%'/'%25'}"
-          PR_BODY="${PR_BODY//$'\n'/'%0A'}"
-          PR_BODY="${PR_BODY//$'\r'/'%0D'}"
-
-          echo "body=$PR_BODY" >> $GITHUB_OUTPUT
-
-  build-docker-ce:
-    name: Build Docker Images (CE)
+  # Step 2: Build artifacts in parallel
+  build-docker:
+    name: Build Docker
     needs: [ calculate-version ]
     if: |
-      needs.calculate-version.outputs.deployment_mode == 'production' ||
-      needs.calculate-version.outputs.deploy_docker == 'true'
-    strategy:
-      matrix:
-        include:
-          - runner: ubuntu-latest
-            platform: linux/amd64
-            arch: amd64
-          - runner: ubuntu-24.04-arm  # Native ARM64 build
-            platform: linux/arm64
-            arch: arm64
-    runs-on: ${{ matrix.runner }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      needs.calculate-version.outputs.deploy_docker == 'true' ||
+      needs.calculate-version.outputs.deployment_mode == 'production'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      version: ${{ needs.calculate-version.outputs.version }}
+      edition: 'ce'
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Docker image for ${{ matrix.platform }}
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./core/Dockerfile
-          platforms: ${{ matrix.platform }}
-          push: false
-          tags: clidey/whodb:${{ needs.calculate-version.outputs.version }}-${{ matrix.arch }}
-          outputs: type=docker,dest=/tmp/whodb-docker-${{ matrix.arch }}.tar
-
-      - name: Upload Docker artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: docker-image-${{ matrix.arch }}
-          path: /tmp/whodb-docker-${{ matrix.arch }}.tar
-          retention-days: 1
-
-  # Build desktop executables for store packaging
-  build-desktop-ce:
-    name: Build Desktop Executables (CE)
+  build-desktop:
+    name: Build Desktop
     needs: [ calculate-version ]
     if: |
-      needs.calculate-version.outputs.deployment_mode == 'production' ||
       needs.calculate-version.outputs.deploy_microsoft == 'true' ||
-      needs.calculate-version.outputs.deploy_apple == 'true'
-    strategy:
-      matrix:
-        include:
-          # Windows builds for Microsoft Store
-          - os: windows-latest
-            platform: windows
-            arch: amd64
-            make-target: build-prod-windows-amd64
-          - os: windows-11-arm  # Use native ARM64 runner for Windows ARM64
-            platform: windows
-            arch: arm64
-            make-target: build-prod-windows-arm64
-          # macOS build for Mac App Store
-          - os: macos-latest
-            platform: darwin
-            arch: universal
-            make-target: build-prod-mac
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: 'desktop-ce/go.mod'
-
-      - name: Setup Node.js and pnpm
-        uses: actions/setup-node@v4
-        with:
-          node-version: 'lts/*'
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Install frontend dependencies
-        working-directory: ./frontend
-        run: pnpm i
-
-      - name: Install Wails CLI
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
-
-      - name: Setup ARM64 compiler on Windows ARM
-        if: matrix.platform == 'windows' && matrix.arch == 'arm64'
-        shell: pwsh
-        run: |
-          Write-Host "Checking available GCC compilers..."
-          Get-Command gcc -ErrorAction SilentlyContinue | Format-List
-          Write-Host "Go environment:"
-          go env GOARCH
-          go env CC
-          Write-Host "Setting GOARCH=arm64 explicitly..."
-          $env:GOARCH = "arm64"
-          Write-Host "Updated GOARCH:"
-          go env GOARCH
-
-      - name: Build Windows
-        if: matrix.platform == 'windows' && matrix.arch == 'amd64'
-        working-directory: ./desktop-ce
-        shell: pwsh
-        env:
-          GOARCH: ${{ matrix.arch }}
-        run: |
-          Write-Host "Building Windows executable for MSIX packaging..."
-          $env:GOWORK = "$PWD/../go.work.desktop-ce"
-
-          # Clean previous build
-          Remove-Item -Path build -Recurse -Force -ErrorAction SilentlyContinue
-
-          # Prepare frontend
-          Write-Host "Preparing frontend..."
-          New-Item -ItemType Directory -Path frontend/dist -Force | Out-Null
-          Set-Location ../frontend
-          pnpm run build:ce
-          Copy-Item -Path build/* -Destination ../desktop-ce/frontend/dist/ -Recurse
-          Set-Location ../desktop-ce
-
-          Write-Host "Building with wails..."
-
-          wails build -clean -platform windows/amd64 `
-            -windowsconsole=false -ldflags="-s -w -H windowsgui" `
-            -o whodb.exe
-
-          if ($LASTEXITCODE -ne 0) {
-              Write-Error "Wails build failed with exit code: $LASTEXITCODE"
-              exit 1
-          }
-
-          # Find where wails actually put the exe
-          Write-Host "Looking for built executable..."
-          Write-Host "Contents of build directory:"
-          Get-ChildItem -Path build -Recurse -ErrorAction SilentlyContinue | Format-Table Name, FullName
-
-          # Check common locations
-          $possibleLocations = @(
-              "build\bin\whodb.exe",
-              "build\bin\whodb-amd64.exe",
-              "build\whodb.exe"
-          )
-
-          $foundExe = $null
-          foreach ($location in $possibleLocations) {
-              if (Test-Path $location) {
-                  $foundExe = $location
-                  Write-Host "Found exe at: $foundExe"
-                  break
-              }
-          }
-
-          if (-not $foundExe) {
-              Write-Error "Could not find whodb.exe after build"
-              exit 1
-          }
-
-          # Move to expected location
-          New-Item -ItemType Directory -Path build/windows/amd64 -Force | Out-Null
-          Move-Item $foundExe build/windows/amd64/whodb.exe -Force
-
-          Write-Host "Raw executable moved to: build/windows/amd64/whodb.exe"
-          Write-Host "Verifying final location..."
-          if (Test-Path "build/windows/amd64/whodb.exe") {
-              $fileInfo = Get-Item "build/windows/amd64/whodb.exe"
-              Write-Host "✅ Executable ready: $($fileInfo.FullName) (Size: $($fileInfo.Length) bytes)"
-          } else {
-              Write-Error "Failed to move executable to expected location"
-              exit 1
-          }
-
-      - name: Skip Windows ARM64 Build (Temporarily Disabled)
-        if: matrix.platform == 'windows' && matrix.arch == 'arm64'
-        shell: pwsh
-        run: |
-          Write-Host "⚠️ Windows ARM64 build is temporarily disabled due to toolchain issues"
-          Write-Host "Creating placeholder for build artifacts..."
-          New-Item -ItemType Directory -Force -Path "./desktop-ce/build/windows/arm64"
-          Write-Host "Skipping actual build..."
-
-      - name: Build macOS
-        if: matrix.platform == 'darwin'
-        working-directory: ./desktop-ce
-        run: make ${{ matrix.make-target }} VERSION=${{ needs.calculate-version.outputs.version }}
-
-      - name: Create macOS DMG
-        if: matrix.platform == 'darwin'
-        working-directory: ./desktop-ce
-        run: make dmg-mac VERSION=${{ needs.calculate-version.outputs.version }}
-
-      - name: Sign and Notarize DMG for Distribution
-        if: matrix.platform == 'darwin'
-        env:
-          APPLE_DEVELOPER_ID_APPLICATION: ${{ secrets.APPLE_DEVELOPER_ID_APPLICATION }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        working-directory: ./desktop-ce
-        run: |
-          echo "🔏 Signing DMG for distribution outside Mac App Store..."
-
-          # Check required environment variables
-          if [ -z "$APPLE_DEVELOPER_ID_APPLICATION" ]; then
-            echo "❌ APPLE_DEVELOPER_ID_APPLICATION secret is not configured"
-            echo "This certificate is required for signing DMGs for distribution outside the Mac App Store"
-            exit 1
-          fi
-
-          if [ -z "$APPLE_ID" ] || [ -z "$APPLE_APP_PASSWORD" ] || [ -z "$APPLE_TEAM_ID" ]; then
-            echo "❌ Missing required secrets for notarization:"
-            [ -z "$APPLE_ID" ] && echo "  - APPLE_ID"
-            [ -z "$APPLE_APP_PASSWORD" ] && echo "  - APPLE_APP_PASSWORD"
-            [ -z "$APPLE_TEAM_ID" ] && echo "  - APPLE_TEAM_ID"
-            exit 1
-          fi
-
-          DMG_FILE="build/darwin/universal/whodb.dmg"
-
-          # Sign the DMG with Developer ID
-          echo "Signing DMG with Developer ID certificate..."
-          codesign --force --sign "$APPLE_DEVELOPER_ID_APPLICATION" \
-            --options runtime --timestamp \
-            "$DMG_FILE"
-
-          echo "📤 Submitting DMG for notarization..."
-          # Notarize the DMG
-          xcrun notarytool submit "$DMG_FILE" \
-            --apple-id "$APPLE_ID" \
-            --password "$APPLE_APP_PASSWORD" \
-            --team-id "$APPLE_TEAM_ID" \
-            --wait
-
-          echo "📎 Stapling notarization ticket..."
-          # Staple the notarization ticket
-          xcrun stapler staple "$DMG_FILE"
-
-          echo "✅ DMG signed and notarized for distribution"
-
-      - name: List build outputs before upload
-        if: matrix.platform == 'windows' && matrix.arch == 'amd64'
-        shell: pwsh
-        working-directory: ./desktop-ce
-        run: |
-          Write-Host "📦 Listing build outputs before upload:"
-          if (Test-Path "build") {
-              Get-ChildItem -Path build -Recurse | Format-Table Name, FullName, Length
-          } else {
-              Write-Host "❌ Build directory does not exist!"
-          }
-
-      - name: Upload artifacts (AMD64 and macOS)
-        if: matrix.arch != 'arm64' || matrix.platform != 'windows'
-        uses: actions/upload-artifact@v4
-        with:
-          name: desktop-${{ matrix.platform }}-${{ matrix.arch || 'all' }}
-          path: |
-            desktop-ce/build/
-          retention-days: 1
-
-      - name: Skip ARM64 Artifacts Upload
-        if: matrix.platform == 'windows' && matrix.arch == 'arm64'
-        shell: pwsh
-        run: |
-          Write-Host "⚠️ Skipping ARM64 artifact upload (build was disabled)"
-
-  # Package for Mac App Store
-  package-mac-app-store:
-    name: Package for Mac App Store
-    runs-on: macos-latest
-    needs: [ calculate-version, build-desktop-ce ]
-    if: |
-      needs.calculate-version.outputs.deployment_mode == 'production' ||
-      needs.calculate-version.outputs.deploy_apple == 'true'
-    continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Download macOS build
-        uses: actions/download-artifact@v4
-        with:
-          name: desktop-darwin-universal
-          path: desktop-ce/
-
-      - name: Check certificate availability
-        id: check_mac_cert
-        run: |
-          echo "🔍 Checking Mac App Store certificates..."
-          if [ -n "${{ secrets.MAS_CODESIGN_ID }}" ]; then
-            echo "  ✅ MAS_CODESIGN_ID is configured"
-          else
-            echo "  ❌ MAS_CODESIGN_ID is NOT configured"
-          fi
-
-          if [ -n "${{ secrets.MAS_INSTALLER_ID }}" ]; then
-            echo "  ✅ MAS_INSTALLER_ID is configured"
-          else
-            echo "  ❌ MAS_INSTALLER_ID is NOT configured"
-          fi
-
-          if [ -n "${{ secrets.MAS_CODESIGN_ID }}" ] && [ -n "${{ secrets.MAS_INSTALLER_ID }}" ]; then
-            echo "has_cert=true" >> $GITHUB_OUTPUT
-            echo "✅ Mac certificates available - will build pkg package"
-          else
-            echo "has_cert=false" >> $GITHUB_OUTPUT
-            echo "⚠️ Mac certificates not configured - will create dummy package"
-          fi
-
-      - name: Create dummy pkg for validation (no certs)
-        if: steps.check_mac_cert.outputs.has_cert != 'true'
-        run: |
-          if [ "${{ needs.calculate-version.outputs.dry_run }}" = "true" ]; then
-            echo "🏃 DRY RUN MODE - No certificates available"
-          elif [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
-            echo "📦 STAGE ONLY MODE - No certificates available"
-          else
-            echo "⚠️ PRODUCTION MODE - No certificates available"
-          fi
-          echo "Creating dummy pkg for validation..."
-          mkdir -p desktop-ce
-          # Create a non-empty dummy file (1 byte minimum for GitHub release)
-          echo "dummy-package-placeholder" > "desktop-ce/WhoDB-${{ needs.calculate-version.outputs.version }}.pkg"
-
-      - name: Package for Mac App Store
-        if: steps.check_mac_cert.outputs.has_cert == 'true'
-        working-directory: ./desktop-ce
-        env:
-          MAS_CODESIGN_ID: ${{ secrets.MAS_CODESIGN_ID }}
-          MAS_INSTALLER_ID: ${{ secrets.MAS_INSTALLER_ID }}
-        run: |
-          if [ "${{ needs.calculate-version.outputs.dry_run }}" = "true" ]; then
-            echo "🏃 DRY RUN MODE - Building Mac App Store package (will not publish)"
-          fi
-
-          # Sign the app for Mac App Store
-          codesign --deep --force --options runtime --sign "$MAS_CODESIGN_ID" \
-            "build/darwin/universal/WhoDB.app"
-
-          # Create Mac App Store package
-          productbuild --component "build/darwin/universal/WhoDB.app" /Applications \
-            --sign "$MAS_INSTALLER_ID" \
-            "WhoDB-${{ needs.calculate-version.outputs.version }}.pkg"
-
-      - name: Upload Mac App Store package
-        uses: actions/upload-artifact@v4
-        with:
-          name: mac-app-store
-          path: desktop-ce/WhoDB-*.pkg
-          retention-days: 1
-
-  package-windows-msix:
-    name: Package Windows MSIX
-    runs-on: windows-latest
-    needs: [ calculate-version, build-desktop-ce ]
-    if: |
-      needs.calculate-version.outputs.deployment_mode == 'production' ||
-      needs.calculate-version.outputs.deploy_microsoft == 'true'
-    continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Check Windows SDK availability
-        shell: pwsh
-        run: |
-          Write-Host "🔍 Checking for Windows SDK..."
-
-          # Check if makeappx is directly available
-          $makeappxCmd = Get-Command makeappx -ErrorAction SilentlyContinue
-          if ($makeappxCmd) {
-              Write-Host "✅ makeappx is available in PATH: $($makeappxCmd.Source)"
-          } else {
-              # Check if makeappx exists in any SDK version
-              $sdkRoot = "C:\Program Files (x86)\Windows Kits\10\bin"
-              if (Test-Path $sdkRoot) {
-                  $versions = Get-ChildItem -Path $sdkRoot -Directory |
-                      Where-Object { $_.Name -match "^10\.\d+\.\d+\.\d+$" } |
-                      Sort-Object { [version]($_.Name -replace "^10\.", "") } -Descending
-
-                  Write-Host "Found Windows SDK versions:"
-                  $versions | ForEach-Object { Write-Host "  - $($_.Name)" }
-
-                  $makeappxFound = $false
-                  foreach ($version in $versions) {
-                      if (Test-Path (Join-Path $version.FullName "x64\makeappx.exe")) {
-                          Write-Host "✅ makeappx.exe available in SDK $($version.Name)"
-                          $makeappxFound = $true
-                          break
-                      }
-                  }
-
-                  if (-not $makeappxFound) {
-                      Write-Host "⚠️ makeappx.exe not found in any SDK version"
-                      Write-Host "Note: Will attempt to use makeappx directly or create dummy for dry run"
-                  }
-              } else {
-                  Write-Host "⚠️ Windows SDK not found at expected location"
-              }
-          }
-
-      - name: Download Windows amd64 builds
-        uses: actions/download-artifact@v4
-        with:
-          name: desktop-windows-amd64
-          path: desktop-ce/
-
-      # ARM64 builds temporarily disabled
-      # - name: Download Windows arm64 builds
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     name: desktop-windows-arm64
-      #     path: desktop-ce/
-
-      - name: List downloaded Windows build artifacts
-        shell: pwsh
-        run: |
-          Write-Host "📁 Current directory: $PWD"
-          Write-Host ""
-          Write-Host "📁 Contents of desktop-ce directory:"
-          if (Test-Path "desktop-ce") {
-              Get-ChildItem -Path "desktop-ce" -Recurse | Format-Table Name, FullName, Length
-          } else {
-              Write-Host "❌ desktop-ce directory does not exist!"
-              Write-Host "Looking for any build directories..."
-              Get-ChildItem -Path . | Format-Table Name, FullName
-          }
-          Write-Host ""
-          Write-Host "🔍 Looking for .exe files anywhere:"
-          Get-ChildItem -Path . -Filter "*.exe" -Recurse -ErrorAction SilentlyContinue | Format-Table Name, FullName, Length
-
-      - name: Build unsigned MSIX for Microsoft Store
-        shell: pwsh
-        run: |
-          if ("${{ needs.calculate-version.outputs.dry_run }}" -eq "true") {
-            echo "🏃 DRY RUN MODE - Building unsigned MSIX package (will not publish)"
-          } else {
-            echo "📦 Building unsigned MSIX package for Microsoft Store"
-          }
-          echo "ℹ️ Microsoft will sign this package when uploaded to Partner Center"
-
-          # Add Windows SDK to PATH if available
-          $sdkVersions = Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits\10\bin" -Directory -ErrorAction SilentlyContinue |
-              Where-Object { $_.Name -match "^10\.\d+\.\d+\.\d+$" } |
-              Sort-Object { [version]($_.Name -replace "^10\.", "") } -Descending
-
-          foreach ($version in $sdkVersions) {
-              $binPath = Join-Path $version.FullName "x64"
-              if (Test-Path (Join-Path $binPath "makeappx.exe")) {
-                  $env:PATH = "$binPath;$env:PATH"
-                  Write-Host "Added Windows SDK to PATH: $binPath"
-                  break
-              }
-          }
-
-          # Try to build MSIX package
-          $ErrorActionPreference = "Stop"
-          try {
-              # Use real Publisher CN from secret if available, otherwise use test publisher
-              if ("${{ secrets.WINDOWS_PUBLISHER_CN }}" -ne "") {
-                  Write-Host "Building with Microsoft Store Publisher CN"
-                  .\scripts\build-msix.ps1 -Architecture amd64 -Version ${{ needs.calculate-version.outputs.version }} -PublisherCN "${{ secrets.WINDOWS_PUBLISHER_CN }}" -SkipSigning
-              } else {
-                  Write-Host "Warning: WINDOWS_PUBLISHER_CN secret not set, exiting"
-                  exit 1
-              }
-              Write-Host "✅ MSIX build script completed"
-          } catch {
-              Write-Host "Failed to build MSIX: $_"
-
-              if ("${{ needs.calculate-version.outputs.dry_run }}" -eq "true") {
-                  Write-Host "Creating dummy MSIX bundle for dry run validation..."
-                  New-Item -ItemType File -Path "WhoDB-${{ needs.calculate-version.outputs.version }}.msixbundle" -Force | Out-Null
-                  Write-Host "✅ Created dummy MSIX bundle for dry run"
-              } else {
-                  Write-Error "Failed to create MSIX package: $_"
-                  exit 1
-              }
-          }
-
-      # ARM64 build temporarily disabled
-      # - name: Build MSIX arm64
-      #   if: needs.calculate-version.outputs.dry_run == 'false'
-      #   shell: pwsh
-      #   env:
-      #     WINDOWS_PFX_PASSWORD: ${{ secrets.WINDOWS_PFX_PASSWORD }}
-      #   run: |
-      #     .\scripts\build-msix.ps1 -Architecture arm64 -Version ${{ needs.calculate-version.outputs.version }} -PublisherCN "${{ secrets.WINDOWS_PUBLISHER_CN }}" -CertPath cert.pfx
-
-      - name: Create MSIX bundle (AMD64 only for now)
-        shell: pwsh
-        run: |
-          $version = "${{ needs.calculate-version.outputs.version }}"
-          $msixFile = "WhoDB-$version-amd64.msix"
-          if (-not (Test-Path $msixFile)) {
-            Write-Error "Expected MSIX package not found: $msixFile"
-            exit 1
-          }
-
-          $bundleRoot = "bundle"
-          if (Test-Path $bundleRoot) {
-            Remove-Item $bundleRoot -Recurse -Force
-          }
-          New-Item -ItemType Directory -Path $bundleRoot | Out-Null
-
-          $x64Dir = Join-Path $bundleRoot "x64"
-          New-Item -ItemType Directory -Path $x64Dir | Out-Null
-
-          Copy-Item $msixFile (Join-Path $x64Dir $msixFile) -Force
-
-          $bundleName = "WhoDB-$version.msixbundle"
-          if (Test-Path $bundleName) {
-            Remove-Item $bundleName -Force
-          }
-
-          $makeappxCmd = Get-Command makeappx -ErrorAction SilentlyContinue
-          if (-not $makeappxCmd) {
-            $sdkRoot = "C:\Program Files (x86)\Windows Kits\10\bin"
-            if (Test-Path $sdkRoot) {
-              $sdkVersions = Get-ChildItem -Path $sdkRoot -Directory |
-                Where-Object { $_.Name -match "^10\.\d+\.\d+\.\d+$" } |
-                Sort-Object { [version]($_.Name -replace "^10\.", "") } -Descending
-
-              foreach ($versionDir in $sdkVersions) {
-                $candidate = Join-Path $versionDir.FullName "x64\makeappx.exe"
-                if (Test-Path $candidate) {
-                  $makeappxCmd = Get-Command $candidate -ErrorAction SilentlyContinue
-                  if ($makeappxCmd) {
-                    break
-                  }
-                }
-              }
-            }
-          }
-
-          if (-not $makeappxCmd) {
-            Write-Error "makeappx.exe not found in PATH or Windows SDK directories"
-            exit 1
-          }
-
-          & $makeappxCmd.Source bundle /d $bundleRoot /p $bundleName /o
-          if ($LASTEXITCODE -ne 0) {
-            Write-Error "makeappx bundle failed with exit code $LASTEXITCODE"
-            exit 1
-          }
-
-          Remove-Item $bundleRoot -Recurse -Force -ErrorAction SilentlyContinue
-
-      - name: Upload MSIX artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-msix
-          path: WhoDB-*.msixbundle
-          retention-days: 1
+      needs.calculate-version.outputs.deploy_apple == 'true' ||
+      needs.calculate-version.outputs.deployment_mode == 'production'
+    uses: ./.github/workflows/_build-desktop.yml
+    with:
+      version: ${{ needs.calculate-version.outputs.version }}
+      edition: 'ce'
+      platforms: >-
+        ${{
+          (needs.calculate-version.outputs.deploy_microsoft == 'true' || needs.calculate-version.outputs.deployment_mode == 'production')
+            && 'windows-amd64,windows-arm64,' || ''
+        }}${{
+          (needs.calculate-version.outputs.deploy_apple == 'true' || needs.calculate-version.outputs.deployment_mode == 'production')
+            && 'darwin-universal' || ''
+        }}
+    secrets:
+      APPLE_DEVELOPER_ID_APPLICATION: ${{ secrets.APPLE_DEVELOPER_ID_APPLICATION }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
   build-snap:
-    name: Build Snap Package
-    strategy:
-      matrix:
-        include:
-          - runner: ubuntu-latest
-            arch: amd64
-          - runner: ubuntu-24.04-arm
-            arch: arm64
-    runs-on: ${{ matrix.runner }}
-    env:
-      SNAPCRAFT_PROJECT_VERSION: ${{ needs.calculate-version.outputs.version }}
+    name: Build Snap
     needs: [ calculate-version ]
     if: |
-      needs.calculate-version.outputs.deployment_mode == 'production' ||
-      needs.calculate-version.outputs.deploy_snap == 'true'
-    continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      needs.calculate-version.outputs.deploy_snap == 'true' ||
+      needs.calculate-version.outputs.deployment_mode == 'production'
+    uses: ./.github/workflows/_build-snap.yml
+    with:
+      version: ${{ needs.calculate-version.outputs.version }}
+    secrets:
+      SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
 
-      - name: Set snap version
-        run: |
-          echo "Setting snap version to: ${{ needs.calculate-version.outputs.version }}"
-          sed -i "s/^version: git$/version: ${{ needs.calculate-version.outputs.version }}/" snapcraft.yaml
-          echo "Snap version set in snapcraft.yaml"
-
-      - name: Build snap from source
-        uses: canonical/action-build@v1
-        id: build
-
-      - name: Rename snap with architecture
-        run: |
-          SNAP_FILE="${{ steps.build.outputs.snap }}"
-          NEW_NAME="${SNAP_FILE%.snap}_${{ matrix.arch }}.snap"
-          mv "$SNAP_FILE" "$NEW_NAME"
-          echo "SNAP_FILE=$NEW_NAME" >> $GITHUB_ENV
-
-      - name: Sanity check snap version
-        run: |
-          SNAP_BASENAME=$(basename "$SNAP_FILE")
-          if [[ "$SNAP_BASENAME" != *"_${SNAPCRAFT_PROJECT_VERSION}_"* ]]; then
-            echo "::error::Snap filename $SNAP_BASENAME does not contain version ${SNAPCRAFT_PROJECT_VERSION}"
-            exit 1
-          fi
-          echo "✓ Snap filename includes version ${SNAPCRAFT_PROJECT_VERSION}"
-
-      - name: Upload snap artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: snap-package-${{ matrix.arch }}
-          path: ${{ env.SNAP_FILE }}
-          retention-days: 1
-
-
-  sign-with-sigstore:
-    name: Sign Artifacts with Sigstore
-    runs-on: ubuntu-latest
-    needs: [ calculate-version, package-windows-msix, package-mac-app-store, build-snap, build-desktop-ce ]
+  # Step 3: Sign and validate all builds
+  sign-and-validate:
+    name: Sign and Validate
+    needs: [ calculate-version, build-docker, build-desktop, build-snap ]
     if: |
       always() &&
-      needs.calculate-version.result == 'success'
-    continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
-    # Need write permissions for OIDC token
+      needs.calculate-version.result == 'success' &&
+      (needs.build-docker.result == 'success' || needs.build-docker.result == 'skipped') &&
+      (needs.build-desktop.result == 'success' || needs.build-desktop.result == 'skipped') &&
+      (needs.build-snap.result == 'success' || needs.build-snap.result == 'skipped')
+    uses: ./.github/workflows/_sign-validate.yml
+    with:
+      version: ${{ needs.calculate-version.outputs.version }}
+      validate-docker: ${{ needs.build-docker.result == 'success' }}
+      validate-snap: ${{ needs.build-snap.result == 'success' }}
+      validate-desktop: ${{ needs.build-desktop.result == 'success' }}
+    secrets:
+      SIGSTORE_ID_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Step 4: Deploy to various platforms (conditionally)
+  deploy-snap:
+    name: Deploy Snap
+    needs: [ calculate-version, sign-and-validate ]
+    if: |
+      needs.calculate-version.outputs.dry_run == 'false' &&
+      needs.calculate-version.outputs.deploy_snap == 'true'
+    uses: ./.github/workflows/_deploy-snap.yml
+    with:
+      version: ${{ needs.calculate-version.outputs.version }}
+      channel: ${{ needs.calculate-version.outputs.stage_only == 'true' && 'edge' || 'stable' }}
+      dry-run: false
+    secrets:
+      SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+
+  deploy-microsoft:
+    name: Deploy Microsoft
+    needs: [ calculate-version, sign-and-validate ]
+    if: |
+      needs.calculate-version.outputs.dry_run == 'false' &&
+      needs.calculate-version.outputs.deploy_microsoft == 'true'
+    uses: ./.github/workflows/_deploy-microsoft.yml
+    with:
+      version: ${{ needs.calculate-version.outputs.version }}
+      stage-only: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
+    secrets:
+      MS_TENANT_ID: ${{ secrets.MS_TENANT_ID }}
+      MS_CLIENT_ID: ${{ secrets.MS_CLIENT_ID }}
+      MS_CLIENT_SECRET: ${{ secrets.MS_CLIENT_SECRET }}
+      MS_APP_ID: ${{ secrets.MS_APP_ID }}
+
+  deploy-apple:
+    name: Deploy Apple
+    needs: [ calculate-version, sign-and-validate ]
+    if: |
+      needs.calculate-version.outputs.dry_run == 'false' &&
+      needs.calculate-version.outputs.deploy_apple == 'true'
+    uses: ./.github/workflows/_deploy-apple.yml
+    with:
+      version: ${{ needs.calculate-version.outputs.version }}
+      stage-only: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
+    secrets:
+      APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+      APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      APPLE_DEVELOPER_ID: ${{ secrets.APPLE_DEVELOPER_ID }}
+      APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
+
+  # Step 5: Create GitHub release
+  create-github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [ calculate-version, deploy-snap, deploy-microsoft, deploy-apple ]
+    if: |
+      always() &&
+      needs.calculate-version.outputs.dry_run == 'false' &&
+      (
+        (needs.calculate-version.outputs.stage_only == 'true' && (
+          needs.deploy-snap.result == 'success' ||
+          needs.deploy-microsoft.result == 'success' ||
+          needs.deploy-apple.result == 'success'
+        )) ||
+        (needs.calculate-version.outputs.deployment_mode == 'production' &&
+         (needs.deploy-snap.result != 'failure') &&
+         (needs.deploy-microsoft.result != 'failure') &&
+         (needs.deploy-apple.result != 'failure'))
+      )
     permissions:
       contents: write
-      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@v3
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts/
-        # Continue even if dockerbuild metadata artifacts fail to download
-        continue-on-error: true
-
-      - name: Sign Windows MSIX bundle
-        env:
-          COSIGN_EXPERIMENTAL: 1
-        run: |
-          for file in artifacts/windows-msix/*.msixbundle; do
-            if [ -f "$file" ]; then
-              echo "Signing $file with Sigstore..."
-              cosign sign-blob --yes "$file" \
-                --output-signature="${file}.sig" \
-                --output-certificate="${file}.pem" \
-                --oidc-issuer=https://token.actions.githubusercontent.com \
-                || echo "Warning: Failed to sign $file, continuing..."
-            fi
-          done
-
-      - name: Sign Mac App Store package
-        env:
-          COSIGN_EXPERIMENTAL: 1
-        run: |
-          for file in artifacts/mac-app-store/*.pkg; do
-            if [ -f "$file" ]; then
-              echo "Signing $file with Sigstore..."
-              cosign sign-blob --yes "$file" \
-                --output-signature="${file}.sig" \
-                --output-certificate="${file}.pem" \
-                --oidc-issuer=https://token.actions.githubusercontent.com \
-                || echo "Warning: Failed to sign $file, continuing..."
-            fi
-          done
-
-      - name: Upload signed artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: signed-artifacts
-          path: artifacts/
-          retention-days: 1
-
-  validate-all-builds:
-    name: Validate All Builds
-    runs-on: ubuntu-latest
-    needs: [ sign-with-sigstore, build-docker-ce, calculate-version ]
-    if: |
-      always() &&
-      needs.calculate-version.result == 'success' &&
-      needs.sign-with-sigstore.result != 'cancelled'
-    steps:
-      - name: Checkout for scripts
-        uses: actions/checkout@v4
-
-      - name: Download required artifacts for validation
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts/
-        # Continue even if dockerbuild metadata artifacts fail
-        continue-on-error: true
-
-      - name: Clean up Docker metadata artifacts
-        run: |
-          # Remove any dockerbuild artifacts that may have partially downloaded
-          rm -rf artifacts/*dockerbuild* || true
-          echo "Cleaned up Docker metadata artifacts (not required for validation)"
-
-      - name: Validate artifacts
-        run: |
-          echo "Checking for required artifacts based on deployment targets..."
-          FAILED=false
-
-          # Check Docker artifacts if deploying to Docker
-          if [ "${{ needs.calculate-version.outputs.deploy_docker }}" = "true" ] || [ "${{ needs.calculate-version.outputs.deployment_mode }}" = "production" ]; then
-            echo "Checking Docker artifacts..."
-            [ -f "artifacts/docker-image-amd64/whodb-docker-amd64.tar" ] || (echo "❌ Docker amd64 image missing" && FAILED=true)
-            [ -f "artifacts/docker-image-arm64/whodb-docker-arm64.tar" ] || (echo "❌ Docker arm64 image missing" && FAILED=true)
-          fi
-
-          # Check Microsoft Store artifacts if deploying to Microsoft
-          if [ "${{ needs.calculate-version.outputs.deploy_microsoft }}" = "true" ] || [ "${{ needs.calculate-version.outputs.deployment_mode }}" = "production" ]; then
-            echo "Checking Microsoft Store artifacts..."
-            [ -f "artifacts/windows-msix/"*.msixbundle ] || (echo "❌ Windows MSIX bundle missing" && FAILED=true)
-          fi
-
-          # Check Apple Store artifacts if deploying to Apple
-          if [ "${{ needs.calculate-version.outputs.deploy_apple }}" = "true" ] || [ "${{ needs.calculate-version.outputs.deployment_mode }}" = "production" ]; then
-            echo "Checking Apple Store artifacts..."
-            [ -f "artifacts/mac-app-store/"*.pkg ] || (echo "❌ Mac App Store package missing" && FAILED=true)
-          fi
-
-          # Check Snap artifacts if deploying to Snap
-          if [ "${{ needs.calculate-version.outputs.deploy_snap }}" = "true" ] || [ "${{ needs.calculate-version.outputs.deployment_mode }}" = "production" ]; then
-            echo "Checking Snap artifacts..."
-            [ -f "artifacts/snap-package-amd64/"*.snap ] || (echo "❌ Snap amd64 package missing" && FAILED=true)
-            [ -f "artifacts/snap-package-arm64/"*.snap ] || (echo "❌ Snap arm64 package missing" && FAILED=true)
-          fi
-
-          if [ "$FAILED" = "true" ]; then
-            echo "❌ Some required artifacts are missing"
-            exit 1
-          else
-            echo "✓ All required artifacts present for selected deployment targets"
-            echo "Note: Windows ARM64 build is temporarily disabled"
-          fi
-
-      - name: Initialize deployment manifest
-        run: |
-          bash scripts/track-deployment.sh docker pending ${{ needs.calculate-version.outputs.version }}
-
-      - name: Upload deployment manifest
-        uses: actions/upload-artifact@v4
-        with:
-          name: deployment-manifest-validated
-          path: deployment_manifest.json
-          retention-days: 1
-
-  # Deploy to stores first (these can be reviewed/rolled back before going live)
-  deploy-snap:
-    name: Deploy to Snap Store
-    runs-on: ubuntu-latest
-    needs: [ calculate-version, validate-all-builds ]
-    if: needs.calculate-version.outputs.dry_run == 'false' && needs.calculate-version.outputs.deploy_snap == 'true'
-    continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
-    steps:
-      - name: Checkout for scripts
-        uses: actions/checkout@v4
-
-      - name: Check Snapcraft credentials
-        run: |
-          echo "🔍 Checking Snapcraft credentials..."
-          if [ -n "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}" ]; then
-            echo "  ✅ SNAPCRAFT_STORE_CREDENTIALS is configured"
-          else
-            echo "  ❌ SNAPCRAFT_STORE_CREDENTIALS is NOT configured"
-            if [ "${{ needs.calculate-version.outputs.dry_run }}" = "false" ] && [ "${{ needs.calculate-version.outputs.stage_only }}" = "false" ]; then
-              echo "::error::Production deployment requires SNAPCRAFT_STORE_CREDENTIALS"
-              exit 1
-            fi
-          fi
-
-      - name: Download snap amd64 artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: snap-package-amd64
-
-      - name: Download snap arm64 artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: snap-package-arm64
-
-      - name: Download deployment manifest
-        uses: actions/download-artifact@v4
-        with:
-          name: deployment-manifest-validated
-          path: .
-        continue-on-error: true
-
-      - name: Initialize manifest if needed
-        run: |
-          if [ ! -f "deployment_manifest.json" ]; then
-            echo "Initializing deployment manifest..."
-            cat > deployment_manifest.json <<EOF
-          {
-            "version": "${{ needs.calculate-version.outputs.version }}",
-            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "deployments": {}
-          }
-          EOF
-          fi
-
-      - name: Check Snapcraft credentials availability
-        id: check_snap_creds
-        run: |
-          if [ -n "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}" ]; then
-            echo "has_creds=true" >> $GITHUB_OUTPUT
-            echo "✅ Snapcraft credentials are configured"
-          else
-            echo "has_creds=false" >> $GITHUB_OUTPUT
-            echo "⚠️ Snapcraft credentials not configured"
-            if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
-              echo "Will skip Snap Store upload in stage-only mode"
-            elif [ "${{ needs.calculate-version.outputs.dry_run }}" = "false" ]; then
-              echo "::error::Production deployment requires SNAPCRAFT_STORE_CREDENTIALS"
-              exit 1
-            fi
-          fi
-
-      - name: Determine Snap release channel
-        if: needs.calculate-version.outputs.dry_run == 'false'
-        id: snap_channel
-        run: |
-          if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
-            echo "channel=edge" >> $GITHUB_OUTPUT
-            echo "📦 Publishing to edge channel (stage only)"
-          else
-            echo "channel=stable" >> $GITHUB_OUTPUT
-            echo "📦 Publishing to stable channel"
-          fi
-
-      - name: Locate built snaps
-        if: needs.calculate-version.outputs.dry_run == 'false'
-        id: locate_snaps
-        run: |
-          echo "Looking for snap files..."
-          ls -la *.snap || echo "No snap files found"
-
-          AMD64_SNAP=$(ls *amd64*.snap 2>/dev/null | head -1 || echo "")
-          ARM64_SNAP=$(ls *arm64*.snap 2>/dev/null | head -1 || echo "")
-
-          if [ -z "$AMD64_SNAP" ] && [ -z "$ARM64_SNAP" ]; then
-            echo "❌ No snap files found in current directory"
-            if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
-              echo "Continuing in stage-only mode..."
-              echo "snap_found=false" >> $GITHUB_OUTPUT
-            else
-              exit 1
-            fi
-          else
-            [ -n "$AMD64_SNAP" ] && echo "✅ Found AMD64 snap: $AMD64_SNAP"
-            [ -n "$ARM64_SNAP" ] && echo "✅ Found ARM64 snap: $ARM64_SNAP"
-            echo "snap_found=true" >> $GITHUB_OUTPUT
-          fi
-          echo "amd64_snap=$AMD64_SNAP" >> $GITHUB_OUTPUT
-          echo "arm64_snap=$ARM64_SNAP" >> $GITHUB_OUTPUT
-
-      - name: Publish AMD64 snap
-        if: needs.calculate-version.outputs.dry_run == 'false' && steps.check_snap_creds.outputs.has_creds == 'true' && steps.locate_snaps.outputs.amd64_snap != ''
-        uses: canonical/action-publish@v1
-        env:
-          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
-        with:
-          snap: ${{ steps.locate_snaps.outputs.amd64_snap }}
-          release: ${{ steps.snap_channel.outputs.channel }}
-
-      - name: Publish ARM64 snap
-        if: needs.calculate-version.outputs.dry_run == 'false' && steps.check_snap_creds.outputs.has_creds == 'true' && steps.locate_snaps.outputs.arm64_snap != ''
-        uses: canonical/action-publish@v1
-        env:
-          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
-        with:
-          snap: ${{ steps.locate_snaps.outputs.arm64_snap }}
-          release: ${{ steps.snap_channel.outputs.channel }}
-
-      - name: Track Snap deployment
-        if: needs.calculate-version.outputs.dry_run == 'false'
-        run: |
-          bash scripts/track-deployment.sh snap deployed ${{ needs.calculate-version.outputs.version }}
-
-      - name: Dry run summary
-        if: needs.calculate-version.outputs.dry_run == 'true'
-        run: |
-          echo "🏃 DRY RUN MODE - Would have published:"
-          if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
-            echo "  - Snap packages (amd64 and arm64) to edge channel (stage only)"
-          else
-            echo "  - Snap packages (amd64 and arm64) to stable channel"
-          fi
-          ls -lh *.snap
-
-      - name: Upload updated manifest
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: deployment-manifest-snap
-          path: deployment_manifest.json
-          retention-days: 1
-
-      - name: Upload store state
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: store-state
-          path: store_state.json
-          retention-days: 1
-
-  deploy-microsoft-store:
-    name: Deploy to Microsoft Store
-    runs-on: windows-latest
-    needs: [ calculate-version, package-windows-msix, deploy-snap ]
-    if: |
-      always() &&
-      needs.calculate-version.outputs.dry_run == 'false' &&
-      needs.calculate-version.outputs.deploy_microsoft == 'true' &&
-      needs.package-windows-msix.result == 'success' &&
-      (needs.calculate-version.outputs.stage_only == 'true' ||
-       (needs.calculate-version.outputs.deployment_mode == 'production' && needs.deploy-snap.result == 'success'))
-    continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
-    steps:
-      - name: Checkout for scripts
-        uses: actions/checkout@v4
-
-      - name: Check Microsoft Store credentials
-        shell: pwsh
-        run: |
-          Write-Host "🔍 Checking Microsoft Store credentials..."
-
-          if ("${{ secrets.MS_TENANT_ID }}" -ne "") {
-            Write-Host "  ✅ MS_TENANT_ID is configured"
-          } else {
-            Write-Host "  ❌ MS_TENANT_ID is NOT configured"
-          }
-
-          if ("${{ secrets.MS_CLIENT_ID }}" -ne "") {
-            Write-Host "  ✅ MS_CLIENT_ID is configured"
-          } else {
-            Write-Host "  ❌ MS_CLIENT_ID is NOT configured"
-          }
-
-          if ("${{ secrets.MS_CLIENT_SECRET }}" -ne "") {
-            Write-Host "  ✅ MS_CLIENT_SECRET is configured"
-          } else {
-            Write-Host "  ❌ MS_CLIENT_SECRET is NOT configured"
-          }
-
-          if ("${{ secrets.MS_APP_ID }}" -ne "") {
-            Write-Host "  ✅ MS_APP_ID is configured"
-          } else {
-            Write-Host "  ❌ MS_APP_ID is NOT configured"
-          }
-
-          $allConfigured = ("${{ secrets.MS_TENANT_ID }}" -ne "") -and
-                          ("${{ secrets.MS_CLIENT_ID }}" -ne "") -and
-                          ("${{ secrets.MS_CLIENT_SECRET }}" -ne "") -and
-                          ("${{ secrets.MS_APP_ID }}" -ne "")
-
-          if ($allConfigured) {
-            Write-Host "✅ All Microsoft Store credentials are configured"
-          } else {
-            Write-Host "⚠️ Some Microsoft Store credentials are missing"
-            Write-Host "::warning::Microsoft Store deployment may fail due to missing credentials"
-          }
-
-      - name: Download MSIX package
-        uses: actions/download-artifact@v4
-        with:
-          name: windows-msix
-          path: .
-
-      - name: Download deployment manifest
-        uses: actions/download-artifact@v4
-        with:
-          name: deployment-manifest-validated
-          path: .
-        continue-on-error: true
-
-      - name: Initialize manifest if needed
-        shell: pwsh
-        run: |
-          if (-not (Test-Path "deployment_manifest.json")) {
-            Write-Host "Initializing deployment manifest..."
-            @{
-              version = "${{ needs.calculate-version.outputs.version }}"
-              timestamp = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
-              deployments = @{}
-            } | ConvertTo-Json | Out-File -FilePath "deployment_manifest.json"
-          }
-
-      - name: Setup and Submit to Microsoft Store
-        shell: pwsh
-        env:
-          MS_TENANT_ID: ${{ secrets.MS_TENANT_ID }}
-          MS_CLIENT_ID: ${{ secrets.MS_CLIENT_ID }}
-          MS_CLIENT_SECRET: ${{ secrets.MS_CLIENT_SECRET }}
-          MS_APP_ID: ${{ secrets.MS_APP_ID }}
-        run: |
-          # Install Windows Store CLI tools
-          Write-Host "Installing StoreBroker module..."
-          Install-Module -Name StoreBroker -Force -Scope CurrentUser -AllowClobber
-          Import-Module StoreBroker
-
-          # Disable StoreBroker telemetry as per their documentation
-          Write-Host "Disabling StoreBroker telemetry..."
-          $global:SBDisableTelemetry = $true
-
-          # Validate credentials are available
-          if ([string]::IsNullOrWhiteSpace($env:MS_TENANT_ID) -or
-              [string]::IsNullOrWhiteSpace($env:MS_CLIENT_ID) -or
-              [string]::IsNullOrWhiteSpace($env:MS_CLIENT_SECRET)) {
-            Write-Error "Missing Microsoft Store credentials. Please check MS_TENANT_ID, MS_CLIENT_ID, and MS_CLIENT_SECRET secrets."
-            exit 1
-          }
-
-          # Authenticate to Partner Center
-          Write-Host "Authenticating to Microsoft Partner Center..."
-          Write-Host "Tenant ID: $env:MS_TENANT_ID"
-          Write-Host "Client ID: $env:MS_CLIENT_ID"
-
-          try {
-            $securePassword = ConvertTo-SecureString $env:MS_CLIENT_SECRET -AsPlainText -Force
-            $credential = New-Object System.Management.Automation.PSCredential($env:MS_CLIENT_ID, $securePassword)
-
-            Set-StoreBrokerAuthentication -TenantId $env:MS_TENANT_ID -Credential $credential
-            Write-Host "✅ Successfully authenticated to Microsoft Partner Center"
-          }
-          catch {
-            Write-Error "Failed to authenticate to Microsoft Partner Center: $_"
-            exit 1
-          }
-
-          # Now create and submit the app submission
-          Write-Host "Creating Microsoft Store submission..."
-          $appId = $env:MS_APP_ID
-
-          if ([string]::IsNullOrWhiteSpace($appId)) {
-            Write-Error "MS_APP_ID is not set or is empty"
-            exit 1
-          }
-
-          $msixPath = Get-ChildItem -Path "." -Filter "*.msixbundle" | Select-Object -First 1
-
-          if ($null -eq $msixPath) {
-            Write-Error "No MSIX bundle found in current directory"
-            exit 1
-          }
-
-          Write-Host "Found MSIX bundle: $($msixPath.Name)"
-          Write-Host "App ID: $appId"
-
-          try {
-            # Test API access first
-            Write-Host "Testing Partner Center API access..."
-            try {
-              # This should work if permissions are correct
-              $testApps = Get-Applications
-              Write-Host "✅ Successfully accessed Partner Center API"
-              Write-Host "Found $($testApps.Count) apps in account"
-            }
-            catch {
-              Write-Host "❌ Cannot access Partner Center API"
-              Write-Host "Error details: $_"
-              Write-Host "This usually means:"
-              Write-Host "  1. The Azure AD app doesn't have Partner Center API permissions"
-              Write-Host "  2. Admin consent hasn't been granted for the permissions"
-              Write-Host "  3. The app isn't properly linked in Partner Center"
-              throw
-            }
-
-            # Determine publish mode based on stage_only flag
-            if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") {
-              Write-Host "📦 STAGE ONLY MODE - Creating draft submission (not publishing)"
-              $autoCommit = $false
-            } else {
-              Write-Host "📦 PRODUCTION MODE - Submitting for immediate publication"
-              $autoCommit = $true
-            }
-
-            Write-Host "Preparing to update submission with MSIX package: $($msixPath.Name)"
-
-            # Create minimal config for New-SubmissionPackage
-            $configPath = Join-Path $PWD "config.json"
-            $config = @{
-              appSubmission = @{}
-            }
-            $config | ConvertTo-Json -Depth 10 | Out-File $configPath -Encoding UTF8
-
-            # Use New-SubmissionPackage to create proper package structure
-            Write-Host "Creating submission package..."
-            New-SubmissionPackage -ConfigPath $configPath -AppxPath $msixPath.FullName -OutPath $PWD -OutName "submission"
-
-            # Load the generated submission JSON
-            $submissionDataPath = Join-Path $PWD "submission.json"
-            $submissionJson = Get-Content $submissionDataPath -Raw | ConvertFrom-Json
-
-            # Clean bad enum fields
-            Write-Host "Cleaning submission metadata..."
-
-            # Remove applicationCategory if it's NotSet
-            if ($submissionJson.PSObject.Properties["applicationCategory"] -and $submissionJson.applicationCategory -eq "NotSet") {
-              $submissionJson.PSObject.Properties.Remove('applicationCategory')
-            }
-
-            # Remove targetPublishDate if present (not needed for Manual/Immediate)
-            if ($submissionJson.PSObject.Properties["targetPublishDate"]) {
-              $submissionJson.PSObject.Properties.Remove('targetPublishDate')
-            }
-
-            # Set targetPublishMode based on deployment type
-            if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") {
-              # Stage-only: Set to Manual
-              if ($submissionJson.PSObject.Properties["targetPublishMode"]) {
-                $submissionJson.targetPublishMode = "Manual"
-              } else {
-                $submissionJson | Add-Member -NotePropertyName "targetPublishMode" -NotePropertyValue "Manual"
-              }
-            } else {
-              # Production: Set to Immediate
-              if ($submissionJson.PSObject.Properties["targetPublishMode"]) {
-                $submissionJson.targetPublishMode = "Immediate"
-              } else {
-                $submissionJson | Add-Member -NotePropertyName "targetPublishMode" -NotePropertyValue "Immediate"
-              }
-            }
-
-            # Save cleaned JSON
-            $submissionJson | ConvertTo-Json -Depth 10 | Out-File $submissionDataPath -Encoding UTF8
-
-            $zipPath = Join-Path $PWD "submission.zip"
-
-            # Check for and delete any existing pending submission
-            Write-Host "Checking for existing pending submission..."
-            try {
-              $existingSubmission = Get-ApplicationSubmission -AppId $appId -SubmissionId PendingSubmission
-              if ($existingSubmission) {
-                Write-Host "⚠️ Found existing pending submission with ID: $($existingSubmission.id)"
-                Write-Host "Deleting existing pending submission to avoid confusion..."
-                Remove-ApplicationSubmission -AppId $appId -SubmissionId $existingSubmission.id -Force
-                Write-Host "✅ Deleted existing pending submission"
-              } else {
-                Write-Host "No existing pending submission found"
-              }
-            }
-            catch {
-              # If no pending submission exists, this is expected
-              Write-Host "No existing pending submission to delete"
-            }
-
-            Write-Host "Creating new submission to Microsoft Store..."
-
-            $submissionParams = @{
-              AppId = $appId
-              SubmissionDataPath = $submissionDataPath
-              PackagePath = $zipPath
-              UpdateListings = $false
-              UpdatePublishModeAndVisibility = $false
-              UpdatePricingAndAvailability = $false
-              UpdateAppProperties = $false
-              UpdateNotesForCertification = $false
-              ReplacePackages = $true
-              Force = $true
-            }
-
-            if ($autoCommit) {
-              Write-Host "Will auto-commit submission for certification"
-              $submissionParams.AutoCommit = $true
-            } else {
-              Write-Host "Will create draft submission (manual commit required)"
-            }
-
-            try {
-              $submissionResult = Update-ApplicationSubmission @submissionParams
-
-              if ($submissionResult) {
-                Write-Host "✅ Submission completed successfully"
-                if ($submissionResult.submissionId) {
-                  Write-Host "Submission ID: $($submissionResult.submissionId)"
-                }
-                if (-not $autoCommit) {
-                  Write-Host "📝 Draft submission created. Review in Partner Center to publish."
-                } else {
-                  Write-Host "📝 Submission committed and entering certification"
-                }
-              } else {
-                Write-Error "Failed to create submission"
-                exit 1
-              }
-            }
-            catch {
-              Write-Host "❌ Submission attempt failed. Error: $_"
-
-              if ("${{ needs.calculate-version.outputs.stage_only }}" -eq "true") {
-                Write-Host "⚠️ Continuing despite error (stage-only mode)"
-              } else {
-                Write-Error "Failed to create Microsoft Store submission"
-                exit 1
-              }
-            }
-          }
-          catch {
-            Write-Error "Failed to create Microsoft Store submission: $_"
-            exit 1
-          }
-
-      - name: Upload updated manifest
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: deployment-manifest-msstore
-          path: deployment_manifest.json
-          retention-days: 1
-
-  deploy-apple-store:
-    name: Deploy to Apple App Store
-    runs-on: macos-latest
-    needs: [ calculate-version, package-mac-app-store, deploy-snap ]
-    if: |
-      always() &&
-      needs.calculate-version.outputs.dry_run == 'false' &&
-      needs.calculate-version.outputs.deploy_apple == 'true' &&
-      needs.package-mac-app-store.result == 'success' &&
-      (needs.calculate-version.outputs.stage_only == 'true' ||
-       (needs.calculate-version.outputs.deployment_mode == 'production' && needs.deploy-snap.result == 'success'))
-    continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
-    steps:
-      - name: Checkout for scripts
-        uses: actions/checkout@v4
-
-      - name: Check Apple Store credentials
-        run: |
-          echo "🔍 Checking Apple Store credentials..."
-
-          if [ -n "${{ secrets.APP_STORE_CONNECT_API_KEY }}" ]; then
-            echo "  ✅ APP_STORE_CONNECT_API_KEY is configured"
-          else
-            echo "  ❌ APP_STORE_CONNECT_API_KEY is NOT configured"
-          fi
-
-          if [ -n "${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}" ]; then
-            echo "  ✅ APP_STORE_CONNECT_API_KEY_ID is configured"
-          else
-            echo "  ❌ APP_STORE_CONNECT_API_KEY_ID is NOT configured"
-          fi
-
-          if [ -n "${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" ]; then
-            echo "  ✅ APP_STORE_CONNECT_ISSUER_ID is configured"
-          else
-            echo "  ❌ APP_STORE_CONNECT_ISSUER_ID is NOT configured"
-          fi
-
-          if [ -n "${{ secrets.APPLE_ID }}" ]; then
-            echo "  ✅ APPLE_ID is configured"
-          else
-            echo "  ❌ APPLE_ID is NOT configured"
-          fi
-
-          if [ -n "${{ secrets.APP_STORE_CONNECT_API_KEY }}" ] && [ -n "${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}" ] && [ -n "${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" ]; then
-            echo "✅ All Apple Store credentials are configured"
-          else
-            echo "⚠️ Some Apple Store credentials are missing"
-            echo "::warning::Apple Store deployment may fail due to missing credentials"
-          fi
-
-      - name: Download Mac App Store package
-        uses: actions/download-artifact@v4
-        with:
-          name: mac-app-store
-          path: .
-
-      - name: Download deployment manifest
-        uses: actions/download-artifact@v4
-        with:
-          name: deployment-manifest-validated
-          path: .
-        continue-on-error: true
-
-      - name: Initialize manifest if needed
-        run: |
-          if [ ! -f "deployment_manifest.json" ]; then
-            echo "Initializing deployment manifest..."
-            cat > deployment_manifest.json <<EOF
-          {
-            "version": "${{ needs.calculate-version.outputs.version }}",
-            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "deployments": {}
-          }
-          EOF
-          fi
-
-      - name: Setup App Store Connect API Key
-        env:
-          APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
-          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
-          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-        run: |
-          # Check if credentials are available
-          if [ -z "$APP_STORE_CONNECT_API_KEY" ] || [ -z "$APP_STORE_CONNECT_API_KEY_ID" ] || [ -z "$APP_STORE_CONNECT_ISSUER_ID" ]; then
-            echo "⚠️ Apple Store Connect API credentials are not configured"
-            echo "Skipping API key setup"
-            exit 0
-          fi
-
-          # Create private keys directory
-          mkdir -p ~/.appstoreconnect/private_keys
-
-          # Save API key
-          echo "$APP_STORE_CONNECT_API_KEY" > ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8
-
-          # Set proper permissions
-          chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8
-
-          echo "✅ Apple Store Connect API key configured"
-
-      - name: Upload to App Store Connect
-        env:
-          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
-          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-        run: |
-          # Check if credentials are available
-          if [ -z "$APP_STORE_CONNECT_API_KEY_ID" ] || [ -z "$APP_STORE_CONNECT_ISSUER_ID" ]; then
-            echo "⚠️ Apple Store Connect API credentials are not configured"
-            echo "Missing one or more of: APP_STORE_CONNECT_API_KEY_ID, APP_STORE_CONNECT_ISSUER_ID"
-
-            if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
-              echo "Skipping Apple Store upload in stage-only mode due to missing credentials"
-              echo "To test Apple Store uploads, please configure the following secrets:"
-              echo "  - APP_STORE_CONNECT_API_KEY"
-              echo "  - APP_STORE_CONNECT_API_KEY_ID"
-              echo "  - APP_STORE_CONNECT_ISSUER_ID"
-              exit 0  # Don't fail in stage-only mode
-            else
-              echo "::error::Production deployment requires Apple Store Connect credentials"
-              exit 1
-            fi
-          fi
-
-          # Find the .pkg file
-          PKG_FILE=$(find . -name "*.pkg" -type f | head -1)
-
-          if [ -z "$PKG_FILE" ]; then
-            echo "❌ No .pkg file found in the current directory"
-            exit 1
-          fi
-
-          if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
-            echo "📦 STAGE ONLY MODE - Uploading for TestFlight only (not for App Store review)"
-          else
-            echo "📦 PRODUCTION MODE - Uploading for App Store release"
-          fi
-
-          echo "Uploading $PKG_FILE to App Store Connect..."
-
-          # Upload using Transporter (altool is deprecated)
-          xcrun iTMSTransporter -m upload \
-            -assetFile "$PKG_FILE" \
-            -apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
-            -apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
-            -v detailed \
-            -verboseLogging
-
-          echo "✅ Package uploaded to App Store Connect"
-
-          if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
-            echo "📝 Package available for TestFlight distribution only"
-            echo "📝 Manual submission required for App Store release"
-          else
-            echo "📝 Review and submit for App Store review in App Store Connect"
-          fi
-
-      - name: Create TestFlight release (optional)
-        env:
-          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
-          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-        run: |
-          if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
-            echo "📦 Stage only mode: Package uploaded for TestFlight testing only"
-            echo "TestFlight distribution can be configured in App Store Connect"
-          else
-            echo "Package is now available in App Store Connect for TestFlight distribution"
-            echo "Manual review and release required via App Store Connect dashboard"
-          fi
-
-      - name: Upload updated manifest
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: deployment-manifest-appstore
-          path: deployment_manifest.json
-          retention-days: 1
-
-  # Create GitHub release after stores are deployed
-  create-github-release:
-    name: Create GitHub Release
-    runs-on: ubuntu-latest
-    needs: [ calculate-version, deploy-snap, deploy-microsoft-store, deploy-apple-store ]
-    if: |
-      always() &&
-      needs.calculate-version.result == 'success' &&
-      needs.calculate-version.outputs.dry_run == 'false' &&
-      (
-        (needs.calculate-version.outputs.stage_only == 'true' && (
-          (needs.calculate-version.outputs.deploy_snap == 'true' && needs.deploy-snap.result == 'success') ||
-          (needs.calculate-version.outputs.deploy_microsoft == 'true' && needs.deploy-microsoft-store.result == 'success') ||
-          (needs.calculate-version.outputs.deploy_apple == 'true' && needs.deploy-apple-store.result == 'success')
-        )) ||
-        (needs.calculate-version.outputs.deployment_mode == 'production' &&
-         needs.deploy-snap.result == 'success' &&
-         needs.deploy-microsoft-store.result == 'success' &&
-         needs.deploy-apple-store.result == 'success')
-      )
-    continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Download deployment manifest
-        uses: actions/download-artifact@v4
-        with:
-          name: deployment-manifest-validated
-          path: .
-        continue-on-error: true
-
-      - name: Initialize manifest if needed
-        run: |
-          if [ ! -f "deployment_manifest.json" ]; then
-            echo "Initializing deployment manifest..."
-            cat > deployment_manifest.json <<EOF
-          {
-            "version": "${{ needs.calculate-version.outputs.version }}",
-            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "deployments": {}
-          }
-          EOF
-          fi
-
-      - name: Download all signed artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: signed-artifacts
-          path: release-assets/
 
       - name: Prepare release assets
         run: |
           mkdir -p final-assets
 
-          echo "📦 Preparing release assets..."
+          # Copy Docker images
+          find artifacts -name "*.tar" -exec cp {} final-assets/ \; 2>/dev/null || true
 
-          # Function to copy only non-empty files
-          copy_if_not_empty() {
-            local src="$1"
-            local dest="$2"
+          # Copy Snap packages
+          find artifacts -name "*.snap" -exec cp {} final-assets/ \; 2>/dev/null || true
 
-            if [ -f "$src" ]; then
-              size=$(stat -c%s "$src" 2>/dev/null || stat -f%z "$src" 2>/dev/null || echo "0")
-              if [ "$size" -gt 0 ]; then
-                echo "  ✅ Including $(basename "$src") (${size} bytes)"
-                cp "$src" "$dest"
-              else
-                echo "  ⚠️ Skipping $(basename "$src") (empty file)"
-              fi
-            fi
-          }
+          # Copy desktop builds
+          find artifacts -name "*.exe" -o -name "*.dmg" -o -name "*.pkg" \
+            -o -name "*.msixbundle" -exec cp {} final-assets/ \; 2>/dev/null || true
 
-          # Copy Windows MSIX bundle (for users who prefer direct download)
-          for file in release-assets/windows-msix/*.msixbundle release-assets/windows-msix/*.sig; do
-            [ -f "$file" ] && copy_if_not_empty "$file" final-assets/
-          done || true
-
-          # Copy Mac App Store package (for users who prefer direct download)
-          for file in release-assets/mac-app-store/*.pkg release-assets/mac-app-store/*.sig; do
-            [ -f "$file" ] && copy_if_not_empty "$file" final-assets/
-          done || true
-
-      - name: Generate checksums
-        working-directory: final-assets
-        run: |
-          if [ "$(ls -A .)" ]; then
-            sha256sum * > SHA256SUMS.txt || true
-          else
-            echo "No files to generate checksums for"
-            echo "No release assets available" > SHA256SUMS.txt
+          # Copy signatures
+          if [ -f artifacts/signatures/signatures.tar.gz ]; then
+            tar -xzf artifacts/signatures/signatures.tar.gz -C final-assets/
           fi
 
-      - name: Validate release assets
-        working-directory: final-assets
-        run: |
-          echo "📋 Final release assets:"
-          echo ""
-          for file in *; do
-            if [ -f "$file" ]; then
-              size=$(stat -c%s "$file" 2>/dev/null || stat -f%z "$file" 2>/dev/null || echo "0")
-              if [ "$size" -gt 0 ]; then
-                echo "  ✅ $file (${size} bytes)"
-              else
-                echo "  ❌ $file is empty - removing"
-                rm "$file"
-              fi
-            fi
-          done
-          echo ""
-          echo "Total files: $(ls -1 | wc -l)"
+          echo "📦 Release assets prepared:"
+          ls -la final-assets/ || echo "No assets found"
 
-      - name: Create Release
-        id: create_release
-        if: needs.calculate-version.outputs.dry_run == 'false'
-        uses: softprops/action-gh-release@v2
+      - name: Create GitHub release
+        uses: ncipollo/release-action@v1
         with:
-          tag_name: v${{ needs.calculate-version.outputs.version }}
-          name: v${{ needs.calculate-version.outputs.version }}
+          tag: v${{ needs.calculate-version.outputs.version }}
+          name: Release v${{ needs.calculate-version.outputs.version }}
+          draft: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
+          prerelease: false
+          generateReleaseNotes: true
+          artifacts: final-assets/*
           body: |
-            # WhoDB v${{ needs.calculate-version.outputs.version }}
+            ## WhoDB v${{ needs.calculate-version.outputs.version }}
 
-            ## Release Notes
-            ${{ needs.calculate-version.outputs.pr_body }}
+            ### Installation Methods
 
-            ## Docker Images
-            - `docker pull clidey/whodb:${{ needs.calculate-version.outputs.version }}`
-            - `docker pull clidey/whodb:latest`
-
-            ## Installation
-
-            **Snap:**
+            #### Docker
             ```bash
-            sudo snap install whodb
+            docker pull clidey/whodb:${{ needs.calculate-version.outputs.version }}
+            docker pull clidey/whodb:latest
             ```
 
-            **Flatpak:**
-            Available on [Flathub](https://flathub.org/apps/com.clidey.whodb)
+            #### Snap
+            ```bash
+            # Stable channel
+            sudo snap install whodb
 
-            **Windows:**
-            Available on Microsoft Store
+            # Edge channel (preview releases)
+            sudo snap install whodb --edge
+            ```
 
-            **macOS:**
-            Available on Mac App Store
+            #### Direct Downloads
+            See assets below for platform-specific packages.
 
-            ## Verification
-            All binaries are signed with Sigstore. Verify signatures using cosign:
+            ### Verification
+            All artifacts are signed with Sigstore. To verify:
             ```bash
             cosign verify-blob --signature <file>.sig --certificate <file>.pem <file>
             ```
-          files: final-assets/*
-          draft: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
-          prerelease: false
 
-      - name: Track GitHub release
-        if: needs.calculate-version.outputs.dry_run == 'false'
-        run: |
-          bash scripts/track-deployment.sh github_release deployed ${{ needs.calculate-version.outputs.version }} "${{ steps.create_release.outputs.id }}"
-
-      - name: Dry run summary
-        if: needs.calculate-version.outputs.dry_run == 'true'
-        run: |
-          echo "🏃 DRY RUN MODE - Would have created GitHub release:"
-          echo "  - Tag: v${{ needs.calculate-version.outputs.version }}"
-          if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
-            echo "  - Status: Draft (stage only)"
-          else
-            echo "  - Status: Published"
-          fi
-          echo "  - Files:"
-          ls -lh final-assets/
-
-      - name: Upload updated manifest
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: deployment-manifest-github
-          path: deployment_manifest.json
-          retention-days: 1
-
-  # Generate Homebrew Cask formula
-  generate-homebrew-cask:
-    name: Generate Homebrew Cask Formula
-    runs-on: macos-latest
-    needs: [ calculate-version, create-github-release, package-mac-app-store ]
+  # Step 6: Deploy to Docker Hub (after GitHub release)
+  deploy-docker:
+    name: Deploy Docker
+    runs-on: ubuntu-latest
+    needs: [ calculate-version, create-github-release ]
     if: |
       always() &&
-      needs.calculate-version.result == 'success' &&
       needs.calculate-version.outputs.dry_run == 'false' &&
+      needs.calculate-version.outputs.deploy_docker == 'true' &&
+      needs.calculate-version.outputs.stage_only != 'true' &&
+      needs.create-github-release.result == 'success'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Download Docker images
+        uses: actions/download-artifact@v4
+        with:
+          pattern: docker-image-*
+          path: docker-images/
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Load and push Docker images
+        run: |
+          VERSION="${{ needs.calculate-version.outputs.version }}"
+          echo "📦 Deploying Docker images for version ${VERSION}"
+
+          # Load images
+          echo "Loading AMD64 image..."
+          docker load < docker-images/docker-image-amd64/whodb-docker-amd64.tar
+
+          echo "Loading ARM64 image..."
+          docker load < docker-images/docker-image-arm64/whodb-docker-arm64.tar
+
+          # Tag and push individual architecture images
+          echo "Pushing AMD64 image..."
+          docker tag clidey/whodb:${VERSION}-amd64 clidey/whodb:${VERSION}-amd64
+          docker push clidey/whodb:${VERSION}-amd64
+
+          echo "Pushing ARM64 image..."
+          docker tag clidey/whodb:${VERSION}-arm64 clidey/whodb:${VERSION}-arm64
+          docker push clidey/whodb:${VERSION}-arm64
+
+          # Create and push multi-arch manifest
+          echo "Creating multi-arch manifest..."
+          docker manifest create clidey/whodb:${VERSION} \
+            clidey/whodb:${VERSION}-amd64 \
+            clidey/whodb:${VERSION}-arm64
+          docker manifest push clidey/whodb:${VERSION}
+
+          # Update latest tag
+          echo "Updating latest tag..."
+          docker manifest create clidey/whodb:latest \
+            clidey/whodb:${VERSION}-amd64 \
+            clidey/whodb:${VERSION}-arm64
+          docker manifest push clidey/whodb:latest
+
+          echo "✅ Docker images deployed successfully"
+
+      - name: Sign Docker images with Cosign
+        run: |
+          # Install Cosign
+          curl -sSL https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64 -o cosign
+          chmod +x cosign
+          sudo mv cosign /usr/local/bin/
+
+          VERSION="${{ needs.calculate-version.outputs.version }}"
+
+          echo "🔏 Signing Docker images..."
+          cosign sign --yes clidey/whodb:${VERSION}
+          cosign sign --yes clidey/whodb:latest
+
+          echo "✅ Docker images signed"
+
+  # Step 7: Generate Homebrew cask (production only)
+  generate-homebrew-cask:
+    name: Generate Homebrew Cask
+    runs-on: macos-latest
+    needs: [ calculate-version, create-github-release ]
+    if: |
+      needs.calculate-version.outputs.dry_run == 'false' &&
+      needs.calculate-version.outputs.stage_only != 'true' &&
+      needs.calculate-version.outputs.deployment_mode == 'production' &&
       needs.create-github-release.result == 'success'
     steps:
       - name: Checkout
@@ -1827,413 +405,264 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: desktop-darwin-universal
-          path: ./desktop-ce/
+          path: desktop-builds/
 
-      - name: Find DMG file
-        id: find_dmg
+      - name: Generate Homebrew cask file
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          DMG_FILE=$(find ./desktop-ce/build -name "*.dmg" -type f | head -1)
+          VERSION="${{ needs.calculate-version.outputs.version }}"
 
-          if [ -z "$DMG_FILE" ]; then
-            echo "Error: No DMG file found"
+          # Find DMG file
+          DMG_PATH=$(find desktop-builds -name "*.dmg" | head -1)
+
+          if [ -z "$DMG_PATH" ]; then
+            echo "❌ No DMG file found"
             exit 1
           fi
 
-          echo "Found DMG: $DMG_FILE"
-          echo "dmg_file=$DMG_FILE" >> $GITHUB_OUTPUT
+          echo "Found DMG: $DMG_PATH"
 
-      - name: Generate Homebrew Cask Formula
-        run: |
-          ./scripts/generate-homebrew-cask.sh \
-            "${{ needs.calculate-version.outputs.version }}" \
-            "${{ steps.find_dmg.outputs.dmg_file }}" \
-            ./whodb.rb
+          # Calculate SHA256
+          SHA256=$(shasum -a 256 "$DMG_PATH" | cut -d' ' -f1)
+          echo "SHA256: $SHA256"
 
-          # Display generated formula
-          echo "Generated formula:"
-          cat ./whodb.rb
+          # Generate cask file
+          cat > whodb.rb <<EOF
+          cask "whodb" do
+            version "${VERSION}"
+            sha256 "${SHA256}"
 
-      - name: Validate Homebrew Cask Formula
-        run: |
-          # Validate the formula syntax
-          brew cask audit --download ./whodb.rb || true
+            url "https://github.com/clidey/whodb/releases/download/v${VERSION}/whodb.dmg"
+            name "WhoDB"
+            desc "Database management tool with AI-powered features"
+            homepage "https://github.com/clidey/whodb"
 
-      - name: Upload Homebrew Cask Formula
+            app "WhoDB.app"
+
+            zap trash: [
+              "~/Library/Application Support/WhoDB",
+              "~/Library/Preferences/com.clidey.whodb.plist",
+              "~/Library/Saved Application State/com.clidey.whodb.savedState"
+            ]
+          end
+          EOF
+
+          echo "✅ Homebrew cask generated"
+          cat whodb.rb
+
+      - name: Upload cask file
         uses: actions/upload-artifact@v4
         with:
-          name: homebrew-cask-formula
+          name: homebrew-cask
           path: whodb.rb
           retention-days: 30
 
-      - name: Comment on Release with Homebrew Info
-        if: needs.calculate-version.outputs.dry_run == 'false'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          cat > /tmp/homebrew-comment.md << 'EOF'
-          ## Homebrew Installation
-
-          This release is available via Homebrew Cask (once submitted to homebrew-core).
-
-          **Installation (future):**
-          ```bash
-          brew install --cask whodb
-          ```
-
-          **Formula:** Available in artifacts → `homebrew-cask-formula/whodb.rb`
-
-          ### To Submit to homebrew-core:
-
-          1. Fork https://github.com/Homebrew/homebrew-core
-          2. Download the `whodb.rb` formula from artifacts
-          3. Place in `Casks/whodb.rb`
-          4. Run `brew cask audit --download whodb.rb`
-          5. Create PR to homebrew-core
-
-          See [HOMEBREW_SETUP.md](../HOMEBREW_SETUP.md) for detailed instructions.
-          EOF
-
-          # Get release ID
-          RELEASE_URL="https://api.github.com/repos/${{ github.repository }}/releases/tags/v${{ needs.calculate-version.outputs.version }}"
-          RELEASE_ID=$(curl -s "$RELEASE_URL" | jq -r '.id')
-
-          if [ -n "$RELEASE_ID" ] && [ "$RELEASE_ID" != "null" ]; then
-            curl -X POST \
-              -H "Authorization: token $GITHUB_TOKEN" \
-              -H "Content-Type: application/json" \
-              --data "{\"body\": $(cat /tmp/homebrew-comment.md | jq -Rs .)}" \
-              "https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID/notes" || true
-          fi
-
-  # Deploy Docker images last (hardest to rollback)
-  deploy-docker:
-    name: Deploy Docker Images
-    runs-on: ubuntu-latest
-    needs: [ calculate-version, create-github-release ]
+  # Step 8: Verify deployments
+  verify-deployments:
+    name: Verify Deployments
+    needs: [ calculate-version, deploy-docker, deploy-snap, create-github-release ]
     if: |
       always() &&
-      needs.calculate-version.result == 'success' &&
-      needs.calculate-version.outputs.deploy_docker == 'true' &&
-      (needs.calculate-version.outputs.stage_only == 'true' ||
-       needs.create-github-release.result == 'success')
-    continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
-    steps:
-      - name: Checkout for scripts
-        uses: actions/checkout@v4
+      needs.calculate-version.outputs.dry_run == 'false' &&
+      needs.calculate-version.outputs.stage_only != 'true'
+    uses: ./.github/workflows/_verify-deployment.yml
+    with:
+      version: ${{ needs.calculate-version.outputs.version }}
+      verify-docker: ${{ needs.deploy-docker.result == 'success' }}
+      verify-snap: ${{ needs.deploy-snap.result == 'success' }}
+      verify-github: ${{ needs.create-github-release.result == 'success' }}
 
-      - name: Check Docker Hub credentials
-        run: |
-          echo "🔍 Checking Docker Hub credentials..."
-
-          if [ -n "${{ secrets.DOCKERHUB_USERNAME }}" ]; then
-            echo "  ✅ DOCKERHUB_USERNAME is configured"
-          else
-            echo "  ❌ DOCKERHUB_USERNAME is NOT configured"
-          fi
-
-          if [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
-            echo "  ✅ DOCKERHUB_TOKEN is configured"
-          else
-            echo "  ❌ DOCKERHUB_TOKEN is NOT configured"
-          fi
-
-          if [ -n "${{ secrets.DOCKERHUB_USERNAME }}" ] && [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
-            echo "✅ All Docker Hub credentials are configured"
-          else
-            echo "❌ Docker Hub credentials are missing"
-            if [ "${{ needs.calculate-version.outputs.dry_run }}" = "false" ] && [ "${{ needs.calculate-version.outputs.stage_only }}" = "false" ]; then
-              echo "::error::Production deployment requires Docker Hub credentials"
-              exit 1
-            elif [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
-              echo "ℹ️ Docker Hub credentials not required for stage-only mode (Docker push is skipped)"
-            fi
-          fi
-
-      - name: Download Docker amd64 artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: docker-image-amd64
-          path: /tmp
-
-      - name: Download Docker arm64 artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: docker-image-arm64
-          path: /tmp
-
-      - name: Download deployment manifest
-        uses: actions/download-artifact@v4
-        with:
-          name: deployment-manifest-github
-          path: .
-
-      - name: Load Docker images
-        run: |
-          docker load --input /tmp/whodb-docker-amd64.tar
-          docker load --input /tmp/whodb-docker-arm64.tar
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Install Cosign
-        if: needs.calculate-version.outputs.dry_run == 'false'
-        uses: sigstore/cosign-installer@v3
-
-      - name: Set up Docker Buildx for manifest
-        uses: docker/setup-buildx-action@v3
-
-      - name: Push Docker images and create manifest
-        if: needs.calculate-version.outputs.dry_run == 'false' && needs.calculate-version.outputs.stage_only != 'true'
-        run: |
-          # Push individual platform images
-          docker push clidey/whodb:${{ needs.calculate-version.outputs.version }}-amd64 || exit 1
-          docker push clidey/whodb:${{ needs.calculate-version.outputs.version }}-arm64 || exit 1
-
-          # Create and push multi-platform manifests
-          docker buildx imagetools create -t clidey/whodb:${{ needs.calculate-version.outputs.version }} \
-            clidey/whodb:${{ needs.calculate-version.outputs.version }}-amd64 \
-            clidey/whodb:${{ needs.calculate-version.outputs.version }}-arm64
-
-          docker buildx imagetools create -t clidey/whodb:latest \
-            clidey/whodb:${{ needs.calculate-version.outputs.version }}-amd64 \
-            clidey/whodb:${{ needs.calculate-version.outputs.version }}-arm64
-
-          bash scripts/track-deployment.sh docker deployed ${{ needs.calculate-version.outputs.version }}
-
-      - name: Sign Docker images
-        if: needs.calculate-version.outputs.dry_run == 'false' && needs.calculate-version.outputs.stage_only != 'true'
-        run: |
-          cosign sign --yes clidey/whodb:${{ needs.calculate-version.outputs.version }}
-          cosign sign --yes clidey/whodb:latest
-
-      - name: Stage only summary
-        if: needs.calculate-version.outputs.stage_only == 'true'
-        run: |
-          echo "📦 STAGE ONLY MODE"
-          echo "✅ Successfully logged in to Docker Hub"
-          echo "✅ Docker images built and loaded locally"
-          echo "⏸️  Docker push skipped (stage-only mode behaves like dry run for Docker)"
-          echo "📝 Images ready but not published:"
-          echo "  - clidey/whodb:${{ needs.calculate-version.outputs.version }}"
-          echo "  - clidey/whodb:latest"
-
-      - name: Dry run summary
-        if: needs.calculate-version.outputs.dry_run == 'true'
-        run: |
-          echo "🏃 DRY RUN MODE"
-          echo "✅ Successfully logged in to Docker Hub"
-          echo "📦 Would have pushed:"
-          echo "  - clidey/whodb:${{ needs.calculate-version.outputs.version }}"
-          echo "  - clidey/whodb:latest"
-          echo "🔏 Would have signed both images with Sigstore"
-
-      - name: Upload updated manifest
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: deployment-manifest-docker
-          path: deployment_manifest.json
-          retention-days: 1
-
-  rollback:
-    name: Rollback on Failure
-    runs-on: ubuntu-latest
-    if: failure() && needs.calculate-version.outputs.dry_run == 'false' && needs.calculate-version.outputs.stage_only != 'true'
-    needs: [ calculate-version, deploy-docker, create-github-release, deploy-snap, deploy-microsoft-store, deploy-apple-store ]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Download deployment manifest
-        uses: actions/download-artifact@v4
-        with:
-          name: deployment-manifest-docker
-          path: .
-        continue-on-error: true
-
-      - name: Download store state
-        uses: actions/download-artifact@v4
-        with:
-          name: store-state
-          path: .
-        continue-on-error: true
-
-      - name: Enhanced comprehensive rollback
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          MS_TENANT_ID: ${{ secrets.MS_TENANT_ID }}
-          MS_CLIENT_ID: ${{ secrets.MS_CLIENT_ID }}
-          MS_CLIENT_SECRET: ${{ secrets.MS_CLIENT_SECRET }}
-          MS_APP_ID: ${{ secrets.MS_APP_ID }}
-        run: |
-          bash scripts/rollback-all.sh \
-            ${{ needs.calculate-version.outputs.version }} \
-            ${{ needs.calculate-version.outputs.previous_version }} \
-            deployment_manifest.json \
-            store_state.json
-
-      - name: Notify rollback
-        run: |
-          echo "::error::Deployment failed and has been rolled back"
-          echo "Failed version: ${{ needs.calculate-version.outputs.version }}"
-          echo "Reverted to: ${{ needs.calculate-version.outputs.previous_version }}"
-          echo ""
-          echo "Rollback actions taken:"
-          echo "  - Docker: Reverted latest tag to ${{ needs.calculate-version.outputs.previous_version }}"
-          echo "  - Docker: Deleted tag ${{ needs.calculate-version.outputs.version }}"
-          echo "  - Snap: Manual verification required in Snapcraft dashboard"
-          echo "  - GitHub: Release and tag deleted if they existed"
-          exit 1
-
-  verify-deployment:
-    name: Verify Deployment Success
-    runs-on: ubuntu-latest
-    needs: [ calculate-version, deploy-docker ]
-    if: needs.calculate-version.outputs.dry_run == 'false' && needs.calculate-version.outputs.stage_only != 'true'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Download final deployment manifest
-        uses: actions/download-artifact@v4
-        with:
-          name: deployment-manifest-docker
-          path: .
-
-      - name: Verify all deployments successful
-        run: |
-          echo "Verifying deployment status..."
-
-          DOCKER_STATUS=$(jq -r '.docker.status' deployment_manifest.json)
-          SNAP_STATUS=$(jq -r '.snap.status' deployment_manifest.json)
-          GITHUB_STATUS=$(jq -r '.github_release.status' deployment_manifest.json)
-
-          echo "Docker deployment: $DOCKER_STATUS"
-          echo "Snap deployment: $SNAP_STATUS"
-          echo "GitHub release: $GITHUB_STATUS"
-
-          if [ "$DOCKER_STATUS" != "deployed" ] || [ "$SNAP_STATUS" != "deployed" ] || [ "$GITHUB_STATUS" != "deployed" ]; then
-            echo "::error::Not all deployments completed successfully"
-            exit 1
-          fi
-
-          echo "✓ All deployments verified successful"
-
-      - name: Test Docker image availability
-        run: |
-          echo "Testing Docker image pull..."
-          docker pull clidey/whodb:${{ needs.calculate-version.outputs.version }} || exit 1
-          echo "✓ Docker image is accessible"
-
-      - name: Verify GitHub release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "Verifying GitHub release..."
-          RELEASE_URL="https://api.github.com/repos/${{ github.repository }}/releases/tags/v${{ needs.calculate-version.outputs.version }}"
-          RELEASE_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token $GITHUB_TOKEN" "$RELEASE_URL")
-
-          if [ "$RELEASE_STATUS" != "200" ]; then
-            echo "::error::GitHub release not found (HTTP $RELEASE_STATUS)"
-            exit 1
-          fi
-
-          echo "✓ GitHub release verified"
-
-  # Summary job for stage-only mode to report what worked and what didn't
-  stage-only-summary:
-    name: Stage-Only Mode Summary
-    runs-on: ubuntu-latest
+  # Step 9: Rollback on failure (production only)
+  rollback-on-failure:
+    name: Rollback if Failed
+    needs: [ calculate-version, verify-deployments ]
     if: |
-      always() &&
-      needs.calculate-version.outputs.stage_only == 'true' &&
-      needs.calculate-version.result == 'success'
-    needs: [ calculate-version, deploy-snap, deploy-microsoft-store, deploy-apple-store, create-github-release, deploy-docker, package-mac-app-store, package-windows-msix ]
+      failure() &&
+      needs.calculate-version.outputs.dry_run == 'false' &&
+      needs.calculate-version.outputs.stage_only != 'true' &&
+      needs.verify-deployments.outputs.all-verified != 'true'
+    uses: ./.github/workflows/_rollback.yml
+    with:
+      version: ${{ needs.calculate-version.outputs.version }}
+      previous-version: ${{ needs.calculate-version.outputs.previous_version }}
+      rollback-docker: ${{ needs.calculate-version.outputs.deploy_docker == 'true' }}
+      rollback-github: true
+    secrets:
+      DOCKER_USERNAME: ${{ vars.DOCKER_USERNAME }}
+      DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Step 10: Final summary
+  deployment-summary:
+    name: Deployment Summary
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [
+      calculate-version,
+      build-docker,
+      build-desktop,
+      build-snap,
+      sign-and-validate,
+      deploy-docker,
+      deploy-snap,
+      deploy-microsoft,
+      deploy-apple,
+      create-github-release,
+      generate-homebrew-cask,
+      verify-deployments
+    ]
     steps:
-      - name: Generate deployment summary
+      - name: Generate comprehensive summary
         run: |
-          echo "📊 STAGE-ONLY MODE DEPLOYMENT SUMMARY"
-          echo "====================================="
-          echo ""
-          echo "Deployment Mode: ${{ needs.calculate-version.outputs.deployment_mode }}"
-          echo "Version: ${{ needs.calculate-version.outputs.version }}"
-          echo ""
-          echo "📦 Store Deployments (Best Effort):"
-          echo ""
+          echo "# 📊 Release Summary for v${{ needs.calculate-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployment Mode:** ${{ needs.calculate-version.outputs.deployment_mode }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
 
-          # Check each deployment status
-          if [ "${{ needs.deploy-snap.result }}" = "success" ]; then
-            echo "✅ Snap Store: Successfully deployed to edge channel"
-          elif [ "${{ needs.deploy-snap.result }}" = "skipped" ]; then
-            echo "⏭️ Snap Store: Skipped"
+          # Build Status
+          echo "## 🔨 Build Status" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.build-docker.result }}" = "success" ]; then
+            echo "| Docker | ✅ Success |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.build-docker.result }}" = "skipped" ]; then
+            echo "| Docker | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ Snap Store: Failed (check logs for details)"
+            echo "| Docker | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
           fi
 
-          if [ "${{ needs.deploy-microsoft-store.result }}" = "success" ]; then
-            echo "✅ Microsoft Store: Successfully created draft submission"
-          elif [ "${{ needs.deploy-microsoft-store.result }}" = "skipped" ]; then
-            echo "⏭️ Microsoft Store: Skipped"
+          if [ "${{ needs.build-desktop.result }}" = "success" ]; then
+            echo "| Desktop | ✅ Success |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.build-desktop.result }}" = "skipped" ]; then
+            echo "| Desktop | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ Microsoft Store: Failed (check logs for details)"
+            echo "| Desktop | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
           fi
 
-          if [ "${{ needs.deploy-apple-store.result }}" = "success" ]; then
-            echo "✅ Apple App Store: Successfully uploaded for TestFlight"
-          elif [ "${{ needs.deploy-apple-store.result }}" = "skipped" ]; then
-            echo "⏭️ Apple App Store: Skipped"
+          if [ "${{ needs.build-snap.result }}" = "success" ]; then
+            echo "| Snap | ✅ Success |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.build-snap.result }}" = "skipped" ]; then
+            echo "| Snap | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ Apple App Store: Failed (check logs for details)"
+            echo "| Snap | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
           fi
 
-          echo ""
-          echo "📄 GitHub Release:"
-          if [ "${{ needs.create-github-release.result }}" = "success" ]; then
-            echo "✅ Draft release created successfully"
-          elif [ "${{ needs.create-github-release.result }}" = "skipped" ]; then
-            echo "⏭️ GitHub Release: Skipped"
-          else
-            echo "❌ Failed to create draft release"
-          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
 
-          echo ""
-          echo "🐳 Docker:"
+          # Deployment Status
+          echo "## 🚀 Deployment Status" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Status | Notes |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|-------|" >> $GITHUB_STEP_SUMMARY
+
+          # Docker Hub
           if [ "${{ needs.deploy-docker.result }}" = "success" ]; then
-            echo "✅ Images built and loaded (not pushed in stage-only mode)"
+            echo "| Docker Hub | ✅ Deployed | Latest tag updated |" >> $GITHUB_STEP_SUMMARY
           elif [ "${{ needs.deploy-docker.result }}" = "skipped" ]; then
-            echo "⏭️ Docker: Skipped"
+            if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
+              echo "| Docker Hub | ⏭️ Skipped | Stage-only mode |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| Docker Hub | ⏭️ Skipped | Not selected |" >> $GITHUB_STEP_SUMMARY
+            fi
           else
-            echo "❌ Failed to build Docker images"
+            echo "| Docker Hub | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
           fi
 
-          echo ""
-          echo "📦 Packaging Status:"
-          if [ "${{ needs.package-mac-app-store.result }}" = "success" ]; then
-            echo "✅ Mac App Store package created"
-          elif [ "${{ needs.package-mac-app-store.result }}" = "skipped" ]; then
-            echo "⏭️ Mac App Store package: Skipped"
+          # Snap Store
+          if [ "${{ needs.deploy-snap.result }}" = "success" ]; then
+            CHANNEL="${{ needs.calculate-version.outputs.stage_only == 'true' && 'edge' || 'stable' }}"
+            echo "| Snap Store | ✅ Deployed | ${CHANNEL} channel |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.deploy-snap.result }}" = "skipped" ]; then
+            echo "| Snap Store | ⏭️ Skipped | Not selected |" >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ Mac App Store package failed"
+            echo "| Snap Store | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
           fi
 
-          if [ "${{ needs.package-windows-msix.result }}" = "success" ]; then
-            echo "✅ Windows MSIX package created"
-          elif [ "${{ needs.package-windows-msix.result }}" = "skipped" ]; then
-            echo "⏭️ Windows MSIX package: Skipped"
+          # Microsoft Store
+          if [ "${{ needs.deploy-microsoft.result }}" = "success" ]; then
+            if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
+              echo "| Microsoft Store | ✅ Deployed | Draft submission |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| Microsoft Store | ✅ Deployed | Submitted for certification |" >> $GITHUB_STEP_SUMMARY
+            fi
+          elif [ "${{ needs.deploy-microsoft.result }}" = "skipped" ]; then
+            echo "| Microsoft Store | ⏭️ Skipped | Not selected |" >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ Windows MSIX package failed"
+            echo "| Microsoft Store | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
           fi
 
-          echo ""
-          echo "====================================="
-          echo ""
-          echo "ℹ️ Stage-only mode uses a best-effort approach."
-          echo "ℹ️ Failed deployments did not block other deployments."
-          echo "ℹ️ Check individual job logs for failure details."
+          # Apple App Store
+          if [ "${{ needs.deploy-apple.result }}" = "success" ]; then
+            if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
+              echo "| Apple App Store | ✅ Deployed | TestFlight only |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| Apple App Store | ✅ Deployed | Submitted for review |" >> $GITHUB_STEP_SUMMARY
+            fi
+          elif [ "${{ needs.deploy-apple.result }}" = "skipped" ]; then
+            echo "| Apple App Store | ⏭️ Skipped | Not selected |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Apple App Store | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # GitHub Release
+          if [ "${{ needs.create-github-release.result }}" = "success" ]; then
+            if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
+              echo "| GitHub Release | ✅ Created | Draft release |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| GitHub Release | ✅ Created | Published |" >> $GITHUB_STEP_SUMMARY
+            fi
+          elif [ "${{ needs.create-github-release.result }}" = "skipped" ]; then
+            echo "| GitHub Release | ⏭️ Skipped | Dry run mode |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| GitHub Release | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Homebrew
+          if [ "${{ needs.generate-homebrew-cask.result }}" = "success" ]; then
+            echo "| Homebrew Cask | ✅ Generated | Formula created |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.generate-homebrew-cask.result }}" = "skipped" ]; then
+            echo "| Homebrew Cask | ⏭️ Skipped | Not production |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Homebrew Cask | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Verification Status
+          if [ "${{ needs.verify-deployments.result }}" = "success" ]; then
+            echo "## ✅ Verification" >> $GITHUB_STEP_SUMMARY
+            if [ "${{ needs.verify-deployments.outputs.all-verified }}" = "true" ]; then
+              echo "All deployments verified successfully!" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "⚠️ Some deployments could not be verified. Check verification report." >> $GITHUB_STEP_SUMMARY
+            fi
+          elif [ "${{ needs.verify-deployments.result }}" = "skipped" ]; then
+            echo "## ⏭️ Verification" >> $GITHUB_STEP_SUMMARY
+            echo "Skipped (stage-only or dry-run mode)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Next Steps
+          echo "## 📝 Next Steps" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.calculate-version.outputs.dry_run }}" = "true" ]; then
+            echo "This was a dry run. No actual deployments were made." >> $GITHUB_STEP_SUMMARY
+            echo "To deploy, run the workflow again with a different mode." >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
+            echo "Stage deployments completed. To promote to production:" >> $GITHUB_STEP_SUMMARY
+            echo "1. Test the edge/draft releases" >> $GITHUB_STEP_SUMMARY
+            echo "2. Promote Snap from edge to stable channel" >> $GITHUB_STEP_SUMMARY
+            echo "3. Submit Microsoft Store draft for certification" >> $GITHUB_STEP_SUMMARY
+            echo "4. Submit Apple TestFlight build for App Store review" >> $GITHUB_STEP_SUMMARY
+            echo "5. Publish GitHub draft release" >> $GITHUB_STEP_SUMMARY
+            echo "6. Deploy to Docker Hub" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Production deployment completed!" >> $GITHUB_STEP_SUMMARY
+            echo "Monitor the following:" >> $GITHUB_STEP_SUMMARY
+            echo "- Microsoft Store certification status" >> $GITHUB_STEP_SUMMARY
+            echo "- Apple App Store review status" >> $GITHUB_STEP_SUMMARY
+            echo "- User feedback on new release" >> $GITHUB_STEP_SUMMARY
+          fi

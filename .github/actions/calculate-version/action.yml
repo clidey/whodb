@@ -1,0 +1,128 @@
+name: 'Calculate Version'
+description: 'Calculate version and deployment parameters'
+inputs:
+  deployment-mode:
+    description: 'Deployment mode (dry-run, stage-only, production)'
+    required: true
+  deploy-docker:
+    description: 'Deploy to Docker Hub'
+    required: false
+    default: 'true'
+  deploy-snap:
+    description: 'Deploy to Snap Store'
+    required: false
+    default: 'true'
+  deploy-microsoft:
+    description: 'Deploy to Microsoft Store'
+    required: false
+    default: 'true'
+  deploy-apple:
+    description: 'Deploy to Apple App Store'
+    required: false
+    default: 'true'
+outputs:
+  version:
+    description: 'Calculated version'
+    value: ${{ steps.version.outputs.version }}
+  previous-version:
+    description: 'Previous version'
+    value: ${{ steps.version.outputs.previous_version }}
+  deployment-mode:
+    description: 'Deployment mode'
+    value: ${{ steps.mode.outputs.mode }}
+  dry-run:
+    description: 'Dry run flag'
+    value: ${{ steps.flags.outputs.dry_run }}
+  stage-only:
+    description: 'Stage only flag'
+    value: ${{ steps.flags.outputs.stage_only }}
+  deploy-docker:
+    description: 'Deploy Docker flag'
+    value: ${{ steps.stores.outputs.docker }}
+  deploy-snap:
+    description: 'Deploy Snap flag'
+    value: ${{ steps.stores.outputs.snap }}
+  deploy-microsoft:
+    description: 'Deploy Microsoft flag'
+    value: ${{ steps.stores.outputs.microsoft }}
+  deploy-apple:
+    description: 'Deploy Apple flag'
+    value: ${{ steps.stores.outputs.apple }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set deployment mode
+      id: mode
+      shell: bash
+      run: |
+        MODE="${{ inputs.deployment-mode }}"
+        echo "mode=$MODE" >> $GITHUB_OUTPUT
+        echo "🎯 Deployment mode: $MODE"
+
+    - name: Set flags
+      id: flags
+      shell: bash
+      run: |
+        MODE="${{ steps.mode.outputs.mode }}"
+
+        if [ "$MODE" = "dry-run" ]; then
+          DRY_RUN="true"
+          STAGE_ONLY="false"
+        elif [ "$MODE" = "stage-only" ]; then
+          DRY_RUN="false"
+          STAGE_ONLY="true"
+        else  # production
+          DRY_RUN="false"
+          STAGE_ONLY="false"
+        fi
+
+        echo "dry_run=$DRY_RUN" >> $GITHUB_OUTPUT
+        echo "stage_only=$STAGE_ONLY" >> $GITHUB_OUTPUT
+        echo "Dry run: $DRY_RUN, Stage only: $STAGE_ONLY"
+
+    - name: Calculate version
+      id: version
+      shell: bash
+      run: |
+        # Get latest tag
+        LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+        PREVIOUS_VERSION=${LATEST_TAG#v}
+
+        # Calculate next version
+        IFS='.' read -r major minor patch <<< "$PREVIOUS_VERSION"
+        patch=$((patch + 1))
+        NEXT_VERSION="${major}.${minor}.${patch}"
+
+        echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
+        echo "previous_version=$PREVIOUS_VERSION" >> $GITHUB_OUTPUT
+        echo "📦 Version: $NEXT_VERSION (previous: $PREVIOUS_VERSION)"
+
+    - name: Set store selection
+      id: stores
+      shell: bash
+      run: |
+        MODE="${{ steps.mode.outputs.mode }}"
+
+        if [ "$MODE" = "production" ]; then
+          # Production: deploy to all stores
+          echo "docker=true" >> $GITHUB_OUTPUT
+          echo "snap=true" >> $GITHUB_OUTPUT
+          echo "microsoft=true" >> $GITHUB_OUTPUT
+          echo "apple=true" >> $GITHUB_OUTPUT
+          echo "Production mode: deploying to all stores"
+        elif [ "$MODE" = "stage-only" ]; then
+          # Stage-only: always deploy snap to edge, respect others
+          echo "docker=${{ inputs.deploy-docker }}" >> $GITHUB_OUTPUT
+          echo "snap=true" >> $GITHUB_OUTPUT  # Always deploy snap to edge
+          echo "microsoft=${{ inputs.deploy-microsoft }}" >> $GITHUB_OUTPUT
+          echo "apple=${{ inputs.deploy-apple }}" >> $GITHUB_OUTPUT
+          echo "Stage-only mode: snap always deploys to edge"
+        else
+          # Dry-run: respect all inputs
+          echo "docker=${{ inputs.deploy-docker }}" >> $GITHUB_OUTPUT
+          echo "snap=${{ inputs.deploy-snap }}" >> $GITHUB_OUTPUT
+          echo "microsoft=${{ inputs.deploy-microsoft }}" >> $GITHUB_OUTPUT
+          echo "apple=${{ inputs.deploy-apple }}" >> $GITHUB_OUTPUT
+          echo "Dry-run mode: selective deployment"
+        fi

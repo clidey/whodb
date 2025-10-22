@@ -1,0 +1,58 @@
+name: Build Docker Images
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version to build'
+        required: true
+        type: string
+      edition:
+        description: 'Edition to build (ce or ee)'
+        required: false
+        type: string
+        default: 'ce'
+    outputs:
+      amd64-artifact:
+        description: 'AMD64 Docker artifact name'
+        value: docker-image-amd64
+      arm64-artifact:
+        description: 'ARM64 Docker artifact name'
+        value: docker-image-arm64
+
+jobs:
+  build-docker:
+    name: Build Docker (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            platform: linux/amd64
+            arch: amd64
+          - runner: ubuntu-24.04-arm
+            platform: linux/arm64
+            arch: arm64
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./core/Dockerfile
+          platforms: ${{ matrix.platform }}
+          push: false
+          tags: clidey/whodb:${{ inputs.version }}-${{ matrix.arch }}
+          outputs: type=docker,dest=/tmp/whodb-docker-${{ matrix.arch }}.tar
+
+      - name: Upload Docker artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image-${{ matrix.arch }}
+          path: /tmp/whodb-docker-${{ matrix.arch }}.tar
+          retention-days: 1

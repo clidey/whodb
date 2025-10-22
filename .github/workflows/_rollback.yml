@@ -1,0 +1,147 @@
+name: Rollback Deployment
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version to rollback'
+        required: true
+        type: string
+      previous-version:
+        description: 'Previous version to restore'
+        required: true
+        type: string
+      rollback-docker:
+        description: 'Rollback Docker Hub'
+        required: false
+        type: boolean
+        default: false
+      rollback-github:
+        description: 'Rollback GitHub release'
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      DOCKER_USERNAME:
+        required: false
+      DOCKER_TOKEN:
+        required: false
+      GITHUB_TOKEN:
+        required: true
+
+jobs:
+  rollback:
+    name: Rollback Failed Deployment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Rollback Docker Hub
+        if: inputs.rollback-docker
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+        run: |
+          echo "🔄 Rolling back Docker Hub deployment..."
+
+          if [ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_TOKEN" ]; then
+            echo "⚠️ Docker credentials not available, skipping Docker rollback"
+            exit 0
+          fi
+
+          # Login to Docker Hub
+          echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+          VERSION="${{ inputs.version }}"
+          PREVIOUS_VERSION="${{ inputs.previous-version }}"
+
+          echo "Current version: $VERSION"
+          echo "Rolling back to: $PREVIOUS_VERSION"
+
+          # Try to restore the previous version as latest
+          echo "Attempting to restore previous version as latest..."
+
+          # Pull the previous version
+          docker pull clidey/whodb:${PREVIOUS_VERSION} || {
+            echo "⚠️ Previous version ${PREVIOUS_VERSION} not found on Docker Hub"
+            echo "Cannot rollback Docker images"
+            exit 0
+          }
+
+          # Re-tag previous version as latest
+          docker tag clidey/whodb:${PREVIOUS_VERSION} clidey/whodb:latest
+          docker push clidey/whodb:latest
+
+          echo "✅ Docker Hub 'latest' tag restored to ${PREVIOUS_VERSION}"
+
+          # Attempt to remove the failed version tag (optional, may fail if not pushed)
+          echo "Attempting to remove failed version tag..."
+          # Note: Docker Hub doesn't have a direct API to delete tags via CLI
+          # This would require using Docker Hub API with curl
+          curl -X DELETE \
+            -H "Authorization: JWT ${DOCKER_HUB_TOKEN}" \
+            "https://hub.docker.com/v2/repositories/clidey/whodb/tags/${VERSION}/" || true
+
+          echo "🔄 Docker rollback completed"
+
+      - name: Rollback GitHub Release
+        if: inputs.rollback-github
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🔄 Rolling back GitHub release..."
+
+          VERSION="${{ inputs.version }}"
+          TAG="v${VERSION}"
+
+          # Check if release exists
+          echo "Checking for release ${TAG}..."
+          RELEASE_ID=$(gh api repos/${{ github.repository }}/releases/tags/${TAG} --jq .id 2>/dev/null || echo "")
+
+          if [ -n "$RELEASE_ID" ]; then
+            echo "Found release ID: $RELEASE_ID"
+
+            # Delete the release
+            echo "Deleting release..."
+            gh api -X DELETE repos/${{ github.repository }}/releases/${RELEASE_ID}
+            echo "✅ Release deleted"
+          else
+            echo "⚠️ No release found for tag ${TAG}"
+          fi
+
+          # Delete the tag
+          echo "Deleting tag ${TAG}..."
+          git push --delete origin ${TAG} 2>/dev/null || {
+            echo "⚠️ Tag ${TAG} not found or already deleted"
+          }
+
+          echo "🔄 GitHub rollback completed"
+
+      - name: Rollback Summary
+        if: always()
+        run: |
+          echo "## 🔄 Rollback Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version Rolled Back:** ${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Restored Version:** ${{ inputs.previous-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Rollback Actions:" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ inputs.rollback-docker }}" = "true" ]; then
+            echo "- ✅ Docker Hub: Restored 'latest' tag to ${{ inputs.previous-version }}" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ inputs.rollback-github }}" = "true" ]; then
+            echo "- ✅ GitHub: Deleted release and tag v${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ⚠️ Manual Actions Required:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Snap Store:** Check Snapcraft dashboard and revert if needed" >> $GITHUB_STEP_SUMMARY
+          echo "- **Microsoft Store:** Check Partner Center and cancel submission if pending" >> $GITHUB_STEP_SUMMARY
+          echo "- **Apple App Store:** Check App Store Connect and remove from TestFlight/review if needed" >> $GITHUB_STEP_SUMMARY
+
+          # Send notification about rollback
+          echo "::warning::Deployment rollback completed. Manual intervention may be required for app stores."

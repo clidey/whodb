@@ -1,0 +1,80 @@
+name: Build Snap Packages
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version to build'
+        required: true
+        type: string
+      upload-artifacts:
+        description: 'Whether to upload artifacts'
+        required: false
+        type: boolean
+        default: true
+    secrets:
+      SNAPCRAFT_STORE_CREDENTIALS:
+        required: false
+
+jobs:
+  build-snap:
+    name: Build Snap (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            arch: amd64
+          - runner: ubuntu-24.04-arm
+            arch: arm64
+    env:
+      SNAPCRAFT_PROJECT_VERSION: ${{ inputs.version }}
+      SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+
+      - name: Setup Snapcraft
+        run: |
+          sudo snap install snapcraft --classic
+          echo "Snapcraft version:"
+          snapcraft --version
+
+      - name: Setup LXD
+        run: |
+          sudo snap install lxd
+          sudo lxd init --auto
+          sudo usermod -a -G lxd $USER
+          echo "LXD configured"
+
+      - name: Build Snap package
+        run: |
+          sg lxd -c "cd snap && snapcraft --use-lxd --verbosity=debug"
+
+      - name: Verify Snap
+        run: |
+          SNAP_FILE=$(ls snap/*.snap 2>/dev/null | head -1)
+          if [ -z "$SNAP_FILE" ]; then
+            echo "❌ No snap file found after build"
+            exit 1
+          fi
+
+          echo "✅ Built snap: $SNAP_FILE"
+          echo "File size: $(du -h "$SNAP_FILE" | cut -f1)"
+
+          # Verify filename contains version
+          SNAP_BASENAME=$(basename "$SNAP_FILE")
+          if [[ "$SNAP_BASENAME" != *"_${SNAPCRAFT_PROJECT_VERSION}_"* ]]; then
+            echo "::error::Snap filename $SNAP_BASENAME does not contain version ${SNAPCRAFT_PROJECT_VERSION}"
+            exit 1
+          fi
+
+      - name: Upload Snap artifact
+        if: inputs.upload-artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: snap-package-${{ matrix.arch }}
+          path: snap/*.snap
+          retention-days: 1

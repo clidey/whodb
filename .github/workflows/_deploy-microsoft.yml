@@ -1,0 +1,332 @@
+name: Deploy to Microsoft Store
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version being deployed'
+        required: true
+        type: string
+      stage-only:
+        description: 'Stage only mode (draft submission)'
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      MS_TENANT_ID:
+        required: false
+      MS_CLIENT_ID:
+        required: false
+      MS_CLIENT_SECRET:
+        required: false
+      MS_APP_ID:
+        required: false
+
+jobs:
+  package-windows-msix:
+    name: Package Windows MSIX
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Windows executables
+        uses: actions/download-artifact@v4
+        with:
+          name: desktop-windows-amd64
+          path: desktop-builds/
+
+      - name: Create MSIX Package
+        shell: pwsh
+        run: |
+          Write-Host "Creating MSIX package..."
+
+          # Prepare directory structure for MSIX
+          $msixDir = "msix-package"
+          New-Item -ItemType Directory -Force -Path $msixDir
+
+          # Copy executable
+          $exePath = "desktop-builds/build/windows/amd64/whodb.exe"
+          if (Test-Path $exePath) {
+            Copy-Item $exePath "$msixDir/whodb.exe"
+            Write-Host "✅ Found executable at $exePath"
+          } else {
+            # Try alternative paths
+            $altPaths = @(
+              "desktop-builds/windows/amd64/whodb.exe",
+              "desktop-builds/whodb.exe"
+            )
+            $found = $false
+            foreach ($altPath in $altPaths) {
+              if (Test-Path $altPath) {
+                Copy-Item $altPath "$msixDir/whodb.exe"
+                Write-Host "✅ Found executable at $altPath"
+                $found = $true
+                break
+              }
+            }
+            if (-not $found) {
+              Write-Error "Executable not found"
+              exit 1
+            }
+          }
+
+          # Create AppxManifest.xml
+          $manifest = @"
+          <?xml version="1.0" encoding="utf-8"?>
+          <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+                   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+                   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
+            <Identity Name="WhoDB"
+                      Publisher="CN=Clidey"
+                      Version="${{ inputs.version }}.0"
+                      ProcessorArchitecture="x64" />
+            <Properties>
+              <DisplayName>WhoDB</DisplayName>
+              <PublisherDisplayName>Clidey</PublisherDisplayName>
+              <Logo>Assets\StoreLogo.png</Logo>
+            </Properties>
+            <Dependencies>
+              <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.22621.0" />
+            </Dependencies>
+            <Resources>
+              <Resource Language="en-US" />
+            </Resources>
+            <Applications>
+              <Application Id="App" Executable="whodb.exe" EntryPoint="Windows.FullTrustApplication">
+                <uap:VisualElements DisplayName="WhoDB"
+                                    Description="Database management tool"
+                                    BackgroundColor="transparent"
+                                    Square150x150Logo="Assets\Square150x150Logo.png"
+                                    Square44x44Logo="Assets\Square44x44Logo.png">
+                  <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
+                  <uap:SplashScreen Image="Assets\SplashScreen.png" />
+                </uap:VisualElements>
+              </Application>
+            </Applications>
+            <Capabilities>
+              <rescap:Capability Name="runFullTrust" />
+            </Capabilities>
+          </Package>
+          "@
+          $manifest | Out-File -FilePath "$msixDir/AppxManifest.xml" -Encoding UTF8
+
+          # Create placeholder assets (in production, use real assets)
+          $assetsDir = "$msixDir/Assets"
+          New-Item -ItemType Directory -Force -Path $assetsDir
+
+          # Create basic placeholder images
+          Add-Type -AssemblyName System.Drawing
+          $sizes = @(
+            @{Name="StoreLogo.png"; Width=50; Height=50},
+            @{Name="Square150x150Logo.png"; Width=150; Height=150},
+            @{Name="Square44x44Logo.png"; Width=44; Height=44},
+            @{Name="Wide310x150Logo.png"; Width=310; Height=150},
+            @{Name="SplashScreen.png"; Width=620; Height=300}
+          )
+
+          foreach ($size in $sizes) {
+            $bitmap = New-Object System.Drawing.Bitmap $size.Width, $size.Height
+            $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+            $graphics.Clear([System.Drawing.Color]::FromArgb(0, 120, 215))
+            $graphics.Dispose()
+            $bitmap.Save("$assetsDir\$($size.Name)", [System.Drawing.Imaging.ImageFormat]::Png)
+            $bitmap.Dispose()
+          }
+
+          # Find MakeAppx.exe
+          $makeAppxPaths = @(
+            "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\makeappx.exe",
+            "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22000.0\x64\makeappx.exe",
+            "C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64\makeappx.exe"
+          )
+
+          $makeAppx = $null
+          foreach ($path in $makeAppxPaths) {
+            if (Test-Path $path) {
+              $makeAppx = $path
+              Write-Host "Found MakeAppx at: $makeAppx"
+              break
+            }
+          }
+
+          if (-not $makeAppx) {
+            Write-Error "MakeAppx.exe not found. Windows SDK may not be installed."
+            exit 1
+          }
+
+          # Package MSIX
+          Write-Host "Creating MSIX package..."
+          $outputPath = "WhoDB_${{ inputs.version }}.msixbundle"
+          & $makeAppx pack /d $msixDir /p $outputPath /v
+
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Failed to create MSIX package"
+            exit 1
+          }
+
+          Write-Host "✅ MSIX package created: $outputPath"
+          Write-Host "File size: $((Get-Item $outputPath).Length / 1MB) MB"
+
+      - name: Upload MSIX package
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-msix
+          path: "*.msixbundle"
+          retention-days: 1
+
+  deploy-microsoft-store:
+    name: Submit to Microsoft Store
+    runs-on: windows-latest
+    needs: [ package-windows-msix ]
+    continue-on-error: ${{ inputs.stage-only }}
+    steps:
+      - name: Checkout for scripts
+        uses: actions/checkout@v4
+
+      - name: Check Microsoft Store credentials
+        id: check_creds
+        shell: pwsh
+        run: |
+          $hasAllCreds = ("${{ secrets.MS_TENANT_ID }}" -ne "") -and
+                        ("${{ secrets.MS_CLIENT_ID }}" -ne "") -and
+                        ("${{ secrets.MS_CLIENT_SECRET }}" -ne "") -and
+                        ("${{ secrets.MS_APP_ID }}" -ne "")
+
+          if ($hasAllCreds) {
+            Write-Host "✅ All Microsoft Store credentials are configured"
+            echo "has_creds=true" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Host "⚠️ Microsoft Store credentials missing"
+            if ("${{ inputs.stage-only }}" -eq "true") {
+              Write-Host "Continuing in stage-only mode without credentials"
+              echo "has_creds=false" >> $env:GITHUB_OUTPUT
+            } else {
+              Write-Error "Production deployment requires all Microsoft Store credentials"
+              exit 1
+            }
+          }
+
+      - name: Download MSIX package
+        if: steps.check_creds.outputs.has_creds == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-msix
+          path: .
+
+      - name: Setup StoreBroker and authenticate
+        if: steps.check_creds.outputs.has_creds == 'true'
+        shell: pwsh
+        env:
+          MS_TENANT_ID: ${{ secrets.MS_TENANT_ID }}
+          MS_CLIENT_ID: ${{ secrets.MS_CLIENT_ID }}
+          MS_CLIENT_SECRET: ${{ secrets.MS_CLIENT_SECRET }}
+        run: |
+          # Install StoreBroker module
+          Write-Host "Installing StoreBroker module..."
+          Install-Module -Name StoreBroker -Force -Scope CurrentUser -AllowClobber
+          Import-Module StoreBroker
+          $global:SBDisableTelemetry = $true
+
+          # Authenticate to Partner Center
+          Write-Host "Authenticating to Microsoft Partner Center..."
+          $securePassword = ConvertTo-SecureString $env:MS_CLIENT_SECRET -AsPlainText -Force
+          $credential = New-Object System.Management.Automation.PSCredential($env:MS_CLIENT_ID, $securePassword)
+
+          try {
+            Set-StoreBrokerAuthentication -TenantId $env:MS_TENANT_ID -Credential $credential
+            Write-Host "✅ Successfully authenticated"
+          } catch {
+            Write-Error "Failed to authenticate: $_"
+            exit 1
+          }
+
+      - name: Submit to Microsoft Store
+        if: steps.check_creds.outputs.has_creds == 'true'
+        shell: pwsh
+        env:
+          MS_APP_ID: ${{ secrets.MS_APP_ID }}
+        run: |
+          $appId = $env:MS_APP_ID
+          $msixPath = Get-ChildItem -Path "." -Filter "*.msixbundle" | Select-Object -First 1
+
+          if ($null -eq $msixPath) {
+            Write-Error "No MSIX bundle found"
+            exit 1
+          }
+
+          Write-Host "Found MSIX: $($msixPath.Name)"
+          Write-Host "App ID: $appId"
+
+          # Check for existing pending submission and delete if needed
+          Write-Host "Checking for existing pending submission..."
+          try {
+            $existingSubmission = Get-ApplicationSubmission -AppId $appId -SubmissionId PendingSubmission
+            if ($existingSubmission) {
+              Write-Host "Deleting existing pending submission..."
+              Remove-ApplicationSubmission -AppId $appId -SubmissionId $existingSubmission.id -Force
+            }
+          } catch {
+            Write-Host "No existing pending submission"
+          }
+
+          # Determine submission mode
+          if ("${{ inputs.stage-only }}" -eq "true") {
+            Write-Host "📦 STAGE MODE - Creating draft submission"
+            $autoCommit = $false
+            $targetPublishMode = "Manual"
+          } else {
+            Write-Host "🚀 PRODUCTION MODE - Creating live submission"
+            $autoCommit = $true
+            $targetPublishMode = "Immediate"
+          }
+
+          # Create submission
+          try {
+            Write-Host "Creating new submission..."
+            $submission = New-ApplicationSubmission -AppId $appId -Force
+
+            # Update submission with MSIX
+            $submission.applicationPackages = @(@{
+              fileName = $msixPath.Name
+              fileStatus = "PendingUpload"
+              minimumDirectXVersion = "None"
+              minimumSystemRam = "None"
+            })
+
+            # Set publish mode
+            $submission.targetPublishMode = $targetPublishMode
+            if ($submission.PSObject.Properties["targetPublishDate"]) {
+              $submission.PSObject.Properties.Remove('targetPublishDate')
+            }
+
+            # Update submission
+            $updatedSubmission = Update-ApplicationSubmission -AppId $appId `
+              -UpdatedSubmission $submission `
+              -PackagePath $msixPath.FullName `
+              -AutoCommit:$autoCommit `
+              -Force
+
+            if ($autoCommit) {
+              Write-Host "✅ Submission created and submitted for certification"
+            } else {
+              Write-Host "✅ Draft submission created - manual review required"
+            }
+          } catch {
+            Write-Error "Failed to create submission: $_"
+            if ("${{ inputs.stage-only }}" -ne "true") {
+              exit 1
+            }
+          }
+
+      - name: Summary
+        if: always()
+        shell: pwsh
+        run: |
+          if ("${{ steps.check_creds.outputs.has_creds }}" -eq "false") {
+            Write-Host "⏭️ Microsoft Store deployment skipped (no credentials)"
+          } elseif ("${{ inputs.stage-only }}" -eq "true") {
+            Write-Host "📦 Draft submission created in Partner Center"
+          } else {
+            Write-Host "🚀 Production submission completed"
+          }

@@ -1,0 +1,262 @@
+name: Deploy to Apple App Store
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version being deployed'
+        required: true
+        type: string
+      stage-only:
+        description: 'Stage only mode (TestFlight only)'
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      APP_STORE_CONNECT_API_KEY:
+        required: false
+      APP_STORE_CONNECT_API_KEY_ID:
+        required: false
+      APP_STORE_CONNECT_ISSUER_ID:
+        required: false
+      APPLE_DEVELOPER_ID:
+        required: false
+      APPLE_DEVELOPER_TEAM_ID:
+        required: false
+
+jobs:
+  package-mac-app-store:
+    name: Package for Mac App Store
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download macOS build
+        uses: actions/download-artifact@v4
+        with:
+          name: desktop-darwin-universal
+          path: desktop-builds/
+
+      - name: Check for app bundle
+        id: check_app
+        run: |
+          # Look for the app bundle
+          APP_PATHS=(
+            "desktop-builds/build/darwin/universal/whodb.app"
+            "desktop-builds/darwin/universal/whodb.app"
+            "desktop-builds/whodb.app"
+          )
+
+          APP_PATH=""
+          for path in "${APP_PATHS[@]}"; do
+            if [ -d "$path" ]; then
+              APP_PATH="$path"
+              echo "✅ Found app bundle at: $APP_PATH"
+              break
+            fi
+          done
+
+          if [ -z "$APP_PATH" ]; then
+            echo "❌ App bundle not found"
+            exit 1
+          fi
+
+          echo "app_path=$APP_PATH" >> $GITHUB_OUTPUT
+
+      - name: Prepare Mac App Store package
+        env:
+          APPLE_DEVELOPER_ID: ${{ secrets.APPLE_DEVELOPER_ID }}
+          APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
+        run: |
+          echo "📦 Preparing Mac App Store package..."
+
+          APP_PATH="${{ steps.check_app.outputs.app_path }}"
+          PKG_PATH="WhoDB_${{ inputs.version }}.pkg"
+
+          # Check if we have signing credentials
+          if [ -n "$APPLE_DEVELOPER_ID" ] && [ -n "$APPLE_DEVELOPER_TEAM_ID" ]; then
+            echo "🔏 Creating signed PKG installer..."
+
+            # Sign the app bundle first if not already signed
+            codesign --force --deep --sign "$APPLE_DEVELOPER_ID" \
+              --options runtime --timestamp \
+              "$APP_PATH"
+
+            # Create signed PKG installer
+            productbuild --component "$APP_PATH" /Applications \
+              --sign "$APPLE_DEVELOPER_ID" \
+              --identifier "com.clidey.whodb" \
+              --version "${{ inputs.version }}" \
+              "$PKG_PATH"
+
+            echo "✅ Signed PKG created"
+          else
+            echo "⚠️ No signing credentials - creating unsigned PKG"
+
+            # Create unsigned PKG installer
+            productbuild --component "$APP_PATH" /Applications \
+              --identifier "com.clidey.whodb" \
+              --version "${{ inputs.version }}" \
+              "$PKG_PATH"
+
+            echo "✅ Unsigned PKG created"
+          fi
+
+          # Verify package
+          if [ -f "$PKG_PATH" ]; then
+            echo "Package size: $(du -h "$PKG_PATH" | cut -f1)"
+            pkgutil --check-signature "$PKG_PATH" || true
+          else
+            echo "❌ Failed to create PKG"
+            exit 1
+          fi
+
+      - name: Upload Mac App Store package
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac-app-store-package
+          path: "*.pkg"
+          retention-days: 1
+
+  deploy-apple-store:
+    name: Submit to Apple App Store
+    runs-on: macos-latest
+    needs: [ package-mac-app-store ]
+    continue-on-error: ${{ inputs.stage-only }}
+    steps:
+      - name: Checkout for scripts
+        uses: actions/checkout@v4
+
+      - name: Check Apple Store credentials
+        id: check_creds
+        run: |
+          echo "🔍 Checking Apple Store credentials..."
+
+          if [ -n "${{ secrets.APP_STORE_CONNECT_API_KEY }}" ] && \
+             [ -n "${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}" ] && \
+             [ -n "${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" ]; then
+            echo "✅ All App Store Connect API credentials configured"
+            echo "has_creds=true" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ App Store Connect API credentials missing"
+
+            if [ "${{ inputs.stage-only }}" = "true" ]; then
+              echo "Continuing in stage-only mode without credentials"
+              echo "has_creds=false" >> $GITHUB_OUTPUT
+            else
+              echo "::error::Production deployment requires App Store Connect API credentials"
+              exit 1
+            fi
+          fi
+
+      - name: Download Mac App Store package
+        if: steps.check_creds.outputs.has_creds == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: mac-app-store-package
+          path: .
+
+      - name: Setup App Store Connect API key
+        if: steps.check_creds.outputs.has_creds == 'true'
+        env:
+          APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          echo "📝 Setting up App Store Connect API key..."
+
+          # Create private keys directory
+          mkdir -p ~/.appstoreconnect/private_keys
+
+          # Write the API key to file
+          echo "$APP_STORE_CONNECT_API_KEY" > ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8
+
+          # Set proper permissions
+          chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8
+
+          echo "✅ API key configured"
+
+      - name: Upload to App Store Connect
+        if: steps.check_creds.outputs.has_creds == 'true'
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          PKG_FILE=$(ls *.pkg | head -1)
+
+          if [ -z "$PKG_FILE" ]; then
+            echo "❌ No PKG file found"
+            exit 1
+          fi
+
+          echo "📤 Uploading package: $PKG_FILE"
+
+          if [ "${{ inputs.stage-only }}" = "true" ]; then
+            echo "📦 STAGE MODE - Uploading for TestFlight only"
+
+            # Upload for TestFlight testing
+            xcrun altool --upload-package "$PKG_FILE" \
+              --type macos \
+              --apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
+              --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
+              --verbose
+
+            if [ $? -eq 0 ]; then
+              echo "✅ Package uploaded for TestFlight distribution"
+              echo ""
+              echo "📝 Next steps:"
+              echo "  1. Wait for processing to complete (usually 5-10 minutes)"
+              echo "  2. Configure TestFlight testing in App Store Connect"
+              echo "  3. Submit for App Store review when ready"
+            else
+              echo "❌ Upload failed"
+              exit 1
+            fi
+          else
+            echo "🚀 PRODUCTION MODE - Submitting for App Store review"
+
+            # Upload and submit for App Store review
+            xcrun altool --upload-package "$PKG_FILE" \
+              --type macos \
+              --apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
+              --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
+              --auto-submit \
+              --verbose
+
+            if [ $? -eq 0 ]; then
+              echo "✅ Package uploaded and submitted for App Store review"
+              echo ""
+              echo "📝 Next steps:"
+              echo "  1. Monitor review status in App Store Connect"
+              echo "  2. Respond to any reviewer feedback"
+              echo "  3. Release when approved"
+            else
+              echo "❌ Upload/submission failed"
+              exit 1
+            fi
+          fi
+
+      - name: Clean up API key
+        if: always() && steps.check_creds.outputs.has_creds == 'true'
+        run: |
+          rm -rf ~/.appstoreconnect/private_keys
+          echo "🧹 API key cleaned up"
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Apple App Store Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.check_creds.outputs.has_creds }}" = "false" ]; then
+            echo "⏭️ **Status:** Skipped (no credentials)" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ inputs.stage-only }}" = "true" ]; then
+            echo "📦 **Status:** TestFlight upload completed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Package is available for TestFlight testing." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "🚀 **Status:** Submitted for App Store review" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Monitor review status in App Store Connect." >> $GITHUB_STEP_SUMMARY
+          fi

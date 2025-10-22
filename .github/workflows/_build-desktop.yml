@@ -1,0 +1,210 @@
+name: Build Desktop Applications
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version to build'
+        required: true
+        type: string
+      edition:
+        description: 'Edition to build (ce or ee)'
+        required: false
+        type: string
+        default: 'ce'
+      platforms:
+        description: 'Platforms to build (comma-separated: windows-amd64,windows-arm64,darwin-universal)'
+        required: false
+        type: string
+        default: 'windows-amd64,windows-arm64,darwin-universal'
+    secrets:
+      APPLE_DEVELOPER_ID_APPLICATION:
+        required: false
+      APPLE_ID:
+        required: false
+      APPLE_APP_PASSWORD:
+        required: false
+      APPLE_TEAM_ID:
+        required: false
+
+jobs:
+  build-desktop:
+    name: Build Desktop (${{ matrix.platform }}-${{ matrix.arch }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          # Windows builds for Microsoft Store
+          - os: windows-latest
+            platform: windows
+            arch: amd64
+            make-target: build-prod-windows-amd64
+            enabled: ${{ contains(inputs.platforms, 'windows-amd64') }}
+          - os: windows-11-arm
+            platform: windows
+            arch: arm64
+            make-target: build-prod-windows-arm64
+            enabled: ${{ contains(inputs.platforms, 'windows-arm64') }}
+          # macOS build for Mac App Store
+          - os: macos-latest
+            platform: darwin
+            arch: universal
+            make-target: build-prod-mac
+            enabled: ${{ contains(inputs.platforms, 'darwin-universal') }}
+    steps:
+      - name: Skip if not enabled
+        if: matrix.enabled == 'false'
+        run: echo "Skipping ${{ matrix.platform }}-${{ matrix.arch }}"
+
+      - name: Checkout
+        if: matrix.enabled != 'false'
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        if: matrix.enabled != 'false'
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'desktop-${{ inputs.edition }}/go.mod'
+
+      - name: Setup Node.js and pnpm
+        if: matrix.enabled != 'false'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+
+      - uses: pnpm/action-setup@v4
+        if: matrix.enabled != 'false'
+        with:
+          version: 10
+
+      - name: Install frontend dependencies
+        if: matrix.enabled != 'false'
+        working-directory: ./frontend
+        run: pnpm i
+
+      - name: Install Wails CLI
+        if: matrix.enabled != 'false'
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      # Windows AMD64 Build
+      - name: Build Windows AMD64
+        if: matrix.platform == 'windows' && matrix.arch == 'amd64' && matrix.enabled != 'false'
+        working-directory: ./desktop-${{ inputs.edition }}
+        shell: pwsh
+        env:
+          GOARCH: ${{ matrix.arch }}
+        run: |
+          Write-Host "Building Windows executable for MSIX packaging..."
+          $env:GOWORK = "$PWD/../go.work.desktop-${{ inputs.edition }}"
+
+          # Clean previous build
+          Remove-Item -Path build -Recurse -Force -ErrorAction SilentlyContinue
+
+          # Prepare frontend
+          Write-Host "Preparing frontend..."
+          New-Item -ItemType Directory -Path frontend/dist -Force | Out-Null
+          Set-Location ../frontend
+          pnpm run build:${{ inputs.edition }}
+          Copy-Item -Path build/* -Destination ../desktop-${{ inputs.edition }}/frontend/dist/ -Recurse
+          Set-Location ../desktop-${{ inputs.edition }}
+
+          Write-Host "Building with wails..."
+          wails build -clean -platform windows/amd64 `
+            -windowsconsole=false -ldflags="-s -w -H windowsgui" `
+            -o whodb.exe
+
+          if ($LASTEXITCODE -ne 0) {
+              Write-Error "Wails build failed with exit code: $LASTEXITCODE"
+              exit 1
+          }
+
+          # Find and move exe to expected location
+          $possibleLocations = @(
+              "build\bin\whodb.exe",
+              "build\bin\whodb-amd64.exe",
+              "build\whodb.exe"
+          )
+
+          $foundExe = $null
+          foreach ($location in $possibleLocations) {
+              if (Test-Path $location) {
+                  $foundExe = $location
+                  Write-Host "Found exe at: $foundExe"
+                  break
+              }
+          }
+
+          if (-not $foundExe) {
+              Write-Error "Could not find whodb.exe after build"
+              exit 1
+          }
+
+          # Move to expected location
+          New-Item -ItemType Directory -Path build/windows/amd64 -Force | Out-Null
+          Move-Item $foundExe build/windows/amd64/whodb.exe -Force
+
+          Write-Host "✅ Executable ready: build/windows/amd64/whodb.exe"
+
+      # Windows ARM64 Build (temporarily disabled)
+      - name: Skip Windows ARM64 Build
+        if: matrix.platform == 'windows' && matrix.arch == 'arm64' && matrix.enabled != 'false'
+        shell: pwsh
+        run: |
+          Write-Host "⚠️ Windows ARM64 build is temporarily disabled due to toolchain issues"
+          New-Item -ItemType Directory -Force -Path "./desktop-${{ inputs.edition }}/build/windows/arm64"
+
+      # macOS Build
+      - name: Build macOS
+        if: matrix.platform == 'darwin' && matrix.enabled != 'false'
+        working-directory: ./desktop-${{ inputs.edition }}
+        run: make ${{ matrix.make-target }} VERSION=${{ inputs.version }}
+
+      - name: Create macOS DMG
+        if: matrix.platform == 'darwin' && matrix.enabled != 'false'
+        working-directory: ./desktop-${{ inputs.edition }}
+        run: make dmg-mac VERSION=${{ inputs.version }}
+
+      - name: Sign and Notarize DMG
+        if: matrix.platform == 'darwin' && matrix.enabled != 'false'
+        env:
+          APPLE_DEVELOPER_ID_APPLICATION: ${{ secrets.APPLE_DEVELOPER_ID_APPLICATION }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        working-directory: ./desktop-${{ inputs.edition }}
+        run: |
+          if [ -z "$APPLE_DEVELOPER_ID_APPLICATION" ]; then
+            echo "⚠️ Skipping DMG signing (no certificate)"
+            exit 0
+          fi
+
+          DMG_FILE="build/darwin/universal/whodb.dmg"
+
+          # Sign the DMG with Developer ID
+          echo "Signing DMG with Developer ID certificate..."
+          codesign --force --sign "$APPLE_DEVELOPER_ID_APPLICATION" \
+            --options runtime --timestamp "$DMG_FILE"
+
+          # Notarize if credentials available
+          if [ -n "$APPLE_ID" ] && [ -n "$APPLE_APP_PASSWORD" ] && [ -n "$APPLE_TEAM_ID" ]; then
+            echo "📤 Submitting DMG for notarization..."
+            xcrun notarytool submit "$DMG_FILE" \
+              --apple-id "$APPLE_ID" \
+              --password "$APPLE_APP_PASSWORD" \
+              --team-id "$APPLE_TEAM_ID" \
+              --wait
+
+            echo "📎 Stapling notarization ticket..."
+            xcrun stapler staple "$DMG_FILE"
+            echo "✅ DMG signed and notarized"
+          else
+            echo "⚠️ Skipping notarization (missing credentials)"
+          fi
+
+      - name: Upload artifacts
+        if: matrix.enabled != 'false' && (matrix.arch != 'arm64' || matrix.platform != 'windows')
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.platform }}-${{ matrix.arch || 'all' }}
+          path: desktop-${{ inputs.edition }}/build/
+          retention-days: 1
