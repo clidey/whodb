@@ -37,10 +37,26 @@ architectures:
   - build-on: amd64
   - build-on: arm64
 
+layout:
+  /usr/lib/x86_64-linux-gnu/webkit2gtk-4.0:
+    bind: $SNAP/usr/lib/x86_64-linux-gnu/webkit2gtk-4.0
+  /usr/lib/x86_64-linux-gnu/webkit2gtk-4.1:
+    bind: $SNAP/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1
+  /usr/lib/aarch64-linux-gnu/webkit2gtk-4.0:
+    bind: $SNAP/usr/lib/aarch64-linux-gnu/webkit2gtk-4.0
+  /usr/lib/aarch64-linux-gnu/webkit2gtk-4.1:
+    bind: $SNAP/usr/lib/aarch64-linux-gnu/webkit2gtk-4.1
+
 apps:
   whodb:
     command: bin/whodb
     desktop: share/applications/whodb.desktop
+    environment:
+      WEBKIT_DISABLE_COMPOSITING_MODE: "1"
+      WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS: "1"
+      GDK_BACKEND: "x11,wayland"
+      GTK_USE_PORTAL: "0"
+      LD_LIBRARY_PATH: "$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/aarch64-linux-gnu:$LD_LIBRARY_PATH"
     plugs:
       - desktop
       - desktop-legacy
@@ -50,6 +66,10 @@ apps:
       - network
       - network-bind
       - opengl
+      - browser-support
+      - audio-playback
+      - unity7
+      - home
 
 parts:
   # Build Node/frontend dependencies first
@@ -102,7 +122,32 @@ parts:
       - libgtk-3-0
       - libwebkit2gtk-4.0-37
       - libwebkit2gtk-4.1-0
+      - libcanberra-gtk3-module
+      - libcanberra-gtk-module
+      - libglu1-mesa
+      - freeglut3
+      - libgpm2
+      - libslang2
+      - libgl1-mesa-dri
+      - libgl1-mesa-glx
+      - libgles2-mesa
+      - libegl1-mesa
+      - libjavascriptcoregtk-4.0-18
+      - libjavascriptcoregtk-4.1-0
+      - gstreamer1.0-plugins-base
+      - gstreamer1.0-plugins-good
+      - gstreamer1.0-gl
+      - libsoup-3.0-0
+      - libsecret-1-0
+      - libenchant-2-2
+      - libhyphen0
+      - libwoff1
+      - libgstreamer-gl1.0-0
     prime:
+      # Explicitly include WebKit subprocess executables
+      - usr/lib/*/webkit2gtk-4.0/*
+      - usr/lib/*/webkit2gtk-4.1/*
+      # Exclude unnecessary libraries to reduce snap size
       - -usr/lib/*/caca/libgl_plugin.so.*
       - -usr/lib/*/libcaca++.so.*
       - -usr/lib/*/libcolordprivate.so.*
