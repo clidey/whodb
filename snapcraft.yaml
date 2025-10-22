@@ -189,7 +189,6 @@ parts:
       - libnghttp2-14
       # Other dependencies
       - libcanberra-gtk3-module
-      - libcanberra-gtk-module
       - libenchant-2-2
       - libhyphen0
       - libxml2
