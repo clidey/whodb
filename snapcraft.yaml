@@ -143,7 +143,6 @@ parts:
       - libglx0
       - libglvnd0
       - libglu1-mesa
-      - freeglut3
       - libgl1-mesa-dri
       - libgles2-mesa
       - libgbm1
