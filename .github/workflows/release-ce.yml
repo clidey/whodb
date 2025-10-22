@@ -978,9 +978,7 @@ jobs:
     name: Deploy to Snap Store
     runs-on: ubuntu-latest
     needs: [ calculate-version, validate-all-builds ]
-    if: |
-      needs.calculate-version.outputs.dry_run == 'false' &&
-      needs.calculate-version.outputs.deploy_snap == 'true'
+    if: needs.calculate-version.outputs.dry_run == 'false' && needs.calculate-version.outputs.deploy_snap == 'true'
     continue-on-error: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
     steps:
       - name: Checkout for scripts
