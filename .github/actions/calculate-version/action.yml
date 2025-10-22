@@ -4,6 +4,10 @@ inputs:
   deployment-mode:
     description: 'Deployment mode (stage-only, production)'
     required: true
+  version-bump:
+    description: 'Version bump type (major, minor, patch)'
+    required: false
+    default: 'minor'
   deploy-docker:
     description: 'Deploy to Docker Hub'
     required: false
@@ -80,14 +84,34 @@ runs:
         LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
         PREVIOUS_VERSION=${LATEST_TAG#v}
 
-        # Calculate next version
+        # Calculate next version based on bump type
         IFS='.' read -r major minor patch <<< "$PREVIOUS_VERSION"
-        patch=$((patch + 1))
+        BUMP_TYPE="${{ inputs.version-bump }}"
+
+        case "$BUMP_TYPE" in
+          "major")
+            major=$((major + 1))
+            minor=0
+            patch=0
+            ;;
+          "minor")
+            minor=$((minor + 1))
+            patch=0
+            ;;
+          "patch")
+            patch=$((patch + 1))
+            ;;
+          *)
+            echo "Invalid version bump type: $BUMP_TYPE"
+            exit 1
+            ;;
+        esac
+
         NEXT_VERSION="${major}.${minor}.${patch}"
 
         echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
         echo "previous_version=$PREVIOUS_VERSION" >> $GITHUB_OUTPUT
-        echo "📦 Version: $NEXT_VERSION (previous: $PREVIOUS_VERSION)"
+        echo "📦 Version: $NEXT_VERSION (previous: $PREVIOUS_VERSION, bump: $BUMP_TYPE)"
 
     - name: Set store selection
       id: stores

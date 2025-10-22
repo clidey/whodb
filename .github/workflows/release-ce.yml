@@ -14,6 +14,15 @@ on:
         options:
           - 'stage-only'     # Deploy to stores as drafts/candidates
           - 'production'     # Full production deployment
+      version_bump:
+        description: 'Version Bump Type'
+        required: true
+        type: choice
+        default: 'minor'
+        options:
+          - 'major'          # 1.0.0 -> 2.0.0
+          - 'minor'          # 0.61.0 -> 0.62.0
+          - 'patch'          # 0.61.0 -> 0.61.1
       # Store selection for stage-only mode (ignored in production)
       deploy_docker:
         description: 'Deploy to Docker Hub (stage-only)'
@@ -74,6 +83,7 @@ jobs:
         uses: ./.github/actions/calculate-version
         with:
           deployment-mode: ${{ steps.deployment_mode.outputs.mode }}
+          version-bump: ${{ inputs.version_bump || 'minor' }}
           deploy-docker: ${{ inputs.deploy_docker }}
           deploy-snap: ${{ inputs.deploy_snap }}
           deploy-microsoft: ${{ inputs.deploy_microsoft }}
