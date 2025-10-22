@@ -53,42 +53,42 @@ jobs:
             enabled: ${{ contains(inputs.platforms, 'darwin-universal') }}
     steps:
       - name: Skip if not enabled
-        if: matrix.enabled == 'false'
+        if: matrix.enabled == false
         run: echo "Skipping ${{ matrix.platform }}-${{ matrix.arch }}"
 
       - name: Checkout
-        if: matrix.enabled != 'false'
+        if: matrix.enabled != false
         uses: actions/checkout@v4
 
       - name: Setup Go
-        if: matrix.enabled != 'false'
+        if: matrix.enabled != false
         uses: actions/setup-go@v5
         with:
           go-version-file: 'desktop-${{ inputs.edition }}/go.mod'
 
       - name: Setup Node.js and pnpm
-        if: matrix.enabled != 'false'
+        if: matrix.enabled != false
         uses: actions/setup-node@v4
         with:
           node-version: 'lts/*'
 
       - uses: pnpm/action-setup@v4
-        if: matrix.enabled != 'false'
+        if: matrix.enabled != false
         with:
           version: 10
 
       - name: Install frontend dependencies
-        if: matrix.enabled != 'false'
+        if: matrix.enabled != false
         working-directory: ./frontend
         run: pnpm i
 
       - name: Install Wails CLI
-        if: matrix.enabled != 'false'
+        if: matrix.enabled != false
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
       # Windows AMD64 Build
       - name: Build Windows AMD64
-        if: matrix.platform == 'windows' && matrix.arch == 'amd64' && matrix.enabled != 'false'
+        if: matrix.platform == 'windows' && matrix.arch == 'amd64' && matrix.enabled != false
         working-directory: ./desktop-${{ inputs.edition }}
         shell: pwsh
         env:
@@ -147,7 +147,7 @@ jobs:
 
       # Windows ARM64 Build (temporarily disabled)
       - name: Skip Windows ARM64 Build
-        if: matrix.platform == 'windows' && matrix.arch == 'arm64' && matrix.enabled != 'false'
+        if: matrix.platform == 'windows' && matrix.arch == 'arm64' && matrix.enabled != false
         shell: pwsh
         run: |
           Write-Host "⚠️ Windows ARM64 build is temporarily disabled due to toolchain issues"
@@ -155,17 +155,17 @@ jobs:
 
       # macOS Build
       - name: Build macOS
-        if: matrix.platform == 'darwin' && matrix.enabled != 'false'
+        if: matrix.platform == 'darwin' && matrix.enabled != false
         working-directory: ./desktop-${{ inputs.edition }}
         run: make ${{ matrix.make-target }} VERSION=${{ inputs.version }}
 
       - name: Create macOS DMG
-        if: matrix.platform == 'darwin' && matrix.enabled != 'false'
+        if: matrix.platform == 'darwin' && matrix.enabled != false
         working-directory: ./desktop-${{ inputs.edition }}
         run: make dmg-mac VERSION=${{ inputs.version }}
 
       - name: Sign and Notarize DMG
-        if: matrix.platform == 'darwin' && matrix.enabled != 'false'
+        if: matrix.platform == 'darwin' && matrix.enabled != false
         env:
           APPLE_DEVELOPER_ID_APPLICATION: ${{ secrets.APPLE_DEVELOPER_ID_APPLICATION }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
@@ -202,7 +202,7 @@ jobs:
           fi
 
       - name: Upload artifacts
-        if: matrix.enabled != 'false' && (matrix.arch != 'arm64' || matrix.platform != 'windows')
+        if: matrix.enabled != false && (matrix.arch != 'arm64' || matrix.platform != 'windows')
         uses: actions/upload-artifact@v4
         with:
           name: desktop-${{ matrix.platform }}-${{ matrix.arch || 'all' }}

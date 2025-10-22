@@ -37,13 +37,13 @@ jobs:
           echo "  Dry Run: ${{ inputs.dry-run }}"
 
       - name: Download snap amd64 artifact
-        if: '!inputs.dry-run'
+        if: inputs.dry-run != true
         uses: actions/download-artifact@v4
         with:
           name: snap-package-amd64
 
       - name: Download snap arm64 artifact
-        if: '!inputs.dry-run'
+        if: inputs.dry-run != true
         uses: actions/download-artifact@v4
         with:
           name: snap-package-arm64
@@ -67,7 +67,7 @@ jobs:
           fi
 
       - name: Locate snap files
-        if: '!inputs.dry-run'
+        if: inputs.dry-run != true
         id: locate_snaps
         run: |
           echo "Looking for snap files..."
@@ -95,7 +95,7 @@ jobs:
           echo "arm64_snap=$ARM64_SNAP" >> $GITHUB_OUTPUT
 
       - name: Publish AMD64 snap
-        if: '!inputs.dry-run && steps.check_creds.outputs.has_creds == "true" && steps.locate_snaps.outputs.amd64_snap != ""'
+        if: inputs.dry-run != true && steps.check_creds.outputs.has_creds == 'true' && steps.locate_snaps.outputs.amd64_snap != ''
         uses: canonical/action-publish@v1
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
@@ -104,7 +104,7 @@ jobs:
           release: ${{ inputs.channel }}
 
       - name: Publish ARM64 snap
-        if: '!inputs.dry-run && steps.check_creds.outputs.has_creds == "true" && steps.locate_snaps.outputs.arm64_snap != ""'
+        if: inputs.dry-run != true && steps.check_creds.outputs.has_creds == 'true' && steps.locate_snaps.outputs.arm64_snap != ''
         uses: canonical/action-publish@v1
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
