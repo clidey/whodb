@@ -119,31 +119,109 @@ parts:
       - pkg-config
       - upx-ucl
     stage-packages:
+      # GTK and WebKit core
       - libgtk-3-0
       - libwebkit2gtk-4.0-37
       - libwebkit2gtk-4.1-0
-      - libcanberra-gtk3-module
-      - libcanberra-gtk-module
+      - libjavascriptcoregtk-4.0-18
+      - libjavascriptcoregtk-4.1-0
+      # X11 and display libraries
+      - libx11-6
+      - libx11-xcb1
+      - libxau6
+      - libxcomposite1
+      - libxcursor1
+      - libxdamage1
+      - libxdmcp6
+      - libxext6
+      - libxfixes3
+      - libxi6
+      - libxinerama1
+      - libxrandr2
+      - libxrender1
+      - libxcb1
+      - libxcb-render0
+      - libxcb-shm0
+      - libxcb-randr0
+      - libxkbcommon0
+      # OpenGL and rendering
+      - libegl1
+      - libgl1
+      - libglx0
+      - libglvnd0
       - libglu1-mesa
       - freeglut3
-      - libgpm2
-      - libslang2
       - libgl1-mesa-dri
       - libgl1-mesa-glx
       - libgles2-mesa
       - libegl1-mesa
-      - libjavascriptcoregtk-4.0-18
-      - libjavascriptcoregtk-4.1-0
+      - libgbm1
+      - libepoxy0
+      # GTK and Cairo dependencies
+      - libgdk-pixbuf-2.0-0
+      - libcairo2
+      - libcairo-gobject2
+      - libpango-1.0-0
+      - libpangocairo-1.0-0
+      - libpangoft2-1.0-0
+      - libatk1.0-0
+      - libatk-bridge2.0-0
+      - libatspi2.0-0
+      - libpixman-1-0
+      # Text rendering and fonts
+      - libfontconfig1
+      - libfreetype6
+      - libharfbuzz0b
+      - libharfbuzz-icu0
+      - libfribidi0
+      - libthai0
+      - libdatrie1
+      - libgraphite2-3
+      # Media and codecs
+      - libgstreamer1.0-0
+      - libgstreamer-plugins-base1.0-0
+      - libgstreamer-gl1.0-0
       - gstreamer1.0-plugins-base
       - gstreamer1.0-plugins-good
       - gstreamer1.0-gl
+      - liborc-0.4-0
+      - libwebp7
+      - libwebpdemux2
+      - libwebpmux3
+      - libjpeg-turbo8
+      - libpng16-16
+      - liblcms2-2
+      # Wayland support
+      - libwayland-client0
+      - libwayland-cursor0
+      - libwayland-egl1
+      - libwayland-server0
+      # Network and security
       - libsoup-3.0-0
+      - libsoup2.4-1
       - libsecret-1-0
+      - libpsl5
+      - libnghttp2-14
+      # Other dependencies
+      - libcanberra-gtk3-module
+      - libcanberra-gtk-module
+      - libgpm2
+      - libslang2
       - libenchant-2-2
       - libhyphen0
       - libwoff1
-      - libgstreamer-gl1.0-0
+      - libicu70
+      - libxml2
+      - libxslt1.1
+      - libgudev-1.0-0
+      - libevdev2
+      - libmanette-0.2-0
+      - libatomic1
+      - libunwind8
+      - libdw1
     prime:
+      # Include the whodb binary
+      - bin/whodb
       # Explicitly include WebKit subprocess executables
       - usr/lib/*/webkit2gtk-4.0/*
       - usr/lib/*/webkit2gtk-4.1/*
