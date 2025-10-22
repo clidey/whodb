@@ -122,7 +122,6 @@ parts:
       - libgtk-3-0
       - libwebkit2gtk-4.0-37
       - libwebkit2gtk-4.1-0
-      - libjavascriptcoregtk-4.0-18
       - libjavascriptcoregtk-4.1-0
       # X11 and display libraries
       - libx11-6
@@ -151,9 +150,7 @@ parts:
       - libglu1-mesa
       - freeglut3
       - libgl1-mesa-dri
-      - libgl1-mesa-glx
       - libgles2-mesa
-      - libegl1-mesa
       - libgbm1
       - libepoxy0
       # GTK and Cairo dependencies
@@ -188,7 +185,6 @@ parts:
       - libwebpdemux2
       - libwebpmux3
       - libjpeg-turbo8
-      - libpng16-16
       - liblcms2-2
       # Wayland support
       - libwayland-client0
@@ -209,7 +205,6 @@ parts:
       - libenchant-2-2
       - libhyphen0
       - libwoff1
-      - libicu70
       - libxml2
       - libxslt1.1
       - libgudev-1.0-0
@@ -240,9 +235,6 @@ parts:
       - -usr/lib/*/libpulse-simple.so.*
       - -usr/lib/*/libunwind-*.so.*
       - -usr/lib/*/libwoff2enc.so.*
-      - -usr/lib/*/libEGL_mesa.so.*
-      - -usr/lib/*/libGLESv2.so.*
-      - -usr/lib/*/libGLX_mesa.so.*
     override-build: |
       # Copy frontend build from previous part
       mkdir -p desktop-ce/frontend/dist
