@@ -67,23 +67,26 @@ jobs:
           fetch-depth: 0
           submodules: false
 
-      - name: Determine deployment mode
+      - name: Determine deployment mode and version bump
         id: deployment_mode
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             MODE="${{ inputs.deployment_mode }}"
+            VERSION_BUMP="${{ inputs.version_bump || 'minor' }}"
           else
-            # PR merges to release branch are always production
+            # PR merges to release branch are always production with minor bump
             MODE="production"
+            VERSION_BUMP="minor"
           fi
           echo "mode=$MODE" >> $GITHUB_OUTPUT
+          echo "version_bump=$VERSION_BUMP" >> $GITHUB_OUTPUT
 
       - name: Calculate version and parameters
         id: calc
         uses: ./.github/actions/calculate-version
         with:
           deployment-mode: ${{ steps.deployment_mode.outputs.mode }}
-          version-bump: ${{ inputs.version_bump || 'minor' }}
+          version-bump: ${{ steps.deployment_mode.outputs.version_bump }}
           deploy-docker: ${{ inputs.deploy_docker }}
           deploy-snap: ${{ inputs.deploy_snap }}
           deploy-microsoft: ${{ inputs.deploy_microsoft }}
