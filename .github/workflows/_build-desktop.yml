@@ -59,6 +59,8 @@ jobs:
       - name: Checkout
         if: matrix.enabled != false
         uses: actions/checkout@v4
+        with:
+          submodules: false
 
       - name: Setup Go
         if: matrix.enabled != false

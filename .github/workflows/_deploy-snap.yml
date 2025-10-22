@@ -12,11 +12,6 @@ on:
         required: false
         type: string
         default: 'stable'
-      dry-run:
-        description: 'Dry run mode'
-        required: false
-        type: boolean
-        default: false
     secrets:
       SNAPCRAFT_STORE_CREDENTIALS:
         required: false
@@ -28,22 +23,21 @@ jobs:
     steps:
       - name: Checkout for scripts
         uses: actions/checkout@v4
+        with:
+          submodules: false
 
       - name: Check deployment parameters
         run: |
           echo "📦 Snap Deployment Configuration:"
           echo "  Version: ${{ inputs.version }}"
           echo "  Channel: ${{ inputs.channel }}"
-          echo "  Dry Run: ${{ inputs.dry-run }}"
 
       - name: Download snap amd64 artifact
-        if: inputs.dry-run != true
         uses: actions/download-artifact@v4
         with:
           name: snap-package-amd64
 
       - name: Download snap arm64 artifact
-        if: inputs.dry-run != true
         uses: actions/download-artifact@v4
         with:
           name: snap-package-arm64
@@ -67,7 +61,6 @@ jobs:
           fi
 
       - name: Locate snap files
-        if: inputs.dry-run != true
         id: locate_snaps
         run: |
           echo "Looking for snap files..."
@@ -95,7 +88,7 @@ jobs:
           echo "arm64_snap=$ARM64_SNAP" >> $GITHUB_OUTPUT
 
       - name: Publish AMD64 snap
-        if: inputs.dry-run != true && steps.check_creds.outputs.has_creds == 'true' && steps.locate_snaps.outputs.amd64_snap != ''
+        if: steps.check_creds.outputs.has_creds == 'true' && steps.locate_snaps.outputs.amd64_snap != ''
         uses: canonical/action-publish@v1
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
@@ -104,7 +97,7 @@ jobs:
           release: ${{ inputs.channel }}
 
       - name: Publish ARM64 snap
-        if: inputs.dry-run != true && steps.check_creds.outputs.has_creds == 'true' && steps.locate_snaps.outputs.arm64_snap != ''
+        if: steps.check_creds.outputs.has_creds == 'true' && steps.locate_snaps.outputs.arm64_snap != ''
         uses: canonical/action-publish@v1
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
@@ -115,10 +108,7 @@ jobs:
       - name: Deployment summary
         if: always()
         run: |
-          if [ "${{ inputs.dry-run }}" = "true" ]; then
-            echo "🏃 DRY RUN MODE - Would have published:"
-            echo "  - Snap packages to ${{ inputs.channel }} channel"
-          elif [ "${{ steps.check_creds.outputs.has_creds }}" = "true" ]; then
+          if [ "${{ steps.check_creds.outputs.has_creds }}" = "true" ]; then
             echo "✅ Published snap packages to ${{ inputs.channel }} channel"
           else
             echo "⏭️ Skipped snap publication (no credentials)"

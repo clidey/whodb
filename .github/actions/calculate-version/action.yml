@@ -2,7 +2,7 @@ name: 'Calculate Version'
 description: 'Calculate version and deployment parameters'
 inputs:
   deployment-mode:
-    description: 'Deployment mode (dry-run, stage-only, production)'
+    description: 'Deployment mode (stage-only, production)'
     required: true
   deploy-docker:
     description: 'Deploy to Docker Hub'
@@ -30,9 +30,6 @@ outputs:
   deployment-mode:
     description: 'Deployment mode'
     value: ${{ steps.mode.outputs.mode }}
-  dry-run:
-    description: 'Dry run flag'
-    value: ${{ steps.flags.outputs.dry_run }}
   stage-only:
     description: 'Stage only flag'
     value: ${{ steps.flags.outputs.stage_only }}
@@ -66,20 +63,14 @@ runs:
       run: |
         MODE="${{ steps.mode.outputs.mode }}"
 
-        if [ "$MODE" = "dry-run" ]; then
-          DRY_RUN="true"
-          STAGE_ONLY="false"
-        elif [ "$MODE" = "stage-only" ]; then
-          DRY_RUN="false"
+        if [ "$MODE" = "stage-only" ]; then
           STAGE_ONLY="true"
         else  # production
-          DRY_RUN="false"
           STAGE_ONLY="false"
         fi
 
-        echo "dry_run=$DRY_RUN" >> $GITHUB_OUTPUT
         echo "stage_only=$STAGE_ONLY" >> $GITHUB_OUTPUT
-        echo "Dry run: $DRY_RUN, Stage only: $STAGE_ONLY"
+        echo "Stage only: $STAGE_ONLY"
 
     - name: Calculate version
       id: version
@@ -111,18 +102,11 @@ runs:
           echo "microsoft=true" >> $GITHUB_OUTPUT
           echo "apple=true" >> $GITHUB_OUTPUT
           echo "Production mode: deploying to all stores"
-        elif [ "$MODE" = "stage-only" ]; then
+        else
           # Stage-only: always deploy snap to edge, respect others
           echo "docker=${{ inputs.deploy-docker }}" >> $GITHUB_OUTPUT
           echo "snap=true" >> $GITHUB_OUTPUT  # Always deploy snap to edge
           echo "microsoft=${{ inputs.deploy-microsoft }}" >> $GITHUB_OUTPUT
           echo "apple=${{ inputs.deploy-apple }}" >> $GITHUB_OUTPUT
           echo "Stage-only mode: snap always deploys to edge"
-        else
-          # Dry-run: respect all inputs
-          echo "docker=${{ inputs.deploy-docker }}" >> $GITHUB_OUTPUT
-          echo "snap=${{ inputs.deploy-snap }}" >> $GITHUB_OUTPUT
-          echo "microsoft=${{ inputs.deploy-microsoft }}" >> $GITHUB_OUTPUT
-          echo "apple=${{ inputs.deploy-apple }}" >> $GITHUB_OUTPUT
-          echo "Dry-run mode: selective deployment"
         fi

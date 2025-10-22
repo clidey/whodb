@@ -33,6 +33,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: false
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -81,6 +83,8 @@ jobs:
     steps:
       - name: Checkout for scripts
         uses: actions/checkout@v4
+        with:
+          submodules: false
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4

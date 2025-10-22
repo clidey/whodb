@@ -10,29 +10,28 @@ on:
         description: 'Deployment Mode'
         required: true
         type: choice
-        default: 'dry-run'
+        default: 'stage-only'
         options:
-          - 'dry-run'        # Build only, no deployments
           - 'stage-only'     # Deploy to stores as drafts/candidates
           - 'production'     # Full production deployment
-      # Store selection for stage-only and dry-run modes (ignored in production)
+      # Store selection for stage-only mode (ignored in production)
       deploy_docker:
-        description: 'Deploy to Docker Hub (stage-only/dry-run)'
+        description: 'Deploy to Docker Hub (stage-only)'
         required: false
         type: boolean
         default: true
       deploy_snap:
-        description: 'Deploy to Snap Store (stage-only/dry-run)'
+        description: 'Deploy to Snap Store (stage-only)'
         required: false
         type: boolean
         default: true
       deploy_microsoft:
-        description: 'Deploy to Microsoft Store (stage-only/dry-run)'
+        description: 'Deploy to Microsoft Store (stage-only)'
         required: false
         type: boolean
         default: true
       deploy_apple:
-        description: 'Deploy to Apple App Store (stage-only/dry-run)'
+        description: 'Deploy to Apple App Store (stage-only)'
         required: false
         type: boolean
         default: true
@@ -47,7 +46,6 @@ jobs:
       version: ${{ steps.calc.outputs.version }}
       previous_version: ${{ steps.calc.outputs.previous-version }}
       deployment_mode: ${{ steps.calc.outputs.deployment-mode }}
-      dry_run: ${{ steps.calc.outputs.dry-run }}
       stage_only: ${{ steps.calc.outputs.stage-only }}
       deploy_docker: ${{ steps.calc.outputs.deploy-docker }}
       deploy_snap: ${{ steps.calc.outputs.deploy-snap }}
@@ -58,6 +56,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          submodules: false
 
       - name: Determine deployment mode
         id: deployment_mode
@@ -88,7 +87,6 @@ jobs:
           echo "|-----------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| **Version** | ${{ steps.calc.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
           echo "| **Mode** | ${{ steps.calc.outputs.deployment-mode }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Dry Run** | ${{ steps.calc.outputs.dry-run }} |" >> $GITHUB_STEP_SUMMARY
           echo "| **Stage Only** | ${{ steps.calc.outputs.stage-only }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Deployment Targets" >> $GITHUB_STEP_SUMMARY
@@ -169,23 +167,18 @@ jobs:
   deploy-snap:
     name: Deploy Snap
     needs: [ calculate-version, sign-and-validate ]
-    if: |
-      needs.calculate-version.outputs.dry_run == 'false' &&
-      needs.calculate-version.outputs.deploy_snap == 'true'
+    if: needs.calculate-version.outputs.deploy_snap == 'true'
     uses: ./.github/workflows/_deploy-snap.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
       channel: ${{ needs.calculate-version.outputs.stage_only == 'true' && 'edge' || 'stable' }}
-      dry-run: false
     secrets:
       SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
 
   deploy-microsoft:
     name: Deploy Microsoft
     needs: [ calculate-version, sign-and-validate ]
-    if: |
-      needs.calculate-version.outputs.dry_run == 'false' &&
-      needs.calculate-version.outputs.deploy_microsoft == 'true'
+    if: needs.calculate-version.outputs.deploy_microsoft == 'true'
     uses: ./.github/workflows/_deploy-microsoft.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
@@ -199,9 +192,7 @@ jobs:
   deploy-apple:
     name: Deploy Apple
     needs: [ calculate-version, sign-and-validate ]
-    if: |
-      needs.calculate-version.outputs.dry_run == 'false' &&
-      needs.calculate-version.outputs.deploy_apple == 'true'
+    if: needs.calculate-version.outputs.deploy_apple == 'true'
     uses: ./.github/workflows/_deploy-apple.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
@@ -220,7 +211,6 @@ jobs:
     needs: [ calculate-version, deploy-snap, deploy-microsoft, deploy-apple ]
     if: |
       always() &&
-      needs.calculate-version.outputs.dry_run == 'false' &&
       (
         (needs.calculate-version.outputs.stage_only == 'true' && (
           needs.deploy-snap.result == 'success' ||
@@ -237,6 +227,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: false
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -310,13 +302,14 @@ jobs:
     needs: [ calculate-version, create-github-release ]
     if: |
       always() &&
-      needs.calculate-version.outputs.dry_run == 'false' &&
       needs.calculate-version.outputs.deploy_docker == 'true' &&
       needs.calculate-version.outputs.stage_only != 'true' &&
       needs.create-github-release.result == 'success'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: false
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -391,13 +384,14 @@ jobs:
     runs-on: macos-latest
     needs: [ calculate-version, create-github-release ]
     if: |
-      needs.calculate-version.outputs.dry_run == 'false' &&
       needs.calculate-version.outputs.stage_only != 'true' &&
       needs.calculate-version.outputs.deployment_mode == 'production' &&
       needs.create-github-release.result == 'success'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: false
 
       - name: Download macOS DMG
         uses: actions/download-artifact@v4
@@ -462,7 +456,6 @@ jobs:
     needs: [ calculate-version, deploy-docker, deploy-snap, create-github-release ]
     if: |
       always() &&
-      needs.calculate-version.outputs.dry_run == 'false' &&
       needs.calculate-version.outputs.stage_only != 'true'
     uses: ./.github/workflows/_verify-deployment.yml
     with:
@@ -477,7 +470,6 @@ jobs:
     needs: [ calculate-version, verify-deployments ]
     if: |
       failure() &&
-      needs.calculate-version.outputs.dry_run == 'false' &&
       needs.calculate-version.outputs.stage_only != 'true' &&
       needs.verify-deployments.outputs.all-verified != 'true'
     uses: ./.github/workflows/_rollback.yml
@@ -611,7 +603,7 @@ jobs:
               echo "| GitHub Release | ✅ Created | Published |" >> $GITHUB_STEP_SUMMARY
             fi
           elif [ "${{ needs.create-github-release.result }}" = "skipped" ]; then
-            echo "| GitHub Release | ⏭️ Skipped | Dry run mode |" >> $GITHUB_STEP_SUMMARY
+            echo "| GitHub Release | ⏭️ Skipped | Stage-only mode |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| GitHub Release | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
           fi
@@ -637,7 +629,7 @@ jobs:
             fi
           elif [ "${{ needs.verify-deployments.result }}" = "skipped" ]; then
             echo "## ⏭️ Verification" >> $GITHUB_STEP_SUMMARY
-            echo "Skipped (stage-only or dry-run mode)" >> $GITHUB_STEP_SUMMARY
+            echo "Skipped (stage-only mode)" >> $GITHUB_STEP_SUMMARY
           fi
 
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -645,10 +637,7 @@ jobs:
           # Next Steps
           echo "## 📝 Next Steps" >> $GITHUB_STEP_SUMMARY
 
-          if [ "${{ needs.calculate-version.outputs.dry_run }}" = "true" ]; then
-            echo "This was a dry run. No actual deployments were made." >> $GITHUB_STEP_SUMMARY
-            echo "To deploy, run the workflow again with a different mode." >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
+          if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
             echo "Stage deployments completed. To promote to production:" >> $GITHUB_STEP_SUMMARY
             echo "1. Test the edge/draft releases" >> $GITHUB_STEP_SUMMARY
             echo "2. Promote Snap from edge to stable channel" >> $GITHUB_STEP_SUMMARY

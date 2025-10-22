@@ -34,7 +34,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: 'recursive'
+          submodules: false
 
       - name: Setup Snapcraft
         run: |
@@ -51,11 +51,11 @@ jobs:
 
       - name: Build Snap package
         run: |
-          sg lxd -c "cd snap && snapcraft --use-lxd --verbosity=debug"
+          sg lxd -c "snapcraft --use-lxd --verbosity=debug"
 
       - name: Verify Snap
         run: |
-          SNAP_FILE=$(ls snap/*.snap 2>/dev/null | head -1)
+          SNAP_FILE=$(ls *.snap 2>/dev/null | head -1)
           if [ -z "$SNAP_FILE" ]; then
             echo "❌ No snap file found after build"
             exit 1
@@ -76,5 +76,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: snap-package-${{ matrix.arch }}
-          path: snap/*.snap
+          path: "*.snap"
           retention-days: 1
