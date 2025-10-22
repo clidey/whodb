@@ -993,8 +993,8 @@ jobs:
         id: snap_channel
         run: |
           if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
-            echo "channel=candidate" >> $GITHUB_OUTPUT
-            echo "📦 Publishing to candidate channel (stage only)"
+            echo "channel=edge" >> $GITHUB_OUTPUT
+            echo "📦 Publishing to edge channel (stage only)"
           else
             echo "channel=stable" >> $GITHUB_OUTPUT
             echo "📦 Publishing to stable channel"
@@ -1054,7 +1054,7 @@ jobs:
         run: |
           echo "🏃 DRY RUN MODE - Would have published:"
           if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
-            echo "  - Snap packages (amd64 and arm64) to candidate channel (stage only)"
+            echo "  - Snap packages (amd64 and arm64) to edge channel (stage only)"
           else
             echo "  - Snap packages (amd64 and arm64) to stable channel"
           fi
@@ -2007,7 +2007,7 @@ jobs:
 
           # Check each deployment status
           if [ "${{ needs.deploy-snap.result }}" = "success" ]; then
-            echo "✅ Snap Store: Successfully staged to candidate channel"
+            echo "✅ Snap Store: Successfully deployed to edge channel"
           elif [ "${{ needs.deploy-snap.result }}" = "skipped" ]; then
             echo "⏭️ Snap Store: Skipped"
           else
