@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: whodb
-version: git
+version: ${SNAPCRAFT_PROJECT_VERSION}
 summary: Lightweight database management tool
 description: |
   WhoDB is a lightweight, next-generation database management tool for

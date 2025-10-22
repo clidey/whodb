@@ -58,25 +58,12 @@ jobs:
 
       - name: Set version for snapcraft
         run: |
-          # Since snapcraft.yaml uses 'version: git', we need to create a tag
-          # for snapcraft to find the correct version
           VERSION="${{ inputs.version }}"
           echo "Setting up version $VERSION for snapcraft"
 
-          # Configure git (required for creating tags)
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-
-          # Create a lightweight tag for the version
-          # This is just for the build process, not a release tag
-          git tag "$VERSION" 2>/dev/null || true
-
-          # Verify the tag was created
-          echo "Git tags available:"
-          git tag -l
-
-          # Also export for fallback
+          # Export version for snapcraft to use
           echo "SNAPCRAFT_PROJECT_VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Version exported: $VERSION"
 
       - name: Build Snap package
         id: build_snap
