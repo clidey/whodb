@@ -110,7 +110,6 @@ parts:
     build-packages:
       - gcc
       - libgtk-3-dev
-      - libwebkit2gtk-4.0-dev
       - libwebkit2gtk-4.1-dev
       - pkg-config
       - upx-ucl
@@ -230,8 +229,8 @@ parts:
       # Change to desktop-ce directory (just like other builds do)
       cd desktop-ce
 
-      # Build the desktop app - from desktop-ce with proper parent structure
-      GOWORK=$PWD/../go.work.desktop-ce wails build -clean -tags desktop,production,!ee -ldflags="-s -w" -o whodb
+      # Build the desktop app - Ubuntu 24.04 uses webkit2gtk-4.1, so we need the webkit2_41 tag
+      GOWORK=$PWD/../go.work.desktop-ce wails build -clean -tags desktop,production,webkit2_41,!ee -ldflags="-s -w" -o whodb
 
       # Install the binary
       install -D -m755 build/bin/whodb $SNAPCRAFT_PART_INSTALL/bin/whodb
