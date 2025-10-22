@@ -38,12 +38,8 @@ architectures:
   - build-on: arm64
 
 layout:
-  /usr/lib/x86_64-linux-gnu/webkit2gtk-4.0:
-    bind: $SNAP/usr/lib/x86_64-linux-gnu/webkit2gtk-4.0
   /usr/lib/x86_64-linux-gnu/webkit2gtk-4.1:
     bind: $SNAP/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1
-  /usr/lib/aarch64-linux-gnu/webkit2gtk-4.0:
-    bind: $SNAP/usr/lib/aarch64-linux-gnu/webkit2gtk-4.0
   /usr/lib/aarch64-linux-gnu/webkit2gtk-4.1:
     bind: $SNAP/usr/lib/aarch64-linux-gnu/webkit2gtk-4.1
 
@@ -120,7 +116,6 @@ parts:
     stage-packages:
       # GTK and WebKit core
       - libgtk-3-0
-      - libwebkit2gtk-4.0-37
       - libwebkit2gtk-4.1-0
       - libjavascriptcoregtk-4.1-0
       # X11 and display libraries
@@ -181,9 +176,6 @@ parts:
       - gstreamer1.0-plugins-good
       - gstreamer1.0-gl
       - liborc-0.4-0
-      - libwebp7
-      - libwebpdemux2
-      - libwebpmux3
       - libjpeg-turbo8
       - liblcms2-2
       # Wayland support
@@ -193,31 +185,24 @@ parts:
       - libwayland-server0
       # Network and security
       - libsoup-3.0-0
-      - libsoup2.4-1
       - libsecret-1-0
       - libpsl5
       - libnghttp2-14
       # Other dependencies
       - libcanberra-gtk3-module
       - libcanberra-gtk-module
-      - libgpm2
-      - libslang2
       - libenchant-2-2
       - libhyphen0
-      - libwoff1
       - libxml2
       - libxslt1.1
       - libgudev-1.0-0
       - libevdev2
       - libmanette-0.2-0
       - libatomic1
-      - libunwind8
-      - libdw1
     prime:
       # Include the whodb binary
       - bin/whodb
       # Explicitly include WebKit subprocess executables
-      - usr/lib/*/webkit2gtk-4.0/*
       - usr/lib/*/webkit2gtk-4.1/*
       # Exclude unnecessary libraries to reduce snap size
       - -usr/lib/*/caca/libgl_plugin.so.*
