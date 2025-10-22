@@ -144,7 +144,6 @@ parts:
       - libglvnd0
       - libglu1-mesa
       - libgl1-mesa-dri
-      - libgles2-mesa
       - libgbm1
       - libepoxy0
       # GTK and Cairo dependencies
