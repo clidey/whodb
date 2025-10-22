@@ -129,13 +129,24 @@ jobs:
             echo "microsoft=true" >> $GITHUB_OUTPUT
             echo "apple=true" >> $GITHUB_OUTPUT
             echo "Production mode: deploying to all stores"
+          elif [ "$MODE" = "stage-only" ]; then
+            # In stage-only mode, always deploy snap to edge channel
+            echo "docker=${{ inputs.deploy_docker }}" >> $GITHUB_OUTPUT
+            echo "snap=true" >> $GITHUB_OUTPUT  # Always deploy snap to edge in stage mode
+            echo "microsoft=${{ inputs.deploy_microsoft }}" >> $GITHUB_OUTPUT
+            echo "apple=${{ inputs.deploy_apple }}" >> $GITHUB_OUTPUT
+            echo "Stage-only mode:"
+            echo "  Docker: ${{ inputs.deploy_docker }}"
+            echo "  Snap: true (always deploys to edge channel)"
+            echo "  Microsoft: ${{ inputs.deploy_microsoft }}"
+            echo "  Apple: ${{ inputs.deploy_apple }}"
           else
-            # In stage-only and dry-run modes, use the input selections
+            # In dry-run mode, use the input selections
             echo "docker=${{ inputs.deploy_docker }}" >> $GITHUB_OUTPUT
             echo "snap=${{ inputs.deploy_snap }}" >> $GITHUB_OUTPUT
             echo "microsoft=${{ inputs.deploy_microsoft }}" >> $GITHUB_OUTPUT
             echo "apple=${{ inputs.deploy_apple }}" >> $GITHUB_OUTPUT
-            echo "Selective deployment mode:"
+            echo "Dry-run mode - selective deployment:"
             echo "  Docker: ${{ inputs.deploy_docker }}"
             echo "  Snap: ${{ inputs.deploy_snap }}"
             echo "  Microsoft: ${{ inputs.deploy_microsoft }}"
