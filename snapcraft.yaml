@@ -21,7 +21,7 @@ description: |
   for managing multiple database types including PostgreSQL, MySQL, SQLite,
   MongoDB, Redis, and more.
 
-base: core22
+base: core24
 confinement: strict
 grade: stable
 title: WhoDB
@@ -76,6 +76,7 @@ parts:
     build-packages:
       - curl
       - ca-certificates
+      - gnupg
     override-build: |
       # Install Node.js
       curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
@@ -123,11 +124,17 @@ parts:
       - go/latest/stable
     build-packages:
       - gcc
+      - g++
       - libgtk-3-dev
       - libwebkit2gtk-4.1-dev
       - pkg-config
       - upx-ucl
+      - build-essential
     stage-packages:
+      # Core system libraries for core24
+      - libc6
+      - libgcc-s1
+      - libstdc++6
       # GTK and WebKit core
       - libgtk-3-0
       - libwebkit2gtk-4.1-0
@@ -164,6 +171,7 @@ parts:
       - libepoxy0
       # GTK and Cairo dependencies
       - libgdk-pixbuf-2.0-0
+      - libgdk-pixbuf2.0-bin
       - libcairo2
       - libcairo-gobject2
       - libpango-1.0-0
@@ -173,6 +181,8 @@ parts:
       - libatk-bridge2.0-0
       - libatspi2.0-0
       - libpixman-1-0
+      - librsvg2-2
+      - librsvg2-common
       # Text rendering and fonts
       - libfontconfig1
       - libfreetype6
@@ -220,6 +230,13 @@ parts:
       - libgles2
       - libdrm2
       - libbrotli1
+      - libgcrypt20
+      - libgpg-error0
+      - libsystemd0
+      # DBus support
+      - libdbus-1-3
+      - dbus
+      - dbus-x11
     prime:
       # Include the whodb binary
       - bin/whodb
@@ -230,6 +247,10 @@ parts:
       - usr/libexec/webkit2gtk-4.1/**
       # Include GObject introspection files
       - usr/share/gir-1.0/**
+      # Include locale data for proper internationalization
+      - usr/share/locale/**
+      # Include MIME type data
+      - usr/share/mime/**
       # Exclude unnecessary libraries to reduce snap size
       - -usr/lib/*/caca/libgl_plugin.so.*
       - -usr/lib/*/libcaca++.so.*
