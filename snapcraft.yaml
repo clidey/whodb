@@ -51,8 +51,8 @@ apps:
       GTK_USE_PORTAL: "1"
       WEBKIT_DISABLE_DMABUF_RENDERER: "1"
       # Ensure WebKit subprocesses are found within the GNOME platform snap
-      WEBKIT_EXEC_PATH: "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1"
-      WEBKIT2_EXEC_PATH: "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1"
+      WEBKIT_EXEC_PATH: "$SNAP/gnome-platform/usr/libexec/webkit2gtk-4.1"
+      WEBKIT2_EXEC_PATH: "$SNAP/gnome-platform/usr/libexec/webkit2gtk-4.1"
     plugs:
       - desktop
       - desktop-legacy
