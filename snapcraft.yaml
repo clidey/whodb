@@ -33,9 +33,13 @@ issues: https://github.com/clidey/whodb/issues
 donation: https://github.com/sponsors/clidey
 icon: linux/icon.png
 
-architectures:
-  - build-on: amd64
-  - build-on: arm64
+platforms:
+  amd64:
+    build-on: [ amd64 ]
+    build-for: [ amd64 ]
+  arm64:
+    build-on: [ arm64 ]
+    build-for: [ arm64 ]
 
 apps:
   whodb:
