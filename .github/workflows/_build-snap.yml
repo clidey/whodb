@@ -104,18 +104,12 @@ jobs:
           sudo apt-get update
 
           # Install essential build tools
+          # Note: ccache is already installed by the ccache-action above
           sudo apt-get install -y \
             build-essential \
             curl \
             git \
-            pkg-config \
-            ccache
-
-          # Configure ccache
-          export PATH="/usr/lib/ccache:$PATH"
-          ccache --set-config=cache_dir=$HOME/.ccache
-          ccache --set-config=max_size=500M
-          ccache -z  # Zero statistics
+            pkg-config
 
           echo "Build dependencies installed"
 
@@ -127,25 +121,27 @@ jobs:
 
       - name: Build Snap package
         id: build_snap
-        env:
-          CC: /usr/lib/ccache/gcc
-          CXX: /usr/lib/ccache/g++
-          CCACHE_DIR: $HOME/.ccache
-          PATH: /usr/lib/ccache:$PATH
         run: |
           echo "Building snap with version: ${{ inputs.version }}"
 
-          # Show ccache stats before build
-          ccache -s
+          # Show ccache stats before build (if available)
+          if command -v ccache &> /dev/null; then
+            echo "ccache stats before build:"
+            ccache -s || true
+          fi
 
           # Write version to a file that snapcraft can read
           echo "${{ inputs.version }}" > .snap_version
 
           # Run snapcraft with destructive mode
+          # The ccache-action will automatically set up the environment if available
           sudo -E snapcraft --destructive-mode --verbosity=debug
 
-          # Show ccache stats after build
-          ccache -s
+          # Show ccache stats after build (if available)
+          if command -v ccache &> /dev/null; then
+            echo "ccache stats after build:"
+            ccache -s || true
+          fi
 
           echo "✅ Snap built successfully"
           echo "build_method=destructive" >> $GITHUB_OUTPUT
