@@ -56,25 +56,16 @@ jobs:
           echo "Snapcraft version:"
           snapcraft --version
 
-      - name: Set version for snapcraft
-        run: |
-          VERSION="${{ inputs.version }}"
-          echo "Setting up version $VERSION for snapcraft"
-
-          # Export version for snapcraft to use
-          echo "SNAPCRAFT_PROJECT_VERSION=$VERSION" >> $GITHUB_ENV
-          echo "Version exported: $VERSION"
-
       - name: Build Snap package
         id: build_snap
         run: |
           echo "Building snap with version: ${{ inputs.version }}"
-          echo "SNAPCRAFT_PROJECT_VERSION is: $SNAPCRAFT_PROJECT_VERSION"
 
-          # Use destructive mode - perfectly fine for GitHub runners (ephemeral VMs)
-          # This ensures git tags are visible and version is correct
-          # Pass environment variable to sudo
-          sudo SNAPCRAFT_PROJECT_VERSION=${{ inputs.version }} snapcraft --destructive-mode --verbosity=debug
+          # Write version to a file that snapcraft can read
+          echo "${{ inputs.version }}" > .snap_version
+
+          # Run snapcraft with destructive mode
+          sudo snapcraft --destructive-mode --verbosity=debug
 
           echo "✅ Snap built successfully"
           echo "build_method=destructive" >> $GITHUB_OUTPUT
