@@ -43,14 +43,16 @@ jobs:
           cache: true
           cache-dependency-path: |
             core/go.sum
+            core/go.mod
             desktop-ce/go.sum
+            desktop-ce/go.mod
 
       - name: Cache Go build artifacts
         uses: actions/cache@v4
         with:
           path: |
             ~/.cache/go-build
-          key: ${{ runner.os }}-${{ runner.arch }}-go-build-snap-${{ hashFiles('**/go.sum', '**/go.mod') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-go-build-snap-${{ hashFiles('core/go.sum', 'desktop-ce/go.sum', 'core/go.mod', 'desktop-ce/go.mod') }}
           restore-keys: |
             ${{ runner.os }}-${{ runner.arch }}-go-build-snap-
             ${{ runner.os }}-go-build-

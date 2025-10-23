@@ -70,7 +70,9 @@ jobs:
           cache: true
           cache-dependency-path: |
             desktop-${{ inputs.edition }}/go.sum
+            desktop-${{ inputs.edition }}/go.mod
             core/go.sum
+            core/go.mod
 
       - name: Cache Go build artifacts
         if: matrix.enabled != false
@@ -80,7 +82,7 @@ jobs:
             ~/.cache/go-build
             ~/Library/Caches/go-build
             ~/AppData/Local/go-build
-          key: ${{ runner.os }}-${{ runner.arch }}-go-build-${{ hashFiles('**/go.sum', '**/go.mod') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-go-build-${{ hashFiles('core/go.sum', 'desktop-ce/go.sum', 'desktop-ee/go.sum', 'core/go.mod', 'desktop-ce/go.mod', 'desktop-ee/go.mod') }}
           restore-keys: |
             ${{ runner.os }}-${{ runner.arch }}-go-build-
             ${{ runner.os }}-go-build-
@@ -119,7 +121,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: frontend/build
-          key: frontend-build-${{ inputs.edition }}-${{ hashFiles('frontend/**/*.tsx', 'frontend/**/*.ts', 'frontend/**/*.css', 'frontend/package.json', 'frontend/pnpm-lock.yaml') }}
+          key: frontend-build-${{ inputs.edition }}-${{ hashFiles('frontend/package.json', 'frontend/pnpm-lock.yaml', 'frontend/tsconfig.json') }}
           restore-keys: |
             frontend-build-${{ inputs.edition }}-
 

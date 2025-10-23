@@ -68,7 +68,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: frontend/build
-          key: frontend-build-${{ inputs.edition }}-${{ hashFiles('frontend/**/*.tsx', 'frontend/**/*.ts', 'frontend/**/*.css', 'frontend/package.json', 'frontend/pnpm-lock.yaml') }}
+          key: frontend-build-${{ inputs.edition }}-${{ hashFiles('frontend/package.json', 'frontend/pnpm-lock.yaml', 'frontend/tsconfig.json') }}
           restore-keys: |
             frontend-build-${{ inputs.edition }}-
 
