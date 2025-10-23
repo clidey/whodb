@@ -266,9 +266,13 @@ func (a *App) RestoreWindowState() error {
 		return err
 	}
 
-	// Apply window settings
-	runtime.WindowSetPosition(a.ctx, a.windowSettings.X, a.windowSettings.Y)
-	runtime.WindowSetSize(a.ctx, a.windowSettings.Width, a.windowSettings.Height)
+	// Apply window settings (guard against invalid geometry)
+	if a.windowSettings.X != 0 || a.windowSettings.Y != 0 {
+		runtime.WindowSetPosition(a.ctx, a.windowSettings.X, a.windowSettings.Y)
+	}
+	if a.windowSettings.Width > 0 && a.windowSettings.Height > 0 {
+		runtime.WindowSetSize(a.ctx, a.windowSettings.Width, a.windowSettings.Height)
+	}
 	if a.windowSettings.Maximized {
 		runtime.WindowMaximise(a.ctx)
 	}

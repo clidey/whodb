@@ -14,21 +14,32 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, {useEffect, useState} from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import { ApolloProvider } from "@apollo/client";
-import { graphqlClient } from './config/graphql-client';
-import { Provider } from "react-redux";
-import { reduxStore, reduxStorePersistor } from './store';
-import { App } from './app';
-import { BrowserRouter, HashRouter } from "react-router-dom";
-import { PersistGate } from 'redux-persist/integration/react';
-import { PostHogProvider } from 'posthog-js/react';
+import {ApolloProvider} from "@apollo/client";
+import {graphqlClient} from './config/graphql-client';
+import {Provider} from "react-redux";
+import {reduxStore, reduxStorePersistor} from './store';
+import {App} from './app';
+import {BrowserRouter, HashRouter} from "react-router-dom";
+import {PersistGate} from 'redux-persist/integration/react';
+import {PostHogProvider} from 'posthog-js/react';
 import {initPosthog} from "./config/posthog";
-import { ThemeProvider } from '@clidey/ux'
-import { isEEMode } from './config/ee-imports';
-import { isDesktopApp } from './utils/external-links';
+import {ThemeProvider} from '@clidey/ux'
+import {isEEMode} from './config/ee-imports';
+import {isDesktopApp} from './utils/external-links';
+
+// Detect desktop Linux and add a class for CSS-based overrides (e.g., fonts)
+try {
+    if (typeof navigator !== 'undefined' && typeof document !== 'undefined') {
+        if (isDesktopApp() && /Linux/i.test(navigator.userAgent || '')) {
+            document.documentElement.classList.add('linux');
+        }
+    }
+} catch (e) {
+    // best-effort; do not block startup on UA detection issues
+}
 
 if (isEEMode) {
   import("@ee/index.css");

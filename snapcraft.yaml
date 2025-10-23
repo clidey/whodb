@@ -41,47 +41,15 @@ platforms:
     build-on: [ arm64 ]
     build-for: [ arm64 ]
 
-layout:
-  /usr/lib/x86_64-linux-gnu/webkit2gtk-4.1:
-    bind: $SNAP/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1
-  /usr/lib/aarch64-linux-gnu/webkit2gtk-4.1:
-    bind: $SNAP/usr/lib/aarch64-linux-gnu/webkit2gtk-4.1
-  /usr/libexec/webkit2gtk-4.1:
-    bind: $SNAP/usr/libexec/webkit2gtk-4.1
 
 apps:
   whodb:
     command: bin/whodb
     desktop: share/applications/whodb.desktop
+    extensions: [ gnome ]
     environment:
-      # WebKit settings for Wails app to work in snap
-      WEBKIT_DISABLE_COMPOSITING_MODE: "1"
-      WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS: "1"
+      GTK_USE_PORTAL: "1"
       WEBKIT_DISABLE_DMABUF_RENDERER: "1"
-      # Critical for loading embedded assets in Wails
-      WEBKIT_ALLOW_FILE_ACCESS_FROM_FILE_URLS: "1"
-      WEBKIT_ALLOW_UNIVERSAL_ACCESS_FROM_FILE_URLS: "1"
-      WEBKIT_DISABLE_WEB_SECURITY: "1"
-      # Force software rendering for compatibility
-      GDK_BACKEND: "x11"
-      GTK_USE_PORTAL: "0"
-      WEBKIT_FORCE_SINGLE_PROCESS: "1"
-      LIBGL_ALWAYS_SOFTWARE: "1"
-      EGL_PLATFORM: "x11"
-      __EGL_VENDOR_LIBRARY_DIRS: "$SNAP/usr/share/glvnd/egl_vendor.d:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/GL/egl_vendor.d"
-      LIBGL_DRIVERS_PATH: "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/dri"
-      __GLX_VENDOR_LIBRARY_NAME: "mesa"
-      MESA_LOADER_DRIVER_OVERRIDE: "swrast"
-      LD_LIBRARY_PATH: "$SNAP/usr/lib:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1:$SNAP/lib:$SNAP/lib/$SNAPCRAFT_ARCH_TRIPLET:$LD_LIBRARY_PATH"
-      GI_TYPELIB_PATH: "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/girepository-1.0:$SNAP/usr/lib/girepository-1.0:$GI_TYPELIB_PATH"
-      WEBKIT_EXEC_PATH: "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1"
-      WEBKIT2_EXEC_PATH: "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1"
-      GTK_PATH: "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gtk-3.0"
-      GTK_IM_MODULE_DIR: "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gtk-3.0/3.0.0/immodules"
-      GDK_PIXBUF_MODULE_FILE: "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gdk-pixbuf-2.0/2.10.0/loaders.cache"
-      GDK_PIXBUF_MODULEDIR: "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gdk-pixbuf-2.0/2.10.0/loaders"
-      FONTCONFIG_PATH: "$SNAP/etc/fonts"
-      FONTCONFIG_FILE: "$SNAP/etc/fonts/fonts.conf"
     plugs:
       - desktop
       - desktop-legacy
@@ -168,11 +136,7 @@ parts:
       - libgcc-s1
       - libstdc++6
       # GTK and WebKit core
-      - libgtk-3-0
-      - libwebkit2gtk-4.1-0
-      - libjavascriptcoregtk-4.1-0
-      - gir1.2-webkit2-4.1
-      - gir1.2-javascriptcoregtk-4.1
+      # Provided by the GNOME extension; avoid staging to prevent ABI conflicts
       # X11 and display libraries
       - libx11-6
       - libx11-xcb1
@@ -228,6 +192,7 @@ parts:
       - fontconfig-config
       - fonts-dejavu-core
       - fonts-liberation
+      - fonts-inter
       # Media and codecs
       - libgstreamer1.0-0
       - libgstreamer-plugins-base1.0-0

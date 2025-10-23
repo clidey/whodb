@@ -34,6 +34,22 @@
   --font-size-3xl: 1.875rem;
 }
 
+.linux :root, :root.linux {
+    /* no-op: selector placeholder to allow :root.linux overrides below */
+}
+
+/* Base font uses the theme variable, which we can override per-OS */
+body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Desktop Linux-only font override: prefer Inter if available */
+:root.linux {
+    --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
 .dark {
   --brand-foreground: #ca6f1e;
 }
