@@ -347,39 +347,51 @@ jobs:
           name: windows-msix
           path: .
 
-      - name: Setup StoreBroker and authenticate
+      - name: Setup StoreBroker Module
+        if: steps.check_creds.outputs.has_creds == 'true'
+        shell: pwsh
+        run: |
+          # Install StoreBroker module if not already installed
+          Write-Host "Checking for StoreBroker module..."
+          if (!(Get-Module -ListAvailable -Name StoreBroker)) {
+            Write-Host "Installing StoreBroker module..."
+            Install-Module -Name StoreBroker -Force -Scope CurrentUser -AllowClobber
+          } else {
+            Write-Host "StoreBroker module already installed"
+          }
+          Write-Host "✅ StoreBroker module ready"
+
+      - name: Submit to Microsoft Store
         if: steps.check_creds.outputs.has_creds == 'true'
         shell: pwsh
         env:
           MS_TENANT_ID: ${{ secrets.MS_TENANT_ID }}
           MS_CLIENT_ID: ${{ secrets.MS_CLIENT_ID }}
           MS_CLIENT_SECRET: ${{ secrets.MS_CLIENT_SECRET }}
+          MS_APP_ID: ${{ secrets.MS_APP_ID }}
         run: |
-          # Install StoreBroker module
-          Write-Host "Installing StoreBroker module..."
-          Install-Module -Name StoreBroker -Force -Scope CurrentUser -AllowClobber
-          Import-Module StoreBroker
+          # Import module and authenticate (must be in same session as submission)
+          Write-Host "Setting up Microsoft Partner Center connection..."
+          Import-Module StoreBroker -Force
           $global:SBDisableTelemetry = $true
 
-          # Authenticate to Partner Center
-          Write-Host "Authenticating to Microsoft Partner Center..."
+          # Authenticate using service principal
+          Write-Host "Authenticating with Tenant ID: $env:MS_TENANT_ID"
+          Write-Host "Client ID: $env:MS_CLIENT_ID"
+
           $securePassword = ConvertTo-SecureString $env:MS_CLIENT_SECRET -AsPlainText -Force
           $credential = New-Object System.Management.Automation.PSCredential($env:MS_CLIENT_ID, $securePassword)
 
           try {
             Set-StoreBrokerAuthentication -TenantId $env:MS_TENANT_ID -Credential $credential
-            Write-Host "✅ Successfully authenticated"
+            Write-Host "✅ Successfully authenticated to Microsoft Partner Center"
           } catch {
-            Write-Error "Failed to authenticate: $_"
+            Write-Error "Failed to authenticate to Microsoft Partner Center: $_"
+            Write-Host "Please ensure your MS_TENANT_ID, MS_CLIENT_ID, and MS_CLIENT_SECRET are correct"
+            Write-Host "See: https://github.com/microsoft/StoreBroker/blob/master/Documentation/SETUP.md"
             exit 1
           }
 
-      - name: Submit to Microsoft Store
-        if: steps.check_creds.outputs.has_creds == 'true'
-        shell: pwsh
-        env:
-          MS_APP_ID: ${{ secrets.MS_APP_ID }}
-        run: |
           $appId = $env:MS_APP_ID
           $msixPath = Get-ChildItem -Path "." -Filter "*.msixbundle" | Select-Object -First 1
 
