@@ -6,7 +6,7 @@ on:
     branches: [ release ]
   workflow_dispatch:
     inputs:
-      deployment_mode:
+      deployment-mode:
         description: 'Deployment Mode'
         required: true
         type: choice
@@ -14,7 +14,7 @@ on:
         options:
           - 'stage-only'     # Deploy to stores as drafts/candidates
           - 'production'     # Full production deployment
-      version_bump:
+      version-bump:
         description: 'Version Bump Type'
         required: true
         type: choice
@@ -24,22 +24,22 @@ on:
           - 'minor'          # 0.61.0 -> 0.62.0
           - 'patch'          # 0.61.0 -> 0.61.1
       # Store selection for stage-only mode (ignored in production)
-      deploy_docker:
+      deploy-docker:
         description: 'Deploy to Docker Hub (stage-only)'
         required: false
         type: boolean
         default: false
-      deploy_snap:
+      deploy-snap:
         description: 'Deploy to Snap Store (stage-only)'
         required: false
         type: boolean
         default: false
-      deploy_microsoft:
+      deploy-microsoft:
         description: 'Deploy to Microsoft Store (stage-only)'
         required: false
         type: boolean
         default: false
-      deploy_apple:
+      deploy-apple:
         description: 'Deploy to Apple App Store (stage-only)'
         required: false
         type: boolean
@@ -71,8 +71,8 @@ jobs:
         id: deployment_mode
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            MODE="${{ inputs.deployment_mode }}"
-            VERSION_BUMP="${{ inputs.version_bump || 'minor' }}"
+            MODE="${{ inputs.deployment-mode }}"
+            VERSION_BUMP="${{ inputs.version-bump || 'minor' }}"
           else
             # PR merges to release branch are always production with minor bump
             MODE="production"
@@ -87,10 +87,10 @@ jobs:
         with:
           deployment-mode: ${{ steps.deployment_mode.outputs.mode }}
           version-bump: ${{ steps.deployment_mode.outputs.version_bump }}
-          deploy-docker: ${{ inputs.deploy_docker }}
-          deploy-snap: ${{ inputs.deploy_snap }}
-          deploy-microsoft: ${{ inputs.deploy_microsoft }}
-          deploy-apple: ${{ inputs.deploy_apple }}
+          deploy-docker: ${{ inputs.deploy-docker }}
+          deploy-snap: ${{ inputs.deploy-snap }}
+          deploy-microsoft: ${{ inputs.deploy-microsoft }}
+          deploy-apple: ${{ inputs.deploy-apple }}
 
       - name: Display configuration
         run: |
