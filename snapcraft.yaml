@@ -95,11 +95,6 @@ apps:
       - audio-playback
       - unity7
       - home
-      - hardware-observe
-      - system-observe
-      - mount-observe
-      - removable-media
-      - personal-files
 
 parts:
   # Build Node/frontend dependencies first
