@@ -180,7 +180,10 @@ jobs:
   deploy-snap:
     name: Deploy Snap
     needs: [ calculate-version, sign-and-validate ]
-    if: needs.calculate-version.outputs.deploy-snap == 'true'
+    if: |
+      always() &&
+      needs.calculate-version.outputs.deploy-snap == 'true' &&
+      needs.sign-and-validate.result != 'failure'
     uses: ./.github/workflows/_deploy-snap.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
@@ -191,7 +194,10 @@ jobs:
   deploy-microsoft:
     name: Deploy Microsoft
     needs: [ calculate-version, sign-and-validate ]
-    if: needs.calculate-version.outputs.deploy-microsoft == 'true'
+    if: |
+      always() &&
+      needs.calculate-version.outputs.deploy-microsoft == 'true' &&
+      needs.sign-and-validate.result != 'failure'
     uses: ./.github/workflows/_deploy-microsoft.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
@@ -205,7 +211,10 @@ jobs:
   deploy-apple:
     name: Deploy Apple
     needs: [ calculate-version, sign-and-validate ]
-    if: needs.calculate-version.outputs.deploy-apple == 'true'
+    if: |
+      always() &&
+      needs.calculate-version.outputs.deploy-apple == 'true' &&
+      needs.sign-and-validate.result != 'failure'
     uses: ./.github/workflows/_deploy-apple.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
