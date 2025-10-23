@@ -56,8 +56,15 @@ apps:
     environment:
       WEBKIT_DISABLE_COMPOSITING_MODE: "1"
       WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS: "1"
-      GDK_BACKEND: "x11,wayland"
+      WEBKIT_FORCE_SANDBOX: "0"
+      GDK_BACKEND: "x11"
       GTK_USE_PORTAL: "0"
+      LIBGL_ALWAYS_SOFTWARE: "1"
+      EGL_PLATFORM: "x11"
+      __EGL_VENDOR_LIBRARY_DIRS: "$SNAP/usr/share/glvnd/egl_vendor.d:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/GL/egl_vendor.d"
+      LIBGL_DRIVERS_PATH: "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/dri"
+      __GLX_VENDOR_LIBRARY_NAME: "mesa"
+      MESA_LOADER_DRIVER_OVERRIDE: "swrast"
       LD_LIBRARY_PATH: "$SNAP/usr/lib:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1:$SNAP/lib:$SNAP/lib/$SNAPCRAFT_ARCH_TRIPLET:$LD_LIBRARY_PATH"
       GI_TYPELIB_PATH: "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/girepository-1.0:$SNAP/usr/lib/girepository-1.0:$GI_TYPELIB_PATH"
       WEBKIT_EXEC_PATH: "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1"
@@ -160,7 +167,6 @@ parts:
       - libjavascriptcoregtk-4.1-0
       - gir1.2-webkit2-4.1
       - gir1.2-javascriptcoregtk-4.1
-      - webkit2gtk-driver
       # X11 and display libraries
       - libx11-6
       - libx11-xcb1
@@ -255,6 +261,10 @@ parts:
       - libgcrypt20
       - libgpg-error0
       - libsystemd0
+      - libnss3
+      - libnspr4
+      - libxtst6
+      - libxss1
       # DBus support
       - libdbus-1-3
       - dbus
@@ -274,6 +284,10 @@ parts:
       - usr/share/locale/**
       # Include MIME type data
       - usr/share/mime/**
+      # Include Mesa/EGL configuration
+      - usr/share/glvnd/**
+      - usr/share/vulkan/**
+      - etc/glvnd/**
       # Exclude unnecessary libraries to reduce snap size
       - -usr/lib/*/caca/libgl_plugin.so.*
       - -usr/lib/*/libcaca++.so.*
