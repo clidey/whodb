@@ -78,7 +78,8 @@ jobs:
         with:
           path: |
             ~/.cache/go-build
-            ~/go/pkg
+            ~/Library/Caches/go-build
+            ~/AppData/Local/go-build
           key: ${{ runner.os }}-${{ runner.arch }}-go-build-${{ hashFiles('**/go.sum', '**/go.mod') }}
           restore-keys: |
             ${{ runner.os }}-${{ runner.arch }}-go-build-

@@ -50,7 +50,6 @@ jobs:
         with:
           path: |
             ~/.cache/go-build
-            ~/go/pkg
           key: ${{ runner.os }}-${{ runner.arch }}-go-build-snap-${{ hashFiles('**/go.sum', '**/go.mod') }}
           restore-keys: |
             ${{ runner.os }}-${{ runner.arch }}-go-build-snap-
