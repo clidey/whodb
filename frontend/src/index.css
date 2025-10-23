@@ -21,6 +21,28 @@
 @custom-variant dark (&:where(.dark, .dark *));
 @custom-variant hover (&:hover);
 
+/* Desktop Linux-only bundled font: Inter variable fonts
+   Place these files in frontend/public/fonts before building:
+   - Inter-roman.var.woff2
+   - Inter-italic.var.woff2
+   Vite copies public/ to / in the build, so URLs are /fonts/*.woff2 */
+@supports (font-variation-settings: normal) {
+    @font-face {
+        font-family: "Inter var";
+        src: url("/fonts/Inter-roman.var.woff2") format("woff2");
+        font-weight: 100 900;
+        font-style: normal;
+        font-display: swap;
+    }
+    @font-face {
+        font-family: "Inter var";
+        src: url("/fonts/Inter-italic.var.woff2") format("woff2");
+        font-weight: 100 900;
+        font-style: italic;
+        font-display: swap;
+    }
+}
+
 :root {
   --brand-foreground: #ca6f1e;
   
@@ -45,9 +67,9 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* Desktop Linux-only font override: prefer Inter if available */
+/* Desktop Linux-only font override: prefer Inter variable if bundled */
 :root.linux {
-    --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+    --font-sans: "Inter var", "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
 .dark {

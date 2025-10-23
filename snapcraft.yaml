@@ -50,6 +50,9 @@ apps:
     environment:
       GTK_USE_PORTAL: "1"
       WEBKIT_DISABLE_DMABUF_RENDERER: "1"
+      # Ensure WebKit subprocesses are found within the GNOME platform snap
+      WEBKIT_EXEC_PATH: "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1"
+      WEBKIT2_EXEC_PATH: "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1"
     plugs:
       - desktop
       - desktop-legacy
@@ -177,8 +180,7 @@ parts:
       - libatk-bridge2.0-0
       - libatspi2.0-0
       - libpixman-1-0
-      - librsvg2-2
-      - librsvg2-common
+      # Use the version from the GNOME extension to avoid ABI mismatches
       # Text rendering and fonts
       - libfontconfig1
       - libfreetype6
