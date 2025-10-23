@@ -38,12 +38,12 @@ jobs:
           - os: windows-latest
             platform: windows
             arch: amd64
-            make-target: build-prod-windows-amd64
+            make-target: ci-build-prod-windows-amd64
             enabled: ${{ contains(inputs.platforms, 'windows-amd64') }}
           - os: windows-11-arm
             platform: windows
             arch: arm64
-            make-target: build-prod-windows-arm64
+            make-target: ci-build-prod-windows-arm64
             enabled: ${{ contains(inputs.platforms, 'windows-arm64') }}
           # macOS build for Mac App Store
           - os: macos-latest
@@ -151,10 +151,6 @@ jobs:
           GOARCH: ${{ matrix.arch }}
         run: |
           Write-Host "Building Windows executable for MSIX packaging..."
-          $env:GOWORK = "$PWD/../go.work.desktop-${{ inputs.edition }}"
-
-          # Clean previous build
-          Remove-Item -Path build -Recurse -Force -ErrorAction SilentlyContinue
 
           # Prepare frontend
           Write-Host "Preparing frontend..."
@@ -173,42 +169,22 @@ jobs:
           Copy-Item -Path build/* -Destination ../desktop-${{ inputs.edition }}/frontend/dist/ -Recurse
           Set-Location ../desktop-${{ inputs.edition }}
 
-          Write-Host "Building with wails..."
-          wails build -clean -platform windows/amd64 `
-            -windowsconsole=false -ldflags="-s -w -H windowsgui" `
-            -o whodb.exe
+          Write-Host "Using Makefile to build..."
+          # Use the CI-specific target that doesn't rebuild frontend
+          make ${{ matrix.make-target }}
 
           if ($LASTEXITCODE -ne 0) {
-              Write-Error "Wails build failed with exit code: $LASTEXITCODE"
+              Write-Error "Make build failed with exit code: $LASTEXITCODE"
               exit 1
           }
 
-          # Find and move exe to expected location
-          $possibleLocations = @(
-              "build\bin\whodb.exe",
-              "build\bin\whodb-amd64.exe",
-              "build\whodb.exe"
-          )
-
-          $foundExe = $null
-          foreach ($location in $possibleLocations) {
-              if (Test-Path $location) {
-                  $foundExe = $location
-                  Write-Host "Found exe at: $foundExe"
-                  break
-              }
-          }
-
-          if (-not $foundExe) {
-              Write-Error "Could not find whodb.exe after build"
+          # Verify the executable is in the expected location
+          if (Test-Path "build/windows/amd64/whodb.exe") {
+              Write-Host "✅ Executable ready: build/windows/amd64/whodb.exe"
+          } else {
+              Write-Error "Could not find whodb.exe at expected location"
               exit 1
           }
-
-          # Move to expected location
-          New-Item -ItemType Directory -Path build/windows/amd64 -Force | Out-Null
-          Move-Item $foundExe build/windows/amd64/whodb.exe -Force
-
-          Write-Host "✅ Executable ready: build/windows/amd64/whodb.exe"
 
       # Windows ARM64 Build (temporarily disabled)
       - name: Skip Windows ARM64 Build

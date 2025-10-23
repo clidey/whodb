@@ -123,9 +123,28 @@ build-prod-windows-amd64: prepare
 		-o $(OUTPUT_PREFIX).exe
 	@mv build/bin/$(OUTPUT_PREFIX).exe build/windows/amd64/
 
+# CI build target for Windows AMD64 (assumes frontend is pre-built in frontend/dist)
+ci-build-prod-windows-amd64:
+	@echo "Building WhoDB Windows executable for AMD64 (CI)..."
+	@mkdir -p build/windows/amd64
+	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean -platform windows/amd64 \
+		$(BUILD_TAGS) -windowsconsole=false -ldflags="-s -w -H windowsgui" \
+		-o $(OUTPUT_PREFIX).exe
+	@mv build/bin/$(OUTPUT_PREFIX).exe build/windows/amd64/
+
 # Production build specifically for Windows ARM64
 build-prod-windows-arm64: prepare
 	@echo "Building WhoDB Windows executable for ARM64..."
+	@mkdir -p build/windows/arm64
+	# When running on native ARM64 Windows, don't specify platform to avoid cross-compilation
+	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean \
+		$(BUILD_TAGS) -windowsconsole=false -ldflags="-s -w -H windowsgui" \
+		-o $(OUTPUT_PREFIX).exe
+	@mv build/bin/$(OUTPUT_PREFIX).exe build/windows/arm64/
+
+# CI build target for Windows ARM64 (assumes frontend is pre-built in frontend/dist)
+ci-build-prod-windows-arm64:
+	@echo "Building WhoDB Windows executable for ARM64 (CI)..."
 	@mkdir -p build/windows/arm64
 	# When running on native ARM64 Windows, don't specify platform to avoid cross-compilation
 	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean \
@@ -286,6 +305,14 @@ macstore-mac: build-prod-mac
 
 build-prod-linux: prepare
 	@echo "Building WhoDB Linux binary for native architecture ($$(uname -m))..."
+	@mkdir -p build/linux/$$(uname -m)
+	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean \
+		$(BUILD_TAGS) $(LINUX_TAGS)  -ldflags="-s -w" -o $(OUTPUT_PREFIX)
+	@mv build/bin/$(OUTPUT_PREFIX) build/linux/$$(uname -m)/
+
+# CI build target for Linux (assumes frontend is pre-built in frontend/dist)
+ci-build-prod-linux:
+	@echo "Building WhoDB Linux binary for CI (native architecture: $$(uname -m))..."
 	@mkdir -p build/linux/$$(uname -m)
 	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean \
 		$(BUILD_TAGS) $(LINUX_TAGS)  -ldflags="-s -w" -o $(OUTPUT_PREFIX)

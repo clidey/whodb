@@ -119,18 +119,14 @@ runs:
       run: |
         MODE="${{ steps.mode.outputs.mode }}"
 
+        # Always respect user selections for which stores to deploy to
+        echo "deploy-docker=${{ inputs.deploy-docker }}" >> $GITHUB_OUTPUT
+        echo "deploy-snap=${{ inputs.deploy-snap }}" >> $GITHUB_OUTPUT
+        echo "deploy-microsoft=${{ inputs.deploy-microsoft }}" >> $GITHUB_OUTPUT
+        echo "deploy-apple=${{ inputs.deploy-apple }}" >> $GITHUB_OUTPUT
+
         if [ "$MODE" = "production" ]; then
-          # Production: deploy to all stores
-          echo "deploy-docker=true" >> $GITHUB_OUTPUT
-          echo "deploy-snap=true" >> $GITHUB_OUTPUT
-          echo "deploy-microsoft=true" >> $GITHUB_OUTPUT
-          echo "deploy-apple=true" >> $GITHUB_OUTPUT
-          echo "Production mode: deploying to all stores"
+          echo "Production mode: deploying selected stores to production channels"
         else
-          # Stage-only: always deploy snap to edge, respect others
-          echo "deploy-docker=${{ inputs.deploy-docker }}" >> $GITHUB_OUTPUT
-          echo "deploy-snap=true" >> $GITHUB_OUTPUT  # Always deploy snap to edge
-          echo "deploy-microsoft=${{ inputs.deploy-microsoft }}" >> $GITHUB_OUTPUT
-          echo "deploy-apple=${{ inputs.deploy-apple }}" >> $GITHUB_OUTPUT
-          echo "Stage-only mode: snap always deploys to edge"
+          echo "Stage-only mode: deploying selected stores to edge/draft channels"
         fi

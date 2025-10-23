@@ -318,23 +318,24 @@ parts:
       - -usr/lib/*/libunwind-*.so.*
       - -usr/lib/*/libwoff2enc.so.*
     override-build: |
-      # Copy frontend build from previous part
-      mkdir -p desktop-ce/frontend/dist
-      cp -r $SNAPCRAFT_STAGE/frontend-dist/* desktop-ce/frontend/dist/
-
-      # Install Wails
+      # Install Wails (required by Makefile)
       go install github.com/wailsapp/wails/v2/cmd/wails@latest
       export PATH=$PATH:$HOME/go/bin
 
-      # Change to desktop-ce directory (just like other builds do)
+      # Copy frontend build from previous part to expected location
+      mkdir -p desktop-ce/frontend/dist
+      cp -r $SNAPCRAFT_STAGE/frontend-dist/* desktop-ce/frontend/dist/
+
+      # Change to desktop-ce directory
       cd desktop-ce
 
-      # Build the desktop app - Ubuntu 24.04 uses webkit2gtk-4.1, so we need the webkit2_41 tag
-      # Add nosandbox tag to help with snap environment
-      GOWORK=$PWD/../go.work.desktop-ce wails build -clean -tags desktop,production,webkit2_41,nosandbox,!ee -ldflags="-s -w" -o whodb
+      # Use the Makefile's CI build target (which handles all proper configuration)
+      make ci-build-prod-linux
 
-      # Install the binary
-      install -D -m755 build/bin/whodb $SNAPCRAFT_PART_INSTALL/bin/whodb
+      # The Makefile places the binary in build/linux/$(uname -m)/
+      # Install it to the snap location
+      ARCH=$(uname -m)
+      install -D -m755 build/linux/$ARCH/whodb $SNAPCRAFT_PART_INSTALL/bin/whodb
 
   desktop-file:
     plugin: dump
