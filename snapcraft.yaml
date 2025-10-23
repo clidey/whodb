@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: whodb
-version: ${SNAPCRAFT_PROJECT_VERSION}
+adopt-info: versioner
 summary: Lightweight database management tool
 description: |
   WhoDB is a lightweight, next-generation database management tool for
@@ -94,6 +94,16 @@ parts:
 
   versioner:
     plugin: nil
+    override-pull: |
+      # Set the version from the environment variable (required)
+      if [ -n "$SNAPCRAFT_PROJECT_VERSION" ]; then
+        snapcraftctl set-version "$SNAPCRAFT_PROJECT_VERSION"
+        echo "Version set to: $SNAPCRAFT_PROJECT_VERSION"
+      else
+        echo "ERROR: SNAPCRAFT_PROJECT_VERSION environment variable is not set"
+        echo "This variable must be set when building the snap package"
+        exit 1
+      fi
 
   whodb:
     after: [ frontend ]
