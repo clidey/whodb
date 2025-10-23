@@ -115,8 +115,8 @@ jobs:
     name: Build Docker
     needs: [ calculate-version ]
     if: |
-      needs.calculate-version.outputs.deploy_docker == 'true' ||
-      needs.calculate-version.outputs.deployment_mode == 'production'
+      needs.calculate-version.outputs.deploy-docker == 'true' ||
+      needs.calculate-version.outputs.deployment-mode == 'production'
     uses: ./.github/workflows/_build-docker.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
@@ -126,19 +126,19 @@ jobs:
     name: Build Desktop
     needs: [ calculate-version ]
     if: |
-      needs.calculate-version.outputs.deploy_microsoft == 'true' ||
-      needs.calculate-version.outputs.deploy_apple == 'true' ||
-      needs.calculate-version.outputs.deployment_mode == 'production'
+      needs.calculate-version.outputs.deploy-microsoft == 'true' ||
+      needs.calculate-version.outputs.deploy-apple == 'true' ||
+      needs.calculate-version.outputs.deployment-mode == 'production'
     uses: ./.github/workflows/_build-desktop.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
       edition: 'ce'
       platforms: >-
         ${{
-          (needs.calculate-version.outputs.deploy_microsoft == 'true' || needs.calculate-version.outputs.deployment_mode == 'production')
+          (needs.calculate-version.outputs.deploy-microsoft == 'true' || needs.calculate-version.outputs.deployment-mode == 'production')
             && 'windows-amd64,windows-arm64,' || ''
         }}${{
-          (needs.calculate-version.outputs.deploy_apple == 'true' || needs.calculate-version.outputs.deployment_mode == 'production')
+          (needs.calculate-version.outputs.deploy-apple == 'true' || needs.calculate-version.outputs.deployment-mode == 'production')
             && 'darwin-universal' || ''
         }}
     secrets:
@@ -151,8 +151,8 @@ jobs:
     name: Build Snap
     needs: [ calculate-version ]
     if: |
-      needs.calculate-version.outputs.deploy_snap == 'true' ||
-      needs.calculate-version.outputs.deployment_mode == 'production'
+      needs.calculate-version.outputs.deploy-snap == 'true' ||
+      needs.calculate-version.outputs.deployment-mode == 'production'
     uses: ./.github/workflows/_build-snap.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
@@ -180,22 +180,22 @@ jobs:
   deploy-snap:
     name: Deploy Snap
     needs: [ calculate-version, sign-and-validate ]
-    if: needs.calculate-version.outputs.deploy_snap == 'true'
+    if: needs.calculate-version.outputs.deploy-snap == 'true'
     uses: ./.github/workflows/_deploy-snap.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
-      channel: ${{ needs.calculate-version.outputs.stage_only == 'true' && 'edge' || 'stable' }}
+      channel: ${{ needs.calculate-version.outputs.stage-only == 'true' && 'edge' || 'stable' }}
     secrets:
       SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
 
   deploy-microsoft:
     name: Deploy Microsoft
     needs: [ calculate-version, sign-and-validate ]
-    if: needs.calculate-version.outputs.deploy_microsoft == 'true'
+    if: needs.calculate-version.outputs.deploy-microsoft == 'true'
     uses: ./.github/workflows/_deploy-microsoft.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
-      stage-only: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
+      stage-only: ${{ needs.calculate-version.outputs.stage-only == 'true' }}
     secrets:
       MS_TENANT_ID: ${{ secrets.MS_TENANT_ID }}
       MS_CLIENT_ID: ${{ secrets.MS_CLIENT_ID }}
@@ -205,11 +205,11 @@ jobs:
   deploy-apple:
     name: Deploy Apple
     needs: [ calculate-version, sign-and-validate ]
-    if: needs.calculate-version.outputs.deploy_apple == 'true'
+    if: needs.calculate-version.outputs.deploy-apple == 'true'
     uses: ./.github/workflows/_deploy-apple.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
-      stage-only: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
+      stage-only: ${{ needs.calculate-version.outputs.stage-only == 'true' }}
     secrets:
       APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
       APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
@@ -225,12 +225,12 @@ jobs:
     if: |
       always() &&
       (
-        (needs.calculate-version.outputs.stage_only == 'true' && (
+        (needs.calculate-version.outputs.stage-only == 'true' && (
           needs.deploy-snap.result == 'success' ||
           needs.deploy-microsoft.result == 'success' ||
           needs.deploy-apple.result == 'success'
         )) ||
-        (needs.calculate-version.outputs.deployment_mode == 'production' &&
+        (needs.calculate-version.outputs.deployment-mode == 'production' &&
          (needs.deploy-snap.result != 'failure') &&
          (needs.deploy-microsoft.result != 'failure') &&
          (needs.deploy-apple.result != 'failure'))
@@ -275,7 +275,7 @@ jobs:
         with:
           tag: v${{ needs.calculate-version.outputs.version }}
           name: Release v${{ needs.calculate-version.outputs.version }}
-          draft: ${{ needs.calculate-version.outputs.stage_only == 'true' }}
+          draft: ${{ needs.calculate-version.outputs.stage-only == 'true' }}
           prerelease: false
           generateReleaseNotes: true
           artifacts: final-assets/*
@@ -315,8 +315,8 @@ jobs:
     needs: [ calculate-version, create-github-release ]
     if: |
       always() &&
-      needs.calculate-version.outputs.deploy_docker == 'true' &&
-      needs.calculate-version.outputs.stage_only != 'true' &&
+      needs.calculate-version.outputs.deploy-docker == 'true' &&
+      needs.calculate-version.outputs.stage-only != 'true' &&
       needs.create-github-release.result == 'success'
     steps:
       - name: Checkout
@@ -397,8 +397,8 @@ jobs:
     runs-on: macos-latest
     needs: [ calculate-version, create-github-release ]
     if: |
-      needs.calculate-version.outputs.stage_only != 'true' &&
-      needs.calculate-version.outputs.deployment_mode == 'production' &&
+      needs.calculate-version.outputs.stage-only != 'true' &&
+      needs.calculate-version.outputs.deployment-mode == 'production' &&
       needs.create-github-release.result == 'success'
     steps:
       - name: Checkout
@@ -469,7 +469,7 @@ jobs:
     needs: [ calculate-version, deploy-docker, deploy-snap, create-github-release ]
     if: |
       always() &&
-      needs.calculate-version.outputs.stage_only != 'true'
+      needs.calculate-version.outputs.stage-only != 'true'
     uses: ./.github/workflows/_verify-deployment.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
@@ -483,13 +483,13 @@ jobs:
     needs: [ calculate-version, verify-deployments ]
     if: |
       failure() &&
-      needs.calculate-version.outputs.stage_only != 'true' &&
+      needs.calculate-version.outputs.stage-only != 'true' &&
       needs.verify-deployments.outputs.all-verified != 'true'
     uses: ./.github/workflows/_rollback.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
-      previous-version: ${{ needs.calculate-version.outputs.previous_version }}
-      rollback-docker: ${{ needs.calculate-version.outputs.deploy_docker == 'true' }}
+      previous-version: ${{ needs.calculate-version.outputs.previous-version }}
+      rollback-docker: ${{ needs.calculate-version.outputs.deploy-docker == 'true' }}
       rollback-github: true
     secrets:
       DOCKER_USERNAME: ${{ vars.DOCKER_USERNAME }}
@@ -519,7 +519,7 @@ jobs:
         run: |
           echo "# 📊 Release Summary for v${{ needs.calculate-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Deployment Mode:** ${{ needs.calculate-version.outputs.deployment_mode }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployment Mode:** ${{ needs.calculate-version.outputs.deployment-mode }}" >> $GITHUB_STEP_SUMMARY
           echo "**Timestamp:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
@@ -563,7 +563,7 @@ jobs:
           if [ "${{ needs.deploy-docker.result }}" = "success" ]; then
             echo "| Docker Hub | ✅ Deployed | Latest tag updated |" >> $GITHUB_STEP_SUMMARY
           elif [ "${{ needs.deploy-docker.result }}" = "skipped" ]; then
-            if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
+            if [ "${{ needs.calculate-version.outputs.stage-only }}" = "true" ]; then
               echo "| Docker Hub | ⏭️ Skipped | Stage-only mode |" >> $GITHUB_STEP_SUMMARY
             else
               echo "| Docker Hub | ⏭️ Skipped | Not selected |" >> $GITHUB_STEP_SUMMARY
@@ -574,7 +574,7 @@ jobs:
 
           # Snap Store
           if [ "${{ needs.deploy-snap.result }}" = "success" ]; then
-            CHANNEL="${{ needs.calculate-version.outputs.stage_only == 'true' && 'edge' || 'stable' }}"
+            CHANNEL="${{ needs.calculate-version.outputs.stage-only == 'true' && 'edge' || 'stable' }}"
             echo "| Snap Store | ✅ Deployed | ${CHANNEL} channel |" >> $GITHUB_STEP_SUMMARY
           elif [ "${{ needs.deploy-snap.result }}" = "skipped" ]; then
             echo "| Snap Store | ⏭️ Skipped | Not selected |" >> $GITHUB_STEP_SUMMARY
@@ -584,7 +584,7 @@ jobs:
 
           # Microsoft Store
           if [ "${{ needs.deploy-microsoft.result }}" = "success" ]; then
-            if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
+            if [ "${{ needs.calculate-version.outputs.stage-only }}" = "true" ]; then
               echo "| Microsoft Store | ✅ Deployed | Draft submission |" >> $GITHUB_STEP_SUMMARY
             else
               echo "| Microsoft Store | ✅ Deployed | Submitted for certification |" >> $GITHUB_STEP_SUMMARY
@@ -597,7 +597,7 @@ jobs:
 
           # Apple App Store
           if [ "${{ needs.deploy-apple.result }}" = "success" ]; then
-            if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
+            if [ "${{ needs.calculate-version.outputs.stage-only }}" = "true" ]; then
               echo "| Apple App Store | ✅ Deployed | TestFlight only |" >> $GITHUB_STEP_SUMMARY
             else
               echo "| Apple App Store | ✅ Deployed | Submitted for review |" >> $GITHUB_STEP_SUMMARY
@@ -610,7 +610,7 @@ jobs:
 
           # GitHub Release
           if [ "${{ needs.create-github-release.result }}" = "success" ]; then
-            if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
+            if [ "${{ needs.calculate-version.outputs.stage-only }}" = "true" ]; then
               echo "| GitHub Release | ✅ Created | Draft release |" >> $GITHUB_STEP_SUMMARY
             else
               echo "| GitHub Release | ✅ Created | Published |" >> $GITHUB_STEP_SUMMARY
@@ -650,7 +650,7 @@ jobs:
           # Next Steps
           echo "## 📝 Next Steps" >> $GITHUB_STEP_SUMMARY
 
-          if [ "${{ needs.calculate-version.outputs.stage_only }}" = "true" ]; then
+          if [ "${{ needs.calculate-version.outputs.stage-only }}" = "true" ]; then
             echo "Stage deployments completed. To promote to production:" >> $GITHUB_STEP_SUMMARY
             echo "1. Test the edge/draft releases" >> $GITHUB_STEP_SUMMARY
             echo "2. Promote Snap from edge to stable channel" >> $GITHUB_STEP_SUMMARY
