@@ -56,7 +56,15 @@ jobs:
                 $latestVersion = $versions | Sort-Object Name -Descending | Select-Object -First 1
                 $sdkPath = Join-Path $latestVersion.FullName "x64"
                 Write-Host "Adding to PATH: $sdkPath"
-                echo "$sdkPath" >> $env:GITHUB_PATH
+                # Use Add-Content for GitHub Actions PATH
+                if ($env:GITHUB_PATH) {
+                  Add-Content -Path $env:GITHUB_PATH -Value $sdkPath
+                  Write-Host "✅ Added to GITHUB_PATH"
+                } else {
+                  # Fallback: Set for current session
+                  $env:PATH = "$sdkPath;$env:PATH"
+                  Write-Host "✅ Added to session PATH"
+                }
               } else {
                 Write-Host "⚠️ Windows Kits directory exists but no SDK versions found"
               }
@@ -178,12 +186,14 @@ jobs:
 
           # Find MakeAppx.exe - GitHub Actions runners have it in various locations
           Write-Host "Searching for MakeAppx.exe..."
+          Write-Host "Current PATH: $env:PATH"
 
           # First try using where.exe to find it in PATH
           $makeAppx = $null
           try {
-            $makeAppx = (where.exe makeappx.exe 2>$null | Select-Object -First 1)
-            if ($makeAppx) {
+            $result = where.exe makeappx.exe 2>$null
+            if ($LASTEXITCODE -eq 0 -and $result) {
+              $makeAppx = $result | Select-Object -First 1
               Write-Host "Found MakeAppx in PATH: $makeAppx"
             }
           } catch {
