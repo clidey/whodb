@@ -30,25 +30,25 @@ outputs:
     value: ${{ steps.version.outputs.version }}
   previous-version:
     description: 'Previous version'
-    value: ${{ steps.version.outputs.previous_version }}
+    value: ${{ steps.version.outputs.previous-version }}
   deployment-mode:
     description: 'Deployment mode'
     value: ${{ steps.mode.outputs.mode }}
   stage-only:
     description: 'Stage only flag'
-    value: ${{ steps.flags.outputs.stage_only }}
+    value: ${{ steps.flags.outputs.stage-only }}
   deploy-docker:
     description: 'Deploy Docker flag'
-    value: ${{ steps.stores.outputs.docker }}
+    value: ${{ steps.stores.outputs.deploy-docker }}
   deploy-snap:
     description: 'Deploy Snap flag'
-    value: ${{ steps.stores.outputs.snap }}
+    value: ${{ steps.stores.outputs.deploy-snap }}
   deploy-microsoft:
     description: 'Deploy Microsoft flag'
-    value: ${{ steps.stores.outputs.microsoft }}
+    value: ${{ steps.stores.outputs.deploy-microsoft }}
   deploy-apple:
     description: 'Deploy Apple flag'
-    value: ${{ steps.stores.outputs.apple }}
+    value: ${{ steps.stores.outputs.deploy-apple }}
 
 runs:
   using: 'composite'
@@ -73,7 +73,7 @@ runs:
           STAGE_ONLY="false"
         fi
 
-        echo "stage_only=$STAGE_ONLY" >> $GITHUB_OUTPUT
+        echo "stage-only=$STAGE_ONLY" >> $GITHUB_OUTPUT
         echo "Stage only: $STAGE_ONLY"
 
     - name: Calculate version
@@ -110,7 +110,7 @@ runs:
         NEXT_VERSION="${major}.${minor}.${patch}"
 
         echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
-        echo "previous_version=$PREVIOUS_VERSION" >> $GITHUB_OUTPUT
+        echo "previous-version=$PREVIOUS_VERSION" >> $GITHUB_OUTPUT
         echo "📦 Version: $NEXT_VERSION (previous: $PREVIOUS_VERSION, bump: $BUMP_TYPE)"
 
     - name: Set store selection
@@ -121,16 +121,16 @@ runs:
 
         if [ "$MODE" = "production" ]; then
           # Production: deploy to all stores
-          echo "docker=true" >> $GITHUB_OUTPUT
-          echo "snap=true" >> $GITHUB_OUTPUT
-          echo "microsoft=true" >> $GITHUB_OUTPUT
-          echo "apple=true" >> $GITHUB_OUTPUT
+          echo "deploy-docker=true" >> $GITHUB_OUTPUT
+          echo "deploy-snap=true" >> $GITHUB_OUTPUT
+          echo "deploy-microsoft=true" >> $GITHUB_OUTPUT
+          echo "deploy-apple=true" >> $GITHUB_OUTPUT
           echo "Production mode: deploying to all stores"
         else
           # Stage-only: always deploy snap to edge, respect others
-          echo "docker=${{ inputs.deploy-docker }}" >> $GITHUB_OUTPUT
-          echo "snap=true" >> $GITHUB_OUTPUT  # Always deploy snap to edge
-          echo "microsoft=${{ inputs.deploy-microsoft }}" >> $GITHUB_OUTPUT
-          echo "apple=${{ inputs.deploy-apple }}" >> $GITHUB_OUTPUT
+          echo "deploy-docker=${{ inputs.deploy-docker }}" >> $GITHUB_OUTPUT
+          echo "deploy-snap=true" >> $GITHUB_OUTPUT  # Always deploy snap to edge
+          echo "deploy-microsoft=${{ inputs.deploy-microsoft }}" >> $GITHUB_OUTPUT
+          echo "deploy-apple=${{ inputs.deploy-apple }}" >> $GITHUB_OUTPUT
           echo "Stage-only mode: snap always deploys to edge"
         fi
