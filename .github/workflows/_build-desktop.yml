@@ -72,6 +72,18 @@ jobs:
             desktop-${{ inputs.edition }}/go.sum
             core/go.sum
 
+      - name: Cache Go build artifacts
+        if: matrix.enabled != false
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg
+          key: ${{ runner.os }}-${{ runner.arch }}-go-build-${{ hashFiles('**/go.sum', '**/go.mod') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-go-build-
+            ${{ runner.os }}-go-build-
+
       - name: Setup Node.js and pnpm
         if: matrix.enabled != false
         uses: actions/setup-node@v4
@@ -99,6 +111,16 @@ jobs:
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
+
+      - name: Cache frontend build
+        if: matrix.enabled != false
+        id: frontend-cache
+        uses: actions/cache@v4
+        with:
+          path: frontend/build
+          key: frontend-build-${{ inputs.edition }}-${{ hashFiles('frontend/**/*.tsx', 'frontend/**/*.ts', 'frontend/**/*.css', 'frontend/package.json', 'frontend/pnpm-lock.yaml') }}
+          restore-keys: |
+            frontend-build-${{ inputs.edition }}-
 
       - name: Install frontend dependencies
         if: matrix.enabled != false
@@ -137,8 +159,16 @@ jobs:
           Write-Host "Preparing frontend..."
           New-Item -ItemType Directory -Path frontend/dist -Force | Out-Null
           Set-Location ../frontend
-          $env:CYPRESS_INSTALL_BINARY = "0"  # Skip Cypress binary for production build
-          pnpm run build:${{ inputs.edition }}
+
+          # Check if frontend is already built from cache
+          if (Test-Path "build/index.html") {
+              Write-Host "Using cached frontend build"
+          } else {
+              Write-Host "Building frontend..."
+              $env:CYPRESS_INSTALL_BINARY = "0"  # Skip Cypress binary for production build
+              pnpm run build:${{ inputs.edition }}
+          }
+
           Copy-Item -Path build/* -Destination ../desktop-${{ inputs.edition }}/frontend/dist/ -Recurse
           Set-Location ../desktop-${{ inputs.edition }}
 

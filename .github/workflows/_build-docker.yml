@@ -39,6 +39,48 @@ jobs:
         with:
           submodules: false
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Cache frontend build
+        id: frontend-cache
+        uses: actions/cache@v4
+        with:
+          path: frontend/build
+          key: frontend-build-${{ inputs.edition }}-${{ hashFiles('frontend/**/*.tsx', 'frontend/**/*.ts', 'frontend/**/*.css', 'frontend/package.json', 'frontend/pnpm-lock.yaml') }}
+          restore-keys: |
+            frontend-build-${{ inputs.edition }}-
+
+      - name: Build frontend if needed
+        if: steps.frontend-cache.outputs.cache-hit != 'true'
+        working-directory: ./frontend
+        env:
+          CYPRESS_INSTALL_BINARY: "0"
+        run: |
+          pnpm install
+          pnpm run build:${{ inputs.edition }}
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 

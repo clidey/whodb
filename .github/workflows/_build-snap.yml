@@ -45,6 +45,60 @@ jobs:
             core/go.sum
             desktop-ce/go.sum
 
+      - name: Cache Go build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg
+          key: ${{ runner.os }}-${{ runner.arch }}-go-build-snap-${{ hashFiles('**/go.sum', '**/go.mod') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-go-build-snap-
+            ${{ runner.os }}-go-build-
+
+      - name: Cache Snapcraft downloads
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/snapcraft/download
+            ~/.cache/snapcraft/stage-packages
+          key: ${{ runner.os }}-${{ runner.arch }}-snapcraft-${{ hashFiles('snapcraft.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-snapcraft-
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Cache Wails binary
+        id: cache-wails
+        uses: actions/cache@v4
+        with:
+          path: ~/go/bin/wails
+          key: ${{ runner.os }}-wails-v2-latest
+
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ runner.os }}-${{ runner.arch }}-ccache-snap
+          max-size: 500M
+
       - name: Install build dependencies
         run: |
           # Update package lists
@@ -55,7 +109,14 @@ jobs:
             build-essential \
             curl \
             git \
-            pkg-config
+            pkg-config \
+            ccache
+
+          # Configure ccache
+          export PATH="/usr/lib/ccache:$PATH"
+          ccache --set-config=cache_dir=$HOME/.ccache
+          ccache --set-config=max_size=500M
+          ccache -z  # Zero statistics
 
           echo "Build dependencies installed"
 
@@ -67,14 +128,25 @@ jobs:
 
       - name: Build Snap package
         id: build_snap
+        env:
+          CC: /usr/lib/ccache/gcc
+          CXX: /usr/lib/ccache/g++
+          CCACHE_DIR: $HOME/.ccache
+          PATH: /usr/lib/ccache:$PATH
         run: |
           echo "Building snap with version: ${{ inputs.version }}"
+
+          # Show ccache stats before build
+          ccache -s
 
           # Write version to a file that snapcraft can read
           echo "${{ inputs.version }}" > .snap_version
 
           # Run snapcraft with destructive mode
-          sudo snapcraft --destructive-mode --verbosity=debug
+          sudo -E snapcraft --destructive-mode --verbosity=debug
+
+          # Show ccache stats after build
+          ccache -s
 
           echo "✅ Snap built successfully"
           echo "build_method=destructive" >> $GITHUB_OUTPUT
