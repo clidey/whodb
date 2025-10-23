@@ -56,7 +56,6 @@ apps:
     environment:
       WEBKIT_DISABLE_COMPOSITING_MODE: "1"
       WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS: "1"
-      WEBKIT_FORCE_SANDBOX: "0"
       GDK_BACKEND: "x11"
       GTK_USE_PORTAL: "0"
       LIBGL_ALWAYS_SOFTWARE: "1"
@@ -73,6 +72,8 @@ apps:
       GTK_IM_MODULE_DIR: "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gtk-3.0/3.0.0/immodules"
       GDK_PIXBUF_MODULE_FILE: "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gdk-pixbuf-2.0/2.10.0/loaders.cache"
       GDK_PIXBUF_MODULEDIR: "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gdk-pixbuf-2.0/2.10.0/loaders"
+      FONTCONFIG_PATH: "$SNAP/etc/fonts"
+      FONTCONFIG_FILE: "$SNAP/etc/fonts/fonts.conf"
     plugs:
       - desktop
       - desktop-legacy
@@ -218,6 +219,10 @@ parts:
       - libthai0
       - libdatrie1
       - libgraphite2-3
+      - fontconfig
+      - fontconfig-config
+      - fonts-dejavu-core
+      - fonts-liberation
       # Media and codecs
       - libgstreamer1.0-0
       - libgstreamer-plugins-base1.0-0
@@ -288,6 +293,9 @@ parts:
       - usr/share/glvnd/**
       - usr/share/vulkan/**
       - etc/glvnd/**
+      # Include font files and configuration
+      - usr/share/fonts/**
+      - etc/fonts/**
       # Exclude unnecessary libraries to reduce snap size
       - -usr/lib/*/caca/libgl_plugin.so.*
       - -usr/lib/*/libcaca++.so.*
