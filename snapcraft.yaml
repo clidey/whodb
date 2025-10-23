@@ -43,11 +43,11 @@ platforms:
 
 layout:
   /usr/lib/x86_64-linux-gnu/webkit2gtk-4.1:
-    bind: $SNAP/gnome-platform/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1
+    bind: $SNAP/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1
   /usr/lib/aarch64-linux-gnu/webkit2gtk-4.1:
-    bind: $SNAP/gnome-platform/usr/lib/aarch64-linux-gnu/webkit2gtk-4.1
+    bind: $SNAP/usr/lib/aarch64-linux-gnu/webkit2gtk-4.1
   /usr/libexec/webkit2gtk-4.1:
-    bind: $SNAP/gnome-platform/usr/libexec/webkit2gtk-4.1
+    bind: $SNAP/usr/libexec/webkit2gtk-4.1
 
 apps:
   whodb:
@@ -57,7 +57,11 @@ apps:
     environment:
       GTK_USE_PORTAL: "1"
       WEBKIT_DISABLE_DMABUF_RENDERER: "1"
-      # WebKit will find subprocesses via the layout bindings
+      # WebKit subprocess paths - check both locations
+      WEBKIT_EXEC_PATH: "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1:$SNAP/usr/libexec/webkit2gtk-4.1"
+      WEBKIT2_EXEC_PATH: "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1:$SNAP/usr/libexec/webkit2gtk-4.1"
+      # GIO modules for proxy support
+      GIO_MODULE_DIR: "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gio/modules"
     plugs:
       - desktop
       - desktop-legacy
@@ -143,8 +147,11 @@ parts:
       - libc6
       - libgcc-s1
       - libstdc++6
-      # GTK and WebKit core
-      # Provided by the GNOME extension; avoid staging to prevent ABI conflicts
+      # GTK is provided by GNOME extension, but WebKit needs explicit staging
+      - libwebkit2gtk-4.1-0
+      - libjavascriptcoregtk-4.1-0
+      - gir1.2-webkit2-4.1
+      - gir1.2-javascriptcoregtk-4.1
       # X11 and display libraries
       - libx11-6
       - libx11-xcb1
@@ -253,17 +260,21 @@ parts:
       - dbus-x11
       # Proxy support (fixes libpxbackend error)
       - libproxy1v5
+      - glib-networking
+      - glib-networking-common
     prime:
       # Include the whodb binary
       - bin/whodb
-      # Include all libraries (except WebKit which comes from GNOME extension)
+      # Include all libraries
       - lib/**
       - usr/lib/**
-      # WebKit subprocesses are provided by the GNOME extension, so exclude them
-      - -usr/libexec/webkit2gtk-4.1/**
-      - -usr/lib/*/webkit2gtk-4.1/**
+      # Include WebKit subprocess executables
+      - usr/libexec/webkit2gtk-4.1/**
+      - usr/lib/*/webkit2gtk-4.1/**
       # Include GObject introspection files
       - usr/share/gir-1.0/**
+      # Include GIO modules
+      - usr/lib/*/gio/modules/**
       # Include locale data for proper internationalization
       - usr/share/locale/**
       # Include MIME type data
