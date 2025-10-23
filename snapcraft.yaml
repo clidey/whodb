@@ -41,6 +41,14 @@ platforms:
     build-on: [ arm64 ]
     build-for: [ arm64 ]
 
+layout:
+  /usr/lib/x86_64-linux-gnu/webkit2gtk-4.1:
+    bind: $SNAP/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1
+  /usr/lib/aarch64-linux-gnu/webkit2gtk-4.1:
+    bind: $SNAP/usr/lib/aarch64-linux-gnu/webkit2gtk-4.1
+  /usr/libexec/webkit2gtk-4.1:
+    bind: $SNAP/usr/libexec/webkit2gtk-4.1
+
 apps:
   whodb:
     command: bin/whodb
@@ -52,6 +60,7 @@ apps:
       GTK_USE_PORTAL: "0"
       LD_LIBRARY_PATH: "$SNAP/usr/lib:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1:$SNAP/lib:$SNAP/lib/$SNAPCRAFT_ARCH_TRIPLET:$LD_LIBRARY_PATH"
       GI_TYPELIB_PATH: "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/girepository-1.0:$SNAP/usr/lib/girepository-1.0:$GI_TYPELIB_PATH"
+      WEBKIT_EXEC_PATH: "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1"
       WEBKIT2_EXEC_PATH: "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1"
       GTK_PATH: "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gtk-3.0"
       GTK_IM_MODULE_DIR: "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gtk-3.0/3.0.0/immodules"
@@ -70,6 +79,9 @@ apps:
       - audio-playback
       - unity7
       - home
+      - hardware-observe
+      - system-observe
+      - mount-observe
 
 parts:
   # Build Node/frontend dependencies first
@@ -145,6 +157,7 @@ parts:
       - libjavascriptcoregtk-4.1-0
       - gir1.2-webkit2-4.1
       - gir1.2-javascriptcoregtk-4.1
+      - webkit2gtk-driver
       # X11 and display libraries
       - libx11-6
       - libx11-xcb1
@@ -218,6 +231,8 @@ parts:
       - libnghttp2-14
       # Other dependencies
       - libcanberra-gtk3-module
+      - libcanberra-gtk3-0
+      - libcanberra0
       - libenchant-2-2
       - libhyphen0
       - libxml2
@@ -247,8 +262,9 @@ parts:
       # Include all libraries
       - lib/**
       - usr/lib/**
-      # Explicitly include WebKit subprocess executables and resources
+      # Explicitly include WebKit subprocess executables from both possible locations
       - usr/libexec/webkit2gtk-4.1/**
+      - usr/lib/*/webkit2gtk-4.1/**
       # Include GObject introspection files
       - usr/share/gir-1.0/**
       # Include locale data for proper internationalization
