@@ -16,6 +16,8 @@ FROM node:lts-alpine AS build-stage
 RUN npm i -g pnpm
 WORKDIR /app
 COPY ./frontend/package.json ./frontend/pnpm-lock.yaml ./
+# Skip Cypress binary installation - not needed for production builds
+ENV CYPRESS_INSTALL_BINARY=0
 RUN pnpm install
 COPY ./frontend/ ./
 

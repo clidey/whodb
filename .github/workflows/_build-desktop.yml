@@ -82,6 +82,8 @@ jobs:
       - name: Install frontend dependencies
         if: matrix.enabled != false
         working-directory: ./frontend
+        env:
+          CYPRESS_INSTALL_BINARY: "0"  # Skip Cypress binary - not needed for production builds
         run: pnpm i
 
       - name: Install Wails CLI
@@ -106,6 +108,7 @@ jobs:
           Write-Host "Preparing frontend..."
           New-Item -ItemType Directory -Path frontend/dist -Force | Out-Null
           Set-Location ../frontend
+          $env:CYPRESS_INSTALL_BINARY = "0"  # Skip Cypress binary for production build
           pnpm run build:${{ inputs.edition }}
           Copy-Item -Path build/* -Destination ../desktop-${{ inputs.edition }}/frontend/dist/ -Recurse
           Set-Location ../desktop-${{ inputs.edition }}

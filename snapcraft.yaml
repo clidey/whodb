@@ -93,6 +93,9 @@ parts:
       - curl
       - ca-certificates
       - gnupg
+    build-environment:
+      # Skip Cypress binary installation - not needed for production builds
+      - CYPRESS_INSTALL_BINARY: "0"
     override-build: |
       # Install Node.js
       curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
@@ -101,7 +104,7 @@ parts:
       # Install pnpm
       npm install -g pnpm
 
-      # Build frontend
+      # Build frontend (Cypress binary will be skipped)
       pnpm install
       pnpm run build:ce
 
