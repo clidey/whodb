@@ -54,10 +54,18 @@ apps:
     command: bin/whodb
     desktop: share/applications/whodb.desktop
     environment:
+      # WebKit settings for Wails app to work in snap
       WEBKIT_DISABLE_COMPOSITING_MODE: "1"
       WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS: "1"
+      WEBKIT_DISABLE_DMABUF_RENDERER: "1"
+      # Critical for loading embedded assets in Wails
+      WEBKIT_ALLOW_FILE_ACCESS_FROM_FILE_URLS: "1"
+      WEBKIT_ALLOW_UNIVERSAL_ACCESS_FROM_FILE_URLS: "1"
+      WEBKIT_DISABLE_WEB_SECURITY: "1"
+      # Force software rendering for compatibility
       GDK_BACKEND: "x11"
       GTK_USE_PORTAL: "0"
+      WEBKIT_FORCE_SINGLE_PROCESS: "1"
       LIBGL_ALWAYS_SOFTWARE: "1"
       EGL_PLATFORM: "x11"
       __EGL_VENDOR_LIBRARY_DIRS: "$SNAP/usr/share/glvnd/egl_vendor.d:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/GL/egl_vendor.d"
@@ -90,6 +98,8 @@ apps:
       - hardware-observe
       - system-observe
       - mount-observe
+      - removable-media
+      - personal-files
 
 parts:
   # Build Node/frontend dependencies first
@@ -325,7 +335,8 @@ parts:
       cd desktop-ce
 
       # Build the desktop app - Ubuntu 24.04 uses webkit2gtk-4.1, so we need the webkit2_41 tag
-      GOWORK=$PWD/../go.work.desktop-ce wails build -clean -tags desktop,production,webkit2_41,!ee -ldflags="-s -w" -o whodb
+      # Add nosandbox tag to help with snap environment
+      GOWORK=$PWD/../go.work.desktop-ce wails build -clean -tags desktop,production,webkit2_41,nosandbox,!ee -ldflags="-s -w" -o whodb
 
       # Install the binary
       install -D -m755 build/bin/whodb $SNAPCRAFT_PART_INSTALL/bin/whodb
