@@ -36,6 +36,15 @@ jobs:
         with:
           submodules: false
 
+      - name: Setup Go cache for snap build
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'core/go.mod'
+          cache: true
+          cache-dependency-path: |
+            core/go.sum
+            desktop-ce/go.sum
+
       - name: Install build dependencies
         run: |
           # Update package lists

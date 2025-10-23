@@ -67,6 +67,10 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: 'desktop-${{ inputs.edition }}/go.mod'
+          cache: true
+          cache-dependency-path: |
+            desktop-${{ inputs.edition }}/go.sum
+            core/go.sum
 
       - name: Setup Node.js and pnpm
         if: matrix.enabled != false
@@ -78,6 +82,23 @@ jobs:
         if: matrix.enabled != false
         with:
           version: 10
+          run_install: false
+
+      - name: Get pnpm store directory
+        if: matrix.enabled != false
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        if: matrix.enabled != false
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
 
       - name: Install frontend dependencies
         if: matrix.enabled != false
@@ -86,8 +107,16 @@ jobs:
           CYPRESS_INSTALL_BINARY: "0"  # Skip Cypress binary - not needed for production builds
         run: pnpm i
 
-      - name: Install Wails CLI
+      - name: Cache Wails binary
         if: matrix.enabled != false
+        id: cache-wails
+        uses: actions/cache@v4
+        with:
+          path: ~/go/bin/wails
+          key: ${{ runner.os }}-wails-v2-latest
+
+      - name: Install Wails CLI
+        if: matrix.enabled != false && steps.cache-wails.outputs.cache-hit != 'true'
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
       # Windows AMD64 Build

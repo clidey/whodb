@@ -51,6 +51,8 @@ jobs:
           push: false
           tags: clidey/whodb:${{ inputs.version }}-${{ matrix.arch }}
           outputs: type=docker,dest=/tmp/whodb-docker-${{ matrix.arch }}.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Upload Docker artifact
         uses: actions/upload-artifact@v4
