@@ -7,9 +7,6 @@ on:
         description: 'Version being deployed'
         required: true
         type: string
-    secrets:
-      GITHUB_TOKEN:
-        required: false
 
 jobs:
   generate-homebrew-cask:
@@ -29,7 +26,7 @@ jobs:
 
       - name: Generate Homebrew cask file
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN || github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           VERSION="${{ inputs.version }}"
 

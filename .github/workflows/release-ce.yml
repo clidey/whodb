@@ -344,8 +344,6 @@ jobs:
     uses: ./.github/workflows/_deploy-homebrew.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
-    secrets:
-      GITHUB_TOKEN: ${{ github.token }}
 
   # Step 8: Verify deployments
   verify-deployments:
