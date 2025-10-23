@@ -34,6 +34,7 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "Checking for Windows SDK..."
+          $ErrorActionPreference = "Continue"
 
           # Check if makeappx is already available
           $makeappxExists = $false
@@ -43,7 +44,9 @@ jobs:
               Write-Host "✅ MakeAppx already available at: $existing"
               $makeappxExists = $true
             }
-          } catch {}
+          } catch {
+            # Ignore errors from where.exe
+          }
 
           if (-not $makeappxExists) {
             # Check Windows Kits installation
@@ -58,8 +61,13 @@ jobs:
                 Write-Host "Adding to PATH: $sdkPath"
                 # Use Add-Content for GitHub Actions PATH
                 if ($env:GITHUB_PATH) {
-                  Add-Content -Path $env:GITHUB_PATH -Value $sdkPath
-                  Write-Host "✅ Added to GITHUB_PATH"
+                  try {
+                    Add-Content -Path $env:GITHUB_PATH -Value $sdkPath -ErrorAction Continue
+                    Write-Host "✅ Added to GITHUB_PATH"
+                  } catch {
+                    Write-Host "Note: Could not update GITHUB_PATH, but continuing"
+                    $env:PATH = "$sdkPath;$env:PATH"
+                  }
                 } else {
                   # Fallback: Set for current session
                   $env:PATH = "$sdkPath;$env:PATH"
@@ -72,6 +80,10 @@ jobs:
               Write-Host "⚠️ Windows SDK not found, will search for alternatives during packaging"
             }
           }
+
+          # Explicitly exit with success
+          Write-Host "SDK setup completed"
+          exit 0
 
       - name: Download Windows executables
         uses: actions/download-artifact@v4
