@@ -53,13 +53,13 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'release')
     outputs:
       version: ${{ steps.calc.outputs.version }}
-      previous_version: ${{ steps.calc.outputs.previous-version }}
-      deployment_mode: ${{ steps.calc.outputs.deployment-mode }}
-      stage_only: ${{ steps.calc.outputs.stage-only }}
-      deploy_docker: ${{ steps.calc.outputs.deploy-docker }}
-      deploy_snap: ${{ steps.calc.outputs.deploy-snap }}
-      deploy_microsoft: ${{ steps.calc.outputs.deploy-microsoft }}
-      deploy_apple: ${{ steps.calc.outputs.deploy-apple }}
+      previous-version: ${{ steps.calc.outputs.previous-version }}
+      deployment-mode: ${{ steps.calc.outputs.deployment-mode }}
+      stage-only: ${{ steps.calc.outputs.stage-only }}
+      deploy-docker: ${{ steps.calc.outputs.deploy-docker }}
+      deploy-snap: ${{ steps.calc.outputs.deploy-snap }}
+      deploy-microsoft: ${{ steps.calc.outputs.deploy-microsoft }}
+      deploy-apple: ${{ steps.calc.outputs.deploy-apple }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
