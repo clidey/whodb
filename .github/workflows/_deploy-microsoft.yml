@@ -30,6 +30,41 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Windows SDK
+        shell: pwsh
+        run: |
+          Write-Host "Checking for Windows SDK..."
+
+          # Check if makeappx is already available
+          $makeappxExists = $false
+          try {
+            $existing = where.exe makeappx.exe 2>$null
+            if ($existing) {
+              Write-Host "✅ MakeAppx already available at: $existing"
+              $makeappxExists = $true
+            }
+          } catch {}
+
+          if (-not $makeappxExists) {
+            # Check Windows Kits installation
+            $kitsPath = "C:\Program Files (x86)\Windows Kits\10\bin"
+            if (Test-Path $kitsPath) {
+              $versions = Get-ChildItem -Path $kitsPath -Directory | Where-Object { $_.Name -match "^\d+\.\d+\.\d+\.\d+$" }
+              if ($versions) {
+                Write-Host "✅ Windows SDK found with versions: $($versions.Name -join ', ')"
+                # Add the latest version to PATH
+                $latestVersion = $versions | Sort-Object Name -Descending | Select-Object -First 1
+                $sdkPath = Join-Path $latestVersion.FullName "x64"
+                Write-Host "Adding to PATH: $sdkPath"
+                echo "$sdkPath" >> $env:GITHUB_PATH
+              } else {
+                Write-Host "⚠️ Windows Kits directory exists but no SDK versions found"
+              }
+            } else {
+              Write-Host "⚠️ Windows SDK not found, will search for alternatives during packaging"
+            }
+          }
+
       - name: Download Windows executables
         uses: actions/download-artifact@v4
         with:
@@ -45,30 +80,37 @@ jobs:
           $msixDir = "msix-package"
           New-Item -ItemType Directory -Force -Path $msixDir
 
-          # Copy executable
-          $exePath = "desktop-builds/build/windows/amd64/whodb.exe"
-          if (Test-Path $exePath) {
-            Copy-Item $exePath "$msixDir/whodb.exe"
-            Write-Host "✅ Found executable at $exePath"
-          } else {
-            # Try alternative paths
-            $altPaths = @(
-              "desktop-builds/windows/amd64/whodb.exe",
-              "desktop-builds/whodb.exe"
-            )
-            $found = $false
-            foreach ($altPath in $altPaths) {
-              if (Test-Path $altPath) {
-                Copy-Item $altPath "$msixDir/whodb.exe"
-                Write-Host "✅ Found executable at $altPath"
-                $found = $true
-                break
-              }
+          # Find and copy executable
+          Write-Host "Looking for Windows executable..."
+
+          # List what's in the download directory for debugging
+          Write-Host "Contents of desktop-builds directory:"
+          Get-ChildItem -Path "desktop-builds" -Recurse -Filter "*.exe" | ForEach-Object {
+            Write-Host "  Found: $($_.FullName)"
+          }
+
+          # Try multiple possible paths
+          $possiblePaths = @(
+            "desktop-builds/windows/amd64/whodb.exe",
+            "desktop-builds/build/windows/amd64/whodb.exe",
+            "desktop-builds/whodb.exe",
+            "desktop-builds/whodb-amd64.exe"
+          )
+
+          $exeFound = $false
+          foreach ($path in $possiblePaths) {
+            if (Test-Path $path) {
+              Copy-Item $path "$msixDir/whodb.exe"
+              Write-Host "✅ Found and copied executable from: $path"
+              $exeFound = $true
+              break
             }
-            if (-not $found) {
-              Write-Error "Executable not found"
-              exit 1
-            }
+          }
+
+          if (-not $exeFound) {
+            Write-Error "❌ Executable not found in any expected location"
+            Write-Host "Please check the artifact upload in the build-desktop workflow"
+            exit 1
           }
 
           # Create AppxManifest.xml
@@ -134,45 +176,114 @@ jobs:
             $bitmap.Dispose()
           }
 
-          # Find MakeAppx.exe
-          $makeAppxPaths = @(
-            "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\makeappx.exe",
-            "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22000.0\x64\makeappx.exe",
-            "C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64\makeappx.exe"
-          )
+          # Find MakeAppx.exe - GitHub Actions runners have it in various locations
+          Write-Host "Searching for MakeAppx.exe..."
 
+          # First try using where.exe to find it in PATH
           $makeAppx = $null
-          foreach ($path in $makeAppxPaths) {
-            if (Test-Path $path) {
-              $makeAppx = $path
-              Write-Host "Found MakeAppx at: $makeAppx"
-              break
+          try {
+            $makeAppx = (where.exe makeappx.exe 2>$null | Select-Object -First 1)
+            if ($makeAppx) {
+              Write-Host "Found MakeAppx in PATH: $makeAppx"
+            }
+          } catch {
+            Write-Host "MakeAppx not found in PATH"
+          }
+
+          # If not in PATH, search common locations
+          if (-not $makeAppx) {
+            # Search in all Windows Kits versions
+            $windowsKitsPath = "C:\Program Files (x86)\Windows Kits\10\bin"
+            if (Test-Path $windowsKitsPath) {
+              # Find all version directories and sort them in descending order
+              $versionDirs = Get-ChildItem -Path $windowsKitsPath -Directory |
+                Where-Object { $_.Name -match "^\d+\.\d+\.\d+\.\d+$" } |
+                Sort-Object Name -Descending
+
+              foreach ($versionDir in $versionDirs) {
+                $testPath = Join-Path $versionDir.FullName "x64\makeappx.exe"
+                if (Test-Path $testPath) {
+                  $makeAppx = $testPath
+                  Write-Host "Found MakeAppx at: $makeAppx"
+                  break
+                }
+                # Also check x86 path as fallback
+                $testPath = Join-Path $versionDir.FullName "x86\makeappx.exe"
+                if (Test-Path $testPath) {
+                  $makeAppx = $testPath
+                  Write-Host "Found MakeAppx at: $makeAppx (x86 version)"
+                  break
+                }
+              }
+            }
+          }
+
+          # Last resort: check if it's in a GitHub Actions tool cache location
+          if (-not $makeAppx) {
+            $githubToolPaths = @(
+              "${env:ProgramFiles(x86)}\Windows Kits\10\App Certification Kit\makeappx.exe",
+              "${env:ProgramFiles}\Windows Kits\10\App Certification Kit\makeappx.exe"
+            )
+
+            foreach ($path in $githubToolPaths) {
+              if (Test-Path $path) {
+                $makeAppx = $path
+                Write-Host "Found MakeAppx at: $makeAppx"
+                break
+              }
             }
           }
 
           if (-not $makeAppx) {
-            Write-Error "MakeAppx.exe not found. Windows SDK may not be installed."
-            exit 1
+            Write-Warning "MakeAppx.exe not found. Windows SDK may not be installed."
+            Write-Host "Contents of C:\Program Files (x86)\Windows Kits\10\bin:"
+            if (Test-Path "C:\Program Files (x86)\Windows Kits\10\bin") {
+              Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin" | Format-Table Name
+            } else {
+              Write-Host "Windows Kits directory not found"
+            }
+
+            # Fallback: Create a ZIP file instead of MSIX
+            Write-Host "Creating ZIP package as fallback..."
+            $zipPath = "WhoDB_${{ inputs.version }}_windows.zip"
+
+            # Use PowerShell's Compress-Archive
+            Compress-Archive -Path $msixDir\* -DestinationPath $zipPath -Force
+
+            if (Test-Path $zipPath) {
+              Write-Host "⚠️ Created ZIP package instead of MSIX: $zipPath"
+              Write-Host "File size: $((Get-Item $zipPath).Length / 1MB) MB"
+              Write-Host "Note: This ZIP can be extracted and run but won't have Microsoft Store integration"
+
+              # Create a marker file to indicate this is a fallback package
+              "This is a fallback ZIP package. MSIX packaging failed due to missing Windows SDK." | Out-File "MSIX_FALLBACK.txt"
+            } else {
+              Write-Error "Failed to create even a ZIP fallback"
+              exit 1
+            }
+          } else {
+            # Package MSIX
+            Write-Host "Creating MSIX package..."
+            $outputPath = "WhoDB_${{ inputs.version }}.msixbundle"
+            & $makeAppx pack /d $msixDir /p $outputPath /v
+
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "Failed to create MSIX package"
+              exit 1
+            }
+
+            Write-Host "✅ MSIX package created: $outputPath"
+            Write-Host "File size: $((Get-Item $outputPath).Length / 1MB) MB"
           }
 
-          # Package MSIX
-          Write-Host "Creating MSIX package..."
-          $outputPath = "WhoDB_${{ inputs.version }}.msixbundle"
-          & $makeAppx pack /d $msixDir /p $outputPath /v
-
-          if ($LASTEXITCODE -ne 0) {
-            Write-Error "Failed to create MSIX package"
-            exit 1
-          }
-
-          Write-Host "✅ MSIX package created: $outputPath"
-          Write-Host "File size: $((Get-Item $outputPath).Length / 1MB) MB"
-
-      - name: Upload MSIX package
+      - name: Upload Windows package
         uses: actions/upload-artifact@v4
         with:
           name: windows-msix
-          path: "*.msixbundle"
+          path: |
+            *.msixbundle
+            *.zip
+            MSIX_FALLBACK.txt
           retention-days: 1
 
   deploy-microsoft-store:
