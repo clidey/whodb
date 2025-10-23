@@ -1,0 +1,122 @@
+name: Deploy to Docker Hub
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version being deployed'
+        required: true
+        type: string
+      stage-only:
+        description: 'Stage only deployment'
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      DOCKER_USERNAME:
+        required: false
+      DOCKER_TOKEN:
+        required: false
+
+jobs:
+  deploy-docker:
+    name: Deploy to Docker Hub
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout for scripts
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Download Docker images
+        uses: actions/download-artifact@v4
+        with:
+          pattern: docker-image-*
+          path: docker-images/
+
+      - name: Check Docker credentials
+        id: check_creds
+        run: |
+          if [ -n "${{ secrets.DOCKER_TOKEN }}" ]; then
+            echo "has_creds=true" >> $GITHUB_OUTPUT
+            echo "✅ Docker credentials are configured"
+          else
+            echo "has_creds=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Docker credentials not configured"
+
+            if [ "${{ inputs.stage-only }}" != "true" ]; then
+              echo "::error::Production deployment requires Docker credentials"
+              exit 1
+            else
+              echo "Continuing without credentials for stage-only mode"
+            fi
+          fi
+
+      - name: Login to Docker Hub
+        if: steps.check_creds.outputs.has_creds == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Load and push Docker images
+        if: steps.check_creds.outputs.has_creds == 'true'
+        run: |
+          VERSION="${{ inputs.version }}"
+          echo "📦 Deploying Docker images for version ${VERSION}"
+
+          # Load images
+          echo "Loading AMD64 image..."
+          docker load < docker-images/docker-image-amd64/whodb-docker-amd64.tar
+
+          echo "Loading ARM64 image..."
+          docker load < docker-images/docker-image-arm64/whodb-docker-arm64.tar
+
+          # Tag and push individual architecture images
+          echo "Pushing AMD64 image..."
+          docker tag clidey/whodb:${VERSION}-amd64 clidey/whodb:${VERSION}-amd64
+          docker push clidey/whodb:${VERSION}-amd64
+
+          echo "Pushing ARM64 image..."
+          docker tag clidey/whodb:${VERSION}-arm64 clidey/whodb:${VERSION}-arm64
+          docker push clidey/whodb:${VERSION}-arm64
+
+          # Create and push multi-arch manifest
+          echo "Creating multi-arch manifest..."
+          docker manifest create clidey/whodb:${VERSION} \
+            clidey/whodb:${VERSION}-amd64 \
+            clidey/whodb:${VERSION}-arm64
+          docker manifest push clidey/whodb:${VERSION}
+
+          # Update latest tag (production only)
+          if [ "${{ inputs.stage-only }}" != "true" ]; then
+            echo "Updating latest tag..."
+            docker manifest create clidey/whodb:latest \
+              clidey/whodb:${VERSION}-amd64 \
+              clidey/whodb:${VERSION}-arm64
+            docker manifest push clidey/whodb:latest
+          fi
+
+          echo "✅ Docker images deployed successfully"
+
+      - name: Sign Docker images with Cosign
+        if: steps.check_creds.outputs.has_creds == 'true'
+        run: |
+          # Install Cosign
+          curl -sSL https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64 -o cosign
+          chmod +x cosign
+          sudo mv cosign /usr/local/bin/
+
+          VERSION="${{ inputs.version }}"
+
+          echo "🔏 Signing Docker images..."
+          cosign sign --yes clidey/whodb:${VERSION}
+
+          if [ "${{ inputs.stage-only }}" != "true" ]; then
+            cosign sign --yes clidey/whodb:latest
+          fi
+
+          echo "✅ Docker images signed"

@@ -1,0 +1,114 @@
+name: Deploy Homebrew Cask
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version being deployed'
+        required: true
+        type: string
+    secrets:
+      GITHUB_TOKEN:
+        required: false
+
+jobs:
+  generate-homebrew-cask:
+    name: Generate Homebrew Cask
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Download macOS DMG
+        uses: actions/download-artifact@v4
+        with:
+          name: desktop-darwin-universal
+          path: desktop-builds/
+
+      - name: Generate Homebrew cask file
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN || github.token }}
+        run: |
+          VERSION="${{ inputs.version }}"
+
+          # Find DMG file
+          DMG_PATH=$(find desktop-builds -name "*.dmg" | head -1)
+
+          if [ -z "$DMG_PATH" ]; then
+            echo "❌ No DMG file found"
+            exit 1
+          fi
+
+          echo "Found DMG: $DMG_PATH"
+
+          # Calculate SHA256
+          SHA256=$(shasum -a 256 "$DMG_PATH" | cut -d' ' -f1)
+          echo "SHA256: $SHA256"
+
+          # Generate cask file
+          cat > whodb.rb <<EOF
+          cask "whodb" do
+            version "${VERSION}"
+            sha256 "${SHA256}"
+
+            url "https://github.com/clidey/whodb/releases/download/v${VERSION}/whodb.dmg"
+            name "WhoDB"
+            desc "Database management tool with AI-powered features"
+            homepage "https://github.com/clidey/whodb"
+
+            app "WhoDB.app"
+
+            zap trash: [
+              "~/Library/Application Support/WhoDB",
+              "~/Library/Preferences/com.clidey.whodb.plist",
+              "~/Library/Saved Application State/com.clidey.whodb.savedState"
+            ]
+          end
+          EOF
+
+          echo "📝 Generated Homebrew cask file:"
+          cat whodb.rb
+
+      - name: Upload cask file as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: homebrew-cask
+          path: whodb.rb
+          retention-days: 30
+
+      - name: Create cask update instructions
+        run: |
+          VERSION="${{ inputs.version }}"
+
+          cat > HOMEBREW_UPDATE.md <<EOF
+          # Homebrew Cask Update Instructions
+
+          The cask file has been generated for WhoDB v${VERSION}.
+
+          ## To submit to Homebrew:
+
+          1. Fork the homebrew-cask repository
+          2. Create a new branch: \`update-whodb-${VERSION}\`
+          3. Replace the contents of \`Casks/whodb.rb\` with the generated file
+          4. Commit with message: \`Update WhoDB to ${VERSION}\`
+          5. Submit a pull request
+
+          ## Manual Installation:
+
+          Users can install this version directly:
+          \`\`\`bash
+          brew install --cask whodb.rb
+          \`\`\`
+          EOF
+
+          echo "📋 Update instructions generated"
+          cat HOMEBREW_UPDATE.md
+
+      - name: Upload instructions
+        uses: actions/upload-artifact@v4
+        with:
+          name: homebrew-instructions
+          path: HOMEBREW_UPDATE.md
+          retention-days: 30
