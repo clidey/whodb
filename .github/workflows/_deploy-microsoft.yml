@@ -479,7 +479,6 @@ jobs:
                 -PackagePath $msixPath.FullName `
                 -UpdatePackages `
                 -AutoCommit:$autoCommit `
-                -Force `
                 -NoStatus
 
               if ($autoCommit) {
