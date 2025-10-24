@@ -24,6 +24,7 @@ description: |
 base: core24
 confinement: strict
 grade: stable
+compression: xz
 title: WhoDB
 license: Apache-2.0
 contact: mailto:support@whodb.com
@@ -285,20 +286,20 @@ parts:
       - usr/share/gir-1.0/**
       # Include GIO modules
       - usr/lib/*/gio/modules/**
-      # Include locale data for proper internationalization
-      - usr/share/locale/**
+      # Include only essential locale data (English)
+      - usr/share/locale/en*/**
       # Include MIME type data
       - usr/share/mime/**
-      # Include Mesa/EGL configuration
+      # Include Mesa/EGL configuration (exclude vulkan since we're not using it)
       - usr/share/glvnd/**
-      - usr/share/vulkan/**
       - etc/glvnd/**
-      # Include EGL vendor files
-      - usr/share/egl/**
-      - usr/lib/*/dri/**
-      # Include font files and configuration
-      - usr/share/fonts/**
-      - etc/fonts/**
+      # Include only essential DRI drivers
+      - usr/lib/*/dri/swrast_dri.so
+      # Include only essential fonts
+      - usr/share/fonts/truetype/liberation/**
+      - usr/share/fonts/truetype/dejavu/DejaVuSans*.ttf
+      - etc/fonts/fonts.conf
+      - etc/fonts/conf.d/**
       # Exclude unnecessary libraries to reduce snap size
       - -usr/lib/*/caca/libgl_plugin.so.*
       - -usr/lib/*/libcaca++.so.*
@@ -319,6 +320,50 @@ parts:
       - -usr/lib/*/libvulkan_*.so
       - -usr/lib/*/libVkLayer_*.so
       - -usr/lib/*/libvulkan.so.*
+      # Exclude most GStreamer plugins (keep only essential ones)
+      - -usr/lib/*/gstreamer-1.0/libgstadpcm*.so
+      - -usr/lib/*/gstreamer-1.0/libgstaiff*.so
+      - -usr/lib/*/gstreamer-1.0/libgstasf*.so
+      - -usr/lib/*/gstreamer-1.0/libgstavi*.so
+      - -usr/lib/*/gstreamer-1.0/libgstcacasink*.so
+      - -usr/lib/*/gstreamer-1.0/libgstcdio*.so
+      - -usr/lib/*/gstreamer-1.0/libgstdtmf*.so
+      - -usr/lib/*/gstreamer-1.0/libgstdv*.so
+      - -usr/lib/*/gstreamer-1.0/libgstflac*.so
+      - -usr/lib/*/gstreamer-1.0/libgstflv*.so
+      - -usr/lib/*/gstreamer-1.0/libgstflx*.so
+      - -usr/lib/*/gstreamer-1.0/libgstgdkpixbuf*.so
+      - -usr/lib/*/gstreamer-1.0/libgstjack*.so
+      - -usr/lib/*/gstreamer-1.0/libgstjpeg*.so
+      - -usr/lib/*/gstreamer-1.0/libgstlame*.so
+      - -usr/lib/*/gstreamer-1.0/libgstmidi*.so
+      - -usr/lib/*/gstreamer-1.0/libgstmpg123*.so
+      - -usr/lib/*/gstreamer-1.0/libgstogg*.so
+      - -usr/lib/*/gstreamer-1.0/libgstopus*.so
+      - -usr/lib/*/gstreamer-1.0/libgstoss*.so
+      - -usr/lib/*/gstreamer-1.0/libgstpng*.so
+      - -usr/lib/*/gstreamer-1.0/libgstpulse*.so
+      - -usr/lib/*/gstreamer-1.0/libgstqt*.so
+      - -usr/lib/*/gstreamer-1.0/libgstraw*.so
+      - -usr/lib/*/gstreamer-1.0/libgstrtpmanager*.so
+      - -usr/lib/*/gstreamer-1.0/libgstrtsp*.so
+      - -usr/lib/*/gstreamer-1.0/libgstsid*.so
+      - -usr/lib/*/gstreamer-1.0/libgstsoup*.so
+      - -usr/lib/*/gstreamer-1.0/libgstspeex*.so
+      - -usr/lib/*/gstreamer-1.0/libgsttaglib*.so
+      - -usr/lib/*/gstreamer-1.0/libgsttwolame*.so
+      - -usr/lib/*/gstreamer-1.0/libgstvideo4linux2*.so
+      - -usr/lib/*/gstreamer-1.0/libgstv4l2*.so
+      - -usr/lib/*/gstreamer-1.0/libgstvorbis*.so
+      - -usr/lib/*/gstreamer-1.0/libgstvpx*.so
+      - -usr/lib/*/gstreamer-1.0/libgstwavenc*.so
+      - -usr/lib/*/gstreamer-1.0/libgstwavpack*.so
+      - -usr/lib/*/gstreamer-1.0/libgstwavparse*.so
+      - -usr/lib/*/gstreamer-1.0/libgstx264*.so
+      - -usr/lib/*/gstreamer-1.0/libgstx265*.so
+      - -usr/lib/*/gstreamer-1.0/libgstximagesrc*.so
+      - -usr/lib/*/gstreamer-1.0/libgstxvid*.so
+      - -usr/lib/*/gstreamer-1.0/libgsty4m*.so
       # Exclude unused Mesa/GL libraries
       - -usr/lib/*/libEGL_mesa.so.*
       - -usr/lib/*/libGLX_mesa.so.*
@@ -366,6 +411,39 @@ parts:
       # Exclude unused other libraries
       - -usr/lib/*/libbrotlienc.so.*
       - -usr/lib/*/libicutu.so.*
+      # Exclude documentation and unnecessary files
+      - -usr/share/doc/**
+      - -usr/share/man/**
+      - -usr/share/info/**
+      - -usr/share/lintian/**
+      - -usr/share/bug/**
+      - -usr/share/gtk-doc/**
+      - -usr/share/pixmaps/**
+      - -usr/share/applications/**
+      - -usr/include/**
+      - -usr/lib/*/pkgconfig/**
+      - -usr/lib/*/cmake/**
+      - -usr/share/aclocal/**
+      - -usr/share/pkgconfig/**
+      - -usr/share/vala/**
+      - -usr/share/glib-2.0/schemas/**
+      - -usr/share/glib-2.0/codegen/**
+      - -usr/share/glib-2.0/gdb/**
+      - -usr/share/glib-2.0/gettext/**
+      - -usr/share/glib-2.0/valgrind/**
+      - -usr/share/thumbnailers/**
+      - -usr/share/gettext/**
+      - -usr/share/GConf/**
+      - -usr/share/dbus-1/**
+      - -usr/share/sounds/**
+      - -usr/share/icons/**
+      - -var/**
+      - -usr/lib/*/gstreamer-1.0/libgst*.a
+      - -usr/lib/*/gstreamer-1.0/libgst*.la
+      - -**/*.a
+      - -**/*.la
+      - -**/*.pyo
+      - -**/*.pyc
     override-build: |
       # Install Wails (required by Makefile)
       go install github.com/wailsapp/wails/v2/cmd/wails@latest
@@ -382,8 +460,15 @@ parts:
       make ci-build-prod-linux
 
       # The Makefile places the binary in build/linux/$(uname -m)/
-      # Install it to the snap location
       ARCH=$(uname -m)
+
+      # Compress the binary with UPX for size reduction
+      if command -v upx >/dev/null 2>&1; then
+        echo "Compressing binary with UPX..."
+        upx --best --lzma build/linux/$ARCH/whodb || true
+      fi
+
+      # Install it to the snap location
       install -D -m755 build/linux/$ARCH/whodb $SNAPCRAFT_PART_INSTALL/bin/whodb
 
   webkit-launcher:

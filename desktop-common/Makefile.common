@@ -314,8 +314,8 @@ build-prod-linux: prepare
 ci-build-prod-linux:
 	@echo "Building WhoDB Linux binary for CI (native architecture: $$(uname -m))..."
 	@mkdir -p build/linux/$$(uname -m)
-	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean \
-		$(BUILD_TAGS) $(LINUX_TAGS)  -ldflags="-s -w" -o $(OUTPUT_PREFIX)
+	CGO_CFLAGS="-O3" CGO_LDFLAGS="-s -w" GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean \
+		$(BUILD_TAGS) $(LINUX_TAGS)  -ldflags="-s -w -extldflags '-static-libgcc -static-libstdc++'" -o $(OUTPUT_PREFIX)
 	@mv build/bin/$(OUTPUT_PREFIX) build/linux/$$(uname -m)/
 
 # Production build specifically for Linux AMD64
