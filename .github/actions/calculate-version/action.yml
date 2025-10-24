@@ -24,10 +24,10 @@ inputs:
     description: 'Deploy to Apple App Store'
     required: false
     default: 'true'
-  github-release-draft:
-    description: 'Create GitHub release as draft (production mode only)'
+  publish-github-release:
+    description: 'Publish GitHub release to production (production mode only)'
     required: false
-    default: 'true'
+    default: 'false'
 outputs:
   version:
     description: 'Calculated version'
@@ -53,9 +53,9 @@ outputs:
   deploy-apple:
     description: 'Deploy Apple flag'
     value: ${{ steps.stores.outputs.deploy-apple }}
-  github-release-draft:
-    description: 'GitHub release draft flag'
-    value: ${{ steps.flags.outputs.github-release-draft }}
+  publish-github-release:
+    description: 'Publish GitHub release flag'
+    value: ${{ steps.flags.outputs.publish-github-release }}
 
 runs:
   using: 'composite'
@@ -83,16 +83,16 @@ runs:
         echo "stage-only=$STAGE_ONLY" >> $GITHUB_OUTPUT
         echo "Stage only: $STAGE_ONLY"
 
-        # For production mode, use the provided github-release-draft input
-        # For stage-only, always override to true (always draft)
+        # For production mode, use the provided publish-github-release input
+        # For stage-only, always override to false (always draft, ignore publish flag)
         if [ "$MODE" = "stage-only" ]; then
-          GITHUB_RELEASE_DRAFT="true"
+          PUBLISH_GITHUB_RELEASE="false"
         else
-          GITHUB_RELEASE_DRAFT="${{ inputs.github-release-draft }}"
+          PUBLISH_GITHUB_RELEASE="${{ inputs.publish-github-release }}"
         fi
 
-        echo "github-release-draft=$GITHUB_RELEASE_DRAFT" >> $GITHUB_OUTPUT
-        echo "GitHub release draft: $GITHUB_RELEASE_DRAFT"
+        echo "publish-github-release=$PUBLISH_GITHUB_RELEASE" >> $GITHUB_OUTPUT
+        echo "Publish GitHub release: $PUBLISH_GITHUB_RELEASE"
 
     - name: Calculate version
       id: version

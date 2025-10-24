@@ -56,11 +56,11 @@ on:
         required: false
         type: boolean
         default: false
-      github-release-draft:
-        description: 'Create GitHub release as draft (only for production mode)'
+      publish-github-release:
+        description: 'Publish GitHub release to production (leave unchecked to keep as draft)'
         required: false
         type: boolean
-        default: true
+        default: false
 
 jobs:
   # Step 1: Calculate version and deployment parameters
@@ -77,7 +77,7 @@ jobs:
       deploy-snap: ${{ steps.calc.outputs.deploy-snap }}
       deploy-microsoft: ${{ steps.calc.outputs.deploy-microsoft }}
       deploy-apple: ${{ steps.calc.outputs.deploy-apple }}
-      github-release-draft: ${{ steps.calc.outputs.github-release-draft }}
+      publish-github-release: ${{ steps.calc.outputs.publish-github-release }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -109,7 +109,7 @@ jobs:
           deploy-snap: ${{ inputs.deploy-snap }}
           deploy-microsoft: ${{ inputs.deploy-microsoft }}
           deploy-apple: ${{ inputs.deploy-apple }}
-          github-release-draft: ${{ inputs.github-release-draft }}
+          publish-github-release: ${{ inputs.publish-github-release }}
 
       - name: Display configuration
         run: |
@@ -120,7 +120,7 @@ jobs:
           echo "| **Version** | ${{ steps.calc.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
           echo "| **Mode** | ${{ steps.calc.outputs.deployment-mode }} |" >> $GITHUB_STEP_SUMMARY
           echo "| **Stage Only** | ${{ steps.calc.outputs.stage-only }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| **GitHub Release Draft** | ${{ steps.calc.outputs.github-release-draft }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Publish GitHub Release** | ${{ steps.calc.outputs.publish-github-release }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Deployment Targets" >> $GITHUB_STEP_SUMMARY
 
@@ -310,7 +310,7 @@ jobs:
         with:
           tag: v${{ needs.calculate-version.outputs.version }}
           name: Release v${{ needs.calculate-version.outputs.version }}
-          draft: ${{ needs.calculate-version.outputs.stage-only == 'true' || needs.calculate-version.outputs.github-release-draft == 'true' }}
+          draft: ${{ needs.calculate-version.outputs.stage-only == 'true' || needs.calculate-version.outputs.publish-github-release != 'true' }}
           prerelease: false
           generateReleaseNotes: true
           artifacts: final-assets/*
@@ -518,7 +518,7 @@ jobs:
 
           # GitHub Release
           if [ "${{ needs.create-github-release.result }}" = "success" ]; then
-            if [ "${{ needs.calculate-version.outputs.stage-only }}" = "true" ] || [ "${{ needs.calculate-version.outputs.github-release-draft }}" = "true" ]; then
+            if [ "${{ needs.calculate-version.outputs.stage-only }}" = "true" ] || [ "${{ needs.calculate-version.outputs.publish-github-release }}" != "true" ]; then
               echo "| GitHub Release | ✅ Created | Draft release |" >> $GITHUB_STEP_SUMMARY
             else
               echo "| GitHub Release | ✅ Created | Published |" >> $GITHUB_STEP_SUMMARY
