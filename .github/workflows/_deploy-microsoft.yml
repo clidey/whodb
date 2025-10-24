@@ -429,12 +429,25 @@ jobs:
           Write-Host "Publishing mode: $targetPublishMode"
           Write-Host "MSIX package: $($msixPath.Name)"
 
+          # Create minimal config file for StoreBroker
+          $configPath = "storebroker_config.json"
+          @{
+            appId = $appId
+            applicationPackages = @(@{
+              fileName = $msixPath.Name
+              fileStatus = "PendingUpload"
+            })
+          } | ConvertTo-Json -Depth 10 | Out-File $configPath -Encoding UTF8
+
+          Write-Host "Created StoreBroker config: $configPath"
+
           # Let Update-ApplicationSubmission handle everything (clones published submission)
           try {
             Write-Host "Creating and uploading submission..."
 
             Update-ApplicationSubmission `
               -AppId $appId `
+              -SubmissionDataPath $configPath `
               -PackagePath $msixPath.FullName `
               -ReplacePackages `
               -TargetPublishMode $targetPublishMode `
