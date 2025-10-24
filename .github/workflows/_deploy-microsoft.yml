@@ -431,7 +431,11 @@ jobs:
 
           # Get the current published submission to use as base
           Write-Host "Fetching current published submission..."
-          $currentSubmission = Get-ApplicationSubmission -AppId $appId -GetAll
+          $app = Get-Application -AppId $appId
+          $publishedSubmissionId = $app.lastPublishedApplicationSubmission.id
+          Write-Host "Last published submission ID: $publishedSubmissionId"
+
+          $currentSubmission = Get-ApplicationSubmission -AppId $appId -SubmissionId $publishedSubmissionId
 
           # Modify only the packages section
           $currentSubmission.applicationPackages = @(@{
