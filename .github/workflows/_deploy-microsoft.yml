@@ -429,19 +429,50 @@ jobs:
           Write-Host "Publishing mode: $targetPublishMode"
           Write-Host "MSIX package: $($msixPath.Name)"
 
-          # Create minimal config file for StoreBroker
-          $configPath = "storebroker_config.json"
-          @{
-            appId = $appId
-            applicationPackages = @(@{
+          # Get the current published submission to use as base
+          try {
+            Write-Host "Fetching current published submission..."
+            $currentSubmission = Get-ApplicationSubmission -AppId $appId -GetAll
+
+            # Modify only the packages section
+            $currentSubmission.applicationPackages = @(@{
               fileName = $msixPath.Name
               fileStatus = "PendingUpload"
+              minimumDirectXVersion = "None"
+              minimumSystemRam = "None"
             })
-          } | ConvertTo-Json -Depth 10 | Out-File $configPath -Encoding UTF8
 
-          Write-Host "Created StoreBroker config: $configPath"
+            # Update publish mode if needed
+            $currentSubmission.targetPublishMode = $targetPublishMode
 
-          # Let Update-ApplicationSubmission handle everything (clones published submission)
+            # Remove targetPublishDate if exists (not compatible with Immediate mode)
+            if ($currentSubmission.PSObject.Properties["targetPublishDate"]) {
+              $currentSubmission.PSObject.Properties.Remove("targetPublishDate")
+            }
+
+            # Save modified submission to file
+            $configPath = "storebroker_config.json"
+            $currentSubmission | ConvertTo-Json -Depth 10 | Out-File $configPath -Encoding UTF8
+            Write-Host "Created submission config based on current published version"
+
+          } catch {
+            Write-Host "WARNING: Could not fetch current submission: $_"
+            Write-Host "Using minimal config instead"
+
+            # Fallback to minimal config
+            $configPath = "storebroker_config.json"
+            @{
+              applicationPackages = @(@{
+                fileName = $msixPath.Name
+                fileStatus = "PendingUpload"
+                minimumDirectXVersion = "None"
+                minimumSystemRam = "None"
+              })
+              targetPublishMode = $targetPublishMode
+            } | ConvertTo-Json -Depth 10 | Out-File $configPath -Encoding UTF8
+          }
+
+          # Submit using StoreBroker
           try {
             Write-Host "Creating and uploading submission..."
 
@@ -450,8 +481,6 @@ jobs:
               -SubmissionDataPath $configPath `
               -PackagePath $msixPath.FullName `
               -ReplacePackages `
-              -TargetPublishMode $targetPublishMode `
-              -UpdatePublishModeAndVisibility `
               -AutoCommit:$autoCommit `
               -Force `
               -NoStatus
