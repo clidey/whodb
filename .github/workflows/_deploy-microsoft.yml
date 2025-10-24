@@ -430,47 +430,29 @@ jobs:
           Write-Host "MSIX package: $($msixPath.Name)"
 
           # Get the current published submission to use as base
-          try {
-            Write-Host "Fetching current published submission..."
-            $currentSubmission = Get-ApplicationSubmission -AppId $appId -GetAll
+          Write-Host "Fetching current published submission..."
+          $currentSubmission = Get-ApplicationSubmission -AppId $appId -GetAll
 
-            # Modify only the packages section
-            $currentSubmission.applicationPackages = @(@{
-              fileName = $msixPath.Name
-              fileStatus = "PendingUpload"
-              minimumDirectXVersion = "None"
-              minimumSystemRam = "None"
-            })
+          # Modify only the packages section
+          $currentSubmission.applicationPackages = @(@{
+            fileName = $msixPath.Name
+            fileStatus = "PendingUpload"
+            minimumDirectXVersion = "None"
+            minimumSystemRam = "None"
+          })
 
-            # Update publish mode if needed
-            $currentSubmission.targetPublishMode = $targetPublishMode
+          # Update publish mode if needed
+          $currentSubmission.targetPublishMode = $targetPublishMode
 
-            # Remove targetPublishDate if exists (not compatible with Immediate mode)
-            if ($currentSubmission.PSObject.Properties["targetPublishDate"]) {
-              $currentSubmission.PSObject.Properties.Remove("targetPublishDate")
-            }
-
-            # Save modified submission to file
-            $configPath = "storebroker_config.json"
-            $currentSubmission | ConvertTo-Json -Depth 10 | Out-File $configPath -Encoding UTF8
-            Write-Host "Created submission config based on current published version"
-
-          } catch {
-            Write-Host "WARNING: Could not fetch current submission: $_"
-            Write-Host "Using minimal config instead"
-
-            # Fallback to minimal config
-            $configPath = "storebroker_config.json"
-            @{
-              applicationPackages = @(@{
-                fileName = $msixPath.Name
-                fileStatus = "PendingUpload"
-                minimumDirectXVersion = "None"
-                minimumSystemRam = "None"
-              })
-              targetPublishMode = $targetPublishMode
-            } | ConvertTo-Json -Depth 10 | Out-File $configPath -Encoding UTF8
+          # Remove targetPublishDate if exists (not compatible with Immediate mode)
+          if ($currentSubmission.PSObject.Properties["targetPublishDate"]) {
+            $currentSubmission.PSObject.Properties.Remove("targetPublishDate")
           }
+
+          # Save modified submission to file
+          $configPath = "storebroker_config.json"
+          $currentSubmission | ConvertTo-Json -Depth 10 | Out-File $configPath -Encoding UTF8
+          Write-Host "Created submission config based on current published version"
 
           # Submit using StoreBroker
           try {
