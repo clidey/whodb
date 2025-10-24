@@ -147,12 +147,10 @@ parts:
       - libc6
       - libgcc-s1
       - libstdc++6
-      # GTK and WebKit libraries
+      # GTK and WebKit libraries (minimal)
       - libgtk-3-0
       - libwebkit2gtk-4.1-0
       - libjavascriptcoregtk-4.1-0
-      - gir1.2-webkit2-4.1
-      - gir1.2-javascriptcoregtk-4.1
       # X11 and display libraries
       - libx11-6
       - libx11-xcb1
@@ -208,14 +206,9 @@ parts:
       - fonts-dejavu-core
       - fonts-liberation
       - fonts-inter
-      # Media and codecs
+      # Media and codecs (minimal - WebKit might need these)
       - libgstreamer1.0-0
       - libgstreamer-plugins-base1.0-0
-      - libgstreamer-gl1.0-0
-      - gstreamer1.0-plugins-base
-      - gstreamer1.0-plugins-good
-      - gstreamer1.0-gl
-      - liborc-0.4-0
       # Mesa/OpenGL for software rendering
       - mesa-utils
       - libegl-mesa0
@@ -282,10 +275,8 @@ parts:
       # Include WebKit subprocess executables
       - usr/libexec/webkit2gtk-4.1/**
       - usr/lib/*/webkit2gtk-4.1/**
-      # Include GObject introspection files
-      - usr/share/gir-1.0/**
-      # Include GIO modules
-      - usr/lib/*/gio/modules/**
+      # Exclude GObject introspection (not needed at runtime)
+      # Include only essential GIO modules
       # Include only essential locale data (English)
       - usr/share/locale/en*/**
       # Include MIME type data
@@ -295,11 +286,12 @@ parts:
       - etc/glvnd/**
       # Include only essential DRI drivers
       - usr/lib/*/dri/swrast_dri.so
-      # Include only essential fonts
-      - usr/share/fonts/truetype/liberation/**
-      - usr/share/fonts/truetype/dejavu/DejaVuSans*.ttf
+      # Include only minimal fonts (just Liberation Sans)
+      - usr/share/fonts/truetype/liberation/LiberationSans*.ttf
       - etc/fonts/fonts.conf
-      - etc/fonts/conf.d/**
+      - etc/fonts/conf.d/10-*.conf
+      - etc/fonts/conf.d/45-*.conf
+      - etc/fonts/conf.d/60-*.conf
       # Exclude unnecessary libraries to reduce snap size
       - -usr/lib/*/caca/libgl_plugin.so.*
       - -usr/lib/*/libcaca++.so.*
@@ -411,6 +403,16 @@ parts:
       # Exclude unused other libraries
       - -usr/lib/*/libbrotlienc.so.*
       - -usr/lib/*/libicutu.so.*
+      # Exclude large ICU data files (WebKit has its own)
+      - -usr/share/icu/**
+      - -usr/lib/*/libicudata.so.*
+      # Exclude GTK modules we don't need
+      - -usr/lib/*/gtk-3.0/*/immodules/**
+      - -usr/lib/*/gtk-3.0/*/printbackends/**
+      # Exclude all GIO modules except the essential ones
+      - -usr/lib/*/gio/modules/libdconf*.so
+      - -usr/lib/*/gio/modules/libgioremote*.so
+      - -usr/lib/*/gio/modules/libgiognutls*.so
       # Exclude documentation and unnecessary files
       - -usr/share/doc/**
       - -usr/share/man/**
@@ -470,6 +472,187 @@ parts:
 
       # Install it to the snap location
       install -D -m755 build/linux/$ARCH/whodb $SNAPCRAFT_PART_INSTALL/bin/whodb
+
+      # Strip debug symbols from all libraries to reduce size
+      echo "Stripping debug symbols from libraries..."
+      find $SNAPCRAFT_PART_INSTALL -type f -name "*.so*" -exec strip --strip-unneeded {} \; 2>/dev/null || true
+
+      # Remove ICU data files we don't need (keep only essential)
+      echo "Reducing ICU data size..."
+      if [ -d "$SNAPCRAFT_PART_INSTALL/usr/share/icu" ]; then
+        # Keep only essential ICU data
+        find $SNAPCRAFT_PART_INSTALL/usr/share/icu -type f -size +1M -delete 2>/dev/null || true
+      fi
+
+      # Remove any Python bytecode that might have snuck in
+      find $SNAPCRAFT_PART_INSTALL -name "*.pyc" -delete 2>/dev/null || true
+      find $SNAPCRAFT_PART_INSTALL -name "*.pyo" -delete 2>/dev/null || true
+
+      # Remove any duplicate libraries
+      echo "Checking for duplicate libraries..."
+      fdupes -rdN $SNAPCRAFT_PART_INSTALL/usr/lib 2>/dev/null || true
+    override-prime: |
+      # Copy everything first
+      craftctl default
+
+      # Aggressive library stripping
+      echo "Performing aggressive library optimization..."
+
+      # Strip all ELF binaries and libraries aggressively
+      find . -type f -exec sh -c 'file "$1" | grep -q "ELF" && strip --strip-all "$1" 2>/dev/null' _ {} \;
+
+      # Remove all static libraries (not needed at runtime)
+      find . -name "*.a" -delete
+
+      # Remove pkg-config files
+      rm -rf usr/lib/*/pkgconfig usr/share/pkgconfig
+
+      # Remove CMake files
+      rm -rf usr/lib/*/cmake usr/share/cmake*
+
+      # Remove all development headers
+      rm -rf usr/include
+
+      # Remove all documentation
+      rm -rf usr/share/doc usr/share/man usr/share/info usr/share/gtk-doc
+
+      # Remove all example files
+      find . -type d -name "examples" -exec rm -rf {} + 2>/dev/null || true
+      find . -type d -name "demos" -exec rm -rf {} + 2>/dev/null || true
+
+      # Remove GIR files (GObject Introspection)
+      rm -rf usr/share/gir-1.0
+      rm -rf usr/lib/*/girepository-1.0
+
+      # Remove all test files
+      find . -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true
+      find . -type d -name "test" -exec rm -rf {} + 2>/dev/null || true
+
+      # Remove Python files (not needed)
+      find . -name "*.py" -delete
+      find . -name "*.pyc" -delete
+      find . -name "*.pyo" -delete
+      rm -rf usr/lib/python*
+
+      # Remove Perl modules (not needed)
+      rm -rf usr/share/perl*
+      rm -rf usr/lib/*/perl*
+
+      # Remove debug symbols
+      find . -name "*.debug" -delete
+
+      # Remove unused GStreamer plugins (keep only absolutely essential)
+      if [ -d usr/lib/*/gstreamer-1.0 ]; then
+        # Keep only core plugins needed for audio
+        find usr/lib/*/gstreamer-1.0 -name "*.so" ! -name "libgstcoreelements.so" \
+          ! -name "libgstautodetect.so" ! -name "libgstalsa.so" \
+          ! -name "libgstpulseaudio.so" ! -name "libgstplayback.so" \
+          ! -name "libgsttypefindfunctions.so" ! -name "libgstaudioconvert.so" \
+          ! -name "libgstaudioresample.so" ! -name "libgstvolume.so" -delete 2>/dev/null || true
+      fi
+
+      # Remove all fonts except essential ones
+      if [ -d usr/share/fonts ]; then
+        # Keep only Liberation Sans for basic text rendering
+        find usr/share/fonts -type f ! -path "*/liberation/*" ! -name "*Liberation*" -delete 2>/dev/null || true
+      fi
+
+      # Remove unnecessary icon themes (keep only essential icons)
+      rm -rf usr/share/icons/Adwaita
+      rm -rf usr/share/icons/HighContrast
+      find usr/share/icons -name "*.svg" -delete 2>/dev/null || true
+
+      # Remove MIME database cache (will be regenerated if needed)
+      rm -rf usr/share/mime/application usr/share/mime/audio usr/share/mime/chemical
+      rm -rf usr/share/mime/image usr/share/mime/message usr/share/mime/model
+      rm -rf usr/share/mime/multipart usr/share/mime/text usr/share/mime/video
+      rm -rf usr/share/mime/x-content usr/share/mime/x-epoc
+      rm -f usr/share/mime/mime.cache
+
+      # Remove GTK update icon cache
+      rm -f usr/share/icons/*/icon-theme.cache
+
+      # Remove any .la libtool files
+      find . -name "*.la" -delete
+
+      # Remove any backup files
+      find . -name "*~" -delete
+      find . -name "*.bak" -delete
+      find . -name "*.old" -delete
+
+      # Remove unused locale data (keep only en_US)
+      find usr/share/locale -mindepth 1 -maxdepth 1 ! -name "en*" -exec rm -rf {} + 2>/dev/null || true
+
+      # Remove all charset/encoding data except UTF-8
+      if [ -d usr/lib/*/gconv ]; then
+        find usr/lib/*/gconv -name "*.so" ! -name "UTF*.so" ! -name "ISO8859*.so" ! -name "UNICODE*.so" -delete 2>/dev/null || true
+      fi
+
+      # Remove WebKit's unused data
+      rm -rf usr/share/webkitgtk-*
+      rm -rf usr/lib/*/webkit2gtk-*/injected-bundle/*.la
+
+      # Remove large WebKit resources we don't need
+      find usr/lib/*/webkit2gtk-*/ -name "*.pak" -size +1M -delete 2>/dev/null || true
+      find usr/lib/*/webkit2gtk-*/ -name "icudtl.dat" -delete 2>/dev/null || true
+
+      # Remove any WebKit debug files
+      find usr/lib/*/webkit2gtk-*/ -name "*.debug" -delete 2>/dev/null || true
+      find usr/libexec/webkit2gtk-*/ -name "*.debug" -delete 2>/dev/null || true
+
+      # Remove all .pc files (pkg-config)
+      find . -name "*.pc" -delete
+
+      # Remove unused Mesa drivers (keep only software renderer)
+      if [ -d usr/lib/*/dri ]; then
+        find usr/lib/*/dri -name "*.so" ! -name "*swrast*" -delete 2>/dev/null || true
+      fi
+
+      # Remove all Vala files
+      rm -rf usr/share/vala*
+
+      # Remove all aclocal files
+      rm -rf usr/share/aclocal
+
+      # Remove unnecessary symbolic links (keep only essential ones)
+      find usr/lib -type l -name "*.so" | while read link; do
+        target=$(readlink "$link")
+        # Remove versioned symlinks that point to the same directory
+        if [[ "$target" == *.so.* ]]; then
+          # Keep the link only if it's a major version link (e.g., .so.1 not .so.1.2.3)
+          if [[ ! "$link" =~ \.so\.[0-9]+$ ]]; then
+            rm -f "$link" 2>/dev/null || true
+          fi
+        fi
+      done
+
+      # Compress any remaining text/config files
+      find . -type f \( -name "*.xml" -o -name "*.json" -o -name "*.conf" -o -name "*.ini" \) -exec gzip -9 {} \; 2>/dev/null || true
+      # Create symlinks for compressed files so they can still be read
+      for f in $(find . -name "*.gz"); do
+        ln -sf "$(basename "$f")" "${f%.gz}" 2>/dev/null || true
+      done
+
+      # Remove any Qt/KDE files that might have snuck in
+      rm -rf usr/share/qt* usr/lib/*/qt*
+      rm -rf usr/share/kde* usr/lib/*/kde*
+
+      # Remove any systemd files (not needed in snap)
+      rm -rf usr/lib/systemd lib/systemd etc/systemd
+
+      # Remove any udev rules (handled by snapd)
+      rm -rf usr/lib/udev lib/udev etc/udev
+
+      # Final pass: remove empty directories
+      find . -type d -empty -delete 2>/dev/null || true
+
+      # Report final size
+      echo "Final prime directory size:"
+      du -sh .
+
+      # Report largest remaining directories
+      echo "Largest directories:"
+      du -sh usr/lib/* 2>/dev/null | sort -rh | head -10 || true
 
   webkit-launcher:
     plugin: dump
