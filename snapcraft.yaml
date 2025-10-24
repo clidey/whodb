@@ -315,6 +315,57 @@ parts:
       - -usr/lib/*/libpulse-simple.so.*
       - -usr/lib/*/libunwind-*.so.*
       - -usr/lib/*/libwoff2enc.so.*
+      # Exclude unused Vulkan libraries (using software rendering)
+      - -usr/lib/*/libvulkan_*.so
+      - -usr/lib/*/libVkLayer_*.so
+      - -usr/lib/*/libvulkan.so.*
+      # Exclude unused Mesa/GL libraries
+      - -usr/lib/*/libEGL_mesa.so.*
+      - -usr/lib/*/libGLX_mesa.so.*
+      - -usr/lib/*/libGLU.so.*
+      - -usr/lib/*/libGLESv2.so.*
+      - -usr/lib/*/libOpenGL.so.*
+      - -usr/lib/*/libxcb-glx.so.*
+      # Exclude unused NSS/crypto libraries
+      - -usr/lib/*/libnssckbi.so
+      - -usr/lib/*/libnssdbm3.so
+      - -usr/lib/*/libsmime3.so
+      - -usr/lib/*/libssl3.so
+      - -usr/lib/*/libsoftokn3.so
+      - -usr/lib/*/libfreebl3.so
+      - -usr/lib/*/libfreeblpriv3.so
+      - -usr/lib/*/libnss3.so
+      # Exclude unused system libraries
+      - -usr/lib/*/libanl.so.*
+      - -usr/lib/*/libBrokenLocale.so.*
+      - -usr/lib/*/libc_malloc_debug.so.*
+      - -usr/lib/*/libmvec.so.*
+      - -usr/lib/*/libnsl.so.*
+      - -usr/lib/*/libnss_hesiod.so.*
+      - -usr/lib/*/libnss_compat.so.*
+      - -usr/lib/*/libnss_dns.so.*
+      - -usr/lib/*/libnss_files.so.*
+      - -usr/lib/*/libpcprofile.so
+      - -usr/lib/*/libthread_db.so.*
+      - -usr/lib/*/libmemusage.so
+      - -usr/lib/*/libdl.so.*
+      - -usr/lib/*/libpthread.so.*
+      - -usr/lib/*/librt.so.*
+      - -usr/lib/*/libutil.so.*
+      # Exclude unused UI libraries
+      - -usr/lib/*/libharfbuzz-gobject.so.*
+      - -usr/lib/*/libdecor-*.so.*
+      - -usr/lib/*/libXss.so.*
+      - -usr/lib/*/libXxf86vm.so.*
+      - -usr/lib/*/libform.so.*
+      - -usr/lib/*/libmenu.so.*
+      - -usr/lib/*/libpanel.so.*
+      - -usr/lib/*/libnotify.so.*
+      - -usr/lib/*/libpangoxft-*.so.*
+      - -usr/lib/*/libxkbcommon-x11.so.*
+      # Exclude unused other libraries
+      - -usr/lib/*/libbrotlienc.so.*
+      - -usr/lib/*/libicutu.so.*
     override-build: |
       # Install Wails (required by Makefile)
       go install github.com/wailsapp/wails/v2/cmd/wails@latest
