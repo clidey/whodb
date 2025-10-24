@@ -52,16 +52,15 @@ layout:
 apps:
   whodb:
     command: bin/whodb
+    command-chain:
+      - bin/webkit-launcher
     desktop: share/applications/whodb.desktop
     extensions: [ gnome ]
     environment:
-      GTK_USE_PORTAL: "1"
+      GTK_USE_PORTAL: "0"  # Disable portal usage which is causing issues
       WEBKIT_DISABLE_DMABUF_RENDERER: "1"
-      # WebKit subprocess paths - check both locations
-      WEBKIT_EXEC_PATH: "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1:$SNAP/usr/libexec/webkit2gtk-4.1"
-      WEBKIT2_EXEC_PATH: "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1:$SNAP/usr/libexec/webkit2gtk-4.1"
-      # GIO modules for proxy support
-      GIO_MODULE_DIR: "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gio/modules"
+      # Disable sandbox for debugging
+      WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS: "1"
     plugs:
       - desktop
       - desktop-legacy
@@ -147,7 +146,8 @@ parts:
       - libc6
       - libgcc-s1
       - libstdc++6
-      # GTK is provided by GNOME extension, but WebKit needs explicit staging
+      # GTK and WebKit libraries
+      - libgtk-3-0
       - libwebkit2gtk-4.1-0
       - libjavascriptcoregtk-4.1-0
       - gir1.2-webkit2-4.1
@@ -215,6 +215,11 @@ parts:
       - gstreamer1.0-plugins-good
       - gstreamer1.0-gl
       - liborc-0.4-0
+      # Mesa/OpenGL for software rendering
+      - mesa-utils
+      - libegl-mesa0
+      - libgles2
+      - mesa-vulkan-drivers
       - libjpeg-turbo8
       - liblcms2-2
       # Wayland support
@@ -262,9 +267,14 @@ parts:
       - libproxy1v5
       - glib-networking
       - glib-networking-common
+      - glib-networking-services
+      - gsettings-desktop-schemas
+      # Additional proxy/network libraries
+      - libproxy-tools
     prime:
-      # Include the whodb binary
+      # Include the whodb binary and launcher
       - bin/whodb
+      - bin/webkit-launcher
       # Include all libraries
       - lib/**
       - usr/lib/**
@@ -283,6 +293,9 @@ parts:
       - usr/share/glvnd/**
       - usr/share/vulkan/**
       - etc/glvnd/**
+      # Include EGL vendor files
+      - usr/share/egl/**
+      - usr/lib/*/dri/**
       # Include font files and configuration
       - usr/share/fonts/**
       - etc/fonts/**
@@ -321,6 +334,62 @@ parts:
       # Install it to the snap location
       ARCH=$(uname -m)
       install -D -m755 build/linux/$ARCH/whodb $SNAPCRAFT_PART_INSTALL/bin/whodb
+
+  webkit-launcher:
+    plugin: dump
+    source: .
+    override-build: |
+      mkdir -p $SNAPCRAFT_PART_INSTALL/bin
+      cat > $SNAPCRAFT_PART_INSTALL/bin/webkit-launcher << 'EOF'
+      #!/bin/bash
+
+      # Detect architecture
+      if [ "$(uname -m)" = "x86_64" ]; then
+        ARCH_TRIPLET="x86_64-linux-gnu"
+      elif [ "$(uname -m)" = "aarch64" ]; then
+        ARCH_TRIPLET="aarch64-linux-gnu"
+      else
+        ARCH_TRIPLET="${SNAPCRAFT_ARCH_TRIPLET}"
+      fi
+
+      # Debug: Check if WebKit subprocess exists
+      echo "Checking for WebKit subprocesses..." >&2
+      if [ -f "${SNAP}/usr/lib/${ARCH_TRIPLET}/webkit2gtk-4.1/WebKitNetworkProcess" ]; then
+        echo "Found WebKitNetworkProcess at ${SNAP}/usr/lib/${ARCH_TRIPLET}/webkit2gtk-4.1/" >&2
+      elif [ -f "${SNAP}/usr/libexec/webkit2gtk-4.1/WebKitNetworkProcess" ]; then
+        echo "Found WebKitNetworkProcess at ${SNAP}/usr/libexec/webkit2gtk-4.1/" >&2
+      else
+        echo "WARNING: WebKitNetworkProcess not found!" >&2
+        find "${SNAP}" -name "WebKitNetworkProcess" 2>/dev/null | head -5
+      fi
+
+      # Set WebKit paths
+      export WEBKIT_EXEC_PATH="${SNAP}/usr/lib/${ARCH_TRIPLET}/webkit2gtk-4.1:${SNAP}/usr/libexec/webkit2gtk-4.1"
+      export WEBKIT2_EXEC_PATH="${WEBKIT_EXEC_PATH}"
+
+      # Additional WebKit environment
+      export WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS="1"
+      export WEBKIT_DISABLE_COMPOSITING_MODE="1"
+
+      # Disable GIO proxy module that's causing libpxbackend errors
+      export GIO_USE_PROXY_RESOLVER="dummy"
+      unset GIO_MODULE_DIR
+      unset GIO_EXTRA_MODULES
+
+      # Library paths
+      export LD_LIBRARY_PATH="${SNAP}/usr/lib/${ARCH_TRIPLET}:${SNAP}/usr/lib:${SNAP}/lib/${ARCH_TRIPLET}:${SNAP}/lib:${LD_LIBRARY_PATH}"
+
+      # Graphics/EGL configuration for software rendering
+      export LIBGL_ALWAYS_SOFTWARE="1"
+      export __EGL_VENDOR_LIBRARY_FILENAMES="${SNAP}/usr/share/glvnd/egl_vendor.d/50_mesa.json"
+      export LIBGL_DRIVERS_PATH="${SNAP}/usr/lib/${ARCH_TRIPLET}/dri"
+      export __GLX_VENDOR_LIBRARY_NAME="mesa"
+      export MESA_LOADER_DRIVER_OVERRIDE="swrast"
+      export EGL_PLATFORM="x11"
+
+      exec "$@"
+      EOF
+      chmod +x $SNAPCRAFT_PART_INSTALL/bin/webkit-launcher
 
   desktop-file:
     plugin: dump
