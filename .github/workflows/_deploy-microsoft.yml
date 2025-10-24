@@ -453,6 +453,11 @@ jobs:
             $currentSubmission.PSObject.Properties.Remove("targetPublishDate")
           }
 
+          # Add appId to avoid warning
+          if (-not $currentSubmission.PSObject.Properties["appId"]) {
+            $currentSubmission | Add-Member -MemberType NoteProperty -Name "appId" -Value $appId -Force
+          }
+
           # Save modified submission to file
           $configPath = "storebroker_config.json"
           $currentSubmission | ConvertTo-Json -Depth 10 | Out-File $configPath -Encoding UTF8
@@ -468,7 +473,6 @@ jobs:
               -PackagePath $msixPath.FullName `
               -ReplacePackages `
               -AutoCommit:$autoCommit `
-              -Force `
               -NoStatus
 
             if ($autoCommit) {
