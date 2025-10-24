@@ -445,6 +445,11 @@ jobs:
               minimumSystemRam = "None"
             })
 
+            # Add AppId to avoid StoreBroker warning
+            if (-not $submission.PSObject.Properties["appId"]) {
+              $submission | Add-Member -MemberType NoteProperty -Name "appId" -Value $appId
+            }
+
             # Set publish mode
             $submission.targetPublishMode = $targetPublishMode
             if ($submission.PSObject.Properties["targetPublishDate"]) {
@@ -471,6 +476,7 @@ jobs:
                 -AppId $appId `
                 -SubmissionDataPath $submissionDataPath `
                 -PackagePath $msixPath.FullName `
+                -UpdatePackages `
                 -AutoCommit:$autoCommit `
                 -Force `
                 -NoStatus
