@@ -24,6 +24,10 @@ inputs:
     description: 'Deploy to Apple App Store'
     required: false
     default: 'true'
+  github-release-draft:
+    description: 'Create GitHub release as draft (production mode only)'
+    required: false
+    default: 'true'
 outputs:
   version:
     description: 'Calculated version'
@@ -49,6 +53,9 @@ outputs:
   deploy-apple:
     description: 'Deploy Apple flag'
     value: ${{ steps.stores.outputs.deploy-apple }}
+  github-release-draft:
+    description: 'GitHub release draft flag'
+    value: ${{ steps.flags.outputs.github-release-draft }}
 
 runs:
   using: 'composite'
@@ -75,6 +82,17 @@ runs:
 
         echo "stage-only=$STAGE_ONLY" >> $GITHUB_OUTPUT
         echo "Stage only: $STAGE_ONLY"
+
+        # For production mode, use the provided github-release-draft input
+        # For stage-only, always override to true (always draft)
+        if [ "$MODE" = "stage-only" ]; then
+          GITHUB_RELEASE_DRAFT="true"
+        else
+          GITHUB_RELEASE_DRAFT="${{ inputs.github-release-draft }}"
+        fi
+
+        echo "github-release-draft=$GITHUB_RELEASE_DRAFT" >> $GITHUB_OUTPUT
+        echo "GitHub release draft: $GITHUB_RELEASE_DRAFT"
 
     - name: Calculate version
       id: version
