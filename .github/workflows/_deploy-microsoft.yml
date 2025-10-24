@@ -36,7 +36,6 @@ jobs:
           Write-Host "Checking for Windows SDK..."
           $ErrorActionPreference = "Continue"
 
-          # Check if makeappx is already available
           $makeappxExists = $false
           try {
             $existing = where.exe makeappx.exe 2>$null
@@ -44,22 +43,17 @@ jobs:
               Write-Host "✅ MakeAppx already available at: $existing"
               $makeappxExists = $true
             }
-          } catch {
-            # Ignore errors from where.exe
-          }
+          } catch {}
 
           if (-not $makeappxExists) {
-            # Check Windows Kits installation
             $kitsPath = "C:\Program Files (x86)\Windows Kits\10\bin"
             if (Test-Path $kitsPath) {
               $versions = Get-ChildItem -Path $kitsPath -Directory | Where-Object { $_.Name -match "^\d+\.\d+\.\d+\.\d+$" }
               if ($versions) {
                 Write-Host "✅ Windows SDK found with versions: $($versions.Name -join ', ')"
-                # Add the latest version to PATH
                 $latestVersion = $versions | Sort-Object Name -Descending | Select-Object -First 1
                 $sdkPath = Join-Path $latestVersion.FullName "x64"
                 Write-Host "Adding to PATH: $sdkPath"
-                # Use Add-Content for GitHub Actions PATH
                 if ($env:GITHUB_PATH) {
                   try {
                     Add-Content -Path $env:GITHUB_PATH -Value $sdkPath -ErrorAction Continue
@@ -69,7 +63,6 @@ jobs:
                     $env:PATH = "$sdkPath;$env:PATH"
                   }
                 } else {
-                  # Fallback: Set for current session
                   $env:PATH = "$sdkPath;$env:PATH"
                   Write-Host "✅ Added to session PATH"
                 }
@@ -81,7 +74,6 @@ jobs:
             }
           }
 
-          # Explicitly exit with success
           Write-Host "SDK setup completed"
           exit 0
 
@@ -95,21 +87,15 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "Creating MSIX package..."
-
-          # Prepare directory structure for MSIX
           $msixDir = "msix-package"
           New-Item -ItemType Directory -Force -Path $msixDir
 
-          # Find and copy executable
           Write-Host "Looking for Windows executable..."
-
-          # List what's in the download directory for debugging
           Write-Host "Contents of desktop-builds directory:"
           Get-ChildItem -Path "desktop-builds" -Recurse -Filter "*.exe" | ForEach-Object {
             Write-Host "  Found: $($_.FullName)"
           }
 
-          # Try multiple possible paths
           $possiblePaths = @(
             "desktop-builds/windows/amd64/whodb.exe",
             "desktop-builds/build/windows/amd64/whodb.exe",
@@ -129,11 +115,9 @@ jobs:
 
           if (-not $exeFound) {
             Write-Error "❌ Executable not found in any expected location"
-            Write-Host "Please check the artifact upload in the build-desktop workflow"
             exit 1
           }
 
-          # Create AppxManifest.xml
           $manifest = @"
           <?xml version="1.0" encoding="utf-8"?>
           <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
@@ -173,11 +157,9 @@ jobs:
           "@
           $manifest | Out-File -FilePath "$msixDir/AppxManifest.xml" -Encoding UTF8
 
-          # Create placeholder assets (in production, use real assets)
           $assetsDir = "$msixDir/Assets"
           New-Item -ItemType Directory -Force -Path $assetsDir
 
-          # Create basic placeholder images
           Add-Type -AssemblyName System.Drawing
           $sizes = @(
             @{Name="StoreLogo.png"; Width=50; Height=50},
@@ -196,11 +178,7 @@ jobs:
             $bitmap.Dispose()
           }
 
-          # Find MakeAppx.exe - GitHub Actions runners have it in various locations
           Write-Host "Searching for MakeAppx.exe..."
-          Write-Host "Current PATH: $env:PATH"
-
-          # First try using where.exe to find it in PATH
           $makeAppx = $null
           try {
             $result = where.exe makeappx.exe 2>$null
@@ -208,92 +186,48 @@ jobs:
               $makeAppx = $result | Select-Object -First 1
               Write-Host "Found MakeAppx in PATH: $makeAppx"
             }
-          } catch {
-            Write-Host "MakeAppx not found in PATH"
-          }
+          } catch {}
 
-          # If not in PATH, search common locations
           if (-not $makeAppx) {
-            # Search in all Windows Kits versions
             $windowsKitsPath = "C:\Program Files (x86)\Windows Kits\10\bin"
             if (Test-Path $windowsKitsPath) {
-              # Find all version directories and sort them in descending order
               $versionDirs = Get-ChildItem -Path $windowsKitsPath -Directory |
                 Where-Object { $_.Name -match "^\d+\.\d+\.\d+\.\d+$" } |
                 Sort-Object Name -Descending
-
               foreach ($versionDir in $versionDirs) {
                 $testPath = Join-Path $versionDir.FullName "x64\makeappx.exe"
                 if (Test-Path $testPath) {
                   $makeAppx = $testPath
-                  Write-Host "Found MakeAppx at: $makeAppx"
                   break
                 }
-                # Also check x86 path as fallback
                 $testPath = Join-Path $versionDir.FullName "x86\makeappx.exe"
                 if (Test-Path $testPath) {
                   $makeAppx = $testPath
-                  Write-Host "Found MakeAppx at: $makeAppx (x86 version)"
                   break
                 }
               }
             }
           }
 
-          # Last resort: check if it's in a GitHub Actions tool cache location
           if (-not $makeAppx) {
-            $githubToolPaths = @(
-              "${env:ProgramFiles(x86)}\Windows Kits\10\App Certification Kit\makeappx.exe",
-              "${env:ProgramFiles}\Windows Kits\10\App Certification Kit\makeappx.exe"
-            )
-
-            foreach ($path in $githubToolPaths) {
-              if (Test-Path $path) {
-                $makeAppx = $path
-                Write-Host "Found MakeAppx at: $makeAppx"
-                break
-              }
-            }
-          }
-
-          if (-not $makeAppx) {
-            Write-Warning "MakeAppx.exe not found. Windows SDK may not be installed."
-            Write-Host "Contents of C:\Program Files (x86)\Windows Kits\10\bin:"
-            if (Test-Path "C:\Program Files (x86)\Windows Kits\10\bin") {
-              Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin" | Format-Table Name
-            } else {
-              Write-Host "Windows Kits directory not found"
-            }
-
-            # Fallback: Create a ZIP file instead of MSIX
             Write-Host "Creating ZIP package as fallback..."
             $zipPath = "WhoDB_${{ inputs.version }}_windows.zip"
-
-            # Use PowerShell's Compress-Archive
             Compress-Archive -Path $msixDir\* -DestinationPath $zipPath -Force
-
             if (Test-Path $zipPath) {
               Write-Host "⚠️ Created ZIP package instead of MSIX: $zipPath"
-              Write-Host "File size: $((Get-Item $zipPath).Length / 1MB) MB"
-              Write-Host "Note: This ZIP can be extracted and run but won't have Microsoft Store integration"
-
-              # Create a marker file to indicate this is a fallback package
-              "This is a fallback ZIP package. MSIX packaging failed due to missing Windows SDK." | Out-File "MSIX_FALLBACK.txt"
+              "This is a fallback ZIP package. MSIX packaging failed." | Out-File "MSIX_FALLBACK.txt"
             } else {
               Write-Error "Failed to create even a ZIP fallback"
               exit 1
             }
           } else {
-            # Package MSIX
             Write-Host "Creating MSIX package..."
             $outputPath = "WhoDB_${{ inputs.version }}.msixbundle"
             & $makeAppx pack /d $msixDir /p $outputPath /v
-
             if ($LASTEXITCODE -ne 0) {
               Write-Error "Failed to create MSIX package"
               exit 1
             }
-
             Write-Host "✅ MSIX package created: $outputPath"
             Write-Host "File size: $((Get-Item $outputPath).Length / 1MB) MB"
           }
@@ -351,7 +285,6 @@ jobs:
         if: steps.check_creds.outputs.has_creds == 'true'
         shell: pwsh
         run: |
-          # Install StoreBroker module if not already installed
           Write-Host "Checking for StoreBroker module..."
           if (!(Get-Module -ListAvailable -Name StoreBroker)) {
             Write-Host "Installing StoreBroker module..."
@@ -370,15 +303,10 @@ jobs:
           MS_CLIENT_SECRET: ${{ secrets.MS_CLIENT_SECRET }}
           MS_APP_ID: ${{ secrets.MS_APP_ID }}
         run: |
-          # Import module and authenticate (must be in same session as submission)
-          Write-Host "Setting up Microsoft Partner Center connection..."
           Import-Module StoreBroker -Force
           $global:SBDisableTelemetry = $true
 
-          # Authenticate using service principal
-          Write-Host "Authenticating with Tenant ID: $env:MS_TENANT_ID"
-          Write-Host "Client ID: $env:MS_CLIENT_ID"
-
+          Write-Host "Authenticating with Microsoft Partner Center..."
           $securePassword = ConvertTo-SecureString $env:MS_CLIENT_SECRET -AsPlainText -Force
           $credential = New-Object System.Management.Automation.PSCredential($env:MS_CLIENT_ID, $securePassword)
 
@@ -426,47 +354,37 @@ jobs:
             $targetPublishMode = "Immediate"
           }
 
-          Write-Host "Publishing mode: $targetPublishMode"
-          Write-Host "MSIX package: $($msixPath.Name)"
+          Write-Host "Creating fresh submission..."
+          $newSubmission = New-ApplicationSubmission -AppId $appId
 
-          # Get the current published submission to use as base
-          Write-Host "Fetching current published submission..."
+          Write-Host "Fetching last published submission to copy metadata..."
           $app = Get-Application -AppId $appId
           $publishedSubmissionId = $app.lastPublishedApplicationSubmission.id
-          Write-Host "Last published submission ID: $publishedSubmissionId"
+          $publishedSubmission = Get-ApplicationSubmission -AppId $appId -SubmissionId $publishedSubmissionId
 
-          $currentSubmission = Get-ApplicationSubmission -AppId $appId -SubmissionId $publishedSubmissionId
+          # Copy over metadata so store details remain intact
+          $newSubmission.listings = $publishedSubmission.listings
+          $newSubmission.pricing = $publishedSubmission.pricing
+          $newSubmission.visibility = $publishedSubmission.visibility
+          $newSubmission.hardwarePreferences = $publishedSubmission.hardwarePreferences
+          $newSubmission.appProperties = $publishedSubmission.appProperties
 
-          # Modify only the packages section
-          $currentSubmission.applicationPackages = @(@{
-            fileName = $msixPath.Name
-            fileStatus = "PendingUpload"
-            minimumDirectXVersion = "None"
-            minimumSystemRam = "None"
+          # Replace only the packages
+          $newSubmission.applicationPackages = @(@{
+              fileName = $msixPath.Name
+              fileStatus = "PendingUpload"
+              minimumDirectXVersion = "None"
+              minimumSystemRam = "None"
           })
 
-          # Update publish mode if needed
-          $currentSubmission.targetPublishMode = $targetPublishMode
+          $newSubmission.targetPublishMode = $targetPublishMode
 
-          # Remove targetPublishDate if exists (not compatible with Immediate mode)
-          if ($currentSubmission.PSObject.Properties["targetPublishDate"]) {
-            $currentSubmission.PSObject.Properties.Remove("targetPublishDate")
-          }
-
-          # Add appId to avoid warning
-          if (-not $currentSubmission.PSObject.Properties["appId"]) {
-            $currentSubmission | Add-Member -MemberType NoteProperty -Name "appId" -Value $appId -Force
-          }
-
-          # Save modified submission to file
+          # Save config to JSON
           $configPath = "storebroker_config.json"
-          $currentSubmission | ConvertTo-Json -Depth 10 | Out-File $configPath -Encoding UTF8
-          Write-Host "Created submission config based on current published version"
+          $newSubmission | ConvertTo-Json -Depth 10 | Out-File $configPath -Encoding UTF8
 
-          # Submit using StoreBroker
           try {
-            Write-Host "Creating and uploading submission..."
-
+            Write-Host "Uploading and submitting new package..."
             Update-ApplicationSubmission `
               -AppId $appId `
               -SubmissionDataPath $configPath `
@@ -474,9 +392,8 @@ jobs:
               -ReplacePackages `
               -AutoCommit:$autoCommit `
               -NoStatus
-
             if ($autoCommit) {
-              Write-Host "✅ Submission created and auto-submitted for certification"
+              Write-Host "✅ Submission created and sent for certification"
             } else {
               Write-Host "✅ Draft submission created successfully"
               Write-Host "Please review and submit manually in Partner Center"
