@@ -137,7 +137,7 @@ jobs:
 
           # Run snapcraft with destructive mode
           # The ccache-action will automatically set up the environment if available
-          sudo -E snapcraft --destructive-mode --verbosity=debug
+          sudo -E snapcraft pack --destructive-mode --verbosity=debug
 
           # Show ccache stats after build (if available)
           if command -v ccache &> /dev/null; then
