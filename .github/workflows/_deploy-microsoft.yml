@@ -477,7 +477,7 @@ jobs:
                 -SubmissionId $submission.id `
                 -SubmissionDataPath $submissionDataPath `
                 -PackagePath $msixPath.FullName `
-                -UpdatePackages `
+                -ReplacePackages `
                 -AutoCommit:$autoCommit `
                 -NoStatus
 
