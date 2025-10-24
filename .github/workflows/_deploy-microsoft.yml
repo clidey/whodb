@@ -474,6 +474,7 @@ jobs:
               # StoreBroker expects the submission JSON and package to be handled together
               Update-ApplicationSubmission `
                 -AppId $appId `
+                -SubmissionId $submission.id `
                 -SubmissionDataPath $submissionDataPath `
                 -PackagePath $msixPath.FullName `
                 -UpdatePackages `
@@ -488,16 +489,12 @@ jobs:
                 Write-Host "Please review and submit manually in Partner Center"
               }
             } catch {
-              # If Update-ApplicationSubmission fails, try manual steps
-              Write-Host "Trying alternative submission method..."
-
-              # Just complete/commit what we have
-              if ($autoCommit) {
-                Complete-ApplicationSubmission -AppId $appId -SubmissionId $submission.id -Force
-                Write-Host "✅ Submission committed for certification"
-              } else {
-                Write-Host "✅ Draft submission created (may need manual package upload)"
-              }
+              # If Update-ApplicationSubmission fails, log detailed error and exit
+              Write-Host "ERROR: Update-ApplicationSubmission failed"
+              Write-Host "Error details: $_"
+              Write-Host "Exception: $($_.Exception.Message)"
+              Write-Host "Stack trace: $($_.ScriptStackTrace)"
+              throw $_
             }
 
             Write-Host "Submission ID: $($submission.id)"
