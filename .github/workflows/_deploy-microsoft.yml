@@ -102,8 +102,8 @@ jobs:
             $semVersion = $semVersion.Substring(1)
           }
           $rawParts = $semVersion.Split(".")
-          if ($rawParts.Count -gt 4) {
-            Write-Error "Semantic version '$semVersion' has more than four segments which is not supported for MSIX packaging."
+          if ($rawParts.Count -gt 3) {
+            Write-Error "Semantic version '$semVersion' has more than three numeric segments which is not supported for this mapping."
             exit 1
           }
           $versionParts = @()
@@ -119,10 +119,27 @@ jobs:
             }
             $versionParts += $parsed
           }
-          while ($versionParts.Count -lt 4) {
+          while ($versionParts.Count -lt 3) {
             $versionParts += 0
           }
-          $windowsVersion = ($versionParts[0..3]) -join "."
+
+          $major = $versionParts[0]
+          $minor = $versionParts[1]
+          $patch = $versionParts[2]
+
+          $windowsMajor = 10
+          $windowsMinor = 100 + $major
+          $windowsBuild = $minor
+          $windowsRevision = $patch
+
+          foreach ($segment in @($windowsMajor, $windowsMinor, $windowsBuild, $windowsRevision)) {
+            if ($segment -lt 0 -or $segment -gt 65535) {
+              Write-Error "Computed Windows version segment '$segment' is out of range for MSIX (0-65535)."
+              exit 1
+            }
+          }
+
+          $windowsVersion = "{0}.{1}.{2}.{3}" -f $windowsMajor, $windowsMinor, $windowsBuild, $windowsRevision
           Write-Host "Windows package version resolved to $windowsVersion"
 
           $manifest = @"
