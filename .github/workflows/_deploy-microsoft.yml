@@ -246,113 +246,22 @@ jobs:
 
           Write-Host "✅ Using bundle: $($msixPath.FullName)"
 
-          $submission = New-ApplicationSubmission -AppId $appId -NoStatus
+          $submission = Start-ApplicationSubmission -ApplicationId $appId -SkipInitialUploadValidation
           if (-not $submission) {
-            Write-Error "❌ Failed to clone latest submission for application $appId"
+            Write-Error "❌ Failed to start a new submission for application $appId"
             exit 1
           }
 
-          if (-not $submission.applicationPackages -or $submission.applicationPackages.Count -eq 0) {
-            Write-Error "❌ Submission clone does not contain any packages; cannot continue"
+          $submission = Set-ApplicationSubmissionPackage -Submission $submission -PackagePath $msixPath.FullName
+          if (-not $submission) {
+            Write-Error "❌ Failed to attach MSIX bundle to submission"
             exit 1
-          }
-
-          $originalPackages = $submission.applicationPackages | ForEach-Object { $_ }
-          $submission.applicationPackages | ForEach-Object { $_.fileStatus = "PendingDelete" }
-
-          $primaryPackage = $originalPackages | Select-Object -First 1
-          $packageJson = $primaryPackage | ConvertTo-Json -Depth 32
-          $newPackage = $packageJson | ConvertFrom-Json
-
-          $bundleName = $msixPath.Name
-          $bundleSize = (Get-Item $msixPath.FullName).Length
-
-          $newPackage.fileName = $bundleName
-          $newPackage.fileStatus = "PendingUpload"
-          if ($newPackage.PSObject.Properties.Name -contains "fileSize") {
-            $newPackage.fileSize = $bundleSize
-          } else {
-            $newPackage | Add-Member -NotePropertyName fileSize -NotePropertyValue $bundleSize
-          }
-          if ($newPackage.PSObject.Properties.Name -contains "version") {
-            $normalizedVersion = "${{ inputs.version }}"
-            if ($normalizedVersion -notmatch '^\d+\.\d+\.\d+\.\d+$') {
-              $normalizedVersion = "$normalizedVersion.0"
-            }
-            $newPackage.version = $normalizedVersion
-          }
-
-          foreach ($prop in @("fileUploadUrl", "fileUploadStatus", "uploadUrl", "id")) {
-            if ($newPackage.PSObject.Properties.Name -contains $prop) {
-              $newPackage.PSObject.Properties.Remove($prop)
-            }
-          }
-
-          $submission.applicationPackages += $newPackage
-
-          foreach ($prop in @("appId", "iapId")) {
-            if ($submission.PSObject.Properties.Name -contains $prop) {
-              $submission.PSObject.Properties.Remove($prop)
-            }
-          }
-          foreach ($pkg in $submission.applicationPackages) {
-            foreach ($prop in @("version","architecture","targetPlatform","languages","capabilities","targetDeviceFamilies","targetDeviceFamiliesEx","minOSVersion","innerPackages")) {
-              if ($pkg.PSObject.Properties.Name -contains $prop) {
-                $pkg.PSObject.Properties.Remove($prop)
-              }
-            }
-          }
-
-          $updatedSubmission = Set-ApplicationSubmission -AppId $appId -UpdatedSubmission $submission -NoStatus
-          if (-not $updatedSubmission) {
-            Write-Error "❌ Failed to update submission with new package metadata"
-            exit 1
-          }
-
-          $uploadUrl = $updatedSubmission.fileUploadUrl
-          if ([string]::IsNullOrWhiteSpace($uploadUrl)) {
-            Write-Error "❌ Store API did not return an upload URL for the submission"
-            exit 1
-          }
-
-          $stagingDir = Join-Path $PWD "ms-store-upload"
-          if (Test-Path $stagingDir) {
-            Remove-Item $stagingDir -Recurse -Force
-          }
-          New-Item -ItemType Directory -Path $stagingDir | Out-Null
-          Copy-Item $msixPath.FullName (Join-Path $stagingDir $bundleName)
-
-          $submissionZip = Join-Path $PWD "submission-package.zip"
-          if (Test-Path $submissionZip) {
-            Remove-Item $submissionZip -Force
-          }
-          Compress-Archive -Path (Join-Path $stagingDir $bundleName) -DestinationPath $submissionZip -CompressionLevel Optimal
-
-          Set-SubmissionPackage -PackagePath $submissionZip -UploadUrl $uploadUrl -NoStatus
-
-          if (Test-Path $submissionZip) {
-            Remove-Item $submissionZip -Force
-          }
-          if (Test-Path $stagingDir) {
-            Remove-Item $stagingDir -Recurse -Force
           }
 
           if ("${{ inputs.stage-only }}" -eq "true") {
-            Write-Host "✅ Submission updated and left as draft (stage-only mode)"
+            Save-ApplicationSubmission -ApplicationId $appId -Submission $submission | Out-Null
+            Write-Host "✅ Saved submission as draft (stage-only mode)"
           } else {
-            Complete-ApplicationSubmission -AppId $appId -SubmissionId $updatedSubmission.id -NoStatus
-            $statusCheck = 0
-            $finalStatus = $null
-            do {
-              Start-Sleep -Seconds 10
-              $finalSubmission = Get-ApplicationSubmission -AppId $appId -SubmissionId $updatedSubmission.id -NoStatus
-              $finalStatus = $finalSubmission.status
-              $statusCheck++
-            } while ($statusCheck -lt 6 -and $finalStatus -eq "PendingCommit")
-
-            Write-Host "🚀 Submission committed for certification"
-            Write-Host "ℹ️ Store submission status: $finalStatus"
-            if ($finalStatus -eq "PendingCommit") {
-              Write-Warning "Submission still shows PendingCommit after commit. Certification state may take longer to appear."
-            }
+            Publish-ApplicationSubmission -ApplicationId $appId -Submission $submission -Force | Out-Null
+            Write-Host "🚀 Submission pushed for certification"
           }
