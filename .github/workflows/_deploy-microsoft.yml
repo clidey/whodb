@@ -299,6 +299,14 @@ jobs:
             }
           }
 
+          $isStageOnly = "${{ inputs.stage-only }}" -eq "true"
+          if (-not $isStageOnly) {
+            $submission.targetPublishMode = "Immediate"
+            if ($submission.PSObject.Properties.Name -contains "targetPublishDate") {
+              $submission.PSObject.Properties.Remove("targetPublishDate")
+            }
+          }
+
           $updatedSubmission = Set-ApplicationSubmission -AppId $appId -UpdatedSubmission $submission -NoStatus
           if (-not $updatedSubmission) {
             Write-Error "❌ Failed to update submission with new package metadata"
@@ -333,9 +341,9 @@ jobs:
             Remove-Item $stagingDir -Recurse -Force
           }
 
-          if ("${{ inputs.stage-only }}" -eq "true") {
+          if ($isStageOnly) {
             Write-Host "✅ Submission updated and left as draft (stage-only mode)"
           } else {
             Complete-ApplicationSubmission -AppId $appId -SubmissionId $updatedSubmission.id -NoStatus
-            Write-Host "🚀 Submission committed for certification"
+            Write-Host "🚀 Submission committed for certification and will publish immediately after approval"
           }
