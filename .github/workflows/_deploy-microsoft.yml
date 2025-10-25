@@ -275,7 +275,11 @@ jobs:
             $newPackage | Add-Member -NotePropertyName fileSize -NotePropertyValue $bundleSize
           }
           if ($newPackage.PSObject.Properties.Name -contains "version") {
-            $newPackage.version = "${{ inputs.version }}"
+            $normalizedVersion = "${{ inputs.version }}"
+            if ($normalizedVersion -notmatch '^\d+\.\d+\.\d+\.\d+$') {
+              $normalizedVersion = "$normalizedVersion.0"
+            }
+            $newPackage.version = $normalizedVersion
           }
 
           foreach ($prop in @("fileUploadUrl", "fileUploadStatus", "uploadUrl", "id")) {
@@ -337,5 +341,18 @@ jobs:
             Write-Host "✅ Submission updated and left as draft (stage-only mode)"
           } else {
             Complete-ApplicationSubmission -AppId $appId -SubmissionId $updatedSubmission.id -NoStatus
+            $statusCheck = 0
+            $finalStatus = $null
+            do {
+              Start-Sleep -Seconds 10
+              $finalSubmission = Get-ApplicationSubmission -AppId $appId -SubmissionId $updatedSubmission.id -NoStatus
+              $finalStatus = $finalSubmission.status
+              $statusCheck++
+            } while ($statusCheck -lt 6 -and $finalStatus -eq "PendingCommit")
+
             Write-Host "🚀 Submission committed for certification"
+            Write-Host "ℹ️ Store submission status: $finalStatus"
+            if ($finalStatus -eq "PendingCommit") {
+              Write-Warning "Submission still shows PendingCommit after commit. Certification state may take longer to appear."
+            }
           }
