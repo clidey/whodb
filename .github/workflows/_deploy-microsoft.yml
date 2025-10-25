@@ -23,7 +23,7 @@ on:
         required: false
       MS_PACKAGE_IDENTITY_NAME:
         required: true
-      MS_PACKAGE_PUBLISHER_ID:
+      WINDOWS_PUBLISHER_CN:
         required: true
       MS_PACKAGE_PUBLISHER_DISPLAY_NAME:
         required: true
@@ -148,13 +148,13 @@ jobs:
           $windowsVersion = "{0}.{1}.{2}.{3}" -f $windowsMajor, $windowsMinor, $windowsBuild, $windowsRevision
           Write-Host "Windows package version resolved to $windowsVersion"
 
-          $packageIdentityName = "${{ secrets.MS_PACKAGE_IDENTITY_NAME }}"
-          $packagePublisherId = "${{ secrets.MS_PACKAGE_PUBLISHER_ID }}"
-          $packagePublisherDisplayName = "${{ secrets.MS_PACKAGE_PUBLISHER_DISPLAY_NAME }}"
+          $packageIdentityName = "${{ secrets.MS_PACKAGE_IDENTITY_NAME }}".Trim()
+          $publisherCnBase = "${{ secrets.WINDOWS_PUBLISHER_CN }}".Trim()
+          $packagePublisherDisplayName = "${{ secrets.MS_PACKAGE_PUBLISHER_DISPLAY_NAME }}".Trim()
 
           foreach ($pair in @(
             @{ Name = "MS_PACKAGE_IDENTITY_NAME"; Value = $packageIdentityName },
-            @{ Name = "MS_PACKAGE_PUBLISHER_ID"; Value = $packagePublisherId },
+            @{ Name = "WINDOWS_PUBLISHER_CN"; Value = $publisherCnBase },
             @{ Name = "MS_PACKAGE_PUBLISHER_DISPLAY_NAME"; Value = $packagePublisherDisplayName }
           )) {
             if ([string]::IsNullOrWhiteSpace($pair.Value)) {
@@ -166,10 +166,11 @@ jobs:
             Write-Error "MS_PACKAGE_IDENTITY_NAME must match the package identity pattern (e.g. Contoso.App). Current value '$packageIdentityName' is invalid."
             exit 1
           }
-          if ($packagePublisherId -notmatch '^CN=[^,]+$') {
-            Write-Error "MS_PACKAGE_PUBLISHER_ID must be a full certificate distinguished name starting with 'CN='. Current value '$packagePublisherId' is invalid."
+          if ($publisherCnBase -match '^\s*$' -or $publisherCnBase -match ',') {
+            Write-Error "WINDOWS_PUBLISHER_CN should only contain the certificate common name without CN= or commas. Current value '$publisherCnBase' is invalid."
             exit 1
           }
+          $packagePublisherId = "CN=$publisherCnBase"
 
           $manifest = @"
           <?xml version="1.0" encoding="utf-8"?>
