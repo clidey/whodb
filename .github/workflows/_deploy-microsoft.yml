@@ -238,4 +238,30 @@ jobs:
           Set-StoreBrokerAuthentication -TenantId $env:MS_TENANT_ID -Credential $credential
 
           $appId = $env:MS_APP_ID
-          $msixPath = Get-ChildItem -Path "." -Filter
+          $msixPath = Get-ChildItem -Path "." -Filter "*.msixbundle" | Select-Object -First 1
+          if (-not $msixPath) {
+            Write-Error "❌ MSIX bundle artifact not found"
+            exit 1
+          }
+
+          Write-Host "✅ Using bundle: $($msixPath.FullName)"
+
+          $submission = Start-ApplicationSubmission -ApplicationId $appId -SkipInitialUploadValidation
+          if (-not $submission) {
+            Write-Error "❌ Failed to start a new submission for application $appId"
+            exit 1
+          }
+
+          $submission = Set-ApplicationSubmissionPackage -Submission $submission -PackagePath $msixPath.FullName
+          if (-not $submission) {
+            Write-Error "❌ Failed to attach MSIX bundle to submission"
+            exit 1
+          }
+
+          if ("${{ inputs.stage-only }}" -eq "true") {
+            Save-ApplicationSubmission -ApplicationId $appId -Submission $submission | Out-Null
+            Write-Host "✅ Saved submission as draft (stage-only mode)"
+          } else {
+            Publish-ApplicationSubmission -ApplicationId $appId -Submission $submission -Force | Out-Null
+            Write-Host "🚀 Submission pushed for certification"
+          }
