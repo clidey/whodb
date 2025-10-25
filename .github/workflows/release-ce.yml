@@ -233,6 +233,9 @@ jobs:
       MS_CLIENT_ID: ${{ secrets.MS_CLIENT_ID }}
       MS_CLIENT_SECRET: ${{ secrets.MS_CLIENT_SECRET }}
       MS_APP_ID: ${{ secrets.MS_APP_ID }}
+      MS_PACKAGE_IDENTITY_NAME: ${{ secrets.MS_PACKAGE_IDENTITY_NAME }}
+      MS_PACKAGE_PUBLISHER_ID: ${{ secrets.MS_PACKAGE_PUBLISHER_ID }}
+      MS_PACKAGE_PUBLISHER_DISPLAY_NAME: ${{ secrets.MS_PACKAGE_PUBLISHER_DISPLAY_NAME }}
 
   deploy-apple:
     name: Deploy Apple

@@ -21,6 +21,12 @@ on:
         required: false
       MS_APP_ID:
         required: false
+      MS_PACKAGE_IDENTITY_NAME:
+        required: true
+      MS_PACKAGE_PUBLISHER_ID:
+        required: true
+      MS_PACKAGE_PUBLISHER_DISPLAY_NAME:
+        required: true
 
 jobs:
   package-windows-msix:
