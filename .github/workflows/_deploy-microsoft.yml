@@ -162,6 +162,14 @@ jobs:
               exit 1
             }
           }
+          if ($packageIdentityName -notmatch '^[A-Za-z0-9][A-Za-z0-9\.]*$') {
+            Write-Error "MS_PACKAGE_IDENTITY_NAME must match the package identity pattern (e.g. Contoso.App). Current value '$packageIdentityName' is invalid."
+            exit 1
+          }
+          if ($packagePublisherId -notmatch '^CN=[^,]+$') {
+            Write-Error "MS_PACKAGE_PUBLISHER_ID must be a full certificate distinguished name starting with 'CN='. Current value '$packagePublisherId' is invalid."
+            exit 1
+          }
 
           $manifest = @"
           <?xml version="1.0" encoding="utf-8"?>
