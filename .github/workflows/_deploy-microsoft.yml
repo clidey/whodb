@@ -74,17 +74,7 @@ jobs:
         run: |
           Write-Host "Creating MSIX package..."
           $msixDir = "msix-package"
-          $templateDir = "msix-package-amd64"
-
-          if (-not (Test-Path $templateDir)) {
-            Write-Error "❌ Template directory '$templateDir' not found. Unable to build MSIX."
-            exit 1
-          }
-
-          if (Test-Path $msixDir) {
-            Remove-Item $msixDir -Recurse -Force
-          }
-          Copy-Item $templateDir $msixDir -Recurse
+          New-Item -ItemType Directory -Force -Path $msixDir
 
           $possiblePaths = @(
             "desktop-builds/windows/amd64/whodb.exe",
@@ -107,19 +97,65 @@ jobs:
             exit 1
           }
 
-          $manifestPath = Join-Path $msixDir "AppxManifest.xml"
-          if (-not (Test-Path $manifestPath)) {
-            Write-Error "❌ AppxManifest.xml not found in template directory"
-            exit 1
-          }
+          $manifest = @"
+          <?xml version="1.0" encoding="utf-8"?>
+          <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+                   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+                   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
+            <Identity Name="WhoDB"
+                      Publisher="CN=Clidey"
+                      Version="${{ inputs.version }}.0"
+                      ProcessorArchitecture="x64" />
+            <Properties>
+              <DisplayName>WhoDB</DisplayName>
+              <PublisherDisplayName>Clidey</PublisherDisplayName>
+              <Logo>Assets\StoreLogo.png</Logo>
+            </Properties>
+            <Dependencies>
+              <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.22621.0" />
+            </Dependencies>
+            <Resources>
+              <Resource Language="en-US" />
+            </Resources>
+            <Applications>
+              <Application Id="App" Executable="whodb.exe" EntryPoint="Windows.FullTrustApplication">
+                <uap:VisualElements DisplayName="WhoDB"
+                                    Description="Database management tool"
+                                    BackgroundColor="transparent"
+                                    Square150x150Logo="Assets\Square150x150Logo.png"
+                                    Square44x44Logo="Assets\Square44x44Logo.png">
+                  <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
+                  <uap:SplashScreen Image="Assets\SplashScreen.png" />
+                </uap:VisualElements>
+              </Application>
+            </Applications>
+            <Capabilities>
+              <rescap:Capability Name="runFullTrust" />
+            </Capabilities>
+          </Package>
+          "@
+          $manifest | Out-File -FilePath "$msixDir/AppxManifest.xml" -Encoding UTF8
 
-          [xml]$manifestXml = Get-Content $manifestPath
-          $version = "${{ inputs.version }}"
-          if ($version.Split('.').Count -lt 4) {
-            $version = "$version.0"
+          $assetsDir = "$msixDir/Assets"
+          New-Item -ItemType Directory -Force -Path $assetsDir
+
+          Add-Type -AssemblyName System.Drawing
+          $sizes = @(
+            @{Name="StoreLogo.png"; Width=50; Height=50},
+            @{Name="Square150x150Logo.png"; Width=150; Height=150},
+            @{Name="Square44x44Logo.png"; Width=44; Height=44},
+            @{Name="Wide310x150Logo.png"; Width=310; Height=150},
+            @{Name="SplashScreen.png"; Width=620; Height=300}
+          )
+
+          foreach ($size in $sizes) {
+            $bitmap = New-Object System.Drawing.Bitmap $size.Width, $size.Height
+            $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+            $graphics.Clear([System.Drawing.Color]::FromArgb(0, 120, 215))
+            $graphics.Dispose()
+            $bitmap.Save("$assetsDir\$($size.Name)", [System.Drawing.Imaging.ImageFormat]::Png)
+            $bitmap.Dispose()
           }
-          $manifestXml.Package.Identity.Version = $version
-          $manifestXml.Save($manifestPath)
 
           $makeAppx = (where.exe makeappx.exe 2>$null | Select-Object -First 1)
           if (-not $makeAppx) {
