@@ -97,6 +97,18 @@ jobs:
             exit 1
           }
 
+          $semVersion = "${{ inputs.version }}".Trim()
+          if ($semVersion.StartsWith("v")) {
+            $semVersion = $semVersion.Substring(1)
+          }
+          $parts = $semVersion.Split(".")
+          $semMajor = [int]$parts[0]
+          $semMinor = if ($parts.Length -ge 2) { [int]$parts[1] } else { 0 }
+          $semPatch = if ($parts.Length -ge 3) { [int]$parts[2] } else { 0 }
+          $windowsMajor = 10 + $semMajor
+          $windowsVersion = "{0}.{1}.{2}.0" -f $windowsMajor, $semMinor, $semPatch
+          Write-Host "Windows package version resolved to $windowsVersion"
+
           $manifest = @"
           <?xml version="1.0" encoding="utf-8"?>
           <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
@@ -104,7 +116,7 @@ jobs:
                    xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
             <Identity Name="WhoDB"
                       Publisher="CN=Clidey"
-                      Version="${{ inputs.version }}.0"
+                      Version="$windowsVersion"
                       ProcessorArchitecture="x64" />
             <Properties>
               <DisplayName>WhoDB</DisplayName>
