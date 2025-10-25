@@ -153,7 +153,7 @@ jobs:
                       ProcessorArchitecture="x64" />
             <Properties>
               <DisplayName>WhoDB</DisplayName>
-              <PublisherDisplayName>Clidey</PublisherDisplayName>
+              <PublisherDisplayName>Clidey Inc</PublisherDisplayName>
               <Logo>Assets\StoreLogo.png</Logo>
             </Properties>
             <Dependencies>
