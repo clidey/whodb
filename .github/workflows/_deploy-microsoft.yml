@@ -142,18 +142,33 @@ jobs:
           $windowsVersion = "{0}.{1}.{2}.{3}" -f $windowsMajor, $windowsMinor, $windowsBuild, $windowsRevision
           Write-Host "Windows package version resolved to $windowsVersion"
 
+          $packageIdentityName = "${{ secrets.MS_PACKAGE_IDENTITY_NAME }}"
+          $packagePublisherId = "${{ secrets.MS_PACKAGE_PUBLISHER_ID }}"
+          $packagePublisherDisplayName = "${{ secrets.MS_PACKAGE_PUBLISHER_DISPLAY_NAME }}"
+
+          foreach ($pair in @(
+            @{ Name = "MS_PACKAGE_IDENTITY_NAME"; Value = $packageIdentityName },
+            @{ Name = "MS_PACKAGE_PUBLISHER_ID"; Value = $packagePublisherId },
+            @{ Name = "MS_PACKAGE_PUBLISHER_DISPLAY_NAME"; Value = $packagePublisherDisplayName }
+          )) {
+            if ([string]::IsNullOrWhiteSpace($pair.Value)) {
+              Write-Error "Missing required secret $($pair.Name) for Microsoft Store packaging."
+              exit 1
+            }
+          }
+
           $manifest = @"
           <?xml version="1.0" encoding="utf-8"?>
           <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
                    xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
                    xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
-            <Identity Name="WhoDB"
-                      Publisher="CN=Clidey"
+            <Identity Name="$packageIdentityName"
+                      Publisher="$packagePublisherId"
                       Version="$windowsVersion"
                       ProcessorArchitecture="x64" />
             <Properties>
               <DisplayName>WhoDB</DisplayName>
-              <PublisherDisplayName>Clidey Inc</PublisherDisplayName>
+              <PublisherDisplayName>$packagePublisherDisplayName</PublisherDisplayName>
               <Logo>Assets\StoreLogo.png</Logo>
             </Properties>
             <Dependencies>
