@@ -208,7 +208,7 @@ jobs:
             exit 1
           }
 
-          $outputPath = "WhoDB_${{ inputs.version }}.msixbundle"
+          $outputPath = "WhoDB_${{ inputs.version }}.msix"
           & $makeAppx pack /d $msixDir /p $outputPath /v
           if ($LASTEXITCODE -ne 0) { exit 1 }
           Write-Host "✅ MSIX package created: $outputPath"
@@ -217,7 +217,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-msix
-          path: "*.msixbundle"
+          path: "*.msix"
           retention-days: 1
 
   deploy-microsoft-store:
@@ -283,13 +283,13 @@ jobs:
           Set-StoreBrokerAuthentication -TenantId $env:MS_TENANT_ID -Credential $credential
 
           $appId = $env:MS_APP_ID
-          $msixPath = Get-ChildItem -Path "." -Filter "*.msixbundle" | Select-Object -First 1
+          $msixPath = Get-ChildItem -Path "." -Filter "*.msix" | Select-Object -First 1
           if (-not $msixPath) {
-            Write-Error "❌ MSIX bundle artifact not found"
+            Write-Error "❌ MSIX artifact not found"
             exit 1
           }
 
-          Write-Host "✅ Using bundle: $($msixPath.FullName)"
+          Write-Host "✅ Using package: $($msixPath.FullName)"
 
           $submission = New-ApplicationSubmission -AppId $appId -NoStatus
           if (-not $submission) {
@@ -354,15 +354,15 @@ jobs:
           $windowsVersion = "{0}.{1}.{2}.{3}" -f $windowsMajor, $windowsMinor, $windowsBuild, $windowsRevision
           Write-Host "Microsoft Store submission version resolved to $windowsVersion"
 
-          $bundleName = $msixPath.Name
-          $bundleSize = (Get-Item $msixPath.FullName).Length
+          $packageName = $msixPath.Name
+          $packageSize = (Get-Item $msixPath.FullName).Length
 
-          $newPackage.fileName = $bundleName
+          $newPackage.fileName = $packageName
           $newPackage.fileStatus = "PendingUpload"
           if ($newPackage.PSObject.Properties.Name -contains "fileSize") {
-            $newPackage.fileSize = $bundleSize
+            $newPackage.fileSize = $packageSize
           } else {
-            $newPackage | Add-Member -NotePropertyName fileSize -NotePropertyValue $bundleSize
+            $newPackage | Add-Member -NotePropertyName fileSize -NotePropertyValue $packageSize
           }
           if ($newPackage.PSObject.Properties.Name -contains "version") {
             $newPackage.version = $windowsVersion
@@ -416,13 +416,13 @@ jobs:
             Remove-Item $stagingDir -Recurse -Force
           }
           New-Item -ItemType Directory -Path $stagingDir | Out-Null
-          Copy-Item $msixPath.FullName (Join-Path $stagingDir $bundleName)
+          Copy-Item $msixPath.FullName (Join-Path $stagingDir $packageName)
 
           $submissionZip = Join-Path $PWD "submission-package.zip"
           if (Test-Path $submissionZip) {
             Remove-Item $submissionZip -Force
           }
-          Compress-Archive -Path (Join-Path $stagingDir $bundleName) -DestinationPath $submissionZip -CompressionLevel Optimal
+          Compress-Archive -Path (Join-Path $stagingDir $packageName) -DestinationPath $submissionZip -CompressionLevel Optimal
 
           Set-SubmissionPackage -PackagePath $submissionZip -UploadUrl $uploadUrl -NoStatus
 
