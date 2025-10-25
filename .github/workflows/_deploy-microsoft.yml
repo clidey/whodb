@@ -309,6 +309,51 @@ jobs:
           $packageJson = $primaryPackage | ConvertTo-Json -Depth 32
           $newPackage = $packageJson | ConvertFrom-Json
 
+          $semVersion = "${{ inputs.version }}".Trim()
+          if ($semVersion.StartsWith("v")) {
+            $semVersion = $semVersion.Substring(1)
+          }
+          $rawParts = $semVersion.Split(".")
+          if ($rawParts.Count -gt 3) {
+            Write-Error "Semantic version '$semVersion' has more than three numeric segments which is not supported for this mapping."
+            exit 1
+          }
+          $versionParts = @()
+          foreach ($part in $rawParts) {
+            $parsed = 0
+            if (-not [int]::TryParse($part, [ref]$parsed)) {
+              Write-Error "Semantic version segment '$part' is not numeric."
+              exit 1
+            }
+            if ($parsed -lt 0 -or $parsed -gt 65535) {
+              Write-Error "Semantic version segment '$part' is out of range for MSIX (0-65535)."
+              exit 1
+            }
+            $versionParts += $parsed
+          }
+          while ($versionParts.Count -lt 3) {
+            $versionParts += 0
+          }
+
+          $major = $versionParts[0]
+          $minor = $versionParts[1]
+          $patch = $versionParts[2]
+
+          $windowsMajor = 10
+          $windowsMinor = 100 + $major
+          $windowsBuild = $minor
+          $windowsRevision = $patch
+
+          foreach ($segment in @($windowsMajor, $windowsMinor, $windowsBuild, $windowsRevision)) {
+            if ($segment -lt 0 -or $segment -gt 65535) {
+              Write-Error "Computed Windows version segment '$segment' is out of range for MSIX (0-65535)."
+              exit 1
+            }
+          }
+
+          $windowsVersion = "{0}.{1}.{2}.{3}" -f $windowsMajor, $windowsMinor, $windowsBuild, $windowsRevision
+          Write-Host "Microsoft Store submission version resolved to $windowsVersion"
+
           $bundleName = $msixPath.Name
           $bundleSize = (Get-Item $msixPath.FullName).Length
 
@@ -320,7 +365,9 @@ jobs:
             $newPackage | Add-Member -NotePropertyName fileSize -NotePropertyValue $bundleSize
           }
           if ($newPackage.PSObject.Properties.Name -contains "version") {
-            $newPackage.version = "${{ inputs.version }}"
+            $newPackage.version = $windowsVersion
+          } else {
+            $newPackage | Add-Member -NotePropertyName version -NotePropertyValue $windowsVersion
           }
 
           foreach ($prop in @("fileUploadUrl", "fileUploadStatus", "uploadUrl", "id")) {
