@@ -13,6 +13,12 @@ on:
         type: boolean
         default: false
     secrets:
+      APPLE_CERTIFICATES_P12:
+        required: false
+      APPLE_CERTIFICATES_PASSWORD:
+        required: false
+      KEYCHAIN_PASSWORD:
+        required: false
       APP_STORE_CONNECT_API_KEY:
         required: false
       APP_STORE_CONNECT_API_KEY_ID:
@@ -64,6 +70,55 @@ jobs:
 
           echo "app_path=$APP_PATH" >> $GITHUB_OUTPUT
 
+      - name: Import Apple Developer Certificates
+        env:
+          CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_CERTIFICATES_P12 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATES_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          if [ -z "$CERTIFICATE_P12_BASE64" ]; then
+            echo "❌ ERROR: Apple certificates are required for Mac App Store packaging"
+            echo "Please configure APPLE_CERTIFICATES_P12 and APPLE_CERTIFICATES_PASSWORD secrets"
+            exit 1
+          fi
+
+          if [ -z "$CERTIFICATE_PASSWORD" ]; then
+            echo "❌ ERROR: APPLE_CERTIFICATES_PASSWORD is required"
+            exit 1
+          fi
+
+          echo "🔐 Setting up keychain for code signing..."
+
+          # Create variables
+          CERTIFICATE_PATH=$RUNNER_TEMP/certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PASSWORD_VALUE="${KEYCHAIN_PASSWORD:-$(uuidgen)}"
+
+          # Decode certificate
+          echo "$CERTIFICATE_P12_BASE64" | base64 --decode -o "$CERTIFICATE_PATH"
+
+          # Create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD_VALUE" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD_VALUE" "$KEYCHAIN_PATH"
+
+          # Import certificate to keychain
+          security import "$CERTIFICATE_PATH" -P "$CERTIFICATE_PASSWORD" \
+            -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+
+          # Set keychain search list
+          security list-keychain -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | sed s/\"//g)
+
+          # Allow codesign to access keychain
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD_VALUE" "$KEYCHAIN_PATH"
+
+          echo "✅ Certificates imported successfully"
+
+          # List available signing identities for verification
+          echo "Available signing identities:"
+          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
+
       - name: Prepare Mac App Store package
         env:
           APPLE_DEVELOPER_ID: ${{ secrets.APPLE_DEVELOPER_ID }}
@@ -71,42 +126,35 @@ jobs:
         run: |
           echo "📦 Preparing Mac App Store package..."
 
+          # Validate required credentials
+          if [ -z "$APPLE_DEVELOPER_ID" ] || [ -z "$APPLE_DEVELOPER_TEAM_ID" ]; then
+            echo "❌ ERROR: APPLE_DEVELOPER_ID and APPLE_DEVELOPER_TEAM_ID are required"
+            exit 1
+          fi
+
           APP_PATH="${{ steps.check_app.outputs.app_path }}"
           PKG_PATH="WhoDB_${{ inputs.version }}.pkg"
 
-          # Check if we have signing credentials
-          if [ -n "$APPLE_DEVELOPER_ID" ] && [ -n "$APPLE_DEVELOPER_TEAM_ID" ]; then
-            echo "🔏 Creating signed PKG installer..."
+          echo "🔏 Creating signed PKG installer..."
 
-            # Sign the app bundle first if not already signed
-            codesign --force --deep --sign "$APPLE_DEVELOPER_ID" \
-              --options runtime --timestamp \
-              "$APP_PATH"
+          # Sign the app bundle first if not already signed
+          codesign --force --deep --sign "$APPLE_DEVELOPER_ID" \
+            --options runtime --timestamp \
+            "$APP_PATH"
 
-            # Create signed PKG installer
-            productbuild --component "$APP_PATH" /Applications \
-              --sign "$APPLE_DEVELOPER_ID" \
-              --identifier "com.clidey.whodb" \
-              --version "${{ inputs.version }}" \
-              "$PKG_PATH"
+          # Create signed PKG installer
+          productbuild --component "$APP_PATH" /Applications \
+            --sign "$APPLE_DEVELOPER_ID" \
+            --identifier "com.clidey.whodb" \
+            --version "${{ inputs.version }}" \
+            "$PKG_PATH"
 
-            echo "✅ Signed PKG created"
-          else
-            echo "⚠️ No signing credentials - creating unsigned PKG"
-
-            # Create unsigned PKG installer
-            productbuild --component "$APP_PATH" /Applications \
-              --identifier "com.clidey.whodb" \
-              --version "${{ inputs.version }}" \
-              "$PKG_PATH"
-
-            echo "✅ Unsigned PKG created"
-          fi
+          echo "✅ Signed PKG created"
 
           # Verify package
           if [ -f "$PKG_PATH" ]; then
             echo "Package size: $(du -h "$PKG_PATH" | cut -f1)"
-            pkgutil --check-signature "$PKG_PATH" || true
+            pkgutil --check-signature "$PKG_PATH"
           else
             echo "❌ Failed to create PKG"
             exit 1
@@ -118,6 +166,16 @@ jobs:
           name: mac-app-store-package
           path: "*.pkg"
           retention-days: 1
+
+      - name: Cleanup Keychain
+        if: always()
+        run: |
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          if [ -f "$KEYCHAIN_PATH" ]; then
+            echo "🧹 Cleaning up keychain..."
+            security delete-keychain "$KEYCHAIN_PATH" || true
+            echo "✅ Keychain cleanup complete"
+          fi
 
   deploy-apple-store:
     name: Submit to Apple App Store
@@ -133,22 +191,16 @@ jobs:
         run: |
           echo "🔍 Checking Apple Store credentials..."
 
-          if [ -n "${{ secrets.APP_STORE_CONNECT_API_KEY }}" ] && \
-             [ -n "${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}" ] && \
-             [ -n "${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" ]; then
-            echo "✅ All App Store Connect API credentials configured"
-            echo "has_creds=true" >> $GITHUB_OUTPUT
-          else
-            echo "⚠️ App Store Connect API credentials missing"
-
-            if [ "${{ inputs.stage-only }}" = "true" ]; then
-              echo "Continuing in stage-only mode without credentials"
-              echo "has_creds=false" >> $GITHUB_OUTPUT
-            else
-              echo "::error::Production deployment requires App Store Connect API credentials"
-              exit 1
-            fi
+          if [ -z "${{ secrets.APP_STORE_CONNECT_API_KEY }}" ] || \
+             [ -z "${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}" ] || \
+             [ -z "${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" ]; then
+            echo "❌ ERROR: App Store Connect API credentials are required"
+            echo "Please configure APP_STORE_CONNECT_API_KEY, APP_STORE_CONNECT_API_KEY_ID, and APP_STORE_CONNECT_ISSUER_ID secrets"
+            exit 1
           fi
+
+          echo "✅ All App Store Connect API credentials configured"
+          echo "has_creds=true" >> $GITHUB_OUTPUT
 
       - name: Download Mac App Store package
         if: steps.check_creds.outputs.has_creds == 'true'

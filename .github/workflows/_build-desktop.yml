@@ -18,6 +18,12 @@ on:
         type: string
         default: 'windows-amd64,windows-arm64,darwin-universal'
     secrets:
+      APPLE_CERTIFICATES_P12:
+        required: false
+      APPLE_CERTIFICATES_PASSWORD:
+        required: false
+      KEYCHAIN_PASSWORD:
+        required: false
       APPLE_DEVELOPER_ID_APPLICATION:
         required: false
       APPLE_ID:
@@ -144,6 +150,57 @@ jobs:
         if: matrix.enabled != false && steps.cache-wails.outputs.cache-hit != 'true'
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
+      # Import Apple Developer certificates for macOS signing
+      - name: Import Apple Developer Certificates
+        if: matrix.platform == 'darwin' && matrix.enabled != false
+        env:
+          CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_CERTIFICATES_P12 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATES_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          if [ -z "$CERTIFICATE_P12_BASE64" ]; then
+            echo "❌ ERROR: Apple certificates are required for macOS builds"
+            echo "Please configure APPLE_CERTIFICATES_P12 and APPLE_CERTIFICATES_PASSWORD secrets"
+            exit 1
+          fi
+
+          if [ -z "$CERTIFICATE_PASSWORD" ]; then
+            echo "❌ ERROR: APPLE_CERTIFICATES_PASSWORD is required"
+            exit 1
+          fi
+
+          echo "🔐 Setting up keychain for code signing..."
+
+          # Create variables
+          CERTIFICATE_PATH=$RUNNER_TEMP/certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PASSWORD_VALUE="${KEYCHAIN_PASSWORD:-$(uuidgen)}"
+
+          # Decode certificate
+          echo "$CERTIFICATE_P12_BASE64" | base64 --decode -o "$CERTIFICATE_PATH"
+
+          # Create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD_VALUE" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD_VALUE" "$KEYCHAIN_PATH"
+
+          # Import certificate to keychain
+          security import "$CERTIFICATE_PATH" -P "$CERTIFICATE_PASSWORD" \
+            -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+
+          # Set keychain search list
+          security list-keychain -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | sed s/\"//g)
+
+          # Allow codesign to access keychain
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD_VALUE" "$KEYCHAIN_PATH"
+
+          echo "✅ Certificates imported successfully"
+
+          # List available signing identities for verification
+          echo "Available signing identities:"
+          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
+
       # Windows AMD64 Build
       - name: Build Windows AMD64
         if: matrix.platform == 'windows' && matrix.arch == 'amd64' && matrix.enabled != false
@@ -216,9 +273,15 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         working-directory: ./desktop-${{ inputs.edition }}
         run: |
+          # Validate all required credentials
           if [ -z "$APPLE_DEVELOPER_ID_APPLICATION" ]; then
-            echo "⚠️ Skipping DMG signing (no certificate)"
-            exit 0
+            echo "❌ ERROR: APPLE_DEVELOPER_ID_APPLICATION is required"
+            exit 1
+          fi
+
+          if [ -z "$APPLE_ID" ] || [ -z "$APPLE_APP_PASSWORD" ] || [ -z "$APPLE_TEAM_ID" ]; then
+            echo "❌ ERROR: APPLE_ID, APPLE_APP_PASSWORD, and APPLE_TEAM_ID are required for notarization"
+            exit 1
           fi
 
           DMG_FILE="build/darwin/universal/whodb.dmg"
@@ -228,21 +291,17 @@ jobs:
           codesign --force --sign "$APPLE_DEVELOPER_ID_APPLICATION" \
             --options runtime --timestamp "$DMG_FILE"
 
-          # Notarize if credentials available
-          if [ -n "$APPLE_ID" ] && [ -n "$APPLE_APP_PASSWORD" ] && [ -n "$APPLE_TEAM_ID" ]; then
-            echo "📤 Submitting DMG for notarization..."
-            xcrun notarytool submit "$DMG_FILE" \
-              --apple-id "$APPLE_ID" \
-              --password "$APPLE_APP_PASSWORD" \
-              --team-id "$APPLE_TEAM_ID" \
-              --wait
+          # Notarize
+          echo "📤 Submitting DMG for notarization..."
+          xcrun notarytool submit "$DMG_FILE" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_APP_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait
 
-            echo "📎 Stapling notarization ticket..."
-            xcrun stapler staple "$DMG_FILE"
-            echo "✅ DMG signed and notarized"
-          else
-            echo "⚠️ Skipping notarization (missing credentials)"
-          fi
+          echo "📎 Stapling notarization ticket..."
+          xcrun stapler staple "$DMG_FILE"
+          echo "✅ DMG signed and notarized"
 
       - name: Upload artifacts
         if: matrix.enabled != false && (matrix.arch != 'arm64' || matrix.platform != 'windows')
@@ -251,3 +310,14 @@ jobs:
           name: desktop-${{ matrix.platform }}-${{ matrix.arch || 'all' }}
           path: desktop-${{ inputs.edition }}/build/
           retention-days: 1
+
+      # Cleanup keychain (macOS only)
+      - name: Cleanup Keychain
+        if: always() && matrix.platform == 'darwin' && matrix.enabled != false
+        run: |
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          if [ -f "$KEYCHAIN_PATH" ]; then
+            echo "🧹 Cleaning up keychain..."
+            security delete-keychain "$KEYCHAIN_PATH" || true
+            echo "✅ Keychain cleanup complete"
+          fi
