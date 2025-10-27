@@ -19,6 +19,7 @@
 
 import {
   AdjustmentsHorizontalIcon as AdjustmentsHorizontalIconCE,
+  ChevronUpDownIcon as ChevronUpDownIconCE,
   ArrowDownCircleIcon as ArrowDownCircleIconCE,
   ArrowDownTrayIcon as ArrowDownTrayIconCE,
   ArrowLeftStartOnRectangleIcon as ArrowLeftStartOnRectangleIconCE,
@@ -92,6 +93,7 @@ import EEOverridesDefault from '@ee/heroicons';
 const EEOverrides: Record<string, any> = (EEOverridesDefault as any) || {};
 
 export const AdjustmentsHorizontalIcon = EEOverrides.AdjustmentsHorizontalIcon ?? AdjustmentsHorizontalIconCE;
+export const ChevronUpDownIcon = EEOverrides.ChevronUpDownIcon ?? ChevronUpDownIconCE;
 export const ArrowDownCircleIcon = EEOverrides.ArrowDownCircleIcon ?? ArrowDownCircleIconCE;
 export const ArrowDownTrayIcon = EEOverrides.ArrowDownTrayIcon ?? ArrowDownTrayIconCE;
 export const ArrowLeftStartOnRectangleIcon = EEOverrides.ArrowLeftStartOnRectangleIcon ?? ArrowLeftStartOnRectangleIconCE;

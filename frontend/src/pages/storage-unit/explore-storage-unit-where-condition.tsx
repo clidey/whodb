@@ -23,12 +23,12 @@ import {
     Popover,
     PopoverContent,
     PopoverTrigger,
-    SearchSelect,
     Sheet,
     SheetContent,
     SheetFooter,
     SheetTitle
 } from "@clidey/ux";
+import { SearchSelect } from "../../components/ux";
 import { AtomicWhereCondition, WhereCondition, WhereConditionType } from '@graphql';
 import classNames from "classnames";
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";

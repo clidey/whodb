@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import {Badge, Button, cn, Input, Label, ModeToggle, SearchSelect, Separator, toast} from '@clidey/ux';
+import { Badge, Button, cn, Input, Label, ModeToggle, Separator, toast } from '@clidey/ux';
+import { SearchSelect } from '../../components/ux';
 import {
     DatabaseType,
     LoginCredentials,
@@ -25,23 +26,23 @@ import {
 } from '@graphql';
 import classNames from "classnames";
 import entries from "lodash/entries";
-import {FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState} from "react";
-import {useNavigate, useSearchParams} from "react-router-dom";
-import {Icons} from "../../components/icons";
-import {Loading} from "../../components/loading";
-import {Container} from "../../components/page";
-import {updateProfileLastAccessed} from "../../components/profile-info-tooltip";
-import {baseDatabaseTypes, getDatabaseTypeDropdownItems, IDatabaseDropdownItem} from "../../config/database-types";
-import {extensions, sources} from '../../config/features';
-import {InternalRoutes} from "../../config/routes";
-import {AuthActions} from "../../store/auth";
-import {DatabaseActions} from "../../store/database";
-import {useAppDispatch, useAppSelector} from "../../store/hooks";
-import {AdjustmentsHorizontalIcon, CheckCircleIcon, CircleStackIcon} from '../../components/heroicons';
-import logoImage from "../../../public/images/logo.png";
+import { FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { v4 } from 'uuid';
-import { isDesktopApp } from '../../utils/external-links';
+import logoImage from "../../../public/images/logo.png";
+import { AdjustmentsHorizontalIcon, CheckCircleIcon, ChevronDownIcon, CircleStackIcon } from '../../components/heroicons';
+import { Icons } from "../../components/icons";
+import { Loading } from "../../components/loading";
+import { Container } from "../../components/page";
+import { updateProfileLastAccessed } from "../../components/profile-info-tooltip";
+import { baseDatabaseTypes, getDatabaseTypeDropdownItems, IDatabaseDropdownItem } from "../../config/database-types";
+import { extensions, sources } from '../../config/features';
+import { InternalRoutes } from "../../config/routes";
 import { useDesktopFile } from '../../hooks/useDesktop';
+import { AuthActions } from "../../store/auth";
+import { DatabaseActions } from "../../store/database";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { isDesktopApp } from '../../utils/external-links';
 
 /**
  * Generate a consistent ID for desktop credentials based on connection details.
@@ -407,6 +408,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                             buttonProps={{
                                 "data-testid": "database",
                             }}
+                            rightIcon={<ChevronDownIcon className="w-4 h-4"/>}
                         />
                     )}
                 </div>
@@ -477,31 +479,31 @@ export const LoginForm: FC<LoginFormProps> = ({
             <div className="fixed top-4 right-4" data-testid="mode-toggle">
                 <ModeToggle />
             </div>
-            <div className={classNames("flex flex-col grow gap-4", {
+            <div className={classNames("flex flex-col grow gap-lg", {
                 "justify-between": advancedDirection === "horizontal",
                 "h-full": advancedDirection === "vertical" && availableProfiles.length === 0,
             })}>
+                {!hideHeader && (
+                    <div className="flex justify-between" data-testid="login-header">
+                        <div className="flex items-center gap-sm text-xl">
+                            {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4"/>}
+                            <h1 className="text-brand-foreground">{extensions.AppName ?? "WhoDB"}</h1>
+                            <h1>Login</h1>
+                        </div>
+                        {
+                            error &&
+                            <Badge variant="destructive" className="self-end">
+                                {error}
+                            </Badge>
+                        }
+                    </div>
+                )}
                 <div className={classNames("flex", {
                     "flex-row grow": advancedDirection === "horizontal",
-                    "flex-col w-full gap-4": advancedDirection === "vertical",
-                })}>
+                    "flex-col w-full gap-lg": advancedDirection === "vertical",
+                })} data-testid="login-form">
                     <div className={classNames("flex flex-col gap-lg grow", advancedDirection === "vertical" ? "w-full" : "w-[350px]")}>
-                        {!hideHeader && (
-                            <div className="flex justify-between">
-                                <div className="flex items-center gap-sm text-xl">
-                                    {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4"/>}
-                                    <h1 className="text-brand-foreground">{extensions.AppName ?? "WhoDB"}</h1>
-                                    <h1>Login</h1>
-                                </div>
-                                {
-                                    error &&
-                                    <Badge variant="destructive" className="self-end">
-                                        {error}
-                                    </Badge>
-                                }
-                            </div>
-                        )}
-                        <div className={cn("flex flex-col grow gap-4", {
+                        <div className={cn("flex flex-col grow gap-lg", {
                             "justify-center": advancedDirection === "horizontal",
                         })}>
                             <div className="flex flex-col gap-sm w-full">
@@ -521,6 +523,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                                         "data-testid": "database-type-select",
                                     }}
                                     contentClassName="w-[var(--radix-popover-trigger-width)] login-select-popover"
+                                    rightIcon={<ChevronDownIcon className="w-4 h-4"/>}
                                 />
                             </div>
                             {fields}
@@ -528,8 +531,8 @@ export const LoginForm: FC<LoginFormProps> = ({
                     </div>
                     {
                         (showAdvanced && advancedForm != null) &&
-                        <div className={classNames("transition-all h-full overflow-hidden flex flex-col gap-lg pt-[5px]", {
-                            "w-[350px] ml-4 mt-[43px]": advancedDirection === "horizontal",
+                        <div className={classNames("transition-all h-full overflow-hidden flex flex-col gap-lg", {
+                            "w-[350px] ml-4": advancedDirection === "horizontal",
                             "w-full": advancedDirection === "vertical",
                         })}>
                             {entries(advancedForm).map(([key, value]) => (
@@ -556,7 +559,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                         <AdjustmentsHorizontalIcon className="w-4 h-4" /> {showAdvanced ? "Less Advanced" : "Advanced"}
                     </Button>
                     {advancedDirection === "horizontal" && (
-                        <Button onClick={handleSubmit} data-testid="login-button" variant={loginWithCredentialsEnabled ? "default" : "secondary"}>
+                        <Button onClick={handleSubmit} data-testid="login-button" variant={loginWithCredentialsEnabled ? "default" : "secondary"} disabled={!loginWithCredentialsEnabled}>
                             <CheckCircleIcon className="w-4 h-4" /> Login
                         </Button>
                     )}
@@ -565,7 +568,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                     <div className={cn("flex flex-col justify-end", {
                         "grow": availableProfiles.length === 0,
                     })}>
-                        <Button onClick={handleSubmit} data-testid="login-button" variant={loginWithCredentialsEnabled ? "default" : "secondary"}>
+                        <Button onClick={handleSubmit} data-testid="login-button" variant={loginWithCredentialsEnabled ? "default" : "secondary"} disabled={!loginWithCredentialsEnabled}>
                             <CheckCircleIcon className="w-4 h-4" /> Login
                         </Button>
                     </div>
@@ -575,7 +578,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 availableProfiles.length > 0 &&
                 <>
                     <Separator className="my-8" />
-                    <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-lg">
                         <Label>Available profiles</Label>
                         <SearchSelect
                             value={selectedAvailableProfile}
@@ -586,8 +589,9 @@ export const LoginForm: FC<LoginFormProps> = ({
                             buttonProps={{
                                 "data-testid": "available-profiles-select",
                             }}
+                            rightIcon={<ChevronDownIcon className="w-4 h-4"/>}
                         />
-                        <Button onClick={() => handleLoginWithProfileSubmit()} data-testid="login-with-profile-button" variant={loginWithProfileEnabled ? "default" : "secondary"}>
+                        <Button onClick={() => handleLoginWithProfileSubmit()} data-testid="login-with-profile-button" variant={loginWithProfileEnabled ? "default" : "secondary"} disabled={!loginWithProfileEnabled}>
                             <CheckCircleIcon className="w-4 h-4" /> Login
                         </Button>
                     </div>

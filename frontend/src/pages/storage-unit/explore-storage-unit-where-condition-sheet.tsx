@@ -19,15 +19,15 @@ import {
     cn,
     Input,
     Label,
-    SearchSelect,
     Sheet,
     SheetContent,
     SheetFooter,
     SheetTitle
 } from "@clidey/ux";
+import { SearchSelect } from "../../components/ux";
 import { AtomicWhereCondition, WhereCondition, WhereConditionType } from '@graphql';
 import React, { FC, useCallback, useEffect, useMemo, useState } from "react";
-import { AdjustmentsHorizontalIcon, PlusCircleIcon, XCircleIcon } from "../../components/heroicons";
+import { AdjustmentsHorizontalIcon, ChevronDownIcon, PlusCircleIcon, XCircleIcon } from "../../components/heroicons";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { ScratchpadActions } from "../../store/scratchpad";
 
@@ -313,6 +313,7 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                                         buttonProps={{
                                                             "data-testid": `edit-existing-field-key-${i}`,
                                                         }}
+                                                        rightIcon={<ChevronDownIcon className="w-4 h-4"/>}
                                                     />
                                                 </div>
                                                 <div className="flex flex-col gap-2">

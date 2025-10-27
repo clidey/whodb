@@ -28,10 +28,15 @@ declare module '@ee/icons' {
 }
 
 declare module '@ee/config.tsx' {
+  import { FeatureFlags } from '../config/ee-types';
+
   export const eeDatabaseTypes: any;
-  export const eeFeatures: any;
+  export const eeFeatures: FeatureFlags;
   export const eeExtensions: Record<string, any>;
   export const eeSources: Record<string, any>;
+  export const eeSettingsDefaults: {
+    whereConditionMode: 'sheet' | 'popover';
+  };
   export const isEEDatabase: any;
   export const isEENoSQLDatabase: any;
   export const getEEDatabaseStorageUnitLabel: any;

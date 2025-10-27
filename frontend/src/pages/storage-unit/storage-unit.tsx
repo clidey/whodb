@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { Badge, Button, Checkbox, cn, Input, Label, SearchInput, SearchSelect, Separator, StackList, StackListItem, Table, TableCell, TableHead, Tabs, TabsContent, TabsList, TabsTrigger, toast, TableRow, VirtualizedTableBody, TableHeader, TableHeadRow, SheetTitle } from '@clidey/ux';
+import { Badge, Button, Checkbox, cn, Input, Label, SearchInput, Separator, StackList, StackListItem, Table, TableCell, TableHead, Tabs, TabsContent, TabsList, TabsTrigger, toast, TableRow, VirtualizedTableBody, TableHeader, TableHeadRow, SheetTitle } from '@clidey/ux';
+import { SearchSelect } from "../../components/ux";
 import { DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useGetStorageUnitsQuery } from '@graphql';
 import { ArrowPathRoundedSquareIcon, CheckCircleIcon, CircleStackIcon, CommandLineIcon, ListBulletIcon, MagnifyingGlassIcon, PlusCircleIcon, TableCellsIcon, XCircleIcon, XMarkIcon } from '../../components/heroicons';
 import classNames from "classnames";
@@ -393,7 +394,7 @@ export const StorageUnitPage: FC = () => {
                     </div>
                     <div className="flex grow" />
                     <Button onClick={handleSubmit} data-testid="submit-button" className="w-full">
-                        <CheckCircleIcon className="w-4 h-4" /> Submit
+                        <CheckCircleIcon className="w-4 h-4" /> Create
                     </Button>
                 </div>
             </ExpandableCard>
@@ -437,9 +438,10 @@ export const StorageUnitPage: FC = () => {
                                                     state: { unit },
                                                 });
                                             }} 
-                                            data-testid="data-button" 
-                                            variant="secondary" 
+                                            data-testid="data-button"
+                                            variant="secondary"
                                             size="sm"
+                                            className="!cursor-pointer"
                                         >
                                             <CircleStackIcon className="w-4 h-4" /> Data
                                         </Button>
@@ -539,7 +541,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data })
         <>
             <Handle className="dark:border-white/5" type="target" position={Position.Left} />
             <Card icon={<CircleStackIcon className="w-4 h-4" />} className="h-fit backdrop-blur-[2px] w-[400px] px-2 py-6">
-                <div className="flex flex-col grow mt-2 gap-4">
+                <div className="flex flex-col grow mt-2 gap-lg" data-testid="storage-unit-graph-card">
                     <div className="flex flex-col grow">
                         <h2 className="text-3xl font-semibold mb-2 break-words">{data.Name}</h2>
                         <StackList>
