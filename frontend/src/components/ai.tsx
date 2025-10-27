@@ -29,7 +29,6 @@ import {
     CommandItem,
     Input,
     Label,
-    SearchSelect,
     Select,
     SelectContent,
     SelectItem,
@@ -40,6 +39,7 @@ import {
     SheetFooter,
     toast
 } from "@clidey/ux";
+import { SearchSelect } from "./ux";
 import map from "lodash/map";
 import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 import { v4 } from "uuid";
@@ -53,6 +53,7 @@ import {
     ArrowPathIcon,
     ArrowTopRightOnSquareIcon,
     CheckCircleIcon,
+    ChevronDownIcon,
     LockClosedIcon,
     PlusCircleIcon,
     TrashIcon,
@@ -299,7 +300,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
         dispatch(AIModelsActions.setCurrentModel(undefined));
     }, [dispatch]);
 
-    return <div className="flex flex-col gap-4">
+    return <div className="flex flex-col gap-4" data-testid="ai-provider">
         <Sheet open={addExternalModel} onOpenChange={setAddExternalModel}>
             <SheetContent className="max-w-md mx-auto w-full px-8 py-10 flex flex-col gap-4">
                 <div className="flex flex-col gap-4">
@@ -403,6 +404,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                             </span>
                         </CommandItem>
                     }
+                    rightIcon={<ChevronDownIcon className="w-4 h-4" />}
                 />
                 <SearchSelect
                     disabled={modelType == null}
@@ -419,6 +421,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                     placeholder="Select Model"
                     side="right"
                     align="start"
+                    rightIcon={<ChevronDownIcon className="w-4 h-4" />}
                 />
             </div>
             <AlertDialog>

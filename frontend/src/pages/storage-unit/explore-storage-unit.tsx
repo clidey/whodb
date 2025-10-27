@@ -441,7 +441,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 <div className="flex gap-sm items-center">
                     <h1 className="text-xl font-bold mr-4">{unitName}</h1>
                 </div>
-                <div className="text-sm"><span className="font-semibold">Total Count:</span> {totalCount}</div>
+                <div className="text-sm" data-testid="total-count-top"><span className="font-semibold">Total Count:</span> {totalCount}</div>
             </div>
             <div className="flex w-full relative" data-testid="explore-storage-unit-options">
                 <div className="flex justify-between items-end w-full">

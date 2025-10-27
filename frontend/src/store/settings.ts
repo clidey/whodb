@@ -15,28 +15,35 @@
  */
 
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
+import { settingsDefaults } from '../config/features';
 
 type ISettingsState = {
     metricsEnabled: true | false;
     storageUnitView: 'list' | 'card';
-    // UI Customization settings
     fontSize: 'small' | 'medium' | 'large';
     borderRadius: 'none' | 'small' | 'medium' | 'large';
     spacing: 'compact' | 'comfortable' | 'spacious';
-    // Where condition mode
     whereConditionMode: 'popover' | 'sheet';
 }
 
-const initialState: ISettingsState = {
-    metricsEnabled: true,
-    storageUnitView: 'card',
-    // UI Customization defaults
-    fontSize: 'medium',
-    borderRadius: 'medium',
-    spacing: 'comfortable',
-    // Where condition mode default
-    whereConditionMode: 'popover',
-}
+const getInitialState = (): ISettingsState => {
+    const baseState: ISettingsState = {
+        metricsEnabled: true,
+        storageUnitView: 'card',
+        fontSize: 'medium',
+        borderRadius: 'medium',
+        spacing: 'comfortable',
+        whereConditionMode: 'popover',
+    };
+
+    if (import.meta.env.VITE_BUILD_EDITION === 'ee' && settingsDefaults) {
+        return { ...baseState, ...settingsDefaults };
+    }
+
+    return baseState;
+};
+
+const initialState = getInitialState();
 
 export const settingsSlice = createSlice({
     name: 'settings',
