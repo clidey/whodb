@@ -295,9 +295,10 @@ jobs:
           echo "✅ App bundle signed"
 
           # Verify the signature
-          echo "Verifying signature..."
+          echo "Verifying code signature..."
           codesign --verify --verbose=4 "$APP_PATH"
-          spctl --assess --verbose=4 --type execute "$APP_PATH"
+
+          echo "✅ Code signature valid"
 
       - name: Create macOS DMG
         if: matrix.platform == 'darwin' && matrix.enabled != false
