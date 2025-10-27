@@ -116,8 +116,16 @@ jobs:
           echo "✅ Certificates imported successfully"
 
           # List available signing identities for verification
-          echo "Available signing identities:"
+          echo "Available codesigning identities:"
           security find-identity -v -p codesigning "$KEYCHAIN_PATH"
+
+          echo ""
+          echo "Available basic identities (includes installer certs):"
+          security find-identity -v -p basic "$KEYCHAIN_PATH"
+
+          echo ""
+          echo "All identities in keychain:"
+          security find-identity -v "$KEYCHAIN_PATH"
 
       - name: Prepare Mac App Store package
         env:
