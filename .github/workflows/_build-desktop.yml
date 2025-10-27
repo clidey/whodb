@@ -267,6 +267,38 @@ jobs:
         working-directory: ./desktop-${{ inputs.edition }}
         run: make ${{ matrix.make-target }} VERSION=${{ inputs.version }}
 
+      - name: Sign macOS App Bundle
+        if: matrix.platform == 'darwin' && matrix.enabled != false
+        env:
+          APPLE_DEVELOPER_ID_APPLICATION: ${{ secrets.APPLE_DEVELOPER_ID_APPLICATION }}
+        working-directory: ./desktop-${{ inputs.edition }}
+        run: |
+          # Validate certificate is available
+          if [ -z "$APPLE_DEVELOPER_ID_APPLICATION" ]; then
+            echo "❌ ERROR: APPLE_DEVELOPER_ID_APPLICATION is required"
+            exit 1
+          fi
+
+          APP_PATH="build/darwin/universal/WhoDB.app"
+
+          if [ ! -d "$APP_PATH" ]; then
+            echo "❌ ERROR: App bundle not found at $APP_PATH"
+            exit 1
+          fi
+
+          echo "🔏 Signing app bundle with hardened runtime..."
+          codesign --force --deep --sign "$APPLE_DEVELOPER_ID_APPLICATION" \
+            --options runtime \
+            --timestamp \
+            "$APP_PATH"
+
+          echo "✅ App bundle signed"
+
+          # Verify the signature
+          echo "Verifying signature..."
+          codesign --verify --verbose=4 "$APP_PATH"
+          spctl --assess --verbose=4 --type execute "$APP_PATH"
+
       - name: Create macOS DMG
         if: matrix.platform == 'darwin' && matrix.enabled != false
         working-directory: ./desktop-${{ inputs.edition }}
