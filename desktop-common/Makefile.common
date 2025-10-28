@@ -16,15 +16,12 @@ APPLE_APP_PASSWORD ?=
 # Prepare frontend assets
 prepare:
 	@echo "Cleaning previous build artifacts..."
-	@# Backup template files before cleaning
-	@mkdir -p /tmp/whodb-templates
-	@cp build/darwin/*.plist /tmp/whodb-templates/ 2>/dev/null || true
-	@rm -rf build/windows build/darwin build/linux build/bin build/assets build/index.html wails.lock frontend/dist
+	@# Clean build artifacts but preserve template files
+	@rm -rf build/windows build/linux build/bin build/assets build/index.html wails.lock frontend/dist
+	@# Only clean darwin build output, not template directory
+	@rm -rf build/darwin/universal build/darwin/amd64 build/darwin/arm64 build/dmgroot
 	@echo "Preparing $(EDITION_NAME) build environment..."
-	@# Restore template files
 	@mkdir -p build/darwin
-	@cp /tmp/whodb-templates/*.plist build/darwin/ 2>/dev/null || true
-	@rm -rf /tmp/whodb-templates
 	@mkdir -p frontend/dist
 	@echo "Building frontend..."
 	@cd ../frontend && pnpm run $(FRONTEND_BUILD_CMD)
