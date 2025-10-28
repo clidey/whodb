@@ -262,6 +262,13 @@ jobs:
           New-Item -ItemType Directory -Force -Path "./desktop-${{ inputs.edition }}/build/windows/arm64"
 
       # macOS Build
+      - name: Clean previous macOS build
+        if: matrix.platform == 'darwin' && matrix.enabled != false
+        working-directory: ./desktop-${{ inputs.edition }}
+        run: |
+          echo "Cleaning previous build to ensure bundle ID changes take effect..."
+          rm -rf build/darwin build/bin wails.lock || true
+
       - name: Build macOS
         if: matrix.platform == 'darwin' && matrix.enabled != false
         working-directory: ./desktop-${{ inputs.edition }}
