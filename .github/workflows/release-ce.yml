@@ -260,6 +260,8 @@ jobs:
       APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
       APPLE_DEVELOPER_ID: ${{ secrets.APPLE_DEVELOPER_ID }}
       APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
+      APPLE_APP_ID: ${{ secrets.APPLE_APP_ID }}
+      ASC_PUBLIC_ID: ${{ secrets.ASC_PUBLIC_ID }}
 
   # Step 5: Create GitHub release
   create-github-release:

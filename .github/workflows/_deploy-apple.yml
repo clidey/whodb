@@ -29,6 +29,10 @@ on:
         required: false
       APPLE_DEVELOPER_TEAM_ID:
         required: false
+      APPLE_APP_ID:
+        required: false
+      ASC_PUBLIC_ID:
+        required: false
 
 jobs:
   package-mac-app-store:
@@ -248,59 +252,204 @@ jobs:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
-          PKG_FILE=$(ls *.pkg | head -1)
+          set -e  # Exit on any error
+
+          echo "═══════════════════════════════════════════════════════════"
+          echo "  App Store Connect Upload"
+          echo "═══════════════════════════════════════════════════════════"
+
+          # Find PKG file
+          PKG_FILE=$(ls *.pkg 2>/dev/null | head -1)
 
           if [ -z "$PKG_FILE" ]; then
-            echo "❌ No PKG file found"
+            echo "❌ ERROR: No PKG file found in current directory"
+            echo "📁 Directory contents:"
+            ls -lh
             exit 1
           fi
 
-          echo "📤 Uploading package: $PKG_FILE"
+          echo "📦 Package: $PKG_FILE"
+          echo "📊 Size: $(du -h "$PKG_FILE" | cut -f1)"
+          echo "🔐 Authentication: API Key (JWT)"
 
           if [ "${{ inputs.stage-only }}" = "true" ]; then
-            echo "📦 STAGE MODE - Uploading for TestFlight only"
-
-            # Upload for TestFlight testing
-            xcrun altool --upload-package "$PKG_FILE" \
-              --type macos \
-              --apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
-              --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
-              --verbose
-
-            if [ $? -eq 0 ]; then
-              echo "✅ Package uploaded for TestFlight distribution"
-              echo ""
-              echo "📝 Next steps:"
-              echo "  1. Wait for processing to complete (usually 5-10 minutes)"
-              echo "  2. Configure TestFlight testing in App Store Connect"
-              echo "  3. Submit for App Store review when ready"
-            else
-              echo "❌ Upload failed"
-              exit 1
-            fi
+            echo "🎯 Mode: STAGE (TestFlight only)"
           else
-            echo "🚀 PRODUCTION MODE - Submitting for App Store review"
-
-            # Upload and submit for App Store review
-            xcrun altool --upload-package "$PKG_FILE" \
-              --type macos \
-              --apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
-              --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
-              --auto-submit \
-              --verbose
-
-            if [ $? -eq 0 ]; then
-              echo "✅ Package uploaded and submitted for App Store review"
-              echo ""
-              echo "📝 Next steps:"
-              echo "  1. Monitor review status in App Store Connect"
-              echo "  2. Respond to any reviewer feedback"
-              echo "  3. Release when approved"
-            else
-              echo "❌ Upload/submission failed"
-              exit 1
-            fi
+            echo "🎯 Mode: PRODUCTION (App Store)"
           fi
+          echo ""
+
+          # Locate iTMSTransporter
+          echo "🔍 Locating iTMSTransporter..."
+          TRANSPORTER_PATH="/Applications/Xcode.app/Contents/SharedFrameworks/ContentDeliveryServices.framework/Versions/A/itms/bin/iTMSTransporter"
+
+          if [ ! -f "$TRANSPORTER_PATH" ]; then
+            echo "⚠️  Not found at standard location, searching..."
+            TRANSPORTER_PATH="$(xcrun -f iTMSTransporter 2>/dev/null || echo '')"
+          fi
+
+          if [ -z "$TRANSPORTER_PATH" ] || [ ! -f "$TRANSPORTER_PATH" ]; then
+            echo "❌ ERROR: iTMSTransporter not found"
+            echo ""
+            echo "Troubleshooting:"
+            echo "  • Ensure Xcode is installed on the runner"
+            echo "  • Check Xcode command-line tools: xcode-select -p"
+            exit 1
+          fi
+
+          echo "✅ Found: $TRANSPORTER_PATH"
+          echo ""
+
+          # Verify API key
+          API_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8"
+
+          if [ ! -f "$API_KEY_PATH" ]; then
+            echo "❌ ERROR: API key not found at $API_KEY_PATH"
+            echo ""
+            echo "Troubleshooting:"
+            echo "  • Verify APP_STORE_CONNECT_API_KEY secret is configured"
+            echo "  • Check 'Setup App Store Connect API key' step completed successfully"
+            exit 1
+          fi
+
+          echo "✅ API key found and configured"
+          echo ""
+
+          # Validate PKG signature before upload
+          echo "🔍 Validating package signature..."
+          if pkgutil --check-signature "$PKG_FILE" > /dev/null 2>&1; then
+            echo "✅ Package signature valid"
+            pkgutil --check-signature "$PKG_FILE" | head -5
+          else
+            echo "⚠️  Warning: Could not verify package signature"
+          fi
+          echo ""
+
+          # Upload with retry logic
+          echo "📤 Starting upload to App Store Connect..."
+          echo "───────────────────────────────────────────────────────────"
+
+          MAX_ATTEMPTS=3
+          ATTEMPT=1
+          UPLOAD_SUCCESS=false
+
+          while [ $ATTEMPT -le $MAX_ATTEMPTS ] && [ "$UPLOAD_SUCCESS" = "false" ]; do
+            if [ $ATTEMPT -gt 1 ]; then
+              echo ""
+              echo "🔄 Retry attempt $ATTEMPT of $MAX_ATTEMPTS..."
+              sleep 10  # Wait before retry
+            else
+              echo "⏳ Attempt $ATTEMPT of $MAX_ATTEMPTS..."
+            fi
+
+            # Create log file for this attempt
+            LOG_FILE="/tmp/transporter_upload_attempt_${ATTEMPT}.log"
+
+            # Run iTMSTransporter with verbose output
+            set +e  # Temporarily disable exit on error
+            "$TRANSPORTER_PATH" \
+              -m upload \
+              -f "$PKG_FILE" \
+              -k "$API_KEY_PATH" \
+              -i "$APP_STORE_CONNECT_API_KEY_ID" \
+              -issuer "$APP_STORE_CONNECT_ISSUER_ID" \
+              -v eXtreme \
+              2>&1 | tee "$LOG_FILE"
+
+            UPLOAD_EXIT_CODE=$?
+            set -e  # Re-enable exit on error
+
+            if [ $UPLOAD_EXIT_CODE -eq 0 ]; then
+              UPLOAD_SUCCESS=true
+              echo ""
+              echo "✅ Upload completed successfully!"
+            else
+              echo ""
+              echo "❌ Upload failed with exit code: $UPLOAD_EXIT_CODE"
+
+              # Parse log for common errors
+              if grep -q "Could not authenticate" "$LOG_FILE"; then
+                echo ""
+                echo "🔍 Authentication error detected"
+                echo "Troubleshooting:"
+                echo "  • Verify API key ID and Issuer ID are correct"
+                echo "  • Check API key has 'App Manager' or 'Admin' role"
+                echo "  • Ensure API key hasn't been revoked"
+              elif grep -q "network" "$LOG_FILE" || grep -q "timed out" "$LOG_FILE"; then
+                echo ""
+                echo "🔍 Network error detected - will retry"
+              elif grep -q "Package already exists" "$LOG_FILE"; then
+                echo ""
+                echo "🔍 Package version already exists in App Store Connect"
+                echo "This may be expected if re-running the workflow"
+                UPLOAD_SUCCESS=true  # Don't fail on duplicate upload
+              elif grep -q "Invalid package" "$LOG_FILE" || grep -q "not valid" "$LOG_FILE"; then
+                echo ""
+                echo "🔍 Invalid package error detected"
+                echo "Troubleshooting:"
+                echo "  • Check package is properly signed"
+                echo "  • Verify bundle ID matches App Store Connect: com.clidey.whodb"
+                echo "  • Ensure app is signed with '3rd Party Mac Developer' certificate"
+                break  # Don't retry on validation errors
+              fi
+
+              if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+                echo "Will retry in 10 seconds..."
+              fi
+            fi
+
+            ATTEMPT=$((ATTEMPT + 1))
+          done
+
+          echo "───────────────────────────────────────────────────────────"
+
+          if [ "$UPLOAD_SUCCESS" = "false" ]; then
+            echo ""
+            echo "❌ Upload failed after $MAX_ATTEMPTS attempts"
+            echo ""
+            echo "📋 Log files:"
+            for i in $(seq 1 $((ATTEMPT - 1))); do
+              LOG="/tmp/transporter_upload_attempt_${i}.log"
+              if [ -f "$LOG" ]; then
+                echo "  Attempt $i: $LOG"
+              fi
+            done
+            echo ""
+            echo "🔗 Helpful resources:"
+            echo "  • App Store Connect: https://appstoreconnect.apple.com"
+            echo "  • Upload guide: https://developer.apple.com/help/app-store-connect/manage-builds/upload-builds"
+            exit 1
+          fi
+
+          echo ""
+          echo "═══════════════════════════════════════════════════════════"
+          echo "  Upload Complete"
+          echo "═══════════════════════════════════════════════════════════"
+          echo ""
+          echo "📝 Next steps:"
+          echo ""
+          if [ "${{ inputs.stage-only }}" = "true" ]; then
+            echo "1️⃣  Wait for App Store Connect to process the build"
+            echo "    ⏱️  Usually takes 5-10 minutes"
+            echo ""
+            echo "2️⃣  Configure TestFlight in App Store Connect:"
+            echo "    🔗 https://appstoreconnect.apple.com/apps"
+            echo ""
+            echo "3️⃣  Add internal/external testers"
+            echo ""
+            echo "4️⃣  When ready, submit for App Store review"
+          else
+            echo "1️⃣  Build will appear in App Store Connect shortly"
+            echo "    🔗 https://appstoreconnect.apple.com/apps"
+            echo ""
+            echo "2️⃣  Complete app submission information if needed"
+            echo ""
+            echo "3️⃣  Submit for App Store review"
+            echo ""
+            echo "4️⃣  Monitor review status (typically 1-3 days)"
+          fi
+          echo ""
+          echo "✅ All done!"
 
       - name: Clean up API key
         if: always() && steps.check_creds.outputs.has_creds == 'true'
