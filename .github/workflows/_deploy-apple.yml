@@ -279,25 +279,33 @@ jobs:
           fi
           echo ""
 
-          # Locate iTMSTransporter
-          echo "🔍 Locating iTMSTransporter..."
-          TRANSPORTER_PATH="/Applications/Xcode.app/Contents/SharedFrameworks/ContentDeliveryServices.framework/Versions/A/itms/bin/iTMSTransporter"
+          # Try multiple upload methods
+          echo "🔍 Determining upload method..."
 
+          # Method 1: Try finding iTMSTransporter in SharedFrameworks (preferred location)
+          TRANSPORTER_PATH="/Applications/Xcode.app/Contents/SharedFrameworks/ContentDeliveryServices.framework/itms/bin/iTMSTransporter"
+
+          # Check all Xcode versions on the system
           if [ ! -f "$TRANSPORTER_PATH" ]; then
-            echo "⚠️  Not found at standard location, searching..."
-            TRANSPORTER_PATH="$(xcrun -f iTMSTransporter 2>/dev/null || echo '')"
+            for XCODE_PATH in /Applications/Xcode*.app; do
+              TEST_PATH="$XCODE_PATH/Contents/SharedFrameworks/ContentDeliveryServices.framework/itms/bin/iTMSTransporter"
+              if [ -f "$TEST_PATH" ]; then
+                TRANSPORTER_PATH="$TEST_PATH"
+                break
+              fi
+            done
           fi
 
-          if [ -z "$TRANSPORTER_PATH" ] || [ ! -f "$TRANSPORTER_PATH" ]; then
-            echo "❌ ERROR: iTMSTransporter not found"
-            echo ""
-            echo "Troubleshooting:"
-            echo "  • Ensure Xcode is installed on the runner"
-            echo "  • Check Xcode command-line tools: xcode-select -p"
-            exit 1
-          fi
+          UPLOAD_METHOD=""
 
-          echo "✅ Found: $TRANSPORTER_PATH"
+          if [ -f "$TRANSPORTER_PATH" ]; then
+            echo "✅ Found iTMSTransporter: $TRANSPORTER_PATH"
+            UPLOAD_METHOD="transporter"
+          else
+            echo "⚠️  iTMSTransporter not found in SharedFrameworks"
+            echo "🔄 Falling back to xcrun altool (package uploads still supported)"
+            UPLOAD_METHOD="altool"
+          fi
           echo ""
 
           # Verify API key
@@ -345,46 +353,77 @@ jobs:
             # Create log file for this attempt
             LOG_FILE="/tmp/transporter_upload_attempt_${ATTEMPT}.log"
 
-            # Run iTMSTransporter with verbose output
+            # Run upload based on method
             set +e  # Temporarily disable exit on error
-            "$TRANSPORTER_PATH" \
-              -m upload \
-              -f "$PKG_FILE" \
-              -k "$API_KEY_PATH" \
-              -i "$APP_STORE_CONNECT_API_KEY_ID" \
-              -issuer "$APP_STORE_CONNECT_ISSUER_ID" \
-              -v eXtreme \
-              2>&1 | tee "$LOG_FILE"
+
+            if [ "$UPLOAD_METHOD" = "transporter" ]; then
+              echo "Using iTMSTransporter..."
+              "$TRANSPORTER_PATH" \
+                -m upload \
+                -f "$PKG_FILE" \
+                -k "$API_KEY_PATH" \
+                -i "$APP_STORE_CONNECT_API_KEY_ID" \
+                -issuer "$APP_STORE_CONNECT_ISSUER_ID" \
+                -v eXtreme \
+                2>&1 | tee "$LOG_FILE"
+            else
+              echo "Using xcrun altool..."
+              # Note: altool upload-app is for IPA/PKG uploads (still supported)
+              # Only notarization is deprecated
+              xcrun altool \
+                --upload-app \
+                --type macos \
+                --file "$PKG_FILE" \
+                --apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
+                --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
+                --verbose \
+                2>&1 | tee "$LOG_FILE"
+            fi
 
             UPLOAD_EXIT_CODE=$?
             set -e  # Re-enable exit on error
 
             # Check both exit code AND log content for actual success
             if [ $UPLOAD_EXIT_CODE -eq 0 ] && ! grep -q "ERROR:" "$LOG_FILE"; then
-              # Verify success indicators in log
-              if grep -q "Successfully uploaded" "$LOG_FILE" || grep -q "Package Summary" "$LOG_FILE" || grep -q "No errors uploading" "$LOG_FILE"; then
-                UPLOAD_SUCCESS=true
-                echo ""
-                echo "✅ Upload completed successfully!"
-              elif grep -q "OSStatus error" "$LOG_FILE"; then
-                # Exit code 0 but OSStatus error present - check if it's fatal
-                echo ""
-                echo "⚠️  Warning: OSStatus error detected in output"
-                echo "Checking if upload actually succeeded..."
-
-                # Error -10814 is often non-fatal, check for success markers
-                if grep -q "No errors uploading" "$LOG_FILE" || [ -z "$(grep 'ERROR:' "$LOG_FILE")" ]; then
-                  echo "✅ Upload appears successful despite warning"
+              # Different success indicators for different methods
+              if [ "$UPLOAD_METHOD" = "altool" ]; then
+                # altool success indicators
+                if grep -q "No errors uploading" "$LOG_FILE" || grep -q "successfully uploaded" "$LOG_FILE"; then
                   UPLOAD_SUCCESS=true
+                  echo ""
+                  echo "✅ Upload completed successfully!"
                 else
-                  echo "❌ Upload may have failed"
+                  echo ""
+                  echo "⚠️  altool completed with exit code 0, verifying..."
+                  # altool sometimes succeeds without explicit success message
+                  if ! grep -q "ERROR" "$LOG_FILE" && ! grep -q "failed" "$LOG_FILE"; then
+                    echo "✅ No errors detected, upload appears successful"
+                    UPLOAD_SUCCESS=true
+                  fi
                 fi
               else
-                # Exit code 0 but no clear success indicators
-                echo ""
-                echo "⚠️  Upload completed with exit code 0, but no success confirmation found"
-                echo "Treating as successful, but verify in App Store Connect"
-                UPLOAD_SUCCESS=true
+                # iTMSTransporter success indicators
+                if grep -q "Successfully uploaded" "$LOG_FILE" || grep -q "Package Summary" "$LOG_FILE" || grep -q "No errors uploading" "$LOG_FILE"; then
+                  UPLOAD_SUCCESS=true
+                  echo ""
+                  echo "✅ Upload completed successfully!"
+                elif grep -q "OSStatus error" "$LOG_FILE"; then
+                  # Exit code 0 but OSStatus error present - this is likely a failure
+                  echo ""
+                  echo "❌ OSStatus error detected - upload failed"
+                  echo "The -10814 error indicates iTMSTransporter couldn't complete the upload"
+
+                  # If this was iTMSTransporter, try switching to altool for next attempt
+                  if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+                    echo "🔄 Will retry with altool instead"
+                    UPLOAD_METHOD="altool"
+                  fi
+                else
+                  # Exit code 0 but no clear success indicators
+                  echo ""
+                  echo "⚠️  Upload completed with exit code 0, but no success confirmation found"
+                  echo "This likely means upload failed - will retry if attempts remain"
+                fi
               fi
             else
               echo ""
