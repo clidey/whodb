@@ -308,18 +308,12 @@ jobs:
             fi
           fi
 
-      - name: Sign macOS App Bundle
+      - name: Patch Bundle ID and Sign
         if: matrix.platform == 'darwin' && matrix.enabled != false
         env:
           APPLE_DEVELOPER_ID_APPLICATION: ${{ secrets.APPLE_DEVELOPER_ID_APPLICATION }}
         working-directory: ./desktop-${{ inputs.edition }}
         run: |
-          # Validate certificate is available
-          if [ -z "$APPLE_DEVELOPER_ID_APPLICATION" ]; then
-            echo "❌ ERROR: APPLE_DEVELOPER_ID_APPLICATION is required"
-            exit 1
-          fi
-
           APP_PATH="build/darwin/universal/WhoDB.app"
 
           if [ ! -d "$APP_PATH" ]; then
@@ -327,52 +321,36 @@ jobs:
             exit 1
           fi
 
-          # Debug: Check Info.plist content
-          echo "Checking Info.plist content..."
-          if [ -f "$APP_PATH/Contents/Info.plist" ]; then
-            echo "Bundle Identifier from Info.plist:"
-            /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP_PATH/Contents/Info.plist" || echo "Failed to read CFBundleIdentifier"
+          PLIST_PATH="$APP_PATH/Contents/Info.plist"
 
-            echo ""
-            echo "Validating Info.plist syntax..."
-            plutil -lint "$APP_PATH/Contents/Info.plist"
+          # Show original bundle ID
+          echo "Original Bundle ID:"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$PLIST_PATH"
 
-            echo ""
-            echo "Full Info.plist content:"
-            cat "$APP_PATH/Contents/Info.plist"
-          fi
+          # Patch bundle ID to match App Store Connect
+          echo ""
+          echo "Patching bundle ID to com.clidey.whodb..."
+          /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier com.clidey.whodb" "$PLIST_PATH"
+
+          # Verify the change
+          echo "New Bundle ID:"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$PLIST_PATH"
+
+          # Validate plist is still valid
+          plutil -lint "$PLIST_PATH"
 
           echo ""
-          echo "🔏 Signing app bundle with hardened runtime..."
-
-          # Remove any existing signatures first
-          echo "Removing existing signatures..."
-          codesign --remove-signature "$APP_PATH" 2>/dev/null || true
-          codesign --remove-signature "$APP_PATH/Contents/MacOS/whodb" 2>/dev/null || true
-
-          # Sign binary first
-          echo "Signing main executable..."
-          codesign --force \
-            --sign "$APPLE_DEVELOPER_ID_APPLICATION" \
-            --options runtime \
-            --timestamp \
-            "$APP_PATH/Contents/MacOS/whodb"
-
-          # Sign app bundle (covers Info.plist and other resources)
-          echo "Signing app bundle..."
-          codesign --force \
+          echo "🔏 Signing app bundle for DMG distribution..."
+          codesign --force --deep \
             --sign "$APPLE_DEVELOPER_ID_APPLICATION" \
             --options runtime \
             --timestamp \
             "$APP_PATH"
 
-          echo "✅ App bundle signed"
-
-          # Verify the signature
-          echo "Verifying code signature..."
+          echo "Verifying signature..."
           codesign --verify --verbose=4 "$APP_PATH"
 
-          echo "✅ Code signature valid"
+          echo "✅ App patched, signed, and verified"
 
       - name: Create macOS DMG
         if: matrix.platform == 'darwin' && matrix.enabled != false
