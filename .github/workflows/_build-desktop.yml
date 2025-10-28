@@ -382,20 +382,6 @@ jobs:
 
       - name: Upload macOS Entitlements
         if: matrix.platform == 'darwin' && matrix.enabled != false
-        run: |
-          ENTITLEMENTS_PATH="desktop-${{ inputs.edition }}/build/darwin/entitlements.plist"
-
-          if [ -f "$ENTITLEMENTS_PATH" ]; then
-            echo "✅ Found entitlements at: $ENTITLEMENTS_PATH"
-          else
-            echo "❌ Entitlements file not found at: $ENTITLEMENTS_PATH"
-            echo "Directory contents:"
-            ls -la desktop-${{ inputs.edition }}/build/darwin/ || echo "Directory doesn't exist"
-            exit 1
-          fi
-
-      - name: Upload macOS Entitlements Artifact
-        if: matrix.platform == 'darwin' && matrix.enabled != false
         uses: actions/upload-artifact@v4
         with:
           name: desktop-darwin-entitlements
