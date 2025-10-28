@@ -183,8 +183,9 @@ jobs:
           echo "Original app: $APP_PATH"
 
           # Copy app to a new location for Mac App Store signing
-          MAS_APP_PATH="${APP_PATH}.mas"
-          echo "Copying app for Mac App Store signing..."
+          # Don't add .mas suffix - Apple rejects bundle names not ending in .app
+          MAS_APP_PATH="${APP_PATH%/*}/WhoDB-MAS.app"
+          echo "Copying app for Mac App Store signing to: $MAS_APP_PATH"
           cp -R "$APP_PATH" "$MAS_APP_PATH"
 
           # Embed provisioning profile
@@ -214,6 +215,13 @@ jobs:
           fi
 
           echo "Using entitlements: $ENTITLEMENTS_PATH"
+
+          # Add missing LSApplicationCategoryType to Info.plist
+          echo "📝 Adding LSApplicationCategoryType to Info.plist..."
+          /usr/libexec/PlistBuddy -c "Add :LSApplicationCategoryType string public.app-category.developer-tools" \
+            "$MAS_APP_PATH/Contents/Info.plist" 2>/dev/null || \
+          /usr/libexec/PlistBuddy -c "Set :LSApplicationCategoryType public.app-category.developer-tools" \
+            "$MAS_APP_PATH/Contents/Info.plist"
 
           # Re-sign app with Mac App Store certificate and entitlements
           echo "🔏 Re-signing app for Mac App Store with entitlements..."
