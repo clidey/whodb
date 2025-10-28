@@ -332,10 +332,36 @@ jobs:
           if [ -f "$APP_PATH/Contents/Info.plist" ]; then
             echo "Bundle Identifier from Info.plist:"
             /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP_PATH/Contents/Info.plist" || echo "Failed to read CFBundleIdentifier"
+
+            echo ""
+            echo "Validating Info.plist syntax..."
+            plutil -lint "$APP_PATH/Contents/Info.plist"
+
+            echo ""
+            echo "Full Info.plist content:"
+            cat "$APP_PATH/Contents/Info.plist"
           fi
 
+          echo ""
           echo "🔏 Signing app bundle with hardened runtime..."
-          codesign --force --deep --sign "$APPLE_DEVELOPER_ID_APPLICATION" \
+
+          # Remove any existing signatures first
+          echo "Removing existing signatures..."
+          codesign --remove-signature "$APP_PATH" 2>/dev/null || true
+          codesign --remove-signature "$APP_PATH/Contents/MacOS/whodb" 2>/dev/null || true
+
+          # Sign binary first
+          echo "Signing main executable..."
+          codesign --force \
+            --sign "$APPLE_DEVELOPER_ID_APPLICATION" \
+            --options runtime \
+            --timestamp \
+            "$APP_PATH/Contents/MacOS/whodb"
+
+          # Sign app bundle (covers Info.plist and other resources)
+          echo "Signing app bundle..."
+          codesign --force \
+            --sign "$APPLE_DEVELOPER_ID_APPLICATION" \
             --options runtime \
             --timestamp \
             "$APP_PATH"
