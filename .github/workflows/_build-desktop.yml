@@ -327,6 +327,13 @@ jobs:
             exit 1
           fi
 
+          # Debug: Check Info.plist content
+          echo "Checking Info.plist content..."
+          if [ -f "$APP_PATH/Contents/Info.plist" ]; then
+            echo "Bundle Identifier from Info.plist:"
+            /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP_PATH/Contents/Info.plist" || echo "Failed to read CFBundleIdentifier"
+          fi
+
           echo "🔏 Signing app bundle with hardened runtime..."
           codesign --force --deep --sign "$APPLE_DEVELOPER_ID_APPLICATION" \
             --options runtime \
