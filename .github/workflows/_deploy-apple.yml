@@ -70,6 +70,97 @@ jobs:
           name: desktop-darwin-entitlements
           path: desktop-builds/build/darwin/
 
+      - name: Generate Homebrew cask (stage-only)
+        if: inputs.stage-only == true
+        run: |
+          echo "📝 Generating Homebrew cask for local testing..."
+
+          VERSION="${{ inputs.version }}"
+
+          # Find DMG file
+          DMG_PATH=$(find desktop-builds -name "*.dmg" | head -1)
+
+          if [ -z "$DMG_PATH" ]; then
+            echo "⚠️  No DMG file found, skipping Homebrew cask generation"
+            exit 0
+          fi
+
+          echo "Found DMG: $DMG_PATH"
+
+          # Calculate SHA256
+          SHA256=$(shasum -a 256 "$DMG_PATH" | cut -d' ' -f1)
+          echo "SHA256: $SHA256"
+
+          # Generate cask file
+          cat > whodb.rb <<EOF
+          cask "whodb" do
+            version "${VERSION}"
+            sha256 "${SHA256}"
+
+            url "https://github.com/clidey/whodb/releases/download/v${VERSION}/whodb.dmg"
+            name "WhoDB"
+            desc "Database management tool with AI-powered features"
+            homepage "https://github.com/clidey/whodb"
+
+            app "WhoDB.app"
+
+            zap trash: [
+              "~/Library/Application Support/WhoDB",
+              "~/Library/Preferences/com.clidey.whodb.plist",
+              "~/Library/Saved Application State/com.clidey.whodb.savedState"
+            ]
+          end
+          EOF
+
+          echo ""
+          echo "✅ Generated whodb.rb:"
+          cat whodb.rb
+
+          # Create usage instructions
+          cat > HOMEBREW_TESTING.md <<EOF
+          # Local Homebrew Cask Testing
+
+          This cask file was generated for WhoDB v${VERSION} in stage mode.
+
+          ## Local Testing Instructions:
+
+          1. Download the whodb.rb file from this workflow run
+          2. Install locally:
+             \`\`\`bash
+             brew install --cask whodb.rb
+             \`\`\`
+
+          3. Test the app:
+             \`\`\`bash
+             open -a WhoDB
+             \`\`\`
+
+          4. Uninstall when done:
+             \`\`\`bash
+             brew uninstall --cask whodb
+             \`\`\`
+
+          ## Submit to Homebrew (after production release):
+
+          1. Fork homebrew-cask repository
+          2. Create branch: \`update-whodb-${VERSION}\`
+          3. Add/update \`Casks/w/whodb.rb\` with this file
+          4. Submit PR with title: \`whodb ${VERSION}\` (or \`whodb ${VERSION} (new cask)\` if first submission)
+          EOF
+
+          echo ""
+          echo "📋 Testing instructions created"
+
+      - name: Upload Homebrew cask (stage-only)
+        if: inputs.stage-only == true
+        uses: actions/upload-artifact@v4
+        with:
+          name: homebrew-cask-stage
+          path: |
+            whodb.rb
+            HOMEBREW_TESTING.md
+          retention-days: 30
+
       - name: Check for app bundle
         id: check_app
         run: |
