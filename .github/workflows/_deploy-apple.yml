@@ -19,6 +19,16 @@ on:
         required: false
       KEYCHAIN_PASSWORD:
         required: false
+      APPLE_MAS_CERTIFICATES_P12:
+        required: false
+      APPLE_MAS_CERTIFICATES_PASSWORD:
+        required: false
+      APPLE_MAS_CERT_APPLICATION:
+        required: false
+      APPLE_MAS_CERT_INSTALLER:
+        required: false
+      APPLE_MAS_PROVISIONING_PROFILE:
+        required: false
       APP_STORE_CONNECT_API_KEY:
         required: false
       APP_STORE_CONNECT_API_KEY_ID:
@@ -54,6 +64,12 @@ jobs:
           name: desktop-darwin-app
           path: desktop-builds/
 
+      - name: Download macOS Entitlements
+        uses: actions/download-artifact@v4
+        with:
+          name: desktop-darwin-entitlements
+          path: desktop-builds/build/darwin/
+
       - name: Check for app bundle
         id: check_app
         run: |
@@ -80,32 +96,32 @@ jobs:
 
           echo "app_path=$APP_PATH" >> $GITHUB_OUTPUT
 
-      - name: Import Apple Developer Certificates
+      - name: Import Mac App Store Certificates
         env:
-          CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_CERTIFICATES_P12 }}
-          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATES_PASSWORD }}
+          MAS_CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_MAS_CERTIFICATES_P12 }}
+          MAS_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_MAS_CERTIFICATES_PASSWORD }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
-          if [ -z "$CERTIFICATE_P12_BASE64" ]; then
-            echo "❌ ERROR: Apple certificates are required for Mac App Store packaging"
-            echo "Please configure APPLE_CERTIFICATES_P12 and APPLE_CERTIFICATES_PASSWORD secrets"
+          if [ -z "$MAS_CERTIFICATE_P12_BASE64" ]; then
+            echo "❌ ERROR: Mac App Store certificates are required"
+            echo "Please configure APPLE_MAS_CERTIFICATES_P12 and APPLE_MAS_CERTIFICATES_PASSWORD secrets"
             exit 1
           fi
 
-          if [ -z "$CERTIFICATE_PASSWORD" ]; then
-            echo "❌ ERROR: APPLE_CERTIFICATES_PASSWORD is required"
+          if [ -z "$MAS_CERTIFICATE_PASSWORD" ]; then
+            echo "❌ ERROR: APPLE_MAS_CERTIFICATES_PASSWORD is required"
             exit 1
           fi
 
-          echo "🔐 Setting up keychain for code signing..."
+          echo "🔐 Setting up keychain for Mac App Store code signing..."
 
           # Create variables
-          CERTIFICATE_PATH=$RUNNER_TEMP/certificate.p12
-          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          CERTIFICATE_PATH=$RUNNER_TEMP/mas_certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/mas-signing.keychain-db
           KEYCHAIN_PASSWORD_VALUE="${KEYCHAIN_PASSWORD:-$(uuidgen)}"
 
           # Decode certificate
-          echo "$CERTIFICATE_P12_BASE64" | base64 --decode -o "$CERTIFICATE_PATH"
+          echo "$MAS_CERTIFICATE_P12_BASE64" | base64 --decode -o "$CERTIFICATE_PATH"
 
           # Create temporary keychain
           security create-keychain -p "$KEYCHAIN_PASSWORD_VALUE" "$KEYCHAIN_PATH"
@@ -113,17 +129,17 @@ jobs:
           security unlock-keychain -p "$KEYCHAIN_PASSWORD_VALUE" "$KEYCHAIN_PATH"
 
           # Import certificate to keychain
-          security import "$CERTIFICATE_PATH" -P "$CERTIFICATE_PASSWORD" \
+          security import "$CERTIFICATE_PATH" -P "$MAS_CERTIFICATE_PASSWORD" \
             -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
 
           # Set keychain search list
           security list-keychain -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | sed s/\"//g)
 
           # Allow codesign to access keychain
-          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+          security set-key-partition-list -S apple-tool:,apple:,codesign:,productbuild: \
             -s -k "$KEYCHAIN_PASSWORD_VALUE" "$KEYCHAIN_PATH"
 
-          echo "✅ Certificates imported successfully"
+          echo "✅ Mac App Store certificates imported successfully"
 
           # List available signing identities for verification
           echo "Available codesigning identities:"
@@ -139,29 +155,86 @@ jobs:
 
       - name: Prepare Mac App Store package
         env:
-          APPLE_DEVELOPER_ID: ${{ secrets.APPLE_DEVELOPER_ID }}
-          APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
+          MAS_CERT_APPLICATION: ${{ secrets.APPLE_MAS_CERT_APPLICATION }}
+          MAS_CERT_INSTALLER: ${{ secrets.APPLE_MAS_CERT_INSTALLER }}
+          MAS_PROVISIONING_PROFILE: ${{ secrets.APPLE_MAS_PROVISIONING_PROFILE }}
         run: |
           echo "📦 Preparing Mac App Store package..."
 
           # Validate required credentials
-          if [ -z "$APPLE_DEVELOPER_ID" ] || [ -z "$APPLE_DEVELOPER_TEAM_ID" ]; then
-            echo "❌ ERROR: APPLE_DEVELOPER_ID and APPLE_DEVELOPER_TEAM_ID are required"
+          if [ -z "$MAS_CERT_APPLICATION" ]; then
+            echo "❌ ERROR: APPLE_MAS_CERT_APPLICATION is required"
+            exit 1
+          fi
+
+          if [ -z "$MAS_CERT_INSTALLER" ]; then
+            echo "❌ ERROR: APPLE_MAS_CERT_INSTALLER is required"
+            exit 1
+          fi
+
+          if [ -z "$MAS_PROVISIONING_PROFILE" ]; then
+            echo "❌ ERROR: APPLE_MAS_PROVISIONING_PROFILE is required (base64-encoded .provisionprofile)"
             exit 1
           fi
 
           APP_PATH="${{ steps.check_app.outputs.app_path }}"
           PKG_PATH="WhoDB_${{ inputs.version }}.pkg"
 
+          echo "Original app: $APP_PATH"
+
+          # Copy app to a new location for Mac App Store signing
+          MAS_APP_PATH="${APP_PATH}.mas"
+          echo "Copying app for Mac App Store signing..."
+          cp -R "$APP_PATH" "$MAS_APP_PATH"
+
+          # Embed provisioning profile
+          echo "📝 Embedding provisioning profile..."
+          PROFILE_PATH="$MAS_APP_PATH/Contents/embedded.provisionprofile"
+          echo "$MAS_PROVISIONING_PROFILE" | base64 --decode -o "$PROFILE_PATH"
+
+          if [ ! -f "$PROFILE_PATH" ]; then
+            echo "❌ ERROR: Failed to create provisioning profile"
+            exit 1
+          fi
+
+          echo "✅ Provisioning profile embedded"
+
+          # Find entitlements file
+          ENTITLEMENTS_PATH=""
+          if [ -f "desktop-builds/build/darwin/entitlements.plist" ]; then
+            ENTITLEMENTS_PATH="desktop-builds/build/darwin/entitlements.plist"
+          elif [ -f "$MAS_APP_PATH/../entitlements.plist" ]; then
+            ENTITLEMENTS_PATH="$MAS_APP_PATH/../entitlements.plist"
+          else
+            echo "❌ ERROR: entitlements.plist not found"
+            echo "Searched in:"
+            echo "  - desktop-builds/build/darwin/entitlements.plist"
+            echo "  - $MAS_APP_PATH/../entitlements.plist"
+            exit 1
+          fi
+
+          echo "Using entitlements: $ENTITLEMENTS_PATH"
+
+          # Re-sign app with Mac App Store certificate and entitlements
+          echo "🔏 Re-signing app for Mac App Store with entitlements..."
+          codesign --force --deep \
+            --sign "$MAS_CERT_APPLICATION" \
+            --entitlements "$ENTITLEMENTS_PATH" \
+            --options runtime \
+            --timestamp \
+            "$MAS_APP_PATH"
+
+          echo "✅ App re-signed for Mac App Store"
+
+          # Verify the signature
+          echo "Verifying Mac App Store signature..."
+          codesign --verify --verbose=4 "$MAS_APP_PATH"
+          codesign --display --entitlements - "$MAS_APP_PATH"
+
+          # Create signed PKG installer with Mac Installer Distribution certificate
           echo "🔏 Creating signed PKG installer..."
-
-          # Verify app is already signed
-          echo "Verifying app signature..."
-          codesign --verify --verbose=4 "$APP_PATH"
-
-          # Create signed PKG installer
-          productbuild --component "$APP_PATH" /Applications \
-            --sign "$APPLE_DEVELOPER_ID" \
+          productbuild --component "$MAS_APP_PATH" /Applications \
+            --sign "$MAS_CERT_INSTALLER" \
             --identifier "com.clidey.whodb" \
             --version "${{ inputs.version }}" \
             "$PKG_PATH"
@@ -187,9 +260,9 @@ jobs:
       - name: Cleanup Keychain
         if: always()
         run: |
-          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PATH=$RUNNER_TEMP/mas-signing.keychain-db
           if [ -f "$KEYCHAIN_PATH" ]; then
-            echo "🧹 Cleaning up keychain..."
+            echo "🧹 Cleaning up Mac App Store keychain..."
             security delete-keychain "$KEYCHAIN_PATH" || true
             echo "✅ Keychain cleanup complete"
           fi

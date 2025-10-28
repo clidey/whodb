@@ -380,6 +380,14 @@ jobs:
           path: desktop-${{ inputs.edition }}/build/darwin/universal/*.app
           retention-days: 1
 
+      - name: Upload macOS Entitlements
+        if: matrix.platform == 'darwin' && matrix.enabled != false
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-darwin-entitlements
+          path: desktop-${{ inputs.edition }}/build/darwin/entitlements.plist
+          retention-days: 1
+
       - name: Upload artifacts (non-macOS)
         if: matrix.enabled != false && matrix.platform != 'darwin' && (matrix.arch != 'arm64' || matrix.platform != 'windows')
         uses: actions/upload-artifact@v4
