@@ -251,6 +251,20 @@ dmg-mac: build-prod-mac
 		"build/darwin/universal/$(OUTPUT_PREFIX).dmg"
 	@echo "DMG created at build/darwin/universal/$(OUTPUT_PREFIX).dmg"
 
+# Create DMG without rebuilding (for CI when app is already built and signed)
+dmg-mac-only:
+	@echo "Creating DMG from existing app bundle..."
+	@if [ ! -d "build/darwin/universal/$(APP_NAME)" ]; then \
+		echo "ERROR: App bundle not found. Build first."; \
+		exit 1; \
+	fi
+	@rm -rf build/dmgroot && mkdir -p build/dmgroot
+	@cp -R "build/darwin/universal/$(APP_NAME)" build/dmgroot/
+	@ln -sf /Applications build/dmgroot/Applications
+	@hdiutil create -volname "$(DMG_VOLNAME)" -srcfolder build/dmgroot -ov -format UDZO \
+		"build/darwin/universal/$(OUTPUT_PREFIX).dmg"
+	@echo "DMG created at build/darwin/universal/$(OUTPUT_PREFIX).dmg"
+
 # One-shot DMG release: codesign app (if provided), create DMG, notarize & staple DMG
 release-dmg: build-prod-mac
 	@if [ -z "$$CODESIGN_ID" ]; then \

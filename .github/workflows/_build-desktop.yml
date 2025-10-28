@@ -303,7 +303,7 @@ jobs:
       - name: Create macOS DMG
         if: matrix.platform == 'darwin' && matrix.enabled != false
         working-directory: ./desktop-${{ inputs.edition }}
-        run: make dmg-mac VERSION=${{ inputs.version }}
+        run: make dmg-mac-only VERSION=${{ inputs.version }}
 
       - name: Sign and Notarize DMG
         if: matrix.platform == 'darwin' && matrix.enabled != false
