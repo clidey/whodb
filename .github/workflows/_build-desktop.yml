@@ -332,9 +332,16 @@ jobs:
           echo "Patching bundle ID to com.clidey.whodb..."
           /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier com.clidey.whodb" "$PLIST_PATH"
 
-          # Verify the change
+          # Add encryption exemption (only uses standard OS TLS/SSL)
+          echo "Adding encryption exemption key..."
+          /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST_PATH" 2>/dev/null || \
+          /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST_PATH"
+
+          # Verify the changes
           echo "New Bundle ID:"
           /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$PLIST_PATH"
+          echo "Encryption exemption:"
+          /usr/libexec/PlistBuddy -c "Print :ITSAppUsesNonExemptEncryption" "$PLIST_PATH"
 
           # Validate plist is still valid
           plutil -lint "$PLIST_PATH"
