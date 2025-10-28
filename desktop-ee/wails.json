@@ -17,6 +17,9 @@
     "copyright": "Copyright 2025 Clidey, Inc.",
     "comments": "Enterprise Database Management Tool"
   },
+  "mac": {
+    "bundleId": "com.clidey.whodb.ee"
+  },
   "debounceMS": 100,
   "devServer": "localhost:3000",
   "appargs": "",
