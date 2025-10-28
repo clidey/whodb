@@ -267,12 +267,46 @@ jobs:
         working-directory: ./desktop-${{ inputs.edition }}
         run: |
           echo "Cleaning previous build to ensure bundle ID changes take effect..."
-          rm -rf build/darwin build/bin wails.lock || true
+          # Clean build outputs but preserve template files
+          rm -rf build/darwin/universal build/darwin/amd64 build/darwin/arm64 build/dmgroot || true
+          rm -rf build/bin wails.lock || true
+          echo "Template files preserved in build/darwin/"
+
+      - name: Verify entitlements before build
+        if: matrix.platform == 'darwin' && matrix.enabled != false
+        working-directory: ./desktop-${{ inputs.edition }}
+        run: |
+          echo "Checking for entitlements.plist before build..."
+          ls -la build/darwin/ || echo "build/darwin doesn't exist"
+
+          if [ -f build/darwin/entitlements.plist ]; then
+            echo "✅ Entitlements exist before build"
+          else
+            echo "❌ Entitlements missing before build"
+          fi
 
       - name: Build macOS
         if: matrix.platform == 'darwin' && matrix.enabled != false
         working-directory: ./desktop-${{ inputs.edition }}
         run: make ${{ matrix.make-target }} VERSION=${{ inputs.version }}
+
+      - name: Verify entitlements after build
+        if: matrix.platform == 'darwin' && matrix.enabled != false
+        working-directory: ./desktop-${{ inputs.edition }}
+        run: |
+          echo "Checking for entitlements.plist after build..."
+          ls -la build/darwin/ || echo "build/darwin doesn't exist"
+
+          if [ -f build/darwin/entitlements.plist ]; then
+            echo "✅ Entitlements exist after build"
+          else
+            echo "❌ Entitlements deleted during build"
+            echo "Recreating from source..."
+            # Fallback: copy from source if it was deleted
+            if [ -f ../../desktop-${{ inputs.edition }}/build/darwin/entitlements.plist ]; then
+              cp ../../desktop-${{ inputs.edition }}/build/darwin/entitlements.plist build/darwin/
+            fi
+          fi
 
       - name: Sign macOS App Bundle
         if: matrix.platform == 'darwin' && matrix.enabled != false
