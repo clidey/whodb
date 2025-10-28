@@ -70,8 +70,7 @@ jobs:
           name: desktop-darwin-entitlements
           path: desktop-builds/build/darwin/
 
-      - name: Generate Homebrew cask (stage-only)
-        if: inputs.stage-only == true
+      - name: Generate Homebrew cask
         run: |
           echo "📝 Generating Homebrew cask for local testing..."
 
@@ -151,11 +150,10 @@ jobs:
           echo ""
           echo "📋 Testing instructions created"
 
-      - name: Upload Homebrew cask (stage-only)
-        if: inputs.stage-only == true
+      - name: Upload Homebrew cask
         uses: actions/upload-artifact@v4
         with:
-          name: homebrew-cask-stage
+          name: homebrew-cask-apple
           path: |
             whodb.rb
             HOMEBREW_TESTING.md
