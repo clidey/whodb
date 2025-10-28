@@ -19,7 +19,7 @@ cypress-results/
 desktop-ce/frontend/
 desktop-ce/build/*
 !desktop-ce/build/darwin/
-!desktop-ce/build/darwin/Info.plist
+!desktop-ce/build/darwin/*.plist
 !desktop-ce/build/appicon.png
 desktop-ee/frontend/
 desktop-ee/build/*
