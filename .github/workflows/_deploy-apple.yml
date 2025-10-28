@@ -359,10 +359,33 @@ jobs:
             UPLOAD_EXIT_CODE=$?
             set -e  # Re-enable exit on error
 
-            if [ $UPLOAD_EXIT_CODE -eq 0 ]; then
-              UPLOAD_SUCCESS=true
-              echo ""
-              echo "✅ Upload completed successfully!"
+            # Check both exit code AND log content for actual success
+            if [ $UPLOAD_EXIT_CODE -eq 0 ] && ! grep -q "ERROR:" "$LOG_FILE"; then
+              # Verify success indicators in log
+              if grep -q "Successfully uploaded" "$LOG_FILE" || grep -q "Package Summary" "$LOG_FILE" || grep -q "No errors uploading" "$LOG_FILE"; then
+                UPLOAD_SUCCESS=true
+                echo ""
+                echo "✅ Upload completed successfully!"
+              elif grep -q "OSStatus error" "$LOG_FILE"; then
+                # Exit code 0 but OSStatus error present - check if it's fatal
+                echo ""
+                echo "⚠️  Warning: OSStatus error detected in output"
+                echo "Checking if upload actually succeeded..."
+
+                # Error -10814 is often non-fatal, check for success markers
+                if grep -q "No errors uploading" "$LOG_FILE" || [ -z "$(grep 'ERROR:' "$LOG_FILE")" ]; then
+                  echo "✅ Upload appears successful despite warning"
+                  UPLOAD_SUCCESS=true
+                else
+                  echo "❌ Upload may have failed"
+                fi
+              else
+                # Exit code 0 but no clear success indicators
+                echo ""
+                echo "⚠️  Upload completed with exit code 0, but no success confirmation found"
+                echo "Treating as successful, but verify in App Store Connect"
+                UPLOAD_SUCCESS=true
+              fi
             else
               echo ""
               echo "❌ Upload failed with exit code: $UPLOAD_EXIT_CODE"
@@ -426,30 +449,48 @@ jobs:
           echo "  Upload Complete"
           echo "═══════════════════════════════════════════════════════════"
           echo ""
+          echo "🔍 IMPORTANT: Verify upload in App Store Connect"
+          echo ""
+          echo "Even though the upload reported success, please verify:"
+          echo "  1. Go to https://appstoreconnect.apple.com/apps"
+          echo "  2. Click on 'WhoDB'"
+          echo "  3. Go to 'TestFlight' or 'App Store' tab"
+          echo "  4. Look for build version ${{ inputs.version }}"
+          echo ""
+          echo "───────────────────────────────────────────────────────────"
+          echo ""
           echo "📝 Next steps:"
           echo ""
           if [ "${{ inputs.stage-only }}" = "true" ]; then
             echo "1️⃣  Wait for App Store Connect to process the build"
             echo "    ⏱️  Usually takes 5-10 minutes"
+            echo "    📊 Status: Processing → Ready to Submit"
             echo ""
-            echo "2️⃣  Configure TestFlight in App Store Connect:"
+            echo "2️⃣  Once status shows 'Ready to Submit':"
+            echo "    • Configure TestFlight testing if needed"
+            echo "    • Add internal/external testers"
+            echo "    • Or submit directly for App Store review"
+            echo ""
+            echo "3️⃣  Monitor processing:"
             echo "    🔗 https://appstoreconnect.apple.com/apps"
-            echo ""
-            echo "3️⃣  Add internal/external testers"
-            echo ""
-            echo "4️⃣  When ready, submit for App Store review"
           else
             echo "1️⃣  Build will appear in App Store Connect shortly"
             echo "    🔗 https://appstoreconnect.apple.com/apps"
             echo ""
-            echo "2️⃣  Complete app submission information if needed"
+            echo "2️⃣  Wait for 'Ready to Submit' status"
             echo ""
-            echo "3️⃣  Submit for App Store review"
+            echo "3️⃣  Complete submission information:"
+            echo "    • App description"
+            echo "    • Screenshots"
+            echo "    • Privacy info"
             echo ""
-            echo "4️⃣  Monitor review status (typically 1-3 days)"
+            echo "4️⃣  Submit for App Store review"
+            echo "    ⏱️  Review typically takes 1-3 business days"
           fi
           echo ""
-          echo "✅ All done!"
+          echo "═══════════════════════════════════════════════════════════"
+          echo "✅ Workflow complete!"
+          echo "═══════════════════════════════════════════════════════════"
 
       - name: Clean up API key
         if: always() && steps.check_creds.outputs.has_creds == 'true'
