@@ -38,10 +38,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download macOS build
+      - name: Download macOS DMG
         uses: actions/download-artifact@v4
         with:
-          name: desktop-darwin-universal
+          name: desktop-darwin-dmg
+          path: desktop-builds/
+
+      - name: Download macOS App Bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: desktop-darwin-app
           path: desktop-builds/
 
       - name: Check for app bundle

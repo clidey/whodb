@@ -344,8 +344,37 @@ jobs:
           xcrun stapler staple "$DMG_FILE"
           echo "✅ DMG signed and notarized"
 
-      - name: Upload artifacts
-        if: matrix.enabled != false && (matrix.arch != 'arm64' || matrix.platform != 'windows')
+      - name: Cleanup build artifacts before upload
+        if: matrix.platform == 'darwin' && matrix.enabled != false
+        working-directory: ./desktop-${{ inputs.edition }}
+        run: |
+          echo "Cleaning up intermediate build files..."
+          # Remove DMG staging directory (duplicate of app bundle)
+          rm -rf build/dmgroot
+          # Remove bin directory if it exists
+          rm -rf build/bin
+          # List what's left
+          echo "Remaining files to upload:"
+          du -sh build/darwin/universal/* || true
+
+      - name: Upload macOS DMG
+        if: matrix.platform == 'darwin' && matrix.enabled != false
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-darwin-dmg
+          path: desktop-${{ inputs.edition }}/build/darwin/universal/*.dmg
+          retention-days: 1
+
+      - name: Upload macOS App Bundle
+        if: matrix.platform == 'darwin' && matrix.enabled != false
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-darwin-app
+          path: desktop-${{ inputs.edition }}/build/darwin/universal/*.app
+          retention-days: 1
+
+      - name: Upload artifacts (non-macOS)
+        if: matrix.enabled != false && matrix.platform != 'darwin' && (matrix.arch != 'arm64' || matrix.platform != 'windows')
         uses: actions/upload-artifact@v4
         with:
           name: desktop-${{ matrix.platform }}-${{ matrix.arch || 'all' }}
