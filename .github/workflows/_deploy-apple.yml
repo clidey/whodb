@@ -151,10 +151,9 @@ jobs:
 
           echo "🔏 Creating signed PKG installer..."
 
-          # Sign the app bundle first if not already signed
-          codesign --force --deep --sign "$APPLE_DEVELOPER_ID" \
-            --options runtime --timestamp \
-            "$APP_PATH"
+          # Verify app is already signed
+          echo "Verifying app signature..."
+          codesign --verify --verbose=4 "$APP_PATH"
 
           # Create signed PKG installer
           productbuild --component "$APP_PATH" /Applications \
