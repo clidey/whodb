@@ -32,6 +32,12 @@ on:
         required: false
       APPLE_TEAM_ID:
         required: false
+      APPLE_MAS_CERTIFICATES_P12:
+        required: false
+      APPLE_MAS_CERTIFICATES_PASSWORD:
+        required: false
+      APPLE_MAS_PROVISIONING_PROFILE:
+        required: false
 
 jobs:
   build-desktop:
