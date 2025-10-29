@@ -70,6 +70,12 @@ jobs:
           name: desktop-darwin-entitlements
           path: desktop-builds/build/darwin/
 
+      - name: Use MAS-specific entitlements
+        run: |
+          # Copy the Mac App Store entitlements (without temporary exceptions)
+          cp macos/entitlements.mas.plist desktop-builds/build/darwin/entitlements.mas.plist
+          echo "✅ Using Mac App Store entitlements without temporary exceptions"
+
       - name: Generate Homebrew cask
         run: |
           VERSION="${{ inputs.version }}"
@@ -259,21 +265,17 @@ jobs:
 
           echo "✅ Provisioning profile embedded"
 
-          # Find entitlements file
-          ENTITLEMENTS_PATH=""
-          if [ -f "desktop-builds/build/darwin/entitlements.plist" ]; then
-            ENTITLEMENTS_PATH="desktop-builds/build/darwin/entitlements.plist"
-          elif [ -f "$MAS_APP_PATH/../entitlements.plist" ]; then
-            ENTITLEMENTS_PATH="$MAS_APP_PATH/../entitlements.plist"
-          else
-            echo "❌ ERROR: entitlements.plist not found"
-            echo "Searched in:"
-            echo "  - desktop-builds/build/darwin/entitlements.plist"
-            echo "  - $MAS_APP_PATH/../entitlements.plist"
+          # Use Mac App Store specific entitlements (without temporary exceptions)
+          ENTITLEMENTS_PATH="desktop-builds/build/darwin/entitlements.mas.plist"
+
+          if [ ! -f "$ENTITLEMENTS_PATH" ]; then
+            echo "❌ ERROR: Mac App Store entitlements not found: $ENTITLEMENTS_PATH"
             exit 1
           fi
 
-          echo "Using entitlements: $ENTITLEMENTS_PATH"
+          echo "Using Mac App Store entitlements: $ENTITLEMENTS_PATH"
+          echo "Entitlements content:"
+          cat "$ENTITLEMENTS_PATH"
 
           # Add missing LSApplicationCategoryType to Info.plist
           echo "📝 Adding LSApplicationCategoryType to Info.plist..."
