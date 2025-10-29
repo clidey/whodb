@@ -485,6 +485,12 @@ jobs:
           # Validate plist is still valid
           plutil -lint "$PLIST_PATH"
 
+          # Ensure binary has execute permissions
+          echo ""
+          echo "🔧 Ensuring binary has execute permissions..."
+          chmod +x "$APP_PATH/Contents/MacOS/whodb"
+          ls -la "$APP_PATH/Contents/MacOS/whodb"
+
           # Step 1: Embed provisioning profile (per Wails docs)
           echo ""
           echo "📝 Step 1: Embedding provisioning profile..."
