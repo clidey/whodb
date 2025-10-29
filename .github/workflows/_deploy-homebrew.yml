@@ -38,35 +38,8 @@ jobs:
             exit 1
           fi
 
-          echo "Found DMG: $DMG_PATH"
-
-          # Calculate SHA256
-          SHA256=$(shasum -a 256 "$DMG_PATH" | cut -d' ' -f1)
-          echo "SHA256: $SHA256"
-
-          # Generate cask file
-          cat > whodb.rb <<EOF
-          cask "whodb" do
-            version "${VERSION}"
-            sha256 "${SHA256}"
-
-            url "https://github.com/clidey/whodb/releases/download/v${VERSION}/whodb.dmg"
-            name "WhoDB"
-            desc "Database management tool with AI-powered features"
-            homepage "https://github.com/clidey/whodb"
-
-            app "WhoDB.app"
-
-            zap trash: [
-              "~/Library/Application Support/WhoDB",
-              "~/Library/Preferences/com.clidey.whodb.plist",
-              "~/Library/Saved Application State/com.clidey.whodb.savedState"
-            ]
-          end
-          EOF
-
-          echo "📝 Generated Homebrew cask file:"
-          cat whodb.rb
+          # Generate cask using script
+          .github/scripts/generate-homebrew-cask.sh "$VERSION" "$DMG_PATH" whodb.rb
 
       - name: Upload cask file as artifact
         uses: actions/upload-artifact@v4
