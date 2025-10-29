@@ -259,6 +259,10 @@ jobs:
           echo "Renaming to WhoDB.app for proper installation..."
           mv "$TEMP_APP_PATH" "$MAS_APP_PATH"
 
+          # Remove existing signature before re-signing
+          echo "Removing existing signature..."
+          codesign --remove-signature "$MAS_APP_PATH"
+
           # Embed provisioning profile
           echo "📝 Embedding provisioning profile..."
           PROFILE_PATH="$MAS_APP_PATH/Contents/embedded.provisionprofile"
@@ -292,7 +296,20 @@ jobs:
 
           # Re-sign app with Mac App Store certificate and entitlements
           echo "🔏 Re-signing app for Mac App Store with entitlements..."
-          codesign --force --deep \
+          # Note: Don't use --deep as it's deprecated and causes signing issues
+          # Sign embedded frameworks and binaries first if they exist
+          if [ -d "$MAS_APP_PATH/Contents/Frameworks" ]; then
+            echo "Signing frameworks..."
+            find "$MAS_APP_PATH/Contents/Frameworks" -name "*.dylib" -o -name "*.framework" | while read framework; do
+              codesign --force \
+                --sign "$MAS_CERT_APPLICATION" \
+                --timestamp \
+                "$framework" || true
+            done
+          fi
+
+          # Sign the main app bundle
+          codesign --force \
             --sign "$MAS_CERT_APPLICATION" \
             --entitlements "$ENTITLEMENTS_PATH" \
             --options runtime \
