@@ -237,6 +237,12 @@ jobs:
 
           echo "Using pre-signed MAS app: $APP_PATH"
 
+          # CRITICAL FIX: GitHub Actions artifact upload/download loses Unix permissions
+          # Restore execute permissions that were set during build
+          echo "🔧 Restoring execute permissions (lost during artifact transfer)..."
+          chmod +x "$APP_PATH/Contents/MacOS/whodb"
+          ls -la "$APP_PATH/Contents/MacOS/whodb"
+
           # Verify the app is already signed correctly
           echo "Verifying existing signature..."
           codesign --verify --verbose=4 "$APP_PATH"
