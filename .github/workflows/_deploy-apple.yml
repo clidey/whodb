@@ -259,9 +259,15 @@ jobs:
           echo "Renaming to WhoDB.app for proper installation..."
           mv "$TEMP_APP_PATH" "$MAS_APP_PATH"
 
-          # Remove existing signature before re-signing
-          echo "Removing existing signature..."
-          codesign --remove-signature "$MAS_APP_PATH"
+          # Remove ALL existing signatures recursively
+          echo "Removing all existing signatures from bundle..."
+          # Remove signatures from frameworks and nested binaries first
+          find "$MAS_APP_PATH" -type f \( -name "*.dylib" -o -name "*.framework" -o -perm +111 \) | while read file; do
+            codesign --remove-signature "$file" 2>/dev/null || true
+          done
+          # Remove main app signature
+          codesign --remove-signature "$MAS_APP_PATH" 2>/dev/null || true
+          echo "✅ All signatures removed"
 
           # Embed provisioning profile
           echo "📝 Embedding provisioning profile..."
@@ -296,19 +302,39 @@ jobs:
 
           # Re-sign app with Mac App Store certificate and entitlements
           echo "🔏 Re-signing app for Mac App Store with entitlements..."
-          # Note: Don't use --deep as it's deprecated and causes signing issues
-          # Sign embedded frameworks and binaries first if they exist
+
+          # Sign all binaries inside-out (deepest first)
+          echo "Signing nested binaries and frameworks..."
+          find "$MAS_APP_PATH/Contents" -type f \( -name "*.dylib" -o -perm +111 \) ! -path "*/MacOS/*" | sort -r | while read binary; do
+            echo "  Signing: $(basename "$binary")"
+            codesign --force \
+              --sign "$MAS_CERT_APPLICATION" \
+              --timestamp \
+              "$binary" 2>/dev/null || true
+          done
+
+          # Sign frameworks if they exist
           if [ -d "$MAS_APP_PATH/Contents/Frameworks" ]; then
-            echo "Signing frameworks..."
-            find "$MAS_APP_PATH/Contents/Frameworks" -name "*.dylib" -o -name "*.framework" | while read framework; do
+            find "$MAS_APP_PATH/Contents/Frameworks" -depth -type d -name "*.framework" | while read framework; do
+              echo "  Signing framework: $(basename "$framework")"
               codesign --force \
                 --sign "$MAS_CERT_APPLICATION" \
                 --timestamp \
-                "$framework" || true
+                "$framework" 2>/dev/null || true
             done
           fi
 
-          # Sign the main app bundle
+          # Sign the main executable
+          if [ -f "$MAS_APP_PATH/Contents/MacOS/whodb" ]; then
+            echo "Signing main executable..."
+            codesign --force \
+              --sign "$MAS_CERT_APPLICATION" \
+              --timestamp \
+              "$MAS_APP_PATH/Contents/MacOS/whodb"
+          fi
+
+          # Sign the main app bundle with entitlements
+          echo "Signing main app bundle..."
           codesign --force \
             --sign "$MAS_CERT_APPLICATION" \
             --entitlements "$ENTITLEMENTS_PATH" \
