@@ -98,9 +98,15 @@ runs:
       id: version
       shell: bash
       run: |
-        # Get latest tag
-        LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-        PREVIOUS_VERSION=${LATEST_TAG#v}
+        # Get all tags, strip 'v' prefix if present, sort by semantic version
+        LATEST_TAG=$(git tag | sed 's/^v//' | sort -V | tail -1)
+
+        # Default to 0.0.0 if no tags exist
+        if [ -z "$LATEST_TAG" ]; then
+          LATEST_TAG="0.0.0"
+        fi
+
+        PREVIOUS_VERSION="$LATEST_TAG"
 
         # Calculate next version based on bump type
         IFS='.' read -r major minor patch <<< "$PREVIOUS_VERSION"

@@ -327,14 +327,14 @@ jobs:
       - name: Create GitHub release
         uses: ncipollo/release-action@v1
         with:
-          tag: v${{ needs.calculate-version.outputs.version }}
-          name: Release v${{ needs.calculate-version.outputs.version }}
+          tag: ${{ needs.calculate-version.outputs.version }}
+          name: Release ${{ needs.calculate-version.outputs.version }}
           draft: ${{ needs.calculate-version.outputs.stage-only == 'true' || needs.calculate-version.outputs.publish-github-release != 'true' }}
           prerelease: false
           generateReleaseNotes: true
           artifacts: final-assets/*
           body: |
-            ## WhoDB v${{ needs.calculate-version.outputs.version }}
+            ## WhoDB ${{ needs.calculate-version.outputs.version }}
 
             ### Installation Methods
 
@@ -444,7 +444,7 @@ jobs:
     steps:
       - name: Generate comprehensive summary
         run: |
-          echo "# 📊 Release Summary for v${{ needs.calculate-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "# 📊 Release Summary for ${{ needs.calculate-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Deployment Mode:** ${{ needs.calculate-version.outputs.deployment-mode }}" >> $GITHUB_STEP_SUMMARY
           echo "**Timestamp:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
