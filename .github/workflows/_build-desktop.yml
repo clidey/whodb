@@ -223,69 +223,21 @@ jobs:
           echo "All identities in keychain:"
           security find-identity -v "$KEYCHAIN_PATH"
 
-      # Import Mac App Store certificates for MAS build
-      - name: Import Mac App Store Certificates
+      # Save MAS provisioning profile for later (after build)
+      - name: Prepare MAS Provisioning Profile
         if: matrix.platform == 'darwin' && matrix.build-type == 'mas' && matrix.enabled != false
         env:
-          MAS_CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_MAS_CERTIFICATES_P12 }}
-          MAS_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_MAS_CERTIFICATES_PASSWORD }}
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
           MAS_PROVISIONING_PROFILE: ${{ secrets.APPLE_MAS_PROVISIONING_PROFILE }}
         run: |
-          if [ -z "$MAS_CERTIFICATE_P12_BASE64" ]; then
-            echo "❌ ERROR: Mac App Store certificates are required for MAS builds"
-            echo "Please configure APPLE_MAS_CERTIFICATES_P12 and APPLE_MAS_CERTIFICATES_PASSWORD secrets"
+          if [ -z "$MAS_PROVISIONING_PROFILE" ]; then
+            echo "❌ ERROR: APPLE_MAS_PROVISIONING_PROFILE is required for MAS builds"
             exit 1
           fi
 
-          if [ -z "$MAS_CERTIFICATE_PASSWORD" ]; then
-            echo "❌ ERROR: APPLE_MAS_CERTIFICATES_PASSWORD is required"
-            exit 1
-          fi
-
-          echo "🔐 Setting up keychain for Mac App Store code signing..."
-
-          # Create variables
-          CERTIFICATE_PATH=$RUNNER_TEMP/mas_certificate.p12
-          KEYCHAIN_PATH=$RUNNER_TEMP/mas-signing.keychain-db
-          KEYCHAIN_PASSWORD_VALUE="${KEYCHAIN_PASSWORD:-$(uuidgen)}"
-
-          # Decode certificate
-          echo "$MAS_CERTIFICATE_P12_BASE64" | base64 --decode -o "$CERTIFICATE_PATH"
-
-          # Create temporary keychain
-          security create-keychain -p "$KEYCHAIN_PASSWORD_VALUE" "$KEYCHAIN_PATH"
-          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD_VALUE" "$KEYCHAIN_PATH"
-
-          # Import certificate to keychain
-          security import "$CERTIFICATE_PATH" -P "$MAS_CERTIFICATE_PASSWORD" \
-            -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
-
-          # Set keychain search list
-          security list-keychain -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | sed s/\"//g)
-
-          # Allow codesign to access keychain
-          security set-key-partition-list -S apple-tool:,apple:,codesign:,productbuild: \
-            -s -k "$KEYCHAIN_PASSWORD_VALUE" "$KEYCHAIN_PATH"
-
-          echo "✅ Mac App Store certificates imported successfully"
-
-          # List available signing identities for verification
-          echo "Available codesigning identities:"
-          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
-
-          # Save MAS certificate name for build step
-          MAS_CERT=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | grep "3rd Party Mac Developer Application" | head -1 | awk '{print $2}')
-          echo "MAS_CERT_ID=$MAS_CERT" >> $GITHUB_ENV
-
-          # Embed provisioning profile in the build directory
-          if [ -n "$MAS_PROVISIONING_PROFILE" ]; then
-            echo "📝 Preparing provisioning profile..."
-            mkdir -p desktop-${{ inputs.edition }}/build/darwin
-            echo "$MAS_PROVISIONING_PROFILE" | base64 --decode -o desktop-${{ inputs.edition }}/build/darwin/embedded.provisionprofile
-            echo "✅ Provisioning profile ready"
-          fi
+          echo "📝 Saving provisioning profile for post-build signing..."
+          mkdir -p desktop-${{ inputs.edition }}/build/darwin
+          echo "$MAS_PROVISIONING_PROFILE" | base64 --decode -o desktop-${{ inputs.edition }}/build/darwin/embedded.provisionprofile
+          echo "✅ Provisioning profile saved"
 
       # Windows AMD64 Build
       - name: Build Windows AMD64
@@ -447,6 +399,51 @@ jobs:
 
           echo "✅ App patched, signed, and verified for DMG distribution"
 
+      - name: Import MAS Certificates for Signing
+        if: matrix.platform == 'darwin' && matrix.build-type == 'mas' && matrix.enabled != false
+        env:
+          MAS_CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_MAS_CERTIFICATES_P12 }}
+          MAS_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_MAS_CERTIFICATES_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          if [ -z "$MAS_CERTIFICATE_P12_BASE64" ]; then
+            echo "❌ ERROR: Mac App Store certificates are required for MAS builds"
+            exit 1
+          fi
+
+          echo "🔐 Setting up keychain for Mac App Store code signing..."
+
+          # Create variables
+          CERTIFICATE_PATH=$RUNNER_TEMP/mas_certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/mas-signing.keychain-db
+          KEYCHAIN_PASSWORD_VALUE="${KEYCHAIN_PASSWORD:-$(uuidgen)}"
+
+          # Decode certificate
+          echo "$MAS_CERTIFICATE_P12_BASE64" | base64 --decode -o "$CERTIFICATE_PATH"
+
+          # Create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD_VALUE" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD_VALUE" "$KEYCHAIN_PATH"
+
+          # Import certificate to keychain
+          security import "$CERTIFICATE_PATH" -P "$MAS_CERTIFICATE_PASSWORD" \
+            -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+
+          # Set keychain search list
+          security list-keychain -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | sed s/\"//g)
+
+          # Allow codesign to access keychain
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD_VALUE" "$KEYCHAIN_PATH"
+
+          echo "✅ Mac App Store certificates imported successfully"
+
+          # Save MAS certificate name for signing step
+          MAS_CERT=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | grep "3rd Party Mac Developer Application" | head -1 | awk '{print $2}')
+          echo "MAS_CERT_ID=$MAS_CERT" >> $GITHUB_ENV
+          echo "Using certificate: $MAS_CERT"
+
       - name: Patch Bundle ID, Embed Profile, and Sign (MAS)
         if: matrix.platform == 'darwin' && matrix.build-type == 'mas' && matrix.enabled != false
         working-directory: ./desktop-${{ inputs.edition }}
@@ -488,31 +485,45 @@ jobs:
           # Validate plist is still valid
           plutil -lint "$PLIST_PATH"
 
-          # Embed provisioning profile
+          # Step 1: Embed provisioning profile (per Wails docs)
+          echo ""
+          echo "📝 Step 1: Embedding provisioning profile..."
           if [ -f "build/darwin/embedded.provisionprofile" ]; then
-            echo "📝 Embedding provisioning profile..."
             cp build/darwin/embedded.provisionprofile "$APP_PATH/Contents/embedded.provisionprofile"
-            echo "✅ Provisioning profile embedded"
+            echo "✅ Provisioning profile embedded at: $APP_PATH/Contents/embedded.provisionprofile"
           else
-            echo "❌ WARNING: No provisioning profile found"
+            echo "❌ ERROR: No provisioning profile found"
+            exit 1
           fi
 
+          # Step 2: Code sign with MAS certificate (per Wails docs)
           echo ""
-          echo "🔏 Signing app bundle for Mac App Store with MAS certificate..."
+          echo "🔏 Step 2: Code signing with Mac App Store certificate..."
           echo "Using certificate: $MAS_CERT_ID"
+          echo "Using entitlements: build/darwin/entitlements.plist"
 
-          codesign --force --deep \
+          # Sign the app bundle (following Wails documentation approach)
+          codesign --force \
             --sign "$MAS_CERT_ID" \
             --entitlements build/darwin/entitlements.plist \
             --options runtime \
             --timestamp \
             "$APP_PATH"
 
-          echo "Verifying signature..."
+          echo ""
+          echo "✅ App signed for Mac App Store"
+
+          # Step 3: Verify signature
+          echo ""
+          echo "🔍 Step 3: Verifying signature..."
           codesign --verify --verbose=4 "$APP_PATH"
+
+          echo ""
+          echo "📋 Entitlements:"
           codesign --display --entitlements - "$APP_PATH"
 
-          echo "✅ App patched, signed, and verified for Mac App Store"
+          echo ""
+          echo "✅ MAS build complete and verified"
 
       - name: Create macOS DMG
         if: matrix.platform == 'darwin' && matrix.build-type == 'dmg' && matrix.enabled != false
