@@ -247,11 +247,17 @@ jobs:
 
           echo "Original app: $APP_PATH"
 
-          # Copy app to a new location for Mac App Store signing
-          # Don't add .mas suffix - Apple rejects bundle names not ending in .app
-          MAS_APP_PATH="${APP_PATH%/*}/WhoDB-MAS.app"
-          echo "Copying app for Mac App Store signing to: $MAS_APP_PATH"
-          cp -R "$APP_PATH" "$MAS_APP_PATH"
+          # Copy app to a temp location for Mac App Store signing
+          # We'll rename it to WhoDB.app (proper case) so it installs correctly
+          TEMP_APP_PATH="${APP_PATH%/*}/whodb-mas-temp.app"
+          MAS_APP_PATH="${APP_PATH%/*}/WhoDB.app"
+
+          echo "Copying app for Mac App Store signing..."
+          cp -R "$APP_PATH" "$TEMP_APP_PATH"
+
+          # Rename to proper case for App Store
+          echo "Renaming to WhoDB.app for proper installation..."
+          mv "$TEMP_APP_PATH" "$MAS_APP_PATH"
 
           # Embed provisioning profile
           echo "📝 Embedding provisioning profile..."
