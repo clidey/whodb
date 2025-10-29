@@ -199,8 +199,20 @@ jobs:
           echo "✅ Mac App Store installer certificate imported successfully"
 
           # List available signing identities for verification
-          echo "Available installer certificates:"
-          security find-identity -v -p basic "$KEYCHAIN_PATH" | grep "Mac Installer Distribution"
+          echo "Available certificates in keychain:"
+          security find-identity -v -p basic "$KEYCHAIN_PATH"
+
+          echo ""
+          echo "Looking for installer certificate..."
+          # Check if we have the installer cert (don't fail if not found)
+          if security find-identity -v -p basic "$KEYCHAIN_PATH" | grep -q "Mac Installer Distribution\|3rd Party Mac Developer Installer"; then
+            INSTALLER_CERT=$(security find-identity -v -p basic "$KEYCHAIN_PATH" | grep "Mac Installer Distribution\|3rd Party Mac Developer Installer" | head -1 | awk '{print $2}')
+            echo "Found installer certificate: $INSTALLER_CERT"
+          else
+            echo "⚠️  No Mac Installer Distribution certificate found"
+            echo "Available certificates:"
+            security find-identity -v "$KEYCHAIN_PATH"
+          fi
 
       - name: Package Mac App Store build
         env:
