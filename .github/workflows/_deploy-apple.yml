@@ -58,23 +58,13 @@ jobs:
           name: desktop-darwin-dmg
           path: desktop-builds/
 
-      - name: Download macOS App Bundle
+      - name: Download macOS App Bundle (MAS)
         uses: actions/download-artifact@v4
         with:
-          name: desktop-darwin-app
+          name: desktop-darwin-mas-app
           path: desktop-builds/
 
-      - name: Download macOS Entitlements
-        uses: actions/download-artifact@v4
-        with:
-          name: desktop-darwin-entitlements
-          path: desktop-builds/build/darwin/
-
-      - name: Use MAS-specific entitlements
-        run: |
-          # Copy the Mac App Store entitlements (without temporary exceptions)
-          cp macos/entitlements.mas.plist desktop-builds/build/darwin/entitlements.mas.plist
-          echo "✅ Using Mac App Store entitlements without temporary exceptions"
+      # No need to download entitlements - the app is already signed with them
 
       - name: Generate Homebrew cask
         run: |
@@ -135,40 +125,42 @@ jobs:
             HOMEBREW_TESTING.md
           retention-days: 30
 
-      - name: Check for app bundle
+      - name: Check for MAS app bundle
         id: check_app
         run: |
-          # Look for the app bundle
+          # Look for the MAS app bundle (should be WhoDB.app with proper case)
           APP_PATHS=(
-            "desktop-builds/build/darwin/universal/whodb.app"
-            "desktop-builds/darwin/universal/whodb.app"
-            "desktop-builds/whodb.app"
+            "desktop-builds/WhoDB.app"
+            "desktop-builds/build/darwin/universal/WhoDB.app"
+            "desktop-builds/darwin/universal/WhoDB.app"
           )
 
           APP_PATH=""
           for path in "${APP_PATHS[@]}"; do
             if [ -d "$path" ]; then
               APP_PATH="$path"
-              echo "✅ Found app bundle at: $APP_PATH"
+              echo "✅ Found MAS app bundle at: $APP_PATH"
               break
             fi
           done
 
           if [ -z "$APP_PATH" ]; then
-            echo "❌ App bundle not found"
+            echo "❌ MAS app bundle not found"
+            echo "Available files:"
+            find desktop-builds -name "*.app" -type d || true
             exit 1
           fi
 
           echo "app_path=$APP_PATH" >> $GITHUB_OUTPUT
 
-      - name: Import Mac App Store Certificates
+      - name: Import Mac App Store Installer Certificate
         env:
           MAS_CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_MAS_CERTIFICATES_P12 }}
           MAS_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_MAS_CERTIFICATES_PASSWORD }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
           if [ -z "$MAS_CERTIFICATE_P12_BASE64" ]; then
-            echo "❌ ERROR: Mac App Store certificates are required"
+            echo "❌ ERROR: Mac App Store certificates are required for PKG signing"
             echo "Please configure APPLE_MAS_CERTIFICATES_P12 and APPLE_MAS_CERTIFICATES_PASSWORD secrets"
             exit 1
           fi
@@ -178,7 +170,7 @@ jobs:
             exit 1
           fi
 
-          echo "🔐 Setting up keychain for Mac App Store code signing..."
+          echo "🔐 Setting up keychain for Mac App Store PKG signing..."
 
           # Create variables
           CERTIFICATE_PATH=$RUNNER_TEMP/mas_certificate.p12
@@ -200,158 +192,47 @@ jobs:
           # Set keychain search list
           security list-keychain -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | sed s/\"//g)
 
-          # Allow codesign to access keychain
-          security set-key-partition-list -S apple-tool:,apple:,codesign:,productbuild: \
+          # Allow productbuild to access keychain
+          security set-key-partition-list -S apple-tool:,apple:,productbuild: \
             -s -k "$KEYCHAIN_PASSWORD_VALUE" "$KEYCHAIN_PATH"
 
-          echo "✅ Mac App Store certificates imported successfully"
+          echo "✅ Mac App Store installer certificate imported successfully"
 
           # List available signing identities for verification
-          echo "Available codesigning identities:"
-          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
+          echo "Available installer certificates:"
+          security find-identity -v -p basic "$KEYCHAIN_PATH" | grep "Mac Installer Distribution"
 
-          echo ""
-          echo "Available basic identities (includes installer certs):"
-          security find-identity -v -p basic "$KEYCHAIN_PATH"
-
-          echo ""
-          echo "All identities in keychain:"
-          security find-identity -v "$KEYCHAIN_PATH"
-
-      - name: Prepare Mac App Store package
+      - name: Package Mac App Store build
         env:
-          MAS_CERT_APPLICATION: ${{ secrets.APPLE_MAS_CERT_APPLICATION }}
           MAS_CERT_INSTALLER: ${{ secrets.APPLE_MAS_CERT_INSTALLER }}
-          MAS_PROVISIONING_PROFILE: ${{ secrets.APPLE_MAS_PROVISIONING_PROFILE }}
         run: |
-          echo "📦 Preparing Mac App Store package..."
+          echo "📦 Packaging Mac App Store build..."
 
-          # Validate required credentials
-          if [ -z "$MAS_CERT_APPLICATION" ]; then
-            echo "❌ ERROR: APPLE_MAS_CERT_APPLICATION is required"
-            exit 1
-          fi
-
+          # Validate installer certificate
           if [ -z "$MAS_CERT_INSTALLER" ]; then
             echo "❌ ERROR: APPLE_MAS_CERT_INSTALLER is required"
             exit 1
           fi
 
-          if [ -z "$MAS_PROVISIONING_PROFILE" ]; then
-            echo "❌ ERROR: APPLE_MAS_PROVISIONING_PROFILE is required (base64-encoded .provisionprofile)"
-            exit 1
-          fi
-
+          # Find the already-signed MAS app
           APP_PATH="${{ steps.check_app.outputs.app_path }}"
           PKG_PATH="WhoDB_${{ inputs.version }}.pkg"
 
-          echo "Original app: $APP_PATH"
-
-          # Copy app to a temp location for Mac App Store signing
-          # We'll rename it to WhoDB.app (proper case) so it installs correctly
-          TEMP_APP_PATH="${APP_PATH%/*}/whodb-mas-temp.app"
-          MAS_APP_PATH="${APP_PATH%/*}/WhoDB.app"
-
-          echo "Copying app for Mac App Store signing..."
-          cp -R "$APP_PATH" "$TEMP_APP_PATH"
-
-          # Rename to proper case for App Store
-          echo "Renaming to WhoDB.app for proper installation..."
-          mv "$TEMP_APP_PATH" "$MAS_APP_PATH"
-
-          # Remove ALL existing signatures recursively
-          echo "Removing all existing signatures from bundle..."
-          # Remove signatures from frameworks and nested binaries first
-          find "$MAS_APP_PATH" -type f \( -name "*.dylib" -o -name "*.framework" -o -perm +111 \) | while read file; do
-            codesign --remove-signature "$file" 2>/dev/null || true
-          done
-          # Remove main app signature
-          codesign --remove-signature "$MAS_APP_PATH" 2>/dev/null || true
-          echo "✅ All signatures removed"
-
-          # Embed provisioning profile
-          echo "📝 Embedding provisioning profile..."
-          PROFILE_PATH="$MAS_APP_PATH/Contents/embedded.provisionprofile"
-          echo "$MAS_PROVISIONING_PROFILE" | base64 --decode -o "$PROFILE_PATH"
-
-          if [ ! -f "$PROFILE_PATH" ]; then
-            echo "❌ ERROR: Failed to create provisioning profile"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "❌ ERROR: App bundle not found at $APP_PATH"
             exit 1
           fi
 
-          echo "✅ Provisioning profile embedded"
+          echo "Using pre-signed MAS app: $APP_PATH"
 
-          # Use Mac App Store specific entitlements (without temporary exceptions)
-          ENTITLEMENTS_PATH="desktop-builds/build/darwin/entitlements.mas.plist"
-
-          if [ ! -f "$ENTITLEMENTS_PATH" ]; then
-            echo "❌ ERROR: Mac App Store entitlements not found: $ENTITLEMENTS_PATH"
-            exit 1
-          fi
-
-          echo "Using Mac App Store entitlements: $ENTITLEMENTS_PATH"
-          echo "Entitlements content:"
-          cat "$ENTITLEMENTS_PATH"
-
-          # Add missing LSApplicationCategoryType to Info.plist
-          echo "📝 Adding LSApplicationCategoryType to Info.plist..."
-          /usr/libexec/PlistBuddy -c "Add :LSApplicationCategoryType string public.app-category.developer-tools" \
-            "$MAS_APP_PATH/Contents/Info.plist" 2>/dev/null || \
-          /usr/libexec/PlistBuddy -c "Set :LSApplicationCategoryType public.app-category.developer-tools" \
-            "$MAS_APP_PATH/Contents/Info.plist"
-
-          # Re-sign app with Mac App Store certificate and entitlements
-          echo "🔏 Re-signing app for Mac App Store with entitlements..."
-
-          # Sign all binaries inside-out (deepest first)
-          echo "Signing nested binaries and frameworks..."
-          find "$MAS_APP_PATH/Contents" -type f \( -name "*.dylib" -o -perm +111 \) ! -path "*/MacOS/*" | sort -r | while read binary; do
-            echo "  Signing: $(basename "$binary")"
-            codesign --force \
-              --sign "$MAS_CERT_APPLICATION" \
-              --timestamp \
-              "$binary" 2>/dev/null || true
-          done
-
-          # Sign frameworks if they exist
-          if [ -d "$MAS_APP_PATH/Contents/Frameworks" ]; then
-            find "$MAS_APP_PATH/Contents/Frameworks" -depth -type d -name "*.framework" | while read framework; do
-              echo "  Signing framework: $(basename "$framework")"
-              codesign --force \
-                --sign "$MAS_CERT_APPLICATION" \
-                --timestamp \
-                "$framework" 2>/dev/null || true
-            done
-          fi
-
-          # Sign the main executable
-          if [ -f "$MAS_APP_PATH/Contents/MacOS/whodb" ]; then
-            echo "Signing main executable..."
-            codesign --force \
-              --sign "$MAS_CERT_APPLICATION" \
-              --timestamp \
-              "$MAS_APP_PATH/Contents/MacOS/whodb"
-          fi
-
-          # Sign the main app bundle with entitlements
-          echo "Signing main app bundle..."
-          codesign --force \
-            --sign "$MAS_CERT_APPLICATION" \
-            --entitlements "$ENTITLEMENTS_PATH" \
-            --options runtime \
-            --timestamp \
-            "$MAS_APP_PATH"
-
-          echo "✅ App re-signed for Mac App Store"
-
-          # Verify the signature
-          echo "Verifying Mac App Store signature..."
-          codesign --verify --verbose=4 "$MAS_APP_PATH"
-          codesign --display --entitlements - "$MAS_APP_PATH"
+          # Verify the app is already signed correctly
+          echo "Verifying existing signature..."
+          codesign --verify --verbose=4 "$APP_PATH"
+          codesign --display --entitlements - "$APP_PATH"
 
           # Create signed PKG installer with Mac Installer Distribution certificate
           echo "🔏 Creating signed PKG installer..."
-          productbuild --component "$MAS_APP_PATH" /Applications \
+          productbuild --component "$APP_PATH" /Applications \
             --sign "$MAS_CERT_INSTALLER" \
             --identifier "com.clidey.whodb" \
             --version "${{ inputs.version }}" \
