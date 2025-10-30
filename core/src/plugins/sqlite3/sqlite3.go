@@ -413,6 +413,36 @@ func (p *Sqlite3Plugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult,
 	return result, nil
 }
 
+func (p *Sqlite3Plugin) GetForeignKeyRelationships(config *engine.PluginConfig, schema string, storageUnit string) (map[string]*engine.ForeignKeyRelationship, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (map[string]*engine.ForeignKeyRelationship, error) {
+		escapedTable := strings.ReplaceAll(storageUnit, "'", "''")
+		query := fmt.Sprintf("PRAGMA foreign_key_list('%s')", escapedTable)
+
+		rows, err := db.Raw(query).Rows()
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+
+		relationships := make(map[string]*engine.ForeignKeyRelationship)
+		for rows.Next() {
+			var id, seq int
+			var table, from, to, onUpdate, onDelete, match string
+			if err := rows.Scan(&id, &seq, &table, &from, &to, &onUpdate, &onDelete, &match); err != nil {
+				log.Logger.WithError(err).Error("Failed to scan foreign key relationship")
+				continue
+			}
+			relationships[from] = &engine.ForeignKeyRelationship{
+				ColumnName:       from,
+				ReferencedTable:  table,
+				ReferencedColumn: to,
+			}
+		}
+
+		return relationships, nil
+	})
+}
+
 func NewSqlite3Plugin() *engine.Plugin {
 	plugin := &Sqlite3Plugin{}
 	plugin.Type = engine.DatabaseType_Sqlite3

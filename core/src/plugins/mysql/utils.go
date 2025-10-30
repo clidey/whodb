@@ -24,13 +24,16 @@ func (p *MySQLPlugin) ConvertStringValueDuringMap(value, columnType string) (int
 
 func (p *MySQLPlugin) GetPrimaryKeyColQuery() string {
 	return `
-		SELECT k.column_name
-		FROM information_schema.table_constraints t
-		JOIN information_schema.key_column_usage k
-		USING (constraint_name, table_schema, table_name)
-		WHERE t.constraint_type = 'PRIMARY KEY'
-		AND t.table_schema = ?
-		AND t.table_name = ?;
+		SELECT k.COLUMN_NAME
+		FROM information_schema.TABLE_CONSTRAINTS t
+		JOIN information_schema.KEY_COLUMN_USAGE k
+		ON k.CONSTRAINT_NAME = t.CONSTRAINT_NAME
+		AND k.TABLE_SCHEMA = t.TABLE_SCHEMA
+		AND k.TABLE_NAME = t.TABLE_NAME
+		WHERE t.CONSTRAINT_TYPE = 'PRIMARY KEY'
+		AND t.TABLE_SCHEMA = ?
+		AND t.TABLE_NAME = ?
+		ORDER BY k.ORDINAL_POSITION;
 	`
 }
 

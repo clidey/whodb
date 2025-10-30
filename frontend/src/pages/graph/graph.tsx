@@ -23,7 +23,7 @@ import {createEdge, createNode} from "../../components/graph/utils";
 import {LoadingPage} from "../../components/loading";
 import {InternalPage} from "../../components/page";
 import {InternalRoutes} from "../../config/routes";
-import {GetGraphDocument, GetGraphQuery, GetGraphQueryVariables, StorageUnit, useGetStorageUnitsQuery} from '@graphql';
+import {GetGraphDocument, GetGraphQuery, GetGraphQueryVariables, StorageUnit, useGetStorageUnitsQuery, useGetColumnsLazyQuery} from '@graphql';
 import {useAppSelector} from "../../store/hooks";
 import {getDatabaseStorageUnitLabel} from "../../utils/functions";
 import {StorageUnitGraphCard} from "../storage-unit/storage-unit";
@@ -142,6 +142,9 @@ export const GraphPage: FC = () => {
     const [selectedUnits, setSelectedUnits] = useState<Set<string>>(new Set());
     const [graphData, setGraphData] = useState<GetGraphQuery["Graph"]>([]);
     const [isInitialized, setIsInitialized] = useState(false);
+    const [tableColumns, setTableColumns] = useState<Record<string, any[]>>({});
+
+    const [fetchColumns] = useGetColumnsLazyQuery();
 
     const { loading: graphLoading } = useQuery<GetGraphQuery, GetGraphQueryVariables>(GetGraphDocument, {
         variables: {
@@ -149,6 +152,27 @@ export const GraphPage: FC = () => {
         },
         onCompleted(data) {
             setGraphData(data.Graph);
+            // Fetch columns for each table
+            const fetchAllColumns = async () => {
+                const columnsMap: Record<string, any[]> = {};
+                for (const graphUnit of data.Graph) {
+                    try {
+                        const result = await fetchColumns({
+                            variables: {
+                                schema: databaseUsesSchemaForGraph(current?.Type) ? schema : current?.Database ?? "",
+                                storageUnit: graphUnit.Unit.Name,
+                            },
+                        });
+                        if (result.data?.Columns) {
+                            columnsMap[graphUnit.Unit.Name] = result.data.Columns;
+                        }
+                    } catch (error) {
+                        console.error(`Failed to fetch columns for ${graphUnit.Unit.Name}:`, error);
+                    }
+                }
+                setTableColumns(columnsMap);
+            };
+            fetchAllColumns();
         },
     });
 
@@ -157,7 +181,7 @@ export const GraphPage: FC = () => {
         variables: {
             schema: databaseUsesSchemaForGraph(current?.Type) ? schema : current?.Database ?? "",
         },
-        skip: !current || (!schema && !current?.Database),
+        skip: !current,
         fetchPolicy: "cache-and-network",
     });
 
@@ -183,51 +207,113 @@ export const GraphPage: FC = () => {
         const newNodes: Node[] = [];
         const newEdges: Edge[] = [];
         const newEdgesSet = new Set<string>();
-        
-        // Create nodes for selected units
+
+        // Create nodes for selected units with column data
         for (const node of graphData) {
             if (!selectedUnits.has(node.Unit.Name)) continue;
+            const columns = tableColumns[node.Unit.Name];
             newNodes.push(createNode({
                 id: node.Unit.Name,
                 type: GraphElements.StorageUnit,
-                data: node.Unit,
+                data: {
+                    ...node.Unit,
+                    columns: columns || node.Unit.Attributes,
+                },
             }));
         }
         
-        // Create edges between selected nodes
+        // Create edges between selected nodes with column-level connections
         for (const node of graphData) {
             if (!selectedUnits.has(node.Unit.Name)) continue;
-            for (const edge of node.Relations) {
-                if (!selectedUnits.has(edge.Name)) continue;
-                
-                if (edge.Relationship === "ManyToMany") {
-                    const newEdge1 = createEdge(node.Unit.Name, edge.Name);
-                    const newEdge2 = createEdge(edge.Name, node.Unit.Name);
-                    if (!newEdgesSet.has(newEdge1.id)) {
-                        newEdgesSet.add(newEdge1.id);
-                        newEdges.push(newEdge1);
-                    }
-                    if (!newEdgesSet.has(newEdge2.id)) {
-                        newEdgesSet.add(newEdge2.id);
-                        newEdges.push(newEdge2);
-                    }
+            for (const relation of node.Relations) {
+                if (!selectedUnits.has(relation.Name)) continue;
+
+                const sourceColumn = relation.SourceColumn;
+                const targetColumn = relation.TargetColumn;
+
+                // Generate unique edge ID based on columns if available
+                const edgeId = sourceColumn && targetColumn
+                    ? `${node.Unit.Name}-${sourceColumn}-${relation.Name}-${targetColumn}`
+                    : `${node.Unit.Name}-${relation.Name}`;
+
+                if (newEdgesSet.has(edgeId)) continue;
+
+                if (relation.Relationship === "ManyToMany") {
+                    const edge1 = {
+                        ...createEdge(node.Unit.Name, relation.Name),
+                        id: edgeId + '-1',
+                    };
+                    const edge2 = {
+                        ...createEdge(relation.Name, node.Unit.Name),
+                        id: edgeId + '-2',
+                    };
+                    newEdgesSet.add(edgeId);
+                    newEdges.push(edge1, edge2);
                 } else {
-                    let [source, sink] = [node.Unit.Name, edge.Name];
-                    if (edge.Relationship === "ManyToOne") {
-                        source = edge.Name;
-                        sink = node.Unit.Name;
+                    let source: string;
+                    let target: string;
+                    let sourceHandle: string | undefined;
+                    let targetHandle: string | undefined;
+
+                    if (relation.Relationship === "OneToMany") {
+                        // OneToMany stored on referenced table (table with PK)
+                        // node.Unit.Name = referenced table (has PK)
+                        // relation.Name = referencing table (has FK)
+                        // Arrow: referencing -> referenced (FK -> PK)
+                        source = relation.Name;
+                        target = node.Unit.Name;
+                        // Only set handles if columns are loaded AND the specific columns exist
+                        if (sourceColumn && targetColumn) {
+                            const sourceColumns = tableColumns[source];
+                            const targetColumns = tableColumns[target];
+                            const sourceColExists = sourceColumns?.some(col => col.Name === sourceColumn && col.IsForeignKey);
+                            const targetColExists = targetColumns?.some(col => col.Name === targetColumn && col.IsPrimary);
+
+                            if (sourceColExists && targetColExists) {
+                                sourceHandle = `${relation.Name}-${sourceColumn}`;
+                                targetHandle = `${node.Unit.Name}-${targetColumn}`;
+                            }
+                        }
+                    } else if (relation.Relationship === "ManyToOne") {
+                        // ManyToOne stored on referencing table (table with FK)
+                        // node.Unit.Name = referencing table (has FK)
+                        // relation.Name = referenced table (has PK)
+                        // Arrow: referencing -> referenced (FK -> PK)
+                        source = node.Unit.Name;
+                        target = relation.Name;
+                        // Only set handles if columns are loaded AND the specific columns exist
+                        if (sourceColumn && targetColumn) {
+                            const sourceColumns = tableColumns[source];
+                            const targetColumns = tableColumns[target];
+                            const sourceColExists = sourceColumns?.some(col => col.Name === sourceColumn && col.IsForeignKey);
+                            const targetColExists = targetColumns?.some(col => col.Name === targetColumn && col.IsPrimary);
+
+                            if (sourceColExists && targetColExists) {
+                                sourceHandle = `${node.Unit.Name}-${sourceColumn}`;
+                                targetHandle = `${relation.Name}-${targetColumn}`;
+                            }
+                        }
+                    } else {
+                        // Unknown or OneToOne - default behavior
+                        source = node.Unit.Name;
+                        target = relation.Name;
                     }
-                    const newEdge = createEdge(source, sink);
-                    if (!newEdgesSet.has(newEdge.id)) {
-                        newEdgesSet.add(newEdge.id);
-                        newEdges.push(newEdge);
-                    }
+
+                    const newEdge: Edge = {
+                        ...createEdge(source, target),
+                        id: edgeId,
+                        sourceHandle,
+                        targetHandle,
+                    };
+
+                    newEdgesSet.add(edgeId);
+                    newEdges.push(newEdge);
                 }
             }
         }
-        
+
         return { computedNodes: newNodes, computedEdges: newEdges };
-    }, [graphData, selectedUnits]);
+    }, [graphData, selectedUnits, tableColumns]);
 
     // Update nodes and edges when computed values change
     useEffect(() => {

@@ -88,11 +88,11 @@ export interface LoginFormProps {
 }
 
 export const LoginForm: FC<LoginFormProps> = ({
-                                                  onLoginSuccess,
-                                                  hideHeader = false,
-                                                  className = "",
-                                                  advancedDirection = "horizontal",
-                                              }) => {
+    onLoginSuccess,
+    hideHeader = false,
+    className = "",
+    advancedDirection = "horizontal",
+}) => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const currentProfile = useAppSelector(state => state.auth.current);
@@ -408,6 +408,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                             buttonProps={{
                                 "data-testid": "database",
                             }}
+                            contentClassName="w-[var(--radix-popover-trigger-width)] login-select-popover"
                             rightIcon={<ChevronDownIcon className="w-4 h-4"/>}
                         />
                     )}

@@ -514,7 +514,7 @@ describe('Clickhouse E2E test', () => {
 
     // 12) Open scratchpad drawer from Explore and run query
     cy.data('users');
-    cy.get('[data-testid="scratchpad-button"]').click();
+    cy.get('[data-testid="embedded-scratchpad-button"]').click();
     cy.contains('h2', 'Scratchpad').should('be.visible');
 
     cy.get('[data-testid="code-editor"]').should('exist');

@@ -26,9 +26,11 @@ import (
 )
 
 type tableRelation struct {
-	Table1   string
-	Table2   string
-	Relation string
+	Table1       string
+	Table2       string
+	Relation     string
+	SourceColumn string
+	TargetColumn string
 }
 
 func (p *ElasticSearchPlugin) GetGraph(config *engine.PluginConfig, database string) ([]engine.GraphUnit, error) {
@@ -59,7 +61,14 @@ func (p *ElasticSearchPlugin) GetGraph(config *engine.PluginConfig, database str
 
 	indicesStats := stats["indices"].(map[string]interface{})
 
+	indices := []string{}
+	for indexName := range indicesStats {
+		indices = append(indices, indexName)
+	}
+
 	relations := []tableRelation{}
+	uniqueRelations := make(map[string]bool)
+
 	for indexName := range indicesStats {
 		var buf bytes.Buffer
 		query := map[string]interface{}{
@@ -100,16 +109,48 @@ func (p *ElasticSearchPlugin) GetGraph(config *engine.PluginConfig, database str
 		if len(hits) > 0 {
 			doc := hits[0].(map[string]interface{})["_source"].(map[string]interface{})
 
-			for key := range doc {
-				for otherIndexName := range indicesStats {
-					singularName := strings.TrimSuffix(otherIndexName, "s")
-					if key == singularName+"_id" || key == otherIndexName+"_id" {
-						relations = append(relations, tableRelation{
-							Table1:   indexName,
-							Table2:   otherIndexName,
-							Relation: "ManyToMany",
-						})
+			foreignKeys := make(map[string]string)
+
+			for fieldName := range doc {
+				if fieldName == "_id" {
+					continue
+				}
+
+				for _, otherIndex := range indices {
+					if otherIndex == indexName {
+						continue
 					}
+
+					singularName := strings.TrimSuffix(otherIndex, "s")
+					pluralName := otherIndex
+					if !strings.HasSuffix(otherIndex, "s") {
+						pluralName = otherIndex + "s"
+					}
+
+					lowerField := strings.ToLower(fieldName)
+					if lowerField == strings.ToLower(singularName)+"_id" ||
+						lowerField == strings.ToLower(singularName)+"id" ||
+						lowerField == strings.ToLower(otherIndex)+"_id" ||
+						lowerField == strings.ToLower(otherIndex)+"id" ||
+						lowerField == strings.ToLower(pluralName)+"_id" ||
+						lowerField == strings.ToLower(pluralName)+"id" {
+						foreignKeys[otherIndex] = fieldName
+						break
+					}
+				}
+			}
+
+			for fk, fieldName := range foreignKeys {
+				relKey := indexName + ":" + fk
+				if !uniqueRelations[relKey+":ManyToOne"] {
+					uniqueRelations[relKey+":ManyToOne"] = true
+					relations = append(relations, tableRelation{
+						Table1:       indexName,
+						Table2:       fk,
+						Relation:     "ManyToOne",
+						SourceColumn: fieldName,
+						TargetColumn: "_id",
+					})
 				}
 			}
 		}
@@ -117,7 +158,14 @@ func (p *ElasticSearchPlugin) GetGraph(config *engine.PluginConfig, database str
 
 	tableMap := make(map[string][]engine.GraphUnitRelationship)
 	for _, tr := range relations {
-		tableMap[tr.Table1] = append(tableMap[tr.Table1], engine.GraphUnitRelationship{Name: tr.Table2, RelationshipType: engine.GraphUnitRelationshipType(tr.Relation)})
+		sourceCol := tr.SourceColumn
+		targetCol := tr.TargetColumn
+		tableMap[tr.Table1] = append(tableMap[tr.Table1], engine.GraphUnitRelationship{
+			Name:             tr.Table2,
+			RelationshipType: engine.GraphUnitRelationshipType(tr.Relation),
+			SourceColumn:     &sourceCol,
+			TargetColumn:     &targetCol,
+		})
 	}
 
 	storageUnits, err := p.GetStorageUnits(config, database)

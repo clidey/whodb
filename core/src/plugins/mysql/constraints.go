@@ -31,6 +31,27 @@ func (p *MySQLPlugin) GetColumnConstraints(config *engine.PluginConfig, schema s
 	constraints := make(map[string]map[string]any)
 
 	_, err := plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
+		// Get primary keys using information_schema
+		primaryRows, err := db.Table("information_schema.table_constraints t").
+			Select("k.COLUMN_NAME").
+			Joins("JOIN information_schema.key_column_usage k ON k.CONSTRAINT_NAME = t.CONSTRAINT_NAME AND k.TABLE_SCHEMA = t.TABLE_SCHEMA AND k.TABLE_NAME = t.TABLE_NAME").
+			Where("t.CONSTRAINT_TYPE = 'PRIMARY KEY' AND t.TABLE_SCHEMA = DATABASE() AND t.TABLE_NAME = ?", storageUnit).
+			Order("k.ORDINAL_POSITION").
+			Rows()
+		if err == nil {
+			defer primaryRows.Close()
+			for primaryRows.Next() {
+				var columnName string
+				if err := primaryRows.Scan(&columnName); err != nil {
+					continue
+				}
+				if constraints[columnName] == nil {
+					constraints[columnName] = map[string]any{}
+				}
+				constraints[columnName]["primary"] = true
+			}
+		}
+
 		// Get nullability using GORM's query builder
 		rows, err := db.Table("information_schema.columns").
 			Select("COLUMN_NAME, IS_NULLABLE").

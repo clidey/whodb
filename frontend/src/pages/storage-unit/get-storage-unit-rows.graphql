@@ -3,6 +3,10 @@ query GetStorageUnitRows($schema: String!, $storageUnit: String!, $where: WhereC
     Columns {
       Type
       Name
+      IsPrimary
+      IsForeignKey
+      ReferencedTable
+      ReferencedColumn
     }
     Rows
     DisableUpdate

@@ -21,18 +21,20 @@ WITH fk_constraints AS (
     SELECT DISTINCT
         ccu.table_name AS table1,
         tc.table_name AS table2,
-        'OneToMany' AS relation
-    FROM 
+        'OneToMany' AS relation,
+        kcu.column_name AS source_column,
+        ccu.column_name AS target_column
+    FROM
         information_schema.table_constraints AS tc
-    JOIN 
+    JOIN
         information_schema.key_column_usage AS kcu
-    ON 
+    ON
         tc.constraint_name = kcu.constraint_name
-    JOIN 
+    JOIN
         information_schema.constraint_column_usage AS ccu
-    ON 
+    ON
         ccu.constraint_name = tc.constraint_name
-    WHERE 
+    WHERE
         tc.constraint_type = 'FOREIGN KEY'
         AND tc.table_schema = ?
         AND ccu.table_schema = ?
@@ -41,18 +43,20 @@ pk_constraints AS (
     SELECT DISTINCT
         tc.table_name AS table1,
         ccu.table_name AS table2,
-        'OneToOne' AS relation
-    FROM 
+        'OneToOne' AS relation,
+        NULL::text AS source_column,
+        NULL::text AS target_column
+    FROM
         information_schema.table_constraints AS tc
-    JOIN 
+    JOIN
         information_schema.key_column_usage AS kcu
-    ON 
+    ON
         tc.constraint_name = kcu.constraint_name
-    JOIN 
+    JOIN
         information_schema.constraint_column_usage AS ccu
-    ON 
+    ON
         ccu.constraint_name = tc.constraint_name
-    WHERE 
+    WHERE
         tc.constraint_type = 'PRIMARY KEY'
         AND tc.table_schema = ?
         AND ccu.table_schema = ?
@@ -62,18 +66,20 @@ unique_constraints AS (
     SELECT DISTINCT
         tc.table_name AS table1,
         ccu.table_name AS table2,
-        'ManyToOne' AS relation
-    FROM 
+        'ManyToOne' AS relation,
+        NULL::text AS source_column,
+        NULL::text AS target_column
+    FROM
         information_schema.table_constraints AS tc
-    JOIN 
+    JOIN
         information_schema.key_column_usage AS kcu
-    ON 
+    ON
         tc.constraint_name = kcu.constraint_name
-    JOIN 
+    JOIN
         information_schema.constraint_column_usage AS ccu
-    ON 
+    ON
         ccu.constraint_name = tc.constraint_name
-    WHERE 
+    WHERE
         tc.constraint_type = 'UNIQUE'
         AND tc.table_schema = ?
         AND ccu.table_schema = ?
@@ -83,7 +89,9 @@ many_to_many_constraints AS (
     SELECT DISTINCT
         kcu1.table_name AS table1,
         kcu2.table_name AS table2,
-        'ManyToMany' AS relation
+        'ManyToMany' AS relation,
+        NULL::text AS source_column,
+        NULL::text AS target_column
     FROM
         information_schema.key_column_usage kcu1
     JOIN
