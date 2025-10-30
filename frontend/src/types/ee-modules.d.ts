@@ -71,3 +71,9 @@ declare module '@ee/pages/raw-execute/index' {
   export const ActionOptionIcons: any;
   export default { plugins, ActionOptions, ActionOptionIcons };
 }
+
+declare module '@ee/settings-defaults' {
+  export const eeSettingsDefaults: {
+    whereConditionMode: 'sheet' | 'popover';
+  };
+}

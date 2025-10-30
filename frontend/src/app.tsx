@@ -55,7 +55,7 @@ export const App = () => {
   }, [updateSettings, metricsEnabled])
 
   useEffect(() => {
-    updateBackendWithSettings()
+    updateBackendWithSettings();
   }, [updateBackendWithSettings]);
 
   return (

@@ -15,7 +15,6 @@
  */
 
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
-import { settingsDefaults } from '../config/features';
 
 type ISettingsState = {
     metricsEnabled: true | false;
@@ -35,10 +34,6 @@ const getInitialState = (): ISettingsState => {
         spacing: 'comfortable',
         whereConditionMode: 'popover',
     };
-
-    if (import.meta.env.VITE_BUILD_EDITION === 'ee' && settingsDefaults) {
-        return { ...baseState, ...settingsDefaults };
-    }
 
     return baseState;
 };

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { reduxStore } from '../store';
+import { SettingsActions } from '../store/settings';
 import {FeatureFlags} from './ee-types';
 
 // Default feature flags (all disabled for open source version)
@@ -66,6 +68,7 @@ export const initialize = () => {
             }
             if (eeConfig?.eeSettingsDefaults) {
                 settingsDefaults = eeConfig.eeSettingsDefaults;
+                reduxStore.dispatch(SettingsActions.setWhereConditionMode(settingsDefaults.whereConditionMode));
             }
         }).catch(() => {
             console.warn('Could not load EE feature flags');
