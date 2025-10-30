@@ -1,0 +1,560 @@
+---
+title: "MySQL Best Practices"
+description: "MySQL-specific best practices for optimal performance, reliability, and database design"
+---
+
+# MySQL Best Practices
+
+MySQL is the world's most popular open-source relational database. Optimizing MySQL databases requires understanding its unique characteristics, storage engines, and configuration options. This guide covers practical MySQL-specific best practices.
+
+<Tip>
+Understanding the differences between InnoDB and MyISAM, and choosing the right storage engine, is fundamental to MySQL optimization.
+</Tip>
+
+## Storage Engines
+
+### Choosing the Right Engine
+
+MySQL supports multiple storage engines. InnoDB is the default and recommended for most applications.
+
+**InnoDB (Recommended):**
+
+```sql
+CREATE TABLE users (
+  user_id INT AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  name VARCHAR(255),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+InnoDB features:
+- ACID compliance with transactions
+- Foreign key constraints
+- Crash recovery
+- Row-level locking (better for concurrent access)
+- Good for write-heavy and mixed workloads
+
+**MyISAM (Legacy):**
+
+```sql
+CREATE TABLE logs (
+  log_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  message TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
+```
+
+MyISAM characteristics:
+- Table-level locking (poor concurrency)
+- Fast for read-only operations
+- No ACID compliance
+- No foreign key support
+- Only use for read-only archive tables
+
+**Converting Tables:**
+
+```sql
+-- Convert MyISAM to InnoDB
+ALTER TABLE legacy_table ENGINE=InnoDB;
+
+-- Check current engine
+SELECT TABLE_NAME, ENGINE FROM INFORMATION_SCHEMA.TABLES
+WHERE TABLE_SCHEMA = 'myapp';
+```
+
+<Warning>
+Never use MyISAM for production databases. Only use InnoDB unless you have specific read-only use cases.
+</Warning>
+
+## Character Sets and Collations
+
+### Proper Character Set Configuration
+
+Character set mismatches cause data corruption and encoding issues.
+
+**Correct Setup:**
+
+```sql
+-- Database level
+CREATE DATABASE myapp
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+
+-- Table level
+CREATE TABLE users (
+  user_id INT PRIMARY KEY,
+  email VARCHAR(255) NOT NULL,
+  name VARCHAR(255),
+  bio TEXT
+) CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+-- Column level
+CREATE TABLE products (
+  product_id INT PRIMARY KEY,
+  name VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  description LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
+);
+```
+
+**Character Set Selection:**
+
+- **utf8mb4**: Full Unicode support (emoji, international characters)
+- **utf8**: Legacy (max 3 bytes per character)
+- **latin1**: Western European only
+- **ascii**: English only
+
+<Tip>
+Always use utf8mb4 for new projects. It supports all Unicode characters including emoji and costs minimal performance overhead.
+</Tip>
+
+**Collation Selection:**
+
+- **utf8mb4_unicode_ci**: Case-insensitive, accent-insensitive (general purpose)
+- **utf8mb4_bin**: Binary comparison (case-sensitive, accent-sensitive)
+- **utf8mb4_general_ci**: Fast but less accurate for some languages
+
+**Check Current Settings:**
+
+```sql
+-- Database level
+SHOW CREATE DATABASE myapp;
+
+-- Table level
+SHOW CREATE TABLE users;
+
+-- Server level
+SHOW VARIABLES LIKE 'character_set_%';
+SHOW VARIABLES LIKE 'collation_%';
+```
+
+## Indexing Strategy
+
+### Index Types and Usage
+
+MySQL supports multiple index types optimized for different query patterns.
+
+**Basic Index Types:**
+
+```sql
+-- Single column index
+CREATE INDEX idx_users_email ON users(email);
+
+-- Composite index (order matters!)
+CREATE INDEX idx_orders_customer_date
+ON orders(customer_id, created_at DESC);
+
+-- Unique index
+CREATE UNIQUE INDEX idx_users_username ON users(username);
+
+-- Primary key (special unique index)
+ALTER TABLE users ADD PRIMARY KEY (user_id);
+
+-- Full-text index
+CREATE FULLTEXT INDEX idx_articles_content
+ON articles(title, content);
+```
+
+**Index Performance Analysis:**
+
+```sql
+-- Check if index is used
+EXPLAIN SELECT * FROM users WHERE email = 'user@example.com';
+
+-- See index statistics
+SELECT * FROM INFORMATION_SCHEMA.STATISTICS
+WHERE TABLE_SCHEMA = 'myapp' AND TABLE_NAME = 'users';
+
+-- Find unused indexes
+SELECT OBJECT_SCHEMA, OBJECT_NAME, COUNT_READ, COUNT_WRITE
+FROM performance_schema.table_io_waits_summary_by_index_usage
+WHERE COUNT_READ = 0 AND OBJECT_SCHEMA != 'mysql'
+ORDER BY COUNT_WRITE DESC;
+```
+
+### Column Selection for Indexes
+
+**Good Index Candidates:**
+
+```sql
+-- Frequently used in WHERE clauses
+CREATE INDEX idx_orders_status ON orders(status);
+
+-- Used in JOIN conditions
+CREATE INDEX idx_orders_customer_id ON orders(customer_id);
+FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
+
+-- Used in ORDER BY
+CREATE INDEX idx_products_category_price
+ON products(category, price DESC);
+
+-- Selective columns (good cardinality)
+CREATE INDEX idx_users_country ON users(country);
+```
+
+**Avoid Indexing:**
+
+```sql
+-- Too many NULL values
+CREATE TABLE problems (
+  id INT,
+  description TEXT,
+  INDEX idx_description (description)  -- Bad if mostly NULL
+);
+
+-- Very low cardinality
+CREATE TABLE issues (
+  issue_id INT,
+  is_active BOOLEAN,
+  INDEX idx_is_active (is_active)  -- Only 2 values, poor selectivity
+);
+
+-- Frequently updated columns
+CREATE TABLE users (
+  user_id INT,
+  login_count INT,
+  last_login TIMESTAMP,
+  INDEX idx_last_login (last_login)  -- Updates break index efficiency
+);
+```
+
+## Performance Optimization
+
+### Query Optimization
+
+**Common Optimization Patterns:**
+
+```sql
+-- Use LIMIT to restrict results
+SELECT * FROM orders
+WHERE customer_id = 123
+LIMIT 100;
+
+-- Use covering indexes
+CREATE INDEX idx_users_covering
+ON users(email, created_at);
+
+SELECT email, created_at FROM users
+WHERE email = 'user@example.com';
+
+-- Avoid SELECT *
+SELECT id, name, email FROM users WHERE active = 1;
+
+-- Use IDs for joins instead of text fields
+SELECT o.order_id, c.name, o.total
+FROM orders o
+JOIN customers c ON o.customer_id = c.id
+WHERE o.created_at > DATE_SUB(NOW(), INTERVAL 30 DAY);
+```
+
+### Connection Pooling
+
+MySQL benefits significantly from connection pooling.
+
+**Configuration:**
+
+```sql
+-- Check connection settings
+SHOW VARIABLES LIKE 'max_connections';
+SHOW VARIABLES LIKE '%timeout%';
+
+-- Typical production settings in my.cnf
+max_connections = 500
+max_allowed_packet = 256M
+wait_timeout = 28800
+interactive_timeout = 28800
+```
+
+**Connection Pool Implementation:**
+
+Most applications use connection pooling libraries:
+- For Node.js: `mysql2/promise` with pooling
+- For Python: `mysql-connector-python`
+- For PHP: `mysqli` with persistent connections
+- For Java: HikariCP
+
+### Partitioning for Large Tables
+
+Partitioning improves query performance on large tables.
+
+**Range Partitioning:**
+
+```sql
+CREATE TABLE orders (
+  order_id INT,
+  customer_id INT,
+  total DECIMAL(10,2),
+  order_date DATE
+)
+PARTITION BY RANGE (YEAR(order_date)) (
+  PARTITION p2023 VALUES LESS THAN (2024),
+  PARTITION p2024 VALUES LESS THAN (2025),
+  PARTITION p2025 VALUES LESS THAN (2026),
+  PARTITION pmax VALUES LESS THAN MAXVALUE
+);
+```
+
+**List Partitioning:**
+
+```sql
+CREATE TABLE users (
+  user_id INT,
+  region VARCHAR(50),
+  name VARCHAR(255)
+)
+PARTITION BY LIST (region) (
+  PARTITION north VALUES IN ('CA', 'OR', 'WA'),
+  PARTITION south VALUES IN ('TX', 'FL', 'GA'),
+  PARTITION east VALUES IN ('NY', 'MA', 'PA'),
+  PARTITION other VALUES IN (DEFAULT)
+);
+```
+
+## Data Integrity
+
+### Constraints and Relationships
+
+**Comprehensive Constraint Example:**
+
+```sql
+CREATE TABLE customers (
+  customer_id INT AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  country_code VARCHAR(2),
+  age INT CHECK (age >= 18),
+  status ENUM('active', 'inactive', 'suspended') DEFAULT 'active',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_email (email),
+  INDEX idx_status (status)
+) ENGINE=InnoDB;
+
+CREATE TABLE orders (
+  order_id INT AUTO_INCREMENT PRIMARY KEY,
+  customer_id INT NOT NULL,
+  order_date DATE NOT NULL,
+  total DECIMAL(10,2) CHECK (total > 0),
+  status ENUM('pending', 'completed', 'cancelled') DEFAULT 'pending',
+  FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  INDEX idx_customer_id (customer_id),
+  INDEX idx_order_date (order_date)
+) ENGINE=InnoDB;
+```
+
+<Tip>
+Use FOREIGN KEY constraints to ensure referential integrity. Cascade deletes/updates simplify data cleanup but use carefully.
+</Tip>
+
+### Transactions
+
+MySQL transactions ensure ACID compliance with InnoDB.
+
+**Transaction Example:**
+
+```sql
+START TRANSACTION;
+
+-- Transfer money between accounts
+UPDATE accounts SET balance = balance - 100 WHERE account_id = 1;
+UPDATE accounts SET balance = balance + 100 WHERE account_id = 2;
+
+INSERT INTO transaction_log (from_account, to_account, amount)
+VALUES (1, 2, 100);
+
+COMMIT;
+-- Or ROLLBACK if error occurs
+```
+
+**Transaction Isolation Levels:**
+
+```sql
+-- Strict isolation
+SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+
+-- Default (good balance)
+SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+
+-- Minimal locking
+SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+
+-- Fastest but risky
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+```
+
+## Monitoring and Maintenance
+
+### Regular Maintenance
+
+**Table Optimization:**
+
+```sql
+-- Optimize individual table
+OPTIMIZE TABLE users;
+
+-- Optimize all tables in database
+OPTIMIZE TABLE users, orders, products;
+
+-- Check for corruption
+CHECK TABLE users;
+REPAIR TABLE users;
+
+-- Analyze for query optimization
+ANALYZE TABLE users;
+```
+
+**Monitor Performance:**
+
+```sql
+-- Active queries
+SHOW PROCESSLIST;
+
+-- Kill long-running query
+KILL 12345;  -- Use process ID from PROCESSLIST
+
+-- Database stats
+SHOW STATUS;
+
+-- Engine statistics
+SHOW ENGINE INNODB STATUS;
+```
+
+## Replication and High Availability
+
+### Master-Slave Replication
+
+Setup replication for data redundancy and read scaling.
+
+**Master Configuration (my.cnf):**
+
+```
+[mysqld]
+server-id = 1
+log_bin = mysql-bin
+binlog_format = ROW
+relay-log = mysql-relay-bin
+relay-log-index = mysql-relay-bin.index
+master-user = replication
+master-password = securepass
+```
+
+**Slave Configuration (my.cnf):**
+
+```
+[mysqld]
+server-id = 2
+log_bin = mysql-bin
+relay-log = mysql-relay-bin
+relay-log-index = mysql-relay-bin.index
+```
+
+**Setup Replication:**
+
+```sql
+-- On Master
+CREATE USER 'replication'@'slave_host' IDENTIFIED BY 'password';
+GRANT REPLICATION SLAVE ON *.* TO 'replication'@'slave_host';
+FLUSH PRIVILEGES;
+
+-- Get master status
+SHOW MASTER STATUS;
+
+-- On Slave
+CHANGE MASTER TO
+  MASTER_HOST='master_host',
+  MASTER_USER='replication',
+  MASTER_PASSWORD='password',
+  MASTER_LOG_FILE='mysql-bin.000001',
+  MASTER_LOG_POS=12345;
+
+START SLAVE;
+SHOW SLAVE STATUS;
+```
+
+## Security Best Practices
+
+<AccordionGroup>
+<Accordion title="User Management">
+```sql
+-- Create application user with minimal privileges
+CREATE USER 'appuser'@'app_host' IDENTIFIED BY 'strong_password';
+GRANT SELECT, INSERT, UPDATE ON myapp.* TO 'appuser'@'app_host';
+FLUSH PRIVILEGES;
+
+-- Remove unnecessary default users
+DELETE FROM mysql.user WHERE User='';
+FLUSH PRIVILEGES;
+
+-- Change root password
+ALTER USER 'root'@'localhost' IDENTIFIED BY 'new_password';
+```
+</Accordion>
+
+<Accordion title="Network Security">
+```sql
+-- Bind to specific IP only
+SHOW VARIABLES LIKE 'bind_address';
+
+-- Use SSL connections
+SHOW VARIABLES LIKE 'have_ssl';
+
+-- Require SSL for specific user
+CREATE USER 'secure_user'@'%' IDENTIFIED BY 'password' REQUIRE SSL;
+```
+</Accordion>
+
+<Accordion title="Query Logging">
+```sql
+-- Enable general query log (development only, high overhead)
+SET GLOBAL general_log = 'ON';
+SET GLOBAL log_output = 'TABLE';
+
+-- Check slow queries
+SET GLOBAL slow_query_log = 'ON';
+SET GLOBAL long_query_time = 2;
+
+-- View slow queries
+SELECT * FROM mysql.slow_log;
+```
+</Accordion>
+
+<Accordion title="Backup Strategy">
+```bash
+# Full backup
+mysqldump --all-databases --single-transaction > backup_$(date +%Y%m%d).sql
+
+# With binlog position for point-in-time recovery
+mysqldump --all-databases --single-transaction --master-data=2 > backup.sql
+
+# Compressed backup
+mysqldump myapp | gzip > backup_myapp_$(date +%Y%m%d).sql.gz
+```
+</Accordion>
+</AccordionGroup>
+
+## Related Topics
+
+<CardGroup cols={2}>
+<Card title="Query Optimization" icon="code" href="/best-practices/query-optimization">
+SQL query optimization techniques
+</Card>
+<Card title="Performance Optimization" icon="rocket" href="/best-practices/performance">
+General database performance guide
+</Card>
+<Card title="Data Management" icon="database" href="/best-practices/data-management">
+Safe data management practices
+</Card>
+<Card title="Security Best Practices" icon="shield" href="/best-practices/security">
+Database security guidelines
+</Card>
+</CardGroup>
+
+## Summary
+
+MySQL success depends on understanding storage engines, proper character set configuration, strategic indexing, and diligent maintenance. InnoDB is the right choice for nearly all applications, utf8mb4 is the right character set, and regular optimization keeps performance optimal. Combine these practices with proper monitoring and you'll maintain reliable, performant MySQL databases.
+
+<Check>
+You now have comprehensive knowledge of MySQL-specific best practices to design and manage efficient, reliable databases.
+</Check>

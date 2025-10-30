@@ -1,0 +1,733 @@
+---
+title: "CI/CD Integration"
+description: "Integrate WhoDB into your continuous integration and deployment pipelines"
+---
+
+# CI/CD Integration
+
+WhoDB can be integrated into your CI/CD pipelines to automate database testing, schema validation, data verification, and deployment workflows. This guide covers integration with popular CI/CD platforms and common automation patterns.
+
+<Tip>
+Automate database operations in your pipeline to catch issues early and ensure data consistency
+</Tip>
+
+## Use Cases for CI/CD Integration
+
+WhoDB in CI/CD pipelines enables:
+
+- **Database Schema Validation**: Verify schema changes before deployment
+- **Data Migration Testing**: Test migrations against realistic datasets
+- **Integration Testing**: Validate application database interactions
+- **Automated Backups**: Schedule and verify database backups
+- **Health Checks**: Monitor database connectivity and performance
+- **Compliance Checks**: Verify data integrity and security policies
+
+## GitHub Actions Integration
+
+GitHub Actions provides native CI/CD for GitHub repositories. Here's how to integrate WhoDB:
+
+### Basic Schema Validation Workflow
+
+```yaml
+name: Database Schema Validation
+
+on:
+  pull_request:
+    paths:
+      - 'migrations/**'
+      - 'schema/**'
+  push:
+    branches:
+      - main
+
+jobs:
+  validate-schema:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      whodb:
+        image: clidey/whodb:latest
+        ports:
+          - 8080:8080
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Wait for services
+        run: |
+          timeout 60 bash -c 'until curl -f http://localhost:8080/health; do sleep 2; done'
+
+      - name: Run migrations
+        run: |
+          psql -h localhost -U postgres -d testdb < migrations/001_initial_schema.sql
+        env:
+          PGPASSWORD: postgres
+
+      - name: Verify schema
+        run: |
+          # Use psql to verify tables exist
+          psql -h localhost -U postgres -d testdb -c "\dt"
+        env:
+          PGPASSWORD: postgres
+
+      - name: Run schema tests
+        run: |
+          npm run test:schema
+```
+
+### Integration Testing with Multiple Databases
+
+```yaml
+name: Integration Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+jobs:
+  test-postgres:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      whodb:
+        image: clidey/whodb:latest
+        ports:
+          - 8080:8080
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup test data
+        run: |
+          psql -h localhost -U postgres -d testdb -f test/fixtures/sample_data.sql
+        env:
+          PGPASSWORD: testpass
+
+      - name: Run application tests
+        run: |
+          npm install
+          npm run test:integration
+        env:
+          DATABASE_URL: postgresql://postgres:testpass@localhost:5432/testdb
+
+  test-mysql:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: testpass
+          MYSQL_DATABASE: testdb
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+      whodb:
+        image: clidey/whodb:latest
+        ports:
+          - 8080:8080
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup test data
+        run: |
+          mysql -h 127.0.0.1 -u root -ptestpass testdb < test/fixtures/sample_data.sql
+
+      - name: Run application tests
+        run: |
+          npm install
+          npm run test:integration
+        env:
+          DATABASE_URL: mysql://root:testpass@127.0.0.1:3306/testdb
+```
+
+### Database Migration Verification
+
+```yaml
+name: Verify Database Migrations
+
+on:
+  pull_request:
+    paths:
+      - 'migrations/**'
+
+jobs:
+  verify-migrations:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        postgres-version: [13, 14, 15]
+
+    services:
+      postgres:
+        image: postgres:${{ matrix.postgres-version }}
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: migrations_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install migration tool
+        run: |
+          npm install -g db-migrate db-migrate-pg
+
+      - name: Run migrations up
+        run: |
+          db-migrate up --config database.json --env test
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/migrations_test
+
+      - name: Verify migration state
+        run: |
+          psql postgresql://postgres:postgres@localhost:5432/migrations_test -c "\dt"
+
+      - name: Test rollback
+        run: |
+          db-migrate down --config database.json --env test
+
+      - name: Re-run migrations
+        run: |
+          db-migrate up --config database.json --env test
+```
+
+## GitLab CI Integration
+
+GitLab CI provides integrated pipeline automation. Here's how to use WhoDB:
+
+### Basic Pipeline Configuration
+
+```yaml
+# .gitlab-ci.yml
+stages:
+  - test
+  - deploy
+
+variables:
+  POSTGRES_DB: testdb
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: testpass
+
+test:schema:
+  stage: test
+  image: clidey/whodb:latest
+  services:
+    - postgres:15
+  script:
+    - apt-get update && apt-get install -y postgresql-client
+    - psql -h postgres -U $POSTGRES_USER -d $POSTGRES_DB -f schema.sql
+    - psql -h postgres -U $POSTGRES_USER -d $POSTGRES_DB -c "\dt"
+  only:
+    changes:
+      - schema/**
+      - migrations/**
+
+test:integration:
+  stage: test
+  image: node:18
+  services:
+    - name: postgres:15
+      alias: postgres
+    - name: clidey/whodb:latest
+      alias: whodb
+  variables:
+    DATABASE_URL: postgresql://postgres:testpass@postgres:5432/testdb
+  script:
+    - npm install
+    - npm run test:integration
+  artifacts:
+    reports:
+      junit: test-results.xml
+
+deploy:staging:
+  stage: deploy
+  image: clidey/whodb:latest
+  services:
+    - postgres:15
+  script:
+    - psql -h $STAGING_DB_HOST -U $STAGING_DB_USER -d $STAGING_DB_NAME -f migrations/latest.sql
+  only:
+    - develop
+  environment:
+    name: staging
+```
+
+### Database Backup Pipeline
+
+```yaml
+# .gitlab-ci.yml
+stages:
+  - backup
+  - verify
+
+backup:production:
+  stage: backup
+  image: postgres:15
+  script:
+    - pg_dump -h $PROD_DB_HOST -U $PROD_DB_USER -d $PROD_DB_NAME > backup.sql
+    - gzip backup.sql
+    - aws s3 cp backup.sql.gz s3://backups/db-backup-$(date +%Y%m%d-%H%M%S).sql.gz
+  artifacts:
+    paths:
+      - backup.sql.gz
+    expire_in: 1 week
+  only:
+    - schedules
+
+verify:backup:
+  stage: verify
+  image: postgres:15
+  services:
+    - name: postgres:15
+      alias: verify-db
+  dependencies:
+    - backup:production
+  script:
+    - gunzip backup.sql.gz
+    - psql -h verify-db -U postgres -d postgres < backup.sql
+    - psql -h verify-db -U postgres -d postgres -c "SELECT COUNT(*) FROM users;"
+```
+
+## Jenkins Integration
+
+Jenkins provides flexible pipeline automation through Jenkinsfiles:
+
+### Declarative Pipeline
+
+```groovy
+pipeline {
+    agent any
+
+    environment {
+        DATABASE_URL = credentials('database-url')
+        WHODB_IMAGE = 'clidey/whodb:latest'
+    }
+
+    stages {
+        stage('Setup') {
+            steps {
+                script {
+                    docker.image('postgres:15').withRun('-e POSTGRES_PASSWORD=testpass -e POSTGRES_DB=testdb') { db ->
+                        docker.image(WHODB_IMAGE).withRun("-p 8080:8080 --link ${db.id}:postgres") { whodb ->
+                            sh 'sleep 10'
+
+                            stage('Run Migrations') {
+                                sh '''
+                                    docker exec ${db.id} psql -U postgres -d testdb -c "CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT);"
+                                '''
+                            }
+
+                            stage('Integration Tests') {
+                                sh '''
+                                    npm install
+                                    npm run test:integration
+                                '''
+                            }
+
+                            stage('Schema Validation') {
+                                sh '''
+                                    docker exec ${db.id} psql -U postgres -d testdb -c "\\dt"
+                                '''
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            junit 'test-results/**/*.xml'
+            cleanWs()
+        }
+    }
+}
+```
+
+### Scripted Pipeline with Parallel Testing
+
+```groovy
+node {
+    stage('Checkout') {
+        checkout scm
+    }
+
+    stage('Parallel Database Tests') {
+        parallel(
+            postgres: {
+                docker.image('postgres:15').withRun('-e POSTGRES_PASSWORD=test') { db ->
+                    sh "psql -h ${db.id} -U postgres -c 'SELECT version();'"
+                }
+            },
+            mysql: {
+                docker.image('mysql:8').withRun('-e MYSQL_ROOT_PASSWORD=test') { db ->
+                    sh "sleep 30"
+                    sh "mysql -h ${db.id} -u root -ptest -e 'SELECT version();'"
+                }
+            }
+        )
+    }
+
+    stage('Deploy') {
+        if (env.BRANCH_NAME == 'main') {
+            sh 'kubectl apply -f k8s/whodb-deployment.yaml'
+        }
+    }
+}
+```
+
+## CircleCI Integration
+
+CircleCI provides cloud-based CI/CD automation:
+
+```yaml
+# .circleci/config.yml
+version: 2.1
+
+executors:
+  docker-executor:
+    docker:
+      - image: cimg/node:18.0
+      - image: cimg/postgres:15.0
+        environment:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: testdb
+      - image: clidey/whodb:latest
+
+jobs:
+  test-database:
+    executor: docker-executor
+    steps:
+      - checkout
+
+      - run:
+          name: Wait for PostgreSQL
+          command: |
+            dockerize -wait tcp://localhost:5432 -timeout 1m
+
+      - run:
+          name: Run migrations
+          command: |
+            psql -h localhost -U testuser -d testdb -f migrations/schema.sql
+          environment:
+            PGPASSWORD: testpass
+
+      - run:
+          name: Run integration tests
+          command: |
+            npm install
+            npm run test:integration
+          environment:
+            DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
+
+      - store_test_results:
+          path: test-results
+
+  deploy-staging:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - run:
+          name: Deploy to staging
+          command: |
+            ssh staging-server "docker-compose pull && docker-compose up -d"
+
+workflows:
+  test-and-deploy:
+    jobs:
+      - test-database
+      - deploy-staging:
+          requires:
+            - test-database
+          filters:
+            branches:
+              only: main
+```
+
+## Database Health Check Scripts
+
+Create reusable health check scripts for your pipelines:
+
+### PostgreSQL Health Check
+
+```bash
+#!/bin/bash
+# scripts/check-postgres-health.sh
+
+set -e
+
+HOST=${1:-localhost}
+PORT=${2:-5432}
+USER=${3:-postgres}
+DB=${4:-postgres}
+
+echo "Checking PostgreSQL health at $HOST:$PORT"
+
+# Check connection
+if ! psql -h "$HOST" -p "$PORT" -U "$USER" -d "$DB" -c "SELECT 1" > /dev/null 2>&1; then
+    echo "ERROR: Cannot connect to PostgreSQL"
+    exit 1
+fi
+
+# Check table count
+TABLE_COUNT=$(psql -h "$HOST" -p "$PORT" -U "$USER" -d "$DB" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public'")
+
+echo "Found $TABLE_COUNT tables"
+
+if [ "$TABLE_COUNT" -eq 0 ]; then
+    echo "WARNING: No tables found in database"
+    exit 1
+fi
+
+# Check for long-running queries
+LONG_QUERIES=$(psql -h "$HOST" -p "$PORT" -U "$USER" -d "$DB" -t -c "SELECT COUNT(*) FROM pg_stat_activity WHERE state = 'active' AND query_start < NOW() - INTERVAL '5 minutes'")
+
+if [ "$LONG_QUERIES" -gt 0 ]; then
+    echo "WARNING: $LONG_QUERIES long-running queries detected"
+fi
+
+echo "PostgreSQL health check passed"
+```
+
+### Migration Verification Script
+
+```bash
+#!/bin/bash
+# scripts/verify-migrations.sh
+
+set -e
+
+DATABASE_URL=$1
+MIGRATIONS_DIR=${2:-./migrations}
+
+echo "Verifying migrations in $MIGRATIONS_DIR"
+
+# Count pending migrations
+PENDING=$(ls -1 "$MIGRATIONS_DIR"/*.sql 2>/dev/null | wc -l)
+echo "Found $PENDING migration files"
+
+# Run migrations
+for migration in "$MIGRATIONS_DIR"/*.sql; do
+    echo "Applying migration: $(basename $migration)"
+    psql "$DATABASE_URL" -f "$migration" || {
+        echo "ERROR: Migration failed: $migration"
+        exit 1
+    }
+done
+
+# Verify schema
+echo "Verifying schema..."
+psql "$DATABASE_URL" -c "\dt" || exit 1
+
+echo "All migrations applied successfully"
+```
+
+## Automated Testing Patterns
+
+### Schema Comparison Test
+
+```javascript
+// tests/schema-comparison.test.js
+const { Client } = require('pg');
+
+describe('Schema Validation', () => {
+  let client;
+
+  beforeAll(async () => {
+    client = new Client({
+      connectionString: process.env.DATABASE_URL
+    });
+    await client.connect();
+  });
+
+  afterAll(async () => {
+    await client.end();
+  });
+
+  test('users table should have correct columns', async () => {
+    const result = await client.query(`
+      SELECT column_name, data_type
+      FROM information_schema.columns
+      WHERE table_name = 'users'
+      ORDER BY column_name
+    `);
+
+    const columns = result.rows.map(r => ({
+      name: r.column_name,
+      type: r.data_type
+    }));
+
+    expect(columns).toMatchSnapshot();
+  });
+
+  test('all foreign keys should be valid', async () => {
+    const result = await client.query(`
+      SELECT
+        tc.table_name,
+        kcu.column_name,
+        ccu.table_name AS foreign_table_name
+      FROM information_schema.table_constraints tc
+      JOIN information_schema.key_column_usage kcu
+        ON tc.constraint_name = kcu.constraint_name
+      JOIN information_schema.constraint_column_usage ccu
+        ON ccu.constraint_name = tc.constraint_name
+      WHERE tc.constraint_type = 'FOREIGN KEY'
+    `);
+
+    expect(result.rows.length).toBeGreaterThan(0);
+  });
+});
+```
+
+### Data Integrity Test
+
+```javascript
+// tests/data-integrity.test.js
+describe('Data Integrity', () => {
+  test('no orphaned records exist', async () => {
+    const result = await client.query(`
+      SELECT COUNT(*) as orphaned
+      FROM orders o
+      LEFT JOIN users u ON o.user_id = u.id
+      WHERE u.id IS NULL
+    `);
+
+    expect(parseInt(result.rows[0].orphaned)).toBe(0);
+  });
+
+  test('all emails are valid format', async () => {
+    const result = await client.query(`
+      SELECT COUNT(*) as invalid
+      FROM users
+      WHERE email !~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$'
+    `);
+
+    expect(parseInt(result.rows[0].invalid)).toBe(0);
+  });
+});
+```
+
+## Best Practices
+
+<AccordionGroup>
+<Accordion title="Use Service Containers">
+Run databases as service containers rather than installing locally for consistent environments across all test runs.
+</Accordion>
+
+<Accordion title="Cache Dependencies">
+Cache database images and npm packages to speed up pipeline execution:
+
+```yaml
+- uses: actions/cache@v3
+  with:
+    path: ~/.docker
+    key: docker-${{ hashFiles('Dockerfile') }}
+```
+</Accordion>
+
+<Accordion title="Parallel Testing">
+Run database tests in parallel when testing multiple database types or versions to reduce total pipeline time.
+</Accordion>
+
+<Accordion title="Environment Isolation">
+Use separate database instances for each pipeline run to prevent test interference and ensure reproducibility.
+</Accordion>
+
+<Accordion title="Cleanup Resources">
+Always clean up database containers and volumes after tests complete to prevent resource exhaustion:
+
+```yaml
+post:
+  always:
+    - docker-compose down -v
+```
+</Accordion>
+</AccordionGroup>
+
+## Deployment Workflows
+
+### Blue-Green Deployment
+
+```yaml
+deploy:
+  stage: deploy
+  script:
+    # Deploy to green environment
+    - docker-compose -f docker-compose.green.yml up -d
+    - ./scripts/health-check.sh green
+
+    # Run smoke tests
+    - npm run test:smoke -- --env=green
+
+    # Switch traffic to green
+    - ./scripts/switch-traffic.sh green
+
+    # Verify production
+    - sleep 30
+    - ./scripts/health-check.sh production
+
+    # Tear down blue environment
+    - docker-compose -f docker-compose.blue.yml down
+```
+
+## Summary
+
+CI/CD integration with WhoDB enables:
+
+- Automated database schema validation
+- Integration testing with multiple database types
+- Migration verification and rollback testing
+- Continuous deployment with health checks
+- Automated backup and verification
+- Parallel testing for faster feedback
+
+Integrating WhoDB into your CI/CD pipeline ensures database changes are tested thoroughly before reaching production.
+
+<Check>
+You're ready to automate database operations in your CI/CD pipeline
+</Check>

@@ -1,0 +1,1281 @@
+---
+title: "Frequently Asked Questions"
+description: "Find answers to commonly asked questions about WhoDB"
+---
+
+# Frequently Asked Questions
+
+Find answers to the most commonly asked questions about WhoDB. If you can't find what you're looking for, check our [Troubleshooting Guide](/resources/troubleshooting) or reach out to our community.
+
+## Installation & Setup
+
+<AccordionGroup>
+<Accordion title="How do I install WhoDB?">
+WhoDB can be installed in multiple ways depending on your environment:
+
+**Docker (Recommended)**
+```bash
+docker run -it -p 8080:8080 clidey/whodb
+```
+
+**Docker Compose**
+```yaml
+version: "3.8"
+services:
+  whodb:
+    image: clidey/whodb
+    ports:
+      - "8080:8080"
+```
+
+**Binary Installation**
+Download the latest binary from the [GitHub Releases](https://github.com/clidey/whodb) page and run it directly.
+
+**Desktop Application**
+Download the desktop application for Windows, macOS, or Linux from our website.
+
+<Tip>
+Docker is the recommended installation method as it provides the most consistent experience across platforms
+</Tip>
+</Accordion>
+
+<Accordion title="What are the system requirements for WhoDB?">
+WhoDB is designed to be lightweight and run on minimal resources:
+
+**Minimum Requirements:**
+- CPU: 1 core
+- RAM: 512 MB
+- Storage: 50 MB for the application
+- OS: Linux, macOS, Windows, or any Docker-compatible platform
+
+**Recommended Requirements:**
+- CPU: 2 cores or more
+- RAM: 1 GB or more
+- Storage: 100 MB or more
+- OS: Latest version of your operating system
+
+**Browser Requirements:**
+- Chrome 90+
+- Firefox 88+
+- Safari 14+
+- Edge 90+
+
+<Note>
+WhoDB runs entirely in your browser, so a modern, up-to-date browser is essential for the best experience
+</Note>
+</Accordion>
+
+<Accordion title="Can I run WhoDB without Docker?">
+Yes, WhoDB can run as a standalone binary without Docker. Download the appropriate binary for your platform from the GitHub Releases page and execute it directly.
+
+```bash
+# Linux/macOS
+./whodb
+
+# Windows
+whodb.exe
+```
+
+The binary includes everything needed to run WhoDB, including the embedded frontend.
+
+<Info>
+The standalone binary is a single file under 50MB, making it easy to deploy and manage
+</Info>
+</Accordion>
+
+<Accordion title="How do I update WhoDB to the latest version?">
+**Docker:**
+```bash
+docker pull clidey/whodb:latest
+docker stop whodb
+docker rm whodb
+docker run -it -p 8080:8080 clidey/whodb
+```
+
+**Docker Compose:**
+```bash
+docker-compose pull
+docker-compose up -d
+```
+
+**Binary:**
+Download the latest binary from GitHub Releases and replace your existing binary.
+
+**Desktop Application:**
+The desktop app will notify you when updates are available and can auto-update.
+
+<Warning>
+Always backup your configuration and connection profiles before updating
+</Warning>
+</Accordion>
+
+<Accordion title="What port does WhoDB use by default?">
+WhoDB runs on port 8080 by default. You can change this by:
+
+**Docker:**
+```bash
+docker run -it -p 3000:8080 clidey/whodb
+```
+
+**Environment Variable:**
+```bash
+PORT=3000 whodb
+```
+
+**Docker Compose:**
+```yaml
+environment:
+  - PORT=3000
+ports:
+  - "3000:3000"
+```
+
+<Note>
+Make sure your chosen port is not already in use by another application
+</Note>
+</Accordion>
+
+<Accordion title="Can I run multiple instances of WhoDB?">
+Yes, you can run multiple instances of WhoDB simultaneously by using different ports:
+
+```bash
+docker run -it -p 8080:8080 --name whodb1 clidey/whodb
+docker run -it -p 8081:8080 --name whodb2 clidey/whodb
+```
+
+This is useful when you want to:
+- Connect to different databases in separate instances
+- Provide isolated environments for different teams
+- Test different WhoDB versions side by side
+
+<Tip>
+Each instance maintains its own connection history and settings
+</Tip>
+</Accordion>
+</AccordionGroup>
+
+## Database Connections
+
+<AccordionGroup>
+<Accordion title="Which databases does WhoDB support?">
+**Community Edition (CE):**
+- PostgreSQL
+- MySQL
+- MariaDB
+- SQLite3
+- MongoDB
+- Redis
+- Elasticsearch
+- ClickHouse
+
+**Enterprise Edition (EE):**
+All CE databases plus:
+- Oracle Database
+- Microsoft SQL Server
+- Amazon DynamoDB
+- Amazon Athena
+- Snowflake
+- And more
+
+See our [Supported Databases](/resources/supported-databases) page for detailed version compatibility.
+
+<Info>
+The Community Edition covers the most popular open-source databases, while Enterprise Edition adds support for commercial and cloud-native databases
+</Info>
+</Accordion>
+
+<Accordion title="How do I connect to a database?">
+<Steps>
+<Step title="Launch WhoDB">
+Access WhoDB at http://localhost:8080
+</Step>
+<Step title="Select Database Type">
+Choose your database type from the dropdown menu
+</Step>
+<Step title="Enter Connection Details">
+Fill in the host, port, username, password, and database name
+</Step>
+<Step title="Configure Advanced Options (Optional)">
+Set SSL, SSH tunneling, or connection pooling options if needed
+</Step>
+<Step title="Connect">
+Click "Connect" to establish the connection
+</Step>
+</Steps>
+
+<Tip>
+Connection details are saved locally in your browser for quick reconnection
+</Tip>
+</Accordion>
+
+<Accordion title="Can I connect to remote databases?">
+Yes, WhoDB can connect to any database accessible from your network:
+
+**Direct Connection:**
+Simply use the remote host's IP address or hostname:
+```
+Host: 192.168.1.100 or db.example.com
+Port: 5432
+```
+
+**SSH Tunnel:**
+For secure connections through SSH:
+```
+SSH Host: bastion.example.com
+SSH Port: 22
+SSH User: ubuntu
+Database Host: localhost (from SSH host perspective)
+Database Port: 5432
+```
+
+**SSL/TLS:**
+Enable SSL for encrypted connections:
+```
+Enable SSL: Yes
+SSL Mode: require/verify-ca/verify-full
+SSL Certificate: (optional)
+```
+
+<Warning>
+Always use secure connections (SSL/SSH) when connecting to databases over public networks
+</Warning>
+</Accordion>
+
+<Accordion title="How do I connect to localhost databases from Docker?">
+When running WhoDB in Docker, "localhost" refers to the container itself, not your host machine. Use one of these approaches:
+
+**On macOS/Windows:**
+```bash
+Host: host.docker.internal
+```
+
+**On Linux:**
+```bash
+docker run -it -p 8080:8080 --network host clidey/whodb
+```
+
+**Using Docker Network:**
+```yaml
+version: "3.8"
+services:
+  postgres:
+    image: postgres:15
+    networks:
+      - whodb-network
+  whodb:
+    image: clidey/whodb
+    networks:
+      - whodb-network
+networks:
+  whodb-network:
+```
+
+Then use the service name as the host:
+```
+Host: postgres
+Port: 5432
+```
+
+<Info>
+Docker networking can be complex. See our [Docker integration guide](/resources/integrations/docker) for detailed examples
+</Info>
+</Accordion>
+
+<Accordion title="Can I save multiple database connections?">
+Yes, WhoDB automatically saves your connection history in your browser's local storage. When you return to the login page, you can select from your recent connections.
+
+Features:
+- Automatically saves connection details (except passwords for security)
+- Quick reconnect from connection history
+- Edit saved connections
+- Delete old connections
+- Export/import connection profiles
+
+<Note>
+For security reasons, passwords are never saved. You'll need to re-enter them when reconnecting
+</Note>
+</Accordion>
+
+<Accordion title="What if my database requires special authentication?">
+WhoDB supports several authentication methods:
+
+**Username/Password:**
+Standard authentication for most databases
+
+**Certificate-Based Authentication:**
+For databases requiring client certificates:
+- Upload your client certificate
+- Provide certificate key
+- Add CA certificate if needed
+
+**SSH Key Authentication:**
+For SSH tunnel connections:
+- Provide your SSH private key
+- Support for encrypted keys with passphrase
+
+**Environment Variables:**
+For automated deployments:
+```bash
+docker run -e DB_HOST=... -e DB_USER=... -e DB_PASS=... clidey/whodb
+```
+
+<Tip>
+Check your database provider's documentation for specific authentication requirements
+</Tip>
+</Accordion>
+
+<Accordion title="How do I connect to SQLite databases?">
+**Local SQLite File:**
+```bash
+docker run -it -p 8080:8080 -v /path/to/db:/db clidey/whodb
+```
+
+Then connect with:
+```
+Database Type: SQLite3
+Database Path: /db/your-database.db
+```
+
+**Without Docker:**
+Simply specify the full path to your SQLite file:
+```
+Database Path: /Users/username/data/app.db
+```
+
+<Note>
+SQLite files must be accessible to the WhoDB process. Use volume mounts for Docker deployments
+</Note>
+</Accordion>
+</AccordionGroup>
+
+## Features & Usage
+
+<AccordionGroup>
+<Accordion title="Can I edit data directly in WhoDB?">
+Yes, WhoDB provides comprehensive data editing capabilities:
+
+**Add New Rows:**
+- Click "Add Row" button
+- Fill in the form fields
+- Submit to insert
+
+**Edit Existing Rows:**
+- Right-click any row
+- Select "Edit Row"
+- Modify values
+- Save changes
+
+**Delete Rows:**
+- Right-click any row
+- Select "Delete Row"
+- Confirm deletion
+
+**Inline Editing:**
+- Double-click any cell
+- Edit value directly
+- Press Enter to save
+
+<Warning>
+All data modifications are immediate and cannot be undone. Always backup before making bulk changes
+</Warning>
+</Accordion>
+
+<Accordion title="How do I export data from WhoDB?">
+WhoDB supports multiple export formats:
+
+<Steps>
+<Step title="Select Data">
+Choose what to export:
+- All data in the table
+- Selected rows only
+- Filtered/searched results
+</Step>
+<Step title="Choose Format">
+Available formats:
+- CSV (Comma-separated values)
+- Excel (.xlsx)
+- JSON
+- SQL INSERT statements
+</Step>
+<Step title="Configure Options">
+Set format-specific options:
+- Delimiter (for CSV)
+- Include headers
+- Date format
+- Encoding
+</Step>
+<Step title="Download">
+Click "Export" to download the file
+</Step>
+</Steps>
+
+<Info>
+Large exports may take some time. WhoDB will show a progress indicator for operations over 10,000 rows
+</Info>
+</Accordion>
+
+<Accordion title="What is the Scratchpad feature?">
+The Scratchpad is WhoDB's powerful query interface, similar to Jupyter notebooks for databases:
+
+**Features:**
+- Write and execute SQL queries
+- Syntax highlighting and auto-completion
+- Multiple independent cells
+- Query history tracking
+- Result visualization
+- Export query results
+
+**Use Cases:**
+- Ad-hoc data analysis
+- Testing complex queries
+- Creating data reports
+- Debugging application queries
+- Learning SQL
+
+**Keyboard Shortcuts:**
+- `Cmd/Ctrl + Enter`: Execute query
+- `Cmd/Ctrl + N`: New cell
+- `Cmd/Ctrl + D`: Duplicate cell
+- `Cmd/Ctrl + S`: Save query
+
+<Tip>
+Use multiple cells to organize related queries and execute them independently
+</Tip>
+</Accordion>
+
+<Accordion title="How does the Graph visualization work?">
+The Graph view creates an interactive visualization of your database schema:
+
+**What It Shows:**
+- Tables as nodes
+- Foreign key relationships as edges
+- Primary keys and indexes
+- Column data types
+- Relationship cardinality
+
+**Interactions:**
+- Click and drag to pan
+- Mouse wheel to zoom
+- Click nodes to see details
+- Click edges to see relationship details
+- Fit view to center all nodes
+
+**Benefits:**
+- Understand complex schemas quickly
+- Identify relationship patterns
+- Find orphaned tables
+- Document database structure
+- Plan schema changes
+
+<Note>
+Graph visualization works best with databases that have defined foreign key relationships
+</Note>
+</Accordion>
+
+<Accordion title="Can I generate test data with WhoDB?">
+Yes, WhoDB includes a mock data generator:
+
+<Steps>
+<Step title="Select Table">
+Navigate to the table you want to populate
+</Step>
+<Step title="Open Mock Data Dialog">
+Click "Generate Mock Data" button
+</Step>
+<Step title="Configure Options">
+- Number of rows (up to 10,000)
+- Mode: Append or Overwrite
+- Auto-generate based on column types
+</Step>
+<Step title="Generate">
+Click "Generate" to create the data
+</Step>
+</Steps>
+
+**Supported Data Types:**
+- Text: Names, emails, addresses, paragraphs
+- Numbers: Integers, decimals, ranges
+- Dates: Past, future, relative dates
+- Booleans: True/false values
+- UUIDs: Valid unique identifiers
+- JSON: Nested objects
+
+<Warning>
+Overwrite mode will delete all existing data in the table before inserting mock data
+</Warning>
+</Accordion>
+
+<Accordion title="Does WhoDB support transactions?">
+WhoDB executes queries in the context provided by your database connection:
+
+**Auto-Commit Mode:**
+Most operations execute immediately without explicit transactions:
+- Single row inserts
+- Single row updates
+- Single row deletes
+- SELECT queries
+
+**Manual Transactions:**
+For complex operations, use transaction commands in the Scratchpad:
+```sql
+BEGIN;
+UPDATE users SET status = 'active' WHERE created_at < '2024-01-01';
+UPDATE orders SET processed = true WHERE user_id IN (SELECT id FROM users WHERE status = 'active');
+COMMIT;
+```
+
+**Rollback on Error:**
+If a query fails, previous successful operations in the same transaction are rolled back automatically.
+
+<Tip>
+Use explicit transactions in Scratchpad for multi-step operations that should succeed or fail together
+</Tip>
+</Accordion>
+
+<Accordion title="Can I use WhoDB with multiple schemas?">
+Yes, WhoDB fully supports multiple schemas:
+
+**PostgreSQL:**
+- Select schema from sidebar
+- View all schemas in database
+- Query across schemas using qualified names
+
+**MySQL:**
+- Each database acts as a schema
+- Switch between databases
+- Cross-database queries supported
+
+**MongoDB:**
+- Collections organized by database
+- Switch between databases
+- Query multiple databases
+
+<Note>
+Schema support varies by database type. Check our [Supported Databases](/resources/supported-databases) page for details
+</Note>
+</Accordion>
+
+<Accordion title="How do I search for specific data?">
+WhoDB provides multiple search capabilities:
+
+**Quick Search:**
+- Type in the search box to search all visible columns
+- Real-time filtering
+- Highlights matching text
+
+**WHERE Conditions:**
+- Complex filtering with SQL operators
+- Multiple conditions with AND/OR
+- Operators: `=`, `!=`, `>`, `<`, `>=`, `<=`, `LIKE`, `IN`
+
+**Full-Text Search:**
+- Available for supported databases
+- Search across all text columns
+- Relevance ranking
+
+**Advanced Query:**
+- Use Scratchpad for complex searches
+- JOIN multiple tables
+- Aggregate and group results
+
+<Tip>
+Combine WHERE conditions with sorting for powerful data exploration
+</Tip>
+</Accordion>
+</AccordionGroup>
+
+## AI & Chat Features
+
+<AccordionGroup>
+<Accordion title="How do I enable the AI chat feature?">
+WhoDB integrates with multiple AI providers:
+
+**Ollama (Local):**
+```bash
+# Install Ollama from https://ollama.com
+ollama pull llama3.1
+```
+WhoDB auto-detects Ollama on localhost:11434
+
+**OpenAI:**
+```bash
+docker run -e WHODB_OPENAI_API_KEY=your-key clidey/whodb
+```
+
+**Anthropic:**
+```bash
+docker run -e WHODB_ANTHROPIC_API_KEY=your-key clidey/whodb
+```
+
+Once configured, the Chat feature appears in the sidebar.
+
+<Info>
+Ollama runs entirely on your machine, keeping your data private. Cloud providers (OpenAI/Anthropic) send queries to their APIs
+</Info>
+</Accordion>
+
+<Accordion title="What can I ask the AI assistant?">
+The AI assistant can help with:
+
+**Query Generation:**
+- "Show me all users created in the last 30 days"
+- "Find the top 10 products by sales"
+- "Get average order value by month"
+
+**Data Analysis:**
+- "What's the distribution of user ages?"
+- "Are there any anomalies in the sales data?"
+- "Summarize the orders table"
+
+**Schema Understanding:**
+- "What tables are related to users?"
+- "Explain the relationship between orders and customers"
+- "What are the primary keys in this database?"
+
+**Optimization:**
+- "How can I make this query faster?"
+- "What indexes should I add?"
+- "Why is this query slow?"
+
+<Tip>
+The AI has full context of your database schema, so ask natural questions without specifying table names
+</Tip>
+</Accordion>
+
+<Accordion title="Is my data sent to AI providers?">
+**Ollama (Local):**
+- Runs entirely on your machine
+- No data leaves your computer
+- Complete privacy
+
+**OpenAI/Anthropic:**
+- Query text and schema information are sent to their APIs
+- Actual data values are not sent unless explicitly mentioned in your question
+- Protected by API provider's privacy policies
+
+**What's Sent:**
+- Table and column names
+- Data types and relationships
+- Your question text
+- Generated SQL queries
+
+**What's NOT Sent:**
+- Actual row data
+- Connection credentials
+- User passwords
+- Database contents
+
+<Warning>
+If you're working with sensitive data, use Ollama for complete privacy
+</Warning>
+</Accordion>
+
+<Accordion title="Can the AI modify my data?">
+By default, the AI assistant can:
+- Generate SELECT queries (read-only)
+- Suggest INSERT/UPDATE/DELETE queries
+- Explain query logic
+
+The AI will **not** automatically execute modification queries. You must:
+1. Review the generated query
+2. Copy it to Scratchpad
+3. Manually execute it
+
+<Note>
+This safety mechanism prevents accidental data loss or corruption
+</Note>
+</Accordion>
+</AccordionGroup>
+
+## Security & Privacy
+
+<AccordionGroup>
+<Accordion title="Is WhoDB secure?">
+WhoDB implements multiple security measures:
+
+**Connection Security:**
+- SSL/TLS support for database connections
+- SSH tunneling support
+- Certificate-based authentication
+- Encrypted credentials storage
+
+**Application Security:**
+- No data persistence on server
+- All data processed in-memory
+- Secure session management
+- XSS and CSRF protection
+
+**Deployment Security:**
+- Docker security best practices
+- Minimal attack surface
+- Regular security updates
+- Dependency scanning
+
+<Info>
+WhoDB is open source, allowing security audits by the community
+</Info>
+</Accordion>
+
+<Accordion title="Where are my passwords stored?">
+WhoDB follows these security principles:
+
+**Connection Passwords:**
+- Never saved permanently
+- Stored only in browser session
+- Cleared when you close the browser
+- Not logged or persisted
+
+**Re-authentication:**
+- Required each time you connect
+- Connection history saved without passwords
+- Secure credential entry
+
+<Warning>
+Never commit connection strings with passwords to version control or share them in screenshots
+</Warning>
+</Accordion>
+
+<Accordion title="Can I use WhoDB in production?">
+WhoDB can be used in production with proper precautions:
+
+**Recommended Practices:**
+- Use read-only database accounts when possible
+- Deploy behind authentication (OAuth, SSO)
+- Limit network access with firewalls
+- Enable SSL/TLS for all connections
+- Regular security updates
+- Audit logs for all operations
+
+**Use Cases:**
+- Development and staging environments
+- Read-only production access for support teams
+- Database administration with proper access controls
+- Data analysis and reporting
+
+<Warning>
+Never expose WhoDB directly to the public internet without authentication and access controls
+</Warning>
+</Accordion>
+
+<Accordion title="How do I secure my WhoDB deployment?">
+**Network Security:**
+```yaml
+# Docker Compose with network isolation
+version: "3.8"
+services:
+  whodb:
+    image: clidey/whodb
+    networks:
+      - internal
+networks:
+  internal:
+    driver: bridge
+```
+
+**Reverse Proxy with Authentication:**
+```nginx
+location /whodb {
+    auth_basic "WhoDB Access";
+    auth_basic_user_file /etc/nginx/.htpasswd;
+    proxy_pass http://localhost:8080;
+}
+```
+
+**Firewall Rules:**
+```bash
+# Only allow specific IPs
+iptables -A INPUT -p tcp --dport 8080 -s 10.0.0.0/8 -j ACCEPT
+iptables -A INPUT -p tcp --dport 8080 -j DROP
+```
+
+**Container Security:**
+```bash
+# Run as non-root user
+docker run --user 1000:1000 clidey/whodb
+```
+
+<Tip>
+Combine multiple security layers for defense in depth
+</Tip>
+</Accordion>
+
+<Accordion title="Does WhoDB log my queries?">
+WhoDB logging behavior:
+
+**Application Logs:**
+- Connection attempts (without passwords)
+- Error messages
+- Performance metrics
+- Feature usage (anonymous)
+
+**Query Logs:**
+- Not logged by WhoDB server
+- Saved in browser history (client-side only)
+- Can be cleared by user
+- Never transmitted to external servers
+
+**Database Logs:**
+- Your database may log queries independently
+- Check your database's logging configuration
+- Not controlled by WhoDB
+
+<Note>
+Browser history is local to your machine and not shared with WhoDB servers
+</Note>
+</Accordion>
+</AccordionGroup>
+
+## Pricing & Licensing
+
+<AccordionGroup>
+<Accordion title="Is WhoDB free?">
+WhoDB offers two editions:
+
+**Community Edition (CE):**
+- Completely free and open source
+- Supports 8 popular databases
+- All core features included
+- No usage limits
+- MIT License
+
+**Enterprise Edition (EE):**
+- Commercial license
+- Additional database support
+- Advanced features
+- Priority support
+- Custom deployments
+
+<Info>
+The Community Edition is suitable for most users and projects
+</Info>
+</Accordion>
+
+<Accordion title="What's the difference between CE and EE?">
+**Community Edition:**
+- PostgreSQL, MySQL, MariaDB, SQLite
+- MongoDB, Redis, Elasticsearch, ClickHouse
+- All basic features
+- Community support
+- Open source
+
+**Enterprise Edition:**
+- All CE databases plus:
+  - Oracle Database
+  - Microsoft SQL Server
+  - Amazon DynamoDB
+  - Amazon Athena
+  - Snowflake
+  - And more
+- Advanced visualizations
+- Enhanced UI components
+- Priority support
+- Commercial license
+- Custom integrations
+
+<Tip>
+Start with Community Edition and upgrade to Enterprise when you need additional database support
+</Tip>
+</Accordion>
+
+<Accordion title="Can I use WhoDB commercially?">
+**Community Edition:**
+- Yes, with MIT License
+- Use for commercial projects
+- No attribution required
+- Modify and distribute freely
+- No warranty provided
+
+**Enterprise Edition:**
+- Requires commercial license
+- Contact sales for pricing
+- Includes support and updates
+- Custom license terms available
+
+<Note>
+Check the LICENSE file in the repository for full legal terms
+</Note>
+</Accordion>
+
+<Accordion title="How do I get support?">
+**Community Edition:**
+- GitHub Issues for bug reports
+- GitHub Discussions for questions
+- Community Discord/Slack
+- Documentation and guides
+
+**Enterprise Edition:**
+- Priority email support
+- Dedicated Slack channel
+- Custom onboarding
+- SLA guarantees
+- Direct engineer access
+
+**Community Resources:**
+- Documentation: https://whodb.com/docs
+- GitHub: https://github.com/clidey/whodb
+- Email: support@clidey.com
+
+<Info>
+The community is active and responsive. Most questions get answered within 24 hours
+</Info>
+</Accordion>
+</AccordionGroup>
+
+## Performance & Optimization
+
+<AccordionGroup>
+<Accordion title="How does WhoDB handle large datasets?">
+WhoDB implements several performance optimizations:
+
+**Lazy Loading:**
+- Only loads visible rows
+- Pagination with configurable page size
+- Virtual scrolling for large result sets
+
+**Query Optimization:**
+- Automatic LIMIT clause addition
+- Index usage hints
+- Query result caching
+
+**Frontend Performance:**
+- Table virtualization
+- Debounced search
+- Optimized rendering
+
+**Best Practices:**
+- Use WHERE conditions to filter data
+- Limit result sets to necessary columns
+- Add database indexes for frequently queried columns
+- Use pagination instead of loading all rows
+
+<Tip>
+For tables with millions of rows, always use WHERE conditions and LIMIT clauses
+</Tip>
+</Accordion>
+
+<Accordion title="Why is my query slow?">
+Common causes and solutions:
+
+**Missing Indexes:**
+```sql
+-- Check if columns used in WHERE have indexes
+CREATE INDEX idx_users_email ON users(email);
+```
+
+**Large Result Sets:**
+```sql
+-- Add LIMIT clause
+SELECT * FROM orders LIMIT 1000;
+```
+
+**Complex JOINs:**
+- Reduce number of joined tables
+- Use indexes on join columns
+- Filter early with WHERE conditions
+
+**Network Latency:**
+- Use connection pooling
+- Enable compression
+- Deploy WhoDB closer to database
+
+See our [Performance Tuning Guide](/resources/performance-tuning) for detailed optimization strategies.
+
+<Note>
+Use the Scratchpad to run EXPLAIN on slow queries to understand execution plans
+</Note>
+</Accordion>
+
+<Accordion title="Can I increase connection limits?">
+Yes, configure connection pooling:
+
+```yaml
+environment:
+  - DB_MAX_CONNECTIONS=100
+  - DB_MAX_IDLE_CONNECTIONS=10
+  - DB_CONNECTION_MAX_LIFETIME=3600
+```
+
+**Parameters:**
+- `DB_MAX_CONNECTIONS`: Maximum total connections
+- `DB_MAX_IDLE_CONNECTIONS`: Idle connection pool size
+- `DB_CONNECTION_MAX_LIFETIME`: Connection lifetime in seconds
+
+<Warning>
+Be careful not to exceed your database server's connection limits
+</Warning>
+</Accordion>
+
+<Accordion title="Does WhoDB cache query results?">
+WhoDB implements selective caching:
+
+**Cached:**
+- Schema metadata
+- Table lists
+- Column definitions
+- Foreign key relationships
+
+**Not Cached:**
+- Query results
+- Table data
+- Row counts
+- User modifications
+
+**Cache Duration:**
+- Schema cache: 5 minutes
+- Manual refresh available
+- Automatically refreshed on schema changes
+
+<Info>
+Caching reduces database load while ensuring data freshness
+</Info>
+</Accordion>
+</AccordionGroup>
+
+## Migration & Integration
+
+<AccordionGroup>
+<Accordion title="Can I migrate from other database tools?">
+Yes, WhoDB is compatible with existing workflows:
+
+**From phpMyAdmin:**
+- Use same MySQL credentials
+- Import existing connection configs
+- Similar interface layout
+- See our [Migration Guide](/guides/migrating-from-phpmyadmin)
+
+**From pgAdmin:**
+- Use same PostgreSQL credentials
+- Import server configurations
+- Query tool is similar to Scratchpad
+- See our [Migration Guide](/guides/migrating-from-pgadmin)
+
+**From DBeaver:**
+- Export connection configs
+- Import into WhoDB
+- Migrate saved queries
+- Use WhoDB as lighter alternative
+
+<Tip>
+WhoDB can run alongside existing tools during your transition period
+</Tip>
+</Accordion>
+
+<Accordion title="Can I integrate WhoDB with my CI/CD pipeline?">
+Yes, WhoDB works well in automated environments:
+
+**Docker in CI/CD:**
+```yaml
+# GitHub Actions example
+- name: Run database tests
+  run: |
+    docker run -d -p 8080:8080 clidey/whodb
+    # Run your tests
+```
+
+**Automated Testing:**
+- Spin up WhoDB in test environments
+- Run data validation queries
+- Export test results
+- Generate reports
+
+**Database Migrations:**
+- Verify schema changes
+- Test migrations
+- Validate data integrity
+
+See our [CI/CD Integration Guide](/resources/integrations/ci-cd) for detailed examples.
+
+<Info>
+WhoDB's lightweight design makes it perfect for temporary test environments
+</Info>
+</Accordion>
+
+<Accordion title="How do I backup data using WhoDB?">
+WhoDB provides several backup options:
+
+**Export Table Data:**
+1. Navigate to the table
+2. Click "Export"
+3. Choose SQL format
+4. Download INSERT statements
+
+**Export Schema:**
+- Use Scratchpad to export DDL:
+```sql
+-- PostgreSQL
+pg_dump --schema-only database_name
+
+-- MySQL
+mysqldump --no-data database_name
+```
+
+**Automated Backups:**
+```bash
+# Script to export all tables
+for table in $(whodb-cli list-tables); do
+  whodb-cli export $table > backup_$table.sql
+done
+```
+
+<Warning>
+WhoDB exports are suitable for small to medium datasets. Use database-native tools for large-scale backups
+</Warning>
+</Accordion>
+
+<Accordion title="Can I use WhoDB with monitoring tools?">
+Yes, WhoDB can integrate with monitoring systems:
+
+**Prometheus Metrics:**
+```yaml
+# Coming in future releases
+whodb_queries_total
+whodb_connection_errors_total
+whodb_query_duration_seconds
+```
+
+**Logging Integration:**
+```yaml
+environment:
+  - LOG_LEVEL=info
+  - LOG_FORMAT=json
+```
+
+**Health Checks:**
+```bash
+curl http://localhost:8080/health
+```
+
+See our [Monitoring Integration Guide](/resources/integrations/monitoring) for detailed setup.
+
+<Note>
+Health check endpoints are useful for load balancer configuration
+</Note>
+</Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+<Accordion title="I can't connect to my database. What should I check?">
+**Checklist:**
+1. Verify connection details (host, port, username, password)
+2. Check database is running and accessible
+3. Verify firewall rules allow connection
+4. Test connection from command line
+5. Check SSL/TLS requirements
+6. Verify user permissions
+
+**Common Issues:**
+- Wrong port number (PostgreSQL: 5432, MySQL: 3306)
+- Localhost vs host.docker.internal in Docker
+- SSL required but not enabled
+- User doesn't have remote access permissions
+
+See our [Troubleshooting Guide](/resources/troubleshooting) for detailed solutions.
+
+<Tip>
+Use `telnet host port` or `nc -zv host port` to test basic network connectivity
+</Tip>
+</Accordion>
+
+<Accordion title="WhoDB is running but I can't access the web interface">
+**Checklist:**
+1. Verify WhoDB is running: `docker ps` or process check
+2. Check port mapping is correct
+3. Try accessing http://localhost:8080
+4. Check firewall allows local connections
+5. Verify no other service is using port 8080
+6. Check browser console for errors
+
+**Common Solutions:**
+```bash
+# Check if port is in use
+lsof -i :8080
+
+# Kill process using the port
+kill -9 <PID>
+
+# Use different port
+docker run -p 3000:8080 clidey/whodb
+```
+
+<Note>
+Some corporate networks block certain ports. Try using standard ports like 80 or 443
+</Note>
+</Accordion>
+
+<Accordion title="Why are my queries failing?">
+**Common Causes:**
+
+**Syntax Errors:**
+- Check SQL syntax for your database
+- Different databases have different syntax
+- Use database-specific functions
+
+**Permission Issues:**
+```sql
+-- Check your permissions
+SHOW GRANTS; -- MySQL
+\dp -- PostgreSQL
+```
+
+**Connection Timeout:**
+- Increase timeout settings
+- Check network stability
+- Verify database is responsive
+
+**Resource Limits:**
+- Query too complex
+- Result set too large
+- Memory constraints
+
+<Tip>
+Copy the error message and search it along with your database type for specific solutions
+</Tip>
+</Accordion>
+
+<Accordion title="How do I report a bug?">
+<Steps>
+<Step title="Check Existing Issues">
+Search [GitHub Issues](https://github.com/clidey/whodb/issues) for similar reports
+</Step>
+<Step title="Gather Information">
+- WhoDB version
+- Database type and version
+- Operating system
+- Browser type and version
+- Steps to reproduce
+- Error messages
+</Step>
+<Step title="Create Issue">
+Open a new issue on GitHub with detailed information
+</Step>
+<Step title="Provide Context">
+Include screenshots, logs, and configuration (without sensitive data)
+</Step>
+</Steps>
+
+<Info>
+The more details you provide, the faster we can resolve the issue
+</Info>
+</Accordion>
+</AccordionGroup>
+
+## Still Have Questions?
+
+If you couldn't find the answer you're looking for:
+
+<CardGroup cols={2}>
+<Card title="Troubleshooting Guide" icon="wrench" href="/resources/troubleshooting">
+Detailed solutions for common issues
+</Card>
+<Card title="Common Errors" icon="triangle-exclamation" href="/resources/common-errors">
+Error messages and their solutions
+</Card>
+<Card title="GitHub Discussions" icon="github" href="https://github.com/clidey/whodb/discussions">
+Ask the community
+</Card>
+<Card title="Contact Support" icon="envelope" href="mailto:support@clidey.com">
+Email us for help
+</Card>
+</CardGroup>

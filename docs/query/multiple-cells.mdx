@@ -1,0 +1,657 @@
+---
+title: "Multiple Cells"
+description: "Organize complex workflows with WhoDB's multi-cell Scratchpad support"
+---
+
+# Multiple Cells
+
+WhoDB's Scratchpad supports multiple cells, allowing you to organize related queries, conduct parallel analyses, and maintain separate workflows within a single Scratchpad session. This powerful feature helps keep your work organized and enables sophisticated query orchestration.
+
+<Tip>
+Multiple cells let you organize your SQL experiments and workflows like a notebook with multiple pages
+</Tip>
+
+## Multi-Cell Concept
+
+### What Are Cells?
+
+Cells are independent query execution environments:
+
+![Scratchpad Multiple Cells](/images/31-scratchpad-multiple-pages.png)
+
+Each cell:
+- Contains its own SQL query
+- Executes independently
+- Maintains separate results
+- Can be named and organized
+- Operates without affecting other cells
+- Has its own execution history
+
+### Cell Navigation
+
+<CardGroup cols={2}>
+<Card title="Cell Tabs" icon="window">
+Click tabs to switch between cells
+</Card>
+<Card title="Add New Cell" icon="plus">
+Create additional cells for new queries
+</Card>
+<Card title="Cell Indicator" icon="tag">
+Current cell highlighted or shown in status bar
+</Card>
+<Card title="Cell Order" icon="arrow-up-down">
+Rearrange cells to match your workflow
+</Card>
+<Card title="Quick Switch" icon="keyboard">
+Keyboard shortcuts to navigate cells
+</Card>
+<Card title="Context Menu" icon="ellipsis">
+Right-click for cell options
+</Card>
+</CardGroup>
+
+## Creating and Managing Cells
+
+### Creating a New Cell
+
+<AccordionGroup>
+<Accordion title="Button Method">
+Click the "+" button next to cell tabs to create a new cell
+</Accordion>
+<Accordion title="Keyboard Method">
+Press `Cmd/Ctrl + N` to create a new cell
+</Accordion>
+<Accordion title="Context Menu">
+Right-click cell tab and select "New Cell"
+</Accordion>
+<Accordion title="Cell Menu">
+Click the cell menu (three dots) and select "New Cell"
+</Accordion>
+</AccordionGroup>
+
+New cells:
+- Appear at the end of existing cells
+- Start with empty editor
+- Are ready for query input
+- Can be moved after creation
+
+### Cell Naming
+
+Give cells meaningful names for organization:
+
+![Cell Options Menu](/images/32-scratchpad-cell-options-menu.png)
+
+<Steps>
+<Step title="Access Cell Menu">
+Click the three dots or right-click cell tab
+</Step>
+<Step title="Select Rename">
+Choose "Rename Cell" from menu
+</Step>
+<Step title="Enter New Name">
+Type descriptive name for the cell
+</Step>
+<Step title="Confirm">
+Press Enter or click Save
+</Step>
+</Steps>
+
+### Naming Examples
+
+```
+"User Analysis"
+"Daily Report"
+"Data Validation"
+"Performance Testing"
+"Schema Exploration"
+"Archive Migration"
+"Quality Checks"
+```
+
+Use names that describe:
+- Query purpose
+- Analysis type
+- Data being examined
+- Workflow stage
+
+### Duplicating Cells
+
+Clone an entire cell including its query:
+
+<AccordionGroup>
+<Accordion title="Menu Option">
+Right-click cell tab → Select "Duplicate Cell"
+</Accordion>
+<Accordion title="Keyboard">
+Press `Cmd/Ctrl + D` to duplicate current cell
+</Accordion>
+<Accordion title="Context Menu">
+Cell menu (•••) → "Duplicate"
+</Accordion>
+</AccordionGroup>
+
+Duplication includes:
+- Current query content
+- Current results (if any)
+- Query history for that cell
+- Results formatting settings
+
+Perfect for:
+- Variations of same query
+- A/B testing different approaches
+- Preserving working versions
+- Creating templates
+
+### Deleting Cells
+
+Remove cells you no longer need:
+
+<AccordionGroup>
+<Accordion title="Menu Delete">
+Right-click cell tab → "Delete Cell" (or context menu)
+</Accordion>
+<Accordion title="Keyboard">
+`Cmd/Ctrl + Backspace` (with confirmation)
+</Accordion>
+</AccordionGroup>
+
+Before deleting:
+- Query content is lost (unless saved to history)
+- Results are cleared
+- Cannot undo (confirmation required)
+- Consider duplicating first if unsure
+
+<Warning>
+Cell deletion is permanent—save important queries to history first
+</Warning>
+
+### Reordering Cells
+
+Organize cells to match your workflow:
+
+<Steps>
+<Step title="Click and Drag Cell Tab">
+Click the cell tab and drag left/right to new position
+</Step>
+<Step title="See Visual Indicator">
+Drop zone highlighted as you drag
+</Step>
+<Step title="Release to Drop">
+Cell moves to new position
+</Step>
+<Step title="Order Persists">
+Cell order maintained during session
+</Step>
+</Steps>
+
+Strategic ordering:
+- Foundation queries first
+- Dependent queries after
+- Validation checks last
+- Frequently used cells front and center
+
+## Multi-Cell Workflows
+
+### Workflow: Data Analysis Project
+
+Create a multi-step analysis organized across cells:
+
+<AccordionGroup>
+<Accordion title="Cell 1: Data Overview">
+```sql
+-- Get table sizes and row counts
+SELECT
+  table_name,
+  (SELECT COUNT(*) FROM information_schema.tables) as total_tables
+FROM information_schema.tables
+WHERE table_schema = 'public';
+```
+
+Purpose: Understand data structure
+</Accordion>
+<Accordion title="Cell 2: Sample Data">
+```sql
+-- View sample records
+SELECT * FROM users LIMIT 10;
+```
+
+Purpose: Examine data format
+</Accordion>
+<Accordion title="Cell 3: Data Quality Check">
+```sql
+-- Check for NULL values and inconsistencies
+SELECT
+  COUNT(*) as total,
+  COUNT(email) as email_count,
+  COUNT(phone) as phone_count
+FROM users
+WHERE email IS NULL OR phone IS NULL;
+```
+
+Purpose: Identify data quality issues
+</Accordion>
+<Accordion title="Cell 4: Analysis">
+```sql
+-- Perform actual analysis
+SELECT
+  status,
+  COUNT(*) as count,
+  AVG(account_age) as avg_age
+FROM users
+GROUP BY status;
+```
+
+Purpose: Generate insights
+</Accordion>
+<Accordion title="Cell 5: Export Preparation">
+```sql
+-- Prepare final dataset for export
+SELECT
+  id,
+  username,
+  email,
+  created_at
+FROM users
+WHERE status = 'active'
+ORDER BY created_at DESC;
+```
+
+Purpose: Ready data for download
+</Accordion>
+</AccordionGroup>
+
+### Workflow: Performance Testing
+
+Compare different query approaches:
+
+```
+Cell 1: Original Query
+├─ Time: 2500ms
+├─ Rows: 10000
+└─ Notes: Using nested subquery
+
+Cell 2: Optimized with JOIN
+├─ Time: 850ms
+├─ Rows: 10000
+└─ Notes: Replaced subquery with JOIN
+
+Cell 3: Indexed Query
+├─ Time: 120ms
+├─ Rows: 10000
+└─ Notes: Added index on filter column
+
+Result: 95% performance improvement!
+```
+
+Execute each cell and compare execution times to find the fastest approach.
+
+### Workflow: Data Migration
+
+Track multiple stages of data migration:
+
+<AccordionGroup>
+<Accordion title="1. Pre-Migration Validation">
+```sql
+-- Verify source data before migration
+SELECT COUNT(*) as source_count FROM source.users;
+SELECT COUNT(DISTINCT id) as unique_ids FROM source.users;
+```
+</Accordion>
+<Accordion title="2. Transform and Map">
+```sql
+-- Check data transformation logic
+SELECT id, old_status,
+  CASE
+    WHEN old_status = 'A' THEN 'active'
+    WHEN old_status = 'I' THEN 'inactive'
+  END as new_status
+FROM source.users LIMIT 100;
+```
+</Accordion>
+<Accordion title="3. Post-Migration Verification">
+```sql
+-- Verify all data migrated correctly
+SELECT COUNT(*) as destination_count FROM destination.users;
+SELECT COUNT(DISTINCT id) as unique_ids FROM destination.users;
+```
+</Accordion>
+<Accordion title="4. Reconciliation">
+```sql
+-- Find any discrepancies
+SELECT source_id FROM source.users
+WHERE source_id NOT IN (SELECT id FROM destination.users);
+```
+</Accordion>
+</AccordionGroup>
+
+## Cell Organization Patterns
+
+### Linear Workflow
+
+Sequential cells for step-by-step processes:
+
+```
+Cell 1: Extract
+  ↓
+Cell 2: Transform
+  ↓
+Cell 3: Validate
+  ↓
+Cell 4: Load
+  ↓
+Cell 5: Verify
+```
+
+Best for:
+- ETL processes
+- Data pipelines
+- Analysis sequences
+- Testing workflows
+
+### Parallel Analysis
+
+Independent cells for different analyses:
+
+```
+Analysis A          Analysis B          Analysis C
+├─ Cell 1          ├─ Cell 3          ├─ Cell 5
+└─ Cell 2          └─ Cell 4          └─ Cell 6
+```
+
+Best for:
+- A/B testing queries
+- Multiple perspectives on data
+- Concurrent analysis
+- Independent investigations
+
+### Hierarchical Organization
+
+Related cells grouped conceptually:
+
+```
+Foundation Queries
+├─ Cell 1: Schema exploration
+├─ Cell 2: Data overview
+└─ Cell 3: Sample data
+
+Analysis Queries
+├─ Cell 4: User analysis
+├─ Cell 5: Order analysis
+└─ Cell 6: Product analysis
+
+Quality Checks
+├─ Cell 7: NULL checks
+├─ Cell 8: Duplicate detection
+└─ Cell 9: Constraint validation
+```
+
+Best for:
+- Complex analysis projects
+- Multi-faceted investigations
+- Organized documentation
+- Team collaboration
+
+## Advanced Cell Features
+
+### Cell Execution Status
+
+Each cell shows execution information:
+
+![Multiple Cells Results](/images/48-scratchpad-multiple-cells-results.png)
+
+Status indicators:
+- **No status**: Not yet executed
+- **Green check**: Last execution successful
+- **Red X**: Last execution had error
+- **Clock icon**: Currently executing
+- **Time display**: Execution duration
+
+### Switching Between Cells
+
+Navigate efficiently:
+
+<AccordionGroup>
+<Accordion title="Mouse">
+Click cell tab to switch instantly
+</Accordion>
+<Accordion title="Keyboard">
+- `Cmd/Ctrl + 1`: Switch to first cell
+- `Cmd/Ctrl + 2`: Switch to second cell
+- `Cmd/Ctrl + Left/Right Arrow`: Previous/next cell
+</Accordion>
+<Accordion title="Tab Navigation">
+Press Tab multiple times to cycle through tabs
+</Accordion>
+</AccordionGroup>
+
+### Cell-Specific Results
+
+Each cell maintains its own results:
+
+- Switching cells shows that cell's results
+- Results persist until new query executed
+- Scroll through large result sets independently
+- Export results from specific cell only
+
+### Shared History
+
+Query history includes all cells:
+
+```
+History:
+├─ Cell 1 Query: SELECT * FROM users
+├─ Cell 1 Query: UPDATE users SET...
+├─ Cell 2 Query: SELECT * FROM orders
+├─ Cell 1 Query: SELECT COUNT(*)...
+└─ Cell 3 Query: DELETE FROM...
+```
+
+Benefits:
+- Complete execution history across cells
+- Clone queries from any cell to any cell
+- Reference previous versions
+- Track all work
+
+## Copy and Paste Between Cells
+
+### Transfer Queries
+
+Copy query from one cell to another:
+
+<Steps>
+<Step title="Select Query Text">
+In source cell, select the query text
+</Step>
+<Step title="Copy">
+`Cmd/Ctrl + C` to copy
+</Step>
+<Step title="Switch Cells">
+Navigate to destination cell
+</Step>
+<Step title="Paste">
+`Cmd/Ctrl + V` to paste
+</Step>
+<Step title="Modify">
+Edit as needed for new cell
+</Step>
+</Steps>
+
+### Copy Results
+
+Copy results from one cell's query to use in another:
+
+```sql
+-- Cell 1: Find specific user IDs
+SELECT id FROM users WHERE status = 'active' LIMIT 10;
+
+-- Copy the IDs, then in Cell 2:
+SELECT * FROM orders
+WHERE user_id IN (1, 2, 3, 4, 5);  -- IDs from Cell 1
+```
+
+## Cell Limitations and Considerations
+
+### Performance
+
+Multiple cells don't directly impact performance, but:
+
+- Each cell executes independently
+- Large result sets consume memory
+- Close unused cells if experiencing slowness
+- Results cached only for current cells
+
+### Best Practices
+
+<AccordionGroup>
+<Accordion title="Name Cells Meaningfully">
+Use clear names to remember what each cell does:
+
+Good: "Active Users Analysis"
+Poor: "Query 1"
+</Accordion>
+<Accordion title="Clean Up Unused Cells">
+Delete cells when no longer needed:
+- Reduces clutter
+- Keeps workspace organized
+- Improves focus
+- Easier navigation
+</Accordion>
+<Accordion title="Comment Complex Queries">
+Add comments within queries:
+
+```sql
+-- Find users who:
+-- 1. Have made purchases > $100
+-- 2. Didn't purchase in last 30 days
+-- 3. Account created > 1 year ago
+SELECT ...
+```
+</Accordion>
+<Accordion title="Save Important Queries">
+Export complex queries to external storage:
+- Backup against accidental deletion
+- Share with team
+- Document for future reference
+- Version control if needed
+</Accordion>
+</AccordionGroup>
+
+## Multi-Cell Examples
+
+### Example 1: A/B Testing Query Performance
+
+```
+Cell 1: Original Query (Nested Subquery)
+SELECT user_id, purchase_count
+FROM users
+WHERE user_id IN (
+  SELECT user_id FROM orders
+  WHERE total > 100
+);
+-- Result: 1450ms
+
+Cell 2: Optimized Query (JOIN)
+SELECT u.id, COUNT(o.id) as purchase_count
+FROM users u
+JOIN orders o ON u.id = o.user_id
+WHERE o.total > 100
+GROUP BY u.id;
+-- Result: 320ms
+
+Result: Use Cell 2 approach—75% faster!
+```
+
+### Example 2: Dataset Preparation
+
+```
+Cell 1: Explore Source Table
+SELECT * FROM raw_data LIMIT 100;
+
+Cell 2: Data Quality Check
+SELECT COUNT(*) as missing_values
+FROM raw_data
+WHERE column1 IS NULL OR column2 IS NULL;
+
+Cell 3: Transform Data
+SELECT
+  id,
+  UPPER(name) as name,
+  DATE(created_at) as date
+FROM raw_data;
+
+Cell 4: Load Clean Data
+INSERT INTO clean_data
+SELECT * FROM ... (previous query);
+
+Cell 5: Verify Load
+SELECT COUNT(*) FROM clean_data;
+```
+
+### Example 3: Multi-Database Comparison
+
+```
+Cell 1: PostgreSQL Query
+SELECT version(), COUNT(*) FROM users;
+
+Cell 2: MySQL Query (if available)
+SELECT @@version, COUNT(*) FROM users;
+
+Cell 3: SQLite Query (if available)
+SELECT sqlite_version(), COUNT(*) FROM users;
+
+Compare results across database systems
+```
+
+## Keyboard Shortcuts for Cell Management
+
+| Shortcut | Action |
+|----------|--------|
+| `Cmd/Ctrl + N` | New cell |
+| `Cmd/Ctrl + D` | Duplicate cell |
+| `Cmd/Ctrl + Shift + Delete` | Delete cell |
+| `Cmd/Ctrl + Right Arrow` | Next cell |
+| `Cmd/Ctrl + Left Arrow` | Previous cell |
+| `Cmd/Ctrl + 1-9` | Jump to cell number |
+
+## Integration with Other Features
+
+### Multi-Cell with History
+
+Each cell maintains history:
+- Clone queries from any cell's history
+- Combine approaches from different cells
+- Reference previous attempts
+
+### Multi-Cell with Export
+
+Export results from specific cells:
+- Each cell's results exportable separately
+- Export all cells' results at once
+- Export to different formats per cell
+
+### Multi-Cell with Auto-Completion
+
+Auto-completion works within each cell:
+- Schema suggestions in every cell
+- Column names current for each database
+- Function names updated per cell
+
+## Next Steps
+
+Master advanced query techniques and visualization:
+
+<CardGroup cols={2}>
+<Card title="Writing Queries" icon="pen" href="/query/writing-queries">
+Learn advanced SQL patterns for your queries
+</Card>
+<Card title="Query Results" icon="chart-bar" href="/query/query-results">
+Analyze and export results from multiple cells
+</Card>
+<Card title="Graph View" icon="share-nodes" href="/visualization/graph-view">
+Visualize your database schema relationships
+</Card>
+</CardGroup>
+
+<Check>
+Multiple cells transform your Scratchpad into a powerful workspace for complex analysis and testing
+</Check>

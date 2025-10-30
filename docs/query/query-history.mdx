@@ -1,0 +1,577 @@
+---
+title: "Query History"
+description: "Manage, access, and reuse your SQL queries with WhoDB's query history"
+---
+
+# Query History
+
+WhoDB automatically saves every query you execute, making it easy to revisit, modify, and reuse your SQL commands. The query history panel is your repository of all previous queries, organized chronologically and searchable for quick access.
+
+<Tip>
+Query history reduces the time spent rewriting queries and helps maintain consistency across your workflows
+</Tip>
+
+## History Panel Overview
+
+Access your query history through the dedicated history panel:
+
+![Query History Panel](/images/33-scratchpad-query-history.png)
+
+The history panel displays:
+
+<CardGroup cols={2}>
+<Card title="Chronological List" icon="list">
+Queries listed from newest to oldest
+</Card>
+<Card title="Query Preview" icon="eye">
+First 50 characters of each query
+</Card>
+<Card title="Timestamps" icon="clock">
+When each query was executed
+</Card>
+<Card title="Execution Status" icon="check">
+Success or error indicators
+</Card>
+<Card title="Quick Actions" icon="lightning">
+Clone, copy, and delete options
+</Card>
+<Card title="Search Functionality" icon="magnifying-glass">
+Find specific queries by content
+</Card>
+</CardGroup>
+
+## Accessing Query History
+
+### Opening the History Panel
+
+<AccordionGroup>
+<Accordion title="History Button">
+Look for the history icon in the Scratchpad interface and click to open the panel.
+</Accordion>
+<Accordion title="Keyboard Shortcut">
+Press `Cmd/Ctrl + H` to toggle the history panel visibility.
+</Accordion>
+<Accordion title="Right-Click Menu">
+Right-click in the editor and select "Show History" from the context menu.
+</Accordion>
+</AccordionGroup>
+
+### History Auto-Population
+
+Every query you execute is automatically added to history:
+- Successful queries appear immediately
+- Failed queries (with errors) also get saved
+- Query syntax and execution results stored
+- Timestamp recorded for each query
+
+<Info>
+Even queries with errors are saved to history—useful for debugging
+</Info>
+
+## Working with Query History
+
+### Finding Queries
+
+#### Search by Content
+
+Find queries by searching for keywords:
+
+```
+Search: "WHERE status"
+Results: All queries containing WHERE status condition
+```
+
+Useful for finding:
+- Queries with specific table names
+- Queries using certain functions
+- Queries with particular WHERE conditions
+- Queries from specific dates
+
+#### Browse by Time
+
+Queries are listed chronologically:
+- Most recent queries at the top
+- Older queries further down
+- Scroll to find queries from earlier sessions
+- Date grouping shows day boundaries
+
+### Using Cloned Queries
+
+The clone feature lets you quickly create variations:
+
+![Clone Button](/images/49-scratchpad-history-clone-button.png)
+
+<Steps>
+<Step title="Find Query in History">
+Look through history to find the query you want to modify
+</Step>
+<Step title="Click Clone Button">
+Click the clone/copy icon next to the query
+</Step>
+<Step title="Query Appears in Editor">
+A new cell is created with the cloned query
+</Step>
+<Step title="Modify as Needed">
+Edit the cloned query for your new purpose
+</Step>
+<Step title="Execute and Save">
+Run the modified query and it's added to history as a new entry
+</Step>
+</Steps>
+
+### Clone Scenarios
+
+<AccordionGroup>
+<Accordion title="Change Date Range">
+Original query:
+```sql
+SELECT * FROM orders
+WHERE created_at > '2024-10-01'
+LIMIT 100;
+```
+
+Clone and modify for different month:
+```sql
+SELECT * FROM orders
+WHERE created_at > '2024-11-01'
+LIMIT 100;
+```
+</Accordion>
+<Accordion title="Modify WHERE Clause">
+Original query:
+```sql
+SELECT * FROM users
+WHERE status = 'active'
+AND created_at > '2024-01-01';
+```
+
+Clone and change status:
+```sql
+SELECT * FROM users
+WHERE status = 'inactive'
+AND created_at > '2024-01-01';
+```
+</Accordion>
+<Accordion title="Change Aggregation">
+Original query:
+```sql
+SELECT category, COUNT(*) FROM products
+GROUP BY category;
+```
+
+Clone and add additional aggregations:
+```sql
+SELECT category, COUNT(*), AVG(price), SUM(stock)
+FROM products
+GROUP BY category;
+```
+</Accordion>
+<Accordion title="Different Table">
+Original query:
+```sql
+SELECT id, name, created_at
+FROM users
+ORDER BY created_at DESC
+LIMIT 50;
+```
+
+Clone for different table:
+```sql
+SELECT id, name, created_at
+FROM customers
+ORDER BY created_at DESC
+LIMIT 50;
+```
+</Accordion>
+</AccordionGroup>
+
+## History Features
+
+### View Full Query
+
+Click any history entry to view the complete query:
+
+```sql
+SELECT
+  u.id,
+  u.username,
+  COUNT(o.id) as order_count,
+  SUM(o.total) as total_spent
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+WHERE o.created_at > '2024-10-01'
+GROUP BY u.id, u.username
+ORDER BY total_spent DESC
+LIMIT 100;
+```
+
+Full query displayed in:
+- Separate view panel
+- With line numbers for reference
+- Syntax highlighting preserved
+- Full content shown (no truncation)
+
+### Execution Metadata
+
+Each history entry shows:
+
+<AccordionGroup>
+<Accordion title="Timestamp">
+When the query was executed
+
+- Format: HH:MM AM/PM or 24-hour format
+- Date: If different from today
+- Time zone: Your local time zone
+</Accordion>
+<Accordion title="Query Status">
+Success or failure indicator
+
+- Green checkmark: Successful execution
+- Red X: Query returned error
+- Hover for status details
+</Accordion>
+<Accordion title="Row Count">
+Rows returned (for SELECT queries)
+
+- Shows: "Returned 42 rows"
+- For INSERT/UPDATE/DELETE: "Affected 5 rows"
+- Helpful for quick result reference
+</Accordion>
+<Accordion title="Query Duration">
+Execution time
+
+- Shows: "Executed in 234 ms"
+- Useful for performance tracking
+- Compare durations for similar queries
+</Accordion>
+</AccordionGroup>
+
+## Managing Query History
+
+### Copying Queries
+
+Copy entire queries from history for reuse:
+
+```
+Click copy icon → Query copied to clipboard
+Paste in editor or external tool
+```
+
+Perfect for:
+- Sharing queries with teammates
+- Documenting in documentation
+- Running in different database tools
+- Storing in external files
+
+### Deleting History Entries
+
+Remove specific queries from history:
+
+<AccordionGroup>
+<Accordion title="Delete Single Entry">
+- Right-click on history entry
+- Select "Delete" from context menu
+- Or click delete icon if available
+- Confirmation required (optional)
+</Accordion>
+<Accordion title="Clear All History">
+- Settings menu → Clear History
+- Deletes entire history for current session
+- Cannot be undone—use with caution
+- History from other sessions preserved
+</Accordion>
+</AccordionGroup>
+
+### Exporting History
+
+Save your query history for documentation or sharing:
+
+Useful for:
+- Creating query libraries
+- Team knowledge base
+- Audit trails
+- Backup before clearing
+- Analysis of query patterns
+
+## Best Practices for Query History
+
+### Organizing Frequently Used Queries
+
+<Steps>
+<Step title="Identify Core Queries">
+Note which queries you use most frequently for various tasks
+</Step>
+<Step title="Add Comments">
+Update cloned queries with comments explaining their purpose:
+
+```sql
+-- Daily active user count
+-- Used for dashboard reporting
+SELECT
+  DATE(created_at) as date,
+  COUNT(*) as active_users
+FROM user_sessions
+GROUP BY DATE(created_at);
+```
+</Step>
+<Step title="Use Consistent Naming">
+Prefix queries with their purpose when adding to cells:
+
+```
+Cell name: "Daily Report Query"
+Cell name: "User Analysis"
+Cell name: "Data Validation Check"
+```
+</Step>
+<Step title="Pin Important Queries">
+Keep most-used queries at the top of history or in separate cells
+</Step>
+</Steps>
+
+### Searching Effectively
+
+#### Use Specific Keywords
+
+```
+Search: "WHERE status = 'active'"
+Results: All queries with this condition
+
+Search: "JOIN orders"
+Results: All queries joining orders table
+
+Search: "GROUP BY category"
+Results: All aggregation queries by category
+```
+
+#### Date-Based Searching
+
+While history is chronological:
+- Look at timestamps to narrow down
+- Remember when you last ran similar queries
+- Scroll to approximate time period
+- Then refine with keyword search
+
+### Maintaining History Quality
+
+<AccordionGroup>
+<Accordion title="Regular Cleanup">
+Periodically remove test and temporary queries:
+- Delete failed experiment queries
+- Remove debugging queries
+- Keep only production-ready queries
+- Maintains clean history for future reference
+</Accordion>
+<Accordion title="Document Complex Queries">
+Add context to complex queries:
+
+```sql
+/*
+  Complex user segmentation query:
+  - Active: Logged in last 7 days
+  - Engaged: Made purchase last 30 days
+  - At-risk: No activity in 90 days
+
+  Used for customer lifecycle analysis
+*/
+SELECT
+  CASE
+    WHEN last_login > NOW() - INTERVAL '7 days' THEN 'active'
+    WHEN last_purchase > NOW() - INTERVAL '30 days' THEN 'engaged'
+    WHEN last_activity < NOW() - INTERVAL '90 days' THEN 'at-risk'
+    ELSE 'inactive'
+  END as status,
+  COUNT(*) as user_count
+FROM users
+GROUP BY status;
+```
+</Accordion>
+<Accordion title="Version Control">
+Track query versions in history:
+- Original version at bottom (oldest)
+- Modifications cloned and updated
+- Timestamp shows iteration history
+- Easy to see query evolution
+</Accordion>
+<Accordion title="Share Knowledge">
+Export useful queries for team use:
+- Share common queries with colleagues
+- Maintain team query library
+- Document purpose and usage
+- Reduce duplicate effort
+</Accordion>
+</AccordionGroup>
+
+## History-Based Workflows
+
+### Workflow: Daily Report Generation
+
+```
+Step 1: Execute weekly user activity query
+Step 2: Clone from history for next week
+Step 3: Modify date range in cloned query
+Step 4: Run new query with updated dates
+Step 5: Export results to CSV
+Step 6: Share report (query saved to history)
+```
+
+### Workflow: Data Quality Monitoring
+
+```
+Step 1: Store data validation queries in history
+Step 2: Each day, clone validation queries
+Step 3: Run updated versions with current dates
+Step 4: Compare results with previous days
+Step 5: Alert if anomalies detected
+```
+
+### Workflow: Analysis Iteration
+
+```
+Step 1: Write initial analysis query
+Step 2: Review results (saved to history)
+Step 3: Clone and modify query based on findings
+Step 4: Refine through multiple iterations
+Step 5: Final version serves as reference
+Step 6: Future analysis starts from final version
+```
+
+### Workflow: Team Collaboration
+
+```
+Step 1: Create standard queries in your workspace
+Step 2: Share query history export with team
+Step 3: Teammates import queries into their history
+Step 4: Everyone uses standardized queries
+Step 5: Modifications tracked in each person's history
+```
+
+## Advanced History Features
+
+### Filtering History
+
+Access advanced history filters:
+
+<AccordionGroup>
+<Accordion title="By Status">
+Show only:
+- Successful queries
+- Failed queries
+- All queries
+</Accordion>
+<Accordion title="By Type">
+Show queries by type:
+- SELECT (read)
+- INSERT/UPDATE/DELETE (write)
+- All types
+</Accordion>
+<Accordion title="By Time Range">
+Filter by execution time:
+- Today
+- This week
+- This month
+- Custom date range
+</Accordion>
+<Accordion title="By Performance">
+Filter by execution time:
+- Fast queries (< 100ms)
+- Medium queries (100ms - 1s)
+- Slow queries (> 1s)
+</Accordion>
+</AccordionGroup>
+
+### History Statistics
+
+View patterns in your query history:
+
+- Most frequently executed queries
+- Average execution time per query type
+- Distribution of query types
+- Peak query execution times
+- Slowest running queries
+
+Use these insights to:
+- Optimize frequently used queries
+- Identify performance problems
+- Understand usage patterns
+- Plan database optimization
+
+## Integration with Multiple Cells
+
+History works seamlessly with multiple cells:
+
+![Multiple Cells Results](/images/48-scratchpad-multiple-cells-results.png)
+
+<Steps>
+<Step title="Create Multiple Cells">
+Set up separate cells for different queries or workflows
+</Step>
+<Step title="Build Each Cell's History">
+Execute queries in each cell—history accumulates for all cells
+</Step>
+<Step title="Access Shared History">
+All history appears in unified history panel
+</Step>
+<Step title="Clone Across Cells">
+Clone queries into different cells for organization
+</Step>
+<Step title="Track All Experiments">
+Full history of all cells available for reference
+</Step>
+</Steps>
+
+## Keyboard Shortcuts for History
+
+| Shortcut | Action |
+|----------|--------|
+| `Cmd/Ctrl + H` | Toggle history panel |
+| `Cmd/Ctrl + Shift + H` | Clear all history |
+| `Cmd/Ctrl + F` | Search history |
+| `Enter` | Load selected query |
+| `Delete` | Delete selected entry |
+
+## Storage and Limits
+
+### History Persistence
+
+Query history is:
+- Stored locally on your device
+- Persists across sessions
+- Organized by workspace/database
+- Searchable and indexed
+- Easily accessible
+
+### Best Practices for Storage
+
+<AccordionGroup>
+<Accordion title="Regular Exports">
+Export important queries regularly:
+- Backup critical queries
+- Share with team
+- Archive for reference
+- Prevents loss if history is cleared
+</Accordion>
+<Accordion title="Session Management">
+Each session maintains separate history:
+- Login to same account: Same history
+- New browser/device: New history
+- Clear browser data: History may be lost
+- Export before clearing browser cache
+</Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+Organize your queries more effectively with multiple cells:
+
+<CardGroup cols={2}>
+<Card title="Multiple Cells" icon="window" href="/query/multiple-cells">
+Create and organize multiple query cells
+</Card>
+<Card title="Query Results" icon="chart-bar" href="/query/query-results">
+Master working with query results
+</Card>
+</CardGroup>
+
+<Check>
+Query history is your query reference library—use it to work faster and smarter
+</Check>

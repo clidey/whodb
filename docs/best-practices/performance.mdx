@@ -1,0 +1,542 @@
+---
+title: Performance Optimization
+description: Techniques for optimizing database query performance in WhoDB
+---
+
+# Performance Optimization
+
+Database performance directly impacts application responsiveness and user experience. This guide covers proven techniques for optimizing query performance and managing database resources effectively in WhoDB.
+
+## Understanding Query Performance
+
+### Query Execution Fundamentals
+
+Before optimizing queries, understand how databases execute them:
+
+**Query Processing Stages:**
+1. **Parsing**: SQL syntax validation and query tree construction
+2. **Planning**: Query optimizer determines execution strategy
+3. **Optimization**: Query plan refinement based on statistics
+4. **Execution**: Actual data retrieval and processing
+5. **Result Return**: Data formatting and transmission
+
+**Performance Factors:**
+- Table size and row count
+- Index availability and quality
+- Data distribution and statistics
+- Query complexity and joins
+- Hardware resources (CPU, memory, I/O)
+- Concurrent user load
+
+### Performance Metrics
+
+Track these key metrics to identify performance issues:
+
+**Query-Level Metrics:**
+- Execution time (total and breakdown)
+- Rows examined vs. rows returned
+- Index usage
+- Temporary table creation
+- Sort operations
+
+**System-Level Metrics:**
+- Query throughput (queries per second)
+- Connection pool utilization
+- Cache hit ratios
+- I/O wait times
+- CPU and memory usage
+
+## Query Optimization Strategies
+
+### Use EXPLAIN to Analyze Queries
+
+The EXPLAIN command reveals how the database executes your query. WhoDB makes it easy to analyze query plans.
+
+**PostgreSQL EXPLAIN:**
+```sql
+EXPLAIN ANALYZE
+SELECT u.username, o.order_date, o.total
+FROM users u
+JOIN orders o ON u.id = o.user_id
+WHERE o.order_date > '2024-01-01'
+ORDER BY o.order_date DESC;
+```
+
+**Key Information to Review:**
+- **Seq Scan**: Full table scan (potentially slow)
+- **Index Scan**: Using an index (generally fast)
+- **Nested Loop**: Join method for small result sets
+- **Hash Join**: Join method for larger result sets
+- **Sort**: Explicit sorting operation
+- **Cost**: Estimated query cost
+- **Actual Time**: Real execution time
+
+**MySQL EXPLAIN:**
+```sql
+EXPLAIN FORMAT=JSON
+SELECT p.product_name, COUNT(*) as order_count
+FROM products p
+JOIN order_items oi ON p.id = oi.product_id
+GROUP BY p.product_name
+HAVING order_count > 100;
+```
+
+**Warning Signs:**
+- Type: ALL (full table scan)
+- Extra: Using filesort (disk-based sorting)
+- Extra: Using temporary (temporary table creation)
+- Rows: Large numbers indicating inefficiency
+
+### Optimize WHERE Clauses
+
+WHERE clause optimization is fundamental to query performance.
+
+**Use Indexed Columns:**
+```sql
+-- Inefficient: Function on indexed column prevents index use
+SELECT * FROM users WHERE LOWER(email) = 'user@example.com';
+
+-- Efficient: Direct comparison uses index
+SELECT * FROM users WHERE email = 'user@example.com';
+```
+
+**Avoid Leading Wildcards:**
+```sql
+-- Inefficient: Leading wildcard prevents index use
+SELECT * FROM products WHERE name LIKE '%shoes%';
+
+-- Efficient: Trailing wildcard can use index
+SELECT * FROM products WHERE name LIKE 'running%';
+```
+
+**Use Appropriate Data Types:**
+```sql
+-- Inefficient: Type conversion required
+SELECT * FROM orders WHERE order_id = '12345';
+
+-- Efficient: Matching data type
+SELECT * FROM orders WHERE order_id = 12345;
+```
+
+### Optimize JOIN Operations
+
+Joins are common performance bottlenecks in complex queries.
+
+**Join Order Matters:**
+Join smaller tables first to reduce intermediate result sizes:
+```sql
+-- Better: Join smaller lookup tables first
+SELECT c.name, o.order_date, p.product_name
+FROM customers c
+JOIN orders o ON c.id = o.customer_id
+JOIN order_items oi ON o.id = oi.order_id
+JOIN products p ON oi.product_id = p.id
+WHERE c.country = 'US';
+```
+
+**Use Appropriate Join Types:**
+- **INNER JOIN**: Only matching rows (most efficient)
+- **LEFT JOIN**: All left table rows (use when necessary)
+- **RIGHT JOIN**: All right table rows (consider reversing to LEFT)
+- **FULL OUTER JOIN**: All rows from both tables (least efficient)
+
+**Index Foreign Keys:**
+Always create indexes on foreign key columns:
+```sql
+CREATE INDEX idx_orders_customer_id ON orders(customer_id);
+CREATE INDEX idx_order_items_order_id ON order_items(order_id);
+CREATE INDEX idx_order_items_product_id ON order_items(product_id);
+```
+
+### Limit Result Sets
+
+Retrieving unnecessary data wastes resources.
+
+**Use LIMIT for Large Tables:**
+```sql
+-- Better: Limit results when you don't need all rows
+SELECT * FROM logs
+WHERE log_date > '2024-01-01'
+ORDER BY log_date DESC
+LIMIT 1000;
+```
+
+**Select Specific Columns:**
+```sql
+-- Inefficient: Retrieves all columns
+SELECT * FROM users WHERE active = true;
+
+-- Efficient: Only needed columns
+SELECT id, username, email FROM users WHERE active = true;
+```
+
+**Use Pagination:**
+For displaying data in pages, use offset and limit:
+```sql
+-- Page 3, 50 items per page
+SELECT id, title, created_at
+FROM articles
+ORDER BY created_at DESC
+LIMIT 50 OFFSET 100;
+```
+
+Note: For large offsets, consider keyset pagination for better performance.
+
+## Indexing Strategies
+
+### Index Basics
+
+Indexes dramatically improve query performance but require careful planning.
+
+**When to Create Indexes:**
+- Columns frequently used in WHERE clauses
+- Columns used in JOIN conditions
+- Columns used in ORDER BY clauses
+- Columns used in GROUP BY clauses
+- Foreign key columns
+
+**Index Types:**
+- **B-tree**: Default, good for equality and range queries
+- **Hash**: Fast equality comparisons, no range support
+- **GIN/GiST**: Full-text search and array operations
+- **Bitmap**: Multiple index combination
+
+### Composite Indexes
+
+Composite indexes cover multiple columns and are powerful optimization tools.
+
+**Column Order Matters:**
+```sql
+-- Index for queries filtering by country then city
+CREATE INDEX idx_users_country_city ON users(country, city);
+
+-- This query uses the index efficiently
+SELECT * FROM users WHERE country = 'US' AND city = 'Seattle';
+
+-- This query also uses the index
+SELECT * FROM users WHERE country = 'US';
+
+-- This query does NOT use the index efficiently
+SELECT * FROM users WHERE city = 'Seattle';
+```
+
+**General Rule:**
+Place the most selective (filters to fewer rows) column first, and columns used together frequently.
+
+### Covering Indexes
+
+Covering indexes include all columns needed for a query, eliminating table lookups.
+
+**Example:**
+```sql
+-- Query that runs frequently
+SELECT username, email FROM users WHERE country = 'US';
+
+-- Covering index includes all needed columns
+CREATE INDEX idx_users_country_covering
+ON users(country)
+INCLUDE (username, email);
+```
+
+### Index Maintenance
+
+Indexes require maintenance to remain effective.
+
+**PostgreSQL Index Maintenance:**
+```sql
+-- Rebuild index to remove bloat
+REINDEX INDEX idx_users_email;
+
+-- Update statistics for query planner
+ANALYZE users;
+
+-- Vacuum to reclaim space
+VACUUM ANALYZE users;
+```
+
+**MySQL Index Maintenance:**
+```sql
+-- Optimize table to rebuild indexes
+OPTIMIZE TABLE users;
+
+-- Update statistics
+ANALYZE TABLE users;
+```
+
+**When to Rebuild:**
+- After large bulk operations
+- When query performance degrades
+- Regular maintenance schedule (monthly/quarterly)
+- After significant data distribution changes
+
+## Managing Large Result Sets
+
+### Cursor-Based Pagination
+
+For large result sets, cursor-based pagination is more efficient than offset-based.
+
+**Keyset Pagination:**
+```sql
+-- Initial query
+SELECT id, username, created_at
+FROM users
+WHERE active = true
+ORDER BY created_at DESC, id DESC
+LIMIT 50;
+
+-- Next page (using last seen values)
+SELECT id, username, created_at
+FROM users
+WHERE active = true
+  AND (created_at, id) < ('2024-01-15 10:30:00', 12345)
+ORDER BY created_at DESC, id DESC
+LIMIT 50;
+```
+
+This approach maintains consistent performance regardless of page depth.
+
+### Streaming Results
+
+For very large exports, stream results instead of loading all into memory:
+
+**Batch Processing:**
+```sql
+-- Process in chunks
+SELECT id, email, status
+FROM users
+WHERE id > $last_processed_id
+ORDER BY id
+LIMIT 10000;
+```
+
+Process each batch, update `$last_processed_id`, and repeat.
+
+### Aggregation Optimization
+
+Optimize aggregation queries for large datasets.
+
+**Use Materialized Views:**
+```sql
+-- PostgreSQL materialized view for expensive aggregation
+CREATE MATERIALIZED VIEW daily_sales_summary AS
+SELECT
+  DATE(order_date) as sale_date,
+  COUNT(*) as order_count,
+  SUM(total_amount) as total_sales
+FROM orders
+GROUP BY DATE(order_date);
+
+-- Refresh periodically
+REFRESH MATERIALIZED VIEW daily_sales_summary;
+```
+
+**Use Incremental Aggregation:**
+Instead of recalculating everything, maintain running totals:
+```sql
+-- Update summary table incrementally
+INSERT INTO daily_sales_summary (sale_date, order_count, total_sales)
+SELECT
+  DATE(order_date),
+  COUNT(*),
+  SUM(total_amount)
+FROM orders
+WHERE order_date >= CURRENT_DATE
+GROUP BY DATE(order_date)
+ON CONFLICT (sale_date)
+DO UPDATE SET
+  order_count = EXCLUDED.order_count,
+  total_sales = EXCLUDED.total_sales;
+```
+
+## Connection Pooling
+
+### Understanding Connection Pools
+
+Database connections are expensive to create. Connection pooling reuses connections for better performance.
+
+**Benefits:**
+- Reduced connection overhead
+- Better resource utilization
+- Improved scalability
+- Consistent performance under load
+
+### Connection Pool Configuration
+
+**Key Parameters:**
+- **Minimum Pool Size**: Connections kept open during idle periods
+- **Maximum Pool Size**: Upper limit on concurrent connections
+- **Connection Timeout**: Maximum wait time for available connection
+- **Idle Timeout**: Time before idle connection is closed
+- **Max Lifetime**: Maximum connection age before refresh
+
+**Recommended Starting Values:**
+```
+Minimum Pool Size: 5
+Maximum Pool Size: 20
+Connection Timeout: 30 seconds
+Idle Timeout: 10 minutes
+Max Lifetime: 30 minutes
+```
+
+Adjust based on:
+- Application concurrent user count
+- Query execution time
+- Database server capacity
+- Network latency
+
+### Connection Pool Monitoring
+
+Monitor these metrics:
+- Active connections
+- Idle connections
+- Connection wait times
+- Connection creation rate
+- Connection errors
+
+**Warning Signs:**
+- Frequent connection timeouts
+- High connection wait times
+- Maximum pool size consistently reached
+- Many short-lived connections
+
+## Query Caching
+
+### Application-Level Caching
+
+Cache query results at the application level for frequently accessed data.
+
+**Good Candidates for Caching:**
+- Reference data (countries, categories)
+- User session data
+- Dashboard aggregations
+- Recently viewed items
+
+**Cache Invalidation Strategies:**
+- Time-based expiration (TTL)
+- Event-based invalidation
+- Versioned cache keys
+- Least Recently Used (LRU) eviction
+
+### Database Query Cache
+
+Some databases provide built-in query caching.
+
+**MySQL Query Cache (Deprecated in 8.0):**
+Modern MySQL versions don't include query cache. Use application-level caching instead.
+
+**PostgreSQL Shared Buffers:**
+PostgreSQL caches frequently accessed data pages in shared buffers. Configure appropriately:
+```sql
+-- View current setting
+SHOW shared_buffers;
+
+-- Recommended: 25% of system RAM for dedicated database server
+ALTER SYSTEM SET shared_buffers = '4GB';
+```
+
+## Performance Testing
+
+### Load Testing
+
+Test performance under realistic load conditions before deploying to production.
+
+**Testing Scenarios:**
+- Normal load: Expected concurrent users
+- Peak load: Maximum anticipated users
+- Stress test: Beyond expected capacity
+- Endurance test: Sustained load over time
+
+**Tools:**
+- Apache JMeter
+- pgbench (PostgreSQL)
+- sysbench (MySQL)
+- Custom load scripts
+
+### Performance Baselines
+
+Establish performance baselines to detect regressions.
+
+**Baseline Metrics:**
+- Query execution times (p50, p95, p99)
+- Throughput (queries per second)
+- Error rates
+- Resource utilization
+
+**Regular Monitoring:**
+- Compare current performance to baseline
+- Investigate significant deviations
+- Update baselines after infrastructure changes
+- Track trends over time
+
+## Performance Tips Summary
+
+**Query Optimization:**
+- Use EXPLAIN to understand query execution
+- Index foreign keys and frequently filtered columns
+- Avoid functions on indexed columns in WHERE clauses
+- Select only needed columns
+- Use appropriate JOIN types and order
+
+**Indexing:**
+- Create indexes on columns used in WHERE, JOIN, and ORDER BY
+- Use composite indexes for multi-column queries
+- Consider covering indexes for frequently run queries
+- Maintain indexes regularly
+- Don't over-index (each index has overhead)
+
+**Data Management:**
+- Use pagination for large result sets
+- Implement cursor-based pagination for deep pagination
+- Stream large exports instead of loading all into memory
+- Use materialized views for expensive aggregations
+- Archive old data to keep tables smaller
+
+**Resource Management:**
+- Configure connection pooling appropriately
+- Monitor connection pool metrics
+- Implement application-level caching
+- Optimize database server configuration
+- Scale horizontally when vertical scaling insufficient
+
+**Testing and Monitoring:**
+- Establish performance baselines
+- Test under realistic load conditions
+- Monitor query performance continuously
+- Set up alerts for performance degradation
+- Regular performance reviews and optimization
+
+## Common Anti-Patterns to Avoid
+
+**N+1 Query Problem:**
+```sql
+-- Bad: Separate query for each user's orders
+-- Application code loops: for each user, SELECT orders WHERE user_id = ?
+
+-- Good: Single query with JOIN
+SELECT u.*, o.*
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+WHERE u.active = true;
+```
+
+**SELECT * in Production:**
+Always select specific columns to reduce data transfer and improve cache efficiency.
+
+**Missing Indexes on Foreign Keys:**
+Always index foreign key columns used in joins.
+
+**Overusing DISTINCT:**
+DISTINCT adds overhead. If you need DISTINCT, consider whether your joins are correct.
+
+**Large IN Clauses:**
+```sql
+-- Less efficient for large lists
+SELECT * FROM products WHERE id IN (1, 2, 3, ..., 10000);
+
+-- Better: Use temporary table or array
+SELECT * FROM products WHERE id = ANY($1::int[]);
+```
+
+## Summary
+
+Database performance optimization is an iterative process requiring measurement, analysis, and refinement. Start with proper indexing, optimize queries using EXPLAIN, and implement efficient data access patterns. Regular monitoring and testing ensure performance remains acceptable as data volumes grow and usage patterns change. WhoDB's query analysis tools make it easy to identify and resolve performance issues before they impact users.

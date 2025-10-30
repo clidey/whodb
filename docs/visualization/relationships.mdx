@@ -1,0 +1,552 @@
+---
+title: "Relationships"
+description: "Understanding foreign keys, cardinality, and relationship types in your database"
+---
+
+# Relationships
+
+Database relationships define how tables connect to each other through foreign keys. Understanding relationship types is essential for designing effective queries, maintaining data integrity, and working with complex schemas.
+
+<Tip>
+Master relationship types to understand your data model and write efficient queries
+</Tip>
+
+## What is a Relationship?
+
+A relationship is a connection between two tables created when a column in one table references a column (usually the primary key) in another table. This connection is enforced by a **foreign key constraint**.
+
+### Key Components
+
+<CardGroup cols={2}>
+<Card title="Parent Table">
+The table being referenced. Its primary key is the target of the relationship.
+</Card>
+<Card title="Child Table">
+The table doing the referencing. Contains the foreign key column.
+</Card>
+<Card title="Foreign Key">
+One or more columns that reference the parent table's primary key
+</Card>
+<Card title="Cardinality">
+Describes how many rows in each table can participate in the relationship
+</Card>
+</CardGroup>
+
+## Relationship Types
+
+WhoDB supports and visualizes several standard relationship types:
+
+### One-to-Many (1:N)
+
+The most common relationship type.
+
+![Graph - One to Many Relationship](/images/92-graph-one-to-many-relationship.png)
+
+**Definition**
+- One row in the parent table can relate to many rows in the child table
+- One row in the child table relates to exactly one row in the parent table
+
+**Example**
+```
+Department (1) ─── (N) Employee
+- Each department can have multiple employees
+- Each employee belongs to exactly one department
+```
+
+**Real-World Examples**
+- One user has many orders
+- One category has many products
+- One department has many employees
+- One post has many comments
+
+**SQL Example**
+```sql
+-- Parent table
+CREATE TABLE departments (
+  id INT PRIMARY KEY,
+  name VARCHAR(100)
+);
+
+-- Child table with foreign key
+CREATE TABLE employees (
+  id INT PRIMARY KEY,
+  name VARCHAR(100),
+  department_id INT NOT NULL,
+  FOREIGN KEY (department_id) REFERENCES departments(id)
+);
+```
+
+**Query Pattern**
+```sql
+-- Find all employees in a department
+SELECT e.* FROM employees e
+WHERE e.department_id = 5;
+
+-- Find department with employee count
+SELECT d.name, COUNT(e.id) as employee_count
+FROM departments d
+LEFT JOIN employees e ON d.id = e.department_id
+GROUP BY d.id, d.name;
+```
+
+### Many-to-One (N:1)
+
+The reverse perspective of one-to-many.
+
+![Graph - Many to One Relationship](/images/93-graph-many-to-one-relationship.png)
+
+**Definition**
+- Many rows in one table relate to one row in another table
+- This is the same as one-to-many, viewed from the child table's perspective
+
+**Example**
+```
+Employee (N) ─── (1) Department
+- Many employees belong to one department
+- Each department has one organization
+```
+
+**When to Use This Perspective**
+- When describing relationships FROM the many side
+- In queries that start from the "many" table
+- When emphasizing the parent dependency
+
+**Query Pattern**
+```sql
+-- Start from the many side
+SELECT e.name, d.name as department
+FROM employees e
+JOIN departments d ON e.department_id = d.id
+WHERE e.salary > 50000;
+```
+
+### One-to-One (1:1)
+
+Each row in one table relates to exactly one row in another.
+
+**Definition**
+- One row in table A relates to exactly one row in table B
+- One row in table B relates to exactly one row in table A
+
+**Example**
+```
+User (1) ─── (1) Profile
+- Each user has exactly one profile
+- Each profile belongs to exactly one user
+```
+
+**Real-World Examples**
+- One user has one account profile
+- One person has one passport
+- One device has one current configuration
+- One employee has one personnel file
+
+**SQL Example**
+```sql
+CREATE TABLE users (
+  id INT PRIMARY KEY,
+  email VARCHAR(100) UNIQUE
+);
+
+CREATE TABLE user_profiles (
+  id INT PRIMARY KEY,
+  user_id INT NOT NULL UNIQUE,  -- UNIQUE makes it 1:1
+  bio TEXT,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+```
+
+**Query Pattern**
+```sql
+-- One-to-one relationships are simple to join
+SELECT u.email, p.bio
+FROM users u
+LEFT JOIN user_profiles p ON u.id = p.user_id;
+```
+
+### Many-to-Many (N:N)
+
+Multiple rows in one table relate to multiple rows in another.
+
+**Definition**
+- Many rows in table A can relate to many rows in table B
+- This relationship is mediated by a **junction table**
+
+**Example**
+```
+Student (N) ─┬─ (N) Course
+             │
+        Enrollment (junction table)
+- Each student can take many courses
+- Each course can have many students
+```
+
+**Real-World Examples**
+- Users have many roles; roles have many users
+- Articles have many tags; tags have many articles
+- Products have many categories; categories have many products
+- Employees serve on many projects; projects have many employees
+
+**SQL Example**
+```sql
+-- Parent tables
+CREATE TABLE students (
+  id INT PRIMARY KEY,
+  name VARCHAR(100)
+);
+
+CREATE TABLE courses (
+  id INT PRIMARY KEY,
+  title VARCHAR(100)
+);
+
+-- Junction table creates N:N relationship
+CREATE TABLE enrollments (
+  student_id INT NOT NULL,
+  course_id INT NOT NULL,
+  grade VARCHAR(1),
+  PRIMARY KEY (student_id, course_id),
+  FOREIGN KEY (student_id) REFERENCES students(id),
+  FOREIGN KEY (course_id) REFERENCES courses(id)
+);
+```
+
+**Query Pattern**
+```sql
+-- Find all courses for a student
+SELECT c.* FROM courses c
+JOIN enrollments e ON c.id = e.course_id
+WHERE e.student_id = 42;
+
+-- Find all students in a course
+SELECT s.* FROM students s
+JOIN enrollments e ON s.id = e.student_id
+WHERE e.course_id = 7;
+
+-- Find students and their course count
+SELECT s.name, COUNT(e.course_id) as course_count
+FROM students s
+LEFT JOIN enrollments e ON s.id = e.student_id
+GROUP BY s.id, s.name;
+```
+
+### Self-Referencing (1:N within same table)
+
+A table references itself, creating hierarchical relationships.
+
+**Example**
+```
+Employee (self-reference via manager_id)
+- Each employee may have one manager (also an employee)
+- Each employee may manage many other employees
+```
+
+**Real-World Examples**
+- Employee has a manager (who is also an employee)
+- Forum post has a parent post
+- File has a parent directory
+- Organization has a parent organization
+
+**SQL Example**
+```sql
+CREATE TABLE employees (
+  id INT PRIMARY KEY,
+  name VARCHAR(100),
+  manager_id INT,
+  FOREIGN KEY (manager_id) REFERENCES employees(id)
+);
+```
+
+**Query Pattern**
+```sql
+-- Find employees who report to a manager
+SELECT e.name FROM employees e
+WHERE e.manager_id = 5;
+
+-- Find all employees under a manager (all levels)
+WITH RECURSIVE org_tree AS (
+  SELECT id, name, manager_id, 1 as level
+  FROM employees
+  WHERE manager_id = 5
+  UNION ALL
+  SELECT e.id, e.name, e.manager_id, t.level + 1
+  FROM employees e
+  JOIN org_tree t ON e.manager_id = t.id
+)
+SELECT * FROM org_tree;
+```
+
+## Complex Relationships
+
+### Multiple Foreign Keys Between Tables
+
+Sometimes two tables have more than one relationship.
+
+![Graph - Multiple Foreign Keys](/images/94-graph-multiple-foreign-keys.png)
+
+**Example**
+```
+Booking relationships:
+- Booking references Customer as booker
+- Booking references Customer as alternate_contact
+- Multiple different relationships between same tables
+```
+
+**SQL Example**
+```sql
+CREATE TABLE bookings (
+  id INT PRIMARY KEY,
+  customer_id INT NOT NULL,
+  alternate_contact_id INT,
+  FOREIGN KEY (customer_id) REFERENCES customers(id),
+  FOREIGN KEY (alternate_contact_id) REFERENCES customers(id)
+);
+```
+
+**Query Pattern**
+```sql
+-- Distinguish between relationships
+SELECT
+  b.id,
+  c.name as primary_customer,
+  alt.name as alternate_contact
+FROM bookings b
+JOIN customers c ON b.customer_id = c.id
+LEFT JOIN customers alt ON b.alternate_contact_id = alt.id;
+```
+
+## Reading Relationship Visualizations
+
+WhoDB shows relationships in the graph with visual indicators:
+
+### Isolated Table Node
+
+![Graph - Isolated Table Node](/images/91-graph-isolated-table-node.png)
+
+A table with no incoming or outgoing foreign key relationships. While not involved in direct relationships, it may be referenced indirectly or through junction tables.
+
+**Characteristics**
+- No connection lines
+- Stands alone in the schema
+- May still be important for data organization
+
+## Relationship Design Patterns
+
+### Star Schema
+
+One central fact table with many dimension tables.
+
+**Pattern**
+```
+DimCustomer (1) ─── (N) FactSales ─── (1) DimProduct
+DimDate (1) ─────────────────────────── (N) FactSales
+```
+
+**Use Case**
+- Data warehouses and analytics databases
+- Efficient aggregate queries
+- Clear separation of facts and dimensions
+
+### Snowflake Schema
+
+Normalized star schema with dimension hierarchies.
+
+**Pattern**
+```
+DimCategory ─ DimProductSubcategory ─ DimProduct ─ FactSales
+```
+
+**Use Case**
+- Complex hierarchical dimensions
+- Reduced data redundancy
+- More normalized than star schema
+
+### CQRS-Inspired Pattern
+
+Separate read and write models with independent schemas.
+
+**Pattern**
+```
+Write Model (normalized) ─→ Sync ← Read Model (denormalized)
+```
+
+**Use Case**
+- High-read-volume applications
+- Specific query optimization needs
+- Complex domain models
+
+## Referential Integrity
+
+Foreign keys enforce referential integrity:
+
+### Foreign Key Constraints
+
+**Constraints Prevent**
+- Adding a row to child table with non-existent parent
+- Deleting a parent row while children exist (without cascade)
+- Orphaned rows in child tables
+
+**Common Actions**
+- `RESTRICT`: Prevent deletion if children exist
+- `CASCADE`: Delete children when parent is deleted
+- `SET NULL`: Set child's foreign key to NULL when parent is deleted
+- `SET DEFAULT`: Set child's foreign key to default when parent is deleted
+
+### Example
+
+```sql
+CREATE TABLE orders (
+  id INT PRIMARY KEY,
+  customer_id INT NOT NULL,
+  FOREIGN KEY (customer_id) REFERENCES customers(id)
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE
+);
+```
+
+## Querying Multiple Relationships
+
+### INNER JOIN
+
+Returns rows where relationship exists in both tables.
+
+```sql
+SELECT o.id, c.name, o.total
+FROM orders o
+INNER JOIN customers c ON o.customer_id = c.id;
+```
+
+### LEFT JOIN
+
+Returns all rows from left table, matching rows from right.
+
+```sql
+SELECT c.name, COUNT(o.id) as order_count
+FROM customers c
+LEFT JOIN orders o ON c.id = o.customer_id
+GROUP BY c.id, c.name;
+```
+
+### Multiple JOINs
+
+```sql
+SELECT o.id, c.name, p.title, oi.quantity
+FROM orders o
+JOIN customers c ON o.customer_id = c.id
+JOIN order_items oi ON o.id = oi.order_id
+JOIN products p ON oi.product_id = p.id;
+```
+
+## Relationships and Performance
+
+### Indexing Relationships
+
+<CardGroup cols={2}>
+<Card title="Foreign Key Columns">
+Always index foreign key columns for better JOIN performance
+</Card>
+<Card title="Referential Columns">
+The referenced primary key is usually indexed automatically
+</Card>
+<Card title="Junction Tables">
+Index both foreign keys for efficient many-to-many queries
+</Card>
+<Card title="Composite Keys">
+Consider index order based on query patterns
+</Card>
+</CardGroup>
+
+### Query Performance Tips
+
+<AccordionGroup>
+<Accordion title="Minimize JOINs">
+Reduce the number of tables involved in a single query. Deep joins (5+ tables) can be slow.
+</Accordion>
+<Accordion title="Use Appropriate JOINs">
+INNER JOIN is typically faster than LEFT JOIN due to simpler execution
+</Accordion>
+<Accordion title="Optimize Junction Tables">
+For many-to-many queries, ensure junction table has proper indexes
+</Accordion>
+<Accordion title="Consider Denormalization">
+In read-heavy scenarios, consider storing denormalized copies of frequently joined data
+</Accordion>
+</AccordionGroup>
+
+## Relationship Best Practices
+
+<AccordionGroup>
+<Accordion title="Design for Clarity">
+Make relationships intuitive and match real-world entities. A developer should understand the schema quickly.
+</Accordion>
+<Accordion title="Use Meaningful Names">
+Foreign key column names should clearly indicate what they reference: `customer_id` instead of `cust_id`.
+</Accordion>
+<Accordion title="Document Complex Relationships">
+Add comments or documentation for non-obvious relationship purposes.
+</Accordion>
+<Accordion title="Keep Hierarchies Shallow">
+Avoid more than 4-5 levels of joins in typical queries. If necessary, use denormalization or materialized views.
+</Accordion>
+<Accordion title="Leverage CASCADE Carefully">
+Use CASCADE delete judiciously; consider the business impact of mass deletions.
+</Accordion>
+<Accordion title="Test Referential Integrity">
+Verify that your foreign key constraints properly prevent data inconsistencies.
+</Accordion>
+</AccordionGroup>
+
+## Common Issues and Solutions
+
+<AccordionGroup>
+<Accordion title="Circular Dependencies">
+**Issue**: Table A references B, B references C, C references A
+
+**Solution**:
+- Introduce a bridge table to break the cycle
+- Use application-level logic instead of database-level relationships
+- Document the circular dependency and its handling
+</Accordion>
+<Accordion title="Orphaned Records">
+**Issue**: Child records exist without matching parent
+
+**Solution**:
+- Use referential integrity constraints
+- Run cleanup queries to remove orphans
+- Audit data for missing references
+</Accordion>
+<Accordion title="N+1 Query Problem">
+**Issue**: Loading parent, then one query per child
+
+**Solution**:
+- Use JOINs instead of separate queries
+- Use batching or bulk loading
+- Consider query caching
+</Accordion>
+<Accordion title="JOIN Performance Degradation">
+**Issue**: Queries slow with many JOINs
+
+**Solution**:
+- Add appropriate indexes
+- Denormalize frequently joined data
+- Use materialized views
+- Break complex query into multiple steps
+</Accordion>
+</AccordionGroup>
+
+## Related Topics
+
+<CardGroup cols={2}>
+<Card title="Graph View" icon="chart-network" href="/visualization/graph-view">
+Visualize relationships in your schema
+</Card>
+<Card title="Schema Topology" icon="sitemap" href="/visualization/schema-topology">
+Understand overall schema organization
+</Card>
+<Card title="Data Integrity" icon="shield" href="/advanced/data-integrity">
+Maintain data consistency with relationships
+</Card>
+<Card title="Advanced Queries" icon="code" href="/query/advanced-queries">
+Master complex queries with multiple relationships
+</Card>
+</CardGroup>

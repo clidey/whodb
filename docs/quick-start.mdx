@@ -1,0 +1,426 @@
+---
+title: "Quick Start Guide"
+description: "Get up and running with WhoDB in minutes"
+---
+
+# Quick Start Guide
+
+This guide will walk you through the basics of using WhoDB to explore your database, view data, run queries, and export results.
+
+<Tip>
+Follow along with this guide after successfully connecting to your database
+</Tip>
+
+## Interface Overview
+
+After logging in, you'll see the main WhoDB interface:
+
+![Storage Unit List](/images/05-storage-unit-list.png)
+
+The interface consists of several key areas:
+
+<CardGroup cols={2}>
+<Card title="Sidebar" icon="bars">
+Navigate between databases, schemas, and tables
+</Card>
+<Card title="Main Content Area" icon="table-cells">
+View and interact with your data
+</Card>
+<Card title="Top Navigation" icon="navbar">
+Access different views and features
+</Card>
+<Card title="Action Bar" icon="gears">
+Context-specific actions and tools
+</Card>
+</CardGroup>
+
+## Your First Five Minutes
+
+<Steps>
+<Step title="Explore the Sidebar">
+The sidebar shows your database structure with expandable sections for schemas and tables.
+
+![Sidebar Navigation](/images/06-storage-unit-list-with-sidebar.png)
+
+Click on any schema to expand it and see its tables, views, and other objects.
+</Step>
+<Step title="View Table Data">
+Click on a table name to view its data in the main area.
+
+![Data View](/images/09-data-view-users-table.png)
+
+The data grid shows all rows and columns with sorting, filtering, and search capabilities.
+</Step>
+<Step title="Explore Table Structure">
+Click the "Explore" tab to view table metadata, columns, indexes, and constraints.
+
+![Explore Table](/images/07-explore-users-table.png)
+</Step>
+<Step title="Run a Query">
+Switch to the "Scratchpad" view to write and execute custom SQL queries.
+
+![Scratchpad](/images/27-scratchpad-main-view.png)
+</Step>
+<Step title="Visualize Relationships">
+Open the "Graph" view to see your database schema as an interactive diagram.
+
+![Graph View](/images/24-graph-view-schema-topology.png)
+</Step>
+</Steps>
+
+## Key Features to Try
+
+### 1. Viewing and Filtering Data
+
+<AccordionGroup>
+<Accordion title="Sorting Columns">
+Click any column header to sort the data in ascending or descending order.
+
+![Sorted Column](/images/38-data-view-sorted-column.png)
+
+<Tip>
+Hold Shift and click multiple columns to sort by multiple fields
+</Tip>
+</Accordion>
+<Accordion title="Searching Data">
+Use the search box to find specific values across all visible columns.
+
+![Search Highlight](/images/19-data-view-search-highlight.png)
+
+Search is real-time and highlights matching results as you type.
+</Accordion>
+<Accordion title="Filtering with Where Conditions">
+Click the filter button to add WHERE conditions for complex filtering.
+
+![Where Conditions](/images/16-data-view-where-conditions-popover.png)
+
+You can combine multiple conditions with AND/OR logic:
+- Equals (=)
+- Not Equals (!=)
+- Greater Than (>)
+- Less Than (\<)
+- Greater Than or Equal (>=)
+- Less Than or Equal (\<=)
+</Accordion>
+<Accordion title="Pagination">
+Control how many rows appear per page using the page size dropdown.
+
+![Page Size](/images/15-data-view-page-size-dropdown.png)
+
+Navigate between pages using the pagination controls at the bottom.
+</Accordion>
+</AccordionGroup>
+
+### 2. Managing Data
+
+<AccordionGroup>
+<Accordion title="Adding Rows">
+Click the "Add Row" button to insert new records.
+
+![Add Row Dialog](/images/11-data-view-add-row-dialog.png)
+
+Fill in the fields and click "Add" to insert the record.
+
+![Add Row Filled](/images/12-data-view-add-row-filled.png)
+
+<Note>
+Required fields are marked with an asterisk (*). Auto-increment fields can be left empty.
+</Note>
+</Accordion>
+<Accordion title="Editing Rows">
+Right-click any row to open the context menu, then select "Edit Row".
+
+![Context Menu](/images/13-data-view-context-menu.png)
+
+Modify the values in the edit dialog:
+
+![Edit Row Dialog](/images/14-data-view-edit-row-dialog.png)
+
+<Tip>
+Double-click a row to quickly open the edit dialog
+</Tip>
+</Accordion>
+<Accordion title="Deleting Rows">
+Right-click a row and select "Delete Row" from the context menu.
+
+![Delete Option](/images/43-context-menu-delete-option.png)
+
+Confirm the deletion to permanently remove the record.
+
+<Warning>
+Deletions are permanent and cannot be undone. Make sure you have backups before deleting data.
+</Warning>
+</Accordion>
+</AccordionGroup>
+
+### 3. Running Queries
+
+The Scratchpad is your SQL playground:
+
+![Scratchpad Code Editor](/images/28-scratchpad-code-editor.png)
+
+<Steps>
+<Step title="Write Your Query">
+Type your SQL query in the code editor. You get syntax highlighting and auto-completion.
+
+```sql
+SELECT id, username, email
+FROM users
+WHERE created_at > '2024-01-01'
+ORDER BY id DESC
+LIMIT 10;
+```
+</Step>
+<Step title="Execute the Query">
+Click the Run button or press Cmd/Ctrl+Enter to execute.
+</Step>
+<Step title="View Results">
+Results appear below the editor in a data grid.
+
+![Query Results](/images/29-scratchpad-query-results.png)
+</Step>
+<Step title="Save to History">
+All queries are automatically saved to history for easy access later.
+
+![Query History](/images/33-scratchpad-query-history.png)
+</Step>
+</Steps>
+
+<Info>
+Scratchpad supports multiple cells, allowing you to organize and execute different queries independently
+</Info>
+
+### 4. Visualizing Schema
+
+The Graph view provides a visual representation of your database:
+
+![Graph View](/images/25-graph-view-with-controls.png)
+
+<AccordionGroup>
+<Accordion title="Navigation Controls">
+- **Pan**: Click and drag the canvas
+- **Zoom**: Use mouse wheel or zoom controls
+- **Fit View**: Click the fit button to center all nodes
+</Accordion>
+<Accordion title="Node Interactions">
+Click on any table node to view its columns and relationships.
+
+![Node Details](/images/26-graph-view-node-details.png)
+
+Relationships are shown as connecting lines with cardinality indicators.
+</Accordion>
+<Accordion title="Understanding Relationships">
+- **One-to-Many**: Solid line with single/multiple indicators
+- **Many-to-One**: Reverse of one-to-many
+- **Many-to-Many**: Through junction tables
+- **One-to-One**: Solid line with single indicators on both ends
+</Accordion>
+</AccordionGroup>
+
+### 5. Exporting Data
+
+Export your data in multiple formats:
+
+![Export Dialog](/images/20-data-view-export-dialog.png)
+
+<Steps>
+<Step title="Choose Export Mode">
+- **Export All**: Export all rows in the table
+- **Export Selected**: Export only selected rows
+- **Export Filtered**: Export rows matching current filters
+</Step>
+<Step title="Select Format">
+Choose your preferred format:
+
+<CardGroup cols={2}>
+<Card title="CSV">
+Comma-separated values for Excel and data tools
+</Card>
+<Card title="Excel">
+Native Excel format (.xlsx)
+</Card>
+<Card title="JSON">
+JSON format for APIs and applications
+</Card>
+<Card title="SQL">
+SQL INSERT statements for backups
+</Card>
+</CardGroup>
+</Step>
+<Step title="Configure Options">
+Set delimiter, encoding, and other format-specific options:
+
+![Export Format Options](/images/21-data-view-export-format-dropdown.png)
+</Step>
+<Step title="Download">
+Click "Export" to download your file
+</Step>
+</Steps>
+
+## Common Workflows
+
+<AccordionGroup>
+<Accordion title="Data Exploration">
+<Steps>
+<Step title="Connect to Database">
+Log in with your credentials
+</Step>
+<Step title="Browse Schema">
+Expand schemas in the sidebar to find interesting tables
+</Step>
+<Step title="View Sample Data">
+Click a table to see its contents
+</Step>
+<Step title="Apply Filters">
+Add WHERE conditions to focus on specific data
+</Step>
+<Step title="Export Results">
+Save filtered data for further analysis
+</Step>
+</Steps>
+</Accordion>
+<Accordion title="Quick Query">
+<Steps>
+<Step title="Open Scratchpad">
+Navigate to the Scratchpad view
+</Step>
+<Step title="Write Query">
+Type your SQL query with auto-completion help
+</Step>
+<Step title="Execute">
+Run the query and view results
+</Step>
+<Step title="Refine">
+Adjust the query based on results
+</Step>
+<Step title="Save">
+Query is automatically saved to history
+</Step>
+</Steps>
+</Accordion>
+<Accordion title="Data Maintenance">
+<Steps>
+<Step title="Navigate to Table">
+Find and open the table you want to modify
+</Step>
+<Step title="Filter Data">
+Use WHERE conditions to find specific rows
+</Step>
+<Step title="Make Changes">
+Add, edit, or delete rows as needed
+</Step>
+<Step title="Verify Changes">
+Refresh to see updated data
+</Step>
+<Step title="Export Backup">
+Export a backup before major changes
+</Step>
+</Steps>
+</Accordion>
+<Accordion title="Schema Analysis">
+<Steps>
+<Step title="Open Graph View">
+Switch to the Graph visualization
+</Step>
+<Step title="Explore Relationships">
+Click nodes to see table connections
+</Step>
+<Step title="Identify Patterns">
+Look for table clusters and relationship chains
+</Step>
+<Step title="Check Constraints">
+Use Explore view to see indexes and keys
+</Step>
+<Step title="Document Findings">
+Export schema diagram for documentation
+</Step>
+</Steps>
+</Accordion>
+</AccordionGroup>
+
+## Keyboard Shortcuts
+
+<Tip>
+Master these shortcuts to work faster in WhoDB
+</Tip>
+
+### Global Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Cmd/Ctrl + K` | Quick navigation |
+| `Cmd/Ctrl + /` | Toggle sidebar |
+| `Cmd/Ctrl + F` | Search in current view |
+| `Esc` | Close dialogs/modals |
+
+### Scratchpad Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Cmd/Ctrl + Enter` | Run current query |
+| `Cmd/Ctrl + S` | Save query |
+| `Cmd/Ctrl + N` | New cell |
+| `Cmd/Ctrl + D` | Duplicate cell |
+| `Cmd/Ctrl + Shift + F` | Format query |
+
+### Data Grid Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Cmd/Ctrl + C` | Copy selected cell |
+| `Cmd/Ctrl + A` | Select all rows |
+| `Tab` | Move to next cell |
+| `Shift + Tab` | Move to previous cell |
+| `Enter` | Edit selected row |
+
+## Best Practices
+
+<AccordionGroup>
+<Accordion title="Query Performance">
+- Use `LIMIT` for large result sets
+- Add indexes for frequently filtered columns
+- Avoid `SELECT *` in production queries
+- Use EXPLAIN to analyze slow queries
+</Accordion>
+<Accordion title="Data Safety">
+- Always backup before bulk operations
+- Use read-only accounts when possible
+- Test queries on development databases first
+- Enable SQL review before executing
+</Accordion>
+<Accordion title="Organization">
+- Use descriptive names for saved queries
+- Create folders for different projects
+- Document complex queries with comments
+- Tag queries by purpose or category
+</Accordion>
+<Accordion title="Collaboration">
+- Share connection details securely
+- Document schema changes
+- Use consistent naming conventions
+- Keep query history for auditing
+</Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+Now that you understand the basics, explore specific features in depth:
+
+<CardGroup cols={2}>
+<Card title="Data Management" icon="table" href="/data/viewing-data">
+Master data viewing, filtering, and editing
+</Card>
+<Card title="Query Interface" icon="code" href="/query/scratchpad-intro">
+Learn advanced query techniques
+</Card>
+<Card title="Schema Explorer" icon="sitemap" href="/features/schema-explorer">
+Understand your database structure
+</Card>
+<Card title="Export Options" icon="download" href="/advanced/export-options">
+Learn about all export formats and options
+</Card>
+</CardGroup>
+
+<Check>
+You're now ready to use WhoDB effectively! Explore the detailed documentation for advanced features and techniques.
+</Check>

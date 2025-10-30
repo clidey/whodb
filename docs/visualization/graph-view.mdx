@@ -1,0 +1,299 @@
+---
+title: "Graph View"
+description: "Interactive visualization of your database schema with table relationships and navigation controls"
+---
+
+# Graph View
+
+The Graph view provides an interactive, visual representation of your entire database schema. Instead of navigating through tables and relationships in text form, you can see your entire data structure at a glance, including all table connections, foreign keys, and relationships.
+
+<Tip>
+The Graph view is particularly useful for understanding complex schemas, identifying data dependencies, and designing new features
+</Tip>
+
+## Overview
+
+The Graph view displays your database as an interactive diagram with:
+- **Table nodes**: Each table appears as a node showing key information
+- **Relationship lines**: Connections between tables based on foreign keys
+- **Cardinality indicators**: Visual markers showing one-to-one, one-to-many, and many-to-many relationships
+- **Navigation controls**: Tools for zooming, panning, and fitting the view
+
+## Accessing Graph View
+
+To view your database schema as a graph:
+
+<Steps>
+<Step title="Navigate to a Schema">
+Select a database and schema from the sidebar to load its tables
+</Step>
+<Step title="Click the Graph Tab">
+Look for the "Graph" tab in the main content area and click it
+</Step>
+<Step title="Wait for Rendering">
+The schema will load and render automatically. Complex schemas may take a few moments to layout
+</Step>
+</Steps>
+
+## Graph Interface
+
+![Graph View - Schema Topology](/images/24-graph-view-schema-topology.png)
+
+The graph displays your complete schema with all table nodes and their relationships. The layout algorithm automatically positions tables to minimize line crossings and make relationships clear.
+
+## Navigation Controls
+
+WhoDB provides several tools to navigate and interact with the graph:
+
+![Graph View - With Layout Controls](/images/25-graph-view-with-controls.png)
+
+### Zoom Controls
+
+<CardGroup cols={2}>
+<Card title="Zoom In" icon="magnifying-glass-plus">
+Click the plus button or scroll up to get a closer view of specific areas
+</Card>
+<Card title="Zoom Out" icon="magnifying-glass-minus">
+Click the minus button or scroll down to see more of the schema at once
+</Card>
+<Card title="Fit View" icon="expand">
+Click the fit button to automatically zoom and center all nodes in the viewport
+</Card>
+<Card title="Reset View" icon="arrow-rotate-right">
+Return to the default zoom level and position
+</Card>
+</CardGroup>
+
+### Pan and Drag
+
+- **Click and drag** the canvas to pan around the graph
+- The cursor changes to a grab hand when hovering over empty space
+- Useful for exploring large schemas or focusing on specific table clusters
+
+### Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `+` / `=` | Zoom in |
+| `-` | Zoom out |
+| `0` | Fit all nodes in view |
+| `Space + Drag` | Pan the canvas |
+| `Arrow Keys` | Navigate between nodes |
+
+## Viewing Node Details
+
+Each table node displays important information and allows interaction:
+
+![Graph View - Node Details](/images/26-graph-view-node-details.png)
+
+### Node Information
+
+Each node shows:
+- **Table name**: The name of the database table
+- **Key columns**: Important columns like primary keys highlighted
+- **Column list**: A preview of the table's columns (on hover or click)
+- **Foreign key indicators**: Visual markers for columns that reference other tables
+
+### Clicking Nodes
+
+Click on any table node to:
+
+<Steps>
+<Step title="View Details">
+See the full column list with data types and constraints
+</Step>
+<Step title="Access Data">
+Use the quick access button to view the table's data
+</Step>
+<Step title="Explore Metadata">
+Check indexes, constraints, and other metadata for the table
+</Step>
+</Steps>
+
+### Quick Data Access
+
+![Graph Node - Data Button Hover](/images/50-graph-node-data-button-hover.png)
+
+Hover over a node to reveal the data button, allowing you to jump directly to the table's data view without leaving the graph.
+
+<Tip>
+This is great for quick navigation when exploring related tables
+</Tip>
+
+## Understanding Relationships
+
+The lines connecting nodes represent foreign key relationships. The visual style and direction indicate the type of relationship:
+
+### Relationship Indicators
+
+- **Solid lines**: Direct foreign key relationships
+- **Line direction**: Shows which table references which (arrow points to referenced table)
+- **Line color**: Different colors may be used for different relationship types
+- **Multiple lines**: Indicate multiple foreign keys between the same tables
+
+## Zooming for Detail
+
+WhoDB automatically adjusts the graph layout based on zoom level for optimal viewing:
+
+### Zoomed In View
+
+![Graph - Zoomed In View](/images/95-graph-zoomed-in-view.png)
+
+When zoomed in, you see detailed information about specific tables:
+- Full column names and data types
+- Constraint details
+- Complete relationship labels
+
+Use this view when examining specific table structures or relationships in detail.
+
+### Zoomed Out View
+
+![Graph - Zoomed Out View](/images/96-graph-zoomed-out-view.png)
+
+When zoomed out, you see the overall structure and patterns:
+- All tables in the schema
+- Overall relationship topology
+- Table clusters and groupings
+- High-level schema organization
+
+Use this view to understand the big picture or plan major structural changes.
+
+## Fit to View
+
+The fit view control ensures your entire schema is visible:
+
+![Graph - Fit View Control](/images/97-graph-fit-view-control.png)
+
+<Steps>
+<Step title="Click Fit Button">
+Click the fit icon in the control panel
+</Step>
+<Step title="Auto-adjust View">
+WhoDB automatically zooms and pans to show all nodes
+</Step>
+<Step title="Continue Exploring">
+Use zoom and pan controls for detailed exploration
+</Step>
+</Steps>
+
+## Workflow: Exploring Complex Schemas
+
+When working with complex databases, use this workflow:
+
+<Steps>
+<Step title="Start with Fit View">
+Click fit view to see the entire schema and understand its overall structure
+</Step>
+<Step title="Identify Patterns">
+Look for clusters of related tables, central tables with many connections, and independent groups
+</Step>
+<Step title="Zoom to Area of Interest">
+Zoom in on specific areas of the schema you want to understand better
+</Step>
+<Step title="Examine Relationships">
+Click nodes to see the full details of table structures and connections
+</Step>
+<Step title="Jump to Data">
+Use quick data access to examine sample data for specific tables
+</Step>
+<Step title="Return to Overview">
+Fit view again to see how changes or findings fit in the larger context
+</Step>
+</Steps>
+
+## Common Patterns
+
+### Hub-and-Spoke Pattern
+
+Large central table with many incoming and outgoing relationships. Common in:
+- User management systems (users table with many related tables)
+- Event tracking systems (events table as central hub)
+- Master data tables in data warehouses
+
+### Hierarchical Pattern
+
+Tables arranged in clear parent-child hierarchies. Common in:
+- Organizational structures (departments → teams → members)
+- Product hierarchies (categories → subcategories → products)
+- File systems or tree structures
+
+### Many-to-Many Pattern
+
+Two main tables connected through a junction table. Common in:
+- User-role assignments
+- Product-category assignments
+- Article-tag systems
+
+### Independent Clusters
+
+Groups of unrelated tables. Common in:
+- Multi-tenant systems (separate clusters per tenant)
+- Modular applications (features as separate components)
+- Legacy systems with data silos
+
+## Performance Tips
+
+<AccordionGroup>
+<Accordion title="Large Schemas (100+ tables)">
+- Start with zoomed-out view to understand clusters
+- Zoom in to examine specific areas
+- Use fit view frequently to maintain context
+- Consider filtering views for specific schema areas
+</Accordion>
+<Accordion title="Performance Optimization">
+- The graph uses efficient rendering for smooth interaction
+- Relationship lines are simplified at zoom-out levels
+- Details load as you zoom in
+- Pan and zoom operations are GPU-accelerated
+</Accordion>
+<Accordion title="Network Speed">
+- Graph data is cached locally after first load
+- Interactions are instant and don't require server calls
+- Relationship data is loaded once during graph initialization
+</Accordion>
+</AccordionGroup>
+
+## Exporting Graph Visualizations
+
+While viewing the graph:
+- **Screenshot**: Use your system's screenshot tool to capture the current view
+- **Print to PDF**: Use browser print functionality to save as PDF
+- **Document**: The graph can be included in documentation by capturing screenshots at different zoom levels
+
+<Tip>
+For documentation, capture multiple views: full schema (zoomed out), relationship details (normal zoom), and specific areas (zoomed in)
+</Tip>
+
+## Troubleshooting
+
+<AccordionGroup>
+<Accordion title="Graph Takes a Long Time to Load">
+For very large schemas (1000+ tables), the initial layout calculation may take several seconds. This is normal. Once loaded, interactions are instant.
+</Accordion>
+<Accordion title="Nodes are Overlapping">
+Try using the fit view to reset the layout. If overlapping persists, zoom out to see the overall structure, then zoom in to areas of interest.
+</Accordion>
+<Accordion title="Can't See Specific Table">
+Use the search functionality to find the table, or zoom out to see more of the schema. You can also use Ctrl+F to search within the browser.
+</Accordion>
+<Accordion title="Relationship Lines are Confusing">
+Click individual nodes to see which specific columns are involved in relationships. The detailed view clarifies connections that might be unclear in the full graph.
+</Accordion>
+</AccordionGroup>
+
+## Related Topics
+
+<CardGroup cols={2}>
+<Card title="Schema Topology" icon="sitemap" href="/visualization/schema-topology">
+Understand how table nodes are organized and positioned in the graph
+</Card>
+<Card title="Relationships" icon="link" href="/visualization/relationships">
+Learn about foreign keys, cardinality, and relationship types
+</Card>
+<Card title="Schema Explorer" icon="book" href="/features/schema-explorer">
+Navigate your schema structure in detail
+</Card>
+<Card title="Data View" icon="table" href="/data/viewing-data">
+View and interact with table data
+</Card>
+</CardGroup>

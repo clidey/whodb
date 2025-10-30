@@ -1,0 +1,532 @@
+---
+title: "Migrating from phpMyAdmin to WhoDB"
+description: "Complete migration guide for phpMyAdmin users transitioning to WhoDB. Compare features, learn new workflows, and master WhoDB's modern interface."
+seo:
+  title: "phpMyAdmin Alternative: Migrate to WhoDB"
+  description: "Switch from phpMyAdmin to WhoDB. Feature comparison, workflow mapping, keyboard shortcuts, and why WhoDB is better for modern database management."
+  keywords: "phpMyAdmin alternative, migrate from phpMyAdmin, database management tool, WhoDB vs phpMyAdmin, better than phpMyAdmin, modern database client"
+---
+
+# Migrating from phpMyAdmin to WhoDB
+
+If you've been using phpMyAdmin for years, you're already familiar with web-based database management. WhoDB builds on that foundation with a modern, intuitive interface designed for today's development workflows. This guide will help you transition smoothly and discover what makes WhoDB better.
+
+<Info>
+WhoDB is designed to feel familiar to phpMyAdmin users while being significantly more intuitive and feature-rich. Most developers switch within minutes.
+</Info>
+
+## Why Migrate from phpMyAdmin?
+
+Both tools manage databases through a web interface, but WhoDB offers important advantages:
+
+<CardGroup cols={2}>
+<Card title="Modern UI/UX" icon="palette">
+Clean, intuitive interface without unnecessary clutter or outdated design
+</Card>
+<Card title="Better Performance" icon="bolt">
+Faster load times and responsiveness even with large datasets
+</Card>
+<Card title="Advanced Features" icon="star">
+Graph visualization, mock data, better querying, and more
+</Card>
+<Card title="Developer-Friendly" icon="code">
+Keyboard shortcuts, query history, multi-cell queries, syntax highlighting
+</Card>
+<Card title="Multi-Database Support" icon="database">
+PostgreSQL, MySQL, SQLite, MongoDB, Redis from the same interface
+</Card>
+<Card title="Better Search & Filtering" icon="magnifying-glass">
+Powerful filtering with visual query builder instead of complex SQL
+</Card>
+</CardGroup>
+
+## Feature Comparison: phpMyAdmin vs WhoDB
+
+<AccordionGroup>
+<Accordion title="Database Management">
+| Feature | phpMyAdmin | WhoDB |
+|---------|-----------|-------|
+| Create/Drop Databases | Yes | Yes |
+| Create/Drop Tables | Yes | Yes |
+| Table Structure View | Yes, text-based | Yes, modern UI |
+| Column Management | Complex dialogs | Intuitive forms |
+| Storage Engines | Full support | Yes |
+| Collation Settings | Yes | Yes |
+| Connection Profiles | Limited | Built-in |
+| Multi-Database View | Dropdown menu | Sidebar browser |
+</Accordion>
+
+<Accordion title="Data Viewing & Browsing">
+| Feature | phpMyAdmin | WhoDB |
+|---------|-----------|-------|
+| Table Data Display | Grid view | Modern data grid |
+| Pagination | Yes | Yes, with custom sizes |
+| Column Sorting | Click header | Click header |
+| Multi-Column Sorting | Complex | Intuitive |
+| Search Data | Basic search | Advanced search + highlighting |
+| Filter/Where Conditions | SQL-based | Visual query builder |
+| Row Count | Shows total | Shows total with pagination |
+| Cell Preview | Hover tooltip | Inline preview |
+| Copy Cell Value | Right-click | Context menu |
+</Accordion>
+
+<Accordion title="Data Editing">
+| Feature | phpMyAdmin | WhoDB |
+|---------|-----------|-------|
+| Inline Editing | Limited | Full support |
+| Add Row Dialog | Yes | Modern modal |
+| Edit Row Dialog | Complex | Clean interface |
+| Bulk Operations | Limited | Yes |
+| Delete Confirmation | Yes | Yes |
+| Undo Operations | No | Limited |
+| Data Validation | Basic | Enhanced |
+| Null Value Handling | Confusing | Clear UI |
+</Accordion>
+
+<Accordion title="Query Execution">
+| Feature | phpMyAdmin | WhoDB |
+|---------|-----------|-------|
+| SQL Editor | Single query | Multi-cell scratchpad |
+| Syntax Highlighting | Yes | Yes, modern |
+| Query History | Browser history | Built-in history |
+| Save Queries | File download | Built-in storage |
+| Query Templates | Limited | Yes |
+| Auto-Completion | Basic | Advanced |
+| Query Formatting | Manual | Auto-format available |
+| Multiple Queries | One at a time | Execute multiple cells |
+</Accordion>
+
+<Accordion title="Schema Visualization">
+| Feature | phpMyAdmin | WhoDB |
+|---------|-----------|-------|
+| Relationships View | Text-based | Interactive graph |
+| Foreign Key Display | Table listing | Visual connections |
+| Schema Diagram | Requires plugin | Built-in |
+| Interactive Exploration | No | Yes |
+| Relationship Details | Manual review | Click node for details |
+| Export Diagram | No | Yes |
+</Accordion>
+
+<Accordion title="Data Export">
+| Feature | phpMyAdmin | WhoDB |
+|---------|-----------|-------|
+| CSV Export | Yes | Yes |
+| Excel Export | Yes, XLS | Yes, XLSX |
+| JSON Export | Yes | Yes |
+| SQL Export | Yes | Yes |
+| XML Export | Yes | Limited |
+| Custom Delimiters | Yes | Yes |
+| Selected Rows Export | Yes | Yes, easier |
+| Filtered Data Export | Yes | Yes, clearer |
+</Accordion>
+
+<Accordion title="User Interface">
+| Feature | phpMyAdmin | WhoDB |
+|---------|-----------|-------|
+| Learning Curve | Steep | Gentle |
+| Keyboard Shortcuts | Limited | Extensive |
+| Mobile Responsive | Partial | Full |
+| Dark Mode | Yes | Yes |
+| Customization | Limited | More options |
+| Context Menus | Yes | Enhanced |
+| Accessibility | Basic | Modern standards |
+</Accordion>
+</AccordionGroup>
+
+## Workflow Mapping: Your Familiar Tasks in WhoDB
+
+### Task: Viewing Table Data
+
+**In phpMyAdmin:**
+1. Click database in left sidebar
+2. Click table name
+3. Click "Browse" tab
+4. Data appears in table
+
+**In WhoDB:**
+1. Database visible in sidebar
+2. Click table name directly
+3. Data view appears immediately
+4. No extra tabs needed
+
+<Tip>
+WhoDB's sidebar automatically shows your database structure. Just click any table to view its data instantly. No need for separate "browse" steps.
+</Tip>
+
+### Task: Editing a Row
+
+**In phpMyAdmin:**
+1. Click the pencil icon on a row
+2. Wait for edit page to load
+3. Modify values in form
+4. Click "Go" to save
+
+**In WhoDB:**
+1. Right-click row → "Edit Row" (or double-click)
+2. Modal opens with form
+3. Modify values
+4. Click "Update" to save
+
+![Data View With Edit Option](/images/09-data-view-users-table.png)
+
+### Task: Filtering Data
+
+**In phpMyAdmin:**
+1. Click "Search" tab or use WHERE clause
+2. Write complex SQL conditions
+3. Execute to filter
+
+**In WhoDB:**
+1. Click filter icon
+2. Select field → operator → value
+3. Filter applies instantly
+
+![Where Conditions Popover](/images/16-data-view-where-conditions-popover.png)
+
+<Tip>
+WhoDB's visual filter builder is much faster than phpMyAdmin's SQL-based approach, especially for non-developers.
+</Tip>
+
+### Task: Exporting Data
+
+**In phpMyAdmin:**
+1. Click "Export" tab
+2. Select format (CSV, Excel, SQL)
+3. Configure options through multiple pages
+4. Click "Go"
+
+**In WhoDB:**
+1. Click "Export" button
+2. Choose format
+3. Configure options in clean dialog
+4. Click "Export"
+
+The process is nearly identical, just cleaner in WhoDB.
+
+### Task: Writing a Query
+
+**In phpMyAdmin:**
+1. Go to "SQL" tab
+2. Type your query
+3. Click "Go"
+4. Results appear below
+
+**In WhoDB:**
+1. Go to "Scratchpad" view
+2. Type your query
+3. Click "Run" or Cmd/Ctrl+Enter
+4. Results appear below
+
+**Advantage in WhoDB**: Multiple cells allow you to organize related queries and run them independently.
+
+## Keyboard Shortcuts: Your Quick Reference
+
+### Shortcuts You Already Know
+
+| Action | phpMyAdmin | WhoDB |
+|--------|-----------|-------|
+| Copy | Cmd/Ctrl+C | Cmd/Ctrl+C |
+| Paste | Cmd/Ctrl+V | Cmd/Ctrl+V |
+| Find | Cmd/Ctrl+F | Cmd/Ctrl+F |
+| Save | Cmd/Ctrl+S | Cmd/Ctrl+S |
+
+### New Shortcuts to Master
+
+| Action | WhoDB Shortcut |
+|--------|---------------|
+| Run Query | Cmd/Ctrl+Enter |
+| New Query Cell | Cmd/Ctrl+N |
+| Duplicate Cell | Cmd/Ctrl+D |
+| Toggle Sidebar | Cmd/Ctrl+/ |
+| Format Query | Cmd/Ctrl+Shift+F |
+| Select All Rows | Cmd/Ctrl+A |
+| Quick Navigation | Cmd/Ctrl+K |
+
+<Info>
+WhoDB's shortcuts are designed for developers who already use modern code editors. They'll feel immediately familiar.
+</Info>
+
+## First-Time Setup in WhoDB
+
+### Connection Profiles
+
+**In phpMyAdmin**, you typically set up multiple servers in `config.inc.php`.
+
+**In WhoDB**, you can save connection profiles without any configuration files:
+
+<Steps>
+<Step title="Click Login Page Setup">
+On the first login screen, enter your database details (host, port, username, password)
+</Step>
+<Step title="Connect">
+Click "Connect" to establish connection
+</Step>
+<Step title="Explore">
+WhoDB immediately shows your database structure in the sidebar
+</Step>
+<Step title="Return Anytime">
+You can create multiple profiles by reconnecting with different credentials
+</Step>
+</Steps>
+
+<Tip>
+WhoDB doesn't store credentials by default (more secure), but you can create and save connection profiles for easy reconnection.
+</Tip>
+
+### Navigating Your First Database
+
+![Storage Unit List](/images/05-storage-unit-list.png)
+
+When you first connect, you'll see:
+- **Sidebar**: Your complete database structure
+- **Main Area**: List of tables
+- **Top Tabs**: Data, Explore, Graph, Scratchpad
+
+Click any table to start exploring. No separate "browse" step needed.
+
+## Understanding WhoDB's Views
+
+Unlike phpMyAdmin's tab-based system, WhoDB organizes features into distinct views:
+
+<CardGroup cols={2}>
+<Card title="Data View" icon="table">
+Browse, edit, filter, and sort your table data with modern UX
+</Card>
+<Card title="Explore View" icon="sitemap">
+See table structure, columns, indexes, constraints, and metadata
+</Card>
+<Card title="Graph View" icon="network">
+Visualize your database schema and relationships interactively
+</Card>
+<Card title="Scratchpad View" icon="code">
+Write and execute SQL queries with multi-cell support
+</Card>
+</CardGroup>
+
+Each view is focused on a specific task, making the interface cleaner than phpMyAdmin's multiple tabs.
+
+## Common phpMyAdmin Tasks in WhoDB
+
+<AccordionGroup>
+<Accordion title="Add a New Column to a Table">
+**In WhoDB:**
+1. Go to Explore view
+2. Find the table
+3. Click "Add Column" button
+4. Fill in column details (name, type, constraints)
+5. Click "Create"
+
+This is cleaner than phpMyAdmin's complex structure modification dialogs.
+</Accordion>
+
+<Accordion title="Create a New Table">
+**In WhoDB:**
+1. Use Scratchpad to write CREATE TABLE statement
+2. Execute the query
+3. Table appears instantly in sidebar
+
+Alternatively, use the UI to create tables (coming in future updates).
+
+**Tip**: This is one area where phpMyAdmin's UI table builder is faster. We're working on improving this in WhoDB.
+</Accordion>
+
+<Accordion title="View and Edit Stored Procedures">
+**In WhoDB:**
+Currently, stored procedures are shown in Explore view but must be edited via queries in Scratchpad.
+
+We're adding visual stored procedure editing in upcoming releases.
+</Accordion>
+
+<Accordion title="Check User Privileges">
+**In WhoDB:**
+1. Open Scratchpad
+2. Run privilege checking queries:
+   - PostgreSQL: `SELECT * FROM information_schema.table_privileges;`
+   - MySQL: `SELECT * FROM mysql.user;`
+3. Results appear in grid
+
+This requires more SQL knowledge than phpMyAdmin's UI, but it's more transparent.
+</Accordion>
+
+<Accordion title="Backup Your Database">
+**In WhoDB:**
+1. Go to Data view or Scratchpad
+2. Export entire table with "Export All" as SQL format
+3. Save file as backup
+
+For full database backups, use command-line tools:
+```bash
+# PostgreSQL
+pg_dump dbname > backup.sql
+
+# MySQL
+mysqldump -u user -p database > backup.sql
+```
+
+WhoDB's export feature is great for quick data backups, but command-line tools are better for full database administration.
+</Accordion>
+</AccordionGroup>
+
+## What's Different (and Why It's Better)
+
+### No "Structure" Tab Confusion
+
+phpMyAdmin separates data browsing from structure viewing. WhoDB has an **"Explore"** view that shows everything in one intuitive place:
+- Column names and types
+- Primary keys and indexes
+- Constraints and relationships
+- All without SQL knowledge
+
+### Instant Multi-Database Access
+
+Instead of selecting from a dropdown, WhoDB's **sidebar shows your entire database structure** at once. Expand schemas, click any table, and view data instantly.
+
+![Storage Unit List With Sidebar](/images/06-storage-unit-list-with-sidebar.png)
+
+### Better Query Organization
+
+phpMyAdmin runs one query at a time. WhoDB's **Scratchpad** lets you write multiple related queries in different cells and run them independently. Perfect for complex workflows.
+
+![Scratchpad Main View](/images/27-scratchpad-main-view.png)
+
+### Visual Relationships
+
+phpMyAdmin requires you to mentally parse foreign keys from `information_schema`. WhoDB's **Graph view** visualizes your entire schema:
+
+![Graph View Schema Topology](/images/24-graph-view-schema-topology.png)
+
+### Smart Filtering Without SQL
+
+phpMyAdmin forces you to write WHERE clauses for filtering. WhoDB's visual filter builder lets you:
+- Select field
+- Choose operator (=, >, \<, like, etc.)
+- Enter value
+- Filter applies instantly
+
+Perfect for non-SQL developers and quick ad-hoc queries.
+
+## Phasing Out phpMyAdmin
+
+### Week 1: Parallel Usage
+- Keep phpMyAdmin running
+- Use WhoDB for all new tasks
+- Reference phpMyAdmin when you need something familiar
+
+### Week 2: Explore Advanced Features
+- Try Graph visualization
+- Practice multi-cell Scratchpad queries
+- Experiment with filtering
+
+### Week 3: Go All-In
+- Fully switch to WhoDB
+- Delete phpMyAdmin from your stack
+- Enjoy the simpler, cleaner interface
+
+<Tip>
+Most users find WhoDB more intuitive within just a few days. Your muscle memory will switch quickly.
+</Tip>
+
+## Troubleshooting Common Transition Issues
+
+<AccordionGroup>
+<Accordion title="I Can't Find the Table Management Features">
+**Solution**: Look in the **Explore view** rather than a separate "Structure" tab. Click the table in your sidebar, then click the "Explore" tab to see all table details including columns, indexes, and constraints.
+</Accordion>
+
+<Accordion title="Where's My Database Statistics?">
+**Solution**: WhoDB displays key stats in the Explore view. For detailed statistics, use the Scratchpad to query system tables:
+```sql
+-- PostgreSQL
+SELECT schemaname, tablename, pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename))
+FROM pg_tables WHERE schemaname != 'information_schema';
+```
+</Accordion>
+
+<Accordion title="How Do I Use Saved Queries?">
+**Solution**: Write queries in the Scratchpad. They're automatically saved to history, which you can access by clicking the "History" button. You can also save query cells and refer back to them.
+</Accordion>
+
+<Accordion title="The Sidebar Feels Overwhelming">
+**Solution**: Click the collapse arrow next to schema names to hide table lists. Use Cmd/Ctrl+/ to toggle the sidebar visibility entirely. You can customize what's visible.
+</Accordion>
+
+<Accordion title="I Need to Connect to Multiple Databases">
+**Solution**: Create separate browser tabs with different connections. WhoDB supports managing multiple connections simultaneously. Each tab maintains its own session.
+</Accordion>
+</AccordionGroup>
+
+## Advanced Features You'll Love
+
+These are things phpMyAdmin doesn't have that will improve your workflow:
+
+<CardGroup cols={2}>
+<Card title="Mock Data Generation" icon="wand">
+Generate realistic test data instantly for development and testing
+</Card>
+<Card title="SQL Formatting" icon="sparkles">
+Auto-format your queries for readability with Cmd/Ctrl+Shift+F
+</Card>
+<Card title="Query History" icon="history">
+All your past queries are automatically saved and searchable
+</Card>
+<Card title="Inline Editing" icon="pencil">
+Edit cell values directly in the table without opening a dialog
+</Card>
+<Card title="Better Search" icon="binoculars">
+Real-time search highlighting across your entire data view
+</Card>
+<Card title="Bulk Export" icon="download">
+Export selected rows, filtered results, or entire tables in seconds
+</Card>
+</CardGroup>
+
+## Quick Migration Checklist
+
+<Steps>
+<Step title="Install WhoDB">
+Follow the [Installation Guide](/installation) to get WhoDB running
+</Step>
+<Step title="Connect to Your First Database">
+Use the [First Database Connection Guide](/guides/tutorials/first-database-connection)
+</Step>
+<Step title="Browse Your Tables">
+Click tables in the sidebar to view familiar data layouts
+</Step>
+<Step title="Try Filtering">
+Test the visual filter builder to replace WHERE clause writing
+</Step>
+<Step title="Explore Your Schema">
+Click "Graph" to visualize your database structure
+</Step>
+<Step title="Run Queries">
+Switch to Scratchpad and write your first multi-cell query
+</Step>
+<Step title="Export Data">
+Use the export feature to verify it works with your formats
+</Step>
+<Step title="Go All-In">
+Migrate your entire workflow and retire phpMyAdmin
+</Step>
+</Steps>
+
+## Getting Help During Migration
+
+<Warning>
+If you get stuck during migration, don't revert to phpMyAdmin immediately. Try exploring the WhoDB interface for just 10 more minutes—you'll usually find what you're looking for.
+</Warning>
+
+**Resources:**
+- [Complete Beginner's Guide](/guides/complete-beginner) - Start from scratch
+- [Quick Start Guide](/quick-start) - 5-minute overview
+- [Features Documentation](/features/database-connectivity) - Detailed feature guides
+- [FAQ](/resources/faq) - Common questions
+
+## Final Words
+
+The jump from phpMyAdmin to WhoDB is easier than you think. Within a week, you'll be more productive. Within a month, you won't even remember phpMyAdmin's interface. The modern design, powerful features, and developer-friendly workflow are worth the small learning curve.
+
+**Welcome to WhoDB. You've made a great choice.**
+
+<Check>
+Ready to make the switch? Start with the [Installation Guide](/installation) and get WhoDB running in minutes.
+</Check>

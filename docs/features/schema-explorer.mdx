@@ -1,0 +1,485 @@
+---
+title: "Schema Explorer"
+description: "Explore your database schema, view table metadata, columns, indexes, and foreign key relationships"
+---
+
+# Schema Explorer
+
+The Schema Explorer is your window into the structure of your database. It provides detailed information about tables, columns, indexes, constraints, and relationships, helping you understand and navigate your data architecture.
+
+## Overview of Schema Explorer
+
+Once connected to your database, the Schema Explorer displays your complete database structure with an intuitive interface for browsing tables and their metadata.
+
+![Explore View](/images/07-explore-users-table.png)
+
+<Info>
+The Schema Explorer automatically loads when you connect to a database. Use it to navigate your schema before performing queries or data operations.
+</Info>
+
+## Viewing Table Metadata
+
+When you select a table in the Schema Explorer, comprehensive metadata about that table is displayed, including column definitions, constraints, and indexes.
+
+![Table Metadata](/images/08-explore-table-metadata.png)
+
+### Understanding Table Information
+
+<AccordionGroup>
+<Accordion title="Table Information">
+Basic table details including:
+- **Table Name**: The name of the table in your database
+- **Row Count**: Approximate number of rows (updated periodically)
+- **Storage Size**: Total storage used by the table
+- **Created**: When the table was created
+- **Modified**: Last modification time
+- **Type**: Base table, view, temporary table, etc.
+</Accordion>
+<Accordion title="Engine and Charset">
+For MySQL databases:
+- **Engine**: MyISAM, InnoDB, or other storage engine
+- **Charset**: Default character encoding for the table
+- **Collation**: How string comparisons are performed
+</Accordion>
+<Accordion title="Table Statistics">
+Performance-related information:
+- **Avg Row Size**: Average size of individual rows
+- **Data Length**: Space used by table data
+- **Index Length**: Space used by indexes
+- **Free Space**: Unused space in the table
+</Accordion>
+</AccordionGroup>
+
+## Exploring Columns
+
+Each table contains columns with specific data types and constraints. The Schema Explorer provides detailed information about each column.
+
+<Steps>
+<Step title="Select a Table">
+Click on any table in the left sidebar to view its columns.
+</Step>
+<Step title="View Column Details">
+The columns section displays:
+- **Column Name**: Name of the column
+- **Data Type**: PostgreSQL/MySQL data type (VARCHAR, INT, TIMESTAMP, JSON, etc.)
+- **Nullable**: Whether NULL values are allowed
+- **Default**: Default value when inserting rows without specifying this column
+- **Constraints**: Unique, check, or other constraints
+</Step>
+<Step title="Inspect Column Properties">
+<CodeGroup>
+```text Standard Columns
+Column Name: email
+Type: VARCHAR(255)
+Nullable: No
+Collation: utf8mb4_unicode_ci
+Default: None
+```
+```text Timestamp Columns
+Column Name: created_at
+Type: TIMESTAMP
+Nullable: No
+Default: CURRENT_TIMESTAMP
+On Update: CURRENT_TIMESTAMP
+```
+```text JSON Columns
+Column Name: metadata
+Type: JSON
+Nullable: Yes
+Default: None
+Comment: Stores additional user data
+```
+</CodeGroup>
+</Step>
+</Steps>
+
+### Column Data Types
+
+WhoDB recognizes and displays all standard database data types:
+
+<CardGroup cols={3}>
+<Card title="Text Types" icon="type">
+VARCHAR, CHAR, TEXT, STRING
+</Card>
+<Card title="Numeric Types" icon="calculator">
+INT, BIGINT, FLOAT, DECIMAL, NUMERIC
+</Card>
+<Card title="Date/Time" icon="calendar">
+DATE, TIME, TIMESTAMP, DATETIME, INTERVAL
+</Card>
+<Card title="Boolean" icon="toggle">
+BOOLEAN, BIT, TINYINT(1)
+</Card>
+<Card title="Special Types" icon="star">
+JSON, UUID, ARRAY, ENUM, BLOB
+</Card>
+<Card title="Database-Specific" icon="database">
+PostGIS types, MongoDB documents
+</Card>
+</CardGroup>
+
+<Tip>
+Hover over column names to see additional details like comments and constraints.
+</Tip>
+
+## Primary Keys and Constraints
+
+Understanding primary keys and other constraints is critical for database design. The Schema Explorer highlights these essential elements.
+
+![Primary Key Column](/images/98-explore-primary-key-column.png)
+
+### Primary Key Identification
+
+<AccordionGroup>
+<Accordion title="Primary Keys">
+Primary keys uniquely identify each row in a table:
+- **Single Column PK**: Most common type (e.g., `id` INT PRIMARY KEY)
+- **Composite PK**: Multiple columns form the primary key
+- **Auto-Increment**: ID automatically generates with each new row
+- **Symbol**: Indicated by a key icon in the Schema Explorer
+
+<Note>
+Every table should have a primary key. Tables without primary keys can be challenging to update or delete specific rows.
+</Note>
+</Accordion>
+<Accordion title="Unique Constraints">
+Ensure column values are unique across all rows:
+- **Single Column**: Unique constraint on one column (e.g., email)
+- **Composite Unique**: Combination of columns must be unique
+- **Null Handling**: Most databases allow multiple NULL values in unique columns
+</Accordion>
+<Accordion title="Check Constraints">
+Enforce business logic at the database level:
+```sql
+-- Example: age must be between 0 and 150
+ALTER TABLE users ADD CONSTRAINT age_check CHECK (age >= 0 AND age <= 150);
+```
+</Accordion>
+<Accordion title="Not Null Constraints">
+Require that column always has a value:
+- Marked as "NOT NULL" or "Nullable: No" in the Schema Explorer
+- Prevents incomplete data entries
+</Accordion>
+</AccordionGroup>
+
+<Warning>
+Pay special attention to nullable columns. Queries must handle NULL values appropriately.
+</Warning>
+
+## Foreign Keys and Relationships
+
+Foreign keys establish relationships between tables, maintaining data integrity and enabling joins. The Schema Explorer visualizes these relationships clearly.
+
+![Foreign Key Columns](/images/99-explore-foreign-key-columns.png)
+
+### Understanding Foreign Keys
+
+<Steps>
+<Step title="Identify Foreign Key Columns">
+Foreign key columns are marked with a relationship icon in the Schema Explorer. They reference primary keys in other tables.
+</Step>
+<Step title="View Relationship Details">
+For each foreign key, understand:
+- **Referenced Table**: Which table this column points to
+- **Referenced Column**: Which column in the other table
+- **Cardinality**: One-to-many, one-to-one, or many-to-many
+- **Cascade Rules**: What happens when referenced rows are deleted/updated
+</Step>
+<Step title="Explore Related Data">
+<CodeGroup>
+```text One-to-Many Relationship
+Table: orders
+Column: customer_id
+↓ References
+Table: customers
+Column: id
+
+Each customer can have many orders
+```
+```text One-to-One Relationship
+Table: users
+Column: profile_id
+↓ References
+Table: profiles
+Column: id
+
+Each user has exactly one profile
+```
+</CodeGroup>
+</Step>
+</Steps>
+
+### Foreign Key Options
+
+<AccordionGroup>
+<Accordion title="ON DELETE Behavior">
+- **RESTRICT**: Prevents deletion if foreign key references exist
+- **CASCADE**: Automatically deletes referencing rows
+- **SET NULL**: Sets foreign key to NULL when referenced row is deleted
+- **SET DEFAULT**: Sets to default value when referenced row is deleted
+</Accordion>
+<Accordion title="ON UPDATE Behavior">
+- **RESTRICT**: Prevents updating if foreign key references exist
+- **CASCADE**: Automatically updates foreign key values
+- **SET NULL**: Sets foreign key to NULL when referenced row is updated
+- **SET DEFAULT**: Sets to default value when referenced row is updated
+</Accordion>
+<Accordion title="Deferrable Constraints">
+For databases supporting deferred constraint checking:
+- **Immediate**: Check constraint immediately after each statement
+- **Deferred**: Check constraint at transaction end
+- Useful for loading data in specific orders
+</Accordion>
+</AccordionGroup>
+
+<Info>
+Foreign key constraints ensure referential integrity—you cannot have an order for a non-existent customer.
+</Info>
+
+## Indexes and Performance
+
+Indexes dramatically improve query performance by allowing the database to find data without scanning entire tables. The Schema Explorer displays all indexes on each table.
+
+![Table with Indexes](/images/100-explore-table-with-indexes.png)
+
+### Understanding Indexes
+
+<Steps>
+<Step title="View Index List">
+Each table displays its indexes with key information:
+- **Index Name**: Name of the index
+- **Type**: B-tree, Hash, GiST, GIN, or BRIN (database-dependent)
+- **Columns**: Which columns the index covers
+- **Unique**: Whether the index enforces uniqueness
+- **Size**: Storage space used by the index
+</Step>
+<Step title="Identify Index Types">
+<CardGroup cols={2}>
+<Card title="Primary Key Index" icon="key">
+Automatically created, ensures uniqueness, used for fast row lookup
+</Card>
+<Card title="Unique Index" icon="lock">
+Similar to PK, enforces uniqueness across column(s)
+</Card>
+<Card title="Regular Index" icon="index">
+Speed up filtering, joins, and sorting operations
+</Card>
+<Card title="Composite Index" icon="layers">
+Indexes on multiple columns for complex queries
+</Card>
+</CardGroup>
+</Step>
+<Step title="Analyze Index Performance">
+<CodeGroup>
+```text Good Index Examples
+-- Single column frequently used in WHERE clause
+CREATE INDEX idx_email ON users(email);
+
+-- Support for JOIN operations
+CREATE INDEX idx_user_id ON orders(user_id);
+
+-- Composite index for common queries
+CREATE INDEX idx_user_date ON orders(user_id, order_date);
+
+-- Partial index for specific data
+CREATE INDEX idx_active_users ON users(id) WHERE status = 'active';
+```
+</CodeGroup>
+</Step>
+</Steps>
+
+### Index Types by Database
+
+<AccordionGroup>
+<Accordion title="PostgreSQL Index Types">
+- **B-tree**: General purpose, default for most queries
+- **Hash**: Fast equality comparisons
+- **GiST**: Geographic and geometric data
+- **GIN**: Full-text search and array queries
+- **BRIN**: Very large tables, time-series data
+</Accordion>
+<Accordion title="MySQL Index Types">
+- **B-tree**: Standard index type
+- **Hash**: Memory storage engine only
+- **Full-text**: Text search indexes
+- **Spatial**: Geographic data
+</Accordion>
+<Accordion title="Index Performance">
+Indexes improve SELECT performance but slow down INSERT, UPDATE, DELETE operations. Monitor the impact of new indexes on write performance.
+
+<Warning>
+Too many indexes can harm performance. Index only columns that are frequently used in WHERE clauses, JOINs, or ORDER BY.
+</Warning>
+</Accordion>
+</AccordionGroup>
+
+## Navigating Complex Schemas
+
+Databases with many tables can be overwhelming. WhoDB provides tools for effective navigation.
+
+### Schema Overview
+
+<AccordionGroup>
+<Accordion title="Table Search">
+Use the search functionality to quickly find tables by name. Especially useful in large schemas with hundreds of tables.
+</Accordion>
+<Accordion title="Filtering Tables">
+Filter tables by type:
+- **Base Tables**: Regular tables containing data
+- **Views**: Virtual tables defined by queries
+- **System Tables**: Database system tables
+- **Temporary Tables**: Temporary tables for the session
+</Accordion>
+<Accordion title="Schema Organization">
+For databases supporting multiple schemas (PostgreSQL, MySQL):
+- View tables organized by schema
+- Switch between schemas easily
+- Understanding schema separation helps organize complex databases
+</Accordion>
+</AccordionGroup>
+
+### Relationship Visualization
+
+<Tip>
+Use the Graph View (available from the Data View) to visualize table relationships and see your schema structure at a glance. This helps understand complex relationships at a high level.
+</Tip>
+
+## Column Details Deep Dive
+
+### String Columns
+
+<CodeGroup>
+```text VARCHAR (Variable Character)
+Storage: Only characters you provide
+Typical Uses: Email, names, addresses
+Example: VARCHAR(255)
+```
+```text CHAR (Fixed Character)
+Storage: Always uses full length
+Typical Uses: Codes, country codes
+Example: CHAR(2)
+```
+```text TEXT (Large Text)
+Storage: Unlimited size
+Typical Uses: Descriptions, content
+Example: TEXT
+```
+</CodeGroup>
+
+### Numeric Columns
+
+<CodeGroup>
+```text Small Numbers
+Type: SMALLINT
+Range: -32,768 to 32,767
+Use: Enum-like values, small counts
+```
+```text Regular Numbers
+Type: INT or INTEGER
+Range: -2 billion to 2 billion
+Use: IDs, counts, quantities
+```
+```text Large Numbers
+Type: BIGINT
+Range: -9 quintillion to 9 quintillion
+Use: Millisecond timestamps, large IDs
+```
+```text Decimals
+Type: DECIMAL(10,2)
+Range: Precise decimal values
+Use: Money, prices, measurements
+```
+</CodeGroup>
+
+### Temporal Columns
+
+<AccordionGroup>
+<Accordion title="Date vs DateTime vs Timestamp">
+- **DATE**: Only year, month, day (e.g., 2024-01-15)
+- **TIME**: Only hour, minute, second (e.g., 14:30:00)
+- **DATETIME**: Both date and time, no timezone
+- **TIMESTAMP**: Date and time with timezone awareness
+</Accordion>
+<Accordion title="Default Timestamps">
+Common patterns for tracking:
+```sql
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+```
+</Accordion>
+</AccordionGroup>
+
+## Best Practices for Schema Design
+
+<Steps>
+<Step title="Always Have Primary Keys">
+Every table needs a primary key. Use auto-incrementing IDs or UUIDs.
+
+<Warning>
+Tables without primary keys cannot be properly updated or deleted by specific row.
+</Warning>
+</Step>
+<Step title="Use Appropriate Data Types">
+Choose the right data type for each column:
+- Small numbers: SMALLINT (vs INT or BIGINT)
+- Emails: VARCHAR(255)
+- Prices: DECIMAL(10,2) (not FLOAT)
+- Status: ENUM or specific values
+</Step>
+<Step title="Index Strategically">
+Index columns used frequently in WHERE, JOIN, or ORDER BY clauses. Avoid indexing rarely-queried columns.
+</Step>
+<Step title="Document Constraints">
+Add CHECK constraints for business logic:
+```sql
+ALTER TABLE users ADD CONSTRAINT valid_age CHECK (age >= 0 AND age <= 150);
+```
+</Step>
+<Step title="Use Descriptive Names">
+Column names should clearly indicate their purpose:
+- `email` instead of `e`
+- `created_at` instead of `date`
+- `is_active` instead of `status`
+</Step>
+</Steps>
+
+## Advanced Schema Information
+
+### Views and Virtual Tables
+
+Some tables may actually be views—queries that appear as tables. Views are useful for:
+- Simplifying complex queries
+- Providing different perspectives on data
+- Security (limiting what users can see)
+
+<Note>
+Views are read-only in most databases and cannot be directly modified.
+</Note>
+
+### Materialized Views
+
+Some databases (PostgreSQL, etc.) support materialized views that store query results:
+- Faster queries than regular views
+- Must be refreshed to see new data
+- Use for complex, expensive queries
+
+## Next Steps
+
+<CardGroup cols={2}>
+<Card title="Viewing Data" icon="table" href="/data/viewing-data">
+Start viewing data in your tables
+</Card>
+<Card title="Graph View" icon="node" href="/visualization/graph-view">
+Visualize your schema relationships
+</Card>
+<Card title="Sidebar Navigation" icon="bars" href="/features/sidebar-navigation">
+Master the navigation features
+</Card>
+<Card title="Querying Data" icon="code" href="/query/scratchpad-intro">
+Write queries in the Scratchpad
+</Card>
+</CardGroup>
+
+<Info>
+Now that you understand your schema structure, you're ready to explore the actual data. Head to the Data Viewing guide to learn how to browse and manage your table contents.
+</Info>

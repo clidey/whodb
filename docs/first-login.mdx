@@ -1,0 +1,396 @@
+---
+title: "First Login"
+description: "Connect to your first database with WhoDB"
+---
+
+# First Login
+
+Let's get you connected to your first database. WhoDB supports multiple database types and connection methods, making it easy to start exploring your data.
+
+## The Login Page
+
+When you first access WhoDB, you'll see the login page where you can configure your database connection.
+
+![WhoDB Login Page](/images/01-login-page.png)
+
+<Info>
+The login page is your gateway to all supported databases. Each connection is temporary and not stored by default for security reasons.
+</Info>
+
+## Supported Databases
+
+WhoDB supports a wide range of database systems:
+
+<CardGroup cols={3}>
+<Card title="PostgreSQL" icon="database">
+Full support for PostgreSQL 10+
+</Card>
+<Card title="MySQL" icon="database">
+MySQL 5.7+ and MariaDB
+</Card>
+<Card title="SQLite" icon="database">
+Local SQLite databases
+</Card>
+<Card title="MongoDB" icon="database">
+MongoDB 4.0+
+</Card>
+<Card title="Redis" icon="database">
+Redis 5.0+
+</Card>
+<Card title="More" icon="ellipsis">
+Additional databases in Enterprise Edition
+</Card>
+</CardGroup>
+
+## Selecting Your Database Type
+
+<Steps>
+<Step title="Click Database Type Dropdown">
+The first field allows you to select your database type. Click the dropdown to see all available options.
+
+![Database Type Dropdown](/images/02-login-database-type-dropdown.png)
+</Step>
+<Step title="Choose Your Database">
+Select the database you want to connect to. The form fields will adapt based on your selection.
+
+<AccordionGroup>
+<Accordion title="PostgreSQL">
+Requires: Host, Port, Username, Password, Database Name
+</Accordion>
+<Accordion title="MySQL">
+Requires: Host, Port, Username, Password, Database Name
+</Accordion>
+<Accordion title="SQLite">
+Requires: File Path
+</Accordion>
+<Accordion title="MongoDB">
+Requires: Connection String or Host, Port, Database
+</Accordion>
+<Accordion title="Redis">
+Requires: Host, Port, Password (optional)
+</Accordion>
+</AccordionGroup>
+</Step>
+</Steps>
+
+## Connection Examples
+
+Let's look at connection examples for the most common databases:
+
+### PostgreSQL Connection
+
+![PostgreSQL Selected](/images/52-login-mysql-selected.png)
+
+#### Standard Connection
+```text
+Host: localhost
+Port: 5432
+Username: postgres
+Password: your_password
+Database: myapp_production
+```
+
+#### Connection String
+```text
+postgresql://username:password@localhost:5432/database_name
+```
+
+<Note>
+For PostgreSQL, you can use either individual fields or a connection string
+</Note>
+
+---
+
+### MySQL Connection
+
+![MySQL Selected](/images/52-login-mysql-selected.png)
+
+```text
+Host: localhost
+Port: 3306
+Username: root
+Password: your_password
+Database: my_database
+```
+
+<Tip>
+MySQL connections also support SSL/TLS. Enable this in Advanced Options if your server requires it.
+</Tip>
+
+---
+
+### SQLite Connection
+
+```text
+File Path: /path/to/your/database.db
+```
+
+<Warning>
+For SQLite, ensure WhoDB has read/write permissions to the database file
+</Warning>
+
+---
+
+### MongoDB Connection
+
+![MongoDB Selected](/images/53-login-mongodb-selected.png)
+
+#### Connection String
+```text
+mongodb://username:password@localhost:27017/database_name
+```
+
+Or use individual fields:
+```text
+Host: localhost
+Port: 27017
+Username: admin
+Password: your_password
+Database: myapp
+```
+
+---
+
+### Redis Connection
+
+![Redis Selected](/images/54-login-redis-selected.png)
+
+```text
+Host: localhost
+Port: 6379
+Password: (optional)
+Database: 0
+```
+
+<Info>
+Redis database number defaults to 0. Change this if you're using a different database index.
+</Info>
+
+
+## Advanced Options
+
+Click "Advanced Options" to access additional connection settings:
+
+![Advanced Options](/images/04-login-advanced-options.png)
+
+<AccordionGroup>
+<Accordion title="SSL/TLS Configuration">
+Enable secure connections with SSL certificates:
+- **SSL Mode**: Disable, Require, Verify-CA, or Verify-Full
+- **SSL Certificate**: Path to SSL certificate file
+- **SSL Key**: Path to SSL private key
+- **SSL Root Certificate**: Path to root certificate
+</Accordion>
+<Accordion title="SSH Tunnel">
+Connect through an SSH tunnel for added security:
+- **SSH Host**: SSH server address
+- **SSH Port**: SSH port (usually 22)
+- **SSH Username**: SSH username
+- **SSH Private Key**: Path to private key file
+</Accordion>
+<Accordion title="Connection Pooling">
+Optimize performance with connection pooling:
+- **Max Connections**: Maximum number of connections
+- **Max Idle**: Maximum idle connections
+- **Connection Lifetime**: Maximum connection lifetime
+</Accordion>
+<Accordion title="Query Timeout">
+Set timeouts for long-running queries:
+- **Query Timeout**: Maximum query execution time in seconds
+</Accordion>
+</AccordionGroup>
+
+## Connecting to Your Database
+
+<Steps>
+<Step title="Fill in Connection Details">
+Enter all required information for your database connection. Make sure the credentials are correct and the database is accessible.
+
+![Login Form Filled](/images/03-login-form-filled.png)
+</Step>
+<Step title="Click Connect">
+Click the "Connect" button to establish the connection. WhoDB will validate your credentials and attempt to connect to the database.
+</Step>
+<Step title="Connection Success">
+Upon successful connection, you'll be redirected to the main WhoDB interface showing your database schema and tables.
+</Step>
+</Steps>
+
+<Check>
+Successful connection! You should now see the WhoDB main interface with your database loaded.
+</Check>
+
+## Troubleshooting Connection Issues
+
+<AccordionGroup>
+<Accordion title="Connection Refused">
+**Problem**: Cannot connect to the database server
+
+**Solutions**:
+- Verify the host and port are correct
+- Ensure the database server is running
+- Check firewall rules allow the connection
+- For Docker: use `host.docker.internal` instead of `localhost` for host databases
+</Accordion>
+<Accordion title="Authentication Failed">
+**Problem**: Username or password is incorrect
+
+**Solutions**:
+- Double-check your credentials
+- Ensure the user has the necessary permissions
+- Verify the database name is correct
+- Check if the user is allowed to connect from WhoDB's IP address
+</Accordion>
+<Accordion title="Database Not Found">
+**Problem**: The specified database doesn't exist
+
+**Solutions**:
+- Verify the database name is spelled correctly (case-sensitive in some systems)
+- Ensure the database has been created
+- Check if you have permission to access that database
+</Accordion>
+<Accordion title="SSL Connection Error">
+**Problem**: SSL/TLS connection fails
+
+**Solutions**:
+- Verify SSL certificates are valid and not expired
+- Ensure certificate paths are correct
+- Try different SSL modes (require vs verify-full)
+- Check if the server requires SSL connections
+</Accordion>
+<Accordion title="Timeout Error">
+**Problem**: Connection times out
+
+**Solutions**:
+- Check network connectivity
+- Verify firewall rules
+- Ensure the database server is not overloaded
+- Increase the connection timeout in advanced options
+</Accordion>
+</AccordionGroup>
+
+## Security Best Practices
+
+<Warning>
+Follow these security guidelines when connecting to databases:
+</Warning>
+
+<Steps>
+<Step title="Use Strong Credentials">
+Always use strong, unique passwords for database connections. Never use default passwords in production.
+</Step>
+<Step title="Enable SSL/TLS">
+For production databases, always enable SSL/TLS to encrypt data in transit.
+</Step>
+<Step title="Limit Permissions">
+Create dedicated database users with minimal required permissions for WhoDB access.
+</Step>
+<Step title="Use Read-Only Accounts">
+When only viewing data, use read-only database accounts to prevent accidental modifications.
+</Step>
+<Step title="Network Security">
+Restrict database access to specific IP addresses or use VPNs for remote connections.
+</Step>
+</Steps>
+
+## Connection Examples by Environment
+
+<AccordionGroup>
+<Accordion title="Local Development">
+```text
+# PostgreSQL Local
+Host: localhost
+Port: 5432
+Username: dev_user
+Password: dev_password
+Database: myapp_dev
+```
+
+<Tip>
+For local development, you can use simpler credentials and skip SSL
+</Tip>
+</Accordion>
+<Accordion title="Docker Compose">
+```text
+# Connecting to PostgreSQL in Docker Compose
+Host: postgres
+Port: 5432
+Username: postgres
+Password: password
+Database: app_db
+```
+
+<Note>
+Use the service name from docker-compose.yml as the host when WhoDB runs in the same Docker network
+</Note>
+</Accordion>
+<Accordion title="Production">
+```text
+# Production PostgreSQL with SSL
+Host: db.example.com
+Port: 5432
+Username: whodb_readonly
+Password: strong_random_password
+Database: production_db
+
+Advanced Options:
+SSL Mode: verify-full
+SSL Certificate: /certs/client.crt
+SSL Key: /certs/client.key
+SSL Root Certificate: /certs/ca.crt
+```
+
+<Warning>
+Always use SSL and read-only accounts for production databases
+</Warning>
+</Accordion>
+<Accordion title="Cloud Databases">
+```text
+# AWS RDS PostgreSQL
+Host: mydb.abc123.us-east-1.rds.amazonaws.com
+Port: 5432
+Username: admin
+Password: your_password
+Database: myapp
+
+# Google Cloud SQL
+Host: 10.1.2.3
+Port: 5432
+Username: postgres
+Password: your_password
+Database: mydb
+
+# Azure Database
+Host: myserver.postgres.database.azure.com
+Port: 5432
+Username: admin@myserver
+Password: your_password
+Database: mydb
+```
+
+<Info>
+Cloud databases often require SSL connections. Enable SSL mode in Advanced Options.
+</Info>
+</Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+<Card title="Quick Start Guide" icon="rocket" href="/quick-start">
+Learn the WhoDB interface basics
+</Card>
+<Card title="Schema Explorer" icon="sitemap" href="/features/schema-explorer">
+Explore your database structure
+</Card>
+<Card title="Data Management" icon="table" href="/data/viewing-data">
+Start viewing and managing data
+</Card>
+<Card title="Query Interface" icon="code" href="/query/scratchpad-intro">
+Write and execute queries
+</Card>
+</CardGroup>
+
+<Tip>
+Now that you're connected, head to the **Quick Start Guide** to learn how to navigate WhoDB and start working with your data
+</Tip>

@@ -1,0 +1,1044 @@
+---
+title: "WhoDB for Developers"
+description: "Master WhoDB workflows for local development, debugging, API development, and testing"
+---
+
+# WhoDB for Developers
+
+As a developer, you need fast, reliable tools to inspect database state, debug issues, and generate test data. WhoDB provides a streamlined workflow that integrates seamlessly into your development process, whether you're building features, debugging production issues, or writing tests.
+
+<Tip>
+This guide covers development-specific workflows, keyboard shortcuts, debugging techniques, and integration patterns that accelerate your coding velocity.
+</Tip>
+
+## Setting Up Your Development Environment
+
+### Local Database Connection
+
+For development work, connect WhoDB to your local or development database instance:
+
+<Steps>
+<Step title="Configure Development Database">
+Create a dedicated development database separate from production:
+
+```bash
+# PostgreSQL example
+createdb myapp_dev
+
+# MySQL example
+mysql -e "CREATE DATABASE myapp_dev;"
+
+# SQLite example
+touch dev.db
+```
+
+Use this database exclusively for development and testing.
+</Step>
+
+<Step title="Connect WhoDB">
+Open WhoDB and connect using your development credentials:
+
+![Login Form](/images/03-login-form-filled.png)
+
+Store connection profiles for different environments:
+- **Local**: Your laptop's database
+- **Development**: Shared team development server
+- **Staging**: Pre-production environment
+- **Read-Only Production**: For investigation only
+
+<Warning>
+Never connect WhoDB with write access to production databases during active development.
+</Warning>
+</Step>
+
+<Step title="Verify Schema State">
+After connecting, navigate to your tables and verify the schema matches your application code:
+
+![Explore Table](/images/07-explore-users-table.png)
+
+Check:
+- Column names and types match your ORM models
+- Indexes exist for frequently queried columns
+- Foreign key relationships are correct
+- Constraints align with application logic
+</Step>
+</Steps>
+
+### Integration with Development Tools
+
+WhoDB works alongside your existing development stack:
+
+**IDE Integration**
+- Keep WhoDB open in a separate window while coding
+- Use split-screen to see code and database side-by-side
+- Reference table structure while writing queries in your code
+
+**Terminal Workflow**
+- Run your application in one terminal
+- Keep database logs in another
+- Use WhoDB for quick data verification without context switching
+
+**Docker Development**
+```yaml
+# docker-compose.yml example
+services:
+  db:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: myapp_dev
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: dev123
+```
+
+Connect WhoDB to `localhost:5432` to inspect your containerized database.
+
+## Development Workflows
+
+### Workflow 1: Feature Development with Live Data Inspection
+
+When building new features, use WhoDB to verify database state in real-time:
+
+<Steps>
+<Step title="Start Development">
+Begin writing your feature code:
+
+```javascript
+// Creating a new order
+async function createOrder(userId, items) {
+  const order = await db.orders.create({
+    user_id: userId,
+    status: 'pending',
+    total: calculateTotal(items),
+    created_at: new Date()
+  });
+
+  for (const item of items) {
+    await db.order_items.create({
+      order_id: order.id,
+      product_id: item.product_id,
+      quantity: item.quantity,
+      price: item.price
+    });
+  }
+
+  return order;
+}
+```
+</Step>
+
+<Step title="Execute Your Code">
+Run your application or test:
+
+```bash
+npm run dev
+# or
+npm test
+```
+
+Your code creates database records.
+</Step>
+
+<Step title="Verify in WhoDB">
+Without leaving your IDE, switch to WhoDB and refresh the table view:
+
+![Data View](/images/10-data-view-table-content.png)
+
+Check:
+- Was the order record created?
+- Are all order_items present?
+- Do the totals match your calculations?
+- Are timestamps correct?
+
+**Keyboard Shortcut**: `Cmd/Ctrl + R` to refresh the current view.
+</Step>
+
+<Step title="Debug Issues">
+If something doesn't look right, use filtering to isolate the problem:
+
+![Where Conditions](/images/16-data-view-where-conditions-popover.png)
+
+```sql
+-- Quick debugging query
+SELECT * FROM orders
+WHERE user_id = 123
+ORDER BY created_at DESC
+LIMIT 5;
+```
+
+Identify exactly which records were affected by your code.
+</Step>
+
+<Step title="Iterate">
+Make changes to your code and repeat the process:
+- Update your code
+- Run the application
+- Verify in WhoDB
+- Continue until correct
+
+This tight feedback loop accelerates development significantly.
+</Step>
+</Steps>
+
+### Workflow 2: Debugging Production Issues Locally
+
+When investigating production bugs, reproduce them locally:
+
+<Steps>
+<Step title="Extract Sample Data">
+If you have read-only production access, export a sample dataset:
+
+![Export Dialog](/images/20-data-view-export-dialog.png)
+
+Export as SQL INSERT statements to recreate the exact state locally:
+
+```sql
+-- Export filters to match the problematic records
+SELECT * FROM orders
+WHERE status = 'failed'
+AND created_at > '2024-10-01'
+LIMIT 100;
+```
+
+**Export as SQL** to get INSERT statements you can run locally.
+</Step>
+
+<Step title="Import to Local Database">
+Run the exported SQL on your local database:
+
+```bash
+psql myapp_dev < production_sample.sql
+```
+
+Now you have realistic production data to debug against.
+</Step>
+
+<Step title="Reproduce the Bug">
+Run your application code against this data:
+
+```javascript
+// Test with production-like data
+const problematicOrder = await getOrder(12345);
+await processOrder(problematicOrder); // Does this fail?
+```
+</Step>
+
+<Step title="Inspect Intermediate State">
+Use WhoDB to check database state at each step:
+
+![Scratchpad Query](/images/28-scratchpad-code-editor.png)
+
+Write queries to understand what went wrong:
+
+```sql
+-- Check order state before processing
+SELECT * FROM orders WHERE id = 12345;
+
+-- Check related records
+SELECT * FROM order_items WHERE order_id = 12345;
+
+-- Look for anomalies
+SELECT * FROM order_items
+WHERE order_id = 12345
+AND (quantity <= 0 OR price < 0);
+```
+</Step>
+
+<Step title="Fix and Verify">
+After fixing the bug, verify the fix works with the production sample data. Then test with fresh mock data to ensure it works generally.
+</Step>
+</Steps>
+
+### Workflow 3: API Development and Testing
+
+When building APIs, use WhoDB to verify data operations:
+
+<Steps>
+<Step title="Generate Test Data">
+Before building endpoints, create realistic test data:
+
+![Mock Data Dialog](/images/22-data-view-mock-data-dialog.png)
+
+Generate:
+- 50 users
+- 100 products
+- 200 orders
+- Related order_items
+
+This gives you a realistic dataset for API development.
+</Step>
+
+<Step title="Build Your Endpoint">
+Implement your API endpoint:
+
+```javascript
+// GET /api/orders/:id
+app.get('/api/orders/:id', async (req, res) => {
+  const order = await db.orders.findOne({
+    where: { id: req.params.id },
+    include: ['user', 'items']
+  });
+
+  res.json(order);
+});
+```
+</Step>
+
+<Step title="Test the Endpoint">
+Make API requests:
+
+```bash
+curl http://localhost:3000/api/orders/1
+```
+</Step>
+
+<Step title="Verify Database Queries">
+Check what queries your API generated by looking at recent data:
+
+```sql
+-- Did the endpoint access the right tables?
+SELECT * FROM orders WHERE id = 1;
+
+-- Were relationships loaded correctly?
+SELECT * FROM order_items WHERE order_id = 1;
+```
+
+This helps optimize N+1 query problems and verify your ORM is generating efficient SQL.
+</Step>
+
+<Step title="Test Edge Cases">
+Modify test data to create edge cases:
+
+![Edit Row](/images/14-data-view-edit-row-dialog.png)
+
+- Set `user_id` to NULL (if allowed) and test API response
+- Set `total` to 0 and verify handling
+- Delete related `order_items` and check cascade behavior
+
+Your API should handle these gracefully.
+</Step>
+</Steps>
+
+### Workflow 4: Schema Migration Testing
+
+Before deploying schema changes, test migrations locally:
+
+<Steps>
+<Step title="Backup Current State">
+Export your current development data:
+
+```sql
+-- Export all tables
+pg_dump myapp_dev > backup_before_migration.sql
+```
+</Step>
+
+<Step title="Run Migration">
+Execute your migration:
+
+```bash
+# Django example
+python manage.py migrate
+
+# Rails example
+rails db:migrate
+
+# Prisma example
+npx prisma migrate dev
+```
+</Step>
+
+<Step title="Verify Schema Changes">
+In WhoDB, navigate to the modified tables and check the Explore view:
+
+![Explore Table Metadata](/images/08-explore-table-metadata.png)
+
+Verify:
+- New columns appear with correct types
+- Old columns are removed (if intended)
+- Indexes were created
+- Foreign keys are correct
+- Default values are set
+
+<Note>
+WhoDB automatically refreshes schema information when you navigate between tables.
+</Note>
+</Step>
+
+<Step title="Test with Existing Data">
+Check that existing data survived the migration:
+
+```sql
+-- Verify data integrity
+SELECT COUNT(*) FROM orders; -- Should match pre-migration count
+
+-- Check new columns have expected values
+SELECT id, new_column FROM orders LIMIT 10;
+
+-- Verify relationships still work
+SELECT o.*, u.username
+FROM orders o
+JOIN users u ON o.user_id = u.id
+LIMIT 5;
+```
+</Step>
+
+<Step title="Test Application Code">
+Run your application against the migrated schema:
+
+```bash
+npm test
+```
+
+If tests fail, use WhoDB to investigate which database operations are breaking.
+</Step>
+</Steps>
+
+## Debugging Techniques
+
+### Using Scratchpad for Investigation
+
+The Scratchpad is your primary debugging tool:
+
+![Scratchpad with Multiple Cells](/images/31-scratchpad-multiple-pages.png)
+
+**Technique 1: Step-Through Query Building**
+
+When debugging complex queries, build them incrementally:
+
+```sql
+-- Cell 1: Start simple
+SELECT * FROM orders LIMIT 5;
+
+-- Cell 2: Add filtering
+SELECT * FROM orders WHERE status = 'pending' LIMIT 5;
+
+-- Cell 3: Add joins
+SELECT o.*, u.username
+FROM orders o
+JOIN users u ON o.user_id = u.id
+WHERE o.status = 'pending'
+LIMIT 5;
+
+-- Cell 4: Add aggregation
+SELECT u.username, COUNT(o.id) as pending_orders
+FROM orders o
+JOIN users u ON o.user_id = u.id
+WHERE o.status = 'pending'
+GROUP BY u.username;
+```
+
+Execute each cell independently to see where issues arise.
+
+**Technique 2: Data Validation Queries**
+
+Create cells for common validation checks:
+
+```sql
+-- Check for orphaned records
+SELECT o.id, o.user_id
+FROM orders o
+LEFT JOIN users u ON o.user_id = u.id
+WHERE u.id IS NULL;
+
+-- Check for duplicate emails
+SELECT email, COUNT(*) as count
+FROM users
+GROUP BY email
+HAVING COUNT(*) > 1;
+
+-- Check for invalid states
+SELECT * FROM orders
+WHERE status NOT IN ('pending', 'processing', 'completed', 'cancelled');
+
+-- Check for date anomalies
+SELECT * FROM orders
+WHERE created_at > NOW()
+OR updated_at < created_at;
+```
+
+Save these cells and re-run them after code changes to verify data integrity.
+
+**Technique 3: Performance Profiling**
+
+Use EXPLAIN to understand query performance:
+
+```sql
+-- Check query plan
+EXPLAIN ANALYZE
+SELECT o.*, u.username, COUNT(oi.id) as item_count
+FROM orders o
+JOIN users u ON o.user_id = u.id
+LEFT JOIN order_items oi ON o.id = oi.order_id
+WHERE o.created_at > '2024-01-01'
+GROUP BY o.id, u.username
+ORDER BY o.created_at DESC;
+```
+
+Look for:
+- Sequential scans on large tables (add indexes)
+- High cost estimates (optimize query)
+- Suboptimal join order (rewrite query)
+
+### Query History for Debugging
+
+All queries are saved automatically:
+
+![Query History](/images/33-scratchpad-query-history.png)
+
+Use history to:
+- Recall debugging queries from previous sessions
+- Compare query results before and after code changes
+- Share queries with teammates investigating the same issue
+- Clone and modify previous queries
+
+**Keyboard Shortcut**: `Cmd/Ctrl + H` to open query history.
+
+### Visual Schema Exploration
+
+Use Graph view to understand relationships when debugging join queries:
+
+![Graph View](/images/24-graph-view-schema-topology.png)
+
+Benefits:
+- See which tables are related
+- Understand foreign key directions
+- Identify missing relationships
+- Plan complex joins visually
+
+Click on table nodes to see column details:
+
+![Graph Node Details](/images/26-graph-view-node-details.png)
+
+This is especially useful when working with unfamiliar codebases or inherited databases.
+
+## Mock Data Generation for Testing
+
+### Generating Realistic Test Data
+
+WhoDB's mock data generator creates realistic datasets for testing:
+
+<Steps>
+<Step title="Open Mock Data Generator">
+Navigate to any table and click "Generate Mock Data":
+
+![Mock Data Dialog](/images/22-data-view-mock-data-dialog.png)
+</Step>
+
+<Step title="Configure Generation">
+Choose settings based on your testing needs:
+
+**Development Testing**: 10-50 rows
+- Fast generation
+- Easy to inspect manually
+- Good for feature development
+
+**Integration Testing**: 100-200 rows
+- Realistic data volume
+- Tests pagination
+- Exercises joins with reasonable data
+
+**Performance Testing**: Generate multiple batches
+- 200 rows per batch (UI limit)
+- Run multiple times for larger datasets
+- Test query performance at scale
+</Step>
+
+<Step title="Use Append Mode During Development">
+During active development, use append mode:
+
+![Append Mode](/images/71-mock-data-append-mode.png)
+
+This preserves any manually created test records while adding more data.
+</Step>
+
+<Step title="Verify Generated Data">
+After generation, verify the data looks realistic:
+
+```sql
+-- Check data distribution
+SELECT status, COUNT(*) as count
+FROM orders
+GROUP BY status;
+
+-- Verify relationships
+SELECT o.id, u.id
+FROM orders o
+LEFT JOIN users u ON o.user_id = u.id
+WHERE u.id IS NULL;
+-- Should return no rows
+
+-- Check value ranges
+SELECT
+  MIN(created_at) as earliest,
+  MAX(created_at) as latest,
+  MIN(total) as min_total,
+  MAX(total) as max_total
+FROM orders;
+```
+</Step>
+</Steps>
+
+### Integration Testing with Mock Data
+
+Use generated data for automated testing:
+
+```javascript
+// test/integration/orders.test.js
+describe('Order Processing', () => {
+  beforeAll(async () => {
+    // Generate test data
+    await generateMockData('users', 20);
+    await generateMockData('products', 50);
+    await generateMockData('orders', 100);
+  });
+
+  afterAll(async () => {
+    // Clean up
+    await db.orders.destroy({ where: {} });
+    await db.products.destroy({ where: {} });
+    await db.users.destroy({ where: {} });
+  });
+
+  test('processes pending orders correctly', async () => {
+    const pending = await db.orders.findAll({
+      where: { status: 'pending' }
+    });
+
+    for (const order of pending) {
+      await processOrder(order.id);
+    }
+
+    // Verify in database
+    const stillPending = await db.orders.count({
+      where: { status: 'pending' }
+    });
+    expect(stillPending).toBe(0);
+  });
+});
+```
+
+**Tip**: Use WhoDB during test development to verify that your test setup creates the expected state.
+
+## Productivity Tips and Shortcuts
+
+### Keyboard Shortcuts
+
+Master these shortcuts to work faster:
+
+**Global Navigation**
+- `Cmd/Ctrl + K`: Quick navigation menu
+- `Cmd/Ctrl + /`: Toggle sidebar
+- `Cmd/Ctrl + 1-9`: Switch between tabs
+- `Esc`: Close current dialog/modal
+
+**Data Grid**
+- `Cmd/Ctrl + F`: Search current table
+- `Cmd/Ctrl + R`: Refresh data
+- `Arrow Keys`: Navigate cells
+- `Enter`: Edit selected row
+- `Cmd/Ctrl + A`: Select all rows
+- `Tab` / `Shift + Tab`: Move between cells
+
+**Scratchpad**
+- `Cmd/Ctrl + Enter`: Execute query
+- `Cmd/Ctrl + S`: Save query
+- `Cmd/Ctrl + N`: New cell
+- `Cmd/Ctrl + D`: Duplicate cell
+- `Cmd/Ctrl + Shift + F`: Format query
+- `Cmd/Ctrl + H`: Query history
+- `Cmd/Ctrl + L`: Clear output
+
+**Pro Tip**: Use `Cmd/Ctrl + Shift + F` to auto-format messy SQL queries.
+
+### Multi-Cell Query Organization
+
+Organize your debugging queries using multiple cells:
+
+![Multiple Cells](/images/48-scratchpad-multiple-cells-results.png)
+
+**Organization Pattern 1: By Feature**
+```
+Cell 1: User queries
+Cell 2: Order queries
+Cell 3: Payment queries
+Cell 4: Analytics queries
+```
+
+**Organization Pattern 2: By Purpose**
+```
+Cell 1: Setup/Insert test data
+Cell 2: Main query being developed
+Cell 3: Validation checks
+Cell 4: Cleanup/Delete test data
+```
+
+**Organization Pattern 3: By Version**
+```
+Cell 1: Original query (broken)
+Cell 2: First fix attempt
+Cell 3: Second fix attempt
+Cell 4: Final working version
+```
+
+Execute cells independently with `Cmd/Ctrl + Enter` while focused in that cell.
+
+### Filter Presets for Common Queries
+
+Create reusable filter combinations for frequent checks:
+
+![Where Conditions](/images/39-data-view-multiple-conditions.png)
+
+**Development Filters**:
+- Recent records: `created_at > NOW() - INTERVAL '1 hour'`
+- Test users: `email LIKE '%@test.com'`
+- Failed operations: `status = 'failed'`
+- Your test data: `created_by = 'dev_user_123'`
+
+Save these as Scratchpad cells for easy re-use:
+
+```sql
+-- Recent test user activity
+SELECT * FROM users
+WHERE email LIKE '%@test.com'
+AND created_at > NOW() - INTERVAL '1 day'
+ORDER BY created_at DESC;
+```
+
+### Export for Documentation
+
+Export query results to document API responses or expected data formats:
+
+```sql
+-- Example: Document API response format
+SELECT
+  id,
+  username,
+  email,
+  created_at,
+  status
+FROM users
+WHERE id = 1;
+```
+
+Export as JSON and include in API documentation:
+
+```json
+{
+  "id": 1,
+  "username": "john_doe",
+  "email": "john@example.com",
+  "created_at": "2024-01-15T10:30:00Z",
+  "status": "active"
+}
+```
+
+This ensures documentation matches actual database structure.
+
+## Integration Patterns
+
+### CI/CD Integration
+
+Use WhoDB during local development, then automate database verification in CI:
+
+```yaml
+# .github/workflows/test.yml
+name: Test
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run migrations
+        run: npm run migrate
+      - name: Generate test data
+        run: npm run seed
+      - name: Run tests
+        run: npm test
+```
+
+During development, use WhoDB to:
+1. Verify migrations work locally
+2. Check seed data looks correct
+3. Debug test failures by inspecting database state
+
+### Docker Compose Development Stack
+
+Integrate WhoDB into your development stack:
+
+```yaml
+# docker-compose.yml
+version: '3.8'
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: myapp_dev
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: dev123
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://dev:dev123@db:5432/myapp_dev
+
+volumes:
+  pgdata:
+```
+
+Run your stack:
+```bash
+docker-compose up
+```
+
+Connect WhoDB to `localhost:5432` to inspect your containerized database while your app runs.
+
+### ORM Integration
+
+WhoDB complements ORMs by providing visibility into generated queries:
+
+**Prisma**
+```javascript
+// After running Prisma queries
+const users = await prisma.user.findMany({
+  include: { orders: true }
+});
+
+// Verify in WhoDB what queries Prisma generated
+// Check if it's using efficient joins or N+1 queries
+```
+
+**Sequelize**
+```javascript
+// Enable query logging
+const sequelize = new Sequelize({
+  logging: console.log
+});
+
+// After operations, check actual database state in WhoDB
+// Verify Sequelize's output matches expectations
+```
+
+**TypeORM**
+```javascript
+// After complex queries
+const result = await getRepository(User)
+  .createQueryBuilder("user")
+  .leftJoinAndSelect("user.orders", "order")
+  .where("user.status = :status", { status: "active" })
+  .getMany();
+
+// Use WhoDB to verify the join worked correctly
+// Check if the WHERE clause filtered as expected
+```
+
+## Debugging Common Development Issues
+
+### Issue: ORM Generated Wrong Query
+
+**Symptoms**: Results don't match expectations.
+
+**Debug with WhoDB**:
+1. Enable query logging in your ORM
+2. Copy the generated SQL
+3. Paste into WhoDB Scratchpad
+4. Execute and examine results
+5. Modify query to work correctly
+6. Update ORM code to generate the correct query
+
+```sql
+-- ORM generated this (inefficient):
+SELECT * FROM users;
+-- Then for each user:
+SELECT * FROM orders WHERE user_id = ?;
+
+-- Should be (efficient):
+SELECT u.*, o.*
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id;
+```
+
+### Issue: Migration Failed Partway Through
+
+**Symptoms**: Database in inconsistent state.
+
+**Debug with WhoDB**:
+1. Check which tables were modified:
+   ```sql
+   SELECT table_name FROM information_schema.tables
+   WHERE table_schema = 'public'
+   ORDER BY table_name;
+   ```
+
+2. Check which columns exist:
+   ```sql
+   SELECT column_name, data_type
+   FROM information_schema.columns
+   WHERE table_name = 'problematic_table';
+   ```
+
+3. Manually complete or rollback the migration
+4. Re-run the fixed migration
+
+### Issue: Foreign Key Constraint Violation
+
+**Symptoms**: Insert/update fails with constraint error.
+
+**Debug with WhoDB**:
+1. Check if referenced record exists:
+   ```sql
+   SELECT * FROM users WHERE id = 123;
+   -- Returns nothing? That's your problem
+   ```
+
+2. Find orphaned records:
+   ```sql
+   SELECT o.*
+   FROM orders o
+   LEFT JOIN users u ON o.user_id = u.id
+   WHERE u.id IS NULL;
+   ```
+
+3. Fix data or adjust application code
+
+### Issue: Slow Query in Development
+
+**Symptoms**: Operation takes too long.
+
+**Debug with WhoDB**:
+1. Run the slow query with EXPLAIN:
+   ```sql
+   EXPLAIN ANALYZE
+   SELECT * FROM orders
+   WHERE user_id = 123
+   AND status = 'pending';
+   ```
+
+2. Look for "Seq Scan" on large tables
+3. Add missing indexes:
+   ```sql
+   CREATE INDEX idx_orders_user_status
+   ON orders(user_id, status);
+   ```
+
+4. Re-run EXPLAIN to verify improvement
+
+## Best Practices
+
+<AccordionGroup>
+<Accordion title="Separate Databases for Different Environments">
+Never mix development and production data. Maintain strict separation:
+- `myapp_dev` for local development
+- `myapp_test` for running tests
+- `myapp_staging` for pre-production testing
+- `myapp_prod` for production (read-only access only)
+</Accordion>
+
+<Accordion title="Version Control Your Test Queries">
+Keep useful debugging and validation queries in version control:
+
+```
+project/
+  sql/
+    debug/
+      check_orphaned_records.sql
+      validate_user_emails.sql
+      find_duplicate_orders.sql
+    performance/
+      slow_queries.sql
+      missing_indexes.sql
+```
+
+Team members can use these when debugging similar issues.
+</Accordion>
+
+<Accordion title="Document Data Anomalies">
+When you discover data issues, document them:
+
+```sql
+-- BUG: Some orders have NULL user_id
+-- Should not happen after 2024-01-15 migration
+-- If found, investigate order creation code
+SELECT * FROM orders WHERE user_id IS NULL;
+```
+
+Include these checks in your test suite.
+</Accordion>
+
+<Accordion title="Clean Up Test Data Regularly">
+Prevent development database bloat:
+
+```sql
+-- Weekly cleanup
+DELETE FROM orders WHERE created_at < NOW() - INTERVAL '7 days';
+DELETE FROM users WHERE email LIKE '%@test.com';
+```
+
+Or regenerate from scratch periodically.
+</Accordion>
+
+<Accordion title="Use Read-Only Connections for Production">
+If you must connect to production, use read-only credentials:
+
+```sql
+-- PostgreSQL
+CREATE ROLE readonly;
+GRANT CONNECT ON DATABASE myapp_prod TO readonly;
+GRANT USAGE ON SCHEMA public TO readonly;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO readonly;
+```
+
+This prevents accidental data modification.
+</Accordion>
+</AccordionGroup>
+
+## Summary
+
+WhoDB accelerates development by providing:
+- Real-time database state inspection during coding
+- Powerful query debugging with Scratchpad
+- Realistic mock data generation for testing
+- Visual schema exploration for understanding relationships
+- Fast keyboard-driven workflows
+
+The tight feedback loop between code changes and database verification catches bugs early and helps you understand exactly how your code interacts with data.
+
+<Check>
+You now have a comprehensive developer toolkit. From feature development through debugging and testing, WhoDB provides the visibility and control you need to build database-backed applications with confidence.
+</Check>
+
+## Next Steps
+
+<CardGroup cols={2}>
+<Card title="QA Testing Guide" icon="vial" href="/guides/roles/qa-testers">
+Learn testing-specific workflows and techniques
+</Card>
+<Card title="Testing & Development" icon="flask" href="/use-cases/testing-development">
+Deep dive into test data generation patterns
+</Card>
+<Card title="Query Interface" icon="code" href="/query/scratchpad-intro">
+Master advanced SQL debugging techniques
+</Card>
+<Card title="Mock Data Generation" icon="database" href="/advanced/mock-data">
+Learn all mock data options and patterns
+</Card>
+</CardGroup>

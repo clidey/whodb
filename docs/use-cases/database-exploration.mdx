@@ -1,0 +1,461 @@
+---
+title: "Database Exploration"
+description: "Learn how to explore unknown databases, discover schemas, understand structure, and visualize relationships"
+---
+
+# Database Exploration
+
+One of WhoDB's core strengths is helping you understand unfamiliar databases. Whether you're onboarding to a new project, inheriting a legacy system, or analyzing a third-party database, WhoDB provides the tools to quickly grasp the structure and relationships.
+
+<Tip>
+This guide is perfect for developers joining new teams, DBAs managing multiple databases, and data analysts exploring new data sources.
+</Tip>
+
+## The Discovery Workflow
+
+When you first connect to an unknown database, follow this systematic approach to build a comprehensive understanding:
+
+<Steps>
+<Step title="Connect and Land">
+After successfully connecting, you'll see the initial view of your database's structure.
+
+![Storage Unit List](/images/05-storage-unit-list.png)
+
+This view shows all the main storage units (tables, views, collections) in your default schema. Take a moment to scan the list and get a sense of scale—how many tables are there? What are they named?
+</Step>
+
+<Step title="Explore the Sidebar">
+Expand the sidebar to see the full organizational structure of your database.
+
+![Sidebar Navigation](/images/06-storage-unit-list-with-sidebar.png)
+
+The sidebar reveals the hierarchy:
+- **Database**: Your current database connection
+- **Schemas**: Logical groupings of tables (in PostgreSQL and MySQL)
+- **Tables/Views/Collections**: Individual storage units
+
+Look for patterns in naming. Do table names use prefixes? Suffixes? This reveals organizational structure and can hint at the business domains.
+</Step>
+
+<Step title="Examine Table Metadata">
+Click the "Explore" tab on any interesting table to view its complete structure.
+
+![Explore Table](/images/07-explore-users-table.png)
+
+This view shows critical information:
+- Column names and data types
+- Primary keys (marked distinctly)
+- Nullable constraints
+- Default values
+
+Take notes on what you observe. Which columns are indexed? Which are required?
+</Step>
+
+<Step title="Review Detailed Metadata">
+For deeper investigation, check the metadata panel showing comprehensive table information.
+
+![Explore Metadata](/images/08-explore-table-metadata.png)
+
+This panel reveals:
+- **Storage statistics**: Row count, size, last modified
+- **Indexes**: What's optimized for fast lookup?
+- **Constraints**: Primary keys, unique constraints, check constraints
+- **Relationships**: Foreign key connections to other tables
+- **Table properties**: Engine, collation, and other database-specific settings
+</Step>
+
+<Step title="Visualize the Entire Schema">
+Switch to the Graph view to see how all tables connect to each other.
+
+![Graph View](/images/24-graph-view-schema-topology.png)
+
+The graph view instantly shows:
+- **Table clusters**: Groups of related tables
+- **Relationship chains**: How data flows through the database
+- **Isolated tables**: Tables with no relationships
+- **Hub tables**: Central tables connected to many others
+
+This visual representation often reveals the true architecture that documentation may not capture.
+</Step>
+
+<Step title="Explore Relationships in Detail">
+Click on table nodes in the graph to see relationship details.
+
+![Graph Node Details](/images/26-graph-view-node-details.png)
+
+For each connection between tables, understand:
+- **Cardinality**: One-to-many, one-to-one, or many-to-many relationships
+- **Foreign keys**: Which columns establish the relationship
+- **Direction**: Parent-to-child or child-to-parent
+- **Purpose**: What business logic does this relationship represent?
+</Step>
+</Steps>
+
+## Understanding Database Structure
+
+### Identifying Table Categories
+
+As you explore, you'll notice tables fall into recognizable patterns:
+
+<AccordionGroup>
+<Accordion title="Core Entity Tables">
+These represent the main business concepts. Look for tables like:
+- `users`
+- `products`
+- `orders`
+- `accounts`
+
+These are typically your starting point for analysis. They contain primary business data and have many relationships.
+</Accordion>
+
+<Accordion title="Transaction Tables">
+These record events and changes over time:
+- `orders`
+- `transactions`
+- `payments`
+- `audit_logs`
+
+They typically have timestamps and reference core entities. Good for time-series analysis.
+</Accordion>
+
+<Accordion title="Lookup/Reference Tables">
+These contain static or slowly-changing data:
+- `countries`
+- `status_types`
+- `categories`
+- `permission_roles`
+
+Usually small and connected via foreign keys. Understanding these helps decode enum-like values.
+</Accordion>
+
+<Accordion title="Junction Tables">
+These enable many-to-many relationships:
+- `user_roles`
+- `product_tags`
+- `course_enrollments`
+
+Typically have composite keys and foreign keys to two other tables. Critical for understanding complex relationships.
+</Accordion>
+
+<Accordion title="System Tables">
+These track metadata and history:
+- `schema_migrations`
+- `job_queue`
+- `event_logs`
+- `analytics_events`
+
+Often prefixed with underscores or special names. May be safe to ignore for initial exploration.
+</Accordion>
+</AccordionGroup>
+
+## Practical Exploration Workflows
+
+### Workflow 1: Map the Data Model
+
+<Steps>
+<Step title="Start with Graph View">
+Open the Graph visualization and take a screenshot for documentation.
+
+Use the layout controls in the graph to arrange nodes logically.
+</Step>
+
+<Step title="Identify Core Entities">
+Look for tables with many outgoing relationships. These are typically your core entities (users, products, orders).
+</Step>
+
+<Step title="Trace Relationships">
+Follow the connections:
+- From core entities, where do relationships lead?
+- Are there circular dependencies?
+- What's the depth of the entity hierarchy?
+</Step>
+
+<Step title="Document the Structure">
+Create a mental (or written) map:
+```
+Users
+├── Orders (1:N)
+│   ├── Order Items (1:N)
+│   │   └── Products (N:1)
+│   └── Payments (1:1)
+└── UserPreferences (1:1)
+```
+</Step>
+
+<Step title="Identify Gaps">
+Look for tables that seem isolated or poorly connected. These might be:
+- New features not yet integrated
+- Historical data kept separate
+- Denormalized copies for performance
+- Administrative/system tables
+</Step>
+</Steps>
+
+### Workflow 2: Understand Column Semantics
+
+Click through tables in explore mode to understand what data each column actually represents:
+
+<AccordionGroup>
+<Accordion title="Column Naming Conventions">
+Look for patterns that reveal meaning:
+- `created_at`, `updated_at`: Timestamps for tracking
+- `is_active`, `is_deleted`: Boolean flags
+- `_id`: Identifiers and foreign keys
+- `_type`: Discriminator columns for inheritance
+- `status`: Categorical values (often enum)
+
+Understanding these patterns saves investigation time.
+</Accordion>
+
+<Accordion title="Data Type Meanings">
+Different databases use types differently:
+- **VARCHAR(255)**: Short text, often names or identifiers
+- **TEXT**: Long text, descriptions or content
+- **DECIMAL/NUMERIC**: Precise values like money
+- **INTEGER vs BIGINT**: Check for potential overflow concerns
+- **ENUM**: Fixed set of values in PostgreSQL
+- **JSON/JSONB**: Flexible nested structures
+
+The data type often hints at what the column represents.
+</Accordion>
+
+<Accordion title="Constraint Meanings">
+- **NOT NULL**: Required data, always populated
+- **UNIQUE**: No duplicates, often for identifiers
+- **DEFAULT**: Automatic values, reveals business logic
+- **CHECK**: Validation rules, defines data constraints
+- **Foreign Key**: Cross-table references, defines relationships
+
+Constraints reveal business rules embedded in the schema.
+</Accordion>
+</AccordionGroup>
+
+### Workflow 3: Explore Data Samples
+
+To understand what data actually exists:
+
+<Steps>
+<Step title="Open a Table">
+Click on a table to view its data in the main grid.
+
+![Data View](/images/09-data-view-users-table.png)
+
+Start with smaller tables or reference tables first—they're easier to understand quickly.
+</Step>
+
+<Step title="Scan the Data">
+Don't just look at structure; look at actual values:
+- What are real examples of IDs?
+- What date ranges are represented?
+- Are there many NULL values?
+- What's the scale—10 rows or 10 million?
+
+This reveals much about how the table is actually used.
+</Step>
+
+<Step title="Use Filtering">
+Apply filters to understand data patterns:
+
+![Filter UI](/images/16-data-view-where-conditions-popover.png)
+
+- Filter by status to see different states of data
+- Filter by date to understand temporal patterns
+- Filter to find edge cases and exceptions
+</Step>
+
+<Step title="Search for Examples">
+Use search to find specific patterns:
+
+![Search Highlight](/images/19-data-view-search-highlight.png)
+
+For instance, search for "test" or "admin" to find system records. Search for specific user IDs to trace their data through the system.
+</Step>
+
+<Step title="Review Data Quality">
+Look for red flags:
+- Many NULL values might indicate unused columns
+- Unusual data patterns might indicate legacy data
+- Inconsistent formats might reveal data entry problems
+- Extreme values (very old dates, huge numbers) might indicate data quality issues
+</Step>
+</Steps>
+
+### Workflow 4: Create Ad-Hoc Queries for Investigation
+
+When basic exploration isn't enough, use the Scratchpad for deeper analysis:
+
+<Steps>
+<Step title="Open the Scratchpad">
+Navigate to the Scratchpad view for SQL query execution.
+
+![Scratchpad](/images/23-data-view-embedded-scratchpad.png)
+
+You can also access a quick scratchpad directly from the data view.
+</Step>
+
+<Step title="Write Discovery Queries">
+Write queries that answer specific questions about the structure:
+
+```sql
+-- Find all tables and their row counts
+SELECT table_name, row_count
+FROM information_schema.tables
+WHERE table_schema = 'public'
+ORDER BY row_count DESC;
+
+-- Find unused columns (columns that are mostly NULL)
+SELECT column_name, COUNT(*) as non_null_count
+FROM your_table
+GROUP BY column_name
+HAVING COUNT(*) < (SELECT COUNT(*) FROM your_table) * 0.01;
+
+-- Find foreign key relationships
+SELECT
+  tc.table_name,
+  kcu.column_name,
+  ccu.table_name AS foreign_table_name
+FROM information_schema.table_constraints AS tc
+JOIN information_schema.key_column_usage AS kcu
+  ON tc.constraint_name = kcu.constraint_name
+JOIN information_schema.constraint_column_usage AS ccu
+  ON ccu.constraint_name = tc.constraint_name
+WHERE tc.constraint_type = 'FOREIGN KEY';
+```
+</Step>
+
+<Step title="Examine Results">
+Run the query and study the results. These metadata queries often reveal:
+- Tables you didn't see in the sidebar (views, temporary tables)
+- Relationships not immediately obvious
+- Data distribution and scale
+</Step>
+</Steps>
+
+## Key Insights to Discover
+
+As you explore, document these critical insights:
+
+<CardGroup cols={2}>
+<Card title="Scale of the Database">
+Total number of tables, rows in major tables, estimated data size. This determines what queries are safe to run.
+</Card>
+
+<Card title="Core Entity Model">
+The 3-5 most important tables and how they relate. This is your mental model of the database.
+</Card>
+
+<Card title="Business Rules">
+Constraints and relationships that encode business logic. These reveal what operations are valid.
+</Card>
+
+<Card title="Data Completeness">
+Which tables are actively maintained vs. historical. Which columns are reliably populated.
+</Card>
+
+<Card title="Integration Points">
+Tables that connect to external systems, API data, or third-party services. Often marked by special naming or structure.
+</Card>
+
+<Card title="Performance Hot Spots">
+Heavily indexed tables or tables with special handling. These are typically your most-queried tables.
+</Card>
+</CardGroup>
+
+## Tips for Efficient Exploration
+
+<AccordionGroup>
+<Accordion title="Start with README or Documentation">
+Check if the repository has documentation, entity diagrams, or SQL schema files. This provides context for your exploration.
+</Accordion>
+
+<Accordion title="Use Consistent Naming Patterns">
+Learn the naming conventions early. Understanding patterns means you can predict table and column names.
+</Accordion>
+
+<Accordion title="Create a Schema Diagram">
+Export the graph view as a reference. Having a visual schema saved locally is invaluable.
+</Accordion>
+
+<Accordion title="Test on Read-Only Replicas">
+Always explore on development or read-only databases first, not production.
+</Accordion>
+
+<Accordion title="Ask Existing Team Members">
+While WhoDB helps you discover structure, talking to someone familiar with the system saves time on interpretation.
+</Accordion>
+
+<Accordion title="Document as You Go">
+Keep notes on what you discover. Future you (and team members) will appreciate the documentation.
+</Accordion>
+
+<Accordion title="Look for Comments in Code">
+Database schemas often have comments or descriptions. Check the table/column comments in the metadata view.
+</Accordion>
+</AccordionGroup>
+
+## Common Exploration Challenges & Solutions
+
+<AccordionGroup>
+<Accordion title="Database Too Large">
+If your database has hundreds of tables:
+- Filter by schema (if using PostgreSQL/MySQL)
+- Start with the most recently modified tables
+- Look for tables with "active" in the name
+- Check git history for schema changes
+- Use the graph view to identify clusters
+</Accordion>
+
+<Accordion title="Poor Naming Conventions">
+If table/column names don't clearly indicate purpose:
+- Read all column names in each table carefully
+- Look at actual data values to understand purpose
+- Check for comments or descriptions in metadata
+- Look for patterns in foreign keys
+- Write queries to understand relationships
+</Accordion>
+
+<Accordion title="Complex Denormalization">
+If data seems duplicated across tables:
+- Check for shadow columns (e.g., `user_name` in both `users` and `orders`)
+- This often indicates performance optimizations or data warehousing
+- Track back to the source of truth table
+- Understand when denormalized data is updated
+</Accordion>
+
+<Accordion title="Historical or Legacy Data">
+If you find tables that seem unused:
+- Check if they have foreign key relationships
+- Look at row counts and last modified dates
+- These might be:
+  - Legacy features no longer in use
+  - Historical data kept for compliance
+  - Migration staging tables
+  - Development or test data accidentally left behind
+</Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+Now that you've explored the database structure, you're ready for:
+
+<CardGroup cols={2}>
+<Card title="Data Analysis" href="/use-cases/data-analysis">
+Run analysis queries and export findings
+</Card>
+
+<Card title="Testing & Development" href="/use-cases/testing-development">
+Use mock data and testing workflows
+</Card>
+
+<Card title="Query Reference" href="/query/scratchpad-intro">
+Master advanced SQL queries
+</Card>
+
+<Card title="Export Options" href="/advanced/export-options">
+Learn how to export and share data
+</Card>
+</CardGroup>
+
+<Check>
+You now have the tools to systematically explore any database, understand its structure, and quickly become productive with new systems. The combination of visual schema exploration, metadata examination, and data sampling provides a comprehensive discovery process.
+</Check>

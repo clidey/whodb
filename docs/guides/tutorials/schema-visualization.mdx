@@ -1,0 +1,645 @@
+---
+title: "Schema Visualization with Graph View"
+description: "Master WhoDB's Graph view to visualize database relationships, understand ERD diagrams, and explore table connections"
+---
+
+# Schema Visualization with Graph View
+
+Understanding how tables relate to each other is fundamental to working effectively with databases. While the Explore view shows individual table details, the Graph view reveals the complete picture—how your entire database fits together. This tutorial teaches you to harness the Graph view's power for schema visualization, relationship exploration, and database comprehension.
+
+## What You'll Learn
+
+By the end of this tutorial, you'll be able to:
+- Open and navigate the Graph view
+- Understand different relationship types (one-to-many, many-to-one)
+- Explore table nodes and their connections
+- Use zoom and pan controls for effective navigation
+- Identify foreign keys and understand their meaning
+- Handle complex multi-table relationships
+- Use graph visualization for query planning
+- Troubleshoot missing or incorrect relationships
+
+<Info>
+This tutorial assumes you've completed the [Data Exploration Workflow](/guides/tutorials/data-exploration-workflow) tutorial and understand table structures and basic relationships.
+</Info>
+
+## Prerequisites
+
+Before starting, ensure you:
+- Have WhoDB connected to a database with related tables
+- Understand primary and foreign key concepts
+- Are familiar with the sidebar navigation
+- Have some familiarity with Entity-Relationship Diagrams (ERDs)
+
+## The Graph View Interface
+
+Let's start by exploring the Graph view interface:
+
+![Graph View Schema Topology](/images/24-graph-view-schema-topology.png)
+
+The Graph view displays your database schema as an interactive diagram with:
+
+**Nodes**: Represented as rectangles, each node is a table. Node size relates to how many relationships it has.
+
+**Edges**: Lines connecting nodes represent foreign key relationships. The direction and style indicate the relationship type.
+
+**Canvas**: The background area where you pan and explore your schema. Use your mouse to navigate.
+
+**Controls**: Toolbar at the top with navigation and view options.
+
+Let's examine the control bar:
+
+![Graph View with Controls](/images/25-graph-view-with-controls.png)
+
+**Available Controls**:
+- **Zoom In**: Magnify a section of your schema
+- **Zoom Out**: See more of your schema at once
+- **Fit View**: Auto-fit all nodes to the visible area
+- **Reset**: Return to the default view
+- **Settings**: Configure graph display options
+- **Export**: Save the schema visualization as an image
+
+## Understanding Relationship Types
+
+Different relationships between tables tell different stories about your data. Let's explore them:
+
+### One-to-Many Relationships
+
+The most common relationship type:
+
+![Graph One to Many Relationship](/images/92-graph-one-to-many-relationship.png)
+
+**Structure**: One row in the parent table connects to many rows in the child table.
+
+**Example**:
+- One user can have many orders
+- One category can have many products
+- One company can have many employees
+
+**Visual**: Line from parent (users) to child (orders) table
+
+**Real-world meaning**: When you see a foreign key column in a table (like `user_id` in orders), it creates a one-to-many relationship. Many orders can reference the same user.
+
+### Many-to-One Relationships
+
+Viewed from the opposite direction:
+
+![Graph Many to One Relationship](/images/93-graph-many-to-one-relationship.png)
+
+**Structure**: Many rows in one table reference a single row in another.
+
+**Example**:
+- Many orders belong to one user
+- Many products belong to one category
+- Many employees work at one company
+
+**Visual**: Appears as a line from child to parent
+
+**Note**: Many-to-one is the same relationship as one-to-many, just viewed from the opposite direction.
+
+### Multiple Foreign Keys
+
+Complex tables can have multiple relationships:
+
+![Graph Multiple Foreign Keys](/images/94-graph-multiple-foreign-keys.png)
+
+**Structure**: A single table has multiple foreign keys to different tables.
+
+**Example**: Order_items table with:
+- Foreign key to orders (which order?)
+- Foreign key to products (which product?)
+- Possibly to inventory, pricing, etc.
+
+**Significance**: These relationships tell a complete story. An order_item exists at the intersection of an order and a product, linking them together.
+
+### Isolated Tables
+
+Tables with no relationships:
+
+![Graph Isolated Table Node](/images/91-graph-isolated-table-node.png)
+
+**Why they exist**:
+- Lookup tables (colors, statuses, countries)
+- Standalone data collections
+- Legacy tables no longer in use
+- Temporary or archive tables
+
+**Implications for queries**: Isolated tables can't be joined with other tables—you might use them for reference only.
+
+## Step 1: Opening Graph View
+
+<Steps>
+<Step title="Click Graph Tab">
+In the main interface, click the "Graph" tab at the top to switch from Data or Explore view to Graph view.
+</Step>
+<Step title="Wait for Rendering">
+WhoDB fetches relationship data from your database and renders the graph. This typically takes 2-5 seconds depending on schema complexity.
+</Step>
+<Step title="Initial Display">
+The graph displays with all tables visible. If your schema is complex, it might look crowded. Don't worry—we'll learn navigation techniques next.
+</Step>
+</Steps>
+
+## Step 2: Navigating the Graph
+
+### Zooming
+
+Use zoom controls to focus on specific areas:
+
+**Zoom In**: Click the + button or scroll up with your mouse wheel
+- Magnifies a section of your schema
+- Shows table and column details more clearly
+- Use when: Examining specific relationships or table details
+
+**Zoom Out**: Click the - button or scroll down
+- Shows more of your schema at once
+- Reveals overall structure and organization
+- Use when: Understanding complete database architecture
+
+![Graph Zoomed In View](/images/95-graph-zoomed-in-view.png)
+
+Shows zoomed-in view with relationships clearly visible.
+
+![Graph Zoomed Out View](/images/96-graph-zoomed-out-view.png)
+
+Shows zoomed-out view revealing overall structure.
+
+### Panning
+
+Click and drag the canvas to move around:
+- Move your mouse to an empty area
+- Click and hold, then drag to pan
+- Explore different sections of your schema
+- Release to stop
+
+**Tip**: After zooming in, use panning to explore different areas without constantly zooming out.
+
+### Fit View
+
+![Graph Fit View Control](/images/97-graph-fit-view-control.png)
+
+**Fit View** automatically adjusts zoom and pan to show all tables:
+- Click the fit button
+- All nodes become visible
+- Optimal for getting an overview
+- Use when: You want to see the complete schema at once
+
+## Step 3: Examining Individual Tables
+
+Click on any table node to see its details:
+
+![Graph View Node Details](/images/26-graph-view-node-details.png)
+
+**Node Details Panel** shows:
+
+**Table Name**: The full name of the table (schema.table if applicable)
+
+**Columns**: List of all columns in the table:
+- Column name
+- Data type (VARCHAR, INT, TIMESTAMP, etc.)
+- Nullable indicator (YES/NO)
+- Key type indicators (PK for Primary Key, FK for Foreign Key)
+
+**Relationships**:
+- Foreign keys pointing to other tables
+- Primary keys being referenced by other tables
+
+**Metadata**:
+- Row count (approximate for large tables)
+- Last modified time
+- Table size
+
+## Step 4: Understanding Relationship Flow
+
+Trace the data flow through your relationships:
+
+### Example 1: E-Commerce Database Flow
+
+**Scenario**: You want to understand how orders relate to products.
+
+<Steps>
+<Step title="Start with Orders Table">
+Click the "orders" node. You see it has foreign keys to:
+- users (who placed the order?)
+- order_status (what's the status?)
+</Step>
+<Step title="Trace to Order Items">
+Orders connects to order_items (one order has many line items).
+</Step>
+<Step title="Trace to Products">
+Order_items connects to products (which product in the order?).
+</Step>
+<Step title="Follow to Inventory">
+Products connects to inventory (stock levels).
+</Step>
+<Step title="Complete Picture">
+You now understand the complete flow: User → Order → Order Items → Product → Inventory
+</Step>
+</Steps>
+
+This flow reveals the relationships you'd need to join in a query to answer questions like "How many items did user X order from category Y?"
+
+### Example 2: Blog Database
+
+**Structure**:
+- users (authors)
+- posts (content)
+- comments (user feedback)
+- tags (categorization)
+- post_tags (many-to-many relationship)
+
+**Relationships**:
+- users → posts (one user writes many posts)
+- users → comments (one user writes many comments)
+- posts → comments (one post has many comments)
+- posts → post_tags (one post has many tags)
+- tags → post_tags (one tag appears on many posts)
+
+**Analysis**: The post_tags table is crucial—it's a junction table enabling many-to-many relationships between posts and tags. This is a common pattern for flexible categorization.
+
+## Step 5: Identifying Key Patterns
+
+### Primary Keys
+
+Look for tables with **PK** indicators. Primary keys:
+- Uniquely identify each row
+- Are indexed for fast lookup
+- Often form foreign keys in other tables
+- Are typically the small numeric IDs you see
+
+**Pattern recognition**: Tables with PK columns that appear as FK in many other tables are often central hub tables. For example, `users.id` is referenced in orders, comments, transactions, etc. This makes users a central entity in your database.
+
+### Foreign Keys
+
+Look for tables with **FK** indicators. Foreign keys:
+- Reference primary keys in other tables
+- Enable relationships and data integrity
+- Are used for joining in queries
+- Should be indexed for performance
+
+**Pattern**: Child tables have more FKs. For example, order_items might have FKs to orders, products, and warehouses—it exists at the intersection of multiple entities.
+
+### Junction Tables
+
+Identify many-to-many relationships through junction tables:
+
+**Pattern recognition**:
+- Table has 2+ foreign keys to other tables
+- Few or no non-key columns
+- Names often like "post_tags", "user_roles", "product_categories"
+- Enables flexible relationships without duplication
+
+**Example**: A post_tags table with just `post_id` and `tag_id`:
+```
+post_id | tag_id
+1       | 5
+1       | 7
+1       | 12
+2       | 5
+2       | 9
+```
+
+This allows:
+- One post tagged with multiple tags
+- One tag applied to multiple posts
+- Easy addition/removal of tags without modifying posts or tags tables
+
+## Step 6: Using Relationships for Query Planning
+
+Understanding relationships helps you plan queries:
+
+### Planning a JOIN Query
+
+**Question**: "Get all orders and the customer email for each order"
+
+<Steps>
+<Step title="Identify Source Table">
+Start with orders table (source of data you want)
+</Step>
+<Step title="Identify Relationship">
+In the graph, find the connection from orders to users
+</Step>
+<Step title="Plan the JOIN">
+You need: `SELECT orders.*, users.email FROM orders JOIN users ON orders.user_id = users.id`
+
+The relationship tells you exactly the JOIN condition to use.
+</Step>
+</Steps>
+
+### Planning Multi-Table Analysis
+
+**Question**: "Get product names and the number of times they've been ordered, with average order quantity"
+
+<Steps>
+<Step title="Identify All Tables Needed">
+- products (for product names)
+- order_items (connects orders to products, has quantity)
+- orders (to filter by date if needed)
+</Step>
+<Step title="Trace Relationships in Graph">
+- products → order_items (products has many order_items)
+- order_items → orders (items belong to orders)
+</Step>
+<Step title="Plan the Query">
+```sql
+SELECT
+  p.name,
+  COUNT(oi.id) AS times_ordered,
+  AVG(oi.quantity) AS avg_quantity
+FROM products p
+LEFT JOIN order_items oi ON p.id = oi.product_id
+LEFT JOIN orders o ON oi.order_id = o.id
+GROUP BY p.id, p.name
+ORDER BY times_ordered DESC;
+```
+
+The graph relationships directly translate to the JOINs in your query.
+</Step>
+</Steps>
+
+## Step 7: Exporting and Sharing Your Schema
+
+The Graph view helps you document your database structure:
+
+### Taking Screenshots
+
+1. **Arrange your graph** to show the most important relationships
+2. **Zoom and pan** to focus on specific areas
+3. **Use the export option** to save as an image
+4. **Include in documentation** for onboarding new team members
+
+### Creating Documentation
+
+Use the graph visualization to document your database:
+
+**For developers**:
+- Shows what tables can be joined
+- Clarifies primary/foreign key relationships
+- Helps with query writing
+
+**For stakeholders**:
+- Visual understanding of data structure
+- Relationship complexity overview
+- Data flow from users to analytics
+
+**For data teams**:
+- Data lineage understanding
+- Quality check reference
+- Architecture documentation
+
+## Step 8: Troubleshooting Missing Relationships
+
+Sometimes expected relationships don't appear:
+
+<AccordionGroup>
+<Accordion title="Missing Foreign Key Relationships">
+**Problem**: Expected relationship between tables doesn't show in graph
+
+**Possible Causes**:
+1. Foreign key constraints not defined in database
+2. Relationship implemented via stored procedures
+3. Database uses a different naming convention
+4. Table just doesn't reference the other table
+
+**Solutions**:
+- Check in Explore view if foreign keys are defined
+- Run query to verify referential integrity: `SELECT DISTINCT user_id FROM orders WHERE user_id NOT IN (SELECT id FROM users);`
+- Consult database documentation
+- Define foreign key constraints if they're missing
+</Accordion>
+<Accordion title="Circular References">
+**Problem**: Multiple paths between same tables create confusion
+
+**Causes**:
+- Table has multiple foreign keys to same table
+- Complex many-to-many relationships
+- Bridge or junction tables creating multiple connection paths
+
+**Solutions**:
+- Zoom in on specific relationships
+- Click nodes to read relationship details
+- Trace one relationship at a time
+- Use in your query planning carefully to avoid accidental cross-joins
+</Accordion>
+<Accordion title="Performance Issues">
+**Problem**: Graph takes a long time to render or becomes unresponsive
+
+**Causes**:
+- Very large schema (100+ tables)
+- Complex relationships create dense graph
+- Browser performance limitations
+
+**Solutions**:
+- Zoom in on specific areas
+- Use the filter or search to focus on relevant tables
+- Reload the graph if it becomes unresponsive
+- Consider using the Explore view for detailed table information
+</Accordion>
+<Accordion title="Graph Not Displaying">
+**Problem**: Graph view shows blank or incomplete
+
+**Causes**:
+- Initial load still in progress
+- Browser JavaScript issue
+- Database connection issue
+
+**Solutions**:
+- Wait a few seconds for initial load
+- Refresh the browser
+- Try fitting the view with the fit button
+- Switch to another tab and back to Graph view
+- Verify database connection is active
+</Accordion>
+</AccordionGroup>
+
+## Advanced Graph Navigation
+
+### Searching for Tables
+
+In complex schemas with many tables:
+1. Use the search feature (if available) to locate a specific table
+2. Click the table in results
+3. Graph zooms and pans to show the selected table
+
+### Filtering by Relationship Type
+
+Some Graph implementations allow filtering:
+- Show only tables related to users table
+- Hide isolated tables
+- Show only many-to-many relationships
+- Display only tables with specific naming patterns
+
+### Graph Configuration
+
+Access graph settings to customize display:
+- **Node size**: Based on relationships or custom
+- **Node color**: By table type or category
+- **Edge thickness**: By relationship strength
+- **Layout**: Force-directed, hierarchical, circular
+- **Labels**: Show full table names, column details
+
+## Common Schema Patterns
+
+Recognizing patterns helps you understand database design:
+
+### Hierarchical Data
+
+**Pattern**: Table with self-referencing foreign key
+
+**Example**: `categories` table with `parent_category_id` column
+```
+id | name              | parent_category_id
+1  | Electronics       | NULL
+2  | Computers         | 1
+3  | Laptops           | 2
+4  | Gaming Laptops    | 3
+```
+
+**Visual in graph**: Node with a self-loop
+
+**Query pattern**: Recursive queries or adjacency list traversal
+
+### Time-Series Data
+
+**Pattern**: Tables with timestamp columns and filtering on dates
+
+**Example**: Daily metrics table with created_at
+
+**Graph insight**: Temporal tables often have limited relationships—they reference core entities but aren't referenced much
+
+**Query pattern**: Filter by date range, aggregate by time periods
+
+### Slowly Changing Dimensions
+
+**Pattern**: Audit or history tables tracking changes
+
+**Example**: `user_snapshots` table capturing user state at different times
+
+**Visual**: Relationship from users to snapshots table
+
+**Implication**: Ability to track how data changes over time
+
+### Dimensional Modeling (Data Warehouse)
+
+**Pattern**: Central fact table with many dimension tables
+
+**Example**:
+- fact_sales (central): Sales transactions
+- dim_customer (dimension): Customer information
+- dim_product (dimension): Product details
+- dim_time (dimension): Date/time information
+- dim_location (dimension): Geographic data
+
+**Visual in graph**: Central hub (fact table) with many connections
+
+**Query pattern**: Star queries joining fact to multiple dimensions
+
+## Case Study: Real-World Schema
+
+Let's analyze a complete e-commerce database schema:
+
+**Core entities**:
+- users (customers)
+- products
+- orders
+- order_items (junction between orders and products)
+
+**Supporting tables**:
+- categories (products organized by category)
+- product_reviews (user feedback)
+- inventory (stock levels)
+- shipping_addresses (for delivery)
+- payments (transaction records)
+- coupons (discount codes)
+- user_coupons (applied discounts)
+
+**Relationship flow**:
+1. User places Order
+2. Order contains Order_items
+3. Order_items reference Products
+4. Products belong to Categories
+5. Products have Inventory levels
+6. Order uses Shipping_address
+7. Order has Payment records
+8. User applies Coupons
+
+**Graph visualization reveals**:
+- users is a central hub (orders, reviews, coupons)
+- products is also central (orders via order_items, categories, inventory)
+- Junction tables: order_items, user_coupons connect related entities
+- Isolation: Categories, shipping_addresses have limited relationships
+
+**Query implications**:
+- Most queries start with users or products
+- order_items is the key table for connecting orders to products
+- Complex queries might combine user, order, and product information
+
+## Best Practices for Schema Visualization
+
+<Steps>
+<Step title="Regular Review">
+Periodically view your schema graph to:
+- Spot new relationships added by migrations
+- Identify orphaned or unused tables
+- Recognize emerging patterns
+- Plan future schema changes
+</Step>
+<Step title="Document Key Relationships">
+Use graph visualization to document:
+- Main data entities and their relationships
+- Critical JOINs for common queries
+- Data flow for reporting
+- Onboarding material for new developers
+</Step>
+<Step title="Use for Query Debugging">
+When queries aren't working as expected:
+- Check the graph for expected relationships
+- Verify foreign key columns are correctly named
+- Trace the data flow you expect from the query
+- Find unexpected relationships that might be causing issues
+</Step>
+<Step title="Share with Team">
+Use graph images for team communication:
+- Data team discussions
+- Documentation
+- Pull request reviews of schema changes
+- Presentations to stakeholders
+</Step>
+</Steps>
+
+## Next Steps
+
+You've mastered schema visualization. Continue learning:
+
+<CardGroup cols={2}>
+<Card title="Complex Queries" icon="code" href="/guides/tutorials/building-complex-queries">
+Use your schema understanding to write advanced queries
+</Card>
+<Card title="Data Export" icon="download" href="/guides/tutorials/data-export-analysis">
+Export analyzed data across related tables
+</Card>
+<Card title="Data Exploration" icon="magnifying-glass" href="/guides/tutorials/data-exploration-workflow">
+Apply schema knowledge to efficient data exploration
+</Card>
+<Card title="Graph Features" icon="network-wired" href="/visualization/graph-view">
+Explore advanced graph view features
+</Card>
+</CardGroup>
+
+## Summary
+
+In this tutorial, you learned:
+- How to open and navigate the Graph view
+- Understanding different relationship types (one-to-many, many-to-one)
+- Examining individual table details within the graph
+- Tracing data flow through relationships
+- Identifying key database patterns (primary keys, foreign keys, junction tables)
+- Using relationships for query planning
+- Exporting and documenting your schema
+- Troubleshooting missing or complex relationships
+- Recognizing common schema design patterns
+- Best practices for schema visualization
+
+<Check>
+You now understand your database architecture at a deeper level and can use that knowledge for better queries, data exploration, and team communication.
+</Check>

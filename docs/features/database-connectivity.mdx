@@ -1,0 +1,517 @@
+---
+title: "Database Connectivity"
+description: "Connect to multiple database types with WhoDB, including PostgreSQL, MySQL, MongoDB, and Redis"
+---
+
+# Database Connectivity
+
+WhoDB provides seamless connectivity to multiple database systems with a unified interface. Whether you're working with traditional relational databases or modern NoSQL solutions, WhoDB makes it easy to connect and manage your data.
+
+## Supported Databases
+
+WhoDB supports the most popular databases used in production environments:
+
+<CardGroup cols={3}>
+<Card title="PostgreSQL" icon="database">
+Full support for PostgreSQL 10+, the leading open-source relational database
+</Card>
+<Card title="MySQL" icon="database">
+MySQL 5.7+, MariaDB, and other MySQL-compatible systems
+</Card>
+<Card title="MongoDB" icon="database">
+MongoDB 4.0+, the flexible document-oriented NoSQL database
+</Card>
+<Card title="Redis" icon="database">
+Redis 5.0+, the in-memory data store for caching and sessions
+</Card>
+<Card title="SQLite" icon="database">
+SQLite for local development and embedded databases
+</Card>
+<Card title="More Coming" icon="ellipsis">
+Additional databases in enterprise and community versions
+</Card>
+</CardGroup>
+
+## PostgreSQL Connection
+
+PostgreSQL is one of the most widely-used relational databases. WhoDB provides comprehensive support for PostgreSQL instances with multiple connection options.
+
+![PostgreSQL Login](/images/01-login-page.png)
+
+### Standard PostgreSQL Connection
+
+<Steps>
+<Step title="Select PostgreSQL">
+Open the database type dropdown and select PostgreSQL from the list of available databases.
+
+![Database Type Dropdown](/images/02-login-database-type-dropdown.png)
+</Step>
+<Step title="Fill Connection Details">
+Enter your PostgreSQL connection information in the form fields.
+
+![Login Form](/images/03-login-form-filled.png)
+
+<CodeGroup>
+```text Connection Fields
+Host: localhost
+Port: 5432
+Username: postgres
+Password: your_password
+Database: production_db
+```
+```text Connection String Format
+postgresql://username:password@localhost:5432/database_name
+```
+</CodeGroup>
+</Step>
+<Step title="Configure Advanced Options">
+For production systems, enable SSL/TLS and other security features.
+
+![Advanced Options](/images/04-login-advanced-options.png)
+
+<AccordionGroup>
+<Accordion title="SSL/TLS Configuration">
+- **SSL Mode**: Disable, Require, Verify-CA, or Verify-Full
+- **SSL Certificate**: Path to client certificate
+- **SSL Key**: Path to private key
+- **SSL Root Certificate**: Path to root CA
+</Accordion>
+<Accordion title="SSH Tunnel">
+Securely connect through an SSH tunnel:
+- **SSH Host**: SSH server address
+- **SSH Port**: Usually 22
+- **SSH Username**: Your SSH username
+- **SSH Private Key**: Path to private key
+</Accordion>
+</AccordionGroup>
+</Step>
+</Steps>
+
+<Info>
+PostgreSQL defaults to port 5432. Ensure your firewall allows connections on this port or the custom port you've configured.
+</Info>
+
+### PostgreSQL-Specific Features
+
+PostgreSQL connections in WhoDB unlock advanced capabilities:
+
+- **Full ACID Support**: Transactional queries with complete rollback capabilities
+- **Schema Support**: Work with multiple schemas within a database
+- **Advanced Types**: Support for arrays, JSON, UUID, and custom types
+- **Extensions**: Query systems with PostGIS, hstore, and other extensions
+- **Row-Level Security**: View tables with RLS policies applied
+
+<Tip>
+Use prepared statements for sensitive queries to prevent SQL injection and improve performance.
+</Tip>
+
+## MySQL Connection
+
+MySQL is the world's most popular open-source relational database. WhoDB provides full support for MySQL and MariaDB.
+
+![MySQL Selected](/images/52-login-mysql-selected.png)
+
+### Setting Up MySQL Connection
+
+<Steps>
+<Step title="Select MySQL">
+Choose MySQL from the database type dropdown.
+</Step>
+<Step title="Enter Connection Details">
+<CodeGroup>
+```text MySQL Connection
+Host: localhost
+Port: 3306
+Username: root
+Password: your_password
+Database: myapp_db
+```
+```text MariaDB Connection
+Host: mariadb.example.com
+Port: 3306
+Username: app_user
+Password: secure_password
+Database: application
+```
+</CodeGroup>
+</Step>
+<Step title="Enable SSL if Required">
+For production systems, enable SSL/TLS encryption in Advanced Options.
+
+<Warning>
+MySQL by default does not require SSL. Enable it for any production connections handling sensitive data.
+</Warning>
+</Step>
+</Steps>
+
+### MySQL Connection Best Practices
+
+<AccordionGroup>
+<Accordion title="Character Set Configuration">
+Ensure proper character encoding for international characters:
+```text
+Use utf8mb4 for full UTF-8 support
+```
+</Accordion>
+<Accordion title="Performance Optimization">
+- Set appropriate connection pool size
+- Enable query timeout to prevent runaway queries
+- Use connection limits based on your needs
+</Accordion>
+<Accordion title="MariaDB Compatibility">
+WhoDB fully supports MariaDB 10.5+. Use standard MySQL connection settings; WhoDB automatically detects the database type.
+</Accordion>
+</AccordionGroup>
+
+## MongoDB Connection
+
+MongoDB brings flexibility with its document-oriented NoSQL approach. WhoDB provides intuitive access to MongoDB collections.
+
+![MongoDB Selected](/images/53-login-mongodb-selected.png)
+
+### Connecting to MongoDB
+
+<Steps>
+<Step title="Choose MongoDB">
+Select MongoDB from the database type dropdown.
+</Step>
+<Step title="Configure Connection">
+<CodeGroup>
+```text Connection String
+mongodb://username:password@localhost:27017/database_name
+```
+```text Individual Fields
+Host: localhost
+Port: 27017
+Username: admin
+Password: your_password
+Database: myapp
+```
+```text MongoDB Atlas (Cloud)
+mongodb+srv://username:password@cluster.mongodb.net/database_name
+```
+</CodeGroup>
+</Step>
+<Step title="Set Database Context">
+Specify which database within the MongoDB instance you want to explore.
+
+<Note>
+MongoDB connection strings can include authentication and replica set information. WhoDB handles complex connection strings automatically.
+</Note>
+</Step>
+</Steps>
+
+### MongoDB-Specific Features
+
+- **Document Viewing**: Browse collections with automatic formatting
+- **Schema Inspection**: View document structure and field types
+- **Index Management**: See indexes and their performance impact
+- **Authentication**: Support for standard and SCRAM authentication
+
+<Tip>
+MongoDB collections in WhoDB are displayed as tables, making them familiar to users of relational databases.
+</Tip>
+
+## Redis Connection
+
+Redis is an in-memory data store ideal for caching, sessions, and real-time applications. WhoDB provides a unique view into Redis data structures.
+
+![Redis Selected](/images/54-login-redis-selected.png)
+
+### Connecting to Redis
+
+<Steps>
+<Step title="Select Redis">
+Choose Redis from the database dropdown.
+</Step>
+<Step title="Enter Redis Details">
+<CodeGroup>
+```text Standard Redis
+Host: localhost
+Port: 6379
+Password: (leave empty if none)
+Database: 0
+```
+```text Redis with Password
+Host: redis.example.com
+Port: 6379
+Password: your_redis_password
+Database: 0
+```
+```text Redis Cluster
+Host: node1.cluster.local
+Port: 6379
+Username: default
+Password: cluster_password
+```
+</CodeGroup>
+</Step>
+<Step title="Select Database Index">
+Redis supports multiple databases (0-15 by default). Choose which database you want to explore.
+</Step>
+</Steps>
+
+### Redis-Specific Considerations
+
+<AccordionGroup>
+<Accordion title="Database Selection">
+Redis supports up to 16 databases by default (0-15). Each database is isolated and contains its own keys. Choose the correct database for your use case.
+</Accordion>
+<Accordion title="Data Expiration">
+Redis keys can have TTL (Time To Live). WhoDB shows expiration information when available, but cannot modify TTLs through the UI.
+</Accordion>
+<Accordion title="Key Patterns">
+Browse and filter Redis keys using patterns. WhoDB helps you navigate large Redis instances efficiently.
+</Accordion>
+</AccordionGroup>
+
+<Warning>
+Redis stores data in memory. Exercise caution when making modifications, as changes are permanent and immediate.
+</Warning>
+
+## Connection Options and Security
+
+### All Database Types
+
+<AccordionGroup>
+<Accordion title="SSL/TLS Encryption">
+Enable SSL/TLS for encrypted connections:
+- **Disable**: Unencrypted connections (development only)
+- **Require**: Encrypted connection required
+- **Verify-CA**: Verify server certificate against root CA
+- **Verify-Full**: Full certificate validation (recommended for production)
+</Accordion>
+<Accordion title="SSH Tunneling">
+Connect securely through an SSH tunnel:
+```text
+SSH Host: bastion.example.com
+SSH Port: 22
+SSH Username: ssh_user
+SSH Private Key: /path/to/id_rsa
+```
+Useful for accessing databases behind firewalls or in private networks.
+</Accordion>
+<Accordion title="Connection Pooling">
+Optimize performance with connection pooling:
+- **Max Connections**: Maximum concurrent connections (default varies by database)
+- **Max Idle Time**: How long idle connections remain open
+- **Connection Lifetime**: Maximum time before connection is recycled
+</Accordion>
+<Accordion title="Query Timeout">
+Prevent runaway queries from consuming resources:
+```text
+Query Timeout: 30 seconds (configurable)
+```
+Queries exceeding this timeout will be cancelled automatically.
+</Accordion>
+</AccordionGroup>
+
+## Security Best Practices
+
+<Steps>
+<Step title="Use Strong Credentials">
+Always use strong, unique passwords for database users. Never use default passwords like "password" or "admin" in production.
+
+<Warning>
+Weak credentials are a leading cause of database breaches.
+</Warning>
+</Step>
+<Step title="Enable Encryption">
+Use SSL/TLS for all connections to production databases to encrypt data in transit.
+</Step>
+<Step title="Create Dedicated Users">
+Don't use administrative accounts for routine work. Create dedicated database users with minimal required permissions.
+
+<CodeGroup>
+```sql PostgreSQL Read-Only User
+CREATE USER whodb_readonly WITH PASSWORD 'strong_password';
+GRANT CONNECT ON DATABASE mydb TO whodb_readonly;
+GRANT USAGE ON SCHEMA public TO whodb_readonly;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO whodb_readonly;
+```
+```sql MySQL Read-Only User
+CREATE USER 'whodb_ro'@'localhost' IDENTIFIED BY 'strong_password';
+GRANT SELECT ON myapp.* TO 'whodb_ro'@'localhost';
+FLUSH PRIVILEGES;
+```
+</CodeGroup>
+</Step>
+<Step title="Network Isolation">
+Restrict database access to known IP addresses or use VPNs for remote connections. Consider using firewalls and security groups.
+</Step>
+<Step title="Monitor Connections">
+Keep track of who is accessing your databases and when. Review logs regularly for suspicious activity.
+</Step>
+</Steps>
+
+## Connection Troubleshooting
+
+<AccordionGroup>
+<Accordion title="Connection Refused">
+**Symptom**: "Connection refused" or "Unable to connect"
+
+**Solutions**:
+1. Verify the host and port are correct
+2. Ensure the database service is running
+3. Check firewall rules allow the connection
+4. For Docker containers: use `host.docker.internal` instead of `localhost`
+5. Try connecting with the database's native client tool first (psql, mysql, mongo, etc.)
+</Accordion>
+<Accordion title="Authentication Failed">
+**Symptom**: "Invalid username or password" or "Access denied"
+
+**Solutions**:
+1. Double-check credentials (case-sensitive in many systems)
+2. Verify the database user exists and is active
+3. Ensure the user has permission to connect from your IP address
+4. Check if the user has the correct role/permissions
+5. Reset the password using the database administration tools
+</Accordion>
+<Accordion title="Database Not Found">
+**Symptom**: "Database does not exist" or "Database not accessible"
+
+**Solutions**:
+1. Verify the database name (some systems are case-sensitive)
+2. Ensure the database has been created
+3. Check if the user has permission to access that database
+4. For MySQL: database and schema are the same concept
+5. For PostgreSQL: verify the database exists with `\l` command
+</Accordion>
+<Accordion title="SSL Connection Error">
+**Symptom**: "SSL certificate error" or "Self-signed certificate error"
+
+**Solutions**:
+1. Verify SSL certificates are valid and not expired
+2. Ensure certificate paths are correctly specified
+3. Try different SSL modes (require → verify-ca → verify-full)
+4. For self-signed certificates, use "Require" mode without verification
+5. Check if the server certificate matches the hostname
+</Accordion>
+<Accordion title="Connection Timeout">
+**Symptom**: "Connection timed out" or "Request timeout"
+
+**Solutions**:
+1. Verify network connectivity to the database host
+2. Check firewall rules and security groups
+3. Increase the connection timeout in Advanced Options
+4. Ensure the database server is not overloaded
+5. Try connecting from a different network location
+6. Check for proxy or VPN issues
+</Accordion>
+<Accordion title="SSH Tunnel Issues">
+**Symptom**: "SSH connection failed" or tunnel-related errors
+
+**Solutions**:
+1. Verify SSH credentials and key file permissions
+2. Ensure SSH server is accessible and running
+3. Check SSH port (usually 22) is accessible
+4. Verify the private key file has correct permissions (600)
+5. Try SSH connection manually before configuring in WhoDB
+</Accordion>
+</AccordionGroup>
+
+## Environment-Specific Configurations
+
+### Local Development
+
+<CodeGroup>
+```text PostgreSQL Local
+Host: localhost
+Port: 5432
+Username: dev_user
+Password: dev_password
+Database: myapp_dev
+```
+```text MySQL Local
+Host: 127.0.0.1
+Port: 3306
+Username: root
+Password: root
+Database: dev_db
+```
+</CodeGroup>
+
+<Tip>
+For local development, skip SSL configuration to simplify setup. Focus on security in production.
+</Tip>
+
+### Docker Compose
+
+<CodeGroup>
+```text PostgreSQL in Docker
+Host: postgres (service name from docker-compose.yml)
+Port: 5432
+Username: postgres
+Password: password
+Database: app_db
+```
+```text MongoDB in Docker
+Host: mongodb
+Port: 27017
+Database: myapp
+```
+</CodeGroup>
+
+<Note>
+When WhoDB runs in the same Docker network as your database, use the service name as the host instead of localhost.
+</Note>
+
+### Production Environments
+
+<CodeGroup>
+```text AWS RDS PostgreSQL
+Host: mydb.abc123.us-east-1.rds.amazonaws.com
+Port: 5432
+Username: whodb_user (read-only account)
+Password: strong_random_password
+Database: production_db
+
+Advanced Options:
+SSL Mode: verify-full
+```
+```text Google Cloud SQL
+Host: 10.1.2.3 (private IP)
+Port: 5432
+Username: whodb_readonly
+Password: strong_password
+Database: mydb
+
+Advanced Options:
+SSL Mode: require
+```
+```text Azure Database for PostgreSQL
+Host: myserver.postgres.database.azure.com
+Port: 5432
+Username: admin@myserver
+Password: strong_password
+Database: mydb
+
+Advanced Options:
+SSL Mode: verify-full
+```
+</CodeGroup>
+
+<Warning>
+Always use SSL/TLS and read-only accounts in production. Enable advanced security features and monitor all connections.
+</Warning>
+
+## Next Steps
+
+<CardGroup cols={2}>
+<Card title="Quick Start" icon="rocket" href="/quick-start">
+Learn the WhoDB interface basics
+</Card>
+<Card title="Schema Explorer" icon="sitemap" href="/features/schema-explorer">
+Explore your database structure
+</Card>
+<Card title="Storage Units" icon="box" href="/features/storage-units">
+Manage your storage units
+</Card>
+<Card title="Data Viewing" icon="table" href="/data/viewing-data">
+Start viewing and managing data
+</Card>
+</CardGroup>
+
+<Info>
+You're now ready to connect to your database and start exploring. Use the Schema Explorer to understand your data structure, or jump straight to viewing data.
+</Info>

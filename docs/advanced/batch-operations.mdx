@@ -1,0 +1,514 @@
+---
+title: "Batch Operations"
+description: "Perform bulk actions on multiple rows with row selection and context menus"
+---
+
+# Batch Operations
+
+WhoDB supports efficient batch operations that allow you to select multiple rows and perform actions on them collectively. This is essential for bulk data management, cleanup, and targeted modifications.
+
+<Tip>
+Row selection and batch operations streamline workflows when working with multiple records
+</Tip>
+
+## Overview
+
+Batch operations in WhoDB include:
+
+- **Row selection**: Choose one or multiple rows
+- **Bulk actions**: Perform operations on selected rows
+- **Context menus**: Quick access to batch operations
+- **Selective export**: Export only selected rows
+- **Bulk deletion**: Delete multiple rows at once
+
+![Row Selection Single](/images/44-table-row-selection-single.png)
+
+## Row Selection Methods
+
+### Individual Row Selection
+
+Select a single row by clicking its checkbox:
+
+1. Locate the checkbox at the left of any row
+2. Click to select that row
+3. The row highlights to indicate selection
+4. Action buttons appear for the selected row
+
+**Use for**: Targeting specific records for editing or deletion
+
+### Multiple Row Selection
+
+Select multiple rows to perform batch operations:
+
+<Steps>
+<Step title="Click first row checkbox">
+Click the checkbox for the first row you want to select
+</Step>
+<Step title="Hold Shift and click last row">
+To select a contiguous range of rows, hold Shift and click the last row in your range
+</Step>
+<Step title="Use Ctrl/Cmd+Click">
+To select non-contiguous rows, hold Ctrl (Windows) or Cmd (Mac) and click additional rows
+</Step>
+</Steps>
+
+**Result**: Multiple rows are selected and highlighted
+
+<Note>
+The selection indicator shows how many rows are currently selected (e.g., "3 rows selected")
+</Note>
+
+### Select/Deselect All
+
+Many interfaces include buttons to select or deselect all visible rows:
+
+- **Select All**: Select every row currently displayed
+- **Deselect All**: Clear all selections
+
+These are useful for:
+- Selecting all rows on the current page
+- Selecting all filtered results
+- Clearing selections after batch operations
+
+## Context Menu Operations
+
+### Accessing the Context Menu
+
+Right-click on any row to open the context menu:
+
+![Context Menu](/images/38-table-header-context-menu.png)
+
+The context menu shows available actions for that row or selection.
+
+### Select Row Option
+
+![Select Row from Context Menu](/images/45-context-menu-select-row.png)
+
+One option in the context menu is "Select Row" which:
+
+- Selects the clicked row (or toggles selection)
+- Prepares the row for batch operations
+- Works alongside other selected rows
+
+## Batch Actions
+
+### Available Batch Operations
+
+After selecting rows, several batch operations become available:
+
+#### Export Selected Rows
+
+Export only the rows you've selected:
+
+![Export Selected Rows Mode](/images/46-export-selected-rows-mode.png)
+
+<Steps>
+<Step title="Select rows">
+Choose one or multiple rows using checkboxes
+</Step>
+<Step title="Click Export">
+Access the export function from the action bar
+</Step>
+<Step title="Choose Export Selected">
+Select the "Export Selected" option in the dialog
+</Step>
+<Step title="Select format">
+Choose CSV, Excel, JSON, or SQL format
+</Step>
+<Step title="Download">
+Click Export to download your selected rows
+</Step>
+</Steps>
+
+**Perfect for**:
+- Sharing specific records with colleagues
+- Creating sample datasets for demos
+- Extracting problem records for analysis
+- Exporting customer data for specific queries
+
+**Example**: Select 5 customer records to send to sales team
+
+#### Delete Selected Rows
+
+Remove multiple rows in one operation:
+
+<Warning>
+Deletion is permanent. Always verify selections before confirming.
+</Warning>
+
+<Steps>
+<Step title="Select rows to delete">
+Choose the rows you want to remove
+</Step>
+<Step title="Open context menu">
+Right-click and select "Delete Row" or use action bar delete button
+</Step>
+<Step title="Confirm deletion">
+Accept the confirmation dialog
+</Step>
+<Step title="Verify results">
+Confirm rows were deleted
+</Step>
+</Steps>
+
+**Example workflow**:
+- Filter to status = 'inactive'
+- Select all inactive users (Ctrl+A or Select All button)
+- Delete selected rows to clean up old accounts
+
+**Safety tip**: Always create an export backup before bulk deletion
+
+#### Update Multiple Rows
+
+Update a field value across multiple selected rows:
+
+While individual row editing works on one row at a time, this workflow applies changes to multiple selected rows:
+
+<Steps>
+<Step title="Select rows to update">
+Choose rows that need the same change
+</Step>
+<Step title="Access bulk edit">
+Right-click context menu or action bar option
+</Step>
+<Step title="Select field to update">
+Choose which column to modify
+</Step>
+<Step title="Enter new value">
+Provide the new value for all selected rows
+</Step>
+<Step title="Confirm">
+Apply the change to all selected rows
+</Step>
+</Steps>
+
+**Example scenarios**:
+- Change status from 'pending' to 'approved' for multiple rows
+- Update last_reviewed date for a group of records
+- Mark multiple items as 'inactive'
+
+## Real-World Batch Operation Workflows
+
+### Cleaning Up Old Data
+
+Remove records that meet cleanup criteria:
+
+<Steps>
+<Step title="Filter old records">
+Use WHERE conditions: created_at < '2020-01-01' AND status = 'deleted'
+</Step>
+<Step title="Export for backup">
+Export filtered results to CSV for archive
+</Step>
+<Step title="Select all filtered rows">
+Use Select All button on filtered results
+</Step>
+<Step title="Delete selected rows">
+Remove all selected rows
+</Step>
+<Step title="Verify deletion">
+Confirm count decreased and backups were saved
+</Step>
+</Steps>
+
+**Result**: Clean database with archived backups
+
+### Bulk Status Updates
+
+Update multiple records to reflect a new state:
+
+<Steps>
+<Step title="Filter to target records">
+Use WHERE conditions: status = 'pending' AND created_at < '2024-09-01'
+</Step>
+<Step title="Select filtered rows">
+Click Select All to choose all pending items
+</Step>
+<Step title="Batch update status">
+Change status to 'archived' for all selected
+</Step>
+<Step title="Verify updates">
+Filter again to confirm change took effect
+</Step>
+</Steps>
+
+**Result**: Multiple records updated efficiently
+
+### Data Export and Analysis
+
+Extract specific record sets for external analysis:
+
+<Steps>
+<Step title="Filter to relevant data">
+Use WHERE conditions: department = 'Sales' AND year = 2024
+</Step>
+<Step title="Select filtered rows">
+Select all results or specific rows
+</Step>
+<Step title="Export selected rows">
+Choose Excel format for spreadsheet analysis
+</Step>
+<Step title="Download file">
+Save to computer for further analysis
+</Step>
+<Step title="Analyze externally">
+Use Excel, Tableau, or other tools
+</Step>
+</Steps>
+
+**Result**: Sales department data in Excel ready for analysis
+
+### Archival Workflow
+
+Move large amounts of old data out of active tables:
+
+<Steps>
+<Step title="Identify old records">
+Filter by: created_at < '2023-01-01'
+</Step>
+<Step title="Export for archive">
+Export all matching rows to JSON/SQL for backup
+</Step>
+<Step title="Store securely">
+Save backup file to archive location
+</Step>
+<Step title="Delete from active table">
+Select filtered rows and delete
+</Step>
+<Step title="Verify results">
+Confirm counts and backups succeeded
+</Step>
+</Steps>
+
+**Result**: Smaller active table with archived data safely backed up
+
+## Selection Best Practices
+
+### Clear Selection Before New Operations
+
+Always clear selections between operations:
+
+1. After completing an action with selected rows
+2. Before starting a different batch operation
+3. Click "Deselect All" or Select All then Deselect
+
+This prevents accidental operations on stale selections.
+
+### Verify Before Destructive Operations
+
+For deletion and bulk updates:
+
+<Accordion title="Verification Checklist">
+- [ ] Correct rows are selected (spot check a few)
+- [ ] Selection count matches expectation
+- [ ] Backup or export completed (for deletion)
+- [ ] No important data in selected rows
+- [ ] Confirmation dialog shown and read carefully
+- [ ] Ready to proceed with operation
+</Accordion>
+
+### Use Filters with Selection
+
+Combine filtering and selection for precision:
+
+<Steps>
+<Step title="Apply WHERE conditions">
+Narrow to specific data subset
+</Step>
+<Step title="Review filtered results">
+Verify filter caught intended rows
+</Step>
+<Step title="Select appropriate rows">
+Choose all matching rows or specific subset
+</Step>
+<Step title="Perform operation">
+Execute batch operation on selection
+</Step>
+</Steps>
+
+**Example**: Filter to inactive users (status = 'inactive'), select all, then delete
+
+### Selective vs. All Selection
+
+Choose the right approach:
+
+### Select All (Fast)
+
+Use when:
+- All visible/filtered rows need the same operation
+- You've already filtered to the correct subset
+- Time is critical and accuracy confirmed
+
+```
+Filter → Select All → Export/Delete → Done
+```
+
+Advantages: Speed, simplicity
+
+---
+
+### Selective Selection (Safe)
+
+Use when:
+- Only some rows need the operation
+- Criteria are complex or varied
+- High cost of mistake (important data)
+
+```
+Manually select → Spot check → Operation → Verify
+```
+
+Advantages: Precision, control, safety
+
+
+## Advanced Selection Scenarios
+
+### A/B Testing Data
+
+Select test and control groups separately:
+
+<Steps>
+<Step title="Create test group">
+Filter to user_id % 2 = 0, select half
+</Step>
+<Step title="Export test group">
+Export selected rows to CSV
+</Step>
+<Step title="Create control group">
+Filter different criteria, select other half
+</Step>
+<Step title="Export control group">
+Export to separate CSV for comparison
+</Step>
+</Steps>
+
+### Progressive Processing
+
+Handle large datasets in batches:
+
+1. Filter to first 100 rows (pagination or date range)
+2. Select and process
+3. Move to next batch
+4. Repeat until complete
+
+Prevents overwhelming single operations on huge datasets.
+
+### Anomaly Investigation
+
+Select unusual records for analysis:
+
+<Steps>
+<Step title="Filter anomalies">
+WHERE amount > expected_max OR status = 'error'
+</Step>
+<Step title="Select anomalous rows">
+Select all or specific outliers
+</Step>
+<Step title="Export for investigation">
+Export with all related fields
+</Step>
+<Step title="Analyze externally">
+Investigate in spreadsheet or custom tool
+</Step>
+</Steps>
+
+## Troubleshooting
+
+### Selection Seems Stuck
+
+**Issue**: Selections not responding to new clicks
+
+**Solution**:
+1. Refresh the page (Cmd/Ctrl + R)
+2. Click elsewhere first, then try again
+3. Clear selections with Deselect All
+4. Restart the batch operation
+
+### Wrong Rows Selected
+
+**Issue**: Selected rows don't match what you intended
+
+**Solution**:
+1. Click Deselect All to start fresh
+2. Verify filter is correct
+3. Manually reselect rows carefully
+4. Use spot checks before confirming action
+
+### Batch Operation Didn't Complete
+
+**Issue**: Export or delete seemed to work but nothing happened
+
+**Solution**:
+1. Refresh page to see current state
+2. Check browser console for errors
+3. Verify selection wasn't cleared
+4. Try operation again with fewer rows
+
+### Performance Issues with Large Selection
+
+**Issue**: Interface slows down with hundreds of selected rows
+
+**Solution**:
+1. Process in smaller batches
+2. Break operation into multiple passes
+3. Clear selections between passes
+4. Contact support if persists
+
+## Related Features
+
+<CardGroup cols={2}>
+<Card title="Where Conditions" icon="filter" href="/advanced/where-conditions">
+Filter rows before batch selection
+</Card>
+<Card title="Export Options" icon="download" href="/advanced/export-options">
+Learn all export capabilities for selected rows
+</Card>
+<Card title="Data Management" icon="pencil" href="/data/viewing-data">
+Individual row editing and operations
+</Card>
+<Card title="Scratchpad" icon="code" href="/query/scratchpad-intro">
+Batch operations via SQL for complex scenarios
+</Card>
+</CardGroup>
+
+## Security Considerations
+
+### Batch Operation Audit Trail
+
+All batch operations are logged:
+
+- **What**: Which rows were affected
+- **When**: Timestamp of operation
+- **Who**: User account performing operation
+- **Type**: Delete, update, export
+- **Count**: Number of rows affected
+
+### Access Control
+
+Batch operations respect database permissions:
+
+- Users can only select/modify rows they have access to
+- Deletions are logged for compliance
+- Exports are auditable for data governance
+- Consider read-only accounts for sensitive data
+
+<Warning>
+Always verify you have proper authorization before performing batch deletions or exports on production databases
+</Warning>
+
+## Summary
+
+Batch operations provide:
+
+- Efficient row selection (single, multiple, all)
+- Context menu access to bulk actions
+- Selective and bulk export capabilities
+- Safe deletion with verification
+- Audit trails for compliance
+- Integration with filtering for precision
+
+Master batch operations to efficiently manage large datasets, perform bulk updates, and export precisely the data you need—while maintaining data integrity and security.
+
+<Check>
+You're ready to work efficiently with multiple rows and perform powerful batch operations!
+</Check>
