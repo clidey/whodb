@@ -21,6 +21,7 @@ import { LoginPage } from "../pages/auth/login";
 import { useAppSelector } from "../store/hooks";
 import { LogoutPage } from "../pages/auth/logout";
 import { isEEFeatureEnabled } from "../utils/ee-loader";
+import { LoadingPage } from "../components/loading";
 
 // Lazy load heavy components
 const GraphPage = lazy(() => import("../pages/graph/graph").then(m => ({ default: m.GraphPage })));
@@ -31,16 +32,9 @@ const ChatPage = lazy(() => import("../pages/chat/chat").then(m => ({ default: m
 const SettingsPage = lazy(() => import("../pages/settings/settings").then(m => ({ default: m.SettingsPage })));
 const ContactUsPage = lazy(() => import("../pages/contact-us/contact-us").then(m => ({ default: m.ContactUsPage })));
 
-// Loading component
-const PageLoader = () => (
-  <div className="flex h-full w-full items-center justify-center">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div>
-  </div>
-);
-
 // Wrapper component for lazy loaded routes
 const LazyRoute: FC<{ component: React.ComponentType<any> }> = ({ component: Component }) => (
-  <Suspense fallback={<PageLoader />}>
+  <Suspense fallback={<LoadingPage />}>
     <Component />
   </Suspense>
 );

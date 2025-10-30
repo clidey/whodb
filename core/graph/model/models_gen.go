@@ -36,10 +36,12 @@ type ChatInput struct {
 }
 
 type Column struct {
-	Type         string `json:"Type"`
-	Name         string `json:"Name"`
-	IsPrimary    bool   `json:"IsPrimary"`
-	IsForeignKey bool   `json:"IsForeignKey"`
+	Type             string  `json:"Type"`
+	Name             string  `json:"Name"`
+	IsPrimary        bool    `json:"IsPrimary"`
+	IsForeignKey     bool    `json:"IsForeignKey"`
+	ReferencedTable  *string `json:"ReferencedTable,omitempty"`
+	ReferencedColumn *string `json:"ReferencedColumn,omitempty"`
 }
 
 type GraphUnit struct {

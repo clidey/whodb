@@ -453,6 +453,10 @@ func (p *RedisPlugin) WithTransaction(config *engine.PluginConfig, operation fun
 	return operation(nil)
 }
 
+func (p *RedisPlugin) GetForeignKeyRelationships(config *engine.PluginConfig, schema string, storageUnit string) (map[string]*engine.ForeignKeyRelationship, error) {
+	return make(map[string]*engine.ForeignKeyRelationship), nil
+}
+
 func NewRedisPlugin() *engine.Plugin {
 	return &engine.Plugin{
 		Type:            engine.DatabaseType_Redis,

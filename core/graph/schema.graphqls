@@ -14,6 +14,8 @@ type Column {
   Name: String!
   IsPrimary: Boolean!
   IsForeignKey: Boolean!
+  ReferencedTable: String
+  ReferencedColumn: String
 }
 
 enum WhereConditionType {

@@ -222,8 +222,45 @@ func (p *GormPlugin) GetColumnsForTable(config *engine.PluginConfig, schema stri
 			return nil, err
 		}
 
+		// Get foreign key relationships
+		fkRelationships, err := p.GetForeignKeyRelationships(config, schema, storageUnit)
+		if err != nil {
+			log.Logger.WithError(err).Warn(fmt.Sprintf("Failed to get foreign key relationships for table %s.%s", schema, storageUnit))
+			fkRelationships = make(map[string]*engine.ForeignKeyRelationship)
+		}
+
+		// Get primary key columns using database-specific method
+		primaryKeys, err := p.GetPrimaryKeyColumns(db, schema, storageUnit)
+		if err != nil {
+			log.Logger.WithError(err).Warn(fmt.Sprintf("Failed to get primary keys for table %s.%s", schema, storageUnit))
+			primaryKeys = []string{}
+		}
+
+		// Enrich columns with primary key and foreign key information
+		for i := range columns {
+			// Check if column is a primary key
+			columns[i].IsPrimary = contains(primaryKeys, columns[i].Name)
+
+			// Check if column is a foreign key
+			if fk, exists := fkRelationships[columns[i].Name]; exists {
+				columns[i].IsForeignKey = true
+				columns[i].ReferencedTable = &fk.ReferencedTable
+				columns[i].ReferencedColumn = &fk.ReferencedColumn
+			}
+		}
+
 		return columns, nil
 	})
+}
+
+// Helper function to check if a slice contains a string
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
 }
 
 // SQLite-specific row retrieval is implemented in the sqlite3 plugin override.
@@ -655,4 +692,9 @@ func (p *GormPlugin) AddRowInTx(tx *gorm.DB, schema string, storageUnit string, 
 // ClearTableDataInTx clears table data using an existing transaction
 func (p *GormPlugin) ClearTableDataInTx(tx *gorm.DB, schema string, storageUnit string) error {
 	return p.clearTableDataWithDB(tx, schema, storageUnit)
+}
+
+// GetForeignKeyRelationships returns foreign key relationships for a table (default empty implementation)
+func (p *GormPlugin) GetForeignKeyRelationships(config *engine.PluginConfig, schema string, storageUnit string) (map[string]*engine.ForeignKeyRelationship, error) {
+	return make(map[string]*engine.ForeignKeyRelationship), nil
 }

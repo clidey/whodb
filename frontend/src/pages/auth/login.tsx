@@ -407,6 +407,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                             buttonProps={{
                                 "data-testid": "database",
                             }}
+                            contentClassName="w-[var(--radix-popover-trigger-width)] login-select-popover"
                         />
                     )}
                 </div>

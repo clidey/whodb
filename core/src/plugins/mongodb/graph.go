@@ -24,16 +24,18 @@ import (
 )
 
 type tableRelation struct {
-	Table1   string
-	Table2   string
-	Relation string
+	Table1       string
+	Table2       string
+	Relation     string
+	SourceColumn string
+	TargetColumn string
 }
 
 func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) ([]engine.GraphUnit, error) {
 	ctx := context.Background()
 	client, err := DB(config)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]interface{}{
+		log.Logger.WithError(err).WithFields(map[string]any{
 			"hostname": config.Credentials.Hostname,
 			"database": database,
 		}).Error("Failed to connect to MongoDB for graph generation")
@@ -44,7 +46,7 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 	db := client.Database(database)
 	cursor, err := db.ListCollections(ctx, bson.M{})
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]interface{}{
+		log.Logger.WithError(err).WithFields(map[string]any{
 			"hostname": config.Credentials.Hostname,
 			"database": database,
 		}).Error("Failed to list MongoDB collections for graph generation")
@@ -58,7 +60,7 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 	for cursor.Next(ctx) {
 		var collectionInfo bson.M
 		if err := cursor.Decode(&collectionInfo); err != nil {
-			log.Logger.WithError(err).WithFields(map[string]interface{}{
+			log.Logger.WithError(err).WithFields(map[string]any{
 				"hostname": config.Credentials.Hostname,
 				"database": database,
 			}).Error("Failed to decode MongoDB collection info for graph generation")
@@ -75,106 +77,118 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 	uniqueRelations := make(map[string]bool)
 	relations := []tableRelation{}
 
+	log.Logger.WithFields(map[string]any{
+		"database":    database,
+		"collections": collections,
+	}).Info("MongoDB Graph: Starting relationship detection")
+
 	for _, collectionName := range collections {
 		collectionType := collectionTypes[collectionName]
 
 		if collectionType == "view" {
+			log.Logger.WithField("collection", collectionName).Info("MongoDB Graph: Skipping view")
 			continue
 		}
 
 		collection := db.Collection(collectionName)
-		indexes, err := collection.Indexes().List(ctx)
+
+		var sampleDoc bson.M
+		err := collection.FindOne(ctx, bson.M{}).Decode(&sampleDoc)
 		if err != nil {
-			log.Logger.WithError(err).WithFields(map[string]interface{}{
-				"hostname": config.Credentials.Hostname,
-				"database": database,
+			log.Logger.WithFields(map[string]any{
 				"collection": collectionName,
-			}).Error("Failed to list MongoDB collection indexes for graph generation")
-			return nil, err
+				"error":      err.Error(),
+			}).Warn("MongoDB Graph: No documents found or error fetching sample")
+			continue
 		}
 
-		foreignKeys := make(map[string]bool)
-		uniqueKeys := make(map[string]bool)
+		fields := []string{}
+		for f := range sampleDoc {
+			fields = append(fields, f)
+		}
+		log.Logger.WithFields(map[string]any{
+			"collection": collectionName,
+			"fields":     fields,
+		}).Info("MongoDB Graph: Found fields")
 
-		for indexes.Next(ctx) {
-			var index bson.M
-			if err := indexes.Decode(&index); err != nil {
-				log.Logger.WithError(err).WithFields(map[string]interface{}{
-					"hostname": config.Credentials.Hostname,
-					"database": database,
-					"collection": collectionName,
-				}).Error("Failed to decode MongoDB index for graph generation")
-				return nil, err
-			}
+		foreignKeys := make(map[string]string)
 
-			keys, ok := index["key"].(bson.M)
-			if !ok {
+		for fieldName := range sampleDoc {
+			if fieldName == "_id" {
 				continue
 			}
 
-			unique, _ := index["unique"].(bool)
+			for _, otherCollection := range collections {
+				if otherCollection == collectionName {
+					continue
+				}
 
-			for key := range keys {
-				for _, otherCollection := range collections {
-					singularName := strings.TrimSuffix(otherCollection, "s")
-					if key == singularName+"_id" || key == otherCollection+"_id" {
-						foreignKeys[otherCollection] = true
-						if unique {
-							uniqueKeys[otherCollection] = true
-						}
-					}
+				singularName := strings.TrimSuffix(otherCollection, "s")
+				pluralName := otherCollection
+				if !strings.HasSuffix(otherCollection, "s") {
+					pluralName = otherCollection + "s"
+				}
+
+				lowerField := strings.ToLower(fieldName)
+				if lowerField == strings.ToLower(singularName)+"_id" ||
+					lowerField == strings.ToLower(singularName)+"id" ||
+					lowerField == strings.ToLower(otherCollection)+"_id" ||
+					lowerField == strings.ToLower(otherCollection)+"id" ||
+					lowerField == strings.ToLower(pluralName)+"_id" ||
+					lowerField == strings.ToLower(pluralName)+"id" {
+					foreignKeys[otherCollection] = fieldName
+					log.Logger.WithFields(map[string]any{
+						"collection": collectionName,
+						"field":      fieldName,
+						"references": otherCollection,
+					}).Info("MongoDB Graph: FOUND FK RELATIONSHIP")
+					break
 				}
 			}
 		}
 
-		for fk := range foreignKeys {
+		for fk, fieldName := range foreignKeys {
 			relKey1 := collectionName + ":" + fk
-			relKey2 := fk + ":" + collectionName
 
-			if uniqueKeys[fk] {
-				if !uniqueRelations[relKey1+":OneToOne"] {
-					uniqueRelations[relKey1+":OneToOne"] = true
-					relations = append(relations, tableRelation{
-						Table1:   collectionName,
-						Table2:   fk,
-						Relation: "OneToOne",
-					})
-				}
-			} else {
-				if !uniqueRelations[relKey1+":OneToMany"] {
-					uniqueRelations[relKey1+":OneToMany"] = true
-					relations = append(relations, tableRelation{
-						Table1:   fk,
-						Table2:   collectionName,
-						Relation: "OneToMany",
-					})
-				}
-
-				if !uniqueRelations[relKey2+":ManyToOne"] {
-					uniqueRelations[relKey2+":ManyToOne"] = true
-					relations = append(relations, tableRelation{
-						Table1:   collectionName,
-						Table2:   fk,
-						Relation: "ManyToOne",
-					})
-				}
+			if !uniqueRelations[relKey1+":ManyToOne"] {
+				uniqueRelations[relKey1+":ManyToOne"] = true
+				relations = append(relations, tableRelation{
+					Table1:       collectionName,
+					Table2:       fk,
+					Relation:     "ManyToOne",
+					SourceColumn: fieldName,
+					TargetColumn: "_id",
+				})
+				log.Logger.WithFields(map[string]any{
+					"from":         collectionName,
+					"to":           fk,
+					"sourceColumn": fieldName,
+					"targetColumn": "_id",
+				}).Info("MongoDB Graph: ADDED RELATION")
 			}
 		}
-
-		// todo: figure out Many-to-Many (Junction Table)
 	}
+
+	log.Logger.WithFields(map[string]any{
+		"database":       database,
+		"relationsCount": len(relations),
+	}).Info("MongoDB Graph: Finished relationship detection")
 
 	tableMap := make(map[string][]engine.GraphUnitRelationship)
 	for _, tr := range relations {
+		sourceCol := tr.SourceColumn
+		targetCol := tr.TargetColumn
 		tableMap[tr.Table1] = append(tableMap[tr.Table1], engine.GraphUnitRelationship{
 			Name:             tr.Table2,
 			RelationshipType: engine.GraphUnitRelationshipType(tr.Relation),
+			SourceColumn:     &sourceCol,
+			TargetColumn:     &targetCol,
 		})
 	}
 
 	storageUnits, err := p.GetStorageUnits(config, database)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]interface{}{
+		log.Logger.WithError(err).WithFields(map[string]any{
 			"hostname": config.Credentials.Hostname,
 			"database": database,
 		}).Error("Failed to get MongoDB storage units for graph generation")

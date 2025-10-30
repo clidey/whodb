@@ -20,6 +20,8 @@ import codeCoverageTask from "@cypress/code-coverage/task.js";
 export default defineConfig({
     numTestsKeptInMemory: 0,
     experimentalStudio: true,
+    viewportWidth: 1280,
+    viewportHeight: 768,
   e2e: {
       baseUrl: 'http://localhost:3000', // Default for local development
       testIsolation: true, // Ensure clean state between tests

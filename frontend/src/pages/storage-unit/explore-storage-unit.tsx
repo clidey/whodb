@@ -59,7 +59,7 @@ import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { CodeEditor } from "../../components/editor";
 import { ErrorState } from "../../components/error-state";
-import { CheckCircleIcon, CommandLineIcon, PlayIcon, PlusCircleIcon, TableCellsIcon, XMarkIcon } from "../../components/heroicons";
+import { CheckCircleIcon, CommandLineIcon, MagnifyingGlassIcon, PlayIcon, PlusCircleIcon, TableCellsIcon, XMarkIcon } from "../../components/heroicons";
 import { LoadingPage } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { SchemaViewer } from "../../components/schema-viewer";
@@ -133,7 +133,9 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         fetchPolicy: "no-cache",
     });
     const [getStorageUnits] = useGetStorageUnitsLazyQuery();
-    const [getColumns] = useColumnsLazyQuery();
+    const [getColumns] = useColumnsLazyQuery({
+        fetchPolicy: "network-only",
+    });
     const [addRow, { loading: adding }] = useAddRowMutation();
     const [rawExecute, { data: rawExecuteData }] = useRawExecuteLazyQuery();
 
@@ -440,51 +442,20 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         return {whereColumns: columns, whereColumnTypes: columnTypes}
     }, [rows?.Columns, rows?.Rows, current?.Type])
 
-    // Foreign key detection logic
-    const [allTableNames, setAllTableNames] = useState<Set<string>>(new Set());
-    
+    // Foreign key detection using actual column metadata
+    const getColumnByName = useCallback((columnName: string) => {
+        return rows?.Columns?.find(col => col.Name === columnName);
+    }, [rows?.Columns]);
+
     const isValidForeignKey = useCallback((columnName: string) => {
-        // Check for both singular and plural table names
-        if (columnName.endsWith("_id")) {
-            const base = columnName.slice(0, -3);
-            return allTableNames.has(base) || allTableNames.has(base + "s");
-        }
-        return false;
-    }, [allTableNames]);
+        const column = getColumnByName(columnName);
+        return Boolean(column?.IsForeignKey && column?.ReferencedTable != null);
+    }, [getColumnByName]);
 
     const getTargetTableName = useCallback((columnName: string) => {
-        if (columnName.endsWith("_id")) {
-            const base = columnName.slice(0, -3);
-            if (allTableNames.has(base)) {
-                return base;
-            } else if (allTableNames.has(base + "s")) {
-                return base + "s";
-            }
-        }
-        return null;
-    }, [allTableNames]);
-
-    // Load all table names for foreign key detection
-    useEffect(() => {
-        if (schema) {
-            getStorageUnits({
-                variables: { schema },
-                onCompleted: (data) => {
-                    const tableNames = new Set(data.StorageUnit?.map(unit => unit.Name) || []);
-                    setAllTableNames(tableNames);
-                }
-            });
-        }
-    }, [schema, getStorageUnits]);
-
-    // Get primary key column name from rows
-    const getPrimaryKeyColumn = useCallback(() => {
-        if (!rows?.Columns) {
-            return null;
-        }
-        const primaryColumn = rows.Columns.find(col => col.IsPrimary);
-        return primaryColumn?.Name || null;
-    }, [rows?.Columns]);
+        const column = getColumnByName(columnName);
+        return column?.ReferencedTable || null;
+    }, [getColumnByName]);
 
     // Entity search functionality
     const handleEntitySearch = useCallback((columnName: string, value: string) => {
@@ -640,7 +611,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                             <CheckCircleIcon className="w-4 h-4" /> Query
                         </Button>
                     </div>
-                    <Button onClick={handleOpenScratchpad} data-testid="scratchpad-button" variant="secondary"
+                    <Button onClick={handleOpenScratchpad} data-testid="embedded-scratchpad-button" variant="secondary"
                         className={cn({
                             "hidden": !databaseSupportsScratchpad(current?.Type),
                         })}>
@@ -760,19 +731,25 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
             </DrawerContent>
         </Drawer>
         <Sheet open={showEntitySearchSheet} onOpenChange={setShowEntitySearchSheet}>
-            <SheetContent side="right" className="flex flex-col p-8">
-                <div className="text-lg font-semibold mb-4">
-                    Entity Details
-                    {entitySearchData && (
-                        <div className="text-sm text-gray-500 mt-1">
-                            {entitySearchData.targetTable} (ID: {entitySearchData.value})
-                        </div>
-                    )}
+            <SheetContent side="right" className="flex flex-col p-8 min-w-[600px]">
+                <div className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <MagnifyingGlassIcon className="w-5 h-5" />
+                    Search around
                 </div>
+                {entitySearchData && (
+                    <div className="text-sm text-gray-500">
+                        Query: {entitySearchData.targetTable} (ID: {entitySearchData.value})
+                    </div>
+                )}
                 <div className="flex-1 overflow-y-auto pr-2">
                     {entitySearchResults && entitySearchResults.Rows.length > 0 ? (
                         <div className="flex flex-col gap-4">
                             <StackList>
+                                {entitySearchData && (
+                                    <StackListItem key="entity-id" item="ID">
+                                        {entitySearchData.value}
+                                    </StackListItem>
+                                )}
                                 {entitySearchResults.Columns.map((column, index) => (
                                     <StackListItem 
                                         key={column.Name} 
@@ -795,7 +772,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                         </div>
                     )}
                 </div>
-                <SheetFooter className="px-0 pt-4 border-t">
+                <SheetFooter>
                     <Button onClick={handleCloseEntitySearchSheet} variant="outline">
                         Close
                     </Button>

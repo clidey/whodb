@@ -114,20 +114,18 @@ export const ExpandableCard: FC<IExpandableCardProps> = (props) => {
   return (
     <>
       <Sheet open={expand} onOpenChange={handleOpenChange}>
-        <SheetTrigger asChild>
-          <div>
-            <Card
-              {...props}
-              tag={props.collapsedTag}
-              className={cn(
-                "min-h-[200px] w-[220px] cursor-pointer",
-                props.className,
-              )}
-              loading={props.loading}>
-              {props.loading ? null : props.children[0]}
-            </Card>
-          </div>
-        </SheetTrigger>
+        <div>
+          <Card
+            {...props}
+            tag={props.collapsedTag}
+            className={cn(
+              "min-h-[200px] w-[220px] cursor-pointer",
+              props.className,
+            )}
+            loading={props.loading}>
+            {props.loading ? null : props.children[0]}
+          </Card>
+        </div>
         <SheetContent side="right" className="p-0">
           <VisuallyHidden>
             <SheetTitle>Card Details</SheetTitle>

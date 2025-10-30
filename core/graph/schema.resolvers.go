@@ -586,13 +586,16 @@ func (r *queryResolver) Row(ctx context.Context, schema string, storageUnit stri
 		constraints = make(map[string]map[string]any)
 	}
 
-	// Get all table names for foreign key detection
-	allTables, err := plugin.GetStorageUnits(config, schema)
-	tableNames := make(map[string]bool)
-	if err == nil {
-		for _, table := range allTables {
-			tableNames[table.Name] = true
-		}
+	// Get foreign key relationships from actual database constraints
+	foreignKeys, err := plugin.GetForeignKeyRelationships(config, schema, storageUnit)
+	if err != nil {
+		log.LogFields(log.Fields{
+			"operation":    "GetForeignKeyRelationships",
+			"schema":       schema,
+			"storage_unit": storageUnit,
+			"error":        err.Error(),
+		}).Warn("Failed to get foreign key relationships")
+		foreignKeys = make(map[string]*engine.ForeignKeyRelationship)
 	}
 
 	columns := []*model.Column{}
@@ -606,22 +609,23 @@ func (r *queryResolver) Row(ctx context.Context, schema string, storageUnit stri
 			}
 		}
 
-		// Detect foreign keys: columns ending with "_id" that reference existing tables
-		// Exclude the case where the column references its own table (e.g., user_id in users table)
+		// Check if this column has a foreign key constraint
+		var referencedTable *string
+		var referencedColumn *string
 		isForeignKey := false
-		if strings.HasSuffix(column.Name, "_id") {
-			base := strings.TrimSuffix(column.Name, "_id")
-			// Check if it references another table (not the current table)
-			if (tableNames[base] && base != storageUnit) || (tableNames[base+"s"] && base+"s" != storageUnit) {
-				isForeignKey = true
-			}
+		if fk, exists := foreignKeys[column.Name]; exists {
+			isForeignKey = true
+			referencedTable = &fk.ReferencedTable
+			referencedColumn = &fk.ReferencedColumn
 		}
 
 		columns = append(columns, &model.Column{
-			Type:         column.Type,
-			Name:         column.Name,
-			IsPrimary:    isPrimary,
-			IsForeignKey: isForeignKey,
+			Type:             column.Type,
+			Name:             column.Name,
+			IsPrimary:        isPrimary,
+			IsForeignKey:     isForeignKey,
+			ReferencedTable:  referencedTable,
+			ReferencedColumn: referencedColumn,
 		})
 	}
 	return &model.RowsResult{
@@ -660,42 +664,51 @@ func (r *queryResolver) Columns(ctx context.Context, schema string, storageUnit 
 		constraints = make(map[string]map[string]any)
 	}
 
-	// Get all table names for foreign key detection
-	allTables, err := plugin.GetStorageUnits(config, schema)
-	tableNames := make(map[string]bool)
-	if err == nil {
-		for _, table := range allTables {
-			tableNames[table.Name] = true
-		}
+	// Get foreign key relationships from actual database constraints
+	foreignKeys, err := plugin.GetForeignKeyRelationships(config, schema, storageUnit)
+	if err != nil {
+		log.LogFields(log.Fields{
+			"operation":    "GetForeignKeyRelationships",
+			"schema":       schema,
+			"storage_unit": storageUnit,
+			"error":        err.Error(),
+		}).Warn("Failed to get foreign key relationships")
+		foreignKeys = make(map[string]*engine.ForeignKeyRelationship)
 	}
 
 	columns := []*model.Column{}
 	for _, column := range columnsResult {
-		isPrimary := false
-		if colConstraints, ok := constraints[column.Name]; ok {
-			if primary, exists := colConstraints["primary"]; exists {
-				if primaryBool, isBool := primary.(bool); isBool {
-					isPrimary = primaryBool
+		// Use column's IsPrimary if already set, otherwise check constraints
+		isPrimary := column.IsPrimary
+		if !isPrimary {
+			if colConstraints, ok := constraints[column.Name]; ok {
+				if primary, exists := colConstraints["primary"]; exists {
+					if primaryBool, isBool := primary.(bool); isBool {
+						isPrimary = primaryBool
+					}
 				}
 			}
 		}
 
-		// Detect foreign keys: columns ending with "_id" that reference existing tables
-		// Exclude the case where the column references its own table (e.g., user_id in users table)
-		isForeignKey := false
-		if strings.HasSuffix(column.Name, "_id") {
-			base := strings.TrimSuffix(column.Name, "_id")
-			// Check if it references another table (not the current table)
-			if (tableNames[base] && base != storageUnit) || (tableNames[base+"s"] && base+"s" != storageUnit) {
+		// Use column's IsForeignKey if already set, otherwise check foreign key relationships
+		isForeignKey := column.IsForeignKey
+		referencedTable := column.ReferencedTable
+		referencedColumn := column.ReferencedColumn
+		if !isForeignKey {
+			if fk, exists := foreignKeys[column.Name]; exists {
 				isForeignKey = true
+				referencedTable = &fk.ReferencedTable
+				referencedColumn = &fk.ReferencedColumn
 			}
 		}
 
 		columns = append(columns, &model.Column{
-			Type:         column.Type,
-			Name:         column.Name,
-			IsPrimary:    isPrimary,
-			IsForeignKey: isForeignKey,
+			Type:             column.Type,
+			Name:             column.Name,
+			IsPrimary:        isPrimary,
+			IsForeignKey:     isForeignKey,
+			ReferencedTable:  referencedTable,
+			ReferencedColumn: referencedColumn,
 		})
 	}
 	return columns, nil

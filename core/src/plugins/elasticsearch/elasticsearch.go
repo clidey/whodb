@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/engine"
@@ -121,6 +122,7 @@ func (p *ElasticSearchPlugin) GetStorageUnits(config *engine.PluginConfig, datab
 		storageUnit := engine.StorageUnit{
 			Name: indexName,
 			Attributes: []engine.Record{
+				{Key: "Type", Value: "Index"},
 				{Key: "Storage Size", Value: fmt.Sprintf("%v", store["size_in_bytes"])},
 				{Key: "Count", Value: fmt.Sprintf("%v", docs["count"])},
 			},
@@ -231,10 +233,153 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 }
 
 func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {
-	// Elasticsearch doesn't have a traditional column structure, it returns documents
-	return []engine.Column{
-		{Name: "document", Type: "Document"},
-	}, nil
+	client, err := DB(config)
+	if err != nil {
+		log.Logger.WithError(err).WithFields(map[string]any{
+			"index": storageUnit,
+		}).Error("Failed to connect to ElasticSearch for column inference")
+		return nil, err
+	}
+
+	var buf bytes.Buffer
+	query := map[string]interface{}{
+		"size": 1,
+		"query": map[string]interface{}{
+			"match_all": map[string]interface{}{},
+		},
+	}
+	if err := json.NewEncoder(&buf).Encode(query); err != nil {
+		log.Logger.WithError(err).WithField("index", storageUnit).Error("Failed to encode query for column inference")
+		return nil, err
+	}
+
+	res, err := client.Search(
+		client.Search.WithContext(context.Background()),
+		client.Search.WithIndex(storageUnit),
+		client.Search.WithBody(&buf),
+	)
+	if err != nil {
+		log.Logger.WithError(err).WithField("index", storageUnit).Error("Failed to search for sample document")
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		log.Logger.WithField("index", storageUnit).Warn("No documents found, returning empty schema")
+		return []engine.Column{}, nil
+	}
+
+	var searchResult map[string]interface{}
+	if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
+		log.Logger.WithError(err).WithField("index", storageUnit).Error("Failed to decode search result")
+		return nil, err
+	}
+
+	hits := searchResult["hits"].(map[string]interface{})["hits"].([]interface{})
+	if len(hits) == 0 {
+		return []engine.Column{}, nil
+	}
+
+	sampleHit := hits[0].(map[string]interface{})
+	sampleDoc := sampleHit["_source"].(map[string]interface{})
+
+	indicesRes, err := client.Indices.Stats()
+	if err != nil {
+		log.Logger.WithError(err).Error("Failed to get ElasticSearch indices for FK detection")
+		return nil, err
+	}
+	defer indicesRes.Body.Close()
+
+	if indicesRes.IsError() {
+		log.Logger.Error("ElasticSearch indices stats API returned error for FK detection")
+		return nil, fmt.Errorf("error getting indices: %s", indicesRes.String())
+	}
+
+	var stats map[string]interface{}
+	if err := json.NewDecoder(indicesRes.Body).Decode(&stats); err != nil {
+		log.Logger.WithError(err).Error("Failed to decode ElasticSearch indices stats")
+		return nil, err
+	}
+
+	indicesStats := stats["indices"].(map[string]interface{})
+	indices := []string{}
+	for indexName := range indicesStats {
+		indices = append(indices, indexName)
+	}
+
+	columns := []engine.Column{}
+
+	// Add _id as primary key first (it's not in _source)
+	columns = append(columns, engine.Column{
+		Name:      "_id",
+		Type:      "keyword",
+		IsPrimary: true,
+		IsForeignKey: false,
+	})
+
+	for fieldName, fieldValue := range sampleDoc {
+		fieldType := inferElasticSearchType(fieldValue)
+
+		var isForeignKey bool
+		var referencedTable *string
+
+		lowerField := strings.ToLower(fieldName)
+		for _, otherIndex := range indices {
+			if otherIndex == storageUnit {
+				continue
+			}
+
+			singularName := strings.TrimSuffix(otherIndex, "s")
+			pluralName := otherIndex
+			if !strings.HasSuffix(otherIndex, "s") {
+				pluralName = otherIndex + "s"
+			}
+
+			if lowerField == strings.ToLower(singularName)+"_id" ||
+				lowerField == strings.ToLower(singularName)+"id" ||
+				lowerField == strings.ToLower(otherIndex)+"_id" ||
+				lowerField == strings.ToLower(otherIndex)+"id" ||
+				lowerField == strings.ToLower(pluralName)+"_id" ||
+				lowerField == strings.ToLower(pluralName)+"id" {
+				isForeignKey = true
+				referencedTable = &otherIndex
+				break
+			}
+		}
+
+		columns = append(columns, engine.Column{
+			Name:            fieldName,
+			Type:            fieldType,
+			IsPrimary:       false,
+			IsForeignKey:    isForeignKey,
+			ReferencedTable: referencedTable,
+		})
+	}
+
+	return columns, nil
+}
+
+func inferElasticSearchType(value any) string {
+	if value == nil {
+		return "null"
+	}
+
+	switch value.(type) {
+	case string:
+		return "text"
+	case float64, float32:
+		return "float"
+	case int, int32, int64:
+		return "long"
+	case bool:
+		return "boolean"
+	case []any:
+		return "array"
+	case map[string]any:
+		return "object"
+	default:
+		return "keyword"
+	}
 }
 
 // convertAtomicConditionToES converts an atomic where condition to an Elasticsearch query clause
@@ -488,6 +633,10 @@ func (p *ElasticSearchPlugin) WithTransaction(config *engine.PluginConfig, opera
 	// ElasticSearch doesn't support transactions
 	// For now, just execute the operation directly
 	return operation(nil)
+}
+
+func (p *ElasticSearchPlugin) GetForeignKeyRelationships(config *engine.PluginConfig, schema string, storageUnit string) (map[string]*engine.ForeignKeyRelationship, error) {
+	return make(map[string]*engine.ForeignKeyRelationship), nil
 }
 
 func (p *ElasticSearchPlugin) GetSupportedOperators() map[string]string { //nolint:unused

@@ -590,7 +590,7 @@ describe('Sqlite3 E2E test', () => {
 
         // 13) Open scratchpad drawer from Explore and run query
         cy.data('users');
-        cy.get('[data-testid="scratchpad-button"]').click();
+        cy.get('[data-testid="embedded-scratchpad-button"]').click();
         cy.contains('h2', 'Scratchpad').should('be.visible');
 
         cy.get('[data-testid="code-editor"]').should('exist');
@@ -610,7 +610,7 @@ describe('Sqlite3 E2E test', () => {
         cy.data('users');
         cy.selectMockData();
 
-        cy.contains('div', 'Mock Data for users').should('be.visible');
+        cy.contains('div', 'Mock Data').should('be.visible');
         cy.contains('Note').should('be.visible');
 
         cy.contains('label', 'Number of Rows').parent().find('input').as('rowsInput');

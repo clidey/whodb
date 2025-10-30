@@ -181,7 +181,7 @@ export const GraphPage: FC = () => {
         variables: {
             schema: databaseUsesSchemaForGraph(current?.Type) ? schema : current?.Database ?? "",
         },
-        skip: !current || (!schema && !current?.Database),
+        skip: !current,
         fetchPolicy: "cache-and-network",
     });
 
@@ -203,9 +203,6 @@ export const GraphPage: FC = () => {
         if (!graphData || selectedUnits.size === 0) {
             return { computedNodes: [], computedEdges: [] };
         }
-
-        console.log('Graph Data:', graphData);
-        console.log('Table Columns:', tableColumns);
 
         const newNodes: Node[] = [];
         const newEdges: Edge[] = [];
@@ -265,9 +262,17 @@ export const GraphPage: FC = () => {
                         // Arrow: referencing -> referenced (FK -> PK)
                         source = relation.Name;
                         target = node.Unit.Name;
+                        // Only set handles if columns are loaded AND the specific columns exist
                         if (sourceColumn && targetColumn) {
-                            sourceHandle = `${relation.Name}-${sourceColumn}`;
-                            targetHandle = `${node.Unit.Name}-${targetColumn}`;
+                            const sourceColumns = tableColumns[source];
+                            const targetColumns = tableColumns[target];
+                            const sourceColExists = sourceColumns?.some(col => col.Name === sourceColumn && col.IsForeignKey);
+                            const targetColExists = targetColumns?.some(col => col.Name === targetColumn && col.IsPrimary);
+
+                            if (sourceColExists && targetColExists) {
+                                sourceHandle = `${relation.Name}-${sourceColumn}`;
+                                targetHandle = `${node.Unit.Name}-${targetColumn}`;
+                            }
                         }
                     } else if (relation.Relationship === "ManyToOne") {
                         // ManyToOne stored on referencing table (table with FK)
@@ -276,9 +281,17 @@ export const GraphPage: FC = () => {
                         // Arrow: referencing -> referenced (FK -> PK)
                         source = node.Unit.Name;
                         target = relation.Name;
+                        // Only set handles if columns are loaded AND the specific columns exist
                         if (sourceColumn && targetColumn) {
-                            sourceHandle = `${node.Unit.Name}-${sourceColumn}`;
-                            targetHandle = `${relation.Name}-${targetColumn}`;
+                            const sourceColumns = tableColumns[source];
+                            const targetColumns = tableColumns[target];
+                            const sourceColExists = sourceColumns?.some(col => col.Name === sourceColumn && col.IsForeignKey);
+                            const targetColExists = targetColumns?.some(col => col.Name === targetColumn && col.IsPrimary);
+
+                            if (sourceColExists && targetColExists) {
+                                sourceHandle = `${node.Unit.Name}-${sourceColumn}`;
+                                targetHandle = `${relation.Name}-${targetColumn}`;
+                            }
                         }
                     } else {
                         // Unknown or OneToOne - default behavior
@@ -293,22 +306,11 @@ export const GraphPage: FC = () => {
                         targetHandle,
                     };
 
-                    console.log('Creating edge:', {
-                        relationship: relation.Relationship,
-                        from: `${source}.${sourceColumn || 'N/A'}`,
-                        to: `${target}.${targetColumn || 'N/A'}`,
-                        sourceHandle,
-                        targetHandle,
-                    });
-
                     newEdgesSet.add(edgeId);
                     newEdges.push(newEdge);
                 }
             }
         }
-
-        console.log('Computed Edges:', newEdges);
-        console.log('Edge count:', newEdges.length);
 
         return { computedNodes: newNodes, computedEdges: newEdges };
     }, [graphData, selectedUnits, tableColumns]);

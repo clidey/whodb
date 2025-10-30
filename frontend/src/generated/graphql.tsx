@@ -50,6 +50,8 @@ export type Column = {
   IsForeignKey: Scalars['Boolean']['output'];
   IsPrimary: Scalars['Boolean']['output'];
   Name: Scalars['String']['output'];
+  ReferencedColumn?: Maybe<Scalars['String']['output']>;
+  ReferencedTable?: Maybe<Scalars['String']['output']>;
   Type: Scalars['String']['output'];
 };
 
@@ -410,7 +412,7 @@ export type GetColumnsQueryVariables = Exact<{
 }>;
 
 
-export type GetColumnsQuery = { __typename?: 'Query', Columns: Array<{ __typename?: 'Column', Name: string, Type: string, IsPrimary: boolean, IsForeignKey: boolean }> };
+export type GetColumnsQuery = { __typename?: 'Query', Columns: Array<{ __typename?: 'Column', Name: string, Type: string, IsPrimary: boolean, IsForeignKey: boolean, ReferencedTable?: string | null, ReferencedColumn?: string | null }> };
 
 export type GetGraphQueryVariables = Exact<{
   schema: Scalars['String']['input'];
@@ -425,7 +427,7 @@ export type ColumnsQueryVariables = Exact<{
 }>;
 
 
-export type ColumnsQuery = { __typename?: 'Query', Columns: Array<{ __typename?: 'Column', Name: string, Type: string, IsPrimary: boolean, IsForeignKey: boolean }> };
+export type ColumnsQuery = { __typename?: 'Query', Columns: Array<{ __typename?: 'Column', Name: string, Type: string, IsPrimary: boolean, IsForeignKey: boolean, ReferencedTable?: string | null, ReferencedColumn?: string | null }> };
 
 export type RawExecuteQueryVariables = Exact<{
   query: Scalars['String']['input'];
@@ -483,7 +485,7 @@ export type GetStorageUnitRowsQueryVariables = Exact<{
 }>;
 
 
-export type GetStorageUnitRowsQuery = { __typename?: 'Query', Row: { __typename?: 'RowsResult', Rows: Array<Array<string>>, DisableUpdate: boolean, Columns: Array<{ __typename?: 'Column', Type: string, Name: string, IsPrimary: boolean, IsForeignKey: boolean }> } };
+export type GetStorageUnitRowsQuery = { __typename?: 'Query', Row: { __typename?: 'RowsResult', Rows: Array<Array<string>>, DisableUpdate: boolean, Columns: Array<{ __typename?: 'Column', Type: string, Name: string, IsPrimary: boolean, IsForeignKey: boolean, ReferencedTable?: string | null, ReferencedColumn?: string | null }> } };
 
 export type GetStorageUnitsQueryVariables = Exact<{
   schema: Scalars['String']['input'];
@@ -975,6 +977,8 @@ export const GetColumnsDocument = gql`
     Type
     IsPrimary
     IsForeignKey
+    ReferencedTable
+    ReferencedColumn
   }
 }
     `;
@@ -1071,6 +1075,8 @@ export const ColumnsDocument = gql`
     Type
     IsPrimary
     IsForeignKey
+    ReferencedTable
+    ReferencedColumn
   }
 }
     `;
@@ -1344,6 +1350,8 @@ export const GetStorageUnitRowsDocument = gql`
       Name
       IsPrimary
       IsForeignKey
+      ReferencedTable
+      ReferencedColumn
     }
     Rows
     DisableUpdate

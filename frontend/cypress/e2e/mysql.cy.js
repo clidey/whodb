@@ -590,7 +590,7 @@ describe('MySQL E2E test', () => {
 
         // 13) Open scratchpad drawer from Explore and run query
         cy.data('users');
-        cy.get('[data-testid="scratchpad-button"]').click();
+        cy.get('[data-testid="embedded-scratchpad-button"]').click();
         cy.contains('h2', 'Scratchpad').should('be.visible');
 
         // The drawer should have the default query populated
@@ -615,7 +615,7 @@ describe('MySQL E2E test', () => {
         cy.selectMockData();
 
         // UI: sheet title and note visible
-        cy.contains('div', 'Mock Data for users').should('be.visible');
+        cy.contains('div', 'Mock Data').should('be.visible');
         cy.contains('Note').should('be.visible');
 
         // The sheet should open; try to exceed max count and verify it clamps

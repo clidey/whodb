@@ -4,5 +4,7 @@ query Columns($schema: String!, $storageUnit: String!) {
         Type
         IsPrimary
         IsForeignKey
+        ReferencedTable
+        ReferencedColumn
     }
 }
