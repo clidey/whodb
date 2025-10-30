@@ -32,7 +32,6 @@ const ChatPage = lazy(() => import("../pages/chat/chat").then(m => ({ default: m
 const SettingsPage = lazy(() => import("../pages/settings/settings").then(m => ({ default: m.SettingsPage })));
 const ContactUsPage = lazy(() => import("../pages/contact-us/contact-us").then(m => ({ default: m.ContactUsPage })));
 
-
 // Wrapper component for lazy loaded routes
 const LazyRoute: FC<{ component: React.ComponentType<any> }> = ({ component: Component }) => (
   <Suspense fallback={<LoadingPage />}>

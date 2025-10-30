@@ -178,9 +178,20 @@ Cypress.Commands.add("getTablePageSize", () => {
 });
 
 Cypress.Commands.add("submitTable", () => {
-    cy.get('[data-testid="submit-button"]').click().then(() => {
-        // Wait a bit for the request to complete
-        cy.wait(200);
+    cy.get('body').then($body => {
+        const dialogVisible = $body.find('[role="dialog"]:visible').length > 0;
+        if (dialogVisible) {
+            cy.get('[role="dialog"]:visible').within(() => {
+                cy.get('[data-testid="add-conditions-button"]').click();
+                cy.wait(300);
+            });
+        }
+    });
+    cy.get('[data-testid="submit-button"]:visible').then($btn => {
+        if ($btn.length > 0) {
+            cy.wrap($btn).click({force: true});
+            cy.wait(200);
+        }
     });
 });
 
@@ -233,7 +244,7 @@ Cypress.Commands.add("whereTable", (fieldArray) => {
                 // In sheet mode, add button is inside the dialog
                 cy.wait(100);
                 cy.get('[role="dialog"]').within(() => {
-                    cy.get('button').contains('Add').click();
+                    cy.get('[data-testid="add-conditions-button"]').click();
                 });
             } else {
                 // Popover mode - uses non-indexed test IDs
@@ -672,9 +683,46 @@ Cypress.Commands.add("getGraph", () => {
             if ($body.find('.react-flow__edge').length > 0) {
                 return cy.get('.react-flow__edge').then(($edgeEls) => {
                     const edges = $edgeEls.toArray().map(el => {
-                        const [source, target] = el.getAttribute("data-testid").slice("rf__edge-".length).split("->");
+                        // Edge ID format is either:
+                        // - "source->target" (old format without handles)
+                        // - "source-sourceCol-target-targetCol" (new format with column info)
+                        const edgeId = el.getAttribute("data-testid").slice("rf__edge-".length);
+
+                        let source, target;
+                        if (edgeId.includes("->")) {
+                            // Old format: "source->target"
+                            [source, target] = edgeId.split("->");
+                        } else {
+                            // New format: "source-sourceCol-target-targetCol"
+                            // Extract source and target by finding the node that matches
+                            const parts = edgeId.split("-");
+                            // Try to match against known nodes
+                            for (let i = 1; i < parts.length; i++) {
+                                const possibleSource = parts.slice(0, i).join("-");
+                                if (nodes.includes(possibleSource)) {
+                                    source = possibleSource;
+                                    // Target is the rest after skipping the source column
+                                    const remaining = parts.slice(i + 1);
+                                    for (let j = 1; j <= remaining.length; j++) {
+                                        const possibleTarget = remaining.slice(0, j).join("-");
+                                        if (nodes.includes(possibleTarget)) {
+                                            target = possibleTarget;
+                                            break;
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+
+                            // Fallback: if we can't parse it, skip this edge
+                            if (!source || !target) {
+                                return null;
+                            }
+                        }
+
                         return {source, target};
-                    });
+                    }).filter(edge => edge !== null);
+
                     const graph = {};
                     nodes.forEach(node => {
                         graph[node] = edges
@@ -858,7 +906,10 @@ Cypress.Commands.add('dismissContextMenu', () => {
 
 Cypress.Commands.add('selectMockData', () => {
     // Right-click the table header to open the context menu
-    cy.get('table thead tr').first().rightclick({ force: true });
+    // Target the table header row with cursor-context-menu class
+    cy.get('table thead tr.cursor-context-menu').first().rightclick({ force: true });
+    // Wait for context menu to appear
+    cy.wait(200);
     // Click the "Mock Data" item using its stable test ID
     cy.get('[data-testid="context-menu-mock-data"]').should('be.visible').click();
 });

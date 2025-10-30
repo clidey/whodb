@@ -1,0 +1,10 @@
+query GetColumns($schema: String!, $storageUnit: String!) {
+  Columns(schema: $schema, storageUnit: $storageUnit) {
+    Name
+    Type
+    IsPrimary
+    IsForeignKey
+    ReferencedTable
+    ReferencedColumn
+  }
+}

@@ -55,42 +55,42 @@ func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCre
 
 // LoginWithProfile is the resolver for the LoginWithProfile field.
 func (r *mutationResolver) LoginWithProfile(ctx context.Context, profile model.LoginProfileInput) (*model.StatusResponse, error) {
-    profiles := src.GetLoginProfiles()
-    for i, loginProfile := range profiles {
-        profileId := src.GetLoginProfileId(i, loginProfile)
-        if profile.ID == profileId {
-            if !src.MainEngine.Choose(engine.DatabaseType(loginProfile.Type)).IsAvailable(&engine.PluginConfig{
-                Credentials: src.GetLoginCredentials(loginProfile),
-            }) {
+	profiles := src.GetLoginProfiles()
+	for i, loginProfile := range profiles {
+		profileId := src.GetLoginProfileId(i, loginProfile)
+		if profile.ID == profileId {
+			if !src.MainEngine.Choose(engine.DatabaseType(loginProfile.Type)).IsAvailable(&engine.PluginConfig{
+				Credentials: src.GetLoginCredentials(loginProfile),
+			}) {
 				log.LogFields(log.Fields{
 					"profile_id": profile.ID,
 					"type":       loginProfile.Type,
 				}).Error("Database connection failed for login profile - credentials unauthorized")
 				return nil, errors.New("unauthorized")
 			}
-            // Build full credentials so the auth layer can persist them to keyring
-            resolved := src.GetLoginCredentials(loginProfile)
-            credentials := &model.LoginCredentials{
-                ID:       &profile.ID,
-                Type:     resolved.Type,
-                Hostname: resolved.Hostname,
-                Username: resolved.Username,
-                Password: resolved.Password,
-                Database: resolved.Database,
-                Advanced: func() []*model.RecordInput {
-                    var out []*model.RecordInput
-                    for _, rec := range resolved.Advanced {
-                        out = append(out, &model.RecordInput{Key: rec.Key, Value: rec.Value})
-                    }
-                    return out
-                }(),
-            }
-            if profile.Database != nil && *profile.Database != "" {
-                credentials.Database = *profile.Database
-            }
-            return auth.Login(ctx, credentials)
-        }
-    }
+			// Build full credentials so the auth layer can persist them to keyring
+			resolved := src.GetLoginCredentials(loginProfile)
+			credentials := &model.LoginCredentials{
+				ID:       &profile.ID,
+				Type:     resolved.Type,
+				Hostname: resolved.Hostname,
+				Username: resolved.Username,
+				Password: resolved.Password,
+				Database: resolved.Database,
+				Advanced: func() []*model.RecordInput {
+					var out []*model.RecordInput
+					for _, rec := range resolved.Advanced {
+						out = append(out, &model.RecordInput{Key: rec.Key, Value: rec.Value})
+					}
+					return out
+				}(),
+			}
+			if profile.Database != nil && *profile.Database != "" {
+				credentials.Database = *profile.Database
+			}
+			return auth.Login(ctx, credentials)
+		}
+	}
 	log.LogFields(log.Fields{
 		"profile_id": profile.ID,
 	}).Error("Login profile not found or not authorized")
@@ -559,7 +559,9 @@ func (r *queryResolver) StorageUnit(ctx context.Context, schema string) ([]*mode
 func (r *queryResolver) Row(ctx context.Context, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) (*model.RowsResult, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
 	typeArg := config.Credentials.Type
-	rowsResult, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetRows(config, schema, storageUnit, where, sort, pageSize, pageOffset)
+	plugin := src.MainEngine.Choose(engine.DatabaseType(typeArg))
+
+	rowsResult, err := plugin.GetRows(config, schema, storageUnit, where, sort, pageSize, pageOffset)
 	if err != nil {
 		log.LogFields(log.Fields{
 			"operation":     "GetRows",
@@ -572,11 +574,58 @@ func (r *queryResolver) Row(ctx context.Context, schema string, storageUnit stri
 		}).Error("Database operation failed")
 		return nil, err
 	}
+
+	constraints, err := plugin.GetColumnConstraints(config, schema, storageUnit)
+	if err != nil {
+		log.LogFields(log.Fields{
+			"operation":    "GetColumnConstraints",
+			"schema":       schema,
+			"storage_unit": storageUnit,
+			"error":        err.Error(),
+		}).Warn("Failed to get column constraints, primary key detection unavailable")
+		constraints = make(map[string]map[string]any)
+	}
+
+	// Get foreign key relationships from actual database constraints
+	foreignKeys, err := plugin.GetForeignKeyRelationships(config, schema, storageUnit)
+	if err != nil {
+		log.LogFields(log.Fields{
+			"operation":    "GetForeignKeyRelationships",
+			"schema":       schema,
+			"storage_unit": storageUnit,
+			"error":        err.Error(),
+		}).Warn("Failed to get foreign key relationships")
+		foreignKeys = make(map[string]*engine.ForeignKeyRelationship)
+	}
+
 	columns := []*model.Column{}
 	for _, column := range rowsResult.Columns {
+		isPrimary := false
+		if colConstraints, ok := constraints[column.Name]; ok {
+			if primary, exists := colConstraints["primary"]; exists {
+				if primaryBool, isBool := primary.(bool); isBool {
+					isPrimary = primaryBool
+				}
+			}
+		}
+
+		// Check if this column has a foreign key constraint
+		var referencedTable *string
+		var referencedColumn *string
+		isForeignKey := false
+		if fk, exists := foreignKeys[column.Name]; exists {
+			isForeignKey = true
+			referencedTable = &fk.ReferencedTable
+			referencedColumn = &fk.ReferencedColumn
+		}
+
 		columns = append(columns, &model.Column{
-			Type: column.Type,
-			Name: column.Name,
+			Type:             column.Type,
+			Name:             column.Name,
+			IsPrimary:        isPrimary,
+			IsForeignKey:     isForeignKey,
+			ReferencedTable:  referencedTable,
+			ReferencedColumn: referencedColumn,
 		})
 	}
 	return &model.RowsResult{
@@ -590,7 +639,9 @@ func (r *queryResolver) Row(ctx context.Context, schema string, storageUnit stri
 func (r *queryResolver) Columns(ctx context.Context, schema string, storageUnit string) ([]*model.Column, error) {
 	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
 	typeArg := config.Credentials.Type
-	columnsResult, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).GetColumnsForTable(config, schema, storageUnit)
+	plugin := src.MainEngine.Choose(engine.DatabaseType(typeArg))
+
+	columnsResult, err := plugin.GetColumnsForTable(config, schema, storageUnit)
 	if err != nil {
 		log.LogFields(log.Fields{
 			"operation":     "GetColumnsForTable",
@@ -601,11 +652,63 @@ func (r *queryResolver) Columns(ctx context.Context, schema string, storageUnit 
 		}).Error("Database operation failed")
 		return nil, err
 	}
+
+	constraints, err := plugin.GetColumnConstraints(config, schema, storageUnit)
+	if err != nil {
+		log.LogFields(log.Fields{
+			"operation":    "GetColumnConstraints",
+			"schema":       schema,
+			"storage_unit": storageUnit,
+			"error":        err.Error(),
+		}).Warn("Failed to get column constraints, primary key detection unavailable")
+		constraints = make(map[string]map[string]any)
+	}
+
+	// Get foreign key relationships from actual database constraints
+	foreignKeys, err := plugin.GetForeignKeyRelationships(config, schema, storageUnit)
+	if err != nil {
+		log.LogFields(log.Fields{
+			"operation":    "GetForeignKeyRelationships",
+			"schema":       schema,
+			"storage_unit": storageUnit,
+			"error":        err.Error(),
+		}).Warn("Failed to get foreign key relationships")
+		foreignKeys = make(map[string]*engine.ForeignKeyRelationship)
+	}
+
 	columns := []*model.Column{}
 	for _, column := range columnsResult {
+		// Use column's IsPrimary if already set, otherwise check constraints
+		isPrimary := column.IsPrimary
+		if !isPrimary {
+			if colConstraints, ok := constraints[column.Name]; ok {
+				if primary, exists := colConstraints["primary"]; exists {
+					if primaryBool, isBool := primary.(bool); isBool {
+						isPrimary = primaryBool
+					}
+				}
+			}
+		}
+
+		// Use column's IsForeignKey if already set, otherwise check foreign key relationships
+		isForeignKey := column.IsForeignKey
+		referencedTable := column.ReferencedTable
+		referencedColumn := column.ReferencedColumn
+		if !isForeignKey {
+			if fk, exists := foreignKeys[column.Name]; exists {
+				isForeignKey = true
+				referencedTable = &fk.ReferencedTable
+				referencedColumn = &fk.ReferencedColumn
+			}
+		}
+
 		columns = append(columns, &model.Column{
-			Type: column.Type,
-			Name: column.Name,
+			Type:             column.Type,
+			Name:             column.Name,
+			IsPrimary:        isPrimary,
+			IsForeignKey:     isForeignKey,
+			ReferencedTable:  referencedTable,
+			ReferencedColumn: referencedColumn,
 		})
 	}
 	return columns, nil
@@ -628,8 +731,10 @@ func (r *queryResolver) RawExecute(ctx context.Context, query string) (*model.Ro
 	columns := []*model.Column{}
 	for _, column := range rowsResult.Columns {
 		columns = append(columns, &model.Column{
-			Type: column.Type,
-			Name: column.Name,
+			Type:         column.Type,
+			Name:         column.Name,
+			IsPrimary:    column.IsPrimary,
+			IsForeignKey: column.IsForeignKey,
 		})
 	}
 	return &model.RowsResult{
@@ -659,6 +764,8 @@ func (r *queryResolver) Graph(ctx context.Context, schema string) ([]*model.Grap
 			relations = append(relations, &model.GraphUnitRelationship{
 				Name:         relation.Name,
 				Relationship: model.GraphUnitRelationshipType(relation.RelationshipType),
+				SourceColumn: relation.SourceColumn,
+				TargetColumn: relation.TargetColumn,
 			})
 		}
 		graphUnitsModel = append(graphUnitsModel, &model.GraphUnit{

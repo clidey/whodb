@@ -147,6 +147,43 @@ func (p *MySQLPlugin) CreateSQLBuilder(db *gorm.DB) gorm_plugin.SQLBuilderInterf
 	return NewMySQLSQLBuilder(db, p)
 }
 
+func (p *MySQLPlugin) GetForeignKeyRelationships(config *engine.PluginConfig, schema string, storageUnit string) (map[string]*engine.ForeignKeyRelationship, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (map[string]*engine.ForeignKeyRelationship, error) {
+		query := `
+			SELECT
+				COLUMN_NAME,
+				REFERENCED_TABLE_NAME,
+				REFERENCED_COLUMN_NAME
+			FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+			WHERE TABLE_SCHEMA = ?
+				AND TABLE_NAME = ?
+				AND REFERENCED_TABLE_NAME IS NOT NULL
+		`
+
+		rows, err := db.Raw(query, schema, storageUnit).Rows()
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+
+		relationships := make(map[string]*engine.ForeignKeyRelationship)
+		for rows.Next() {
+			var columnName, referencedTable, referencedColumn string
+			if err := rows.Scan(&columnName, &referencedTable, &referencedColumn); err != nil {
+				log.Logger.WithError(err).Error("Failed to scan foreign key relationship")
+				continue
+			}
+			relationships[columnName] = &engine.ForeignKeyRelationship{
+				ColumnName:       columnName,
+				ReferencedTable:  referencedTable,
+				ReferencedColumn: referencedColumn,
+			}
+		}
+
+		return relationships, nil
+	})
+}
+
 func NewMySQLPlugin() *engine.Plugin {
 	mysqlPlugin := &MySQLPlugin{}
 	mysqlPlugin.Type = engine.DatabaseType_MySQL
