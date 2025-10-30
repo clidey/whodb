@@ -487,7 +487,7 @@ export const ChatPage: FC = () => {
                     />
                     <Button tabIndex={0} onClick={loading ? undefined : handleSubmitQuery} className={cn("rounded-full", {
                         "opacity-50": loading,
-                    })} disabled={disableChat} variant={disableChat ? "secondary" : undefined}>
+                    })} disabled={disableChat} variant={disableChat ? "secondary" : undefined} data-testid="icon-button">
                         <ArrowUpCircleIcon className="w-8 h-8" />
                     </Button>
                 </div>

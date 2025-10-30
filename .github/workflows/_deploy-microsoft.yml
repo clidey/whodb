@@ -1,0 +1,471 @@
+name: Deploy to Microsoft Store
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version being deployed'
+        required: true
+        type: string
+      stage-only:
+        description: 'Stage only mode (draft submission)'
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      MS_TENANT_ID:
+        required: false
+      MS_CLIENT_ID:
+        required: false
+      MS_CLIENT_SECRET:
+        required: false
+      MS_APP_ID:
+        required: false
+      MS_PACKAGE_IDENTITY_NAME:
+        required: true
+      WINDOWS_PUBLISHER_CN:
+        required: true
+      MS_PACKAGE_PUBLISHER_DISPLAY_NAME:
+        required: true
+
+jobs:
+  package-windows-msix:
+    name: Package Windows MSIX
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Windows SDK
+        shell: pwsh
+        run: |
+          Write-Host "Checking for Windows SDK..."
+          $ErrorActionPreference = "Continue"
+
+          $makeappxExists = $false
+          try {
+            $existing = where.exe makeappx.exe 2>$null
+            if ($existing) {
+              Write-Host "✅ MakeAppx already available at: $existing"
+              $makeappxExists = $true
+            }
+          } catch {}
+
+          if (-not $makeappxExists) {
+            $kitsPath = "C:\Program Files (x86)\Windows Kits\10\bin"
+            if (Test-Path $kitsPath) {
+              $versions = Get-ChildItem -Path $kitsPath -Directory | Where-Object { $_.Name -match "^\d+\.\d+\.\d+\.\d+$" }
+              if ($versions) {
+                $latestVersion = $versions | Sort-Object Name -Descending | Select-Object -First 1
+                $sdkPath = Join-Path $latestVersion.FullName "x64"
+                if ($env:GITHUB_PATH) {
+                  Add-Content -Path $env:GITHUB_PATH -Value $sdkPath -ErrorAction Continue
+                } else {
+                  $env:PATH = "$sdkPath;$env:PATH"
+                }
+              }
+            }
+          }
+          Write-Host "SDK setup completed"
+          exit 0
+
+      - name: Download Windows executables
+        uses: actions/download-artifact@v4
+        with:
+          name: desktop-windows-amd64
+          path: desktop-builds/
+
+      - name: Create MSIX Package
+        shell: pwsh
+        run: |
+          Write-Host "Creating MSIX package..."
+          $msixDir = "msix-package"
+          New-Item -ItemType Directory -Force -Path $msixDir
+
+          $possiblePaths = @(
+            "desktop-builds/windows/amd64/whodb.exe",
+            "desktop-builds/build/windows/amd64/whodb.exe",
+            "desktop-builds/whodb.exe",
+            "desktop-builds/whodb-amd64.exe"
+          )
+          $exeFound = $false
+          foreach ($path in $possiblePaths) {
+            if (Test-Path $path) {
+              Copy-Item $path "$msixDir/whodb.exe"
+              Write-Host "✅ Found and copied executable from: $path"
+              $exeFound = $true
+              break
+            }
+          }
+
+          if (-not $exeFound) {
+            Write-Error "❌ Executable not found in any expected location"
+            exit 1
+          }
+
+          $semVersion = "${{ inputs.version }}".Trim()
+          if ($semVersion.StartsWith("v")) {
+            $semVersion = $semVersion.Substring(1)
+          }
+          $rawParts = $semVersion.Split(".")
+          if ($rawParts.Count -gt 3) {
+            Write-Error "Semantic version '$semVersion' has more than three numeric segments which is not supported for this mapping."
+            exit 1
+          }
+          $versionParts = @()
+          foreach ($part in $rawParts) {
+            $parsed = 0
+            if (-not [int]::TryParse($part, [ref]$parsed)) {
+              Write-Error "Semantic version segment '$part' is not numeric."
+              exit 1
+            }
+            if ($parsed -lt 0 -or $parsed -gt 65535) {
+              Write-Error "Semantic version segment '$part' is out of range for MSIX (0-65535)."
+              exit 1
+            }
+            $versionParts += $parsed
+          }
+          while ($versionParts.Count -lt 3) {
+            $versionParts += 0
+          }
+
+          $major = $versionParts[0]
+          $minor = $versionParts[1]
+          $patch = $versionParts[2]
+
+          $windowsMajor = 10
+          $windowsMinor = 100 + $major
+          $windowsBuild = $minor
+          $windowsRevision = $patch
+
+          foreach ($segment in @($windowsMajor, $windowsMinor, $windowsBuild, $windowsRevision)) {
+            if ($segment -lt 0 -or $segment -gt 65535) {
+              Write-Error "Computed Windows version segment '$segment' is out of range for MSIX (0-65535)."
+              exit 1
+            }
+          }
+
+          $windowsVersion = "{0}.{1}.{2}.{3}" -f $windowsMajor, $windowsMinor, $windowsBuild, $windowsRevision
+          Write-Host "Windows package version resolved to $windowsVersion"
+
+          $packageIdentityName = "${{ secrets.MS_PACKAGE_IDENTITY_NAME }}".Trim()
+          $publisherCnBase = "${{ secrets.WINDOWS_PUBLISHER_CN }}".Trim()
+          $packagePublisherDisplayName = "${{ secrets.MS_PACKAGE_PUBLISHER_DISPLAY_NAME }}".Trim()
+
+          foreach ($pair in @(
+            @{ Name = "MS_PACKAGE_IDENTITY_NAME"; Value = $packageIdentityName },
+            @{ Name = "WINDOWS_PUBLISHER_CN"; Value = $publisherCnBase },
+            @{ Name = "MS_PACKAGE_PUBLISHER_DISPLAY_NAME"; Value = $packagePublisherDisplayName }
+          )) {
+            if ([string]::IsNullOrWhiteSpace($pair.Value)) {
+              Write-Error "Missing required secret $($pair.Name) for Microsoft Store packaging."
+              exit 1
+            }
+          }
+          if ($packageIdentityName -notmatch '^[A-Za-z0-9][A-Za-z0-9\.]*$') {
+            Write-Error "MS_PACKAGE_IDENTITY_NAME must match the package identity pattern (e.g. Contoso.App). Current value '$packageIdentityName' is invalid."
+            exit 1
+          }
+          if ($publisherCnBase -match '^\s*$' -or $publisherCnBase -match ',') {
+            Write-Error "WINDOWS_PUBLISHER_CN should only contain the certificate common name without CN= or commas. Current value '$publisherCnBase' is invalid."
+            exit 1
+          }
+          $packagePublisherId = "CN=$publisherCnBase"
+
+          $manifest = @"
+          <?xml version="1.0" encoding="utf-8"?>
+          <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+                   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+                   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
+            <Identity Name="$packageIdentityName"
+                      Publisher="$packagePublisherId"
+                      Version="$windowsVersion"
+                      ProcessorArchitecture="x64" />
+            <Properties>
+              <DisplayName>WhoDB</DisplayName>
+              <PublisherDisplayName>$packagePublisherDisplayName</PublisherDisplayName>
+              <Logo>Assets\StoreLogo.png</Logo>
+            </Properties>
+            <Dependencies>
+              <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.22621.0" />
+            </Dependencies>
+            <Resources>
+              <Resource Language="en-US" />
+            </Resources>
+            <Applications>
+              <Application Id="App" Executable="whodb.exe" EntryPoint="Windows.FullTrustApplication">
+                <uap:VisualElements DisplayName="WhoDB"
+                                    Description="Database management tool"
+                                    BackgroundColor="transparent"
+                                    Square150x150Logo="Assets\Square150x150Logo.png"
+                                    Square44x44Logo="Assets\Square44x44Logo.png">
+                  <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
+                  <uap:SplashScreen Image="Assets\SplashScreen.png" />
+                </uap:VisualElements>
+              </Application>
+            </Applications>
+            <Capabilities>
+              <rescap:Capability Name="runFullTrust" />
+            </Capabilities>
+          </Package>
+          "@
+          $manifest | Out-File -FilePath "$msixDir/AppxManifest.xml" -Encoding UTF8
+
+          $assetsDir = "$msixDir/Assets"
+          New-Item -ItemType Directory -Force -Path $assetsDir
+
+          Add-Type -AssemblyName System.Drawing
+          $sizes = @(
+            @{Name="StoreLogo.png"; Width=50; Height=50},
+            @{Name="Square150x150Logo.png"; Width=150; Height=150},
+            @{Name="Square44x44Logo.png"; Width=44; Height=44},
+            @{Name="Wide310x150Logo.png"; Width=310; Height=150},
+            @{Name="SplashScreen.png"; Width=620; Height=300}
+          )
+
+          foreach ($size in $sizes) {
+            $bitmap = New-Object System.Drawing.Bitmap $size.Width, $size.Height
+            $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+            $graphics.Clear([System.Drawing.Color]::FromArgb(0, 120, 215))
+            $graphics.Dispose()
+            $bitmap.Save("$assetsDir\$($size.Name)", [System.Drawing.Imaging.ImageFormat]::Png)
+            $bitmap.Dispose()
+          }
+
+          $makeAppx = (where.exe makeappx.exe 2>$null | Select-Object -First 1)
+          if (-not $makeAppx) {
+            Write-Error "MakeAppx.exe not found"
+            exit 1
+          }
+
+          $outputPath = "WhoDB_${{ inputs.version }}.msix"
+          & $makeAppx pack /d $msixDir /p $outputPath /v
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          Write-Host "✅ MSIX package created: $outputPath"
+
+      - name: Upload Windows package
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-msix
+          path: "*.msix"
+          retention-days: 1
+
+  deploy-microsoft-store:
+    name: Submit to Microsoft Store
+    runs-on: windows-latest
+    needs: [ package-windows-msix ]
+    continue-on-error: ${{ inputs.stage-only }}
+    steps:
+      - name: Checkout for scripts
+        uses: actions/checkout@v4
+
+      - name: Check Microsoft Store credentials
+        id: check_creds
+        shell: pwsh
+        run: |
+          $hasAllCreds = ("${{ secrets.MS_TENANT_ID }}" -ne "") -and
+                        ("${{ secrets.MS_CLIENT_ID }}" -ne "") -and
+                        ("${{ secrets.MS_CLIENT_SECRET }}" -ne "") -and
+                        ("${{ secrets.MS_APP_ID }}" -ne "")
+
+          if ($hasAllCreds) {
+            Write-Host "✅ All Microsoft Store credentials are configured"
+            echo "has_creds=true" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Host "⚠️ Microsoft Store credentials missing"
+            if ("${{ inputs.stage-only }}" -eq "true") {
+              echo "has_creds=false" >> $env:GITHUB_OUTPUT
+            } else {
+              Write-Error "Production deployment requires all Microsoft Store credentials"
+              exit 1
+            }
+          }
+
+      - name: Download MSIX package
+        if: steps.check_creds.outputs.has_creds == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-msix
+          path: .
+
+      - name: Setup StoreBroker Module
+        if: steps.check_creds.outputs.has_creds == 'true'
+        shell: pwsh
+        run: |
+          if (!(Get-Module -ListAvailable -Name StoreBroker)) {
+            Install-Module -Name StoreBroker -Force -Scope CurrentUser -AllowClobber
+          }
+          Write-Host "✅ StoreBroker ready"
+
+      - name: Replace MSIX bundle and submit
+        if: steps.check_creds.outputs.has_creds == 'true'
+        shell: pwsh
+        env:
+          MS_TENANT_ID: ${{ secrets.MS_TENANT_ID }}
+          MS_CLIENT_ID: ${{ secrets.MS_CLIENT_ID }}
+          MS_CLIENT_SECRET: ${{ secrets.MS_CLIENT_SECRET }}
+          MS_APP_ID: ${{ secrets.MS_APP_ID }}
+        run: |
+          Import-Module StoreBroker -Force
+          $global:SBDisableTelemetry = $true
+          $securePassword = ConvertTo-SecureString $env:MS_CLIENT_SECRET -AsPlainText -Force
+          $credential = New-Object System.Management.Automation.PSCredential($env:MS_CLIENT_ID, $securePassword)
+          Set-StoreBrokerAuthentication -TenantId $env:MS_TENANT_ID -Credential $credential
+
+          $appId = $env:MS_APP_ID
+          $msixPath = Get-ChildItem -Path "." -Filter "*.msix" | Select-Object -First 1
+          if (-not $msixPath) {
+            Write-Error "❌ MSIX artifact not found"
+            exit 1
+          }
+
+          Write-Host "✅ Using package: $($msixPath.FullName)"
+
+          $submission = New-ApplicationSubmission -AppId $appId -NoStatus
+          if (-not $submission) {
+            Write-Error "❌ Failed to clone latest submission for application $appId"
+            exit 1
+          }
+
+          if (-not $submission.applicationPackages -or $submission.applicationPackages.Count -eq 0) {
+            Write-Error "❌ Submission clone does not contain any packages; cannot continue"
+            exit 1
+          }
+
+          $originalPackages = $submission.applicationPackages | ForEach-Object { $_ }
+          $submission.applicationPackages | ForEach-Object { $_.fileStatus = "PendingDelete" }
+
+          $primaryPackage = $originalPackages | Select-Object -First 1
+          $packageJson = $primaryPackage | ConvertTo-Json -Depth 32
+          $newPackage = $packageJson | ConvertFrom-Json
+
+          $semVersion = "${{ inputs.version }}".Trim()
+          if ($semVersion.StartsWith("v")) {
+            $semVersion = $semVersion.Substring(1)
+          }
+          $rawParts = $semVersion.Split(".")
+          if ($rawParts.Count -gt 3) {
+            Write-Error "Semantic version '$semVersion' has more than three numeric segments which is not supported for this mapping."
+            exit 1
+          }
+          $versionParts = @()
+          foreach ($part in $rawParts) {
+            $parsed = 0
+            if (-not [int]::TryParse($part, [ref]$parsed)) {
+              Write-Error "Semantic version segment '$part' is not numeric."
+              exit 1
+            }
+            if ($parsed -lt 0 -or $parsed -gt 65535) {
+              Write-Error "Semantic version segment '$part' is out of range for MSIX (0-65535)."
+              exit 1
+            }
+            $versionParts += $parsed
+          }
+          while ($versionParts.Count -lt 3) {
+            $versionParts += 0
+          }
+
+          $major = $versionParts[0]
+          $minor = $versionParts[1]
+          $patch = $versionParts[2]
+
+          $windowsMajor = 10
+          $windowsMinor = 100 + $major
+          $windowsBuild = $minor
+          $windowsRevision = $patch
+
+          foreach ($segment in @($windowsMajor, $windowsMinor, $windowsBuild, $windowsRevision)) {
+            if ($segment -lt 0 -or $segment -gt 65535) {
+              Write-Error "Computed Windows version segment '$segment' is out of range for MSIX (0-65535)."
+              exit 1
+            }
+          }
+
+          $windowsVersion = "{0}.{1}.{2}.{3}" -f $windowsMajor, $windowsMinor, $windowsBuild, $windowsRevision
+          Write-Host "Microsoft Store submission version resolved to $windowsVersion"
+
+          $packageName = $msixPath.Name
+          $packageSize = (Get-Item $msixPath.FullName).Length
+
+          $newPackage.fileName = $packageName
+          $newPackage.fileStatus = "PendingUpload"
+          if ($newPackage.PSObject.Properties.Name -contains "fileSize") {
+            $newPackage.fileSize = $packageSize
+          } else {
+            $newPackage | Add-Member -NotePropertyName fileSize -NotePropertyValue $packageSize
+          }
+          if ($newPackage.PSObject.Properties.Name -contains "version") {
+            $newPackage.version = $windowsVersion
+          } else {
+            $newPackage | Add-Member -NotePropertyName version -NotePropertyValue $windowsVersion
+          }
+
+          foreach ($prop in @("fileUploadUrl", "fileUploadStatus", "uploadUrl", "id")) {
+            if ($newPackage.PSObject.Properties.Name -contains $prop) {
+              $newPackage.PSObject.Properties.Remove($prop)
+            }
+          }
+
+          $submission.applicationPackages += $newPackage
+
+          foreach ($prop in @("appId", "iapId")) {
+            if ($submission.PSObject.Properties.Name -contains $prop) {
+              $submission.PSObject.Properties.Remove($prop)
+            }
+          }
+          foreach ($pkg in $submission.applicationPackages) {
+            foreach ($prop in @("version","architecture","targetPlatform","languages","capabilities","targetDeviceFamilies","targetDeviceFamiliesEx","minOSVersion","innerPackages")) {
+              if ($pkg.PSObject.Properties.Name -contains $prop) {
+                $pkg.PSObject.Properties.Remove($prop)
+              }
+            }
+          }
+
+          $isStageOnly = "${{ inputs.stage-only }}" -eq "true"
+          if (-not $isStageOnly) {
+            $submission.targetPublishMode = "Immediate"
+            if ($submission.PSObject.Properties.Name -contains "targetPublishDate") {
+              $submission.PSObject.Properties.Remove("targetPublishDate")
+            }
+          }
+
+          $updatedSubmission = Set-ApplicationSubmission -AppId $appId -UpdatedSubmission $submission -NoStatus
+          if (-not $updatedSubmission) {
+            Write-Error "❌ Failed to update submission with new package metadata"
+            exit 1
+          }
+
+          $uploadUrl = $updatedSubmission.fileUploadUrl
+          if ([string]::IsNullOrWhiteSpace($uploadUrl)) {
+            Write-Error "❌ Store API did not return an upload URL for the submission"
+            exit 1
+          }
+
+          $stagingDir = Join-Path $PWD "ms-store-upload"
+          if (Test-Path $stagingDir) {
+            Remove-Item $stagingDir -Recurse -Force
+          }
+          New-Item -ItemType Directory -Path $stagingDir | Out-Null
+          Copy-Item $msixPath.FullName (Join-Path $stagingDir $packageName)
+
+          $submissionZip = Join-Path $PWD "submission-package.zip"
+          if (Test-Path $submissionZip) {
+            Remove-Item $submissionZip -Force
+          }
+          Compress-Archive -Path (Join-Path $stagingDir $packageName) -DestinationPath $submissionZip -CompressionLevel Optimal
+
+          Set-SubmissionPackage -PackagePath $submissionZip -UploadUrl $uploadUrl -NoStatus
+
+          if (Test-Path $submissionZip) {
+            Remove-Item $submissionZip -Force
+          }
+          if (Test-Path $stagingDir) {
+            Remove-Item $stagingDir -Recurse -Force
+          }
+
+          if ($isStageOnly) {
+            Write-Host "✅ Submission updated and left as draft (stage-only mode)"
+          } else {
+            Complete-ApplicationSubmission -AppId $appId -SubmissionId $updatedSubmission.id -NoStatus
+            Write-Host "🚀 Submission committed for certification and will publish immediately after approval"
+          }

@@ -1,0 +1,176 @@
+name: 'Deployment Summary'
+description: 'Generate deployment summary report'
+inputs:
+  version:
+    description: 'Version being deployed'
+    required: true
+  deployment-mode:
+    description: 'Deployment mode'
+    required: true
+  build-docker:
+    description: 'Docker build result'
+    required: true
+  build-desktop:
+    description: 'Desktop build result'
+    required: true
+  build-snap:
+    description: 'Snap build result'
+    required: true
+  deploy-docker:
+    description: 'Docker deployment result'
+    required: true
+  deploy-snap:
+    description: 'Snap deployment result'
+    required: true
+  deploy-microsoft:
+    description: 'Microsoft deployment result'
+    required: true
+  deploy-apple:
+    description: 'Apple deployment result'
+    required: true
+  github-release:
+    description: 'GitHub release result'
+    required: true
+  homebrew-cask:
+    description: 'Homebrew cask result'
+    required: true
+  verification:
+    description: 'Verification result'
+    required: true
+  rollback:
+    description: 'Rollback result'
+    required: true
+  stage-only:
+    description: 'Stage only flag'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Generate summary
+      shell: bash
+      run: |
+        # Helper function to format status
+        format_status() {
+          case "$1" in
+            success) echo "✅ Success" ;;
+            skipped) echo "⏭️ Skipped" ;;
+            failure|failed) echo "❌ Failed" ;;
+            *) echo "❓ Unknown" ;;
+          esac
+        }
+
+        # Start summary
+        echo "# 📊 Release Summary for v${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Deployment Mode:** ${{ inputs.deployment-mode }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Timestamp:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        # Build Status
+        echo "## 🔨 Build Status" >> $GITHUB_STEP_SUMMARY
+        echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Docker | $(format_status ${{ inputs.build-docker }}) |" >> $GITHUB_STEP_SUMMARY
+        echo "| Desktop | $(format_status ${{ inputs.build-desktop }}) |" >> $GITHUB_STEP_SUMMARY
+        echo "| Snap | $(format_status ${{ inputs.build-snap }}) |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        # Deployment Status
+        echo "## 🚀 Deployment Status" >> $GITHUB_STEP_SUMMARY
+        echo "| Platform | Status | Notes |" >> $GITHUB_STEP_SUMMARY
+        echo "|----------|--------|-------|" >> $GITHUB_STEP_SUMMARY
+
+        # Docker Hub
+        if [ "${{ inputs.deploy-docker }}" = "success" ]; then
+          echo "| Docker Hub | ✅ Deployed | Version ${{ inputs.version }} |" >> $GITHUB_STEP_SUMMARY
+        elif [ "${{ inputs.deploy-docker }}" = "skipped" ]; then
+          echo "| Docker Hub | ⏭️ Skipped | Not selected |" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "| Docker Hub | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        # Snap Store
+        if [ "${{ inputs.deploy-snap }}" = "success" ]; then
+          CHANNEL="${{ inputs.stage-only == 'true' && 'edge' || 'stable' }}"
+          echo "| Snap Store | ✅ Deployed | ${CHANNEL} channel |" >> $GITHUB_STEP_SUMMARY
+        elif [ "${{ inputs.deploy-snap }}" = "skipped" ]; then
+          echo "| Snap Store | ⏭️ Skipped | Not selected |" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "| Snap Store | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        # Microsoft Store
+        if [ "${{ inputs.deploy-microsoft }}" = "success" ]; then
+          MODE="${{ inputs.stage-only == 'true' && 'Draft submission' || 'Production' }}"
+          echo "| Microsoft Store | ✅ Deployed | ${MODE} |" >> $GITHUB_STEP_SUMMARY
+        elif [ "${{ inputs.deploy-microsoft }}" = "skipped" ]; then
+          echo "| Microsoft Store | ⏭️ Skipped | Not selected |" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "| Microsoft Store | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        # Apple App Store
+        if [ "${{ inputs.deploy-apple }}" = "success" ]; then
+          MODE="${{ inputs.stage-only == 'true' && 'TestFlight' || 'Production' }}"
+          echo "| Apple App Store | ✅ Deployed | ${MODE} |" >> $GITHUB_STEP_SUMMARY
+        elif [ "${{ inputs.deploy-apple }}" = "skipped" ]; then
+          echo "| Apple App Store | ⏭️ Skipped | Not selected |" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "| Apple App Store | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        # GitHub Release
+        if [ "${{ inputs.github-release }}" = "success" ]; then
+          MODE="${{ inputs.stage-only == 'true' && 'Draft' || 'Published' }}"
+          echo "| GitHub Release | ✅ Created | ${MODE} |" >> $GITHUB_STEP_SUMMARY
+        elif [ "${{ inputs.github-release }}" = "skipped" ]; then
+          echo "| GitHub Release | ⏭️ Skipped | Stage-only mode |" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "| GitHub Release | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        # Homebrew
+        if [ "${{ inputs.homebrew-cask }}" = "success" ]; then
+          echo "| Homebrew Cask | ✅ Generated | Ready for PR |" >> $GITHUB_STEP_SUMMARY
+        elif [ "${{ inputs.homebrew-cask }}" = "skipped" ]; then
+          echo "| Homebrew Cask | ⏭️ Skipped | Not production |" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "| Homebrew Cask | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        # Additional Status
+        echo "## 📋 Additional Status" >> $GITHUB_STEP_SUMMARY
+        echo "| Step | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+
+        if [ "${{ inputs.verification }}" = "success" ]; then
+          echo "| Verification | ✅ All deployments verified |" >> $GITHUB_STEP_SUMMARY
+        elif [ "${{ inputs.verification }}" = "skipped" ]; then
+          echo "| Verification | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "| Verification | ⚠️ Some checks failed |" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        if [ "${{ inputs.rollback }}" = "success" ]; then
+          echo "| Rollback | ⚠️ Rollback executed |" >> $GITHUB_STEP_SUMMARY
+        elif [ "${{ inputs.rollback }}" = "skipped" ]; then
+          echo "| Rollback | ⏭️ Not needed |" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "| Rollback | ❌ Rollback failed |" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        # Quick links
+        echo "## 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
+        echo "- [Docker Hub](https://hub.docker.com/r/clidey/whodb)" >> $GITHUB_STEP_SUMMARY
+        echo "- [Snap Store](https://snapcraft.io/whodb)" >> $GITHUB_STEP_SUMMARY
+
+        if [ "${{ inputs.github-release }}" = "success" ]; then
+          echo "- [GitHub Release](https://github.com/clidey/whodb/releases/tag/v${{ inputs.version }})" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        echo "- [Workflow Run](https://github.com/clidey/whodb/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY

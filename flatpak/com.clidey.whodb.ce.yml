@@ -1,0 +1,65 @@
+# Copyright 2025 Clidey, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+id: com.clidey.whodb.ce
+runtime: org.freedesktop.Platform
+runtime-version: '23.08'
+sdk: org.freedesktop.Sdk
+command: whodb
+
+finish-args:
+  # Full filesystem access for database file selection (especially SQLite)
+  - --filesystem=host
+  # Network access for database connections
+  - --share=network
+  # X11 and Wayland display access
+  - --socket=x11
+  - --socket=wayland
+  # GPU acceleration
+  - --device=dri
+  # System tray/notifications
+  - --talk-name=org.freedesktop.Notifications
+  - --talk-name=org.kde.StatusNotifierWatcher
+  # IPC for multi-window support
+  - --share=ipc
+
+modules:
+  - name: whodb
+    buildsystem: simple
+    build-commands:
+      - install -Dm755 whodb /app/bin/whodb
+      - install -Dm644 whodb.desktop /app/share/applications/com.clidey.whodb.ce.desktop
+      - install -Dm644 icon.png /app/share/icons/hicolor/256x256/apps/com.clidey.whodb.ce.png
+    sources:
+      - type: file
+        path: ../desktop-ce/build/linux/amd64/whodb
+        dest-filename: whodb
+        only-arches:
+          - x86_64
+      - type: file
+        path: ../desktop-ce/build/linux/arm64/whodb
+        dest-filename: whodb
+        only-arches:
+          - aarch64
+      - type: file
+        path: ../linux/whodb.desktop
+      - type: file
+        path: ../linux/icon.png
+
+# External data checker for automatic version updates
+x-checker-data:
+  type: json
+  url: https://api.github.com/repos/clidey/whodb/releases/latest
+  version-query: .tag_name | sub("^v"; "")
+  url-query: .assets[] | select(.name=="whodb-linux-amd64") | .browser_download_url

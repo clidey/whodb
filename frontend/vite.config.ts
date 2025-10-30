@@ -35,8 +35,8 @@ const eeModulePlugin = () => ({
   },
   load(id: string) {
     if (id.startsWith('\0virtual:ee-fallback:')) {
-      // Return minimal module code
-      return '';
+      // Return minimal module code with default export
+      return 'export default {};';
     }
   }
 });

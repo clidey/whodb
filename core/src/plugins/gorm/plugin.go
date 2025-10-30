@@ -303,7 +303,11 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 		}
 	}
 
-	query = query.Limit(pageSize).Offset(pageOffset)
+	// Only apply pagination if pageSize > 0
+	// pageSize <= 0 means fetch all rows
+	if pageSize > 0 {
+		query = query.Limit(pageSize).Offset(pageOffset)
+	}
 
 	rows, err := query.Rows()
 	if err != nil {

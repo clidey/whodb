@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import { Badge, Button, Checkbox, cn, Input, Label, SearchInput, SearchSelect, Separator, StackList, StackListItem, Table, TableCell, TableHead, Tabs, TabsContent, TabsList, TabsTrigger, toast, TableRow, VirtualizedTableBody, TableHeader, TableHeadRow, SheetTitle } from '@clidey/ux';
-import { DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useGetStorageUnitsQuery, useGetColumnsLazyQuery } from '@graphql';
+import { Badge, Button, Checkbox, cn, Input, Label, SearchInput, Separator, StackList, StackListItem, Table, TableCell, TableHead, Tabs, TabsContent, TabsList, TabsTrigger, toast, TableRow, VirtualizedTableBody, TableHeader, TableHeadRow, SheetTitle } from '@clidey/ux';
+import { SearchSelect } from "../../components/ux";
+import { DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useGetColumnsLazyQuery, useGetStorageUnitsQuery } from '@graphql';
 import { ArrowPathRoundedSquareIcon, CheckCircleIcon, CircleStackIcon, CommandLineIcon, ListBulletIcon, MagnifyingGlassIcon, PlusCircleIcon, TableCellsIcon, XCircleIcon, XMarkIcon } from '../../components/heroicons';
 import classNames from "classnames";
 import clone from "lodash/clone";
@@ -68,7 +69,7 @@ const StorageUnitCard: FC<{ unit: StorageUnit, columns?: any[] }> = ({ unit, col
     }, [unit.Attributes]);
 
     return (<ExpandableCard key={unit.Name} isExpanded={expanded} setExpanded={setExpanded} icon={<TableCellsIcon className="w-4 h-4" />} className={cn({
-        "shadow-2xl": expanded,
+        "shadow-2xl exploring-storage-unit": expanded,
     })} data-testid="storage-unit-card">
         <div className="flex flex-col grow mt-2 cursor-pointer" data-testid="storage-unit-card">
             <div className="flex flex-col grow mb-2 w-full overflow-x-hidden">
@@ -415,7 +416,7 @@ export const StorageUnitPage: FC = () => {
                     </div>
                     <div className="flex grow" />
                     <Button onClick={handleSubmit} data-testid="submit-button" className="w-full">
-                        <CheckCircleIcon className="w-4 h-4" /> Submit
+                        <CheckCircleIcon className="w-4 h-4" /> Create
                     </Button>
                 </div>
             </ExpandableCard>
@@ -436,7 +437,7 @@ export const StorageUnitPage: FC = () => {
                         {sharedAttributeKeys.map(key => (
                             <TableHead key={key}>{key}</TableHead>
                         ))}
-                        <TableHead className="w-32">Actions</TableHead>
+                        <TableHead>Actions</TableHead>
                     </TableHeadRow>
                 </TableHeader>
                 <VirtualizedTableBody
@@ -459,9 +460,10 @@ export const StorageUnitPage: FC = () => {
                                                     state: { unit },
                                                 });
                                             }} 
-                                            data-testid="data-button" 
-                                            variant="secondary" 
+                                            data-testid="data-button"
+                                            variant="secondary"
                                             size="sm"
+                                            className="!cursor-pointer"
                                         >
                                             <CircleStackIcon className="w-4 h-4" /> Data
                                         </Button>
@@ -577,8 +579,8 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit & { columns?: 
 
     return (
         <>
-            <Card icon={<CircleStackIcon className="w-4 h-4" />} className="h-fit backdrop-blur-[2px] w-[400px] px-2 py-6 relative">
-                <div className="flex flex-col grow mt-2 gap-4">
+            <Card icon={<CircleStackIcon className="w-4 h-4" />} className="h-fit backdrop-blur-[2px] w-[400px] px-2 py-6">
+                <div className="flex flex-col grow mt-2 gap-lg" data-testid="storage-unit-graph-card">
                     <div className="flex flex-col grow">
                         <h2 className="text-3xl font-semibold mb-2 break-words">{data.Name}</h2>
                         <StackList>

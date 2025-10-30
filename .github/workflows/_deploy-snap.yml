@@ -1,0 +1,115 @@
+name: Deploy to Snap Store
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version being deployed'
+        required: true
+        type: string
+      channel:
+        description: 'Snap channel (edge, beta, candidate, stable)'
+        required: false
+        type: string
+        default: 'stable'
+    secrets:
+      SNAPCRAFT_STORE_CREDENTIALS:
+        required: false
+
+jobs:
+  deploy-snap:
+    name: Deploy to Snap Store
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout for scripts
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Check deployment parameters
+        run: |
+          echo "📦 Snap Deployment Configuration:"
+          echo "  Version: ${{ inputs.version }}"
+          echo "  Channel: ${{ inputs.channel }}"
+
+      - name: Download snap amd64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: snap-package-amd64
+
+      - name: Download snap arm64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: snap-package-arm64
+
+      - name: Check Snapcraft credentials
+        id: check_creds
+        run: |
+          if [ -n "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}" ]; then
+            echo "has_creds=true" >> $GITHUB_OUTPUT
+            echo "✅ Snapcraft credentials are configured"
+          else
+            echo "has_creds=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Snapcraft credentials not configured"
+
+            if [ "${{ inputs.channel }}" = "stable" ]; then
+              echo "::error::Production deployment requires SNAPCRAFT_STORE_CREDENTIALS"
+              exit 1
+            else
+              echo "Continuing without credentials for ${{ inputs.channel }} channel"
+            fi
+          fi
+
+      - name: Locate snap files
+        id: locate_snaps
+        run: |
+          echo "Looking for snap files..."
+          ls -la *.snap || echo "No snap files in current directory"
+
+          AMD64_SNAP=$(ls *amd64*.snap 2>/dev/null | head -1 || echo "")
+          ARM64_SNAP=$(ls *arm64*.snap 2>/dev/null | head -1 || echo "")
+
+          if [ -z "$AMD64_SNAP" ] && [ -z "$ARM64_SNAP" ]; then
+            echo "❌ No snap files found"
+            if [ "${{ inputs.channel }}" != "stable" ]; then
+              echo "Continuing in non-production mode..."
+              echo "snap_found=false" >> $GITHUB_OUTPUT
+              exit 0
+            else
+              exit 1
+            fi
+          fi
+
+          [ -n "$AMD64_SNAP" ] && echo "✅ Found AMD64 snap: $AMD64_SNAP"
+          [ -n "$ARM64_SNAP" ] && echo "✅ Found ARM64 snap: $ARM64_SNAP"
+
+          echo "snap_found=true" >> $GITHUB_OUTPUT
+          echo "amd64_snap=$AMD64_SNAP" >> $GITHUB_OUTPUT
+          echo "arm64_snap=$ARM64_SNAP" >> $GITHUB_OUTPUT
+
+      - name: Publish AMD64 snap
+        if: steps.check_creds.outputs.has_creds == 'true' && steps.locate_snaps.outputs.amd64_snap != ''
+        uses: canonical/action-publish@v1
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+        with:
+          snap: ${{ steps.locate_snaps.outputs.amd64_snap }}
+          release: ${{ inputs.channel }}
+
+      - name: Publish ARM64 snap
+        if: steps.check_creds.outputs.has_creds == 'true' && steps.locate_snaps.outputs.arm64_snap != ''
+        uses: canonical/action-publish@v1
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+        with:
+          snap: ${{ steps.locate_snaps.outputs.arm64_snap }}
+          release: ${{ inputs.channel }}
+
+      - name: Deployment summary
+        if: always()
+        run: |
+          if [ "${{ steps.check_creds.outputs.has_creds }}" = "true" ]; then
+            echo "✅ Published snap packages to ${{ inputs.channel }} channel"
+          else
+            echo "⏭️ Skipped snap publication (no credentials)"
+          fi

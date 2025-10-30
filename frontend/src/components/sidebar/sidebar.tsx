@@ -22,7 +22,6 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-    SearchSelect,
     Sheet,
     SheetContent,
     SheetTitle,
@@ -38,6 +37,7 @@ import {
     toast,
     useSidebar
 } from "@clidey/ux";
+import { SearchSelect } from "../ux";
 import {
     DatabaseType,
     useGetDatabaseQuery,
@@ -323,7 +323,7 @@ export const Sidebar: FC = () => {
                         </div>
                     ) : (
                         <SidebarGroup className="grow">
-                            <div className="flex flex-col gap-4">
+                            <div className="flex flex-col gap-lg">
                                 {/* Profile Select */}
                                 <div className="flex flex-col gap-sm w-full">
                                     <h2 className={cn("text-sm", !open &&  "hidden")}>Profile</h2>

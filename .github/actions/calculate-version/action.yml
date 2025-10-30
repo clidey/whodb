@@ -1,0 +1,156 @@
+name: 'Calculate Version'
+description: 'Calculate version and deployment parameters'
+inputs:
+  deployment-mode:
+    description: 'Deployment mode (stage-only, production)'
+    required: true
+  version-bump:
+    description: 'Version bump type (major, minor, patch)'
+    required: false
+    default: 'minor'
+  deploy-docker:
+    description: 'Deploy to Docker Hub'
+    required: false
+    default: 'true'
+  deploy-snap:
+    description: 'Deploy to Snap Store'
+    required: false
+    default: 'true'
+  deploy-microsoft:
+    description: 'Deploy to Microsoft Store'
+    required: false
+    default: 'true'
+  deploy-apple:
+    description: 'Deploy to Apple App Store'
+    required: false
+    default: 'true'
+  publish-github-release:
+    description: 'Publish GitHub release to production (production mode only)'
+    required: false
+    default: 'false'
+outputs:
+  version:
+    description: 'Calculated version'
+    value: ${{ steps.version.outputs.version }}
+  previous-version:
+    description: 'Previous version'
+    value: ${{ steps.version.outputs.previous-version }}
+  deployment-mode:
+    description: 'Deployment mode'
+    value: ${{ steps.mode.outputs.mode }}
+  stage-only:
+    description: 'Stage only flag'
+    value: ${{ steps.flags.outputs.stage-only }}
+  deploy-docker:
+    description: 'Deploy Docker flag'
+    value: ${{ steps.stores.outputs.deploy-docker }}
+  deploy-snap:
+    description: 'Deploy Snap flag'
+    value: ${{ steps.stores.outputs.deploy-snap }}
+  deploy-microsoft:
+    description: 'Deploy Microsoft flag'
+    value: ${{ steps.stores.outputs.deploy-microsoft }}
+  deploy-apple:
+    description: 'Deploy Apple flag'
+    value: ${{ steps.stores.outputs.deploy-apple }}
+  publish-github-release:
+    description: 'Publish GitHub release flag'
+    value: ${{ steps.flags.outputs.publish-github-release }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set deployment mode
+      id: mode
+      shell: bash
+      run: |
+        MODE="${{ inputs.deployment-mode }}"
+        echo "mode=$MODE" >> $GITHUB_OUTPUT
+        echo "🎯 Deployment mode: $MODE"
+
+    - name: Set flags
+      id: flags
+      shell: bash
+      run: |
+        MODE="${{ steps.mode.outputs.mode }}"
+
+        if [ "$MODE" = "stage-only" ]; then
+          STAGE_ONLY="true"
+        else  # production
+          STAGE_ONLY="false"
+        fi
+
+        echo "stage-only=$STAGE_ONLY" >> $GITHUB_OUTPUT
+        echo "Stage only: $STAGE_ONLY"
+
+        # For production mode, use the provided publish-github-release input
+        # For stage-only, always override to false (always draft, ignore publish flag)
+        if [ "$MODE" = "stage-only" ]; then
+          PUBLISH_GITHUB_RELEASE="false"
+        else
+          PUBLISH_GITHUB_RELEASE="${{ inputs.publish-github-release }}"
+        fi
+
+        echo "publish-github-release=$PUBLISH_GITHUB_RELEASE" >> $GITHUB_OUTPUT
+        echo "Publish GitHub release: $PUBLISH_GITHUB_RELEASE"
+
+    - name: Calculate version
+      id: version
+      shell: bash
+      run: |
+        # Get all tags, strip 'v' prefix if present, sort by semantic version
+        LATEST_TAG=$(git tag | sed 's/^v//' | sort -V | tail -1)
+
+        # Default to 0.0.0 if no tags exist
+        if [ -z "$LATEST_TAG" ]; then
+          LATEST_TAG="0.0.0"
+        fi
+
+        PREVIOUS_VERSION="$LATEST_TAG"
+
+        # Calculate next version based on bump type
+        IFS='.' read -r major minor patch <<< "$PREVIOUS_VERSION"
+        BUMP_TYPE="${{ inputs.version-bump }}"
+
+        case "$BUMP_TYPE" in
+          "major")
+            major=$((major + 1))
+            minor=0
+            patch=0
+            ;;
+          "minor")
+            minor=$((minor + 1))
+            patch=0
+            ;;
+          "patch")
+            patch=$((patch + 1))
+            ;;
+          *)
+            echo "Invalid version bump type: $BUMP_TYPE"
+            exit 1
+            ;;
+        esac
+
+        NEXT_VERSION="${major}.${minor}.${patch}"
+
+        echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
+        echo "previous-version=$PREVIOUS_VERSION" >> $GITHUB_OUTPUT
+        echo "📦 Version: $NEXT_VERSION (previous: $PREVIOUS_VERSION, bump: $BUMP_TYPE)"
+
+    - name: Set store selection
+      id: stores
+      shell: bash
+      run: |
+        MODE="${{ steps.mode.outputs.mode }}"
+
+        # Always respect user selections for which stores to deploy to
+        echo "deploy-docker=${{ inputs.deploy-docker }}" >> $GITHUB_OUTPUT
+        echo "deploy-snap=${{ inputs.deploy-snap }}" >> $GITHUB_OUTPUT
+        echo "deploy-microsoft=${{ inputs.deploy-microsoft }}" >> $GITHUB_OUTPUT
+        echo "deploy-apple=${{ inputs.deploy-apple }}" >> $GITHUB_OUTPUT
+
+        if [ "$MODE" = "production" ]; then
+          echo "Production mode: deploying selected stores to production channels"
+        else
+          echo "Stage-only mode: deploying selected stores to edge/draft channels"
+        fi

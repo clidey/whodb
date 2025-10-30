@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- App Sandbox is required for Mac App Store -->
+    <key>com.apple.security.app-sandbox</key>
+    <true/>
+
+    <!-- Network access for database connections -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+    <key>com.apple.security.network.server</key>
+    <true/>
+
+    <!-- File access for SQLite and other file-based databases -->
+    <key>com.apple.security.files.user-selected.read-write</key>
+    <true/>
+
+    <!-- Allow file downloads -->
+    <key>com.apple.security.files.downloads.read-write</key>
+    <true/>
+
+    <!-- Allow opening files from Finder -->
+    <key>com.apple.security.files.bookmarks.app-scope</key>
+    <true/>
+
+    <!-- Disable library validation to allow dynamic loading -->
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+
+    <!-- Allow JIT compilation for JavaScript engines -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+
+    <!-- Allow execution of unsigned executable memory -->
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+
+    <!-- Application identifiers (required for Mac App Store) -->
+    <key>com.apple.application-identifier</key>
+    <string>F32XW59S3D.com.clidey.whodb</string>
+    <key>com.apple.developer.team-identifier</key>
+    <string>F32XW59S3D</string>
+</dict>
+</plist>

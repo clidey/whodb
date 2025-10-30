@@ -266,9 +266,13 @@ func (a *App) RestoreWindowState() error {
 		return err
 	}
 
-	// Apply window settings
-	runtime.WindowSetPosition(a.ctx, a.windowSettings.X, a.windowSettings.Y)
-	runtime.WindowSetSize(a.ctx, a.windowSettings.Width, a.windowSettings.Height)
+	// Apply window settings (guard against invalid geometry)
+	if a.windowSettings.X != 0 || a.windowSettings.Y != 0 {
+		runtime.WindowSetPosition(a.ctx, a.windowSettings.X, a.windowSettings.Y)
+	}
+	if a.windowSettings.Width > 0 && a.windowSettings.Height > 0 {
+		runtime.WindowSetSize(a.ctx, a.windowSettings.Width, a.windowSettings.Height)
+	}
 	if a.windowSettings.Maximized {
 		runtime.WindowMaximise(a.ctx)
 	}
@@ -319,18 +323,30 @@ Documentation: https://whodb.com/docs`,
 
 // getSettingsPath returns the path to store window settings
 func (a *App) getSettingsPath() string {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		// Fallback to temp directory if home directory cannot be determined
-		homeDir = os.TempDir()
-	}
 	suffix := ""
 	if a.edition == "ee" {
 		suffix = "-ee"
 	}
-	configDir := filepath.Join(homeDir, ".whodb"+suffix)
-	os.MkdirAll(configDir, dirPermissionUserRWX)
-	return filepath.Join(configDir, "window-settings.json")
+
+	if snapUserCommon := os.Getenv("SNAP_USER_COMMON"); snapUserCommon != "" {
+		configDir := filepath.Join(snapUserCommon, "config"+suffix)
+		os.MkdirAll(configDir, dirPermissionUserRWX)
+		return filepath.Join(configDir, "window-settings.json")
+	}
+
+	if configDir, err := os.UserConfigDir(); err == nil && configDir != "" {
+		target := filepath.Join(configDir, "whodb"+suffix)
+		os.MkdirAll(target, dirPermissionUserRWX)
+		return filepath.Join(target, "window-settings.json")
+	}
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		homeDir = os.TempDir()
+	}
+	fallbackDir := filepath.Join(homeDir, ".whodb"+suffix)
+	os.MkdirAll(fallbackDir, dirPermissionUserRWX)
+	return filepath.Join(fallbackDir, "window-settings.json")
 }
 
 // SetupApplicationMenu creates and sets the application menu

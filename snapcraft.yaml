@@ -1,0 +1,723 @@
+# Copyright 2025 Clidey, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: whodb
+adopt-info: versioner
+summary: Lightweight database management tool
+description: |
+  WhoDB is a lightweight, next-generation database management tool for
+  developers and database administrators. It provides an intuitive interface
+  for managing multiple database types including PostgreSQL, MySQL, SQLite,
+  MongoDB, Redis, and more.
+
+base: core24
+confinement: strict
+grade: stable
+compression: xz
+title: WhoDB
+license: Apache-2.0
+contact: mailto:support@whodb.com
+website: https://whodb.com
+source-code: https://github.com/clidey/whodb
+issues: https://github.com/clidey/whodb/issues
+donation: https://github.com/sponsors/clidey
+icon: linux/icon.png
+
+platforms:
+  amd64:
+    build-on: [ amd64 ]
+    build-for: [ amd64 ]
+  arm64:
+    build-on: [ arm64 ]
+    build-for: [ arm64 ]
+
+layout:
+  /usr/lib/x86_64-linux-gnu/webkit2gtk-4.1:
+    bind: $SNAP/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1
+  /usr/lib/aarch64-linux-gnu/webkit2gtk-4.1:
+    bind: $SNAP/usr/lib/aarch64-linux-gnu/webkit2gtk-4.1
+  /usr/libexec/webkit2gtk-4.1:
+    bind: $SNAP/usr/libexec/webkit2gtk-4.1
+
+apps:
+  whodb:
+    command: bin/whodb
+    command-chain:
+      - bin/webkit-launcher
+    desktop: share/applications/whodb.desktop
+    extensions: [ gnome ]
+    environment:
+      GTK_USE_PORTAL: "0"  # Disable portal usage which is causing issues
+      WEBKIT_DISABLE_DMABUF_RENDERER: "1"
+      # Disable sandbox for debugging
+      WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS: "1"
+    plugs:
+      - desktop
+      - desktop-legacy
+      - wayland
+      - x11
+      - gsettings
+      - network
+      - network-bind
+      - opengl
+      - browser-support
+      - audio-playback
+      - unity7
+      - home
+
+parts:
+  # Build Node/frontend dependencies first
+  frontend:
+    plugin: nil
+    source: frontend
+    source-type: local
+    build-packages:
+      - curl
+      - ca-certificates
+      - gnupg
+    build-environment:
+      # Skip Cypress binary installation - not needed for production builds
+      - CYPRESS_INSTALL_BINARY: "0"
+    override-build: |
+      # Install Node.js
+      curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
+      apt-get install -y nodejs
+
+      # Install pnpm
+      npm install -g pnpm
+
+      # Build frontend (Cypress binary will be skipped)
+      pnpm install
+      pnpm run build:ce
+
+      # Stage the build output for the next part
+      mkdir -p $SNAPCRAFT_PART_INSTALL/frontend-dist
+      cp -r build/* $SNAPCRAFT_PART_INSTALL/frontend-dist/
+
+  versioner:
+    plugin: nil
+    override-pull: |
+      # Read version from .snap_version file created by GitHub Actions
+      # The file is in the project root
+      VERSION_FILE="${SNAPCRAFT_PROJECT_DIR}/.snap_version"
+
+      if [ -f "$VERSION_FILE" ]; then
+        VERSION=$(cat "$VERSION_FILE")
+        snapcraftctl set-version "$VERSION"
+        echo "Version set to: $VERSION"
+      else
+        echo "ERROR: $VERSION_FILE not found"
+        echo "This file must be created with the version before building"
+        exit 1
+      fi
+
+  whodb:
+    after: [ frontend ]
+    plugin: nil
+    source: .
+    source-type: local
+    build-environment:
+      - CGO_ENABLED: "1"
+      - PATH: "/snap/go/current/bin:$PATH"
+      - GOPATH: "$HOME/go"
+      - GOWORK: "$PWD/go.work.desktop-ce"
+    build-snaps:
+      - go/latest/stable
+    build-packages:
+      - gcc
+      - g++
+      - libgtk-3-dev
+      - libwebkit2gtk-4.1-dev
+      - pkg-config
+      - upx-ucl
+      - build-essential
+    stage-packages:
+      # Core system libraries for core24
+      - libc6
+      - libgcc-s1
+      - libstdc++6
+      # GTK and WebKit libraries (minimal)
+      - libgtk-3-0
+      - libwebkit2gtk-4.1-0
+      - libjavascriptcoregtk-4.1-0
+      # X11 and display libraries
+      - libx11-6
+      - libx11-xcb1
+      - libxau6
+      - libxcomposite1
+      - libxcursor1
+      - libxdamage1
+      - libxdmcp6
+      - libxext6
+      - libxfixes3
+      - libxi6
+      - libxinerama1
+      - libxrandr2
+      - libxrender1
+      - libxcb1
+      - libxcb-render0
+      - libxcb-shm0
+      - libxcb-randr0
+      - libxkbcommon0
+      # OpenGL and rendering
+      - libegl1
+      - libgl1
+      - libglx0
+      - libglvnd0
+      - libglu1-mesa
+      - libgl1-mesa-dri
+      - libgbm1
+      - libepoxy0
+      # GTK and Cairo dependencies
+      - libgdk-pixbuf-2.0-0
+      - libgdk-pixbuf2.0-bin
+      - libcairo2
+      - libcairo-gobject2
+      - libpango-1.0-0
+      - libpangocairo-1.0-0
+      - libpangoft2-1.0-0
+      - libatk1.0-0
+      - libatk-bridge2.0-0
+      - libatspi2.0-0
+      - libpixman-1-0
+      # Use the version from the GNOME extension to avoid ABI mismatches
+      # Text rendering and fonts
+      - libfontconfig1
+      - libfreetype6
+      - libharfbuzz0b
+      - libharfbuzz-icu0
+      - libfribidi0
+      - libthai0
+      - libdatrie1
+      - libgraphite2-3
+      - fontconfig
+      - fontconfig-config
+      - fonts-dejavu-core
+      - fonts-liberation
+      - fonts-inter
+      # Media and codecs (minimal - WebKit might need these)
+      - libgstreamer1.0-0
+      - libgstreamer-plugins-base1.0-0
+      # Mesa/OpenGL for software rendering
+      - mesa-utils
+      - libegl-mesa0
+      - libgles2
+      - mesa-vulkan-drivers
+      - libjpeg-turbo8
+      - liblcms2-2
+      # Wayland support
+      - libwayland-client0
+      - libwayland-cursor0
+      - libwayland-egl1
+      - libwayland-server0
+      # Network and security
+      - libsoup-3.0-0
+      - libsecret-1-0
+      - libpsl5
+      - libnghttp2-14
+      # Other dependencies
+      - libcanberra-gtk3-module
+      - libcanberra-gtk3-0
+      - libcanberra0
+      - libenchant-2-2
+      - libhyphen0
+      - libxml2
+      - libxslt1.1
+      - libgudev-1.0-0
+      - libevdev2
+      - libmanette-0.2-0
+      - libatomic1
+      # Additional WebKit dependencies
+      - libicu74
+      - libsqlite3-0
+      - libwoff1
+      - libnotify4
+      - libgles2
+      - libdrm2
+      - libbrotli1
+      - libgcrypt20
+      - libgpg-error0
+      - libsystemd0
+      - libnss3
+      - libnspr4
+      - libxtst6
+      - libxss1
+      # DBus support
+      - libdbus-1-3
+      - dbus
+      - dbus-x11
+      # Proxy support (fixes libpxbackend error)
+      - libproxy1v5
+      - glib-networking
+      - glib-networking-common
+      - glib-networking-services
+      - gsettings-desktop-schemas
+      # Additional proxy/network libraries
+      - libproxy-tools
+    prime:
+      # Include the whodb binary and launcher
+      - bin/whodb
+      - bin/webkit-launcher
+      # Include all libraries
+      - lib/**
+      - usr/lib/**
+      # Include WebKit subprocess executables
+      - usr/libexec/webkit2gtk-4.1/**
+      - usr/lib/*/webkit2gtk-4.1/**
+      # Exclude GObject introspection (not needed at runtime)
+      # Include only essential GIO modules
+      # Include only essential locale data (English)
+      - usr/share/locale/en*/**
+      # Include MIME type data
+      - usr/share/mime/**
+      # Include Mesa/EGL configuration (exclude vulkan since we're not using it)
+      - usr/share/glvnd/**
+      - etc/glvnd/**
+      # Include only essential DRI drivers
+      - usr/lib/*/dri/swrast_dri.so
+      # Include only minimal fonts (just Liberation Sans)
+      - usr/share/fonts/truetype/liberation/LiberationSans*.ttf
+      - etc/fonts/fonts.conf
+      - etc/fonts/conf.d/10-*.conf
+      - etc/fonts/conf.d/45-*.conf
+      - etc/fonts/conf.d/60-*.conf
+      # Exclude unnecessary libraries to reduce snap size
+      - -usr/lib/*/caca/libgl_plugin.so.*
+      - -usr/lib/*/libcaca++.so.*
+      - -usr/lib/*/libcolordprivate.so.*
+      - -usr/lib/*/libdconf.so.*
+      - -usr/lib/*/libexslt.so.*
+      - -usr/lib/*/libgstcheck-1.0.so.*
+      - -usr/lib/*/libgstcontroller-1.0.so.*
+      - -usr/lib/*/libicuio.so.*
+      - -usr/lib/*/libicutest.so.*
+      - -usr/lib/*/libjacknet.so.*
+      - -usr/lib/*/libjackserver.so.*
+      - -usr/lib/*/liborc-test-0.4.so.*
+      - -usr/lib/*/libpulse-simple.so.*
+      - -usr/lib/*/libunwind-*.so.*
+      - -usr/lib/*/libwoff2enc.so.*
+      # Exclude unused Vulkan libraries (using software rendering)
+      - -usr/lib/*/libvulkan_*.so
+      - -usr/lib/*/libVkLayer_*.so
+      - -usr/lib/*/libvulkan.so.*
+      # Exclude most GStreamer plugins (keep only essential ones)
+      - -usr/lib/*/gstreamer-1.0/libgstadpcm*.so
+      - -usr/lib/*/gstreamer-1.0/libgstaiff*.so
+      - -usr/lib/*/gstreamer-1.0/libgstasf*.so
+      - -usr/lib/*/gstreamer-1.0/libgstavi*.so
+      - -usr/lib/*/gstreamer-1.0/libgstcacasink*.so
+      - -usr/lib/*/gstreamer-1.0/libgstcdio*.so
+      - -usr/lib/*/gstreamer-1.0/libgstdtmf*.so
+      - -usr/lib/*/gstreamer-1.0/libgstdv*.so
+      - -usr/lib/*/gstreamer-1.0/libgstflac*.so
+      - -usr/lib/*/gstreamer-1.0/libgstflv*.so
+      - -usr/lib/*/gstreamer-1.0/libgstflx*.so
+      - -usr/lib/*/gstreamer-1.0/libgstgdkpixbuf*.so
+      - -usr/lib/*/gstreamer-1.0/libgstjack*.so
+      - -usr/lib/*/gstreamer-1.0/libgstjpeg*.so
+      - -usr/lib/*/gstreamer-1.0/libgstlame*.so
+      - -usr/lib/*/gstreamer-1.0/libgstmidi*.so
+      - -usr/lib/*/gstreamer-1.0/libgstmpg123*.so
+      - -usr/lib/*/gstreamer-1.0/libgstogg*.so
+      - -usr/lib/*/gstreamer-1.0/libgstopus*.so
+      - -usr/lib/*/gstreamer-1.0/libgstoss*.so
+      - -usr/lib/*/gstreamer-1.0/libgstpng*.so
+      - -usr/lib/*/gstreamer-1.0/libgstpulse*.so
+      - -usr/lib/*/gstreamer-1.0/libgstqt*.so
+      - -usr/lib/*/gstreamer-1.0/libgstraw*.so
+      - -usr/lib/*/gstreamer-1.0/libgstrtpmanager*.so
+      - -usr/lib/*/gstreamer-1.0/libgstrtsp*.so
+      - -usr/lib/*/gstreamer-1.0/libgstsid*.so
+      - -usr/lib/*/gstreamer-1.0/libgstsoup*.so
+      - -usr/lib/*/gstreamer-1.0/libgstspeex*.so
+      - -usr/lib/*/gstreamer-1.0/libgsttaglib*.so
+      - -usr/lib/*/gstreamer-1.0/libgsttwolame*.so
+      - -usr/lib/*/gstreamer-1.0/libgstvideo4linux2*.so
+      - -usr/lib/*/gstreamer-1.0/libgstv4l2*.so
+      - -usr/lib/*/gstreamer-1.0/libgstvorbis*.so
+      - -usr/lib/*/gstreamer-1.0/libgstvpx*.so
+      - -usr/lib/*/gstreamer-1.0/libgstwavenc*.so
+      - -usr/lib/*/gstreamer-1.0/libgstwavpack*.so
+      - -usr/lib/*/gstreamer-1.0/libgstwavparse*.so
+      - -usr/lib/*/gstreamer-1.0/libgstx264*.so
+      - -usr/lib/*/gstreamer-1.0/libgstx265*.so
+      - -usr/lib/*/gstreamer-1.0/libgstximagesrc*.so
+      - -usr/lib/*/gstreamer-1.0/libgstxvid*.so
+      - -usr/lib/*/gstreamer-1.0/libgsty4m*.so
+      # Exclude unused Mesa/GL libraries
+      - -usr/lib/*/libEGL_mesa.so.*
+      - -usr/lib/*/libGLX_mesa.so.*
+      - -usr/lib/*/libGLU.so.*
+      - -usr/lib/*/libGLESv2.so.*
+      - -usr/lib/*/libOpenGL.so.*
+      - -usr/lib/*/libxcb-glx.so.*
+      # Exclude unused NSS/crypto libraries
+      - -usr/lib/*/libnssckbi.so
+      - -usr/lib/*/libnssdbm3.so
+      - -usr/lib/*/libsmime3.so
+      - -usr/lib/*/libssl3.so
+      - -usr/lib/*/libsoftokn3.so
+      - -usr/lib/*/libfreebl3.so
+      - -usr/lib/*/libfreeblpriv3.so
+      - -usr/lib/*/libnss3.so
+      # Exclude unused system libraries
+      - -usr/lib/*/libanl.so.*
+      - -usr/lib/*/libBrokenLocale.so.*
+      - -usr/lib/*/libc_malloc_debug.so.*
+      - -usr/lib/*/libmvec.so.*
+      - -usr/lib/*/libnsl.so.*
+      - -usr/lib/*/libnss_hesiod.so.*
+      - -usr/lib/*/libnss_compat.so.*
+      - -usr/lib/*/libnss_dns.so.*
+      - -usr/lib/*/libnss_files.so.*
+      - -usr/lib/*/libpcprofile.so
+      - -usr/lib/*/libthread_db.so.*
+      - -usr/lib/*/libmemusage.so
+      - -usr/lib/*/libdl.so.*
+      - -usr/lib/*/libpthread.so.*
+      - -usr/lib/*/librt.so.*
+      - -usr/lib/*/libutil.so.*
+      # Exclude unused UI libraries
+      - -usr/lib/*/libharfbuzz-gobject.so.*
+      - -usr/lib/*/libdecor-*.so.*
+      - -usr/lib/*/libXss.so.*
+      - -usr/lib/*/libXxf86vm.so.*
+      - -usr/lib/*/libform.so.*
+      - -usr/lib/*/libmenu.so.*
+      - -usr/lib/*/libpanel.so.*
+      - -usr/lib/*/libnotify.so.*
+      - -usr/lib/*/libpangoxft-*.so.*
+      - -usr/lib/*/libxkbcommon-x11.so.*
+      # Exclude unused other libraries
+      - -usr/lib/*/libbrotlienc.so.*
+      - -usr/lib/*/libicutu.so.*
+      # Exclude large ICU data files (WebKit has its own)
+      - -usr/share/icu/**
+      - -usr/lib/*/libicudata.so.*
+      # Exclude GTK modules we don't need
+      - -usr/lib/*/gtk-3.0/*/immodules/**
+      - -usr/lib/*/gtk-3.0/*/printbackends/**
+      # Exclude all GIO modules except the essential ones
+      - -usr/lib/*/gio/modules/libdconf*.so
+      - -usr/lib/*/gio/modules/libgioremote*.so
+      - -usr/lib/*/gio/modules/libgiognutls*.so
+      # Exclude documentation and unnecessary files
+      - -usr/share/doc/**
+      - -usr/share/man/**
+      - -usr/share/info/**
+      - -usr/share/lintian/**
+      - -usr/share/bug/**
+      - -usr/share/gtk-doc/**
+      - -usr/share/pixmaps/**
+      - -usr/share/applications/**
+      - -usr/include/**
+      - -usr/lib/*/pkgconfig/**
+      - -usr/lib/*/cmake/**
+      - -usr/share/aclocal/**
+      - -usr/share/pkgconfig/**
+      - -usr/share/vala/**
+      - -usr/share/glib-2.0/schemas/**
+      - -usr/share/glib-2.0/codegen/**
+      - -usr/share/glib-2.0/gdb/**
+      - -usr/share/glib-2.0/gettext/**
+      - -usr/share/glib-2.0/valgrind/**
+      - -usr/share/thumbnailers/**
+      - -usr/share/gettext/**
+      - -usr/share/GConf/**
+      - -usr/share/dbus-1/**
+      - -usr/share/sounds/**
+      - -usr/share/icons/**
+      - -var/**
+      - -usr/lib/*/gstreamer-1.0/libgst*.a
+      - -usr/lib/*/gstreamer-1.0/libgst*.la
+      - -**/*.a
+      - -**/*.la
+      - -**/*.pyo
+      - -**/*.pyc
+    override-build: |
+      # Install Wails (required by Makefile)
+      go install github.com/wailsapp/wails/v2/cmd/wails@latest
+      export PATH=$PATH:$HOME/go/bin
+
+      # Copy frontend build from previous part to expected location
+      mkdir -p desktop-ce/frontend/dist
+      cp -r $SNAPCRAFT_STAGE/frontend-dist/* desktop-ce/frontend/dist/
+
+      # Change to desktop-ce directory
+      cd desktop-ce
+
+      # Use the Makefile's CI build target (which handles all proper configuration)
+      make ci-build-prod-linux
+
+      # The Makefile places the binary in build/linux/$(uname -m)/
+      ARCH=$(uname -m)
+
+      # Compress the binary with UPX for size reduction
+      if command -v upx >/dev/null 2>&1; then
+        echo "Compressing binary with UPX..."
+        upx --best --lzma build/linux/$ARCH/whodb || true
+      fi
+
+      # Install it to the snap location
+      install -D -m755 build/linux/$ARCH/whodb $SNAPCRAFT_PART_INSTALL/bin/whodb
+
+      # Strip debug symbols from all libraries to reduce size
+      echo "Stripping debug symbols from libraries..."
+      find $SNAPCRAFT_PART_INSTALL -type f -name "*.so*" -exec strip --strip-unneeded {} \; 2>/dev/null || true
+
+      # Remove ICU data files we don't need (keep only essential)
+      echo "Reducing ICU data size..."
+      if [ -d "$SNAPCRAFT_PART_INSTALL/usr/share/icu" ]; then
+        # Keep only essential ICU data
+        find $SNAPCRAFT_PART_INSTALL/usr/share/icu -type f -size +1M -delete 2>/dev/null || true
+      fi
+
+      # Remove any Python bytecode that might have snuck in
+      find $SNAPCRAFT_PART_INSTALL -name "*.pyc" -delete 2>/dev/null || true
+      find $SNAPCRAFT_PART_INSTALL -name "*.pyo" -delete 2>/dev/null || true
+
+      # Remove any duplicate libraries
+      echo "Checking for duplicate libraries..."
+      fdupes -rdN $SNAPCRAFT_PART_INSTALL/usr/lib 2>/dev/null || true
+    override-prime: |
+      # Copy everything first
+      craftctl default
+
+      # Aggressive library stripping
+      echo "Performing aggressive library optimization..."
+
+      # Strip all ELF binaries and libraries aggressively
+      find . -type f -exec sh -c 'file "$1" | grep -q "ELF" && strip --strip-all "$1" 2>/dev/null' _ {} \;
+
+      # Remove all static libraries (not needed at runtime)
+      find . -name "*.a" -delete
+
+      # Remove pkg-config files
+      rm -rf usr/lib/*/pkgconfig usr/share/pkgconfig
+
+      # Remove CMake files
+      rm -rf usr/lib/*/cmake usr/share/cmake*
+
+      # Remove all development headers
+      rm -rf usr/include
+
+      # Remove all documentation
+      rm -rf usr/share/doc usr/share/man usr/share/info usr/share/gtk-doc
+
+      # Remove all example files
+      find . -type d -name "examples" -exec rm -rf {} + 2>/dev/null || true
+      find . -type d -name "demos" -exec rm -rf {} + 2>/dev/null || true
+
+      # Remove GIR files (GObject Introspection)
+      rm -rf usr/share/gir-1.0
+      rm -rf usr/lib/*/girepository-1.0
+
+      # Remove all test files
+      find . -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true
+      find . -type d -name "test" -exec rm -rf {} + 2>/dev/null || true
+
+      # Remove Python files (not needed)
+      find . -name "*.py" -delete
+      find . -name "*.pyc" -delete
+      find . -name "*.pyo" -delete
+      rm -rf usr/lib/python*
+
+      # Remove Perl modules (not needed)
+      rm -rf usr/share/perl*
+      rm -rf usr/lib/*/perl*
+
+      # Remove debug symbols
+      find . -name "*.debug" -delete
+
+      # Remove unused GStreamer plugins (keep only absolutely essential)
+      if [ -d usr/lib/*/gstreamer-1.0 ]; then
+        # Keep only core plugins needed for audio
+        find usr/lib/*/gstreamer-1.0 -name "*.so" ! -name "libgstcoreelements.so" \
+          ! -name "libgstautodetect.so" ! -name "libgstalsa.so" \
+          ! -name "libgstpulseaudio.so" ! -name "libgstplayback.so" \
+          ! -name "libgsttypefindfunctions.so" ! -name "libgstaudioconvert.so" \
+          ! -name "libgstaudioresample.so" ! -name "libgstvolume.so" -delete 2>/dev/null || true
+      fi
+
+      # Remove all fonts except essential ones
+      if [ -d usr/share/fonts ]; then
+        # Keep only Liberation Sans for basic text rendering
+        find usr/share/fonts -type f ! -path "*/liberation/*" ! -name "*Liberation*" -delete 2>/dev/null || true
+      fi
+
+      # Remove unnecessary icon themes (keep only essential icons)
+      rm -rf usr/share/icons/Adwaita
+      rm -rf usr/share/icons/HighContrast
+      find usr/share/icons -name "*.svg" -delete 2>/dev/null || true
+
+      # Remove MIME database cache (will be regenerated if needed)
+      rm -rf usr/share/mime/application usr/share/mime/audio usr/share/mime/chemical
+      rm -rf usr/share/mime/image usr/share/mime/message usr/share/mime/model
+      rm -rf usr/share/mime/multipart usr/share/mime/text usr/share/mime/video
+      rm -rf usr/share/mime/x-content usr/share/mime/x-epoc
+      rm -f usr/share/mime/mime.cache
+
+      # Remove GTK update icon cache
+      rm -f usr/share/icons/*/icon-theme.cache
+
+      # Remove any .la libtool files
+      find . -name "*.la" -delete
+
+      # Remove any backup files
+      find . -name "*~" -delete
+      find . -name "*.bak" -delete
+      find . -name "*.old" -delete
+
+      # Remove unused locale data (keep only en_US)
+      find usr/share/locale -mindepth 1 -maxdepth 1 ! -name "en*" -exec rm -rf {} + 2>/dev/null || true
+
+      # Remove all charset/encoding data except UTF-8
+      if [ -d usr/lib/*/gconv ]; then
+        find usr/lib/*/gconv -name "*.so" ! -name "UTF*.so" ! -name "ISO8859*.so" ! -name "UNICODE*.so" -delete 2>/dev/null || true
+      fi
+
+      # Remove WebKit's unused data
+      rm -rf usr/share/webkitgtk-*
+      rm -rf usr/lib/*/webkit2gtk-*/injected-bundle/*.la
+
+      # Remove large WebKit resources we don't need
+      find usr/lib/*/webkit2gtk-*/ -name "*.pak" -size +1M -delete 2>/dev/null || true
+      find usr/lib/*/webkit2gtk-*/ -name "icudtl.dat" -delete 2>/dev/null || true
+
+      # Remove any WebKit debug files
+      find usr/lib/*/webkit2gtk-*/ -name "*.debug" -delete 2>/dev/null || true
+      find usr/libexec/webkit2gtk-*/ -name "*.debug" -delete 2>/dev/null || true
+
+      # Remove all .pc files (pkg-config)
+      find . -name "*.pc" -delete
+
+      # Remove unused Mesa drivers (keep only software renderer)
+      if [ -d usr/lib/*/dri ]; then
+        find usr/lib/*/dri -name "*.so" ! -name "*swrast*" -delete 2>/dev/null || true
+      fi
+
+      # Remove all Vala files
+      rm -rf usr/share/vala*
+
+      # Remove all aclocal files
+      rm -rf usr/share/aclocal
+
+      # Remove unnecessary symbolic links (keep only essential ones)
+      find usr/lib -type l -name "*.so" | while read link; do
+        target=$(readlink "$link")
+        # Remove versioned symlinks that point to the same directory
+        if [[ "$target" == *.so.* ]]; then
+          # Keep the link only if it's a major version link (e.g., .so.1 not .so.1.2.3)
+          if [[ ! "$link" =~ \.so\.[0-9]+$ ]]; then
+            rm -f "$link" 2>/dev/null || true
+          fi
+        fi
+      done
+
+      # Compress any remaining text/config files
+      find . -type f \( -name "*.xml" -o -name "*.json" -o -name "*.conf" -o -name "*.ini" \) -exec gzip -9 {} \; 2>/dev/null || true
+      # Create symlinks for compressed files so they can still be read
+      for f in $(find . -name "*.gz"); do
+        ln -sf "$(basename "$f")" "${f%.gz}" 2>/dev/null || true
+      done
+
+      # Remove any Qt/KDE files that might have snuck in
+      rm -rf usr/share/qt* usr/lib/*/qt*
+      rm -rf usr/share/kde* usr/lib/*/kde*
+
+      # Remove any systemd files (not needed in snap)
+      rm -rf usr/lib/systemd lib/systemd etc/systemd
+
+      # Remove any udev rules (handled by snapd)
+      rm -rf usr/lib/udev lib/udev etc/udev
+
+      # Final pass: remove empty directories
+      find . -type d -empty -delete 2>/dev/null || true
+
+      # Report final size
+      echo "Final prime directory size:"
+      du -sh .
+
+      # Report largest remaining directories
+      echo "Largest directories:"
+      du -sh usr/lib/* 2>/dev/null | sort -rh | head -10 || true
+
+  webkit-launcher:
+    plugin: dump
+    source: .
+    override-build: |
+      mkdir -p $SNAPCRAFT_PART_INSTALL/bin
+      cat > $SNAPCRAFT_PART_INSTALL/bin/webkit-launcher << 'EOF'
+      #!/bin/bash
+
+      # Detect architecture
+      if [ "$(uname -m)" = "x86_64" ]; then
+        ARCH_TRIPLET="x86_64-linux-gnu"
+      elif [ "$(uname -m)" = "aarch64" ]; then
+        ARCH_TRIPLET="aarch64-linux-gnu"
+      else
+        ARCH_TRIPLET="${SNAPCRAFT_ARCH_TRIPLET}"
+      fi
+
+      # Debug: Check if WebKit subprocess exists
+      echo "Checking for WebKit subprocesses..." >&2
+      if [ -f "${SNAP}/usr/lib/${ARCH_TRIPLET}/webkit2gtk-4.1/WebKitNetworkProcess" ]; then
+        echo "Found WebKitNetworkProcess at ${SNAP}/usr/lib/${ARCH_TRIPLET}/webkit2gtk-4.1/" >&2
+      elif [ -f "${SNAP}/usr/libexec/webkit2gtk-4.1/WebKitNetworkProcess" ]; then
+        echo "Found WebKitNetworkProcess at ${SNAP}/usr/libexec/webkit2gtk-4.1/" >&2
+      else
+        echo "WARNING: WebKitNetworkProcess not found!" >&2
+        find "${SNAP}" -name "WebKitNetworkProcess" 2>/dev/null | head -5
+      fi
+
+      # Set WebKit paths
+      export WEBKIT_EXEC_PATH="${SNAP}/usr/lib/${ARCH_TRIPLET}/webkit2gtk-4.1:${SNAP}/usr/libexec/webkit2gtk-4.1"
+      export WEBKIT2_EXEC_PATH="${WEBKIT_EXEC_PATH}"
+
+      # Additional WebKit environment
+      export WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS="1"
+      export WEBKIT_DISABLE_COMPOSITING_MODE="1"
+
+      # Disable GIO proxy module that's causing libpxbackend errors
+      export GIO_USE_PROXY_RESOLVER="dummy"
+      unset GIO_MODULE_DIR
+      unset GIO_EXTRA_MODULES
+
+      # Library paths
+      export LD_LIBRARY_PATH="${SNAP}/usr/lib/${ARCH_TRIPLET}:${SNAP}/usr/lib:${SNAP}/lib/${ARCH_TRIPLET}:${SNAP}/lib:${LD_LIBRARY_PATH}"
+
+      # Graphics/EGL configuration for software rendering
+      export LIBGL_ALWAYS_SOFTWARE="1"
+      export __EGL_VENDOR_LIBRARY_FILENAMES="${SNAP}/usr/share/glvnd/egl_vendor.d/50_mesa.json"
+      export LIBGL_DRIVERS_PATH="${SNAP}/usr/lib/${ARCH_TRIPLET}/dri"
+      export __GLX_VENDOR_LIBRARY_NAME="mesa"
+      export MESA_LOADER_DRIVER_OVERRIDE="swrast"
+      export EGL_PLATFORM="x11"
+
+      exec "$@"
+      EOF
+      chmod +x $SNAPCRAFT_PART_INSTALL/bin/webkit-launcher
+
+  desktop-file:
+    plugin: dump
+    source: linux
+    override-build: |
+      install -D whodb.desktop $CRAFT_PART_INSTALL/share/applications/whodb.desktop
+      install -D icon.png $CRAFT_PART_INSTALL/share/icons/hicolor/256x256/apps/whodb.png
+      install -D icon.png $CRAFT_PART_INSTALL/meta/gui/whodb.png
+    prime:
+      - share/applications/whodb.desktop
+      - share/icons/hicolor/256x256/apps/whodb.png
+      - meta/gui/whodb.png

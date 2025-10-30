@@ -1134,7 +1134,8 @@ export const StorageUnitTable: FC<TableProps> = ({
                         </PaginationContent>
                     </Pagination>
                 </div>
-                <div className="flex justify-end items-center mb-2">
+                <div className="flex justify-end items-center mb-2 gap-4">
+                    <div className="text-sm hidden" data-testid="total-count-bottom"><span className="font-semibold">Total Count:</span> {totalCount}</div>
                     <Button
                         variant="secondary"
                         onClick={() => setShowExportConfirm(true)}
