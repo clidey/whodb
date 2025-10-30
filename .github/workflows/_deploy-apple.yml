@@ -19,6 +19,16 @@ on:
         required: false
       KEYCHAIN_PASSWORD:
         required: false
+      APPLE_MAS_CERTIFICATES_P12:
+        required: false
+      APPLE_MAS_CERTIFICATES_PASSWORD:
+        required: false
+      APPLE_MAS_CERT_APPLICATION:
+        required: false
+      APPLE_MAS_CERT_INSTALLER:
+        required: false
+      APPLE_MAS_PROVISIONING_PROFILE:
+        required: false
       APP_STORE_CONNECT_API_KEY:
         required: false
       APP_STORE_CONNECT_API_KEY_ID:
@@ -29,6 +39,10 @@ on:
         required: false
       APPLE_DEVELOPER_TEAM_ID:
         required: false
+      APPLE_APP_ID:
+        required: false
+      ASC_PUBLIC_ID:
+        required: false
 
 jobs:
   package-mac-app-store:
@@ -38,64 +52,133 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download macOS build
+      - name: Download macOS DMG
         uses: actions/download-artifact@v4
         with:
-          name: desktop-darwin-universal
+          name: desktop-darwin-dmg
           path: desktop-builds/
 
-      - name: Check for app bundle
+      - name: Download macOS App Bundle (MAS)
+        uses: actions/download-artifact@v4
+        with:
+          name: desktop-darwin-mas-app
+          path: desktop-builds/
+
+      # No need to download entitlements - the app is already signed with them
+
+      - name: Generate Homebrew cask
+        run: |
+          VERSION="${{ inputs.version }}"
+
+          # Find DMG file
+          DMG_PATH=$(find desktop-builds -name "*.dmg" | head -1)
+
+          if [ -z "$DMG_PATH" ]; then
+            echo "⚠️  No DMG file found, skipping Homebrew cask generation"
+            exit 0
+          fi
+
+          # Generate cask using script
+          .github/scripts/generate-homebrew-cask.sh "$VERSION" "$DMG_PATH" whodb.rb
+
+          # Create usage instructions
+          cat > HOMEBREW_TESTING.md <<EOF
+          # Local Homebrew Cask Testing
+
+          This cask file was generated for WhoDB v${VERSION}.
+
+          ## Local Testing Instructions:
+
+          1. Download the whodb.rb file from this workflow run
+          2. Install locally:
+             \`\`\`bash
+             brew install --cask whodb.rb
+             \`\`\`
+
+          3. Test the app:
+             \`\`\`bash
+             open -a WhoDB
+             \`\`\`
+
+          4. Uninstall when done:
+             \`\`\`bash
+             brew uninstall --cask whodb
+             \`\`\`
+
+          ## Submit to Homebrew (after production release):
+
+          1. Fork homebrew-cask repository
+          2. Create branch: \`update-whodb-${VERSION}\`
+          3. Add/update \`Casks/w/whodb.rb\` with this file
+          4. Submit PR with title: \`whodb ${VERSION}\` (or \`whodb ${VERSION} (new cask)\` if first submission)
+          EOF
+
+          echo ""
+          echo "📋 Testing instructions created"
+
+      - name: Upload Homebrew cask
+        uses: actions/upload-artifact@v4
+        with:
+          name: homebrew-cask-apple
+          path: |
+            whodb.rb
+            HOMEBREW_TESTING.md
+          retention-days: 30
+
+      - name: Check for MAS app bundle
         id: check_app
         run: |
-          # Look for the app bundle
+          # Look for the MAS app bundle (should be WhoDB.app with proper case)
           APP_PATHS=(
-            "desktop-builds/build/darwin/universal/whodb.app"
-            "desktop-builds/darwin/universal/whodb.app"
-            "desktop-builds/whodb.app"
+            "desktop-builds/WhoDB.app"
+            "desktop-builds/build/darwin/universal/WhoDB.app"
+            "desktop-builds/darwin/universal/WhoDB.app"
           )
 
           APP_PATH=""
           for path in "${APP_PATHS[@]}"; do
             if [ -d "$path" ]; then
               APP_PATH="$path"
-              echo "✅ Found app bundle at: $APP_PATH"
+              echo "✅ Found MAS app bundle at: $APP_PATH"
               break
             fi
           done
 
           if [ -z "$APP_PATH" ]; then
-            echo "❌ App bundle not found"
+            echo "❌ MAS app bundle not found"
+            echo "Available files:"
+            find desktop-builds -name "*.app" -type d || true
             exit 1
           fi
 
           echo "app_path=$APP_PATH" >> $GITHUB_OUTPUT
 
-      - name: Import Apple Developer Certificates
+      - name: Import Mac App Store Installer Certificate
         env:
-          CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_CERTIFICATES_P12 }}
-          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATES_PASSWORD }}
+          MAS_CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_MAS_CERTIFICATES_P12 }}
+          MAS_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_MAS_CERTIFICATES_PASSWORD }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
-          if [ -z "$CERTIFICATE_P12_BASE64" ]; then
-            echo "❌ ERROR: Apple certificates are required for Mac App Store packaging"
-            echo "Please configure APPLE_CERTIFICATES_P12 and APPLE_CERTIFICATES_PASSWORD secrets"
+          if [ -z "$MAS_CERTIFICATE_P12_BASE64" ]; then
+            echo "❌ ERROR: Mac App Store certificates are required for PKG signing"
+            echo "Please configure APPLE_MAS_CERTIFICATES_P12 and APPLE_MAS_CERTIFICATES_PASSWORD secrets"
             exit 1
           fi
 
-          if [ -z "$CERTIFICATE_PASSWORD" ]; then
-            echo "❌ ERROR: APPLE_CERTIFICATES_PASSWORD is required"
+          if [ -z "$MAS_CERTIFICATE_PASSWORD" ]; then
+            echo "❌ ERROR: APPLE_MAS_CERTIFICATES_PASSWORD is required"
             exit 1
           fi
 
-          echo "🔐 Setting up keychain for code signing..."
+          echo "🔐 Setting up keychain for Mac App Store PKG signing..."
 
           # Create variables
-          CERTIFICATE_PATH=$RUNNER_TEMP/certificate.p12
-          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          CERTIFICATE_PATH=$RUNNER_TEMP/mas_certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/mas-signing.keychain-db
           KEYCHAIN_PASSWORD_VALUE="${KEYCHAIN_PASSWORD:-$(uuidgen)}"
 
           # Decode certificate
-          echo "$CERTIFICATE_P12_BASE64" | base64 --decode -o "$CERTIFICATE_PATH"
+          echo "$MAS_CERTIFICATE_P12_BASE64" | base64 --decode -o "$CERTIFICATE_PATH"
 
           # Create temporary keychain
           security create-keychain -p "$KEYCHAIN_PASSWORD_VALUE" "$KEYCHAIN_PATH"
@@ -103,56 +186,72 @@ jobs:
           security unlock-keychain -p "$KEYCHAIN_PASSWORD_VALUE" "$KEYCHAIN_PATH"
 
           # Import certificate to keychain
-          security import "$CERTIFICATE_PATH" -P "$CERTIFICATE_PASSWORD" \
+          security import "$CERTIFICATE_PATH" -P "$MAS_CERTIFICATE_PASSWORD" \
             -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
 
           # Set keychain search list
           security list-keychain -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | sed s/\"//g)
 
-          # Allow codesign to access keychain
-          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+          # Allow productbuild to access keychain
+          security set-key-partition-list -S apple-tool:,apple:,productbuild: \
             -s -k "$KEYCHAIN_PASSWORD_VALUE" "$KEYCHAIN_PATH"
 
-          echo "✅ Certificates imported successfully"
+          echo "✅ Mac App Store installer certificate imported successfully"
 
           # List available signing identities for verification
-          echo "Available codesigning identities:"
-          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
-
-          echo ""
-          echo "Available basic identities (includes installer certs):"
+          echo "Available certificates in keychain:"
           security find-identity -v -p basic "$KEYCHAIN_PATH"
 
           echo ""
-          echo "All identities in keychain:"
-          security find-identity -v "$KEYCHAIN_PATH"
+          echo "Looking for installer certificate..."
+          # Check if we have the installer cert (don't fail if not found)
+          if security find-identity -v -p basic "$KEYCHAIN_PATH" | grep -q "Mac Installer Distribution\|3rd Party Mac Developer Installer"; then
+            INSTALLER_CERT=$(security find-identity -v -p basic "$KEYCHAIN_PATH" | grep "Mac Installer Distribution\|3rd Party Mac Developer Installer" | head -1 | awk '{print $2}')
+            echo "Found installer certificate: $INSTALLER_CERT"
+          else
+            echo "⚠️  No Mac Installer Distribution certificate found"
+            echo "Available certificates:"
+            security find-identity -v "$KEYCHAIN_PATH"
+          fi
 
-      - name: Prepare Mac App Store package
+      - name: Package Mac App Store build
         env:
-          APPLE_DEVELOPER_ID: ${{ secrets.APPLE_DEVELOPER_ID }}
-          APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
+          MAS_CERT_INSTALLER: ${{ secrets.APPLE_MAS_CERT_INSTALLER }}
         run: |
-          echo "📦 Preparing Mac App Store package..."
+          echo "📦 Packaging Mac App Store build..."
 
-          # Validate required credentials
-          if [ -z "$APPLE_DEVELOPER_ID" ] || [ -z "$APPLE_DEVELOPER_TEAM_ID" ]; then
-            echo "❌ ERROR: APPLE_DEVELOPER_ID and APPLE_DEVELOPER_TEAM_ID are required"
+          # Validate installer certificate
+          if [ -z "$MAS_CERT_INSTALLER" ]; then
+            echo "❌ ERROR: APPLE_MAS_CERT_INSTALLER is required"
             exit 1
           fi
 
+          # Find the already-signed MAS app
           APP_PATH="${{ steps.check_app.outputs.app_path }}"
           PKG_PATH="WhoDB_${{ inputs.version }}.pkg"
 
+          if [ ! -d "$APP_PATH" ]; then
+            echo "❌ ERROR: App bundle not found at $APP_PATH"
+            exit 1
+          fi
+
+          echo "Using pre-signed MAS app: $APP_PATH"
+
+          # CRITICAL FIX: GitHub Actions artifact upload/download loses Unix permissions
+          # Restore execute permissions that were set during build
+          echo "🔧 Restoring execute permissions (lost during artifact transfer)..."
+          chmod +x "$APP_PATH/Contents/MacOS/whodb"
+          ls -la "$APP_PATH/Contents/MacOS/whodb"
+
+          # Verify the app is already signed correctly
+          echo "Verifying existing signature..."
+          codesign --verify --verbose=4 "$APP_PATH"
+          codesign --display --entitlements - "$APP_PATH"
+
+          # Create signed PKG installer with Mac Installer Distribution certificate
           echo "🔏 Creating signed PKG installer..."
-
-          # Sign the app bundle first if not already signed
-          codesign --force --deep --sign "$APPLE_DEVELOPER_ID" \
-            --options runtime --timestamp \
-            "$APP_PATH"
-
-          # Create signed PKG installer
           productbuild --component "$APP_PATH" /Applications \
-            --sign "$APPLE_DEVELOPER_ID" \
+            --sign "$MAS_CERT_INSTALLER" \
             --identifier "com.clidey.whodb" \
             --version "${{ inputs.version }}" \
             "$PKG_PATH"
@@ -178,9 +277,9 @@ jobs:
       - name: Cleanup Keychain
         if: always()
         run: |
-          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PATH=$RUNNER_TEMP/mas-signing.keychain-db
           if [ -f "$KEYCHAIN_PATH" ]; then
-            echo "🧹 Cleaning up keychain..."
+            echo "🧹 Cleaning up Mac App Store keychain..."
             security delete-keychain "$KEYCHAIN_PATH" || true
             echo "✅ Keychain cleanup complete"
           fi
@@ -243,59 +342,284 @@ jobs:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
-          PKG_FILE=$(ls *.pkg | head -1)
+          set -e  # Exit on any error
+
+          echo "═══════════════════════════════════════════════════════════"
+          echo "  App Store Connect Upload"
+          echo "═══════════════════════════════════════════════════════════"
+
+          # Find PKG file
+          PKG_FILE=$(ls *.pkg 2>/dev/null | head -1)
 
           if [ -z "$PKG_FILE" ]; then
-            echo "❌ No PKG file found"
+            echo "❌ ERROR: No PKG file found in current directory"
+            echo "📁 Directory contents:"
+            ls -lh
             exit 1
           fi
 
-          echo "📤 Uploading package: $PKG_FILE"
+          echo "📦 Package: $PKG_FILE"
+          echo "📊 Size: $(du -h "$PKG_FILE" | cut -f1)"
+          echo "🔐 Authentication: API Key (JWT)"
 
           if [ "${{ inputs.stage-only }}" = "true" ]; then
-            echo "📦 STAGE MODE - Uploading for TestFlight only"
-
-            # Upload for TestFlight testing
-            xcrun altool --upload-package "$PKG_FILE" \
-              --type macos \
-              --apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
-              --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
-              --verbose
-
-            if [ $? -eq 0 ]; then
-              echo "✅ Package uploaded for TestFlight distribution"
-              echo ""
-              echo "📝 Next steps:"
-              echo "  1. Wait for processing to complete (usually 5-10 minutes)"
-              echo "  2. Configure TestFlight testing in App Store Connect"
-              echo "  3. Submit for App Store review when ready"
-            else
-              echo "❌ Upload failed"
-              exit 1
-            fi
+            echo "🎯 Mode: STAGE (TestFlight only)"
           else
-            echo "🚀 PRODUCTION MODE - Submitting for App Store review"
-
-            # Upload and submit for App Store review
-            xcrun altool --upload-package "$PKG_FILE" \
-              --type macos \
-              --apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
-              --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
-              --auto-submit \
-              --verbose
-
-            if [ $? -eq 0 ]; then
-              echo "✅ Package uploaded and submitted for App Store review"
-              echo ""
-              echo "📝 Next steps:"
-              echo "  1. Monitor review status in App Store Connect"
-              echo "  2. Respond to any reviewer feedback"
-              echo "  3. Release when approved"
-            else
-              echo "❌ Upload/submission failed"
-              exit 1
-            fi
+            echo "🎯 Mode: PRODUCTION (App Store)"
           fi
+          echo ""
+
+          # Try multiple upload methods
+          echo "🔍 Determining upload method..."
+
+          # Method 1: Try finding iTMSTransporter in SharedFrameworks (preferred location)
+          TRANSPORTER_PATH="/Applications/Xcode.app/Contents/SharedFrameworks/ContentDeliveryServices.framework/itms/bin/iTMSTransporter"
+
+          # Check all Xcode versions on the system
+          if [ ! -f "$TRANSPORTER_PATH" ]; then
+            for XCODE_PATH in /Applications/Xcode*.app; do
+              TEST_PATH="$XCODE_PATH/Contents/SharedFrameworks/ContentDeliveryServices.framework/itms/bin/iTMSTransporter"
+              if [ -f "$TEST_PATH" ]; then
+                TRANSPORTER_PATH="$TEST_PATH"
+                break
+              fi
+            done
+          fi
+
+          UPLOAD_METHOD=""
+
+          if [ -f "$TRANSPORTER_PATH" ]; then
+            echo "✅ Found iTMSTransporter: $TRANSPORTER_PATH"
+            UPLOAD_METHOD="transporter"
+          else
+            echo "⚠️  iTMSTransporter not found in SharedFrameworks"
+            echo "🔄 Falling back to xcrun altool (package uploads still supported)"
+            UPLOAD_METHOD="altool"
+          fi
+          echo ""
+
+          # Verify API key
+          API_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8"
+
+          if [ ! -f "$API_KEY_PATH" ]; then
+            echo "❌ ERROR: API key not found at $API_KEY_PATH"
+            echo ""
+            echo "Troubleshooting:"
+            echo "  • Verify APP_STORE_CONNECT_API_KEY secret is configured"
+            echo "  • Check 'Setup App Store Connect API key' step completed successfully"
+            exit 1
+          fi
+
+          echo "✅ API key found and configured"
+          echo ""
+
+          # Validate PKG signature before upload
+          echo "🔍 Validating package signature..."
+          if pkgutil --check-signature "$PKG_FILE" > /dev/null 2>&1; then
+            echo "✅ Package signature valid"
+            pkgutil --check-signature "$PKG_FILE" | head -5
+          else
+            echo "⚠️  Warning: Could not verify package signature"
+          fi
+          echo ""
+
+          # Upload with retry logic
+          echo "📤 Starting upload to App Store Connect..."
+          echo "───────────────────────────────────────────────────────────"
+
+          MAX_ATTEMPTS=3
+          ATTEMPT=1
+          UPLOAD_SUCCESS=false
+
+          while [ $ATTEMPT -le $MAX_ATTEMPTS ] && [ "$UPLOAD_SUCCESS" = "false" ]; do
+            if [ $ATTEMPT -gt 1 ]; then
+              echo ""
+              echo "🔄 Retry attempt $ATTEMPT of $MAX_ATTEMPTS..."
+              sleep 10  # Wait before retry
+            else
+              echo "⏳ Attempt $ATTEMPT of $MAX_ATTEMPTS..."
+            fi
+
+            # Create log file for this attempt
+            LOG_FILE="/tmp/transporter_upload_attempt_${ATTEMPT}.log"
+
+            # Run upload based on method
+            set +e  # Temporarily disable exit on error
+
+            if [ "$UPLOAD_METHOD" = "transporter" ]; then
+              echo "Using iTMSTransporter..."
+              "$TRANSPORTER_PATH" \
+                -m upload \
+                -f "$PKG_FILE" \
+                -k "$API_KEY_PATH" \
+                -i "$APP_STORE_CONNECT_API_KEY_ID" \
+                -issuer "$APP_STORE_CONNECT_ISSUER_ID" \
+                -v eXtreme \
+                2>&1 | tee "$LOG_FILE"
+            else
+              echo "Using xcrun altool..."
+              # Note: altool upload-app is for IPA/PKG uploads (still supported)
+              # Only notarization is deprecated
+              xcrun altool \
+                --upload-app \
+                --type macos \
+                --file "$PKG_FILE" \
+                --apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
+                --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
+                --verbose \
+                2>&1 | tee "$LOG_FILE"
+            fi
+
+            UPLOAD_EXIT_CODE=$?
+            set -e  # Re-enable exit on error
+
+            # Check both exit code AND log content for actual success
+            if [ $UPLOAD_EXIT_CODE -eq 0 ] && ! grep -q "ERROR:" "$LOG_FILE"; then
+              # Different success indicators for different methods
+              if [ "$UPLOAD_METHOD" = "altool" ]; then
+                # altool success indicators
+                if grep -q "No errors uploading" "$LOG_FILE" || grep -q "successfully uploaded" "$LOG_FILE"; then
+                  UPLOAD_SUCCESS=true
+                  echo ""
+                  echo "✅ Upload completed successfully!"
+                else
+                  echo ""
+                  echo "⚠️  altool completed with exit code 0, verifying..."
+                  # altool sometimes succeeds without explicit success message
+                  if ! grep -q "ERROR" "$LOG_FILE" && ! grep -q "failed" "$LOG_FILE"; then
+                    echo "✅ No errors detected, upload appears successful"
+                    UPLOAD_SUCCESS=true
+                  fi
+                fi
+              else
+                # iTMSTransporter success indicators
+                if grep -q "Successfully uploaded" "$LOG_FILE" || grep -q "Package Summary" "$LOG_FILE" || grep -q "No errors uploading" "$LOG_FILE"; then
+                  UPLOAD_SUCCESS=true
+                  echo ""
+                  echo "✅ Upload completed successfully!"
+                elif grep -q "OSStatus error" "$LOG_FILE"; then
+                  # Exit code 0 but OSStatus error present - this is likely a failure
+                  echo ""
+                  echo "❌ OSStatus error detected - upload failed"
+                  echo "The -10814 error indicates iTMSTransporter couldn't complete the upload"
+
+                  # If this was iTMSTransporter, try switching to altool for next attempt
+                  if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+                    echo "🔄 Will retry with altool instead"
+                    UPLOAD_METHOD="altool"
+                  fi
+                else
+                  # Exit code 0 but no clear success indicators
+                  echo ""
+                  echo "⚠️  Upload completed with exit code 0, but no success confirmation found"
+                  echo "This likely means upload failed - will retry if attempts remain"
+                fi
+              fi
+            else
+              echo ""
+              echo "❌ Upload failed with exit code: $UPLOAD_EXIT_CODE"
+
+              # Parse log for common errors
+              if grep -q "Could not authenticate" "$LOG_FILE"; then
+                echo ""
+                echo "🔍 Authentication error detected"
+                echo "Troubleshooting:"
+                echo "  • Verify API key ID and Issuer ID are correct"
+                echo "  • Check API key has 'App Manager' or 'Admin' role"
+                echo "  • Ensure API key hasn't been revoked"
+              elif grep -q "network" "$LOG_FILE" || grep -q "timed out" "$LOG_FILE"; then
+                echo ""
+                echo "🔍 Network error detected - will retry"
+              elif grep -q "Package already exists" "$LOG_FILE"; then
+                echo ""
+                echo "🔍 Package version already exists in App Store Connect"
+                echo "This may be expected if re-running the workflow"
+                UPLOAD_SUCCESS=true  # Don't fail on duplicate upload
+              elif grep -q "Invalid package" "$LOG_FILE" || grep -q "not valid" "$LOG_FILE"; then
+                echo ""
+                echo "🔍 Invalid package error detected"
+                echo "Troubleshooting:"
+                echo "  • Check package is properly signed"
+                echo "  • Verify bundle ID matches App Store Connect: com.clidey.whodb"
+                echo "  • Ensure app is signed with '3rd Party Mac Developer' certificate"
+                break  # Don't retry on validation errors
+              fi
+
+              if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+                echo "Will retry in 10 seconds..."
+              fi
+            fi
+
+            ATTEMPT=$((ATTEMPT + 1))
+          done
+
+          echo "───────────────────────────────────────────────────────────"
+
+          if [ "$UPLOAD_SUCCESS" = "false" ]; then
+            echo ""
+            echo "❌ Upload failed after $MAX_ATTEMPTS attempts"
+            echo ""
+            echo "📋 Log files:"
+            for i in $(seq 1 $((ATTEMPT - 1))); do
+              LOG="/tmp/transporter_upload_attempt_${i}.log"
+              if [ -f "$LOG" ]; then
+                echo "  Attempt $i: $LOG"
+              fi
+            done
+            echo ""
+            echo "🔗 Helpful resources:"
+            echo "  • App Store Connect: https://appstoreconnect.apple.com"
+            echo "  • Upload guide: https://developer.apple.com/help/app-store-connect/manage-builds/upload-builds"
+            exit 1
+          fi
+
+          echo ""
+          echo "═══════════════════════════════════════════════════════════"
+          echo "  Upload Complete"
+          echo "═══════════════════════════════════════════════════════════"
+          echo ""
+          echo "🔍 IMPORTANT: Verify upload in App Store Connect"
+          echo ""
+          echo "Even though the upload reported success, please verify:"
+          echo "  1. Go to https://appstoreconnect.apple.com/apps"
+          echo "  2. Click on 'WhoDB'"
+          echo "  3. Go to 'TestFlight' or 'App Store' tab"
+          echo "  4. Look for build version ${{ inputs.version }}"
+          echo ""
+          echo "───────────────────────────────────────────────────────────"
+          echo ""
+          echo "📝 Next steps:"
+          echo ""
+          if [ "${{ inputs.stage-only }}" = "true" ]; then
+            echo "1️⃣  Wait for App Store Connect to process the build"
+            echo "    ⏱️  Usually takes 5-10 minutes"
+            echo "    📊 Status: Processing → Ready to Submit"
+            echo ""
+            echo "2️⃣  Once status shows 'Ready to Submit':"
+            echo "    • Configure TestFlight testing if needed"
+            echo "    • Add internal/external testers"
+            echo "    • Or submit directly for App Store review"
+            echo ""
+            echo "3️⃣  Monitor processing:"
+            echo "    🔗 https://appstoreconnect.apple.com/apps"
+          else
+            echo "1️⃣  Build will appear in App Store Connect shortly"
+            echo "    🔗 https://appstoreconnect.apple.com/apps"
+            echo ""
+            echo "2️⃣  Wait for 'Ready to Submit' status"
+            echo ""
+            echo "3️⃣  Complete submission information:"
+            echo "    • App description"
+            echo "    • Screenshots"
+            echo "    • Privacy info"
+            echo ""
+            echo "4️⃣  Submit for App Store review"
+            echo "    ⏱️  Review typically takes 1-3 business days"
+          fi
+          echo ""
+          echo "═══════════════════════════════════════════════════════════"
+          echo "✅ Workflow complete!"
+          echo "═══════════════════════════════════════════════════════════"
 
       - name: Clean up API key
         if: always() && steps.check_creds.outputs.has_creds == 'true'

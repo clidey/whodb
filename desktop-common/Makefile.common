@@ -16,8 +16,12 @@ APPLE_APP_PASSWORD ?=
 # Prepare frontend assets
 prepare:
 	@echo "Cleaning previous build artifacts..."
-	@rm -rf build/windows build/darwin build/linux build/bin build/assets build/index.html wails.lock frontend/dist
+	@# Clean build artifacts but preserve template files
+	@rm -rf build/windows build/linux build/bin build/assets build/index.html wails.lock frontend/dist
+	@# Only clean darwin build output, not template directory
+	@rm -rf build/darwin/universal build/darwin/amd64 build/darwin/arm64 build/dmgroot
 	@echo "Preparing $(EDITION_NAME) build environment..."
+	@mkdir -p build/darwin
 	@mkdir -p frontend/dist
 	@echo "Building frontend..."
 	@cd ../frontend && pnpm run $(FRONTEND_BUILD_CMD)
@@ -244,6 +248,20 @@ release-mac: notarize-mac
 # Create a DMG containing the .app (drag-and-drop install UX)
 dmg-mac: build-prod-mac
 	@echo "Creating DMG for WhoDB..."
+	@rm -rf build/dmgroot && mkdir -p build/dmgroot
+	@cp -R "build/darwin/universal/$(APP_NAME)" build/dmgroot/
+	@ln -sf /Applications build/dmgroot/Applications
+	@hdiutil create -volname "$(DMG_VOLNAME)" -srcfolder build/dmgroot -ov -format UDZO \
+		"build/darwin/universal/$(OUTPUT_PREFIX).dmg"
+	@echo "DMG created at build/darwin/universal/$(OUTPUT_PREFIX).dmg"
+
+# Create DMG without rebuilding (for CI when app is already built and signed)
+dmg-mac-only:
+	@echo "Creating DMG from existing app bundle..."
+	@if [ ! -d "build/darwin/universal/$(APP_NAME)" ]; then \
+		echo "ERROR: App bundle not found. Build first."; \
+		exit 1; \
+	fi
 	@rm -rf build/dmgroot && mkdir -p build/dmgroot
 	@cp -R "build/darwin/universal/$(APP_NAME)" build/dmgroot/
 	@ln -sf /Applications build/dmgroot/Applications

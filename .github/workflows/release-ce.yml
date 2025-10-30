@@ -177,6 +177,9 @@ jobs:
       APPLE_ID: ${{ secrets.APPLE_ID }}
       APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_MAS_CERTIFICATES_P12: ${{ secrets.APPLE_MAS_CERTIFICATES_P12 }}
+      APPLE_MAS_CERTIFICATES_PASSWORD: ${{ secrets.APPLE_MAS_CERTIFICATES_PASSWORD }}
+      APPLE_MAS_PROVISIONING_PROFILE: ${{ secrets.APPLE_MAS_PROVISIONING_PROFILE }}
 
   build-snap:
     name: Build Snap
@@ -255,11 +258,18 @@ jobs:
       APPLE_CERTIFICATES_P12: ${{ secrets.APPLE_CERTIFICATES_P12 }}
       APPLE_CERTIFICATES_PASSWORD: ${{ secrets.APPLE_CERTIFICATES_PASSWORD }}
       KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+      APPLE_MAS_CERTIFICATES_P12: ${{ secrets.APPLE_MAS_CERTIFICATES_P12 }}
+      APPLE_MAS_CERTIFICATES_PASSWORD: ${{ secrets.APPLE_MAS_CERTIFICATES_PASSWORD }}
+      APPLE_MAS_CERT_APPLICATION: ${{ secrets.APPLE_MAS_CERT_APPLICATION }}
+      APPLE_MAS_CERT_INSTALLER: ${{ secrets.APPLE_MAS_CERT_INSTALLER }}
+      APPLE_MAS_PROVISIONING_PROFILE: ${{ secrets.APPLE_MAS_PROVISIONING_PROFILE }}
       APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
       APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
       APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
       APPLE_DEVELOPER_ID: ${{ secrets.APPLE_DEVELOPER_ID }}
       APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
+      APPLE_APP_ID: ${{ secrets.APPLE_APP_ID }}
+      ASC_PUBLIC_ID: ${{ secrets.ASC_PUBLIC_ID }}
 
   # Step 5: Create GitHub release
   create-github-release:
@@ -314,43 +324,58 @@ jobs:
           echo "📦 Release assets prepared:"
           ls -la final-assets/ || echo "No assets found"
 
+      - name: Prepare release body
+        id: release_body
+        env:
+          VERSION: ${{ needs.calculate-version.outputs.version }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "📝 Preparing release body from template..."
+
+          # Read the template
+          TEMPLATE=$(cat .github/RELEASE_TEMPLATE.md)
+
+          # Get PR description if this was triggered by a PR merge
+          PR_DESCRIPTION=""
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.event.pull_request.merged }}" = "true" ]; then
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+            PR_DESCRIPTION=$(gh pr view $PR_NUMBER --json body --jq '.body')
+            echo "Using PR #$PR_NUMBER description"
+          else
+            echo "Not triggered by PR merge - no PR description"
+          fi
+
+          # Replace template variables
+          BODY="$TEMPLATE"
+          BODY="${BODY//\{\{VERSION\}\}/$VERSION}"
+
+          # Replace PR description or remove the placeholder
+          if [ -n "$PR_DESCRIPTION" ]; then
+            # Escape for use in sed
+            PR_ESCAPED=$(echo "$PR_DESCRIPTION" | sed ':a;N;$!ba;s/\n/\\n/g' | sed 's/[&/\]/\\&/g')
+            BODY=$(echo "$BODY" | sed "s|{{PR_DESCRIPTION}}|$PR_ESCAPED|")
+          else
+            # Remove PR_DESCRIPTION placeholder and extra newline
+            BODY=$(echo "$BODY" | sed '/{{PR_DESCRIPTION}}/d')
+          fi
+
+          # Save to file
+          echo "$BODY" > /tmp/release-body.md
+
+          echo "✅ Release body prepared"
+          echo "Preview:"
+          cat /tmp/release-body.md
+
       - name: Create GitHub release
         uses: ncipollo/release-action@v1
         with:
-          tag: v${{ needs.calculate-version.outputs.version }}
-          name: Release v${{ needs.calculate-version.outputs.version }}
+          tag: ${{ needs.calculate-version.outputs.version }}
+          name: Release ${{ needs.calculate-version.outputs.version }}
           draft: ${{ needs.calculate-version.outputs.stage-only == 'true' || needs.calculate-version.outputs.publish-github-release != 'true' }}
           prerelease: false
           generateReleaseNotes: true
           artifacts: final-assets/*
-          body: |
-            ## WhoDB v${{ needs.calculate-version.outputs.version }}
-
-            ### Installation Methods
-
-            #### Docker
-            ```bash
-            docker pull clidey/whodb:${{ needs.calculate-version.outputs.version }}
-            docker pull clidey/whodb:latest
-            ```
-
-            #### Snap
-            ```bash
-            # Stable channel
-            sudo snap install whodb
-
-            # Edge channel (preview releases)
-            sudo snap install whodb --edge
-            ```
-
-            #### Direct Downloads
-            See assets below for platform-specific packages.
-
-            ### Verification
-            All artifacts are signed with Sigstore. To verify:
-            ```bash
-            cosign verify-blob --signature <file>.sig --certificate <file>.pem <file>
-            ```
+          bodyFile: /tmp/release-body.md
 
   # Step 6: Deploy to Docker Hub (after GitHub release)
   deploy-docker:
@@ -434,7 +459,7 @@ jobs:
     steps:
       - name: Generate comprehensive summary
         run: |
-          echo "# 📊 Release Summary for v${{ needs.calculate-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "# 📊 Release Summary for ${{ needs.calculate-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Deployment Mode:** ${{ needs.calculate-version.outputs.deployment-mode }}" >> $GITHUB_STEP_SUMMARY
           echo "**Timestamp:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY

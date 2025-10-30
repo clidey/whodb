@@ -32,6 +32,12 @@ on:
         required: false
       APPLE_TEAM_ID:
         required: false
+      APPLE_MAS_CERTIFICATES_P12:
+        required: false
+      APPLE_MAS_CERTIFICATES_PASSWORD:
+        required: false
+      APPLE_MAS_PROVISIONING_PROFILE:
+        required: false
 
 jobs:
   build-desktop:
@@ -51,10 +57,18 @@ jobs:
             arch: arm64
             make-target: ci-build-prod-windows-arm64
             enabled: ${{ contains(inputs.platforms, 'windows-arm64') }}
-          # macOS build for Mac App Store
+          # macOS build for DMG distribution (Developer ID)
           - os: macos-latest
             platform: darwin
             arch: universal
+            build-type: dmg
+            make-target: build-prod-mac
+            enabled: ${{ contains(inputs.platforms, 'darwin-universal') }}
+          # macOS build for Mac App Store (MAS certificates)
+          - os: macos-latest
+            platform: darwin
+            arch: universal
+            build-type: mas
             make-target: build-prod-mac
             enabled: ${{ contains(inputs.platforms, 'darwin-universal') }}
     steps:
@@ -150,9 +164,9 @@ jobs:
         if: matrix.enabled != false && steps.cache-wails.outputs.cache-hit != 'true'
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
-      # Import Apple Developer certificates for macOS signing
-      - name: Import Apple Developer Certificates
-        if: matrix.platform == 'darwin' && matrix.enabled != false
+      # Import Apple Developer certificates for macOS DMG signing
+      - name: Import Apple Developer Certificates (Developer ID)
+        if: matrix.platform == 'darwin' && matrix.build-type == 'dmg' && matrix.enabled != false
         env:
           CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_CERTIFICATES_P12 }}
           CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATES_PASSWORD }}
@@ -209,6 +223,22 @@ jobs:
           echo "All identities in keychain:"
           security find-identity -v "$KEYCHAIN_PATH"
 
+      # Save MAS provisioning profile for later (after build)
+      - name: Prepare MAS Provisioning Profile
+        if: matrix.platform == 'darwin' && matrix.build-type == 'mas' && matrix.enabled != false
+        env:
+          MAS_PROVISIONING_PROFILE: ${{ secrets.APPLE_MAS_PROVISIONING_PROFILE }}
+        run: |
+          if [ -z "$MAS_PROVISIONING_PROFILE" ]; then
+            echo "❌ ERROR: APPLE_MAS_PROVISIONING_PROFILE is required for MAS builds"
+            exit 1
+          fi
+
+          echo "📝 Saving provisioning profile for post-build signing..."
+          mkdir -p desktop-${{ inputs.edition }}/build/darwin
+          echo "$MAS_PROVISIONING_PROFILE" | base64 --decode -o desktop-${{ inputs.edition }}/build/darwin/embedded.provisionprofile
+          echo "✅ Provisioning profile saved"
+
       # Windows AMD64 Build
       - name: Build Windows AMD64
         if: matrix.platform == 'windows' && matrix.arch == 'amd64' && matrix.enabled != false
@@ -262,18 +292,252 @@ jobs:
           New-Item -ItemType Directory -Force -Path "./desktop-${{ inputs.edition }}/build/windows/arm64"
 
       # macOS Build
+      - name: Clean previous macOS build
+        if: matrix.platform == 'darwin' && matrix.enabled != false
+        working-directory: ./desktop-${{ inputs.edition }}
+        run: |
+          echo "Cleaning previous build to ensure bundle ID changes take effect..."
+          # Clean build outputs but preserve template files
+          rm -rf build/darwin/universal build/darwin/amd64 build/darwin/arm64 build/dmgroot || true
+          rm -rf build/bin wails.lock || true
+          echo "Template files preserved in build/darwin/"
+
+      - name: Prepare MAS entitlements and provisioning profile
+        if: matrix.platform == 'darwin' && matrix.build-type == 'mas' && matrix.enabled != false
+        working-directory: ./desktop-${{ inputs.edition }}
+        run: |
+          echo "Preparing MAS-specific entitlements..."
+          mkdir -p build/darwin
+          # Use MAS entitlements for MAS builds
+          cp ../macos/entitlements.mas.plist build/darwin/entitlements.plist
+          echo "✅ MAS entitlements prepared"
+
+      - name: Verify entitlements before build
+        if: matrix.platform == 'darwin' && matrix.enabled != false
+        working-directory: ./desktop-${{ inputs.edition }}
+        run: |
+          echo "Checking for entitlements.plist before build..."
+          ls -la build/darwin/ || echo "build/darwin doesn't exist"
+
+          if [ -f build/darwin/entitlements.plist ]; then
+            echo "✅ Entitlements exist before build"
+          else
+            echo "❌ Entitlements missing before build"
+          fi
+
       - name: Build macOS
         if: matrix.platform == 'darwin' && matrix.enabled != false
         working-directory: ./desktop-${{ inputs.edition }}
         run: make ${{ matrix.make-target }} VERSION=${{ inputs.version }}
 
-      - name: Create macOS DMG
+      - name: Verify entitlements after build
         if: matrix.platform == 'darwin' && matrix.enabled != false
         working-directory: ./desktop-${{ inputs.edition }}
-        run: make dmg-mac VERSION=${{ inputs.version }}
+        run: |
+          echo "Checking for entitlements.plist after build..."
+          ls -la build/darwin/ || echo "build/darwin doesn't exist"
+
+          if [ -f build/darwin/entitlements.plist ]; then
+            echo "✅ Entitlements exist after build"
+          else
+            echo "❌ Entitlements deleted during build"
+            echo "Recreating from source..."
+            # Fallback: copy from source if it was deleted
+            if [ -f ../../desktop-${{ inputs.edition }}/build/darwin/entitlements.plist ]; then
+              cp ../../desktop-${{ inputs.edition }}/build/darwin/entitlements.plist build/darwin/
+            fi
+          fi
+
+      - name: Patch Bundle ID and Sign (DMG)
+        if: matrix.platform == 'darwin' && matrix.build-type == 'dmg' && matrix.enabled != false
+        env:
+          APPLE_DEVELOPER_ID_APPLICATION: ${{ secrets.APPLE_DEVELOPER_ID_APPLICATION }}
+        working-directory: ./desktop-${{ inputs.edition }}
+        run: |
+          APP_PATH="build/darwin/universal/WhoDB.app"
+
+          if [ ! -d "$APP_PATH" ]; then
+            echo "❌ ERROR: App bundle not found at $APP_PATH"
+            exit 1
+          fi
+
+          PLIST_PATH="$APP_PATH/Contents/Info.plist"
+
+          # Show original bundle ID
+          echo "Original Bundle ID:"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$PLIST_PATH"
+
+          # Patch bundle ID to match App Store Connect
+          echo ""
+          echo "Patching bundle ID to com.clidey.whodb..."
+          /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier com.clidey.whodb" "$PLIST_PATH"
+
+          # Add encryption exemption (only uses standard OS TLS/SSL)
+          echo "Adding encryption exemption key..."
+          /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST_PATH" 2>/dev/null || \
+          /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST_PATH"
+
+          # Verify the changes
+          echo "New Bundle ID:"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$PLIST_PATH"
+          echo "Encryption exemption:"
+          /usr/libexec/PlistBuddy -c "Print :ITSAppUsesNonExemptEncryption" "$PLIST_PATH"
+
+          # Validate plist is still valid
+          plutil -lint "$PLIST_PATH"
+
+          echo ""
+          echo "🔏 Signing app bundle for DMG distribution with Developer ID..."
+          codesign --force --deep \
+            --sign "$APPLE_DEVELOPER_ID_APPLICATION" \
+            --options runtime \
+            --timestamp \
+            "$APP_PATH"
+
+          echo "Verifying signature..."
+          codesign --verify --verbose=4 "$APP_PATH"
+
+          echo "✅ App patched, signed, and verified for DMG distribution"
+
+      - name: Import MAS Certificates for Signing
+        if: matrix.platform == 'darwin' && matrix.build-type == 'mas' && matrix.enabled != false
+        env:
+          MAS_CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_MAS_CERTIFICATES_P12 }}
+          MAS_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_MAS_CERTIFICATES_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          if [ -z "$MAS_CERTIFICATE_P12_BASE64" ]; then
+            echo "❌ ERROR: Mac App Store certificates are required for MAS builds"
+            exit 1
+          fi
+
+          echo "🔐 Setting up keychain for Mac App Store code signing..."
+
+          # Create variables
+          CERTIFICATE_PATH=$RUNNER_TEMP/mas_certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/mas-signing.keychain-db
+          KEYCHAIN_PASSWORD_VALUE="${KEYCHAIN_PASSWORD:-$(uuidgen)}"
+
+          # Decode certificate
+          echo "$MAS_CERTIFICATE_P12_BASE64" | base64 --decode -o "$CERTIFICATE_PATH"
+
+          # Create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD_VALUE" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD_VALUE" "$KEYCHAIN_PATH"
+
+          # Import certificate to keychain
+          security import "$CERTIFICATE_PATH" -P "$MAS_CERTIFICATE_PASSWORD" \
+            -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+
+          # Set keychain search list
+          security list-keychain -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | sed s/\"//g)
+
+          # Allow codesign to access keychain
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD_VALUE" "$KEYCHAIN_PATH"
+
+          echo "✅ Mac App Store certificates imported successfully"
+
+          # Save MAS certificate name for signing step
+          MAS_CERT=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | grep "3rd Party Mac Developer Application" | head -1 | awk '{print $2}')
+          echo "MAS_CERT_ID=$MAS_CERT" >> $GITHUB_ENV
+          echo "Using certificate: $MAS_CERT"
+
+      - name: Patch Bundle ID, Embed Profile, and Sign (MAS)
+        if: matrix.platform == 'darwin' && matrix.build-type == 'mas' && matrix.enabled != false
+        working-directory: ./desktop-${{ inputs.edition }}
+        run: |
+          APP_PATH="build/darwin/universal/WhoDB.app"
+
+          if [ ! -d "$APP_PATH" ]; then
+            echo "❌ ERROR: App bundle not found at $APP_PATH"
+            exit 1
+          fi
+
+          PLIST_PATH="$APP_PATH/Contents/Info.plist"
+
+          # Show original bundle ID
+          echo "Original Bundle ID:"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$PLIST_PATH"
+
+          # Patch bundle ID to match App Store Connect
+          echo ""
+          echo "Patching bundle ID to com.clidey.whodb..."
+          /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier com.clidey.whodb" "$PLIST_PATH"
+
+          # Add encryption exemption (only uses standard OS TLS/SSL)
+          echo "Adding encryption exemption key..."
+          /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST_PATH" 2>/dev/null || \
+          /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST_PATH"
+
+          # Add LSApplicationCategoryType
+          echo "Adding LSApplicationCategoryType..."
+          /usr/libexec/PlistBuddy -c "Add :LSApplicationCategoryType string public.app-category.developer-tools" "$PLIST_PATH" 2>/dev/null || \
+          /usr/libexec/PlistBuddy -c "Set :LSApplicationCategoryType public.app-category.developer-tools" "$PLIST_PATH"
+
+          # Verify the changes
+          echo "New Bundle ID:"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$PLIST_PATH"
+          echo "Encryption exemption:"
+          /usr/libexec/PlistBuddy -c "Print :ITSAppUsesNonExemptEncryption" "$PLIST_PATH"
+
+          # Validate plist is still valid
+          plutil -lint "$PLIST_PATH"
+
+          # Ensure binary has execute permissions
+          echo ""
+          echo "🔧 Ensuring binary has execute permissions..."
+          chmod +x "$APP_PATH/Contents/MacOS/whodb"
+          ls -la "$APP_PATH/Contents/MacOS/whodb"
+
+          # Step 1: Embed provisioning profile (per Wails docs)
+          echo ""
+          echo "📝 Step 1: Embedding provisioning profile..."
+          if [ -f "build/darwin/embedded.provisionprofile" ]; then
+            cp build/darwin/embedded.provisionprofile "$APP_PATH/Contents/embedded.provisionprofile"
+            echo "✅ Provisioning profile embedded at: $APP_PATH/Contents/embedded.provisionprofile"
+          else
+            echo "❌ ERROR: No provisioning profile found"
+            exit 1
+          fi
+
+          # Step 2: Code sign with MAS certificate (per Wails docs)
+          echo ""
+          echo "🔏 Step 2: Code signing with Mac App Store certificate..."
+          echo "Using certificate: $MAS_CERT_ID"
+          echo "Using entitlements: build/darwin/entitlements.plist"
+
+          # Sign the app bundle (following Wails documentation approach)
+          codesign --force \
+            --sign "$MAS_CERT_ID" \
+            --entitlements build/darwin/entitlements.plist \
+            --options runtime \
+            --timestamp \
+            "$APP_PATH"
+
+          echo ""
+          echo "✅ App signed for Mac App Store"
+
+          # Step 3: Verify signature
+          echo ""
+          echo "🔍 Step 3: Verifying signature..."
+          codesign --verify --verbose=4 "$APP_PATH"
+
+          echo ""
+          echo "📋 Entitlements:"
+          codesign --display --entitlements - "$APP_PATH"
+
+          echo ""
+          echo "✅ MAS build complete and verified"
+
+      - name: Create macOS DMG
+        if: matrix.platform == 'darwin' && matrix.build-type == 'dmg' && matrix.enabled != false
+        working-directory: ./desktop-${{ inputs.edition }}
+        run: make dmg-mac-only VERSION=${{ inputs.version }}
 
       - name: Sign and Notarize DMG
-        if: matrix.platform == 'darwin' && matrix.enabled != false
+        if: matrix.platform == 'darwin' && matrix.build-type == 'dmg' && matrix.enabled != false
         env:
           APPLE_DEVELOPER_ID_APPLICATION: ${{ secrets.APPLE_DEVELOPER_ID_APPLICATION }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
@@ -311,8 +575,55 @@ jobs:
           xcrun stapler staple "$DMG_FILE"
           echo "✅ DMG signed and notarized"
 
-      - name: Upload artifacts
-        if: matrix.enabled != false && (matrix.arch != 'arm64' || matrix.platform != 'windows')
+      - name: Cleanup build artifacts before upload
+        if: matrix.platform == 'darwin' && matrix.enabled != false
+        working-directory: ./desktop-${{ inputs.edition }}
+        run: |
+          echo "Cleaning up intermediate build files..."
+          # Remove DMG staging directory (duplicate of app bundle)
+          rm -rf build/dmgroot
+          # Remove bin directory if it exists
+          rm -rf build/bin
+          # List what's left
+          echo "Remaining files to upload:"
+          du -sh build/darwin/universal/* || true
+
+      # Upload DMG artifacts (only for DMG builds)
+      - name: Upload macOS DMG
+        if: matrix.platform == 'darwin' && matrix.build-type == 'dmg' && matrix.enabled != false
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-darwin-dmg
+          path: desktop-${{ inputs.edition }}/build/darwin/universal/*.dmg
+          retention-days: 1
+
+      - name: Upload macOS App Bundle (DMG)
+        if: matrix.platform == 'darwin' && matrix.build-type == 'dmg' && matrix.enabled != false
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-darwin-app
+          path: desktop-${{ inputs.edition }}/build/darwin/universal/*.app
+          retention-days: 1
+
+      # Upload MAS artifacts (only for MAS builds)
+      - name: Upload macOS App Bundle (MAS)
+        if: matrix.platform == 'darwin' && matrix.build-type == 'mas' && matrix.enabled != false
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-darwin-mas-app
+          path: desktop-${{ inputs.edition }}/build/darwin/universal/*.app
+          retention-days: 1
+
+      - name: Upload macOS MAS Entitlements
+        if: matrix.platform == 'darwin' && matrix.build-type == 'mas' && matrix.enabled != false
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-darwin-entitlements
+          path: desktop-${{ inputs.edition }}/build/darwin/entitlements.plist
+          retention-days: 1
+
+      - name: Upload artifacts (non-macOS)
+        if: matrix.enabled != false && matrix.platform != 'darwin' && (matrix.arch != 'arm64' || matrix.platform != 'windows')
         uses: actions/upload-artifact@v4
         with:
           name: desktop-${{ matrix.platform }}-${{ matrix.arch || 'all' }}
@@ -323,9 +634,16 @@ jobs:
       - name: Cleanup Keychain
         if: always() && matrix.platform == 'darwin' && matrix.enabled != false
         run: |
+          echo "🧹 Cleaning up keychains..."
+          # Clean up DMG keychain
           KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
           if [ -f "$KEYCHAIN_PATH" ]; then
-            echo "🧹 Cleaning up keychain..."
             security delete-keychain "$KEYCHAIN_PATH" || true
-            echo "✅ Keychain cleanup complete"
+            echo "✅ DMG keychain cleanup complete"
+          fi
+          # Clean up MAS keychain
+          MAS_KEYCHAIN_PATH=$RUNNER_TEMP/mas-signing.keychain-db
+          if [ -f "$MAS_KEYCHAIN_PATH" ]; then
+            security delete-keychain "$MAS_KEYCHAIN_PATH" || true
+            echo "✅ MAS keychain cleanup complete"
           fi

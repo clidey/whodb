@@ -39,5 +39,11 @@
     <!-- Hardened runtime entitlements -->
     <key>com.apple.security.cs.debugger</key>
     <false/>
+
+    <!-- Application identifiers (required for Mac App Store) -->
+    <key>com.apple.application-identifier</key>
+    <string>F32XW59S3D.com.clidey.whodb</string>
+    <key>com.apple.developer.team-identifier</key>
+    <string>F32XW59S3D</string>
 </dict>
 </plist>
