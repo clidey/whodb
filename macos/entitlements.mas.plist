@@ -9,8 +9,6 @@
     <!-- Network access for database connections -->
     <key>com.apple.security.network.client</key>
     <true/>
-    <key>com.apple.security.network.server</key>
-    <true/>
 
     <!-- File access for SQLite and other file-based databases -->
     <key>com.apple.security.files.user-selected.read-write</key>
