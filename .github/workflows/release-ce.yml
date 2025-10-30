@@ -191,16 +191,16 @@ jobs:
     secrets:
       SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
 
-  # Step 3: Sign and validate all builds
+  # Step 3: Sign and validate all builds (best effort - continues even if any build fails)
   sign-and-validate:
     name: Sign and Validate
     needs: [ calculate-version, build-docker, build-desktop, build-snap ]
     if: |
       always() &&
       needs.calculate-version.result == 'success' &&
-      (needs.build-docker.result == 'success' || needs.build-docker.result == 'skipped') &&
-      (needs.build-desktop.result == 'success' || needs.build-desktop.result == 'skipped') &&
-      (needs.build-snap.result == 'success' || needs.build-snap.result == 'skipped')
+      (needs.build-docker.result == 'success' || needs.build-docker.result == 'skipped' || needs.build-docker.result == 'failure') &&
+      (needs.build-desktop.result == 'success' || needs.build-desktop.result == 'skipped' || needs.build-desktop.result == 'failure') &&
+      (needs.build-snap.result == 'success' || needs.build-snap.result == 'skipped' || needs.build-snap.result == 'failure')
     uses: ./.github/workflows/_sign-validate.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
@@ -208,87 +208,17 @@ jobs:
       validate-snap: ${{ needs.build-snap.result == 'success' }}
       validate-desktop: ${{ needs.build-desktop.result == 'success' }}
 
-  # Step 4: Deploy to various platforms (conditionally)
-  deploy-snap:
-    name: Deploy Snap
-    needs: [ calculate-version, sign-and-validate ]
-    if: |
-      always() &&
-      needs.calculate-version.outputs.deploy-snap == 'true' &&
-      needs.sign-and-validate.result != 'failure'
-    uses: ./.github/workflows/_deploy-snap.yml
-    with:
-      version: ${{ needs.calculate-version.outputs.version }}
-      channel: ${{ needs.calculate-version.outputs.stage-only == 'true' && 'edge' || 'stable' }}
-    secrets:
-      SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
-
-  deploy-microsoft:
-    name: Deploy Microsoft
-    needs: [ calculate-version, sign-and-validate ]
-    if: |
-      always() &&
-      needs.calculate-version.outputs.deploy-microsoft == 'true' &&
-      needs.sign-and-validate.result != 'failure'
-    uses: ./.github/workflows/_deploy-microsoft.yml
-    with:
-      version: ${{ needs.calculate-version.outputs.version }}
-      stage-only: ${{ needs.calculate-version.outputs.stage-only == 'true' }}
-    secrets:
-      MS_TENANT_ID: ${{ secrets.MS_TENANT_ID }}
-      MS_CLIENT_ID: ${{ secrets.MS_CLIENT_ID }}
-      MS_CLIENT_SECRET: ${{ secrets.MS_CLIENT_SECRET }}
-      MS_APP_ID: ${{ secrets.MS_APP_ID }}
-      MS_PACKAGE_IDENTITY_NAME: ${{ secrets.MS_PACKAGE_IDENTITY_NAME }}
-      WINDOWS_PUBLISHER_CN: ${{ secrets.WINDOWS_PUBLISHER_CN }}
-      MS_PACKAGE_PUBLISHER_DISPLAY_NAME: ${{ secrets.MS_PACKAGE_PUBLISHER_DISPLAY_NAME }}
-
-  deploy-apple:
-    name: Deploy Apple
-    needs: [ calculate-version, sign-and-validate ]
-    if: |
-      always() &&
-      needs.calculate-version.outputs.deploy-apple == 'true' &&
-      needs.sign-and-validate.result != 'failure'
-    uses: ./.github/workflows/_deploy-apple.yml
-    with:
-      version: ${{ needs.calculate-version.outputs.version }}
-      stage-only: ${{ needs.calculate-version.outputs.stage-only == 'true' }}
-    secrets:
-      APPLE_CERTIFICATES_P12: ${{ secrets.APPLE_CERTIFICATES_P12 }}
-      APPLE_CERTIFICATES_PASSWORD: ${{ secrets.APPLE_CERTIFICATES_PASSWORD }}
-      KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-      APPLE_MAS_CERTIFICATES_P12: ${{ secrets.APPLE_MAS_CERTIFICATES_P12 }}
-      APPLE_MAS_CERTIFICATES_PASSWORD: ${{ secrets.APPLE_MAS_CERTIFICATES_PASSWORD }}
-      APPLE_MAS_CERT_APPLICATION: ${{ secrets.APPLE_MAS_CERT_APPLICATION }}
-      APPLE_MAS_CERT_INSTALLER: ${{ secrets.APPLE_MAS_CERT_INSTALLER }}
-      APPLE_MAS_PROVISIONING_PROFILE: ${{ secrets.APPLE_MAS_PROVISIONING_PROFILE }}
-      APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
-      APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
-      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-      APPLE_DEVELOPER_ID: ${{ secrets.APPLE_DEVELOPER_ID }}
-      APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
-      APPLE_APP_ID: ${{ secrets.APPLE_APP_ID }}
-      ASC_PUBLIC_ID: ${{ secrets.ASC_PUBLIC_ID }}
-
-  # Step 5: Create GitHub release
+  # Step 4: Create GitHub release (only if ALL selected platforms built successfully)
   create-github-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [ calculate-version, deploy-snap, deploy-microsoft, deploy-apple ]
+    needs: [ calculate-version, build-docker, build-desktop, build-snap ]
     if: |
       always() &&
-      (
-        (needs.calculate-version.outputs.stage-only == 'true' && (
-          needs.deploy-snap.result == 'success' ||
-          needs.deploy-microsoft.result == 'success' ||
-          needs.deploy-apple.result == 'success'
-        )) ||
-        (needs.calculate-version.outputs.deployment-mode == 'production' &&
-         (needs.deploy-snap.result != 'failure') &&
-         (needs.deploy-microsoft.result != 'failure') &&
-         (needs.deploy-apple.result != 'failure'))
-      )
+      needs.calculate-version.result == 'success' &&
+      (needs.calculate-version.outputs.deploy-docker != 'true' || needs.build-docker.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-snap != 'true' || needs.build-snap.result == 'success') &&
+      ((needs.calculate-version.outputs.deploy-microsoft != 'true' && needs.calculate-version.outputs.deploy-apple != 'true') || needs.build-desktop.result == 'success')
     permissions:
       contents: write
     steps:
@@ -377,6 +307,69 @@ jobs:
           artifacts: final-assets/*
           bodyFile: /tmp/release-body.md
 
+  # Step 5: Deploy to various platforms (after GitHub release created)
+  deploy-snap:
+    name: Deploy Snap
+    needs: [ calculate-version, create-github-release ]
+    if: |
+      always() &&
+      needs.calculate-version.outputs.deploy-snap == 'true' &&
+      needs.create-github-release.result == 'success'
+    uses: ./.github/workflows/_deploy-snap.yml
+    with:
+      version: ${{ needs.calculate-version.outputs.version }}
+      channel: ${{ needs.calculate-version.outputs.stage-only == 'true' && 'edge' || 'stable' }}
+    secrets:
+      SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+
+  deploy-microsoft:
+    name: Deploy Microsoft
+    needs: [ calculate-version, create-github-release ]
+    if: |
+      always() &&
+      needs.calculate-version.outputs.deploy-microsoft == 'true' &&
+      needs.create-github-release.result == 'success'
+    uses: ./.github/workflows/_deploy-microsoft.yml
+    with:
+      version: ${{ needs.calculate-version.outputs.version }}
+      stage-only: ${{ needs.calculate-version.outputs.stage-only == 'true' }}
+    secrets:
+      MS_TENANT_ID: ${{ secrets.MS_TENANT_ID }}
+      MS_CLIENT_ID: ${{ secrets.MS_CLIENT_ID }}
+      MS_CLIENT_SECRET: ${{ secrets.MS_CLIENT_SECRET }}
+      MS_APP_ID: ${{ secrets.MS_APP_ID }}
+      MS_PACKAGE_IDENTITY_NAME: ${{ secrets.MS_PACKAGE_IDENTITY_NAME }}
+      WINDOWS_PUBLISHER_CN: ${{ secrets.WINDOWS_PUBLISHER_CN }}
+      MS_PACKAGE_PUBLISHER_DISPLAY_NAME: ${{ secrets.MS_PACKAGE_PUBLISHER_DISPLAY_NAME }}
+
+  deploy-apple:
+    name: Deploy Apple
+    needs: [ calculate-version, create-github-release ]
+    if: |
+      always() &&
+      needs.calculate-version.outputs.deploy-apple == 'true' &&
+      needs.create-github-release.result == 'success'
+    uses: ./.github/workflows/_deploy-apple.yml
+    with:
+      version: ${{ needs.calculate-version.outputs.version }}
+      stage-only: ${{ needs.calculate-version.outputs.stage-only == 'true' }}
+    secrets:
+      APPLE_CERTIFICATES_P12: ${{ secrets.APPLE_CERTIFICATES_P12 }}
+      APPLE_CERTIFICATES_PASSWORD: ${{ secrets.APPLE_CERTIFICATES_PASSWORD }}
+      KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+      APPLE_MAS_CERTIFICATES_P12: ${{ secrets.APPLE_MAS_CERTIFICATES_P12 }}
+      APPLE_MAS_CERTIFICATES_PASSWORD: ${{ secrets.APPLE_MAS_CERTIFICATES_PASSWORD }}
+      APPLE_MAS_CERT_APPLICATION: ${{ secrets.APPLE_MAS_CERT_APPLICATION }}
+      APPLE_MAS_CERT_INSTALLER: ${{ secrets.APPLE_MAS_CERT_INSTALLER }}
+      APPLE_MAS_PROVISIONING_PROFILE: ${{ secrets.APPLE_MAS_PROVISIONING_PROFILE }}
+      APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+      APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      APPLE_DEVELOPER_ID: ${{ secrets.APPLE_DEVELOPER_ID }}
+      APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
+      APPLE_APP_ID: ${{ secrets.APPLE_APP_ID }}
+      ASC_PUBLIC_ID: ${{ secrets.ASC_PUBLIC_ID }}
+
   # Step 6: Deploy to Docker Hub (after GitHub release)
   deploy-docker:
     name: Deploy Docker
@@ -405,39 +398,7 @@ jobs:
     with:
       version: ${{ needs.calculate-version.outputs.version }}
 
-  # Step 8: Verify deployments
-  verify-deployments:
-    name: Verify Deployments
-    needs: [ calculate-version, deploy-docker, deploy-snap, create-github-release ]
-    if: |
-      always() &&
-      needs.calculate-version.outputs.stage-only != 'true'
-    uses: ./.github/workflows/_verify-deployment.yml
-    with:
-      version: ${{ needs.calculate-version.outputs.version }}
-      verify-docker: ${{ needs.deploy-docker.result == 'success' }}
-      verify-snap: ${{ needs.deploy-snap.result == 'success' }}
-      verify-github: ${{ needs.create-github-release.result == 'success' }}
-
-  # Step 9: Rollback on failure (production only)
-  rollback-on-failure:
-    name: Rollback if Failed
-    needs: [ calculate-version, verify-deployments ]
-    if: |
-      failure() &&
-      needs.calculate-version.outputs.stage-only != 'true' &&
-      needs.verify-deployments.outputs.all-verified != 'true'
-    uses: ./.github/workflows/_rollback.yml
-    with:
-      version: ${{ needs.calculate-version.outputs.version }}
-      previous-version: ${{ needs.calculate-version.outputs.previous-version }}
-      rollback-docker: ${{ needs.calculate-version.outputs.deploy-docker == 'true' }}
-      rollback-github: true
-    secrets:
-      DOCKER_USERNAME: ${{ vars.DOCKER_USERNAME }}
-      DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
-
-  # Step 10: Final summary
+  # Step 8: Final summary
   deployment-summary:
     name: Deployment Summary
     runs-on: ubuntu-latest
@@ -453,8 +414,7 @@ jobs:
       deploy-microsoft,
       deploy-apple,
       create-github-release,
-      generate-homebrew-cask,
-      verify-deployments
+      generate-homebrew-cask
     ]
     steps:
       - name: Generate comprehensive summary
@@ -574,21 +534,6 @@ jobs:
 
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          # Verification Status
-          if [ "${{ needs.verify-deployments.result }}" = "success" ]; then
-            echo "## ✅ Verification" >> $GITHUB_STEP_SUMMARY
-            if [ "${{ needs.verify-deployments.outputs.all-verified }}" = "true" ]; then
-              echo "All deployments verified successfully!" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "⚠️ Some deployments could not be verified. Check verification report." >> $GITHUB_STEP_SUMMARY
-            fi
-          elif [ "${{ needs.verify-deployments.result }}" = "skipped" ]; then
-            echo "## ⏭️ Verification" >> $GITHUB_STEP_SUMMARY
-            echo "Skipped (stage-only mode)" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          echo "" >> $GITHUB_STEP_SUMMARY
-
           # Next Steps
           echo "## 📝 Next Steps" >> $GITHUB_STEP_SUMMARY
 
@@ -602,8 +547,14 @@ jobs:
             echo "6. Deploy to Docker Hub" >> $GITHUB_STEP_SUMMARY
           else
             echo "Production deployment completed!" >> $GITHUB_STEP_SUMMARY
-            echo "Monitor the following:" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Monitor the following:**" >> $GITHUB_STEP_SUMMARY
             echo "- Microsoft Store certification status" >> $GITHUB_STEP_SUMMARY
             echo "- Apple App Store review status" >> $GITHUB_STEP_SUMMARY
             echo "- User feedback on new release" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**If any platform failed:**" >> $GITHUB_STEP_SUMMARY
+            echo "1. Check the logs for the failed job" >> $GITHUB_STEP_SUMMARY
+            echo "2. Fix the issue" >> $GITHUB_STEP_SUMMARY
+            echo "3. Re-run the failed job from Actions → Re-run jobs → Re-run failed jobs" >> $GITHUB_STEP_SUMMARY
           fi
