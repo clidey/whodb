@@ -22,6 +22,11 @@ on:
         required: false
         type: boolean
         default: true
+      validate-appimage:
+        description: 'Whether to validate AppImage builds'
+        required: false
+        type: boolean
+        default: true
 
 jobs:
   sign-with-sigstore:
@@ -49,7 +54,7 @@ jobs:
           echo "🔏 Signing artifacts with Sigstore..."
 
           # Find all artifacts to sign
-          find artifacts -type f \( -name "*.tar" -o -name "*.snap" -o -name "*.exe" -o -name "*.dmg" -o -name "*.pkg" -o -name "*.msix" -o -name "*.msixbundle" \) | while read -r file; do
+          find artifacts -type f \( -name "*.tar" -o -name "*.snap" -o -name "*.AppImage" -o -name "*.exe" -o -name "*.dmg" -o -name "*.pkg" -o -name "*.msix" -o -name "*.msixbundle" \) | while read -r file; do
             echo "Signing: $file"
 
             # Sign the artifact
@@ -216,6 +221,57 @@ jobs:
             exit 1
           fi
 
+      - name: Validate AppImage artifacts
+        if: inputs.validate-appimage
+        run: |
+          echo "🐧 Validating AppImage artifacts..."
+          FAILED=false
+
+          for arch in amd64 arm64; do
+            ARTIFACT_DIR="artifacts/appimage-ce-${arch}"
+            if [ -d "$ARTIFACT_DIR" ]; then
+              APPIMAGE_FILE=$(find "$ARTIFACT_DIR" -name "*.AppImage" | head -1)
+              if [ -n "$APPIMAGE_FILE" ]; then
+                echo "✅ Found AppImage ${arch}: $(basename "$APPIMAGE_FILE")"
+
+                # Verify signature
+                SIG_FILE="signatures/$(basename "$APPIMAGE_FILE").sig"
+                CERT_FILE="signatures/$(basename "$APPIMAGE_FILE").pem"
+                if [ -f "$SIG_FILE" ] && [ -f "$CERT_FILE" ]; then
+                  echo "Verifying signature..."
+                  cosign verify-blob \
+                    --signature "$SIG_FILE" \
+                    --certificate "$CERT_FILE" \
+                    --certificate-identity-regexp ".*" \
+                    --certificate-oidc-issuer-regexp ".*" \
+                    "$APPIMAGE_FILE"
+                  echo "✅ Signature verified"
+                else
+                  echo "⚠️ No signature found for AppImage ${arch}"
+                fi
+
+                # Verify it's executable
+                if [ -x "$APPIMAGE_FILE" ]; then
+                  echo "✅ AppImage is executable"
+                else
+                  echo "❌ AppImage is not executable"
+                  FAILED=true
+                fi
+              else
+                echo "❌ AppImage ${arch} missing"
+                FAILED=true
+              fi
+            else
+              echo "❌ AppImage ${arch} artifact directory missing"
+              FAILED=true
+            fi
+          done
+
+          if [ "$FAILED" = "true" ]; then
+            echo "::error::AppImage validation failed"
+            exit 1
+          fi
+
       - name: Create validation manifest
         run: |
           cat > validation_manifest.json <<EOF
@@ -225,9 +281,10 @@ jobs:
             "validation": {
               "docker": ${{ inputs.validate-docker }},
               "snap": ${{ inputs.validate-snap }},
-              "desktop": ${{ inputs.validate-desktop }}
+              "desktop": ${{ inputs.validate-desktop }},
+              "appimage": ${{ inputs.validate-appimage }}
             },
-            "artifacts": $(find artifacts -type f -name "*.tar" -o -name "*.snap" -o -name "*.exe" -o -name "*.dmg" | wc -l)
+            "artifacts": $(find artifacts -type f -name "*.tar" -o -name "*.snap" -o -name "*.AppImage" -o -name "*.exe" -o -name "*.dmg" | wc -l)
           }
           EOF
 

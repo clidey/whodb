@@ -191,34 +191,45 @@ jobs:
     secrets:
       SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
 
+  build-appimage:
+    name: Build AppImage
+    needs: [ calculate-version ]
+    uses: ./.github/workflows/_build-appimage.yml
+    with:
+      version: ${{ needs.calculate-version.outputs.version }}
+      edition: 'ce'
+
   # Step 3: Sign and validate all builds (best effort - continues even if any build fails)
   sign-and-validate:
     name: Sign and Validate
-    needs: [ calculate-version, build-docker, build-desktop, build-snap ]
+    needs: [ calculate-version, build-docker, build-desktop, build-snap, build-appimage ]
     if: |
       always() &&
       needs.calculate-version.result == 'success' &&
       (needs.build-docker.result == 'success' || needs.build-docker.result == 'skipped' || needs.build-docker.result == 'failure') &&
       (needs.build-desktop.result == 'success' || needs.build-desktop.result == 'skipped' || needs.build-desktop.result == 'failure') &&
-      (needs.build-snap.result == 'success' || needs.build-snap.result == 'skipped' || needs.build-snap.result == 'failure')
+      (needs.build-snap.result == 'success' || needs.build-snap.result == 'skipped' || needs.build-snap.result == 'failure') &&
+      (needs.build-appimage.result == 'success' || needs.build-appimage.result == 'skipped' || needs.build-appimage.result == 'failure')
     uses: ./.github/workflows/_sign-validate.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
       validate-docker: ${{ needs.build-docker.result == 'success' }}
       validate-snap: ${{ needs.build-snap.result == 'success' }}
       validate-desktop: ${{ needs.build-desktop.result == 'success' }}
+      validate-appimage: ${{ needs.build-appimage.result == 'success' }}
 
   # Step 4: Create GitHub release (only if ALL selected platforms built successfully)
   create-github-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [ calculate-version, build-docker, build-desktop, build-snap ]
+    needs: [ calculate-version, build-docker, build-desktop, build-snap, build-appimage ]
     if: |
       always() &&
       needs.calculate-version.result == 'success' &&
       (needs.calculate-version.outputs.deploy-docker != 'true' || needs.build-docker.result == 'success') &&
       (needs.calculate-version.outputs.deploy-snap != 'true' || needs.build-snap.result == 'success') &&
-      ((needs.calculate-version.outputs.deploy-microsoft != 'true' && needs.calculate-version.outputs.deploy-apple != 'true') || needs.build-desktop.result == 'success')
+      ((needs.calculate-version.outputs.deploy-microsoft != 'true' && needs.calculate-version.outputs.deploy-apple != 'true') || needs.build-desktop.result == 'success') &&
+      needs.build-appimage.result == 'success'
     permissions:
       contents: write
     steps:
@@ -241,6 +252,9 @@ jobs:
 
           # Copy Snap packages
           find artifacts -name "*.snap" -exec cp {} final-assets/ \; 2>/dev/null || true
+
+          # Copy AppImage packages
+          find artifacts -name "*.AppImage" -exec cp {} final-assets/ \; 2>/dev/null || true
 
           # Copy desktop builds
           find artifacts -name "*.exe" -o -name "*.dmg" -o -name "*.pkg" \
@@ -408,6 +422,7 @@ jobs:
       build-docker,
       build-desktop,
       build-snap,
+      build-appimage,
       sign-and-validate,
       deploy-docker,
       deploy-snap,
@@ -452,6 +467,14 @@ jobs:
             echo "| Snap | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| Snap | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.build-appimage.result }}" = "success" ]; then
+            echo "| AppImage | ✅ Success |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.build-appimage.result }}" = "skipped" ]; then
+            echo "| AppImage | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| AppImage | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
           fi
 
           echo "" >> $GITHUB_STEP_SUMMARY
