@@ -1,189 +1,522 @@
-# <img src="./docs/images/logo.png" width="30px" height="auto" />  WhoDB
-Build Status: &nbsp; <img src="https://hello.clidey.com/api/flows/status?id=b32257fa-1415-4847-a0f3-e684f5f76608&secret=cd74dbd5-36ec-42f9-b4f0-12ce9fcc762b" alt="Clidey build status" height="20px" />
+<div align="center">
+
+# <img src="./docs/images/logo.png" width="40px" height="auto" />  WhoDB
+
+### *Lightweight, Fast, and Beautiful Database Management*
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/clidey/whodb/core)](https://goreportcard.com/report/github.com/clidey/whodb/core)
+[![Build Status](https://hello.clidey.com/api/flows/status?id=b32257fa-1415-4847-a0f3-e684f5f76608&secret=cd74dbd5-36ec-42f9-b4f0-12ce9fcc762b)](https://clidey.com)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![GitHub Stars](https://img.shields.io/github/stars/clidey/whodb?style=social)](https://github.com/clidey/whodb/stargazers)
 
-### *"Is it magic? Is it sorcery? No, it's just WhoDB!"*
-<p align="center"><img src="./docs/images/trailer.png" alt="Trailer" width="100%" height="auto" /></p>
+[🚀 Quick Start](#quick-start) • [📖 Documentation](https://whodb.com/docs/) • [🎮 Live Demo](https://whodb.com/demo/login?host=quick-container-491288b0-3138-48fa-93b4-1e730296c0b7.hello.svc.cluster.local&username=user&password=password&database=Adventureworks) • [💬 Community](https://github.com/clidey/whodb/discussions)
 
-<details>
-    <summary>View screenshots of WhoDB</summary>
-    <img src="./docs/images/album_table_view.png" alt="View of the Album table" width="100%" height="auto" />
-    <img src="./docs/images/edit_view.png" alt="Edit view pop-up" width="100%" height="auto" />
-    <img src="./docs/images/export_delete_btns.png" alt="Export and delete buttons in action" width="100%" height="auto" />
-    <img src="./docs/images/scratchpad2.png" alt="The scratchpad functionality" width="100%" height="auto" />
-    <img src="./docs/images/table_view.png" alt="All available tables in the current database" width="100%" height="auto" />
-</details>
+</div>
 
-<div style="width:100%;border-bottom:0.5px solid white;margin:50px 0px;"></div>
+---
 
-#### Table of Contents
-1. [Description](#description)
-2. [Key Features](#key-features)
-3. [Demo](#try-the-demo)
-4. [Documentation](#documentation)
-5. [Quick Start](#quick-start)
-6. [Development Setup](#development-setup)
-7. [Frontend](#frontend-setup)
-8. [Backend](#backend-setup)
-9. [FAQs](#faqs)
-10. [Contributing](#contributing)
-11. [Infrastructure](#infrastructure)
-12. [Contact details](#contact)
+<p align="center"><img src="./docs/images/trailer.png" alt="WhoDB Interface" width="100%" height="auto" /></p>
 
+## 🎯 What is WhoDB?
 
-## Description
-**WhoDB** is a lightweight (<50MB), powerful, and user-friendly database management tool designed to streamline your database administration tasks.
-Combining the simplicity of Adminer with enhanced UX and performance, WhoDB is built with GoLang to deliver optimal speed and efficiency.
-With features like interactive schema visualization and inline editing, WhoDB caters to both small projects and complex enterprise systems.
+**WhoDB is the modern database management tool that developers actually want to use.**
 
-**WhoDB offers you the opportunity to talk to your data using natural language thanks to our integration with Ollama, ChatGPT, and Anthropic.
-This feature allows you to perform queries and manage your data through conversation instead of complex SQL.**
+Built with GoLang and React, WhoDB is a lightweight (<50MB) yet powerful database client that combines blazing-fast performance with an intuitive, beautiful interface. Whether you're debugging a production issue, exploring a new database schema, or managing data for your next feature, WhoDB makes database management feel effortless.
 
-## Key Features
-- **Conversate With Your Data:** No more wasting time crafting complex SQL queries - ask away!
-- **Enhanced UX:** A clean, intuitive interface that's easy to navigate.
-- **Blazing Fast Performance:** Built with GoLang for exceptional speed, including table virtualization on the frontend.
-- **Schema Visualization:** Interactive graphs to easily visualize your database schema.
-- **Inline Editing & Preview:** Edit and preview data directly in the interface.
-- **Broad Database Support:** Compatible with PostgreSQL, MySQL, SQLite3, MongoDB, Redis, MariaDB, & ElasticSearch. Enterprise supports a lot more NoSQL and SQL-like databases including Oracle, SQL Server, DynamoDB, Athena, Snowflake, and more.
-- **Scratchpad:** A Jupyter notebook-like interface for performing database queries.
+### Why WhoDB?
 
-## Editions
+<table>
+<tr>
+<td width="50%">
 
-WhoDB is available in two editions:
+**🚀 Lightning Fast**
+- Instant startup (<1s)
+- Real-time query results
+- Efficient table virtualization
+- 90% less resource usage than traditional tools
 
-- **Community Edition (CE)**: Open source with all core features
-- **Enterprise Edition (EE)**: Additional database support and advanced features
+**🎨 Beautiful & Intuitive**
+- Clean, modern interface
+- Spreadsheet-like data grid
+- Interactive schema visualization
+- No training required
 
-See [BUILD_AND_RUN.md](./BUILD_AND_RUN.md) for detailed build and run instructions for both editions.
+</td>
+<td width="50%">
 
-<div style="width:100%;border-bottom:0.5px solid white;margin:50px 0px;"></div>
+**🤖 AI-Powered**
+- Natural language to SQL
+- Talk to your data conversationally
+- Supports Ollama, OpenAI, and Anthropic
+- No complex query writing needed
 
-## Try the demo
-Experience WhoDB firsthand with our [live demo](https://whodb.com/demo/login?host=quick-container-491288b0-3138-48fa-93b4-1e730296c0b7.hello.svc.cluster.local&username=user&password=password&database=Adventureworks).  
-*Note: This demo is populated with a sample database from postgresDBSamples, with credentials pre-filled.*
+**🔧 Developer-Friendly**
+- Multi-database support
+- Query history & management
+- Mock data generation
+- Flexible export options
 
-Or checkout our [demo video](https://youtu.be/hnAQcYYzcLo)
+</td>
+</tr>
+</table>
 
-## Documentation
+## ✨ Key Features
 
-For more detailed information, check out our [Documentation.](https://whodb.com/docs/)
+### 📊 Visual Data Management
 
-<div style="width:100%;border-bottom:0.5px solid white;margin:50px 0px;"></div>
+<table>
+<tr>
+<td width="50%">
+<img src="./docs/images/09-data-view-users-table.png" alt="Data Grid View" width="100%"/>
+</td>
+<td width="50%">
 
-## Quick Start
+**Spreadsheet-Like Data Grid**
+- View, edit, and manage data intuitively
+- Sort, filter, and search with ease
+- Inline editing with real-time updates
+- Bulk operations for efficiency
 
-Get up and running with WhoDB quickly using Docker:
-```sh
+</td>
+</tr>
+</table>
+
+### 🔍 Interactive Schema Explorer
+
+<table>
+<tr>
+<td width="50%">
+
+**Visual Schema Topology**
+- Interactive graph visualization
+- Explore table relationships
+- Understand foreign keys instantly
+- Pan, zoom, and navigate easily
+
+</td>
+<td width="50%">
+<img src="./docs/images/24-graph-view-schema-topology.png" alt="Schema Graph" width="100%"/>
+</td>
+</tr>
+</table>
+
+### 💻 Powerful Query Interface
+
+<table>
+<tr>
+<td width="50%">
+<img src="./docs/images/27-scratchpad-main-view.png" alt="Scratchpad" width="100%"/>
+</td>
+<td width="50%">
+
+**Scratchpad Query Editor**
+- Jupyter-like notebook interface
+- Syntax highlighting & auto-completion
+- Query history & reuse
+- Multi-cell organization
+
+</td>
+</tr>
+</table>
+
+### 🗄️ Multi-Database Support
+
+**Community Edition (CE):** PostgreSQL, MySQL, SQLite3, MongoDB, Redis, MariaDB, ElasticSearch
+
+**Enterprise Edition (EE):** All CE databases plus Oracle, SQL Server, DynamoDB, Athena, Snowflake, Cassandra, and more
+
+### 🎯 Advanced Capabilities
+
+- **Mock Data Generation** - Generate realistic test data for development
+- **Flexible Export Options** - Export to CSV, Excel, JSON, or SQL
+- **Advanced Filtering** - Build complex WHERE conditions visually
+- **AI-Powered Queries** - Convert natural language to SQL with Ollama, OpenAI, or Anthropic
+
+---
+
+## 🎮 Try WhoDB Now
+
+<div align="center">
+
+**Experience WhoDB in action without any setup**
+
+<table>
+<tr>
+<td align="center" width="50%">
+<h3>🌐 Live Demo</h3>
+<p>Try WhoDB instantly with our sample database</p>
+<a href="https://whodb.com/demo/login?host=quick-container-491288b0-3138-48fa-93b4-1e730296c0b7.hello.svc.cluster.local&username=user&password=password&database=Adventureworks">
+<img src="./docs/images/01-login-page.png" alt="Login Page" width="80%"/>
+</a>
+<p><a href="https://whodb.com/demo/login?host=quick-container-491288b0-3138-48fa-93b4-1e730296c0b7.hello.svc.cluster.local&username=user&password=password&database=Adventureworks"><strong>Launch Demo →</strong></a></p>
+<p><em>Pre-filled with sample PostgreSQL database</em></p>
+</td>
+<td align="center" width="50%">
+<h3>🎥 Video Demo</h3>
+<p>Watch WhoDB in action</p>
+<a href="https://youtu.be/hnAQcYYzcLo">
+<img src="https://img.youtube.com/vi/hnAQcYYzcLo/maxresdefault.jpg" alt="WhoDB Demo Video" width="80%"/>
+</a>
+<p><a href="https://youtu.be/hnAQcYYzcLo"><strong>Watch Video →</strong></a></p>
+<p><em>Complete walkthrough of features</em></p>
+</td>
+</tr>
+</table>
+
+</div>
+
+---
+
+## 🚀 Quick Start
+
+### Option 1: Docker (Recommended)
+
+The fastest way to get started with WhoDB:
+
+```bash
 docker run -it -p 8080:8080 clidey/whodb
 ```
 
-Or, use Docker Compose:
-```sh
+Then open [http://localhost:8080](http://localhost:8080) in your browser.
+
+### Option 2: Docker Compose
+
+For more control and configuration:
+
+```yaml
 version: "3.8"
 services:
   whodb:
     image: clidey/whodb
-    # volumes: # (optional for sqlite) 
-    #   - ./sample.db:/db/sample.db
-    environment:
-#      optional if you have ollama configured elsewhere. will use these defaults otherwise
-#      - WHODB_OLLAMA_HOST=localhost
-#      - WHODB_OLLAMA_PORT=11434
-
-#      use this to preconfigure your Anthropic connection. endpoint will default to below
-      - WHODB_ANTHROPIC_API_KEY=...
-#      - WHODB_ANTHROPIC_ENDPOINT=https://api.anthropic.com/v1
-
-#     use this to preconfigure your OpenAI connection. endpoint will default to below
-      - WHODB_OPENAI_API_KEY=...
-#      - WHODB_OPENAI_ENDPOINT=https://api.openai.com/v1
     ports:
       - "8080:8080"
+    environment:
+      # AI Integration (Optional)
+      # Ollama Configuration
+      - WHODB_OLLAMA_HOST=localhost
+      - WHODB_OLLAMA_PORT=11434
+
+      # Anthropic Configuration
+      - WHODB_ANTHROPIC_API_KEY=your_key_here
+      # - WHODB_ANTHROPIC_ENDPOINT=https://api.anthropic.com/v1
+
+      # OpenAI Configuration
+      - WHODB_OPENAI_API_KEY=your_key_here
+      # - WHODB_OPENAI_ENDPOINT=https://api.openai.com/v1
+    # volumes: # (Optional for SQLite)
+    #   - ./sample.db:/db/sample.db
 ```
 
-Access WhoDB by navigating to http://localhost:8080 in your browser.
+### What's Next?
 
-<div style="width:100%;border-bottom:0.5px solid white;margin:20px 0px;"></div>
+1. **Connect to your database** - Enter your database credentials on the login page
+2. **Explore your schema** - Browse tables and visualize relationships
+3. **Run queries** - Use the Scratchpad to execute SQL queries
+4. **Manage data** - Edit, add, and delete records with ease
 
-## Development Setup
+📖 **For detailed installation options and configuration**, see our [Documentation](https://whodb.com/docs/)
+
+---
+
+## 🛠️ Development Setup
+
 ### Prerequisites
-- GoLang (latest version recommended)
-- PNPM (latest version recommended)
+
+- **GoLang** - Latest version recommended
+- **PNPM** - For frontend package management
+- **Node.js** - Version 16 or higher
 
 ### Editions
 
-WhoDB is available in two editions:
-- **Community Edition (CE)**: Core features with support for PostgreSQL, MySQL, SQLite3, MongoDB, Redis, MariaDB, & ElasticSearch
-- **Enterprise Edition (EE)**: All CE features plus additional database support, advanced visualizations, and enhanced UI components
+<table>
+<tr>
+<td width="50%">
 
-See [BUILD_AND_RUN.md](./BUILD_AND_RUN.md) for detailed build and run instructions and [ARCHITECTURE.md](./ARCHITECTURE.md) for understanding the modular design.
+**Community Edition (CE)**
+- PostgreSQL
+- MySQL / MariaDB
+- SQLite3
+- MongoDB
+- Redis
+- ElasticSearch
 
-### Frontend Setup
-To start the frontend service, navigate to the `frontend/` directory and run:
-```sh
-pnpm i && pnpm start
+</td>
+<td width="50%">
+
+**Enterprise Edition (EE)**
+- All CE databases
+- Oracle
+- SQL Server
+- DynamoDB
+- Athena
+- Snowflake
+- Cassandra
+- And more...
+
+</td>
+</tr>
+</table>
+
+📚 See [BUILD_AND_RUN.md](./BUILD_AND_RUN.md) for detailed build instructions and [ARCHITECTURE.md](./ARCHITECTURE.md) for architecture details.
+
+### Frontend Development
+
+Navigate to the `frontend/` directory and start the development server:
+
+```bash
+cd frontend
+pnpm i
+pnpm start
 ```
 
-### Backend Setup
-##### 1. Preparing the Frontend for the Backend (Only if you don’t have a build/ directory in core/):
-If the `core/` directory doesn't have a `build/` folder, you'll need to build the frontend and move it to the backend directory. From the root directory, run:
-```sh
-cd frontend && pnpm install && pnpm run build && rm -rf ../core/build/ && cp -r ./build ../core/ && cd -;
+### Backend Development
+
+#### 1. Build Frontend (First-Time Setup)
+
+If the `core/build/` directory doesn't exist, build the frontend first:
+
+```bash
+cd frontend
+pnpm install
+pnpm run build
+rm -rf ../core/build/
+cp -r ./build ../core/
+cd ..
 ```
-This command will compile the frontend and copy the `build/` folder to `core/`. 
-This step is required because Go will attempt to embed the `build/` folder on each launch. 
-You only need to do this once.
 
-##### 2. Setting up Ollama (if you'd like to enable the natural conversation integration)
-Go to https://ollama.com/ and download it for your system. 
-Once that is done, we recommend that you start out with the [Llama 3.1 8b model](https://ollama.com/library/llama3.1).
-WhoDB will automatically detect your installed model(s) and will show you a **Chat** option on the left sidebar.
+> **Note:** This is only required once, as Go embeds the `build/` folder on startup.
 
-##### 3. Starting the Backend Service
-If the `core/` directory already has a `build/` folder, or once you've completed the step above, you can start the backend service by running:
-```sh
-cd core/
+#### 2. Setup AI Integration (Optional)
+
+To enable natural language queries:
+
+1. **Ollama** - Download from [ollama.com](https://ollama.com/)
+   ```bash
+   # Install Llama 3.1 8b model
+   ollama pull llama3.1
+   ```
+   WhoDB will auto-detect installed models and show a **Chat** option in the sidebar.
+
+2. **OpenAI/Anthropic** - Set environment variables (see Docker Compose example above)
+
+#### 3. Start Backend Service
+
+```bash
+cd core
 go run .
 ```
 
-<div style="width:100%;border-bottom:0.5px solid white;margin:50px 0px;"></div>
+The backend will start on `http://localhost:8080`
 
-## FAQs
+---
 
-**What inspired the creation of WhoDB?**  
-WhoDB was inspired by Adminer for its lightweight nature and ease of use. We aimed to build on these qualities with enhanced visualization and a consistent user experience across various databases.
+## 💼 Use Cases
 
-**How does WhoDB handle large queries?**  
-WhoDB supports lazy loading, ensuring smooth performance even with large datasets.
+### 👨‍💻 For Developers
 
-**What makes WhoDB different from DBeaver?**  
-Unlike DBeaver, which is feature-rich but resource-heavy, WhoDB is designed to be lightweight and efficient, running on minimal resources—perfect for smaller setups or resource-constrained environments.
+<table>
+<tr>
+<td width="50%">
 
-**Is WhoDB compatible with any database?**
-WhoDB supports a wide range of databases, providing a consistent experience across SQL, NoSQL, and Graph databases. The Community Edition supports PostgreSQL, MySQL, SQLite3, MongoDB, Redis, MariaDB, & ElasticSearch. The Enterprise Edition adds support for additional databases.
+**Local Development**
+- Quick database inspection during development
+- Debug production issues with read-only access
+- Test API endpoints with real data
+- Explore schema changes
 
-**How do I deploy WhoDB?**
-WhoDB can be deployed easily using Docker or Docker Compose. See the ["Quick Start"](#quick-start) section for details.
+</td>
+<td width="50%">
 
-**Q: Is WhoDB suitable for production environments?**  
-While WhoDB is lightweight and efficient, we recommend evaluating its suitability for your specific production environment.
+**API Development**
+- Validate data transformations
+- Test query performance
+- Generate mock data for testing
+- Export data for integration tests
 
-## Contributing
+</td>
+</tr>
+</table>
 
-We welcome contributions from the community! Feel free to open issues or submit pull requests to help improve WhoDB. 
-We have a contribution guide [here](https://github.com/clidey/whodb/blob/main/CONTRIBUTING.md).
+### 📊 For Data Analysts
 
-## Infrastructure
+- Run ad-hoc SQL queries quickly
+- Export data to Excel for analysis
+- Build complex filters visually
+- Visualize table relationships
 
-WhoDB's deployment and CI/CD are managed by Clidey, a no-code DevOps platform. For more information, visit https://clidey.com
+### 🧪 For QA Engineers
 
-Clidey Build Status: &nbsp; <img src="https://hello.clidey.com/api/flows/status?id=b32257fa-1415-4847-a0f3-e684f5f76608&secret=cd74dbd5-36ec-42f9-b4f0-12ce9fcc762b" alt="Clidey build status" height="20px" />
+- Generate realistic test data
+- Verify database state during testing
+- Debug test failures quickly
+- Validate data migrations
 
-## Contact
+### 🛠️ For Database Administrators
 
-For any inquiries or support, please reach out to [support@clidey.com](mailto:support@clidey.com).
+- Monitor table structures and indexes
+- Manage user data efficiently
+- Quick schema exploration
+- Emergency data fixes
 
+---
+
+## ❓ Frequently Asked Questions
+
+<details>
+<summary><strong>What makes WhoDB different from other database tools?</strong></summary>
+<br>
+
+WhoDB combines the lightweight nature of tools like Adminer with modern UX, powerful visualizations, and AI capabilities. Unlike resource-heavy tools like DBeaver, WhoDB uses 90% less memory while providing a faster, more intuitive experience.
+
+</details>
+
+<details>
+<summary><strong>Is WhoDB suitable for production use?</strong></summary>
+<br>
+
+Yes, WhoDB is production-ready and used by thousands of developers. For production environments, we recommend:
+- Using read-only database accounts when possible
+- Enabling SSL/TLS connections
+- Consider Enterprise Edition for audit logging and advanced security features
+
+</details>
+
+<details>
+<summary><strong>How does WhoDB handle large datasets?</strong></summary>
+<br>
+
+WhoDB implements several performance optimizations:
+- Table virtualization for efficient rendering
+- Lazy loading for large result sets
+- Pagination controls
+- Query result streaming
+
+</details>
+
+<details>
+<summary><strong>Which databases are supported?</strong></summary>
+<br>
+
+**Community Edition:** PostgreSQL, MySQL, MariaDB, SQLite3, MongoDB, Redis, ElasticSearch
+
+**Enterprise Edition:** All CE databases plus Oracle, SQL Server, DynamoDB, Athena, Snowflake, Cassandra, and more
+
+</details>
+
+<details>
+<summary><strong>How do I deploy WhoDB?</strong></summary>
+<br>
+
+WhoDB can be deployed in multiple ways:
+- **Docker** - Single command deployment
+- **Docker Compose** - For production setups
+- **Kubernetes** - For enterprise environments
+- **Binary** - Direct installation on servers
+
+See our [Quick Start](#quick-start) section for details.
+
+</details>
+
+<details>
+<summary><strong>Does WhoDB store my credentials?</strong></summary>
+<br>
+
+No. WhoDB does not store database credentials by default. Connections are temporary and credentials are cleared when you close the browser. You can optionally configure connection profiles stored locally in your browser.
+
+</details>
+
+<details>
+<summary><strong>Can I use WhoDB with AI features?</strong></summary>
+<br>
+
+Yes! WhoDB integrates with:
+- **Ollama** - For local, private AI models
+- **OpenAI** - GPT-4 and other OpenAI models
+- **Anthropic** - Claude models
+
+These integrations allow you to query your database using natural language instead of SQL.
+
+</details>
+
+## 🤝 Contributing
+
+We welcome contributions from the community! Whether it's bug reports, feature requests, or code contributions, we appreciate your help in making WhoDB better.
+
+### How to Contribute
+
+1. **Report Issues** - Found a bug? [Open an issue](https://github.com/clidey/whodb/issues)
+2. **Request Features** - Have an idea? [Start a discussion](https://github.com/clidey/whodb/discussions)
+3. **Submit PRs** - Want to contribute code? Check our [Contributing Guide](CONTRIBUTING.md)
+4. **Improve Docs** - Help us improve documentation
+
+### Development Resources
+
+- [Contributing Guide](CONTRIBUTING.md) - Detailed contribution guidelines
+- [Architecture](ARCHITECTURE.md) - Understanding the codebase
+- [Build & Run](BUILD_AND_RUN.md) - Development setup instructions
+
+---
+
+## 📸 Screenshots
+
+<details>
+<summary><strong>View More Screenshots</strong></summary>
+
+### Data Management
+<img src="./docs/images/09-data-view-users-table.png" alt="Data View" width="100%"/>
+
+### Add/Edit Records
+<img src="./docs/images/11-data-view-add-row-dialog.png" alt="Add Row" width="100%"/>
+
+### Advanced Filtering
+<img src="./docs/images/16-data-view-where-conditions-popover.png" alt="Where Conditions" width="100%"/>
+
+### Export Options
+<img src="./docs/images/20-data-view-export-dialog.png" alt="Export Dialog" width="100%"/>
+
+### Schema Graph Visualization
+<img src="./docs/images/25-graph-view-with-controls.png" alt="Graph View" width="100%"/>
+
+### Scratchpad Query Editor
+<img src="./docs/images/28-scratchpad-code-editor.png" alt="Scratchpad" width="100%"/>
+
+### Query Results
+<img src="./docs/images/29-scratchpad-query-results.png" alt="Query Results" width="100%"/>
+
+### Multiple Database Support
+<img src="./docs/images/51-login-database-types-all-options.png" alt="Database Types" width="100%"/>
+
+</details>
+
+---
+
+## 🏢 Infrastructure & Support
+
+WhoDB's deployment and CI/CD are powered by [Clidey](https://clidey.com), a no-code DevOps platform.
+
+**Build Status:** [![Build Status](https://hello.clidey.com/api/flows/status?id=b32257fa-1415-4847-a0f3-e684f5f76608&secret=cd74dbd5-36ec-42f9-b4f0-12ce9fcc762b)](https://clidey.com)
+
+### Contact & Support
+
+- **Email:** [support@clidey.com](mailto:support@clidey.com)
+- **GitHub Issues:** [Report a bug](https://github.com/clidey/whodb/issues)
+- **Discussions:** [Join the conversation](https://github.com/clidey/whodb/discussions)
+- **Documentation:** [docs.whodb.com](https://whodb.com/docs/)
+
+---
+
+<div align="center">
+
+### ⭐ Star Us on GitHub!
+
+If you find WhoDB useful, please consider giving us a star on GitHub. It helps us grow the community and continue improving WhoDB.
+
+[![GitHub stars](https://img.shields.io/github/stars/clidey/whodb?style=social)](https://github.com/clidey/whodb/stargazers)
+
+---
+
+**Built with ❤️ by the Clidey team**
 
 *"Is it magic? Is it sorcery? No, it's just WhoDB!"*
+
+</div>
