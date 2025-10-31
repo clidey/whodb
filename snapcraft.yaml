@@ -58,7 +58,6 @@ apps:
     desktop: share/applications/whodb.desktop
     extensions: [ gnome ]
     environment:
-      GTK_USE_PORTAL: "0"  # Disable portal usage which is causing issues
       WEBKIT_DISABLE_DMABUF_RENDERER: "1"
       # Disable sandbox for debugging
       WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS: "1"
@@ -694,6 +693,18 @@ parts:
       export GIO_USE_PROXY_RESOLVER="dummy"
       unset GIO_MODULE_DIR
       unset GIO_EXTRA_MODULES
+
+      # If running under WSL or no portal is exposed, prefer X11 to avoid Wayland protocol errors
+      if grep -qi microsoft /proc/version 2>/dev/null || [ -n "$WSL_DISTRO_NAME" ]; then
+        export GDK_BACKEND="x11"
+      elif env -i DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS" dbus-send --session \
+          --dest=org.freedesktop.portal.Desktop \
+          /org/freedesktop/portal/desktop \
+          org.freedesktop.DBus.Peer.Ping >/dev/null 2>&1; then
+        :
+      else
+        export GDK_BACKEND="x11"
+      fi
 
       # Library paths
       export LD_LIBRARY_PATH="${SNAP}/usr/lib/${ARCH_TRIPLET}:${SNAP}/usr/lib:${SNAP}/lib/${ARCH_TRIPLET}:${SNAP}/lib:${LD_LIBRARY_PATH}"
