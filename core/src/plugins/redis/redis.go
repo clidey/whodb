@@ -45,7 +45,7 @@ func (p *RedisPlugin) IsAvailable(config *engine.PluginConfig) bool {
 
 func (p *RedisPlugin) GetDatabases(config *engine.PluginConfig) ([]string, error) {
 	maxDatabases := 16
-	availableDatabases := []string{}
+	var availableDatabases []string
 
 	for i := 0; i < maxDatabases; i++ {
 		dbConfig := *config
@@ -79,10 +79,23 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 	}
 	defer client.Close()
 
-	keys, err := client.Keys(ctx, "*").Result()
-	if err != nil {
-		log.Logger.WithError(err).Error("Failed to retrieve Redis keys")
-		return nil, err
+	var keys []string
+	var cursor uint64
+
+	for {
+		var scanKeys []string
+		scanKeys, cursor, err = client.Scan(ctx, cursor, "*", 0).Result() // count = 0 will use the redis default of 10
+		if err != nil {
+			log.Logger.WithError(err).Error("Failed to scan Redis keys")
+			return nil, err
+		}
+
+		keys = append(keys, scanKeys...)
+
+		// When cursor is 0, we've completed the full scan
+		if cursor == 0 {
+			break
+		}
 	}
 
 	pipe := client.Pipeline()
@@ -239,7 +252,7 @@ func (p *RedisPlugin) GetRows(
 			log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to get Redis hash values")
 			return nil, err
 		}
-		rows := [][]string{}
+		var rows [][]string
 		for field, value := range hashValues {
 			if where == nil || filterRedisHash(field, value, where) {
 				rows = append(rows, []string{field, value})
@@ -259,7 +272,7 @@ func (p *RedisPlugin) GetRows(
 			log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to get Redis list values")
 			return nil, err
 		}
-		rows := [][]string{}
+		var rows [][]string
 		for i, value := range listValues {
 			if where == nil || filterRedisList(value, where) {
 				rows = append(rows, []string{strconv.Itoa(i), value})
@@ -275,7 +288,7 @@ func (p *RedisPlugin) GetRows(
 			log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to get Redis set values")
 			return nil, err
 		}
-		rows := [][]string{}
+		var rows [][]string
 		for i, value := range setValues {
 			rows = append(rows, []string{strconv.Itoa(i), value})
 		}
@@ -290,7 +303,7 @@ func (p *RedisPlugin) GetRows(
 			log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to get Redis zset values")
 			return nil, err
 		}
-		rows := [][]string{}
+		var rows [][]string
 		for i, member := range zsetValues {
 			rows = append(rows, []string{strconv.Itoa(i), member.Member.(string), fmt.Sprintf("%.2f", member.Score)})
 		}
