@@ -14,10 +14,6 @@
     <key>com.apple.security.files.user-selected.read-write</key>
     <true/>
 
-    <!-- Allow file downloads -->
-    <key>com.apple.security.files.downloads.read-write</key>
-    <true/>
-
     <!-- Allow opening files from Finder -->
     <key>com.apple.security.files.bookmarks.app-scope</key>
     <true/>
