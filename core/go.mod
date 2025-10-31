@@ -3,7 +3,7 @@ module github.com/clidey/whodb/core
 go 1.25.1
 
 require (
-	github.com/99designs/gqlgen v0.17.80
+	github.com/99designs/gqlgen v0.17.81
 	github.com/ClickHouse/clickhouse-go/v2 v2.40.3
 	github.com/brianvoe/gofakeit/v7 v7.6.0
 	github.com/deckarep/golang-set/v2 v2.8.0
