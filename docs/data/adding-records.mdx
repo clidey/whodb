@@ -1,0 +1,305 @@
+---
+title: "Adding Records"
+description: "Learn how to insert new records into your tables using the add row dialog"
+---
+
+# Adding Records
+
+WhoDB makes it easy to add new records to your tables through an intuitive dialog interface. This guide covers how to insert new data, handle different field types, and work with constraints.
+
+## Opening the Add Row Dialog
+
+To add a new record:
+
+1. Navigate to the table where you want to add data
+2. Click the "Add Row" button in the top action bar
+3. The add row dialog will open with form fields for each column
+
+![Data View Add Row Dialog](/images/11-data-view-add-row-dialog.png)
+
+<Tip>
+The add row dialog automatically shows all columns from your table, making it easy to fill in complete records.
+</Tip>
+
+## Understanding the Form
+
+The add row dialog displays a form with fields organized by column:
+
+![Data View Add Row Filled](/images/12-data-view-add-row-filled.png)
+
+### Form Field Organization
+
+- **Column Name**: Clear label for each field
+- **Data Type**: Indicator showing what type of data is expected
+- **Input Field**: Appropriately typed input control based on column data type
+- **Required Fields**: Marked to indicate columns that cannot be NULL
+- **Optional Fields**: Can be left empty if the column allows NULL values
+
+### Supported Field Types
+
+WhoDB provides specialized input controls for different data types:
+
+**Text & String Fields**
+- Regular text input for VARCHAR, TEXT, and similar types
+- Multi-line support for longer text content
+- Character limits based on column constraints
+
+**Numeric Fields**
+- Number input with appropriate controls
+- Support for integers, decimals, and floating-point numbers
+- Validation to prevent invalid numeric entries
+
+**Date & Time Fields**
+- Date picker for DATE type columns
+- DateTime picker for TIMESTAMP type columns
+- Time input for TIME type columns
+
+**Boolean Fields**
+- Toggle or checkbox for BOOLEAN type columns
+- Easy true/false selection
+
+**Special Types**
+- UUID fields with generation options
+- JSON fields with syntax highlighting
+- Array fields with item management
+
+## Filling Out the Form
+
+### Step-by-Step Process
+
+<Steps>
+<Step title="Review Column Requirements">
+Identify which columns are required (marked with an asterisk) and which are optional.
+</Step>
+<Step title="Fill Required Fields">
+Enter values for all required fields. The dialog will prevent submission if any required field is empty.
+</Step>
+<Step title="Fill Optional Fields">
+Add values for optional columns if needed. Leave them empty if NULL values are acceptable.
+</Step>
+<Step title="Review Your Entry">
+Double-check all values before submission for accuracy and correctness.
+</Step>
+<Step title="Submit the Form">
+Click the "Save" or "Add" button to insert the new record into your table.
+</Step>
+</Steps>
+
+### Input Validation
+
+WhoDB validates your input as you fill out the form:
+
+- **Type Checking**: Ensures values match the expected data type
+- **Length Constraints**: Respects maximum length limits for text fields
+- **Format Validation**: Validates dates, emails, and other formatted fields
+- **Constraint Verification**: Checks unique constraints and other database constraints
+
+<Warning>
+If validation errors occur, review the highlighted fields and correct the invalid entries before attempting to submit again.
+</Warning>
+
+## Working with Different Data Types
+
+### Text Insertion
+
+For text and string columns:
+- Type content directly into the field
+- Multi-line text will wrap automatically
+- Be aware of character limits specified by your column
+
+### Numeric Insertion
+
+For numeric columns:
+- Enter numbers without formatting (no commas or currency symbols)
+- Decimal values use a period as separator
+- The system validates range constraints automatically
+
+### Date/Time Insertion
+
+For temporal columns:
+- Use the date picker for consistent date formatting
+- Select time separately from date if applicable
+- Format is automatically handled by WhoDB
+
+### Boolean Insertion
+
+For boolean columns:
+- Toggle the checkbox or switch control
+- Values are stored as true or false
+- Clear indication of the current state
+
+### Foreign Keys
+
+When your table has foreign key relationships:
+- A dropdown shows available values from the related table
+- Select the appropriate related record
+- The foreign key ID is automatically set
+
+<Tip>
+If a foreign key reference doesn't exist yet, you may need to add it to the related table first.
+</Tip>
+
+## Handling NULL Values
+
+### Allowing NULL
+
+If a column allows NULL values:
+- Leave the field empty or unchecked
+- NULL will be stored in the database
+- No error will occur
+
+### Required Columns
+
+If a column doesn't allow NULL values:
+- You must provide a value
+- The form will prevent submission without it
+- The field is marked with an asterisk indicator
+
+### Default Values
+
+Some columns may have default values:
+- The form may pre-populate with the default
+- You can override with your own value
+- Check your database schema to see default values
+
+<Info>
+Auto-increment columns (like primary keys) are typically not shown in the add form, as the database generates these values automatically.
+</Info>
+
+## Constraints & Validation
+
+### Unique Constraints
+
+If a column has a unique constraint:
+- WhoDB may check for duplicate values
+- An error message will appear if you try to insert a duplicate
+- Modify your entry to provide a unique value
+
+### Check Constraints
+
+Tables with check constraints:
+- Values must meet the constraint criteria
+- Validation will prevent invalid entries
+- Check your schema to understand the constraints
+
+### Foreign Key Constraints
+
+When inserting records with foreign keys:
+- The referenced record must exist in the related table
+- Foreign key constraints are validated before insertion
+- An error message appears if the reference is invalid
+
+## Submission & Feedback
+
+### Successful Submission
+
+When you submit a valid form:
+1. A confirmation message appears
+2. The dialog closes
+3. The new record is added to the table
+4. The data grid refreshes to show the new row
+
+<Tip>
+After successfully adding a record, you can immediately add another by clicking "Add Row" again, or the dialog can remain open for batch insertion.
+</Tip>
+
+### Error Handling
+
+If submission fails:
+- An error message explains what went wrong
+- The form remains open for correction
+- Identify the invalid field and fix it
+- Try submitting again
+
+### Common Issues
+
+**"Field required" error**
+- Ensure all marked required fields have values
+- Check for any fields you may have missed
+
+**"Invalid format" error**
+- Verify the data format matches the column type
+- For dates, use the provided date picker
+
+**"Constraint violation" error**
+- Check unique constraints for duplicate values
+- Verify foreign key references exist
+- Review any check constraints in your schema
+
+## Keyboard Shortcuts
+
+Make form entry faster with these shortcuts:
+
+| Shortcut | Action |
+|----------|--------|
+| `Tab` | Move to next field |
+| `Shift + Tab` | Move to previous field |
+| `Enter` | Submit the form (from last field) |
+| `Escape` | Close the dialog |
+
+## Best Practices
+
+<Steps>
+<Step title="Validate Before Adding">
+Review your data for accuracy before inserting, especially for critical fields like IDs or references.
+</Step>
+<Step title="Check Constraints First">
+Understand your table's constraints before adding data to avoid repeated errors.
+</Step>
+<Step title="Use Defaults When Appropriate">
+Let the database use default values when sensible to ensure consistency.
+</Step>
+<Step title="Be Careful with Foreign Keys">
+Ensure referenced records exist before creating relationships through foreign keys.
+</Step>
+<Step title="Batch Insert When Possible">
+If adding multiple similar records, consider keeping the form open between additions for faster entry.
+</Step>
+</Steps>
+
+## Limitations
+
+- **Auto-increment Fields**: Not editable in the add form; values are generated automatically
+- **Computed Fields**: Cannot be set manually; values are generated by the database
+- **Large BLOBs**: May not be suitable for direct entry through the form
+- **One Record at a Time**: The dialog adds one record per submission (use Mock Data for bulk insertion)
+
+## Troubleshooting
+
+**Dialog Won't Submit**
+- Check for required fields left empty
+- Look for validation errors on specific fields
+- Review the error message for specific guidance
+
+**Data Not Appearing After Submit**
+- Check if you're viewing the correct table
+- Verify the page you're on (new records appear on the first page)
+- Try refreshing the data view
+
+**Can't Insert Due to Constraint**
+- Review the constraint error message
+- Verify you're not creating duplicates
+- Ensure foreign key references exist
+
+## Next Steps
+
+Once you've added records, explore these related features:
+
+<CardGroup cols={2}>
+<Card title="Editing Records" icon="pen" href="/data/editing-records">
+Learn how to modify existing records you've added
+</Card>
+<Card title="Deleting Records" icon="trash" href="/data/deleting-records">
+Discover how to remove records when needed
+</Card>
+<Card title="Mock Data Generation" icon="wand-magic-sparkles" href="/advanced/mock-data">
+Generate test data in bulk for your tables
+</Card>
+<Card title="Viewing Data" icon="table" href="/data/viewing-data">
+Review and manage all your table data
+</Card>
+</CardGroup>
+
+<Info>
+For bulk data insertion, consider using Mock Data generation in the Advanced Features section, which can quickly populate tables with test data.
+</Info>

@@ -1,0 +1,513 @@
+---
+title: "Sidebar Navigation"
+description: "Master WhoDB's sidebar features including database and schema selection, and efficient table navigation"
+---
+
+# Sidebar Navigation
+
+The sidebar is the command center of WhoDB, providing quick access to your databases, schemas, and tables. Understanding how to effectively use the sidebar will significantly improve your productivity when working with multiple databases and large schemas.
+
+## The WhoDB Sidebar Overview
+
+The sidebar appears on the left side of the WhoDB interface, organizing your database structure in a hierarchical, easy-to-navigate format.
+
+![Sidebar with Storage Units](/images/06-storage-unit-list-with-sidebar.png)
+
+<Info>
+The sidebar adapts based on your database type. Different databases (PostgreSQL, MySQL, MongoDB, Redis) have different organizational structures reflected in the sidebar.
+</Info>
+
+## Database Selector
+
+The database selector at the top of the sidebar shows your currently-connected database and provides options for managing connections.
+
+![Database Selector](/images/34-sidebar-database-selector.png)
+
+### Changing Databases
+
+<Steps>
+<Step title="Click Database Selector">
+Click on the database name at the top of the sidebar to access database management options.
+</Step>
+<Step title="View Current Connection">
+The selector displays:
+- **Database Type**: PostgreSQL, MySQL, MongoDB, or Redis
+- **Database Name**: The currently connected database
+- **Connection Status**: Visual indicator showing you're connected
+- **Server Information**: Host and port (if available)
+</Step>
+<Step title="Switch Databases">
+<CardGroup cols={2}>
+<Card title="Disconnect" icon="plug">
+Close your current database connection
+</Card>
+<Card title="New Connection" icon="plus">
+Add a new database connection
+</Card>
+<Card title="Recent Connections" icon="history">
+Quickly reconnect to recently used databases
+</Card>
+<Card title="Connection Info" icon="info">
+View details about the current connection
+</Card>
+</CardGroup>
+</Step>
+</Steps>
+
+### Connection Indicator
+
+The status indicator shows:
+- **Green**: Successfully connected and ready
+- **Yellow**: Connection unstable or in progress
+- **Red**: Connection failed or disconnected
+
+<Tip>
+Use the connection indicator to quickly verify your database connection status before running queries.
+</Tip>
+
+## Schema Selector
+
+For databases that support multiple schemas (PostgreSQL, MySQL), the schema selector allows you to switch between schemas without reconnecting.
+
+![Schema Selector](/images/35-sidebar-schema-selector.png)
+
+### Understanding Schemas
+
+<AccordionGroup>
+<Accordion title="What are Schemas?">
+Schemas are containers for database objects (tables, views, indexes). They help organize large databases:
+
+- **PostgreSQL**: Native schema support - can have public, private, or application schemas
+- **MySQL**: Limited schema support - schemas are similar to databases
+- **SQLite**: No schema support - all tables are in one namespace
+- **MongoDB**: Uses databases instead of schemas
+</Accordion>
+<Accordion title="Typical Schema Organization">
+<CodeGroup>
+```text E-Commerce Database Schema Structure
+public (default schema)
+├── users
+├── products
+├── orders
+└── order_items
+
+auth_schema
+├── users
+├── permissions
+└── roles
+
+reporting_schema
+├── sales_summary
+├── user_analytics
+└── product_trends
+```
+</CodeGroup>
+</Accordion>
+<Accordion title="Switching Schemas">
+Click the schema dropdown to switch between available schemas. All tables in the sidebar immediately update to show the selected schema's contents.
+</Accordion>
+</AccordionGroup>
+
+<Note>
+When switching schemas, your current view updates to show tables from the new schema. Any ongoing data editing operations are cancelled.
+</Note>
+
+## Table Navigation Menu
+
+The main section of the sidebar displays all tables in the current schema, organized for easy navigation.
+
+![Navigation Menu](/images/36-sidebar-navigation-menu.png)
+
+### Table Organization
+
+<Steps>
+<Step title="Table List">
+Tables are displayed in a hierarchical list format:
+- **Table Name**: Full name of the table
+- **Table Type**: Icon indicating the table type (regular, view, temporary)
+- **Row Count**: Number of rows (if available)
+- **Last Modified**: When the table was last changed
+</Step>
+<Step title="Sorting Options">
+<CardGroup cols={2}>
+<Card title="Alphabetical" icon="a-to-z">
+Tables sorted A-Z for easy search
+</Card>
+<Card title="Most Recent" icon="clock">
+Recently modified tables at the top
+</Card>
+<Card title="Largest First" icon="size">
+Tables by size, largest first
+</Card>
+<Card title="Smallest First" icon="size">
+Tables by size, smallest first
+</Card>
+</CardGroup>
+</Step>
+<Step title="Search Tables">
+Use the search box to quickly find tables:
+```text
+Search features:
+- Type table name or partial name
+- Real-time filtering as you type
+- Case-insensitive search
+- Highlight matching tables
+```
+</Step>
+</Steps>
+
+### Interacting with Tables
+
+<AccordionGroup>
+<Accordion title="Single Click - View Table">
+Click a table once to view its schema information and metadata in the main panel.
+</Accordion>
+<Accordion title="Double Click - Explore Data">
+Double-click a table to immediately view its data in the Data View.
+</Accordion>
+<Accordion title="Right Click - Context Menu">
+Right-click on a table to access:
+- **View Data**: Open the table in Data View
+- **View Schema**: Display table structure
+- **Copy Name**: Copy table name to clipboard
+- **Export**: Export table data
+- **Generate Mock Data**: Create test data
+- **Properties**: View detailed table information
+</Accordion>
+<Accordion title="Hover - Quick Info">
+Hover over a table to see a tooltip with:
+- Complete table name
+- Row count
+- Storage size
+- Last modified date
+</Accordion>
+</AccordionGroup>
+
+## Efficient Navigation Workflows
+
+### Finding Tables in Large Schemas
+
+For databases with hundreds of tables, use these strategies:
+
+<Steps>
+<Step title="Use Search">
+Type part of the table name in the search box. Search is case-insensitive and matches partial names.
+
+<CodeGroup>
+```text Search Examples
+Type: "user"
+Matches: users, user_roles, user_permissions
+
+Type: "order"
+Matches: orders, order_items, order_status
+
+Type: "_prod"
+Matches: All tables ending with _prod
+```
+</CodeGroup>
+</Step>
+<Step title="Filter by Type">
+Some sidebars allow filtering by table type:
+- **Tables**: Regular data tables
+- **Views**: Virtual tables defined by queries
+- **System**: Database system tables
+</Step>
+<Step title="Use Favorites">
+Mark frequently-used tables as favorites for quick access:
+- Click the star icon next to table name
+- Favorites appear at the top of the list
+- Makes navigation faster in complex schemas
+</Step>
+</Steps>
+
+### Multi-Table Workflows
+
+<AccordionGroup>
+<Accordion title="Comparing Tables">
+1. Click first table to view its schema
+2. Scroll down to see all columns
+3. Open second table in new tab to compare
+4. Use browser tabs to switch between tables
+</Accordion>
+<Accordion title="Following Relationships">
+1. View a table's schema
+2. Identify foreign key columns
+3. Click the foreign key to jump to related table
+4. Browser back button returns to previous table
+5. Understand data relationships quickly
+</Accordion>
+<Accordion title="Schema Analysis">
+1. Expand table list to see all tables
+2. Note naming patterns (user_*, order_*, product_*)
+3. Identify related tables by prefix
+4. Understand database organization
+5. Plan your queries based on structure
+</Accordion>
+</AccordionGroup>
+
+## Table Sections in the Sidebar
+
+### Collapsible Groups
+
+Some databases organize tables into collapsible groups:
+
+<AccordionGroup>
+<Accordion title="Schema Grouping (PostgreSQL)">
+Tables grouped by schema:
+```
+public
+├── users
+├── products
+└── orders
+
+auth
+├── roles
+└── permissions
+
+reporting
+├── monthly_sales
+└── user_analytics
+```
+Click schema name to expand/collapse all tables in that schema.
+</Accordion>
+<Accordion title="Table Type Grouping">
+Some configurations group tables by type:
+```
+Tables
+├── users
+├── orders
+└── products
+
+Views
+├── active_users
+└── order_summary
+
+System Tables
+├── pg_catalog
+└── information_schema
+```
+</Accordion>
+<Accordion title="Custom Organization">
+Enterprise versions may support custom grouping by application or module.
+</Accordion>
+</AccordionGroup>
+
+## Sidebar Actions and Features
+
+### Table Operations
+
+<CardGroup cols={2}>
+<Card title="View Data" icon="table">
+Open table in Data View to see and edit rows
+</Card>
+<Card title="View Schema" icon="sitemap">
+Display column definitions and constraints
+</Card>
+<Card title="Copy Name" icon="copy">
+Copy table name to clipboard
+</Card>
+<Card title="Export Data" icon="download">
+Export table data in various formats
+</Card>
+<Card title="Generate Data" icon="wand">
+Create mock/test data for the table
+</Card>
+<Card title="Properties" icon="info">
+View detailed table metadata and statistics
+</Card>
+</CardGroup>
+
+### Quick Actions
+
+<Steps>
+<Step title="Keyboard Shortcuts">
+<CodeGroup>
+```text Navigation Shortcuts
+Ctrl/Cmd + F: Focus on search box
+Enter: Open first search result
+Arrow Up/Down: Navigate search results
+Escape: Close search or context menu
+```
+</CodeGroup>
+</Step>
+<Step title="Drag and Drop">
+Some configurations allow dragging tables to:
+- Reorder favorites
+- Group related tables
+- Create custom collections
+</Step>
+<Step title="Context Sensitivity">
+Sidebar items show different options based on:
+- Database type (PostgreSQL vs MySQL vs MongoDB)
+- User permissions (read-only vs read-write)
+- Connection status (connected vs disconnected)
+</Step>
+</Steps>
+
+## Sidebar Customization
+
+### Appearance Settings
+
+<AccordionGroup>
+<Accordion title="Sidebar Width">
+- Resize by dragging the divider between sidebar and main panel
+- Double-click to auto-fit content
+- Sidebar remembers your preferred width
+</Accordion>
+<Accordion title="Density">
+Some versions support different density settings:
+- **Compact**: More tables visible, less spacing
+- **Normal**: Standard comfortable spacing
+- **Spacious**: Large spacing, fewer visible tables
+</Accordion>
+<Accordion title="Theme Integration">
+The sidebar adapts to your chosen theme:
+- Light mode: Light background, dark text
+- Dark mode: Dark background, light text
+- High contrast: Enhanced readability
+</Accordion>
+</AccordionGroup>
+
+### Preferences
+
+<AccordionGroup>
+<Accordion title="Auto-Expand">
+Control whether schemas/groups auto-expand when clicked:
+- Always expand: Recommended for frequent navigation
+- Manual only: Requires explicit clicking
+</Accordion>
+<Accordion title="Show Row Counts">
+Toggle whether row counts display for each table:
+- Enable: Helpful for understanding data volume
+- Disable: Faster performance with very large schemas
+</Accordion>
+<Accordion title="Show Last Modified">
+Display when each table was last modified:
+- Useful for understanding recent changes
+- Helps identify active tables
+</Accordion>
+</AccordionGroup>
+
+## Advanced Navigation Patterns
+
+### Search-First Workflow
+
+For power users with large schemas:
+
+<Steps>
+<Step title="Click Search Box">
+The search box is always accessible at the top of the sidebar.
+</Step>
+<Step title="Type Table Name">
+Begin typing immediately - search is real-time:
+```text
+Example: type "cust" → matches "customers", "customer_orders"
+```
+</Step>
+<Step title="Select from Results">
+Arrow keys or mouse to select the table you want.
+</Step>
+<Step title="Open Table">
+Press Enter or click to open the selected table.
+</Step>
+</Steps>
+
+### Relationship Exploration
+
+<Steps>
+<Step title="Start with Core Table">
+Select a main table (e.g., orders)
+</Step>
+<Step title="View Its Schema">
+See all columns and foreign keys
+</Step>
+<Step title="Click Foreign Key">
+Jump to referenced table (e.g., customers)
+</Step>
+<Step title="Explore Relationships">
+Continue exploring through relationships:
+```
+orders → customers → addresses
+```
+</Step>
+<Step title="Use Browser Navigation">
+Use back/forward buttons to revisit tables
+</Step>
+</Steps>
+
+## Troubleshooting Sidebar Issues
+
+<AccordionGroup>
+<Accordion title="Sidebar Not Showing Tables">
+**Solution**:
+1. Check database connection (look for connection indicator)
+2. Verify schema is selected (especially for PostgreSQL)
+3. Refresh the page (Ctrl+R or Cmd+R)
+4. Check for permission issues (read-only account)
+</Accordion>
+<Accordion title="Search Not Finding Tables">
+**Solution**:
+1. Verify table names - search is exact substring match
+2. Check for schema filter - may be hiding tables
+3. Try different search terms or partial names
+4. Scroll manually through list to verify table exists
+</Accordion>
+<Accordion title="Sidebar Stuck or Unresponsive">
+**Solution**:
+1. Try resizing the sidebar by dragging divider
+2. Close and reopen the connection
+3. Refresh your browser
+4. Check browser console for JavaScript errors
+</Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+<Steps>
+<Step title="Learn Search First">
+Invest time in learning the search functionality. For large schemas, search-first is the fastest approach.
+
+<Tip>
+Most tables can be found in 1-2 seconds with effective searching.
+</Tip>
+</Step>
+<Step title="Organize Your Database">
+Use meaningful table names and schemas:
+- Prefix related tables: user_*, order_*, product_*
+- Use schemas for logical grouping
+- Avoid abbreviations that aren't obvious
+</Step>
+<Step title="Use Favorites Strategically">
+Mark only tables you use regularly. Too many favorites defeats their purpose.
+
+<Warning>
+Having 20+ favorites makes navigation slower, not faster.
+</Warning>
+</Step>
+<Step title="Monitor Row Counts">
+Keep an eye on growing tables:
+- Unexpectedly large tables may indicate bugs
+- Growing log tables may need archival
+</Step>
+</Steps>
+
+## Next Steps
+
+<CardGroup cols={2}>
+<Card title="Schema Explorer" icon="sitemap" href="/features/schema-explorer">
+Deep dive into table structure and relationships
+</Card>
+<Card title="Storage Units" icon="box" href="/features/storage-units">
+Manage and organize your storage
+</Card>
+<Card title="Data Viewing" icon="table" href="/data/viewing-data">
+Browse and edit table data
+</Card>
+<Card title="Graph View" icon="node" href="/visualization/graph-view">
+Visualize your entire schema structure
+</Card>
+</CardGroup>
+
+<Info>
+The sidebar is your primary navigation hub. Master it, and you'll work much faster through WhoDB's powerful features.
+</Info>

@@ -1,0 +1,195 @@
+{
+  "name": "WhoDB",
+  "favicon": "logo/logo.png",
+  "fonts": {
+    "family": "Montserrat",
+    "source": "https://fonts.gstatic.com/s/googlesansflex/v5/t5sJIQcYNIWbFgDgAAzZ34auoVyXkJCOvp3SFWJbN5hF8Ju1x6sKCyp0l9sI40swNJwGpVd4AZzz0v6lJ4qFXNZhGjLvDSkV4USKMo6qQzwliVdHAy9jxTDHg_ugnAakpwGc-cxgUqDCIUI.woff2",
+    "format": "woff2"
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "introduction",
+              "why-whodb",
+              "installation",
+              "first-login",
+              "quick-start"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/database-connectivity",
+              "features/schema-explorer",
+              "features/sidebar-navigation",
+              "features/storage-units"
+            ]
+          },
+          {
+            "group": "Data Management",
+            "pages": [
+              "data/viewing-data",
+              "data/adding-records",
+              "data/editing-records",
+              "data/deleting-records",
+              "data/filtering-searching",
+              "data/sorting-pagination"
+            ]
+          },
+          {
+            "group": "Query Interface",
+            "pages": [
+              "query/scratchpad-intro",
+              "query/writing-queries",
+              "query/query-results",
+              "query/query-history",
+              "query/multiple-cells"
+            ]
+          },
+          {
+            "group": "Visualization",
+            "pages": [
+              "visualization/graph-view",
+              "visualization/schema-topology",
+              "visualization/relationships"
+            ]
+          },
+          {
+            "group": "Advanced Features",
+            "pages": [
+              "advanced/mock-data",
+              "advanced/export-options",
+              "advanced/where-conditions",
+              "advanced/batch-operations"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Guides",
+        "groups": [
+          {
+            "group": "Getting Started Guides",
+            "pages": [
+              "guides/complete-beginner",
+              "guides/migrating-from-phpmyadmin",
+              "guides/migrating-from-pgadmin",
+              "guides/team-setup"
+            ]
+          },
+          {
+            "group": "Step-by-Step Tutorials",
+            "pages": [
+              "guides/tutorials/first-database-connection",
+              "guides/tutorials/data-exploration-workflow",
+              "guides/tutorials/building-complex-queries",
+              "guides/tutorials/data-export-analysis",
+              "guides/tutorials/schema-visualization"
+            ]
+          },
+          {
+            "group": "Role-Based Guides",
+            "pages": [
+              "guides/roles/developers",
+              "guides/roles/data-analysts",
+              "guides/roles/database-administrators",
+              "guides/roles/qa-testers"
+            ]
+          },
+          {
+            "group": "Use Case Guides",
+            "pages": [
+              "use-cases/database-exploration",
+              "use-cases/data-analysis",
+              "use-cases/testing-development",
+              "use-cases/data-migration",
+              "use-cases/debugging-production",
+              "use-cases/api-development"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Best Practices",
+        "groups": [
+          {
+            "group": "General Best Practices",
+            "pages": [
+              "best-practices/security",
+              "best-practices/performance",
+              "best-practices/data-management",
+              "best-practices/query-optimization"
+            ]
+          },
+          {
+            "group": "Database-Specific",
+            "pages": [
+              "best-practices/postgresql",
+              "best-practices/mysql",
+              "best-practices/mongodb"
+            ]
+          },
+          {
+            "group": "Team Workflows",
+            "pages": [
+              "best-practices/collaboration",
+              "best-practices/access-control",
+              "best-practices/documentation"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Resources",
+        "groups": [
+          {
+            "group": "Help & Support",
+            "pages": [
+              "resources/faq",
+              "resources/troubleshooting",
+              "resources/common-errors",
+              "resources/performance-tuning"
+            ]
+          },
+          {
+            "group": "Comparisons",
+            "pages": [
+              "resources/comparisons/overview",
+              "resources/comparisons/vs-phpmyadmin",
+              "resources/comparisons/vs-pgadmin",
+              "resources/comparisons/vs-dbeaver",
+              "resources/comparisons/vs-tableplus"
+            ]
+          },
+          {
+            "group": "Integrations",
+            "pages": [
+              "resources/integrations/docker",
+              "resources/integrations/ci-cd",
+              "resources/integrations/monitoring",
+              "resources/integrations/backup-tools"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "resources/keyboard-shortcuts",
+              "resources/glossary",
+              "resources/supported-databases",
+              "resources/changelog"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "logo": {
+    "light": "./logo/logo.svg",
+    "dark": "./logo/logo.svg"
+  }
+}

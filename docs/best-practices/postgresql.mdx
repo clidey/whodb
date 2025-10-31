@@ -1,0 +1,542 @@
+---
+title: "PostgreSQL Best Practices"
+description: "PostgreSQL-specific best practices for optimal database design, performance, and reliability"
+---
+
+# PostgreSQL Best Practices
+
+PostgreSQL is a powerful, feature-rich database system. Leveraging its advanced capabilities while following best practices ensures reliable, performant, and maintainable databases. This guide covers PostgreSQL-specific optimization techniques and patterns.
+
+<Tip>
+PostgreSQL's advanced features like JSON/JSONB, array types, and window functions provide capabilities that can dramatically improve application design when used properly.
+</Tip>
+
+## Schema Design
+
+### Using Schemas for Organization
+
+PostgreSQL schemas provide a logical namespace for tables, functions, and other objects. Use them to organize complex databases.
+
+**Creating and Organizing Schemas:**
+
+```sql
+-- Create separate schemas for different concerns
+CREATE SCHEMA public;
+CREATE SCHEMA audit;
+CREATE SCHEMA reporting;
+CREATE SCHEMA api;
+
+-- Create tables in specific schemas
+CREATE TABLE public.users (
+  user_id SERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE audit.user_changes (
+  change_id BIGSERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES public.users(user_id),
+  changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Set search path to control default schema
+SET search_path TO public, audit, pg_public;
+```
+
+Benefits of schema organization:
+- Logical separation of concerns
+- Simplified access control per schema
+- Easier migrations and maintenance
+- Better naming flexibility
+
+### Using JSONB for Semi-Structured Data
+
+JSONB (binary JSON) is PostgreSQL's powerful semi-structured data type. It's more efficient than TEXT JSON and supports advanced queries.
+
+**JSONB Storage:**
+
+```sql
+CREATE TABLE products (
+  product_id SERIAL PRIMARY KEY,
+  name VARCHAR(255),
+  metadata JSONB,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO products (name, metadata) VALUES (
+  'Laptop',
+  '{
+    "brand": "TechCorp",
+    "specs": {
+      "cpu": "Intel i7",
+      "ram": "16GB",
+      "storage": "512GB SSD"
+    },
+    "colors": ["Silver", "Black", "Gold"],
+    "price": 1299.99
+  }'::JSONB
+);
+```
+
+**Querying JSONB:**
+
+```sql
+-- Extract top-level values
+SELECT metadata->>'brand' as brand
+FROM products
+WHERE product_id = 1;
+
+-- Extract nested values
+SELECT metadata->'specs'->>'cpu' as cpu
+FROM products
+WHERE product_id = 1;
+
+-- Query by nested value
+SELECT * FROM products
+WHERE metadata->'specs'->>'ram' = '16GB';
+
+-- Array operations
+SELECT * FROM products
+WHERE metadata->'colors' @> '"Silver"'::JSONB;
+
+-- JSONB contains operator
+SELECT * FROM products
+WHERE metadata @> '{"brand": "TechCorp"}'::JSONB;
+```
+
+<Tip>
+Use ->> (text) for text extraction and -> (JSONB) when you need to chain further operations. Create indexes on frequently queried JSONB paths for performance.
+</Tip>
+
+**JSONB Indexing:**
+
+```sql
+-- General JSONB index
+CREATE INDEX idx_products_metadata
+ON products USING GIN (metadata);
+
+-- Index specific path
+CREATE INDEX idx_products_brand
+ON products USING GIN (metadata->'specs');
+
+-- Functional index for specific extraction
+CREATE INDEX idx_products_cpu
+ON products ((metadata->'specs'->>'cpu'));
+```
+
+## Performance Optimization
+
+### Index Strategies
+
+PostgreSQL offers multiple index types optimized for different query patterns.
+
+**B-Tree Index (Default):**
+
+```sql
+CREATE INDEX idx_users_email ON users(email);
+
+-- Composite index for WHERE and ORDER BY
+CREATE INDEX idx_orders_customer_date
+ON orders(customer_id, created_at DESC);
+```
+
+**GiST Index (Geometric/Full-Text):**
+
+```sql
+CREATE INDEX idx_locations_geom
+ON locations USING GiST(coordinates);
+
+CREATE INDEX idx_documents_search
+ON documents USING GiST(to_tsvector('english', content));
+```
+
+**GIN Index (JSON/Arrays):**
+
+```sql
+CREATE INDEX idx_products_tags
+ON products USING GIN(tags);
+
+CREATE INDEX idx_products_metadata
+ON products USING GIN(metadata);
+```
+
+**BRIN Index (Block Range Index - for large tables):**
+
+```sql
+-- Excellent for very large tables with natural ordering
+CREATE INDEX idx_events_timestamp
+ON events USING BRIN(created_at);
+```
+
+### VACUUM and ANALYZE
+
+PostgreSQL uses MVCC (Multi-Version Concurrency Control), which creates dead rows. Regular maintenance is essential.
+
+**Manual VACUUM:**
+
+```sql
+-- Standard vacuum
+VACUUM ANALYZE users;
+
+-- Full vacuum (locks table, use offline)
+VACUUM FULL users;
+
+-- Verbose output
+VACUUM VERBOSE users;
+
+-- Analyze without vacuuming
+ANALYZE users;
+```
+
+**Auto-VACUUM Configuration:**
+
+```sql
+-- Set in postgresql.conf
+autovacuum = on
+autovacuum_naptime = 10s
+autovacuum_vacuum_threshold = 50
+autovacuum_vacuum_scale_factor = 0.1
+
+-- Check settings
+SELECT * FROM pg_settings WHERE name LIKE '%autovacuum%';
+```
+
+**Monitor Vacuum Activity:**
+
+```sql
+-- Check last vacuum/analyze times
+SELECT schemaname, tablename, last_vacuum, last_autovacuum
+FROM pg_stat_user_tables;
+
+-- Monitor dead tuples
+SELECT schemaname, tablename,
+  n_dead_tup,
+  ROUND(n_dead_tup::numeric / NULLIF(n_live_tup, 0) * 100, 2) as dead_ratio
+FROM pg_stat_user_tables
+WHERE n_live_tup > 0
+ORDER BY n_dead_tup DESC;
+```
+
+<Warning>
+If dead tuple ratio exceeds 50%, manual VACUUM may be needed. High dead tuple counts slow queries significantly.
+</Warning>
+
+### Table Partitioning
+
+Partitioning large tables improves query performance and simplifies maintenance.
+
+**Range Partitioning (By Date):**
+
+```sql
+CREATE TABLE orders (
+  order_id BIGSERIAL,
+  customer_id INT,
+  total DECIMAL,
+  created_at DATE,
+  PRIMARY KEY (order_id, created_at)
+) PARTITION BY RANGE (YEAR(created_at));
+
+CREATE TABLE orders_2024 PARTITION OF orders
+  FOR VALUES FROM (2024) TO (2025);
+
+CREATE TABLE orders_2025 PARTITION OF orders
+  FOR VALUES FROM (2025) TO (2026);
+
+-- Queries on 2024 data only scan orders_2024
+SELECT * FROM orders WHERE created_at >= '2024-01-01' AND created_at < '2024-06-01';
+```
+
+**List Partitioning (By Category):**
+
+```sql
+CREATE TABLE user_logs (
+  log_id BIGSERIAL PRIMARY KEY,
+  user_id INT,
+  log_type VARCHAR(50),
+  message TEXT
+) PARTITION BY LIST (log_type);
+
+CREATE TABLE user_logs_login PARTITION OF user_logs
+  FOR VALUES IN ('login', 'login_failed');
+
+CREATE TABLE user_logs_activity PARTITION OF user_logs
+  FOR VALUES IN ('create', 'update', 'delete');
+```
+
+## Advanced Features
+
+### Window Functions
+
+Window functions perform calculations across rows without collapsing data.
+
+**Common Window Functions:**
+
+```sql
+-- Row numbering
+SELECT
+  order_id,
+  customer_id,
+  total,
+  ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY created_at) as order_seq
+FROM orders;
+
+-- Running total
+SELECT
+  order_id,
+  total,
+  SUM(total) OVER (ORDER BY created_at) as running_total
+FROM orders;
+
+-- Rank with gaps
+SELECT
+  product_id,
+  sales,
+  RANK() OVER (ORDER BY sales DESC) as sales_rank
+FROM products;
+
+-- Dense rank (no gaps)
+SELECT
+  product_id,
+  sales,
+  DENSE_RANK() OVER (ORDER BY sales DESC) as sales_rank
+FROM products;
+
+-- Lead/lag values
+SELECT
+  order_id,
+  total,
+  LAG(total) OVER (ORDER BY created_at) as prev_total,
+  LEAD(total) OVER (ORDER BY created_at) as next_total
+FROM orders;
+
+-- Percentage in group
+SELECT
+  category,
+  COUNT(*) as count,
+  ROUND(100.0 * COUNT(*) / SUM(COUNT(*)) OVER (), 2) as percentage
+FROM products
+GROUP BY category;
+```
+
+### Common Table Expressions (CTEs)
+
+CTEs make complex queries readable and maintainable.
+
+**Recursive CTE:**
+
+```sql
+-- Generate hierarchy
+WITH RECURSIVE org_hierarchy AS (
+  SELECT employee_id, name, manager_id, 1 as level
+  FROM employees
+  WHERE manager_id IS NULL
+
+  UNION ALL
+
+  SELECT e.employee_id, e.name, e.manager_id, h.level + 1
+  FROM employees e
+  JOIN org_hierarchy h ON e.manager_id = h.employee_id
+)
+SELECT * FROM org_hierarchy
+ORDER BY level, name;
+```
+
+**Multiple CTEs:**
+
+```sql
+WITH monthly_sales AS (
+  SELECT DATE_TRUNC('month', created_at)::DATE as month, SUM(total) as sales
+  FROM orders
+  GROUP BY 1
+),
+yearly_sales AS (
+  SELECT DATE_TRUNC('year', created_at)::DATE as year, SUM(total) as sales
+  FROM orders
+  GROUP BY 1
+)
+SELECT
+  ms.month,
+  ms.sales as monthly,
+  ys.sales as yearly,
+  ROUND(100.0 * ms.sales / ys.sales, 2) as pct_of_year
+FROM monthly_sales ms
+JOIN yearly_sales ys ON DATE_TRUNC('year', ms.month)::DATE = ys.year;
+```
+
+### Full-Text Search
+
+PostgreSQL offers powerful full-text search capabilities.
+
+**Creating Full-Text Index:**
+
+```sql
+CREATE TABLE articles (
+  article_id SERIAL PRIMARY KEY,
+  title VARCHAR(255),
+  content TEXT,
+  search_vector TSVECTOR
+);
+
+-- Generate search vector
+UPDATE articles
+SET search_vector = to_tsvector('english', title || ' ' || content);
+
+-- Create index for performance
+CREATE INDEX idx_articles_search ON articles USING GIN(search_vector);
+```
+
+**Querying with Full-Text Search:**
+
+```sql
+-- Simple search
+SELECT * FROM articles
+WHERE search_vector @@ to_tsquery('english', 'database & optimization');
+
+-- Ranking results
+SELECT article_id, ts_rank(search_vector, query) as relevance
+FROM articles, to_tsquery('english', 'performance') as query
+WHERE search_vector @@ query
+ORDER BY relevance DESC;
+```
+
+## Data Integrity
+
+### Constraints
+
+PostgreSQL constraints ensure data integrity at the database level.
+
+**Comprehensive Constraint Example:**
+
+```sql
+CREATE TABLE users (
+  user_id SERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  username VARCHAR(50) UNIQUE NOT NULL,
+  age INT CHECK (age >= 18 AND age <= 150),
+  status VARCHAR(20) DEFAULT 'active',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Foreign key constraint
+CREATE TABLE orders (
+  order_id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  total DECIMAL(10,2) CHECK (total > 0),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Exclude constraint (no overlapping time ranges)
+CREATE TABLE bookings (
+  booking_id SERIAL PRIMARY KEY,
+  room_id INT,
+  check_in TIMESTAMP,
+  check_out TIMESTAMP,
+  EXCLUDE USING GIST (room_id WITH =, tsrange(check_in, check_out) WITH &&)
+);
+```
+
+## Connection Management
+
+### Connection Pooling
+
+PostgreSQL benefits from connection pooling for high-concurrency applications.
+
+**PgBouncer Configuration:**
+
+```
+[databases]
+myapp = host=localhost port=5432 dbname=myapp
+
+[pgbouncer]
+pool_mode = transaction
+max_client_conn = 1000
+default_pool_size = 25
+min_pool_size = 10
+reserve_pool_size = 5
+reserve_pool_timeout = 3
+```
+
+**Connection String:**
+
+```
+postgresql://user:password@pgbouncer-host:6432/myapp
+```
+
+## Monitoring and Maintenance
+
+<AccordionGroup>
+<Accordion title="Query Performance Monitoring">
+```sql
+-- Find slow queries
+SELECT query, calls, total_time, mean_time
+FROM pg_stat_statements
+ORDER BY mean_time DESC
+LIMIT 10;
+
+-- Monitor active queries
+SELECT pid, usename, query, state
+FROM pg_stat_activity
+WHERE state = 'active';
+```
+</Accordion>
+
+<Accordion title="Table Size Analysis">
+```sql
+-- Find largest tables
+SELECT schemaname, tablename,
+  ROUND(pg_total_relation_size(schemaname||'.'||tablename) / 1024.0 / 1024.0) as size_mb
+FROM pg_tables
+WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
+ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
+```
+</Accordion>
+
+<Accordion title="Index Usage Statistics">
+```sql
+-- Unused indexes
+SELECT schemaname, tablename, indexname
+FROM pg_stat_user_indexes
+WHERE idx_scan = 0
+ORDER BY pg_relation_size(indexrelid) DESC;
+```
+</Accordion>
+
+<Accordion title="Database Replication">
+PostgreSQL replication ensures high availability:
+
+```sql
+-- Enable replication in postgresql.conf
+wal_level = replica
+max_wal_senders = 10
+
+-- Create replication slot
+SELECT pg_create_physical_replication_slot('standby_slot');
+```
+</Accordion>
+</AccordionGroup>
+
+## Related Topics
+
+<CardGroup cols={2}>
+<Card title="Query Optimization" icon="code" href="/best-practices/query-optimization">
+SQL query optimization techniques
+</Card>
+<Card title="Performance Optimization" icon="rocket" href="/best-practices/performance">
+General database performance guide
+</Card>
+<Card title="Data Management" icon="database" href="/best-practices/data-management">
+Safe data management practices
+</Card>
+<Card title="Security Best Practices" icon="shield" href="/best-practices/security">
+Database security guidelines
+</Card>
+</CardGroup>
+
+## Summary
+
+PostgreSQL is a sophisticated database system with powerful features for performance, data integrity, and advanced querying. Proper schema design, strategic indexing, regular maintenance, and thoughtful use of advanced features create reliable, high-performance databases. Focus on understanding your workload and applying the appropriate PostgreSQL features to optimize for your specific use cases.
+
+<Check>
+You now have practical knowledge of PostgreSQL-specific best practices to design and manage efficient, reliable databases.
+</Check>

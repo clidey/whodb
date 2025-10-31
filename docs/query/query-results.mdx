@@ -1,0 +1,616 @@
+---
+title: "Query Results"
+description: "Master result display, data grids, and error handling in the Scratchpad"
+---
+
+# Query Results
+
+After executing a query, WhoDB displays results in an interactive data grid with powerful tools for viewing, analyzing, and exporting your data. Understanding how to work with results will help you extract maximum value from your queries.
+
+<Tip>
+Query results provide more than just data display—they include sorting, filtering, and export capabilities
+</Tip>
+
+## Result Display Types
+
+WhoDB adapts the result display based on your query type:
+
+### SELECT Query Results
+
+Retrieve queries display data in an interactive grid:
+
+![Query Results](/images/29-scratchpad-query-results.png)
+
+<CardGroup cols={2}>
+<Card title="Row Count" icon="calculator">
+Total number of rows returned by the query
+</Card>
+<Card title="Execution Time" icon="hourglass">
+How long the query took to execute
+</Card>
+<Card title="Column Headers" icon="heading">
+Clickable headers with sort and filter options
+</Card>
+<Card title="Data Grid" icon="table">
+Scrollable area showing all retrieved rows
+</Card>
+<Card title="Pagination" icon="list">
+Navigate through large result sets
+</Card>
+<Card title="Export Button" icon="download">
+Save results in various formats
+</Card>
+</CardGroup>
+
+### Action Query Results
+
+INSERT, UPDATE, and DELETE queries show operation details:
+
+![Action Result](/images/40-scratchpad-action-result.png)
+
+Information provided:
+- **Rows Affected**: Number of records modified
+- **Execution Time**: Query performance metric
+- **Status**: Success or failure indicator
+- **Message**: Additional details or warnings
+
+### Example Results Displayed
+
+<AccordionGroup>
+<Accordion title="Simple SELECT">
+```sql
+SELECT id, name, email FROM users LIMIT 5;
+```
+
+Result:
+- Row count: 5
+- Columns: id, name, email
+- Grid showing 5 rows of user data
+</Accordion>
+<Accordion title="Aggregation">
+```sql
+SELECT
+  category,
+  COUNT(*) as count,
+  AVG(price) as avg_price
+FROM products
+GROUP BY category;
+```
+
+Result:
+- Row count: varies (one per category)
+- Columns: category, count, avg_price
+- Summary data displayed in grid
+</Accordion>
+<Accordion title="JOIN Results">
+```sql
+SELECT
+  u.username,
+  COUNT(o.id) as orders,
+  SUM(o.total) as spent
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+GROUP BY u.id, u.username;
+```
+
+Result:
+- Row count: number of users
+- Columns: username, orders, spent
+- Combined data from multiple tables
+</Accordion>
+<Accordion title="Single Value">
+```sql
+SELECT COUNT(*) as total FROM orders;
+```
+
+Result:
+- Row count: 1
+- Columns: total
+- Single value displayed in grid
+</Accordion>
+</AccordionGroup>
+
+## Interactive Data Grid
+
+The results grid provides powerful data manipulation capabilities:
+
+### Column Interactions
+
+<AccordionGroup>
+<Accordion title="Sorting">
+Click any column header to sort the data:
+
+```
+Click header → Ascending (↑)
+Click again → Descending (↓)
+Click again → No sort
+```
+
+Multi-column sorting:
+- Hold Shift and click multiple column headers
+- Data sorts by the first column, then second, etc.
+- Visual indicators show sort order and priority
+
+Example: Sort by category ascending, then by price descending
+</Accordion>
+<Accordion title="Column Resizing">
+Resize columns to see more or less content:
+
+- Hover between column headers
+- Drag the resize handle left or right
+- Columns maintain size during scrolling
+
+Tip: Double-click the resize handle to auto-fit column width to content
+</Accordion>
+<Accordion title="Column Visibility">
+Show or hide columns as needed:
+
+- Click the column menu (three dots)
+- Check/uncheck columns to toggle visibility
+- Column preferences persist during your session
+</Accordion>
+<Accordion title="Text Truncation">
+Long values are truncated with ellipsis:
+
+- Hover over truncated text to see full value in tooltip
+- Resize column to see more content
+- Copy the full value with cell selection
+</Accordion>
+</AccordionGroup>
+
+### Row Operations
+
+<AccordionGroup>
+<Accordion title="Row Selection">
+Select rows for bulk operations:
+
+- Click checkbox at start of row to select
+- Shift+click to select range of rows
+- Ctrl/Cmd+click to select multiple non-consecutive rows
+- Click header checkbox to select all visible rows
+
+Selected rows can be:
+- Copied together
+- Exported as a group
+- Used for analysis
+</Accordion>
+<Accordion title="Row Details">
+View full record details:
+
+- Right-click a row to open context menu
+- Select "View Details" or click the row
+- Full record displayed in readable format
+- Scroll through all fields
+
+Perfect for records with many columns that don't fit on screen.
+</Accordion>
+<Accordion title="Copying Values">
+Copy individual or multiple values:
+
+- Click a cell to select it
+- Ctrl/Cmd+C to copy the value
+- Select multiple cells: drag or shift+click
+- Paste into spreadsheet or text editor
+
+Copy formats:
+- Single cell: just the value
+- Multiple cells: tab-separated values
+- Full rows: tab-separated, newline-separated rows
+</Accordion>
+</AccordionGroup>
+
+## Advanced Query Result Examples
+
+### SELECT Query Result
+
+```sql
+SELECT
+  id,
+  username,
+  email,
+  created_at,
+  last_login
+FROM users
+WHERE status = 'active'
+ORDER BY last_login DESC
+LIMIT 20;
+```
+
+Result Display:
+- Rows: 20
+- Columns: id, username, email, created_at, last_login
+- Showing active users sorted by recent activity
+- Can sort by any column or search within results
+
+### Count Query Result
+
+![Count Query Result](/images/87-scratchpad-count-query-result.png)
+
+```sql
+SELECT
+  category,
+  COUNT(*) as product_count
+FROM products
+GROUP BY category
+ORDER BY product_count DESC;
+```
+
+Result Characteristics:
+- Compact display showing grouped data
+- Numeric values formatted with thousand separators
+- Useful for quick analytics
+- Can export for further analysis
+
+### JOIN Query Result
+
+![Join Query Result](/images/88-scratchpad-join-query-result.png)
+
+```sql
+SELECT
+  u.id,
+  u.username,
+  COUNT(o.id) as total_orders,
+  SUM(o.total) as total_spent,
+  MAX(o.created_at) as last_order
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+GROUP BY u.id, u.username
+ORDER BY total_spent DESC;
+```
+
+Result Display:
+- Combined data from multiple tables
+- Aggregated values (COUNT, SUM, MAX)
+- Shows relationships between tables
+- Perfect for business intelligence queries
+
+## Working with Large Result Sets
+
+### Pagination
+
+Navigate large result sets efficiently:
+
+- Results display with page indicators at the bottom
+- Jump to specific page using page input
+- Change page size: 10, 25, 50, 100, or custom
+- Previous/Next buttons for sequential browsing
+
+<Tip>
+Use LIMIT in your query for better performance with very large datasets
+</Tip>
+
+### Scrolling
+
+For horizontal scrolling:
+- Scroll bar appears when columns exceed visible width
+- Scroll left/right to see additional columns
+- Shift+scroll for faster horizontal navigation
+
+For vertical scrolling:
+- Scroll down to see more rows within current page
+- Pagination loads additional pages as needed
+- Ctrl/Cmd+End jumps to last row
+
+### Performance Considerations
+
+Large queries can take longer to execute:
+
+```sql
+-- SLOW: Returns millions of rows
+SELECT * FROM large_table;
+
+-- FAST: Returns manageable subset
+SELECT * FROM large_table LIMIT 1000;
+
+-- FAST: Filters before transfer
+SELECT * FROM large_table
+WHERE date > '2024-10-01'
+LIMIT 10000;
+```
+
+## Data Type Formatting
+
+WhoDB formats data based on column type:
+
+### Common Data Types
+
+<AccordionGroup>
+<Accordion title="Numbers">
+Displayed with proper formatting:
+
+- Integers: 1000 (no decimal places)
+- Decimals: 199.99 (with decimal places)
+- Large numbers: Formatted with thousand separators
+- Scientific notation: For very large/small values
+
+Example: 1234567.89 displays as 1,234,567.89
+</Accordion>
+<Accordion title="Dates">
+Displayed in readable format:
+
+- Format: YYYY-MM-DD
+- Timestamps: YYYY-MM-DD HH:MM:SS
+- Timezone info preserved where available
+- Hover for full precision
+
+Example: 2024-10-30 or 2024-10-30 14:32:15
+</Accordion>
+<Accordion title="Booleans">
+Displayed as true/false or yes/no:
+
+- Boolean values shown as true/false
+- Some databases show 1/0 (database-specific)
+- Easily identifiable in results
+- Can be sorted and filtered
+
+Example: true or false
+</Accordion>
+<Accordion title="NULL Values">
+Special handling for missing data:
+
+- Displayed as "NULL" or empty cell
+- Visually distinct from empty strings
+- Cannot be sorted mixed with normal values
+- Useful for data quality checks
+
+Example: NULL or blank cell
+</Accordion>
+<Accordion title="JSON/Complex Types">
+Special display for complex data:
+
+- JSON: Formatted and expandable
+- Arrays: Displayed with elements
+- Objects: Shown as formatted JSON
+- Click to expand nested structures
+
+Example: `{"key": "value"}` or `[1, 2, 3]`
+</Accordion>
+</AccordionGroup>
+
+## Error Handling
+
+### Syntax Errors
+
+When your query has a syntax error:
+
+![Query Error](/images/30-scratchpad-query-error.png)
+
+Error display shows:
+- Error type: "Syntax Error"
+- Error message: What went wrong
+- Approximate location: Where the error occurred
+- Hints: Suggestions for fixing the issue
+
+### Runtime Errors
+
+Errors that occur during execution:
+
+<AccordionGroup>
+<Accordion title="Table Not Found">
+```
+Error: table "users" does not exist
+```
+
+Cause: Table name misspelled or doesn't exist
+Solution: Check table name in schema explorer
+</Accordion>
+<Accordion title="Column Not Found">
+```
+Error: column "usename" does not exist
+```
+
+Cause: Column name typo
+Solution: Verify exact column name
+</Accordion>
+<Accordion title="Type Mismatch">
+```
+Error: cannot compare text with number
+```
+
+Cause: Comparing incompatible data types
+Solution: Ensure WHERE conditions match data types
+</Accordion>
+<Accordion title="Connection Error">
+```
+Error: connection refused
+```
+
+Cause: Database connection lost
+Solution: Check database status and reconnect
+</Accordion>
+</AccordionGroup>
+
+### No Results
+
+A successful query but returning no data:
+
+```sql
+SELECT * FROM users WHERE id = 99999;
+```
+
+Result:
+- Row count: 0
+- No error message (query executed successfully)
+- Empty grid
+- Execution time shows query ran
+
+This is normal—adjust your WHERE conditions to find matching data.
+
+## Exporting Results
+
+Save your query results in multiple formats:
+
+### Export Options
+
+<CardGroup cols={2}>
+<Card title="CSV" icon="file-csv">
+Comma-separated values for spreadsheets and data tools
+</Card>
+<Card title="Excel" icon="file-excel">
+Native Excel format (.xlsx) with formatting
+</Card>
+<Card title="JSON" icon="file-json">
+JSON format for APIs and applications
+</Card>
+<Card title="SQL" icon="file-code">
+SQL INSERT statements for data migration
+</Card>
+</CardGroup>
+
+### Exporting Steps
+
+<Steps>
+<Step title="Click Export Button">
+Located above or below the results grid
+</Step>
+<Step title="Select Format">
+Choose CSV, Excel, JSON, or SQL
+</Step>
+<Step title="Choose Scope">
+- All rows: Export entire result set
+- Selected: Only checked rows
+- Visible: Current page only
+</Step>
+<Step title="Configure Format Options">
+Set delimiters, encoding, and other options specific to format
+</Step>
+<Step title="Download">
+File downloads to your device
+</Step>
+</Steps>
+
+### Export Examples
+
+```sql
+-- Simple SELECT
+SELECT id, username, email FROM users;
+-- Export: CSV, Excel, or JSON
+```
+
+```sql
+-- Aggregation
+SELECT category, COUNT(*) as count
+FROM products
+GROUP BY category;
+-- Export: CSV for Excel analysis
+```
+
+```sql
+-- Complex JOIN
+SELECT u.username, COUNT(o.id) as orders
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+GROUP BY u.id, u.username;
+-- Export: Excel for presentation
+```
+
+## Result Analysis Tips
+
+<AccordionGroup>
+<Accordion title="Spot Patterns">
+Look for trends in numerical data:
+- Highest/lowest values
+- Clusters or outliers
+- Missing expected results
+- Unexpected data gaps
+</Accordion>
+<Accordion title="Validate Data Quality">
+Check results for data issues:
+- NULL values where unexpected
+- Duplicate records
+- Incorrect data types
+- Out-of-range values
+</Accordion>
+<Accordion title="Cross-Reference Results">
+Compare results from different queries:
+- Run count query, then detail query
+- Verify totals match between queries
+- Check for consistency across related tables
+- Validate relationships
+</Accordion>
+<Accordion title="Performance Optimization">
+Analyze query performance:
+- Note execution times for similar queries
+- Identify slow-running queries
+- Consider indexes for frequently filtered columns
+- Break complex queries into simpler parts
+</Accordion>
+</AccordionGroup>
+
+## Practical Examples
+
+### Example: User Activity Analysis
+
+```sql
+-- Find active users with recent orders
+SELECT
+  u.id,
+  u.username,
+  COUNT(o.id) as order_count,
+  SUM(o.total) as total_spent,
+  MAX(o.created_at) as last_order_date
+FROM users u
+JOIN orders o ON u.id = o.user_id
+WHERE o.created_at > NOW() - INTERVAL '30 days'
+GROUP BY u.id, u.username
+ORDER BY total_spent DESC
+LIMIT 50;
+```
+
+Result Actions:
+- Sort by total_spent to see top customers
+- Filter by order_count for frequent buyers
+- Export to Excel for customer outreach
+- Copy top user IDs for detailed analysis
+
+### Example: Data Quality Check
+
+```sql
+-- Find incomplete user records
+SELECT
+  id,
+  username,
+  email,
+  phone,
+  address,
+  created_at
+FROM users
+WHERE email IS NULL
+  OR phone IS NULL
+  OR address IS NULL
+ORDER BY created_at DESC;
+```
+
+Result Actions:
+- Count NULL values by column
+- Export for data cleanup
+- Identify affected users
+- Plan remediation strategy
+
+## Keyboard Shortcuts for Results
+
+| Shortcut | Action |
+|----------|--------|
+| `Cmd/Ctrl + C` | Copy selected cell or rows |
+| `Cmd/Ctrl + A` | Select all rows |
+| `Cmd/Ctrl + Down` | Move to last row |
+| `Cmd/Ctrl + Home` | Move to first row |
+| `Enter` | Edit selected row |
+| `Delete` | Clear selected cells |
+
+## Next Steps
+
+Learn how to organize and reuse your queries:
+
+<CardGroup cols={2}>
+<Card title="Query History" icon="history" href="/query/query-history">
+Access and manage your query history
+</Card>
+<Card title="Multiple Cells" icon="window" href="/query/multiple-cells">
+Organize complex workflows with multiple cells
+</Card>
+</CardGroup>
+
+<Check>
+You now know how to view, analyze, and export your query results effectively
+</Check>

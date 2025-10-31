@@ -1,0 +1,205 @@
+---
+title: "Viewing Data"
+description: "Learn how to view and interact with your table data in WhoDB"
+---
+
+# Viewing Data
+
+WhoDB provides an intuitive data grid interface that makes it easy to view, browse, and interact with your table data. This guide covers how to navigate the data view, understand the interface, and work with different data types.
+
+## Accessing the Data View
+
+To view table data:
+
+1. Navigate to your desired table in the sidebar
+2. Click on the table name to open the data view
+3. The data will load automatically and display in the grid
+
+![Data View Users Table](/images/09-data-view-users-table.png)
+
+<Tip>
+The data view loads the first page of results by default. You can adjust the page size and navigate through pages as needed.
+</Tip>
+
+## Understanding the Data Grid
+
+The data grid displays your table data in a familiar spreadsheet-like format with several key components:
+
+![Data View Table Content](/images/10-data-view-table-content.png)
+
+### Column Headers
+
+Each column header displays the column name and provides several interactive features:
+
+- **Column Name**: Shows the field name from your database
+- **Data Type Indicator**: Visual indicator of the column's data type
+- **Sort Controls**: Click to sort ascending or descending
+- **Column Width**: Drag edges to resize columns to your preference
+
+<Info>
+Column headers are sticky and remain visible when you scroll vertically through your data, making it easier to reference column names while reviewing rows.
+</Info>
+
+### Row Display
+
+Each row in the grid represents a single record from your table:
+
+- **Row Number**: Sequential identifier on the left side
+- **Data Cells**: Display the actual values for each column
+- **Null Indicator**: Empty cells represent NULL values
+- **Row Highlighting**: Hover over a row to see it highlighted for easier readability
+
+### Data Type Rendering
+
+WhoDB intelligently displays different data types:
+
+**Text & Strings**
+![Table Long Text Content](/images/80-table-long-text-content.png)
+
+Text fields display their full content with word wrapping for long values.
+
+**Dates & Timestamps**
+![Table Dates Timestamps](/images/81-table-dates-timestamps.png)
+
+Dates and timestamps are formatted consistently and are sortable chronologically.
+
+**Numeric Types**
+![Table Numeric Types](/images/82-table-numeric-types.png)
+
+Numbers are right-aligned for easier comparison and calculation visualization.
+
+**Null Values**
+![Table with Null Values](/images/79-table-with-null-values.png)
+
+NULL values are displayed as empty cells with subtle styling to distinguish them from empty strings.
+
+## Interacting with the Grid
+
+### Scrolling & Navigation
+
+- **Horizontal Scrolling**: Scroll left and right to view all columns (or use arrow keys)
+- **Vertical Scrolling**: Scroll up and down to view more rows
+- **Keyboard Navigation**: Use arrow keys to move between cells
+
+<Tip>
+The grid maintains a smooth scrolling experience even with large datasets and many columns.
+</Tip>
+
+### Column Resizing
+
+Adjust column widths to better view your data:
+
+1. Position your cursor on the border between two column headers
+2. When the cursor changes to a resize cursor, drag left or right
+3. The column width will adjust and be remembered for the current session
+
+### Row Selection
+
+Select rows for batch operations:
+
+1. Click the checkbox at the start of a row to select it
+2. Click the header checkbox to select all rows on the current page
+3. Selected rows are highlighted with a subtle background color
+
+<Warning>
+Batch operations typically affect only the selected rows on the current page. Check your selection before performing bulk operations.
+</Warning>
+
+## Viewing Empty Tables
+
+When a table contains no records:
+
+![Table Empty State No Results](/images/76-table-empty-state-no-results.png)
+
+The grid displays an empty state message explaining that no data is available. You can:
+- Add new records using the "Add Row" button
+- Generate mock data for testing
+- Check your filters if you were expecting to see data
+
+## Viewing Large Tables
+
+When working with tables containing many columns:
+
+![Table Many Columns Wide](/images/78-table-many-columns-wide.png)
+
+WhoDB automatically handles wide tables by:
+- Allowing horizontal scrolling to view all columns
+- Keeping the first column (or key columns) visible while scrolling
+- Maintaining responsive performance even with many columns
+
+## Data Refresh
+
+The data view can be refreshed to show the latest changes:
+
+- **Automatic**: Some operations automatically refresh the view
+- **Manual**: Look for a refresh button in the action bar to reload data
+- **Real-time**: The view updates when you add, edit, or delete records through WhoDB
+
+<Info>
+If other applications modify the database, you may need to manually refresh the view to see those changes in WhoDB.
+</Info>
+
+## Best Practices
+
+<Steps>
+<Step title="Start Small">
+When first exploring a large table, start with the default page size to get a quick overview of the data structure and content.
+</Step>
+<Step title="Use Sorting">
+Sort by key columns to group similar data together and spot patterns or outliers quickly.
+</Step>
+<Step title="Check Data Types">
+Pay attention to how different data types are displayed to ensure data integrity and identify any formatting issues.
+</Step>
+<Step title="Navigate Efficiently">
+Use the page navigation to jump to specific sections of large tables rather than scrolling through every page.
+</Step>
+<Step title="Watch for NULL Values">
+Understand which columns allow NULL values and how that might affect your application or analysis.
+</Step>
+</Steps>
+
+## Keyboard Shortcuts
+
+Make data viewing more efficient with these keyboard shortcuts:
+
+| Shortcut | Action |
+|----------|--------|
+| `Arrow Keys` | Navigate between cells |
+| `Ctrl/Cmd + Home` | Jump to the first row |
+| `Ctrl/Cmd + End` | Jump to the last row |
+| `Ctrl/Cmd + Left/Right` | Navigate between columns |
+| `Page Up/Down` | Navigate between pages |
+
+## Limitations & Considerations
+
+- **Large Result Sets**: Very large tables may take longer to load initially
+- **Memory Usage**: Extremely wide tables with thousands of columns may impact performance
+- **Real-time Updates**: Changes made outside WhoDB require manual refresh to display
+
+<Note>
+For very large tables (100,000+ rows), consider using filters or pagination to work with manageable subsets of data rather than loading everything at once.
+</Note>
+
+## Next Steps
+
+Once you're comfortable viewing data, explore these related features:
+
+<CardGroup cols={2}>
+<Card title="Sorting & Pagination" icon="arrow-up-arrow-down" href="/data/sorting-pagination">
+Learn how to organize your data with sorting and navigate through pages
+</Card>
+<Card title="Filtering & Searching" icon="magnifying-glass" href="/data/filtering-searching">
+Discover how to search for specific records and apply filters
+</Card>
+<Card title="Adding Records" icon="plus" href="/data/adding-records">
+Learn how to insert new records into your tables
+</Card>
+<Card title="Editing Records" icon="pen" href="/data/editing-records">
+Find out how to modify existing data
+</Card>
+</CardGroup>
+
+<Info>
+The data grid is just one way to interact with your data. For more complex queries and analysis, check out the Scratchpad interface in the Query section.
+</Info>

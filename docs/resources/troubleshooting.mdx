@@ -1,0 +1,1103 @@
+---
+title: "Troubleshooting Guide"
+description: "Solutions for common WhoDB issues including connection problems, performance issues, and UI problems"
+---
+
+# Troubleshooting Guide
+
+This guide helps you resolve common issues when using WhoDB. Follow the step-by-step solutions to diagnose and fix problems.
+
+## Connection Issues
+
+<AccordionGroup>
+<Accordion title="Connection refused or connection timeout">
+
+### Symptoms
+- Error: "Connection refused"
+- Error: "Connection timeout"
+- WhoDB displays "Unable to connect" message
+
+### Step-by-Step Solution
+
+<Steps>
+<Step title="Verify database is running">
+Check if the database service is running on the target server:
+
+**PostgreSQL:**
+```bash
+pg_isready -h hostname -p 5432
+```
+
+**MySQL:**
+```bash
+mysqladmin -h hostname -u username ping
+```
+
+**MongoDB:**
+```bash
+mongosh --eval "db.adminCommand('ping')"
+```
+</Step>
+
+<Step title="Check connectivity from your machine">
+Test basic network connectivity:
+
+**macOS/Linux:**
+```bash
+telnet hostname 5432
+nc -zv hostname 5432
+```
+
+**Windows:**
+```cmd
+telnet hostname 5432
+```
+
+If connection is refused, the host or port is incorrect.
+</Step>
+
+<Step title="Verify connection parameters">
+Double-check:
+- **Host**: Correct hostname or IP address
+- **Port**: Default ports (PostgreSQL: 5432, MySQL: 3306, MongoDB: 27017)
+- **Database name**: Correct for SQL databases
+- **Username/Password**: Correct credentials
+
+**Docker users**: If running WhoDB in Docker and connecting to localhost, use `host.docker.internal` instead.
+</Step>
+
+<Step title="Check firewall rules">
+Ensure firewall allows outbound connections:
+
+**Linux/macOS:**
+```bash
+# Check if port is open
+lsof -i :5432
+
+# Allow port through firewall
+sudo ufw allow 5432/tcp
+```
+
+**Windows:**
+Check Windows Defender Firewall settings for the application.
+</Step>
+
+<Step title="Increase timeout if needed">
+If the database is slow to respond, increase timeout:
+
+```yaml
+environment:
+  - DB_CONNECTION_TIMEOUT=30
+  - DB_QUERY_TIMEOUT=60
+```
+</Step>
+</Steps>
+
+### Common Scenarios
+
+**"Can't connect to local server"**
+- Check if database service is running
+- Verify correct port for the service
+
+**"No route to host"**
+- Network connectivity issue
+- Check VPN or network configuration
+- Verify hostname resolves: `ping hostname`
+
+**"Connection reset by peer"**
+- Database server rejected connection
+- Check authentication credentials
+- Verify user permissions
+
+</Accordion>
+
+<Accordion title="SSL/TLS connection errors">
+
+### Symptoms
+- Error: "SSL certificate problem"
+- Error: "SSL handshake failure"
+- Connection works without SSL but fails with SSL enabled
+
+### Step-by-Step Solution
+
+<Steps>
+<Step title="Verify SSL is required">
+Check your database configuration to determine if SSL is mandatory or optional. If optional, try connecting without SSL first.
+</Step>
+
+<Step title="Check certificate validity">
+```bash
+openssl s_client -connect hostname:5432 -starttls postgres
+```
+
+This shows certificate details and any validation issues.
+</Step>
+
+<Step title="Configure SSL mode correctly">
+- **disable**: No SSL (local development only)
+- **require**: SSL required, certificate not verified
+- **verify-ca**: SSL required, CA verified
+- **verify-full**: SSL required, CA and hostname verified
+
+Start with "require" if unsure.
+</Step>
+
+<Step title="Provide CA certificate if needed">
+If using "verify-ca" or "verify-full", you may need to provide the CA certificate:
+
+```yaml
+SSL Mode: verify-ca
+SSL CA Certificate: /path/to/ca-cert.pem
+```
+
+Download the certificate from your database provider.
+</Step>
+
+<Step title="Test with command-line tool">
+Verify the connection works outside WhoDB:
+
+**PostgreSQL:**
+```bash
+psql -h hostname -U username -d database \
+  -sslmode=require
+```
+
+**MySQL:**
+```bash
+mysql -h hostname -u username --ssl-mode=REQUIRED
+```
+
+If this fails, the SSL configuration is wrong.
+</Step>
+</Steps>
+
+### Common Scenarios
+
+**Database requires SSL but WhoDB has it disabled**
+- Enable SSL in connection settings
+- Set appropriate SSL mode
+
+**Self-signed certificate errors**
+- Use SSL mode "require" to skip verification
+- Or add the certificate to trusted store
+
+**"Hostname doesn't match certificate"**
+- Use SSL mode "verify-ca" instead of "verify-full"
+- Or contact database provider for correct hostname
+
+</Accordion>
+
+<Accordion title="Authentication failed">
+
+### Symptoms
+- Error: "Authentication failed"
+- Error: "Access denied for user"
+- Error: "Invalid credentials"
+
+### Step-by-Step Solution
+
+<Steps>
+<Step title="Verify credentials outside WhoDB">
+Test credentials with the database client:
+
+**PostgreSQL:**
+```bash
+psql -h hostname -U username -d database
+```
+
+**MySQL:**
+```bash
+mysql -h hostname -u username -p database
+```
+
+This confirms credentials are correct.
+</Step>
+
+<Step title="Check for special characters in password">
+If password contains special characters, ensure they're entered correctly. Some characters may need escaping in connection strings.
+
+Try:
+- Removing special characters temporarily
+- Using quotes around password
+- URL-encoding the password
+</Step>
+
+<Step title="Verify user exists and has permissions">
+```sql
+-- PostgreSQL: Check if user exists
+SELECT * FROM pg_user WHERE usename = 'username';
+
+-- MySQL: Check user and permissions
+SELECT User, Host FROM mysql.user WHERE User='username';
+SHOW GRANTS FOR 'username'@'hostname';
+```
+
+Ensure user has permission to connect to the specific database.
+</Step>
+
+<Step title="Check user permissions on database">
+**PostgreSQL:**
+```sql
+GRANT CONNECT ON DATABASE database_name TO username;
+```
+
+**MySQL:**
+```sql
+GRANT ALL PRIVILEGES ON database.* TO 'username'@'hostname';
+FLUSH PRIVILEGES;
+```
+</Step>
+
+<Step title="Try with admin account">
+Test connection with admin credentials to rule out permission issues. If admin works but your user doesn't, it's a permissions problem.
+</Step>
+</Steps>
+
+### Common Scenarios
+
+**"Password authentication failed"**
+- Verify exact password (case-sensitive)
+- Confirm no extra spaces in password
+- Check Caps Lock isn't enabled
+
+**"User does not have permission"**
+- User exists but lacks database access
+- Grant appropriate permissions
+- May need to connect to 'postgres' database first (PostgreSQL)
+
+**"Too many connections"**
+- Database connection limit reached
+- Try connecting later
+- Reduce concurrent connections
+
+</Accordion>
+
+<Accordion title="SSH tunnel connection fails">
+
+### Symptoms
+- Error: "SSH connection failed"
+- Error: "SSH key permission denied"
+- Error: "SSH handshake timeout"
+
+### Step-by-Step Solution
+
+<Steps>
+<Step title="Verify SSH server is accessible">
+```bash
+ssh -v username@ssh-host
+```
+
+The verbose output shows where connection fails.
+</Step>
+
+<Step title="Check SSH credentials">
+- Username: Correct SSH username
+- Password: Correct SSH password (if using password auth)
+- Private key: Correct key file for SSH key auth
+
+Test: `ssh username@ssh-host`
+</Step>
+
+<Step title="Verify SSH key permissions">
+SSH keys must have correct permissions:
+
+```bash
+chmod 600 ~/.ssh/id_rsa
+chmod 700 ~/.ssh
+```
+
+File must be readable only by the owner.
+</Step>
+
+<Step title="Configure tunnel settings correctly">
+In WhoDB:
+- SSH Host: ssh-tunnel.example.com
+- SSH Port: 22 (usually)
+- SSH Username: Your SSH username
+- Database Host: localhost (from SSH perspective)
+- Database Port: 5432
+
+After connecting via SSH tunnel, the database appears as localhost.
+</Step>
+
+<Step title="Test tunnel manually">
+```bash
+ssh -L 5432:database-host:5432 username@ssh-host
+```
+
+Then connect WhoDB to localhost:5432 to verify tunnel works.
+</Step>
+</Steps>
+
+### Common Scenarios
+
+**"Permission denied (publickey)"**
+- SSH key not authorized on server
+- Check ~/.ssh/authorized_keys on SSH server
+- Verify correct key is being used
+
+**"Connection refused"**
+- SSH server not listening on port 22
+- Firewall blocking SSH port
+- SSH service not running
+
+**"SSH tunnel times out"**
+- SSH server unreachable
+- Network firewall blocking connection
+- Check intermediate routers/VPN
+
+</Accordion>
+</AccordionGroup>
+
+## Performance Issues
+
+<AccordionGroup>
+<Accordion title="Slow query performance">
+
+### Symptoms
+- Queries take a long time to return results
+- Table with millions of rows loads very slowly
+- Export operation is slow
+
+### Step-by-Step Solution
+
+<Steps>
+<Step title="Check query result size">
+Use LIMIT to see if data is being returned quickly:
+
+```sql
+-- Test with small limit
+SELECT * FROM large_table LIMIT 100;
+
+-- If this is fast, the issue is result size
+-- If this is slow, the issue is query execution
+```
+
+If LIMIT 100 is fast but full query is slow, you have too many results.
+</Step>
+
+<Step title="Add WHERE conditions to filter data">
+Instead of loading entire table:
+```sql
+-- Slow: Full table scan
+SELECT * FROM orders;
+
+-- Fast: Filtered results
+SELECT * FROM orders WHERE created_at > NOW() - INTERVAL '30 days';
+```
+</Step>
+
+<Step title="Check if columns have indexes">
+```sql
+-- PostgreSQL: Check indexes
+SELECT * FROM pg_indexes WHERE tablename = 'table_name';
+
+-- MySQL: Check indexes
+SHOW INDEX FROM table_name;
+
+-- SQLite: Check indexes
+PRAGMA index_list(table_name);
+```
+
+Add indexes to frequently filtered columns:
+```sql
+CREATE INDEX idx_orders_created_at ON orders(created_at);
+CREATE INDEX idx_orders_user_id ON orders(user_id);
+```
+</Step>
+
+<Step title="Analyze query execution plan">
+Use EXPLAIN to understand how database executes query:
+
+```sql
+-- PostgreSQL
+EXPLAIN ANALYZE SELECT * FROM orders WHERE user_id = 123;
+
+-- MySQL
+EXPLAIN SELECT * FROM orders WHERE user_id = 123;
+```
+
+Look for sequential scans that could use indexes.
+</Step>
+
+<Step title="Optimize based on execution plan">
+- Add indexes for columns in WHERE clause
+- Use appropriate JOIN types
+- Reduce number of columns selected
+- Filter early before JOINs
+</Step>
+
+<Step title="Check network latency">
+- If local database is slow, issue is query/indexes
+- If remote database is slow, may be network
+- Try running same query from database server directly
+</Step>
+</Steps>
+
+### Common Scenarios
+
+**"Table with 10M rows is too slow"**
+- Add WHERE conditions
+- Create appropriate indexes
+- Use pagination
+
+**"Export is slow"**
+- Use LIMIT for testing
+- Export in batches
+- Consider SQL format (faster than CSV)
+
+**"JOIN queries are slow"**
+- Add indexes on join columns
+- Check join conditions
+- Consider materialized views
+
+</Accordion>
+
+<Accordion title="High memory usage">
+
+### Symptoms
+- WhoDB process consuming excessive RAM
+- System becomes unresponsive
+- "Out of memory" errors
+
+### Step-by-Step Solution
+
+<Steps>
+<Step title="Identify memory-intensive operation">
+Is memory spike caused by:
+- Large SELECT query returning many rows
+- Exporting large dataset
+- Generating mock data
+</Step>
+
+<Step title="For large SELECT queries">
+Use pagination instead:
+- Reduce page size in WhoDB
+- Add LIMIT clause to queries
+- Fetch results in batches
+</Step>
+
+<Step title="For exports">
+Export in smaller chunks:
+- Use WHERE conditions to filter data
+- Export by date ranges
+- Export specific columns only
+</Step>
+
+<Step title="For mock data generation">
+Reduce row count:
+- Generate 1,000 rows at a time instead of 10,000
+- Split generation across multiple sessions
+- Increase DB_MAX_MEMORY if available
+
+```yaml
+environment:
+  - DB_MAX_MEMORY=2gb
+```
+</Step>
+
+<Step title="Monitor resource usage">
+Check WhoDB container/process memory:
+
+**Docker:**
+```bash
+docker stats
+```
+
+**System:**
+```bash
+# macOS
+top -o MEM
+
+# Linux
+top | grep whodb
+```
+
+If memory keeps growing, there may be a memory leak.
+</Step>
+</Steps>
+
+### Common Scenarios
+
+**"Memory spikes when viewing large table"**
+- Use pagination
+- Apply filters
+- Use LIMIT in query
+
+**"Export operation runs out of memory"**
+- Export in smaller batches
+- Use CSV instead of JSON (usually smaller)
+- Increase allocated memory
+
+</Accordion>
+
+<Accordion title="WhoDB is running slowly overall">
+
+### Symptoms
+- UI is sluggish
+- Clicking buttons has delay
+- Interface appears to freeze
+
+### Step-by-Step Solution
+
+<Steps>
+<Step title="Check browser console for errors">
+Open browser developer tools (F12):
+- Console tab for JavaScript errors
+- Network tab to see slow requests
+- Performance tab to profile
+
+Look for:
+- Failed network requests
+- Long-running JavaScript
+- Large resource downloads
+</Step>
+
+<Step title="Clear browser cache">
+```bash
+# Hard refresh in browser
+Ctrl+Shift+R (Windows/Linux)
+Cmd+Shift+R (macOS)
+```
+
+Or clear cache and cookies in browser settings.
+</Step>
+
+<Step title="Check database connectivity">
+A slow database connection affects UI responsiveness:
+- Run a simple query in Scratchpad
+- Time how long it takes
+- If >5 seconds, database is slow
+
+See "Slow query performance" section above.
+</Step>
+
+<Step title="Try different browser">
+If UI is slow in one browser, may be browser-specific:
+- Try Chrome, Firefox, Safari, Edge
+- Update browser to latest version
+- Disable problematic extensions
+</Step>
+
+<Step title="Check WhoDB resources">
+Ensure WhoDB has enough resources:
+
+**Docker:**
+```bash
+docker stats whodb
+CPU: Should be <50% during normal use
+Memory: Should be <500MB
+```
+
+If maxed out, increase resource limits.
+</Step>
+
+<Step title="Restart WhoDB">
+```bash
+# Docker
+docker restart whodb
+
+# Binary
+Kill and restart the process
+```
+
+This clears any memory leaks or stale state.
+</Step>
+</Steps>
+
+### Common Scenarios
+
+**"UI freezes when clicking buttons"**
+- Database query is running
+- Network is slow
+- Try reducing query result size
+
+**"Page loads very slowly"**
+- Large result set being rendered
+- Slow network
+- Browser performance issue
+
+</Accordion>
+</AccordionGroup>
+
+## UI and Usability Issues
+
+<AccordionGroup>
+<Accordion title="Data not showing in table">
+
+### Symptoms
+- Table appears empty even though data exists
+- After editing, changes don't appear
+- Page shows "No results" incorrectly
+
+### Step-by-Step Solution
+
+<Steps>
+<Step title="Check if filters are applied">
+Look for filter badges in the toolbar:
+- WHERE conditions might be filtering out all rows
+- Search box might be filtering results
+
+Clear filters to see all data:
+- Click "Clear filters" button
+- Reset WHERE conditions
+</Step>
+
+<Step title="Verify table actually has data">
+Run query in Scratchpad:
+```sql
+SELECT COUNT(*) FROM table_name;
+```
+
+If count is 0, table is actually empty.
+</Step>
+
+<Step title="Check column visibility">
+Columns might be hidden:
+- Right-click column headers
+- Select "Show All Columns"
+- Verify columns are selected
+</Step>
+
+<Step title="Refresh the page">
+Press F5 or click refresh button to reload data from database.
+</Step>
+
+<Step title="Check pagination">
+Data might be on another page:
+- Check page number at bottom
+- Verify page size setting
+- Navigate between pages
+</Step>
+
+<Step title="Check database connection">
+Make sure still connected to database:
+- Connection status should show "Connected"
+- Try running a simple query
+- Reconnect if needed
+</Step>
+</Steps>
+
+### Common Scenarios
+
+**"Added data but doesn't appear"**
+- Data was added to different table
+- Filter is hiding new data
+- Page needs refresh
+
+**"Only seeing some columns"**
+- Columns are hidden
+- Scroll horizontally to see more
+- Use "Show All Columns" option
+
+</Accordion>
+
+<Accordion title="Data editing or deletion not working">
+
+### Symptoms
+- "Edit Row" button doesn't work
+- "Delete Row" fails
+- "Add Row" doesn't insert data
+
+### Step-by-Step Solution
+
+<Steps>
+<Step title="Verify user has permissions">
+Your database user may not have write permissions:
+
+```sql
+-- PostgreSQL: Check permissions
+\dp table_name
+
+-- MySQL: Check permissions
+SHOW GRANTS FOR 'username'@'hostname';
+```
+
+Grant INSERT/UPDATE/DELETE permissions if needed.
+</Step>
+
+<Step title="Check for permission errors">
+Look at error message:
+- "Permission denied" → Need database permissions
+- "Constraint violation" → Primary key or foreign key issue
+- "NULL in NOT NULL column" → Validation error
+
+Each error has a specific solution.
+</Step>
+
+<Step title="Try editing in Scratchpad">
+Test if modifications work via SQL:
+```sql
+UPDATE table_name SET column = 'value' WHERE id = 123;
+```
+
+If this fails, it's a database permissions issue.
+If it succeeds, it's a WhoDB UI issue.
+</Step>
+
+<Step title="Check constraint violations">
+When adding/updating rows:
+- Verify all required fields are filled
+- Check foreign key references exist
+- Ensure values match expected types
+</Step>
+
+<Step title="Grant write permissions">
+If user lacks permissions:
+
+**PostgreSQL:**
+```sql
+GRANT INSERT, UPDATE, DELETE ON table_name TO username;
+```
+
+**MySQL:**
+```sql
+GRANT INSERT, UPDATE, DELETE ON database.* TO 'username'@'hostname';
+FLUSH PRIVILEGES;
+```
+</Step>
+
+<Step title="Try with admin account">
+Connect with admin account to verify it works. If admin can edit but your user can't, it's a permissions problem.
+</Step>
+</Steps>
+
+### Common Scenarios
+
+**"Edit works but Delete fails"**
+- User has UPDATE permission but not DELETE
+- Foreign key prevents deletion
+- Row has dependent records
+
+**"All write operations fail"**
+- User has SELECT-only permissions
+- Need to grant INSERT/UPDATE/DELETE
+- May need to use different user account
+
+</Accordion>
+
+<Accordion title="Graph visualization not showing relationships">
+
+### Symptoms
+- Graph view is empty or shows isolated tables
+- Foreign key relationships not displayed
+- Nodes aren't connected
+
+### Step-by-Step Solution
+
+<Steps>
+<Step title="Verify database has foreign keys defined">
+Check if foreign key constraints exist:
+
+**PostgreSQL:**
+```sql
+SELECT constraint_name, table_name, column_name
+FROM information_schema.key_column_usage
+WHERE table_schema = 'public';
+```
+
+**MySQL:**
+```sql
+SELECT CONSTRAINT_NAME, TABLE_NAME, COLUMN_NAME
+FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+WHERE REFERENCED_TABLE_NAME IS NOT NULL;
+```
+</Step>
+
+<Step title="Database may not have relationships defined">
+If no foreign keys exist, add them:
+
+```sql
+ALTER TABLE orders ADD FOREIGN KEY (user_id) REFERENCES users(id);
+```
+
+Graph visualization depends on foreign keys.
+</Step>
+
+<Step title="Refresh the graph">
+- Click "Refresh" or "Fit View" button
+- Return to table view, then back to graph
+- Full page refresh (F5)
+</Step>
+
+<Step title="Try different layout algorithms">
+If graph exists but layout is poor:
+- Try different layout options
+- Zoom in/out to see all relationships
+- Pan around to find connected components
+</Step>
+
+<Step title="Check if tables are included in display">
+Some tables might be filtered:
+- Verify tables you expect are visible
+- Check if search/filter is active
+- Select schemas to include
+</Step>
+</Steps>
+
+### Common Scenarios
+
+**"Graph shows only one table"**
+- Other tables not connected via foreign keys
+- Foreign keys not defined in schema
+- Tables are in different schemas
+
+**"Graph is too cluttered"**
+- Many interconnected tables
+- Use zoom controls to navigate
+- Filter to specific schema or tables
+
+</Accordion>
+</AccordionGroup>
+
+## Query and Scratchpad Issues
+
+<AccordionGroup>
+<Accordion title="Query returns error message">
+
+### Symptoms
+- Error appears when executing query
+- Error message is unclear
+- Same query works in other tools
+
+### Step-by-Step Solution
+
+<Steps>
+<Step title="Read error message carefully">
+Common error patterns:
+- **Syntax Error**: Query syntax is wrong
+- **Permission Error**: User lacks access
+- **Data Type Error**: Value doesn't match expected type
+- **Constraint Error**: Violates database rule
+</Step>
+
+<Step title="Check SQL syntax for your database">
+Different databases have different SQL syntax:
+- PostgreSQL: Uses `SERIAL`, `ARRAY`, JSON operators
+- MySQL: Uses `AUTO_INCREMENT`, different functions
+- SQLite: Limited function set
+- MongoDB: Uses aggregation pipeline
+
+Use database-specific syntax.
+</Step>
+
+<Step title="Verify table and column names">
+SQL is case-sensitive in some databases:
+```sql
+-- Check actual names
+SELECT * FROM information_schema.tables;
+
+-- Use correct case in query
+SELECT * FROM "TableName";
+```
+</Step>
+
+<Step title="Check permissions">
+User may not have permission for operation:
+```sql
+-- Test with simple SELECT first
+SELECT 1;
+
+-- If that works, issue is with specific query
+```
+</Step>
+
+<Step title="Test in native client">
+Run same query in native database client:
+```bash
+# PostgreSQL
+psql -h host -U user -d database -c "SELECT * FROM table;"
+
+# MySQL
+mysql -h host -u user -p database -e "SELECT * FROM table;"
+```
+
+If it fails there too, it's a database issue, not WhoDB.
+</Step>
+
+<Step title="Simplify the query">
+Reduce complexity to find the issue:
+```sql
+-- Start simple
+SELECT * FROM table LIMIT 1;
+
+-- Add complexity gradually
+SELECT col1, col2 FROM table WHERE col3 = 'value';
+```
+</Step>
+</Steps>
+
+### Common Scenarios
+
+**"Syntax error near [keyword]"**
+- Check keyword is valid for your database
+- Verify commas, quotes, parentheses
+- Use IDE with syntax highlighting
+
+**"Table or view does not exist"**
+- Check table name spelling
+- Verify correct database is selected
+- Use schema-qualified names if needed
+
+**"Access denied for this query"**
+- User lacks SELECT/UPDATE/DELETE permissions
+- Try with admin account
+- Grant appropriate permissions
+
+</Accordion>
+
+<Accordion title="Scratchpad cell won't execute">
+
+### Symptoms
+- Execute button doesn't work
+- Query doesn't run when pressing Ctrl+Enter
+- Cell appears to be stuck
+
+### Step-by-Step Solution
+
+<Steps>
+<Step title="Check connection status">
+Cell won't execute if not connected:
+- Verify "Connected" status in sidebar
+- Check database connection
+- Try reconnecting to database
+</Step>
+
+<Step title="Check if another query is running">
+WhoDB may be executing a previous query:
+- Wait for results to appear
+- Look for loading indicator
+- Try stopping the query if there's a stop button
+</Step>
+
+<Step title="Verify query is selected">
+Click in the code editor to focus:
+- Cursor should be in the cell
+- Try pressing Ctrl+Enter to execute
+- Use "Execute" button instead if needed
+</Step>
+
+<Step title="Check for query timeouts">
+Very long-running queries may timeout:
+- Add LIMIT clause to reduce results
+- Simplify query
+- Increase timeout setting if available
+
+```yaml
+DB_QUERY_TIMEOUT=120
+```
+</Step>
+
+<Step title="Try a simple test query">
+Execute basic query to verify execution:
+```sql
+SELECT 1;
+```
+
+If this works, issue is with specific query.
+If this fails, issue is with connection/execution.
+</Step>
+
+<Step title="Create a new cell">
+If one cell is stuck:
+- Press Ctrl+N to create new cell
+- Try query in new cell
+- Delete the stuck cell
+</Step>
+</Steps>
+
+### Common Scenarios
+
+**"Ctrl+Enter doesn't work"**
+- Cell not focused (click in code area)
+- Try using Execute button instead
+- Check keyboard shortcut settings
+
+**"Query appears to execute but no results**
+- Query is still running (very long timeout)
+- Try stopping execution if available
+- Simplify query or add LIMIT
+
+</Accordion>
+
+<Accordion title="Query results are truncated or incomplete">
+
+### Symptoms
+- Only seeing part of the data
+- Large numbers are rounded
+- Long text is cut off
+
+### Step-by-Step Solution
+
+<Steps>
+<Step title="Check page size setting">
+Results are paginated:
+- Click page size dropdown
+- Increase page size to show more rows
+- Use pagination buttons to navigate
+</Step>
+
+<Step title="Expand columns to see full content">
+Click and drag column border:
+- Widen columns to see truncated text
+- Double-click column border for auto-fit
+- Scroll horizontally to see all columns
+</Step>
+
+<Step title="Check for column width limits">
+Some data types have display limits:
+- Long text fields show summary
+- JSON shows preview
+- Large numbers may be formatted
+
+Click on cell to see full content in detail view.
+</Step>
+
+<Step title="Use query to verify full data">
+In Scratchpad, check if data is actually truncated:
+```sql
+SELECT column_name, LENGTH(column_name) as length FROM table LIMIT 1;
+```
+
+If length is longer than displayed, it's just a display limit.
+</Step>
+
+<Step title="Download data to see all content">
+Export the data to see everything:
+- CSV export shows all content
+- Excel export shows all content
+- Use these formats for complete view
+</Step>
+</Steps>
+
+### Common Scenarios
+
+**"Long text is cut off"**
+- Column is too narrow
+- Data is just truncated in UI
+- Expand column or export to see full text
+
+**"Showing page 1 of 10, but need all data"**
+- Results are paginated
+- Increase page size to load more at once
+- Export all data to file
+
+</Accordion>
+</AccordionGroup>
+
+## Helpful Resources
+
+<CardGroup cols={2}>
+<Card title="Common Errors" icon="triangle-exclamation" href="/resources/common-errors">
+Detailed explanation of error messages and solutions
+</Card>
+<Card title="Performance Tuning" icon="bolt" href="/resources/performance-tuning">
+Optimize your WhoDB experience and database performance
+</Card>
+<Card title="FAQ" icon="question" href="/resources/faq">
+Frequently asked questions about WhoDB
+</Card>
+<Card title="GitHub Issues" icon="github" href="https://github.com/clidey/whodb/issues">
+Search for known issues or report new ones
+</Card>
+</CardGroup>

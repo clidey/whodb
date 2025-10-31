@@ -1,0 +1,327 @@
+---
+title: "Editing Records"
+description: "Learn how to modify existing records in your tables using WhoDB's edit interface"
+---
+
+# Editing Records
+
+WhoDB provides straightforward methods to edit and update existing records in your tables. This guide covers how to open the edit dialog, modify data, and handle different types of changes.
+
+## Opening the Edit Dialog
+
+There are several ways to edit a record:
+
+### Method 1: Context Menu
+
+Right-click on any row to open the context menu:
+
+![Data View Context Menu](/images/13-data-view-context-menu.png)
+
+1. Right-click on the row you want to edit
+2. Select "Edit Row" from the context menu
+3. The edit dialog opens with the current data
+
+### Method 2: Double-Click
+
+Some interfaces allow direct editing:
+1. Double-click on a row to open the edit dialog
+2. The dialog appears with the row's current data
+
+### Method 3: Action Bar
+
+If a row is selected:
+1. Look for an "Edit" button in the action bar
+2. Click to open the edit dialog for the selected row
+
+![Data View Edit Row Dialog](/images/14-data-view-edit-row-dialog.png)
+
+<Tip>
+The context menu method is the most reliable way to edit a specific row.
+</Tip>
+
+## Understanding the Edit Dialog
+
+The edit dialog displays the same form as the add dialog, but pre-populated with existing data:
+
+### Dialog Structure
+
+- **Column Name**: Clearly labeled for each field
+- **Current Value**: Shows the existing data
+- **Input Field**: Editable field matching the column's data type
+- **Read-Only Fields**: Primary keys and computed fields may be disabled
+- **Save/Cancel Buttons**: Action buttons at the bottom
+
+### Identifying Changes
+
+- **Modified Fields**: May be highlighted or marked to show changes
+- **Original Values**: Sometimes preserved for reference
+- **Unsaved Changes**: Indicated by visual feedback
+
+## Modifying Data
+
+### Editing Different Data Types
+
+**Text & String Fields**
+- Click in the field and modify the text
+- Clear and retype for complete replacement
+- Use backspace and delete for corrections
+
+**Numeric Fields**
+- Modify the number value
+- Ensure the new value meets any numeric constraints
+- The system validates type compatibility
+
+**Date & Time Fields**
+- Use the date/time picker to select a new value
+- Or type the date in the expected format
+- Timezone information may be relevant for timestamps
+
+**Boolean Fields**
+- Toggle the checkbox or switch
+- True/false state clearly indicated
+
+**Foreign Keys**
+- Use the dropdown to select a different related record
+- Must reference an existing record in the related table
+
+### Step-by-Step Editing
+
+<Steps>
+<Step title="Locate the Record">
+Find and right-click on the row you want to edit to open the context menu.
+</Step>
+<Step title="Select Edit Row">
+Choose "Edit Row" from the context menu to open the edit dialog.
+</Step>
+<Step title="Review Current Values">
+The dialog shows all current data for the record.
+</Step>
+<Step title="Modify Desired Fields">
+Click on the fields you want to change and enter new values.
+</Step>
+<Step title="Leave Unchanged Fields Alone">
+Only modify the columns you actually want to update.
+</Step>
+<Step title="Verify Changes">
+Review all modifications before saving.
+</Step>
+<Step title="Save Changes">
+Click the "Save" or "Update" button to apply the changes.
+</Step>
+</Steps>
+
+## Validation During Editing
+
+### Real-Time Validation
+
+As you modify fields:
+- **Type Validation**: Ensures values match the expected data type
+- **Length Checking**: Respects maximum character limits
+- **Format Validation**: Validates dates, emails, and formatted fields
+
+### Constraint Checking
+
+Before saving, WhoDB checks:
+- **Unique Constraints**: No duplicate values for unique columns
+- **Foreign Keys**: References still exist in related tables
+- **Check Constraints**: Values meet any check constraints
+- **NOT NULL**: Required fields have values
+
+<Warning>
+If your changes violate constraints, an error message will appear explaining the issue. Modify your entry and try again.
+</Warning>
+
+## Special Field Types
+
+### Primary Keys
+
+- **Read-Only**: Cannot be modified after creation
+- **Grayed Out**: Field appears disabled in the edit dialog
+- **Identity/Auto-Increment**: These fields are set by the database
+
+<Info>
+Primary keys identify unique records. Changing them could break relationships and data integrity, so they cannot be edited.
+</Info>
+
+### Computed/Generated Columns
+
+- **Read-Only**: Cannot be edited manually
+- **Auto-Generated**: Values are calculated by the database
+- **Disabled State**: Field appears grayed out
+
+### Timestamps (Updated At)
+
+Some tables have automatic timestamp columns:
+- **Auto-Updated**: Modified automatically when the record changes
+- **Read-Only**: Cannot be manually set
+- **Updated Automatically**: Will reflect the current time after saving
+
+### Foreign Key Fields
+
+When editing foreign key columns:
+- Dropdown shows all available related records
+- Select the appropriate new reference
+- The system validates the reference exists
+
+## Handling NULL Values
+
+### Setting Values to NULL
+
+If a column allows NULL:
+1. Clear the field completely
+2. Some interfaces show an explicit "NULL" checkbox
+3. The value becomes NULL when saved
+
+### Clearing Non-Required Fields
+
+For optional columns:
+- Clear the field to set it to NULL
+- Only when NULL values are allowed
+- Required fields cannot be cleared
+
+### Viewing NULL Values
+
+Cells with NULL values appear empty in the grid:
+- Clearly distinguished from empty strings
+- You can edit to set a value or leave as NULL
+- Proper NULL handling is important for data integrity
+
+## Saving Changes
+
+### Successful Save
+
+When you click Save and the changes are valid:
+1. Confirmation message appears
+2. The dialog closes automatically
+3. The data grid refreshes with updated values
+4. The row shows the new data
+
+<Tip>
+After saving, the new data immediately appears in the table, confirming your changes were successful.
+</Tip>
+
+### Handling Save Errors
+
+If there's an issue saving:
+
+**Constraint Violation**
+- A constraint prevented the save
+- Review the error message
+- Fix the violating value
+- Try saving again
+
+**Database Error**
+- An unexpected database error occurred
+- Check your database connection
+- Review the error details
+- Try again, or contact support if it persists
+
+**Permission Error**
+- You may lack permission to edit this record
+- Check your database user permissions
+- Contact your database administrator
+
+### Canceling Edits
+
+- Click "Cancel" or close the dialog
+- All changes are discarded
+- The original values remain unchanged in the database
+
+## Batch Editing
+
+For editing multiple similar records:
+
+1. Edit one record and save
+2. Open another record for editing
+3. Modify the new record
+4. Continue for each record needing changes
+
+<Tip>
+For bulk updates of similar data, consider using the Scratchpad to write an UPDATE query that changes multiple records at once.
+</Tip>
+
+## Keyboard Shortcuts
+
+Speed up editing with these shortcuts:
+
+| Shortcut | Action |
+|----------|--------|
+| `Tab` | Move to next field |
+| `Shift + Tab` | Move to previous field |
+| `Ctrl/Cmd + S` | Save changes |
+| `Escape` | Cancel editing |
+| `Enter` | Save (from last field) |
+
+## Best Practices
+
+<Steps>
+<Step title="Review Before Saving">
+Always verify changes before clicking save to prevent unintended modifications.
+</Step>
+<Step title="Understand Constraints">
+Know which fields are unique or required to avoid constraint violations.
+</Step>
+<Step title="Use Appropriate Values">
+Ensure new values are consistent with your data model and business logic.
+</Step>
+<Step title="Check Foreign Keys">
+When updating foreign key references, verify the new reference exists.
+</Step>
+<Step title="Consider Data Impact">
+Think about how changes might affect dependent data or application behavior.
+</Step>
+</Steps>
+
+## Limitations
+
+- **Primary Keys**: Cannot be edited after creation
+- **Computed Columns**: Cannot be manually edited
+- **System Timestamps**: May be auto-updated by the database
+- **Large BLOBs**: May not be efficiently editable through the dialog
+- **One Record at a Time**: Edit dialog works with one record per session
+
+## Troubleshooting
+
+**Can't Save Changes**
+- Check for validation errors on specific fields
+- Ensure required fields have values
+- Look for constraint violations in the error message
+- Try canceling and editing again
+
+**Changes Don't Appear**
+- Check if you're viewing the correct table and page
+- Verify the save completed successfully
+- Try refreshing the data view
+
+**Field Is Grayed Out/Disabled**
+- This is a read-only field (typically a primary key)
+- You cannot edit primary keys or computed columns
+- This is intentional for data integrity
+
+**Foreign Key Error**
+- The referenced record may no longer exist
+- Select a valid reference from the dropdown
+- You may need to add the referenced record first
+
+## Next Steps
+
+Continue managing your data with these related features:
+
+<CardGroup cols={2}>
+<Card title="Deleting Records" icon="trash" href="/data/deleting-records">
+Learn how to remove records you no longer need
+</Card>
+<Card title="Adding Records" icon="plus" href="/data/adding-records">
+Insert new records into your tables
+</Card>
+<Card title="Viewing Data" icon="table" href="/data/viewing-data">
+Navigate and view all your table data
+</Card>
+<Card title="Scratchpad Queries" icon="code" href="/query/writing-queries">
+Use SQL for bulk updates and complex modifications
+</Card>
+</CardGroup>
+
+<Info>
+For complex edits affecting many records, the Scratchpad query interface may be more efficient than editing individual rows through the dialog.
+</Info>

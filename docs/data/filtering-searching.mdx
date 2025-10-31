@@ -1,0 +1,384 @@
+---
+title: "Filtering & Searching"
+description: "Learn how to search for records and apply advanced filters using WHERE conditions"
+---
+
+# Filtering & Searching
+
+WhoDB provides powerful search and filtering capabilities to help you quickly find the data you need. This guide covers the different filtering methods, search operators, and advanced techniques for data discovery.
+
+## Quick Search
+
+### Basic Search
+
+The simplest way to find data is using the quick search feature:
+
+![Data View Search Highlight](/images/19-data-view-search-highlight.png)
+
+1. Click the search box in the action bar
+2. Type your search term
+3. Results are highlighted in real-time as you type
+4. The search applies to all visible columns
+
+### Search Behavior
+
+- **Real-time Matching**: Results update as you type
+- **Case-Insensitive**: Searches are typically not case-sensitive
+- **Partial Matching**: Matches anywhere within cell values
+- **All Columns**: Searches across all columns in the table
+
+<Tip>
+Use quick search when you know a specific value you're looking for but aren't sure which column contains it.
+</Tip>
+
+### Clearing Search
+
+- Click the clear button (X) to remove the search term
+- Press Escape to exit search mode
+- The full dataset reappears
+
+## Advanced WHERE Conditions
+
+For more sophisticated filtering beyond simple search, use WHERE conditions:
+
+### Opening WHERE Conditions
+
+To access advanced filtering:
+
+1. Click the filter button in the action bar
+2. The WHERE conditions panel opens
+
+![Data View Where Conditions Popover](/images/16-data-view-where-conditions-popover.png)
+
+### Building Filter Conditions
+
+The WHERE conditions interface allows you to build complex queries:
+
+<Steps>
+<Step title="Select Field">
+Click on the field selector dropdown to choose which column to filter.
+
+![Data View Where Field Dropdown](/images/17-data-view-where-field-dropdown.png)
+</Step>
+<Step title="Choose Operator">
+Select the comparison operator for your condition (see operators below).
+</Step>
+<Step title="Enter Value">
+Type or select the value to compare against.
+</Step>
+<Step title="Add Conditions">
+Click "Add Condition" to add more filters.
+</Step>
+<Step title="Combine Logic">
+Use AND/OR to combine multiple conditions logically.
+</Step>
+<Step title="Apply Filters">
+Click "Apply" or "Filter" to execute the WHERE clause.
+</Step>
+</Steps>
+
+## Filter Operators
+
+WhoDB supports multiple comparison operators for filtering:
+
+### Equality Operators
+
+**Equals (=)**
+![Where Operator Equals](/images/59-where-operator-equals.png)
+
+- Matches exact values
+- Case-sensitive (depending on database)
+- `WHERE status = 'active'`
+
+**Not Equals (!=)**
+![Where Operator Not Equals](/images/62-where-operator-not-equals.png)
+
+- Matches all values except the specified one
+- `WHERE role != 'admin'`
+- Useful for excluding specific records
+
+### Comparison Operators
+
+**Greater Than (>)**
+![Where Operator Greater Than](/images/60-where-operator-greater-than.png)
+
+- Matches values larger than specified
+- Primarily for numeric or date comparisons
+- `WHERE age > 18`
+- `WHERE created_at > '2023-01-01'`
+
+**Less Than (\<)**
+![Where Operator Less Than](/images/61-where-operator-less-than.png)
+
+- Matches values smaller than specified
+- Works with numbers, dates, and text
+- `WHERE price < 100`
+
+**Greater Than or Equal To (>=)**
+![Where Operator GTE](/images/63-where-operator-gte.png)
+
+- Matches values greater than or equal to specified
+- `WHERE score >= 80`
+
+**Less Than or Equal To (\<=)**
+![Where Operator LTE](/images/64-where-operator-lte.png)
+
+- Matches values less than or equal to specified
+- `WHERE stock <= 10`
+
+### String Operators
+
+**Contains/LIKE**
+- Partial text matching
+- `WHERE email LIKE '%@company.com'`
+- Useful for finding patterns
+
+**Starts With**
+- Matches beginning of text
+- `WHERE code LIKE 'US%'`
+
+**Ends With**
+- Matches end of text
+- `WHERE email LIKE '%@gmail.com'`
+
+### NULL Operators
+
+**Is NULL**
+- Matches empty/NULL values
+- `WHERE phone IS NULL`
+
+**Is Not NULL**
+- Matches non-empty values
+- `WHERE updated_at IS NOT NULL`
+
+### Range Operators
+
+**Between**
+- Matches values within a range
+- `WHERE price BETWEEN 50 AND 150`
+- `WHERE created_at BETWEEN '2023-01-01' AND '2023-12-31'`
+
+**In**
+- Matches if value is in a list
+- `WHERE status IN ('active', 'pending')`
+
+## Combining Multiple Conditions
+
+### AND Logic
+
+All conditions must be true:
+
+![Data View Where Conditions Badge](/images/18-data-view-where-conditions-badge.png)
+
+```sql
+WHERE status = 'active' AND age > 18
+```
+
+- Shows only records that match ALL conditions
+- Use when you need records meeting multiple criteria
+
+### OR Logic
+
+Any condition can be true:
+
+```sql
+WHERE status = 'active' OR role = 'admin'
+```
+
+- Shows records matching ANY condition
+- Use when looking for records matching one of several options
+
+### Complex Combinations
+
+Combine AND and OR operators:
+
+```sql
+WHERE (status = 'active' AND age > 18) OR (role = 'manager')
+```
+
+- Group conditions with parentheses
+- Build sophisticated queries
+- The interface handles complex logic
+
+<Tip>
+When combining conditions, AND has higher precedence than OR. Use the interface to clearly structure your logic.
+</Tip>
+
+## Filtering Workflow
+
+### Complete Filtering Example
+
+Let's filter a users table to find active users over 30 years old:
+
+<Steps>
+<Step title="Click Filter Button">
+Open the WHERE conditions dialog from the action bar.
+</Step>
+<Step title="Add First Condition">
+Select "status" field, "=" operator, value "active"
+</Step>
+<Step title="Add AND Condition">
+Click "Add Condition" and select AND logic
+</Step>
+<Step title="Add Second Condition">
+Select "age" field, ">" operator, value "30"
+</Step>
+<Step title="Apply Filters">
+Click "Apply" to execute the filter
+</Step>
+<Step title="Review Results">
+The table now shows only active users over 30
+</Step>
+</Steps>
+
+### Viewing Active Filters
+
+- **Filter Badge**: Shows active filters in the action bar
+- **Condition Count**: Displays number of active conditions
+- **Edit Filters**: Click the badge to modify or remove filters
+- **Clear Filters**: Remove all conditions to see full dataset
+
+## Search and Filter Combinations
+
+### Using Search AND WHERE Conditions Together
+
+You can combine quick search with WHERE conditions:
+
+1. Apply WHERE conditions to filter by specific criteria
+2. Use search to find specific values within the filtered results
+3. The results show only records matching both the search and conditions
+
+<Info>
+This combination is powerful for finding specific records within a large filtered subset.
+</Info>
+
+## Advanced Filtering Scenarios
+
+### Find All Inactive Users Created Before 2023
+
+1. Open WHERE conditions
+2. Add condition: status = 'inactive'
+3. Add AND condition: created_at < '2023-01-01'
+4. Apply
+5. Results show matching records
+
+### Find Records with Missing Data
+
+To find records where optional fields are empty:
+
+1. Filter: email IS NULL
+2. Results show records without email addresses
+3. Useful for data quality checks
+
+### Find Records in a Date Range
+
+To find all transactions in Q3 2023:
+
+1. Open WHERE conditions
+2. Add condition: transaction_date >= '2023-07-01'
+3. Add AND condition: transaction_date \<= '2023-09-30'
+4. Or use BETWEEN operator for simpler syntax
+
+## Performance Considerations
+
+### Filter Tips for Large Tables
+
+- **Filter Early**: Apply filters before sorting or searching
+- **Use Indexes**: Columns with database indexes filter faster
+- **Simple Conditions**: Simpler conditions execute faster
+- **Avoid Complex Patterns**: LIKE '%value%' is slower than LIKE 'value%'
+
+<Tip>
+For very large tables, applying restrictive filters first significantly improves performance and responsiveness.
+</Tip>
+
+## Best Practices
+
+<Steps>
+<Step title="Start Broad">
+Begin with general filters and narrow down if needed.
+</Step>
+<Step title="Combine Operators Logically">
+Use AND for narrowing results, OR for expanding options.
+</Step>
+<Step title="Verify Filter Results">
+Always check that filtered results make sense before further operations.
+</Step>
+<Step title="Use Appropriate Operators">
+Choose operators matching your data types (e.g., > for numbers).
+</Step>
+<Step title="Clear Filters When Done">
+Remove filters when you want to see the full dataset again.
+</Step>
+</Steps>
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl/Cmd + F` | Open quick search |
+| `Escape` | Close search or filter panel |
+| `Enter` | Apply filter or search |
+| `Ctrl/Cmd + Shift + F` | Open advanced WHERE conditions |
+
+## Troubleshooting
+
+**No Results Found**
+- Verify the filter values are correct
+- Check spelling and case sensitivity
+- Try broadening the filter conditions
+- Ensure column name is correct
+
+**Too Many Results**
+- Add additional AND conditions to narrow results
+- Use more specific comparison operators
+- Check that OR conditions aren't too broad
+
+**Filter Not Applying**
+- Confirm you clicked "Apply" button
+- Check that all required fields have values
+- Verify the filter logic is correct
+
+**Unexpected Results**
+- Review the conditions in the filter panel
+- Check if multiple conditions are combining correctly
+- Verify AND/OR logic is appropriate
+
+## Limitations
+
+- **One Table at a Time**: Filters apply to the current table only
+- **No Cross-Table Filters**: Cannot filter by values in other tables through the UI (use Scratchpad for JOINs)
+- **Pattern Complexity**: LIKE patterns have limitations depending on your database
+- **Performance**: Very complex filters on large datasets may be slow
+
+## Advanced: Using Scratchpad for Complex Queries
+
+For filtering beyond WHERE conditions capabilities:
+
+1. Use the Scratchpad query interface
+2. Write custom SQL with WHERE clauses
+3. Combine filters with JOINs, GROUP BY, or aggregations
+4. See the Query section for more details
+
+## Next Steps
+
+Explore related data management features:
+
+<CardGroup cols={2}>
+<Card title="Sorting & Pagination" icon="arrow-up-arrow-down" href="/data/sorting-pagination">
+Learn how to organize and navigate through results
+</Card>
+<Card title="Viewing Data" icon="table" href="/data/viewing-data">
+Understand the data grid interface
+</Card>
+<Card title="Scratchpad Queries" icon="code" href="/query/writing-queries">
+Write custom SQL queries for advanced filtering
+</Card>
+<Card title="Where Conditions" icon="filter" href="/advanced/where-conditions">
+Deep dive into advanced WHERE condition usage
+</Card>
+</CardGroup>
+
+<Tip>
+Effective filtering is key to working efficiently with large databases. Master these tools to quickly find exactly the data you need.
+</Tip>

@@ -1,0 +1,769 @@
+---
+title: "WhoDB for Data Analysts"
+description: "Master WhoDB for analytics workflows, complex queries, data exploration, and insights generation"
+seo:
+  title: "Database Tool for Data Analysts - WhoDB"
+  description: "Advanced analytics tool for data analysts. Write complex SQL queries, filter large datasets, create analytics workflows, and export results for business intelligence with WhoDB."
+  keywords: "database tool for data analysts, SQL tool for analysts, data analysis tool, analytics database, query builder, data exploration, business intelligence"
+---
+
+# WhoDB for Data Analysts
+
+As a data analyst, you need a powerful tool that bridges the gap between raw databases and actionable insights. WhoDB provides everything you need: interactive filtering, advanced SQL capabilities, complex query execution, and flexible data export—all without leaving your browser.
+
+<Tip>
+This guide covers analytics workflows, complex query patterns, performance optimization, and best practices for turning database queries into business insights.
+</Tip>
+
+## Analytics Workflow Overview
+
+The typical analytics workflow in WhoDB follows four phases: explore, analyze, validate, and export.
+
+<CardGroup cols={2}>
+<Card title="Explore Data" icon="magnifying-glass">
+Understand table structure, identify relevant data, apply initial filters
+</Card>
+<Card title="Analyze & Query" icon="chart-line">
+Write complex SQL, aggregate data, find patterns and trends
+</Card>
+<Card title="Validate Results" icon="check-circle">
+Verify queries, cross-check results, ensure data accuracy
+</Card>
+<Card title="Export & Share" icon="download">
+Export in multiple formats, prepare for stakeholders and dashboards
+</Card>
+</CardGroup>
+
+## Phase 1: Data Exploration
+
+Before writing complex queries, understand what data you're working with.
+
+### Interactive Table Exploration
+
+<Steps>
+<Step title="Navigate to Your Table">
+Select the table containing your analysis data.
+
+![Data View](/images/09-data-view-users-table.png)
+
+The data grid displays your records in a familiar spreadsheet format, making it easy to scan and understand the data structure.
+</Step>
+
+<Step title="Examine Column Types and Values">
+Review each column:
+- **Data types**: Are dates formatted correctly? Are numbers in the expected range?
+- **Value distributions**: What values appear most frequently? Are there nulls?
+- **Data quality**: Do you see obvious errors or anomalies?
+
+This preliminary scan informs your analysis approach.
+</Step>
+
+<Step title="Apply Initial Filters">
+Start with simple filtering to narrow your focus:
+
+![Filter UI](/images/16-data-view-where-conditions-popover.png)
+
+Example filters:
+- `status = 'active'` to focus on current records
+- `created_at >= '2024-01-01'` to focus on recent periods
+- `amount > 0` to exclude zero-value records
+- `is_deleted = false` to remove archived data
+
+Basic filters help you understand your dataset's composition.
+</Step>
+
+<Step title="Search for Specific Patterns">
+Use search to locate specific values across columns:
+
+![Search Highlight](/images/19-data-view-search-highlight.png)
+
+Search is useful for:
+- Finding specific user accounts or transactions
+- Locating error messages or anomalous data
+- Verifying whether specific data exists
+- Quick spot-checks during analysis
+</Step>
+</Steps>
+
+### Understanding Relationships
+
+Navigate to related tables to understand your data model:
+
+<Steps>
+<Step title="Explore Foreign Keys">
+Identify which columns link to other tables. This tells you:
+- What related data is available
+- How to write effective joins
+- What aggregations make sense
+
+Example: An `orders` table with a `user_id` foreign key tells you that order data can be linked to user data.
+</Step>
+
+<Step title="Check Table Dependencies">
+Understanding relationships helps you:
+- Write joins efficiently
+- Validate aggregation logic
+- Identify data consistency issues
+
+Example: If a customer table has 5,000 records but orders table shows 6,000 unique customer IDs, you have orphaned orders.
+</Step>
+</Steps>
+
+## Phase 2: Complex Analysis Queries
+
+Once you understand your data, write sophisticated queries to extract insights.
+
+### Opening the Query Interface
+
+<Steps>
+<Step title="Access the Scratchpad">
+Open the Scratchpad view for full SQL development capabilities:
+
+![Scratchpad Code Editor](/images/28-scratchpad-code-editor.png)
+
+The Scratchpad provides:
+- Full SQL syntax highlighting
+- Query history and saved queries
+- Result pagination and sorting
+- Multiple query cells for iterative analysis
+</Step>
+
+<Step title="Write Your First Query">
+Start simple and build complexity:
+
+```sql
+SELECT
+  COUNT(*) as total_records,
+  COUNT(DISTINCT user_id) as unique_users,
+  AVG(amount) as average_amount
+FROM orders
+WHERE created_at >= '2024-01-01';
+```
+
+This baseline query tells you the scale and scope of your dataset.
+</Step>
+</Steps>
+
+### Essential Analytics Queries
+
+#### Aggregation & Summarization
+
+Group data to find patterns and trends:
+
+```sql
+-- Sales by product category (most common analytics pattern)
+SELECT
+  category,
+  COUNT(*) as transaction_count,
+  SUM(amount) as total_revenue,
+  AVG(amount) as avg_transaction_size,
+  MAX(amount) as max_transaction,
+  MIN(amount) as min_transaction,
+  STDDEV(amount) as revenue_volatility
+FROM orders
+WHERE created_at >= '2024-01-01'
+  AND status = 'completed'
+GROUP BY category
+ORDER BY total_revenue DESC;
+```
+
+<Tip>
+GROUP BY queries are the foundation of analytics. Use them constantly to break data into meaningful segments.
+</Tip>
+
+#### Time Series Analysis
+
+Track metrics over time to identify trends:
+
+```sql
+-- Monthly revenue trend with growth rate
+WITH monthly_sales AS (
+  SELECT
+    DATE_TRUNC('month', created_at)::date as month,
+    SUM(amount) as revenue,
+    COUNT(*) as transaction_count
+  FROM orders
+  WHERE status = 'completed'
+    AND created_at >= '2023-01-01'
+  GROUP BY DATE_TRUNC('month', created_at)
+)
+SELECT
+  month,
+  revenue,
+  transaction_count,
+  LAG(revenue) OVER (ORDER BY month) as previous_month_revenue,
+  ROUND(((revenue - LAG(revenue) OVER (ORDER BY month)) /
+         LAG(revenue) OVER (ORDER BY month) * 100)::numeric, 2) as growth_percent
+FROM monthly_sales
+ORDER BY month DESC;
+```
+
+This reveals whether your metrics are growing, stable, or declining.
+
+#### Cohort Analysis
+
+Track how different user groups behave over time:
+
+```sql
+-- User retention by signup cohort
+WITH user_cohorts AS (
+  SELECT
+    user_id,
+    DATE_TRUNC('month', created_at)::date as signup_month
+  FROM users
+),
+user_activity AS (
+  SELECT DISTINCT
+    user_id,
+    DATE_TRUNC('month', activity_date)::date as activity_month
+  FROM user_events
+  WHERE event_type = 'purchase'
+)
+SELECT
+  c.signup_month,
+  EXTRACT(YEAR FROM AGE(a.activity_month, c.signup_month)) * 12 +
+  EXTRACT(MONTH FROM AGE(a.activity_month, c.signup_month)) as months_since_signup,
+  COUNT(DISTINCT c.user_id) as active_users
+FROM user_cohorts c
+LEFT JOIN user_activity a ON c.user_id = a.user_id
+GROUP BY c.signup_month, months_since_signup
+ORDER BY c.signup_month DESC, months_since_signup;
+```
+
+This shows which signup cohorts have the best retention and engagement.
+
+#### Join-Based Analysis
+
+Combine data from multiple tables:
+
+```sql
+-- Customer lifetime value analysis
+SELECT
+  c.customer_id,
+  c.customer_name,
+  c.segment,
+  COUNT(o.order_id) as lifetime_orders,
+  SUM(o.amount) as lifetime_value,
+  AVG(o.amount) as avg_order_value,
+  MAX(o.created_at) as last_purchase_date,
+  MIN(o.created_at) as first_purchase_date,
+  DATEDIFF(MAX(o.created_at), MIN(o.created_at)) as customer_tenure_days
+FROM customers c
+LEFT JOIN orders o ON c.customer_id = o.customer_id
+GROUP BY c.customer_id, c.customer_name, c.segment
+ORDER BY lifetime_value DESC;
+```
+
+This powerful pattern combines customer attributes with their transaction history.
+
+#### Window Functions for Context
+
+Calculate metrics while preserving row-level detail:
+
+```sql
+-- Orders ranked by amount, with percentile context
+SELECT
+  order_id,
+  customer_id,
+  amount,
+  ROW_NUMBER() OVER (ORDER BY amount DESC) as rank,
+  PERCENT_RANK() OVER (ORDER BY amount) * 100 as percentile,
+  SUM(amount) OVER (ORDER BY amount DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) as running_total
+FROM orders
+WHERE created_at >= '2024-01-01'
+ORDER BY amount DESC
+LIMIT 100;
+```
+
+Window functions let you see individual records alongside aggregate context.
+
+#### Anomaly Detection
+
+Find unusual values that deviate from normal patterns:
+
+```sql
+-- Detect transactions that are statistical outliers
+WITH transaction_stats AS (
+  SELECT
+    AVG(amount) as avg_amount,
+    STDDEV(amount) as std_dev
+  FROM orders
+  WHERE created_at >= NOW() - INTERVAL '90 days'
+)
+SELECT
+  o.order_id,
+  o.customer_id,
+  o.amount,
+  ts.avg_amount,
+  ROUND((o.amount - ts.avg_amount) / ts.std_dev, 2) as std_deviations_from_mean,
+  CASE
+    WHEN ABS(o.amount - ts.avg_amount) > (3 * ts.std_dev) THEN 'ANOMALY'
+    WHEN ABS(o.amount - ts.avg_amount) > (2 * ts.std_dev) THEN 'UNUSUAL'
+    ELSE 'NORMAL'
+  END as classification
+FROM orders o, transaction_stats ts
+WHERE ABS(o.amount - ts.avg_amount) > (2 * ts.std_dev)
+ORDER BY ABS(o.amount - ts.avg_amount) DESC;
+```
+
+This finds outliers that might indicate fraud, data errors, or significant business events.
+
+### Query Execution & Results
+
+<Steps>
+<Step title="Execute Your Query">
+Click the Execute button or press Ctrl+Enter:
+
+![Query Results](/images/86-scratchpad-select-query-result.png)
+
+The query runs and results appear below your query text.
+</Step>
+
+<Step title="Review Results">
+Examine the result set:
+- **Row count**: Does the number of rows make sense?
+- **Value ranges**: Are values within expected ranges?
+- **Null values**: Are nulls appearing where expected?
+- **Data types**: Do columns display correct types?
+</Step>
+
+<Step title="Sort Results">
+Click column headers to sort:
+
+```
+Sales by Category (sorted descending by revenue):
+Electronics | 5,400 | $850,000
+Furniture   | 3,200 | $620,000
+Clothing    | 8,100 | $580,000
+```
+
+Sorting helps identify top performers and outliers.
+</Step>
+</Steps>
+
+### Multi-Cell Queries
+
+For complex analysis, break your work into multiple cells:
+
+<Steps>
+<Step title="Create Intermediate Queries">
+Build analysis step-by-step:
+
+![Multiple Cells](/images/48-scratchpad-multiple-cells-results.png)
+
+**Cell 1**: Clean and filter raw data
+```sql
+-- Get valid orders from the past year
+SELECT *
+FROM orders
+WHERE status = 'completed'
+  AND created_at >= '2023-01-01'
+  AND amount > 0;
+```
+
+**Cell 2**: Aggregate into meaningful metrics
+```sql
+-- Calculate metrics by category
+SELECT category, COUNT(*) as count, SUM(amount) as revenue
+FROM valid_orders_cte
+GROUP BY category;
+```
+
+**Cell 3**: Format for presentation
+```sql
+-- Add rankings and percentages
+SELECT *,
+  ROW_NUMBER() OVER (ORDER BY revenue DESC) as rank,
+  ROUND(revenue / SUM(revenue) OVER () * 100, 1) as revenue_percent
+FROM category_metrics;
+```
+
+This step-by-step approach is easier to debug and modify.
+</Step>
+
+<Step title="Use Query History">
+Access previous queries instantly:
+
+![Query History](/images/33-scratchpad-query-history.png)
+
+Your query history lets you:
+- Find previously successful queries
+- Clone and modify queries
+- Track your analysis progression
+- Recreate analysis later
+</Step>
+</Steps>
+
+## Phase 3: Data Validation
+
+Before sharing analysis results, validate your queries.
+
+### Validation Checklist
+
+<AccordionGroup>
+<Accordion title="Row Count Validation">
+After any major operation, verify row counts make sense:
+- Total rows: Does COUNT(*) match expectations?
+- Filtered rows: Did your WHERE clause exclude as expected?
+- Grouped rows: Is GROUP BY producing the right number of groups?
+
+Suspicious row counts often indicate logic errors.
+</Accordion>
+
+<Accordion title="Value Range Validation">
+Check that values fall within expected ranges:
+- Amounts: Are they positive? Below maximum limits?
+- Dates: Are they between expected periods? Any future dates?
+- Percentages: Do they sum to 100% or 1.0 as expected?
+- IDs: Are they sequential or as expected?
+
+Out-of-range values often indicate data quality issues.
+</Accordion>
+
+<Accordion title="NULL Handling Validation">
+Verify NULL behavior:
+- COUNT(column) vs COUNT(*): Do they match? If not, you have NULLs.
+- COALESCE usage: Are you handling NULLs appropriately?
+- JOIN logic: Did LEFT JINs produce NULLs as expected?
+
+NULLs are a common source of analysis mistakes.
+</Accordion>
+
+<Accordion title="Join Validation">
+Verify join results are correct:
+- Compare JOIN results: Does INNER JOIN produce fewer rows than LEFT JOIN? (It should)
+- Check for duplicates: Did your join multiply rows unexpectedly?
+- Verify keys: Do the join keys match your expectations?
+
+Incorrect joins are a frequent source of errors.
+</Accordion>
+
+<Accordion title="Aggregate Validation">
+Cross-check aggregates:
+- SUM vs COUNT with SUM: Do they align?
+- Manual spot-checks: Pick a few groups and verify calculations manually
+- Compare methods: Calculate the same metric different ways and verify results match
+</Accordion>
+
+<Accordion title="Temporal Validation">
+For time-based analysis, verify dates:
+- Timezone handling: Are dates correct for your timezone?
+- Date ranges: Do you include the expected periods?
+- Seasonality: Do seasonal patterns make business sense?
+</Accordion>
+</AccordionGroup>
+
+## Phase 4: Exporting & Sharing
+
+Once validated, export your analysis results.
+
+### Export Workflow
+
+<Steps>
+<Step title="Select Your Data">
+Choose what to export:
+
+![Export Dialog](/images/20-data-view-export-dialog.png)
+
+Options:
+- **All**: Every row in your result set
+- **Selected**: Only rows you've highlighted
+- **Filtered**: Rows matching your current filters
+</Step>
+
+<Step title="Choose Your Format">
+Select the format that matches your audience and downstream use:
+
+![Export Format](/images/21-data-view-export-format-dropdown.png)
+
+<AccordionGroup>
+<Accordion title="CSV">
+Best for:
+- Excel or Google Sheets analysis
+- Data science workflows (Python, R, pandas)
+- Generic data exchange between systems
+- Sharing with non-technical stakeholders
+
+CSV is universal and widely supported.
+</Accordion>
+
+<Accordion title="Excel">
+Best for:
+- Business stakeholders and executives
+- Complex spreadsheet formatting
+- Pivot tables and charts
+- When you want to include formulas or formatting
+
+More polished than CSV for business contexts.
+</Accordion>
+
+<Accordion title="JSON">
+Best for:
+- NoSQL workflows
+- JavaScript/web application integration
+- Preserving nested data structures
+- API-based data workflows
+</Accordion>
+
+<Accordion title="SQL">
+Best for:
+- Database backups and restore
+- Sharing with other databases
+- Version control of specific datasets
+- Reproducibility and documentation
+
+SQL INSERT statements are human-readable and executable.
+</Accordion>
+</AccordionGroup>
+</Step>
+
+<Step title="Configure Export Options">
+Customize the export:
+
+**For CSV:**
+- **Delimiter**: Comma (standard), semicolon (European), pipe (data with commas), tab
+- **Encoding**: UTF-8 (universal), ISO-8859-1 (legacy)
+
+**Column Selection:**
+- Include/exclude specific columns
+- Reorder columns to match report structure
+- Exclude sensitive data like passwords or API keys
+</Step>
+
+<Step title="Download and Verify">
+Download your file and do a quick sanity check:
+- Row count matches query results
+- Column order is correct
+- Data formatting is readable
+- No encoding issues with special characters
+</Step>
+</Steps>
+
+## Real-World Analytics Scenarios
+
+### Scenario 1: Customer Segmentation
+
+Identify different customer groups for targeted marketing:
+
+```sql
+-- Segment customers by behavior
+SELECT
+  c.customer_id,
+  c.customer_name,
+  c.segment_category,
+  COUNT(o.order_id) as lifetime_orders,
+  SUM(o.amount) as lifetime_value,
+  MAX(o.created_at) as last_purchase,
+  DATEDIFF(NOW(), MAX(o.created_at)) as days_since_purchase,
+  CASE
+    WHEN SUM(o.amount) > 5000 AND DATEDIFF(NOW(), MAX(o.created_at)) < 30 THEN 'High Value Active'
+    WHEN SUM(o.amount) > 5000 AND DATEDIFF(NOW(), MAX(o.created_at)) < 90 THEN 'High Value At Risk'
+    WHEN SUM(o.amount) > 1000 AND DATEDIFF(NOW(), MAX(o.created_at)) < 30 THEN 'Medium Value Active'
+    WHEN SUM(o.amount) <= 1000 AND COUNT(o.order_id) >= 5 THEN 'Small Value Loyal'
+    WHEN COUNT(o.order_id) = 1 THEN 'One-Time Buyer'
+    ELSE 'Dormant'
+  END as customer_segment
+FROM customers c
+LEFT JOIN orders o ON c.customer_id = o.customer_id
+GROUP BY c.customer_id, c.customer_name, c.segment_category
+ORDER BY lifetime_value DESC;
+```
+
+Export this for marketing teams to enable targeted campaigns.
+
+### Scenario 2: Churn Prediction
+
+Identify customers at risk of leaving:
+
+```sql
+-- Find customers showing churn signals
+WITH customer_activity AS (
+  SELECT
+    c.customer_id,
+    c.customer_name,
+    COUNT(o.order_id) as total_orders,
+    MAX(o.created_at) as last_order_date,
+    DATEDIFF(NOW(), MAX(o.created_at)) as days_inactive,
+    AVG(o.amount) as avg_order_value,
+    STDDEV(o.amount) as order_volatility
+  FROM customers c
+  LEFT JOIN orders o ON c.customer_id = o.customer_id
+  GROUP BY c.customer_id, c.customer_name
+)
+SELECT
+  *,
+  CASE
+    WHEN days_inactive > 180 AND total_orders < 5 THEN 'HIGH RISK'
+    WHEN days_inactive > 90 AND total_orders < 10 THEN 'MEDIUM RISK'
+    WHEN days_inactive > 60 THEN 'LOW RISK'
+    ELSE 'STABLE'
+  END as churn_risk
+FROM customer_activity
+WHERE days_inactive > 60
+ORDER BY days_inactive DESC;
+```
+
+### Scenario 3: Product Performance Analysis
+
+Identify your best and worst performing products:
+
+```sql
+-- Detailed product performance metrics
+SELECT
+  p.product_id,
+  p.product_name,
+  p.category,
+  COUNT(DISTINCT oi.order_id) as times_sold,
+  SUM(oi.quantity) as total_units_sold,
+  SUM(oi.quantity * oi.price) as total_revenue,
+  AVG(oi.price) as avg_price,
+  MIN(oi.price) as min_price,
+  MAX(oi.price) as max_price,
+  ROUND(SUM(oi.quantity * oi.price) / NULLIF(COUNT(DISTINCT oi.order_id), 0), 2) as revenue_per_sale,
+  ROW_NUMBER() OVER (PARTITION BY p.category ORDER BY SUM(oi.quantity * oi.price) DESC) as rank_in_category
+FROM products p
+LEFT JOIN order_items oi ON p.product_id = oi.product_id
+GROUP BY p.product_id, p.product_name, p.category
+ORDER BY total_revenue DESC;
+```
+
+## Performance Optimization for Large Datasets
+
+### Query Optimization
+
+<AccordionGroup>
+<Accordion title="Index Usage">
+Use indexes on heavily-filtered columns:
+```sql
+-- Check if your query uses indexes (PostgreSQL)
+EXPLAIN ANALYZE
+SELECT * FROM orders WHERE customer_id = 123;
+```
+
+If the plan shows "Seq Scan" on large tables, the column should be indexed.
+</Accordion>
+
+<Accordion title="Reduce Scope">
+Always filter to smaller date ranges:
+```sql
+-- SLOW: No date filter
+SELECT * FROM transactions WHERE status = 'pending';
+
+-- FAST: Date filtered
+SELECT * FROM transactions
+WHERE status = 'pending'
+  AND created_at >= NOW() - INTERVAL '7 days';
+```
+</Accordion>
+
+<Accordion title="Simplify Joins">
+Unnecessary joins slow queries significantly:
+```sql
+-- Only join tables you actually need
+SELECT o.*, c.customer_name
+FROM orders o
+INNER JOIN customers c ON o.customer_id = c.customer_id
+-- Don't add: JOIN order_items oi ON o.order_id = oi.order_id
+-- if you don't use oi columns
+```
+</Accordion>
+
+<Accordion title="Use CTEs for Clarity">
+Complex queries are easier to debug as multiple steps:
+```sql
+WITH step1 AS (
+  SELECT * FROM raw_data WHERE filter
+),
+step2 AS (
+  SELECT * FROM step1 WHERE another_filter
+)
+SELECT * FROM step2;
+```
+</Accordion>
+</AccordionGroup>
+
+### Troubleshooting Query Issues
+
+<AccordionGroup>
+<Accordion title="Query Runs Too Slowly">
+- Add time range filters to reduce rows
+- Check indexes with EXPLAIN
+- Simplify joins or split into multiple queries
+- Pre-aggregate data in intermediate steps
+</Accordion>
+
+<Accordion title="Results Don't Match Expectations">
+- Check NULL handling in aggregates
+- Verify JOIN logic (INNER vs LEFT JOIN)
+- Validate WHERE conditions
+- Check for timezone issues with dates
+</Accordion>
+
+<Accordion title="Rows Multiplied by Join">
+This happens with many-to-many joins:
+```sql
+-- PROBLEM: Orders have multiple items, customer table is duplicate
+SELECT c.*, o.*, oi.*
+FROM customers c
+JOIN orders o ON c.id = o.customer_id
+JOIN order_items oi ON o.id = oi.order_id;
+-- Result: 3 order items means customer row appears 3 times
+
+-- SOLUTION: Aggregate first
+SELECT c.*, SUM(oi.price * oi.quantity) as order_total
+FROM customers c
+JOIN orders o ON c.id = o.customer_id
+JOIN order_items oi ON o.id = oi.order_id
+GROUP BY c.id;
+```
+</Accordion>
+</AccordionGroup>
+
+## Best Practices for Analytics
+
+<CardGroup cols={2}>
+<Card title="Start with Questions" icon="question">
+Begin with a specific business question, not just exploration. This focuses your analysis.
+</Card>
+<Card title="Validate Your Data" icon="check-double">
+Cross-check results different ways. Verify row counts and value ranges.
+</Card>
+<Card title="Document Assumptions" icon="file-pen">
+When exporting, document date ranges, filters applied, and what NULLs mean.
+</Card>
+<Card title="Use Read-Only Access" icon="lock">
+When possible, connect to read-only replicas to avoid accidental data modification.
+</Card>
+<Card title="Save Query History" icon="history">
+Bookmark important queries for quick reuse and analysis reproducibility.
+</Card>
+<Card title="Iterate Incrementally" icon="cycle">
+Build complex queries step-by-step. Test each piece before adding more complexity.
+</Card>
+</CardGroup>
+
+## Next Steps
+
+Continue mastering WhoDB analytics:
+
+<CardGroup cols={2}>
+<Card title="Database Exploration" href="/use-cases/database-exploration">
+Learn how to explore and understand new datasets
+</Card>
+
+<Card title="Advanced Queries" href="/query/writing-queries">
+Master complex SQL patterns and optimization
+</Card>
+
+<Card title="Data Export" href="/advanced/export-options">
+Learn export customization for different audiences
+</Card>
+
+<Card title="Where Conditions" href="/advanced/where-conditions">
+Master filtering techniques for focused analysis
+</Card>
+</CardGroup>
+
+<Check>
+You now have a complete toolkit for data analysis in WhoDB. From exploring raw data through complex SQL queries to exporting polished results, you can answer virtually any question your database holds. The combination of interactive exploration, powerful query execution, and flexible export makes WhoDB an essential analytics companion.
+</Check>

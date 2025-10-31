@@ -1,0 +1,862 @@
+---
+title: Database Access Control
+description: Best practices for database access control, role-based access, read-only users, and security policies with WhoDB
+---
+
+# Database Access Control
+
+Proper access control is fundamental to database security. This guide covers implementing role-based access, managing read-only users, establishing connection profiles, and enforcing security policies to protect your databases while enabling productive work.
+
+## Access Control Fundamentals
+
+### Principle of Least Privilege
+
+Grant users only the minimum permissions necessary to perform their job functions.
+
+**Least Privilege Benefits:**
+
+- Reduces blast radius of compromised credentials
+- Minimizes accidental data damage
+- Simplifies security audits
+- Improves compliance posture
+- Enables precise accountability tracking
+
+**Implementation Process:**
+
+1. Document each user's actual job requirements
+2. Grant read-only access initially
+3. Expand permissions only when justified
+4. Review periodically and remove unused access
+5. Audit changes regularly
+
+**Dangerous Anti-Patterns:**
+
+- Sharing credentials between team members
+- Using administrative accounts for routine work
+- Granting broad permissions "just in case"
+- Not reviewing access after role changes
+- Maintaining access after team transitions
+
+### Database User Categories
+
+Design your access control strategy around user categories.
+
+<AccordionGroup>
+<Accordion title="Read-Only Analysts">
+**Purpose**: Data exploration, reporting, analysis
+
+**Permissions**:
+- SELECT on specific schemas
+- View creation (read-only views)
+- Query execution only
+
+**Restrictions**:
+- No INSERT, UPDATE, DELETE
+- No DDL (CREATE, ALTER, DROP)
+- No administrative functions
+- Limited to development/reporting data
+
+**Example (PostgreSQL)**:
+```sql
+CREATE ROLE analyst_readonly;
+GRANT CONNECT ON DATABASE analytics TO analyst_readonly;
+GRANT USAGE ON SCHEMA public TO analyst_readonly;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO analyst_readonly;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT SELECT ON TABLES TO analyst_readonly;
+
+CREATE USER analyst_user WITH PASSWORD 'secure_password';
+GRANT analyst_readonly TO analyst_user;
+```
+</Accordion>
+
+<Accordion title="Application Developers">
+**Purpose**: Read and write application data in development/staging
+
+**Permissions**:
+- SELECT, INSERT, UPDATE on specific tables
+- View creation
+- Stored procedure execution
+- Limited schema modifications in dev only
+
+**Restrictions**:
+- No production write access
+- No administrative operations
+- No user management
+- No backup/restore operations
+
+**Example (PostgreSQL)**:
+```sql
+CREATE ROLE developer_app;
+GRANT CONNECT ON DATABASE dev_db TO developer_app;
+GRANT USAGE ON SCHEMA public TO developer_app;
+GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO developer_app;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO developer_app;
+```
+</Accordion>
+
+<Accordion title="Data Engineers">
+**Purpose**: ETL operations, data transformations, pipeline management
+
+**Permissions**:
+- Full access to staging schemas
+- SELECT on source tables
+- Full access to transformation tables
+- Scheduled job execution
+- Read-only access to production source data
+
+**Restrictions**:
+- No direct production data modifications
+- No user management
+- No security configuration changes
+- No backup operations
+
+**Example (PostgreSQL)**:
+```sql
+CREATE ROLE data_engineer;
+GRANT CONNECT ON DATABASE analytics TO data_engineer;
+GRANT USAGE ON SCHEMA public, staging TO data_engineer;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO data_engineer;
+GRANT ALL ON ALL TABLES IN SCHEMA staging TO data_engineer;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA staging TO data_engineer;
+```
+</Accordion>
+
+<Accordion title="Database Administrators">
+**Purpose**: System administration, maintenance, emergency operations
+
+**Permissions**:
+- Full database access
+- User and role management
+- Backup and recovery operations
+- Configuration management
+- Performance tuning and monitoring
+
+**Restrictions**:
+- MFA required
+- Limited to administrative tasks only
+- Comprehensive audit logging mandatory
+- Change approval process required
+- Time-limited elevated sessions
+</Accordion>
+
+<Accordion title="Service/Application Accounts">
+**Purpose**: Automated processes, scheduled jobs, application runtime
+
+**Permissions**:
+- Only necessary for application function
+- Environment-specific (dev, staging, prod)
+- Limited to required tables and operations
+
+**Restrictions**:
+- No interactive use
+- No shared with developers
+- Rotated regularly
+- Monitored for suspicious activity
+- No elevated privileges
+</Accordion>
+</AccordionGroup>
+
+## Role-Based Access Control (RBAC)
+
+### Designing Your RBAC Schema
+
+Establish a systematic approach to managing roles and permissions.
+
+**RBAC Structure Example:**
+
+```
+Database: production
+├── Organization Role
+│   ├── department_sales_read
+│   ├── department_marketing_read
+│   └── department_finance_read
+├── Function Role
+│   ├── analyst_read
+│   ├── developer_app
+│   ├── engineer_etl
+│   └── admin_full
+└── Data Role
+    ├── can_access_customer_pii
+    ├── can_access_financial
+    ├── can_access_internal_only
+    └── can_modify_production
+```
+
+**Naming Conventions:**
+
+```
+Format: [environment]_[function]_[permission]
+
+Examples:
+- dev_analyst_read          (development, analytics, read-only)
+- prod_app_readwrite        (production, application, read+write)
+- staging_engineer_full     (staging, data engineering, full access)
+- prod_admin_emergency      (production, admin, emergency access)
+```
+
+### Role Hierarchy
+
+Organize roles hierarchically to simplify administration.
+
+**Hierarchy Example:**
+
+```
+admin_full
+├── developer_app
+│   ├── analyst_read
+│   └── user_basic
+├── engineer_etl
+│   ├── analyst_read
+│   └── user_basic
+└── support_tier1
+    └── user_basic
+```
+
+**Benefits:**
+
+- Inheriting permissions reduces duplication
+- Changes to parent roles propagate automatically
+- Clear permission hierarchy understood by teams
+- Easier onboarding and offboarding
+
+### Implementing RBAC
+
+<AccordionGroup>
+<Accordion title="PostgreSQL RBAC">
+**Step 1: Create roles**
+```sql
+CREATE ROLE analyst_read;
+CREATE ROLE developer_app;
+CREATE ROLE engineer_etl;
+CREATE ROLE admin_full;
+```
+
+**Step 2: Define permissions**
+```sql
+-- Read-only analyst role
+GRANT CONNECT ON DATABASE myapp TO analyst_read;
+GRANT USAGE ON SCHEMA public TO analyst_read;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO analyst_read;
+
+-- Developer role (inherits analyst permissions + write)
+GRANT analyst_read TO developer_app;
+GRANT INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO developer_app;
+```
+
+**Step 3: Create users and assign roles**
+```sql
+CREATE USER alice WITH PASSWORD 'secure_password';
+GRANT analyst_read TO alice;
+
+CREATE USER bob WITH PASSWORD 'secure_password';
+GRANT developer_app TO bob;
+```
+
+**Step 4: Set default permissions**
+```sql
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT SELECT ON TABLES TO analyst_read;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT SELECT, INSERT, UPDATE ON TABLES TO developer_app;
+```
+</Accordion>
+
+<Accordion title="MySQL RBAC">
+**Step 1: Create users with roles**
+```sql
+CREATE USER 'analyst'@'%' IDENTIFIED BY 'secure_password';
+CREATE USER 'developer'@'%' IDENTIFIED BY 'secure_password';
+CREATE USER 'admin'@'%' IDENTIFIED BY 'secure_password';
+```
+
+**Step 2: Grant role-based permissions**
+```sql
+-- Analyst: read-only
+GRANT SELECT ON myapp.* TO 'analyst'@'%';
+
+-- Developer: read and write
+GRANT SELECT, INSERT, UPDATE, DELETE ON myapp.* TO 'developer'@'%';
+
+-- Admin: full access
+GRANT ALL PRIVILEGES ON myapp.* TO 'admin'@'%' WITH GRANT OPTION;
+```
+
+**Step 3: Apply changes**
+```sql
+FLUSH PRIVILEGES;
+```
+
+**Step 4: Set default role**
+```sql
+ALTER USER 'developer'@'%' DEFAULT ROLE 'developer_app';
+```
+</Accordion>
+
+<Accordion title="MongoDB RBAC">
+**Step 1: Create roles with specific privileges**
+```javascript
+db.createRole({
+  role: "analyst_readonly",
+  privileges: [
+    {
+      resource: { db: "analytics", collection: "" },
+      actions: ["find", "listCollections"]
+    }
+  ],
+  roles: []
+})
+```
+
+**Step 2: Create users with role assignment**
+```javascript
+db.createUser({
+  user: "analyst_user",
+  pwd: "secure_password",
+  roles: [
+    { role: "analyst_readonly", db: "analytics" }
+  ]
+})
+```
+
+**Step 3: Verify role permissions**
+```javascript
+db.getRole("analyst_readonly", { showPrivileges: true })
+```
+</Accordion>
+</AccordionGroup>
+
+## Read-Only Access Management
+
+### Creating Safe Read-Only Users
+
+Read-only users are essential for non-destructive database access.
+
+**Read-Only User Best Practices:**
+
+- Use for analysts, consultants, auditors
+- Default to read-only, expand only when justified
+- Combine with IP restrictions and time-based limits
+- Monitor for suspicious activity patterns
+- Rotate credentials regularly
+
+### Read-Only Verification
+
+<Warning>
+Verify that read-only access truly prevents modifications. Some database configurations can accidentally grant write access through views or functions.
+</Warning>
+
+**Verification Queries:**
+
+```sql
+-- PostgreSQL: Verify user has no write permissions
+SELECT grantee, privilege_type
+FROM information_schema.role_table_grants
+WHERE table_name='your_table'
+  AND grantee='analyst_user';
+
+-- Should return: SELECT only, not INSERT, UPDATE, DELETE
+```
+
+```sql
+-- MySQL: Check user privileges
+SHOW GRANTS FOR 'analyst_user'@'%';
+
+-- Verify only SELECT is granted
+```
+
+```javascript
+-- MongoDB: List user roles and privileges
+db.getUser("analyst_user")
+// Verify role contains only read actions
+```
+
+### View-Based Read-Only Access
+
+Use views to provide controlled, read-only access to specific data.
+
+**Sensitive Data Masking View:**
+
+```sql
+-- Hide sensitive columns for read-only users
+CREATE VIEW customers_redacted AS
+SELECT
+  id,
+  name,
+  city,
+  country,
+  '***' as email,           -- Mask email
+  '***' as phone,           -- Mask phone
+  FALSE as is_premium       -- Hide business logic
+FROM customers;
+
+-- Grant read-only access to view only
+GRANT SELECT ON customers_redacted TO analyst_readonly;
+```
+
+**Time-Series Data View:**
+
+```sql
+-- Provide read-only access to recent data only
+CREATE VIEW recent_transactions AS
+SELECT *
+FROM transactions
+WHERE created_at >= NOW() - INTERVAL '90 days';
+
+-- Grant access to view, not underlying table
+GRANT SELECT ON recent_transactions TO analyst_readonly;
+REVOKE SELECT ON transactions FROM analyst_readonly;
+```
+
+## Connection Profile Management
+
+### Establishing Connection Profiles
+
+WhoDB connection profiles securely store database credentials and settings.
+
+**Connection Profile Best Practices:**
+
+- Use environment-specific profiles (dev, staging, prod)
+- Never hardcode credentials in configuration files
+- Rotate credentials regularly
+- Use least privilege database users
+- Enable SSL/TLS for all connections
+- Document connection purpose and usage
+
+### Organizing Connection Profiles
+
+<AccordionGroup>
+<Accordion title="Naming Convention">
+Use consistent naming for easy identification:
+
+Format: `[environment]-[database-type]-[region]-[purpose]`
+
+Examples:
+- `dev-postgres-us-east-analytics`
+- `prod-mysql-us-west-app`
+- `staging-postgres-eu-reporting`
+- `dev-mongodb-local-testing`
+</Accordion>
+
+<Accordion title="Environment Separation">
+Keep profiles organized by environment:
+
+```
+Development
+├── dev-postgres-local
+├── dev-mysql-docker
+└── dev-mongodb-local
+
+Staging
+├── staging-postgres-rds
+├── staging-mysql-rds
+└── staging-mongodb-atlas
+
+Production
+├── prod-postgres-primary
+├── prod-postgres-replica
+├── prod-mysql-primary
+└── prod-mongodb-cluster
+```
+</Accordion>
+
+<Accordion title="Color Coding for Safety">
+Use color coding to prevent accidental production operations:
+
+- **Red**: Production databases (extreme caution)
+- **Yellow**: Staging databases (caution, test first)
+- **Green**: Development/test databases (safe for experimentation)
+- **Blue**: Read-only replicas (safe for queries)
+
+In WhoDB:
+- Assign colors to connection profiles
+- Always verify color before executing modifications
+- Train team on color meanings
+</Accordion>
+
+<Accordion title="Connection Parameters">
+Configure security parameters in each profile:
+
+```
+Host: db.example.com
+Port: 5432
+Database: myapp
+Username: app_user
+SSL Mode: require (or verify-full)
+Timeout: 30 seconds
+Pool Size: 10
+
+Notes:
+- Uses IAM authentication with assumed role
+- Read replica: only for reporting queries
+- Backup location: us-east-1a
+- VPN required: Yes
+```
+</Accordion>
+</AccordionGroup>
+
+### Credential Rotation
+
+<Warning>
+Regular credential rotation is essential for security. Credentials should be rotated at least quarterly, immediately after employee departure, and after any suspected breach.
+</Warning>
+
+**Credential Rotation Process:**
+
+```
+Step 1: Prepare new credentials
+├── Generate new password (16+ chars, mixed case, symbols)
+├── Test in development environment first
+└── Verify old credentials still work (for rollback)
+
+Step 2: Update database
+├── Create new user with same permissions
+├── Verify new user can connect
+└── Keep old user active temporarily
+
+Step 3: Update applications
+├── Update connection string in WhoDB
+├── Verify all services connect successfully
+├── Monitor logs for connection errors
+
+Step 4: Verify and cleanup
+├── Confirm all services use new credentials
+├── Run security audit
+├── Remove old credentials
+└── Document rotation date and approver
+```
+
+**Rotation Schedule:**
+
+```
+Production Databases:  Quarterly + immediate after separation
+Staging Databases:     Semi-annually + after breach suspicion
+Development Databases: Annually + after onboarding
+Service Accounts:      Quarterly + after vulnerability scan
+```
+
+## Security Policies
+
+### Data Classification
+
+Classify data by sensitivity to guide access control decisions.
+
+**Data Classification Levels:**
+
+| Level | Examples | Access | Encryption | Auditing |
+|-------|----------|--------|------------|----------|
+| **Public** | Product catalog, public documentation | Everyone | Optional | Optional |
+| **Internal** | Sales reports, team info | Employees | Recommended | Recommended |
+| **Sensitive** | Customer data, health records | Department specific | Required | Required |
+| **Restricted** | Passwords, API keys, PII | Minimal, need-based | Required | Required |
+
+**Classification Process:**
+
+1. Audit all tables and columns
+2. Document sensitivity level
+3. Define access restrictions
+4. Implement technical controls
+5. Review and update annually
+
+**Example Classification:**
+
+```
+Table: users
+├── id: PUBLIC
+├── name: INTERNAL
+├── email: SENSITIVE (PII)
+├── password_hash: RESTRICTED
+└── ssn: RESTRICTED (highly sensitive)
+```
+
+### Implementing Access Policies
+
+<AccordionGroup>
+<Accordion title="Column-Level Security">
+Restrict access to sensitive columns:
+
+```sql
+-- PostgreSQL: Create role without access to sensitive columns
+CREATE ROLE analyst_no_pii;
+GRANT SELECT (id, name, city, country) ON customers TO analyst_no_pii;
+
+-- Not SELECT *, only specified columns
+-- Excludes email, phone, ssn
+```
+</Accordion>
+
+<Accordion title="Row-Level Security">
+PostgreSQL Row-Level Security (RLS):
+
+```sql
+-- Enable RLS on table
+ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
+
+-- Analysts can only see customers in their region
+CREATE POLICY analyst_access_by_region ON customers
+  FOR SELECT
+  USING (region = current_setting('app.user_region'));
+
+-- Set user's region
+SET app.user_region = 'NORTH_AMERICA';
+```
+</Accordion>
+
+<Accordion title="Time-Based Access">
+Restrict access by time:
+
+```sql
+-- PostgreSQL: Create role valid only during business hours
+CREATE ROLE developer_business_hours;
+
+-- Check access time before granting connection
+CREATE OR REPLACE FUNCTION check_business_hours()
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXTRACT(HOUR FROM CURRENT_TIME) BETWEEN 9 AND 18
+    AND EXTRACT(DOW FROM CURRENT_DATE) BETWEEN 1 AND 5;
+END;
+$$ LANGUAGE plpgsql;
+```
+</Accordion>
+
+<Accordion title="IP Restriction">
+Restrict connections by IP:
+
+```
+Connection Profile: prod-postgres-primary
+├── Host: db.prod.example.com
+├── Allowed IPs:
+│   ├── 10.0.1.0/24 (office network)
+│   ├── 10.0.2.0/24 (VPN network)
+│   └── 203.0.113.45/32 (admin home)
+└── Blocked IPs: 0.0.0.0/0 (deny all by default)
+```
+</Accordion>
+</AccordionGroup>
+
+### Audit Logging
+
+<Warning>
+Enable comprehensive audit logging for all database access. Audit logs are critical for security investigations, compliance audits, and incident response.
+</Warning>
+
+**What to Log:**
+
+- User login/logout events
+- Query execution (SELECT, INSERT, UPDATE, DELETE)
+- Schema modifications
+- Security policy changes
+- Failed authentication attempts
+- Administrative operations
+
+**PostgreSQL Audit Configuration:**
+
+```sql
+-- Install pgAudit extension
+CREATE EXTENSION pgaudit;
+
+-- Log all write operations
+ALTER SYSTEM SET pgaudit.log = 'write, ddl';
+
+-- Log which tables accessed
+ALTER SYSTEM SET pgaudit.log_relation = on;
+
+-- Log statement details
+ALTER SYSTEM SET pgaudit.log_statement = off;
+ALTER SYSTEM SET pgaudit.log_statement_once = off;
+
+-- Reload configuration
+SELECT pg_reload_conf();
+```
+
+**Audit Log Review Process:**
+
+```
+Daily:
+  - Check for failed authentication attempts
+  - Review administrative operations
+  - Monitor unusual access patterns
+
+Weekly:
+  - Analyze access by user and role
+  - Identify overprivileged accounts
+  - Review data exports
+
+Monthly:
+  - Comprehensive access review
+  - Compliance verification
+  - Detection of suspicious patterns
+
+Quarterly:
+  - Formal access audit
+  - Recertification of access
+  - Policy effectiveness review
+```
+
+## Managing Access Lifecycle
+
+### User Onboarding
+
+<AccordionGroup>
+<Accordion title="Day 1: Account Creation">
+- [ ] Database account created
+- [ ] Appropriate role assigned
+- [ ] Temporary password issued securely
+- [ ] Connection profile provided
+- [ ] Security policy overview provided
+- [ ] WhoDB access granted
+</Accordion>
+
+<Accordion title="Day 7: Verification">
+- [ ] User confirmed connection works
+- [ ] Permissions verified correct
+- [ ] Training completed on security policies
+- [ ] First queries documented
+- [ ] Questions answered
+</Accordion>
+
+<Accordion title="Day 30: Review">
+- [ ] Permissions still appropriate for role
+- [ ] Access usage review
+- [ ] Feedback on onboarding process
+- [ ] Additional training needs identified
+- [ ] Permanent password set
+</Accordion>
+</AccordionGroup>
+
+### Access Reviews
+
+<AccordionGroup>
+<Accordion title="Quarterly User Access Review">
+**Process:**
+1. Generate user list with assigned roles
+2. Send to department managers for verification
+3. Collect feedback on access appropriateness
+4. Identify and remove unnecessary access
+5. Document review and approvals
+6. Archive for compliance
+
+**Template:**
+```
+User: alice@example.com
+Current Role: analyst_readonly
+Department: Sales
+Manager: Bob Johnson
+
+Questions:
+- Does this user still need database access? YES / NO
+- Is the role appropriate? YES / NO / NEEDS_UPGRADE / NEEDS_DOWNGRADE
+- Any concerns? ___________________
+
+Recommendation: APPROVE / REVOKE / MODIFY
+```
+</Accordion>
+
+<Accordion title="Role Change Review">
+When user changes roles:
+- [ ] Remove old role permissions
+- [ ] Document date of change
+- [ ] Assign new role permissions
+- [ ] Verify appropriate access
+- [ ] Document business justification
+- [ ] Notify security team
+</Accordion>
+
+<Accordion title="Dormant Account Review">
+Inactive accounts should be disabled:
+
+```
+Audit Query (PostgreSQL):
+SELECT usename, valuntil, last_login
+FROM pg_user
+LEFT JOIN pg_stat_user_tables ON 1=1
+WHERE last_login < NOW() - INTERVAL '90 days'
+  OR last_login IS NULL;
+
+Action:
+- Disable account after 90 days inactivity
+- Archive after 1 year
+- Delete after 2 years (per retention policy)
+```
+</Accordion>
+</AccordionGroup>
+
+### User Offboarding
+
+<Warning>
+Prompt offboarding is critical when employees leave. Delayed credential removal represents a significant security risk.
+</Warning>
+
+**Offboarding Checklist:**
+
+```
+Effective Date: [departure date]
+Employee: [name]
+
+Immediate (Day 0):
+  [ ] Disable database user account
+  [ ] Revoke all role memberships
+  [ ] Disable SSH keys if applicable
+  [ ] Remove VPN access
+  [ ] Notify security team
+
+Within 24 Hours:
+  [ ] Confirm account is disabled
+  [ ] Check for running queries/sessions
+  [ ] Audit recent query history
+  [ ] Document access used over final period
+
+Within 7 Days:
+  [ ] Archive credentials securely
+  [ ] Document any outstanding work
+  [ ] Transfer owned queries to team
+  [ ] Update access documentation
+  [ ] File security incident if needed
+```
+
+## Access Control Checklist
+
+**Initial Setup:**
+
+- [ ] Database roles defined for each user type
+- [ ] Least privilege principle implemented
+- [ ] Read-only users created for analysts
+- [ ] Connection profiles configured securely
+- [ ] SSL/TLS enabled for all connections
+
+**Role Management:**
+
+- [ ] RBAC hierarchy established
+- [ ] Default permissions set
+- [ ] New table permissions automated
+- [ ] Role documentation complete
+- [ ] Service accounts use least privilege
+
+**Security Policies:**
+
+- [ ] Data classified by sensitivity
+- [ ] Column-level security implemented
+- [ ] Row-level security configured
+- [ ] IP restrictions enforced
+- [ ] Audit logging enabled
+
+**Ongoing Maintenance:**
+
+- [ ] Quarterly access reviews scheduled
+- [ ] Credential rotation calendar maintained
+- [ ] Dormant accounts identified monthly
+- [ ] Audit logs reviewed regularly
+- [ ] Policy violations investigated
+
+**Incident Response:**
+
+- [ ] Breach response procedures documented
+- [ ] Escalation path defined
+- [ ] Audit log preservation process established
+- [ ] Forensic analysis capabilities in place
+- [ ] Communication template prepared
+
+## Summary
+
+Robust access control requires careful planning, consistent implementation, and ongoing maintenance. By implementing role-based access, managing credentials securely, defining clear policies, and conducting regular reviews, you create a strong security posture that protects your databases while enabling productive work. WhoDB's connection profile management and audit capabilities make it straightforward to implement these best practices. Remember that access control is not a one-time setup—it requires continuous attention as your organization evolves, team members change, and new threats emerge.

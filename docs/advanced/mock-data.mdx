@@ -1,0 +1,381 @@
+---
+title: "Mock Data Generation"
+description: "Generate realistic test data for development and testing"
+---
+
+# Mock Data Generation
+
+WhoDB provides a powerful mock data generation feature that allows you to populate your tables with realistic test data. This is invaluable for development, testing, and demonstration purposes.
+
+<Tip>
+Mock data generation helps you quickly create test datasets without manual data entry
+</Tip>
+
+## Overview
+
+The mock data generator creates realistic data based on your table schema, supporting various data types and constraints. You can generate anywhere from a single row to hundreds of rows of test data.
+
+![Mock Data Dialog](/images/22-data-view-mock-data-dialog.png)
+
+## Accessing Mock Data Generation
+
+1. Navigate to any table in WhoDB
+2. Click the **Add Data** menu or action button
+3. Select **Generate Mock Data** from the options
+
+The mock data generation dialog will open with several configuration options.
+
+## Configuration Options
+
+### Data Handling Modes
+
+The first critical choice is how to handle existing data:
+
+![Mock Data Handling Options](/images/72-mock-data-handling-options.png)
+
+### Append Mode
+
+**Safe Operation** - Adds new mock data to existing rows
+
+![Append Mode](/images/71-mock-data-append-mode.png)
+
+Use this mode when:
+- You want to preserve existing data
+- You're adding test data to a partially populated table
+- You're conducting safe testing that doesn't require a fresh state
+
+All generated rows are inserted as new records without modifying existing data.
+
+<Check>
+Recommended for development environments where data preservation is important
+</Check>
+
+---
+
+### Overwrite Mode
+
+**Destructive Operation** - Replaces all existing data with mock data
+
+![Overwrite Confirmation](/images/47-mock-data-overwrite-confirmation.png)
+
+Use this mode when:
+- You want a completely fresh dataset
+- You're resetting test data
+- You're preparing demonstration data
+
+All existing rows in the table are deleted and replaced with newly generated mock data.
+
+<Warning>
+This operation is destructive and cannot be undone. Ensure you have backups before using overwrite mode.
+</Warning>
+
+### Row Count
+
+Specify how many rows of mock data to generate. WhoDB provides several preset options:
+
+**Minimum - 1 Row**
+
+![Row Count Minimum](/images/73-mock-data-row-count-minimum.png)
+
+Perfect for quick testing or creating a single example record.
+
+**Medium - 100 Rows**
+
+![Row Count Medium](/images/74-mock-data-row-count-medium.png)
+
+Ideal for standard testing scenarios with a reasonable dataset size.
+
+**Maximum - 200 Rows**
+
+![Row Count Maximum](/images/75-mock-data-row-count-maximum.png)
+
+For comprehensive testing with large datasets. Note that row counts may be clamped based on your database configuration.
+
+<Tip>
+You can manually enter custom row counts between these presets by editing the field directly
+</Tip>
+
+## Data Type Handling
+
+WhoDB intelligently generates appropriate data for each column type:
+
+### Text Columns
+- **String**: Lorem ipsum-style placeholder text
+- **Email**: Realistic email addresses (user@example.com format)
+- **URL**: Valid URLs with example domains
+- **Names**: Common first and last name combinations
+
+### Numeric Columns
+- **Integer**: Random whole numbers within typical ranges
+- **Decimal/Float**: Random decimal values
+- **Percentage**: Values between 0-100
+- **Age**: Values between 18-80
+- **Price**: Currency values with appropriate decimal places
+
+### Date/Time Columns
+- **Date**: Random dates within the past 5 years
+- **DateTime**: Timestamps with realistic times
+- **Time**: Valid time values
+- **Year**: Recent calendar years
+
+### Boolean/Enum Columns
+- **Boolean**: Random true/false values
+- **Enum**: Random selections from defined options
+
+### Relationship Columns
+- **Foreign Keys**: Valid references to existing records
+- **Relationships**: Maintains referential integrity
+
+## Using Mock Data Effectively
+
+### Best Practices
+
+<AccordionGroup>
+<Accordion title="Test in Non-Production First">
+Always test mock data generation on development or staging databases first. Verify the generated data meets your needs before using in production contexts.
+
+<Note>
+Production databases should rarely receive mock data generation, especially in overwrite mode
+</Note>
+</Accordion>
+<Accordion title="Backup Before Overwrite">
+Before using overwrite mode, always export or backup your existing data:
+
+1. Use **Export All** to save current data to CSV/Excel
+2. Store the backup file securely
+3. Confirm the backup is successful before proceeding with overwrite
+
+```bash
+# Recommended: Maintain a backup
+mysqldump database_name table_name > backup.sql
+```
+</Accordion>
+<Accordion title="Match Your Test Requirements">
+Consider what your tests actually need:
+
+- **Unit Tests**: 1-10 rows is usually sufficient
+- **Integration Tests**: 50-100 rows provides good coverage
+- **Performance Tests**: 200+ rows to test at scale
+- **UI/Demo**: 20-50 rows for visual appeal without being overwhelming
+</Accordion>
+<Accordion title="Verify Data Constraints">
+After generation, verify that:
+
+- Foreign key relationships are valid
+- No constraint violations occurred
+- Data ranges are appropriate for your use case
+- Null/Not Null constraints are respected
+- Unique constraints have no duplicates
+</Accordion>
+<Accordion title="Document Your Test Data">
+Keep notes about mock datasets:
+
+- Record the row count and timestamp
+- Document which mode was used (append/overwrite)
+- Note any special configuration
+- Track which tests use which datasets
+</Accordion>
+</AccordionGroup>
+
+### Common Workflows
+
+### Fresh Start Testing
+
+<Steps>
+<Step title="Backup Current Data">
+Export all existing data to a safe location
+</Step>
+<Step title="Open Mock Data Generator">
+Navigate to your test table and open the dialog
+</Step>
+<Step title="Select Overwrite Mode">
+Choose "Overwrite" to replace all existing data
+</Step>
+<Step title="Set Row Count">
+Choose an appropriate count (50-100 rows for most tests)
+</Step>
+<Step title="Generate">
+Click "Generate Mock Data" to create the test dataset
+</Step>
+<Step title="Verify Results">
+Check that the data was generated correctly
+</Step>
+<Step title="Run Tests">
+Execute your tests against the fresh dataset
+</Step>
+</Steps>
+
+### Incremental Testing
+
+<Steps>
+<Step title="Open Mock Data Generator">
+Navigate to the table that needs more test data
+</Step>
+<Step title="Select Append Mode">
+Choose "Append" to add data without removing existing rows
+</Step>
+<Step title="Set Row Count">
+Choose the number of additional rows to add (10-20 is typical)
+</Step>
+<Step title="Generate">
+Click "Generate Mock Data" to add to the table
+</Step>
+<Step title="Review New Data">
+Scroll through to see the newly added rows
+</Step>
+<Step title="Continue Testing">
+The additional data is now available for testing
+</Step>
+</Steps>
+
+### Demo Preparation
+
+<Steps>
+<Step title="Create Demo Database">
+Set up a separate database for demonstrations
+</Step>
+<Step title="Generate Sample Data">
+Populate each table with 20-30 rows for visual appeal
+</Step>
+<Step title="Use Append Mode">
+Add data gradually to show realistic scenarios
+</Step>
+<Step title="Filter to Highlights">
+Use WHERE conditions to show relevant data subsets
+</Step>
+<Step title="Export Results">
+Save demo queries and results for consistency
+</Step>
+</Steps>
+
+
+## Security and Safety Considerations
+
+### Never Generate Mock Production Data
+
+<Warning>
+**Critical**: Do not generate mock data using production database credentials or connection settings
+</Warning>
+
+Production databases should have strict access controls. Generating mock data in production can:
+- Corrupt existing critical data in overwrite mode
+- Violate data compliance requirements (GDPR, HIPAA, etc.)
+- Create unexpected downtime if performance is affected
+- Introduce invalid or inconsistent data
+
+### Separate Environments
+
+Maintain clear separation:
+
+| Environment | Mock Data | Purpose |
+|------------|-----------|---------|
+| **Local Dev** | Yes | Individual development |
+| **Development** | Yes | Team development/testing |
+| **Staging** | Limited | Pre-production testing |
+| **Production** | No | Live data only |
+
+### Data Privacy
+
+When generating mock data:
+
+- No sensitive personal information is included
+- Generated emails and names are fictional
+- No real phone numbers or addresses are used
+- All data is placeholder/test quality
+
+However, if your table contains sensitive fields:
+
+<Tip>
+Configure field-level encryption or masking after generation to ensure privacy compliance
+</Tip>
+
+### Audit Trail
+
+WhoDB logs mock data generation events for audit purposes:
+
+- **Timestamp**: When data was generated
+- **User**: Who initiated generation
+- **Mode**: Append or overwrite
+- **Row Count**: Number of rows generated
+- **Table**: Which table was affected
+
+Review audit logs regularly in sensitive environments.
+
+## Troubleshooting
+
+### Generation Fails with Constraint Errors
+
+**Cause**: Foreign key constraints cannot be satisfied
+
+**Solution**:
+1. Ensure parent tables have sufficient data
+2. Generate parent table data first
+3. Then generate child table data
+4. Check referential integrity settings
+
+### Generated Data Looks Unrealistic
+
+**Cause**: Schema metadata may be incomplete
+
+**Solution**:
+1. Verify table structure in Explore view
+2. Check column types and constraints
+3. Update any custom field naming patterns
+4. Try with a smaller row count first
+
+### Overwrite Mode Deleted Data Unexpectedly
+
+**Cause**: Confirmation was accepted on the wrong table
+
+**Solution**:
+1. Check if you have a backup
+2. Review audit logs for timestamp
+3. Restore from backup if available
+4. Use version control to recover data
+
+<Note>
+Always maintain backups before using overwrite mode to prevent data loss
+</Note>
+
+### Performance Issues After Generation
+
+**Cause**: Large dataset may impact performance
+
+**Solution**:
+1. Add appropriate indexes to frequently queried columns
+2. Archive old test data periodically
+3. Use smaller row counts (50 instead of 200)
+4. Configure database connection pooling
+
+## Related Features
+
+<CardGroup cols={2}>
+<Card title="Data Import" icon="upload" href="/data/importing">
+Learn how to import your own data from CSV or other formats
+</Card>
+<Card title="Export Options" icon="download" href="/advanced/export-options">
+Master exporting your data in various formats
+</Card>
+<Card title="Batch Operations" icon="layer-group" href="/advanced/batch-operations">
+Work with multiple rows at once
+</Card>
+<Card title="Query Interface" icon="code" href="/query/scratchpad-intro">
+Write custom SQL to generate specific test data
+</Card>
+</CardGroup>
+
+## Summary
+
+Mock data generation in WhoDB provides:
+
+- Quick population of test tables with realistic data
+- Flexible row count configuration
+- Safe append mode and powerful overwrite mode
+- Intelligent data type handling
+- Comprehensive audit trail for compliance
+
+Use mock data generation to streamline your development workflow, accelerate testing, and prepare demonstration environments—while maintaining security and data integrity in production systems.
+
+<Check>
+You're now ready to generate effective test data for your development and testing needs!
+</Check>

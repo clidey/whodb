@@ -1,0 +1,418 @@
+---
+title: "WhoDB Changelog"
+description: "Track WhoDB updates, new features, improvements, and bug fixes with our comprehensive changelog"
+---
+
+# WhoDB Changelog
+
+Stay informed about the latest features, improvements, and bug fixes in WhoDB. This changelog documents all significant updates across Community Edition (CE) and Enterprise Edition (EE).
+
+<Tip>
+Subscribe to GitHub releases for instant notifications of new WhoDB versions
+</Tip>
+
+## v1.5.0 (Latest Release)
+
+**Release Date:** Q4 2024
+
+### New Features
+
+- **AI Chat Enhancements**: Improved schema awareness and multi-table query generation
+- **Keyboard Shortcut Customization**: Configure custom keyboard shortcuts in settings
+- **Advanced Export Options**: New export presets and quick-export templates
+- **Table Comparison Tool**: Compare schema and data between similar tables
+- **Saved Queries Feature**: Save frequently used queries in organized collections
+- **Dark Mode Enhancement**: Improved visual hierarchy and contrast ratios
+
+### Improvements
+
+- Performance optimization for large dataset pagination (50% faster)
+- Enhanced Scratchpad multi-cell workflow with better cell organization
+- Improved Graph visualization for schemas with 100+ tables
+- Better error messages with actionable solutions
+- Faster database connection establishment
+- Reduced memory footprint on frontend by 30%
+- Improved accessibility with better keyboard navigation
+- Enhanced search functionality with fuzzy matching
+
+### Bug Fixes
+
+- Fixed data grid column header overflow issues
+- Resolved Scratchpad query result caching problems
+- Fixed Graph view zoom level persistence
+- Corrected WHERE condition operator behavior for NULL values
+- Fixed export encoding issues with special characters
+- Resolved connection profile import errors
+- Fixed sidebar collapse state not persisting
+- Corrected mock data generation for specific PostgreSQL types
+
+### Database Support Updates
+
+- **PostgreSQL**: Added support for v16 with improved JSON functions
+- **MongoDB**: Enhanced document preview with better formatting
+- **ClickHouse**: Added support for dictionary tables and functions
+- **Elasticsearch**: Improved index mapping visualization
+
+### Known Issues
+
+- EE: Oracle Database connection pooling requires manual configuration
+- Large Excel exports (10k+ rows) may take longer than CSV
+- Graph visualization performance on schemas with 500+ tables
+
+---
+
+## v1.4.5
+
+**Release Date:** Q3 2024
+
+### New Features
+
+- **SSH Tunnel Connection Support**: Securely connect to databases through bastion hosts
+- **Export to Excel (XLSX)**: Native Excel format with formatting support
+- **Connection Profiles**: Save and manage multiple database connections
+- **Quick Copy**: One-click copy of table data to clipboard
+
+### Improvements
+
+- Scratchpad syntax highlighting now supports 15+ database dialects
+- Reduced initial load time by 40%
+- Better handling of very large result sets (100k+ rows)
+- Improved WHERE condition builder UI
+- Enhanced error recovery and retry logic
+
+### Bug Fixes
+
+- Fixed date format inconsistencies in exports
+- Corrected Scratchpad cell ordering issues
+- Fixed PostgreSQL array type display
+- Resolved MySQL timezone handling
+- Fixed sidebar scrolling performance
+
+### Database Support Updates
+
+- **MySQL**: Added support for v8.3
+- **MariaDB**: Added support for v11.0
+
+---
+
+## v1.4.0
+
+**Release Date:** Q2 2024
+
+### New Features
+
+- **AI Chat Integration**: Natural language database querying with multiple LLM providers
+  - Ollama support (local, private)
+  - OpenAI integration
+  - Anthropic Claude support
+- **Mock Data Generation**: Generate realistic test data with customizable options
+- **Global Search**: Search across all databases and tables
+- **Query History**: Automatic saving and searching of executed queries
+- **Multiple Scratchpad Cells**: Organize related queries in notebooks
+
+### Improvements
+
+- Graph visualization now handles bidirectional relationships better
+- Enhanced schema explorer with search functionality
+- Improved connection error messages
+- Better support for large schemas (500+ tables)
+- Faster data grid rendering with virtualization
+- Enhanced keyboard navigation throughout app
+
+### Bug Fixes
+
+- Fixed Graph view rendering on Safari
+- Corrected WHERE clause generation for LIKE operators
+- Fixed inline cell editing with special characters
+- Resolved connection timeout issues
+- Fixed pagination state on data grid
+
+### Database Support Updates
+
+- **Redis**: Added support for Redis 7.0+
+- **Elasticsearch**: Added support for v8.0+
+
+---
+
+## v1.3.0
+
+**Release Date:** Q1 2024
+
+### New Features
+
+- **Graph Visualization**: Interactive schema relationship diagrams
+  - Pan and zoom controls
+  - Node details on click
+  - Relationship cardinality indicators
+- **Advanced WHERE Conditions**: Multi-condition filter builder
+- **Data Export (CSV, JSON, SQL)**: Multiple export formats with customization
+- **Inline Row Editing**: Quick cell edit with double-click
+- **Table Search**: Search across table columns with highlighting
+
+### Improvements
+
+- Sidebar now shows table record counts
+- Enhanced column header information tooltips
+- Better handling of NULL values in data grid
+- Improved mobile responsiveness
+- Faster schema loading for databases with 200+ tables
+
+### Bug Fixes
+
+- Fixed data grid sorting on columns with NULL values
+- Corrected foreign key relationship detection
+- Fixed export file naming with special characters
+- Resolved page size dropdown issues
+- Fixed schema caching for schema changes
+
+---
+
+## v1.2.0
+
+**Release Date:** Q4 2023
+
+### New Features
+
+- **Scratchpad Query Editor**: Multi-cell notebook-style query interface
+  - Syntax highlighting
+  - Query history
+  - Result visualization
+- **Explore View**: Detailed table structure information
+  - Column definitions
+  - Indexes and keys
+  - Constraints display
+- **Where Condition Builder**: GUI for building filter conditions
+- **Column Sorting**: Multi-column sort support with visual indicators
+- **Pagination**: Configurable page sizes (10, 25, 50, 100)
+
+### Improvements
+
+- Significantly improved query execution performance
+- Better handling of very wide tables (50+ columns)
+- Enhanced error messages with helpful suggestions
+- Improved connection stability with reconnection logic
+
+### Bug Fixes
+
+- Fixed sidebar tree node expansion persistence
+- Corrected data types display for edge cases
+- Fixed connection credential storage security
+- Resolved data grid horizontal scrolling issues
+
+---
+
+## v1.1.0
+
+**Release Date:** Q3 2023
+
+### New Features
+
+- **Schema Explorer**: Hierarchical view of database structure
+  - Databases and schemas
+  - Tables, views, and stored procedures
+  - Tree-based navigation
+- **Add/Edit/Delete Rows**: Basic data manipulation interface
+- **SSL/TLS Support**: Secure database connections
+- **Connection Pooling**: Configurable connection pool settings
+
+### Improvements
+
+- Faster database connection establishment
+- Better handling of special characters in data
+- Improved UI responsiveness
+- Better error handling and user feedback
+
+### Bug Fixes
+
+- Fixed connection timeout handling
+- Corrected data type detection
+- Fixed data grid refresh issues
+- Resolved theme switching bugs
+
+---
+
+## v1.0.0 (Initial Release)
+
+**Release Date:** Q2 2023
+
+### Features
+
+- **Multi-Database Support**: Connect to PostgreSQL, MySQL, SQLite, MongoDB
+- **Data Grid View**: View and navigate table data
+- **Sidebar Navigation**: Browse database structure
+- **Connection Management**: Save and switch between database connections
+- **Browser-Based Interface**: No installation required (with Docker)
+- **Lightweight Design**: Minimal resource usage
+
+### Database Support
+
+- PostgreSQL 9.6+
+- MySQL 5.7+
+- SQLite 3.8+
+- MongoDB 3.6+
+
+### Known Limitations (Fixed in Later Versions)
+
+- Limited export capabilities (JSON only)
+- No query editor (added in v1.2.0)
+- No schema visualization (added in v1.3.0)
+- Limited keyboard shortcuts (expanded in v1.4.0+)
+
+---
+
+## Version Comparison
+
+| Feature | v1.0 | v1.1 | v1.2 | v1.3 | v1.4 | v1.5 |
+|---------|------|------|------|------|------|------|
+| Multi-Database Support | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Data Grid | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Scratchpad Editor | ✗ | ✗ | ✓ | ✓ | ✓ | ✓ |
+| Graph Visualization | ✗ | ✗ | ✗ | ✓ | ✓ | ✓ |
+| AI Chat | ✗ | ✗ | ✗ | ✗ | ✓ | ✓ |
+| Mock Data | ✗ | ✗ | ✗ | ✗ | ✓ | ✓ |
+| Export (Multiple Formats) | ✗ | ✗ | ✗ | ✓ | ✓ | ✓ |
+| Query History | ✗ | ✗ | ✗ | ✗ | ✓ | ✓ |
+| Custom Keyboard Shortcuts | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ |
+
+## Upcoming Features (Roadmap)
+
+<AccordionGroup>
+<Accordion title="Q1 2025 Planning">
+- Schema version control and migration tracking
+- Collaborative workspace with real-time sync
+- Advanced query optimization suggestions
+- Enhanced mobile app with offline support
+- Integration with popular data tools (Jupyter, Tableau)
+</Accordion>
+
+<Accordion title="Q2 2025 Planning">
+- Query performance analysis and profiling
+- Automated schema documentation generation
+- Data masking for sensitive information
+- API endpoint generation from queries
+- Team management and role-based access
+</Accordion>
+
+<Accordion title="Future Roadmap">
+- GraphQL query builder (visual)
+- Data lineage tracking
+- Integration with dbt for data transformation
+- Workflow automation and scheduling
+- Multi-tenant support
+- Advanced caching strategies
+</Accordion>
+</AccordionGroup>
+
+## Release Process
+
+WhoDB follows semantic versioning (MAJOR.MINOR.PATCH):
+
+- **Major Version**: Significant features, breaking changes, or major improvements
+- **Minor Version**: New features and improvements without breaking changes
+- **Patch Version**: Bug fixes and security updates
+
+## Getting Latest Updates
+
+<CardGroup cols={2}>
+<Card title="GitHub Releases" icon="github" href="https://github.com/clidey/whodb/releases">
+Download latest version and pre-releases
+</Card>
+<Card title="Installation Guide" icon="download" href="/installation">
+Learn how to install the latest WhoDB
+</Card>
+<Card title="Community Forum" icon="comments" href="https://github.com/clidey/whodb/discussions">
+Discuss upcoming features with community
+</Card>
+<Card title="Report Issues" icon="bug" href="https://github.com/clidey/whodb/issues">
+Report bugs or request features
+</Card>
+</CardGroup>
+
+## Breaking Changes History
+
+<AccordionGroup>
+<Accordion title="v1.0 → v1.1">
+- No breaking changes
+- Full backward compatibility maintained
+</Accordion>
+
+<Accordion title="v1.1 → v1.2">
+- Query history storage format changed
+- Old history entries may need to be re-saved
+- No API breaking changes
+</Accordion>
+
+<Accordion title="v1.2 → v1.3">
+- Keyboard shortcuts restructured
+- Custom shortcuts will be reset to defaults
+- No database compatibility changes
+</Accordion>
+
+<Accordion title="v1.3 → v1.4">
+- ChatDB/Ollama parameter format updated
+- Old configurations will auto-migrate
+- Connection profile format enhanced but backward compatible
+</Accordion>
+
+<Accordion title="v1.4 → v1.5">
+- No breaking changes
+- Full backward compatibility with v1.4 profiles
+- All features remain compatible
+</Accordion>
+</AccordionGroup>
+
+## Migration Guide Between Versions
+
+<Steps>
+<Step title="Backup Current Configuration">
+Export your connection profiles and settings
+</Step>
+<Step title="Review Breaking Changes">
+Check if your version has any breaking changes (see above)
+</Step>
+<Step title="Update WhoDB">
+Follow the installation guide for your platform
+</Step>
+<Step title="Verify Connections">
+Test database connections after upgrade
+</Step>
+<Step title="Check Settings">
+Review and re-configure settings if needed
+</Step>
+</Steps>
+
+## Support Matrix
+
+| Version | Release Date | Support End | LTS |
+|---------|-------------|-------------|-----|
+| v1.0.x | Q2 2023 | Q1 2024 | ✗ |
+| v1.1.x | Q3 2023 | Q2 2024 | ✗ |
+| v1.2.x | Q4 2023 | Q3 2024 | ✓ |
+| v1.3.x | Q1 2024 | Q4 2024 | ✗ |
+| v1.4.x | Q2 2024 | Q2 2025 | ✓ |
+| v1.5.x | Q4 2024 | Q4 2025 | ✓ |
+
+**LTS (Long Term Support)** versions receive security updates and critical bug fixes for extended periods.
+
+## Feedback & Feature Requests
+
+Have suggestions for new features or improvements? We'd love to hear from you:
+
+<CardGroup cols={2}>
+<Card title="GitHub Discussions" icon="comments" href="https://github.com/clidey/whodb/discussions">
+Join the community discussion
+</Card>
+<Card title="Feature Requests" icon="lightbulb" href="https://github.com/clidey/whodb/issues/new?template=feature_request.md">
+Propose new features
+</Card>
+<Card title="Bug Reports" icon="bug" href="https://github.com/clidey/whodb/issues/new?template=bug_report.md">
+Report issues you encounter
+</Card>
+<Card title="Email Support" icon="envelope" href="mailto:support@clidey.com">
+Contact support team
+</Card>
+</CardGroup>
+
+<Info>
+This changelog is updated with each WhoDB release. Check back regularly for the latest news and improvements.
+</Info>

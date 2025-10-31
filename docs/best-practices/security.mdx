@@ -1,0 +1,428 @@
+---
+title: Security Best Practices
+description: Essential security practices for managing databases with WhoDB
+---
+
+# Security Best Practices
+
+Database security is critical for protecting sensitive data and maintaining system integrity. This guide covers essential security practices when using WhoDB to manage your databases.
+
+## Connection Security
+
+### Use Encrypted Connections
+
+Always use encrypted connections when accessing databases over networks. WhoDB supports SSL/TLS for all major database systems.
+
+**PostgreSQL SSL Configuration:**
+```
+Host: production-db.example.com
+Port: 5432
+Username: whodb_user
+Password: [secure password]
+Database: myapp
+SSL Mode: require
+```
+
+Configure SSL modes based on your security requirements:
+- **disable**: No SSL (only for local development)
+- **require**: SSL required, but certificate not verified
+- **verify-ca**: SSL required, verify certificate authority
+- **verify-full**: SSL required, verify CA and hostname
+
+**MySQL SSL Configuration:**
+```
+Host: mysql-prod.example.com
+Port: 3306
+Username: app_reader
+Password: [secure password]
+Database: production
+SSL: Enabled
+SSL CA: /path/to/ca-cert.pem
+```
+
+### Network Security
+
+Implement network-level security controls:
+
+**Firewall Rules:**
+- Restrict database access to specific IP ranges
+- Use VPN or SSH tunneling for remote access
+- Never expose database ports directly to the internet
+
+**SSH Tunneling:**
+When direct database access is restricted, use SSH tunneling:
+```bash
+ssh -L 5432:localhost:5432 user@bastion-host.example.com
+```
+Then connect WhoDB to `localhost:5432`.
+
+### Connection String Security
+
+Never hardcode credentials in application code or configuration files. WhoDB stores connection profiles securely, but additional precautions are necessary:
+
+**Environment Variables:**
+Store sensitive connection details in environment variables rather than committing them to version control.
+
+**Secrets Management:**
+For production environments, use dedicated secrets management solutions:
+- HashiCorp Vault
+- AWS Secrets Manager
+- Azure Key Vault
+- Google Cloud Secret Manager
+
+## Authentication and Access Control
+
+### Principle of Least Privilege
+
+Create database users with minimum necessary permissions. Avoid using administrative accounts for routine operations.
+
+**PostgreSQL Read-Only User:**
+```sql
+CREATE ROLE whodb_readonly;
+GRANT CONNECT ON DATABASE myapp TO whodb_readonly;
+GRANT USAGE ON SCHEMA public TO whodb_readonly;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO whodb_readonly;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT SELECT ON TABLES TO whodb_readonly;
+
+CREATE USER readonly_user WITH PASSWORD 'secure_password';
+GRANT whodb_readonly TO readonly_user;
+```
+
+**MySQL Read-Only User:**
+```sql
+CREATE USER 'readonly_user'@'%' IDENTIFIED BY 'secure_password';
+GRANT SELECT ON myapp.* TO 'readonly_user'@'%';
+FLUSH PRIVILEGES;
+```
+
+### Role-Based Access
+
+Create different database roles for different purposes:
+
+**Development Access:**
+- Read and write access to development databases
+- No access to production data
+- Limited to specific schemas or tables
+
+**Analyst Access:**
+- Read-only access to specific tables
+- No access to sensitive columns (PII, passwords)
+- Query execution limits
+
+**Operations Access:**
+- Read and write for specific operations
+- Time-limited credentials
+- Audit logging required
+
+**Administrative Access:**
+- Full access for emergencies only
+- Multi-factor authentication required
+- Comprehensive audit trail
+
+### Password Management
+
+Implement strong password policies:
+
+**Password Requirements:**
+- Minimum 16 characters
+- Mix of uppercase, lowercase, numbers, and symbols
+- No dictionary words or common patterns
+- Regular rotation (90 days for sensitive systems)
+
+**Password Storage:**
+- Use password managers for credential storage
+- Never share passwords via email or chat
+- Use separate passwords for each environment
+
+## Credential Management
+
+### Rotating Credentials
+
+Regularly rotate database credentials, especially after:
+- Employee departure
+- Suspected security breach
+- Routine security maintenance
+- Application updates
+
+**Rotation Process:**
+1. Create new credentials with same permissions
+2. Update applications to use new credentials
+3. Verify all services are using new credentials
+4. Revoke old credentials
+5. Document rotation in security logs
+
+### Multi-Factor Authentication
+
+Where supported, enable multi-factor authentication for database access:
+- Time-based one-time passwords (TOTP)
+- Hardware security keys
+- Biometric authentication
+
+## Audit Logging
+
+### Database-Level Auditing
+
+Enable comprehensive audit logging for production databases.
+
+**PostgreSQL pgAudit:**
+```sql
+CREATE EXTENSION pgaudit;
+ALTER SYSTEM SET pgaudit.log = 'write, ddl';
+ALTER SYSTEM SET pgaudit.log_level = 'log';
+ALTER SYSTEM SET pgaudit.log_relation = on;
+SELECT pg_reload_conf();
+```
+
+**MySQL Audit Plugin:**
+```sql
+INSTALL PLUGIN audit_log SONAME 'audit_log.so';
+SET GLOBAL audit_log_policy = 'ALL';
+SET GLOBAL audit_log_format = 'JSON';
+```
+
+### Application-Level Logging
+
+WhoDB operations should be logged at the application level:
+- Track which users execute which queries
+- Log data modifications with timestamps
+- Record failed authentication attempts
+- Monitor for suspicious activity patterns
+
+### Log Review
+
+Regularly review audit logs for:
+- Unauthorized access attempts
+- Unusual query patterns
+- Large data exports
+- Schema modifications
+- Failed authentication attempts
+- After-hours access
+
+## Production Access Guidelines
+
+### Change Management
+
+Implement strict change management for production databases:
+
+**Before Making Changes:**
+1. Document the intended change
+2. Get approval from required stakeholders
+3. Test changes in staging environment
+4. Schedule maintenance window if needed
+5. Prepare rollback plan
+
+**During Changes:**
+1. Verify current database state
+2. Create backup before modifications
+3. Execute changes with minimal scope
+4. Verify results immediately
+5. Monitor system performance
+
+**After Changes:**
+1. Document actual changes made
+2. Update configuration management
+3. Notify affected teams
+4. Monitor for issues
+5. Archive change documentation
+
+### Emergency Access
+
+Establish procedures for emergency production access:
+
+**Break-Glass Procedures:**
+- Defined criteria for emergency access
+- Documented escalation path
+- Automatic notification to security team
+- Comprehensive logging of all actions
+- Post-incident review required
+
+## Data Privacy and Compliance
+
+### Sensitive Data Handling
+
+Identify and protect sensitive data:
+
+**Personal Identifiable Information (PII):**
+- Names, addresses, phone numbers
+- Social security numbers
+- Financial information
+- Health records
+
+**Protection Strategies:**
+- Column-level encryption for sensitive fields
+- Masking in non-production environments
+- Access logging for PII queries
+- Retention policies and data deletion
+
+### Regulatory Compliance
+
+Ensure database management practices comply with relevant regulations:
+
+**GDPR Requirements:**
+- Right to be forgotten (data deletion)
+- Data portability
+- Consent management
+- Breach notification procedures
+
+**HIPAA Requirements:**
+- Access controls and authentication
+- Audit logging
+- Encryption at rest and in transit
+- Business associate agreements
+
+**PCI DSS Requirements:**
+- Cardholder data protection
+- Strong access controls
+- Regular security testing
+- Incident response plan
+
+## Query Security
+
+### SQL Injection Prevention
+
+While WhoDB uses parameterized queries internally, be cautious with:
+
+**Dynamic Query Construction:**
+Never concatenate user input directly into SQL queries in scratchpad mode:
+```sql
+-- DANGEROUS: Never do this
+SELECT * FROM users WHERE username = '[user_input]';
+
+-- SAFE: Use parameters
+SELECT * FROM users WHERE username = $1;
+```
+
+**Stored Procedures:**
+Review stored procedures for SQL injection vulnerabilities, especially those using dynamic SQL.
+
+### Query Whitelisting
+
+For automated or scheduled queries:
+- Maintain approved query templates
+- Review and approve new query patterns
+- Monitor for deviations from approved queries
+- Use views to restrict data access
+
+## Backup and Recovery
+
+### Backup Verification
+
+Security depends on reliable backups:
+
+**Backup Testing:**
+- Regularly test backup restoration
+- Verify backup encryption
+- Test recovery time objectives (RTO)
+- Test recovery point objectives (RPO)
+
+**Backup Security:**
+- Encrypt backups at rest
+- Secure backup transfer channels
+- Restrict access to backup files
+- Store backups in separate locations
+
+## Security Monitoring
+
+### Real-Time Monitoring
+
+Implement monitoring for security events:
+
+**Alert Triggers:**
+- Multiple failed authentication attempts
+- Queries accessing unusual data volumes
+- Schema modifications
+- Privilege escalations
+- Unusual access times or locations
+
+**Monitoring Tools:**
+- Database activity monitoring (DAM)
+- Security information and event management (SIEM)
+- Intrusion detection systems (IDS)
+- Log aggregation and analysis
+
+## Incident Response
+
+### Incident Detection
+
+Establish procedures for detecting security incidents:
+- Automated alerting for suspicious activity
+- Regular log review
+- User reports of unusual behavior
+- Performance anomalies
+
+### Response Plan
+
+Create and maintain an incident response plan:
+
+**Immediate Actions:**
+1. Isolate affected systems
+2. Preserve evidence
+3. Assess scope and impact
+4. Notify security team
+5. Begin containment
+
+**Investigation:**
+1. Analyze logs and audit trails
+2. Identify attack vectors
+3. Determine data exposure
+4. Document findings
+5. Report to stakeholders
+
+**Recovery:**
+1. Patch vulnerabilities
+2. Restore from clean backups
+3. Reset compromised credentials
+4. Verify system integrity
+5. Resume normal operations
+
+**Post-Incident:**
+1. Conduct lessons learned review
+2. Update security procedures
+3. Implement additional controls
+4. Notify affected parties if required
+5. Document incident and response
+
+## Security Checklist
+
+Use this checklist before granting database access:
+
+**Connection Security:**
+- [ ] SSL/TLS enabled and configured
+- [ ] Network access restricted by IP
+- [ ] VPN or SSH tunnel required for remote access
+- [ ] No database ports exposed to internet
+
+**Authentication:**
+- [ ] Strong, unique passwords used
+- [ ] Service accounts follow least privilege
+- [ ] No shared credentials
+- [ ] MFA enabled where available
+
+**Authorization:**
+- [ ] User has minimum necessary permissions
+- [ ] Access limited to required databases/schemas
+- [ ] Sensitive tables have additional restrictions
+- [ ] Read-only access used where possible
+
+**Auditing:**
+- [ ] Database audit logging enabled
+- [ ] Application logging configured
+- [ ] Log retention policy defined
+- [ ] Log review process established
+
+**Compliance:**
+- [ ] Regulatory requirements identified
+- [ ] Data classification completed
+- [ ] Privacy controls implemented
+- [ ] Incident response plan documented
+
+**Monitoring:**
+- [ ] Security alerts configured
+- [ ] Anomaly detection enabled
+- [ ] Regular security reviews scheduled
+- [ ] Incident response procedures tested
+
+## Summary
+
+Database security requires a layered approach combining technical controls, operational procedures, and continuous monitoring. By following these best practices, you can significantly reduce security risks while maintaining the productivity benefits of WhoDB's database management capabilities. Regular security reviews and updates to procedures ensure your database security posture remains strong as threats evolve.

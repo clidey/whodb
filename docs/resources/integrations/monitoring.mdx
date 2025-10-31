@@ -1,0 +1,794 @@
+---
+title: "Monitoring Integration"
+description: "Monitor WhoDB with Prometheus, Grafana, and logging solutions"
+---
+
+# Monitoring Integration
+
+Effective monitoring ensures WhoDB and your databases remain healthy, performant, and secure. This guide covers integration with popular monitoring tools, logging solutions, alerting systems, and best practices for production observability.
+
+<Tip>
+Comprehensive monitoring helps you detect issues before they impact users and provides insights for optimization
+</Tip>
+
+## Monitoring Architecture
+
+A complete monitoring setup includes:
+
+- **Metrics Collection**: Gather performance and health metrics
+- **Logging**: Centralized log aggregation and analysis
+- **Alerting**: Notifications for critical events
+- **Dashboards**: Visual representation of system health
+- **Tracing**: Request flow analysis across services
+
+## Prometheus Integration
+
+Prometheus is the industry-standard metrics collection and monitoring system. WhoDB can be monitored using node exporters and custom metrics.
+
+### Prometheus Configuration
+
+Create a `prometheus.yml` configuration:
+
+```yaml
+# prometheus.yml
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'production'
+    environment: 'prod'
+
+scrape_configs:
+  - job_name: 'whodb'
+    static_configs:
+      - targets: ['whodb:8080']
+        labels:
+          service: 'whodb'
+          instance: 'whodb-01'
+
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+        labels:
+          service: 'postgres'
+          database: 'production'
+
+  - job_name: 'mysql'
+    static_configs:
+      - targets: ['mysql-exporter:9104']
+        labels:
+          service: 'mysql'
+          database: 'production'
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+        labels:
+          service: 'redis'
+
+  - job_name: 'mongodb'
+    static_configs:
+      - targets: ['mongodb-exporter:9216']
+        labels:
+          service: 'mongodb'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+rule_files:
+  - '/etc/prometheus/rules/*.yml'
+```
+
+### Docker Compose with Prometheus
+
+```yaml
+version: '3.8'
+
+services:
+  whodb:
+    image: clidey/whodb:latest
+    ports:
+      - "8080:8080"
+    networks:
+      - monitoring
+
+  prometheus:
+    image: prom/prometheus:latest
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus-rules:/etc/prometheus/rules:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    environment:
+      DATA_SOURCE_NAME: "postgresql://postgres:password@postgres:5432/postgres?sslmode=disable"
+    ports:
+      - "9187:9187"
+    networks:
+      - monitoring
+
+  mysql-exporter:
+    image: prom/mysqld-exporter:latest
+    environment:
+      DATA_SOURCE_NAME: "root:password@(mysql:3306)/"
+    ports:
+      - "9104:9104"
+    networks:
+      - monitoring
+
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    environment:
+      REDIS_ADDR: "redis:6379"
+      REDIS_PASSWORD: "password"
+    ports:
+      - "9121:9121"
+    networks:
+      - monitoring
+
+volumes:
+  prometheus-data:
+
+networks:
+  monitoring:
+    driver: bridge
+```
+
+### Prometheus Alert Rules
+
+Create alert rules in `prometheus-rules/alerts.yml`:
+
+```yaml
+groups:
+  - name: whodb_alerts
+    interval: 30s
+    rules:
+      - alert: WhoDBDown
+        expr: up{job="whodb"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "WhoDB instance is down"
+          description: "WhoDB instance {{ $labels.instance }} has been down for more than 2 minutes."
+
+      - alert: HighMemoryUsage
+        expr: (container_memory_usage_bytes{name="whodb"} / container_spec_memory_limit_bytes{name="whodb"}) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage detected"
+          description: "WhoDB is using {{ $value | humanizePercentage }} of available memory."
+
+      - alert: DatabaseConnectionFailure
+        expr: increase(database_connection_errors_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database connection failures detected"
+          description: "{{ $value }} connection failures in the last 5 minutes."
+
+  - name: database_alerts
+    interval: 30s
+    rules:
+      - alert: PostgreSQLDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL instance is down"
+          description: "PostgreSQL on {{ $labels.instance }} is not responding."
+
+      - alert: SlowQueries
+        expr: rate(pg_stat_statements_mean_exec_time[5m]) > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow queries detected"
+          description: "Average query execution time is {{ $value }}ms."
+
+      - alert: HighDatabaseConnections
+        expr: (pg_stat_database_numbackends / pg_settings_max_connections) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High database connection usage"
+          description: "Database is using {{ $value | humanizePercentage }} of available connections."
+```
+
+## Grafana Dashboards
+
+Grafana provides visual dashboards for Prometheus metrics.
+
+### Grafana Setup
+
+```yaml
+# docker-compose.yml
+services:
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+
+volumes:
+  grafana-data:
+```
+
+### Grafana Datasource Configuration
+
+Create `grafana/datasources/prometheus.yml`:
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      timeInterval: "15s"
+```
+
+### WhoDB Dashboard JSON
+
+Create a dashboard in `grafana/dashboards/whodb.json`:
+
+```json
+{
+  "dashboard": {
+    "title": "WhoDB Monitoring",
+    "panels": [
+      {
+        "title": "WhoDB Uptime",
+        "targets": [
+          {
+            "expr": "up{job=\"whodb\"}",
+            "legendFormat": "{{ instance }}"
+          }
+        ],
+        "type": "stat"
+      },
+      {
+        "title": "Request Rate",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{job=\"whodb\"}[5m])",
+            "legendFormat": "{{ instance }}"
+          }
+        ],
+        "type": "graph"
+      },
+      {
+        "title": "Response Time",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "p95"
+          }
+        ],
+        "type": "graph"
+      },
+      {
+        "title": "Database Connection Pool",
+        "targets": [
+          {
+            "expr": "database_connection_pool_active",
+            "legendFormat": "Active"
+          },
+          {
+            "expr": "database_connection_pool_idle",
+            "legendFormat": "Idle"
+          }
+        ],
+        "type": "graph"
+      }
+    ]
+  }
+}
+```
+
+## Logging Integration
+
+Centralized logging helps track errors, debug issues, and audit activity.
+
+### ELK Stack Integration
+
+Deploy the ELK (Elasticsearch, Logstash, Kibana) stack for log aggregation:
+
+```yaml
+version: '3.8'
+
+services:
+  whodb:
+    image: clidey/whodb:latest
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service=whodb"
+    networks:
+      - logging
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.0
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - logging
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.10.0
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+    ports:
+      - "5000:5000"
+    environment:
+      - "LS_JAVA_OPTS=-Xmx256m -Xms256m"
+    depends_on:
+      - elasticsearch
+    networks:
+      - logging
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.10.0
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    networks:
+      - logging
+
+volumes:
+  elasticsearch-data:
+
+networks:
+  logging:
+    driver: bridge
+```
+
+### Logstash Pipeline Configuration
+
+Create `logstash/pipeline/logstash.conf`:
+
+```ruby
+input {
+  file {
+    path => "/var/log/whodb/*.log"
+    start_position => "beginning"
+    codec => json
+  }
+}
+
+filter {
+  if [service] == "whodb" {
+    grok {
+      match => { "message" => "%{TIMESTAMP_ISO8601:timestamp} %{LOGLEVEL:level} %{GREEDYDATA:message}" }
+    }
+
+    date {
+      match => [ "timestamp", "ISO8601" ]
+      target => "@timestamp"
+    }
+
+    mutate {
+      remove_field => ["timestamp"]
+    }
+  }
+}
+
+output {
+  elasticsearch {
+    hosts => ["elasticsearch:9200"]
+    index => "whodb-logs-%{+YYYY.MM.dd}"
+  }
+
+  stdout {
+    codec => rubydebug
+  }
+}
+```
+
+### Structured Logging
+
+Configure WhoDB for structured JSON logging:
+
+```yaml
+services:
+  whodb:
+    image: clidey/whodb:latest
+    environment:
+      - WHODB_LOG_FORMAT=json
+      - WHODB_LOG_LEVEL=info
+    volumes:
+      - ./logs:/var/log/whodb
+```
+
+## Loki and Promtail Integration
+
+Loki provides lightweight log aggregation optimized for Kubernetes and cloud-native environments:
+
+```yaml
+version: '3.8'
+
+services:
+  whodb:
+    image: clidey/whodb:latest
+    logging:
+      driver: "json-file"
+      options:
+        tag: "whodb"
+    networks:
+      - monitoring
+
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - monitoring
+
+  promtail:
+    image: grafana/promtail:latest
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./promtail-config.yml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - monitoring
+    depends_on:
+      - loki
+
+networks:
+  monitoring:
+    driver: bridge
+```
+
+Promtail configuration (`promtail-config.yml`):
+
+```yaml
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+    relabel_configs:
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
+      - source_labels: ['__meta_docker_container_log_stream']
+        target_label: 'stream'
+```
+
+## Health Checks
+
+Implement comprehensive health checks for monitoring systems:
+
+### HTTP Health Check Endpoint
+
+Create a health check script:
+
+```bash
+#!/bin/bash
+# scripts/health-check.sh
+
+WHODB_URL=${1:-http://localhost:8080}
+TIMEOUT=${2:-5}
+
+# Check WhoDB availability
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time "$TIMEOUT" "$WHODB_URL/health")
+
+if [ "$HTTP_CODE" -eq 200 ]; then
+    echo "WhoDB is healthy"
+    exit 0
+else
+    echo "WhoDB health check failed with HTTP code: $HTTP_CODE"
+    exit 1
+fi
+```
+
+### Kubernetes Liveness and Readiness Probes
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whodb
+spec:
+  replicas: 3
+  template:
+    spec:
+      containers:
+      - name: whodb
+        image: clidey/whodb:latest
+        ports:
+        - containerPort: 8080
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+```
+
+## Alerting with AlertManager
+
+Configure AlertManager for intelligent alert routing:
+
+```yaml
+# alertmanager.yml
+global:
+  resolve_timeout: 5m
+  slack_api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  receiver: 'default'
+  routes:
+    - match:
+        severity: critical
+      receiver: 'pagerduty-critical'
+      continue: true
+
+    - match:
+        severity: warning
+      receiver: 'slack-warnings'
+
+    - match:
+        alertname: WhoDBDown
+      receiver: 'slack-critical'
+
+receivers:
+  - name: 'default'
+    slack_configs:
+      - channel: '#monitoring'
+        title: 'Alert: {{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+
+  - name: 'slack-warnings'
+    slack_configs:
+      - channel: '#alerts-warnings'
+        title: 'Warning: {{ .GroupLabels.alertname }}'
+        text: '{{ .Annotations.summary }}'
+
+  - name: 'slack-critical'
+    slack_configs:
+      - channel: '#alerts-critical'
+        title: 'CRITICAL: {{ .GroupLabels.alertname }}'
+        text: '@here {{ .Annotations.description }}'
+
+  - name: 'pagerduty-critical'
+    pagerduty_configs:
+      - service_key: 'YOUR_PAGERDUTY_SERVICE_KEY'
+        description: '{{ .GroupLabels.alertname }}: {{ .Annotations.summary }}'
+```
+
+Deploy AlertManager:
+
+```yaml
+services:
+  alertmanager:
+    image: prom/alertmanager:latest
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - alertmanager-data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    networks:
+      - monitoring
+
+volumes:
+  alertmanager-data:
+```
+
+## Application Performance Monitoring
+
+### Jaeger for Distributed Tracing
+
+```yaml
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"
+      - "14268:14268"
+      - "14250:14250"
+      - "9411:9411"
+    environment:
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+    networks:
+      - monitoring
+```
+
+## Monitoring Best Practices
+
+<AccordionGroup>
+<Accordion title="Define Clear SLOs">
+Establish Service Level Objectives (SLOs) for:
+- Availability: 99.9% uptime
+- Latency: p95 < 200ms
+- Error rate: < 0.1%
+</Accordion>
+
+<Accordion title="Alert on Symptoms, Not Causes">
+Focus alerts on user-impacting issues rather than internal metrics. Alert when users are affected, not when a single container restarts.
+</Accordion>
+
+<Accordion title="Avoid Alert Fatigue">
+Configure proper thresholds and grouping to prevent notification spam. Use escalation policies for critical alerts.
+</Accordion>
+
+<Accordion title="Implement Runbooks">
+Document response procedures for each alert type to enable quick resolution.
+</Accordion>
+
+<Accordion title="Regular Dashboard Review">
+Schedule weekly dashboard reviews to identify trends and optimize performance proactively.
+</Accordion>
+
+<Accordion title="Log Retention Policies">
+Define retention based on compliance requirements and storage capacity:
+- Production logs: 30-90 days
+- Development logs: 7-14 days
+- Audit logs: 1-7 years (compliance dependent)
+</Accordion>
+</AccordionGroup>
+
+## Complete Monitoring Stack
+
+Production-ready monitoring configuration:
+
+```yaml
+version: '3.8'
+
+services:
+  whodb:
+    image: clidey/whodb:latest
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+      - monitoring
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana:/etc/grafana/provisioning
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - monitoring
+
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    networks:
+      - monitoring
+
+  promtail:
+    image: grafana/promtail:latest
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./promtail-config.yml:/etc/promtail/config.yml
+    networks:
+      - monitoring
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    ports:
+      - "9093:9093"
+    networks:
+      - monitoring
+
+volumes:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  app-network:
+  monitoring:
+```
+
+## Summary
+
+Comprehensive monitoring for WhoDB includes:
+
+- Metrics collection with Prometheus
+- Visual dashboards with Grafana
+- Centralized logging with ELK or Loki
+- Intelligent alerting with AlertManager
+- Distributed tracing with Jaeger
+- Health checks and SLO monitoring
+
+Proper monitoring ensures reliability, enables proactive issue resolution, and provides insights for continuous improvement.
+
+<Check>
+You're ready to implement production-grade monitoring for WhoDB
+</Check>

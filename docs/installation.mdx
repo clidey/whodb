@@ -1,0 +1,298 @@
+---
+title: "Installation"
+description: "Get WhoDB installed and running on your system"
+---
+
+# Installation Guide
+
+WhoDB can be installed and run in multiple ways depending on your environment and preferences. Choose the method that best suits your needs.
+
+## Installation Methods
+
+<CardGroup cols={2}>
+<Card title="Docker" icon="docker">
+Quick start with Docker for any platform
+</Card>
+<Card title="Binary Download" icon="file-zipper">
+Download pre-compiled binaries for your OS
+</Card>
+<Card title="Build from Source" icon="code-branch">
+Compile WhoDB from source code
+</Card>
+<Card title="Desktop App" icon="desktop">
+Native desktop application (Community & Enterprise)
+</Card>
+</CardGroup>
+
+## Docker Installation (Recommended)
+
+<Tip>
+Docker is the fastest and easiest way to get started with WhoDB
+</Tip>
+
+### Prerequisites
+
+- Docker installed on your system ([Get Docker](https://docs.docker.com/get-docker/))
+- Access to a database you want to connect to
+
+### Quick Start with Docker
+
+<Steps>
+<Step title="Pull the Docker Image">
+```bash
+docker pull clidey/whodb:latest
+```
+</Step>
+<Step title="Run WhoDB Container">
+```bash
+docker run -d \
+  --name whodb \
+  -p 8080:8080 \
+  clidey/whodb:latest
+```
+</Step>
+<Step title="Access WhoDB">
+Open your browser and navigate to `http://localhost:8080`
+</Step>
+</Steps>
+
+<Note>
+WhoDB will be accessible on port 8080. You can change the port by modifying the `-p` flag (e.g., `-p 3000:8080` for port 3000)
+</Note>
+
+### Docker Compose
+
+For a more robust setup, use Docker Compose:
+
+```yaml
+version: '3.8'
+services:
+  whodb:
+    image: clidey/whodb:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - WHODB_PORT=8080
+    restart: unless-stopped
+    volumes:
+      - whodb-data:/data
+volumes:
+  whodb-data:
+```
+
+Save this as `docker-compose.yml` and run:
+
+```bash
+docker-compose up -d
+```
+
+## Binary Installation
+
+<Warning>
+Pre-compiled binaries are platform-specific. Make sure to download the correct version for your operating system.
+</Warning>
+
+### Download Pre-Compiled Binaries
+
+<AccordionGroup>
+<Accordion title="Linux">
+```bash
+# Download the latest Linux binary
+curl -L https://github.com/clidey/whodb/releases/latest/download/whodb-linux-amd64 -o whodb
+
+# Make it executable
+chmod +x whodb
+
+# Run WhoDB
+./whodb
+```
+</Accordion>
+<Accordion title="macOS">
+```bash
+# Download the latest macOS binary
+curl -L https://github.com/clidey/whodb/releases/latest/download/whodb-darwin-amd64 -o whodb
+
+# Make it executable
+chmod +x whodb
+
+# Run WhoDB
+./whodb
+```
+</Accordion>
+<Accordion title="Windows">
+1. Download `whodb-windows-amd64.exe` from the [releases page](https://github.com/clidey/whodb/releases/latest)
+2. Double-click the executable to run WhoDB
+3. Access via browser at `http://localhost:8080`
+</Accordion>
+</AccordionGroup>
+
+## Build from Source
+
+For developers who want to customize WhoDB or contribute to the project:
+
+### Prerequisites
+
+<AccordionGroup>
+<Accordion title="Backend Requirements">
+- Go 1.21 or higher
+- Git
+</Accordion>
+<Accordion title="Frontend Requirements">
+- Node.js 18 or higher
+- pnpm package manager
+</Accordion>
+</AccordionGroup>
+
+### Build Steps
+
+<Steps>
+<Step title="Clone the Repository">
+```bash
+git clone https://github.com/clidey/whodb.git
+cd whodb
+```
+</Step>
+<Step title="Build the Frontend">
+```bash
+cd frontend
+pnpm install
+pnpm run build
+cd ..
+```
+</Step>
+<Step title="Build the Backend">
+```bash
+cd core
+go build -o whodb .
+```
+</Step>
+<Step title="Run WhoDB">
+```bash
+./whodb
+```
+</Step>
+</Steps>
+
+<Info>
+The built binary will embed the frontend assets, creating a single executable file
+</Info>
+
+### Development Mode
+
+For active development with hot-reload:
+
+<CodeGroup>
+```bash Backend
+cd core
+go run .
+```
+```bash Frontend
+cd frontend
+pnpm start
+```
+</CodeGroup>
+
+Run both commands in separate terminals. The frontend will be available at `http://localhost:5173` and will proxy API requests to the backend.
+
+## Configuration Options
+
+WhoDB can be configured using environment variables or command-line flags:
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `WHODB_PORT` | Port to run WhoDB on | `8080` |
+| `WHODB_HOST` | Host address to bind to | `0.0.0.0` |
+| `WHODB_LOG_LEVEL` | Logging level (debug, info, warn, error) | `info` |
+
+### Example with Custom Port
+
+```bash
+WHODB_PORT=3000 ./whodb
+```
+
+Or with Docker:
+
+```bash
+docker run -d \
+  -p 3000:3000 \
+  -e WHODB_PORT=3000 \
+  clidey/whodb:latest
+```
+
+## Verifying Installation
+
+<Check>
+After installation, verify WhoDB is running correctly
+</Check>
+
+<Steps>
+<Step title="Check the Service">
+Open your browser and navigate to `http://localhost:8080` (or your configured port)
+</Step>
+<Step title="Verify Login Page">
+You should see the WhoDB login page with database connection options
+</Step>
+<Step title="Test Connection">
+Try connecting to a test database to ensure everything works properly
+</Step>
+</Steps>
+
+![WhoDB Login Page](/images/01-login-page.png)
+
+## Troubleshooting
+
+<AccordionGroup>
+<Accordion title="Port Already in Use">
+If port 8080 is already in use, either:
+- Stop the service using that port
+- Use a different port with `-p 3000:8080` (Docker) or `WHODB_PORT=3000` (binary)
+</Accordion>
+<Accordion title="Permission Denied (Linux/macOS)">
+Make sure the binary is executable:
+```bash
+chmod +x whodb
+```
+</Accordion>
+<Accordion title="Docker Container Exits Immediately">
+Check the logs to see what went wrong:
+```bash
+docker logs whodb
+```
+</Accordion>
+<Accordion title="Cannot Connect to Database">
+Ensure:
+- The database is accessible from WhoDB's network
+- Firewall rules allow the connection
+- Credentials are correct
+- For Docker: use host.docker.internal instead of localhost for databases on the host
+</Accordion>
+</AccordionGroup>
+
+## Network Considerations
+
+<Warning>
+By default, WhoDB binds to `0.0.0.0`, making it accessible from any network interface. For production deployments, consider:
+</Warning>
+
+- Running behind a reverse proxy (Nginx, Caddy)
+- Enabling HTTPS/TLS
+- Implementing authentication and authorization
+- Restricting network access with firewall rules
+- Using a VPN or SSH tunnel for remote access
+
+## Next Steps
+
+<CardGroup cols={2}>
+<Card title="First Login" icon="right-to-bracket" href="/first-login">
+Connect to your first database
+</Card>
+<Card title="Quick Start Guide" icon="rocket" href="/quick-start">
+Learn the basics in minutes
+</Card>
+</CardGroup>
+
+<Tip>
+Now that WhoDB is installed, proceed to the **First Login** guide to connect to your database and start exploring your data
+</Tip>

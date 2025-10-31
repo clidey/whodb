@@ -1,0 +1,659 @@
+---
+title: "MongoDB Best Practices"
+description: "MongoDB-specific best practices for effective document design, performance, and reliability"
+---
+
+# MongoDB Best Practices
+
+MongoDB is a powerful NoSQL database that enables flexible, schema-less data modeling. However, flexibility requires discipline. This guide covers practical MongoDB best practices for optimal performance, data integrity, and maintainability.
+
+<Tip>
+MongoDB's strength is flexibility, but that requires thoughtful design. Structure your documents considering your query patterns and data access needs.
+</Tip>
+
+## Document Design
+
+### Schema Design Principles
+
+While MongoDB is schema-less, good document design is critical.
+
+**Flat vs. Nested Structure:**
+
+```javascript
+// GOOD: Nested structure for related data
+{
+  "_id": ObjectId("..."),
+  "userId": 123,
+  "email": "user@example.com",
+  "profile": {
+    "firstName": "John",
+    "lastName": "Doe",
+    "avatar": "https://..."
+  },
+  "settings": {
+    "notifications": true,
+    "theme": "dark",
+    "language": "en"
+  },
+  "createdAt": ISODate("2024-01-01"),
+  "updatedAt": ISODate("2024-10-31")
+}
+
+// AVOID: Too flat, harder to manage
+{
+  "_id": ObjectId("..."),
+  "userId": 123,
+  "email": "user@example.com",
+  "firstName": "John",
+  "lastName": "Doe",
+  "avatar": "https://...",
+  "notifications": true,
+  "theme": "dark",
+  "language": "en",
+  "createdAt": ISODate("2024-01-01")
+}
+```
+
+**Embedding vs. Referencing:**
+
+```javascript
+// EMBEDDING: For frequently accessed related data
+db.orders.insertOne({
+  _id: ObjectId("..."),
+  orderNumber: "ORD-001",
+  customer: {
+    id: ObjectId("..."),
+    name: "John Doe",
+    email: "john@example.com",
+    address: {
+      street: "123 Main St",
+      city: "New York",
+      state: "NY",
+      zip: "10001"
+    }
+  },
+  items: [
+    {
+      productId: ObjectId("..."),
+      productName: "Laptop",
+      quantity: 1,
+      price: 999.99
+    }
+  ],
+  total: 999.99,
+  createdAt: ISODate("2024-10-31")
+});
+
+// REFERENCING: For separate concerns, or to avoid duplication
+db.orders.insertOne({
+  _id: ObjectId("..."),
+  orderNumber: "ORD-001",
+  customerId: ObjectId("customer123"),
+  items: [ObjectId("item1"), ObjectId("item2")],
+  total: 999.99,
+  createdAt: ISODate("2024-10-31")
+});
+
+// Separate collection
+db.customers.findOne({ _id: ObjectId("customer123") });
+db.items.find({ _id: { $in: [ObjectId("item1"), ObjectId("item2")] } });
+```
+
+<Tip>
+Embed data that is accessed together frequently. Reference data that changes independently or needs to be accessed separately.
+</Tip>
+
+### Array Handling
+
+Arrays require careful consideration for performance and querying.
+
+**Good Array Practices:**
+
+```javascript
+// GOOD: Fixed, bounded arrays (manageable size)
+db.users.insertOne({
+  _id: ObjectId("..."),
+  email: "user@example.com",
+  favoriteProducts: [
+    ObjectId("prod1"),
+    ObjectId("prod2"),
+    ObjectId("prod3")
+  ]  // Known, small set of IDs
+});
+
+// GOOD: Timestamps for ordering
+db.comments.insertOne({
+  _id: ObjectId("..."),
+  postId: ObjectId("..."),
+  comments: [
+    {
+      author: "User1",
+      text: "Great post!",
+      createdAt: ISODate("2024-10-30T10:00:00Z")
+    },
+    {
+      author: "User2",
+      text: "Thanks for sharing",
+      createdAt: ISODate("2024-10-30T11:00:00Z")
+    }
+  ]
+});
+
+// AVOID: Unbounded, continuously growing array
+db.events.insertOne({
+  _id: ObjectId("..."),
+  // DON'T DO THIS - grows infinitely:
+  allUserActions: []  // Could become huge
+});
+
+// BETTER: Use separate collection for unbounded data
+db.userActions.insertMany([
+  { userId: ObjectId("..."), action: "login", timestamp: ISODate("...") },
+  { userId: ObjectId("..."), action: "view", timestamp: ISODate("...") }
+]);
+```
+
+## Indexing Strategy
+
+### Index Types and Creation
+
+**Creating Indexes:**
+
+```javascript
+// Single field index
+db.users.createIndex({ email: 1 });
+
+// Descending order
+db.orders.createIndex({ createdAt: -1 });
+
+// Compound index
+db.orders.createIndex({ customerId: 1, createdAt: -1 });
+
+// Index with options
+db.users.createIndex(
+  { email: 1 },
+  { unique: true, name: "idx_users_email" }
+);
+
+// Sparse index (only indexes documents with field)
+db.users.createIndex(
+  { phone: 1 },
+  { sparse: true }
+);
+
+// Text index (full-text search)
+db.articles.createIndex(
+  { title: "text", content: "text" }
+);
+
+// Geospatial index
+db.locations.createIndex({ coordinates: "2dsphere" });
+
+// TTL index (auto-delete old documents)
+db.sessions.createIndex(
+  { createdAt: 1 },
+  { expireAfterSeconds: 3600 }  // Delete after 1 hour
+);
+```
+
+**Analyzing Indexes:**
+
+```javascript
+// View all indexes on collection
+db.users.getIndexes();
+
+// Get index statistics
+db.users.aggregate([{ $indexStats: {} }]);
+
+// Analyze query performance
+db.users.explain("executionStats").find({ email: "user@example.com" });
+
+// Remove unused index
+db.users.dropIndex("idx_users_email");
+
+// Rebuild indexes
+db.users.reIndex();
+```
+
+<Warning>
+Too many indexes slow writes (every INSERT/UPDATE must update all indexes). Balance read optimization with write performance.
+</Warning>
+
+### Query Pattern Optimization
+
+**Using Explain to Optimize:**
+
+```javascript
+// Check if index is used
+db.orders.explain("executionStats").find({
+  customerId: ObjectId("..."),
+  createdAt: { $gt: ISODate("2024-01-01") }
+});
+
+// Look for:
+// - executionStages.stage: "COLLSCAN" (bad, full collection scan)
+// - executionStages.stage: "IXSCAN" (good, index scan)
+// - executionStats.totalDocsExamined: X
+// - executionStats.nReturned: Y
+// - Ratio of examined to returned should be low
+```
+
+## Query Optimization
+
+### Aggregation Pipeline
+
+The aggregation pipeline is MongoDB's most powerful query tool.
+
+**Aggregation Example:**
+
+```javascript
+// Complex multi-stage aggregation
+db.orders.aggregate([
+  // Stage 1: Match (filter early)
+  {
+    $match: {
+      createdAt: { $gte: ISODate("2024-01-01") },
+      status: "completed"
+    }
+  },
+  // Stage 2: Add computed fields
+  {
+    $addFields: {
+      month: { $month: "$createdAt" },
+      year: { $year: "$createdAt" }
+    }
+  },
+  // Stage 3: Group and aggregate
+  {
+    $group: {
+      _id: { month: "$month", year: "$year" },
+      totalSales: { $sum: "$total" },
+      avgOrder: { $avg: "$total" },
+      orderCount: { $sum: 1 }
+    }
+  },
+  // Stage 4: Sort results
+  { $sort: { "_id.year": -1, "_id.month": -1 } },
+  // Stage 5: Project (select fields)
+  {
+    $project: {
+      _id: 0,
+      month: "$_id.month",
+      year: "$_id.year",
+      totalSales: 1,
+      avgOrder: { $round: ["$avgOrder", 2] },
+      orderCount: 1
+    }
+  }
+]);
+```
+
+### Common Query Patterns
+
+**Pattern 1: Full-Text Search:**
+
+```javascript
+// Create text index
+db.articles.createIndex({ title: "text", content: "text" });
+
+// Search
+db.articles.find({
+  $text: { $search: "mongodb database" }
+});
+
+// Search with relevance score
+db.articles.find(
+  { $text: { $search: "mongodb" } },
+  { score: { $meta: "textScore" } }
+).sort({ score: { $meta: "textScore" } });
+```
+
+**Pattern 2: Array Queries:**
+
+```javascript
+// Find documents containing a value in an array
+db.users.find({ favoriteProducts: ObjectId("prod123") });
+
+// Query array element by position
+db.comments.find({ "comments.0.author": "John" });
+
+// Query with array size
+db.users.find({ favoriteProducts: { $size: 5 } });
+
+// Query with array element matching
+db.comments.find({
+  comments: { $elemMatch: { author: "John", likes: { $gt: 10 } } }
+});
+```
+
+**Pattern 3: Date Range Queries:**
+
+```javascript
+// Orders in last 7 days
+db.orders.find({
+  createdAt: {
+    $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+  }
+});
+
+// Orders between dates
+db.orders.find({
+  createdAt: {
+    $gte: ISODate("2024-01-01"),
+    $lt: ISODate("2024-02-01")
+  }
+});
+```
+
+**Pattern 4: Conditional Updates:**
+
+```javascript
+// Upsert (insert if not exists, update if exists)
+db.users.updateOne(
+  { email: "user@example.com" },
+  {
+    $set: {
+      lastLogin: new Date(),
+      status: "active"
+    }
+  },
+  { upsert: true }
+);
+
+// Atomic operations
+db.products.updateOne(
+  { _id: ObjectId("prod123") },
+  { $inc: { stockCount: -1 } }  // Decrement atomically
+);
+
+// Array operations
+db.users.updateOne(
+  { _id: ObjectId("user123") },
+  { $push: { favoriteProducts: ObjectId("prod456") } }  // Add to array
+);
+```
+
+## Data Integrity and Validation
+
+### Schema Validation
+
+MongoDB 3.6+ supports schema validation.
+
+**Creating Schema Validation:**
+
+```javascript
+// Create collection with schema validation
+db.createCollection("users", {
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: ["email", "name"],
+      properties: {
+        _id: { bsonType: "objectId" },
+        email: {
+          bsonType: "string",
+          pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+        },
+        name: { bsonType: "string" },
+        age: {
+          bsonType: ["int", "long"],
+          minimum: 18,
+          maximum: 150
+        },
+        status: {
+          enum: ["active", "inactive", "suspended"]
+        },
+        profile: {
+          bsonType: "object",
+          properties: {
+            firstName: { bsonType: "string" },
+            lastName: { bsonType: "string" }
+          }
+        }
+      }
+    }
+  }
+});
+
+// Add validation to existing collection
+db.runCommand({
+  collMod: "orders",
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: ["customerId", "total"],
+      properties: {
+        customerId: { bsonType: "objectId" },
+        total: {
+          bsonType: "decimal",
+          minimum: 0
+        }
+      }
+    }
+  }
+});
+```
+
+### Transactions
+
+MongoDB 4.0+ supports multi-document ACID transactions.
+
+**Transaction Example:**
+
+```javascript
+// Start session
+const session = db.getMongo().startSession();
+
+try {
+  session.startTransaction();
+
+  // Multiple operations
+  db.accounts.updateOne(
+    { _id: ObjectId("account1") },
+    { $inc: { balance: -100 } },
+    { session: session }
+  );
+
+  db.accounts.updateOne(
+    { _id: ObjectId("account2") },
+    { $inc: { balance: 100 } },
+    { session: session }
+  );
+
+  db.transactions.insertOne(
+    { from: ObjectId("account1"), to: ObjectId("account2"), amount: 100 },
+    { session: session }
+  );
+
+  session.commitTransaction();
+} catch (error) {
+  session.abortTransaction();
+  throw error;
+} finally {
+  session.endSession();
+}
+```
+
+## Performance Best Practices
+
+<AccordionGroup>
+<Accordion title="Batch Operations">
+Large batch inserts are more efficient:
+
+```javascript
+// INEFFICIENT: Individual inserts
+for (let i = 0; i < 1000; i++) {
+  db.users.insertOne({ name: `User${i}` });
+}
+
+// EFFICIENT: Batch insert
+const docs = [];
+for (let i = 0; i < 1000; i++) {
+  docs.push({ name: `User${i}` });
+}
+db.users.insertMany(docs, { ordered: false });
+```
+</Accordion>
+
+<Accordion title="Connection Pooling">
+```javascript
+// Using MongoDB Node.js driver
+const client = new MongoClient(uri, {
+  maxPoolSize: 50,
+  minPoolSize: 10,
+  waitQueueTimeoutMS: 10000,
+  socketTimeoutMS: 45000
+});
+```
+</Accordion>
+
+<Accordion title="Projection (Select Specific Fields)">
+```javascript
+// Return only needed fields
+db.users.find(
+  { status: "active" },
+  { projection: { _id: 1, email: 1, name: 1 } }
+);
+
+// Exclude large fields
+db.articles.find(
+  { category: "tech" },
+  { projection: { content: 0 } }  // Exclude large content field
+);
+```
+</Accordion>
+
+<Accordion title="Monitoring and Profiling">
+```javascript
+// Enable profiling
+db.setProfilingLevel(1, { slowms: 100 });
+
+// View profiled queries
+db.system.profile.find().sort({ ts: -1 }).limit(5).pretty();
+
+// Disable profiling
+db.setProfilingLevel(0);
+
+// Database statistics
+db.stats();
+
+// Collection statistics
+db.users.stats();
+```
+</Accordion>
+</AccordionGroup>
+
+## Replication and High Availability
+
+### Replica Sets
+
+Replica sets provide data redundancy and high availability.
+
+**Replica Set Configuration:**
+
+```javascript
+// Initiate replica set
+rs.initiate({
+  _id: "rs0",
+  members: [
+    { _id: 0, host: "mongo1:27017", priority: 2 },
+    { _id: 1, host: "mongo2:27017", priority: 1 },
+    { _id: 2, host: "mongo3:27017", priority: 1 }
+  ]
+});
+
+// Check replica set status
+rs.status();
+
+// Add member to replica set
+rs.add("mongo4:27017");
+
+// Remove member
+rs.remove("mongo4:27017");
+```
+
+## Common Mistakes to Avoid
+
+### Mistake 1: Excessive Nesting
+
+```javascript
+// AVOID: Too deeply nested
+{
+  level1: {
+    level2: {
+      level3: {
+        level4: {
+          level5: {
+            data: "value"
+          }
+        }
+      }
+    }
+  }
+}
+
+// BETTER: Flatter structure with reasonable nesting
+{
+  category: "value",
+  subcategory: "value",
+  data: "value"
+}
+```
+
+### Mistake 2: Using Field Names as Data
+
+```javascript
+// AVOID: Storing data in field names
+{
+  _id: ObjectId("..."),
+  "user1": 100,
+  "user2": 200,
+  "user3": 150
+}
+
+// BETTER: Use arrays or separate collection
+{
+  _id: ObjectId("..."),
+  scores: [
+    { userId: "user1", score: 100 },
+    { userId: "user2", score: 200 },
+    { userId: "user3", score: 150 }
+  ]
+}
+```
+
+### Mistake 3: Missing Indexes on Query Fields
+
+```javascript
+// SLOW: No index
+db.orders.find({ customerId: ObjectId("...") });
+
+// BETTER: Create index
+db.orders.createIndex({ customerId: 1 });
+db.orders.find({ customerId: ObjectId("...") });
+```
+
+## Related Topics
+
+<CardGroup cols={2}>
+<Card title="Query Optimization" icon="code" href="/best-practices/query-optimization">
+SQL query optimization techniques
+</Card>
+<Card title="Performance Optimization" icon="rocket" href="/best-practices/performance">
+General database performance guide
+</Card>
+<Card title="Data Management" icon="database" href="/best-practices/data-management">
+Safe data management practices
+</Card>
+<Card title="Security Best Practices" icon="shield" href="/best-practices/security">
+Database security guidelines
+</Card>
+</CardGroup>
+
+## Summary
+
+MongoDB's flexibility is powerful, but it requires thoughtful design. Structure documents considering query patterns, use embedded vs. referenced data strategically, create appropriate indexes, and leverage the aggregation pipeline for complex queries. Schema validation and transactions add data integrity guarantees. When applied consistently, these practices result in high-performance, maintainable MongoDB databases.
+
+<Check>
+You now have comprehensive knowledge of MongoDB best practices to design and manage efficient, reliable NoSQL databases.
+</Check>

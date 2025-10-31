@@ -1,0 +1,695 @@
+---
+title: "Docker Integration"
+description: "Deploy and integrate WhoDB with Docker in production environments"
+---
+
+# Docker Integration
+
+WhoDB is designed with Docker-first deployment in mind, offering containerized deployment that simplifies installation, scaling, and integration with existing infrastructure. This guide covers advanced Docker configurations, networking, volume management, and production deployment strategies.
+
+<Tip>
+Docker provides the fastest and most reliable way to deploy WhoDB across any environment
+</Tip>
+
+## Quick Start
+
+Get WhoDB running with a single command:
+
+```bash
+docker run -d \
+  --name whodb \
+  -p 8080:8080 \
+  clidey/whodb:latest
+```
+
+Access WhoDB at `http://localhost:8080`
+
+## Docker Compose Configuration
+
+Docker Compose provides declarative configuration for complex deployments. Here's a comprehensive setup:
+
+### Basic Docker Compose Setup
+
+```yaml
+version: '3.8'
+
+services:
+  whodb:
+    image: clidey/whodb:latest
+    container_name: whodb
+    ports:
+      - "8080:8080"
+    environment:
+      - WHODB_PORT=8080
+      - WHODB_LOG_LEVEL=info
+    restart: unless-stopped
+    volumes:
+      - whodb-data:/data
+    networks:
+      - whodb-network
+
+volumes:
+  whodb-data:
+    driver: local
+
+networks:
+  whodb-network:
+    driver: bridge
+```
+
+Save as `docker-compose.yml` and run:
+
+```bash
+docker-compose up -d
+```
+
+### Production Docker Compose Setup
+
+For production environments, add health checks, resource limits, and monitoring:
+
+```yaml
+version: '3.8'
+
+services:
+  whodb:
+    image: clidey/whodb:latest
+    container_name: whodb-prod
+    ports:
+      - "8080:8080"
+    environment:
+      - WHODB_PORT=8080
+      - WHODB_HOST=0.0.0.0
+      - WHODB_LOG_LEVEL=warn
+      # AI Integration
+      - WHODB_ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - WHODB_OPENAI_API_KEY=${OPENAI_API_KEY}
+      - WHODB_OLLAMA_HOST=${OLLAMA_HOST:-localhost}
+      - WHODB_OLLAMA_PORT=${OLLAMA_PORT:-11434}
+    restart: always
+    volumes:
+      - whodb-data:/data
+      - ./logs:/var/log/whodb
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  whodb-data:
+    driver: local
+
+networks:
+  app-network:
+    external: true
+```
+
+<Info>
+Use environment variables from `.env` files to keep sensitive credentials out of your compose file
+</Info>
+
+## Docker Networking
+
+### Connecting to Databases on Host
+
+When your database runs on the host machine and WhoDB runs in Docker, use special hostnames:
+
+<CodeGroup>
+```yaml Linux
+services:
+  whodb:
+    image: clidey/whodb:latest
+    network_mode: host
+    # Database on host accessible via localhost
+```
+```yaml macOS/Windows
+services:
+  whodb:
+    image: clidey/whodb:latest
+    # Use host.docker.internal to reach host services
+    environment:
+      - DATABASE_HOST=host.docker.internal
+```
+</CodeGroup>
+
+### Shared Docker Network
+
+Connect WhoDB to databases in separate containers using a shared network:
+
+```yaml
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres-db
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=myapp
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - database-network
+
+  whodb:
+    image: clidey/whodb:latest
+    container_name: whodb
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - database-network
+
+volumes:
+  postgres-data:
+
+networks:
+  database-network:
+    driver: bridge
+```
+
+Connect to PostgreSQL using:
+- **Host**: `postgres` (the service name)
+- **Port**: `5432`
+- **Database**: `myapp`
+- **Username**: `postgres`
+- **Password**: `password`
+
+### Multiple Database Connections
+
+Connect WhoDB to multiple database types simultaneously:
+
+```yaml
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: postgres_pass
+      POSTGRES_DB: postgres_db
+    networks:
+      - db-network
+
+  mysql:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: mysql_pass
+      MYSQL_DATABASE: mysql_db
+    networks:
+      - db-network
+
+  mongodb:
+    image: mongo:6
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongo
+      MONGO_INITDB_ROOT_PASSWORD: mongo_pass
+    networks:
+      - db-network
+
+  redis:
+    image: redis:7
+    command: redis-server --requirepass redis_pass
+    networks:
+      - db-network
+
+  whodb:
+    image: clidey/whodb:latest
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - mysql
+      - mongodb
+      - redis
+    networks:
+      - db-network
+
+networks:
+  db-network:
+    driver: bridge
+```
+
+All databases are accessible via their service names from WhoDB.
+
+## Volume Management
+
+### Persistent Data Storage
+
+WhoDB stores configuration and session data. Use volumes to persist this data:
+
+```yaml
+services:
+  whodb:
+    image: clidey/whodb:latest
+    volumes:
+      # Application data
+      - whodb-data:/data
+      # SQLite databases (optional)
+      - ./databases:/databases
+      # Configuration files
+      - ./config:/config
+      # Log files
+      - ./logs:/var/log/whodb
+
+volumes:
+  whodb-data:
+    driver: local
+```
+
+### SQLite Database Support
+
+When working with SQLite databases, mount them as volumes:
+
+```yaml
+services:
+  whodb:
+    image: clidey/whodb:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      # Mount SQLite database file
+      - ./sample.db:/databases/sample.db:ro
+      # Mount multiple databases
+      - ./databases:/databases:ro
+```
+
+<Warning>
+Mount SQLite files as read-only (`:ro`) in production to prevent accidental modifications
+</Warning>
+
+## Environment Variables
+
+Configure WhoDB behavior through environment variables:
+
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `WHODB_PORT` | HTTP server port | `8080` | `3000` |
+| `WHODB_HOST` | Bind address | `0.0.0.0` | `127.0.0.1` |
+| `WHODB_LOG_LEVEL` | Logging verbosity | `info` | `debug`, `warn`, `error` |
+| `WHODB_OLLAMA_HOST` | Ollama AI host | `localhost` | `ollama-server` |
+| `WHODB_OLLAMA_PORT` | Ollama AI port | `11434` | `11434` |
+| `WHODB_ANTHROPIC_API_KEY` | Anthropic API key | - | `sk-ant-...` |
+| `WHODB_ANTHROPIC_ENDPOINT` | Anthropic endpoint | `https://api.anthropic.com/v1` | Custom endpoint |
+| `WHODB_OPENAI_API_KEY` | OpenAI API key | - | `sk-...` |
+| `WHODB_OPENAI_ENDPOINT` | OpenAI endpoint | `https://api.openai.com/v1` | Custom endpoint |
+
+### Environment File Example
+
+Create a `.env` file for sensitive configuration:
+
+```bash
+# .env
+WHODB_PORT=8080
+WHODB_LOG_LEVEL=info
+
+# AI Integration
+ANTHROPIC_API_KEY=sk-ant-api03-xxx
+OPENAI_API_KEY=sk-xxx
+
+# Ollama Configuration
+OLLAMA_HOST=ollama-server
+OLLAMA_PORT=11434
+```
+
+Reference in `docker-compose.yml`:
+
+```yaml
+services:
+  whodb:
+    image: clidey/whodb:latest
+    env_file:
+      - .env
+```
+
+<Warning>
+Never commit `.env` files with sensitive credentials to version control. Add `.env` to `.gitignore`
+</Warning>
+
+## Reverse Proxy Integration
+
+### Nginx Reverse Proxy
+
+Deploy WhoDB behind Nginx for SSL termination and load balancing:
+
+```yaml
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - whodb
+    networks:
+      - proxy-network
+
+  whodb:
+    image: clidey/whodb:latest
+    expose:
+      - "8080"
+    networks:
+      - proxy-network
+
+networks:
+  proxy-network:
+    driver: bridge
+```
+
+Nginx configuration (`nginx.conf`):
+
+```nginx
+upstream whodb {
+    server whodb:8080;
+}
+
+server {
+    listen 80;
+    server_name whodb.example.com;
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name whodb.example.com;
+
+    ssl_certificate /etc/nginx/ssl/cert.pem;
+    ssl_certificate_key /etc/nginx/ssl/key.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    location / {
+        proxy_pass http://whodb;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # WebSocket support
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}
+```
+
+### Traefik Integration
+
+Use Traefik for automatic SSL with Let's Encrypt:
+
+```yaml
+version: '3.8'
+
+services:
+  traefik:
+    image: traefik:v2.10
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.le.acme.email=admin@example.com"
+      - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./letsencrypt:/letsencrypt
+    networks:
+      - proxy-network
+
+  whodb:
+    image: clidey/whodb:latest
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whodb.rule=Host(`whodb.example.com`)"
+      - "traefik.http.routers.whodb.entrypoints=websecure"
+      - "traefik.http.routers.whodb.tls.certresolver=le"
+      - "traefik.http.services.whodb.loadbalancer.server.port=8080"
+    networks:
+      - proxy-network
+
+networks:
+  proxy-network:
+    driver: bridge
+```
+
+## Resource Management
+
+### CPU and Memory Limits
+
+Prevent resource exhaustion with explicit limits:
+
+```yaml
+services:
+  whodb:
+    image: clidey/whodb:latest
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+```
+
+### Docker Swarm Deployment
+
+Deploy WhoDB across a Docker Swarm cluster:
+
+```yaml
+version: '3.8'
+
+services:
+  whodb:
+    image: clidey/whodb:latest
+    ports:
+      - "8080:8080"
+    deploy:
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+      placement:
+        constraints:
+          - node.role == worker
+    networks:
+      - swarm-network
+
+networks:
+  swarm-network:
+    driver: overlay
+```
+
+Deploy with:
+
+```bash
+docker stack deploy -c docker-compose.yml whodb-stack
+```
+
+## Security Best Practices
+
+### Run as Non-Root User
+
+Enhance security by running WhoDB as a non-root user:
+
+```dockerfile
+FROM clidey/whodb:latest
+
+USER 1000:1000
+```
+
+### Read-Only Root Filesystem
+
+Mount the root filesystem as read-only:
+
+```yaml
+services:
+  whodb:
+    image: clidey/whodb:latest
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/run
+```
+
+### Security Options
+
+Apply security profiles:
+
+```yaml
+services:
+  whodb:
+    image: clidey/whodb:latest
+    security_opt:
+      - no-new-privileges:true
+      - seccomp:unconfined
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+```
+
+## Production Deployment Example
+
+Complete production-ready configuration:
+
+```yaml
+version: '3.8'
+
+services:
+  whodb:
+    image: clidey/whodb:latest
+    container_name: whodb-production
+    restart: always
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      - WHODB_PORT=8080
+      - WHODB_LOG_LEVEL=warn
+    env_file:
+      - .env.production
+    volumes:
+      - whodb-data:/data
+      - ./logs:/var/log/whodb:rw
+    networks:
+      - internal-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/run
+
+volumes:
+  whodb-data:
+    driver: local
+
+networks:
+  internal-network:
+    driver: bridge
+    internal: false
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+<Accordion title="Container Exits Immediately">
+Check container logs for errors:
+
+```bash
+docker logs whodb
+```
+
+Common causes:
+- Port already in use
+- Invalid environment variables
+- Missing required volumes
+</Accordion>
+
+<Accordion title="Cannot Connect to Database">
+Verify network connectivity:
+
+```bash
+# Test from WhoDB container
+docker exec -it whodb ping postgres
+
+# Check network
+docker network inspect whodb-network
+```
+
+Ensure database host uses service name, not `localhost`.
+</Accordion>
+
+<Accordion title="Permission Denied on Volumes">
+Fix volume permissions:
+
+```bash
+# Set correct ownership
+sudo chown -R 1000:1000 ./whodb-data
+
+# Or run with host user
+docker run --user $(id -u):$(id -g) ...
+```
+</Accordion>
+
+<Accordion title="High Memory Usage">
+Set memory limits in compose file:
+
+```yaml
+deploy:
+  resources:
+    limits:
+      memory: 1G
+```
+
+Monitor with:
+```bash
+docker stats whodb
+```
+</Accordion>
+</AccordionGroup>
+
+## Summary
+
+WhoDB's Docker integration provides:
+
+- Simple deployment with single command
+- Flexible networking for database connectivity
+- Production-ready configurations with health checks
+- Resource management and scaling capabilities
+- Reverse proxy integration for SSL/TLS
+- Volume management for persistent data
+
+Docker offers the most reliable deployment method for WhoDB across development, staging, and production environments.
+
+<Check>
+You're ready to deploy WhoDB in any Docker environment
+</Check>

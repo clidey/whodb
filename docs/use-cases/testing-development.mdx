@@ -1,0 +1,823 @@
+---
+title: "Testing & Development"
+description: "Use WhoDB for testing workflows, mock data generation, and development database management"
+---
+
+# Testing & Development
+
+One of WhoDB's most powerful features for developers is the ability to generate realistic mock data and quickly test database interactions. Whether you're writing integration tests, developing new features, or debugging database issues, WhoDB streamlines your testing workflows.
+
+<Tip>
+This guide covers mock data generation, query testing, and development workflows that accelerate your development cycle.
+</Tip>
+
+## Development Database Workflow
+
+### Setting Up Your Development Database
+
+<Steps>
+<Step title="Connect to Development Database">
+First, connect WhoDB to your development or staging database—not production.
+
+Use separate connection profiles for:
+- **Development**: Local or cloud-hosted dev database
+- **Staging**: Production-like environment for testing
+- **Backups**: Read-only mirrors for analysis
+
+Never test on production databases directly.
+</Step>
+
+<Step title="Understand Schema State">
+Navigate to tables you're working with and verify their current state.
+
+Look for:
+- Are there existing records?
+- What's the current max ID or sequence number?
+- Are there any constraints that affect testing?
+
+This context is important for generating realistic test data.
+</Step>
+
+<Step title="Document Constraints and Rules">
+For each table you'll test with, understand:
+- Foreign key dependencies
+- NOT NULL constraints
+- UNIQUE constraints
+- DEFAULT values
+- Data type limits
+
+This affects what mock data you can generate.
+</Step>
+</Steps>
+
+## Generating Mock Data
+
+### The Mock Data Generator
+
+WhoDB includes a powerful mock data generator for creating test datasets:
+
+<Steps>
+<Step title="Open Mock Data Dialog">
+Click the "Generate Mock Data" button in your table view.
+
+![Mock Data Dialog](/images/22-data-view-mock-data-dialog.png)
+
+This opens the configuration interface for test data generation.
+</Step>
+
+<Step title="Configure Generation Options">
+Set up how many rows you want to generate:
+
+![Generation Options](/images/71-mock-data-append-mode.png)
+
+Choose your data handling mode:
+- **Append**: Add mock data to existing records (safe, reversible)
+- **Overwrite**: Replace all existing data (use with caution on development only)
+
+For most testing scenarios, append mode is safer because you can delete the generated data if something goes wrong.
+</Step>
+
+<Step title="Set Row Count">
+Specify how many rows to generate:
+
+![Row Count Options](/images/74-mock-data-row-count-medium.png)
+
+Different scenarios need different data volumes:
+
+<AccordionGroup>
+<Accordion title="Minimal (1-10 rows)">
+Use for:
+- Quick unit tests
+- Testing single-row operations
+- Debugging UI with minimal data
+- Edge cases with small datasets
+
+Example test: "Can I edit a single row correctly?"
+</Accordion>
+
+<Accordion title="Standard (50-200 rows)">
+Use for:
+- Integration tests
+- Feature development
+- Testing with realistic pagination
+- Performance testing with moderate data
+
+Example test: "Does pagination work with 100 rows?"
+</Accordion>
+
+<Accordion title="Large (500-1000+ rows)">
+Use for:
+- Load testing
+- Performance benchmarking
+- Testing query optimization
+- Realistic staging datasets
+
+Example test: "Does search still work with 10,000 rows?"
+</Accordion>
+</AccordionGroup>
+
+The UI enforces a 200-row limit for data safety, but you can run multiple generations to accumulate more data.
+</Step>
+
+<Step title="Generate and Verify">
+Click "Generate" to create the mock data.
+
+The generator creates:
+- **Realistic column values**: Names, emails, dates, numbers
+- **Foreign key relationships**: Valid references to related tables
+- **Constraint compliance**: Respecting NOT NULL and UNIQUE constraints
+- **Diverse data**: Multiple variations to test different code paths
+
+After generation, verify the data was created correctly by viewing the table.
+</Step>
+</Steps>
+
+### Mock Data Generation Patterns
+
+#### Pattern 1: Bootstrap a Complete Schema
+
+For a brand new feature, populate all related tables at once:
+
+<Steps>
+<Step title="Generate in Dependency Order">
+If you have foreign key dependencies, generate in order:
+1. Parent tables first (users, categories)
+2. Middle tables (orders, products)
+3. Junction tables (user_roles, product_tags)
+4. Transaction tables (payments, events)
+
+This ensures foreign key constraints are satisfied.
+</Step>
+
+<Step title="Set Appropriate Volumes">
+- Parent tables: 10-50 rows (users, companies)
+- Transaction tables: 100-500 rows (orders, events)
+- Detail tables: Same as parent (order items = orders)
+
+This creates realistic data distribution.
+</Step>
+
+<Step title="Use Append Mode">
+Generate each table in append mode so they accumulate naturally.
+
+For repeated testing cycles, you can clear and regenerate using overwrite mode.
+</Step>
+</Steps>
+
+#### Pattern 2: Test Specific Scenarios
+
+Generate data that exercises particular code paths:
+
+```
+Example: Testing discount code functionality
+1. Generate 50 users (append)
+2. Generate 30 orders with various amounts
+3. Generate 5 different discount codes
+4. Manually update some orders to use discount codes
+5. Test your discount logic against this dataset
+```
+
+Use a mix of generated data and manual entries for edge cases.
+
+#### Pattern 3: Reproduce Production Issues
+
+When debugging production issues locally:
+
+<Steps>
+<Step title="Extract Sample Data">
+Use your analysis queries to export a sample of real production data (safely anonymized).
+
+```sql
+-- Export 100 recent orders for local testing
+SELECT * FROM orders
+WHERE created_at > NOW() - INTERVAL '7 days'
+LIMIT 100;
+```
+</Step>
+
+<Step title="Import to Development">
+Import the data or use it as a template for mock data generation.
+
+This gives you realistic data to test against.
+</Step>
+
+<Step title="Add Edge Cases">
+Generate additional records to test edge cases you want to verify.
+</Step>
+</Steps>
+
+## Testing Workflows
+
+### Workflow 1: Unit Testing with Mock Data
+
+When writing unit tests that interact with a database:
+
+<Steps>
+<Step title="Create Test Fixtures">
+Generate a consistent set of mock data before each test run.
+
+```javascript
+// Test setup
+beforeEach(async () => {
+  // Generate 5 test users
+  await generateMockData('users', { count: 5, mode: 'append' });
+  // Generate 10 test orders
+  await generateMockData('orders', { count: 10, mode: 'append' });
+});
+
+afterEach(async () => {
+  // Clean up by deleting test records
+  await deleteTestData();
+});
+```
+
+This ensures tests start with known data state.
+</Step>
+
+<Step title="Test CRUD Operations">
+Verify your application can Create, Read, Update, Delete records:
+
+```javascript
+test('can create new order', async () => {
+  const newOrder = await createOrder({ user_id: 1, amount: 99.99 });
+  expect(newOrder.id).toBeDefined();
+
+  // Verify in WhoDB
+  // Open table, filter by user_id, confirm new record appears
+});
+
+test('can update order status', async () => {
+  await updateOrder(1, { status: 'shipped' });
+
+  // Verify in WhoDB
+  // Open table, view order 1, confirm status changed
+});
+```
+</Step>
+
+<Step title="Test Edge Cases">
+Use WhoDB to verify edge case handling:
+
+```javascript
+test('handles NULL values correctly', async () => {
+  // Generate data with NULL optional fields
+  // Verify application displays NULLs appropriately
+
+  // In WhoDB: View table, confirm NULL fields show correctly
+  // Filter by NOT NULL to see complete records
+});
+
+test('handles large numbers correctly', async () => {
+  // Generate data with boundary values
+  // Verify no overflow or truncation
+
+  // In WhoDB: Check numeric columns for precision
+});
+```
+</Step>
+
+<Step title="Verify in WhoDB">
+After each test, quickly check results in WhoDB:
+
+![Data View](/images/09-data-view-users-table.png)
+
+Browse the data to confirm test operations succeeded, or filter to isolate test records.
+</Step>
+</Steps>
+
+### Workflow 2: Integration Testing
+
+When testing how multiple components interact:
+
+<Steps>
+<Step title="Set Up Complex Data State">
+Generate mock data representing realistic application state:
+
+1. **Users table**: 30 diverse user records
+2. **Products table**: 20 products across categories
+3. **Orders table**: 100 orders from the users
+4. **Order items table**: Multiple items per order
+5. **Reviews table**: Some products reviewed multiple times
+
+This creates a rich dataset for integration testing.
+</Step>
+
+<Step title="Run Integration Tests">
+Test complex workflows like:
+- Placing an order and verifying inventory decreases
+- Updating user profile and seeing changes reflected in order history
+- Calculating totals correctly across multiple orders
+- Applying discounts and verifying calculations
+
+After each operation, verify results in WhoDB:
+
+![Filter UI](/images/16-data-view-where-conditions-popover.png)
+
+Use filters to isolate test records and confirm state changed correctly.
+</Step>
+
+<Step title="Test Cross-Table Consistency">
+Use queries to verify data consistency:
+
+```sql
+-- Verify order items reference valid products
+SELECT oi.order_id, oi.product_id
+FROM order_items oi
+LEFT JOIN products p ON oi.product_id = p.id
+WHERE p.id IS NULL;
+
+-- Verify order totals match line item sums
+SELECT o.id, o.total, SUM(oi.quantity * oi.price)
+FROM orders o
+LEFT JOIN order_items oi ON o.id = oi.order_id
+GROUP BY o.id
+HAVING o.total != SUM(oi.quantity * oi.price);
+```
+
+Run these queries in Scratchpad after your integration tests to verify data integrity.
+</Step>
+</Steps>
+
+### Workflow 3: Performance Testing
+
+When optimizing queries or testing with large datasets:
+
+<Steps>
+<Step title="Generate Realistic Data Volume">
+Create dataset sizes matching your production scale:
+
+![Row Count Options](/images/75-mock-data-row-count-max-clamped.png)
+
+- If production has 10K users, generate 10K test users
+- If production has 1M orders, generate 100K-1M test orders
+- Adjust down to test performance at smaller scales
+
+Generate in stages: 100 rows → 1K rows → 10K rows to see where performance degrades.
+</Step>
+
+<Step title="Write Performance Test Queries">
+In Scratchpad, write the queries your application will execute:
+
+```sql
+-- Count queries (common operation)
+SELECT COUNT(*) FROM users WHERE status = 'active';
+
+-- Join queries (common in user interfaces)
+SELECT u.*, COUNT(o.id) as order_count
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+WHERE u.created_at > '2024-01-01'
+GROUP BY u.id;
+
+-- Search queries (common in applications)
+SELECT * FROM products
+WHERE name ILIKE '%laptop%' OR description ILIKE '%laptop%';
+```
+
+Execute these and note execution time.
+</Step>
+
+<Step title="Compare Before/After Optimization">
+For query optimization:
+
+1. **Before**: Execute query with current code, note time
+2. **Optimize**: Add index, rewrite query, etc.
+3. **After**: Execute query with optimization, note time
+4. **Compare**: Calculate performance improvement
+
+```sql
+-- Example: Adding index
+-- Before optimization
+SELECT * FROM orders WHERE user_id = 123;  -- 2.5 seconds
+
+-- Add index
+CREATE INDEX idx_orders_user_id ON orders(user_id);
+
+-- After optimization
+SELECT * FROM orders WHERE user_id = 123;  -- 0.05 seconds
+-- 50x faster!
+```
+
+Document performance improvements for your team.
+</Step>
+
+<Step title="Load Test Your Application">
+Simulate concurrent users:
+
+```javascript
+// Simulate 100 concurrent queries
+const queries = Array(100).fill(
+  'SELECT * FROM orders WHERE user_id = ?'
+);
+
+const start = Date.now();
+await Promise.all(queries);
+const elapsed = Date.now() - start;
+
+console.log(`100 queries completed in ${elapsed}ms`);
+console.log(`Average: ${elapsed/100}ms per query`);
+```
+
+Monitor database performance in WhoDB while load tests run:
+- Watch query execution times in Scratchpad
+- Check if connection pool is being strained
+- Verify no deadlocks occur
+</Step>
+</Steps>
+
+## Query Testing and Debugging
+
+### Testing Query Logic
+
+When writing complex queries, test them iteratively:
+
+<Steps>
+<Step title="Start Simple">
+Begin with basic queries and build complexity:
+
+```sql
+-- Step 1: Start simple
+SELECT * FROM users LIMIT 5;
+
+-- Step 2: Add filtering
+SELECT * FROM users
+WHERE created_at > '2024-01-01'
+LIMIT 5;
+
+-- Step 3: Add aggregation
+SELECT
+  created_at::date,
+  COUNT(*) as user_count
+FROM users
+WHERE created_at > '2024-01-01'
+GROUP BY created_at::date;
+
+-- Step 4: Add joining
+SELECT
+  u.id,
+  u.username,
+  COUNT(o.id) as order_count
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+WHERE u.created_at > '2024-01-01'
+GROUP BY u.id
+ORDER BY order_count DESC;
+```
+
+Build incrementally, verifying results at each step.
+</Step>
+
+<Step title="Verify Results Make Sense">
+After each query, ask:
+- Do row counts make sense?
+- Do values look reasonable?
+- Are there unexpected NULLs?
+- Do aggregates add up correctly?
+
+![Query Results](/images/86-scratchpad-select-query-result.png)
+
+Review the result grid carefully—errors often jump out visually.
+</Step>
+
+<Step title="Test Edge Cases">
+Once your query works for normal data, test edge cases:
+
+```sql
+-- Original query (works for normal case)
+SELECT u.*, COUNT(o.id) as order_count
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+GROUP BY u.id;
+
+-- Test 1: Users with NO orders (LEFT JOIN should include them)
+-- Verify COUNT = 0 for users without orders
+
+-- Test 2: Users with MANY orders
+-- Verify COUNT is accurate for high-volume users
+
+-- Test 3: Orders with NULL user_id
+-- Verify these don't corrupt the results
+
+-- Test 4: Recent data only
+-- Add date filtering and verify results still correct
+```
+</Step>
+
+<Step title="Compare Approaches">
+Write the same query multiple ways and compare results:
+
+```sql
+-- Approach 1: Using LEFT JOIN and COUNT
+SELECT u.id, COUNT(o.id) as order_count
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+GROUP BY u.id;
+
+-- Approach 2: Using subquery
+SELECT u.id, (SELECT COUNT(*) FROM orders WHERE user_id = u.id) as order_count
+FROM users u;
+
+-- Approach 3: Using window functions
+SELECT DISTINCT u.id,
+  COUNT(*) OVER (PARTITION BY u.id) as order_count
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id;
+
+-- All three should give identical results
+-- But they may have different performance characteristics
+```
+
+Understanding these differences makes you a better SQL developer.
+</Step>
+</Steps>
+
+### Debugging Failing Queries
+
+When a query doesn't return what you expect:
+
+<Steps>
+<Step title="Break It Down">
+If a complex query fails, identify which part:
+
+```sql
+-- Original failing query
+SELECT u.id, u.name, COUNT(o.id) as order_count
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+WHERE u.created_at > '2024-01-01'
+AND o.total > 100
+GROUP BY u.id
+HAVING COUNT(o.id) > 5;
+
+-- Test each part individually:
+
+-- Part 1: Users created recently
+SELECT COUNT(*) FROM users WHERE created_at > '2024-01-01';
+-- Result: 150 users
+
+-- Part 2: Orders with total > 100
+SELECT COUNT(*) FROM orders WHERE total > 100;
+-- Result: 300 orders
+
+-- Part 3: Join them (still no aggregation)
+SELECT u.id, o.id
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+WHERE u.created_at > '2024-01-01'
+AND o.total > 100
+LIMIT 10;
+-- Check if results look reasonable
+
+-- Part 4: Add aggregation
+SELECT u.id, COUNT(o.id) as order_count
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+WHERE u.created_at > '2024-01-01'
+AND o.total > 100
+GROUP BY u.id;
+
+-- Part 5: Add HAVING clause
+-- (now it should match the original query)
+```
+
+This isolation helps identify exactly which part is causing issues.
+</Step>
+
+<Step title="Check Data Assumptions">
+Verify your assumptions about the data:
+
+```sql
+-- Assumption: Every order has a user_id
+SELECT COUNT(*) FROM orders WHERE user_id IS NULL;
+-- If result > 0, you have invalid data to handle
+
+-- Assumption: No duplicate user records
+SELECT user_id, COUNT(*) as cnt FROM users GROUP BY user_id HAVING COUNT(*) > 1;
+-- If results appear, you have duplicates
+
+-- Assumption: Order totals are always positive
+SELECT * FROM orders WHERE total <= 0;
+-- If results appear, you need to handle this
+```
+
+Many query failures result from incorrect assumptions about data.
+</Step>
+
+<Step title="Use EXPLAIN for Performance">
+When a query runs slowly:
+
+```sql
+EXPLAIN ANALYZE
+SELECT u.*, COUNT(o.id) as order_count
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+GROUP BY u.id
+ORDER BY order_count DESC;
+```
+
+The output shows:
+- How many rows the database expects to process
+- What indexes are being used
+- Where time is being spent
+- Opportunities for optimization
+</Step>
+</Steps>
+
+## Development Workflows with Mock Data
+
+### Workflow: Feature Development Cycle
+
+<Steps>
+<Step title="Start: Set Up Test Environment">
+Generate initial mock data for your feature:
+- User data (30 rows)
+- Feature-specific data (100 rows)
+- Edge case data (10-20 rows)
+
+```sql
+-- After generation, verify data distribution
+SELECT status, COUNT(*) FROM users GROUP BY status;
+-- Should show realistic distribution across active/inactive/pending
+```
+</Step>
+
+<Step title="Develop: Write Your Feature Code">
+Build your feature against the mock data:
+- Your code can query freely without affecting production
+- You can modify test data as you discover new requirements
+- You can regenerate completely if you make mistakes
+</Step>
+
+<Step title="Test: Verify Against Data">
+After each coding session:
+1. Run your feature
+2. Check results in WhoDB
+3. Verify data state changed correctly
+4. Test edge cases
+
+```javascript
+// Feature: Apply discount to order
+const order = await getOrder(1);
+const discounted = await applyDiscount(order, 'SUMMER20'); // 20% off
+// Check in WhoDB: View order 1, verify total decreased by 20%
+```
+</Step>
+
+<Step title="Debug: Use Queries for Investigation">
+When something unexpected happens, write queries to understand why:
+
+```sql
+-- Why didn't discount apply?
+SELECT id, original_total, discount_code, new_total,
+  (original_total - new_total) as savings
+FROM orders
+WHERE discount_code = 'SUMMER20'
+ORDER BY created_at DESC
+LIMIT 5;
+```
+</Step>
+
+<Step title="Iterate: Regenerate and Retry">
+If you need fresh test data:
+
+1. Export current test results (for documentation)
+2. Delete all test records
+3. Regenerate fresh mock data
+4. Retry the development cycle
+</Step>
+
+<Step title="Finalize: Clean Up">
+Before committing:
+1. Delete all test mock data
+2. Verify production (or staging) is unaffected
+3. Run full test suite
+4. Deploy changes with confidence
+</Step>
+</Steps>
+
+## Query Examples for Common Development Tasks
+
+### Monitoring and Debugging
+
+```sql
+-- Recent errors logged
+SELECT * FROM error_logs
+ORDER BY created_at DESC
+LIMIT 20;
+
+-- Failed transactions
+SELECT * FROM transactions
+WHERE status = 'failed'
+AND created_at > NOW() - INTERVAL '1 hour'
+ORDER BY created_at DESC;
+
+-- Database activity by table
+SELECT table_name, COUNT(*) as activity_count
+FROM audit_log
+WHERE created_at > NOW() - INTERVAL '1 hour'
+GROUP BY table_name
+ORDER BY activity_count DESC;
+```
+
+### Data Validation
+
+```sql
+-- Orphaned records (foreign key violations)
+SELECT o.id FROM orders o
+LEFT JOIN users u ON o.user_id = u.id
+WHERE u.id IS NULL;
+
+-- Duplicate entries
+SELECT email, COUNT(*) as cnt
+FROM users
+GROUP BY email
+HAVING COUNT(*) > 1;
+
+-- Data freshness
+SELECT table_name, MAX(created_at) as last_record
+FROM audit_log
+GROUP BY table_name
+ORDER BY last_record;
+```
+
+### Performance Investigation
+
+```sql
+-- Slowest queries in history
+SELECT query, avg_execution_time, execution_count
+FROM query_log
+ORDER BY avg_execution_time DESC
+LIMIT 20;
+
+-- Table sizes and row counts
+SELECT table_name, row_count, size_mb
+FROM table_stats
+ORDER BY size_mb DESC;
+
+-- Most-accessed tables
+SELECT table_name, access_count
+FROM table_access_stats
+ORDER BY access_count DESC;
+```
+
+## Best Practices for Development Testing
+
+<AccordionGroup>
+<Accordion title="Always Use a Separate Development Database">
+Never test on production. Use development or local databases exclusively.
+</Accordion>
+
+<Accordion title="Document Test Data">
+Document what mock data you generated and why. This helps team members understand your test scenarios.
+</Accordion>
+
+<Accordion title="Automate Test Data Generation">
+Build scripts or use WhoDB API to automatically generate test data for CI/CD pipelines.
+</Accordion>
+
+<Accordion title="Use Realistic Data Volumes">
+Test with data volumes similar to production to catch performance issues early.
+</Accordion>
+
+<Accordion title="Version Control Your Test Queries">
+Keep analysis and debugging queries in version control. Future debugging of similar issues is easier with examples.
+</Accordion>
+
+<Accordion title="Clean Up Regularly">
+Delete old test data periodically to keep your development database lean and fast.
+</Accordion>
+
+<Accordion title="Test Data Isolation">
+Use consistent prefixes or IDs for test data so you can easily identify and clean up your test records.
+</Accordion>
+
+<Accordion title="Export Before Major Changes">
+Before running destructive tests, export your current data state for rollback if needed.
+</Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+Ready to advance your development practices?
+
+<CardGroup cols={2}>
+<Card title="Database Exploration" href="/use-cases/database-exploration">
+Learn how to explore unfamiliar databases
+</Card>
+
+<Card title="Data Analysis" href="/use-cases/data-analysis">
+Use WhoDB for advanced data analysis
+</Card>
+
+<Card title="Query Interface" href="/query/scratchpad-intro">
+Master advanced SQL techniques
+</Card>
+
+<Card title="Export Options" href="/advanced/export-options">
+Learn comprehensive export capabilities
+</Card>
+</CardGroup>
+
+<Check>
+You now have a complete testing and development workflow. From generating realistic mock data through integrated testing with performance validation, you have tools to accelerate development and confidence in your database code. The combination of mock data generation, interactive querying, and rapid iteration creates a developer experience that catches bugs early and speeds up development cycles.
+</Check>

@@ -1,0 +1,835 @@
+---
+title: "WhoDB for QA Engineers & Testers"
+description: "Database testing tool for QA. Mock data generation, test data management, database verification, and debugging test failures"
+seo:
+  title: "Database Tool for Testing - WhoDB for QA Engineers"
+  description: "QA database testing tool for mock data generation, test data management, and database verification. Generate test data, verify database state, debug test failures with WhoDB."
+  keywords: "database tool for testing, test data management, mock data generation, QA database testing, test environment management, database verification"
+---
+
+# WhoDB for QA Engineers & Testers
+
+As a QA engineer, you need tools to generate realistic test data, verify database state during testing, manage test environments, and debug database-related test failures. WhoDB provides everything you need to manage your testing database workflows efficiently.
+
+<Tip>
+This guide covers mock data generation, test data management, database verification, and debugging techniques essential for comprehensive quality assurance.
+</Tip>
+
+## QA Testing Capabilities
+
+<CardGroup cols={2}>
+<Card title="Mock Data Generation" icon="sparkles">
+Generate realistic test data at scale for comprehensive testing
+</Card>
+<Card title="Test Data Management" icon="database">
+Manage, organize, and verify your test databases
+</Card>
+<Card title="Database Verification" icon="shield-check">
+Verify database state and data integrity during testing
+</Card>
+<Card title="Failure Debugging" icon="bug">
+Investigate test failures by inspecting database state
+</Card>
+</CardGroup>
+
+## Setting Up Your Test Environment
+
+### Configure Test Database Connection
+
+<Steps>
+<Step title="Connect to Test Database">
+Set up WhoDB with your dedicated test database:
+
+![Login Form](/images/03-login-form-filled.png)
+
+Important:
+- **Use a separate test database** from production and development
+- **Reset between test runs** to maintain clean state
+- **Use non-sensitive test credentials** (never use real user data)
+- **Enable auto-refresh** if your test framework modifies the database
+</Step>
+
+<Step title="Verify Schema Matches Application">
+Confirm your test database schema matches your application code:
+
+![Explore Users Table](/images/07-explore-users-table.png)
+
+Check:
+- All required tables exist
+- Column names and types match your ORM models
+- Foreign key relationships are defined
+- Constraints match your business logic
+- Indexes are present for expected query patterns
+
+Mismatched schemas are a common source of test failures that pass locally but fail in CI/CD.
+</Step>
+
+<Step title="Document Test Database Setup">
+Create a setup guide for your team:
+
+**Example Test Environment Setup:**
+```bash
+# PostgreSQL
+createdb app_test
+psql app_test < schema.sql
+
+# MySQL
+mysql -e "CREATE DATABASE app_test;"
+mysql app_test < schema.sql
+
+# SQLite
+touch test.db
+sqlite3 test.db < schema.sql
+```
+
+Share this with your team to ensure consistency.
+</Step>
+</Steps>
+
+## Mock Data Generation Workflow
+
+### Generating Test Data
+
+<Steps>
+<Step title="Navigate to Table">
+Open the table where you need to generate test data:
+
+![Data View Users Table](/images/09-data-view-users-table.png)
+
+The data grid shows existing records, helping you understand what test data to generate.
+</Step>
+
+<Step title="Open Mock Data Generator">
+Click the "Generate Mock Data" button:
+
+![Mock Data Dialog](/images/22-data-view-mock-data-dialog.png)
+
+This opens the test data generation interface.
+</Step>
+
+<Step title="Choose Append Mode for Safety">
+Select your data handling mode:
+
+![Mock Data Append Mode](/images/71-mock-data-append-mode.png)
+
+<Tip>
+Always use **Append mode** during active testing. This preserves existing data and lets you delete generated data if something goes wrong.
+
+Use **Overwrite** only when you're explicitly resetting the test database.
+</Tip>
+</Step>
+
+<Step title="Set Row Count for Your Test Case">
+Choose the appropriate data volume:
+
+![Row Count Minimum](/images/73-mock-data-row-count-min.png)
+
+Different tests need different data volumes:
+
+**Minimal Tests (1-10 rows):**
+```
+Use for:
+- Unit test verification
+- UI single-row operations
+- Edge case testing
+- Performance baselines with minimal data
+
+Example: "Can I edit a single record correctly?"
+```
+
+![Row Count Medium](/images/74-mock-data-row-count-medium.png)
+
+**Standard Tests (50-200 rows):**
+```
+Use for:
+- Integration tests
+- List/pagination testing
+- Search and filter validation
+- Basic performance testing
+
+Example: "Can I paginate correctly through 100 records?"
+```
+
+**Load Tests (1000+ rows):**
+```
+Use for:
+- Performance testing
+- Sorting efficiency verification
+- Large dataset handling
+- UI responsiveness under load
+
+Example: "Does the UI stay responsive with 10,000 records?"
+```
+
+![Row Count Maximum Clamped](/images/75-mock-data-row-count-max-clamped.png)
+</Step>
+
+<Step title="Generate and Verify">
+Execute the generation:
+
+After generation completes, verify the data was created correctly:
+- Count matches expectation
+- Data types are correct
+- Relationships are valid
+- No errors in generated data
+</Step>
+</Steps>
+
+### Test Data Generation Strategies
+
+#### Strategy 1: Minimal Data for Quick Tests
+
+Generate just enough data to test a feature:
+
+<Steps>
+<Step title="Minimal User Setup">
+Generate 2-3 test users for basic functionality:
+
+```
+Test Data:
+- 1 admin user
+- 1 regular user
+- 1 inactive user (for permission/role testing)
+```
+
+This lets you test basic CRUD operations quickly.
+</Step>
+
+<Step title="Minimal Related Data">
+Generate minimal related records:
+
+```
+For order testing:
+- 1 order per user
+- 2-3 order items per order
+- No historical data
+
+This tests the basic relationships without bloat.
+```
+</Step>
+</Steps>
+
+#### Strategy 2: Comprehensive Data for Integration Tests
+
+Generate realistic data distributions for thorough testing:
+
+<Steps>
+<Step title="User Segmentation">
+Generate diverse user states:
+
+```
+100 test users with distribution:
+- 60 active users (recent activity)
+- 25 inactive users (no recent activity)
+- 10 premium users (different tier)
+- 5 suspended users (restricted access)
+```
+
+This tests different user states and access patterns.
+</Step>
+
+<Step title="Temporal Distribution">
+Spread data across time ranges:
+
+```
+Orders with dates:
+- 10% from past year (historical data)
+- 50% from past 3 months (recent data)
+- 40% from past week (current activity)
+
+This tests time-range queries and reporting.
+```
+</Step>
+
+<Step title="State Distribution">
+Vary record states:
+
+```
+500 orders with status distribution:
+- 40% completed
+- 30% pending
+- 20% cancelled
+- 10% failed
+
+This tests filtering and status transitions.
+```
+</Step>
+</Steps>
+
+#### Strategy 3: Edge Case Testing
+
+Generate specific data to test edge cases:
+
+<Steps>
+<Step title="Boundary Values">
+Create records with boundary data:
+
+```sql
+-- After generation, manually add edge cases
+INSERT INTO products VALUES
+(999999999, 'Max Int ID', 999999.99),     -- Maximum values
+(-1, 'Negative', 0.01),                  -- Negative values
+(0, 'Zero', NULL);                       -- NULL values
+```
+</Step>
+
+<Step title="Special Characters">
+Test data with special characters:
+
+```sql
+INSERT INTO users (name, email) VALUES
+('O''Brien', 'test+tag@example.com'),   -- Quotes and special chars
+('José García', 'josé@example.com'),     -- Unicode characters
+('User, Test', 'comma@test.com');        -- Commas in data
+```
+</Step>
+
+<Step title="Performance Edge Cases">
+Generate data for stress testing:
+
+```
+Large Dataset Tests:
+- 10,000 user records
+- 100,000 order records
+- Test sorting, filtering, and export with large datasets
+```
+</Step>
+</Steps>
+
+## Verifying Database State During Testing
+
+### Checking Test Results
+
+<Steps>
+<Step title="View Table After Test Execution">
+After running tests, open WhoDB to verify database state:
+
+![Data View Table Content](/images/10-data-view-table-content.png)
+
+Check:
+- Were records created/updated/deleted as expected?
+- Are relationships intact?
+- Did the test modify the correct tables?
+</Step>
+
+<Step title="Filter to Test-Generated Data">
+Apply filters to isolate test results:
+
+![Data View Where Conditions Popover](/images/16-data-view-where-conditions-popover.png)
+
+```
+Example filters:
+- created_at = TODAY (show today's records)
+- status = 'test_pending' (show test-specific records)
+- created_by = 'test_user' (show records from test)
+```
+
+This helps you verify specific test outcomes without data noise.
+</Step>
+
+<Step title="Add Row Context Menu">
+Right-click rows to see additional options:
+
+![Context Menu](/images/13-data-view-context-menu.png)
+
+Inspect individual records:
+- View complete record data
+- Check timestamps and metadata
+- Verify related records
+</Step>
+</Steps>
+
+### Validating Database Integrity After Tests
+
+<Steps>
+<Step title="Count Records">
+Use filtering to verify record counts:
+
+![Data View Add Row Dialog](/images/11-data-view-add-row-dialog.png)
+
+After tests, verify:
+- Correct number of records created
+- Correct number of records deleted
+- Correct number of records updated
+- No orphaned records remain
+</Step>
+
+<Step title="Write Verification Queries">
+Use Scratchpad for complex verification:
+
+![Scratchpad Main View](/images/27-scratchpad-main-view.png)
+
+```sql
+-- Verify test data integrity
+SELECT
+  'Total test records' as check_name,
+  COUNT(*) as expected,
+  (SELECT COUNT(*) FROM orders WHERE created_at >= TODAY) as actual
+FROM test_data;
+
+-- Check for orphaned relationships
+SELECT 'Orphaned orders' as check_name, COUNT(*) as count
+FROM orders o
+LEFT JOIN customers c ON o.customer_id = c.customer_id
+WHERE c.customer_id IS NULL;
+
+-- Verify constraints
+SELECT 'Invalid states' as check_name, COUNT(*) as count
+FROM orders
+WHERE status NOT IN ('pending', 'completed', 'cancelled');
+```
+</Step>
+
+<Step title="Review Query Results">
+Examine verification results:
+
+![Scratchpad Query Results](/images/29-scratchpad-query-results.png)
+
+Document findings:
+- Are all verifications passing?
+- Are there unexpected data states?
+- Do results align with test expectations?
+</Step>
+</Steps>
+
+## Debugging Test Failures
+
+### Investigating Failed Tests
+
+<Steps>
+<Step title="Identify the Failure">
+When a test fails, first determine the type:
+
+```
+Types of test failures:
+- Assertion failure (code expected X, got Y)
+- Timeout (operation took too long)
+- Error (exception thrown)
+- Data-related (unexpected database state)
+```
+</Step>
+
+<Step title="Inspect Database State">
+Use WhoDB to examine what the database contains:
+
+![Data View Query Filtered](/images/16-data-view-where-conditions-popover.png)
+
+Apply filters to see the exact state when the test failed:
+- Records created: Yes/No/Partial?
+- Record values: Expected or different?
+- Relationships: Intact or broken?
+- Side effects: Any unintended modifications?
+</Step>
+
+<Step title="Compare to Expected State">
+Document the discrepancy:
+
+```
+Test Expected:
+- 1 order record with status='pending'
+- 3 order_item records
+- 1 customer reference
+
+Database Contained:
+- 0 order records
+- No order_items
+- Error likely in order creation logic
+```
+</Step>
+</Steps>
+
+### Common Debugging Scenarios
+
+<AccordionGroup>
+<Accordion title="Test Creates Data But Test Assertion Fails">
+The database modification worked, but the application processed data differently than expected:
+
+```sql
+-- Check what was actually created
+SELECT * FROM orders
+WHERE customer_id = @test_customer_id
+ORDER BY created_at DESC
+LIMIT 5;
+
+-- Verify the data
+SELECT COUNT(*) as items
+FROM order_items
+WHERE order_id IN (SELECT id FROM orders WHERE customer_id = @test_customer_id);
+```
+
+The discrepancy might be in:
+- How your application reads the data
+- Default values set by the database
+- Timestamps or timezone handling
+- Foreign key behavior
+</Accordion>
+
+<Accordion title="Test Fails With Constraint Violation">
+Your test data violates a database constraint:
+
+```sql
+-- Find the constraint violation
+SELECT * FROM test_data
+WHERE (invalid condition);
+
+-- Example: Finding duplicate emails when unique constraint exists
+SELECT email, COUNT(*) as count
+FROM users
+WHERE email IN (SELECT email FROM test_data)
+GROUP BY email
+HAVING COUNT(*) > 1;
+```
+
+Fix by:
+- Adjusting test data generation
+- Cleaning up before test
+- Modifying test approach to work with constraints
+</Accordion>
+
+<Accordion title="Test Seems to Pass But Data Persists Unexpectedly">
+Test cleanup didn't work as expected:
+
+```sql
+-- Find remaining test data
+SELECT * FROM orders
+WHERE test_flag = true
+  OR created_by = 'test_user'
+  OR created_at = TODAY;
+
+-- Check if deletion actually happened
+SELECT COUNT(*) as orphaned_items
+FROM order_items
+WHERE order_id NOT IN (SELECT id FROM orders);
+```
+
+This might indicate:
+- Cleanup script didn't run
+- Foreign key constraints preventing deletion
+- Rollback didn't execute
+- Wrong records were targeted for deletion
+</Accordion>
+
+<Accordion title="Test Data Looks Wrong (Nulls, Invalid Values)">
+Generated test data contains unexpected values:
+
+```sql
+-- Find anomalous test data
+SELECT *
+FROM products
+WHERE price < 0
+  OR price > 1000000
+  OR name IS NULL
+  OR category = '';
+
+-- Check for constraints not being met
+SELECT * FROM orders
+WHERE status NOT IN ('pending', 'completed', 'cancelled')
+  OR amount <= 0
+  OR created_at > NOW();
+```
+
+This indicates:
+- Mock data generator has gaps
+- Application isn't validating input
+- Constraints aren't defined in the database
+- Manual test data entry had errors
+</Accordion>
+
+<Accordion title="Performance Test Shows Unexpected Slowness">
+Application performance degrades with test data:
+
+```sql
+-- Check query performance with test data
+EXPLAIN ANALYZE
+SELECT * FROM orders
+WHERE customer_id = @test_id
+ORDER BY created_at DESC
+LIMIT 10;
+
+-- Check if indexes exist
+SELECT indexname
+FROM pg_indexes
+WHERE tablename = 'orders'
+  AND indexdef LIKE '%customer_id%';
+
+-- Check table statistics
+SELECT * FROM pg_stat_user_tables
+WHERE relname = 'orders';
+```
+
+Debugging points:
+- Missing indexes on filter columns
+- Outdated table statistics
+- Data volume too small to reveal real bottleneck
+- Join inefficiency not apparent with small data
+</Accordion>
+</AccordionGroup>
+
+## Test Data Management Best Practices
+
+<CardGroup cols={2}>
+<Card title="Use Separate Test Database" icon="database">
+Never test against production. Keep test data isolated.
+</Card>
+<Card title="Reset Between Test Runs" icon="rotate-ccw">
+Clean test data to avoid test interdependencies and false positives.
+</Card>
+<Card title="Document Test Scenarios" icon="file-pen">
+Document what test data each scenario needs and why.
+</Card>
+<Card title="Match Production Patterns" icon="copy">
+Generate test data that mirrors real production data distributions.
+</Card>
+<Card title="Version Test Data" icon="tag">
+Keep standard test datasets versioned for reproducibility.
+</Card>
+<Card title="Automate Generation" icon="zap">
+Integrate mock data generation into your test setup scripts.
+</Card>
+</CardGroup>
+
+## Test Scenarios & Examples
+
+### Scenario 1: User Registration Testing
+
+Test user registration workflow with various data:
+
+<Steps>
+<Step title="Generate Base Users">
+Create starting user set for testing:
+
+```
+20 existing users with variety:
+- 10 active users
+- 5 inactive users
+- 5 premium users
+```
+</Step>
+
+<Step title="Run Registration Tests">
+Test new user creation:
+
+```
+Test Cases:
+1. New user can register
+2. Duplicate emails rejected
+3. Invalid emails rejected
+4. Password requirements enforced
+5. Default preferences assigned
+```
+</Step>
+
+<Step title="Verify Results">
+After registration tests, check:
+
+```sql
+SELECT
+  COUNT(*) as total_users,
+  COUNT(CASE WHEN created_at = TODAY THEN 1 END) as registered_today,
+  COUNT(CASE WHEN is_active = true THEN 1 END) as active_count
+FROM users;
+
+-- Find any registration errors
+SELECT * FROM registration_attempts
+WHERE status = 'failed'
+ORDER BY created_at DESC;
+```
+</Step>
+</Steps>
+
+### Scenario 2: Order Processing Testing
+
+Test order workflow with realistic data:
+
+<Steps>
+<Step title="Generate Order Ecosystem">
+Create complete order test data:
+
+```
+100 test customers
+500 test products
+1000 test orders with distribution:
+- 400 completed
+- 300 pending
+- 200 cancelled
+3000 order items distributed across orders
+```
+</Step>
+
+<Step title="Run Order Tests">
+Execute order processing tests:
+
+```
+Test Cases:
+1. Create order from items
+2. Calculate totals correctly
+3. Apply discounts
+4. Handle inventory updates
+5. Process payment
+6. Update order status
+```
+</Step>
+
+<Step title="Debug Issues">
+If order tests fail:
+
+```sql
+-- Check order creation
+SELECT * FROM orders WHERE test_order_id = @id;
+
+-- Check items were added
+SELECT * FROM order_items WHERE order_id = @id;
+
+-- Verify calculations
+SELECT
+  order_id,
+  SUM(quantity * price) as calculated_total,
+  total as stored_total,
+  (total - SUM(quantity * price)) as discrepancy
+FROM order_items
+GROUP BY order_id
+HAVING calculated_total != total;
+```
+</Step>
+</Steps>
+
+### Scenario 3: Permission/Authorization Testing
+
+Verify access control with role-based test data:
+
+<Steps>
+<Step title="Generate Users by Role">
+Create test users with different permissions:
+
+```
+Admin Users: 2
+  - Full system access
+
+Moderator Users: 5
+  - Can view all content
+  - Can delete/edit reported content
+
+Regular Users: 50
+  - Can view own content only
+  - Limited actions
+
+Guest Access: Verify properly denied
+```
+</Step>
+
+<Step title="Test Authorization">
+Run permission checks:
+
+```
+Test Cases:
+1. Admin can access all resources
+2. Moderators see moderation panel
+3. Regular users see only their data
+4. Guests get access denied
+```
+</Step>
+
+<Step title="Verify Access Log">
+Check authorization was enforced:
+
+```sql
+-- Check access patterns
+SELECT
+  user_role,
+  resource_accessed,
+  COUNT(*) as access_count
+FROM access_log
+WHERE test_run_id = @run_id
+GROUP BY user_role, resource_accessed;
+
+-- Find any denied accesses
+SELECT * FROM access_log
+WHERE status = 'denied'
+  AND test_run_id = @run_id;
+```
+</Step>
+</Steps>
+
+## Integration with Test Frameworks
+
+### Test Database Reset
+
+Create a test setup script that uses WhoDB-compatible connections:
+
+```sql
+-- test_setup.sql
+-- Run before each test suite
+
+-- Disable foreign key checks during cleanup
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- Truncate all test tables
+TRUNCATE TABLE order_items;
+TRUNCATE TABLE orders;
+TRUNCATE TABLE customers;
+TRUNCATE TABLE users;
+
+-- Reset auto-increment
+ALTER TABLE users AUTO_INCREMENT = 1;
+ALTER TABLE customers AUTO_INCREMENT = 1;
+ALTER TABLE orders AUTO_INCREMENT = 1;
+ALTER TABLE order_items AUTO_INCREMENT = 1;
+
+-- Re-enable checks
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- Generate base test data
+INSERT INTO users (name, email) VALUES
+('Test User 1', 'test1@example.com'),
+('Test User 2', 'test2@example.com');
+```
+
+### Continuous Integration Integration
+
+Add database verification to your CI/CD pipeline:
+
+```bash
+#!/bin/bash
+# test_verification.sh
+
+# Run your tests
+npm test
+
+# Get database state after tests
+TEST_RESULT=$?
+
+if [ $TEST_RESULT -ne 0 ]; then
+  # Capture database state for debugging
+  mysql app_test -e "SELECT * FROM orders WHERE created_at = TODAY;" > test_orders.txt
+  mysql app_test -e "SHOW ENGINE INNODB STATUS;" > innodb_status.txt
+  echo "Test failed. Database state saved."
+fi
+
+exit $TEST_RESULT
+```
+
+## Next Steps
+
+Enhance your QA testing with WhoDB:
+
+<CardGroup cols={2}>
+<Card title="Mock Data Generation" href="/advanced/mock-data">
+Master all mock data generation options
+</Card>
+
+<Card title="Query Testing" href="/query/writing-queries">
+Write verification queries for complex test scenarios
+</Card>
+
+<Card title="Data Filtering" href="/advanced/where-conditions">
+Master filtering for precise test data verification
+</Card>
+
+<Card title="Testing & Development" href="/use-cases/testing-development">
+Explore comprehensive development testing patterns
+</Card>
+</CardGroup>
+
+<Check>
+With WhoDB's test data generation and verification tools, you can confidently test your applications. Generate realistic data, verify behavior, debug failures, and ensure data integrity throughout your testing workflow. This comprehensive testing approach leads to higher quality software and fewer production issues.
+</Check>
