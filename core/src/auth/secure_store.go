@@ -17,24 +17,24 @@
 package auth
 
 import (
-    "encoding/json"
+	"encoding/json"
 
-    "github.com/clidey/whodb/core/src/engine"
-    "github.com/clidey/whodb/core/src/env"
-    "github.com/zalando/go-keyring"
+	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/env"
+	"github.com/zalando/go-keyring"
 )
 
 var keyringService = getKeyringService()
 
 func getKeyringService() string {
-    base := "WhoDB"
-    if env.IsEnterpriseEdition {
-        base = "WhoDB-EE"
-    }
-    if env.IsDevelopment {
-        return base + "-Dev"
-    }
-    return base
+	base := "WhoDB"
+	if env.IsEnterpriseEdition {
+		base = "WhoDB-EE"
+	}
+	if env.IsDevelopment {
+		return base + "-Dev"
+	}
+	return base
 }
 
 // GetKeyringServiceName exposes the resolved keyring service label for logging.
@@ -45,6 +45,9 @@ func keyForProfile(id string) string {
 }
 
 func SaveCredentials(id string, creds *engine.Credentials) error {
+	if !env.GetIsDesktopMode() {
+		return nil
+	}
 	if id == "" || creds == nil {
 		return nil
 	}
@@ -56,6 +59,9 @@ func SaveCredentials(id string, creds *engine.Credentials) error {
 }
 
 func LoadCredentials(id string) (*engine.Credentials, error) {
+	if !env.GetIsDesktopMode() {
+		return nil, keyring.ErrNotFound
+	}
 	if id == "" {
 		return nil, keyring.ErrNotFound
 	}
@@ -71,6 +77,9 @@ func LoadCredentials(id string) (*engine.Credentials, error) {
 }
 
 func DeleteCredentials(id string) error {
+	if !env.GetIsDesktopMode() {
+		return nil
+	}
 	if id == "" {
 		return nil
 	}
