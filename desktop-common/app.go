@@ -353,6 +353,10 @@ func (a *App) getSettingsPath() string {
 func (a *App) SetupApplicationMenu() {
 	appMenu := menu.NewMenu()
 
+	if goruntime.GOOS == "darwin" {
+		appMenu.Append(menu.AppMenu())
+	}
+
 	// File Menu
 	fileMenu := appMenu.AddSubmenu("File")
 	fileMenu.AddText("New Connection", keys.CmdOrCtrl("n"), func(_ *menu.CallbackData) {
@@ -368,20 +372,24 @@ func (a *App) SetupApplicationMenu() {
 	})
 
 	// Edit Menu
-	editMenu := appMenu.AddSubmenu("Edit")
-	editMenu.AddText("Copy", keys.CmdOrCtrl("c"), func(_ *menu.CallbackData) {
-		runtime.EventsEmit(a.ctx, "menu:copy")
-	})
-	editMenu.AddText("Paste", keys.CmdOrCtrl("v"), func(_ *menu.CallbackData) {
-		runtime.EventsEmit(a.ctx, "menu:paste")
-	})
-	editMenu.AddText("Select All", keys.CmdOrCtrl("a"), func(_ *menu.CallbackData) {
-		runtime.EventsEmit(a.ctx, "menu:select-all")
-	})
-	editMenu.AddSeparator()
-	editMenu.AddText("Find", keys.CmdOrCtrl("f"), func(_ *menu.CallbackData) {
-		runtime.EventsEmit(a.ctx, "menu:find")
-	})
+	if goruntime.GOOS == "darwin" {
+		appMenu.Append(menu.EditMenu())
+	} else {
+		editMenu := appMenu.AddSubmenu("Edit")
+		editMenu.AddText("Copy", keys.CmdOrCtrl("c"), func(_ *menu.CallbackData) {
+			runtime.EventsEmit(a.ctx, "menu:copy")
+		})
+		editMenu.AddText("Paste", keys.CmdOrCtrl("v"), func(_ *menu.CallbackData) {
+			runtime.EventsEmit(a.ctx, "menu:paste")
+		})
+		editMenu.AddText("Select All", keys.CmdOrCtrl("a"), func(_ *menu.CallbackData) {
+			runtime.EventsEmit(a.ctx, "menu:select-all")
+		})
+		editMenu.AddSeparator()
+		editMenu.AddText("Find", keys.CmdOrCtrl("f"), func(_ *menu.CallbackData) {
+			runtime.EventsEmit(a.ctx, "menu:find")
+		})
+	}
 
 	// View Menu
 	viewMenu := appMenu.AddSubmenu("View")
