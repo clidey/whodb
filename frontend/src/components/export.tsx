@@ -43,6 +43,7 @@ const exportDelimiterOptions = [
     {value: ',', label: 'Comma (,) - Standard CSV'},
     {value: ';', label: 'Semicolon (;) - Excel in some locales'},
     {value: '|', label: 'Pipe (|) - Less common in data'},
+    {value: '\t', label: 'Tab - TSV Format'},
 ] as const;
 
 interface IExportProps {
@@ -126,7 +127,7 @@ export const Export: FC<IExportProps> = ({
                                     </SelectTrigger>
                                     <SelectContent>
                                         {exportFormatOptions.map(opt => (
-                                            <SelectItem key={opt.value} value={opt.value}>
+                                            <SelectItem key={opt.value} value={opt.value} data-value={opt.value}>
                                                 {opt.label}
                                             </SelectItem>
                                         ))}
@@ -150,7 +151,7 @@ export const Export: FC<IExportProps> = ({
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {exportDelimiterOptions.map(opt => (
-                                                    <SelectItem key={opt.value} value={opt.value}>
+                                                    <SelectItem key={opt.value} value={opt.value} data-value={opt.value}>
                                                         {opt.label}
                                                     </SelectItem>
                                                 ))}

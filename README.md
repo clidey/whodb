@@ -1,11 +1,11 @@
 <div align="center">
 
-# <img src="./docs/images/logo.png" width="40px" height="auto" />  WhoDB
+# <img src="./docs/logo/logo.png" width="40px" height="auto" />  WhoDB
 
 ### *Lightweight, Fast, and Beautiful Database Management*
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/clidey/whodb/core)](https://goreportcard.com/report/github.com/clidey/whodb/core)
-[![Build Status](https://hello.clidey.com/api/flows/status?id=b32257fa-1415-4847-a0f3-e684f5f76608&secret=cd74dbd5-36ec-42f9-b4f0-12ce9fcc762b)](https://clidey.com)
+<!-- [![Build Status](https://hello.clidey.com/api/flows/status?id=b32257fa-1415-4847-a0f3-e684f5f76608&secret=cd74dbd5-36ec-42f9-b4f0-12ce9fcc762b)](https://clidey.com) -->
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![GitHub Stars](https://img.shields.io/github/stars/clidey/whodb?style=social)](https://github.com/clidey/whodb/stargazers)
 
@@ -15,7 +15,7 @@
 
 ---
 
-<p align="center"><img src="./docs/images/trailer.png" alt="WhoDB Interface" width="100%" height="auto" /></p>
+<p align="center"><img src="./docs/images/06-storage-unit-list-with-sidebar.png" alt="WhoDB Interface" width="100%" height="auto" /></p>
 
 ## 🎯 What is WhoDB?
 
@@ -494,7 +494,7 @@ We welcome contributions from the community! Whether it's bug reports, feature r
 
 WhoDB's deployment and CI/CD are powered by [Clidey](https://clidey.com), a no-code DevOps platform.
 
-**Build Status:** [![Build Status](https://hello.clidey.com/api/flows/status?id=b32257fa-1415-4847-a0f3-e684f5f76608&secret=cd74dbd5-36ec-42f9-b4f0-12ce9fcc762b)](https://clidey.com)
+<!-- **Build Status:** [![Build Status](https://hello.clidey.com/api/flows/status?id=b32257fa-1415-4847-a0f3-e684f5f76608&secret=cd74dbd5-36ec-42f9-b4f0-12ce9fcc762b)](https://clidey.com) -->
 
 ### Contact & Support
 

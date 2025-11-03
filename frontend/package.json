@@ -55,6 +55,7 @@
     "cypress:all": "VITE_E2E_TEST=true bash ../ee/dev/run-cypress-ee.sh",
     "cypress:all:headless": "VITE_E2E_TEST=true bash ../dev/parallel-cypress.sh ee true",
     "screenshot": "VITE_E2E_TEST=true bash ../dev/run-screenshot-tests.sh",
+    "screenshot:copy": "bash ../dev/copy-screenshots.sh",
     "# Auxiliary test commands - not recommended for individual use": "",
     "_test:ce:setup": "bash ../dev/setup-e2e.sh ce && NODE_ENV=test vite --port 3000 &",
     "_test:ce:cleanup": "pkill -f 'vite --port 3000' || true; bash ../dev/cleanup-e2e.sh ce",
