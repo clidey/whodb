@@ -11,23 +11,23 @@ inputs:
   deploy-docker:
     description: 'Deploy to Docker Hub'
     required: false
-    default: 'true'
+    default: 'false'
   deploy-snap:
     description: 'Deploy to Snap Store'
     required: false
-    default: 'true'
+    default: 'false'
   deploy-microsoft:
     description: 'Deploy to Microsoft Store'
     required: false
-    default: 'true'
+    default: 'false'
   deploy-apple:
     description: 'Deploy to Apple App Store'
     required: false
-    default: 'true'
+    default: 'false'
   deploy-appimage:
     description: 'Build AppImage'
     required: false
-    default: 'true'
+    default: 'false'
   publish-github-release:
     description: 'Publish GitHub release to production (production mode only)'
     required: false
