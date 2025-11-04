@@ -44,6 +44,10 @@ on:
       ASC_PUBLIC_ID:
         required: false
 
+permissions:
+  contents: read
+  actions: write
+
 jobs:
   package-mac-app-store:
     name: Package for Mac App Store

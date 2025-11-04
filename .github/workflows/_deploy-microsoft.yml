@@ -28,6 +28,10 @@ on:
       MS_PACKAGE_PUBLISHER_DISPLAY_NAME:
         required: true
 
+permissions:
+  contents: read
+  actions: write
+
 jobs:
   package-windows-msix:
     name: Package Windows MSIX

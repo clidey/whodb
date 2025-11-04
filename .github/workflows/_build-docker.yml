@@ -20,6 +20,10 @@ on:
         description: 'ARM64 Docker artifact name'
         value: docker-image-arm64
 
+permissions:
+  contents: read
+  actions: write
+
 jobs:
   build-docker:
     name: Build Docker (${{ matrix.arch }})

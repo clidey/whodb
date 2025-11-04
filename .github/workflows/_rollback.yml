@@ -27,6 +27,10 @@ on:
       DOCKER_TOKEN:
         required: false
 
+permissions:
+  contents: write
+  actions: read
+
 jobs:
   rollback:
     name: Rollback Failed Deployment

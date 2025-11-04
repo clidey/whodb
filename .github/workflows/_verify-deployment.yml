@@ -36,6 +36,10 @@ on:
         description: 'All deployments verified'
         value: ${{ jobs.verify.outputs.all-verified }}
 
+permissions:
+  contents: read
+  actions: write
+
 jobs:
   verify:
     name: Verify Deployments

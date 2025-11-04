@@ -18,6 +18,11 @@ on:
       DOCKER_TOKEN:
         required: false
 
+permissions:
+  contents: read
+  actions: read
+  id-token: write
+
 jobs:
   deploy-docker:
     name: Deploy to Docker Hub
