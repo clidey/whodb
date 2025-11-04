@@ -23,21 +23,24 @@ if [ -z "$1" ] || [ -z "$2" ]; then
     exit 1
 fi
 
-ARCH=$1
+TARGET_ARCH=$1
 VERSION=$2
-APPDIR="WhoDB-${ARCH}.AppDir"
+APPDIR="WhoDB-${TARGET_ARCH}.AppDir"
 
-echo "Building AppImage for ${ARCH}..."
+echo "Building AppImage for ${TARGET_ARCH}..."
 
-case "$ARCH" in
+case "$TARGET_ARCH" in
     amd64)
         BUILD_ARCH="x86_64"
+        APPIMAGETOOL_ARCH="x86_64"
         ;;
     arm64)
         BUILD_ARCH="aarch64"
+        APPIMAGETOOL_ARCH="aarch64"
         ;;
     *)
-        BUILD_ARCH="$ARCH"
+        BUILD_ARCH="$TARGET_ARCH"
+        APPIMAGETOOL_ARCH="$TARGET_ARCH"
         ;;
 esac
 
@@ -77,18 +80,14 @@ ln -sf usr/share/icons/hicolor/256x256/apps/whodb.png "$APPDIR/whodb.png"
 ln -sf usr/share/icons/hicolor/256x256/apps/whodb.png "$APPDIR/.DirIcon"
 
 # Download appimagetool if not present
-if [ ! -f "appimagetool-${ARCH}.AppImage" ]; then
-    echo "Downloading appimagetool for ${ARCH}..."
-    if [ "$ARCH" = "amd64" ]; then
-        APPIMAGETOOL_ARCH="x86_64"
-    else
-        APPIMAGETOOL_ARCH="aarch64"
-    fi
-    wget -q "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-${APPIMAGETOOL_ARCH}.AppImage" -O "appimagetool-${ARCH}.AppImage"
-    chmod +x "appimagetool-${ARCH}.AppImage"
+if [ ! -f "appimagetool-${TARGET_ARCH}.AppImage" ]; then
+    echo "Downloading appimagetool for ${TARGET_ARCH}..."
+    wget -q "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-${APPIMAGETOOL_ARCH}.AppImage" -O "appimagetool-${TARGET_ARCH}.AppImage"
+    chmod +x "appimagetool-${TARGET_ARCH}.AppImage"
 fi
 
 # Build AppImage
-ARCH=$ARCH "./appimagetool-${ARCH}.AppImage" "$APPDIR" "WhoDB-${VERSION}-${ARCH}.AppImage"
+export ARCH="$APPIMAGETOOL_ARCH"
+"./appimagetool-${TARGET_ARCH}.AppImage" "$APPDIR" "WhoDB-${VERSION}-${TARGET_ARCH}.AppImage"
 
-echo "✓ AppImage created: WhoDB-${VERSION}-${ARCH}.AppImage"
+echo "✓ AppImage created: WhoDB-${VERSION}-${TARGET_ARCH}.AppImage"
