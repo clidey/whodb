@@ -199,6 +199,7 @@ jobs:
   build-appimage:
     name: Build AppImage
     needs: [ calculate-version ]
+    if: false
     uses: ./.github/workflows/_build-appimage.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
