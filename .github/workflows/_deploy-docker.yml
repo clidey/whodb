@@ -45,7 +45,7 @@ jobs:
       - name: Check Docker credentials
         id: check_creds
         run: |
-          if [ -n "${{ secrets.DOCKER_TOKEN }}" ]; then
+          if [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
             echo "has_creds=true" >> $GITHUB_OUTPUT
             echo "✅ Docker credentials are configured"
           else
@@ -64,8 +64,8 @@ jobs:
         if: steps.check_creds.outputs.has_creds == 'true'
         uses: docker/login-action@v3
         with:
-          username: ${{ vars.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Load and push Docker images
         if: steps.check_creds.outputs.has_creds == 'true'
