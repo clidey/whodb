@@ -80,11 +80,27 @@ jobs:
           restore-keys: |
             frontend-build-${{ inputs.edition }}-
 
-      - name: Install frontend dependencies
+      - name: Build frontend
         working-directory: ./frontend
-        env:
-          CYPRESS_INSTALL_BINARY: "0"
-        run: pnpm i
+        run: |
+          # Check if frontend is already built from cache
+          if [ -f "build/index.html" ]; then
+            echo "✅ Using cached frontend build"
+          else
+            echo "Building frontend..."
+            CYPRESS_INSTALL_BINARY=0 pnpm i
+            pnpm run build:${{ inputs.edition }}
+            echo "✅ Frontend built successfully"
+          fi
+
+      - name: Copy frontend to desktop directory
+        run: |
+          echo "Copying frontend build to desktop directory..."
+          mkdir -p desktop-${{ inputs.edition }}/frontend/dist
+          cp -r frontend/build/* desktop-${{ inputs.edition }}/frontend/dist/
+
+          echo "✅ Frontend files copied successfully"
+          ls -la desktop-${{ inputs.edition }}/frontend/dist
 
       - name: Cache Wails binary
         id: cache-wails
