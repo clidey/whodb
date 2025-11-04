@@ -29,6 +29,18 @@ APPDIR="WhoDB-${ARCH}.AppDir"
 
 echo "Building AppImage for ${ARCH}..."
 
+case "$ARCH" in
+    amd64)
+        BUILD_ARCH="x86_64"
+        ;;
+    arm64)
+        BUILD_ARCH="aarch64"
+        ;;
+    *)
+        BUILD_ARCH="$ARCH"
+        ;;
+esac
+
 # Create AppDir structure
 rm -rf "$APPDIR"
 mkdir -p "$APPDIR/usr/bin"
@@ -36,7 +48,12 @@ mkdir -p "$APPDIR/usr/share/applications"
 mkdir -p "$APPDIR/usr/share/icons/hicolor/256x256/apps"
 
 # Copy binary
-cp "desktop-ce/build/linux/${ARCH}/whodb" "$APPDIR/usr/bin/"
+BINARY_PATH="desktop-ce/build/linux/${BUILD_ARCH}/whodb"
+if [ ! -f "$BINARY_PATH" ]; then
+    echo "Error: Compiled binary not found at $BINARY_PATH"
+    exit 1
+fi
+cp "$BINARY_PATH" "$APPDIR/usr/bin/"
 chmod +x "$APPDIR/usr/bin/whodb"
 
 # Copy desktop file and icon

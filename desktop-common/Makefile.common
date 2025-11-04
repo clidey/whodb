@@ -330,13 +330,20 @@ build-prod-linux: prepare
 
 # CI build target for Linux (assumes frontend is pre-built in frontend/dist)
 ci-build-prod-linux:
-	@echo "Building WhoDB Linux binary for CI (native architecture: $$(uname -m))..."
-	@mkdir -p build/linux/$$(uname -m)
+	@TARGET_ARCH=$${TARGET_ARCH:-$$(uname -m)}; \
+	case "$$TARGET_ARCH" in \
+		amd64|x86_64) ARCH_DIR="x86_64"; GOARCH_VALUE="amd64" ;; \
+		arm64|aarch64) ARCH_DIR="aarch64"; GOARCH_VALUE="arm64" ;; \
+		*) ARCH_DIR="$$TARGET_ARCH"; GOARCH_VALUE="" ;; \
+	esac; \
+	echo "Building WhoDB Linux binary for CI (target architecture: $$ARCH_DIR)..."; \
+	mkdir -p build/linux/$$ARCH_DIR; \
+	if [ -n "$$GOARCH_VALUE" ]; then export GOARCH=$$GOARCH_VALUE; else unset GOARCH; fi; \
 	CGO_CFLAGS="-Os -ffunction-sections -fdata-sections -fno-asynchronous-unwind-tables -fno-unwind-tables -flto -fvisibility=hidden" \
 	CGO_LDFLAGS="-s -w -Wl,--gc-sections -Wl,--as-needed -Wl,-z,relro -Wl,-z,now -flto" \
 	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean \
-		$(BUILD_TAGS) $(LINUX_TAGS)  -ldflags="-s -w -extldflags '-static-libgcc -static-libstdc++ -Wl,--gc-sections -Wl,--as-needed'" -o $(OUTPUT_PREFIX)
-	@mv build/bin/$(OUTPUT_PREFIX) build/linux/$$(uname -m)/
+		$(BUILD_TAGS) $(LINUX_TAGS)  -ldflags="-s -w -extldflags '-static-libgcc -static-libstdc++ -Wl,--gc-sections -Wl,--as-needed'" -o $(OUTPUT_PREFIX); \
+	mv build/bin/$(OUTPUT_PREFIX) build/linux/$$ARCH_DIR/
 
 # Production build specifically for Linux AMD64
 build-prod-linux-amd64: prepare
