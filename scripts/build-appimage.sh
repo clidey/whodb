@@ -92,6 +92,8 @@ fi
 # Build AppImage
 echo "Using AppImage ARCH override: ${APPIMAGE_ARCH_ENV:-$APPIMAGETOOL_ARCH}"
 export ARCH="${APPIMAGE_ARCH_ENV:-$APPIMAGETOOL_ARCH}"
+echo "Inspecting AppDir executables:"
+find "$APPDIR" -maxdepth 2 -type f -exec file {} \;
 "./appimagetool-${TARGET_ARCH}.AppImage" "$APPDIR" "WhoDB-${VERSION}-${TARGET_ARCH}.AppImage"
 
 echo "✓ AppImage created: WhoDB-${VERSION}-${TARGET_ARCH}.AppImage"
