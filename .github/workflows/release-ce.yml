@@ -227,7 +227,6 @@ jobs:
     uses: ./.github/workflows/_sign-validate.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
-      validate-docker: ${{ needs.build-docker.result == 'success' }}
       validate-snap: ${{ needs.build-snap.result == 'success' }}
       validate-desktop: ${{ needs.build-desktop.result == 'success' }}
       validate-appimage: ${{ needs.build-appimage.result == 'success' }}
