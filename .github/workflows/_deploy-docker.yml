@@ -13,9 +13,9 @@ on:
         type: boolean
         default: false
     secrets:
-      DOCKER_USERNAME:
+      DOCKERHUB_USERNAME:
         required: false
-      DOCKER_TOKEN:
+      DOCKERHUB_TOKEN:
         required: false
 
 permissions:
