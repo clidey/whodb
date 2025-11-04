@@ -38,7 +38,7 @@ case "$TARGET_ARCH" in
     arm64)
         BUILD_ARCH="aarch64"
         APPIMAGETOOL_ARCH="aarch64"
-        APPIMAGE_ARCH_ENV="arm64"
+        APPIMAGE_ARCH_ENV="aarch64"
         ;;
     *)
         BUILD_ARCH="$TARGET_ARCH"
