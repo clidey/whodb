@@ -242,7 +242,7 @@ jobs:
       (needs.calculate-version.outputs.deploy-docker != 'true' || needs.build-docker.result == 'success') &&
       (needs.calculate-version.outputs.deploy-snap != 'true' || needs.build-snap.result == 'success') &&
       ((needs.calculate-version.outputs.deploy-microsoft != 'true' && needs.calculate-version.outputs.deploy-apple != 'true') || needs.build-desktop.result == 'success') &&
-      needs.build-appimage.result == 'success'
+      (needs.calculate-version.outputs.deploy-appimage != 'true' || needs.build-appimage.result == 'success')
     permissions:
       contents: write
     steps:
