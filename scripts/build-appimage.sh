@@ -25,8 +25,6 @@ fi
 
 TARGET_ARCH=$1
 VERSION=$2
-APPDIR="WhoDB-${TARGET_ARCH}.AppDir"
-
 echo "Building AppImage for ${TARGET_ARCH}..."
 
 case "$TARGET_ARCH" in
@@ -46,6 +44,8 @@ case "$TARGET_ARCH" in
         APPIMAGE_ARCH_ENV="$TARGET_ARCH"
         ;;
 esac
+
+APPDIR="WhoDB-${APPIMAGE_ARCH_ENV}.AppDir"
 
 # Create AppDir structure
 rm -rf "$APPDIR"
@@ -90,13 +90,14 @@ if [ ! -f "appimagetool-${TARGET_ARCH}.AppImage" ]; then
 fi
 
 # Build AppImage
-echo "Using AppImage ARCH override: ${APPIMAGE_ARCH_ENV:-$APPIMAGETOOL_ARCH}"
-export ARCH="${APPIMAGE_ARCH_ENV:-$APPIMAGETOOL_ARCH}"
+APPIMAGE_ARCH="${APPIMAGE_ARCH_ENV:-$APPIMAGETOOL_ARCH}"
+echo "Using AppImage ARCH override: ${APPIMAGE_ARCH}"
 echo "Inspecting AppDir executables:"
 find "$APPDIR" -maxdepth 4 -type f -exec file {} \;
 echo "Binary details:"
 ls -l "$APPDIR/usr/bin/"
 file "$APPDIR/usr/bin/whodb"
-"./appimagetool-${TARGET_ARCH}.AppImage" "$APPDIR" "WhoDB-${VERSION}-${TARGET_ARCH}.AppImage"
+echo "Running appimagetool with ARCH=${APPIMAGE_ARCH}"
+env ARCH="${APPIMAGE_ARCH}" "./appimagetool-${TARGET_ARCH}.AppImage" --verbose "$APPDIR" "WhoDB-${VERSION}-${TARGET_ARCH}.AppImage"
 
 echo "✓ AppImage created: WhoDB-${VERSION}-${TARGET_ARCH}.AppImage"
