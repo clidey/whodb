@@ -41,9 +41,25 @@ jobs:
         with:
           submodules: false
 
-      - name: Download all artifacts
+      - name: Download Snap packages
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
+          pattern: snap-package-*
+          path: artifacts/
+
+      - name: Download Desktop builds
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: desktop-*
+          path: artifacts/
+
+      - name: Download AppImages
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: appimage-*
           path: artifacts/
 
       - name: Install Cosign
@@ -91,9 +107,25 @@ jobs:
         with:
           submodules: false
 
-      - name: Download all artifacts
+      - name: Download Snap packages
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
+          pattern: snap-package-*
+          path: artifacts/
+
+      - name: Download Desktop builds
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: desktop-*
+          path: artifacts/
+
+      - name: Download AppImages
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: appimage-*
           path: artifacts/
 
       - name: Download signatures
