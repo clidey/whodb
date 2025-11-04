@@ -22,9 +22,11 @@ import (
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/plugins"
 	mysqldriver "github.com/go-sql-driver/mysql"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func (p *MySQLPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
@@ -44,7 +46,7 @@ func (p *MySQLPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	mysqlConfig.Loc = connectionInput.Loc
 	mysqlConfig.Params = connectionInput.ExtraOptions
 
-	db, err := gorm.Open(mysql.Open(mysqlConfig.FormatDSN()), &gorm.Config{})
+	db, err := gorm.Open(mysql.Open(mysqlConfig.FormatDSN()), &gorm.Config{Logger: logger.Default.LogMode(plugins.GetGormLogConfig())})
 	if err != nil {
 		log.Logger.WithError(err).WithFields(map[string]any{
 			"hostname": connectionInput.Hostname,

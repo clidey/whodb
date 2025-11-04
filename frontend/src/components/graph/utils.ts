@@ -111,7 +111,7 @@ export const MARKER_END: EdgeMarker = {
   orient: 'auto-start-reverse',
 };
 
-export function createEdge(source: string, target: string, type = "floatingGraphEdge") {
+export function createEdge(source: string, target: string, type = "default") {
   return {
       id: `${source}->${target}`,
       type,

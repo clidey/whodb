@@ -1,0 +1,560 @@
+---
+title: "Supported Databases"
+description: "Complete list of databases supported by WhoDB with version compatibility, features, and limitations"
+---
+
+# Supported Databases
+
+WhoDB supports a comprehensive range of databases across relational, NoSQL, and data warehouse categories. This guide details version compatibility, supported features, and any limitations for each database type.
+
+<Tip>
+Check this page to verify your database version is supported before connecting to WhoDB
+</Tip>
+
+## Community Edition Databases
+
+The Community Edition of WhoDB supports eight popular databases at no cost.
+
+### PostgreSQL
+
+The most advanced open-source relational database with powerful features and SQL compliance.
+
+**Version Support:**
+- PostgreSQL 9.6 through 16+
+- Latest versions recommended for full feature support
+
+| Feature | Support | Notes |
+|---------|---------|-------|
+| Basic connectivity | ✓ | Full connection support |
+| Schema navigation | ✓ | Multiple schemas supported |
+| Data manipulation | ✓ | INSERT, UPDATE, DELETE operations |
+| Transactions | ✓ | ACID compliance, explicit transactions |
+| Views | ✓ | Query and manage views |
+| Stored procedures | ✓ | Create and execute functions |
+| Foreign keys | ✓ | Full referential integrity |
+| Full-text search | ✓ | Text search with GiST/GIN indexes |
+| Array types | ✓ | Native array support |
+| JSON/JSONB | ✓ | Advanced JSON operations |
+| Window functions | ✓ | Ranking and analytic functions |
+| CTEs | ✓ | Common Table Expressions |
+| Mock data generation | ✓ | Realistic data for testing |
+| Export (CSV, Excel, JSON, SQL) | ✓ | All formats supported |
+
+**Recommended Connection Settings:**
+- Use SSL mode "require" or "verify-full" for remote connections
+- Enable connection pooling for multiple concurrent users
+- Set statement_timeout for long-running queries
+
+**Limitations:**
+- Connection through SSH tunnel requires proper SSH key setup
+- Some advanced PL/pgSQL debugging features not available
+- Custom data types require specific JSON serialization
+
+### MySQL
+
+The world's most popular open-source relational database, widely used in web applications.
+
+**Version Support:**
+- MySQL 5.7 through 8.4+
+- MariaDB 10.3 through 11.0+
+- Percona Server 5.7+
+
+| Feature | Support | Notes |
+|---------|---------|-------|
+| Basic connectivity | ✓ | Full connection support |
+| Multiple databases | ✓ | Switch between databases easily |
+| Data manipulation | ✓ | INSERT, UPDATE, DELETE operations |
+| Transactions | ✓ | ACID support in InnoDB |
+| Views | ✓ | Query and manage views |
+| Stored procedures | ✓ | Execute stored routines |
+| Foreign keys | ✓ | Supported in InnoDB tables |
+| Triggers | ✓ | Create and manage triggers |
+| Full-text search | ✓ | FULLTEXT indexes on MyISAM/InnoDB |
+| JSON | ✓ | JSON data type and functions |
+| Partitioning | ✓ | Query partitioned tables |
+| Mock data generation | ✓ | Compatible data generation |
+| Export (CSV, Excel, JSON, SQL) | ✓ | All formats supported |
+
+**Recommended Connection Settings:**
+- Use SSL mode "required" for encrypted connections
+- Set max_allowed_packet if working with large data
+- Use connection pooling to manage concurrent connections
+
+**Limitations:**
+- MyISAM tables don't support transactions
+- UNSIGNED data types handled as regular integers in some contexts
+- Some JSON path expressions limited compared to PostgreSQL
+
+### SQLite
+
+A lightweight, embedded SQL database engine ideal for development, testing, and mobile applications.
+
+**Version Support:**
+- SQLite 3.8 through 3.45+
+- All recent versions supported
+
+| Feature | Support | Notes |
+|---------|---------|-------|
+| Basic connectivity | ✓ | Local file path required |
+| Schema navigation | ✓ | Single database file |
+| Data manipulation | ✓ | INSERT, UPDATE, DELETE operations |
+| Transactions | ✓ | ACID compliance |
+| Views | ✓ | Create and query views |
+| Triggers | ✓ | Create and manage triggers |
+| Foreign keys | ✓ | Must be enabled with PRAGMA |
+| Indexes | ✓ | Full index support |
+| JSON | ✓ | JSON1 extension support |
+| Full-text search | ✓ | FTS5 module support |
+| Virtual tables | ✓ | Custom table implementations |
+| Mock data generation | ✓ | Supported |
+| Export (CSV, Excel, JSON, SQL) | ✓ | All formats supported |
+
+**Recommended Connection Settings:**
+- Store .db files in persistent volumes when using Docker
+- Use appropriate permissions (600 or 644) for database files
+- Consider WAL mode for concurrent access
+
+**Limitations:**
+- Single writer at a time (concurrent writes limited)
+- No true user/permission system
+- Limited optimization for very large datasets (GB+ sizes)
+- No native encryption support
+
+### MongoDB
+
+A flexible NoSQL document database for unstructured and semi-structured data.
+
+**Version Support:**
+- MongoDB 3.6 through 7.0+
+- MongoDB Atlas supported
+- Community and Enterprise editions
+
+| Feature | Support | Notes |
+|---------|---------|-------|
+| Basic connectivity | ✓ | Connection string support |
+| Database browsing | ✓ | List all databases |
+| Collection exploration | ✓ | Browse collections and documents |
+| Document viewing | ✓ | View JSON documents |
+| Document insertion | ✓ | Add new documents |
+| Document editing | ✓ | Modify existing documents |
+| Document deletion | ✓ | Remove documents |
+| Aggregation queries | ✓ | Support for aggregation pipelines |
+| Indexes | ✓ | Create and manage indexes |
+| Export (JSON, CSV) | ✓ | JSON primary, CSV for tabular data |
+| Mock data generation | ✓ | Generate realistic test documents |
+| Authentication | ✓ | Username/password, X.509 certs |
+| Atlas support | ✓ | Connect to MongoDB Atlas clusters |
+
+**Recommended Connection Settings:**
+- Use connection strings with appropriate SSL settings
+- Enable authentication for production clusters
+- Use MongoDB Atlas for cloud deployments
+
+**Limitations:**
+- No traditional SQL WHERE conditions, uses MongoDB query syntax
+- Document collections with varying schemas display column inference
+- Export to SQL not supported (MongoDB-specific)
+- Real-time query execution required (no transaction support like RDBMS)
+
+### Redis
+
+An in-memory data structure store used for caching, messaging, and real-time analytics.
+
+**Version Support:**
+- Redis 4.0 through 7.2+
+- Redis Cluster supported
+- Redis Sentinel compatible
+
+| Feature | Support | Notes |
+|---------|---------|-------|
+| Basic connectivity | ✓ | TCP connection support |
+| Key browsing | ✓ | Navigate key space |
+| Key-value viewing | ✓ | Display key values |
+| Data type handling | ✓ | Strings, lists, sets, hashes, sorted sets |
+| Key operations | ✓ | SET, GET, DEL, EXPIRE |
+| TTL management | ✓ | View and manage key expiration |
+| Export (JSON) | ✓ | Export as JSON format |
+| Mock data generation | ✓ | Generate test data structures |
+| Authentication | ✓ | Password and ACL support |
+| Cluster mode | ✓ | Connect to Redis clusters |
+
+**Recommended Connection Settings:**
+- Use SSL for remote Redis connections
+- Enable authentication in production
+- Set connection timeout appropriately
+
+**Limitations:**
+- No traditional data grid view (Redis uses key-value structure)
+- No SQL queries possible (uses Redis commands)
+- Limited transaction support compared to RDBMS
+- Export to CSV not applicable (Redis structure incompatible)
+- Real-time data updates not visible without refresh
+
+### Elasticsearch
+
+A distributed search and analytics engine for large-scale data exploration.
+
+**Version Support:**
+- Elasticsearch 7.10 through 8.10+
+- OpenSearch 1.0+ (compatible)
+
+| Feature | Support | Notes |
+|---------|---------|-------|
+| Index browsing | ✓ | List and navigate indexes |
+| Document viewing | ✓ | Display documents with highlighting |
+| Full-text search | ✓ | Query indexes with ES query syntax |
+| Aggregations | ✓ | Analytics and faceting |
+| Mappings | ✓ | View index field mappings |
+| Export (JSON) | ✓ | Export documents as JSON |
+| Mock data generation | ✓ | Generate documents |
+| Authentication | ✓ | Basic auth and API keys |
+| Cluster info | ✓ | View cluster and shard status |
+
+**Recommended Connection Settings:**
+- Use HTTPS for remote connections
+- Authenticate with appropriate credentials
+- Set timeout for large aggregations
+
+**Limitations:**
+- No INSERT/UPDATE/DELETE operations via WhoDB UI
+- Query syntax is Elasticsearch-specific, not SQL
+- Aggregations limited to built-in capabilities
+- Document editing requires direct API calls
+
+### ClickHouse
+
+A columnar database management system for analytical queries and real-time data.
+
+**Version Support:**
+- ClickHouse 21.8 through 24.1+
+- Cloud deployments supported
+
+| Feature | Support | Notes |
+|---------|---------|-------|
+| Table browsing | ✓ | List all tables |
+| Column exploration | ✓ | View column structures |
+| Query execution | ✓ | Run SQL-like queries |
+| Data viewing | ✓ | Display query results |
+| Export (CSV, JSON) | ✓ | Export analytical results |
+| Mock data generation | ✓ | Generate test datasets |
+| Aggregations | ✓ | Fast analytical queries |
+| Dictionary support | ✓ | Access dictionary tables |
+
+**Recommended Connection Settings:**
+- Use appropriate timeout for analytical queries
+- Set memory limits for large result sets
+- Use HTTP protocol for web deployments
+
+**Limitations:**
+- No INSERT/UPDATE/DELETE through WhoDB interface
+- Optimized for analytical workloads, not transactional
+- Some advanced data types have limited support
+- Real-time changes not visible without refresh
+
+## Enterprise Edition Databases
+
+Enterprise Edition extends support to commercial and specialized databases.
+
+### Oracle Database
+
+Enterprise-grade relational database system with advanced features.
+
+**Version Support:**
+- Oracle 19c, 21c
+- Oracle 23c (latest)
+- Cloud databases supported (Oracle Cloud Infrastructure)
+
+| Feature | Support | Notes |
+|---------|---------|-------|
+| Connection | ✓ | TNS and direct connection |
+| Schema navigation | ✓ | Multiple schemas per database |
+| All RDBMS features | ✓ | Full SQL support |
+| Stored procedures | ✓ | PL/SQL execution |
+| Partitioning | ✓ | Query partitioned tables |
+| Advanced features | ✓ | Advanced security, compression |
+| Export | ✓ | All formats supported |
+
+### Microsoft SQL Server
+
+Microsoft's enterprise relational database system.
+
+**Version Support:**
+- SQL Server 2017 through 2022
+- Azure SQL Database supported
+
+| Feature | Support | Notes |
+|---------|---------|-------|
+| Connection | ✓ | Named pipes, TCP/IP |
+| Schema navigation | ✓ | Multiple schemas |
+| T-SQL execution | ✓ | Full T-SQL support |
+| Stored procedures | ✓ | Execute stored procedures |
+| Views | ✓ | Indexed views supported |
+| Export | ✓ | All formats supported |
+
+### Amazon DynamoDB
+
+NoSQL database service with seamless scalability.
+
+**Version Support:**
+- Latest API version
+- AWS regions worldwide
+
+| Feature | Support | Notes |
+|---------|---------|-------|
+| Table exploration | ✓ | Browse tables |
+| Item viewing | ✓ | Display items |
+| Query execution | ✓ | Scan and query operations |
+| Export (JSON) | ✓ | Export items as JSON |
+
+### Amazon Athena
+
+Interactive query service for data in Amazon S3.
+
+**Version Support:**
+- Presto/Trino compatibility
+- Latest engine versions
+
+| Feature | Support | Notes |
+|---------|---------|-------|
+| Query execution | ✓ | SQL queries on S3 data |
+| Result viewing | ✓ | Display query results |
+| Export | ✓ | Export results |
+
+### Snowflake
+
+Cloud data warehouse platform optimized for analytics.
+
+**Version Support:**
+- All current Snowflake versions
+- All cloud regions supported
+
+| Feature | Support | Notes |
+|---------|---------|-------|
+| Connection | ✓ | OAuth, username/password |
+| Schema navigation | ✓ | Multiple databases and schemas |
+| Query execution | ✓ | Full SQL support |
+| Export | ✓ | All formats supported |
+
+## Feature Comparison Matrix
+
+| Feature | PostgreSQL | MySQL | SQLite | MongoDB | Redis | Elasticsearch | ClickHouse | Oracle | SQL Server | Snowflake |
+|---------|-----------|-------|--------|---------|-------|---------------|-----------|--------|-----------|-----------|
+| Insert/Update/Delete | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✓ | ✓ | ✓ |
+| Transactions | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✓ | ✓ | ✓ | ✓ |
+| Foreign Keys | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✓ | ✓ | ✓ | ✓ |
+| Views | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✓ | ✓ | ✓ | ✓ |
+| Stored Procedures | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✓ | ✓ | ✓ | ✓ |
+| Full-Text Search | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| JSON Support | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Export (SQL) | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✓ | ✓ | ✓ |
+| Mock Data Generation | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Graph Visualization | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✓ | ✓ | ✓ | ✓ |
+
+## Connection Requirements
+
+<AccordionGroup>
+<Accordion title="PostgreSQL Connection">
+Required information:
+- Host address (IP or hostname)
+- Port (default: 5432)
+- Database name
+- Username
+- Password
+
+Optional:
+- SSL mode (disable, allow, prefer, require)
+- SSH tunnel configuration
+- Connection pooling settings
+</Accordion>
+
+<Accordion title="MySQL/MariaDB Connection">
+Required information:
+- Host address
+- Port (default: 3306)
+- Username
+- Password
+
+Optional:
+- Database name (can select after connection)
+- SSL settings
+- SSH tunnel configuration
+</Accordion>
+
+<Accordion title="SQLite Connection">
+Required information:
+- File path to .db file
+
+Optional:
+- Use in-memory databases for testing
+</Accordion>
+
+<Accordion title="MongoDB Connection">
+Required information:
+- Connection string (mongodb://...) or
+- Host, port, username, password
+
+Optional:
+- Replica set configuration
+- Authentication database
+- SSL/TLS settings
+</Accordion>
+
+<Accordion title="Redis Connection">
+Required information:
+- Host address
+- Port (default: 6379)
+
+Optional:
+- Password
+- Database number
+- SSL settings
+- Cluster mode
+</Accordion>
+
+<Accordion title="Elasticsearch Connection">
+Required information:
+- Host address (usually localhost or domain)
+- Port (default: 9200)
+
+Optional:
+- Username and password
+- SSL settings
+- API key authentication
+</Accordion>
+
+<Accordion title="ClickHouse Connection">
+Required information:
+- Host address
+- Port (HTTP: 8123, TCP: 9000)
+- Database name (optional)
+
+Optional:
+- Username and password
+- SSL settings
+</Accordion>
+</AccordionGroup>
+
+## Version Upgrade Guide
+
+When upgrading your database to a newer version:
+
+<Steps>
+<Step title="Check Compatibility">
+Verify your new database version is listed in this documentation
+</Step>
+<Step title="Test Connection">
+Connect with WhoDB to ensure compatibility
+</Step>
+<Step title="Verify Features">
+Confirm all features you use are still available
+</Step>
+<Step title="Update WhoDB">
+Ensure you're running the latest WhoDB version for best compatibility
+</Step>
+</Steps>
+
+## Known Limitations by Database
+
+<AccordionGroup>
+<Accordion title="PostgreSQL Limitations">
+- Some advanced data types require custom serialization
+- Materialized views have limited refresh capabilities
+- Connection through SSH requires proper key setup
+</Accordion>
+
+<Accordion title="MySQL Limitations">
+- Unsigned integers displayed as regular integers in some contexts
+- JSON path expressions more limited than PostgreSQL
+- MyISAM tables don't support transactions
+</Accordion>
+
+<Accordion title="SQLite Limitations">
+- Single writer at a time (concurrent writes limited)
+- No true user/permission system
+- Limited optimization for datasets over 1GB
+- No native encryption
+</Accordion>
+
+<Accordion title="MongoDB Limitations">
+- Traditional SQL WHERE conditions not applicable
+- Mixed schema collections require column inference
+- No export to SQL format
+- No transaction support like RDBMS
+</Accordion>
+
+<Accordion title="Redis Limitations">
+- Not suitable for complex relational data
+- Limited aggregation capabilities
+- Requires refresh to see real-time updates
+- No SQL query support
+</Accordion>
+
+<Accordion title="Elasticsearch Limitations">
+- Read-only access only (no INSERT/UPDATE/DELETE)
+- Elasticsearch-specific query syntax required
+- Not designed for transactional operations
+</Accordion>
+
+<Accordion title="ClickHouse Limitations">
+- Read-only for analytical queries only
+- Designed for analytical workloads, not transactions
+- Limited support for some advanced data types
+</Accordion>
+</AccordionGroup>
+
+## Recommended Database Versions
+
+For optimal WhoDB experience and security:
+
+| Database | Recommended Version | Minimum Version |
+|----------|-------------------|-----------------|
+| PostgreSQL | 14+ | 9.6 |
+| MySQL | 8.0+ | 5.7 |
+| SQLite | 3.40+ | 3.8 |
+| MongoDB | 6.0+ | 3.6 |
+| Redis | 7.0+ | 4.0 |
+| Elasticsearch | 8.0+ | 7.10 |
+| ClickHouse | 23.0+ | 21.8 |
+
+## Migration Between Databases
+
+WhoDB's export capabilities make it easy to migrate data between database types:
+
+<Steps>
+<Step title="Connect to Source Database">
+Access the database you're exporting from
+</Step>
+<Step title="Export Data">
+Export table data in JSON or CSV format
+</Step>
+<Step title="Connect to Target Database">
+Switch to your destination database
+</Step>
+<Step title="Create Tables">
+Set up corresponding table structures
+</Step>
+<Step title="Import Data">
+Use database-specific import tools to load exported data
+</Step>
+</Steps>
+
+## Getting Help with Database Issues
+
+<CardGroup cols={2}>
+<Card title="Database Connectivity" icon="link" href="/features/database-connectivity">
+Learn connection troubleshooting
+</Card>
+<Card title="FAQ" icon="circle-question" href="/resources/faq">
+See common questions answered
+</Card>
+<Card title="GitHub Issues" icon="github" href="https://github.com/clidey/whodb/issues">
+Report compatibility issues
+</Card>
+<Card title="Community Forum" icon="comments" href="https://github.com/clidey/whodb/discussions">
+Ask the community
+</Card>
+</CardGroup>
+
+<Info>
+This page is kept up-to-date with the latest database versions and WhoDB compatibility information. Check back periodically for updates.
+</Info>

@@ -1,0 +1,611 @@
+---
+title: Data Management Best Practices
+description: Safe and effective data management techniques for WhoDB users
+---
+
+# Data Management Best Practices
+
+Effective data management balances operational efficiency with data safety. This guide covers essential practices for managing data safely and effectively using WhoDB, from routine operations to complex data transformations.
+
+## Data Safety Principles
+
+### Always Backup Before Changes
+
+The most important rule of data management is simple: always have a backup before making changes.
+
+**Types of Changes Requiring Backups:**
+- Bulk updates or deletes
+- Schema modifications
+- Data migrations
+- Testing new queries on production data
+- Running unfamiliar scripts
+- Major application updates
+
+**Backup Strategies:**
+- Full database backup for major changes
+- Table-level backup for isolated changes
+- Row-level backup for small, targeted changes
+- Transaction savepoints for multi-step operations
+
+**Creating Backups:**
+
+PostgreSQL:
+```bash
+# Full database backup
+pg_dump -h localhost -U username -d database_name > backup_$(date +%Y%m%d_%H%M%S).sql
+
+# Single table backup
+pg_dump -h localhost -U username -d database_name -t table_name > table_backup.sql
+
+# Compressed backup
+pg_dump -h localhost -U username -d database_name | gzip > backup.sql.gz
+```
+
+MySQL:
+```bash
+# Full database backup
+mysqldump -h localhost -u username -p database_name > backup_$(date +%Y%m%d_%H%M%S).sql
+
+# Single table backup
+mysqldump -h localhost -u username -p database_name table_name > table_backup.sql
+
+# All databases
+mysqldump -h localhost -u username -p --all-databases > all_databases_backup.sql
+```
+
+MongoDB:
+```bash
+# Full database backup
+mongodump --host localhost --port 27017 --db database_name --out /backup/location
+
+# Single collection backup
+mongodump --host localhost --db database_name --collection collection_name --out /backup/location
+```
+
+### Verify Backups
+
+Backups are only useful if they can be restored successfully.
+
+**Backup Verification Process:**
+1. Create test database or schema
+2. Restore backup to test location
+3. Verify data integrity
+4. Test critical queries
+5. Document verification date
+6. Automate verification where possible
+
+**Regular Testing Schedule:**
+- Test restore procedures monthly
+- Verify backup completeness
+- Measure restoration time
+- Update recovery documentation
+- Train team members on restoration
+
+### Use Transactions Appropriately
+
+Transactions ensure data consistency by treating multiple operations as a single unit of work.
+
+**Transaction Basics:**
+```sql
+BEGIN;
+
+UPDATE accounts SET balance = balance - 100 WHERE id = 1;
+UPDATE accounts SET balance = balance + 100 WHERE id = 2;
+
+-- Verify changes before committing
+SELECT id, balance FROM accounts WHERE id IN (1, 2);
+
+-- If correct:
+COMMIT;
+
+-- If incorrect:
+ROLLBACK;
+```
+
+**When to Use Transactions:**
+- Multiple related updates
+- Data migrations
+- Batch operations
+- Testing complex queries
+- Any operation that must be atomic
+
+**Transaction Best Practices:**
+- Keep transactions short
+- Avoid user interaction during transactions
+- Don't hold transactions during long operations
+- Use appropriate isolation levels
+- Monitor for deadlocks
+
+## Safe Data Modification
+
+### Test Queries Before Execution
+
+Always test data modification queries before running them on production data.
+
+**Safe Testing Workflow:**
+
+1. **Select Before Update/Delete:**
+```sql
+-- First, SELECT to see what will be affected
+SELECT * FROM users WHERE last_login < '2020-01-01';
+
+-- Review the results, then execute the update
+-- UPDATE users SET active = false WHERE last_login < '2020-01-01';
+```
+
+2. **Use Transactions for Testing:**
+```sql
+BEGIN;
+
+UPDATE products SET price = price * 1.10 WHERE category = 'electronics';
+
+-- Review the changes
+SELECT id, name, price FROM products WHERE category = 'electronics';
+
+-- If correct: COMMIT; otherwise: ROLLBACK;
+ROLLBACK;
+```
+
+3. **Test on Subset First:**
+```sql
+-- Test on small subset
+UPDATE orders
+SET status = 'archived'
+WHERE order_date < '2020-01-01'
+LIMIT 10;
+
+-- If successful, run on full dataset
+-- UPDATE orders SET status = 'archived' WHERE order_date < '2020-01-01';
+```
+
+### Use WHERE Clauses Carefully
+
+Missing or incorrect WHERE clauses cause some of the most devastating data loss incidents.
+
+**Dangerous Patterns:**
+```sql
+-- DANGER: Missing WHERE clause updates all rows
+UPDATE users SET role = 'admin';
+
+-- DANGER: Incorrect logic updates wrong rows
+UPDATE products SET discontinued = true WHERE active = true;
+-- (Should be: WHERE active = false)
+```
+
+**Safety Measures:**
+- Always write WHERE clause first
+- Use SELECT to verify WHERE logic
+- Double-check column names and values
+- Use transactions for reversibility
+- Limit rows affected during testing
+
+### Implement Row-Level Verification
+
+For critical updates, verify each affected row.
+
+**Verification Query Pattern:**
+```sql
+-- Create temporary backup table
+CREATE TABLE orders_backup AS
+SELECT * FROM orders WHERE status = 'pending';
+
+-- Perform update
+UPDATE orders
+SET status = 'processing', updated_at = CURRENT_TIMESTAMP
+WHERE status = 'pending';
+
+-- Verify changes
+SELECT
+  b.id,
+  b.status as old_status,
+  o.status as new_status
+FROM orders_backup b
+JOIN orders o ON b.id = o.id
+WHERE b.status != o.status;
+
+-- If incorrect, rollback using backup table
+-- If correct, drop backup table
+DROP TABLE orders_backup;
+```
+
+## Bulk Operations
+
+### Planning Bulk Operations
+
+Bulk operations require careful planning to avoid impacting system performance.
+
+**Pre-Operation Checklist:**
+- [ ] Backup created and verified
+- [ ] Operation tested on subset
+- [ ] Maintenance window scheduled
+- [ ] Rollback plan documented
+- [ ] Monitoring in place
+- [ ] Stakeholders notified
+- [ ] Resource requirements assessed
+
+### Batch Processing
+
+Process large datasets in batches to avoid locking tables and consuming excessive resources.
+
+**Batch Update Pattern:**
+```sql
+-- Process in batches of 1000 rows
+DO $$
+DECLARE
+  batch_size INTEGER := 1000;
+  processed INTEGER := 0;
+  total INTEGER;
+BEGIN
+  SELECT COUNT(*) INTO total FROM users WHERE active = false;
+
+  WHILE processed < total LOOP
+    UPDATE users
+    SET archived = true
+    WHERE id IN (
+      SELECT id FROM users
+      WHERE active = false AND archived = false
+      LIMIT batch_size
+    );
+
+    processed := processed + batch_size;
+
+    -- Short delay to reduce system load
+    PERFORM pg_sleep(0.1);
+
+    RAISE NOTICE 'Processed % of % rows', processed, total;
+  END LOOP;
+END $$;
+```
+
+**Benefits of Batch Processing:**
+- Reduces lock contention
+- Allows concurrent operations
+- Easier to monitor progress
+- Can be paused and resumed
+- Lower memory usage
+
+### Handling Large Deletes
+
+Large delete operations can cause performance issues and transaction log growth.
+
+**Incremental Delete Strategy:**
+```sql
+-- Delete in chunks
+DELETE FROM logs
+WHERE id IN (
+  SELECT id FROM logs
+  WHERE created_at < '2020-01-01'
+  LIMIT 10000
+);
+
+-- Repeat until done
+-- Monitor table size reduction: SELECT COUNT(*) FROM logs;
+```
+
+**Truncate for Full Table Deletion:**
+```sql
+-- Much faster than DELETE for removing all rows
+TRUNCATE TABLE staging_data;
+
+-- Truncate with cascade for related tables
+TRUNCATE TABLE orders CASCADE;
+```
+
+## Data Validation
+
+### Input Validation
+
+Validate data before insertion or update to maintain data quality.
+
+**Validation Checks:**
+
+Data Type Validation:
+```sql
+-- Ensure numeric values are within range
+SELECT * FROM products
+WHERE price < 0 OR price > 1000000;
+
+-- Check date validity
+SELECT * FROM events
+WHERE event_date > CURRENT_DATE + INTERVAL '10 years';
+```
+
+Format Validation:
+```sql
+-- Validate email format
+SELECT * FROM users
+WHERE email !~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$';
+
+-- Validate phone format
+SELECT * FROM contacts
+WHERE phone !~ '^\+?[0-9]{10,15}$';
+```
+
+Business Rule Validation:
+```sql
+-- Check inventory consistency
+SELECT product_id, SUM(quantity) as total
+FROM inventory_movements
+GROUP BY product_id
+HAVING total < 0;
+
+-- Verify referential integrity
+SELECT o.id
+FROM orders o
+LEFT JOIN customers c ON o.customer_id = c.id
+WHERE c.id IS NULL;
+```
+
+### Constraint Management
+
+Use database constraints to enforce data integrity automatically.
+
+**Essential Constraints:**
+
+Primary Keys:
+```sql
+ALTER TABLE users ADD PRIMARY KEY (id);
+```
+
+Foreign Keys:
+```sql
+ALTER TABLE orders
+ADD CONSTRAINT fk_customer
+FOREIGN KEY (customer_id)
+REFERENCES customers(id)
+ON DELETE RESTRICT;
+```
+
+Unique Constraints:
+```sql
+ALTER TABLE users ADD CONSTRAINT unique_email UNIQUE (email);
+```
+
+Check Constraints:
+```sql
+ALTER TABLE products
+ADD CONSTRAINT check_price
+CHECK (price >= 0);
+
+ALTER TABLE orders
+ADD CONSTRAINT check_status
+CHECK (status IN ('pending', 'processing', 'shipped', 'delivered', 'cancelled'));
+```
+
+Not Null Constraints:
+```sql
+ALTER TABLE users ALTER COLUMN email SET NOT NULL;
+ALTER TABLE orders ALTER COLUMN order_date SET NOT NULL;
+```
+
+### Data Quality Monitoring
+
+Continuously monitor data quality to detect issues early.
+
+**Quality Metrics:**
+- Null value percentages
+- Duplicate record counts
+- Constraint violation attempts
+- Data distribution anomalies
+- Referential integrity breaks
+
+**Quality Monitoring Queries:**
+```sql
+-- Check for duplicate emails
+SELECT email, COUNT(*)
+FROM users
+GROUP BY email
+HAVING COUNT(*) > 1;
+
+-- Find orphaned records
+SELECT COUNT(*)
+FROM order_items oi
+LEFT JOIN orders o ON oi.order_id = o.id
+WHERE o.id IS NULL;
+
+-- Identify null critical fields
+SELECT COUNT(*) as null_emails
+FROM users
+WHERE email IS NULL;
+
+-- Check data freshness
+SELECT
+  MAX(updated_at) as last_update,
+  EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - MAX(updated_at)))/3600 as hours_since_update
+FROM products;
+```
+
+## Data Migration
+
+### Planning Migrations
+
+Data migrations require thorough planning and testing.
+
+**Migration Planning Checklist:**
+- [ ] Source and target schemas documented
+- [ ] Data transformation logic defined
+- [ ] Data volume and duration estimated
+- [ ] Dependencies identified
+- [ ] Testing strategy created
+- [ ] Rollback procedure documented
+- [ ] Validation queries prepared
+
+### Migration Testing
+
+Test migrations in non-production environment before running in production.
+
+**Testing Phases:**
+
+1. **Unit Testing:**
+   - Test individual transformation functions
+   - Verify edge cases
+   - Validate error handling
+
+2. **Integration Testing:**
+   - Test complete migration process
+   - Verify referential integrity
+   - Check constraint compliance
+
+3. **Performance Testing:**
+   - Measure migration duration
+   - Assess system impact
+   - Optimize batch sizes
+
+4. **Data Validation:**
+   - Compare row counts
+   - Verify data accuracy
+   - Check completeness
+
+**Validation Query Examples:**
+```sql
+-- Verify row counts match
+SELECT
+  (SELECT COUNT(*) FROM source_table) as source_count,
+  (SELECT COUNT(*) FROM target_table) as target_count;
+
+-- Check for missing records
+SELECT s.id
+FROM source_table s
+LEFT JOIN target_table t ON s.id = t.id
+WHERE t.id IS NULL;
+
+-- Verify data accuracy (sample)
+SELECT
+  s.id,
+  s.value as source_value,
+  t.value as target_value
+FROM source_table s
+JOIN target_table t ON s.id = t.id
+WHERE s.value != t.value
+LIMIT 100;
+```
+
+### Rollback Procedures
+
+Every migration needs a documented rollback procedure.
+
+**Rollback Strategy:**
+1. Keep original data until migration validated
+2. Document reverse transformation logic
+3. Test rollback procedure
+4. Define rollback decision criteria
+5. Assign rollback authority
+
+**Example Rollback Process:**
+```sql
+-- Step 1: Stop application writes to new table
+-- Step 2: Restore from backup
+DROP TABLE IF EXISTS new_users;
+CREATE TABLE new_users AS SELECT * FROM users_backup;
+
+-- Step 3: Verify restoration
+SELECT COUNT(*) FROM new_users;
+
+-- Step 4: Rename tables
+BEGIN;
+ALTER TABLE users RENAME TO users_failed_migration;
+ALTER TABLE new_users RENAME TO users;
+COMMIT;
+
+-- Step 5: Resume application
+```
+
+## Data Archival
+
+### Archival Strategy
+
+Archive old data to maintain system performance while preserving historical information.
+
+**When to Archive:**
+- Data no longer actively used
+- Regulatory retention requirements met
+- Table size impacting performance
+- Historical reference needed
+
+**Archival Approaches:**
+
+Separate Archive Tables:
+```sql
+-- Create archive table
+CREATE TABLE orders_archive (LIKE orders INCLUDING ALL);
+
+-- Move old data
+INSERT INTO orders_archive
+SELECT * FROM orders
+WHERE order_date < '2020-01-01';
+
+-- Verify and delete
+DELETE FROM orders
+WHERE order_date < '2020-01-01'
+  AND id IN (SELECT id FROM orders_archive);
+```
+
+Partitioning:
+```sql
+-- PostgreSQL table partitioning
+CREATE TABLE orders (
+  id SERIAL,
+  order_date DATE NOT NULL,
+  -- other columns
+) PARTITION BY RANGE (order_date);
+
+CREATE TABLE orders_2023 PARTITION OF orders
+  FOR VALUES FROM ('2023-01-01') TO ('2024-01-01');
+
+CREATE TABLE orders_2024 PARTITION OF orders
+  FOR VALUES FROM ('2024-01-01') TO ('2025-01-01');
+
+-- Drop old partitions when archiving
+DROP TABLE orders_2020;
+```
+
+### Archive Storage
+
+Choose appropriate storage for archived data.
+
+**Storage Options:**
+- Separate database for archives
+- Compressed backup files
+- Cloud object storage (S3, Azure Blob)
+- Tape backup for long-term storage
+
+**Archive Access:**
+- Read-only access when needed
+- Separate connection credentials
+- Lower priority query execution
+- Documented retrieval process
+
+## Data Safety Checklist
+
+Before executing any data modification operation:
+
+**Pre-Operation:**
+- [ ] Backup created and verified
+- [ ] Query tested with SELECT
+- [ ] WHERE clause verified
+- [ ] Transaction started (if appropriate)
+- [ ] Row count estimated
+- [ ] Operation documented
+
+**During Operation:**
+- [ ] Progress monitored
+- [ ] Performance impact assessed
+- [ ] Errors logged
+- [ ] Can pause if needed
+
+**Post-Operation:**
+- [ ] Changes verified
+- [ ] Transaction committed
+- [ ] Documentation updated
+- [ ] Stakeholders notified
+- [ ] Backup retained until validated
+
+**Rollback Ready:**
+- [ ] Rollback procedure documented
+- [ ] Rollback tested (if critical)
+- [ ] Rollback authority designated
+- [ ] Decision criteria defined
+
+## Summary
+
+Safe data management requires discipline, planning, and robust procedures. Always backup before changes, test operations thoroughly, use transactions appropriately, and validate results carefully. By following these best practices, you can confidently manage data using WhoDB while minimizing risk of data loss or corruption. Remember that the time invested in proper planning and testing is always less than the time required to recover from data disasters.

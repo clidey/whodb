@@ -1,0 +1,1127 @@
+---
+title: "Common Errors and Solutions"
+description: "Reference guide for common WhoDB error messages with explanations and solutions"
+---
+
+# Common Errors and Solutions
+
+This guide provides detailed explanations and solutions for error messages you may encounter when using WhoDB.
+
+## Connection Errors
+
+<AccordionGroup>
+<Accordion title="Connection refused">
+
+### Error Message
+```
+Connection refused
+Unable to connect to the database
+```
+
+### What It Means
+WhoDB tried to connect to the database server, but the connection was rejected. This usually means the database server isn't running or isn't listening on the specified port.
+
+### Causes
+- Database service not running
+- Incorrect host or port
+- Firewall blocking connection
+- Database server configuration issue
+
+### Solutions
+
+**1. Verify database is running:**
+```bash
+# PostgreSQL
+systemctl status postgresql
+
+# MySQL
+systemctl status mysql
+
+# Check if port is listening
+lsof -i :5432
+```
+
+**2. Check connection parameters:**
+- Host: Use correct hostname or IP (for Docker: `host.docker.internal`)
+- Port: Verify correct port (PostgreSQL: 5432, MySQL: 3306, MongoDB: 27017)
+- Test from command line first
+
+**3. Check firewall:**
+```bash
+# Allow port through firewall
+sudo ufw allow 5432/tcp
+
+# Test connectivity
+telnet hostname 5432
+```
+
+**4. Restart database service:**
+```bash
+systemctl restart postgresql
+```
+
+See [Connection Issues Troubleshooting](/resources/troubleshooting#connection-issues) for detailed steps.
+
+</Accordion>
+
+<Accordion title="Connection timeout">
+
+### Error Message
+```
+Connection timeout
+Connection attempt timed out
+```
+
+### What It Means
+WhoDB connected to the server but didn't receive a response within the timeout period. The network is slow or the database is unresponsive.
+
+### Causes
+- Network latency too high
+- Database server overloaded
+- Slow query taking too long to execute
+- Firewall dropping packets
+
+### Solutions
+
+**1. Increase timeout setting:**
+```yaml
+environment:
+  - DB_CONNECTION_TIMEOUT=30
+  - DB_QUERY_TIMEOUT=60
+```
+
+**2. Test network connectivity:**
+```bash
+ping hostname
+traceroute hostname
+```
+
+**3. Check if database is responsive:**
+```bash
+# PostgreSQL
+psql -h hostname -U user -d database
+
+# MySQL
+mysql -h hostname -u user -p
+```
+
+**4. Reduce query load:**
+- Add WHERE conditions to filter data
+- Use LIMIT to reduce results
+- Check for running queries: `SHOW PROCESSLIST;`
+
+If local connections work fine, the issue is network-related.
+
+</Accordion>
+
+<Accordion title="Connection reset by peer">
+
+### Error Message
+```
+Connection reset by peer
+Connection closed unexpectedly
+```
+
+### What It Means
+The connection was established but then closed abruptly by the database server. Something about the connection violated the server's policy.
+
+### Causes
+- Wrong authentication credentials
+- User doesn't have permission
+- Server configuration rejected connection
+- SSL/TLS certificate issue
+
+### Solutions
+
+**1. Verify credentials are correct:**
+```bash
+# Test with database client
+psql -h hostname -U username -d database
+# Enter password when prompted
+```
+
+**2. Check user permissions:**
+```sql
+-- PostgreSQL: Check if user can connect
+SELECT * FROM pg_user WHERE usename = 'username';
+
+-- MySQL: Check user exists
+SELECT User FROM mysql.user WHERE User='username';
+```
+
+**3. Check SSL requirements:**
+Try disabling SSL temporarily:
+- Set SSL Mode to "disable"
+- If connection works, SSL is the issue
+- Configure proper SSL certificates
+
+**4. Check server logs:**
+```bash
+# PostgreSQL logs
+tail -f /var/log/postgresql/postgresql.log
+
+# MySQL logs
+tail -f /var/log/mysql/error.log
+```
+
+Look for rejection reasons in logs.
+
+</Accordion>
+
+<Accordion title="Authentication failed / Access denied">
+
+### Error Message
+```
+Authentication failed
+Access denied for user 'username'@'hostname'
+Invalid username or password
+```
+
+### What It Means
+The database server recognized your connection but rejected your credentials. Either the username doesn't exist, the password is wrong, or the user isn't allowed to connect from this host.
+
+### Causes
+- Incorrect password
+- Username doesn't exist
+- User not allowed to connect from this host
+- User account is locked or disabled
+
+### Solutions
+
+**1. Verify credentials outside WhoDB:**
+```bash
+# PostgreSQL
+psql -h hostname -U username -d database
+
+# MySQL
+mysql -h hostname -u username -p
+
+# MongoDB
+mongosh --host hostname:27017 -u username -p
+```
+
+If you can connect with the client, credentials are correct but WhoDB might have a formatting issue.
+
+**2. Check for special characters in password:**
+Some special characters need escaping. Try:
+- Removing special characters temporarily
+- Testing with simpler password
+- Using quotes around password in connection string
+
+**3. Verify user exists:**
+```sql
+-- PostgreSQL
+\du
+
+-- MySQL
+SELECT User, Host FROM mysql.user;
+
+-- MongoDB
+db.getUsers()
+```
+
+**4. Create user if doesn't exist:**
+```sql
+-- PostgreSQL
+CREATE USER username WITH PASSWORD 'password';
+GRANT CONNECT ON DATABASE mydb TO username;
+
+-- MySQL
+CREATE USER 'username'@'hostname' IDENTIFIED BY 'password';
+GRANT ALL PRIVILEGES ON mydb.* TO 'username'@'hostname';
+FLUSH PRIVILEGES;
+```
+
+**5. Unlock user account:**
+```sql
+-- PostgreSQL
+ALTER USER username WITH ENCRYPTED PASSWORD 'newpassword';
+
+-- MySQL
+SET PASSWORD FOR 'username'@'hostname' = PASSWORD('newpassword');
+```
+
+</Accordion>
+
+<Accordion title="SSL certificate problem: self signed certificate">
+
+### Error Message
+```
+SSL certificate problem: self signed certificate
+SSL: certificate_verify_failed
+Certificate verification failed
+```
+
+### What It Means
+The database is using a self-signed SSL certificate that isn't in the trusted certificate store. This is common in development and testing environments.
+
+### Causes
+- Database using self-signed certificate
+- SSL verification mode set to "verify-full"
+- Certificate not imported to trust store
+- Certificate expired
+
+### Solutions
+
+**1. Try with lower SSL verification mode:**
+Change from "verify-full" to "require":
+- Click SSL settings
+- Set SSL Mode to "require"
+- Reconnect
+
+This accepts self-signed certificates.
+
+**2. Accept the certificate on first connection:**
+Some tools ask to accept certificate. Look for warning dialog.
+
+**3. Add certificate to trusted store:**
+Export certificate and trust it:
+```bash
+# Export certificate
+openssl s_client -connect hostname:5432 -starttls postgres \
+  -showcerts > cert.pem
+
+# Add to trusted certificates
+sudo cp cert.pem /usr/local/share/ca-certificates/
+sudo update-ca-certificates
+```
+
+**4. Disable SSL verification (development only):**
+```yaml
+SSL Mode: disable
+```
+
+Never do this in production.
+
+</Accordion>
+
+<Accordion title="SSL: CERTIFICATE_VERIFY_FAILED hostname mismatch">
+
+### Error Message
+```
+SSL: CERTIFICATE_VERIFY_FAILED hostname mismatch
+The hostname doesn't match the certificate
+```
+
+### What It Means
+The SSL certificate is valid but issued for a different hostname than the one you're connecting to. For example, certificate is for `db.internal` but you're connecting to `192.168.1.100`.
+
+### Causes
+- Using IP address instead of hostname
+- Hostname doesn't match certificate CN
+- Certificate is for different domain
+- Certificate uses wildcard incorrectly
+
+### Solutions
+
+**1. Connect using correct hostname:**
+If certificate is for `db.example.com`, use that hostname instead of IP address.
+
+**2. Use SSL Mode "verify-ca" instead of "verify-full":**
+```
+SSL Mode: verify-ca
+```
+
+This verifies the certificate is valid but doesn't check hostname matching.
+
+**3. Add hostname to hosts file (local development only):**
+```bash
+# /etc/hosts
+192.168.1.100  db.example.com
+```
+
+Then connect using `db.example.com`.
+
+**4. Import certificate with correct hostname:**
+Ensure certificate includes the hostname you're using:
+```bash
+openssl x509 -in certificate.pem -text -noout | grep "Subject:"
+```
+
+</Accordion>
+</AccordionGroup>
+
+## Query Errors
+
+<AccordionGroup>
+<Accordion title="Syntax error">
+
+### Error Message
+```
+Syntax error at or near "[keyword]"
+Syntax error near [token]
+```
+
+### What It Means
+Your SQL query has invalid syntax. The database parser encountered a token it didn't expect.
+
+### Causes
+- Misspelled keywords
+- Missing or extra commas
+- Unmatched quotes or parentheses
+- Using syntax from wrong database type
+- Missing FROM clause or other required elements
+
+### Solutions
+
+**1. Check for common syntax mistakes:**
+```sql
+-- WRONG: Missing comma
+SELECT col1 col2 FROM table;
+
+-- CORRECT
+SELECT col1, col2 FROM table;
+
+-- WRONG: Mismatched quotes
+SELECT * FROM table WHERE name = 'value;
+
+-- CORRECT
+SELECT * FROM table WHERE name = 'value';
+```
+
+**2. Verify keywords spelling:**
+```sql
+-- WRONG
+SELELCT * FROM table;
+
+-- CORRECT
+SELECT * FROM table;
+```
+
+**3. Check database-specific syntax:**
+PostgreSQL, MySQL, SQLite each have different functions:
+```sql
+-- PostgreSQL
+SELECT NOW();
+
+-- MySQL
+SELECT NOW();
+
+-- SQLite
+SELECT datetime('now');
+```
+
+**4. Use syntax highlighting and linter:**
+- IDEs like VS Code show syntax errors
+- Use database-specific extensions
+- Test in database client first
+
+**5. Break down complex queries:**
+Test parts of the query separately:
+```sql
+-- Test SELECT
+SELECT col1, col2 FROM table;
+
+-- Add WHERE
+SELECT col1, col2 FROM table WHERE condition;
+
+-- Add JOIN
+SELECT t1.col1, t2.col2 FROM table1 t1 JOIN table2 t2 ON t1.id = t2.id;
+```
+
+</Accordion>
+
+<Accordion title="Table or view does not exist">
+
+### Error Message
+```
+Table "public.tablename" does not exist
+Table or view does not exist
+Unknown table 'tablename'
+```
+
+### What It Means
+The table you're trying to query doesn't exist in the database, or you're looking in the wrong schema/database.
+
+### Causes
+- Table name is misspelled
+- Table is in different schema
+- Using wrong database
+- Table was dropped
+- Case sensitivity issue
+
+### Solutions
+
+**1. Verify table name:**
+```sql
+-- PostgreSQL: List all tables
+\dt
+
+-- MySQL: List all tables
+SHOW TABLES;
+
+-- SQLite: List all tables
+.tables
+```
+
+**2. Use correct table name in query:**
+```sql
+-- WRONG
+SELECT * FROM orders;  -- If table is actually named 'order'
+
+-- CORRECT
+SELECT * FROM order;
+```
+
+**3. Specify schema/database if needed:**
+```sql
+-- PostgreSQL: Fully qualified name
+SELECT * FROM public.users;
+
+-- MySQL: Database-qualified name
+SELECT * FROM mydb.users;
+```
+
+**4. Check if table exists in current database:**
+Some databases use different naming:
+```sql
+-- PostgreSQL: Check current database
+SELECT current_database();
+
+-- MySQL: Check current database
+SELECT DATABASE();
+```
+
+**5. Case sensitivity:**
+Some databases are case-sensitive:
+```sql
+-- PostgreSQL requires quotes for case sensitivity
+SELECT * FROM "TableName";
+
+-- MySQL is usually case-insensitive
+SELECT * FROM TableName;
+```
+
+</Accordion>
+
+<Accordion title="Column does not exist">
+
+### Error Message
+```
+Column "columnname" does not exist
+Unknown column 'columnname' in field list
+```
+
+### What It Means
+The column you're trying to access doesn't exist in the table, or there's a typo in the column name.
+
+### Causes
+- Column name is misspelled
+- Column doesn't exist in this table
+- Case sensitivity issue
+- Column is in different table
+
+### Solutions
+
+**1. List columns in table:**
+```sql
+-- PostgreSQL
+\d tablename
+
+-- MySQL
+DESCRIBE tablename;
+
+-- SQLite
+PRAGMA table_info(tablename);
+```
+
+**2. Verify spelling:**
+```sql
+-- WRONG: Typo in column name
+SELECT user_name FROM users;  -- If column is actually 'username'
+
+-- CORRECT
+SELECT username FROM users;
+```
+
+**3. Handle case sensitivity:**
+```sql
+-- PostgreSQL: Use quotes if needed
+SELECT "UserName" FROM users;
+
+-- Safer approach: lowercase everything
+SELECT LOWER(column_name) FROM users;
+```
+
+**4. Specify table for ambiguous columns:**
+```sql
+-- WRONG: Ambiguous in JOIN
+SELECT id FROM users JOIN orders ON users.id = orders.user_id;
+
+-- CORRECT: Specify which table
+SELECT users.id FROM users JOIN orders ON users.id = orders.user_id;
+```
+
+</Accordion>
+
+<Accordion title="Permission denied">
+
+### Error Message
+```
+Permission denied
+Access denied for user
+User does not have permission
+```
+
+### What It Means
+Your database user doesn't have permission to perform the requested operation (SELECT, INSERT, UPDATE, DELETE, etc.).
+
+### Causes
+- User only has SELECT permission but trying to INSERT/UPDATE/DELETE
+- User doesn't have permission on specific table
+- User role doesn't include required permissions
+- Administrative operations require admin user
+
+### Solutions
+
+**1. Check current permissions:**
+```sql
+-- PostgreSQL: Check table permissions
+\dp tablename
+
+-- MySQL: Check user permissions
+SHOW GRANTS FOR 'username'@'hostname';
+```
+
+**2. Grant missing permissions:**
+```sql
+-- PostgreSQL: Grant all permissions on table
+GRANT ALL PRIVILEGES ON tablename TO username;
+
+-- PostgreSQL: Grant specific permissions
+GRANT SELECT, INSERT, UPDATE ON tablename TO username;
+
+-- MySQL: Grant permissions
+GRANT SELECT, INSERT, UPDATE ON database.* TO 'username'@'hostname';
+FLUSH PRIVILEGES;
+```
+
+**3. Try with admin account:**
+Connect with admin/superuser account to verify operation works:
+- If admin can do it but user can't, it's a permissions issue
+- Grant appropriate permissions to user
+
+**4. Check user role:**
+```sql
+-- PostgreSQL: Check user roles
+\du username
+
+-- PostgreSQL: Make user superuser
+ALTER USER username SUPERUSER;
+```
+
+**5. Reconnect after permission change:**
+After granting permissions, reconnect to database for changes to take effect.
+
+</Accordion>
+
+<Accordion title="Foreign key constraint failed">
+
+### Error Message
+```
+Foreign key constraint failed
+Constraint violation
+Cannot add or update a child row
+Duplicate entry in foreign key
+```
+
+### What It Means
+You tried to insert or update a row that violates a foreign key constraint. Either the referenced record doesn't exist, or the value doesn't match any existing record in the referenced table.
+
+### Causes
+- Referenced record doesn't exist in parent table
+- Trying to delete record that has child records
+- Foreign key value is NULL but constraint requires it
+- Type mismatch between foreign key and reference
+
+### Solutions
+
+**1. Verify referenced record exists:**
+```sql
+-- Verify user exists before inserting order
+SELECT * FROM users WHERE id = 123;
+
+-- Then insert order
+INSERT INTO orders (user_id, amount) VALUES (123, 99.99);
+```
+
+**2. Check all existing data meets constraints:**
+```sql
+-- Find orders with non-existent user IDs
+SELECT o.* FROM orders o
+LEFT JOIN users u ON o.user_id = u.id
+WHERE u.id IS NULL;
+```
+
+**3. Use correct data type:**
+```sql
+-- WRONG: String foreign key
+INSERT INTO orders (user_id) VALUES ('123');
+
+-- CORRECT: Integer foreign key
+INSERT INTO orders (user_id) VALUES (123);
+```
+
+**4. Temporarily disable constraint for bulk operations:**
+```sql
+-- PostgreSQL
+ALTER TABLE orders DISABLE TRIGGER ALL;
+-- ... do operations ...
+ALTER TABLE orders ENABLE TRIGGER ALL;
+
+-- MySQL
+SET FOREIGN_KEY_CHECKS=0;
+-- ... do operations ...
+SET FOREIGN_KEY_CHECKS=1;
+```
+
+**5. Delete child records first:**
+```sql
+-- If deleting user, first delete their orders
+DELETE FROM orders WHERE user_id = 123;
+DELETE FROM users WHERE id = 123;
+```
+
+</Accordion>
+
+<Accordion title="Timeout waiting for query execution">
+
+### Error Message
+```
+Timeout waiting for query execution
+Query execution timeout
+Operation took too long
+```
+
+### What It Means
+Your query ran longer than the allowed timeout period. The database took too long to return results and the connection was terminated.
+
+### Causes
+- Query is inefficient and takes too long
+- Large result set requires long to transfer
+- Database is busy with other queries
+- No indexes on query columns
+
+### Solutions
+
+**1. Add LIMIT to reduce results:**
+```sql
+-- WRONG: May return millions of rows
+SELECT * FROM large_table;
+
+-- CORRECT: Limit results
+SELECT * FROM large_table LIMIT 1000;
+```
+
+**2. Add WHERE condition to filter:**
+```sql
+-- WRONG: Scans entire table
+SELECT * FROM orders;
+
+-- CORRECT: Filter by date range
+SELECT * FROM orders WHERE created_at > '2024-01-01';
+```
+
+**3. Create indexes on frequently queried columns:**
+```sql
+-- Find slow queries and add indexes
+CREATE INDEX idx_orders_user_id ON orders(user_id);
+CREATE INDEX idx_users_email ON users(email);
+```
+
+**4. Increase timeout setting:**
+```yaml
+environment:
+  - DB_QUERY_TIMEOUT=120
+```
+
+**5. Check if database is overloaded:**
+```sql
+-- See currently running queries
+-- PostgreSQL
+SELECT * FROM pg_stat_activity;
+
+-- MySQL
+SHOW PROCESSLIST;
+```
+
+Kill long-running operations if needed.
+
+</Accordion>
+</AccordionGroup>
+
+## Data Errors
+
+<AccordionGroup>
+<Accordion title="NOT NULL constraint violated">
+
+### Error Message
+```
+NOT NULL constraint failed
+Cannot insert NULL into NOT NULL column
+Column does not allow NULL values
+```
+
+### What It Means
+You tried to insert or update a row with a NULL value in a column that requires a value.
+
+### Causes
+- Trying to insert NULL in required field
+- Field left empty when submitting form
+- NULL value from missing join result
+- Default value not applied
+
+### Solutions
+
+**1. Provide value for all required columns:**
+```sql
+-- WRONG: Missing required email
+INSERT INTO users (name) VALUES ('John');
+
+-- CORRECT: Provide all required fields
+INSERT INTO users (name, email) VALUES ('John', 'john@example.com');
+```
+
+**2. In UI form: Fill all required fields:**
+- Fields marked with asterisk (*) are required
+- Don't leave them blank
+- Check error message for which field
+
+**3. Use default values:**
+```sql
+INSERT INTO users (name, email, created_at)
+VALUES ('John', 'john@example.com', NOW());
+```
+
+**4. Handle NULL in JOINs:**
+```sql
+-- WRONG: NULL if no match in join
+SELECT u.name, o.id FROM users u
+LEFT JOIN orders o ON u.id = o.user_id;
+
+-- CORRECT: Use COALESCE to provide default
+SELECT u.name, COALESCE(o.id, 0) FROM users u
+LEFT JOIN orders o ON u.id = o.user_id;
+```
+
+**5. Check column definition:**
+```sql
+-- See if column allows NULL
+\d users  -- PostgreSQL
+DESCRIBE users; -- MySQL
+PRAGMA table_info(users); -- SQLite
+```
+
+</Accordion>
+
+<Accordion title="Duplicate key value violates unique constraint">
+
+### Error Message
+```
+Duplicate key value violates unique constraint
+Duplicate entry for key 'fieldname'
+Unique constraint failed
+```
+
+### What It Means
+You tried to insert or update a row with a value that already exists in a column that has a unique constraint (typically primary key or unique index).
+
+### Causes
+- Inserting duplicate value in primary key
+- Email already exists in database
+- Unique index violation
+- Trying to insert same value twice
+
+### Solutions
+
+**1. Verify value doesn't already exist:**
+```sql
+-- Check if email already exists
+SELECT * FROM users WHERE email = 'test@example.com';
+
+-- If it exists, update instead of insert
+UPDATE users SET name = 'Updated' WHERE email = 'test@example.com';
+```
+
+**2. Use INSERT ... ON DUPLICATE KEY UPDATE (MySQL):**
+```sql
+INSERT INTO users (email, name) VALUES ('test@example.com', 'John')
+ON DUPLICATE KEY UPDATE name = 'John';
+```
+
+**3. Use upsert syntax (PostgreSQL):**
+```sql
+INSERT INTO users (email, name) VALUES ('test@example.com', 'John')
+ON CONFLICT (email) DO UPDATE SET name = 'John';
+```
+
+**4. Check unique constraints:**
+```sql
+-- PostgreSQL: List constraints
+\d users
+
+-- MySQL: Check indexes
+SHOW INDEX FROM users;
+```
+
+**5. For primary key conflicts:**
+```sql
+-- If primary key is auto-increment, don't specify it
+INSERT INTO users (email, name) VALUES ('test@example.com', 'John');
+-- ID will auto-generate
+
+-- WRONG: Specifying duplicate ID
+INSERT INTO users (id, email, name) VALUES (1, 'test@example.com', 'John');
+```
+
+</Accordion>
+
+<Accordion title="Data type mismatch">
+
+### Error Message
+```
+Invalid input syntax for type integer
+Cannot convert string to number
+Type conversion error
+```
+
+### What It Means
+You tried to insert or compare a value with the wrong data type. For example, inserting text into a numeric column.
+
+### Causes
+- Inserting string in numeric column
+- Comparing incompatible types
+- Invalid date format
+- Type conversion error
+
+### Solutions
+
+**1. Verify correct data type:**
+```sql
+-- Check column types
+\d tablename  -- PostgreSQL
+DESCRIBE tablename; -- MySQL
+
+-- Example error
+INSERT INTO orders (id, amount) VALUES ('abc', '99.99');  -- WRONG
+INSERT INTO orders (id, amount) VALUES (1, 99.99);  -- CORRECT
+```
+
+**2. Cast values to correct type:**
+```sql
+-- Cast to integer
+SELECT CAST('123' AS INTEGER);
+SELECT '123'::INTEGER;  -- PostgreSQL
+
+-- Cast to decimal
+SELECT CAST('99.99' AS DECIMAL(10,2));
+```
+
+**3. Fix date format:**
+```sql
+-- PostgreSQL: Use proper date format
+INSERT INTO orders (created_at) VALUES ('2024-01-15');
+
+-- MySQL: Multiple formats work
+INSERT INTO orders (created_at) VALUES ('2024-01-15');
+INSERT INTO orders (created_at) VALUES (STR_TO_DATE('2024-01-15', '%Y-%m-%d'));
+```
+
+**4. Handle type conversion in application:**
+Ensure UI validates types before submitting:
+- Numbers: Only numeric input
+- Dates: Use date picker
+- Emails: Validate format
+
+</Accordion>
+
+<Accordion title="Division by zero">
+
+### Error Message
+```
+Division by zero
+Attempted to divide by zero
+```
+
+### What It Means
+A query tried to divide by zero, which is mathematically undefined and not allowed.
+
+### Causes
+- Direct division by 0
+- Denominator column contains 0
+- Empty result set in division
+- Logic error in calculation
+
+### Solutions
+
+**1. Add zero check:**
+```sql
+-- WRONG: May divide by zero
+SELECT total / count FROM orders;
+
+-- CORRECT: Check for zero
+SELECT CASE WHEN count > 0 THEN total / count ELSE 0 END FROM orders;
+```
+
+**2. Filter out zero values:**
+```sql
+-- WRONG
+SELECT total / count FROM orders WHERE count = 0;
+
+-- CORRECT
+SELECT total / count FROM orders WHERE count > 0;
+```
+
+**3. Use NULLIF to handle zeros:**
+```sql
+-- NULLIF returns NULL if expression equals value
+SELECT total / NULLIF(count, 0) FROM orders;
+
+-- Then handle NULLs
+SELECT COALESCE(total / NULLIF(count, 0), 0) FROM orders;
+```
+
+**4. Check denominator values:**
+```sql
+-- Find which rows have zero denominator
+SELECT * FROM orders WHERE count = 0;
+
+-- Fix the data
+UPDATE orders SET count = 1 WHERE count = 0;
+```
+
+</Accordion>
+</AccordionGroup>
+
+## Performance and Resource Errors
+
+<AccordionGroup>
+<Accordion title="Out of memory">
+
+### Error Message
+```
+Out of memory
+Memory allocation failed
+Insufficient memory
+```
+
+### What It Means
+The operation required more RAM than available, and the system couldn't allocate enough memory to complete the operation.
+
+### Causes
+- Query returning very large result set
+- Exporting huge amount of data
+- Multiple large operations simultaneously
+- Memory limit too low
+
+### Solutions
+
+**1. Reduce result set size:**
+```sql
+-- WRONG: All 10 million rows
+SELECT * FROM huge_table;
+
+-- CORRECT: Use pagination
+SELECT * FROM huge_table LIMIT 1000;
+
+-- CORRECT: Filter with WHERE
+SELECT * FROM huge_table WHERE created_at > '2024-01-01' LIMIT 1000;
+```
+
+**2. Use smaller page size:**
+- Change page size setting from 1000 to 100
+- Load data in smaller batches
+- Navigate between pages instead of loading all
+
+**3. Increase memory allocation:**
+```yaml
+environment:
+  - DB_MAX_MEMORY=2gb
+```
+
+**4. Export in smaller batches:**
+Instead of exporting 10M rows at once:
+- Export by date ranges
+- Export specific columns only
+- Use multiple export operations
+
+**5. Close other applications:**
+Free up system memory by closing unnecessary programs.
+
+</Accordion>
+
+<Accordion title="Connection pool exhausted">
+
+### Error Message
+```
+Connection pool exhausted
+No more connections available
+Maximum pool size reached
+```
+
+### What It Means
+All available database connections are in use and new queries can't get a connection.
+
+### Causes
+- Too many concurrent operations
+- Connections not being released
+- Connection pool size too small
+- Queries hanging without completing
+
+### Solutions
+
+**1. Increase connection pool size:**
+```yaml
+environment:
+  - DB_MAX_CONNECTIONS=100
+  - DB_MAX_IDLE_CONNECTIONS=20
+```
+
+**2. Close unused connections:**
+Wait for current operations to complete or restart WhoDB.
+
+**3. Check for hanging queries:**
+```sql
+-- PostgreSQL: See active connections
+SELECT * FROM pg_stat_activity;
+
+-- MySQL: See running queries
+SHOW PROCESSLIST;
+```
+
+**4. Kill long-running queries:**
+```sql
+-- PostgreSQL
+SELECT pg_terminate_backend(pid) FROM pg_stat_activity
+WHERE state = 'active' AND query_start < NOW() - INTERVAL '10 minutes';
+
+-- MySQL
+KILL <process_id>;
+```
+
+**5. Reduce concurrent operations:**
+- Don't run too many queries simultaneously
+- Use queue instead of parallel operations
+- Restart WhoDB to reset pool
+
+</Accordion>
+</AccordionGroup>
+
+## Getting More Help
+
+If you encounter an error not listed here:
+
+<CardGroup cols={2}>
+<Card title="Troubleshooting Guide" icon="wrench" href="/resources/troubleshooting">
+Step-by-step solutions for common issues
+</Card>
+<Card title="Performance Tuning" icon="bolt" href="/resources/performance-tuning">
+Optimize queries and database performance
+</Card>
+<Card title="GitHub Issues" icon="github" href="https://github.com/clidey/whodb/issues">
+Search for similar issues or report a bug
+</Card>
+<Card title="FAQ" icon="question" href="/resources/faq">
+Frequently asked questions about WhoDB
+</Card>
+</CardGroup>

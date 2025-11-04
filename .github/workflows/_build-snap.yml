@@ -1,0 +1,181 @@
+name: Build Snap Packages
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version to build'
+        required: true
+        type: string
+      upload-artifacts:
+        description: 'Whether to upload artifacts'
+        required: false
+        type: boolean
+        default: true
+    secrets:
+      SNAPCRAFT_STORE_CREDENTIALS:
+        required: false
+
+jobs:
+  build-snap:
+    name: Build Snap (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            arch: amd64
+          - runner: ubuntu-24.04-arm
+            arch: arm64
+    env:
+      SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
+      SNAPCRAFT_PROJECT_VERSION: ${{ inputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Setup Go cache for snap build
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'core/go.mod'
+          cache: true
+          cache-dependency-path: |
+            core/go.sum
+            core/go.mod
+            desktop-ce/go.sum
+            desktop-ce/go.mod
+
+      - name: Cache Go build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+          key: ${{ runner.os }}-${{ runner.arch }}-go-build-snap-${{ hashFiles('core/go.sum', 'desktop-ce/go.sum', 'core/go.mod', 'desktop-ce/go.mod') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-go-build-snap-
+            ${{ runner.os }}-go-build-
+
+      - name: Cache Snapcraft downloads
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/snapcraft/download
+            ~/.cache/snapcraft/stage-packages
+          key: ${{ runner.os }}-${{ runner.arch }}-snapcraft-${{ hashFiles('snapcraft.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-snapcraft-
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Cache Wails binary
+        id: cache-wails
+        uses: actions/cache@v4
+        with:
+          path: ~/go/bin/wails
+          key: ${{ runner.os }}-wails-v2-latest
+
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ runner.os }}-${{ runner.arch }}-ccache-snap
+          max-size: 500M
+
+      - name: Install build dependencies
+        run: |
+          # Update package lists
+          sudo apt-get update
+
+          # Install essential build tools
+          # Note: ccache is already installed by the ccache-action above
+          sudo apt-get install -y \
+            build-essential \
+            curl \
+            git \
+            pkg-config
+
+          echo "Build dependencies installed"
+
+      - name: Setup Snapcraft
+        run: |
+          sudo snap install snapcraft --classic
+          echo "Snapcraft version:"
+          snapcraft --version
+
+      - name: Build Snap package
+        id: build_snap
+        run: |
+          echo "Building snap with version: ${{ inputs.version }}"
+
+          # Show ccache stats before build (if available)
+          if command -v ccache &> /dev/null; then
+            echo "ccache stats before build:"
+            ccache -s || true
+          fi
+
+          # Write version to a file that snapcraft can read
+          echo "${{ inputs.version }}" > .snap_version
+
+          # Run snapcraft with destructive mode
+          # The ccache-action will automatically set up the environment if available
+          sudo -E snapcraft pack --destructive-mode --verbosity=debug
+
+          # Show ccache stats after build (if available)
+          if command -v ccache &> /dev/null; then
+            echo "ccache stats after build:"
+            ccache -s || true
+          fi
+
+          echo "✅ Snap built successfully"
+          echo "build_method=destructive" >> $GITHUB_OUTPUT
+
+      - name: Verify Snap
+        run: |
+          SNAP_FILE=$(ls *.snap 2>/dev/null | head -1)
+          if [ -z "$SNAP_FILE" ]; then
+            echo "❌ No snap file found after build"
+            exit 1
+          fi
+
+          echo "✅ Built snap: $SNAP_FILE"
+          echo "File size: $(du -h "$SNAP_FILE" | cut -f1)"
+          echo "Expected version: ${{ inputs.version }}"
+
+          # Verify filename contains version (be flexible about format)
+          SNAP_BASENAME=$(basename "$SNAP_FILE")
+          VERSION="${{ inputs.version }}"
+          VERSION_NO_V="${VERSION#v}"  # Remove leading 'v' if present
+
+          if [[ "$SNAP_BASENAME" == *"_${VERSION}_"* ]] || [[ "$SNAP_BASENAME" == *"_${VERSION_NO_V}_"* ]]; then
+            echo "✅ Snap filename contains correct version"
+          else
+            echo "⚠️ Warning: Snap filename $SNAP_BASENAME may not contain expected version ${VERSION}"
+            echo "This is not critical, continuing..."
+          fi
+
+      - name: Upload Snap artifact
+        if: inputs.upload-artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: snap-package-${{ matrix.arch }}
+          path: "*.snap"
+          retention-days: 1

@@ -21,6 +21,28 @@
 @custom-variant dark (&:where(.dark, .dark *));
 @custom-variant hover (&:hover);
 
+/* Desktop Linux-only bundled font: Inter variable fonts
+   Place these files in frontend/public/fonts before building:
+   - Inter-roman.var.woff2
+   - Inter-italic.var.woff2
+   Vite copies public/ to / in the build, so URLs are /fonts/*.woff2 */
+@supports (font-variation-settings: normal) {
+    @font-face {
+        font-family: "Inter var";
+        src: url("/fonts/Inter-roman.var.woff2") format("woff2");
+        font-weight: 100 900;
+        font-style: normal;
+        font-display: swap;
+    }
+    @font-face {
+        font-family: "Inter var";
+        src: url("/fonts/Inter-italic.var.woff2") format("woff2");
+        font-weight: 100 900;
+        font-style: italic;
+        font-display: swap;
+    }
+}
+
 :root {
   --brand-foreground: #ca6f1e;
   
@@ -32,6 +54,22 @@
   --font-size-xl: 1.25rem;
   --font-size-2xl: 1.5rem;
   --font-size-3xl: 1.875rem;
+}
+
+.linux :root, :root.linux {
+    /* no-op: selector placeholder to allow :root.linux overrides below */
+}
+
+/* Base font uses the theme variable, which we can override per-OS */
+body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Desktop Linux-only font override: prefer Inter variable if bundled */
+:root.linux {
+    --font-sans: "Inter var", "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
 .dark {
@@ -79,3 +117,37 @@
 .gap-xl { gap: var(--spacing-xl); }
 .gap-2xl { gap: var(--spacing-2xl); }
 .gap-3xl { gap: var(--spacing-3xl); }
+
+
+[data-slot="table-container"] {
+  width: 100%;
+}
+
+.react-flow__controls {
+  border: 0;
+  box-shadow: none;
+}
+
+.react-flow__controls > button:first-child {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.react-flow__controls > button:last-child {
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.react-flow__controls-button {
+  padding: 8px;
+  background: var(--secondary) !important;
+  border-bottom: 0;
+}
+
+[role="tree"] [data-radix-collection-item] > svg:first-child {
+  transform: rotateZ(270deg);
+}
+
+[data-testid="mode-toggle"] {
+  z-index: 5;
+}

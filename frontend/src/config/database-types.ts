@@ -76,7 +76,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         },
         supportsScratchpad: true,
         supportsSchema: true,
-        supportsDatabaseSwitching: true,
+        supportsDatabaseSwitching: false,
         usesSchemaForGraph: true,  // Uses database field for graph queries
     },
     {
@@ -92,7 +92,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         },
         supportsScratchpad: true,
         supportsSchema: true,
-        supportsDatabaseSwitching: true,
+        supportsDatabaseSwitching: false,
         usesSchemaForGraph: true,  // Uses database field for graph queries
     },
     {
@@ -154,7 +154,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         supportsScratchpad: false,  // ElasticSearch doesn't support SQL scratchpad
         supportsSchema: false,  // ElasticSearch doesn't have schemas
         supportsDatabaseSwitching: false,
-        usesSchemaForGraph: true,  // Uses schema field for graph queries
+        usesSchemaForGraph: false,  // Uses database field (empty) for graph queries
     },
     {
         id: "ClickHouse",

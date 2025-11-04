@@ -1,0 +1,1019 @@
+---
+title: "Data Migration"
+description: "Complete guide to using WhoDB for database migration projects. Export, transform, validate, and import data between databases with confidence."
+---
+
+# Data Migration
+
+Database migrations are critical operational events that require precision, validation, and confidence. Whether you're migrating from one database platform to another, consolidating multiple databases, or modernizing your infrastructure, WhoDB provides the tools to execute migrations safely and verify data integrity throughout the process.
+
+<Tip>
+This guide covers planning, exporting, validating, and importing data. Real-world migration workflows with SQL examples and step-by-step validation procedures.
+</Tip>
+
+## Understanding Database Migrations
+
+A successful migration involves multiple phases, each with specific objectives and validation requirements:
+
+1. **Planning & Assessment**: Understand your source data
+2. **Extraction**: Export data from the legacy system
+3. **Transformation**: Clean and prepare data for the new system
+4. **Validation**: Verify data integrity before import
+5. **Import**: Load data into the new database
+6. **Post-Migration Verification**: Confirm migration success
+
+WhoDB excels at phases 1, 2, 3, 4, and 6—the critical data validation and transformation stages.
+
+## Phase 1: Pre-Migration Assessment
+
+Before migrating a single row of data, understand what you're working with.
+
+<Steps>
+<Step title="Connect to Source Database">
+In WhoDB, connect to your source database—the system you're migrating FROM. This might be a legacy MySQL database, an old PostgreSQL instance, or even SQLite.
+
+![Database Types](/images/01-login-page.png)
+
+WhoDB supports multiple database types, making it ideal for cross-platform migrations.
+</Step>
+
+<Step title="Explore Your Schema">
+Navigate through the Explore tab to understand your database structure.
+
+![Explore Schema](/images/08-explore-table-metadata.png)
+
+For each table, document:
+- **Table names and purposes**: What business data does each table hold?
+- **Column count and types**: How complex is each table?
+- **Primary keys and indexes**: How is data organized?
+- **Foreign key relationships**: What dependencies exist?
+- **Row counts**: How much data are you migrating?
+
+This context is crucial for planning your migration strategy.
+</Step>
+
+<Step title="Identify Data Issues">
+Use WhoDB's filtering and query capabilities to identify data quality problems before migration:
+
+```sql
+-- Find NULL values in critical fields
+SELECT * FROM customers
+WHERE email IS NULL OR phone IS NULL;
+
+-- Find duplicates that might violate constraints
+SELECT email, COUNT(*) as cnt
+FROM customers
+GROUP BY email
+HAVING COUNT(*) > 1;
+
+-- Find orphaned records (foreign key issues)
+SELECT o.* FROM orders o
+LEFT JOIN customers c ON o.customer_id = c.id
+WHERE c.id IS NULL;
+
+-- Find unusual data types or formatting
+SELECT * FROM orders
+WHERE order_date > NOW();  -- Future dates
+
+-- Find empty or invalid strings
+SELECT * FROM products
+WHERE name = '' OR TRIM(name) = '';
+```
+
+Export these results to a validation report for your team to review.
+</Step>
+
+<Step title="Estimate Migration Scope">
+Calculate the total data volume:
+
+![Data View](/images/09-data-view-users-table.png)
+
+Use queries to count records by table:
+
+```sql
+SELECT
+  'customers' as table_name, COUNT(*) as row_count FROM customers
+UNION ALL
+SELECT 'orders', COUNT(*) FROM orders
+UNION ALL
+SELECT 'order_items', COUNT(*) FROM order_items
+UNION ALL
+SELECT 'products', COUNT(*) FROM products
+ORDER BY row_count DESC;
+```
+
+This helps you understand:
+- Total data volume to migrate
+- Whether you can do it in one batch or need staging
+- Expected migration duration
+- Resource requirements
+</Step>
+</Steps>
+
+## Phase 2: Data Extraction and Export
+
+Once you've assessed the source data, extract it for transformation.
+
+<Steps>
+<Step title="Prepare Your Tables">
+Decide which tables to migrate. Most migrations include:
+- Core business entities (customers, products, orders)
+- Historical data (transactions, events, audit logs)
+- Configuration data (settings, parameters)
+
+Some tables to consider leaving behind:
+- Temporary or cache tables
+- Session data (usually regenerated)
+- Analytics/reporting tables (can be rebuilt)
+
+Document your decisions for your migration team.
+</Step>
+
+<Step title="Create Export Strategy">
+For each table, decide on export granularity:
+
+**Option 1: Single Export**
+- Export entire tables at once
+- Best for small tables (< 100K rows)
+- Simple but large files
+
+**Option 2: Staged Exports**
+- Export by date range (e.g., 2022, 2023, 2024)
+- Export by category or status
+- Best for large tables with natural partitions
+- Allows parallel processing and easier recovery
+
+**Option 3: Sampled Export**
+- For testing: export 1% or 10% sample
+- Migrate sample first to validate process
+- Then do full migration with confidence
+
+Most migrations use a combination—sample export for testing, then full staged exports for production.
+</Step>
+
+<Step title="Export Data by Table">
+Navigate to each table and use WhoDB's export functionality.
+
+![Export Dialog](/images/20-data-view-export-dialog.png)
+
+For the first pass, export all data:
+
+```
+1. Navigate to table
+2. Click "Export All"
+3. Choose format (CSV for transformation, SQL for direct import)
+4. Download file
+5. Verify file size and completeness
+```
+
+Name your exports consistently:
+- `customers_2024-10-31_full.csv`
+- `orders_2024-01-to-12.csv`
+- `order_items_2024-full.sql`
+
+This naming scheme prevents confusion during multi-table migrations.
+</Step>
+
+<Step title="Export Format Selection">
+Choose the format based on your needs:
+
+![Export Format](/images/21-data-view-export-format-dropdown.png)
+
+**CSV Format** - Best for transformation:
+- Open in Excel or Python/R
+- Clean and enrich data
+- Handle special characters and encoding issues
+- Then import to new database
+
+**SQL Format** - Best for similar databases:
+- If migrating between PostgreSQL versions or MySQL versions
+- Direct INSERT statements
+- Preserves data types precisely
+- Faster import
+
+**JSON Format** - Best for complex relationships:
+- Preserves nested data structures
+- Good for NoSQL migrations
+- Easier to transform programmatically
+
+For this guide, we'll assume CSV export for transformation flexibility.
+</Step>
+
+<Step title="Verify Export Completeness">
+After export, verify the data is complete:
+
+1. **Check file size**: Is it reasonable for the row count?
+2. **Check row count**: `wc -l` on CSV should match database row count + 1 (header)
+3. **Check sampling**: Open file, spot-check first and last rows
+4. **Check for truncation**: Look for incomplete rows at end
+
+```bash
+# On macOS/Linux, verify row count
+wc -l customers_2024-10-31_full.csv
+# Should be row_count + 1
+
+# Check file size
+ls -lh customers_2024-10-31_full.csv
+# Should be reasonable for data size
+
+# Spot check first few rows
+head -n 5 customers_2024-10-31_full.csv
+```
+</Step>
+</Steps>
+
+## Phase 3: Data Transformation and Cleaning
+
+Before importing to the new system, clean and prepare your data.
+
+<Steps>
+<Step title="Analyze Export Files">
+Before any transformation, understand the data in your exports:
+
+```sql
+-- Count rows in the export
+SELECT COUNT(*) FROM customers;
+
+-- Check for NULL values by column
+SELECT
+  COUNT(CASE WHEN id IS NULL THEN 1 END) as null_ids,
+  COUNT(CASE WHEN email IS NULL THEN 1 END) as null_emails,
+  COUNT(CASE WHEN created_at IS NULL THEN 1 END) as null_created
+FROM customers;
+
+-- Find problematic data types
+SELECT * FROM orders
+WHERE amount::text ~ '[^0-9.-]';  -- Non-numeric characters in amount
+```
+</Step>
+
+<Step title="Create Transformation Scripts">
+Use Python, SQL, or your preferred tool to transform data:
+
+**Example 1: Standardize email addresses**
+```python
+import pandas as pd
+
+# Read export
+df = pd.read_csv('customers_2024-10-31_full.csv')
+
+# Standardize emails
+df['email'] = df['email'].str.lower().str.strip()
+
+# Remove duplicates
+df = df.drop_duplicates(subset=['email'], keep='first')
+
+# Save cleaned version
+df.to_csv('customers_cleaned.csv', index=False)
+```
+
+**Example 2: Handle date format differences**
+```sql
+-- If migrating from MySQL (datetime) to PostgreSQL (timestamp)
+SELECT
+  id,
+  email,
+  -- Convert date strings to timestamp
+  TO_TIMESTAMP(created_at_string, 'YYYY-MM-DD HH24:MI:SS') as created_at,
+  -- Handle NULL dates
+  CASE WHEN updated_at_string IS NULL
+    THEN NULL
+    ELSE TO_TIMESTAMP(updated_at_string, 'YYYY-MM-DD HH24:MI:SS')
+  END as updated_at
+FROM customers_import
+WHERE created_at_string IS NOT NULL;
+```
+
+**Example 3: Handle encoding issues**
+```python
+# Some systems export with wrong encoding
+import chardet
+
+# Detect encoding
+with open('customers_export.csv', 'rb') as f:
+    result = chardet.detect(f.read(10000))
+    encoding = result['encoding']
+
+# Read with correct encoding
+df = pd.read_csv('customers_export.csv', encoding=encoding)
+
+# Fix encoding issues
+df['name'] = df['name'].encode('utf-8').decode('utf-8', errors='ignore')
+
+df.to_csv('customers_fixed.csv', index=False, encoding='utf-8')
+```
+
+**Example 4: Transform between database schemas**
+```sql
+-- Old schema: users table with everything
+-- New schema: separate users and user_profiles tables
+
+-- Create migration view
+SELECT
+  id as user_id,
+  email,
+  created_at,
+  -- These stay in users table
+FROM old_users
+
+-- Create separate profile data
+SELECT
+  id as user_profile_id,
+  user_id,
+  first_name,
+  last_name,
+  avatar_url,
+  -- These move to user_profiles table
+FROM old_users;
+```
+</Step>
+
+<Step title="Handle Special Cases">
+Address specific data challenges:
+
+**Handling Missing Foreign Keys**
+```sql
+-- Before migration, decide: keep or remove orphaned records?
+-- Option 1: Remove orphaned records
+DELETE FROM orders
+WHERE customer_id NOT IN (SELECT id FROM customers);
+
+-- Option 2: Set to NULL (if allowed)
+UPDATE orders SET customer_id = NULL
+WHERE customer_id NOT IN (SELECT id FROM customers);
+
+-- Option 3: Create placeholder records
+INSERT INTO customers (id, email, created_at)
+SELECT DISTINCT customer_id, 'unknown@example.com', NOW()
+FROM orders
+WHERE customer_id NOT IN (SELECT id FROM customers);
+```
+
+**Handling Duplicates**
+```sql
+-- Identify which duplicates to keep
+WITH ranked_duplicates AS (
+  SELECT
+    *,
+    ROW_NUMBER() OVER (PARTITION BY email ORDER BY created_at ASC) as rn
+  FROM customers
+)
+SELECT * FROM ranked_duplicates WHERE rn > 1;
+
+-- Keep oldest, remove newer duplicates
+DELETE FROM customers c1
+WHERE EXISTS (
+  SELECT 1 FROM customers c2
+  WHERE c1.email = c2.email
+  AND c2.created_at < c1.created_at
+);
+```
+
+**Handling Encoding Issues**
+```sql
+-- For PostgreSQL: Fix encoding
+UPDATE customers
+SET name = CONVERT(name, 'USING utf8')
+WHERE name LIKE '%\xEF%';
+
+-- For MySQL: Different approach
+UPDATE customers
+SET name = CONVERT(CAST(CONVERT(name USING latin1) AS BINARY) USING utf8);
+```
+</Step>
+
+<Step title="Create Staged Import Data">
+Organize cleaned data for import:
+
+```
+migration/
+├── staging/
+│   ├── customers_cleaned.csv
+│   ├── products_cleaned.csv
+│   ├── orders_cleaned.csv
+│   └── order_items_cleaned.csv
+├── validation/
+│   ├── row_count_comparison.csv
+│   ├── data_quality_report.csv
+│   └── migration_issues.log
+└── migration_notes.md
+```
+
+This organization makes imports systematic and traceable.
+</Step>
+</Steps>
+
+## Phase 4: Pre-Migration Validation
+
+Before importing to production, validate everything is ready.
+
+<Steps>
+<Step title="Row Count Verification">
+Verify you're not losing data:
+
+```sql
+-- Count all records in source
+SELECT
+  'customers' as table_name, COUNT(*) as source_count FROM old_customers
+UNION ALL
+SELECT 'orders', COUNT(*) FROM old_orders
+UNION ALL
+SELECT 'products', COUNT(*) FROM old_products
+UNION ALL
+SELECT 'order_items', COUNT(*) FROM old_order_items;
+
+-- Compare with staged files (after cleaning)
+-- customers_cleaned.csv: 5,432 rows
+-- orders_cleaned.csv: 28,104 rows
+-- products_cleaned.csv: 847 rows
+-- order_items_cleaned.csv: 112,503 rows
+```
+
+Expected discrepancies:
+- Some deletions are intentional (orphaned records)
+- Some duplicates removed
+- Document all differences in a reconciliation report
+</Step>
+
+<Step title="Data Type Compatibility">
+Ensure destination database can store all values:
+
+```sql
+-- Check numeric ranges
+SELECT
+  MIN(amount), MAX(amount) FROM orders;
+-- If MAX(amount) = 999999999.99, ensure destination supports DECIMAL(12,2)
+
+-- Check text lengths
+SELECT
+  MAX(LENGTH(description)) FROM products;
+-- If MAX = 5000 chars, ensure destination supports TEXT not VARCHAR(255)
+
+-- Check date ranges
+SELECT
+  MIN(created_at), MAX(created_at) FROM orders;
+-- If dates go to 2099, ensure destination year is supported
+```
+</Step>
+
+<Step title="Constraint Validation">
+Check data will satisfy destination constraints:
+
+```sql
+-- Verify unique constraints will be satisfied
+SELECT email, COUNT(*) as cnt
+FROM customers_staged
+GROUP BY email
+HAVING COUNT(*) > 1;
+
+-- Verify foreign keys will be valid
+SELECT DISTINCT customer_id FROM orders_staged
+WHERE customer_id NOT IN (SELECT id FROM customers_staged);
+
+-- Verify non-null constraints
+SELECT COUNT(*) FROM customers_staged WHERE email IS NULL;
+```
+
+Use this in a comprehensive pre-import checklist.
+</Step>
+
+<Step title="Create Validation Report">
+Document everything for stakeholder review:
+
+```markdown
+# Pre-Migration Validation Report
+Date: 2024-10-31
+Source DB: Legacy MySQL
+Destination DB: PostgreSQL Production
+
+## Row Counts
+| Table | Source | After Cleaning | Difference | Status |
+|-------|--------|-----------------|-----------|--------|
+| customers | 5,500 | 5,432 | -68 (duplicates removed) | ✓ OK |
+| orders | 28,200 | 28,104 | -96 (orphaned removed) | ✓ OK |
+| products | 850 | 847 | -3 (inactive removed) | ✓ OK |
+| order_items | 112,600 | 112,503 | -97 (orphaned removed) | ✓ OK |
+
+## Data Quality
+- Duplicate emails removed: 68
+- Orphaned orders (no customer): 96
+- Invalid dates: 0
+- NULL in required fields: 0
+- Character encoding issues: FIXED
+
+## Constraint Violations
+- Would-be unique constraint violations: 0
+- Would-be foreign key violations: 0
+- Would-be NOT NULL violations: 0
+
+## Ready for Migration: YES
+Approved by: [Data Lead]
+Date: [Today]
+```
+
+This report provides confidence and accountability for the migration.
+</Step>
+</Steps>
+
+## Phase 5: Performing the Migration
+
+With everything validated, perform the actual migration.
+
+<Steps>
+<Step title="Prepare New Database">
+Ensure destination database is ready:
+
+```sql
+-- Destination is empty or in known state
+-- All tables created with correct schema
+-- All indexes defined
+-- All constraints configured
+-- Test connection works
+
+-- Verify with simple query
+SELECT * FROM customers LIMIT 1;
+-- Should return: ERROR - no data (which is expected)
+```
+</Step>
+
+<Step title="Import First Table (Test Run)">
+Start with a non-critical table to verify the process:
+
+**Import customers table via WhoDB:**
+1. In new database connection
+2. Create customers table if not exists
+3. Use WhoDB or SQL import to load customers_cleaned.csv
+
+```sql
+-- PostgreSQL example
+COPY customers(id, email, name, created_at)
+FROM '/path/to/customers_cleaned.csv'
+WITH (FORMAT csv, HEADER true, NULL 'NULL');
+
+-- MySQL example
+LOAD DATA INFILE '/path/to/customers_cleaned.csv'
+INTO TABLE customers
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS
+(id, email, name, created_at);
+```
+
+**Verify import:**
+```sql
+SELECT COUNT(*) FROM customers;
+-- Should equal 5,432
+```
+</Step>
+
+<Step title="Verify First Import">
+Before importing dependent tables, validate the first import:
+
+```sql
+-- Verify counts match
+SELECT COUNT(*) as imported_count FROM customers;
+-- Should be 5,432
+
+-- Spot check data
+SELECT * FROM customers LIMIT 5;
+-- Verify data looks correct
+
+-- Check for truncation
+SELECT MAX(LENGTH(email)) FROM customers;
+-- Verify no emails were truncated
+
+-- Check dates converted correctly
+SELECT MIN(created_at), MAX(created_at) FROM customers;
+-- Should be reasonable dates
+```
+</Step>
+
+<Step title="Import Dependent Tables">
+Import tables with foreign keys in dependency order:
+
+```
+1. customers (parent)
+2. products (parent, no dependencies)
+3. orders (depends on customers)
+4. order_items (depends on orders and products)
+5. reviews (depends on customers and products)
+```
+
+For each, repeat: Import → Verify → Check constraints → Continue
+
+```sql
+-- Import orders (depends on customers)
+COPY orders(id, customer_id, order_date, total)
+FROM '/path/to/orders_cleaned.csv'
+WITH (FORMAT csv, HEADER true, NULL 'NULL');
+
+-- Verify
+SELECT COUNT(*) FROM orders;  -- 28,104
+SELECT COUNT(DISTINCT customer_id) FROM orders;  -- 5,200+ (less than 5,432 customers)
+
+-- Verify no orphaned orders
+SELECT COUNT(*) FROM orders o
+LEFT JOIN customers c ON o.customer_id = c.id
+WHERE c.id IS NULL;  -- Should be 0
+```
+</Step>
+
+<Step title="Rebuild Indexes (if needed)">
+After large imports, rebuild indexes for performance:
+
+```sql
+-- PostgreSQL
+REINDEX TABLE customers;
+REINDEX TABLE orders;
+REINDEX TABLE products;
+
+-- MySQL
+OPTIMIZE TABLE customers;
+OPTIMIZE TABLE orders;
+OPTIMIZE TABLE products;
+
+-- Or rebuild specific indexes
+ALTER TABLE orders ADD CONSTRAINT fk_orders_customers
+FOREIGN KEY (customer_id) REFERENCES customers(id);
+CREATE INDEX idx_orders_customer_id ON orders(customer_id);
+```
+</Step>
+</Steps>
+
+## Phase 6: Post-Migration Verification
+
+After import, comprehensively verify data integrity.
+
+<Steps>
+<Step title="Count and Compare">
+Use WhoDB's querying to compare source and destination:
+
+![Query Results](/images/86-scratchpad-select-query-result.png)
+
+Create side-by-side counts:
+
+```sql
+-- In destination database
+SELECT
+  'customers' as table_name, COUNT(*) as count FROM customers
+UNION ALL
+SELECT 'orders', COUNT(*) FROM orders
+UNION ALL
+SELECT 'products', COUNT(*) FROM products
+UNION ALL
+SELECT 'order_items', COUNT(*) FROM order_items;
+
+-- Compare with pre-migration validation report
+-- All counts should match exactly
+```
+</Step>
+
+<Step title="Validate Relationships">
+Verify foreign key relationships:
+
+```sql
+-- No orphaned orders
+SELECT COUNT(*) FROM orders o
+LEFT JOIN customers c ON o.customer_id = c.id
+WHERE c.id IS NULL;  -- Should be 0
+
+-- No orphaned order_items
+SELECT COUNT(*) FROM order_items oi
+LEFT JOIN orders o ON oi.order_id = o.id
+WHERE o.id IS NULL;  -- Should be 0
+
+-- All references are valid
+SELECT COUNT(*) FROM order_items oi
+LEFT JOIN products p ON oi.product_id = p.id
+WHERE p.id IS NULL;  -- Should be 0
+```
+</Step>
+
+<Step title="Spot Check Data Quality">
+Manually verify sample data looks correct:
+
+![Data View](/images/09-data-view-users-table.png)
+
+In WhoDB:
+1. Open each table
+2. View first 10 rows
+3. Verify data looks reasonable
+4. Check for encoding issues or truncation
+5. Verify dates converted correctly
+
+```sql
+-- Check for suspicious values
+SELECT * FROM customers WHERE email LIKE '%@%' = false;
+SELECT * FROM orders WHERE total < 0;
+SELECT * FROM products WHERE price IS NULL;
+```
+</Step>
+
+<Step title="Validate Constraints">
+Verify all constraints are satisfied:
+
+```sql
+-- Check unique constraints
+SELECT email, COUNT(*) FROM customers GROUP BY email HAVING COUNT(*) > 1;
+-- Should return 0 rows
+
+-- Check not-null constraints
+SELECT COUNT(*) FROM customers WHERE email IS NULL;
+-- Should return 0
+
+-- Check check constraints
+SELECT COUNT(*) FROM orders WHERE total < 0;
+-- Should return 0 (if you have a CHECK constraint)
+```
+</Step>
+
+<Step title="Query Comparison">
+Run the same queries on both databases and compare results:
+
+```sql
+-- Query 1: Total revenue by customer
+SELECT
+  customer_id,
+  SUM(total) as total_spent
+FROM orders
+GROUP BY customer_id
+ORDER BY total_spent DESC
+LIMIT 10;
+
+-- Run this on BOTH old and new database
+-- Results should be IDENTICAL
+
+-- Query 2: Product performance
+SELECT
+  product_id,
+  COUNT(*) as order_count,
+  SUM(quantity) as total_sold
+FROM order_items
+GROUP BY product_id
+ORDER BY order_count DESC;
+
+-- Run on both databases - compare results
+```
+
+Any differences indicate migration issues to investigate.
+</Step>
+
+<Step title="Performance Testing">
+Verify new database performs acceptably:
+
+![Scratchpad Results](/images/87-scratchpad-count-query-result.png)
+
+```sql
+-- Test common application queries
+-- Query 1: Get recent orders
+SELECT * FROM orders
+WHERE created_at > NOW() - INTERVAL '7 days'
+ORDER BY created_at DESC;
+
+-- Query 2: Join query
+SELECT
+  o.id,
+  c.email,
+  SUM(oi.quantity * oi.price) as total
+FROM orders o
+JOIN customers c ON o.customer_id = c.id
+LEFT JOIN order_items oi ON o.id = oi.order_id
+GROUP BY o.id, c.email;
+
+-- Check execution time - should be reasonable
+-- Compare with old database - new should be similar or faster
+```
+</Step>
+
+<Step title="Create Final Sign-Off Report">
+Document successful migration:
+
+```markdown
+# Post-Migration Verification Report
+Date Completed: 2024-10-31
+Source DB: Legacy MySQL (shutdown)
+Destination DB: PostgreSQL Production
+
+## Row Count Verification
+✓ customers: 5,432 rows (matches pre-migration count)
+✓ orders: 28,104 rows (matches)
+✓ products: 847 rows (matches)
+✓ order_items: 112,503 rows (matches)
+
+## Relationship Integrity
+✓ No orphaned orders: 0 records without valid customer_id
+✓ No orphaned order items: 0 records without valid order_id
+✓ All product references: 0 invalid product_ids
+
+## Data Quality
+✓ Unique constraints: No duplicates found
+✓ NOT NULL constraints: No NULL values in required fields
+✓ Check constraints: All values within expected ranges
+
+## Query Comparison Results
+✓ 10 common queries run on both databases
+✓ All results identical to legacy database
+✓ Performance acceptable
+
+## Application Testing
+✓ Application successfully connects to new database
+✓ Read operations working correctly
+✓ Write operations working correctly
+✓ No encoding issues observed
+
+## Sign-Off
+Migration is COMPLETE and VERIFIED.
+Data integrity confirmed.
+Ready for production use.
+
+Approved by: [Database Admin]
+Date: 2024-10-31
+```
+
+This serves as your official record of successful migration.
+</Step>
+</Steps>
+
+## Complete Migration Checklist
+
+Use this checklist for your migration project:
+
+<AccordionGroup>
+<Accordion title="Pre-Migration (1-2 weeks before)">
+- [ ] Connect to source database in WhoDB
+- [ ] Explore and document schema
+- [ ] Identify data quality issues
+- [ ] Count rows and estimate volume
+- [ ] Create transformation scripts
+- [ ] Test transformation on sample data
+- [ ] Design staging area
+- [ ] Get stakeholder sign-off on plan
+</Accordion>
+
+<Accordion title="Week of Migration">
+- [ ] Verify destination database ready
+- [ ] Final row count comparison
+- [ ] Final data quality validation
+- [ ] All transformation scripts tested
+- [ ] Backups created
+- [ ] Rollback plan documented
+- [ ] Test and production environments ready
+- [ ] Notify stakeholders
+</Accordion>
+
+<Accordion title="Migration Day">
+- [ ] Stop applications accessing source database
+- [ ] Final export of any changed data
+- [ ] Import customers (test run)
+- [ ] Verify customer import
+- [ ] Import products
+- [ ] Import orders
+- [ ] Import order_items
+- [ ] Verify all imports
+- [ ] Rebuild indexes
+- [ ] Run final validation queries
+</Accordion>
+
+<Accordion title="Post-Migration (1-2 weeks after)">
+- [ ] Monitor application performance
+- [ ] Monitor error rates
+- [ ] Check for data-related errors
+- [ ] Archive old database (don't delete yet)
+- [ ] Update documentation
+- [ ] Update connection strings if needed
+- [ ] Final stakeholder sign-off
+- [ ] Schedule cleanup (delete old DB if all OK)
+</Accordion>
+</AccordionGroup>
+
+## Common Migration Challenges
+
+<AccordionGroup>
+<Accordion title="Character Encoding Issues">
+**Problem**: Data exports with garbled characters or symbols.
+
+**Solution**:
+- Always export as UTF-8
+- Detect source encoding before transformation
+- Test character conversion in staging before production
+- WhoDB supports multiple encodings - verify in export settings
+</Accordion>
+
+<Accordion title="Foreign Key Constraint Violations">
+**Problem**: Import fails because of orphaned records.
+
+**Solution**:
+1. Query source database to find orphaned records
+2. Decide: delete or reassign to valid parent
+3. Clean source data before export
+4. Import parents first, then dependents
+5. Disable constraints during import if necessary (re-enable after)
+</Accordion>
+
+<Accordion title="Data Type Mismatches">
+**Problem**: Date strings won't convert, numbers overflow, text truncates.
+
+**Solution**:
+- Verify destination database column types match data
+- Use explicit type conversion in transformation
+- Test with sample data first
+- Use CAST() or TO_DATE() functions appropriately
+</Accordion>
+
+<Accordion title="Performance Problems After Migration">
+**Problem**: New database queries run slower than old database.
+
+**Solution**:
+- Compare row counts (more data = slower queries)
+- Verify indexes are created
+- Run ANALYZE or OPTIMIZE after import
+- Compare query execution plans between old and new
+- Check if queries were rewritten during conversion
+</Accordion>
+
+<Accordion title="Large Data Volumes">
+**Problem**: Cannot export/import entire database at once.
+
+**Solution**:
+- Use staged exports by date range
+- Migrate one month at a time
+- Use parallel imports if possible
+- Archive old data and migrate separately
+- Consider whether all historical data is needed
+</Accordion>
+
+<Accordion title="Downtime Requirements">
+**Problem**: Cannot afford long application downtime during migration.
+
+**Solution**:
+- Migrate most data while systems running
+- Quick final sync of recent changes only
+- Use application connection redirection
+- Test failover before migration day
+- Have rollback plan ready
+- Target: < 5 minute downtime for switchover
+</Accordion>
+</AccordionGroup>
+
+## Best Practices for Safe Migrations
+
+<AccordionGroup>
+<Accordion title="Always Test on Staging First">
+Never test your migration process for the first time on production. Run complete migration to a staging environment first. This catches issues and builds confidence.
+</Accordion>
+
+<Accordion title="Keep Source Database Alive">
+Don't shut down the source database immediately after migration. Keep it for 1-2 weeks for validation and potential rollback. Archive backups for much longer (6+ months).
+</Accordion>
+
+<Accordion title="Document Everything">
+Every step of the migration should be documented with dates, counts, query results, and decisions. This is invaluable if issues arise later.
+</Accordion>
+
+<Accordion title="Have a Rollback Plan">
+Know exactly how to roll back to the old system if something goes wrong. Practice this before migration day.
+</Accordion>
+
+<Accordion title="Validate, Then Validate Again">
+The verification phase is not optional. Run multiple independent validations confirming data integrity. The extra hour spent validating saves 10 hours of troubleshooting later.
+</Accordion>
+
+<Accordion title="Use Read-Only Connections">
+For migration testing and validation, use read-only database connections when possible. This prevents accidental data modification during the critical verification phase.
+</Accordion>
+
+<Accordion title="Minimize Downtime">
+Plan migrations to minimize application downtime. Export non-dependent data while systems run. Only pause applications for the final sync of changed data.
+</Accordion>
+
+<Accordion title="Monitor After Migration">
+After the migration, monitor application logs and performance metrics closely for 24-48 hours. Watch for data-related errors, query performance issues, or unexpected behaviors.
+</Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+Ready to execute your migration?
+
+<CardGroup cols={2}>
+<Card title="Data Analysis" href="/use-cases/data-analysis">
+Use analysis techniques to validate migrated data
+</Card>
+
+<Card title="Query Interface" href="/query/scratchpad-intro">
+Master SQL queries for validation
+</Card>
+
+<Card title="Export Options" href="/advanced/export-options">
+Deep dive into export configuration
+</Card>
+
+<Card title="Testing & Development" href="/use-cases/testing-development">
+Test your migration with mock data first
+</Card>
+</CardGroup>
+
+<Check>
+You now have a complete framework for database migrations. From pre-migration assessment through post-migration verification, WhoDB provides the tools to execute migrations safely and validate data integrity. By following these phases—planning, extraction, transformation, validation, import, and verification—you can migrate databases with confidence, knowing your data is intact and your applications will continue operating seamlessly in their new home.
+</Check>

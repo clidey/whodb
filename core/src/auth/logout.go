@@ -15,16 +15,22 @@
 package auth
 
 import (
-	"context"
-	"net/http"
+    "context"
+    "net/http"
 
-	"github.com/clidey/whodb/core/graph/model"
-	"github.com/clidey/whodb/core/src/common"
+    "github.com/clidey/whodb/core/graph/model"
+    "github.com/clidey/whodb/core/src/common"
 )
 
 func Logout(ctx context.Context) (*model.StatusResponse, error) {
-	http.SetCookie(ctx.Value(common.RouterKey_ResponseWriter).(http.ResponseWriter), nil)
-	return &model.StatusResponse{
-		Status: true,
-	}, nil
+    // Best-effort: remove stored credentials for current profile from keyring
+    if creds := GetCredentials(ctx); creds != nil && creds.Id != nil {
+        if err := DeleteCredentials(*creds.Id); err != nil {
+            warnKeyringUnavailableOnce(err)
+        }
+    }
+    http.SetCookie(ctx.Value(common.RouterKey_ResponseWriter).(http.ResponseWriter), nil)
+    return &model.StatusResponse{
+        Status: true,
+    }, nil
 }

@@ -37,7 +37,7 @@ export const Loading: FC<ILoadingProps> = ({className, size = "md", hideText, lo
   }
 
     return (
-        <div className="flex justify-center items-center w-fit h-fit gap-sm">
+        <div className="flex justify-center items-center w-fit h-fit gap-sm" data-testid="loading-spinner">
             <Spinner className={className} size={size}/>
             {!hideText && <p className={textSize}>{loadingText}</p>}
         </div>

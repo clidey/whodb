@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/engine"
@@ -253,11 +254,125 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 }
 
 func (p *MongoDBPlugin) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {
-	// MongoDB doesn't have a traditional column structure, it returns documents
-	return []engine.Column{
-		{Name: "document", Type: "Document"},
-	}, nil
+	ctx := context.Background()
+	client, err := DB(config)
+	if err != nil {
+		log.Logger.WithError(err).WithFields(map[string]any{
+			"hostname": config.Credentials.Hostname,
+			"database": schema,
+			"collection": storageUnit,
+		}).Error("Failed to connect to MongoDB for column inference")
+		return nil, err
+	}
+	defer client.Disconnect(ctx)
+
+	db := client.Database(schema)
+	collection := db.Collection(storageUnit)
+
+	var sampleDoc bson.M
+	err = collection.FindOne(ctx, bson.M{}).Decode(&sampleDoc)
+	if err != nil {
+		log.Logger.WithFields(map[string]any{
+			"collection": storageUnit,
+			"error":      err.Error(),
+		}).Warn("MongoDB GetColumns: No documents found, returning empty schema")
+		return []engine.Column{}, nil
+	}
+
+	cursor, err := db.ListCollections(ctx, bson.M{})
+	if err != nil {
+		log.Logger.WithError(err).WithFields(map[string]any{
+			"hostname": config.Credentials.Hostname,
+			"database": schema,
+		}).Error("Failed to list MongoDB collections for FK detection")
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	collections := []string{}
+	for cursor.Next(ctx) {
+		var collectionInfo bson.M
+		if err := cursor.Decode(&collectionInfo); err != nil {
+			continue
+		}
+		name, _ := collectionInfo["name"].(string)
+		collections = append(collections, name)
+	}
+
+	columns := []engine.Column{}
+	for fieldName, fieldValue := range sampleDoc {
+		fieldType := inferMongoDBType(fieldValue)
+
+		isPrimary := fieldName == "_id"
+
+		var isForeignKey bool
+		var referencedTable *string
+
+		if fieldName != "_id" {
+			lowerField := strings.ToLower(fieldName)
+			for _, otherCollection := range collections {
+				if otherCollection == storageUnit {
+					continue
+				}
+
+				singularName := strings.TrimSuffix(otherCollection, "s")
+				pluralName := otherCollection
+				if !strings.HasSuffix(otherCollection, "s") {
+					pluralName = otherCollection + "s"
+				}
+
+				if lowerField == strings.ToLower(singularName)+"_id" ||
+					lowerField == strings.ToLower(singularName)+"id" ||
+					lowerField == strings.ToLower(otherCollection)+"_id" ||
+					lowerField == strings.ToLower(otherCollection)+"id" ||
+					lowerField == strings.ToLower(pluralName)+"_id" ||
+					lowerField == strings.ToLower(pluralName)+"id" {
+					isForeignKey = true
+					referencedTable = &otherCollection
+					break
+				}
+			}
+		}
+
+		columns = append(columns, engine.Column{
+			Name:            fieldName,
+			Type:            fieldType,
+			IsPrimary:       isPrimary,
+			IsForeignKey:    isForeignKey,
+			ReferencedTable: referencedTable,
+		})
+	}
+
+	return columns, nil
 }
+
+func inferMongoDBType(value any) string {
+	if value == nil {
+		return "null"
+	}
+
+	switch value.(type) {
+	case primitive.ObjectID:
+		return "ObjectId"
+	case string:
+		return "string"
+	case int, int32, int64:
+		return "int"
+	case float32, float64:
+		return "double"
+	case bool:
+		return "bool"
+	case primitive.DateTime:
+		return "date"
+	case []any:
+		return "array"
+	case map[string]any, bson.M:
+		return "object"
+	default:
+		return "mixed"
+	}
+}
+
 
 func convertWhereConditionToMongoDB(where *model.WhereCondition) (bson.M, error) {
 	if where == nil {
@@ -372,6 +487,10 @@ func (p *MongoDBPlugin) WithTransaction(config *engine.PluginConfig, operation f
 	// MongoDB doesn't support transactions in the same way as SQL databases
 	// For now, just execute the operation directly
 	return operation(nil)
+}
+
+func (p *MongoDBPlugin) GetForeignKeyRelationships(config *engine.PluginConfig, schema string, storageUnit string) (map[string]*engine.ForeignKeyRelationship, error) {
+	return make(map[string]*engine.ForeignKeyRelationship), nil
 }
 
 func NewMongoDBPlugin() *engine.Plugin {

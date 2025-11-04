@@ -1,22 +1,5 @@
-/*
- * Copyright 2025 Clidey, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
-import {gql} from '@apollo/client';
-
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -64,7 +47,11 @@ export type ChatInput = {
 
 export type Column = {
   __typename?: 'Column';
+  IsForeignKey: Scalars['Boolean']['output'];
+  IsPrimary: Scalars['Boolean']['output'];
   Name: Scalars['String']['output'];
+  ReferencedColumn?: Maybe<Scalars['String']['output']>;
+  ReferencedTable?: Maybe<Scalars['String']['output']>;
   Type: Scalars['String']['output'];
 };
 
@@ -89,6 +76,8 @@ export type GraphUnitRelationship = {
   __typename?: 'GraphUnitRelationship';
   Name: Scalars['String']['output'];
   Relationship: GraphUnitRelationshipType;
+  SourceColumn?: Maybe<Scalars['String']['output']>;
+  TargetColumn?: Maybe<Scalars['String']['output']>;
 };
 
 export enum GraphUnitRelationshipType {
@@ -340,18 +329,7 @@ export enum WhereConditionType {
 export type GetProfilesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetProfilesQuery = {
-  __typename?: 'Query',
-  Profiles: Array<{
-    __typename?: 'LoginProfile',
-    Alias?: string | null,
-    Id: string,
-    Type: DatabaseType,
-    Database?: string | null,
-    IsEnvironmentDefined: boolean,
-    Source: string
-  }>
-};
+export type GetProfilesQuery = { __typename?: 'Query', Profiles: Array<{ __typename?: 'LoginProfile', Alias?: string | null, Id: string, Type: DatabaseType, Database?: string | null, IsEnvironmentDefined: boolean, Source: string }> };
 
 export type GetSchemaQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -428,12 +406,20 @@ export type GetAiModelsQueryVariables = Exact<{
 
 export type GetAiModelsQuery = { __typename?: 'Query', AIModel: Array<string> };
 
+export type GetColumnsQueryVariables = Exact<{
+  schema: Scalars['String']['input'];
+  storageUnit: Scalars['String']['input'];
+}>;
+
+
+export type GetColumnsQuery = { __typename?: 'Query', Columns: Array<{ __typename?: 'Column', Name: string, Type: string, IsPrimary: boolean, IsForeignKey: boolean, ReferencedTable?: string | null, ReferencedColumn?: string | null }> };
+
 export type GetGraphQueryVariables = Exact<{
   schema: Scalars['String']['input'];
 }>;
 
 
-export type GetGraphQuery = { __typename?: 'Query', Graph: Array<{ __typename?: 'GraphUnit', Unit: { __typename?: 'StorageUnit', Name: string, Attributes: Array<{ __typename?: 'Record', Key: string, Value: string }> }, Relations: Array<{ __typename?: 'GraphUnitRelationship', Name: string, Relationship: GraphUnitRelationshipType }> }> };
+export type GetGraphQuery = { __typename?: 'Query', Graph: Array<{ __typename?: 'GraphUnit', Unit: { __typename?: 'StorageUnit', Name: string, Attributes: Array<{ __typename?: 'Record', Key: string, Value: string }> }, Relations: Array<{ __typename?: 'GraphUnitRelationship', Name: string, Relationship: GraphUnitRelationshipType, SourceColumn?: string | null, TargetColumn?: string | null }> }> };
 
 export type ColumnsQueryVariables = Exact<{
   schema: Scalars['String']['input'];
@@ -441,10 +427,7 @@ export type ColumnsQueryVariables = Exact<{
 }>;
 
 
-export type ColumnsQuery = {
-  __typename?: 'Query',
-  Columns: Array<{ __typename?: 'Column', Name: string, Type: string }>
-};
+export type ColumnsQuery = { __typename?: 'Query', Columns: Array<{ __typename?: 'Column', Name: string, Type: string, IsPrimary: boolean, IsForeignKey: boolean, ReferencedTable?: string | null, ReferencedColumn?: string | null }> };
 
 export type RawExecuteQueryVariables = Exact<{
   query: Scalars['String']['input'];
@@ -502,7 +485,7 @@ export type GetStorageUnitRowsQueryVariables = Exact<{
 }>;
 
 
-export type GetStorageUnitRowsQuery = { __typename?: 'Query', Row: { __typename?: 'RowsResult', Rows: Array<Array<string>>, DisableUpdate: boolean, Columns: Array<{ __typename?: 'Column', Type: string, Name: string }> } };
+export type GetStorageUnitRowsQuery = { __typename?: 'Query', Row: { __typename?: 'RowsResult', Rows: Array<Array<string>>, DisableUpdate: boolean, Columns: Array<{ __typename?: 'Column', Type: string, Name: string, IsPrimary: boolean, IsForeignKey: boolean, ReferencedTable?: string | null, ReferencedColumn?: string | null }> } };
 
 export type GetStorageUnitsQueryVariables = Exact<{
   schema: Scalars['String']['input'];
@@ -987,6 +970,52 @@ export type GetAiModelsQueryHookResult = ReturnType<typeof useGetAiModelsQuery>;
 export type GetAiModelsLazyQueryHookResult = ReturnType<typeof useGetAiModelsLazyQuery>;
 export type GetAiModelsSuspenseQueryHookResult = ReturnType<typeof useGetAiModelsSuspenseQuery>;
 export type GetAiModelsQueryResult = Apollo.QueryResult<GetAiModelsQuery, GetAiModelsQueryVariables>;
+export const GetColumnsDocument = gql`
+    query GetColumns($schema: String!, $storageUnit: String!) {
+  Columns(schema: $schema, storageUnit: $storageUnit) {
+    Name
+    Type
+    IsPrimary
+    IsForeignKey
+    ReferencedTable
+    ReferencedColumn
+  }
+}
+    `;
+
+/**
+ * __useGetColumnsQuery__
+ *
+ * To run a query within a React component, call `useGetColumnsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetColumnsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetColumnsQuery({
+ *   variables: {
+ *      schema: // value for 'schema'
+ *      storageUnit: // value for 'storageUnit'
+ *   },
+ * });
+ */
+export function useGetColumnsQuery(baseOptions: Apollo.QueryHookOptions<GetColumnsQuery, GetColumnsQueryVariables> & ({ variables: GetColumnsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetColumnsQuery, GetColumnsQueryVariables>(GetColumnsDocument, options);
+      }
+export function useGetColumnsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetColumnsQuery, GetColumnsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetColumnsQuery, GetColumnsQueryVariables>(GetColumnsDocument, options);
+        }
+export function useGetColumnsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetColumnsQuery, GetColumnsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetColumnsQuery, GetColumnsQueryVariables>(GetColumnsDocument, options);
+        }
+export type GetColumnsQueryHookResult = ReturnType<typeof useGetColumnsQuery>;
+export type GetColumnsLazyQueryHookResult = ReturnType<typeof useGetColumnsLazyQuery>;
+export type GetColumnsSuspenseQueryHookResult = ReturnType<typeof useGetColumnsSuspenseQuery>;
+export type GetColumnsQueryResult = Apollo.QueryResult<GetColumnsQuery, GetColumnsQueryVariables>;
 export const GetGraphDocument = gql`
     query GetGraph($schema: String!) {
   Graph(schema: $schema) {
@@ -1000,6 +1029,8 @@ export const GetGraphDocument = gql`
     Relations {
       Name
       Relationship
+      SourceColumn
+      TargetColumn
     }
   }
 }
@@ -1038,13 +1069,17 @@ export type GetGraphLazyQueryHookResult = ReturnType<typeof useGetGraphLazyQuery
 export type GetGraphSuspenseQueryHookResult = ReturnType<typeof useGetGraphSuspenseQuery>;
 export type GetGraphQueryResult = Apollo.QueryResult<GetGraphQuery, GetGraphQueryVariables>;
 export const ColumnsDocument = gql`
-  query Columns($schema: String!, $storageUnit: String!) {
-    Columns(schema: $schema, storageUnit: $storageUnit) {
-      Name
-      Type
-    }
+    query Columns($schema: String!, $storageUnit: String!) {
+  Columns(schema: $schema, storageUnit: $storageUnit) {
+    Name
+    Type
+    IsPrimary
+    IsForeignKey
+    ReferencedTable
+    ReferencedColumn
   }
-`;
+}
+    `;
 
 /**
  * __useColumnsQuery__
@@ -1063,24 +1098,18 @@ export const ColumnsDocument = gql`
  *   },
  * });
  */
-export function useColumnsQuery(baseOptions: Apollo.QueryHookOptions<ColumnsQuery, ColumnsQueryVariables> & ({
-  variables: ColumnsQueryVariables;
-  skip?: boolean;
-} | { skip: boolean; })) {
-  const options = {...defaultOptions, ...baseOptions}
-  return Apollo.useQuery<ColumnsQuery, ColumnsQueryVariables>(ColumnsDocument, options);
-}
-
+export function useColumnsQuery(baseOptions: Apollo.QueryHookOptions<ColumnsQuery, ColumnsQueryVariables> & ({ variables: ColumnsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ColumnsQuery, ColumnsQueryVariables>(ColumnsDocument, options);
+      }
 export function useColumnsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ColumnsQuery, ColumnsQueryVariables>) {
-  const options = {...defaultOptions, ...baseOptions}
-  return Apollo.useLazyQuery<ColumnsQuery, ColumnsQueryVariables>(ColumnsDocument, options);
-}
-
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ColumnsQuery, ColumnsQueryVariables>(ColumnsDocument, options);
+        }
 export function useColumnsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ColumnsQuery, ColumnsQueryVariables>) {
-  const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-  return Apollo.useSuspenseQuery<ColumnsQuery, ColumnsQueryVariables>(ColumnsDocument, options);
-}
-
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ColumnsQuery, ColumnsQueryVariables>(ColumnsDocument, options);
+        }
 export type ColumnsQueryHookResult = ReturnType<typeof useColumnsQuery>;
 export type ColumnsLazyQueryHookResult = ReturnType<typeof useColumnsLazyQuery>;
 export type ColumnsSuspenseQueryHookResult = ReturnType<typeof useColumnsSuspenseQuery>;
@@ -1319,6 +1348,10 @@ export const GetStorageUnitRowsDocument = gql`
     Columns {
       Type
       Name
+      IsPrimary
+      IsForeignKey
+      ReferencedTable
+      ReferencedColumn
     }
     Rows
     DisableUpdate

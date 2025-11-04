@@ -1,0 +1,605 @@
+---
+title: "WhoDB for Database Administrators"
+description: "Database administration tool for schema management, monitoring, and multi-database management"
+seo:
+  title: "Database Administration Tool - WhoDB for DBAs"
+  description: "Professional DBA tools for database administration. Manage schemas, monitor multiple databases, handle maintenance tasks, and administer database connectivity with WhoDB."
+  keywords: "database administration tool, DBA tools, schema management, database monitoring, multi-database management, database administration"
+---
+
+# WhoDB for Database Administrators
+
+As a database administrator, you manage complex database infrastructure supporting multiple applications and teams. WhoDB provides DBA-specific capabilities for schema exploration, multi-database management, data integrity verification, and administrative maintenance tasks.
+
+<Tip>
+This guide covers schema management, multi-database workflows, data integrity checks, and monitoring patterns essential for effective database administration.
+</Tip>
+
+## DBA Administration Capabilities
+
+<CardGroup cols={2}>
+<Card title="Schema Management" icon="database">
+Explore, understand, and document database schemas across your infrastructure
+</Card>
+<Card title="Multi-Database Access" icon="network">
+Manage multiple database instances, environments, and replica servers
+</Card>
+<Card title="Data Integrity" icon="shield-check">
+Verify data consistency, check constraints, and identify orphaned records
+</Card>
+<Card title="Maintenance Tasks" icon="wrench">
+Execute administrative queries and maintenance operations
+</Card>
+</CardGroup>
+
+## Multi-Database Management
+
+### Managing Multiple Connection Profiles
+
+<Steps>
+<Step title="Create Environment-Specific Profiles">
+Set up separate connection profiles for your database infrastructure:
+
+![Login Form](/images/03-login-form-filled.png)
+
+Typical DBA environment structure:
+- **Production**: Primary production database (read-only access recommended)
+- **Production Replica**: Read-only replica for analysis and backups
+- **Staging**: Pre-production environment mirroring production
+- **Development**: Shared team development database
+- **Local**: Local development database for quick testing
+
+<Warning>
+Configure production connections with read-only credentials to prevent accidental modifications.
+</Warning>
+</Step>
+
+<Step title="Switch Between Databases">
+Quickly switch connection context using the database selector:
+
+![Sidebar Database Selector](/images/34-sidebar-database-selector.png)
+
+This lets you compare schemas or data across environments without reconnecting.
+</Step>
+
+<Step title="Organize by Environment">
+Use consistent naming for profiles:
+- `prod-primary`, `prod-replica-1`, `prod-replica-2`
+- `staging-main`, `staging-mirror`
+- `dev-main`, `dev-local`
+
+Clear naming prevents dangerous mistakes when connecting to production.
+</Step>
+</Steps>
+
+### Cross-Database Schema Comparison
+
+<Steps>
+<Step title="Connect to First Database">
+Open your primary database and navigate to a table:
+
+![Explore Table](/images/07-explore-users-table.png)
+
+Review the table's structure and data.
+</Step>
+
+<Step title="Switch to Second Database">
+Use the environment selector to switch to your second database without disconnecting from the first:
+
+![Sidebar Schema Selector](/images/35-sidebar-schema-selector.png)
+
+Navigate to the same table in the second database.
+</Step>
+
+<Step title="Compare Schemas">
+Document differences:
+- Column names and types
+- Constraints and indexes
+- Default values
+- Data distribution and counts
+
+Use this to verify schema consistency across your database infrastructure.
+</Step>
+</Steps>
+
+## Schema Exploration & Documentation
+
+### Understanding Your Database Structure
+
+<Steps>
+<Step title="Navigate Table Metadata">
+Open any table and review its structure:
+
+![Explore Table Metadata](/images/08-explore-table-metadata.png)
+
+Review:
+- Column names, types, and nullability
+- Primary keys and their data types
+- Constraints (UNIQUE, NOT NULL, CHECK)
+- Indexes and their coverage
+</Step>
+
+<Step title="Identify Primary Keys">
+Verify that each table has appropriate primary key definition:
+
+![Primary Key Column](/images/98-explore-primary-key-column.png)
+
+For effective DBA work, document:
+- What is the primary key (usually ID or UUID)?
+- Is it auto-incrementing or application-generated?
+- Are there any surrogate keys vs natural keys?
+- How are distributed systems handling ID generation?
+</Step>
+
+<Step title="Verify Foreign Key Relationships">
+Check how tables relate to each other:
+
+![Foreign Key Columns](/images/99-explore-foreign-key-columns.png)
+
+Document:
+- Which tables reference which
+- Referential integrity constraints
+- Foreign key index presence
+- Cascading behavior on deletes/updates
+</Step>
+
+<Step title="Document Index Strategy">
+Review indexes to ensure optimal query performance:
+
+![Explore Table With Indexes](/images/100-explore-table-with-indexes.png)
+
+Check:
+- Are heavily-queried columns indexed?
+- Are all foreign keys indexed?
+- Are there redundant or unused indexes?
+- Is index maintenance scheduled appropriately?
+</Step>
+</Steps>
+
+### Visualizing Schema Topology
+
+<Steps>
+<Step title="Open Graph Visualization">
+Access the schema graph to visualize your entire database structure:
+
+![Graph View Schema Topology](/images/24-graph-view-schema-topology.png)
+
+The graph displays:
+- All tables and their relationships
+- Foreign key connections
+- Data flow between entities
+</Step>
+
+<Step title="Analyze Relationships">
+Use the graph to understand your data model:
+
+![Graph View With Controls](/images/25-graph-view-with-controls.png)
+
+Identify:
+- Central tables that many others depend on
+- Orphaned or isolated tables
+- Highly interconnected subsystems
+- Potential data redundancy or denormalization
+
+This visual helps you understand the impact of schema changes.
+</Step>
+
+<Step title="Review Node Details">
+Click nodes to explore individual table relationships:
+
+![Graph Node Details](/images/26-graph-node-details.png)
+
+For each table, see:
+- Incoming foreign keys (tables that reference this one)
+- Outgoing foreign keys (tables this one references)
+- Data flow implications
+- Cascading dependencies for change management
+</Step>
+</Steps>
+
+## Data Integrity & Verification
+
+### Integrity Checking Queries
+
+<Steps>
+<Step title="Open Scratchpad for Queries">
+Use the Scratchpad to write data integrity verification queries:
+
+![Scratchpad Main View](/images/27-scratchpad-main-view.png)
+
+Create a standard DBA query library for regular integrity checks.
+</Step>
+
+<Step title="Check Referential Integrity">
+Verify that foreign keys reference valid data:
+
+```sql
+-- Find orphaned orders (no matching customer)
+SELECT o.order_id, o.customer_id
+FROM orders o
+LEFT JOIN customers c ON o.customer_id = c.customer_id
+WHERE c.customer_id IS NULL;
+
+-- Find dangling order items (no matching order)
+SELECT oi.item_id, oi.order_id
+FROM order_items oi
+LEFT JOIN orders o ON oi.order_id = o.order_id
+WHERE o.order_id IS NULL;
+```
+
+These queries identify data inconsistencies that violate referential integrity.
+</Step>
+
+<Step title="Verify Constraint Compliance">
+Check that data respects defined constraints:
+
+```sql
+-- Find rows violating NOT NULL constraints
+SELECT * FROM users WHERE email IS NULL;
+
+-- Find rows violating UNIQUE constraints
+SELECT email, COUNT(*) as count
+FROM users
+GROUP BY email
+HAVING COUNT(*) > 1;
+
+-- Find rows violating business logic constraints
+SELECT * FROM orders
+WHERE total_amount <= 0
+  OR created_at > NOW()
+  OR status NOT IN ('pending', 'completed', 'cancelled');
+```
+
+Regular constraint verification catches data quality issues early.
+</Step>
+
+<Step title="Monitor Table Health">
+Track table statistics for capacity planning:
+
+```sql
+-- Table size and row count analysis
+SELECT
+  schemaname,
+  tablename,
+  pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as total_size,
+  (SELECT COUNT(*) FROM schemaname||'.'||tablename) as row_count
+FROM pg_tables
+WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
+ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
+```
+
+This helps you understand table growth and storage requirements.
+</Step>
+
+<Step title="Check for Gaps in Sequences">
+For auto-increment fields, verify no gaps or anomalies:
+
+```sql
+-- Find missing user IDs (gaps in sequence)
+WITH sequence AS (
+  SELECT generate_series(MIN(id), MAX(id)) as id
+  FROM users
+)
+SELECT s.id
+FROM sequence s
+LEFT JOIN users u ON s.id = u.id
+WHERE u.id IS NULL
+ORDER BY s.id;
+```
+
+Gaps sometimes indicate deleted records or application issues.
+</Step>
+</Steps>
+
+### Data Quality Audits
+
+<Steps>
+<Step title="Execute Quality Check Query">
+Write comprehensive data quality queries:
+
+![Scratchpad Query Results](/images/29-scratchpad-query-results.png)
+
+```sql
+-- Comprehensive data quality audit
+SELECT
+  CASE
+    WHEN email IS NULL THEN 'Missing email'
+    WHEN email NOT LIKE '%@%.%' THEN 'Invalid email format'
+    WHEN phone IS NULL THEN 'Missing phone'
+    WHEN created_at > NOW() THEN 'Future creation date'
+    WHEN age < 0 OR age > 150 THEN 'Invalid age'
+    WHEN DATEDIFF(NOW(), created_at) > 365*100 THEN 'Account older than 100 years'
+    ELSE NULL
+  END as quality_issue,
+  COUNT(*) as affected_records
+FROM users
+WHERE (email IS NULL
+  OR email NOT LIKE '%@%.%'
+  OR phone IS NULL
+  OR created_at > NOW()
+  OR age < 0 OR age > 150
+  OR DATEDIFF(NOW(), created_at) > 365*100)
+GROUP BY quality_issue
+ORDER BY affected_records DESC;
+```
+
+This aggregates quality issues for reporting and prioritization.
+</Step>
+
+<Step title="Review Results">
+Examine the quality report:
+
+![Scratchpad Query Error](/images/30-scratchpad-query-error.png)
+
+Document:
+- How many records have issues
+- What types of issues are most common
+- Which tables are most affected
+- Severity of each issue type
+</Step>
+
+<Step title="Plan Remediation">
+Based on the audit:
+- Identify root causes of quality issues
+- Plan data cleanup procedures
+- Implement validation rules to prevent recurrence
+- Document findings for stakeholders
+</Step>
+</Steps>
+
+## Administrative Maintenance Tasks
+
+### Schema Modification Verification
+
+Before and after schema changes, verify your modifications:
+
+```sql
+-- Verify new column was added correctly
+SELECT column_name, data_type, is_nullable
+FROM information_schema.columns
+WHERE table_name = 'orders'
+ORDER BY ordinal_position;
+
+-- Check index creation
+SELECT indexname, indexdef
+FROM pg_indexes
+WHERE tablename = 'orders';
+
+-- Verify constraint creation
+SELECT constraint_name, constraint_type
+FROM information_schema.table_constraints
+WHERE table_name = 'orders';
+```
+
+<Tip>
+Always verify schema changes after applying them. Document the modifications for audit trails.
+</Tip>
+
+### Statistics & Performance Monitoring
+
+Monitor database performance over time:
+
+```sql
+-- Monitor slow queries
+SELECT
+  query,
+  calls,
+  total_time,
+  mean_time,
+  max_time
+FROM pg_stat_statements
+WHERE mean_time > 100
+ORDER BY mean_time DESC
+LIMIT 20;
+
+-- Check table bloat (dead tuples)
+SELECT
+  schemaname,
+  tablename,
+  ROUND(dead_tuples::float / live_tuples * 100, 2) as dead_percent
+FROM pg_stat_user_tables
+WHERE live_tuples > 0
+  AND ROUND(dead_tuples::float / live_tuples * 100, 2) > 10
+ORDER BY dead_percent DESC;
+```
+
+Regular monitoring helps you maintain optimal database performance.
+
+### Cleanup & Maintenance
+
+Execute administrative cleanup tasks safely:
+
+```sql
+-- Delete old archive records (with backup first)
+DELETE FROM audit_logs
+WHERE created_at < NOW() - INTERVAL '2 years'
+AND archived = true;
+
+-- Mark records for deletion rather than immediate delete
+UPDATE orders
+SET is_deleted = true, deleted_at = NOW()
+WHERE created_at < NOW() - INTERVAL '5 years'
+  AND status = 'cancelled';
+```
+
+<Warning>
+Always have backups before executing destructive operations. Test cleanup queries on non-production first.
+</Warning>
+
+## DBA Best Practices
+
+<CardGroup cols={2}>
+<Card title="Document Everything" icon="file-pen">
+Maintain documentation of your schema, constraints, relationships, and standard procedures.
+</Card>
+<Card title="Use Read-Only Access" icon="lock">
+Configure production connections as read-only to prevent accidents.
+</Card>
+<Card title="Regular Integrity Checks" icon="clock">
+Schedule routine data integrity verifications to catch issues early.
+</Card>
+<Card title="Version Control Schemas" icon="code-branch">
+Track schema changes and have a rollback plan for each modification.
+</Card>
+<Card title="Monitor Performance" icon="gauge">
+Regularly check slow queries, indexes, and table statistics.
+</Card>
+<Card title="Test First" icon="flask">
+Test all queries and procedures on development/staging before production.
+</Card>
+</CardGroup>
+
+## Query Repository for DBAs
+
+### Common DBA Queries
+
+#### Database Health Check
+
+```sql
+-- Overall database health summary
+SELECT
+  datname,
+  numbackends as active_connections,
+  xact_commit as transactions_committed,
+  xact_rollback as transactions_rolled_back,
+  tup_returned as tuples_read,
+  tup_fetched as tuples_fetched,
+  tup_inserted as tuples_inserted,
+  tup_updated as tuples_updated,
+  tup_deleted as tuples_deleted
+FROM pg_stat_database
+WHERE datname NOT IN ('template0', 'template1', 'postgres');
+```
+
+#### Missing Indexes on Foreign Keys
+
+```sql
+-- Identify foreign keys without corresponding indexes
+SELECT
+  tc.table_name,
+  kcu.column_name,
+  'MISSING INDEX' as status
+FROM information_schema.table_constraints tc
+JOIN information_schema.key_column_usage kcu ON tc.constraint_name = kcu.constraint_name
+WHERE tc.constraint_type = 'FOREIGN KEY'
+  AND NOT EXISTS (
+    SELECT 1 FROM information_schema.statistics s
+    WHERE s.table_name = tc.table_name
+    AND s.column_name = kcu.column_name
+  );
+```
+
+#### Connection Analysis
+
+```sql
+-- Who is connected and what are they doing?
+SELECT
+  usename,
+  application_name,
+  state,
+  query,
+  state_change,
+  query_start
+FROM pg_stat_activity
+WHERE datname = current_database()
+  AND usename != 'postgres'
+ORDER BY query_start DESC;
+```
+
+## Troubleshooting Common DBA Issues
+
+<AccordionGroup>
+<Accordion title="High Connection Count">
+Investigate connection leaks or long-running queries:
+
+```sql
+SELECT usename, COUNT(*) as connections
+FROM pg_stat_activity
+GROUP BY usename
+ORDER BY connections DESC;
+```
+
+Check for idle connections or long-running transactions consuming resources.
+</Accordion>
+
+<Accordion title="Slow Query Performance">
+Analyze execution plans to identify bottlenecks:
+
+```sql
+EXPLAIN ANALYZE
+SELECT * FROM large_table WHERE status = 'active';
+```
+
+Look for sequential scans on large tables—these should use indexes.
+</Accordion>
+
+<Accordion title="Disk Space Issues">
+Find the largest tables consuming space:
+
+```sql
+SELECT
+  schemaname,
+  tablename,
+  pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename))
+FROM pg_tables
+WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
+ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC
+LIMIT 20;
+```
+
+Archive old data or add storage capacity based on findings.
+</Accordion>
+
+<Accordion title="Data Integrity Violations">
+Run comprehensive referential integrity checks:
+
+```sql
+-- Template for checking orphaned records
+SELECT 'orders missing customers' as issue, COUNT(*) as count
+FROM orders o
+LEFT JOIN customers c ON o.customer_id = c.customer_id
+WHERE c.customer_id IS NULL;
+```
+
+Fix identified violations and implement preventive measures.
+</Accordion>
+
+<Accordion title="Backup Verification">
+Verify backup integrity periodically:
+
+```sql
+-- Check that recent backups exist and are current
+SELECT * FROM backup_log
+WHERE backup_date >= NOW() - INTERVAL '1 day'
+ORDER BY backup_date DESC;
+```
+
+Ensure backups are recent, complete, and regularly tested.
+</Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+Enhance your DBA capabilities:
+
+<CardGroup cols={2}>
+<Card title="Database Exploration" href="/use-cases/database-exploration">
+Master schema exploration and documentation
+</Card>
+
+<Card title="Query Writing" href="/query/writing-queries">
+Learn advanced SQL for administrative tasks
+</Card>
+
+<Card title="Data Export" href="/advanced/export-options">
+Export schema documentation and reports
+</Card>
+
+<Card title="Where Conditions" href="/advanced/where-conditions">
+Master filtering for targeted administrative queries
+</Card>
+</CardGroup>
+
+<Check>
+With these DBA tools and patterns, you can effectively manage your database infrastructure, verify data integrity, track schema changes, and maintain optimal performance across multiple database instances. WhoDB provides the administrative capabilities essential for professional database administration.
+</Check>

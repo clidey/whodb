@@ -1,0 +1,935 @@
+---
+title: "Backup Tool Integration"
+description: "Integrate WhoDB with backup solutions for automated database backups and disaster recovery"
+---
+
+# Backup Tool Integration
+
+Automated database backups are critical for disaster recovery, compliance, and data protection. This guide covers integration with popular backup tools, scheduling strategies, restore procedures, and best practices for maintaining reliable backups across all database types.
+
+<Tip>
+Automated backups ensure your data is protected against loss and enable quick recovery from unexpected incidents
+</Tip>
+
+## Backup Strategy Overview
+
+A comprehensive backup strategy includes:
+
+- **Backup Types**: Full, incremental, and differential backups
+- **Scheduling**: Regular automated backup jobs on defined intervals
+- **Retention Policies**: How long backups are retained
+- **Testing**: Regular restore tests to verify backup integrity
+- **Monitoring**: Alerts for backup failures
+- **Documentation**: Runbooks for disaster recovery procedures
+
+## Full vs. Incremental Backups
+
+### Full Backups
+
+Complete snapshot of the entire database. Larger file size but simplest recovery.
+
+**When to use**:
+- Initial baseline backups
+- Critical production databases
+- Before major schema changes
+- For long-term archival
+
+**Frequency**: Weekly or monthly
+
+```bash
+# PostgreSQL full backup
+pg_dump -U postgres -d production_db > backup-full-$(date +%Y%m%d).sql
+
+# MySQL full backup
+mysqldump -u root -p --all-databases > backup-full-$(date +%Y%m%d).sql
+
+# SQLite full backup
+cp production.db backup-full-$(date +%Y%m%d).db
+```
+
+### Incremental Backups
+
+Only backup changes since last backup. Smaller file size but requires full backup for recovery.
+
+**When to use**:
+- High-frequency backup schedules
+- Large databases with frequent updates
+- Cost optimization for storage
+
+**Frequency**: Daily or multiple times per day
+
+**Note**: Implementation depends on database type. PostgreSQL WAL archiving provides incremental backup capability.
+
+## Database-Specific Backup Tools
+
+### PostgreSQL Backups
+
+PostgreSQL offers multiple backup methods suitable for different scenarios.
+
+#### Using pg_dump
+
+Simple SQL-based backup approach:
+
+```bash
+#!/bin/bash
+# scripts/backup-postgres.sh
+
+BACKUP_DIR="/backups/postgres"
+DB_HOST="localhost"
+DB_USER="postgres"
+DB_NAME="production"
+RETENTION_DAYS=30
+
+# Create backup directory
+mkdir -p "$BACKUP_DIR"
+
+# Perform backup
+BACKUP_FILE="$BACKUP_DIR/backup-$(date +%Y%m%d-%H%M%S).sql"
+pg_dump -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" > "$BACKUP_FILE"
+
+# Compress backup
+gzip "$BACKUP_FILE"
+
+# Remove old backups
+find "$BACKUP_DIR" -name "*.sql.gz" -mtime +$RETENTION_DAYS -delete
+
+echo "Backup completed: ${BACKUP_FILE}.gz"
+```
+
+Run via cron:
+
+```bash
+# Daily backup at 2 AM
+0 2 * * * /scripts/backup-postgres.sh
+
+# Hourly incremental backups
+0 * * * * /scripts/backup-postgres-incremental.sh
+```
+
+#### WAL Archiving
+
+Enable continuous archiving for point-in-time recovery:
+
+```postgresql
+-- In postgresql.conf
+wal_level = replica
+max_wal_senders = 3
+max_wal_size = 1GB
+wal_keep_size = 1GB
+
+# Archive WAL files
+archive_mode = on
+archive_command = 'test ! -f /backups/wal/%f && cp %p /backups/wal/%f'
+archive_timeout = 300
+```
+
+#### pg_basebackup for Physical Backups
+
+Create physical backups suitable for streaming replication:
+
+```bash
+#!/bin/bash
+# scripts/backup-postgres-physical.sh
+
+BACKUP_DIR="/backups/postgres-physical"
+DB_HOST="localhost"
+DB_PORT=5432
+DB_USER="postgres"
+
+mkdir -p "$BACKUP_DIR"
+
+# Create base backup
+pg_basebackup \
+  -h "$DB_HOST" \
+  -p "$DB_PORT" \
+  -U "$DB_USER" \
+  -D "$BACKUP_DIR/base-$(date +%Y%m%d-%H%M%S)" \
+  -Ft \
+  -z \
+  -P
+
+echo "Physical backup completed"
+```
+
+### MySQL/MariaDB Backups
+
+Multiple backup strategies for MySQL databases.
+
+#### Using mysqldump
+
+Logical backup approach:
+
+```bash
+#!/bin/bash
+# scripts/backup-mysql.sh
+
+BACKUP_DIR="/backups/mysql"
+DB_HOST="localhost"
+DB_USER="root"
+DB_PASSWORD="password"
+RETENTION_DAYS=30
+
+mkdir -p "$BACKUP_DIR"
+
+# Full backup
+BACKUP_FILE="$BACKUP_DIR/backup-$(date +%Y%m%d-%H%M%S).sql"
+mysqldump \
+  -h "$DB_HOST" \
+  -u "$DB_USER" \
+  -p"$DB_PASSWORD" \
+  --all-databases \
+  --single-transaction \
+  --lock-tables=false > "$BACKUP_FILE"
+
+# Compress
+gzip "$BACKUP_FILE"
+
+# Cleanup old backups
+find "$BACKUP_DIR" -name "*.sql.gz" -mtime +$RETENTION_DAYS -delete
+
+echo "MySQL backup completed: ${BACKUP_FILE}.gz"
+```
+
+#### Percona XtraBackup
+
+Advanced incremental backup solution:
+
+```bash
+#!/bin/bash
+# scripts/backup-mysql-xtrabackup.sh
+
+BACKUP_DIR="/backups/mysql-xtrabackup"
+TARGET_DIR="$BACKUP_DIR/$(date +%Y%m%d-%H%M%S)"
+FULL_BACKUP_DIR="$BACKUP_DIR/full-$(date +%A)"
+
+mkdir -p "$TARGET_DIR"
+
+# Weekly full backup
+if [ "$(date +%A)" == "Sunday" ]; then
+    xtrabackup --backup \
+      --target-dir="$FULL_BACKUP_DIR" \
+      --user=root \
+      --password=password
+    echo "Full backup: $FULL_BACKUP_DIR"
+else
+    # Daily incremental backup
+    xtrabackup --backup \
+      --target-dir="$TARGET_DIR" \
+      --incremental-basedir="$FULL_BACKUP_DIR" \
+      --user=root \
+      --password=password
+    echo "Incremental backup: $TARGET_DIR"
+fi
+```
+
+#### Binary Log Backup
+
+Enable point-in-time recovery with binary logs:
+
+```bash
+#!/bin/bash
+# scripts/backup-mysql-binlog.sh
+
+BINLOG_DIR="/backups/mysql-binlogs"
+LOG_INDEX_FILE="/var/lib/mysql/mysql-bin.index"
+
+mkdir -p "$BINLOG_DIR"
+
+# Copy current binary logs
+cp /var/lib/mysql/mysql-bin.* "$BINLOG_DIR/"
+
+# Purge old binary logs (keep 7 days)
+mysql -u root -p"$PASSWORD" -e "PURGE BINARY LOGS BEFORE DATE_SUB(NOW(), INTERVAL 7 DAY);"
+
+echo "Binary logs backed up to $BINLOG_DIR"
+```
+
+### SQLite Backups
+
+Simple file-based backup for SQLite databases:
+
+```bash
+#!/bin/bash
+# scripts/backup-sqlite.sh
+
+BACKUP_DIR="/backups/sqlite"
+SOURCE_DB="$1"
+RETENTION_DAYS=30
+
+mkdir -p "$BACKUP_DIR"
+
+# Copy database file
+BACKUP_FILE="$BACKUP_DIR/$(basename $SOURCE_DB)-$(date +%Y%m%d-%H%M%S).db"
+cp "$SOURCE_DB" "$BACKUP_FILE"
+
+# Compress
+gzip "$BACKUP_FILE"
+
+# Cleanup old backups
+find "$BACKUP_DIR" -name "*.db.gz" -mtime +$RETENTION_DAYS -delete
+
+echo "SQLite backup: ${BACKUP_FILE}.gz"
+```
+
+### MongoDB Backups
+
+MongoDB-specific backup strategies:
+
+#### Using mongodump
+
+Logical backup approach:
+
+```bash
+#!/bin/bash
+# scripts/backup-mongodb.sh
+
+BACKUP_DIR="/backups/mongodb"
+MONGO_HOST="localhost"
+MONGO_PORT=27017
+RETENTION_DAYS=30
+
+mkdir -p "$BACKUP_DIR"
+
+# Perform backup
+BACKUP_FILE="$BACKUP_DIR/backup-$(date +%Y%m%d-%H%M%S)"
+mongodump \
+  --host "$MONGO_HOST:$MONGO_PORT" \
+  --out "$BACKUP_FILE"
+
+# Compress
+tar -czf "${BACKUP_FILE}.tar.gz" -C "$BACKUP_DIR" "$(basename $BACKUP_FILE)"
+rm -rf "$BACKUP_FILE"
+
+# Cleanup
+find "$BACKUP_DIR" -name "*.tar.gz" -mtime +$RETENTION_DAYS -delete
+
+echo "MongoDB backup: ${BACKUP_FILE}.tar.gz"
+```
+
+#### Replica Set Backups
+
+For production MongoDB replica sets:
+
+```bash
+#!/bin/bash
+# scripts/backup-mongodb-replica.sh
+
+# Connect to secondary member
+mongodump \
+  --host secondary-member:27017 \
+  --oplog \
+  --out /backups/mongodb-replica
+
+# Archive with timestamp
+tar -czf "/backups/mongodb-replica-$(date +%Y%m%d-%H%M%S).tar.gz" \
+  -C /backups mongodb-replica
+
+echo "Replica set backup completed"
+```
+
+## Automated Backup Scheduling
+
+### Docker-Based Scheduling
+
+Create a backup container with cron:
+
+```dockerfile
+# Dockerfile.backup
+FROM postgres:15
+
+RUN apt-get update && apt-get install -y \
+    curl \
+    awscli \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY scripts/backup-postgres.sh /scripts/backup.sh
+RUN chmod +x /scripts/backup.sh
+
+# Run backup container with cron
+CMD ["crond", "-f", "-l", "2"]
+```
+
+Docker Compose integration:
+
+```yaml
+version: '3.8'
+
+services:
+  backup-postgres:
+    build:
+      context: .
+      dockerfile: Dockerfile.backup
+    environment:
+      PGHOST: postgres
+      PGUSER: postgres
+      PGPASSWORD: postgres_password
+    volumes:
+      - ./scripts/backup-postgres.sh:/scripts/backup.sh:ro
+      - backup-storage:/backups
+      - /var/spool/cron/crontabs:/var/spool/cron/crontabs
+    depends_on:
+      - postgres
+    networks:
+      - db-network
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: postgres_password
+    networks:
+      - db-network
+
+volumes:
+  backup-storage:
+
+networks:
+  db-network:
+```
+
+### Kubernetes CronJob
+
+Schedule backups in Kubernetes:
+
+```yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-backup
+spec:
+  schedule: "0 2 * * *"  # 2 AM daily
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: postgres-backup
+          containers:
+          - name: postgres-backup
+            image: postgres:15
+            command:
+            - /bin/bash
+            - -c
+            - |
+              pg_dump -h postgres-service -U postgres -d production > /backups/backup-$(date +%Y%m%d-%H%M%S).sql
+              gzip /backups/backup-*.sql
+              aws s3 cp /backups/ s3://backup-bucket/postgres/ --recursive
+            env:
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: password
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: access-key
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: secret-key
+            volumeMounts:
+            - name: backup-storage
+              mountPath: /backups
+          volumes:
+          - name: backup-storage
+            emptyDir: {}
+          restartPolicy: OnFailure
+```
+
+## Cloud Backup Storage
+
+### AWS S3 Integration
+
+Store backups in AWS S3 for durability:
+
+```bash
+#!/bin/bash
+# scripts/backup-to-s3.sh
+
+BACKUP_DIR="/backups/temp"
+S3_BUCKET="s3://company-backups"
+DB_HOST="localhost"
+DB_USER="postgres"
+DB_NAME="production"
+RETENTION_DAYS=30
+
+# Create backup
+mkdir -p "$BACKUP_DIR"
+BACKUP_FILE="$BACKUP_DIR/backup-$(date +%Y%m%d-%H%M%S).sql"
+pg_dump -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" > "$BACKUP_FILE"
+
+# Compress
+gzip "$BACKUP_FILE"
+
+# Upload to S3
+aws s3 cp "${BACKUP_FILE}.gz" "$S3_BUCKET/postgres/" \
+    --storage-class GLACIER_IR \
+    --metadata "date=$(date +%Y-%m-%d),database=$DB_NAME"
+
+# List recent backups
+echo "Recent backups in S3:"
+aws s3 ls "$S3_BUCKET/postgres/" --recursive | tail -10
+
+# Cleanup local backup
+rm -f "${BACKUP_FILE}.gz"
+
+echo "Backup uploaded to S3: ${BACKUP_FILE}.gz"
+```
+
+### Google Cloud Storage Integration
+
+```bash
+#!/bin/bash
+# scripts/backup-to-gcs.sh
+
+BACKUP_DIR="/backups/temp"
+GCS_BUCKET="gs://company-database-backups"
+DB_HOST="localhost"
+DB_USER="postgres"
+DB_NAME="production"
+
+mkdir -p "$BACKUP_DIR"
+
+# Create backup
+BACKUP_FILE="$BACKUP_DIR/backup-$(date +%Y%m%d-%H%M%S).sql"
+pg_dump -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" > "$BACKUP_FILE"
+gzip "$BACKUP_FILE"
+
+# Upload to GCS
+gsutil cp "${BACKUP_FILE}.gz" "$GCS_BUCKET/postgres/$(date +%Y/%m/%d)/"
+
+# Set lifecycle policy for cost optimization
+gsutil lifecycle set - "$GCS_BUCKET" << EOF
+{
+  "lifecycle": {
+    "rule": [
+      {
+        "action": {"type": "Delete"},
+        "condition": {"age": 90}
+      },
+      {
+        "action": {"type": "SetStorageClass", "storageClass": "COLDLINE"},
+        "condition": {"age": 30}
+      }
+    ]
+  }
+}
+EOF
+
+rm -f "${BACKUP_FILE}.gz"
+echo "Backup uploaded to GCS"
+```
+
+## Backup Verification and Testing
+
+### Automated Restore Testing
+
+Regular restore tests ensure backup integrity:
+
+```bash
+#!/bin/bash
+# scripts/verify-backup.sh
+
+BACKUP_FILE="$1"
+TEST_DB="backup_test_$(date +%s)"
+
+echo "Testing restore from: $BACKUP_FILE"
+
+# Create test database
+psql -U postgres -c "CREATE DATABASE $TEST_DB"
+
+# Attempt restore
+if gunzip -c "$BACKUP_FILE" | psql -U postgres -d "$TEST_DB" > /dev/null 2>&1; then
+    # Verify tables exist
+    TABLE_COUNT=$(psql -U postgres -d "$TEST_DB" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public'")
+
+    if [ "$TABLE_COUNT" -gt 0 ]; then
+        echo "SUCCESS: Restore verified. Found $TABLE_COUNT tables"
+
+        # Run integrity checks
+        psql -U postgres -d "$TEST_DB" -c "SELECT COUNT(*) FROM pg_stat_user_tables;" > /dev/null
+
+        # Cleanup
+        psql -U postgres -c "DROP DATABASE $TEST_DB"
+        exit 0
+    fi
+fi
+
+echo "FAILED: Backup restore failed"
+psql -U postgres -c "DROP DATABASE $TEST_DB" 2>/dev/null
+exit 1
+```
+
+### Backup Checksums
+
+Verify backup file integrity:
+
+```bash
+#!/bin/bash
+# scripts/backup-checksum.sh
+
+BACKUP_FILE="$1"
+CHECKSUM_FILE="${BACKUP_FILE}.sha256"
+
+# Generate checksum
+sha256sum "$BACKUP_FILE" > "$CHECKSUM_FILE"
+
+# Verify on restore
+sha256sum -c "$CHECKSUM_FILE"
+
+if [ $? -eq 0 ]; then
+    echo "Checksum verification PASSED"
+else
+    echo "Checksum verification FAILED - backup may be corrupted"
+    exit 1
+fi
+```
+
+## Backup Retention Policies
+
+### Tiered Retention Strategy
+
+```bash
+#!/bin/bash
+# scripts/manage-backup-retention.sh
+
+BACKUP_DIR="/backups"
+ARCHIVE_DIR="/archive"
+
+# Daily backups: keep 7 days
+find "$BACKUP_DIR/daily" -name "*.sql.gz" -mtime +7 -delete
+
+# Weekly backups: keep 8 weeks (56 days)
+find "$BACKUP_DIR/weekly" -name "*.sql.gz" -mtime +56 -delete
+
+# Monthly backups: keep 12 months (365 days)
+find "$BACKUP_DIR/monthly" -name "*.sql.gz" -mtime +365 -delete
+
+# Archive older backups to cold storage
+find "$BACKUP_DIR/monthly" -name "*.sql.gz" -mtime +30 | while read file; do
+    aws s3 cp "$file" "s3://backup-archive/$(date +%Y/%m)/"
+done
+
+echo "Backup retention policy applied"
+```
+
+## Restore Procedures
+
+### PostgreSQL Restore
+
+```bash
+#!/bin/bash
+# scripts/restore-postgres.sh
+
+BACKUP_FILE="$1"
+TARGET_DB="$2"
+TARGET_HOST="${3:-localhost}"
+TARGET_USER="${4:-postgres}"
+
+if [ -z "$BACKUP_FILE" ] || [ -z "$TARGET_DB" ]; then
+    echo "Usage: $0 <backup_file> <target_db> [host] [user]"
+    exit 1
+fi
+
+echo "Restoring PostgreSQL backup: $BACKUP_FILE"
+echo "Target database: $TARGET_DB"
+
+# Create target database
+psql -h "$TARGET_HOST" -U "$TARGET_USER" -c "CREATE DATABASE $TARGET_DB" 2>/dev/null || true
+
+# Restore from backup
+if [[ "$BACKUP_FILE" == *.gz ]]; then
+    gunzip -c "$BACKUP_FILE" | psql -h "$TARGET_HOST" -U "$TARGET_USER" -d "$TARGET_DB"
+else
+    psql -h "$TARGET_HOST" -U "$TARGET_USER" -d "$TARGET_DB" < "$BACKUP_FILE"
+fi
+
+if [ $? -eq 0 ]; then
+    echo "Restore completed successfully"
+
+    # Verify
+    TABLES=$(psql -h "$TARGET_HOST" -U "$TARGET_USER" -d "$TARGET_DB" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public'")
+    echo "Restored database has $TABLES tables"
+else
+    echo "Restore failed"
+    exit 1
+fi
+```
+
+### MySQL Restore
+
+```bash
+#!/bin/bash
+# scripts/restore-mysql.sh
+
+BACKUP_FILE="$1"
+TARGET_USER="$2"
+TARGET_HOST="${3:-localhost}"
+
+if [ -z "$BACKUP_FILE" ] || [ -z "$TARGET_USER" ]; then
+    echo "Usage: $0 <backup_file> <user> [host]"
+    exit 1
+fi
+
+echo "Restoring MySQL backup: $BACKUP_FILE"
+
+if [[ "$BACKUP_FILE" == *.gz ]]; then
+    gunzip -c "$BACKUP_FILE" | mysql -h "$TARGET_HOST" -u "$TARGET_USER" -p
+else
+    mysql -h "$TARGET_HOST" -u "$TARGET_USER" -p < "$BACKUP_FILE"
+fi
+
+if [ $? -eq 0 ]; then
+    echo "MySQL restore completed"
+else
+    echo "Restore failed"
+    exit 1
+fi
+```
+
+## Backup Monitoring and Alerts
+
+### Backup Failure Alerts
+
+```bash
+#!/bin/bash
+# scripts/backup-with-alert.sh
+
+BACKUP_DIR="/backups"
+DB_HOST="localhost"
+DB_USER="postgres"
+DB_NAME="production"
+ALERT_EMAIL="ops@company.com"
+
+BACKUP_FILE="$BACKUP_DIR/backup-$(date +%Y%m%d-%H%M%S).sql"
+
+# Perform backup
+if pg_dump -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" > "$BACKUP_FILE"; then
+    gzip "$BACKUP_FILE"
+    FILE_SIZE=$(du -h "${BACKUP_FILE}.gz" | cut -f1)
+
+    echo "Backup successful: ${BACKUP_FILE}.gz ($FILE_SIZE)" | \
+        mail -s "Database Backup Success" "$ALERT_EMAIL"
+else
+    echo "BACKUP FAILED at $(date)" | \
+        mail -s "URGENT: Database Backup Failed" "$ALERT_EMAIL"
+    exit 1
+fi
+```
+
+### Backup Status Dashboard Script
+
+```bash
+#!/bin/bash
+# scripts/backup-status.sh
+
+BACKUP_DIR="/backups"
+ALERT_EMAIL="ops@company.com"
+
+echo "=== Backup Status Report ==="
+echo "Generated: $(date)"
+echo ""
+
+# Check backup age
+LATEST_BACKUP=$(ls -t "$BACKUP_DIR"/*.sql.gz 2>/dev/null | head -1)
+
+if [ -z "$LATEST_BACKUP" ]; then
+    echo "ERROR: No backups found!"
+    echo "Error: No backups in $BACKUP_DIR" | mail -s "CRITICAL: No database backups found" "$ALERT_EMAIL"
+    exit 1
+fi
+
+BACKUP_TIME=$(stat -c %y "$LATEST_BACKUP" | cut -d' ' -f1)
+BACKUP_SIZE=$(du -h "$LATEST_BACKUP" | cut -f1)
+BACKUP_AGE_HOURS=$(( ($(date +%s) - $(stat -c %Y "$LATEST_BACKUP")) / 3600 ))
+
+echo "Latest backup: $LATEST_BACKUP"
+echo "Time: $BACKUP_TIME"
+echo "Size: $BACKUP_SIZE"
+echo "Age: ${BACKUP_AGE_HOURS} hours"
+echo ""
+
+# Alert if backup is too old
+if [ "$BACKUP_AGE_HOURS" -gt 25 ]; then
+    echo "WARNING: Backup is older than 24 hours!"
+    echo "Last backup is ${BACKUP_AGE_HOURS} hours old" | \
+        mail -s "WARNING: Stale database backup" "$ALERT_EMAIL"
+fi
+
+# Check disk space
+DISK_USAGE=$(df "$BACKUP_DIR" | awk 'NR==2 {print $5}' | sed 's/%//')
+echo "Disk usage: $DISK_USAGE%"
+
+if [ "$DISK_USAGE" -gt 80 ]; then
+    echo "ALERT: Backup storage above 80%!"
+    echo "Disk usage is $DISK_USAGE%" | \
+        mail -s "ALERT: Backup storage nearly full" "$ALERT_EMAIL"
+fi
+```
+
+## Complete Backup Docker Compose Setup
+
+Production-ready backup infrastructure:
+
+```yaml
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: secure_password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - db-network
+
+  backup-scheduler:
+    image: backup-scheduler:latest
+    environment:
+      DB_HOST: postgres
+      DB_USER: postgres
+      DB_PASSWORD: secure_password
+      BACKUP_DIR: /backups
+      AWS_BUCKET: s3://company-backups
+      BACKUP_SCHEDULE: "0 2 * * *"
+    volumes:
+      - ./scripts:/scripts:ro
+      - backup-storage:/backups
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - postgres
+    networks:
+      - db-network
+
+  backup-verify:
+    image: postgres:15
+    environment:
+      PGPASSWORD: secure_password
+    volumes:
+      - ./scripts/verify-backup.sh:/verify.sh:ro
+      - backup-storage:/backups:ro
+    depends_on:
+      - postgres
+    networks:
+      - db-network
+    # Run verification daily
+    entrypoint: /bin/bash -c "while true; do sleep 86400; /verify.sh /backups/*.sql.gz; done"
+
+  backup-monitor:
+    image: backup-monitor:latest
+    volumes:
+      - ./scripts/backup-status.sh:/monitor.sh:ro
+      - backup-storage:/backups:ro
+    environment:
+      ALERT_EMAIL: ops@company.com
+    # Check backup status every hour
+    entrypoint: /bin/bash -c "while true; do sleep 3600; /monitor.sh; done"
+    networks:
+      - db-network
+
+volumes:
+  postgres-data:
+  backup-storage:
+
+networks:
+  db-network:
+```
+
+## Best Practices
+
+<AccordionGroup>
+<Accordion title="3-2-1 Backup Rule">
+Maintain at least:
+- 3 copies of critical data
+- 2 different storage media
+- 1 copy offsite
+
+This ensures protection against hardware failure and disaster.
+</Accordion>
+
+<Accordion title="Test Backups Regularly">
+Schedule monthly restore tests from backups to verify integrity and document recovery procedures before you need them.
+</Accordion>
+
+<Accordion title="Automate Retention Cleanup">
+Automatically delete old backups according to your retention policy to control storage costs and comply with regulations.
+</Accordion>
+
+<Accordion title="Monitor Backup Performance">
+Track backup duration and size trends to detect issues early. Alert on failed backups or unusually long backup times.
+</Accordion>
+
+<Accordion title="Document Recovery Procedures">
+Maintain detailed runbooks for restoring from backups, including:
+- Required credentials
+- Network requirements
+- Expected recovery time
+- Verification steps
+</Accordion>
+
+<Accordion title="Encrypt Backups">
+Use encryption for backups in transit and at rest, especially when storing in cloud storage:
+
+```bash
+# Encrypt backup before uploading
+gpg --symmetric --cipher-algo AES256 backup.sql
+aws s3 cp backup.sql.gpg s3://backups/
+```
+</Accordion>
+
+<Accordion title="Version Control Backups">
+For database schema backups, store them in version control with diffs to track schema evolution:
+
+```bash
+pg_dump --schema-only > schema-$(date +%Y%m%d).sql
+git add schema-*.sql
+git commit -m "Database schema backup $(date +%Y-%m-%d)"
+```
+</Accordion>
+</AccordionGroup>
+
+## Disaster Recovery Planning
+
+### Recovery Time Objective (RTO) and Recovery Point Objective (RPO)
+
+Define these metrics for your backup strategy:
+
+- **RTO**: Maximum acceptable downtime (e.g., 4 hours)
+- **RPO**: Maximum acceptable data loss (e.g., 1 hour)
+
+These determine backup frequency and retention:
+
+```
+If RPO = 1 hour: Backup at least every hour
+If RTO = 4 hours: Keep at least 24+ hours of backups for flexibility
+```
+
+### Backup Disaster Recovery Checklist
+
+- Document all backup procedures and locations
+- Test recovery procedures quarterly
+- Maintain redundant backup copies in different geographic regions
+- Practice failover to backup systems
+- Maintain current documentation of database credentials and access procedures
+- Verify backup encryption and access controls
+
+## Summary
+
+Effective backup integration with WhoDB includes:
+
+- Multiple backup strategies for different database types
+- Automated scheduling with cron, Docker, or Kubernetes
+- Cloud storage integration for durability and cost optimization
+- Regular verification and testing procedures
+- Comprehensive monitoring and alerting
+- Clear retention policies and compliance requirements
+
+Proper backup procedures ensure business continuity and provide peace of mind knowing your data is protected against any eventuality.
+
+<Check>
+You're ready to implement enterprise-grade backup and disaster recovery for your databases
+</Check>

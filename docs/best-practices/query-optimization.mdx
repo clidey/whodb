@@ -1,0 +1,605 @@
+---
+title: "SQL Query Optimization"
+description: "Master SQL query optimization techniques to improve database performance and reduce execution time"
+---
+
+# SQL Query Optimization
+
+Query optimization is fundamental to database performance. A well-optimized query can execute thousands of times faster than an inefficient one. This comprehensive guide covers practical techniques, real-world examples, and common pitfalls to avoid.
+
+<Tip>
+Use the EXPLAIN command to analyze query execution plans before optimizing. Understanding how your database executes queries is the first step to optimization.
+</Tip>
+
+## Understanding Query Execution Plans
+
+### Using EXPLAIN
+
+The EXPLAIN command shows how your database will execute a query. This is your most powerful diagnostic tool.
+
+**Basic EXPLAIN Usage:**
+
+```sql
+EXPLAIN SELECT * FROM users WHERE user_id = 42;
+```
+
+**PostgreSQL EXPLAIN with Analysis:**
+
+```sql
+EXPLAIN ANALYZE SELECT * FROM orders
+WHERE created_at > '2024-01-01'
+ORDER BY total DESC;
+```
+
+**Interpreting Output:**
+
+Look for these performance indicators:
+- Seq Scan: Full table scan (slow for large tables)
+- Index Scan: Using an index (usually fast)
+- Filter: Rows being eliminated during scan
+- Sort: Sorting operation (can be expensive)
+- Hash Join: Hash-based join (efficient)
+- Nested Loop: Loop-based join (slower with large datasets)
+
+<Warning>
+A Seq Scan on a large table without a WHERE clause is almost always a problem. Add appropriate indexes or improve query selectivity.
+</Warning>
+
+## Indexing Strategies
+
+### Creating Effective Indexes
+
+**Single Column Index (Most Common):**
+
+```sql
+CREATE INDEX idx_users_email ON users(email);
+```
+
+**Composite Index (Multiple Columns):**
+
+```sql
+CREATE INDEX idx_orders_customer_date
+ON orders(customer_id, created_at DESC);
+```
+
+**Unique Index:**
+
+```sql
+CREATE UNIQUE INDEX idx_users_username
+ON users(username);
+```
+
+**Partial Index (Index subset of data):**
+
+```sql
+CREATE INDEX idx_active_orders
+ON orders(customer_id)
+WHERE status = 'active';
+```
+
+<Tip>
+Composite indexes should order columns: equality conditions first, then range conditions, then sort conditions. This maximizes index effectiveness.
+</Tip>
+
+### Index Column Order Matters
+
+```sql
+-- GOOD: customer_id (equality), created_at (range)
+CREATE INDEX idx_orders_cust_date
+ON orders(customer_id, created_at);
+
+-- Will use index for queries like:
+SELECT * FROM orders
+WHERE customer_id = 123
+AND created_at > '2024-01-01';
+
+-- SLOW: Wrong order wastes index potential
+CREATE INDEX idx_orders_date_cust
+ON orders(created_at, customer_id);
+```
+
+## Query Pattern Optimization
+
+### Pattern 1: Avoid SELECT *
+
+**Inefficient:**
+
+```sql
+SELECT * FROM users
+WHERE status = 'active'
+LIMIT 10;
+```
+
+**Optimized:**
+
+```sql
+SELECT user_id, email, name, status
+FROM users
+WHERE status = 'active'
+LIMIT 10;
+```
+
+The optimized version reduces data transfer and allows index-only scans on the selected columns.
+
+### Pattern 2: Use WHERE Before HAVING
+
+**Inefficient:**
+
+```sql
+SELECT customer_id, COUNT(*) as order_count
+FROM orders
+GROUP BY customer_id
+HAVING COUNT(*) > 5;
+```
+
+**Optimized:**
+
+```sql
+SELECT customer_id, COUNT(*) as order_count
+FROM orders
+WHERE created_at > '2024-01-01'
+GROUP BY customer_id
+HAVING COUNT(*) > 5;
+```
+
+Filter rows before grouping to reduce the dataset processed by the aggregation.
+
+### Pattern 3: Use IN for Multiple Values
+
+**Inefficient:**
+
+```sql
+SELECT * FROM users
+WHERE status = 'active'
+OR status = 'pending'
+OR status = 'review';
+```
+
+**Optimized:**
+
+```sql
+SELECT * FROM users
+WHERE status IN ('active', 'pending', 'review');
+```
+
+The IN operator is more efficient and often uses better execution plans.
+
+### Pattern 4: BETWEEN for Range Queries
+
+**Inefficient:**
+
+```sql
+SELECT * FROM transactions
+WHERE amount >= 100
+AND amount <= 500;
+```
+
+**Optimized:**
+
+```sql
+SELECT * FROM transactions
+WHERE amount BETWEEN 100 AND 500;
+```
+
+BETWEEN often generates better index utilization for range queries.
+
+### Pattern 5: Use UNION Instead of OR for Complex Conditions
+
+**Potentially Inefficient:**
+
+```sql
+SELECT * FROM orders
+WHERE customer_id = 123
+OR product_id = 456
+OR status = 'high-priority';
+```
+
+**Potentially Faster:**
+
+```sql
+SELECT * FROM orders WHERE customer_id = 123
+UNION
+SELECT * FROM orders WHERE product_id = 456
+UNION
+SELECT * FROM orders WHERE status = 'high-priority';
+```
+
+UNION allows each part to use different indexes. Use UNION ALL if duplicates are acceptable (faster).
+
+## Join Optimization
+
+### Pattern 6: Join with Indexed Foreign Keys
+
+**Inefficient (No Index):**
+
+```sql
+SELECT o.order_id, c.customer_name, o.total
+FROM orders o
+JOIN customers c ON o.customer_id = c.customer_id
+WHERE o.created_at > '2024-01-01';
+```
+
+**Optimized (With Index):**
+
+```sql
+CREATE INDEX idx_orders_customer_id ON orders(customer_id);
+CREATE INDEX idx_customers_id ON customers(customer_id);
+
+SELECT o.order_id, c.customer_name, o.total
+FROM orders o
+JOIN customers c ON o.customer_id = c.customer_id
+WHERE o.created_at > '2024-01-01';
+```
+
+Always index foreign key columns used in joins.
+
+### Pattern 7: Join Order Matters
+
+**Inefficient Order:**
+
+```sql
+SELECT o.order_id, c.customer_name, p.product_name
+FROM orders o
+JOIN customers c ON o.customer_id = c.customer_id
+JOIN products p ON o.product_id = p.product_id
+WHERE c.status = 'vip';
+```
+
+**Optimized Order:**
+
+```sql
+SELECT o.order_id, c.customer_name, p.product_name
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+JOIN products p ON o.product_id = p.product_id
+WHERE c.status = 'vip';
+```
+
+Start with the most filtered table first. This reduces the number of rows in subsequent joins.
+
+### Pattern 8: LEFT JOIN with NULL Filter
+
+**Inefficient (Still uses LEFT JOIN):**
+
+```sql
+SELECT u.user_id, u.email, l.login_count
+FROM users u
+LEFT JOIN login_logs l ON u.user_id = l.user_id
+WHERE l.login_id IS NOT NULL;
+```
+
+**Optimized (Switch to INNER JOIN):**
+
+```sql
+SELECT u.user_id, u.email, l.login_count
+FROM users u
+INNER JOIN login_logs l ON u.user_id = l.user_id;
+```
+
+If you're filtering out NULL values, use INNER JOIN instead.
+
+## Aggregation Optimization
+
+### Pattern 9: Aggregate with GROUP BY Efficiently
+
+**Inefficient:**
+
+```sql
+SELECT customer_id, COUNT(*) as order_count
+FROM orders
+GROUP BY customer_id;
+```
+
+**Optimized (Add Index):**
+
+```sql
+CREATE INDEX idx_orders_customer_id ON orders(customer_id);
+
+SELECT customer_id, COUNT(*) as order_count
+FROM orders
+GROUP BY customer_id;
+```
+
+### Pattern 10: Subquery Optimization with Common Table Expressions
+
+**Inefficient (Correlated Subquery):**
+
+```sql
+SELECT u.user_id, u.email,
+  (SELECT COUNT(*) FROM orders o WHERE o.customer_id = u.user_id) as order_count
+FROM users u
+WHERE (SELECT COUNT(*) FROM orders o WHERE o.customer_id = u.user_id) > 3;
+```
+
+**Optimized (CTE):**
+
+```sql
+WITH user_orders AS (
+  SELECT customer_id, COUNT(*) as order_count
+  FROM orders
+  GROUP BY customer_id
+)
+SELECT u.user_id, u.email, uo.order_count
+FROM users u
+JOIN user_orders uo ON u.user_id = uo.customer_id
+WHERE uo.order_count > 3;
+```
+
+CTEs make the query clearer and prevent repetitive subquery execution.
+
+## Avoiding Common Performance Mistakes
+
+### Mistake 1: Functions in WHERE Clauses
+
+**Slow (Cannot use index):**
+
+```sql
+SELECT * FROM users
+WHERE UPPER(email) = 'USER@EXAMPLE.COM';
+```
+
+**Fast (Can use index):**
+
+```sql
+SELECT * FROM users
+WHERE email = 'user@example.com';
+```
+
+Functions on indexed columns prevent index usage. Process data application-side when possible.
+
+### Mistake 2: Implicit Type Conversion
+
+**Slow (String compared to number):**
+
+```sql
+SELECT * FROM users
+WHERE user_id = '123';
+```
+
+**Fast (Proper type matching):**
+
+```sql
+SELECT * FROM users
+WHERE user_id = 123;
+```
+
+Type mismatches force conversions that bypass indexes.
+
+### Mistake 3: LIKE with Leading Wildcard
+
+**Very Slow (No index use):**
+
+```sql
+SELECT * FROM products
+WHERE product_name LIKE '%laptop%';
+```
+
+**Faster (Prefix search):**
+
+```sql
+SELECT * FROM products
+WHERE product_name LIKE 'laptop%';
+```
+
+**Fastest (Exact/Index search):**
+
+```sql
+SELECT * FROM products
+WHERE product_name = 'laptop';
+```
+
+Leading wildcards prevent index usage. Consider full-text search for text matching.
+
+### Mistake 4: NOT IN with NULL Values
+
+**Problematic:**
+
+```sql
+SELECT * FROM orders
+WHERE customer_id NOT IN (
+  SELECT customer_id FROM vip_customers WHERE vip_customers.status IS NULL
+);
+```
+
+**Fixed:**
+
+```sql
+SELECT * FROM orders
+WHERE customer_id NOT IN (
+  SELECT customer_id FROM vip_customers WHERE status IS NOT NULL
+);
+```
+
+NOT IN returns NULL if any subquery value is NULL, causing the entire condition to be NULL.
+
+### Mistake 5: Unnecessary DISTINCT
+
+**Inefficient (Extra processing):**
+
+```sql
+SELECT DISTINCT customer_id
+FROM orders
+WHERE status = 'completed';
+```
+
+**Optimized (If duplicates aren't possible):**
+
+```sql
+SELECT customer_id
+FROM orders
+WHERE status = 'completed';
+```
+
+Only use DISTINCT when necessary. It requires sorting or hashing.
+
+## Advanced Optimization Techniques
+
+<AccordionGroup>
+<Accordion title="Query Caching Strategies">
+Cache frequently accessed data:
+
+```sql
+-- Create a summary table for reporting
+CREATE TABLE daily_sales_summary AS
+SELECT DATE(created_at) as sale_date, SUM(total) as daily_total
+FROM orders
+WHERE created_at > CURRENT_DATE - INTERVAL '30 days'
+GROUP BY DATE(created_at);
+
+-- Now query the summary instead of raw data
+SELECT * FROM daily_sales_summary WHERE sale_date > '2024-01-01';
+```
+
+Materialized views or summary tables reduce computation for expensive queries.
+</Accordion>
+
+<Accordion title="Partitioning Large Tables">
+For very large tables, partitioning improves performance:
+
+```sql
+-- PostgreSQL: Partition by date range
+CREATE TABLE orders_partitioned (
+  order_id SERIAL,
+  customer_id INT,
+  total DECIMAL,
+  created_at TIMESTAMP
+) PARTITION BY RANGE (YEAR(created_at));
+
+CREATE TABLE orders_2024 PARTITION OF orders_partitioned
+  FOR VALUES FROM (2024) TO (2025);
+```
+
+Partitioning allows faster queries by limiting data scans to relevant partitions.
+</Accordion>
+
+<Accordion title="Denormalization for Read Performance">
+In read-heavy scenarios, denormalization can improve performance:
+
+```sql
+-- Instead of joining every time
+SELECT o.order_id, c.customer_name, o.total
+FROM orders o
+JOIN customers c ON o.customer_id = c.customer_id;
+
+-- Store customer_name in orders table
+ALTER TABLE orders ADD COLUMN customer_name VARCHAR(255);
+
+-- Update on customer insert/change (handled by trigger)
+SELECT o.order_id, o.customer_name, o.total
+FROM orders o;
+```
+
+Trade storage and update complexity for faster reads.
+</Accordion>
+
+<Accordion title="Connection Pooling">
+Reuse database connections:
+
+```
+Connection Pool Settings:
+- Min connections: 5
+- Max connections: 20
+- Connection timeout: 30 seconds
+- Idle timeout: 300 seconds
+```
+
+Connection pooling reduces overhead for repeated queries.
+</Accordion>
+</AccordionGroup>
+
+## Performance Testing Workflow
+
+<Steps>
+<Step title="Establish Baseline">
+Run the current query and note execution time and resource usage.
+
+```sql
+EXPLAIN ANALYZE SELECT * FROM orders WHERE status = 'pending';
+```
+</Step>
+
+<Step title="Identify Bottleneck">
+Look at the EXPLAIN output for Seq Scan, high costs, or poor index usage.
+</Step>
+
+<Step title="Create Hypothesis">
+"Adding an index on status column will improve performance"
+</Step>
+
+<Step title="Implement Change">
+```sql
+CREATE INDEX idx_orders_status ON orders(status);
+```
+</Step>
+
+<Step title="Test Impact">
+```sql
+EXPLAIN ANALYZE SELECT * FROM orders WHERE status = 'pending';
+```
+
+Compare to baseline. Measure execution time, plan cost, and rows examined.
+</Step>
+
+<Step title="Document Results">
+Keep records of what worked and what didn't for future reference.
+</Step>
+</Steps>
+
+## Optimization Checklist
+
+<AccordionGroup>
+<Accordion title="Before Optimizing">
+- [ ] Run EXPLAIN ANALYZE on the slow query
+- [ ] Confirm the query is actually slow in production
+- [ ] Check current indexes on involved tables
+- [ ] Review table row counts and data distribution
+- [ ] Have a backup of the database
+</Accordion>
+
+<Accordion title="Common Optimizations to Try">
+- [ ] Add missing indexes on WHERE, JOIN, and ORDER BY columns
+- [ ] Remove functions from WHERE clauses
+- [ ] Replace OR conditions with IN
+- [ ] Move filter conditions to WHERE before HAVING
+- [ ] Use UNION for complex OR conditions
+- [ ] Check join order
+- [ ] Replace LEFT JOIN with INNER JOIN when applicable
+- [ ] Use CTEs for complex subqueries
+- [ ] Reduce SELECT columns to only needed ones
+- [ ] Add LIMIT to prevent full table scans
+</Accordion>
+
+<Accordion title="After Implementing Changes">
+- [ ] Re-run EXPLAIN ANALYZE to verify improvement
+- [ ] Test query on production data volume
+- [ ] Monitor query performance in production
+- [ ] Check index size and storage impact
+- [ ] Document the optimization for team reference
+- [ ] Clean up abandoned indexes
+</Accordion>
+</AccordionGroup>
+
+## Related Topics
+
+<CardGroup cols={2}>
+<Card title="Performance Optimization" icon="rocket" href="/best-practices/performance">
+Overall database performance techniques
+</Card>
+<Card title="PostgreSQL Best Practices" icon="database" href="/best-practices/postgresql">
+PostgreSQL-specific optimization tips
+</Card>
+<Card title="MySQL Best Practices" icon="database" href="/best-practices/mysql">
+MySQL-specific optimization tips
+</Card>
+<Card title="Writing Queries" icon="code" href="/query/writing-queries">
+Learn query writing in WhoDB
+</Card>
+</CardGroup>
+
+## Summary
+
+SQL query optimization combines art and science. Use EXPLAIN to understand execution plans, create strategic indexes, avoid common pitfalls, and test changes methodically. Even small optimizations compound when queries run thousands of times daily. Start with the highest-impact changes and work systematically through the optimization checklist.
+
+<Check>
+You now have a comprehensive understanding of SQL query optimization techniques and patterns. Apply these principles to transform slow queries into fast, efficient ones.
+</Check>

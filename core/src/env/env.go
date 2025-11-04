@@ -29,6 +29,14 @@ import (
 
 var IsDevelopment = os.Getenv("ENVIRONMENT") == "dev"
 var IsEnterpriseEdition = false // Set to true by EE build
+
+// GetIsDesktopMode returns true if running in desktop mode.
+// This is a function (not a variable) so it reads the env var each time,
+// allowing the desktop app to set WHODB_DESKTOP after package initialization.
+func GetIsDesktopMode() bool {
+	return os.Getenv("WHODB_DESKTOP") == "true"
+}
+
 var Tokens = common.FilterList(strings.Split(os.Getenv("WHODB_TOKENS"), ","), func(item string) bool {
 	return item != ""
 })

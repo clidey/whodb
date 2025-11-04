@@ -15,6 +15,7 @@
  */
 
 import {
+    Badge,
     Button,
     cn,
     Drawer,
@@ -32,6 +33,9 @@ import {
     Sheet,
     SheetContent,
     SheetFooter,
+    SheetTitle,
+    StackList,
+    StackListItem,
     toast
 } from "@clidey/ux";
 import {
@@ -42,19 +46,23 @@ import {
     SortDirection,
     StorageUnit,
     useAddRowMutation,
+    useColumnsLazyQuery,
     useGetStorageUnitRowsLazyQuery,
+    useGetStorageUnitsLazyQuery,
     useRawExecuteLazyQuery,
     useUpdateStorageUnitMutation,
-    WhereCondition
+    WhereCondition,
+    WhereConditionType
 } from '@graphql';
-import { CheckCircleIcon, CommandLineIcon, PlayIcon, PlusCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { keys } from "lodash";
+import keys from "lodash/keys";
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { CodeEditor } from "../../components/editor";
 import { ErrorState } from "../../components/error-state";
+import { CheckCircleIcon, CommandLineIcon, MagnifyingGlassIcon, PlayIcon, PlusCircleIcon, TableCellsIcon, XMarkIcon } from "../../components/heroicons";
 import { LoadingPage } from "../../components/loading";
 import { InternalPage } from "../../components/page";
+import { SchemaViewer } from "../../components/schema-viewer";
 import { getColumnIcons, StorageUnitTable } from "../../components/table";
 import { Tip } from "../../components/tip";
 import { BUILD_EDITION } from "../../config/edition";
@@ -64,7 +72,7 @@ import { databaseSupportsScratchpad, databaseTypesThatUseDatabaseInsteadOfSchema
 import { getDatabaseOperators } from "../../utils/database-operators";
 import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
 import { ExploreStorageUnitWhereCondition } from "./explore-storage-unit-where-condition";
-import { SchemaViewer } from "../../components/schema-viewer";
+import { ExploreStorageUnitWhereConditionSheet } from "./explore-storage-unit-where-condition-sheet";
 
 // Conditionally import EE query utilities
 let generateInitialQuery: ((databaseType: string | undefined, schema: string | undefined, tableName: string | undefined) => string) | undefined;
@@ -89,6 +97,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
 
     let schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
+    const whereConditionMode = useAppSelector(state => state.settings.whereConditionMode);
     const navigate = useNavigate();
     const [rows, setRows] = useState<RowsResult>();
     const [showAdd, setShowAdd] = useState(false);
@@ -99,6 +108,15 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     // For add row sheet logic
     const [addRowData, setAddRowData] = useState<Record<string, any>>({});
     const [addRowError, setAddRowError] = useState<string | null>(null);
+
+    // Entity search sheet state
+    const [showEntitySearchSheet, setShowEntitySearchSheet] = useState(false);
+    const [entitySearchData, setEntitySearchData] = useState<{
+        columnName: string;
+        value: string;
+        targetTable: string;
+    } | null>(null);
+    const [entitySearchResults, setEntitySearchResults] = useState<RowsResult | null>(null);
 
     const [updateStorageUnit, {loading: updating}] = useUpdateStorageUnitMutation();
 
@@ -113,6 +131,10 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
             setRows(data.Row);
         },
         fetchPolicy: "no-cache",
+    });
+    const [getStorageUnits] = useGetStorageUnitsLazyQuery();
+    const [getColumns] = useColumnsLazyQuery({
+        fetchPolicy: "network-only",
     });
     const [addRow, { loading: adding }] = useAddRowMutation();
     const [rawExecute, { data: rawExecuteData }] = useRawExecuteLazyQuery();
@@ -261,9 +283,14 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         ];
     }, [current]);
     
-    const {columns, columnTypes} = useMemo(() => {
+    const {columns, columnTypes, columnIsPrimary, columnIsForeignKey} = useMemo(() => {
         const dataColumns = rows?.Columns.map(c => c.Name) ?? [];
-        return {columns: dataColumns, columnTypes: rows?.Columns.map(column => column.Type)};
+        return {
+            columns: dataColumns,
+            columnTypes: rows?.Columns.map(column => column.Type),
+            columnIsPrimary: rows?.Columns.map(column => column.IsPrimary),
+            columnIsForeignKey: rows?.Columns.map(column => column.IsForeignKey)
+        };
     }, [rows?.Columns, rows?.Rows]);
 
     useEffect(() => {
@@ -415,6 +442,90 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         return {whereColumns: columns, whereColumnTypes: columnTypes}
     }, [rows?.Columns, rows?.Rows, current?.Type])
 
+    // Foreign key detection using actual column metadata
+    const getColumnByName = useCallback((columnName: string) => {
+        return rows?.Columns?.find(col => col.Name === columnName);
+    }, [rows?.Columns]);
+
+    const isValidForeignKey = useCallback((columnName: string) => {
+        const column = getColumnByName(columnName);
+        return Boolean(column?.IsForeignKey && column?.ReferencedTable != null);
+    }, [getColumnByName]);
+
+    const getTargetTableName = useCallback((columnName: string) => {
+        const column = getColumnByName(columnName);
+        return column?.ReferencedTable || null;
+    }, [getColumnByName]);
+
+    // Entity search functionality
+    const handleEntitySearch = useCallback((columnName: string, value: string) => {
+        const targetTable = getTargetTableName(columnName);
+        if (!targetTable) {
+            toast.error("Could not determine target table for foreign key");
+            return;
+        }
+
+        setEntitySearchData({
+            columnName,
+            value,
+            targetTable
+        });
+
+        // First, fetch the target table's column metadata to find its primary key
+        getColumns({
+            variables: {
+                schema,
+                storageUnit: targetTable
+            },
+            onCompleted: (columnsData) => {
+                // Find the primary key column in the target table
+                const targetPrimaryKey = columnsData.Columns?.find(col => col.IsPrimary);
+
+                if (!targetPrimaryKey) {
+                    toast.error(`No primary key found for table ${targetTable}`);
+                    return;
+                }
+
+                const primaryKeyName = targetPrimaryKey.Name;
+
+                // Now search for the entity using the correct primary key
+                getStorageUnitRows({
+                    variables: {
+                        schema,
+                        storageUnit: targetTable,
+                        where: {
+                            Type: WhereConditionType.Atomic,
+                            Atomic: {
+                                Key: primaryKeyName,
+                                Operator: "=",
+                                Value: value,
+                                ColumnType: "string"
+                            }
+                        },
+                        pageSize: 1,
+                        pageOffset: 0
+                    },
+                    onCompleted: (data) => {
+                        setEntitySearchResults(data.Row);
+                        setShowEntitySearchSheet(true);
+                    },
+                    onError: (error) => {
+                        toast.error(`Failed to search for entity: ${error.message}`);
+                    }
+                });
+            },
+            onError: (error) => {
+                toast.error(`Failed to get target table structure: ${error.message}`);
+            }
+        });
+    }, [getColumns, getStorageUnitRows, getTargetTableName, schema]);
+
+    const handleCloseEntitySearchSheet = useCallback(() => {
+        setShowEntitySearchSheet(false);
+        setEntitySearchData(null);
+        setEntitySearchResults(null);
+    }, []);
+
     if (unit == null) {
         return <Navigate to={InternalRoutes.Dashboard.StorageUnit.path} />
     }
@@ -438,7 +549,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 <div className="flex gap-sm items-center">
                     <h1 className="text-xl font-bold mr-4">{unitName}</h1>
                 </div>
-                <div className="text-sm"><span className="font-semibold">Total Count:</span> {totalCount}</div>
+                <div className="text-sm" data-testid="total-count-top"><span className="font-semibold">Total Count:</span> {totalCount}</div>
             </div>
             <div className="flex w-full relative" data-testid="explore-storage-unit-options">
                 <div className="flex justify-between items-end w-full">
@@ -477,15 +588,30 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                                 </SelectContent>
                             </Select>
                         </div>
-                        {current?.Type !== DatabaseType.Redis &&
-                            <ExploreStorageUnitWhereCondition defaultWhere={whereCondition} columns={whereColumns}
-                                                              operators={validOperators} onChange={handleFilterChange}
-                                                              columnTypes={whereColumnTypes ?? []}/>}
+                        {current?.Type !== DatabaseType.Redis && (
+                            whereConditionMode === 'sheet' ? (
+                                <ExploreStorageUnitWhereConditionSheet 
+                                    defaultWhere={whereCondition} 
+                                    columns={whereColumns}
+                                    operators={validOperators} 
+                                    onChange={handleFilterChange}
+                                    columnTypes={whereColumnTypes ?? []}
+                                />
+                            ) : (
+                                <ExploreStorageUnitWhereCondition 
+                                    defaultWhere={whereCondition} 
+                                    columns={whereColumns}
+                                    operators={validOperators} 
+                                    onChange={handleFilterChange}
+                                    columnTypes={whereColumnTypes ?? []}
+                                />
+                            )
+                        )}
                         <Button className="ml-6 mt-[22px]" onClick={handleQuery} data-testid="submit-button">
                             <CheckCircleIcon className="w-4 h-4" /> Query
                         </Button>
                     </div>
-                    <Button onClick={handleOpenScratchpad} data-testid="scratchpad-button" variant="secondary"
+                    <Button onClick={handleOpenScratchpad} data-testid="embedded-scratchpad-button" variant="secondary"
                         className={cn({
                             "hidden": !databaseSupportsScratchpad(current?.Type),
                         })}>
@@ -494,7 +620,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 </div>
                 <Sheet open={showAdd} onOpenChange={setShowAdd}>
                     <SheetContent side="right" className="flex flex-col p-8">
-                        <div className="text-lg font-semibold mb-4">Add new row</div>
+                        <SheetTitle className="flex items-center gap-2"><TableCellsIcon className="w-5 h-5" /> Add new row</SheetTitle>
                         <div className="flex-1 overflow-y-auto pr-2">
                             <div className="flex flex-col gap-4">
                                 {rows?.Columns?.map((col, index) => (
@@ -521,8 +647,16 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                                 <ErrorState error={addRowError} />
                             )}
                         </div>
-                        <SheetFooter className="px-0 pt-4 border-t">
-                            <Button onClick={handleAddRowSubmit} data-testid="submit-add-row-button" disabled={adding}>
+                        <SheetFooter className="flex flex-row gap-sm px-0 pt-4 border-t">
+                            <Button
+                                className="flex-1"
+                                variant="secondary"
+                                onClick={() => setShowAdd(false)}
+                                data-testid="cancel-add-row"
+                            >
+                                Cancel
+                            </Button>
+                            <Button className="flex-1" onClick={handleAddRowSubmit} data-testid="submit-add-row-button" disabled={adding}>
                                 <CheckCircleIcon className="w-4 h-4" /> Submit
                             </Button>
                         </SheetFooter>
@@ -534,10 +668,12 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 {
                     rows != null &&
                     <StorageUnitTable
-                        columns={columns} 
-                        rows={rows.Rows} 
-                        onRowUpdate={handleRowUpdate} 
+                        columns={columns}
+                        rows={rows.Rows}
+                        onRowUpdate={handleRowUpdate}
                         columnTypes={columnTypes}
+                        columnIsPrimary={columnIsPrimary}
+                        columnIsForeignKey={columnIsForeignKey}
                         schema={schema}
                         storageUnit={unitName}
                         onRefresh={handleSubmitRequest}
@@ -550,6 +686,9 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                         currentPage={currentPage}
                         onPageChange={handlePageChange}
                         showPagination={true}
+                        // Foreign key functionality
+                        isValidForeignKey={isValidForeignKey}
+                        onEntitySearch={handleEntitySearch}
                     >
                         <div className="flex gap-2">
                             <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-row-button">
@@ -562,7 +701,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         </div>
         <Drawer open={scratchpad} onOpenChange={handleCloseScratchpad}>
             <DrawerContent className="px-8 min-h-[65vh]">
-                <Button variant="ghost" className="absolute top-0 right-0" onClick={handleCloseScratchpad}>
+                <Button variant="ghost" className="absolute top-0 right-0" onClick={handleCloseScratchpad} data-testid="icon-button">
                     <XMarkIcon className="w-4 h-4" />
                 </Button>
                 <DrawerHeader className="px-0">
@@ -591,5 +730,54 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 />
             </DrawerContent>
         </Drawer>
+        <Sheet open={showEntitySearchSheet} onOpenChange={setShowEntitySearchSheet}>
+            <SheetContent side="right" className="flex flex-col p-8 min-w-[600px]">
+                <div className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <MagnifyingGlassIcon className="w-5 h-5" />
+                    Search around
+                </div>
+                {entitySearchData && (
+                    <div className="text-sm text-gray-500">
+                        Query: {entitySearchData.targetTable} (ID: {entitySearchData.value})
+                    </div>
+                )}
+                <div className="flex-1 overflow-y-auto pr-2">
+                    {entitySearchResults && entitySearchResults.Rows.length > 0 ? (
+                        <div className="flex flex-col gap-4">
+                            <StackList>
+                                {entitySearchData && (
+                                    <StackListItem key="entity-id" item="ID">
+                                        {entitySearchData.value}
+                                    </StackListItem>
+                                )}
+                                {entitySearchResults.Columns.map((column, index) => (
+                                    <StackListItem 
+                                        key={column.Name} 
+                                        item={
+                                            isValidForeignKey(column.Name) ? (
+                                                <Badge className="text-lg" data-testid="foreign-key-attribute">
+                                                    {column.Name}
+                                                </Badge>
+                                            ) : column.Name
+                                        }
+                                    >
+                                        {entitySearchResults.Rows[0][index]}
+                                    </StackListItem>
+                                ))}
+                            </StackList>
+                        </div>
+                    ) : (
+                        <div className="text-center text-gray-500 py-8">
+                            No entity found with the specified ID
+                        </div>
+                    )}
+                </div>
+                <SheetFooter>
+                    <Button onClick={handleCloseEntitySearchSheet} variant="outline">
+                        Close
+                    </Button>
+                </SheetFooter>
+            </SheetContent>
+        </Sheet>
     </InternalPage>
 }

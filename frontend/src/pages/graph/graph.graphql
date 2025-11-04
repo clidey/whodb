@@ -10,6 +10,8 @@ query GetGraph($schema: String!) {
     Relations {
       Name
       Relationship
+      SourceColumn
+      TargetColumn
     }
   }
 }

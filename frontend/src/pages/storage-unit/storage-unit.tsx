@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-import { Badge, Button, Checkbox, cn, Input, Label, SearchInput, SearchSelect, Separator, StackList, StackListItem, Table, TableCell, TableHead, Tabs, TabsContent, TabsList, TabsTrigger, toast, TableRow, VirtualizedTableBody, TableHeader, TableHeadRow } from '@clidey/ux';
-import { DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useGetStorageUnitsQuery } from '@graphql';
-import { ArrowPathRoundedSquareIcon, CheckCircleIcon, CircleStackIcon, CommandLineIcon, ListBulletIcon, MagnifyingGlassIcon, PlusCircleIcon, TableCellsIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { Badge, Button, Checkbox, cn, Input, Label, SearchInput, Separator, StackList, StackListItem, Table, TableCell, TableHead, Tabs, TabsContent, TabsList, TabsTrigger, toast, TableRow, VirtualizedTableBody, TableHeader, TableHeadRow, SheetTitle } from '@clidey/ux';
+import { SearchSelect } from "../../components/ux";
+import { DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useGetColumnsLazyQuery, useGetStorageUnitsQuery } from '@graphql';
+import { ArrowPathRoundedSquareIcon, CheckCircleIcon, CircleStackIcon, CommandLineIcon, ListBulletIcon, MagnifyingGlassIcon, PlusCircleIcon, TableCellsIcon, XCircleIcon, XMarkIcon } from '../../components/heroicons';
 import classNames from "classnames";
-import { clone, cloneDeep, filter } from "lodash";
+import clone from "lodash/clone";
+import cloneDeep from "lodash/cloneDeep";
+import filter from "lodash/filter";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Handle, Node, Position, useReactFlow } from "reactflow";
@@ -34,7 +37,7 @@ import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
 import { Tip } from '../../components/tip';
 import { SettingsActions } from '../../store/settings';
 
-const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = ({ unit, allTableNames }) => {
+const StorageUnitCard: FC<{ unit: StorageUnit, columns?: any[] }> = ({ unit, columns }) => {
     const [expanded, setExpanded] = useState(false);
     const navigate = useNavigate();
 
@@ -50,23 +53,25 @@ const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = (
         setExpanded(s => !s);
     }, []);
 
+    const foreignKeyMap = useMemo(() => {
+        if (!columns) return new Map<string, boolean>();
+        const map = new Map<string, boolean>();
+        columns.forEach(col => {
+            if (col.IsForeignKey) {
+                map.set(col.Name, true);
+            }
+        });
+        return map;
+    }, [columns]);
+
     const [introAttributes, expandedAttributes] = useMemo(() => {
         return [ unit.Attributes.slice(0,4), unit.Attributes.slice(4) ];
     }, [unit.Attributes]);
 
-    const isValidForeignKey = useCallback((key: string) => {
-        // Check for both singular and plural table names
-        if (key.endsWith("_id")) {
-            const base = key.slice(0, -3);
-            return allTableNames.has(base) || allTableNames.has(base + "s");
-        }
-        return false;
-    }, [allTableNames]);
-
     return (<ExpandableCard key={unit.Name} isExpanded={expanded} setExpanded={setExpanded} icon={<TableCellsIcon className="w-4 h-4" />} className={cn({
-        "shadow-2xl": expanded,
+        "shadow-2xl exploring-storage-unit": expanded,
     })} data-testid="storage-unit-card">
-        <div className="flex flex-col grow mt-2" data-testid="storage-unit-card">
+        <div className="flex flex-col grow mt-2 cursor-pointer" data-testid="storage-unit-card">
             <div className="flex flex-col grow mb-2 w-full overflow-x-hidden">
                 <Tip className="w-fit">
                     <h1
@@ -84,7 +89,7 @@ const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = (
                     ))
                 }
             </div>
-            <div className="flex flex-row justify-end gap-xs">
+            <div className="flex flex-row justify-end gap-xs" onClick={(e) => e.stopPropagation()}>
                 <Button onClick={handleExpand} data-testid="explore-button" variant="secondary">
                     <MagnifyingGlassIcon className="w-4 h-4" /> Describe
                 </Button>
@@ -94,25 +99,34 @@ const StorageUnitCard: FC<{ unit: StorageUnit, allTableNames: Set<string> }> = (
             </div>
         </div>
         <div className="flex flex-col grow gap-lg justify-between h-full overflow-y-auto">
+            <SheetTitle className="flex items-center gap-2 mb-4">
+                <TableCellsIcon className="w-5 h-5" />
+                {unit.Name}
+            </SheetTitle>
             <div className="w-full" data-testid="explore-fields">
                 <div className="flex flex-col gap-xs2">
-                    <h1 className="text-2xl font-bold mb-4 break-all">{unit.Name}</h1>
                     <StackList>
                         {
-                            introAttributes.map(attribute => (
-                                <StackListItem key={attribute.Key} item={attribute.Key}>
-                                    {attribute.Value}
-                                </StackListItem>
-                            ))
+                            introAttributes.map(attribute => {
+                                const isForeignKey = foreignKeyMap.has(attribute.Key);
+                                return (
+                                    <StackListItem key={attribute.Key} item={isForeignKey ?
+                                        <Badge className="text-lg" data-testid="foreign-key-attribute">{attribute.Key}</Badge> : attribute.Key}>
+                                        {attribute.Value}
+                                    </StackListItem>
+                                );
+                            })
                         }
                         {
-                            expandedAttributes.map(attribute => (
-                                <StackListItem key={attribute.Key} item={isValidForeignKey(attribute.Key) ?
-                                    <Badge className="text-lg"
-                                           data-testid="foreign-key-attribute">{attribute.Key}</Badge> : attribute.Key}>
-                                    {attribute.Value}
-                                </StackListItem>
-                            ))
+                            expandedAttributes.map(attribute => {
+                                const isForeignKey = foreignKeyMap.has(attribute.Key);
+                                return (
+                                    <StackListItem key={attribute.Key} item={isForeignKey ?
+                                        <Badge className="text-lg" data-testid="foreign-key-attribute">{attribute.Key}</Badge> : attribute.Key}>
+                                        {attribute.Value}
+                                    </StackListItem>
+                                );
+                            })
                         }
                     </StackList>
                 </div>
@@ -139,6 +153,8 @@ export const StorageUnitPage: FC = () => {
     const [addStorageUnit,] = useAddStorageUnitMutation();
     const [expandedUnit, setExpandedUnit] = useState<string | null>(null);
     const dispatch = useAppDispatch();
+    const [tableColumns, setTableColumns] = useState<Record<string, any[]>>({});
+    const [fetchColumns] = useGetColumnsLazyQuery();
 
     // For databases that don't have schemas (MongoDB, ClickHouse), pass the database name as the schema parameter
     // todo: is there a different way to do this? clickhouse doesn't have schemas as a table is considered a schema. people mainly switch between DB
@@ -245,6 +261,32 @@ export const StorageUnitPage: FC = () => {
         refetch();
     }, [current, refetch]);
 
+    useEffect(() => {
+        if (!data?.StorageUnit) return;
+
+        const fetchAllColumns = async () => {
+            const columnsMap: Record<string, any[]> = {};
+            for (const unit of data.StorageUnit) {
+                try {
+                    const result = await fetchColumns({
+                        variables: {
+                            schema,
+                            storageUnit: unit.Name,
+                        },
+                    });
+                    if (result.data?.Columns) {
+                        columnsMap[unit.Name] = result.data.Columns;
+                    }
+                } catch (error) {
+                    console.error(`Failed to fetch columns for ${unit.Name}:`, error);
+                }
+            }
+            setTableColumns(columnsMap);
+        };
+
+        fetchAllColumns();
+    }, [data?.StorageUnit, fetchColumns, schema]);
+
     const filterStorageUnits = useMemo(() => {
         const lowerCaseFilterValue = filterValue.toLowerCase();
         return filter(data?.StorageUnit ?? [], unit => unit.Name.toLowerCase().includes(lowerCaseFilterValue))
@@ -258,33 +300,20 @@ export const StorageUnitPage: FC = () => {
         return databaseSupportsModifiers(current.Type);
     }, [current?.Type]);
 
-    const allTableNames = useMemo(() => {
-        return new Set(Array.isArray(data?.StorageUnit) ? data.StorageUnit.map(unit => unit.Name) : []);
-    }, [data?.StorageUnit]);
-
     const sharedAttributeKeys = useMemo(() => {
         if (!data?.StorageUnit || data.StorageUnit.length === 0) {
             return [];
         }
-        
+
         // Get attributes that exist in ALL storage units (intersection of all attributes)
         const firstUnitAttributeKeys = new Set(data.StorageUnit[0].Attributes.map(attr => attr.Key));
-        
-        return Array.from(firstUnitAttributeKeys).filter(key => 
-            data.StorageUnit.every(unit => 
+
+        return Array.from(firstUnitAttributeKeys).filter(key =>
+            data.StorageUnit.every(unit =>
                 unit.Attributes.some(attr => attr.Key === key)
             )
         ).sort();
     }, [data?.StorageUnit]);
-
-    const isValidForeignKey = useCallback((key: string) => {
-        // Check for both singular and plural table names
-        if (key.endsWith("_id")) {
-            const base = key.slice(0, -3);
-            return allTableNames.has(base) || allTableNames.has(base + "s");
-        }
-        return false;
-    }, [allTableNames]);
 
     if (loading) {
         return <InternalPage routes={routes}>
@@ -306,15 +335,15 @@ export const StorageUnitPage: FC = () => {
                 }
                 <Tabs value={view} onValueChange={value => dispatch(SettingsActions.setStorageUnitView(value as 'list' | 'card'))}>
                     <TabsList>
-                        <TabsTrigger value="card"><TableCellsIcon className="w-4 h-4" /></TabsTrigger>
-                        <TabsTrigger value="list"><ListBulletIcon className="w-4 h-4" /></TabsTrigger>
+                        <TabsTrigger value="card" data-testid="icon-button"><TableCellsIcon className="w-4 h-4" /></TabsTrigger>
+                        <TabsTrigger value="list" data-testid="icon-button"><ListBulletIcon className="w-4 h-4" /></TabsTrigger>
                     </TabsList>
                 </Tabs>
             </div>
         </div>
         <div className={cn("flex flex-wrap gap-4", {
             "hidden": view !== "card",
-        })}>
+        })} data-testid="storage-unit-card-list">
             <ExpandableCard className={classNames("overflow-visible min-w-[200px] max-w-[700px] h-full", {
                 "hidden": current?.Type === DatabaseType.Redis,
             })} icon={<PlusCircleIcon className="w-4 h-4" />} isExpanded={create} setExpanded={setCreate} tag={<Badge variant="destructive">{error}</Badge>}>
@@ -326,10 +355,13 @@ export const StorageUnitPage: FC = () => {
                 </div>
                 <div className="flex grow flex-col my-2 gap-4">
                     <div className="flex flex-col gap-4">
-                        <h1 className="text-2xl font-bold mb-4">Create a {getDatabaseStorageUnitLabel(current?.Type, true)}</h1>
+                        <SheetTitle className="flex items-center gap-2">
+                            <PlusCircleIcon className="w-5 h-5" />
+                            Create a {getDatabaseStorageUnitLabel(current?.Type, true)}
+                        </SheetTitle>
                         <div className="flex flex-col gap-2">
                             <Label>Name</Label>
-                            <Input value={storageUnitName} onChange={e => setStorageUnitName(e.target.value)} />
+                            <Input value={storageUnitName} onChange={e => setStorageUnitName(e.target.value)} placeholder="Enter name..." />
                         </div>
                         <div className={classNames("flex flex-col gap-sm overflow-y-auto max-h-[75vh]", {
                             "hidden": isNoSQL(current?.Type as DatabaseType),
@@ -337,7 +369,7 @@ export const StorageUnitPage: FC = () => {
                             <div className="flex flex-col gap-4">
                                 {
                                     fields.map((field, index) => (
-                                        <div className="flex flex-col gap-lg relative" key={`field-${index}`}>
+                                        <div className="flex flex-col gap-lg relative" key={`field-${index}`} data-testid="create-field-card">
                                             <Label>Field Name</Label>
                                             <Input value={field.Key} onChange={e => handleFieldValueChange("Key", index, e.target.value)} placeholder="Enter field name"/>
                                             <Label>Field Type</Label>
@@ -369,7 +401,7 @@ export const StorageUnitPage: FC = () => {
                                             {
                                                 fields.length > 1 &&
                                                 <Button variant="destructive" onClick={() => handleRemove(index)} data-testid="remove-field-button" className="w-full mt-1">
-                                                    <XMarkIcon className="w-4 h-4"/> <span>Remove</span>
+                                                    <XCircleIcon className="w-4 h-4"/> <span>Remove</span>
                                                 </Button>
                                             }
                                             {index !== fields.length - 1 && <Separator className="mt-2" />}
@@ -384,13 +416,13 @@ export const StorageUnitPage: FC = () => {
                     </div>
                     <div className="flex grow" />
                     <Button onClick={handleSubmit} data-testid="submit-button" className="w-full">
-                        <CheckCircleIcon className="w-4 h-4" /> Submit
+                        <CheckCircleIcon className="w-4 h-4" /> Create
                     </Button>
                 </div>
             </ExpandableCard>
             {
                 data != null && data.StorageUnit.length > 0 && filterStorageUnits.map(unit => (
-                    <StorageUnitCard key={unit.Name} unit={unit} allTableNames={allTableNames} />
+                    <StorageUnitCard key={unit.Name} unit={unit} columns={tableColumns[unit.Name]} />
                 ))
             }
         </div>
@@ -405,7 +437,7 @@ export const StorageUnitPage: FC = () => {
                         {sharedAttributeKeys.map(key => (
                             <TableHead key={key}>{key}</TableHead>
                         ))}
-                        <TableHead className="w-32">Actions</TableHead>
+                        <TableHead>Actions</TableHead>
                     </TableHeadRow>
                 </TableHeader>
                 <VirtualizedTableBody
@@ -428,9 +460,10 @@ export const StorageUnitPage: FC = () => {
                                                     state: { unit },
                                                 });
                                             }} 
-                                            data-testid="data-button" 
-                                            variant="secondary" 
+                                            data-testid="data-button"
+                                            variant="secondary"
                                             size="sm"
+                                            className="!cursor-pointer"
                                         >
                                             <CircleStackIcon className="w-4 h-4" /> Data
                                         </Button>
@@ -446,39 +479,57 @@ export const StorageUnitPage: FC = () => {
                     {(() => {
                         const unit = filterStorageUnits.find(u => u.Name === expandedUnit);
                         if (!unit) return null;
-                        
+
+                        const columns = tableColumns[unit.Name];
+                        const foreignKeyMap = new Map<string, boolean>();
+                        if (columns) {
+                            columns.forEach(col => {
+                                if (col.IsForeignKey) {
+                                    foreignKeyMap.set(col.Name, true);
+                                }
+                            });
+                        }
+
                         const [introAttributes, expandedAttributes] = [unit.Attributes.slice(0,4), unit.Attributes.slice(4)];
-                        
+
                         return (
                             <Card className="p-6">
                                 <div className="flex flex-col gap-4">
                                     <h2 className="text-2xl font-bold">{unit.Name}</h2>
                                     <StackList>
-                                        {introAttributes.map(attribute => (
-                                            <StackListItem key={attribute.Key} item={attribute.Key}>
-                                                {attribute.Value}
-                                            </StackListItem>
-                                        ))}
-                                        {expandedAttributes.map(attribute => (
-                                            <StackListItem key={attribute.Key} item={isValidForeignKey(attribute.Key) ? <Badge className="text-lg" data-testid="foreign-key-attribute">{attribute.Key}</Badge> : attribute.Key}>
-                                                {attribute.Value}
-                                            </StackListItem>
-                                        ))}
+                                        {introAttributes.map(attribute => {
+                                            const isForeignKey = foreignKeyMap.has(attribute.Key);
+                                            return (
+                                                <StackListItem key={attribute.Key} item={isForeignKey ?
+                                                    <Badge className="text-lg" data-testid="foreign-key-attribute">{attribute.Key}</Badge> : attribute.Key}>
+                                                    {attribute.Value}
+                                                </StackListItem>
+                                            );
+                                        })}
+                                        {expandedAttributes.map(attribute => {
+                                            const isForeignKey = foreignKeyMap.has(attribute.Key);
+                                            return (
+                                                <StackListItem key={attribute.Key} item={isForeignKey ?
+                                                    <Badge className="text-lg" data-testid="foreign-key-attribute">{attribute.Key}</Badge> : attribute.Key}>
+                                                    {attribute.Value}
+                                                </StackListItem>
+                                            );
+                                        })}
                                     </StackList>
                                     <div className="flex gap-sm mt-4">
-                                        <Button 
+                                        <Button
                                             onClick={() => {
                                                 navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
                                                     state: { unit },
                                                 });
-                                            }} 
-                                            data-testid="data-button" 
+                                            }}
+                                            data-testid="data-button"
                                             variant="secondary"
                                         >
                                             <CircleStackIcon className="w-4 h-4" /> Data
                                         </Button>
-                                        <Button 
-                                            onClick={() => setExpandedUnit(null)} 
+                                        <Button
+                                            onClick={() => setExpandedUnit(null)}
                                             variant="outline"
                                         >
                                             <XMarkIcon className="w-4 h-4" /> Close
@@ -494,9 +545,10 @@ export const StorageUnitPage: FC = () => {
     </InternalPage>
 }
 
-export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data }) => {
-    const { getNodes } = useReactFlow();
+export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit & { columns?: any[] }>> = ({ data }) => {
     const navigate = useNavigate();
+    const schema = useAppSelector(state => state.database.schema);
+    const current = useAppSelector(state => state.auth.current);
 
     const handleNavigateTo = useCallback(() => {
         if (data == null) {
@@ -509,16 +561,15 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data })
         });
     }, [navigate, data]);
 
-    const isValidForeignKey = useCallback((key: string) => {
-        // Use node ids as table names
-        if (key.endsWith("_id")) {
-            const nodes = getNodes();
-            const base = key.slice(0, -3);
-            const nodeIds = new Set(nodes.map((node: Node) => node.id));
-            return nodeIds.has(base) || nodeIds.has(base + "s");
-        }
-        return false;
-    }, [getNodes]);
+    // Always display Attributes (which contains both metadata and field definitions)
+    // Use columns data ONLY for IsForeignKey/IsPrimary flags to render handles
+    const displayItems = data?.Attributes || [];
+    const columnsMap = new Map();
+    if (data?.columns) {
+        data.columns.forEach((col: any) => {
+            columnsMap.set(col.Name, col);
+        });
+    }
 
     if (data == null) {
         return (<Card icon={<ArrowPathRoundedSquareIcon className="w-4 h-4" />}>
@@ -528,20 +579,47 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data })
 
     return (
         <>
-            <Handle className="dark:border-white/5" type="target" position={Position.Left} />
             <Card icon={<CircleStackIcon className="w-4 h-4" />} className="h-fit backdrop-blur-[2px] w-[400px] px-2 py-6">
-                <div className="flex flex-col grow mt-2 gap-4">
+                <div className="flex flex-col grow mt-2 gap-lg" data-testid="storage-unit-graph-card">
                     <div className="flex flex-col grow">
                         <h2 className="text-3xl font-semibold mb-2 break-words">{data.Name}</h2>
                         <StackList>
                             {
-                                data.Attributes.map(attribute => (
-                                    <StackListItem rowClassName="items-start" key={attribute.Key}
-                                                   item={isValidForeignKey(attribute.Key) ? <Badge
-                                                       className="text-lg">{attribute.Key}</Badge> : attribute.Key}>
-                                        {attribute.Value}
-                                    </StackListItem>
-                                ))
+                                displayItems.map((item: any, index: number) => {
+                                    const name = item.Name || item.Key;
+                                    const value = item.Type || item.Value;
+
+                                    // Check if this field has FK/PK info from columns data
+                                    const colInfo = columnsMap.get(name);
+                                    const isFKColumn = colInfo?.IsForeignKey || false;
+                                    const isPKColumn = colInfo?.IsPrimary || false;
+
+                                    return (
+                                        <div key={`${name}-${index}`} className="relative">
+                                            {isFKColumn && (
+                                                <Handle
+                                                    type="source"
+                                                    position={Position.Right}
+                                                    id={`${data.Name}-${name}`}
+                                                    className="right-0 translate-x-6 w-3 h-3 border-2 border-border bg-background dark:bg-background"
+                                                />
+                                            )}
+                                            {isPKColumn && (
+                                                <Handle
+                                                    type="target"
+                                                    position={Position.Left}
+                                                    id={`${data.Name}-${name}`}
+                                                    className="left-0 -translate-x-6 w-3 h-3 border-2 border-border bg-background dark:bg-background"
+                                                />
+                                            )}
+                                            <StackListItem rowClassName="items-start"
+                                                           item={isFKColumn ? <Badge
+                                                               className="text-lg">{name}</Badge> : name}>
+                                                {value}
+                                            </StackListItem>
+                                        </div>
+                                    );
+                                })
                             }
                         </StackList>
                     </div>
@@ -550,7 +628,6 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit>> = ({ data })
                     </Button>
                 </div>
             </Card>
-            <Handle className="dark:border-white/5" type="source" position={Position.Right} />
         </>
     );
 }

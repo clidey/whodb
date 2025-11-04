@@ -27,6 +27,7 @@ import (
 
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
@@ -74,6 +75,12 @@ func (p *Sqlite3Plugin) FormTableName(schema string, storageUnit string) string 
 }
 
 func (p *Sqlite3Plugin) GetDatabases(config *engine.PluginConfig) ([]string, error) {
+	// In desktop mode, return empty list - users will browse for files
+	if env.GetIsDesktopMode() {
+		return []string{}, nil
+	}
+
+	// Server mode: scan default directory
 	directory := getDefaultDirectory()
 	entries, err := os.ReadDir(directory)
 	if err != nil {
@@ -404,6 +411,36 @@ func (p *Sqlite3Plugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult,
 	}
 
 	return result, nil
+}
+
+func (p *Sqlite3Plugin) GetForeignKeyRelationships(config *engine.PluginConfig, schema string, storageUnit string) (map[string]*engine.ForeignKeyRelationship, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (map[string]*engine.ForeignKeyRelationship, error) {
+		escapedTable := strings.ReplaceAll(storageUnit, "'", "''")
+		query := fmt.Sprintf("PRAGMA foreign_key_list('%s')", escapedTable)
+
+		rows, err := db.Raw(query).Rows()
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+
+		relationships := make(map[string]*engine.ForeignKeyRelationship)
+		for rows.Next() {
+			var id, seq int
+			var table, from, to, onUpdate, onDelete, match string
+			if err := rows.Scan(&id, &seq, &table, &from, &to, &onUpdate, &onDelete, &match); err != nil {
+				log.Logger.WithError(err).Error("Failed to scan foreign key relationship")
+				continue
+			}
+			relationships[from] = &engine.ForeignKeyRelationship{
+				ColumnName:       from,
+				ReferencedTable:  table,
+				ReferencedColumn: to,
+			}
+		}
+
+		return relationships, nil
+	})
 }
 
 func NewSqlite3Plugin() *engine.Plugin {

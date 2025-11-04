@@ -1,0 +1,296 @@
+name: Sign and Validate Builds
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version being signed'
+        required: true
+        type: string
+      validate-docker:
+        description: 'Whether to validate Docker builds'
+        required: false
+        type: boolean
+        default: true
+      validate-snap:
+        description: 'Whether to validate Snap builds'
+        required: false
+        type: boolean
+        default: true
+      validate-desktop:
+        description: 'Whether to validate Desktop builds'
+        required: false
+        type: boolean
+        default: true
+      validate-appimage:
+        description: 'Whether to validate AppImage builds'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  sign-with-sigstore:
+    name: Sign with Sigstore
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign artifacts
+        run: |
+          echo "🔏 Signing artifacts with Sigstore..."
+
+          # Find all artifacts to sign
+          find artifacts -type f \( -name "*.tar" -o -name "*.snap" -o -name "*.AppImage" -o -name "*.exe" -o -name "*.dmg" -o -name "*.pkg" -o -name "*.msix" -o -name "*.msixbundle" \) | while read -r file; do
+            echo "Signing: $file"
+
+            # Sign the artifact
+            cosign sign-blob --yes \
+              --output-signature "${file}.sig" \
+              --output-certificate "${file}.pem" \
+              "$file"
+
+            echo "✅ Signed: $(basename "$file")"
+          done
+
+      - name: Create signatures archive
+        run: |
+          mkdir -p signatures
+          find artifacts -name "*.sig" -o -name "*.pem" | while read -r file; do
+            cp "$file" signatures/
+          done
+          tar czf signatures.tar.gz signatures/
+
+      - name: Upload signatures
+        uses: actions/upload-artifact@v4
+        with:
+          name: signatures
+          path: signatures.tar.gz
+          retention-days: 7
+
+  validate-builds:
+    name: Validate All Builds
+    runs-on: ubuntu-latest
+    needs: [ sign-with-sigstore ]
+    steps:
+      - name: Checkout for scripts
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Download signatures
+        uses: actions/download-artifact@v4
+        with:
+          name: signatures
+          path: .
+
+      - name: Extract signatures
+        run: tar xzf signatures.tar.gz
+
+      - name: Install Cosign for verification
+        uses: sigstore/cosign-installer@v3
+
+      - name: Validate Docker artifacts
+        if: inputs.validate-docker
+        run: |
+          echo "🐳 Validating Docker artifacts..."
+          FAILED=false
+
+          for arch in amd64 arm64; do
+            ARTIFACT_DIR="artifacts/docker-image-${arch}"
+            if [ -d "$ARTIFACT_DIR" ]; then
+              TAR_FILE=$(find "$ARTIFACT_DIR" -name "*.tar" | head -1)
+              if [ -n "$TAR_FILE" ]; then
+                echo "✅ Found Docker ${arch} image: $(basename "$TAR_FILE")"
+
+                # Verify signature if available
+                SIG_FILE="signatures/$(basename "$TAR_FILE").sig"
+                CERT_FILE="signatures/$(basename "$TAR_FILE").pem"
+                if [ -f "$SIG_FILE" ] && [ -f "$CERT_FILE" ]; then
+                  echo "Verifying signature..."
+                  cosign verify-blob \
+                    --signature "$SIG_FILE" \
+                    --certificate "$CERT_FILE" \
+                    --certificate-identity-regexp ".*" \
+                    --certificate-oidc-issuer-regexp ".*" \
+                    "$TAR_FILE"
+                  echo "✅ Signature verified"
+                else
+                  echo "⚠️ No signature found for Docker ${arch} image"
+                fi
+              else
+                echo "❌ Docker ${arch} image missing"
+                FAILED=true
+              fi
+            else
+              echo "❌ Docker ${arch} artifact directory missing"
+              FAILED=true
+            fi
+          done
+
+          if [ "$FAILED" = "true" ]; then
+            echo "::error::Docker validation failed"
+            exit 1
+          fi
+
+      - name: Validate Snap artifacts
+        if: inputs.validate-snap
+        run: |
+          echo "📦 Validating Snap artifacts..."
+          FAILED=false
+
+          for arch in amd64 arm64; do
+            ARTIFACT_DIR="artifacts/snap-package-${arch}"
+            if [ -d "$ARTIFACT_DIR" ]; then
+              SNAP_FILE=$(find "$ARTIFACT_DIR" -name "*.snap" | head -1)
+              if [ -n "$SNAP_FILE" ]; then
+                echo "✅ Found Snap ${arch} package: $(basename "$SNAP_FILE")"
+
+                # Verify filename contains correct version
+                SNAP_NAME=$(basename "$SNAP_FILE")
+                VERSION="${{ inputs.version }}"
+                VERSION_NO_V="${VERSION#v}"  # Remove leading 'v' if present
+
+                if [[ "$SNAP_NAME" == *"_${VERSION}_"* ]] || [[ "$SNAP_NAME" == *"_${VERSION_NO_V}_"* ]]; then
+                  echo "✅ Snap filename contains correct version: $VERSION"
+                else
+                  echo "::error::Snap filename doesn't contain expected version $VERSION"
+                  echo "::error::Found: $SNAP_NAME"
+                  FAILED=true
+                fi
+              else
+                echo "❌ Snap ${arch} package missing"
+                FAILED=true
+              fi
+            else
+              echo "❌ Snap ${arch} artifact directory missing"
+              FAILED=true
+            fi
+          done
+
+          if [ "$FAILED" = "true" ]; then
+            echo "::error::Snap validation failed"
+            exit 1
+          fi
+
+      - name: Validate Desktop artifacts
+        if: inputs.validate-desktop
+        run: |
+          echo "🖥️ Validating Desktop artifacts..."
+          FAILED=false
+
+          # Check Windows builds
+          if [ -d "artifacts/desktop-windows-amd64" ]; then
+            echo "✅ Windows AMD64 desktop build found"
+          else
+            echo "⚠️ Windows AMD64 desktop build missing (may be expected)"
+          fi
+
+          # Check macOS builds
+          if [ -d "artifacts/desktop-darwin-universal" ]; then
+            if [ -f "artifacts/desktop-darwin-universal/build/darwin/universal/whodb.dmg" ]; then
+              echo "✅ macOS DMG found"
+            else
+              echo "❌ macOS DMG missing"
+              FAILED=true
+            fi
+          else
+            echo "⚠️ macOS desktop build missing (may be expected)"
+          fi
+
+          if [ "$FAILED" = "true" ]; then
+            echo "::error::Desktop validation failed"
+            exit 1
+          fi
+
+      - name: Validate AppImage artifacts
+        if: inputs.validate-appimage
+        run: |
+          echo "🐧 Validating AppImage artifacts..."
+          FAILED=false
+
+          for arch in amd64 arm64; do
+            ARTIFACT_DIR="artifacts/appimage-ce-${arch}"
+            if [ -d "$ARTIFACT_DIR" ]; then
+              APPIMAGE_FILE=$(find "$ARTIFACT_DIR" -name "*.AppImage" | head -1)
+              if [ -n "$APPIMAGE_FILE" ]; then
+                echo "✅ Found AppImage ${arch}: $(basename "$APPIMAGE_FILE")"
+
+                # Verify signature
+                SIG_FILE="signatures/$(basename "$APPIMAGE_FILE").sig"
+                CERT_FILE="signatures/$(basename "$APPIMAGE_FILE").pem"
+                if [ -f "$SIG_FILE" ] && [ -f "$CERT_FILE" ]; then
+                  echo "Verifying signature..."
+                  cosign verify-blob \
+                    --signature "$SIG_FILE" \
+                    --certificate "$CERT_FILE" \
+                    --certificate-identity-regexp ".*" \
+                    --certificate-oidc-issuer-regexp ".*" \
+                    "$APPIMAGE_FILE"
+                  echo "✅ Signature verified"
+                else
+                  echo "⚠️ No signature found for AppImage ${arch}"
+                fi
+
+                # Verify it's executable
+                if [ -x "$APPIMAGE_FILE" ]; then
+                  echo "✅ AppImage is executable"
+                else
+                  echo "❌ AppImage is not executable"
+                  FAILED=true
+                fi
+              else
+                echo "❌ AppImage ${arch} missing"
+                FAILED=true
+              fi
+            else
+              echo "❌ AppImage ${arch} artifact directory missing"
+              FAILED=true
+            fi
+          done
+
+          if [ "$FAILED" = "true" ]; then
+            echo "::error::AppImage validation failed"
+            exit 1
+          fi
+
+      - name: Create validation manifest
+        run: |
+          cat > validation_manifest.json <<EOF
+          {
+            "version": "${{ inputs.version }}",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "validation": {
+              "docker": ${{ inputs.validate-docker }},
+              "snap": ${{ inputs.validate-snap }},
+              "desktop": ${{ inputs.validate-desktop }},
+              "appimage": ${{ inputs.validate-appimage }}
+            },
+            "artifacts": $(find artifacts -type f -name "*.tar" -o -name "*.snap" -o -name "*.AppImage" -o -name "*.exe" -o -name "*.dmg" | wc -l)
+          }
+          EOF
+
+      - name: Upload validation manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-manifest-validated
+          path: validation_manifest.json
+          retention-days: 1

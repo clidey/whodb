@@ -17,6 +17,8 @@
 package engine
 
 import (
+	"strings"
+
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/types"
 )
@@ -48,7 +50,7 @@ func (e *Engine) RegistryPlugin(plugin *Plugin) {
 
 func (e *Engine) Choose(databaseType DatabaseType) *Plugin {
 	for _, plugin := range e.Plugins {
-		if plugin.Type == databaseType {
+		if strings.EqualFold(string(plugin.Type), string(databaseType)) {
 			return plugin
 		}
 	}

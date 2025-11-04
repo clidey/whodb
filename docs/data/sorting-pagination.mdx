@@ -1,0 +1,405 @@
+---
+title: "Sorting & Pagination"
+description: "Learn how to sort columns and navigate through large datasets using pagination"
+---
+
+# Sorting & Pagination
+
+WhoDB provides intuitive sorting and pagination features to help you organize and navigate through large datasets efficiently. This guide covers how to sort data, adjust page sizes, and navigate through pages.
+
+## Column Sorting
+
+### Basic Single Column Sort
+
+To sort by a single column:
+
+1. Click on any column header
+2. The column sorts in ascending order
+3. Click again to reverse to descending order
+4. Click a third time to remove sorting
+
+![Sorted Column Example](/images/38-data-view-sorted-column.png)
+
+### Sort Indicators
+
+- **Sort Arrow**: Shows which column is currently sorted
+- **Ascending (↑)**: Data is sorted from lowest to highest
+- **Descending (↓)**: Data is sorted from highest to lowest
+- **No Arrow**: Column is not currently sorted
+
+### Sort Behavior by Data Type
+
+**Text Columns**
+- Ascending: Alphabetical order (A-Z)
+- Descending: Reverse alphabetical (Z-A)
+- Case-sensitive or insensitive depending on database
+
+**Numeric Columns**
+- Ascending: Smallest to largest values
+- Descending: Largest to smallest values
+- NULL values typically appear at the end
+
+**Date & Time Columns**
+- Ascending: Oldest to newest dates
+- Descending: Newest to oldest dates
+- Timestamp precision respected
+
+**Boolean Columns**
+- FALSE typically sorts first
+- TRUE sorts second
+- Consistent regardless of ascending/descending
+
+<Tip>
+Click a column header to quickly sort by that column. It's the fastest way to organize your data.
+</Tip>
+
+## Multi-Column Sorting
+
+For more sophisticated sorting across multiple columns:
+
+### Using Shift+Click
+
+To sort by multiple columns:
+
+1. Click the first column header to sort by it
+2. Hold Shift and click additional column headers
+3. Each additional column becomes a secondary, tertiary sort level
+4. Visual indicators show the sort order
+
+### Sort Priority
+
+- **First Click**: Primary sort (highest priority)
+- **Second Shift+Click**: Secondary sort
+- **Third Shift+Click**: Tertiary sort, etc.
+
+### Clearing Multi-Column Sorts
+
+- Click a column without Shift to make it the primary sort
+- Shift+click the same column again to remove it from sorting
+- Use the sort reset button if available in the interface
+
+<Info>
+Multi-column sorting is useful for grouping related records together (e.g., sort by department, then by last name).
+</Info>
+
+## Pagination Overview
+
+For tables with many records, pagination breaks the data into manageable pages:
+
+### Understanding Page Controls
+
+![Page Size Dropdown](/images/15-data-view-page-size-dropdown.png)
+
+The pagination controls show:
+
+- **Current Page**: Which page you're viewing
+- **Total Records**: Total number of records in the table
+- **Total Pages**: How many pages total
+- **Page Size**: Number of records per page
+- **Navigation Buttons**: Move between pages
+
+### Page Size Options
+
+WhoDB provides several standard page sizes:
+
+**Page Size: 10**
+![Page Size 10 Selected](/images/56-page-size-10-selected.png)
+
+- Default view for quick browsing
+- Fast loading of small datasets
+- Suitable for most tables
+
+**Page Size: 25**
+![Page Size 25 Selected](/images/57-page-size-25-selected.png)
+
+- Balanced view showing more data per page
+- Good for detailed inspection
+- Still maintains good performance
+
+**Page Size: 50**
+![Page Size 50 Selected](/images/58-page-size-50-selected.png)
+
+- Shows many records per page
+- Reduces page navigation
+- Suitable for less intensive operations
+
+### All Options View
+
+![Page Size All Options](/images/55-page-size-all-options.png)
+
+Available page sizes typically include:
+- 10 (default)
+- 25
+- 50
+- 100 (if database supports it)
+- All (load entire table)
+
+<Warning>
+Selecting "All" on a large table may cause performance issues. Use smaller page sizes when possible.
+</Warning>
+
+## Changing Page Size
+
+### Setting Page Size
+
+1. Look for the page size selector in the pagination controls
+2. Click on the current page size to open the dropdown
+3. Select your desired page size
+4. The table reloads with the new page size
+
+### Page Size Effects
+
+- **Smaller Sizes** (10): Faster loading, more page navigation
+- **Larger Sizes** (50+): Fewer pages, longer initial load
+- **All Records**: No pagination, all records at once
+
+<Tip>
+If the table is very responsive, use a larger page size. If performance degrades, switch to a smaller page size.
+</Tip>
+
+## Navigating Between Pages
+
+### Page Navigation Controls
+
+**First Page**
+- Button to jump directly to the first page
+- Useful when viewing later pages
+
+**Previous Page**
+- Navigate one page backward
+- Disabled when already on first page
+
+**Next Page**
+- Navigate one page forward
+- Disabled when on the last page
+
+**Last Page**
+- Jump directly to the last page
+- Useful for viewing most recent records (if sorted ascending by ID)
+
+**Page Input**
+- Type a specific page number to jump directly to it
+- Enter the page number and press Enter
+
+### Quick Navigation
+
+- **Keyboard**: Use arrow keys to move between pages
+- **Direct Entry**: Some interfaces allow typing a page number
+
+## Pagination Workflow
+
+### Complete Pagination Example
+
+Viewing a table with 250 records:
+
+<Steps>
+<Step title="Set Page Size">
+Click the page size dropdown and select 25 to view 25 records per page.
+</Step>
+<Step title="View Current Page">
+The first page loads showing records 1-25 of 250 (total 10 pages).
+</Step>
+<Step title="Sort Data">
+Click a column header to sort the data. Sorting resets you to page 1.
+</Step>
+<Step title="Navigate Pages">
+Click Next to view the next 25 records (26-50).
+</Step>
+<Step title="Jump to End">
+Click Last Page to jump to page 10 (records 226-250).
+</Step>
+<Step title="Return to Start">
+Click First Page to return to the beginning.
+</Step>
+</Steps>
+
+## Advanced Pagination Scenarios
+
+### Finding Records in Large Tables
+
+To find a specific record in a 10,000+ record table:
+
+1. **Use Filters**: Apply WHERE conditions to narrow the dataset
+2. **Sort Strategically**: Sort by a key field to group similar records
+3. **Use Pagination**: Navigate through the filtered/sorted results
+4. **Or Use Search**: Quick search for a specific value
+
+<Tip>
+Combining search, filters, and sorting is faster than manually navigating through all pages.
+</Tip>
+
+### Viewing Most Recent Records
+
+For tables with timestamp columns:
+
+1. Sort by the date/timestamp column in descending order
+2. Most recent records appear first on page 1
+3. Navigate backward through pages for older records
+
+### Grouping Similar Records
+
+To review records of a specific type:
+
+1. Apply a filter to show only that type (e.g., status = 'active')
+2. Sort by a secondary field (e.g., name or date)
+3. Review through the pages
+
+## Sorting and Pagination Together
+
+### Sort Then Paginate
+
+The typical workflow:
+
+1. **Sort**: Choose column(s) to sort by
+2. **Filter** (Optional): Apply conditions if needed
+3. **Set Page Size**: Choose appropriate page size
+4. **Navigate**: Go through pages as needed
+
+### Maintaining Sort After Navigation
+
+- Sort order is maintained when navigating between pages
+- Changing page size preserves sort settings
+- Return to sorted view after filtering
+
+## Performance Considerations
+
+### Large Dataset Optimization
+
+**For Very Large Tables (100K+ rows)**
+
+1. **Use Filters First**: Dramatically reduce result set before sorting
+2. **Use Smaller Page Sizes**: Faster initial load
+3. **Avoid Sorting Complex Data**: Numeric sorts are faster than text
+4. **Sort by Indexed Columns**: Much faster on databases with indexes
+
+<Info>
+Sorting and pagination performance depends significantly on your database and available indexes. Talk to your database administrator for optimization suggestions.
+</Info>
+
+### Memory Usage
+
+- **Larger Page Sizes**: Use more browser memory but reduce page transitions
+- **Smaller Page Sizes**: Lower memory usage but more page navigation
+- **Balance**: Choose page size based on your available resources
+
+## Best Practices
+
+<Steps>
+<Step title="Start with Filters">
+Apply filters first to reduce the dataset before sorting or pagination.
+</Step>
+<Step title="Sort by Key Columns">
+Sort by columns that help you find what you're looking for quickly.
+</Step>
+<Step title="Use Appropriate Page Size">
+Choose a page size that balances speed with information density.
+</Step>
+<Step title="Multi-Sort When Needed">
+Use Shift+click for secondary sorts when grouping data.
+</Step>
+<Step title="Verify Results">
+Check that sorting is showing expected results, especially for mixed data types.
+</Step>
+</Steps>
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Click Column Header` | Sort by column |
+| `Shift + Click Column` | Multi-column sort |
+| `Ctrl/Cmd + Click` | Sometimes alternative sort behavior |
+| `Page Down` | Next page |
+| `Page Up` | Previous page |
+| `Ctrl/Cmd + Home` | First page |
+| `Ctrl/Cmd + End` | Last page |
+
+## Common Issues
+
+### Sorting Not Working
+
+**Issue**: Column doesn't sort when clicked
+
+Solutions:
+- Click directly on the column header text
+- Check that the column is not locked or read-only
+- Verify your browser has JavaScript enabled
+- Try sorting by a different column
+
+### Pagination Issues
+
+**Issue**: Can't navigate to certain pages
+
+Possible causes:
+- Page number exceeds total pages
+- Apply filters that reduce results
+- Check the page count display
+- Try using First/Last page buttons
+
+**Issue**: Page size change not working
+
+Solutions:
+- Ensure you selected a different page size
+- Try refreshing the page
+- Check your browser console for errors
+
+### Performance Issues
+
+**Issue**: Sorting/pagination is very slow
+
+For slow performance:
+- Reduce page size for faster loading
+- Apply filters to reduce dataset
+- Check your database connection
+- Consider using the Scratchpad for complex operations
+
+## Limitations
+
+- **Single Table**: Sorting and pagination work on one table at a time
+- **Page-Based Navigation**: No continuous scroll (traditional pagination)
+- **Sort Persistence**: Sorts may reset when filtering
+- **Real-Time Data**: External changes require refresh to appear
+
+## Advanced: Working with Large Datasets
+
+### Using Scratchpad for Complex Operations
+
+For sophisticated sorting and analysis:
+
+1. Use the Scratchpad query interface
+2. Write SQL with ORDER BY clauses
+3. Use LIMIT and OFFSET for custom pagination
+4. Combine with WHERE, GROUP BY, etc.
+
+Example:
+```sql
+SELECT * FROM users
+WHERE status = 'active'
+ORDER BY created_at DESC, name ASC
+LIMIT 25 OFFSET 0
+```
+
+See the Query section for more details.
+
+## Next Steps
+
+Explore related data management features:
+
+<CardGroup cols={2}>
+<Card title="Filtering & Searching" icon="magnifying-glass" href="/data/filtering-searching">
+Learn to filter and search your data
+</Card>
+<Card title="Viewing Data" icon="table" href="/data/viewing-data">
+Understand the data grid interface
+</Card>
+<Card title="Scratchpad Queries" icon="code" href="/query/writing-queries">
+Write custom SQL for advanced operations
+</Card>
+<Card title="Data Management" icon="database" href="/data/viewing-data">
+Explore all data management features
+</Card>
+</CardGroup>
+
+<Tip>
+Efficient sorting and pagination are essential skills for working with large databases. Practice these techniques to become proficient at quickly finding and organizing your data.
+</Tip>

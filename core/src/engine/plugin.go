@@ -52,8 +52,12 @@ type StorageUnit struct {
 }
 
 type Column struct {
-	Type string
-	Name string
+	Type             string
+	Name             string
+	IsPrimary        bool
+	IsForeignKey     bool
+	ReferencedTable  *string
+	ReferencedColumn *string
 }
 
 type GetRowsResult struct {
@@ -75,6 +79,8 @@ const (
 type GraphUnitRelationship struct {
 	Name             string
 	RelationshipType GraphUnitRelationshipType
+	SourceColumn     *string
+	TargetColumn     *string
 }
 
 type GraphUnit struct {
@@ -86,6 +92,12 @@ type ChatMessage struct {
 	Type   string
 	Result *GetRowsResult
 	Text   string
+}
+
+type ForeignKeyRelationship struct {
+	ColumnName       string
+	ReferencedTable  string
+	ReferencedColumn string
 }
 
 type PluginFunctions interface {
@@ -108,6 +120,9 @@ type PluginFunctions interface {
 	// Mock data generation methods
 	GetColumnConstraints(config *PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error)
 	ClearTableData(config *PluginConfig, schema string, storageUnit string) (bool, error)
+
+	// Foreign key detection
+	GetForeignKeyRelationships(config *PluginConfig, schema string, storageUnit string) (map[string]*ForeignKeyRelationship, error)
 
 	// Transaction support
 	WithTransaction(config *PluginConfig, operation func(tx any) error) error

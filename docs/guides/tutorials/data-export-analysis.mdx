@@ -1,0 +1,625 @@
+---
+title: "Data Export and Analysis Workflow"
+description: "Complete workflow for filtering data, exporting to Excel, and conducting analysis outside WhoDB"
+---
+
+# Data Export and Analysis Workflow
+
+Database exploration is just the first step. The real value comes from exporting your data into formats you can share, analyze, and present. This tutorial guides you through the complete workflow: filtering data, exporting in various formats, and analyzing results. By the end, you'll have a comprehensive dataset ready for presentations, reports, or deep analysis.
+
+## What You'll Learn
+
+By the end of this tutorial, you'll be able to:
+- Apply precise filters to isolate exactly the data you need
+- Understand different export formats and when to use each
+- Export data to Excel, CSV, JSON, and SQL formats
+- Configure export options like delimiters and column selection
+- Export selected rows vs. entire result sets
+- Use exported data in analysis tools like Excel and Google Sheets
+- Create reproducible export workflows
+
+<Info>
+This tutorial assumes you've completed the [Data Exploration Workflow](/guides/tutorials/data-exploration-workflow) tutorial and understand filtering and pagination.
+</Info>
+
+## Prerequisites
+
+Before starting, ensure you:
+- Have WhoDB connected to a database with data
+- Know how to filter data with WHERE conditions
+- Have Excel, Google Sheets, or similar tools installed (optional but recommended)
+- Are familiar with basic data analysis concepts
+
+## The Complete Export Workflow
+
+Here's the workflow we'll follow:
+
+1. **Identify your data needs** - What question are you answering?
+2. **Filter the dataset** - Apply WHERE conditions to get exactly what you need
+3. **Preview results** - Verify you have the right data before exporting
+4. **Choose export format** - Select the best format for your use case
+5. **Configure export options** - Customize delimiter, columns, and filename
+6. **Execute export** - Download your file
+7. **Analyze and share** - Use the exported data for further work
+
+## Step 1: Identifying Your Export Needs
+
+Before filtering, clarify what you're exporting and why:
+
+**Business Questions to Answer**:
+- Quarterly sales performance report?
+- Customer analysis for a marketing campaign?
+- Data for compliance auditing?
+- Product performance metrics?
+- User engagement statistics?
+
+**Who needs the data?**
+- Internal team (technical analysis)?
+- Management (presentation-ready)?
+- External partners (standardized format)?
+- Customers (privacy-sensitive)?
+
+**When do you need it?**
+- One-time export?
+- Regular recurring export?
+- Ad-hoc analysis?
+
+This context guides your filtering and export choices. For example:
+- Internal analysis: SQL format with all data
+- Management report: Excel with summary statistics
+- Partner sharing: CSV with sanitized sensitive fields
+
+## Step 2: Applying Precise Filters
+
+Let's start with a complete example. Suppose you need to analyze Q4 2024 sales:
+
+Open the Data view and click the filter button:
+
+![Where Conditions Popover](/images/16-data-view-where-conditions-popover.png)
+
+### Example Filter Workflow 1: Date Range Analysis
+
+**Goal**: Export all sales orders from Q4 2024 (October 1 - December 31)
+
+<Steps>
+<Step title="Open Filter Panel">
+Click the filter icon in the action bar to open the WHERE conditions panel.
+</Step>
+<Step title="Add First Condition">
+Click "Select field" and choose `order_date`:
+
+![Where Field Dropdown](/images/17-data-view-where-field-dropdown.png)
+</Step>
+<Step title="Set Date Range Start">
+- Operator: `>=` (greater than or equal)
+- Value: `2024-10-01`
+
+![Where Operator GTE](/images/63-where-operator-gte.png)
+</Step>
+<Step title="Add Second Condition">
+Click "Add Condition" to add another filter. Set it to AND logic:
+- Field: `order_date`
+- Operator: `<=` (less than or equal)
+- Value: `2024-12-31`
+</Step>
+<Step title="Add Status Filter">
+Add a third condition (AND):
+- Field: `status`
+- Operator: `=`
+- Value: `completed`
+
+This ensures we only export completed orders, excluding pending or cancelled ones.
+</Step>
+<Step title="Apply Filters">
+Click "Apply". The data grid updates to show only Q4 completed orders:
+
+![Multiple Conditions](/images/39-data-view-multiple-conditions.png)
+
+Notice the filter badge showing active filters.
+</Step>
+</Steps>
+
+### Example Filter Workflow 2: Customer Segment Analysis
+
+**Goal**: Export high-value customers who've placed 5+ orders
+
+```
+Condition 1: order_count >= 5 (AND)
+Condition 2: total_spent >= 5000 (AND)
+Condition 3: status = 'active'
+```
+
+This requires creating a custom view or running a query, then filtering results.
+
+### Example Filter Workflow 3: Data Quality Check
+
+**Goal**: Export incomplete records (missing email or phone)
+
+```
+Condition 1: email IS NULL (OR)
+Condition 2: phone_number IS NULL
+```
+
+These incomplete records can then be reviewed, corrected, or deleted.
+
+<Tip>
+Always verify your filter results before exporting. Make sure the data grid shows exactly what you expect—the right number of rows and relevant columns.
+</Tip>
+
+## Step 3: Previewing Your Data
+
+Before exporting, take time to review what you'll be exporting:
+
+**Check the basics**:
+- Page indicator shows "Page 1 of X" — do you have the expected number of pages?
+- Visible columns are what you need — or should you hide some?
+- Data appears correct — spot-check a few cells
+- Formatting looks good — dates in proper format, numbers aligned
+
+**Look at column order**:
+
+![Table Header Context Menu](/images/37-table-header-context-menu.png)
+
+Right-click column headers to hide unnecessary columns. This reduces file size and improves clarity for recipients.
+
+**Check row count**:
+The approximate row count helps you understand export size. A million-row export might take longer than a thousand-row export. For large datasets, consider:
+- Adding more filter conditions
+- Using LIMIT in queries for samples
+- Scheduling exports during off-peak hours
+
+## Step 4: Understanding Export Formats
+
+Click the export button to see available formats:
+
+![Export Dialog](/images/20-data-view-export-dialog.png)
+
+Each format serves different purposes:
+
+### CSV (Comma-Separated Values)
+
+![Export Format CSV Option](/images/65-export-format-csv-option.png)
+
+**When to use**:
+- Maximum compatibility with all tools
+- Text-based, small file size
+- Universal import format for databases
+- GitHub-friendly (versioning support)
+
+**Characteristics**:
+- Plain text, no formatting
+- Column names in first row
+- One row per line
+- Configurable delimiter
+
+**Example**:
+```csv
+id,name,email,created_at,status
+1,Alice Johnson,alice@example.com,2023-01-15,active
+2,Bob Smith,bob@example.com,2023-01-16,active
+3,Charlie Brown,charlie@example.com,2023-01-17,inactive
+```
+
+### Excel
+
+![Export Format Excel Option](/images/66-export-format-excel-option.png)
+
+**When to use**:
+- Business reports and presentations
+- Data analysis in Excel or Google Sheets
+- Sharing with non-technical stakeholders
+- Need for formatting and formulas
+
+**Characteristics**:
+- Binary format (.xlsx)
+- Supports formatting, colors, fonts
+- Can include multiple sheets
+- Larger file size than CSV
+
+**Advantages**:
+- Professional appearance
+- Easy further analysis
+- Column autofit for readability
+- Date formatting preserved
+
+### JSON
+
+**When to use**:
+- Web applications and APIs
+- NoSQL databases
+- JavaScript/Node.js projects
+- Nested data structures
+
+**Characteristics**:
+- Structured, nested format
+- Supports complex data types
+- Self-documenting schema
+- Larger file size than CSV
+
+**Example**:
+```json
+[
+  {
+    "id": 1,
+    "name": "Alice Johnson",
+    "email": "alice@example.com",
+    "created_at": "2023-01-15",
+    "status": "active"
+  },
+  {
+    "id": 2,
+    "name": "Bob Smith",
+    "email": "bob@example.com",
+    "created_at": "2023-01-16",
+    "status": "active"
+  }
+]
+```
+
+### SQL
+
+**When to use**:
+- Database backups and migrations
+- Sharing structured data with developers
+- Creating reproducible datasets
+- INSERT statements for bulk data
+
+**Characteristics**:
+- Database-ready format
+- Can be executed directly
+- Preserves data types
+- Good for documentation
+
+**Example**:
+```sql
+INSERT INTO users (id, name, email, created_at, status)
+VALUES (1, 'Alice Johnson', 'alice@example.com', '2023-01-15', 'active');
+INSERT INTO users (id, name, email, created_at, status)
+VALUES (2, 'Bob Smith', 'bob@example.com', '2023-01-16', 'active');
+```
+
+## Step 5: Configuring Export Options
+
+Different formats have different configuration options:
+
+### CSV Options
+
+When exporting to CSV, you'll see:
+
+- **Delimiter**: Character separating columns
+  - Comma (,): Standard, compatible with most tools
+  - Tab: Better for data with commas
+  - Semicolon (;): Common in European systems
+
+![Export Delimiter Comma](/images/67-export-delimiter-comma.png)
+
+- **Include Headers**: Whether to include column names in first row
+  - Usually: Yes (recommended)
+  - Sometimes: No (if importing into existing structure)
+
+- **Selected Rows vs. All**: Export only selected rows or all filtered results
+
+### Excel Options
+
+- **Include Headers**: Column names in first row
+- **Auto-fit Columns**: Automatically size columns to content
+- **Formatting**: Preserve date/number formatting
+- **Sheet Name**: Name of the Excel sheet (default: Sheet1)
+
+### Column Selection
+
+In the export dialog, you can often select which columns to include:
+
+- Deselect unnecessary columns to reduce file size
+- Reorder columns by dragging
+- Hide sensitive columns like passwords or API keys
+
+## Step 6: Exporting Data
+
+Let's walk through a complete export workflow:
+
+### Workflow: Export Q4 Sales Report
+
+**Step 1**: Apply filters as shown earlier (Q4 2024, completed status)
+
+**Step 2**: Click the Export button:
+
+![Export Dialog](/images/20-data-view-export-dialog.png)
+
+**Step 3**: Review the export preview showing:
+- Number of rows to export
+- Selected columns
+- Estimated file size
+
+**Step 4**: Choose format. For a report to management: Excel
+
+**Step 5**: Configure options:
+- Format: Excel (.xlsx)
+- Include headers: Yes
+- Auto-fit columns: Yes
+
+**Step 6**: Review column selection. Hide any sensitive data (passwords, API keys)
+
+**Step 7**: Click "Export" button
+
+**Step 8**: Browser downloads the file with timestamp:
+- Default name: `export_[table_name]_[timestamp].xlsx`
+- Example: `export_orders_2024-10-31_143022.xlsx`
+
+<Check>
+Your file is now downloaded and ready for analysis!
+</Check>
+
+## Step 7: Using Exported Data
+
+### Opening in Excel
+
+1. **Open Excel** and use File → Open to select your downloaded CSV or Excel file
+2. **Data Import Dialog** appears for CSV files
+   - Confirm delimiter matches export settings
+   - Preview shows data looks correct
+   - Click OK to import
+3. **Format and Analyze**
+   - Apply conditional formatting to highlight important values
+   - Create pivot tables for summaries
+   - Make charts for visualization
+
+### Using in Google Sheets
+
+1. **Create new spreadsheet** in Google Sheets
+2. **File → Import** your CSV file
+   - Choose "Replace current sheet" or "Insert new sheet"
+   - Adjust import settings if needed
+3. **Analyze and Share**
+   - Use built-in functions for calculations
+   - Share link with team members
+   - Collaborate in real-time
+
+### Analysis Examples
+
+**Example 1: Revenue Summary**
+
+After importing Q4 sales to Excel:
+```
+Create a pivot table:
+Rows: Product Category
+Values: Sum of Amount
+Result: Total revenue by category for Q4
+```
+
+**Example 2: Customer Analysis**
+
+After importing customers:
+```
+Create formulas:
+- Average customer value: =AVERAGE(total_spent)
+- Customers this year: =COUNTIF(signup_year, 2024)
+- Churn rate: =COUNTIF(status, "inactive") / COUNTA(status)
+```
+
+**Example 3: Data Validation**
+
+After importing user data:
+```
+Check for data quality:
+- Blank cells: =COUNTBLANK(E:E)
+- Invalid emails: =SUMPRODUCT(--(NOT(ISNUMBER(SEARCH("@",E:E)))))
+- Duplicate IDs: Use Data → Remove Duplicates
+```
+
+## Step 8: Regular Scheduled Exports
+
+For recurring reports, consider:
+
+1. **Query Approach**: Create a saved query in Scratchpad that produces your export data
+2. **Document the Process**:
+   - Save the query
+   - Document filter criteria
+   - Store export instructions
+3. **Reproduce**: Run the same query monthly/quarterly to get updated data
+4. **Automation** (Advanced): Use WhoDB's API to automate exports programmatically
+
+## Selected Rows Export
+
+For smaller exports, you can select specific rows:
+
+<Steps>
+<Step title="Select Rows">
+Click the checkbox at the left of each row you want to export, or use "Select All" for the current page:
+
+![Table Row Selection Single](/images/44-table-row-selection-single.png)
+</Step>
+<Step title="Context Menu">
+Right-click or use the action menu:
+
+![Context Menu Select Row](/images/45-context-menu-select-row.png)
+</Step>
+<Step title="Export Selected">
+Click "Export Selected Rows":
+
+![Export Selected Rows Dialog](/images/46-export-selected-rows-dialog.png)
+</Step>
+<Step title="Choose Format and Options">
+Proceed with format selection and configuration as before.
+</Step>
+</Steps>
+
+**When to use selected rows export**:
+- Exporting a small sample
+- Removing specific records before export
+- Exact control over which rows to include
+- Testing export process with minimal data
+
+## Best Practices for Data Export
+
+<AccordionGroup>
+<Accordion title="Always Filter First">
+Never export entire tables if possible. Filtering ensures:
+- Smaller, more manageable files
+- Only relevant data for your analysis
+- Reduced risk of sharing sensitive data
+- Faster export and analysis
+
+Start with WHERE conditions to narrow your dataset.
+</Accordion>
+<Accordion title="Remove Sensitive Data">
+Before exporting, hide columns containing:
+- Passwords or hashes
+- API keys or tokens
+- Full credit card numbers
+- Personally identifiable information (PII) if not needed
+- Internal notes or comments
+
+Use column selection in the export dialog to deselect sensitive fields.
+</Accordion>
+<Accordion title="Use Consistent Naming">
+Save exports with meaningful names:
+- Good: `Q4-2024-Sales-Report.xlsx`
+- Good: `Active-Customers-October-2024.csv`
+- Bad: `export.xlsx`
+- Bad: `data.csv`
+
+Include dates and purpose in filenames for easy identification.
+</Accordion>
+<Accordion title="Document Your Process">
+Keep notes about exports:
+- What filters were applied
+- Why data was excluded
+- Who received the export
+- What analysis was performed
+
+This helps with reproducibility and audit trails.
+</Accordion>
+<Accordion title="Verify Before Sharing">
+Before sending exported data to others:
+- Check row counts match expectations
+- Spot-check data for accuracy
+- Verify formatting is correct
+- Ensure no sensitive data is included
+- Test with a colleague first if possible
+</Accordion>
+<Accordion title="Choose Format for Audience">
+Different audiences need different formats:
+- **Excel**: Business stakeholders, presentations
+- **CSV**: Technical teams, data import
+- **JSON**: Developers, web applications
+- **SQL**: Database administrators, backup/restore
+
+Match the format to your audience's tools and comfort level.
+</Accordion>
+</AccordionGroup>
+
+## Common Export Scenarios
+
+### Scenario 1: Monthly Sales Report
+
+**Process**:
+1. Filter orders: `created_at >= '2024-10-01' AND created_at < '2024-11-01'`
+2. Include columns: order_date, customer_name, product, quantity, amount
+3. Sort by: customer_name, order_date
+4. Export format: Excel with formatting
+5. Create pivot table in Excel by product category
+
+### Scenario 2: Customer Segmentation Export
+
+**Process**:
+1. Filter customers: `status = 'active' AND last_purchase >= DATE_SUB(NOW(), INTERVAL 90 DAY)`
+2. Calculate in query: total_spent, purchase_count, avg_order_value
+3. Sort by: total_spent DESC
+4. Export format: CSV for importing to marketing tool
+5. Use in email campaign targeting
+
+### Scenario 3: Data Backup Export
+
+**Process**:
+1. Export all tables from database
+2. Format: SQL (INSERT statements)
+3. Filename: `database_backup_2024-10-31.sql`
+4. Store in backup location
+5. Document the backup in your records
+
+### Scenario 4: Privacy Compliance Export
+
+**Process**:
+1. Filter: `email = 'user@example.com'` (user requesting their data)
+2. Include columns: All non-sensitive columns
+3. Exclude columns: password, ip_address, internal_notes
+4. Format: CSV or Excel, easy to read
+5. Deliver: Secure transfer to user
+
+## Troubleshooting Export Issues
+
+<AccordionGroup>
+<Accordion title="File Won't Open in Excel">
+**Problem**: Downloaded file can't be opened in Excel
+
+**Solutions**:
+- Verify file extension (.xlsx for Excel, .csv for CSV)
+- For CSV: Try opening with different delimiter (comma vs. tab)
+- File might be corrupted: Try exporting again
+- Check file isn't huge (>100MB may cause issues)
+</Accordion>
+<Accordion title="Data Looks Wrong After Export">
+**Problem**: Numbers, dates, or formatting incorrect in exported file
+
+**Solutions**:
+- Check column data types (Explore view)
+- Verify filters applied correctly before exporting
+- For dates: Check date format matches expected
+- For numbers: Ensure numeric columns exported as numbers, not text
+</Accordion>
+<Accordion title="Export Too Large">
+**Problem**: File is too big to work with or send
+
+**Solutions**:
+- Add more filter conditions to reduce rows
+- Use CSV instead of Excel (smaller file size)
+- Split export into smaller time periods or categories
+- Export specific columns only, hiding unnecessary ones
+</Accordion>
+<Accordion title="Need Specific Formatting">
+**Problem**: Exported data needs special formatting for your needs
+
+**Solutions**:
+- Export to Excel, then apply formatting there
+- Use a query in Scratchpad to format data as SQL
+- Export multiple times with different configurations
+- Consider importing into analysis tool for custom formatting
+</Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+You've mastered data export and analysis. Continue learning:
+
+<CardGroup cols={2}>
+<Card title="Complex Queries" icon="code" href="/guides/tutorials/building-complex-queries">
+Write advanced queries before exporting filtered results
+</Card>
+<Card title="Visualize Schema" icon="sitemap" href="/guides/tutorials/schema-visualization">
+Understand relationships between exported tables
+</Card>
+<Card title="Export Options" icon="table" href="/advanced/export-options">
+Advanced export configurations and options
+</Card>
+<Card title="Data Management" icon="table" href="/data/viewing-data">
+Learn to edit and manage data in WhoDB
+</Card>
+</CardGroup>
+
+## Summary
+
+In this tutorial, you learned:
+- How to identify your export needs and choose appropriate filters
+- Applying precise WHERE conditions for targeted exports
+- Understanding different export formats (CSV, Excel, JSON, SQL)
+- Configuring export options for your use case
+- Exporting data to files for external analysis
+- Using exported data in Excel and Google Sheets
+- Best practices for security, naming, and documentation
+- Handling common export scenarios and troubleshooting issues
+- Selecting specific rows for targeted exports
+
+<Check>
+You now have the complete workflow for extracting data from WhoDB, analyzing it externally, and sharing it with colleagues and stakeholders.
+</Check>

@@ -1,0 +1,635 @@
+---
+title: "Data Exploration Workflow"
+description: "Master the complete workflow for exploring, viewing, filtering, and analyzing data in WhoDB"
+---
+
+# Data Exploration Workflow
+
+Data exploration is at the heart of database management. Whether you're debugging an issue, analyzing trends, or understanding your data structure, WhoDB provides a comprehensive set of tools to make exploration efficient and intuitive. This tutorial guides you through a complete workflow from initial connection to advanced data analysis.
+
+## What You'll Learn
+
+This tutorial covers the complete data exploration workflow:
+- Navigating the database structure efficiently
+- Understanding the Explore view for table metadata
+- Viewing and browsing table data
+- Using pagination to handle large datasets
+- Filtering data with WHERE conditions
+- Searching across all columns
+- Sorting data for better insights
+- Combining multiple techniques for complex analysis
+
+<Info>
+This tutorial assumes you've already connected to a database. If you haven't, complete the [First Database Connection](/guides/tutorials/first-database-connection) tutorial first.
+</Info>
+
+## Understanding the WhoDB Interface
+
+After connecting, you'll see the main interface with several key areas:
+
+![Storage Unit List](/images/05-storage-unit-list.png)
+
+The interface is divided into functional zones:
+
+**Left Sidebar**: Your navigation hub showing databases, schemas, tables, views, and other database objects in a hierarchical tree structure.
+
+**Main Content Area**: Where you interact with your data—viewing tables, examining metadata, or analyzing results.
+
+**Top Tabs**: Switch between different views:
+- **Data**: View and edit table contents
+- **Explore**: Examine table structure and metadata
+- **Graph**: Visualize schema relationships
+- **Scratchpad**: Write and execute custom queries
+
+**Action Bar**: Context-sensitive buttons for common operations like adding rows, exporting data, or refreshing views.
+
+## Step 1: Navigating Your Database Structure
+
+Let's start by exploring the sidebar navigation:
+
+![Sidebar Navigation](/images/06-storage-unit-list-with-sidebar.png)
+
+The sidebar organizes your database in a logical hierarchy:
+
+<Steps>
+<Step title="Database Level">
+At the top, you'll see your connected database name. For systems that support multiple databases (like PostgreSQL or MySQL), you can switch between databases using the dropdown selector.
+
+![Database Selector](/images/34-sidebar-database-selector.png)
+</Step>
+<Step title="Schema Level">
+Expand the database to see schemas. Schemas are logical groupings of tables and other objects:
+- PostgreSQL: Usually has `public` schema and possibly others
+- MySQL: Schemas are equivalent to databases
+- SQLite: No schema concept (all tables in one namespace)
+
+![Schema Selector](/images/35-sidebar-schema-selector.png)
+
+<Tip>
+In PostgreSQL, the `public` schema is the default. Application tables often live here, while system tables are in `pg_catalog` and `information_schema`.
+</Tip>
+</Step>
+<Step title="Object Types">
+Within each schema, objects are grouped by type:
+- **Tables**: Your data storage units
+- **Views**: Virtual tables based on queries
+- **Materialized Views**: Cached query results (PostgreSQL)
+- **Functions**: Stored procedures and functions
+- **Sequences**: Auto-increment generators
+
+Click the arrow next to any group to expand and see individual objects.
+</Step>
+<Step title="Individual Tables">
+Click on any table name to open it in the main content area. The table name becomes highlighted, indicating it's currently selected.
+
+![Navigation Menu](/images/36-sidebar-navigation-menu.png)
+</Step>
+</Steps>
+
+<Note>
+The sidebar supports keyboard navigation. Use arrow keys to move between items and Enter to open a table.
+</Note>
+
+## Step 2: Exploring Table Structure
+
+Before diving into data, it's valuable to understand the table structure. Click on a table, then switch to the **Explore** tab:
+
+![Explore Users Table](/images/07-explore-users-table.png)
+
+The Explore view provides comprehensive metadata about your table:
+
+### Table Information
+
+At the top, you'll see:
+- **Table Name**: The full qualified name (schema.table)
+- **Row Count**: Approximate number of rows
+- **Size**: Disk space used by the table
+- **Created/Modified**: Timestamps for table creation and last modification
+
+### Column Details
+
+The main section shows all columns with detailed information:
+
+![Explore Table Metadata](/images/08-explore-table-metadata.png)
+
+For each column, you can see:
+
+**Column Name**: The field name as it appears in the database
+
+**Data Type**: The column's data type (INTEGER, VARCHAR, TEXT, TIMESTAMP, etc.)
+- Numeric types: INT, BIGINT, DECIMAL, NUMERIC, REAL, DOUBLE
+- String types: CHAR, VARCHAR, TEXT
+- Date/Time types: DATE, TIME, TIMESTAMP, TIMESTAMPTZ
+- Boolean: BOOLEAN, BOOL
+- Binary: BYTEA, BLOB
+- JSON: JSON, JSONB (PostgreSQL)
+
+**Nullable**: Whether the column can contain NULL values
+- ✓ (Yes): Column accepts NULL values
+- ✗ (No): Column requires a value (NOT NULL constraint)
+
+**Default Value**: The default value assigned when no value is provided
+- `NULL`: Defaults to NULL
+- `nextval('sequence_name')`: Auto-increment from sequence
+- Static values: '0', 'CURRENT_TIMESTAMP', etc.
+
+**Primary Key**: Indicated with a key icon if the column is part of the primary key
+
+![Primary Key Column](/images/98-explore-primary-key-column.png)
+
+**Foreign Key**: Shows relationships to other tables with an arrow icon
+
+![Foreign Key Columns](/images/99-explore-foreign-key-columns.png)
+
+<Tip>
+Understanding column types is important for filtering and querying. A TIMESTAMP column requires date-time values, while an INTEGER column accepts only numbers.
+</Tip>
+
+### Indexes
+
+Below the columns, you'll find index information:
+
+![Table with Indexes](/images/100-explore-table-with-indexes.png)
+
+Indexes speed up queries by creating optimized lookup structures. Common index types:
+- **Primary Key Index**: Automatically created for primary keys
+- **Unique Index**: Ensures column values are unique
+- **Regular Index**: Improves query performance
+- **Composite Index**: Covers multiple columns
+
+<Note>
+Indexes are important for query performance. If you're filtering frequently on a column without an index, queries may be slow on large tables.
+</Note>
+
+### Constraints
+
+Constraints enforce data integrity rules:
+- **Primary Key**: Uniquely identifies each row
+- **Foreign Key**: Links to another table
+- **Unique**: Ensures column values are unique
+- **Check**: Validates data against a condition
+- **Not Null**: Requires a value
+
+Understanding constraints helps you understand how data relates and what values are valid.
+
+## Step 3: Viewing Table Data
+
+Now let's look at the actual data. Click the **Data** tab to see the table contents:
+
+![Data View Users Table](/images/09-data-view-users-table.png)
+
+The Data view displays records in a spreadsheet-like grid:
+
+### Understanding the Data Grid
+
+![Data View Table Content](/images/10-data-view-table-content.png)
+
+**Column Headers**: Show column names and types. Click to sort or access column options.
+
+**Row Numbers**: On the left, showing the row position in the current view (not the database ID).
+
+**Cells**: Individual data values. Different types are formatted appropriately:
+- Numbers: Right-aligned
+- Text: Left-aligned
+- Dates: Formatted as YYYY-MM-DD or with time
+- Booleans: Shown as true/false or ✓/✗
+- NULL values: Displayed in gray as "NULL"
+
+![Table with NULL Values](/images/79-table-with-null-values.png)
+
+**Long Text**: Text too long for the cell is truncated with "..." Click the cell to see the full content.
+
+![Table Long Text Content](/images/80-table-long-text-content.png)
+
+### Data Type Formatting
+
+Different data types are displayed with appropriate formatting:
+
+**Date and Timestamp Fields**:
+![Table Dates and Timestamps](/images/81-table-dates-timestamps.png)
+
+**Numeric Types**:
+![Table Numeric Types](/images/82-table-numeric-types.png)
+
+<Tip>
+Hover over a cell to see a tooltip with the full value, especially useful for truncated text or detailed timestamps.
+</Tip>
+
+## Step 4: Pagination for Large Datasets
+
+Large tables can contain millions of rows. WhoDB uses pagination to load data efficiently:
+
+![Page Size Dropdown](/images/15-data-view-page-size-dropdown.png)
+
+### Configuring Page Size
+
+Click the page size dropdown to choose how many rows to display per page:
+
+**Available Options**:
+- 10 rows: For quick browsing and minimal scrolling
+- 25 rows: Balance between data visibility and performance
+- 50 rows: More data per page for larger screens
+- 100 rows: Maximum rows per page for comprehensive views
+
+![Page Size 10 Selected](/images/56-page-size-10-selected.png)
+![Page Size 25 Selected](/images/57-page-size-25-selected.png)
+![Page Size 50 Selected](/images/58-page-size-50-selected.png)
+
+**Choosing the Right Page Size**:
+- Use smaller sizes (10-25) for tables with many columns
+- Use larger sizes (50-100) for tables with few columns
+- Consider your screen size and resolution
+- Smaller sizes load faster on slow connections
+
+### Navigating Pages
+
+At the bottom of the data grid, you'll find pagination controls:
+- **First Page**: Jump to the beginning
+- **Previous Page**: Go back one page
+- **Page Numbers**: Click specific page numbers
+- **Next Page**: Advance one page
+- **Last Page**: Jump to the end
+
+The current page and total pages are displayed: "Page 1 of 42"
+
+<Note>
+The total row count is approximate for large tables to avoid expensive COUNT(*) queries. The actual number of pages may vary slightly.
+</Note>
+
+## Step 5: Filtering Data with WHERE Conditions
+
+Often you don't need all data—just specific records matching certain criteria. Use WHERE conditions to filter:
+
+![Where Conditions Popover](/images/16-data-view-where-conditions-popover.png)
+
+<Steps>
+<Step title="Open the Filter Panel">
+Click the filter icon in the action bar to open the WHERE conditions panel.
+</Step>
+<Step title="Select a Column">
+Click "Select field" to see all available columns:
+
+![Where Field Dropdown](/images/17-data-view-where-field-dropdown.png)
+
+Choose the column you want to filter on. The available operators will adjust based on the column's data type.
+</Step>
+<Step title="Choose an Operator">
+Select the comparison operator:
+
+**For all types**:
+- `=` (Equals): Exact match
+- `!=` (Not Equals): Exclude matching values
+
+![Where Operator Equals](/images/59-where-operator-equals.png)
+![Where Operator Not Equals](/images/62-where-operator-not-equals.png)
+
+**For numbers and dates**:
+- `>` (Greater Than): Values larger than the specified value
+- `<` (Less Than): Values smaller than the specified value
+- `>=` (Greater Than or Equal): Values larger than or equal to
+- `<=` (Less Than or Equal): Values smaller than or equal to
+
+![Where Operator Greater Than](/images/60-where-operator-greater-than.png)
+![Where Operator Less Than](/images/61-where-operator-less-than.png)
+![Where Operator GTE](/images/63-where-operator-gte.png)
+![Where Operator LTE](/images/64-where-operator-lte.png)
+
+**For text**:
+- `LIKE`: Pattern matching with % wildcards
+- `NOT LIKE`: Exclude patterns
+- `IN`: Match any value in a list
+- `NOT IN`: Exclude values in a list
+- `IS NULL`: Find NULL values
+- `IS NOT NULL`: Find non-NULL values
+</Step>
+<Step title="Enter the Value">
+Type the value to filter by. The input field adapts to the column type:
+- **Text**: Free text input
+- **Numbers**: Numeric input with validation
+- **Dates**: Date picker or manual entry
+- **Booleans**: True/false dropdown
+</Step>
+<Step title="Add More Conditions">
+Click "Add Condition" to combine multiple filters. You can use AND/OR logic to create complex filters.
+
+![Multiple Conditions](/images/39-data-view-multiple-conditions.png)
+</Step>
+<Step title="Apply Filters">
+Click "Apply" to execute the filter. The data grid updates to show only matching rows.
+
+![Where Conditions Badge](/images/18-data-view-where-conditions-badge.png)
+
+A badge appears showing the number of active filters. Click it to view or modify conditions.
+</Step>
+</Steps>
+
+### Real-World Filtering Examples
+
+**Find active users**:
+```
+Field: status
+Operator: =
+Value: active
+```
+
+**Find recent records**:
+```
+Field: created_at
+Operator: >
+Value: 2024-01-01
+```
+
+**Find users by email domain**:
+```
+Field: email
+Operator: LIKE
+Value: %@example.com
+```
+
+**Find rows with missing data**:
+```
+Field: phone_number
+Operator: IS NULL
+```
+
+**Complex filter (recent active users)**:
+```
+Condition 1: status = 'active'
+AND
+Condition 2: created_at > '2024-01-01'
+```
+
+<Tip>
+Filters are translated to SQL WHERE clauses. The query runs on the database server, making it efficient even for large tables.
+</Tip>
+
+## Step 6: Searching Across All Columns
+
+For quick searches without setting up filters, use the search box:
+
+![Search Highlight](/images/19-data-view-search-highlight.png)
+
+The search feature:
+- Searches across all visible columns simultaneously
+- Highlights matching text in yellow
+- Updates in real-time as you type
+- Is case-insensitive by default
+- Works with the current page only (combine with filters for broader searches)
+
+**When to use Search vs. Filters**:
+- **Search**: Quick lookups when you're not sure which column contains the value
+- **Filters**: Precise queries on specific columns with operators
+
+<Note>
+Search works on the current page only. For comprehensive searches across all rows, use WHERE conditions with the LIKE operator.
+</Note>
+
+## Step 7: Sorting Data
+
+Sorting helps you find extremes (highest, lowest, most recent) or organize data logically:
+
+![Sorted Column](/images/38-data-view-sorted-column.png)
+
+<Steps>
+<Step title="Click Column Header">
+Click any column header to sort by that column in ascending order (A-Z, 0-9, oldest to newest).
+</Step>
+<Step title="Toggle Sort Direction">
+Click the same header again to reverse the sort order (descending: Z-A, 9-0, newest to oldest).
+</Step>
+<Step title="Multi-Column Sorting">
+Hold Shift and click multiple column headers to sort by multiple columns. The sort order follows your click sequence.
+</Step>
+<Step title="Access Column Menu">
+Right-click a column header to access additional options:
+
+![Table Header Context Menu](/images/37-table-header-context-menu.png)
+
+Options include:
+- Sort Ascending
+- Sort Descending
+- Clear Sort
+- Hide Column
+- Filter by this column
+</Step>
+</Steps>
+
+### Sorting Examples
+
+**Find newest records**:
+- Click `created_at` column header twice (descending)
+
+**Find highest values**:
+- Click `amount` column header twice (descending)
+
+**Alphabetical listing**:
+- Click `name` column header once (ascending)
+
+**Complex sort (by status, then by date)**:
+- Click `status` header (ascending)
+- Hold Shift, click `created_at` header twice (descending)
+
+<Tip>
+Sorting is performed by the database, not in the browser, making it efficient even for millions of rows.
+</Tip>
+
+## Step 8: Combining Techniques for Advanced Analysis
+
+The real power comes from combining filtering, sorting, and pagination:
+
+### Example Workflow: Finding Top Customers
+
+**Goal**: Find the top 10 customers by total purchases in the last quarter.
+
+<Steps>
+<Step title="Apply Date Filter">
+Filter `purchase_date >= '2024-01-01'`
+</Step>
+<Step title="Sort by Amount">
+Click `total_amount` column twice for descending sort
+</Step>
+<Step title="Set Page Size">
+Choose 10 rows per page
+</Step>
+<Step title="Review Results">
+The first page now shows your top 10 customers
+</Step>
+</Steps>
+
+### Example Workflow: Data Quality Check
+
+**Goal**: Find incomplete user records.
+
+<Steps>
+<Step title="Filter for NULL Email">
+Add condition: `email IS NULL`
+</Step>
+<Step title="Add OR Condition">
+Add condition: `phone IS NULL` with OR logic
+</Step>
+<Step title="Sort by Creation Date">
+Sort `created_at` descending to see most recent incomplete records
+</Step>
+<Step title="Review and Fix">
+Identify patterns in incomplete records
+</Step>
+</Steps>
+
+### Example Workflow: Activity Analysis
+
+**Goal**: Analyze user activity patterns.
+
+<Steps>
+<Step title="Filter Active Users">
+Add condition: `status = 'active'`
+</Step>
+<Step title="Search for Specific Domain">
+Use search box: "@enterprise.com" to find enterprise users
+</Step>
+<Step title="Sort by Last Login">
+Sort `last_login_at` descending
+</Step>
+<Step title="Adjust Page Size">
+Set to 50 rows for better overview
+</Step>
+</Steps>
+
+## Handling Different Data Scenarios
+
+### Empty Result Sets
+
+If your filters return no rows:
+
+![Empty State No Results](/images/76-table-empty-state-no-results.png)
+
+**Troubleshooting**:
+- Check filter values for typos
+- Verify date formats match the database format
+- Use broader conditions (LIKE with % wildcards)
+- Clear filters and try again with simpler conditions
+
+### Single Row Results
+
+![Single Row Result](/images/77-table-single-row-result.png)
+
+Perfect for finding specific records by unique identifiers or primary keys.
+
+### Wide Tables
+
+For tables with many columns:
+
+![Many Columns Wide](/images/78-table-many-columns-wide.png)
+
+**Tips**:
+- Scroll horizontally to see all columns
+- Hide unnecessary columns via the column header menu
+- Use a smaller page size to reduce vertical scrolling
+- Consider the Explore view to see column list
+
+## Best Practices for Data Exploration
+
+<AccordionGroup>
+<Accordion title="Start Broad, Then Narrow">
+Begin by viewing data without filters to understand the overall dataset. Then apply filters progressively to focus on what matters.
+
+1. View table structure in Explore tab
+2. Browse sample data without filters
+3. Identify interesting patterns
+4. Apply filters to investigate further
+</Accordion>
+<Accordion title="Use Appropriate Page Sizes">
+Choose page sizes based on your task:
+- **10 rows**: Quick checks and narrow filters
+- **25 rows**: General exploration
+- **50 rows**: Detailed analysis
+- **100 rows**: Comprehensive reviews
+
+Remember: Larger page sizes take longer to load.
+</Accordion>
+<Accordion title="Combine Search and Filters">
+Use search for quick exploration, then create precise filters for the patterns you discover:
+
+1. Search to find examples
+2. Note which columns contain the pattern
+3. Create WHERE conditions for those columns
+4. Refine with additional criteria
+</Accordion>
+<Accordion title="Understand Your Data Types">
+Check the Explore tab before filtering:
+- Timestamp fields need proper date formats
+- Numeric fields require numbers, not strings
+- Boolean fields use true/false or 1/0
+- Text fields are case-sensitive in some databases
+
+This prevents filter errors and unexpected results.
+</Accordion>
+<Accordion title="Sort for Insights">
+Sorting reveals data patterns:
+- Sort dates descending to see recent activity
+- Sort names ascending for alphabetical lists
+- Sort numbers descending to find extremes
+- Multi-sort to organize by category then value
+</Accordion>
+<Accordion title="Check NULL Values">
+NULL values indicate missing data:
+- Use `IS NULL` to find empty fields
+- Use `IS NOT NULL` to exclude empty fields
+- Consider data quality implications
+- Plan data cleanup or validation
+</Accordion>
+</AccordionGroup>
+
+## Performance Considerations
+
+<Warning>
+Keep these performance tips in mind when working with large datasets
+</Warning>
+
+**Indexed Columns**: Filtering and sorting on indexed columns is much faster. Check the Explore tab to see which columns have indexes.
+
+**Avoid Large Page Sizes on Slow Connections**: Loading 100 rows over a slow connection takes significantly longer than 10 rows.
+
+**Filter Before Sorting**: Apply WHERE conditions to reduce the dataset before sorting. Sorting millions of rows is slower than sorting thousands.
+
+**Use Appropriate Operators**: Some operators are faster than others:
+- Fast: `=`, `!=`, `>`, `<`, `>=`, `<=` on indexed columns
+- Medium: `LIKE` with leading characters (`name LIKE 'John%'`)
+- Slow: `LIKE` with leading wildcards (`name LIKE '%smith'`)
+
+**Limit Complex Filters**: Each additional filter condition adds processing time. Use the minimum necessary conditions.
+
+## Next Steps
+
+You've mastered the data exploration workflow! Continue your learning:
+
+<CardGroup cols={2}>
+<Card title="Build Complex Queries" icon="code" href="/guides/tutorials/building-complex-queries">
+Write advanced SQL queries with JOINs and aggregations
+</Card>
+<Card title="Export Your Data" icon="download" href="/guides/tutorials/data-export-analysis">
+Learn to export filtered data for further analysis
+</Card>
+<Card title="Visualize Schema" icon="sitemap" href="/guides/tutorials/schema-visualization">
+Explore table relationships with the Graph view
+</Card>
+<Card title="Data Management" icon="table" href="/data/viewing-data">
+Learn about adding, editing, and deleting records
+</Card>
+</CardGroup>
+
+## Summary
+
+In this tutorial, you learned:
+- How to navigate the WhoDB interface and sidebar
+- Understanding table structure with the Explore view
+- Viewing and browsing table data efficiently
+- Using pagination for large datasets
+- Filtering data with WHERE conditions and operators
+- Searching across all columns quickly
+- Sorting data for better insights
+- Combining techniques for advanced analysis
+- Best practices for performance and data quality
+
+<Check>
+You now have a complete workflow for exploring and analyzing data in WhoDB. Practice these techniques to become more efficient in your daily database work.
+</Check>

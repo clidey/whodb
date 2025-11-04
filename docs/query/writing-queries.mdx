@@ -1,0 +1,627 @@
+---
+title: "Writing Queries"
+description: "Master the Scratchpad code editor with syntax highlighting and auto-completion"
+---
+
+# Writing Queries
+
+The Scratchpad code editor provides a professional SQL editing experience with syntax highlighting, auto-completion, and error detection. Whether you're writing simple queries or complex multi-statement scripts, the editor has tools to make you more productive.
+
+<Tip>
+Use the built-in editor features to write correct SQL faster
+</Tip>
+
+## Code Editor Overview
+
+The query editor combines powerful features in a clean, focused interface:
+
+![Scratchpad Code Editor](/images/28-scratchpad-code-editor.png)
+
+### Key Editor Features
+
+<CardGroup cols={2}>
+<Card title="Syntax Highlighting" icon="palette">
+Keywords, functions, and values displayed in distinct colors
+</Card>
+<Card title="Auto-Completion" icon="wand-magic-sparkles">
+Schema-aware suggestions for tables, columns, and functions
+</Card>
+<Card title="Line Numbers" icon="list-ol">
+Easy reference when debugging errors
+</Card>
+<Card title="Error Underlining" icon="circle-exclamation">
+Instant feedback on syntax issues
+</Card>
+<Card title="Multi-Line Support" icon="align-justify">
+Write complex queries spanning multiple lines
+</Card>
+<Card title="Indentation Guides" icon="ruler-vertical">
+Visual alignment for nested queries and formatting
+</Card>
+</CardGroup>
+
+## Syntax Highlighting
+
+Every SQL element is color-coded for clarity:
+
+### SQL Syntax Colors
+
+<AccordionGroup>
+<Accordion title="Keywords">
+Reserved words like SELECT, FROM, WHERE, JOIN are highlighted in blue:
+
+```sql
+SELECT id, name FROM users WHERE status = 'active';
+```
+
+All SQL keywords are recognized and highlighted consistently across all databases.
+</Accordion>
+<Accordion title="Functions">
+Built-in functions like COUNT, SUM, CONCAT are in purple:
+
+```sql
+SELECT
+  COUNT(*) as total_count,
+  AVG(salary) as average_salary,
+  CONCAT(first_name, ' ', last_name) as full_name
+FROM employees;
+```
+
+Functions are database-specific and highlighted according to your target database.
+</Accordion>
+<Accordion title="Strings">
+Text values in single quotes are displayed in green:
+
+```sql
+SELECT * FROM users
+WHERE username = 'john_doe'
+AND email LIKE '%@example.com';
+```
+
+Different quote styles are recognized: '', "", and backticks (database-specific).
+</Accordion>
+<Accordion title="Numbers">
+Numeric values appear in orange:
+
+```sql
+SELECT id, price, discount
+FROM products
+WHERE price > 100
+AND quantity >= 5;
+```
+
+Decimals, integers, and scientific notation are all recognized.
+</Accordion>
+<Accordion title="Comments">
+SQL comments are grayed out:
+
+```sql
+-- This is a single-line comment
+/* This is a
+   multi-line comment */
+SELECT id, name FROM users; -- inline comment
+```
+
+Both single-line (--) and multi-line (/* */) comments are supported.
+</Accordion>
+</AccordionGroup>
+
+## Auto-Completion
+
+The editor provides context-aware suggestions to speed up your typing:
+
+### Schema-Aware Suggestions
+
+Start typing a table name and WhoDB suggests tables from your schema:
+
+```sql
+SELECT * FROM u  -- Suggests: users, user_profiles, user_settings
+```
+
+### Column Suggestions
+
+After selecting a table, suggestions include available columns:
+
+```sql
+SELECT us  -- Suggests: username, user_id, user_type, user_status
+FROM users
+```
+
+### Function Suggestions
+
+As you type functions, you get suggestions for available functions:
+
+```sql
+SELECT COUNT(  -- Suggests: COUNT, COUNT(DISTINCT)
+```
+
+### Trigger Suggestions
+
+Auto-completion appears when you:
+- Type a table name after FROM, JOIN, INTO, UPDATE
+- Type a column name after SELECT
+- Type a function name followed by `(`
+- Need to reference aliases
+
+<Tip>
+Press `Ctrl + Space` (or `Cmd + Space` on Mac) to manually trigger auto-completion at any time
+</Tip>
+
+## Writing Different Query Types
+
+### SELECT Queries
+
+Retrieve data from your tables:
+
+```sql
+-- Simple selection
+SELECT id, name, email
+FROM users
+WHERE created_at > '2024-01-01'
+LIMIT 10;
+
+-- With ordering
+SELECT
+  id,
+  name,
+  email,
+  status,
+  created_at
+FROM users
+ORDER BY created_at DESC, name ASC;
+
+-- With filtering and multiple conditions
+SELECT id, name, balance
+FROM accounts
+WHERE status = 'active'
+  AND balance > 1000
+  AND created_at >= DATE('2023-01-01')
+LIMIT 100;
+```
+
+### Aggregation Queries
+
+Calculate statistics and group data:
+
+```sql
+-- Count and average by category
+SELECT
+  category,
+  COUNT(*) as item_count,
+  AVG(price) as avg_price,
+  MIN(price) as min_price,
+  MAX(price) as max_price,
+  SUM(quantity) as total_quantity
+FROM products
+GROUP BY category
+HAVING COUNT(*) > 5
+ORDER BY item_count DESC;
+
+-- Time-based aggregation
+SELECT
+  DATE_TRUNC('month', created_at) as month,
+  COUNT(*) as order_count,
+  SUM(total) as revenue
+FROM orders
+WHERE created_at >= '2024-01-01'
+GROUP BY DATE_TRUNC('month', created_at)
+ORDER BY month DESC;
+```
+
+### JOIN Queries
+
+Combine data from multiple tables:
+
+```sql
+-- Inner join (matching records only)
+SELECT
+  u.id,
+  u.username,
+  o.id as order_id,
+  o.total,
+  o.status
+FROM users u
+INNER JOIN orders o ON u.id = o.user_id
+WHERE o.status = 'completed'
+ORDER BY o.created_at DESC;
+
+-- Left join (all users, with matching orders)
+SELECT
+  u.id,
+  u.username,
+  COUNT(o.id) as order_count,
+  SUM(o.total) as total_spent,
+  MAX(o.created_at) as last_order
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+GROUP BY u.id, u.username
+ORDER BY total_spent DESC;
+
+-- Multiple joins
+SELECT
+  u.username,
+  o.id as order_id,
+  p.name as product_name,
+  oi.quantity,
+  oi.price
+FROM users u
+JOIN orders o ON u.id = o.user_id
+JOIN order_items oi ON o.id = oi.order_id
+JOIN products p ON oi.product_id = p.id
+WHERE o.created_at >= '2024-10-01'
+ORDER BY o.created_at DESC;
+```
+
+### UPDATE Queries
+
+Modify existing data:
+
+```sql
+-- Simple update
+UPDATE users
+SET last_login = NOW()
+WHERE id = 123;
+
+-- Conditional update with multiple columns
+UPDATE orders
+SET status = 'shipped', shipped_at = NOW()
+WHERE id = 456
+  AND status = 'processing';
+
+-- Update based on another table
+UPDATE users u
+SET premium = true
+WHERE EXISTS (
+  SELECT 1 FROM orders o
+  WHERE o.user_id = u.id
+  AND o.total > 1000
+);
+
+-- Bulk update with calculation
+UPDATE products
+SET price = price * 1.1
+WHERE category = 'electronics'
+  AND price < 50;
+```
+
+### DELETE Queries
+
+Remove records (use with caution):
+
+```sql
+-- Delete specific record
+DELETE FROM users WHERE id = 999;
+
+-- Delete with multiple conditions
+DELETE FROM audit_logs
+WHERE created_at < '2024-01-01'
+  AND severity = 'debug';
+
+-- Delete unused records
+DELETE FROM temporary_data
+WHERE NOT EXISTS (
+  SELECT 1 FROM main_table
+  WHERE main_table.ref_id = temporary_data.id
+);
+```
+
+### INSERT Queries
+
+Add new records:
+
+```sql
+-- Simple insert
+INSERT INTO users (username, email, status)
+VALUES ('john_doe', 'john@example.com', 'active');
+
+-- Insert multiple rows
+INSERT INTO products (name, category, price)
+VALUES
+  ('Laptop', 'electronics', 1200.00),
+  ('Mouse', 'electronics', 25.00),
+  ('Keyboard', 'electronics', 75.00);
+
+-- Insert from select
+INSERT INTO user_archive
+SELECT * FROM users
+WHERE status = 'inactive'
+  AND last_login < NOW() - INTERVAL '1 year';
+```
+
+### Subqueries
+
+Nest queries for complex logic:
+
+```sql
+-- Subquery in SELECT
+SELECT
+  id,
+  username,
+  (SELECT COUNT(*) FROM orders WHERE user_id = users.id) as order_count
+FROM users;
+
+-- Subquery in WHERE (EXISTS)
+SELECT * FROM users u
+WHERE EXISTS (
+  SELECT 1 FROM orders o
+  WHERE o.user_id = u.id
+    AND o.total > 500
+);
+
+-- Subquery in WHERE (IN)
+SELECT * FROM products
+WHERE category_id IN (
+  SELECT id FROM categories
+  WHERE active = true
+);
+
+-- Common Table Expression (CTE)
+WITH active_users AS (
+  SELECT id, username
+  FROM users
+  WHERE status = 'active'
+),
+user_orders AS (
+  SELECT
+    au.id,
+    au.username,
+    COUNT(o.id) as order_count
+  FROM active_users au
+  LEFT JOIN orders o ON au.id = o.user_id
+  GROUP BY au.id, au.username
+)
+SELECT * FROM user_orders
+WHERE order_count > 0
+ORDER BY order_count DESC;
+```
+
+## Query Formatting
+
+Clean, well-formatted SQL is easier to read and debug:
+
+### Manual Formatting Tips
+
+```sql
+-- POOR - Hard to read
+SELECT id,name,email,status FROM users WHERE created_at > '2024-01-01' AND status='active' ORDER BY created_at DESC LIMIT 50;
+
+-- GOOD - Clear structure
+SELECT
+  id,
+  name,
+  email,
+  status,
+  created_at
+FROM users
+WHERE created_at > '2024-01-01'
+  AND status = 'active'
+ORDER BY created_at DESC
+LIMIT 50;
+```
+
+### Auto-Format Your Code
+
+Press `Cmd/Ctrl + Shift + F` to automatically format your entire query:
+
+- Consistent indentation (2 spaces)
+- Keywords on separate lines
+- Proper alignment of SELECT columns
+- WHERE conditions properly indented
+
+<Info>
+Auto-formatting helps maintain consistency across all your queries
+</Info>
+
+## Advanced Editing
+
+### Multi-Line Comments
+
+Document complex logic:
+
+```sql
+/*
+  Find users who placed orders worth more than $1000
+  but haven't purchased anything in the last 30 days.
+  Used for targeting reactivation campaigns.
+*/
+SELECT
+  u.id,
+  u.email,
+  MAX(o.created_at) as last_order_date
+FROM users u
+JOIN orders o ON u.id = o.user_id
+WHERE o.total > 1000
+  AND o.created_at < NOW() - INTERVAL '30 days'
+GROUP BY u.id, u.email;
+```
+
+### Inline Comments
+
+Add quick notes on specific lines:
+
+```sql
+SELECT
+  id,
+  username,      -- Primary identifier
+  email,          -- For notifications
+  last_login,     -- Track activity
+  status          -- User state
+FROM users;
+```
+
+### Selection and Editing
+
+- Select all text: `Cmd/Ctrl + A`
+- Cut, copy, paste: Standard keyboard shortcuts
+- Find and replace: `Cmd/Ctrl + H`
+- Navigate to line: `Ctrl + G`
+
+## Error Detection and Debugging
+
+### Syntax Error Indicators
+
+The editor highlights syntax errors in real-time:
+
+<AccordionGroup>
+<Accordion title="Missing Semicolon">
+```sql
+SELECT * FROM users  -- Red underline if configured
+```
+
+Add the semicolon or click execute (semicolon is optional at line end).
+</Accordion>
+<Accordion title="Invalid Keywords">
+```sql
+SELCT * FROM users  -- Typo in keyword
+```
+
+Hover over the error or execute to see the error message.
+</Accordion>
+<Accordion title="Missing Commas">
+```sql
+SELECT id, name email FROM users  -- Missing comma before email
+```
+
+Check your column list for proper separation.
+</Accordion>
+</AccordionGroup>
+
+### Execution Errors
+
+When you execute a query with errors:
+
+![Query Error](/images/30-scratchpad-query-error.png)
+
+The error message appears below the editor with:
+- Error type and description
+- Specific location information
+- Database-specific error details
+
+### Debugging Tips
+
+<AccordionGroup>
+<Accordion title="Test Incrementally">
+Start with a simple query and add complexity:
+
+```sql
+-- First: Get the basic table
+SELECT * FROM orders LIMIT 10;
+
+-- Then: Add filtering
+SELECT * FROM orders WHERE status = 'active' LIMIT 10;
+
+-- Finally: Add joins and grouping
+SELECT
+  u.username,
+  COUNT(o.id) as order_count
+FROM users u
+JOIN orders o ON u.id = o.user_id
+WHERE o.status = 'active'
+GROUP BY u.id, u.username;
+```
+</Accordion>
+<Accordion title="Check Column Names">
+Verify column names match your schema exactly (case-sensitive in some databases).
+
+```sql
+-- Use the schema explorer or information schema
+SELECT COLUMN_NAME
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'users';
+```
+</Accordion>
+<Accordion title="Validate Data Types">
+Ensure your WHERE conditions match the column data type:
+
+```sql
+-- String comparison
+WHERE username = 'john_doe'
+
+-- Number comparison
+WHERE age > 18
+
+-- Date comparison
+WHERE created_at > '2024-01-01'
+```
+</Accordion>
+<Accordion title="Use LIMIT in Development">
+Always use LIMIT when exploring large tables:
+
+```sql
+SELECT * FROM large_table LIMIT 100;  -- Safe
+```
+</Accordion>
+</AccordionGroup>
+
+## Best Practices for Query Writing
+
+<Steps>
+<Step title="Plan Before Writing">
+Think through your query logic before typing. What data do you need? What joins are required? What filters apply?
+</Step>
+<Step title="Use Meaningful Aliases">
+Clear aliases make complex queries easier to understand:
+
+```sql
+SELECT
+  u.id as user_id,
+  u.username,
+  COUNT(o.id) as total_orders,
+  SUM(o.total) as total_spent
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+GROUP BY u.id;
+```
+</Step>
+<Step title="Format Consistently">
+Maintain consistent formatting throughout your queries. Use auto-format to establish a baseline.
+</Step>
+<Step title="Comment Complex Logic">
+Explain the "why" not the "what":
+
+```sql
+-- Active users defined as status='active' AND not banned
+WHERE u.status = 'active'
+  AND u.banned_at IS NULL
+```
+</Step>
+<Step title="Avoid Common Pitfalls">
+- Use `IS NULL` not `= NULL`
+- Use `LIKE` for pattern matching
+- Quote identifiers if they contain special characters
+- Be careful with data types in comparisons
+</Step>
+</Steps>
+
+## Keyboard Shortcuts for Editing
+
+| Shortcut | Action |
+|----------|--------|
+| `Cmd/Ctrl + Z` | Undo |
+| `Cmd/Ctrl + Shift + Z` | Redo |
+| `Cmd/Ctrl + X` | Cut |
+| `Cmd/Ctrl + C` | Copy |
+| `Cmd/Ctrl + V` | Paste |
+| `Cmd/Ctrl + F` | Find |
+| `Cmd/Ctrl + H` | Find and Replace |
+| `Cmd/Ctrl + Shift + F` | Format Code |
+| `Cmd/Ctrl + /` | Toggle Comment |
+| `Ctrl + G` | Go to Line |
+| `Cmd/Ctrl + Space` | Trigger Auto-Complete |
+
+## Next Steps
+
+Master your query results and see how data is displayed:
+
+<CardGroup cols={2}>
+<Card title="Query Results" icon="chart-bar" href="/query/query-results">
+Learn to work with query results and data visualization
+</Card>
+<Card title="Query History" icon="history" href="/query/query-history">
+Organize and reuse your written queries
+</Card>
+</CardGroup>
+
+<Check>
+You now have the tools to write clean, efficient SQL queries in WhoDB
+</Check>

@@ -1,0 +1,103 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened]
+  issue_comment:
+    types: [created]
+
+jobs:
+  post-instructions:
+    # Only run on new PR creation
+    if: github.event_name == 'pull_request' && github.event.action == 'opened'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Post instruction comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: 'Hey, leave a @claude-review comment below and I\'ll do a code review!'
+            });
+
+  claude-review:
+    # Only run when someone comments "@claude-review" on a PR
+    if: |
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, '@claude-review')
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+      id-token: write
+    
+    steps:
+      # Get PR details to checkout the correct commit
+      - name: Get PR details
+        uses: actions/github-script@v7
+        id: pr
+        with:
+          script: |
+            const { data: pullRequest } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            return {
+              ref: pullRequest.head.ref,
+              sha: pullRequest.head.sha
+            };
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ fromJSON(steps.pr.outputs.result).sha }}
+          fetch-depth: 1
+
+      - name: Run Claude Code Review
+        id: claude-review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.issue.number }}
+
+            Review this WhoDB pull request. Use CLAUDE.md for detailed guidelines.
+
+            CRITICAL CHECKS:
+            1. SQL Injection: NEVER allow string formatting for SQL. Must use parameterized queries or GORM builder
+            2. Plugin Architecture: Database-specific logic MUST be in plugins, NO switch/if statements on database type
+            3. CE/EE Separation: EE code MUST only be in ee/ subdirectory
+            4. GraphQL First: New APIs must use GraphQL, not HTTP endpoints (unless file downloads)
+
+            REVIEW AREAS:
+            - Security: SQL injection, sensitive data logging, connection handling
+            - Architecture: Plugin pattern adherence, CE/EE separation
+            - Go Code: Modern syntax (any vs interface{}), proper error handling
+            - Frontend: GraphQL usage, no inline gql strings, proper Redux patterns
+            - Dependencies: Matching versions between CE and EE editions
+            - Performance: Database query optimization, N+1 queries
+            - Testing: Coverage for critical paths
+
+            FOCUS ON:
+            - Finding actual bugs and security issues
+            - Ensuring architectural patterns are followed
+            - Code clarity and maintainability
+
+            Be specific and actionable. Reference file:line_number when pointing out issues.
+
+            Use `gh pr comment` to post your review as a single, well-formatted comment.
+          
+          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
+          # or https://docs.claude.com/en/docs/claude-code/sdk#command-line for available options
+          claude_args: '--allowed-tools "Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*)"'
+

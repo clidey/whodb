@@ -1,0 +1,656 @@
+---
+title: "Migrating from pgAdmin to WhoDB"
+description: "Switch from pgAdmin to WhoDB. Learn why WhoDB is faster, simpler, and more intuitive for modern database management."
+seo:
+  title: "pgAdmin Alternative: Migrate to WhoDB"
+  description: "Better than pgAdmin. Switch to WhoDB for faster, simpler PostgreSQL management. Feature comparison, workflow mapping, and migration guide."
+  keywords: "pgAdmin alternative, migrate from pgAdmin, WhoDB vs pgAdmin, better than pgAdmin, PostgreSQL management tool, modern database client"
+---
+
+# Migrating from pgAdmin to WhoDB
+
+pgAdmin is the industry standard for PostgreSQL management, and for good reason. But WhoDB takes the best ideas from pgAdmin and reimagines them for modern workflows. This guide will help you transition smoothly and discover why so many PostgreSQL developers are switching.
+
+<Info>
+WhoDB supports PostgreSQL as a first-class citizen while also supporting MySQL, SQLite, MongoDB, and Redis. Plus, it's significantly faster and more intuitive than pgAdmin.
+</Info>
+
+## Why Switch from pgAdmin to WhoDB?
+
+pgAdmin is powerful but complex. WhoDB provides the features you need with half the complexity:
+
+<CardGroup cols={2}>
+<Card title="10x Faster UI" icon="bolt">
+Lighter interface that loads instantly and remains responsive
+</Card>
+<Card title="Simpler Navigation" icon="arrow-right">
+Find what you need in seconds instead of navigating nested menus
+</Card>
+<Card title="No Complex Dialogs" icon="window">
+Modern, single-purpose interfaces instead of overwhelming modal windows
+</Card>
+<Card title="Multi-Database Support" icon="database">
+Manage PostgreSQL, MySQL, SQLite, MongoDB, and Redis simultaneously
+</Card>
+<Card title="Better Performance" icon="rocket">
+Handle large datasets smoothly without UI lag
+</Card>
+<Card title="Developer Friendly" icon="code">
+Keyboard shortcuts, query history, syntax highlighting, multi-cell queries
+</Card>
+</CardGroup>
+
+## Feature Comparison: pgAdmin vs WhoDB
+
+<AccordionGroup>
+<Accordion title="Server Management">
+| Feature | pgAdmin | WhoDB |
+|---------|--------|-------|
+| Add/Remove Servers | Complex hierarchy | Simple connection profiles |
+| Server Properties | Deep menu diving | Connection form |
+| Server Groups | Yes, nested | Yes, simplified |
+| Connection Pooling | Yes, complex config | Yes, simpler settings |
+| SSL Configuration | Yes, many options | Yes, focused options |
+| SSH Tunnels | Yes | Yes |
+| Connection Testing | Built-in | Automatic on connect |
+| Quick Reconnect | Multiple steps | One click |
+</Accordion>
+
+<Accordion title="Database Navigation">
+| Feature | pgAdmin | WhoDB |
+|--------|--------|-------|
+| Database List | Tree view (nested) | Sidebar (flat, expandable) |
+| Schema Visibility | Drill down through menus | Expand/collapse in sidebar |
+| Table Browsing | Multiple nested levels | Flat sidebar structure |
+| Quick Search | Limited | Ctrl+K navigation |
+| Favorite Bookmarks | Dashboard | Not needed (sidebar always visible) |
+| Database Switching | Navigate tree | Click in sidebar |
+| Simultaneous Connections | Yes, tab-based | Yes, tab-based |
+</Accordion>
+
+<Accordion title="Table Data Viewing">
+| Feature | pgAdmin | WhoDB |
+|--------|--------|-------|
+| Data Grid | Basic | Modern, fast |
+| Sorting | Click header | Click header |
+| Filtering | SQL-based WHERE | Visual query builder |
+| Search Data | Row editing | Search highlighting |
+| Pagination | Limited | Flexible sizes |
+| Cell Editing | Inline | Inline + dialog |
+| Row Selection | Single | Multi-select |
+| Copy Values | Manual | Context menu |
+| Export Selected | Complex | One click |
+</Accordion>
+
+<Accordion title="Query Execution">
+| Feature | pgAdmin | WhoDB |
+|--------|--------|-------|
+| Query Editor | Basic editor | Modern scratchpad |
+| Syntax Highlighting | Yes | Yes, better colors |
+| Query History | Server logs | Built-in searchable history |
+| Saved Queries | File-based | Browser-based history |
+| Multiple Queries | One at a time | Multi-cell scratchpad |
+| Auto-Completion | Basic | Advanced with schema context |
+| Query Formatting | Manual | Auto-format available |
+| Execution Plan | EXPLAIN available | Yes, cleaner display |
+| Result Set Navigation | Basic | Intuitive pagination |
+</Accordion>
+
+<Accordion title="Schema Management">
+| Feature | pgAdmin | WhoDB |
+|--------|--------|-------|
+| View Schema Objects | Deep menu navigation | Sidebar explorer |
+| Create Objects | Complex wizards | Simple dialogs |
+| Edit Definitions | Property dialogs | SQL-based or forms |
+| Dependencies View | Yes, complex | Relationships in graph |
+| Object Properties | Many tabs | Organized sections |
+| Mass Operations | Limited | Better selection |
+</Accordion>
+
+<Accordion title="Visualization & Design">
+| Feature | pgAdmin | WhoDB |
+|--------|--------|-------|
+| ER Diagrams | Plugin (pgAdmin4) | Built-in interactive graph |
+| Relationship Display | Static diagram | Interactive graph |
+| Constraint Visualization | Text-based | Visual connections |
+| Schema Complexity View | Confusing | Clear interactive layout |
+| Export Diagrams | Limited | Built-in |
+</Accordion>
+
+<Accordion title="Data Maintenance">
+| Feature | pgAdmin | WhoDB |
+|--------|--------|-------|
+| Add Rows | Complex dialogs | Simple modal |
+| Edit Rows | Inline or dialog | Both options available |
+| Delete Rows | Confirmation required | Confirmed deletion |
+| Bulk Operations | Limited | Multi-select capabilities |
+| Data Validation | Basic | Enhanced validation |
+| Foreign Key Handling | Shows constraints | Visual in graph |
+</Accordion>
+
+<Accordion title="Backups & Maintenance">
+| Feature | pgAdmin | WhoDB |
+|--------|--------|-------|
+| Database Backup | Built-in tool | Export as SQL |
+| Restore Data | Restore tool | SQL import (future) |
+| Maintenance Tasks | VACUUM, ANALYZE buttons | Query-based |
+| Bloat Analysis | Built-in | Via query |
+</Accordion>
+</AccordionGroup>
+
+## Workflow Mapping: Your pgAdmin Tasks in WhoDB
+
+### Task: Connecting to a Server
+
+**In pgAdmin:**
+1. Click "Servers" in left tree
+2. Right-click → "Register Server"
+3. Fill complex registration form
+4. Navigate to database → schema → table
+
+**In WhoDB:**
+1. Enter host, port, username, password
+2. Click "Connect"
+3. Sidebar shows everything instantly
+
+<Tip>
+WhoDB's connection process is 80% faster than pgAdmin's registration and navigation steps.
+</Tip>
+
+### Task: Viewing Table Data
+
+**In pgAdmin:**
+1. Server → Database → Schema → Table (4 clicks)
+2. Right-click table → "View/Edit Data" → "All Rows"
+3. Wait for data grid to load
+
+**In WhoDB:**
+1. Click table in sidebar (1 click)
+2. Data appears immediately
+
+![Storage Unit List With Sidebar](/images/06-storage-unit-list-with-sidebar.png)
+
+### Task: Filtering Data
+
+**In pgAdmin:**
+1. Right-click table → "View/Edit Data"
+2. Click "Filter" button
+3. Write SQL WHERE clause
+4. Results update
+
+**In WhoDB:**
+1. Click filter icon
+2. Select field → operator → value
+3. Filter applies instantly
+
+The visual approach is much faster for ad-hoc filtering.
+
+![Where Conditions Popover](/images/16-data-view-where-conditions-popover.png)
+
+### Task: Running a Query
+
+**In pgAdmin:**
+1. Tools → Query Tool (or Ctrl+Alt+Q)
+2. Type query
+3. Execute
+4. Results in panel below
+
+**In WhoDB:**
+1. Click "Scratchpad" view
+2. Type query
+3. Run with Cmd/Ctrl+Enter
+4. Results appear below
+
+**WhoDB Advantage**: Multiple cells let you organize related queries and execute them independently.
+
+![Scratchpad Main View](/images/27-scratchpad-main-view.png)
+
+### Task: Viewing Relationships
+
+**In pgAdmin:**
+1. Requires Graphviz plugin
+2. Tools → Debugger → ER Diagram
+3. Complex setup for visualization
+
+**In WhoDB:**
+1. Click "Graph" view
+2. Interactive visualization loads instantly
+3. Click any node for details
+
+![Graph View Schema Topology](/images/24-graph-view-schema-topology.png)
+
+<Tip>
+WhoDB's graph visualization is built-in and interactive. No plugins required. Click nodes to explore relationships instantly.
+</Tip>
+
+### Task: Exploring Table Structure
+
+**In pgAdmin:**
+1. Navigate table → Properties tab
+2. Explore properties across multiple tabs
+3. Check columns, constraints, indexes separately
+
+**In WhoDB:**
+1. Click table → "Explore" view
+2. All structure info in one clean interface
+3. Scroll to see everything
+
+Much simpler without pgAdmin's multi-tab chaos.
+
+![Explore Table Metadata](/images/08-explore-table-metadata.png)
+
+## Interface Differences Explained
+
+### pgAdmin's Tree Navigation vs WhoDB's Sidebar
+
+**pgAdmin** uses a deep tree structure:
+```
+Servers
+  └─ My Server
+     └─ Databases
+        └─ postgres
+           └─ Schemas
+              └─ public
+                 └─ Tables
+                    └─ users
+```
+
+**WhoDB** uses a flat, expandable sidebar:
+```
+Database: postgres
+  Schemas
+    └─ public
+       └─ users (click to view data)
+```
+
+The WhoDB approach is faster and less disorienting.
+
+### Modal Dialogs vs Single-Purpose Views
+
+**pgAdmin** opens complex property dialogs with many tabs for every action (creating tables, editing columns, etc.).
+
+**WhoDB** has dedicated views for each task:
+- **Data View** for browsing/editing records
+- **Explore View** for schema structure
+- **Graph View** for relationships
+- **Scratchpad View** for queries
+
+Each view is focused and lightweight.
+
+## Keyboard Shortcuts: pgAdmin Habits in WhoDB
+
+### Shortcuts That Transferred
+
+| Action | pgAdmin | WhoDB |
+|--------|--------|-------|
+| Execute Query | F5 or Cmd/Ctrl+Enter | Cmd/Ctrl+Enter |
+| Copy | Cmd/Ctrl+C | Cmd/Ctrl+C |
+| Paste | Cmd/Ctrl+V | Cmd/Ctrl+V |
+| Find | Cmd/Ctrl+F | Cmd/Ctrl+F |
+| Select All | Cmd/Ctrl+A | Cmd/Ctrl+A |
+
+### New Shortcuts to Learn
+
+| Action | WhoDB Shortcut |
+|--------|---------------|
+| Quick Navigation | Cmd/Ctrl+K |
+| Toggle Sidebar | Cmd/Ctrl+/ |
+| New Query Cell | Cmd/Ctrl+N |
+| Duplicate Cell | Cmd/Ctrl+D |
+| Format Query | Cmd/Ctrl+Shift+F |
+
+<Info>
+WhoDB's keyboard shortcuts are fewer and more focused. You'll master them quickly.
+</Info>
+
+## First-Time Setup in WhoDB
+
+### Creating Your Connection
+
+<Steps>
+<Step title="Go to Login Page">
+Navigate to WhoDB's login interface
+</Step>
+<Step title="Enter PostgreSQL Details">
+- Host: your_server.example.com
+- Port: 5432 (default)
+- Username: your_username
+- Password: your_password
+- Database: postgres (or your target database)
+</Step>
+<Step title="Click Connect">
+WhoDB connects immediately
+</Step>
+<Step title="Explore Your Databases">
+Sidebar shows your complete database structure
+</Step>
+</Steps>
+
+<Tip>
+WhoDB doesn't require complex server registration like pgAdmin. Just fill in the connection details and you're ready.
+</Tip>
+
+### Understanding WhoDB's Interface
+
+When you connect, you'll see:
+
+- **Sidebar**: Your complete database structure (expandable)
+- **Main Area**: Tables list or specific table data
+- **Top Tabs**: Data, Explore, Graph, Scratchpad
+- **Action Bar**: Context-specific tools
+
+Click any table in the sidebar to start exploring instantly.
+
+![Explore Users Table](/images/07-explore-users-table.png)
+
+## Common pgAdmin Tasks in WhoDB
+
+<AccordionGroup>
+<Accordion title="Creating a New Table">
+**In WhoDB:**
+1. Open Scratchpad view
+2. Write CREATE TABLE statement:
+```sql
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(100) UNIQUE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
+3. Execute query
+4. Table appears in sidebar
+
+**Note**: Visual table creation UI is coming in a future update. For now, SQL is the most reliable method.
+</Accordion>
+
+<Accordion title="Adding a Column to Existing Table">
+**In WhoDB:**
+1. Go to Scratchpad
+2. Write ALTER TABLE statement:
+```sql
+ALTER TABLE users ADD COLUMN phone VARCHAR(20);
+```
+3. Execute
+4. Refresh Explore view to see new column
+
+Alternatively, use Explore view's "Add Column" button (if available).
+</Accordion>
+
+<Accordion title="Viewing Indexes">
+**In WhoDB:**
+1. Click table name
+2. Click "Explore" view tab
+3. Scroll to "Indexes" section
+4. See all indexes with their columns
+
+Much simpler than pgAdmin's property tabs.
+</Accordion>
+
+<Accordion title="Analyzing Query Performance">
+**In WhoDB:**
+1. Open Scratchpad
+2. Add EXPLAIN ANALYZE before your query:
+```sql
+EXPLAIN ANALYZE
+SELECT users.id, COUNT(posts.id)
+FROM users
+LEFT JOIN posts ON users.id = posts.user_id
+GROUP BY users.id;
+```
+3. Execute to see query plan
+4. Results show execution time and node costs
+
+WhoDB displays the same information as pgAdmin but in a cleaner format.
+</Accordion>
+
+<Accordion title="Backing Up Your Database">
+**In WhoDB:**
+1. Select all rows from a table (Cmd/Ctrl+A)
+2. Click "Export"
+3. Choose "SQL" format
+4. Click "Export" to download SQL INSERT statements
+
+For full database backups, use pg_dump from command line:
+```bash
+pg_dump -U username -h hostname database_name > backup.sql
+```
+
+WhoDB's export is perfect for table-level backups but can't replace pg_dump for full database administration.
+</Accordion>
+
+<Accordion title="Viewing Table Size">
+**In WhoDB:**
+1. Open Scratchpad
+2. Run query:
+```sql
+SELECT
+  tablename,
+  pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) AS size
+FROM pg_tables
+WHERE schemaname = 'public'
+ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
+```
+3. See table sizes in results
+
+pgAdmin has a built-in tool, but WhoDB's query approach is more flexible and transparent.
+</Accordion>
+
+<Accordion title="Checking Active Connections">
+**In WhoDB:**
+1. Open Scratchpad
+2. Run query:
+```sql
+SELECT pid, usename, application_name, state, query
+FROM pg_stat_activity
+WHERE state != 'idle';
+```
+3. View active queries and connections
+
+WhoDB makes you write the query, which actually teaches you more about PostgreSQL internals.
+</Accordion>
+
+<Accordion title="Setting User Permissions">
+**In WhoDB:**
+1. Open Scratchpad
+2. Write GRANT statement:
+```sql
+GRANT SELECT, INSERT, UPDATE ON public.users TO app_user;
+GRANT USAGE ON SCHEMA public TO app_user;
+```
+3. Execute to apply permissions
+
+For complex permission management, you might still use pgAdmin, but WhoDB works perfectly for this.
+</Accordion>
+</AccordionGroup>
+
+## What's Different (and Why It's Better)
+
+### No Plugin Dependencies
+
+pgAdmin's ER diagram requires Graphviz. WhoDB's graph visualization is built-in and interactive.
+
+**pgAdmin Workflow:**
+1. Install Graphviz (complex on some systems)
+2. Configure pgAdmin to find Graphviz
+3. Generate ER diagram (static image)
+
+**WhoDB Workflow:**
+1. Click "Graph" tab
+2. Interactive visualization loads instantly
+3. Click nodes to explore
+
+### Faster Data Exploration
+
+pgAdmin's nested menus create unnecessary clicking. WhoDB's sidebar puts everything at your fingertips:
+
+| Task | pgAdmin Clicks | WhoDB Clicks |
+|------|---------------|------------|
+| View table data | 4+ | 1 |
+| Filter records | 3 | 2 |
+| See table structure | 3 | 2 |
+| Run query | 2 | 1 |
+
+### Multi-Tab Connection Management
+
+Both support multiple connections, but WhoDB's approach is simpler:
+
+**pgAdmin**: Manage multiple server registrations with properties and folders
+**WhoDB**: Open new browser tabs with different connections
+
+### Better for Multi-Database Workflows
+
+If you use PostgreSQL AND MySQL or SQLite:
+
+**pgAdmin**: Limited to PostgreSQL only (or community versions for others)
+**WhoDB**: Manage all databases from one interface
+
+## Advanced Features You'll Appreciate
+
+These capabilities go beyond what pgAdmin offers:
+
+<CardGroup cols={2}>
+<Card title="Mock Data Generation" icon="wand">
+Generate realistic test data instantly for development
+</Card>
+<Card title="Multi-Cell Scratchpad" icon="layers">
+Organize related queries in different cells, execute independently
+</Card>
+<Card title="Advanced Filtering" icon="filter">
+Visual query builder instead of SQL WHERE clauses
+</Card>
+<Card title="Real-Time Search" icon="search">
+Highlight matching values as you type
+</Card>
+<Card title="Inline Cell Editing" icon="pencil">
+Edit values directly in the grid without dialogs
+</Card>
+<Card title="Better Export Options" icon="download">
+Export filtered results, selected rows, or entire tables
+</Card>
+</CardGroup>
+
+## Migration Timeline
+
+### Week 1: Explore WhoDB
+- Install and connect to your PostgreSQL database
+- Browse a few tables
+- Try the Graph view
+- Run a simple query in Scratchpad
+
+### Week 2: Start Using Daily
+- Use WhoDB for all new data exploration
+- Practice filtering and sorting
+- Write multi-cell queries in Scratchpad
+- Try exporting data
+
+### Week 3: Go All-In
+- Fully switch to WhoDB for daily work
+- Keep pgAdmin only as backup for complex admin tasks
+- Discover WhoDB-specific workflows
+
+### Month 2: Retire pgAdmin
+- Realize you haven't opened pgAdmin in weeks
+- Remove it from your toolset
+- Enjoy the simpler, faster workflow
+
+<Tip>
+Most pgAdmin users find WhoDB equally capable within 2 weeks. The learning curve is minimal if you know PostgreSQL already.
+</Tip>
+
+## Troubleshooting Common Transition Issues
+
+<AccordionGroup>
+<Accordion title="Where's the Properties Dialog I'm Used To?">
+**Solution**: Click the table → "Explore" view. All properties are displayed in organized sections without overwhelming dialogs.
+</Accordion>
+
+<Accordion title="How Do I See Permissions for Users?">
+**Solution**: Use Scratchpad to query pg_catalog tables:
+```sql
+SELECT usename, usesuper, usecreatedb, usecanlogin
+FROM pg_user;
+```
+</Accordion>
+
+<Accordion title="Can I Schedule Maintenance Tasks?">
+**Solution**: WhoDB doesn't have a scheduler like pgAdmin. Use pgAdmin or cron jobs for VACUUM, ANALYZE, and backups. WhoDB is best for interactive queries.
+</Accordion>
+
+<Accordion title="The Sidebar Feels Overwhelming with Many Tables">
+**Solution**: Use Cmd/Ctrl+K for quick navigation. Search for table names instead of scrolling.
+</Accordion>
+
+<Accordion title="I Need to Debug a Slow Query">
+**Solution**: Use EXPLAIN ANALYZE in Scratchpad:
+```sql
+EXPLAIN ANALYZE
+SELECT ...;
+```
+Results show the same execution plan as pgAdmin's EXPLAIN tool.
+</Accordion>
+</AccordionGroup>
+
+## When to Still Use pgAdmin
+
+WhoDB is excellent for 95% of PostgreSQL management, but pgAdmin is still better for:
+
+- Complex backup and restore operations
+- Database server administration (not just data)
+- Automated maintenance scheduling
+- Advanced permission management UI
+- Managing multiple servers across enterprises
+
+For daily data exploration, testing, and queries? WhoDB is superior.
+
+## Quick Migration Checklist
+
+<Steps>
+<Step title="Install WhoDB">
+Follow the [Installation Guide](/installation)
+</Step>
+<Step title="Connect to PostgreSQL">
+Use the [First Database Connection Guide](/guides/tutorials/first-database-connection)
+</Step>
+<Step title="Browse Your Database">
+Expand schemas and click tables in the sidebar
+</Step>
+<Step title="Try Filtering">
+Test the visual filter builder
+</Step>
+<Step title="Explore Graph Visualization">
+Click "Graph" to see your schema visually
+</Step>
+<Step title="Run Queries">
+Write your first multi-cell query in Scratchpad
+</Step>
+<Step title="Practice with Complex Tasks">
+Try editing rows, exporting data, running EXPLAIN
+</Step>
+<Step title="Retire pgAdmin Gradually">
+Keep it handy but use WhoDB for daily work
+</Step>
+</Steps>
+
+## Getting Help During Transition
+
+<Warning>
+If you can't find a feature, try the Scratchpad. Most pgAdmin functions can be replicated with SQL queries in WhoDB.
+</Warning>
+
+**Resources:**
+- [Complete Beginner's Guide](/guides/complete-beginner) - Learn from scratch
+- [Quick Start Guide](/quick-start) - 5-minute overview
+- [Data Management Guide](/data/viewing-data) - Explore and edit data
+- [Query Guide](/query/scratchpad-intro) - Master the Scratchpad
+- [FAQ](/resources/faq) - Common questions
+
+## Final Words
+
+Switching from pgAdmin to WhoDB is one of the best decisions you can make. You'll work faster, enjoy a cleaner interface, and gain access to modern features pgAdmin doesn't have. The PostgreSQL-specific knowledge you have will transfer perfectly—WhoDB just makes it easier to apply.
+
+**Welcome to WhoDB. Your database management just got simpler.**
+
+<Check>
+Ready to switch? Start with the [Installation Guide](/installation) and get up and running in minutes.
+</Check>

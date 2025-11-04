@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=WhoDB
+Comment=Lightweight database management tool
+Exec=whodb
+Icon=whodb
+Terminal=false
+Categories=Development;Database;Utility;
+Keywords=database;sql;mongodb;redis;mysql;postgresql;sqlite;
+StartupWMClass=WhoDB

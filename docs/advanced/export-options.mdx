@@ -1,0 +1,549 @@
+---
+title: "Export Options"
+description: "Export your data in multiple formats with advanced configuration options"
+---
+
+# Export Options
+
+WhoDB provides comprehensive export capabilities that allow you to extract your data in multiple formats with fine-grained control over options and content selection.
+
+<Tip>
+Export your data exactly the way you need it for downstream analysis, backups, or sharing
+</Tip>
+
+## Overview
+
+The export functionality lets you choose:
+
+- **What to export**: All data, filtered rows, or selected rows
+- **Format**: CSV, Excel, JSON, or SQL
+- **Configuration**: Delimiters, encoding, headers, and more
+
+![Export Dialog](/images/20-data-view-export-dialog.png)
+
+## Accessing the Export Function
+
+1. Navigate to any table in WhoDB
+2. Click the **Export** button in the action bar
+3. The export configuration dialog opens
+
+## Export Modes
+
+### Export All
+
+Exports every row in the current table, regardless of filters or selections.
+
+**When to use**:
+- Creating complete data backups
+- Migrating entire tables
+- Getting the full dataset for analysis
+- Compliance/audit requirements
+
+**Result**: All rows with all columns are included in the export.
+
+### Export Filtered
+
+Exports only rows that match your current WHERE conditions.
+
+**When to use**:
+- Extracting specific subsets of data
+- Working with particular time periods or categories
+- Exporting results of complex queries
+- Creating focused datasets
+
+**How it works**:
+1. Apply WHERE conditions to filter your table
+2. Click Export
+3. Only filtered rows are included
+
+<Tip>
+This is perfect for exporting quarterly reports or specific customer segments
+</Tip>
+
+### Export Selected
+
+Exports only the rows you've manually selected.
+
+![Export Selected Rows Mode](/images/46-export-selected-rows-mode.png)
+
+**When to use**:
+- Exporting specific records you've chosen
+- Creating focused samples for testing
+- Sharing specific data points with colleagues
+- Excluding unwanted rows
+
+**How it works**:
+1. Select rows by clicking their checkboxes
+2. Click Export
+3. Only selected rows are included in the export
+
+<Note>
+Selection and export is a powerful combination for granular data extraction
+</Note>
+
+## Export Formats
+
+### CSV (Comma-Separated Values)
+
+![CSV Format Option](/images/65-export-format-csv-option.png)
+
+The most universal format, compatible with Excel, Google Sheets, and data analysis tools.
+
+**Advantages**:
+- Universal compatibility
+- Human-readable and editable
+- Compact file size
+- Easy to version control
+- Scriptable processing
+
+**Configuration**:
+- **Delimiter**: Choose separator (comma, semicolon, pipe, tab)
+- **Encoding**: UTF-8 (recommended), Latin-1, or other encodings
+- **Headers**: Include or exclude column names as first row
+
+**Best for**:
+- Spreadsheet analysis in Excel/Sheets
+- Data import into other tools
+- Web application data feeds
+- Cross-platform data sharing
+
+```
+id,username,email,status
+1,alice,alice@example.com,active
+2,bob,bob@example.com,inactive
+3,charlie,charlie@example.com,active
+```
+
+### Excel (.xlsx)
+
+![Excel Format Option](/images/66-export-format-excel-option.png)
+
+Native Excel format with advanced formatting and features.
+
+**Advantages**:
+- Familiar Excel interface
+- Multiple sheets support
+- Built-in formatting options
+- Formula compatibility
+- Widely used in business
+
+**Configuration**:
+- **Sheet Name**: Custom name for the worksheet
+- **Include Headers**: Column names on first row
+- **Column Width**: Auto-fit or fixed width
+
+**Best for**:
+- Business reports and presentations
+- Sharing with non-technical users
+- Financial data analysis
+- Creating polished deliverables
+
+### JSON
+
+Structured format ideal for APIs and applications.
+
+**Advantages**:
+- Structured data format
+- Nested object support
+- API-friendly
+- Programmatically processable
+- Self-documenting
+
+**Configuration**:
+- **Pretty Print**: Human-readable formatting with indentation
+- **Array Format**: Single array or line-delimited JSON
+
+**Best for**:
+- API data transfer
+- Web application consumption
+- Programmatic data processing
+- NoSQL database import
+
+```json
+[
+  {
+    "id": 1,
+    "username": "alice",
+    "email": "alice@example.com",
+    "status": "active"
+  },
+  {
+    "id": 2,
+    "username": "bob",
+    "email": "bob@example.com",
+    "status": "inactive"
+  }
+]
+```
+
+### SQL
+
+SQL INSERT statements for database backup and transfer.
+
+**Advantages**:
+- Database-agnostic backup format
+- Portable to other systems
+- Readable and auditable
+- Transaction-safe with proper formatting
+- Ideal for version control
+
+**Configuration**:
+- **Include DROP**: Optional DROP TABLE statement
+- **Include CREATE**: Optional CREATE TABLE statement
+- **Batch Size**: Rows per INSERT statement
+
+**Best for**:
+- Database backups
+- Cross-database migration
+- Archival storage
+- Version control (with diffs)
+
+```sql
+INSERT INTO users (id, username, email, status)
+VALUES (1, 'alice', 'alice@example.com', 'active');
+INSERT INTO users (id, username, email, status)
+VALUES (2, 'bob', 'bob@example.com', 'inactive');
+```
+
+## CSV Delimiter Options
+
+When exporting to CSV format, choose your delimiter:
+
+### Comma (,)
+
+![Comma Delimiter](/images/67-export-delimiter-comma.png)
+
+**Most Common** - Standard CSV format recognized by all tools.
+
+```
+id,name,email
+1,Alice,alice@example.com
+2,Bob,bob@example.com
+```
+
+**Use when**: Target system expects standard CSV format.
+
+### Semicolon (;)
+
+![Semicolon Delimiter](/images/68-export-delimiter-semicolon.png)
+
+**European Standard** - Common in countries that use comma as decimal separator.
+
+```
+id;name;email
+1;Alice;alice@example.com
+2;Bob;bob@example.com
+```
+
+**Use when**:
+- Working with European software/users
+- Regional requirements specify semicolon
+- Target system configured for semicolon
+
+### Pipe (|)
+
+![Pipe Delimiter](/images/69-export-delimiter-pipe.png)
+
+**Specialized Format** - Useful when data contains commas or semicolons.
+
+```
+id|name|email
+1|Alice|alice@example.com
+2|Bob|bob@example.com
+```
+
+**Use when**:
+- Data contains commas or semicolons
+- Legacy system requires pipe delimiter
+- Working with fixed-width or complex data
+
+### Tab (\t)
+
+![Tab Delimiter](/images/70-export-delimiter-tab.png)
+
+**TSV Format** - Tab-separated values for data that contains commas.
+
+```
+id    name    email
+1     Alice   alice@example.com
+2     Bob     bob@example.com
+```
+
+**Use when**:
+- Data contains commas frequently
+- Tab-separated format is required
+- Excel TSV import is needed
+
+## Complete Export Workflow
+
+<Steps>
+<Step title="Navigate to Table">
+Open the table you want to export data from
+</Step>
+<Step title="Apply Filters (Optional)">
+Use WHERE conditions to select specific data if exporting filtered rows
+
+![Where Conditions](/images/16-data-view-where-conditions-popover.png)
+</Step>
+<Step title="Select Rows (Optional)">
+Click checkboxes to select specific rows if using export selected mode
+
+![Row Selection](/images/44-table-row-selection-single.png)
+</Step>
+<Step title="Open Export Dialog">
+Click the Export button to open the configuration dialog
+
+![Export Dialog](/images/21-data-view-export-dialog.png)
+</Step>
+<Step title="Choose Export Mode">
+Select "All", "Filtered", or "Selected"
+</Step>
+<Step title="Select Format">
+Choose your desired output format (CSV, Excel, JSON, SQL)
+</Step>
+<Step title="Configure Format Options">
+Set delimiter, encoding, sheet name, or other format-specific options
+</Step>
+<Step title="Download">
+Click "Export" to download the file to your computer
+</Step>
+</Steps>
+
+## Advanced Scenarios
+
+### Exporting for Data Analysis
+
+<AccordionGroup>
+<Accordion title="Excel for Business Analysis">
+<Steps>
+<Step title="Filter to relevant period">
+Use WHERE conditions to limit to current year/quarter
+</Step>
+<Step title="Export as Excel">
+Select Excel format for familiar interface
+</Step>
+<Step title="Include headers">
+Ensure column names are included for clarity
+</Step>
+<Step title="Download">
+Save to your computer for analysis in Excel
+</Step>
+<Step title="Add formulas">
+Excel file is editable—add your own analysis formulas
+</Step>
+</Steps>
+
+**Result**: Excel file ready for pivot tables, charts, and formulas.
+</Accordion>
+<Accordion title="CSV for Programmatic Processing">
+<Steps>
+<Step title="Select appropriate delimiter">
+Choose delimiter that doesn't conflict with your data
+</Step>
+<Step title="Export all rows">
+Export complete dataset for processing
+</Step>
+<Step title="Download">
+Save to accessible location
+</Step>
+<Step title="Process with script">
+Use Python, JavaScript, or other tools to manipulate data
+</Step>
+</Steps>
+
+```python
+import csv
+
+with open('export.csv', 'r') as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        print(f"User: {row['username']}, Status: {row['status']}")
+```
+
+**Result**: Data ready for integration into your workflows.
+</Accordion>
+<Accordion title="JSON for API Integration">
+<Steps>
+<Step title="Select JSON format">
+Choose JSON for structured data
+</Step>
+<Step title="Export filtered data">
+Use WHERE conditions to get specific records
+</Step>
+<Step title="Enable pretty print">
+Make JSON human-readable for verification
+</Step>
+<Step title="Download">
+Save to project directory
+</Step>
+<Step title="Consume in application">
+Load JSON data into your application or API
+</Step>
+</Steps>
+
+```javascript
+// In your Node.js application
+const userData = require('./export.json');
+userData.forEach(user => {
+  console.log(`${user.username}: ${user.email}`);
+});
+```
+
+**Result**: JSON data ready for application consumption.
+</Accordion>
+</AccordionGroup>
+
+### Creating Database Backups
+
+<Warning>
+Use SQL export format for creating portable database backups
+</Warning>
+
+<Steps>
+<Step title="Export as SQL">
+Select SQL format from export options
+</Step>
+<Step title="Include CREATE statement">
+Enable "Include CREATE TABLE" for complete table definition
+</Step>
+<Step title="Include DROP (optional)">
+Enable "Include DROP TABLE" for safe overwrites
+</Step>
+<Step title="Export all rows">
+Export complete dataset
+</Step>
+<Step title="Store securely">
+Save backup file in version control or secure location
+</Step>
+<Step title="Verify backup">
+Review SQL file to ensure all data is present
+</Step>
+</Steps>
+
+The resulting SQL file is portable and can be imported into any compatible database.
+
+## Security and Best Practices
+
+### Handling Sensitive Data
+
+<Warning>
+**Sensitive Data Alert**: Exported files may contain sensitive information like passwords, API keys, or personal details
+</Warning>
+
+**Before Exporting**:
+
+1. **Verify File Destination**: Ensure you're saving to a secure location
+2. **Check Permissions**: Verify who has access to the downloaded file
+3. **Filter Columns**: Use WHERE conditions to exclude sensitive fields if possible
+4. **Review Recipients**: Confirm the intended recipient should receive this data
+5. **Encryption**: Consider encrypting exported files before sharing
+
+**After Exporting**:
+
+1. **Secure Storage**: Store backups in encrypted locations
+2. **Access Control**: Restrict file permissions appropriately
+3. **Compliance**: Verify export complies with data privacy regulations (GDPR, HIPAA, etc.)
+4. **Audit Log**: WhoDB logs export operations for compliance
+5. **Retention**: Don't keep exports longer than necessary
+
+### Compliance Considerations
+
+Export functions are logged for audit trails:
+
+- **What**: Which table was exported
+- **When**: Timestamp of the export
+- **Who**: User account that performed export
+- **How Many**: Number of rows exported
+- **Format**: File format used
+
+<Tip>
+Review audit logs regularly to ensure exports comply with your data governance policies
+</Tip>
+
+### Performance Notes
+
+**Large Exports**:
+- Export All on very large tables may take time
+- Consider filtering to smaller date ranges
+- Use pagination to break exports into chunks
+- Monitor browser memory during download
+
+**Network**:
+- Large files may timeout on slow connections
+- Use local installations for better performance
+- Consider breaking into multiple smaller exports
+
+## Troubleshooting
+
+### Export File is Corrupted
+
+**Cause**: Browser or connection issue during download
+
+**Solution**:
+1. Try exporting again
+2. Use a different browser
+3. Check disk space on your computer
+4. Try with smaller row count first
+
+### Special Characters Appear Garbled
+
+**Cause**: Encoding mismatch between export and reader
+
+**Solution**:
+1. Change CSV encoding to UTF-8 (default)
+2. Verify Excel is configured for UTF-8 import
+3. Try ISO-8859-1 if UTF-8 doesn't work
+4. Use plain text editor to verify content
+
+### Excel File Won't Open
+
+**Cause**: File size or format compatibility
+
+**Solution**:
+1. Verify file isn't corrupted (check file size)
+2. Try opening in newer Excel version
+3. Try Excel import wizard: Data → From Text
+4. Export as CSV and open in Excel instead
+
+### JSON Shows as Binary/Unreadable
+
+**Cause**: Browser is attempting to open rather than download
+
+**Solution**:
+1. Right-click the download link → Save As
+2. Verify downloaded file is valid JSON
+3. Open in text editor to verify content
+4. Try with smaller export first
+
+## Related Features
+
+<CardGroup cols={2}>
+<Card title="Where Conditions" icon="filter" href="/advanced/where-conditions">
+Learn advanced filtering for targeted exports
+</Card>
+<Card title="Batch Operations" icon="layer-group" href="/advanced/batch-operations">
+Select multiple rows efficiently for export
+</Card>
+<Card title="Mock Data" icon="database" href="/advanced/mock-data">
+Generate test data for import and testing
+</Card>
+<Card title="Scratchpad" icon="code" href="/query/scratchpad-intro">
+Run queries to prepare data for export
+</Card>
+</CardGroup>
+
+## Summary
+
+WhoDB export options provide:
+
+- Multiple format choices (CSV, Excel, JSON, SQL)
+- Flexible delimiter and encoding options
+- Selective export (all, filtered, or selected rows)
+- Portable backup capabilities
+- Audit trail for compliance
+
+Whether you need to analyze data in Excel, migrate databases, or integrate with applications, WhoDB's export functionality gives you complete control over your data extraction.
+
+<Check>
+You're ready to export your data in any format you need!
+</Check>

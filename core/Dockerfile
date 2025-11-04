@@ -16,6 +16,8 @@ FROM node:lts-alpine AS build-stage
 RUN npm i -g pnpm
 WORKDIR /app
 COPY ./frontend/package.json ./frontend/pnpm-lock.yaml ./
+# Skip Cypress binary installation - not needed for production builds
+ENV CYPRESS_INSTALL_BINARY=0
 RUN pnpm install
 COPY ./frontend/ ./
 
@@ -31,7 +33,7 @@ RUN mkdir -p ee/frontend/src/components/theme ee/frontend/src/components/charts 
 
 RUN pnpm run build
 
-FROM golang:1.24.1-alpine AS backend-stage
+FROM golang:alpine AS backend-stage
 RUN apk update && apk add --no-cache gcc musl-dev git
 WORKDIR /app
 COPY ./core/go.mod ./core/go.sum ./
@@ -44,7 +46,7 @@ COPY --from=build-stage /app/build/ ./build/
 # Build backend
 RUN CGO_ENABLED=1 GOOS=linux go build -o /core
 
-FROM alpine:3.22.1
+FROM alpine:3.22
 RUN apk update && apk add --no-cache ca-certificates
 WORKDIR /app
 COPY --from=backend-stage /core /core

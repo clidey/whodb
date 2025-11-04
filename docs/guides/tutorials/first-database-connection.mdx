@@ -1,0 +1,428 @@
+---
+title: "Your First Database Connection"
+description: "Step-by-step tutorial for connecting to your first database with WhoDB"
+---
+
+# Your First Database Connection
+
+Connecting to a database for the first time can feel daunting, but WhoDB makes it straightforward. This tutorial will walk you through every step of establishing your first successful connection, from understanding the login screen to troubleshooting common issues.
+
+## What You'll Learn
+
+By the end of this tutorial, you'll be able to:
+- Navigate the WhoDB login interface confidently
+- Select the appropriate database type for your needs
+- Configure connection settings correctly
+- Troubleshoot common connection problems
+- Verify a successful connection
+
+<Info>
+This tutorial assumes you have WhoDB installed and running. If you haven't installed it yet, check out the [Installation Guide](/installation).
+</Info>
+
+## Prerequisites
+
+Before starting, make sure you have:
+- WhoDB installed and accessible in your browser
+- Database credentials (username, password, host, port)
+- Network access to your database server
+- Basic understanding of your database type (PostgreSQL, MySQL, etc.)
+
+## Step 1: Understanding the Login Page
+
+When you first open WhoDB, you'll see a clean, focused login page:
+
+![WhoDB Login Page](/images/01-login-page.png)
+
+The login page is designed with simplicity in mind. You'll notice several key elements:
+
+**Database Type Selector**: The dropdown at the top allows you to choose which type of database you're connecting to. This is the first and most important decision.
+
+**Connection Fields**: Below the database type, you'll see fields for entering connection details. These fields change based on the database type you select.
+
+**Advanced Options**: An expandable section for SSL certificates, SSH tunnels, and connection pooling settings.
+
+**Connect Button**: Once your details are entered, this button establishes the connection.
+
+<Tip>
+WhoDB doesn't store your credentials by default. You'll need to enter them each time you connect, ensuring better security for sensitive environments.
+</Tip>
+
+## Step 2: Selecting Your Database Type
+
+Click the database type dropdown to see all available options:
+
+![Database Type Dropdown](/images/02-login-database-type-dropdown.png)
+
+WhoDB supports several database types:
+
+<CardGroup cols={2}>
+<Card title="PostgreSQL" icon="database">
+The world's most advanced open source relational database
+</Card>
+<Card title="MySQL/MariaDB" icon="database">
+Popular open source relational database management system
+</Card>
+<Card title="SQLite" icon="database">
+Self-contained, serverless SQL database engine
+</Card>
+<Card title="MongoDB" icon="database">
+Document-oriented NoSQL database
+</Card>
+<Card title="Redis" icon="database">
+In-memory data structure store
+</Card>
+<Card title="Additional Types" icon="plus">
+Enterprise Edition includes support for Oracle, SQL Server, and more
+</Card>
+</CardGroup>
+
+For this tutorial, we'll use PostgreSQL as our example, but the process is similar for other database types.
+
+<Note>
+Choose the database type that matches your actual database. Selecting the wrong type will result in connection errors.
+</Note>
+
+## Step 3: Entering Connection Details
+
+After selecting PostgreSQL, the form updates to show the required fields. Let's fill them in:
+
+![Login Form Filled](/images/03-login-form-filled.png)
+
+Here's what each field means and what to enter:
+
+**Host**: The address where your database server is running. Common values:
+- `localhost` - For databases on your local machine
+- `127.0.0.1` - Alternative localhost address
+- `host.docker.internal` - When WhoDB runs in Docker connecting to host machine
+- `postgres` or other service names - When using Docker Compose
+- `db.example.com` - For remote servers
+- IP addresses like `192.168.1.100` - For local network servers
+
+**Port**: The port your database listens on. Default ports:
+- PostgreSQL: `5432`
+- MySQL: `3306`
+- MongoDB: `27017`
+- Redis: `6379`
+- SQLite: No port needed (file-based)
+
+**Username**: Your database user account. Common usernames:
+- PostgreSQL: `postgres` (default superuser)
+- MySQL: `root` (default administrator)
+- Custom users: Your organization's specific username
+
+**Password**: The password for the database user. Enter this carefully as passwords are case-sensitive.
+
+**Database**: The specific database you want to connect to. This is the database name within your server:
+- PostgreSQL: `postgres` (default database), or your application database like `myapp_production`
+- MySQL: Your database name like `wordpress` or `ecommerce`
+- MongoDB: Your database name or leave blank to see all databases
+
+<Warning>
+Never share your database credentials through insecure channels. Always use strong, unique passwords for production databases.
+</Warning>
+
+### Example Connection: Local Development
+
+For a local PostgreSQL development database:
+```text
+Host: localhost
+Port: 5432
+Username: postgres
+Password: dev_password
+Database: myapp_dev
+```
+
+### Example Connection: Docker Compose
+
+When connecting from WhoDB to a PostgreSQL container:
+```text
+Host: postgres
+Port: 5432
+Username: postgres
+Password: password
+Database: app_db
+```
+
+### Example Connection: Remote Server
+
+For a production PostgreSQL server:
+```text
+Host: db.example.com
+Port: 5432
+Username: app_readonly
+Password: secure_random_password_123
+Database: production_db
+```
+
+## Step 4: Configuring Advanced Options (Optional)
+
+For secure connections or special networking requirements, click the "Advanced Options" section:
+
+![Advanced Options](/images/04-login-advanced-options.png)
+
+<AccordionGroup>
+<Accordion title="SSL/TLS Configuration">
+Enable encrypted connections for production databases:
+
+**When to use**: Always for production databases, especially over the internet
+
+**SSL Mode Options**:
+- `disable`: No SSL (only for local development)
+- `require`: Use SSL, but don't verify certificates
+- `verify-ca`: Use SSL and verify the certificate authority
+- `verify-full`: Use SSL and verify the entire certificate chain (most secure)
+
+**Certificate Files**: If your database requires client certificates, provide:
+- SSL Certificate: Your client certificate file
+- SSL Key: Your private key file
+- SSL Root Certificate: The CA certificate to verify the server
+
+<Tip>
+Many cloud database providers (AWS RDS, Google Cloud SQL, Azure) require or recommend SSL connections. Check your provider's documentation for certificate files.
+</Tip>
+</Accordion>
+<Accordion title="SSH Tunnel">
+Connect through an SSH bastion host for added security:
+
+**When to use**: When your database isn't directly accessible but you can SSH to a jump host
+
+**Required Fields**:
+- SSH Host: The bastion/jump server address
+- SSH Port: Usually `22`
+- SSH Username: Your SSH username
+- SSH Private Key: Path to your SSH private key file
+
+This creates an encrypted tunnel through the SSH server to reach your database.
+</Accordion>
+<Accordion title="Connection Pooling">
+Optimize performance for high-traffic applications:
+
+- **Max Connections**: Maximum simultaneous connections (default: 10)
+- **Max Idle**: Maximum idle connections to keep open (default: 5)
+- **Connection Lifetime**: How long connections stay open (default: 1 hour)
+
+<Note>
+Most users can leave these at default values. Adjust only if you're experiencing connection issues or have specific performance requirements.
+</Note>
+</Accordion>
+</AccordionGroup>
+
+## Step 5: Establishing the Connection
+
+Once all fields are filled correctly, click the "Connect" button.
+
+WhoDB will attempt to:
+1. Validate your input fields
+2. Establish a network connection to the host and port
+3. Authenticate using your username and password
+4. Connect to the specified database
+5. Verify permissions and access
+
+This process usually takes 1-3 seconds. You'll see a loading indicator while the connection is being established.
+
+<Check>
+Success! If the connection succeeds, you'll be redirected to the main WhoDB interface showing your database structure and tables.
+</Check>
+
+## Troubleshooting Connection Issues
+
+If your connection fails, don't worry. Here are the most common issues and their solutions:
+
+<AccordionGroup>
+<Accordion title="Error: Connection Refused">
+**Symptom**: "Connection refused" or "Cannot connect to server"
+
+**Possible Causes & Solutions**:
+
+1. **Database server isn't running**
+   - Verify the database service is started
+   - Check with: `systemctl status postgresql` or `brew services list`
+
+2. **Wrong host or port**
+   - Double-check the host address and port number
+   - Try `localhost` vs `127.0.0.1` vs `host.docker.internal`
+   - Verify the port with: `netstat -an | grep 5432`
+
+3. **Firewall blocking connection**
+   - Check firewall rules allow the port
+   - For cloud databases, verify security group settings
+   - Test connectivity: `telnet hostname 5432`
+
+4. **Docker networking issues**
+   - If WhoDB is in Docker, use `host.docker.internal` for host machine databases
+   - Ensure containers are on the same Docker network for container-to-container connections
+   - Check with: `docker network inspect bridge`
+
+<Tip>
+For Docker users connecting to the host machine: Use `host.docker.internal` on Mac/Windows or `172.17.0.1` on Linux instead of `localhost`.
+</Tip>
+</Accordion>
+<Accordion title="Error: Authentication Failed">
+**Symptom**: "Password authentication failed" or "Access denied"
+
+**Possible Causes & Solutions**:
+
+1. **Incorrect username or password**
+   - Verify credentials are correct (passwords are case-sensitive)
+   - Try connecting with a different tool to verify credentials work
+   - Reset password if needed: `ALTER USER postgres PASSWORD 'newpassword';`
+
+2. **User doesn't have permission**
+   - Grant necessary permissions: `GRANT ALL ON DATABASE mydb TO username;`
+   - Verify user exists: `SELECT * FROM pg_user;` (PostgreSQL)
+   - Check user hosts: `SELECT user, host FROM mysql.user;` (MySQL)
+
+3. **Host-based authentication restrictions**
+   - Check `pg_hba.conf` (PostgreSQL) allows connections from WhoDB's IP
+   - For MySQL, verify user is allowed from WhoDB's host: `'user'@'%'` vs `'user'@'localhost'`
+
+<Warning>
+Be cautious when modifying authentication configuration files. Always backup before making changes.
+</Warning>
+</Accordion>
+<Accordion title="Error: Database Not Found">
+**Symptom**: "Database does not exist" or "Unknown database"
+
+**Possible Causes & Solutions**:
+
+1. **Database name is incorrect**
+   - Verify the database name (case-sensitive in some systems)
+   - List databases: `\l` (PostgreSQL) or `SHOW DATABASES;` (MySQL)
+   - Check for typos or extra spaces
+
+2. **Database hasn't been created**
+   - Create the database: `CREATE DATABASE mydb;`
+   - Ensure you have permission to see the database
+
+3. **Connected to wrong server**
+   - Verify you're connecting to the intended server
+   - Check the host address matches your expectation
+</Accordion>
+<Accordion title="Error: SSL Connection Failed">
+**Symptom**: "SSL connection error" or "Certificate verification failed"
+
+**Possible Causes & Solutions**:
+
+1. **Server requires SSL but it's disabled**
+   - Enable SSL in Advanced Options
+   - Set SSL Mode to at least "require"
+
+2. **Certificate files are incorrect**
+   - Verify certificate paths are correct and files exist
+   - Ensure WhoDB has read permissions for certificate files
+   - Check certificates aren't expired: `openssl x509 -in cert.pem -noout -dates`
+
+3. **SSL mode is too strict**
+   - Try "require" instead of "verify-full" for development
+   - Ensure you have the correct CA certificate for "verify-ca" or "verify-full"
+
+<Note>
+Cloud database providers often provide downloadable certificate bundles. Check your provider's documentation for SSL setup instructions.
+</Note>
+</Accordion>
+<Accordion title="Error: Connection Timeout">
+**Symptom**: "Connection timeout" or "Operation timed out"
+
+**Possible Causes & Solutions**:
+
+1. **Network connectivity issues**
+   - Test network: `ping hostname`
+   - Check VPN is connected if required
+   - Verify DNS resolution: `nslookup hostname`
+
+2. **Firewall blocking traffic**
+   - Check both local and remote firewalls
+   - For cloud databases, verify security groups/firewall rules
+   - Ensure your IP is whitelisted if required
+
+3. **Server is overloaded**
+   - Database server might be unresponsive
+   - Check server resources and performance
+   - Try again in a few minutes
+
+4. **Wrong region or endpoint**
+   - For cloud databases, verify you're using the correct regional endpoint
+   - Check for typos in the hostname
+</Accordion>
+</AccordionGroup>
+
+## Verifying Your Connection
+
+Once connected successfully, you should see the main WhoDB interface with:
+
+- **Sidebar**: Showing your database structure with schemas and tables
+- **Main area**: Displaying a list of available tables or storage units
+- **Top navigation**: With tabs for Data, Explore, Graph, and Scratchpad views
+
+Take a moment to explore:
+- Expand schemas in the sidebar
+- Click on a table to view its data
+- Check that the database name appears correctly in the interface
+
+<Tip>
+If you see your tables and can browse the sidebar, your connection is working perfectly. You're ready to start exploring your data!
+</Tip>
+
+## Security Best Practices
+
+Now that you're connected, keep these security practices in mind:
+
+<Steps>
+<Step title="Use Dedicated Database Users">
+Create specific users for WhoDB with only necessary permissions:
+```sql
+-- PostgreSQL example
+CREATE USER whodb_viewer WITH PASSWORD 'secure_password';
+GRANT CONNECT ON DATABASE mydb TO whodb_viewer;
+GRANT USAGE ON SCHEMA public TO whodb_viewer;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO whodb_viewer;
+```
+</Step>
+<Step title="Enable SSL for Production">
+Always use SSL/TLS connections for production databases to encrypt data in transit.
+</Step>
+<Step title="Restrict Network Access">
+Use firewall rules to allow connections only from trusted IP addresses or networks.
+</Step>
+<Step title="Use Read-Only Accounts When Possible">
+For viewing data only, use database accounts with SELECT-only permissions.
+</Step>
+<Step title="Rotate Credentials Regularly">
+Change database passwords periodically and after team member departures.
+</Step>
+</Steps>
+
+## Next Steps
+
+Congratulations on establishing your first database connection! Now you're ready to:
+
+<CardGroup cols={2}>
+<Card title="Explore Your Data" icon="magnifying-glass" href="/guides/tutorials/data-exploration-workflow">
+Learn how to browse tables, view data, and filter results
+</Card>
+<Card title="Run Your First Query" icon="code" href="/guides/tutorials/building-complex-queries">
+Start writing SQL queries in the Scratchpad
+</Card>
+<Card title="Visualize Your Schema" icon="sitemap" href="/guides/tutorials/schema-visualization">
+Understand table relationships with the Graph view
+</Card>
+<Card title="Quick Start Guide" icon="rocket" href="/quick-start">
+Get a comprehensive overview of WhoDB features
+</Card>
+</CardGroup>
+
+## Summary
+
+In this tutorial, you learned how to:
+- Navigate the WhoDB login interface
+- Select the appropriate database type
+- Enter connection details correctly
+- Configure advanced options for SSL and SSH
+- Troubleshoot common connection issues
+- Verify a successful connection
+- Follow security best practices
+
+<Check>
+You're now connected and ready to explore! The next tutorial will show you how to navigate your database, view data, and use filtering and search features effectively.
+</Check>

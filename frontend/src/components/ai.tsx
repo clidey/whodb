@@ -29,7 +29,6 @@ import {
     CommandItem,
     Input,
     Label,
-    SearchSelect,
     Select,
     SelectContent,
     SelectItem,
@@ -40,23 +39,27 @@ import {
     SheetFooter,
     toast
 } from "@clidey/ux";
+import { SearchSelect } from "./ux";
+import map from "lodash/map";
+import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
+import { v4 } from "uuid";
+import { useGetAiModelsLazyQuery, useGetAiProvidersLazyQuery } from "../generated/graphql";
+import { reduxStore } from "../store";
+import { AIModelsActions, availableExternalModelTypes } from "../store/ai-models";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { ensureModelsArray, ensureModelTypesArray } from "../utils/ai-models-helper";
+import { ExternalLink } from "../utils/external-links";
 import {
     ArrowPathIcon,
     ArrowTopRightOnSquareIcon,
     CheckCircleIcon,
-    PlusIcon,
+    ChevronDownIcon,
+    LockClosedIcon,
+    PlusCircleIcon,
     TrashIcon,
     XMarkIcon
-} from "@heroicons/react/24/outline";
-import {map} from "lodash";
-import {FC, ReactElement, useCallback, useEffect, useMemo, useState} from "react";
-import {v4} from "uuid";
-import {useGetAiModelsLazyQuery, useGetAiProvidersLazyQuery} from "../generated/graphql";
-import {reduxStore} from "../store";
-import {AIModelsActions, availableExternalModelTypes} from "../store/ai-models";
-import {useAppDispatch, useAppSelector} from "../store/hooks";
-import {ensureModelsArray, ensureModelTypesArray} from "../utils/ai-models-helper";
-import {Icons} from "./icons";
+} from "./heroicons";
+import { Icons } from "./icons";
 
 export const externalModelTypes = map(availableExternalModelTypes, (model) => ({
     id: model,
@@ -181,6 +184,7 @@ export const useAI = () => {
             icon: (Icons.Logos as Record<string, ReactElement>)[modelType.modelType.replace("-", "")],
             extra: {
                 token: modelType.token,
+                isEnvironmentDefined: modelType.isEnvironmentDefined,
             }
         }));
     }, [modelTypes]);
@@ -238,7 +242,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
     const dispatch = useAppDispatch();
     const [addExternalModel, setAddExternalModel] = useState(false);
     const [externalModelType, setExternalModel] = useState<string>(externalModelTypes[0].id);
-    const [externalModelToken, setExternalModelToken] = useState<string>();
+    const [externalModelToken, setExternalModelToken] = useState<string>("");
 
     const handleAddExternalModel = useCallback(() => {
         setAddExternalModel(status => !status);
@@ -296,7 +300,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
         dispatch(AIModelsActions.setCurrentModel(undefined));
     }, [dispatch]);
 
-    return <div className="flex flex-col gap-4">
+    return <div className="flex flex-col gap-4" data-testid="ai-provider">
         <Sheet open={addExternalModel} onOpenChange={setAddExternalModel}>
             <SheetContent className="max-w-md mx-auto w-full px-8 py-10 flex flex-col gap-4">
                 <div className="flex flex-col gap-4">
@@ -351,11 +355,11 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                     <div className="text-xs text-neutral-500 mt-4 flex flex-col gap-2">
                         <div className="font-bold">Local Setup</div>
                         <div>
-                            Go to <a href="https://ollama.com/" target="_blank" rel="noopener noreferrer" className="font-semibold underline text-blue-600 hover:text-blue-800">Ollama</a> and follow the installation instructions.
+                            Go to <ExternalLink href="https://ollama.com/" className="font-semibold underline text-blue-600 hover:text-blue-800">Ollama</ExternalLink> and follow the installation instructions.
                         </div>
                         <div className="font-semibold">Downloading the Ollama Model</div>
                         <div>
-                            Once installed, install the desired model you would like to use. In this guide, we will use <a href="https://ollama.com/library/llama3.1" target="_blank" rel="noopener noreferrer" className="font-semibold underline text-blue-600 hover:text-blue-800">Llama3.1 8b</a>. To install this model, run:
+                            Once installed, install the desired model you would like to use. In this guide, we will use <ExternalLink href="https://ollama.com/library/llama3.1" className="font-semibold underline text-blue-600 hover:text-blue-800">Llama3.1 8b</ExternalLink>. To install this model, run:
                         </div>
                         <div className="font-mono bg-neutral-100 dark:bg-neutral-900 rounded px-2 py-1 mb-1">
                             ollama run llama3.1
@@ -378,6 +382,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         value: item.id,
                         label: item.label,
                         icon: item.icon,
+                        rightIcon: item.extra?.isEnvironmentDefined ? <LockClosedIcon className="w-3 h-3 text-muted-foreground" /> : undefined,
                     }))}
                     value={modelType?.id}
                     onChange={id => {
@@ -394,11 +399,12 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                             onSelect={handleAddExternalModel}
                         >
                             <span className="flex items-center gap-sm text-green-500">
-                                <PlusIcon className="w-4 h-4 stroke-green-500" />
+                                <PlusCircleIcon className="w-4 h-4 stroke-green-500" />
                                 Add a provider
                             </span>
                         </CommandItem>
                     }
+                    rightIcon={<ChevronDownIcon className="w-4 h-4" />}
                 />
                 <SearchSelect
                     disabled={modelType == null}
@@ -415,6 +421,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                     placeholder="Select Model"
                     side="right"
                     align="start"
+                    rightIcon={<ChevronDownIcon className="w-4 h-4" />}
                 />
             </div>
             <AlertDialog>

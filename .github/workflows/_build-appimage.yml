@@ -1,0 +1,97 @@
+name: Build AppImage
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version to build'
+        required: true
+        type: string
+      edition:
+        description: 'Edition to build (ce or ee)'
+        required: false
+        type: string
+        default: 'ce'
+
+jobs:
+  build-appimage:
+    name: Build AppImage (${{ matrix.arch }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [ amd64, arm64 ]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            libgtk-3-dev \
+            libwebkit2gtk-4.0-dev \
+            wget \
+            fuse \
+            file
+
+      - name: Set up Wails
+        run: |
+          go install github.com/wailsapp/wails/v2/cmd/wails@latest
+          echo "$HOME/go/bin" >> $GITHUB_PATH
+
+      - name: Determine Go workspace
+        id: gowork
+        run: |
+          if [ "${{ inputs.edition }}" = "ee" ]; then
+            echo "workspace=$PWD/go.work.desktop-ee" >> $GITHUB_OUTPUT
+            echo "source_dir=desktop-ee" >> $GITHUB_OUTPUT
+          else
+            echo "workspace=$PWD/go.work.desktop-ce" >> $GITHUB_OUTPUT
+            echo "source_dir=desktop-ce" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build Wails app for ${{ matrix.arch }}
+        env:
+          GOWORK: ${{ steps.gowork.outputs.workspace }}
+        run: |
+          cd ${{ steps.gowork.outputs.source_dir }}
+
+          if [ "${{ matrix.arch }}" = "amd64" ]; then
+            GOARCH=amd64 wails build -clean -platform linux/amd64
+          else
+            # For ARM64, cross-compile
+            GOARCH=arm64 wails build -clean -platform linux/arm64
+          fi
+
+      - name: Build AppImage
+        run: |
+          chmod +x scripts/build-appimage.sh
+          ./scripts/build-appimage.sh ${{ matrix.arch }} ${{ inputs.version }}
+
+      - name: Verify AppImage
+        run: |
+          APPIMAGE="WhoDB-${{ inputs.version }}-${{ matrix.arch }}.AppImage"
+
+          if [ ! -f "$APPIMAGE" ]; then
+            echo "❌ AppImage not found: $APPIMAGE"
+            exit 1
+          fi
+
+          echo "✅ AppImage created: $APPIMAGE"
+          ls -lh "$APPIMAGE"
+          file "$APPIMAGE"
+
+      - name: Upload AppImage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: appimage-${{ inputs.edition }}-${{ matrix.arch }}
+          path: WhoDB-${{ inputs.version }}-${{ matrix.arch }}.AppImage
+          retention-days: 1

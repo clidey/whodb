@@ -1,0 +1,23 @@
+cask "whodb" do
+  version "{{VERSION}}"
+  sha256 "{{SHA256}}"
+
+  url "https://github.com/clidey/whodb/releases/download/v{{VERSION}}/whodb.dmg",
+      verified: "github.com/clidey/whodb"
+  name "WhoDB"
+  desc "Database management tool with AI-powered features"
+  homepage "https://github.com/clidey/whodb"
+
+  livecheck do
+    url :url
+    strategy :github_latest
+  end
+
+  app "WhoDB.app"
+
+  zap trash: [
+    "~/Library/Application Support/WhoDB",
+    "~/Library/Preferences/com.clidey.whodb.plist",
+    "~/Library/Saved Application State/com.clidey.whodb.savedState"
+  ]
+end

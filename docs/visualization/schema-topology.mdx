@@ -1,0 +1,324 @@
+---
+title: "Schema Topology"
+description: "Understanding how WhoDB visualizes and organizes your database schema"
+---
+
+# Schema Topology
+
+Schema topology refers to the overall structure and organization of tables and relationships within your database. WhoDB visualizes this topology using an interactive graph that automatically arranges tables to show their connections and dependencies.
+
+<Info>
+Understanding your schema topology is crucial for making informed database design decisions and optimizing queries
+</Info>
+
+## What is Schema Topology?
+
+Schema topology is the complete picture of:
+- **Tables**: All database objects (tables, views, materialized views)
+- **Relationships**: Connections between tables via foreign keys
+- **Cardinality**: The nature of relationships (one-to-one, one-to-many, many-to-many)
+- **Organization**: How tables are logically grouped and dependent on each other
+
+## The Graph Visualization
+
+![Graph View - Schema Topology](/images/24-graph-view-schema-topology.png)
+
+WhoDB displays your schema topology as a graph where:
+- Each **node** represents a table
+- Each **edge** (connecting line) represents a foreign key relationship
+- **Node positioning** is algorithmically optimized to minimize visual complexity
+- **Line directions** show the direction of the relationship
+
+## Table Nodes
+
+Each table node in the graph displays:
+
+### Node Content
+
+<CardGroup cols={2}>
+<Card title="Table Name">
+The name of the database table displayed prominently at the node's center
+</Card>
+<Card title="Visual Icon">
+An icon indicating the table type (regular table, view, materialized view)
+</Card>
+<Card title="Key Columns">
+Primary key columns highlighted with a special marker
+</Card>
+<Card title="Foreign Keys">
+Columns that reference other tables shown with connection indicators
+</Card>
+</CardGroup>
+
+### Node States
+
+**Idle State**
+- Table name visible
+- Key columns marked
+- Ready to interact
+
+**Hover State**
+- Highlights connected tables
+- Shows quick action buttons
+- Reveals data access option
+
+**Selected State**
+- Full details displayed
+- All columns and constraints shown
+- Relationship details expanded
+
+## Understanding Node Positioning
+
+The graph uses a force-directed layout algorithm that:
+
+1. **Minimizes overlaps**: Positions nodes to avoid covering each other
+2. **Reduces line crossings**: Arranges tables to minimize complex crossing patterns
+3. **Groups related tables**: Tables with many mutual relationships cluster together
+4. **Maintains hierarchy**: Parent tables often appear above or beside their children
+
+### Layout Evolution
+
+As you interact with the graph:
+- **Initial load**: All nodes position based on the complete schema
+- **Zoom in**: Focused view emphasizes nearby relationships
+- **Zoom out**: High-level view shows overall patterns and clusters
+- **Pan**: Navigate to different areas while maintaining relative positions
+
+## Relationship Topology Patterns
+
+Different schemas exhibit different topology patterns:
+
+### Hub-and-Spoke
+
+A central table with many outgoing relationships:
+- Common in: User management, event tracking, master data systems
+- Characteristics: One large node with many connecting lines
+- Example: `users` table connecting to `orders`, `reviews`, `comments`, etc.
+
+### Hierarchical
+
+Clear parent-child chains:
+- Common in: Organizational systems, taxonomies, file hierarchies
+- Characteristics: Linear chains of tables
+- Example: `categories` → `subcategories` → `products` → `variants`
+
+### Many-to-Many Network
+
+Multiple tables interconnected through junction tables:
+- Common in: Role-based systems, tagging systems, flexible associations
+- Characteristics: Complex interconnected relationships
+- Example: `users` ↔ `roles` (via `user_roles`), `articles` ↔ `tags` (via `article_tags`)
+
+### Modular/Clustered
+
+Separate groups of related tables with few cross-cluster relationships:
+- Common in: Multi-tenant systems, microservice databases, feature-based organization
+- Characteristics: Distinct clusters with minimal inter-cluster connections
+- Example: `billing_*` tables, `shipping_*` tables, `notification_*` tables
+
+### Linear Chain
+
+Tables arranged in a sequence:
+- Common in: Event pipelines, workflow systems, data transformation pipelines
+- Characteristics: Sequential dependencies
+- Example: `raw_data` → `processed_data` → `aggregated_data` → `reports`
+
+## Analyzing Topology
+
+### Key Metrics
+
+<CardGroup cols={2}>
+<Card title="Connectivity">
+How many relationships each table has. Central tables may be performance critical.
+</Card>
+<Card title="Depth">
+The maximum distance from any table to any other. Affects query complexity.
+</Card>
+<Card title="Density">
+The ratio of actual relationships to possible relationships. Indicates design complexity.
+</Card>
+<Card title="Cycles">
+Circular relationships that might indicate design issues or complex queries needed.
+</Card>
+</CardGroup>
+
+### Design Quality Indicators
+
+**Good Topology:**
+- Clear grouping of related tables
+- Minimal deep chains (3-4 levels typical)
+- Reasonable number of relationships per table
+- Mostly unidirectional relationships
+
+**Problematic Topology:**
+- Excessive hub-and-spoke with one table having 20+ relationships
+- Very deep hierarchies (8+ levels)
+- Circular relationships that complicate queries
+- Unused tables with no relationships
+
+## Exploring Your Schema Topology
+
+### Workflow: Understanding Your Schema
+
+<Steps>
+<Step title="View Complete Topology">
+Start with a zoomed-out view using the fit view control. This shows the overall structure and any obvious patterns.
+</Step>
+<Step title="Identify Clusters">
+Look for groups of closely related tables. These usually represent specific business areas or features.
+</Step>
+<Step title="Find Central Tables">
+Locate tables with many connections. These are often critical to your application's functionality.
+</Step>
+<Step title="Examine Hierarchies">
+Identify any parent-child hierarchies and understand their depth.
+</Step>
+<Step title="Check for Issues">
+Look for unusual patterns that might indicate design problems (excessive centralization, deep nesting, unexpected isolation).
+</Step>
+<Step title="Drill Down">
+Zoom in on areas of interest to see detailed column information and constraint details.
+</Step>
+</Steps>
+
+### Workflow: Schema Planning
+
+When planning new features or schema changes:
+
+<Steps>
+<Step title="Review Current Topology">
+Understand the existing structure and where your new tables fit
+</Step>
+<Step title="Identify Integration Points">
+Determine which existing tables your new tables should relate to
+</Step>
+<Step title="Check for Conflicts">
+Ensure your relationships don't create problematic patterns or cycles
+</Step>
+<Step title="Plan Foreign Keys">
+Design relationships that maintain the schema's logical organization
+</Step>
+<Step title="Validate Against Topology">
+Return to the graph to ensure your design fits the overall structure
+</Step>
+</Steps>
+
+## Topology and Performance
+
+Your schema's topology directly affects query performance:
+
+### Topology Characteristics Affecting Performance
+
+| Characteristic | Impact | Optimization |
+|---|---|---|
+| **Hub Tables** | Often bottleneck, may need indexes | Index foreign keys, consider denormalization |
+| **Deep Hierarchies** | Many JOINs needed, complex queries | Flatten if possible, use materialized views |
+| **Dense Networks** | Complex queries, many relationships | Simplify relationships, consider denormalization |
+| **Isolated Tables** | No performance concerns | Normal queries |
+
+<Tip>
+Use the topology view to identify which tables should be indexed and which queries might benefit from optimization
+</Tip>
+
+## Common Topology Issues and Solutions
+
+<AccordionGroup>
+<Accordion title="Excessive Hub Table">
+**Issue**: One table has 30+ relationships
+**Solutions**:
+- Consider if some relationships could be indirect
+- Evaluate if some related tables could be consolidated
+- Add appropriate indexes to the hub table
+- Use denormalization carefully for read-heavy operations
+</Accordion>
+<Accordion title="Circular Dependencies">
+**Issue**: Tables reference each other directly or indirectly
+**Solutions**:
+- Introduce a new table to break the cycle if possible
+- Use views to simplify complex circular queries
+- Document the circular relationship for query optimization
+</Accordion>
+<Accordion title="Very Deep Hierarchies">
+**Issue**: 6+ levels of parent-child relationships
+**Solutions**:
+- Flatten unnecessary levels
+- Use materialized views for common query paths
+- Add denormalized "level skipping" columns for direct access
+</Accordion>
+<Accordion title="Isolated Table Clusters">
+**Issue**: Groups of tables with no relationships to other clusters
+**Solutions**:
+- This is often intentional (different features or tenants)
+- Ensure this is by design, not an oversight
+- Document the separation for maintenance teams
+</Accordion>
+</AccordionGroup>
+
+## Topology Evolution
+
+Your schema topology will likely change over time:
+
+### Adding Tables
+
+New tables should fit logically into your existing topology:
+- Placed near related tables in the hierarchy
+- Connected to appropriate parent or sibling tables
+- Not creating unnecessary new hubs or isolated clusters
+
+### Removing Tables
+
+When removing tables:
+- Check what depends on them
+- Plan migrations for foreign keys
+- Verify no orphaned references remain
+
+### Refactoring Relationships
+
+Sometimes you need to restructure relationships:
+- Use the topology view to plan changes
+- Identify affected queries and applications
+- Use transactions for data consistency
+- Test thoroughly before production
+
+## Exporting and Documenting Topology
+
+### Creating Documentation
+
+<Steps>
+<Step title="Capture Overview">
+Take a screenshot of the zoomed-out view for your architecture documentation
+</Step>
+<Step title="Document Key Tables">
+Annotate which tables are central to important workflows
+</Step>
+<Step title="Highlight Patterns">
+Note the design patterns you identify
+</Step>
+<Step title="Add Context">
+Include notes about business logic and dependencies
+</Step>
+</Steps>
+
+### Sharing Topology Information
+
+- **PDF Export**: Use browser print-to-PDF for sharing
+- **Screenshots**: Document different zoom levels
+- **Description**: Write narrative descriptions of your schema organization
+- **Diagrams**: Create supplementary diagrams for complex areas
+
+## Related Topics
+
+<CardGroup cols={2}>
+<Card title="Graph View" icon="chart-network" href="/visualization/graph-view">
+Learn how to interact with the graph visualization
+</Card>
+<Card title="Relationships" icon="link" href="/visualization/relationships">
+Deep dive into foreign keys and relationship types
+</Card>
+<Card title="Schema Explorer" icon="book" href="/features/schema-explorer">
+Navigate and explore schema structure
+</Card>
+<Card title="Query Optimization" icon="rocket" href="/advanced/query-optimization">
+Use topology understanding to write better queries
+</Card>
+</CardGroup>

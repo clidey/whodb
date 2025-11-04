@@ -25,9 +25,11 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/plugins"
 	gorm_clickhouse "gorm.io/driver/clickhouse"
 )
 
@@ -106,7 +108,7 @@ func (p *ClickHousePlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 
 	db, err := gorm.Open(gorm_clickhouse.New(gorm_clickhouse.Config{
 		Conn: conn,
-	}))
+	}), &gorm.Config{Logger: logger.Default.LogMode(plugins.GetGormLogConfig())})
 	if err != nil {
 		log.Logger.WithError(err).WithFields(map[string]any{
 			"hostname": connectionInput.Hostname,

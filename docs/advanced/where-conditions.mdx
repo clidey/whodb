@@ -1,0 +1,577 @@
+---
+title: "Where Conditions - Advanced Filtering"
+description: "Filter your data with advanced conditions, operators, and complex queries"
+---
+
+# Advanced Filtering with Where Conditions
+
+WhoDB's WHERE conditions feature enables sophisticated data filtering through a visual interface. Build complex queries without writing SQL, or combine conditions to extract exactly the data you need.
+
+<Tip>
+WHERE conditions are the foundation of effective data exploration and targeted exports
+</Tip>
+
+## Overview
+
+The WHERE conditions interface allows you to:
+
+- Apply single or multiple filters
+- Use various comparison operators
+- Combine conditions with AND/OR logic
+- Build complex queries visually
+- Save and reuse filter presets
+
+![Where Conditions Popover](/images/16-data-view-where-conditions-popover.png)
+
+## Basic Filtering
+
+### Opening the Filter Interface
+
+1. Navigate to any table in WhoDB
+2. Click the **Filter** button in the action bar (funnel icon)
+3. The WHERE conditions popover opens
+
+The interface shows an empty filter state ready for your first condition.
+
+### Creating Your First Condition
+
+<Steps>
+<Step title="Select a Column">
+Click the field dropdown to choose which column to filter
+
+![Where Field Dropdown](/images/18-data-view-where-field-dropdown.png)
+
+All available columns in the table are shown in the list.
+</Step>
+<Step title="Choose an Operator">
+Select the comparison operator for your condition (e.g., =, >, \<)
+
+Available operators depend on the column's data type.
+</Step>
+<Step title="Enter a Value">
+Type or select the value to compare against
+</Step>
+<Step title="Apply Filter">
+Click "Apply" or "Done" to filter the table
+</Step>
+</Steps>
+
+The table instantly updates to show only matching rows.
+
+## Comparison Operators
+
+WhoDB supports various operators for different filter scenarios:
+
+### Equality Operators
+
+#### Equals (=)
+
+![Equals Operator](/images/59-where-operator-equals.png)
+
+Exact match filter. Returns rows where the column value exactly matches your input.
+
+**Use for**:
+- Exact category matching (status = 'active')
+- Finding specific users by ID
+- Filtering by exact date or timestamp
+
+```sql
+SELECT * FROM users WHERE status = 'active'
+```
+
+<Note>
+Case-sensitive for text fields on most databases
+</Note>
+
+#### Not Equals (!=)
+
+![Not Equals Operator](/images/62-where-operator-not-equals.png)
+
+Inverse match. Returns all rows EXCEPT those matching the value.
+
+**Use for**:
+- Excluding specific categories (status != 'deleted')
+- Finding inactive records
+- Filtering out placeholder values
+
+```sql
+SELECT * FROM users WHERE status != 'archived'
+```
+
+**Example Results**:
+- Row 1: status = 'active' ✓ (included)
+- Row 2: status = 'inactive' ✓ (included)
+- Row 3: status = 'deleted' ✗ (excluded)
+
+### Comparison Operators
+
+#### Greater Than (>)
+
+![Greater Than Operator](/images/60-where-operator-greater-than.png)
+
+Returns rows where the column value is strictly greater than the specified value.
+
+**Use for**:
+- Age > 18 (find adults)
+- price > 100 (expensive items)
+- created_at > '2024-01-01' (recent records)
+
+```sql
+SELECT * FROM products WHERE price > 50
+```
+
+#### Less Than (\<)
+
+![Less Than Operator](/images/61-where-operator-less-than.png)
+
+Returns rows where the column value is strictly less than the specified value.
+
+**Use for**:
+- inventory < 10 (low stock alert)
+- age < 18 (minors)
+- discount < 0.5 (discounts under 50%)
+
+```sql
+SELECT * FROM products WHERE inventory < 10
+```
+
+#### Greater Than or Equal (>=)
+
+![Greater Than or Equal Operator](/images/63-where-operator-greater-than-equal.png)
+
+Inclusive greater than comparison.
+
+**Use for**:
+- age >= 18 (18 and older)
+- score >= 80 (passing grades)
+- created_at >= '2024-10-01' (October or later)
+
+```sql
+SELECT * FROM orders WHERE total >= 100
+```
+
+#### Less Than or Equal (\<=)
+
+![Less Than or Equal Operator](/images/64-where-operator-less-than-equal.png)
+
+Inclusive less than comparison.
+
+**Use for**:
+- discount \<= 0.3 (30% discount or less)
+- attempts \<= 3 (three or fewer attempts)
+- deadline \<= '2024-12-31' (by year end)
+
+```sql
+SELECT * FROM tasks WHERE deadline <= '2024-12-31'
+```
+
+## Working with Multiple Conditions
+
+### Adding More Conditions
+
+Click **Add Condition** to add additional filters. Multiple conditions are combined with AND logic by default.
+
+![Multiple Where Conditions](/images/40-data-view-multiple-where-conditions.png)
+
+**AND Logic**: All conditions must be true
+```sql
+WHERE status = 'active' AND age > 18
+```
+
+Only rows where status IS 'active' AND age IS greater than 18 are shown.
+
+### Condition Logic
+
+### AND Conditions
+
+**All conditions must be satisfied**
+
+```sql
+WHERE status = 'active' AND created_at > '2024-01-01'
+```
+
+**Result**: Shows only active users created after Jan 1, 2024
+
+Use AND when you want to narrow results and require multiple criteria.
+
+**Example Scenarios**:
+- Active users who registered in 2024
+- Products priced over $50 with inventory > 10
+- Orders placed this month and not yet shipped
+
+---
+
+### OR Conditions
+
+**At least one condition must be satisfied**
+
+When filtering within a single column, OR logic can show alternatives:
+
+```sql
+WHERE status = 'active' OR status = 'pending'
+```
+
+**Result**: Shows users with either active or pending status
+
+Use OR to broaden results and show alternative options.
+
+**Example Scenarios**:
+- Show users with active or trial status
+- Products in category A OR category B
+- Orders shipped OR in-progress (exclude pending)
+
+### Editing and Removing Conditions
+
+<AccordionGroup>
+<Accordion title="Modify a Condition">
+1. Click the condition you want to change
+2. Edit the field, operator, or value
+3. The table updates automatically
+</Accordion>
+<Accordion title="Remove a Condition">
+1. Hover over the condition
+2. Click the delete/remove icon (X)
+3. The table updates with one fewer filter
+</Accordion>
+<Accordion title="Clear All Conditions">
+1. Click "Clear" or "Reset" in the filter interface
+2. All conditions are removed
+3. Table shows unfiltered data
+</Accordion>
+</AccordionGroup>
+
+## Real-World Filtering Scenarios
+
+### User Management
+
+**Find active users who haven't logged in recently**
+
+<Steps>
+<Step title="Add first condition">
+Set status = 'active'
+</Step>
+<Step title="Add second condition">
+Set last_login < '2024-09-30' (more than 30 days ago)
+</Step>
+</Steps>
+
+**Result**: Identifies users to re-engage or remove
+
+### Inventory Management
+
+**Low stock items that need reordering**
+
+<Steps>
+<Step title="Filter by inventory">
+Set quantity \<= 10
+</Step>
+<Step title="Filter by status">
+Set status != 'discontinued'
+</Step>
+</Steps>
+
+**Result**: List of in-stock items needing replenishment
+
+### Financial Analysis
+
+**Orders over $1,000 placed this quarter**
+
+<Steps>
+<Step title="Filter by amount">
+Set total > 1000
+</Step>
+<Step title="Filter by date start">
+Set created_at >= '2024-10-01'
+</Step>
+<Step title="Filter by date end">
+Set created_at \<= '2024-12-31'
+</Step>
+</Steps>
+
+**Result**: High-value Q4 2024 orders
+
+### Content Management
+
+**Published posts by a specific author**
+
+<Steps>
+<Step title="Filter by status">
+Set status = 'published'
+</Step>
+<Step title="Filter by author">
+Set author = 'Sarah Johnson'
+</Step>
+<Step title="Filter by date">
+Set created_at > '2024-01-01'
+</Step>
+</Steps>
+
+**Result**: All published content from this author in 2024
+
+## Advanced Filtering Patterns
+
+### Date Range Filtering
+
+Filter for records within a specific time period:
+
+<Steps>
+<Step title="Add start date condition">
+Set created_at >= '2024-01-01'
+</Step>
+<Step title="Add end date condition">
+Set created_at < '2024-12-31'
+</Step>
+</Steps>
+
+```sql
+WHERE created_at >= '2024-01-01' AND created_at < '2024-12-31'
+```
+
+### Numeric Range Filtering
+
+Filter for values within a range:
+
+<Steps>
+<Step title="Add minimum condition">
+Set price >= 50
+</Step>
+<Step title="Add maximum condition">
+Set price \<= 200
+</Step>
+</Steps>
+
+```sql
+WHERE price >= 50 AND price \<= 200
+```
+
+**Use cases**: Price ranges, age brackets, score thresholds
+
+### Exclusion Patterns
+
+Show everything EXCEPT specific items:
+
+<Steps>
+<Step title="Add exclusion condition">
+Set status != 'archived'
+</Step>
+<Step title="Add another exclusion">
+Set deleted_at IS NULL
+</Step>
+</Steps>
+
+```sql
+WHERE status != 'archived' AND deleted_at IS NULL
+```
+
+### Combining Categories
+
+Show records from multiple categories:
+
+Since visual interface uses AND, you'd typically show one category at a time. For multiple categories, use SQL mode:
+
+```sql
+WHERE category = 'Electronics' OR category = 'Computers'
+```
+
+## Filter Indicators and Status
+
+### Active Filter Display
+
+When filters are applied, the filter button shows a badge indicating the number of active conditions.
+
+![Where Conditions Badge](/images/19-data-view-where-conditions-badge.png)
+
+- **1 condition**: One filter is active
+- **2+ conditions**: Multiple filters applied
+- **No badge**: No filters active (showing all data)
+
+### Row Count Changes
+
+Notice how the table updates instantly when you apply or modify filters. The page count and total row display changes to reflect filtered results.
+
+## Saving and Reusing Filters
+
+<Tip>
+Save frequently used filter combinations for quick access
+</Tip>
+
+### Saving a Filter Set
+
+After creating a useful set of conditions:
+
+1. Complete your filter configuration
+2. Click **Save Filter** (if available)
+3. Give it a descriptive name
+4. Access it later from the saved filters list
+
+### Common Saved Filters
+
+Examples of filter sets worth saving:
+
+- **Active Users**: status = 'active'
+- **Recent Orders**: created_at > current_date - 30 days
+- **Overdue Tasks**: status = 'pending' AND due_date < current_date
+- **High Priority**: priority = 'high' AND status != 'completed'
+- **Q4 2024 Revenue**: date >= '2024-10-01' AND date \<= '2024-12-31'
+
+## Exporting Filtered Data
+
+After applying filters, you can export only the filtered results:
+
+<Steps>
+<Step title="Apply filters">
+Use WHERE conditions to narrow your data
+</Step>
+<Step title="Open Export">
+Click the Export button
+</Step>
+<Step title="Choose Export Filtered">
+Select the "Export Filtered" option
+</Step>
+<Step title="Select Format">
+Choose CSV, Excel, JSON, or SQL
+</Step>
+<Step title="Download">
+Get your filtered data in desired format
+</Step>
+</Steps>
+
+This is perfect for:
+- Exporting quarterly reports (filtered by date)
+- Sharing specific customer data (filtered by status)
+- Creating demo datasets (filtered to relevant records)
+
+## Performance Considerations
+
+### Filtering Large Tables
+
+<Accordion title="Tips for Large Datasets">
+**Use Specific Filters**: More specific conditions execute faster
+- Good: status = 'active' AND created_at > '2024-01-01'
+- Slow: status NOT IN ('deleted', 'archived', 'inactive')
+
+**Filter Early**: Apply restrictions before other operations
+- Apply WHERE conditions before sorting
+- Filter before searching
+- Paginate filtered results
+
+**Avoid Full Table Scans**: Don't filter on unindexed columns if possible
+- Indexed columns: id, status, created_at (usually)
+- Unindexed columns: arbitrary text fields
+- Check your Explore tab for index information
+</Accordion>
+
+### Complex Query Alternatives
+
+For very complex filtering beyond the visual interface:
+
+1. Switch to **Scratchpad** SQL editor
+2. Write custom SQL with complex logic
+3. Use subqueries, JOINs, and window functions
+4. Export results as needed
+
+```sql
+SELECT * FROM users
+WHERE status = 'active'
+  AND created_at > DATE_SUB(NOW(), INTERVAL 30 DAY)
+  AND user_id IN (
+    SELECT user_id FROM orders
+    WHERE total > 100
+    GROUP BY user_id
+    HAVING COUNT(*) > 5
+  )
+```
+
+## Best Practices
+
+<AccordionGroup>
+<Accordion title="Start Simple, Add Complexity">
+Begin with one condition, verify results, then add more. This helps you understand data and debug issues.
+</Accordion>
+<Accordion title="Use Appropriate Operators">
+Choose the right operator for your data type:
+- Text: Equals, Not Equals
+- Numbers: Range operators (>=, \<=)
+- Dates: Range and comparison operators
+- Booleans: Equals for true/false
+</Accordion>
+<Accordion title="Verify Results Make Sense">
+After applying filters, scan the results to ensure they match your expectations. Mismatches reveal data issues.
+</Accordion>
+<Accordion title="Document Complex Filters">
+If using complex conditions, save them with clear names or note them for reproducibility.
+</Accordion>
+<Accordion title="Combine with Search">
+Use WHERE conditions for structured filtering and Search for text pattern matching—they complement each other.
+</Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+### Filter Returns No Results
+
+**Cause**: Conditions too restrictive or values don't exist
+
+**Solution**:
+1. Remove one condition to see if results appear
+2. Verify the value you're filtering for exists
+3. Check for case sensitivity (text fields)
+4. Use the table preview to verify data
+
+### Results Don't Match Expectations
+
+**Cause**: Misunderstanding of operator behavior
+
+**Solution**:
+1. Clear filters and start fresh
+2. Apply one condition at a time
+3. Verify each step matches expectations
+4. Check if AND/OR logic is correct
+
+### Slow Filtering Performance
+
+**Cause**: Large dataset or unoptimized query
+
+**Solution**:
+1. Use more specific filter values
+2. Add date ranges to narrow results
+3. Filter on indexed columns
+4. Check database indexes in Explore view
+
+### Need Complex Logic
+
+**Alternative**: Switch to Scratchpad SQL editor for advanced queries
+
+## Related Features
+
+<CardGroup cols={2}>
+<Card title="Export Options" icon="download" href="/advanced/export-options">
+Export your filtered data in multiple formats
+</Card>
+<Card title="Search" icon="magnifying-glass" href="/data/viewing-data">
+Combine WHERE conditions with text search
+</Card>
+<Card title="Batch Operations" icon="layer-group" href="/advanced/batch-operations">
+Work with filtered row selections
+</Card>
+<Card title="Scratchpad" icon="code" href="/query/scratchpad-intro">
+Write custom SQL for advanced filtering
+</Card>
+</CardGroup>
+
+## Summary
+
+WHERE conditions provide:
+
+- Visual interface for building filters
+- Multiple comparison operators
+- Support for single and complex multi-condition queries
+- Real-time table updates
+- Integration with export and batch operations
+- Performance-conscious filtering
+
+Master WHERE conditions to efficiently extract exactly the data you need from your databases, whether for analysis, reporting, or data maintenance tasks.
+
+<Check>
+You're ready to filter your data with precision and confidence!
+</Check>

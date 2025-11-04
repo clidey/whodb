@@ -46,7 +46,7 @@ These are non-negotiable principles. Follow them at all times.
 9. Use `any` instead of `interface{}` in all Go code (Go 1.18+ modern syntax). In general use modern Go syntax
    everywhere.
 10. When updating dependencies, ensure versions are identical between Community Edition (`core/go.mod`) and Enterprise
-    Edition (`ee/go.mod`) for shared dependencies
+    Edition (`ee/go.mod`) for shared dependencies. This also includes the desktop versions for CE (`desktop-ce/go.mod`) and EE (`desktop-ee/go.mod`). In general, the Community Edition (`core/go.mod`) has to be the reference point for dependency versions.
 11. Never log sensitive data such as passwords, API keys, tokens, or full connection strings.
 12. Always use PNPM instead of NPM.
 
@@ -237,7 +237,7 @@ All GraphQL operations must be defined in `.graphql` files:
 const MY_QUERY = gql`query MyQuery { ... }`;
 
 // CORRECT: Use the generated hook
-import {useMyQuery} from '@graphql';
+import { useMyQuery } from '@graphql';
 ```
 
 ### Frontend Feature Development

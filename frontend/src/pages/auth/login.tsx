@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import {Badge, Button, cn, Input, Label, ModeToggle, SearchSelect, Separator, toast} from '@clidey/ux';
+import { Badge, Button, cn, Input, Label, ModeToggle, Separator, toast } from '@clidey/ux';
+import { SearchSelect } from '../../components/ux';
 import {
     DatabaseType,
     LoginCredentials,
@@ -24,24 +25,54 @@ import {
     useLoginWithProfileMutation
 } from '@graphql';
 import classNames from "classnames";
-import {entries} from "lodash";
-import {FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState} from "react";
-import {useNavigate, useSearchParams} from "react-router-dom";
-import {Icons} from "../../components/icons";
-import {Loading} from "../../components/loading";
-import {Container} from "../../components/page";
-import {updateProfileLastAccessed} from "../../components/profile-info-tooltip";
-import {baseDatabaseTypes, getDatabaseTypeDropdownItems, IDatabaseDropdownItem} from "../../config/database-types";
-import {extensions, sources} from '../../config/features';
-import {InternalRoutes} from "../../config/routes";
-import {AuthActions} from "../../store/auth";
-import {DatabaseActions} from "../../store/database";
-import {useAppDispatch, useAppSelector} from "../../store/hooks";
-import {AdjustmentsHorizontalIcon, CheckCircleIcon, CircleStackIcon} from '@heroicons/react/24/outline';
+import entries from "lodash/entries";
+import { FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { v4 } from 'uuid';
 import logoImage from "../../../public/images/logo.png";
+import { AdjustmentsHorizontalIcon, CheckCircleIcon, ChevronDownIcon, CircleStackIcon } from '../../components/heroicons';
+import { Icons } from "../../components/icons";
+import { Loading } from "../../components/loading";
+import { Container } from "../../components/page";
+import { updateProfileLastAccessed } from "../../components/profile-info-tooltip";
+import { baseDatabaseTypes, getDatabaseTypeDropdownItems, IDatabaseDropdownItem } from "../../config/database-types";
+import { extensions, sources } from '../../config/features';
+import { InternalRoutes } from "../../config/routes";
+import { useDesktopFile } from '../../hooks/useDesktop';
+import { AuthActions } from "../../store/auth";
+import { DatabaseActions } from "../../store/database";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { isDesktopApp } from '../../utils/external-links';
 
+/**
+ * Generate a consistent ID for desktop credentials based on connection details.
+ * This ensures the same credentials always produce the same ID, preventing duplicate keyring entries.
+ * For browser environments, returns undefined to rely on cookie-based auth.
+ */
+function generateCredentialId(type: string, hostname: string, username: string, database: string): string | undefined {
+    // browser environment just uses a random ID
+    if (!isDesktopApp()) {
+        return v4();
+    }
 
-// Embeddable LoginForm component for use in LoginPage and @sidebar.tsx
+    // desktop environment uses a deterministic ID based on connection details
+    const parts = [
+        'whodb',
+        type || 'unknown',
+        hostname || 'localhost',
+        username || 'default',
+        database || 'default'
+    ];
+
+    const combined = parts.join('::');
+    try {
+        const encoded = btoa(combined).replace(/[+/=]/g, '');
+        return encoded.substring(0, 16).toLowerCase();
+    } catch {
+        return v4();
+    }
+}
+
 
 // Embeddable LoginForm component
 export interface LoginFormProps {
@@ -57,11 +88,11 @@ export interface LoginFormProps {
 }
 
 export const LoginForm: FC<LoginFormProps> = ({
-                                                  onLoginSuccess,
-                                                  hideHeader = false,
-                                                  className = "",
-                                                  advancedDirection = "horizontal",
-                                              }) => {
+    onLoginSuccess,
+    hideHeader = false,
+    className = "",
+    advancedDirection = "horizontal",
+}) => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const currentProfile = useAppSelector(state => state.auth.current);
@@ -86,6 +117,8 @@ export const LoginForm: FC<LoginFormProps> = ({
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [selectedAvailableProfile, setSelectedAvailableProfile] = useState<string>();
 
+    const { isDesktop, selectSQLiteDatabase } = useDesktopFile();
+
     const loading = useMemo(() => {
         return loginLoading || loginWithProfileLoading;
     }, [loginLoading, loginWithProfileLoading]);
@@ -98,7 +131,11 @@ export const LoginForm: FC<LoginFormProps> = ({
         }
         setError(undefined);
 
+        // Generate ID only for desktop apps, using consistent ID for same credentials
+        const credentialId = generateCredentialId(databaseType.id, hostName, username, database);
+
         const credentials: LoginCredentials = {
+            Id: credentialId,
             Type: databaseType.id,
             Hostname: hostName,
             Database: database,
@@ -131,27 +168,28 @@ export const LoginForm: FC<LoginFormProps> = ({
         });
     }, [databaseType.id, hostName, database, username, password, advancedForm, login, dispatch, navigate, onLoginSuccess]);
 
-    const handleLoginWithProfileSubmit = useCallback(() => {
-        if (selectedAvailableProfile == null) {
+    const handleLoginWithProfileSubmit = useCallback((overrideProfileId?: string) => {
+        const profileId = overrideProfileId ?? selectedAvailableProfile;
+        if (profileId == null) {
             return setError("Select a profile");
         }
         setError(undefined);
 
-        const profile = profiles?.Profiles.find(p => p.Id === selectedAvailableProfile);
+        const profile = profiles?.Profiles.find(p => p.Id === profileId);
 
         loginWithProfile({
             variables: {
                 profile: {
-                    Id:  selectedAvailableProfile,
+                    Id:  profileId,
                     Type: profile?.Type as DatabaseType,
                 },
             },
             onCompleted(data) {
                 if (data.LoginWithProfile.Status) {
-                    updateProfileLastAccessed(selectedAvailableProfile);
+                    updateProfileLastAccessed(profileId);
                     dispatch(AuthActions.login({
                         Type: profile?.Type as DatabaseType,
-                        Id: selectedAvailableProfile,
+                        Id: profileId,
                         Database: profile?.Database ?? "",
                         Hostname: "",
                         Password: "",
@@ -206,6 +244,18 @@ export const LoginForm: FC<LoginFormProps> = ({
         setSelectedAvailableProfile(itemId);
     }, []);
 
+    const handleBrowseSQLiteFile = useCallback(async () => {
+        try {
+            const filePath = await selectSQLiteDatabase();
+            if (filePath) {
+                setDatabase(filePath);
+            }
+        } catch (error) {
+            console.error('Failed to select SQLite database:', error);
+            toast.error('Failed to select database file');
+        }
+    }, [selectSQLiteDatabase]);
+
     useEffect(() => {
         dispatch(DatabaseActions.setSchema(""));
     }, [dispatch]);
@@ -225,6 +275,15 @@ export const LoginForm: FC<LoginFormProps> = ({
         }
     }, [currentProfile]);
 
+    const availableProfiles = useMemo(() => {
+        return profiles?.Profiles.map(profile => ({
+            value: profile.Id,
+            label: profile.Alias ?? profile.Id,
+            icon: (Icons.Logos as Record<string, ReactElement>)[profile.Type],
+            rightIcon: sources[profile.Source],
+        })) ?? [];
+    }, [profiles?.Profiles]);
+    
     useEffect(() => {
         if (searchParams.size > 0) {
             if (searchParams.has("type")) {
@@ -239,10 +298,10 @@ export const LoginForm: FC<LoginFormProps> = ({
 
             if (searchParams.has("resource")) {
                 const selectedProfile = availableProfiles.find(profile => profile.value === searchParams.get("resource"));
-                setSelectedAvailableProfile(selectedProfile?.value);
-                setTimeout(() => {
-                    handleLoginWithProfileSubmit();
-                }, 10);
+                if (selectedProfile?.value) {
+                    setSelectedAvailableProfile(selectedProfile?.value);
+                    handleLoginWithProfileSubmit(selectedProfile.value);
+                }
             } else if (searchParams.has("login")) {
                 setTimeout(() => {
                     handleSubmit();
@@ -254,7 +313,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         } else {
             setSelectedAvailableProfile(undefined);
         }
-    }, [searchParams, databaseTypeItems]);
+    }, [searchParams, databaseTypeItems, profiles?.Profiles, availableProfiles]);
 
     const handleHostNameChange = useCallback((newHostName: string) => {
         if (databaseType.id !== DatabaseType.MongoDb || !newHostName.startsWith("mongodb+srv://")) {
@@ -315,24 +374,44 @@ export const LoginForm: FC<LoginFormProps> = ({
             return <div className="flex flex-col gap-lg w-full">
                 <div className="flex flex-col gap-xs w-full">
                     <Label>Database</Label>
-                    <SearchSelect
-                        value={database}
-                        onChange={setDatabase}
-                        disabled={databasesLoading}
-                        options={
-                            databasesLoading
-                                ? []
-                                : foundDatabases?.Database?.map(db => ({
-                                value: db,
-                                label: db,
-                                icon: <CircleStackIcon className="w-4 h-4"/>,
-                            })) ?? []
-                        }
-                        placeholder="Select Database"
-                        buttonProps={{
-                            "data-testid": "database",
-                        }}
-                    />
+                    {isDesktop ? (
+                        <div className="flex flex-col gap-sm w-full">
+                            <Input
+                                value={database}
+                                onChange={(e) => setDatabase(e.target.value)}
+                                placeholder="Select or enter database file path"
+                                data-testid="database"
+                            />
+                            <Button
+                                onClick={handleBrowseSQLiteFile}
+                                variant="outline"
+                                className="w-full"
+                            >
+                                Browse for SQLite File
+                            </Button>
+                        </div>
+                    ) : (
+                        <SearchSelect
+                            value={database}
+                            onChange={setDatabase}
+                            disabled={databasesLoading}
+                            options={
+                                databasesLoading
+                                    ? []
+                                    : foundDatabases?.Database?.map(db => ({
+                                    value: db,
+                                    label: db,
+                                    icon: <CircleStackIcon className="w-4 h-4"/>,
+                                })) ?? []
+                            }
+                            placeholder="Select Database"
+                            buttonProps={{
+                                "data-testid": "database",
+                            }}
+                            contentClassName="w-[var(--radix-popover-trigger-width)] login-select-popover"
+                            rightIcon={<ChevronDownIcon className="w-4 h-4"/>}
+                        />
+                    )}
                 </div>
             </div>
         }
@@ -362,16 +441,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 </div>
             )}
         </div>
-    }, [database, databaseType.id, databaseType.fields, databasesLoading, foundDatabases?.Database, handleHostNameChange, hostName, password, username]);
-
-    const availableProfiles = useMemo(() => {
-        return profiles?.Profiles.map(profile => ({
-            value: profile.Id,
-            label: profile.Alias ?? profile.Id,
-            icon: (Icons.Logos as Record<string, ReactElement>)[profile.Type],
-            rightIcon: sources[profile.Source],
-        })) ?? [];
-    }, [profiles?.Profiles]);
+    }, [database, databaseType.id, databaseType.fields, databasesLoading, foundDatabases?.Database, handleHostNameChange, hostName, password, username, isDesktop, handleBrowseSQLiteFile]);
 
     const loginWithCredentialsEnabled = useMemo(() => {
         if (databaseType.id === DatabaseType.Sqlite3) {
@@ -407,34 +477,34 @@ export const LoginForm: FC<LoginFormProps> = ({
         <div className={classNames("w-fit h-fit", className, {
             "w-full h-full": advancedDirection === "vertical",
         })}>
-            <div className="fixed top-4 right-4">
-                <ModeToggle/>
+            <div className="fixed top-4 right-4" data-testid="mode-toggle">
+                <ModeToggle />
             </div>
-            <div className={classNames("flex flex-col grow gap-4", {
+            <div className={classNames("flex flex-col grow gap-lg", {
                 "justify-between": advancedDirection === "horizontal",
                 "h-full": advancedDirection === "vertical" && availableProfiles.length === 0,
             })}>
+                {!hideHeader && (
+                    <div className="flex justify-between" data-testid="login-header">
+                        <div className="flex items-center gap-sm text-xl">
+                            {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4"/>}
+                            <h1 className="text-brand-foreground">{extensions.AppName ?? "WhoDB"}</h1>
+                            <h1>Login</h1>
+                        </div>
+                        {
+                            error &&
+                            <Badge variant="destructive" className="self-end">
+                                {error}
+                            </Badge>
+                        }
+                    </div>
+                )}
                 <div className={classNames("flex", {
                     "flex-row grow": advancedDirection === "horizontal",
-                    "flex-col w-full gap-4": advancedDirection === "vertical",
-                })}>
+                    "flex-col w-full gap-lg": advancedDirection === "vertical",
+                })} data-testid="login-form">
                     <div className={classNames("flex flex-col gap-lg grow", advancedDirection === "vertical" ? "w-full" : "w-[350px]")}>
-                        {!hideHeader && (
-                            <div className="flex justify-between">
-                                <div className="flex items-center gap-sm text-xl">
-                                    {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4"/>}
-                                    <h1 className="text-brand-foreground">{extensions.AppName ?? "WhoDB"}</h1>
-                                    <h1>Login</h1>
-                                </div>
-                                {
-                                    error &&
-                                    <Badge variant="destructive" className="self-end">
-                                        {error}
-                                    </Badge>
-                                }
-                            </div>
-                        )}
-                        <div className={cn("flex flex-col grow gap-4", {
+                        <div className={cn("flex flex-col grow gap-lg", {
                             "justify-center": advancedDirection === "horizontal",
                         })}>
                             <div className="flex flex-col gap-sm w-full">
@@ -454,6 +524,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                                         "data-testid": "database-type-select",
                                     }}
                                     contentClassName="w-[var(--radix-popover-trigger-width)] login-select-popover"
+                                    rightIcon={<ChevronDownIcon className="w-4 h-4"/>}
                                 />
                             </div>
                             {fields}
@@ -461,12 +532,12 @@ export const LoginForm: FC<LoginFormProps> = ({
                     </div>
                     {
                         (showAdvanced && advancedForm != null) &&
-                        <div className={classNames("transition-all h-full overflow-hidden flex flex-col gap-xs", {
-                            "w-[350px] ml-4 mt-[43px]": advancedDirection === "horizontal",
+                        <div className={classNames("transition-all h-full overflow-hidden flex flex-col gap-lg", {
+                            "w-[350px] ml-4": advancedDirection === "horizontal",
                             "w-full": advancedDirection === "vertical",
                         })}>
                             {entries(advancedForm).map(([key, value]) => (
-                                <div className="flex flex-col gap-xs" key={key}>
+                                <div className="flex flex-col gap-sm" key={key}>
                                     <Label htmlFor={`${key}-input`}>{key}</Label>
                                     <Input
                                         id={`${key}-input`}
@@ -489,7 +560,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                         <AdjustmentsHorizontalIcon className="w-4 h-4" /> {showAdvanced ? "Less Advanced" : "Advanced"}
                     </Button>
                     {advancedDirection === "horizontal" && (
-                        <Button onClick={handleSubmit} data-testid="login-button" variant={loginWithCredentialsEnabled ? "default" : "secondary"}>
+                        <Button onClick={handleSubmit} data-testid="login-button" variant={loginWithCredentialsEnabled ? "default" : "secondary"} disabled={!loginWithCredentialsEnabled}>
                             <CheckCircleIcon className="w-4 h-4" /> Login
                         </Button>
                     )}
@@ -498,7 +569,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                     <div className={cn("flex flex-col justify-end", {
                         "grow": availableProfiles.length === 0,
                     })}>
-                        <Button onClick={handleSubmit} data-testid="login-button" variant={loginWithCredentialsEnabled ? "default" : "secondary"}>
+                        <Button onClick={handleSubmit} data-testid="login-button" variant={loginWithCredentialsEnabled ? "default" : "secondary"} disabled={!loginWithCredentialsEnabled}>
                             <CheckCircleIcon className="w-4 h-4" /> Login
                         </Button>
                     </div>
@@ -508,7 +579,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 availableProfiles.length > 0 &&
                 <>
                     <Separator className="my-8" />
-                    <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-lg">
                         <Label>Available profiles</Label>
                         <SearchSelect
                             value={selectedAvailableProfile}
@@ -519,8 +590,9 @@ export const LoginForm: FC<LoginFormProps> = ({
                             buttonProps={{
                                 "data-testid": "available-profiles-select",
                             }}
+                            rightIcon={<ChevronDownIcon className="w-4 h-4"/>}
                         />
-                        <Button onClick={handleLoginWithProfileSubmit} data-testid="login-with-profile-button" variant={loginWithProfileEnabled ? "default" : "secondary"}>
+                        <Button onClick={() => handleLoginWithProfileSubmit()} data-testid="login-with-profile-button" variant={loginWithProfileEnabled ? "default" : "secondary"} disabled={!loginWithProfileEnabled}>
                             <CheckCircleIcon className="w-4 h-4" /> Login
                         </Button>
                     </div>

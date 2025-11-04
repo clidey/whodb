@@ -22,9 +22,9 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-    SearchSelect,
     Sheet,
     SheetContent,
+    SheetTitle,
     Sidebar as SidebarComponent,
     SidebarContent,
     SidebarGroup,
@@ -37,6 +37,7 @@ import {
     toast,
     useSidebar
 } from "@clidey/ux";
+import { SearchSelect } from "../ux";
 import {
     DatabaseType,
     useGetDatabaseQuery,
@@ -45,17 +46,7 @@ import {
     useLoginMutation,
     useLoginWithProfileMutation
 } from '@graphql';
-import {
-    ArrowLeftStartOnRectangleIcon,
-    ChevronDownIcon,
-    CogIcon,
-    CommandLineIcon,
-    PlusIcon,
-    QuestionMarkCircleIcon,
-    RectangleGroupIcon,
-    SparklesIcon,
-    TableCellsIcon
-} from "@heroicons/react/24/outline";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import classNames from "classnames";
 import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
@@ -67,9 +58,20 @@ import { LoginForm } from "../../pages/auth/login";
 import { AuthActions, LocalLoginProfile } from "../../store/auth";
 import { DatabaseActions } from "../../store/database";
 import { useAppSelector } from "../../store/hooks";
-import { databaseSupportsSchema, databaseSupportsScratchpad, databaseTypesThatUseDatabaseInsteadOfSchema } from "../../utils/database-features";
+import { databaseSupportsDatabaseSwitching, databaseSupportsSchema, databaseSupportsScratchpad, databaseTypesThatUseDatabaseInsteadOfSchema } from "../../utils/database-features";
 import { isEEFeatureEnabled } from "../../utils/ee-loader";
 import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
+import {
+    ArrowLeftStartOnRectangleIcon,
+    ChevronDownIcon,
+    CogIcon,
+    CommandLineIcon,
+    PlusCircleIcon,
+    QuestionMarkCircleIcon,
+    RectangleGroupIcon,
+    SparklesIcon,
+    TableCellsIcon
+} from "../heroicons";
 import { Icons } from "../icons";
 import { Loading } from "../loading";
 import { updateProfileLastAccessed } from "../profile-info-tooltip";
@@ -273,6 +275,29 @@ export const Sidebar: FC = () => {
         }
     }, []);
 
+    // Listen for menu event to open add profile form
+    useEffect(() => {
+        const handleOpenAddProfile = () => {
+            // Open the sidebar if it's closed
+            if (!open) {
+                toggleSidebar();
+            }
+            // Open the add profile sheet
+            setShowLoginCard(true);
+        };
+
+        const handleToggleSidebar = () => {
+            toggleSidebar();
+        };
+
+        window.addEventListener('menu:open-add-profile', handleOpenAddProfile);
+        window.addEventListener('menu:toggle-sidebar', handleToggleSidebar);
+        return () => {
+            window.removeEventListener('menu:open-add-profile', handleOpenAddProfile);
+            window.removeEventListener('menu:toggle-sidebar', handleToggleSidebar);
+        };
+    }, [open, toggleSidebar]);
+
     return (
         <div className="dark">
             <SidebarComponent variant="sidebar" collapsible="icon" className="dark:group-data-[side=left]:border-r-neutral-800 z-[50]">
@@ -289,7 +314,7 @@ export const Sidebar: FC = () => {
                         <SidebarTrigger className="px-0" />
                     </div>
                 </SidebarHeader>
-                <SidebarContent className={cn("mt-8 mb-16", {
+                <SidebarContent className={cn("mt-8 mb-16 overflow-y-auto", {
                     "mx-4": open,
                 })}>
                     {loading ? (
@@ -298,7 +323,7 @@ export const Sidebar: FC = () => {
                         </div>
                     ) : (
                         <SidebarGroup className="grow">
-                            <div className="flex flex-col gap-4">
+                            <div className="flex flex-col gap-lg">
                                 {/* Profile Select */}
                                 <div className="flex flex-col gap-sm w-full">
                                     <h2 className={cn("text-sm", !open &&  "hidden")}>Profile</h2>
@@ -317,7 +342,7 @@ export const Sidebar: FC = () => {
                                                 onSelect={handleAddProfile}
                                             >
                                                 <span className="flex items-center gap-sm text-green-500">
-                                                    <PlusIcon className="w-4 h-4 stroke-green-500" />
+                                                    <PlusCircleIcon className="w-4 h-4 stroke-green-500" />
                                                     Add another profile
                                                 </span>
                                             </CommandItem>
@@ -325,13 +350,14 @@ export const Sidebar: FC = () => {
                                         side="left" align="start"
                                         buttonProps={{
                                             "data-testid": "sidebar-profile",
+                                            "data-collapsed": !open,
                                         }}
                                     />
                                 </div>
                                 {/* Database Select */}
                                 <div className={cn("flex flex-col gap-sm w-full", {
                                     "opacity-0 pointer-events-none": !open,
-                                    "hidden": !current || databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type),
+                                    "hidden": !databaseSupportsDatabaseSwitching(current?.Type),
                                 })}>
                                     <h2 className="text-sm">Database</h2>
                                     <SearchSelect
@@ -368,7 +394,7 @@ export const Sidebar: FC = () => {
                             </div>
                             
                             {/* Main navigation */}
-                            <SidebarMenu className="grow mt-16 gap-4">
+                            <SidebarMenu className="grow mt-8 gap-4">
                                 {sidebarRoutes.map(route => (
                                     <SidebarMenuItem key={route.title}>
                                         <SidebarMenuButton asChild>
@@ -385,7 +411,7 @@ export const Sidebar: FC = () => {
                                     </SidebarMenuItem>
                                 ))}
 
-                                <SidebarSeparator className={cn("my-16", {
+                                <SidebarSeparator className={cn("my-2", {
                                     "mx-0": !open,
                                 })} />
 
@@ -455,6 +481,9 @@ export const Sidebar: FC = () => {
             </SidebarComponent>
             <Sheet open={showLoginCard} onOpenChange={setShowLoginCard}>
                 <SheetContent side="right" className="p-8">
+                    <VisuallyHidden>
+                        <SheetTitle>Database Login</SheetTitle>
+                    </VisuallyHidden>
                     <LoginForm advancedDirection="vertical" />
                 </SheetContent>
             </Sheet>

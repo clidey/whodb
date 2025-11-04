@@ -1,0 +1,291 @@
+name: Verify Deployment
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version to verify'
+        required: true
+        type: string
+      verify-docker:
+        description: 'Verify Docker deployment'
+        required: false
+        type: boolean
+        default: false
+      verify-snap:
+        description: 'Verify Snap deployment'
+        required: false
+        type: boolean
+        default: false
+      verify-github:
+        description: 'Verify GitHub release'
+        required: false
+        type: boolean
+        default: false
+    outputs:
+      docker-verified:
+        description: 'Docker verification status'
+        value: ${{ jobs.verify.outputs.docker-verified }}
+      snap-verified:
+        description: 'Snap verification status'
+        value: ${{ jobs.verify.outputs.snap-verified }}
+      github-verified:
+        description: 'GitHub verification status'
+        value: ${{ jobs.verify.outputs.github-verified }}
+      all-verified:
+        description: 'All deployments verified'
+        value: ${{ jobs.verify.outputs.all-verified }}
+
+jobs:
+  verify:
+    name: Verify Deployments
+    runs-on: ubuntu-latest
+    outputs:
+      docker-verified: ${{ steps.verify-docker.outputs.verified }}
+      snap-verified: ${{ steps.verify-snap.outputs.verified }}
+      github-verified: ${{ steps.verify-github.outputs.verified }}
+      all-verified: ${{ steps.summary.outputs.all-verified }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup verification
+        run: |
+          echo "🔍 Starting deployment verification for version ${{ inputs.version }}"
+          echo "VERSION=${{ inputs.version }}" >> $GITHUB_ENV
+
+          # Create verification report file
+          cat > verification_report.json <<EOF
+          {
+            "version": "${{ inputs.version }}",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "deployments": {}
+          }
+          EOF
+
+      - name: Verify Docker Hub deployment
+        id: verify-docker
+        if: inputs.verify-docker
+        run: |
+          echo "🐳 Verifying Docker Hub deployment..."
+
+          VERSION="${{ inputs.version }}"
+          VERIFIED=false
+
+          # Check if image exists on Docker Hub
+          echo "Checking Docker Hub for clidey/whodb:${VERSION}..."
+
+          # Use Docker Hub API to check if tag exists
+          RESPONSE=$(curl -s "https://hub.docker.com/v2/repositories/clidey/whodb/tags/${VERSION}/")
+
+          if echo "$RESPONSE" | grep -q "\"name\":\"${VERSION}\""; then
+            echo "✅ Docker tag ${VERSION} found on Docker Hub"
+
+            # Check for multi-arch manifest
+            echo "Checking for multi-arch support..."
+            docker manifest inspect clidey/whodb:${VERSION} > /dev/null 2>&1
+            if [ $? -eq 0 ]; then
+              echo "✅ Multi-arch manifest verified"
+              VERIFIED=true
+            else
+              echo "⚠️ Multi-arch manifest not found"
+            fi
+
+            # Check latest tag
+            echo "Checking latest tag..."
+            LATEST_DIGEST=$(docker manifest inspect clidey/whodb:latest 2>/dev/null | jq -r .config.digest || echo "")
+            VERSION_DIGEST=$(docker manifest inspect clidey/whodb:${VERSION} 2>/dev/null | jq -r .config.digest || echo "")
+
+            if [ "$LATEST_DIGEST" = "$VERSION_DIGEST" ] && [ -n "$LATEST_DIGEST" ]; then
+              echo "✅ Latest tag points to version ${VERSION}"
+            else
+              echo "⚠️ Latest tag does not match version ${VERSION}"
+            fi
+          else
+            echo "❌ Docker tag ${VERSION} NOT found on Docker Hub"
+          fi
+
+          echo "verified=$VERIFIED" >> $GITHUB_OUTPUT
+
+          # Update report
+          jq ".deployments.docker = {\"verified\": $VERIFIED, \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" \
+            verification_report.json > temp.json && mv temp.json verification_report.json
+
+      - name: Verify Snap Store deployment
+        id: verify-snap
+        if: inputs.verify-snap
+        run: |
+          echo "📦 Verifying Snap Store deployment..."
+
+          VERSION="${{ inputs.version }}"
+          VERIFIED=false
+
+          # Install snapcraft to use snap CLI
+          sudo snap install snapcraft --classic
+
+          # Search for the snap
+          echo "Checking Snap Store for whodb version ${VERSION}..."
+
+          # Get snap info
+          snap info whodb 2>/dev/null | grep -E "^\s*(stable|candidate|beta|edge):" > snap_channels.txt || {
+            echo "⚠️ Could not retrieve snap info"
+            echo "verified=false" >> $GITHUB_OUTPUT
+            exit 0
+          }
+
+          echo "Current snap channels:"
+          cat snap_channels.txt
+
+          # Check if version is in any channel
+          if grep -q "${VERSION}" snap_channels.txt; then
+            echo "✅ Version ${VERSION} found in Snap Store"
+            VERIFIED=true
+
+            # Identify which channel
+            if grep "stable:.*${VERSION}" snap_channels.txt; then
+              echo "  - Published to stable channel"
+            elif grep "candidate:.*${VERSION}" snap_channels.txt; then
+              echo "  - Published to candidate channel"
+            elif grep "beta:.*${VERSION}" snap_channels.txt; then
+              echo "  - Published to beta channel"
+            elif grep "edge:.*${VERSION}" snap_channels.txt; then
+              echo "  - Published to edge channel"
+            fi
+          else
+            echo "❌ Version ${VERSION} NOT found in Snap Store"
+          fi
+
+          echo "verified=$VERIFIED" >> $GITHUB_OUTPUT
+
+          # Update report
+          jq ".deployments.snap = {\"verified\": $VERIFIED, \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" \
+            verification_report.json > temp.json && mv temp.json verification_report.json
+
+      - name: Verify GitHub Release
+        id: verify-github
+        if: inputs.verify-github
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          echo "📦 Verifying GitHub Release..."
+
+          VERSION="${{ inputs.version }}"
+          TAG="v${VERSION}"
+          VERIFIED=false
+
+          # Check if release exists
+          echo "Checking for GitHub release ${TAG}..."
+
+          RELEASE_DATA=$(gh api repos/${{ github.repository }}/releases/tags/${TAG} 2>/dev/null || echo "{}")
+
+          if echo "$RELEASE_DATA" | jq -e '.id' > /dev/null; then
+            echo "✅ GitHub release ${TAG} found"
+
+            # Check release status
+            IS_DRAFT=$(echo "$RELEASE_DATA" | jq -r '.draft')
+            IS_PRERELEASE=$(echo "$RELEASE_DATA" | jq -r '.prerelease')
+
+            echo "  - Draft: $IS_DRAFT"
+            echo "  - Pre-release: $IS_PRERELEASE"
+
+            # Check for assets
+            ASSET_COUNT=$(echo "$RELEASE_DATA" | jq '.assets | length')
+            echo "  - Assets: $ASSET_COUNT"
+
+            if [ "$ASSET_COUNT" -gt 0 ]; then
+              echo "✅ Release has assets attached"
+              VERIFIED=true
+
+              # List assets
+              echo "Assets:"
+              echo "$RELEASE_DATA" | jq -r '.assets[].name' | while read asset; do
+                echo "  - $asset"
+              done
+            else
+              echo "⚠️ Release has no assets"
+            fi
+          else
+            echo "❌ GitHub release ${TAG} NOT found"
+          fi
+
+          echo "verified=$VERIFIED" >> $GITHUB_OUTPUT
+
+          # Update report
+          jq ".deployments.github = {\"verified\": $VERIFIED, \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" \
+            verification_report.json > temp.json && mv temp.json verification_report.json
+
+      - name: Verification Summary
+        id: summary
+        if: always()
+        run: |
+          echo "## 📊 Deployment Verification Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Time:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Verification Results:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          ALL_VERIFIED=true
+
+          # Docker verification
+          if [ "${{ inputs.verify-docker }}" = "true" ]; then
+            if [ "${{ steps.verify-docker.outputs.verified }}" = "true" ]; then
+              echo "✅ **Docker Hub:** Verified" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ **Docker Hub:** NOT Verified" >> $GITHUB_STEP_SUMMARY
+              ALL_VERIFIED=false
+            fi
+          else
+            echo "⏭️ **Docker Hub:** Skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Snap verification
+          if [ "${{ inputs.verify-snap }}" = "true" ]; then
+            if [ "${{ steps.verify-snap.outputs.verified }}" = "true" ]; then
+              echo "✅ **Snap Store:** Verified" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ **Snap Store:** NOT Verified" >> $GITHUB_STEP_SUMMARY
+              ALL_VERIFIED=false
+            fi
+          else
+            echo "⏭️ **Snap Store:** Skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # GitHub verification
+          if [ "${{ inputs.verify-github }}" = "true" ]; then
+            if [ "${{ steps.verify-github.outputs.verified }}" = "true" ]; then
+              echo "✅ **GitHub Release:** Verified" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ **GitHub Release:** NOT Verified" >> $GITHUB_STEP_SUMMARY
+              ALL_VERIFIED=false
+            fi
+          else
+            echo "⏭️ **GitHub Release:** Skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Overall status
+          if [ "$ALL_VERIFIED" = "true" ]; then
+            echo "### ✅ All deployments verified successfully!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ⚠️ Some deployments could not be verified" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Please check the failed verifications and consider manual verification or rollback." >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "all-verified=$ALL_VERIFIED" >> $GITHUB_OUTPUT
+
+          # Save final report
+          jq ".summary = {\"all_verified\": $ALL_VERIFIED, \"completed\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" \
+            verification_report.json > temp.json && mv temp.json verification_report.json
+
+      - name: Upload verification report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verification-report
+          path: verification_report.json
+          retention-days: 30

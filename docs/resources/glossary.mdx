@@ -1,0 +1,445 @@
+---
+title: "Database and WhoDB Glossary"
+description: "Comprehensive glossary of database terminology and WhoDB-specific concepts with clear definitions"
+---
+
+# Database and WhoDB Glossary
+
+A comprehensive reference guide to database and WhoDB terminology. Whether you're new to databases or looking for a specific term, this glossary provides clear, concise definitions to help you understand database concepts and WhoDB features.
+
+<Tip>
+Use the search function (Cmd/Ctrl + F) to quickly find terms in this glossary
+</Tip>
+
+## A
+
+**Aggregate Function**
+A SQL function that performs calculations across multiple rows and returns a single value. Common examples include COUNT(), SUM(), AVG(), MIN(), and MAX(). These functions are typically used with GROUP BY clauses to summarize data.
+
+**API (Application Programming Interface)**
+A set of rules and tools for building software applications. WhoDB exposes functionality through a GraphQL API, allowing external applications and integrations to interact with database operations programmatically.
+
+**Auto-Increment**
+A database feature that automatically generates unique numeric values for a column, typically used for primary keys. Each new row receives the next sequential number without manual intervention.
+
+**Alias**
+An alternative name given to a table, column, or subquery in SQL, typically using the AS keyword. Aliases improve query readability and are essential when working with self-joins or multiple tables.
+
+## B
+
+**Backup**
+A complete copy of database data created for recovery purposes. WhoDB's export features allow you to create backups in various formats (SQL, CSV, Excel) for data protection and migration.
+
+**Batch Operation**
+Processing multiple database records in a single transaction or operation, rather than individually. WhoDB supports batch operations for adding, editing, and deleting multiple rows efficiently.
+
+**Boolean**
+A data type that stores one of two values: TRUE or FALSE. Used for binary decisions and flags in databases, often represented as 1 or 0 in some systems.
+
+## C
+
+**Cardinality**
+The relationship type between two tables in a database schema, describing how many records in one table can relate to records in another. Common cardinalities include one-to-one, one-to-many, and many-to-many.
+
+**Cascade**
+A referential integrity constraint that automatically propagates changes (updates or deletes) from parent to child records. When a parent row is deleted, CASCADE delete removes all related child rows.
+
+**Chat Feature**
+WhoDB's AI-powered natural language interface for querying databases. Users can describe their data needs in plain language, and the AI translates them into SQL queries or provides schema insights.
+
+**ClickHouse**
+An open-source columnar database management system optimized for analytical queries and real-time data. Supported in WhoDB for handling large volumes of time-series data and analytics workloads.
+
+**Column**
+A vertical structure in a table representing a specific attribute of data. Each column has a name and data type, defining what kind of values it can store.
+
+**Composite Key**
+A primary key consisting of two or more columns together. Used when a single column cannot uniquely identify rows, requiring a combination of columns for uniqueness.
+
+**Constraint**
+A rule applied to database columns or tables to enforce data integrity. Common constraints include PRIMARY KEY, FOREIGN KEY, UNIQUE, NOT NULL, and CHECK constraints.
+
+**Connection Pool**
+A collection of reusable database connections managed by WhoDB to improve performance. Rather than creating new connections for each operation, connections are reused when available.
+
+**CSV (Comma-Separated Values)**
+A plain-text file format for storing tabular data where rows are separated by newlines and columns by commas. WhoDB supports both importing and exporting data in CSV format.
+
+## D
+
+**Data Type**
+A classification that specifies what kind of data a column can store, such as INTEGER, VARCHAR, DATE, BOOLEAN, or JSON. Data types ensure data integrity and optimize storage.
+
+**Database**
+An organized collection of structured data stored in a database management system. WhoDB supports connecting to multiple databases across different database engines.
+
+**Database Engine**
+The underlying software system that manages data storage, retrieval, and manipulation. Examples include PostgreSQL, MySQL, MongoDB, and SQLite.
+
+**DBeaver**
+A popular GUI database management tool. WhoDB offers a lighter-weight alternative for database exploration and management with modern UI/UX.
+
+**DELETE**
+A SQL statement that removes one or more rows from a table based on specified conditions. In WhoDB, deletions can be performed via the data grid interface or Scratchpad queries.
+
+**Delimiter**
+A character used to separate fields or values, most commonly a comma in CSV files. WhoDB allows customization of delimiters when exporting or importing data.
+
+## E
+
+**Elasticsearch**
+A distributed search and analytics engine built on top of Apache Lucene. Supported in WhoDB for searching and analyzing large volumes of unstructured data.
+
+**Entity-Relationship (ER) Model**
+A method of visually representing database structures showing entities (tables) and their relationships. WhoDB's Graph view provides an interactive ER diagram of your database schema.
+
+**Export**
+The process of extracting data from WhoDB in various formats (CSV, Excel, JSON, SQL) for use in other applications or for backup purposes.
+
+**Explore View**
+One of WhoDB's primary views that displays detailed information about a table's structure including columns, data types, indexes, primary keys, and foreign key relationships.
+
+## F
+
+**Filter**
+A mechanism to restrict which rows are displayed based on specified criteria. WhoDB supports filtering via the search box and WHERE condition builders.
+
+**Foreign Key**
+A column or combination of columns that references a primary key in another table, enforcing referential integrity and establishing relationships between tables.
+
+**Format Query**
+WhoDB's feature to automatically reorganize and indent SQL code for improved readability using keyboard shortcut Cmd/Ctrl + Shift + F.
+
+**Full-Text Search**
+A search capability that indexes and searches all text columns in a table. Available in databases that support full-text search like PostgreSQL with text search extensions.
+
+## G
+
+**Graph View**
+WhoDB's visual representation of database schema showing tables as nodes and foreign key relationships as connecting lines. Interactive visualization allows panning, zooming, and node exploration.
+
+**GraphQL**
+A query language and runtime for APIs (Application Programming Interface) used throughout WhoDB for all backend communication, providing strongly-typed and flexible data querying.
+
+**GORM**
+Go Object-Relational Mapping library used in WhoDB's backend for database interactions, providing type safety and database abstraction.
+
+**GROUP BY**
+A SQL clause that groups rows with identical values in specified columns, typically used with aggregate functions to summarize data by categories.
+
+## H
+
+**Hash Function**
+A cryptographic function used for password hashing and data integrity verification, ensuring passwords are never stored in plain text in WhoDB.
+
+**HAVING**
+A SQL clause that filters grouped data (rows returned by GROUP BY), similar to WHERE but applied after grouping and aggregation.
+
+## I
+
+**Index**
+A database structure that speeds up data retrieval by creating a sorted key-value lookup. Indexes significantly improve query performance on frequently searched columns but require additional storage.
+
+**INSERT**
+A SQL statement that adds one or more new rows to a table. In WhoDB, rows can be added through the data grid interface or Scratchpad queries.
+
+**Instance**
+A single running copy of a database server. WhoDB can connect to multiple database instances simultaneously, either locally or remotely.
+
+## J
+
+**JOIN**
+A SQL operation that combines rows from two or more tables based on related columns. Common types include INNER JOIN, LEFT JOIN, RIGHT JOIN, and FULL OUTER JOIN.
+
+**JSON (JavaScript Object Notation)**
+A lightweight data format using key-value pairs and hierarchical structures. WhoDB supports JSON data types in many databases and can export data as JSON.
+
+**JSON Export**
+WhoDB's capability to export database query results in JSON format, useful for APIs, web applications, and data processing pipelines.
+
+## K
+
+**Key**
+A constraint or index used to uniquely identify rows (primary key) or establish relationships (foreign key) in a database table.
+
+**Keyboard Shortcuts**
+Quick key combinations in WhoDB for common operations. Examples: Cmd/Ctrl + Enter to execute queries, Cmd/Ctrl + A to select all rows.
+
+## L
+
+**LIMIT**
+A SQL clause that restricts the number of rows returned by a query. Essential for performance optimization when working with large datasets.
+
+## M
+
+**MariaDB**
+An open-source relational database that is a fork of MySQL, maintaining compatibility while adding new features. Supported in WhoDB's Community Edition.
+
+**Mock Data**
+Synthetic test data generated by WhoDB using realistic patterns for each data type. Useful for development, testing, and demonstration purposes without exposing real data.
+
+**MongoDB**
+A NoSQL document database that stores data in flexible JSON-like documents rather than rigid relational tables. Supported in WhoDB for document database exploration.
+
+**MySQL**
+A popular open-source relational database management system widely used in web applications. Fully supported in WhoDB.
+
+## N
+
+**NoSQL**
+A category of databases that don't use traditional relational table structures. Examples include MongoDB, Redis, and Elasticsearch, all supported in WhoDB.
+
+**NOT NULL**
+A constraint ensuring a column always contains a value and cannot be empty or null. Critical for data integrity on required fields.
+
+**Null**
+A special value representing the absence of data or an unknown value, distinct from zero or empty string in databases.
+
+## O
+
+**OFFSET**
+A SQL clause used with LIMIT to skip a specified number of rows before retrieving results, used for pagination in data browsing.
+
+**ORDER BY**
+A SQL clause that sorts query results by specified columns in ascending (ASC) or descending (DESC) order.
+
+## P
+
+**Pagination**
+Dividing large datasets into smaller, manageable pages for display and navigation. WhoDB automatically implements pagination with configurable page sizes.
+
+**Parameter**
+A placeholder in a SQL query replaced with actual values at execution time, preventing SQL injection attacks. WhoDB uses parameterized queries internally for security.
+
+**pgAdmin**
+A popular GUI administration tool for PostgreSQL databases. WhoDB serves as a modern alternative with support for multiple database types.
+
+**phpMyAdmin**
+A widely-used web-based administration tool for MySQL. WhoDB offers similar functionality with enhanced UI and additional database support.
+
+**Plugin**
+WhoDB's architecture component for database engine support. Each database type (PostgreSQL, MySQL, etc.) is implemented as a plugin ensuring clean separation of concerns.
+
+**PostgreSQL**
+An advanced open-source relational database known for reliability, advanced features, and SQL compliance. Widely supported and popular with WhoDB users.
+
+**Primary Key**
+A column or combination of columns that uniquely identifies each row in a table. Each table should have exactly one primary key for data integrity.
+
+## Q
+
+**Query**
+A request for data from a database written in SQL or another query language. WhoDB's Scratchpad is designed for writing and executing complex queries.
+
+**Query History**
+WhoDB's feature that automatically saves all executed queries for easy access and reuse, visible in the Scratchpad interface.
+
+**Quick Start**
+WhoDB's introductory guide helping new users connect to their first database and understand basic features in minutes.
+
+## R
+
+**Recursive Query**
+A query that references itself, used for hierarchical data exploration like organizational structures or category trees. Supported in advanced SQL databases via Common Table Expressions (CTEs).
+
+**Referential Integrity**
+A database principle ensuring that foreign key values always reference valid primary key values in related tables, maintained through constraints.
+
+**Redis**
+An in-memory data structure store used for caching, messaging, and real-time analytics. Supported in WhoDB for exploring Redis data structures and keys.
+
+**Relational Database**
+A database organized into tables with relationships between them, following the relational model for data organization and querying.
+
+**Relationship**
+A connection between two tables established through foreign keys, representing how data in different tables relates to each other.
+
+**Row**
+A horizontal record in a database table containing values for all columns, representing a single instance of the entity the table describes.
+
+## S
+
+**Schema**
+The blueprint of a database describing all tables, columns, relationships, constraints, and other structural elements. WhoDB visualizes schemas in the Explorer and Graph views.
+
+**Schema Explorer**
+WhoDB's sidebar view showing the complete database structure including databases, schemas, tables, views, and stored procedures in a hierarchical tree.
+
+**Scratchpad**
+WhoDB's primary query interface for writing and executing SQL queries, similar to Jupyter notebooks but for databases, supporting multiple cells and result visualization.
+
+**Search**
+WhoDB's capability to find specific data across tables using the quick search box or WHERE conditions. Also includes full-text search where database engines support it.
+
+**SELECT**
+A SQL statement that retrieves data from one or more tables, the most common query type in databases.
+
+**SQL (Structured Query Language)**
+The standardized language for querying and manipulating relational databases, universally supported across database engines.
+
+**SQLite**
+A lightweight, serverless relational database engine ideal for embedded applications, development, and testing. Fully supported in WhoDB.
+
+**SSH (Secure Shell)**
+A secure protocol for remote command execution. WhoDB supports SSH tunneling for securely accessing remote databases through a bastion host.
+
+**SSL/TLS**
+Cryptographic protocols for secure communication over networks. WhoDB supports SSL/TLS encryption for database connections over the internet.
+
+**Storage Unit**
+WhoDB's terminology for a connected database instance, representing a specific database server or service you can explore and interact with.
+
+## T
+
+**Table**
+The primary data structure in relational databases consisting of columns (fields) and rows (records) organized in a grid format.
+
+**Transaction**
+A group of SQL statements treated as a single atomic unit that either all succeed or all fail together, ensuring data consistency.
+
+**Trigger**
+A special type of stored procedure automatically executed when specific database events occur (INSERT, UPDATE, DELETE), used for automated data management.
+
+## U
+
+**UPDATE**
+A SQL statement that modifies existing row data in a table based on specified conditions. In WhoDB, rows can be updated through the data grid or Scratchpad.
+
+**UNIQUE**
+A constraint ensuring all values in a column are distinct with no duplicates allowed, while NULL values may be permitted (varies by database).
+
+## V
+
+**View**
+A virtual table derived from one or more base tables, containing the result of a stored SELECT query. WhoDB displays database views in the schema explorer alongside tables.
+
+**Visualization**
+WhoDB's capability to represent data and schema structures graphically, including data tables, graphs, and interactive diagrams for easier comprehension.
+
+## W
+
+**WHERE**
+A SQL clause specifying conditions that rows must meet to be included in query results, used for filtering data.
+
+**WhoDB**
+A modern, open-source database management tool providing a unified interface for multiple database types with visual schema exploration and powerful query capabilities.
+
+**WHERE Conditions**
+WhoDB's GUI interface for building complex WHERE clauses without writing SQL, supporting operators like `=`, `!=`, `>`, `<`, `>=`, `<=`, `LIKE`, and `IN`.
+
+**Window Function**
+An advanced SQL feature that performs calculations across a set of table rows related to the current row, useful for ranking, running totals, and analytics.
+
+## X
+
+**XML (eXtensible Markup Language)**
+A markup language for storing and transporting structured data, supported as a data type in some advanced databases like PostgreSQL.
+
+## Z
+
+**Zone (Time Zone)**
+A region's standard time offset used in datetime operations. WhoDB respects database time zones when displaying and storing temporal data.
+
+---
+
+## Glossary by Category
+
+### Database Concepts
+
+<AccordionGroup>
+<Accordion title="Core Database Terms">
+- **Database**: Organized collection of structured data
+- **Table**: Grid structure with rows and columns
+- **Row**: Single record in a table
+- **Column**: Attribute or field in a table
+- **Primary Key**: Unique identifier for rows
+- **Foreign Key**: Reference to another table's primary key
+- **Index**: Structure for faster data retrieval
+- **Schema**: Blueprint of database structure
+</Accordion>
+
+<Accordion title="SQL Operations">
+- **SELECT**: Retrieve data from tables
+- **INSERT**: Add new rows to tables
+- **UPDATE**: Modify existing row data
+- **DELETE**: Remove rows from tables
+- **JOIN**: Combine data from multiple tables
+- **GROUP BY**: Organize rows into groups
+- **ORDER BY**: Sort query results
+- **WHERE**: Filter rows based on conditions
+</Accordion>
+
+<Accordion title="Data Types">
+- **Integer**: Whole numbers
+- **VARCHAR**: Variable-length text
+- **Date**: Calendar dates
+- **Boolean**: True/False values
+- **JSON**: Hierarchical data structures
+- **UUID**: Universally unique identifiers
+- **Decimal**: Precise decimal numbers
+- **Timestamp**: Date and time values
+</Accordion>
+
+<Accordion title="Database Engines">
+- **PostgreSQL**: Advanced open-source relational database
+- **MySQL**: Popular web database
+- **SQLite**: Lightweight embedded database
+- **MongoDB**: NoSQL document database
+- **Redis**: In-memory data structure store
+- **Elasticsearch**: Search and analytics engine
+- **MariaDB**: MySQL-compatible database
+- **ClickHouse**: Columnar analytics database
+</Accordion>
+</AccordionGroup>
+
+### WhoDB-Specific Terms
+
+<AccordionGroup>
+<Accordion title="WhoDB Features">
+- **Scratchpad**: Query editor interface
+- **Graph View**: Visual schema representation
+- **Schema Explorer**: Hierarchical structure browser
+- **Chat Feature**: AI-powered query assistant
+- **Mock Data**: Generated test data
+- **Export**: Data download functionality
+- **Batch Operations**: Multiple row modifications
+- **Keyboard Shortcuts**: Quick action commands
+</Accordion>
+
+<Accordion title="WhoDB Editions">
+- **Community Edition**: Free, open-source version
+- **Enterprise Edition**: Commercial version with additional databases
+- **Storage Unit**: Connected database instance
+- **Connection Profile**: Saved database credentials
+</Accordion>
+
+<Accordion title="WhoDB Operations">
+- **Inline Edit**: Direct cell value modification
+- **Quick Export**: Rapid data download
+- **Filter**: Restrict visible rows
+- **Search**: Find specific data
+- **Pagination**: Browse large datasets
+- **Sort**: Arrange rows by column values
+</Accordion>
+</AccordionGroup>
+
+## Related Documentation
+
+<CardGroup cols={2}>
+<Card title="Quick Start Guide" icon="rocket" href="/quick-start">
+Get started with WhoDB basics
+</Card>
+<Card title="Keyboard Shortcuts" icon="keyboard" href="/resources/keyboard-shortcuts">
+Master productivity shortcuts
+</Card>
+<Card title="Supported Databases" icon="database" href="/resources/supported-databases">
+View all supported database engines
+</Card>
+<Card title="FAQ" icon="circle-question" href="/resources/faq">
+Find answers to common questions
+</Card>
+</CardGroup>
+
+<Info>
+This glossary is regularly updated with new terms and definitions as WhoDB evolves. If you encounter a term not in this glossary, check the main documentation or community forums.
+</Info>

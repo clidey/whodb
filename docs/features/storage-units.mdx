@@ -1,0 +1,602 @@
+---
+title: "Storage Units"
+description: "Understand and manage storage units in WhoDB for organizing and accessing your database tables"
+---
+
+# Storage Units
+
+Storage Units are WhoDB's way of organizing and presenting database objects. Whether you're working with a single database, multiple schemas, or various database types, Storage Units help you navigate and manage your data efficiently.
+
+## What Are Storage Units?
+
+Storage Units are logical containers that group related database objects. The exact structure depends on your database type and configuration.
+
+![Storage Unit List](/images/05-storage-unit-list.png)
+
+<Info>
+A Storage Unit typically corresponds to a schema in PostgreSQL, a database in MySQL, or a database in MongoDB. For Redis, each database number is a separate Storage Unit.
+</Info>
+
+### Storage Unit Types by Database
+
+<CardGroup cols={2}>
+<Card title="PostgreSQL" icon="database">
+Schemas within a database are Storage Units. Useful for multi-tenant or modular applications.
+</Card>
+<Card title="MySQL" icon="database">
+Each database is a Storage Unit. MySQL doesn't have true schemas like PostgreSQL.
+</Card>
+<Card title="MongoDB" icon="database">
+Each database is a Storage Unit. Collections within are similar to tables.
+</Card>
+<Card title="Redis" icon="database">
+Each database index (0-15) is a Storage Unit, containing Redis keys.
+</Card>
+<Card title="SQLite" icon="database">
+The entire SQLite file is one Storage Unit with no sub-divisions.
+</Card>
+<Card title="Other DBs" icon="database">
+Enterprise versions may support additional database structures.
+</Card>
+</CardGroup>
+
+## Storage Unit List View
+
+The Storage Unit list provides an overview of all available Storage Units in your current connection.
+
+![Storage Unit List with Sidebar](/images/06-storage-unit-list-with-sidebar.png)
+
+### Viewing Storage Units
+
+<Steps>
+<Step title="Access Storage Units">
+From the main WhoDB interface, look for the Storage Units view. This is typically accessible from:
+- A "Storage Units" tab or menu item
+- The main dashboard when no table is selected
+- A dedicated view in the sidebar
+</Step>
+<Step title="Review Unit Information">
+Each Storage Unit displays:
+- **Name**: The identifier (schema name, database name, or index)
+- **Type**: What kind of storage unit (Schema, Database, Collection, etc.)
+- **Table Count**: Number of tables/collections it contains
+- **Size**: Total storage space used
+- **Created**: When it was created
+- **Last Modified**: Last time it was modified
+</Step>
+<Step title="Understand Organization">
+<CodeGroup>
+```text PostgreSQL Storage Units (Schemas)
+public              │ 24 tables  │ 85 MB
+auth                │ 5 tables   │ 3 MB
+reporting           │ 12 tables  │ 120 MB
+temporal_data       │ 8 tables   │ 450 MB
+```
+```text MySQL Storage Units (Databases)
+production_db       │ 42 tables  │ 2.5 GB
+staging_db          │ 42 tables  │ 2.3 GB
+testing_db          │ 42 tables  │ 1.8 GB
+analytics_db        │ 15 tables  │ 5 GB
+```
+</CodeGroup>
+</Step>
+</Steps>
+
+## Managing Storage Units
+
+### Selecting a Storage Unit
+
+<Steps>
+<Step title="Click Storage Unit">
+Click on any Storage Unit from the list to select it.
+</Step>
+<Step title="View Tables">
+The sidebar updates to show all tables in the selected Storage Unit.
+</Step>
+<Step title="Explore Contents">
+Use the sidebar navigation (see Sidebar Navigation guide) to browse and work with tables.
+</Step>
+</Steps>
+
+### Storage Unit Information
+
+<AccordionGroup>
+<Accordion title="Storage Unit Metadata">
+Hovering over or clicking a Storage Unit shows:
+- **Full Name**: Complete identifier
+- **Object Count**: Total number of tables/collections
+- **Data Size**: Storage used by data
+- **Index Size**: Storage used by indexes
+- **Total Size**: Combined data and index storage
+- **Created Date**: Creation timestamp
+- **Last Modified**: Last change timestamp
+- **Owner/Creator**: Database user who created it
+</Accordion>
+<Accordion title="Storage Unit Properties">
+Access detailed properties by:
+1. Right-clicking the Storage Unit
+2. Selecting "Properties" or "Details"
+3. Viewing configuration information
+
+<CodeGroup>
+```text PostgreSQL Schema Properties
+Name: public
+Owner: postgres
+Description: Standard schema
+Collation: en_US.UTF-8
+Tables: 24
+Views: 5
+Indexes: 63
+Functions: 12
+```
+</CodeGroup>
+</Accordion>
+<Accordion title="Sorting Storage Units">
+List can be sorted by:
+- **Name**: Alphabetically A-Z
+- **Size**: Largest or smallest first
+- **Created**: Newest or oldest first
+- **Modified**: Recently changed first
+- **Table Count**: Most or least tables
+</Accordion>
+</AccordionGroup>
+
+## Viewing Tables in Storage Units
+
+### Table List
+
+When a Storage Unit is selected, all its tables appear in the sidebar with options for viewing and managing them.
+
+<Steps>
+<Step title="See Table List">
+The sidebar displays all tables in the selected Storage Unit with:
+- Table name
+- Row count (if available)
+- Last modified date
+- Table type (regular, view, temporary)
+</Step>
+<Step title="Quick Access">
+<CardGroup cols={2}>
+<Card title="Single Click" icon="hand">
+View table schema and metadata
+</Card>
+<Card title="Double Click" icon="hand">
+Open table in Data View to see rows
+</Card>
+<Card title="Right Click" icon="hand">
+Access context menu with all options
+</Card>
+<Card title="Search" icon="magnifying-glass">
+Find tables by name quickly
+</Card>
+</CardGroup>
+</Step>
+<Step title="Explore Structure">
+Once a table is selected:
+- View all columns with their data types
+- See primary keys and foreign keys
+- Review indexes and constraints
+- Understand relationships with other tables
+</Step>
+</Steps>
+
+### Table Types Within Storage Units
+
+<AccordionGroup>
+<Accordion title="Regular Tables">
+Standard tables containing data:
+- Store actual data rows
+- Have primary keys and relationships
+- Can be indexed and queried
+- Most common table type
+
+<CodeGroup>
+```text Example Regular Tables
+users              │ 15,234 rows
+products           │ 3,456 rows
+orders             │ 89,123 rows
+order_items        │ 342,567 rows
+```
+</CodeGroup>
+</Accordion>
+<Accordion title="Views">
+Virtual tables defined by queries:
+- Don't store data directly
+- Represent a query result
+- Useful for simplifying complex queries
+- May be read-only or updateable
+
+```sql
+CREATE VIEW active_users AS
+  SELECT * FROM users
+  WHERE status = 'active'
+    AND deleted_at IS NULL;
+```
+</Accordion>
+<Accordion title="Temporary Tables">
+Tables that exist only for the session:
+- Created with CREATE TEMPORARY TABLE
+- Automatically deleted when session ends
+- Private to your connection
+- Useful for complex data processing
+
+<Note>
+Temporary tables are not shown in all views. They disappear when you disconnect.
+</Note>
+</Accordion>
+<Accordion title="System Tables">
+Internal database system tables:
+- PostgreSQL: pg_* tables, information_schema
+- MySQL: information_schema, mysql database
+- Usually read-only
+- Contain database metadata
+
+<Warning>
+Avoid modifying system tables. WhoDB typically hides these by default to prevent accidental changes.
+</Warning>
+</Accordion>
+</AccordionGroup>
+
+## Storage Capacity and Growth
+
+### Understanding Storage Usage
+
+<Steps>
+<Step title="Monitor Storage Size">
+Each Storage Unit shows its total size:
+- Data size: Actual row data
+- Index size: Storage for indexes
+- Total size: Combined usage
+</Step>
+<Step title="Identify Large Tables">
+The table list shows individual table sizes. Identify which tables consume the most space:
+
+<CodeGroup>
+```text Storage Analysis Example
+logs table              │ 45 GB  │ Growing
+archive_2023 table      │ 32 GB  │ Static
+events table            │ 28 GB  │ Growing
+user_sessions table     │ 12 GB  │ Stable
+```
+</CodeGroup>
+
+<Tip>
+Growing tables like "logs" may need archival strategies or cleanup jobs.
+</Tip>
+</Step>
+<Step title="Plan Capacity">
+Understanding storage usage helps with:
+- Capacity planning
+- Budget forecasting
+- Performance optimization (compress old data)
+- Backup strategy (larger databases need more storage)
+</Step>
+</Steps>
+
+### Identifying Growth Patterns
+
+<AccordionGroup>
+<Accordion title="Rapidly Growing Tables">
+Tables that grow quickly over time may need:
+- Partitioning (split into smaller pieces)
+- Archival (move old data to separate storage)
+- Purging (delete unnecessary old records)
+- Compression (reduce data size)
+
+<Warning>
+Rapidly growing tables can cause performance degradation. Address growth before it becomes a problem.
+</Warning>
+</Accordion>
+<Accordion title="Static Tables">
+Tables that don't change much:
+- Good candidates for aggressive indexing
+- Unlikely to benefit from partitioning
+- Can use materialized views for complex queries
+</Accordion>
+<Accordion title="Temporal Data">
+Tables organized by time period:
+```
+transactions_2023_q1    │ 15 GB
+transactions_2023_q2    │ 14 GB
+transactions_2023_q3    │ 16 GB
+transactions_2023_q4    │ 17 GB
+```
+Good for time-based archival and cleanup strategies.
+</Accordion>
+</AccordionGroup>
+
+## Navigation Workflows
+
+### Switching Between Storage Units
+
+<Steps>
+<Step title="View Current Unit">
+The Storage Unit name typically appears in the header or sidebar.
+</Step>
+<Step title="Click Different Unit">
+Click on another Storage Unit to switch to it.
+</Step>
+<Step title="Sidebar Updates">
+The table list immediately updates to show tables from the new Storage Unit.
+</Step>
+<Step title="Rapid Switching">
+For quick comparisons, use browser tabs:
+- Open two WhoDB windows
+- Keep different Storage Units in each
+- Compare side-by-side
+</Step>
+</Steps>
+
+### Exploring Complex Schemas
+
+For databases with many Storage Units:
+
+<AccordionGroup>
+<Accordion title="Search Storage Units">
+If a search function is available:
+1. Type the schema/database name
+2. Find it quickly in large lists
+3. Double-click to switch to it
+</Accordion>
+<Accordion title="Group by Purpose">
+Mentally organize units by purpose:
+- `*_prod` units: Production data
+- `*_staging` units: Pre-production testing
+- `*_dev` units: Development/testing
+- `analytics_*` units: Reporting and analysis
+</Accordion>
+<Accordion title="Use Favorites">
+Mark frequently-used Storage Units as favorites for quick access.
+</Accordion>
+</AccordionGroup>
+
+## Database-Specific Storage Unit Behavior
+
+### PostgreSQL Schemas
+
+<CardGroup cols={2}>
+<Card title="public Schema" icon="star">
+Default schema where tables are created if not specified
+</Card>
+<Card title="Custom Schemas" icon="folder">
+Application-specific schemas for organization
+</Card>
+<Card title="Extensions Schema" icon="puzzle">
+pg_catalog and other system schemas (hidden by default)
+</Card>
+<Card title="Search Path" icon="path">
+PostgreSQL searches schemas in path order
+</Card>
+</CardGroup>
+
+<CodeGroup>
+```sql PostgreSQL Schema Operations
+-- Create new schema
+CREATE SCHEMA IF NOT EXISTS app_schema;
+
+-- Set default schema for session
+SET search_path TO app_schema, public;
+
+-- View all schemas
+SELECT * FROM information_schema.schemata;
+
+-- Move table between schemas
+ALTER TABLE old_schema.table_name SET SCHEMA new_schema;
+```
+</CodeGroup>
+
+### MySQL Databases
+
+<AccordionGroup>
+<Accordion title="Database vs Schema">
+In MySQL, "database" and "schema" are synonymous. What PostgreSQL calls schemas, MySQL calls databases.
+</Accordion>
+<Accordion title="System Databases">
+MySQL has several system databases:
+- `information_schema`: Metadata about all databases
+- `mysql`: User accounts and permissions
+- `performance_schema`: Performance metrics
+- `sys`: Performance monitoring views
+</Accordion>
+<Accordion title="Database-Level Operations">
+```sql
+-- Create new database
+CREATE DATABASE app_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Switch database
+USE app_db;
+
+-- View all databases
+SHOW DATABASES;
+
+-- Delete database
+DROP DATABASE app_db;
+```
+</Accordion>
+</AccordionGroup>
+
+### MongoDB Databases
+
+In MongoDB, each Storage Unit represents a database containing collections (similar to tables):
+
+<CodeGroup>
+```text MongoDB Structure
+myapp (Database/Storage Unit)
+├── users (Collection)
+├── products (Collection)
+├── orders (Collection)
+└── order_items (Collection)
+
+analytics (Database/Storage Unit)
+├── user_events (Collection)
+├── page_views (Collection)
+└── error_logs (Collection)
+```
+</CodeGroup>
+
+<Note>
+MongoDB databases and collections are lazily created—they don't exist until data is written to them.
+</Note>
+
+### Redis Databases
+
+Redis supports 16 databases (0-15) by default, each isolated and independent:
+
+<CodeGroup>
+```text Redis Database Structure
+Database 0 (Default)    │ Cache data
+Database 1              │ Session data
+Database 2              │ Queue data
+Database 3-15           │ Additional storage
+```
+</CodeGroup>
+
+```redis
+-- Select database
+SELECT 1
+
+-- View keys in database
+KEYS *
+
+-- Get database info
+INFO
+
+-- Flush database (delete all keys)
+FLUSHDB
+```
+
+<Warning>
+Switching Redis databases in WhoDB changes your entire view. Be cautious not to accidentally operate on the wrong database.
+</Warning>
+
+## Best Practices
+
+<Steps>
+<Step title="Understand Your Storage Structure">
+Before working extensively with WhoDB, understand your database's Storage Unit organization:
+- How many storage units exist
+- What each unit contains
+- Naming conventions used
+- Which units are production vs. development
+</Step>
+<Step title="Organize Strategically">
+When designing your database:
+- Group related tables in the same Storage Unit
+- Use clear, descriptive names (production_db vs. prod)
+- Separate concerns (auth from business logic)
+- Document your structure
+</Step>
+<Step title="Monitor Storage Growth">
+Regularly check Storage Unit sizes:
+- Identify rapidly growing units
+- Plan for capacity needs
+- Address performance issues early
+- Consider archival strategies
+</Step>
+<Step title="Secure Sensitive Units">
+If possible, restrict access to sensitive Storage Units:
+- Use read-only accounts for analytics units
+- Limit direct access to production units
+- Archive or delete old data as appropriate
+</Step>
+</Steps>
+
+## Troubleshooting Storage Unit Issues
+
+<AccordionGroup>
+<Accordion title="Storage Unit Not Appearing">
+**Problem**: Expected Storage Unit (schema/database) doesn't show
+
+**Solutions**:
+1. Verify the Storage Unit exists (use database admin tools)
+2. Check that your user account has access to it
+3. Refresh the page to reload the list
+4. Verify the connection is to the correct server
+5. Check for permission/role restrictions
+</Accordion>
+<Accordion title="Can't Switch Storage Units">
+**Problem**: Clicking a Storage Unit doesn't switch to it
+
+**Solutions**:
+1. Ensure you're connected to the database
+2. Verify the Storage Unit is accessible (not deleted)
+3. Check browser console for errors
+4. Try refreshing the page
+5. Reconnect to the database
+</Accordion>
+<Accordion title="Storage Information Shows as Unavailable">
+**Problem**: Table counts or storage sizes show as "unknown" or "—"
+
+**Solutions**:
+1. WhoDB may still be calculating statistics
+2. Your user account may lack permission to view statistics
+3. The database may be very large (calculation takes time)
+4. Refresh the page to retry calculation
+5. Try with a more privileged account
+</Accordion>
+<Accordion title="Incorrect Storage Size">
+**Problem**: Storage size seems inaccurate
+
+**Explanations**:
+- Size estimates can be approximate in some databases
+- Deleted data may still occupy space until vacuum/optimize runs
+- Indexes take additional space not reflected in table size
+- Some databases report sizes differently
+- Run database maintenance to get accurate sizes
+</Accordion>
+</AccordionGroup>
+
+## Performance Considerations
+
+### Impact of Large Storage Units
+
+<Info>
+Storage Unit size can affect WhoDB performance:
+- Listing many tables takes longer
+- Loading Storage Unit information takes time
+- Very large units (thousands of tables) may be slow
+</Info>
+
+### Optimization Strategies
+
+<Steps>
+<Step title="Use Multiple Smaller Units">
+Instead of one huge Storage Unit, split into logical units:
+- Faster loading and navigation
+- Better organization
+- Clearer permissions and access control
+</Step>
+<Step title="Archive Old Data">
+Move historical data to separate Storage Units:
+- Keeps active Storage Units performant
+- Makes backup/archival easier
+- Improves query performance on active data
+</Step>
+<Step title="Use Database Partitioning">
+For very large tables, partition by date or range:
+- Improves query performance
+- Makes maintenance easier
+- Enables selective backups
+</Step>
+</Steps>
+
+## Next Steps
+
+<CardGroup cols={2}>
+<Card title="Sidebar Navigation" icon="bars" href="/features/sidebar-navigation">
+Master efficient table navigation in the sidebar
+</Card>
+<Card title="Schema Explorer" icon="sitemap" href="/features/schema-explorer">
+Explore table structure and relationships
+</Card>
+<Card title="Viewing Data" icon="table" href="/data/viewing-data">
+Browse and work with table data
+</Card>
+<Card title="Database Connectivity" icon="plug" href="/features/database-connectivity">
+Configure and manage database connections
+</Card>
+</CardGroup>
+
+<Tip>
+Understanding Storage Units is fundamental to efficient WhoDB navigation. Spend time exploring your database's structure to become a WhoDB power user.
+</Tip>

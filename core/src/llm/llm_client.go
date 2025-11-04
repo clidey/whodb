@@ -43,6 +43,11 @@ type LLMClient struct {
 }
 
 func (c *LLMClient) Complete(prompt string, model LLMModel, receiverChan *chan string) (*string, error) {
+	// Validate API key for services that require it
+	if err := c.validateAPIKey(); err != nil {
+		return nil, err
+	}
+
 	var url string
 	var headers map[string]string
 	var requestBody []byte
@@ -87,6 +92,11 @@ func (c *LLMClient) Complete(prompt string, model LLMModel, receiverChan *chan s
 }
 
 func (c *LLMClient) GetSupportedModels() ([]string, error) {
+	// Validate API key for services that require it
+	if err := c.validateAPIKey(); err != nil {
+		return nil, err
+	}
+
 	var url string
 	var headers map[string]string
 
@@ -148,4 +158,13 @@ func (c *LLMClient) parseModelsResponse(body io.ReadCloser) ([]string, error) {
 	default:
 		return nil, errors.New("unsupported LLM type")
 	}
+}
+
+// validateAPIKey checks if API key is present for services that require it
+func (c *LLMClient) validateAPIKey() error {
+	requiresAPIKey := c.Type == ChatGPT_LLMType || c.Type == Anthropic_LLMType
+	if requiresAPIKey && strings.TrimSpace(c.APIKey) == "" {
+		return errors.New("API key is required for " + string(c.Type))
+	}
+	return nil
 }

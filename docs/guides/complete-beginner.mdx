@@ -1,0 +1,868 @@
+---
+title: "Complete Beginner's Guide to WhoDB"
+description: "A comprehensive guide for absolute beginners to learn database management with WhoDB - from basic concepts to running your first query"
+seo:
+  title: "Complete Beginner's Guide to Database Management with WhoDB"
+  description: "Learn database management from scratch with WhoDB. Understand databases, connect safely, explore tables, run queries, and export data with our step-by-step beginner's guide."
+  keywords: "database beginner guide, WhoDB tutorial, learn database management, first database connection, SQL for beginners, database basics, table data exploration"
+---
+
+# Complete Beginner's Guide to WhoDB
+
+Welcome to the world of database management. This guide is designed for absolute beginners who are new to databases and want to learn how to work with data effectively using WhoDB.
+
+<Info>
+No prior database experience needed. We'll walk you through everything step by step, starting from the very basics.
+</Info>
+
+## What is a Database?
+
+Before diving into WhoDB, let's understand what databases are and why they matter.
+
+### Understanding Databases
+
+A **database** is an organized collection of data stored electronically. Think of it as a digital filing cabinet where information is stored in a structured way that makes it easy to find, update, and manage.
+
+<AccordionGroup>
+<Accordion title="Real-World Database Examples">
+**Examples You Use Every Day:**
+- Your email inbox (stores messages, sender info, dates)
+- Social media platforms (stores posts, comments, user profiles)
+- Online stores (products, prices, inventory)
+- Banking apps (account balances, transactions)
+- Your phone contacts (names, numbers, addresses)
+
+All these applications use databases behind the scenes to store and retrieve information quickly.
+</Accordion>
+<Accordion title="Why Use Databases?">
+**Databases are essential because they:**
+- Store large amounts of data efficiently
+- Allow multiple people to access data simultaneously
+- Keep data organized and easy to search
+- Prevent data loss with backups
+- Ensure data accuracy with rules and validations
+- Enable fast searching even with millions of records
+</Accordion>
+<Accordion title="Common Database Types">
+WhoDB supports several database types:
+
+**Relational Databases (SQL)**
+- PostgreSQL: Popular for web applications
+- MySQL: Widely used, especially for websites
+- SQLite: Simple, file-based database
+
+**NoSQL Databases**
+- MongoDB: Flexible document storage
+- Redis: Fast key-value storage for caching
+
+Don't worry about choosing right now—you can work with any of these using WhoDB.
+</Accordion>
+</AccordionGroup>
+
+### Database Tables Explained
+
+Data in databases is organized into **tables**, similar to spreadsheets:
+
+<CardGroup cols={2}>
+<Card title="Rows (Records)" icon="bars">
+Each row represents a single item or entry, like one person or one product
+</Card>
+<Card title="Columns (Fields)" icon="table-columns">
+Each column represents a specific piece of information, like name, email, or price
+</Card>
+<Card title="Primary Key" icon="key">
+A unique identifier for each row, ensuring no duplicates
+</Card>
+<Card title="Relationships" icon="link">
+Connections between tables, like linking orders to customers
+</Card>
+</CardGroup>
+
+**Example: Users Table**
+
+| id | username | email | created_at |
+|----|----------|-------|------------|
+| 1 | john_doe | john@example.com | 2024-01-15 |
+| 2 | jane_smith | jane@example.com | 2024-01-16 |
+| 3 | bob_wilson | bob@example.com | 2024-01-17 |
+
+- **Rows**: Each person is one row
+- **Columns**: id, username, email, created_at
+- **Primary Key**: The "id" column uniquely identifies each user
+
+<Tip>
+Think of a database table like an Excel spreadsheet with extra rules to keep data consistent and organized.
+</Tip>
+
+## Getting Started with WhoDB
+
+Now that you understand databases, let's connect to one using WhoDB.
+
+### What is WhoDB?
+
+**WhoDB** is a database management tool that provides a user-friendly interface to:
+- Connect to your databases
+- View and explore your data
+- Add, edit, and delete records
+- Run queries to analyze data
+- Export data for reports
+
+Think of WhoDB as a window into your database—it makes complex database operations simple and visual.
+
+<Info>
+WhoDB is lightweight and fast. Unlike complex tools that require installation and configuration, WhoDB is ready to use immediately.
+</Info>
+
+### Your First Connection
+
+Let's connect to your first database. Don't worry—we'll guide you through every step.
+
+<Steps>
+<Step title="Access WhoDB">
+Open WhoDB in your web browser. You'll see the login page where you'll configure your database connection.
+
+![WhoDB Login Page](/images/01-login-page.png)
+
+This is your starting point for accessing any database.
+</Step>
+<Step title="Select Database Type">
+Click the database type dropdown to see all supported databases.
+
+![Database Type Dropdown](/images/02-login-database-type-dropdown.png)
+
+**If you're not sure which to choose:**
+- For local testing: Choose **SQLite**
+- For web applications: Usually **PostgreSQL** or **MySQL**
+- Ask your team or check your application's documentation
+</Step>
+<Step title="Enter Connection Details">
+Fill in the required information. Here's what each field means:
+
+![Login Form Filled](/images/03-login-form-filled.png)
+
+**Common Fields:**
+- **Host**: The computer address where your database lives (often "localhost" for local databases)
+- **Port**: The communication channel number (default: 5432 for PostgreSQL, 3306 for MySQL)
+- **Username**: Your database account name
+- **Password**: Your database password (kept secure and not stored)
+- **Database**: The specific database name you want to access
+
+<Tip>
+If you're practicing, ask your instructor or team lead for these connection details. Never guess—incorrect details won't harm anything, but you won't be able to connect.
+</Tip>
+</Step>
+<Step title="Advanced Options (Optional)">
+Click "Advanced Options" if you need special settings like SSL or SSH tunnels.
+
+![Advanced Options](/images/04-login-advanced-options.png)
+
+**For beginners:** You can usually skip advanced options for local or development databases.
+
+**For production databases:** Your administrator will tell you if you need SSL or other security settings.
+</Step>
+<Step title="Connect">
+Click the "Connect" button. WhoDB will verify your credentials and connect to the database.
+
+**If connection succeeds:** You'll see your database interface with all your tables listed.
+
+**If connection fails:** Check these common issues:
+- Is the database running?
+- Are your credentials correct?
+- Is the host and port correct?
+- For local databases: Try "localhost" or "127.0.0.1" as the host
+</Step>
+</Steps>
+
+<Warning>
+Keep your database credentials secure. Never share passwords or save them in insecure locations.
+</Warning>
+
+## Understanding the WhoDB Interface
+
+Once connected, you'll see the main interface. Let's explore what everything means.
+
+### The Main Screen
+
+![Storage Unit List with Sidebar](/images/06-storage-unit-list-with-sidebar.png)
+
+The interface has four main areas:
+
+<CardGroup cols={2}>
+<Card title="Sidebar (Left)" icon="sidebar">
+Shows your database structure: schemas, tables, views
+</Card>
+<Card title="Main Area (Center)" icon="window">
+Displays your data, queries, and results
+</Card>
+<Card title="Top Bar" icon="navbar">
+Navigation between different views (Explore, Data, Graph, Scratchpad)
+</Card>
+<Card title="Action Bar" icon="gears">
+Buttons for adding, editing, exporting, and other actions
+</Card>
+</CardGroup>
+
+### Navigating the Sidebar
+
+The sidebar is your database navigation tool:
+
+<Steps>
+<Step title="Expand Schemas">
+Click on a schema (database section) to expand it and see what's inside. Think of schemas as folders organizing related tables.
+</Step>
+<Step title="Find Tables">
+Under each schema, you'll see a list of tables (where your data lives), views (saved queries), and other database objects.
+</Step>
+<Step title="Click a Table">
+Click any table name to view its data in the main area.
+</Step>
+</Steps>
+
+<Tip>
+If you see a lot of tables, use the search box in the sidebar to quickly find what you need.
+</Tip>
+
+## Exploring Your First Table
+
+Let's look at your data. We'll start with the "users" table as an example.
+
+### The Explore View
+
+Click on a table name, then click the "Explore" tab to see the table's structure:
+
+![Explore Users Table](/images/07-explore-users-table.png)
+
+**What you're seeing:**
+
+<AccordionGroup>
+<Accordion title="Table Metadata">
+Basic information about the table:
+- **Table Name**: The official name in the database
+- **Row Count**: How many records are in the table
+- **Size**: How much disk space the table uses
+- **Created**: When the table was created
+</Accordion>
+<Accordion title="Columns List">
+Every column (field) in the table with:
+- **Name**: What the column is called
+- **Type**: What kind of data it stores (text, numbers, dates, etc.)
+- **Nullable**: Whether it can be empty (NULL)
+- **Default**: What value it gets if you don't specify one
+</Accordion>
+<Accordion title="Primary Keys">
+The unique identifier column(s) that ensure each row is distinct.
+
+![Primary Key Column](/images/98-explore-primary-key-column.png)
+
+Usually an "id" column with auto-incrementing numbers.
+</Accordion>
+<Accordion title="Foreign Keys">
+Connections to other tables.
+
+![Foreign Key Columns](/images/99-explore-foreign-key-columns.png)
+
+For example, an "orders" table might have a "user_id" column linking to the "users" table.
+</Accordion>
+<Accordion title="Indexes">
+Special database features that speed up searches.
+
+![Table with Indexes](/images/100-explore-table-with-indexes.png)
+
+Think of them like an index in a book—they help find information faster.
+</Accordion>
+</AccordionGroup>
+
+<Info>
+The Explore view is like looking at the blueprint of your table. It shows you the structure without showing the actual data.
+</Info>
+
+## Viewing Table Data
+
+Now let's see the actual data inside your table.
+
+### The Data View
+
+Click the "Data" tab to view the table's records:
+
+![Data View Users Table](/images/09-data-view-users-table.png)
+
+**Understanding what you see:**
+
+<Steps>
+<Step title="The Data Grid">
+Your data displays in a spreadsheet-like grid with rows and columns.
+
+![Data View Table Content](/images/10-data-view-table-content.png)
+
+- Each row is one record (one user, one product, etc.)
+- Each column is one piece of information
+- Scroll horizontally to see more columns
+- Scroll vertically to see more rows
+</Step>
+<Step title="Column Headers">
+The top row shows column names. Click any header to sort by that column (ascending or descending).
+
+![Sorted Column](/images/38-data-view-sorted-column.png)
+</Step>
+<Step title="Row Selection">
+Click the checkbox at the start of any row to select it. Selected rows can be exported, deleted, or modified together.
+
+![Table Row Selection](/images/44-table-row-selection-single.png)
+</Step>
+<Step title="Pagination Controls">
+At the bottom, you'll see page numbers. Large tables are split into pages for faster loading.
+
+Use the page size dropdown to control how many rows appear per page (10, 25, 50, or 100).
+
+![Page Size Dropdown](/images/15-data-view-page-size-dropdown.png)
+</Step>
+</Steps>
+
+### Different Data Types
+
+WhoDB displays different types of data appropriately:
+
+**Text and Strings**
+![Long Text Content](/images/80-table-long-text-content.png)
+
+Text wraps to fit in cells, making long descriptions readable.
+
+**Numbers**
+![Numeric Types](/images/82-table-numeric-types.png)
+
+Numbers align to the right for easy comparison.
+
+**Dates and Timestamps**
+![Dates and Timestamps](/images/81-table-dates-timestamps.png)
+
+Dates display in a consistent format with time when relevant.
+
+**NULL Values**
+![Table with NULL Values](/images/79-table-with-null-values.png)
+
+Empty cells represent NULL (missing data). These are different from empty strings.
+
+<Tip>
+Understanding data types helps you work with data correctly. For example, you can sort numbers by value but text alphabetically.
+</Tip>
+
+## Your First Search and Filter
+
+Now that you can view data, let's learn to find specific information.
+
+### Searching Data
+
+Use the search box to find records containing specific text:
+
+<Steps>
+<Step title="Type Your Search">
+Click the search box and type what you're looking for.
+
+As you type, WhoDB searches all visible columns in real-time.
+</Step>
+<Step title="View Results">
+Matching records are highlighted:
+
+![Search Highlight](/images/19-data-view-search-highlight.png)
+
+The search looks through all columns, making it easy to find data even if you don't remember which field it's in.
+</Step>
+<Step title="Clear Search">
+Click the X in the search box to clear it and show all records again.
+</Step>
+</Steps>
+
+### Filtering with WHERE Conditions
+
+For more precise filtering, use WHERE conditions:
+
+<Steps>
+<Step title="Open Filter Panel">
+Click the filter button to open the WHERE conditions panel.
+
+![Where Conditions Popover](/images/16-data-view-where-conditions-popover.png)
+</Step>
+<Step title="Select a Field">
+Choose which column you want to filter by:
+
+![Where Field Dropdown](/images/17-data-view-where-field-dropdown.png)
+</Step>
+<Step title="Choose an Operator">
+Select how you want to compare:
+
+- **Equals (=)**: Exact match
+  ![Operator Equals](/images/59-where-operator-equals.png)
+
+- **Not Equals (!=)**: Everything except this value
+  ![Operator Not Equals](/images/62-where-operator-not-equals.png)
+
+- **Greater Than (>)**: Numbers or dates above a value
+  ![Operator Greater Than](/images/60-where-operator-greater-than.png)
+
+- **Less Than (\<)**: Numbers or dates below a value
+  ![Operator Less Than](/images/61-where-operator-less-than.png)
+
+- **Greater Than or Equal (>=)**: At or above a value
+  ![Operator GTE](/images/63-where-operator-gte.png)
+
+- **Less Than or Equal (&lt;=)**: At or below a value
+  ![Operator LTE](/images/64-where-operator-lte.png)
+</Step>
+<Step title="Enter a Value">
+Type the value you want to filter by, then click "Add Condition."
+</Step>
+<Step title="View Filtered Results">
+The table updates to show only matching records:
+
+![Where Conditions Badge](/images/18-data-view-where-conditions-badge.png)
+
+You'll see a badge showing how many conditions are active.
+</Step>
+<Step title="Multiple Conditions">
+Add more conditions to narrow results further:
+
+![Multiple Conditions](/images/39-data-view-multiple-conditions.png)
+
+All conditions must be true for a row to appear (AND logic).
+</Step>
+</Steps>
+
+<Info>
+WHERE conditions are powerful. You can filter by dates (e.g., "created_at > 2024-01-01"), numbers (e.g., "price &lt; 100"), or text (e.g., "status = 'active'").
+</Info>
+
+## Running Your First Query
+
+Now you're ready to write SQL queries in the Scratchpad.
+
+### What is SQL?
+
+**SQL** (Structured Query Language) is the language used to communicate with databases. Don't worry—it's more readable than most programming languages.
+
+**Basic SQL Query Structure:**
+
+```sql
+SELECT column1, column2
+FROM table_name
+WHERE condition
+ORDER BY column1
+LIMIT 10;
+```
+
+This reads almost like English: "Select these columns from this table where this condition is true, ordered by this column, limit to 10 results."
+
+### Using the Scratchpad
+
+<Steps>
+<Step title="Open Scratchpad">
+Click "Scratchpad" in the top navigation to open the query editor.
+
+![Scratchpad Main View](/images/27-scratchpad-main-view.png)
+
+This is your SQL playground where you can write and test queries.
+</Step>
+<Step title="Write a Simple Query">
+Let's start with the simplest query—getting all data from a table:
+
+![Scratchpad Code Editor](/images/28-scratchpad-code-editor.png)
+
+Type this query:
+
+```sql
+SELECT * FROM users LIMIT 10;
+```
+
+**What this means:**
+- `SELECT *` = Get all columns
+- `FROM users` = From the users table
+- `LIMIT 10` = Only show 10 rows
+
+<Tip>
+Always use LIMIT when exploring. It prevents accidentally loading millions of rows.
+</Tip>
+</Step>
+<Step title="Run the Query">
+Press the Run button or hit **Cmd/Ctrl + Enter**.
+
+WhoDB executes your query and shows the results below:
+
+![Query Results](/images/29-scratchpad-query-results.png)
+</Step>
+<Step title="Understand the Results">
+You'll see:
+- **Results Table**: Your data in a grid format
+- **Row Count**: How many rows were returned
+- **Execution Time**: How long the query took
+
+If there's an error, you'll see a clear message explaining what went wrong:
+
+![Query Error](/images/30-scratchpad-query-error.png)
+</Step>
+</Steps>
+
+### Common Query Examples
+
+Here are some beginner-friendly queries to try:
+
+<AccordionGroup>
+<Accordion title="Select Specific Columns">
+Instead of all columns (`*`), choose specific ones:
+
+```sql
+SELECT id, username, email
+FROM users
+LIMIT 10;
+```
+
+![Select Query Result](/images/86-scratchpad-select-query-result.png)
+
+This makes results cleaner and loads faster.
+</Accordion>
+<Accordion title="Count Records">
+Find out how many records are in a table:
+
+```sql
+SELECT COUNT(*) as total_users
+FROM users;
+```
+
+![Count Query Result](/images/87-scratchpad-count-query-result.png)
+
+The `as total_users` part gives the result column a readable name.
+</Accordion>
+<Accordion title="Filter Results">
+Use WHERE to show only matching records:
+
+```sql
+SELECT username, email
+FROM users
+WHERE created_at > '2024-01-01'
+LIMIT 20;
+```
+
+This shows users created after January 1, 2024.
+</Accordion>
+<Accordion title="Order Results">
+Sort your results:
+
+```sql
+SELECT username, email, created_at
+FROM users
+ORDER BY created_at DESC
+LIMIT 10;
+```
+
+`DESC` means descending (newest first). Use `ASC` for ascending (oldest first).
+</Accordion>
+<Accordion title="Join Two Tables">
+Combine data from related tables:
+
+```sql
+SELECT
+  users.username,
+  orders.order_date,
+  orders.total
+FROM users
+LEFT JOIN orders ON users.id = orders.user_id
+LIMIT 10;
+```
+
+![Join Query Result](/images/88-scratchpad-join-query-result.png)
+
+This shows users and their orders together.
+</Accordion>
+</AccordionGroup>
+
+<Warning>
+Be careful with UPDATE and DELETE queries. They permanently change your data. Always use WHERE conditions to avoid affecting the wrong records.
+</Warning>
+
+### Query History
+
+All your queries are automatically saved:
+
+![Query History](/images/33-scratchpad-query-history.png)
+
+<Steps>
+<Step title="Access History">
+Click the History panel to see previous queries.
+</Step>
+<Step title="Reuse Queries">
+Click any historical query to load it into the editor.
+
+![History Clone Button](/images/49-scratchpad-history-clone-button.png)
+</Step>
+<Step title="Modify and Re-run">
+Make changes and run again. This is faster than writing from scratch.
+</Step>
+</Steps>
+
+## Exporting Your Data
+
+Once you've found the data you need, you can export it for use in other applications.
+
+### Export Process
+
+<Steps>
+<Step title="Open Export Dialog">
+From the Data view, click the Export button to open the export dialog.
+
+![Export Dialog](/images/20-data-view-export-dialog.png)
+</Step>
+<Step title="Choose What to Export">
+Select your export scope:
+- **All Rows**: Export everything in the table
+- **Selected Rows**: Only rows you've selected
+- **Filtered Rows**: Rows matching your current filters
+
+![Export Selected Rows](/images/46-export-selected-rows-dialog.png)
+</Step>
+<Step title="Select Format">
+Choose your export format:
+
+**CSV (Comma-Separated Values)**
+![CSV Option](/images/65-export-format-csv-option.png)
+
+Best for Excel, Google Sheets, and data analysis tools.
+
+**Excel (.xlsx)**
+![Excel Option](/images/66-export-format-excel-option.png)
+
+Native Excel format with formatting support.
+
+**JSON**
+For developers and APIs—structured data format.
+
+**SQL**
+Creates INSERT statements you can run on another database.
+</Step>
+<Step title="Configure Options">
+Set format-specific options:
+
+![Export Delimiter](/images/67-export-delimiter-comma.png)
+
+For CSV:
+- **Delimiter**: Comma, semicolon, or tab
+- **Include Headers**: Column names in first row
+- **Quote Strings**: Wrap text in quotes
+</Step>
+<Step title="Download File">
+Click "Export" and your file will download to your computer.
+
+You can now open it in Excel, import it into another system, or use it for analysis.
+</Step>
+</Steps>
+
+<Tip>
+CSV is the most universal format. When in doubt, export as CSV—it works with almost everything.
+</Tip>
+
+## Visualizing Relationships
+
+The Graph view helps you understand how your tables connect.
+
+### Understanding the Graph
+
+Switch to the Graph view to see your database schema visually:
+
+![Graph View Schema Topology](/images/24-graph-view-schema-topology.png)
+
+**What you're seeing:**
+- **Boxes (Nodes)**: Each box represents one table
+- **Lines (Edges)**: Connections show relationships between tables
+- **Arrows**: Show the direction of relationships
+
+<Steps>
+<Step title="Navigate the Graph">
+Use the controls to explore:
+
+![Graph View with Controls](/images/25-graph-view-with-controls.png)
+
+- **Pan**: Click and drag to move around
+- **Zoom**: Mouse wheel or zoom buttons
+- **Fit View**: Centers all tables in the viewport
+
+![Fit View Control](/images/97-graph-fit-view-control.png)
+</Step>
+<Step title="Click on Tables">
+Click any table to see its details:
+
+![Graph Node Details](/images/26-graph-view-node-details.png)
+
+You'll see:
+- Column names and types
+- Primary key
+- Foreign keys connecting to other tables
+</Step>
+<Step title="View Data from Graph">
+Hover over a table node and click "View Data" to jump directly to that table's data:
+
+![Graph Node Data Button](/images/50-graph-node-data-button-hover.png)
+</Step>
+</Steps>
+
+### Understanding Relationships
+
+Different relationship types appear differently:
+
+**One-to-Many Relationship**
+![One to Many Relationship](/images/92-graph-one-to-many-relationship.png)
+
+Example: One user can have many orders.
+
+**Many-to-One Relationship**
+![Many to One Relationship](/images/93-graph-many-to-one-relationship.png)
+
+The reverse: Many orders belong to one user.
+
+**Multiple Foreign Keys**
+![Multiple Foreign Keys](/images/94-graph-multiple-foreign-keys.png)
+
+Some tables connect to many others.
+
+**Isolated Tables**
+![Isolated Table Node](/images/91-graph-isolated-table-node.png)
+
+Tables without relationships appear alone.
+
+<Info>
+The Graph view is especially helpful when you're new to a database. It shows you how everything fits together at a glance.
+</Info>
+
+## Tips for Beginners
+
+<AccordionGroup>
+<Accordion title="Start Small">
+Don't try to learn everything at once. Master viewing data first, then move to filtering, then queries.
+</Accordion>
+<Accordion title="Practice on Development Databases">
+Never practice on production (live) databases. Ask for a development copy where mistakes don't matter.
+</Accordion>
+<Accordion title="Use LIMIT Liberally">
+Always add `LIMIT 10` or `LIMIT 100` to queries when exploring. This prevents accidentally loading millions of rows.
+</Accordion>
+<Accordion title="Read Error Messages">
+When queries fail, read the error message carefully. It usually tells you exactly what's wrong:
+- Misspelled table name
+- Missing quotation marks
+- Wrong column name
+- Syntax error
+</Accordion>
+<Accordion title="Keep a Query Library">
+Save useful queries in a note file. Copy-paste and modify them instead of writing from scratch.
+</Accordion>
+<Accordion title="Backup Before Modifying">
+Before UPDATE or DELETE operations, export the data first. This gives you a backup if something goes wrong.
+</Accordion>
+<Accordion title="Ask Questions">
+If you're confused, ask someone with more experience. Database mistakes can be costly, so it's better to ask than guess.
+</Accordion>
+<Accordion title="Learn Incrementally">
+Database skills build on each other. Master each concept before moving to the next:
+
+1. View data
+2. Search and filter
+3. Sort and paginate
+4. Simple SELECT queries
+5. WHERE conditions
+6. Joins
+7. Updates and deletes
+</Accordion>
+</AccordionGroup>
+
+## Common Beginner Mistakes
+
+<Warning>
+Watch out for these common pitfalls:
+</Warning>
+
+<AccordionGroup>
+<Accordion title="Forgetting WHERE in Updates/Deletes">
+**Wrong:**
+```sql
+DELETE FROM users;
+```
+
+This deletes ALL users. Always include WHERE:
+
+**Correct:**
+```sql
+DELETE FROM users WHERE id = 123;
+```
+</Accordion>
+<Accordion title="Not Using LIMIT">
+**Wrong:**
+```sql
+SELECT * FROM huge_table;
+```
+
+This tries to load millions of rows. Always use LIMIT:
+
+**Correct:**
+```sql
+SELECT * FROM huge_table LIMIT 100;
+```
+</Accordion>
+<Accordion title="Case Sensitivity Confusion">
+In many databases:
+- Keywords are case-insensitive: `SELECT` = `select`
+- Table/column names may be case-sensitive depending on the database
+
+When in doubt, match the exact case shown in the Explore view.
+</Accordion>
+<Accordion title="Modifying Production Data">
+Never practice on live databases. Changes are permanent and can cause serious problems.
+</Accordion>
+<Accordion title="Not Understanding NULL">
+`NULL` is not the same as empty string or zero:
+- `NULL` = Missing/unknown value
+- `''` = Empty text
+- `0` = The number zero
+
+Use `IS NULL` or `IS NOT NULL` to check for NULL values.
+</Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+Congratulations on completing the beginner's guide. You now understand database basics and can navigate WhoDB confidently.
+
+<CardGroup cols={2}>
+<Card title="Quick Start Guide" icon="rocket" href="/quick-start">
+Explore more WhoDB features with hands-on examples
+</Card>
+<Card title="Data Management" icon="table" href="/data/viewing-data">
+Learn advanced data viewing, editing, and management techniques
+</Card>
+<Card title="Writing Queries" icon="code" href="/query/writing-queries">
+Master SQL queries with auto-completion and best practices
+</Card>
+<Card title="Migration Guides" icon="arrows-turn-right" href="/guides/migrating-from-phpmyadmin">
+Coming from phpMyAdmin or pgAdmin? Check our migration guides
+</Card>
+</CardGroup>
+
+## Getting Help
+
+<AccordionGroup>
+<Accordion title="Documentation">
+Browse the full WhoDB documentation for in-depth guides on every feature.
+</Accordion>
+<Accordion title="Common Questions">
+Check the FAQ section for answers to frequently asked questions.
+</Accordion>
+<Accordion title="Community Support">
+Join the WhoDB community to ask questions and share tips with other users.
+</Accordion>
+<Accordion title="Practice Databases">
+Ask your team or instructor for practice databases where you can experiment safely.
+</Accordion>
+</AccordionGroup>
+
+<Check>
+You're now ready to work with databases confidently. Remember: everyone started as a beginner. Take your time, practice regularly, and don't be afraid to ask questions.
+</Check>
+
+<Tip>
+Bookmark this guide for reference. As you gain experience, you'll find yourself using WhoDB faster and more confidently each day.
+</Tip>

@@ -1,0 +1,944 @@
+---
+title: "Performance Tuning Guide"
+description: "Optimize WhoDB performance and database queries for faster results and better resource utilization"
+---
+
+# Performance Tuning Guide
+
+Learn how to optimize WhoDB and your database for better performance. This guide covers query optimization, database configuration, and best practices for working with large datasets.
+
+## Query Optimization
+
+<AccordionGroup>
+<Accordion title="Understanding slow queries">
+
+### Identifying Slow Queries
+
+The first step in optimization is identifying which queries are slow:
+
+**In WhoDB Scratchpad:**
+1. Run your query
+2. Note the execution time shown in results
+3. Queries over 1 second should be investigated
+4. Queries over 5 seconds definitely need optimization
+
+**Using EXPLAIN to understand execution:**
+
+```sql
+-- PostgreSQL: Detailed execution plan
+EXPLAIN ANALYZE
+SELECT * FROM orders
+WHERE customer_id = 123 AND created_at > '2024-01-01';
+
+-- MySQL: Execution plan
+EXPLAIN
+SELECT * FROM orders
+WHERE customer_id = 123 AND created_at > '2024-01-01';
+
+-- SQLite: Query plan
+EXPLAIN QUERY PLAN
+SELECT * FROM orders
+WHERE customer_id = 123 AND created_at > '2024-01-01';
+```
+
+**Key metrics to watch:**
+- Sequential Scan vs Index Scan: Seq Scan on large tables is slow
+- Loop times: Shows how many times operations repeat
+- Rows: Expected vs actual rows returned
+- Cost: Relative expense of operation
+
+### Common Slow Query Patterns
+
+**Pattern 1: No WHERE clause**
+```sql
+-- SLOW: Scans entire table
+SELECT * FROM orders;
+
+-- FAST: Filter results
+SELECT * FROM orders WHERE status = 'pending' LIMIT 100;
+```
+
+**Pattern 2: Missing indexes**
+```sql
+-- SLOW: Column has no index
+SELECT * FROM users WHERE phone = '555-1234';
+
+-- FAST: After creating index
+CREATE INDEX idx_users_phone ON users(phone);
+SELECT * FROM users WHERE phone = '555-1234';
+```
+
+**Pattern 3: Complex JOINs**
+```sql
+-- SLOW: Multiple JOINs without indexes
+SELECT * FROM orders o
+JOIN customers c ON o.customer_id = c.id
+JOIN products p ON o.product_id = p.id
+WHERE o.created_at > '2024-01-01';
+
+-- FAST: Index all join columns
+CREATE INDEX idx_orders_customer_id ON orders(customer_id);
+CREATE INDEX idx_orders_product_id ON orders(product_id);
+CREATE INDEX idx_orders_created_at ON orders(created_at);
+
+SELECT * FROM orders o
+JOIN customers c ON o.customer_id = c.id
+JOIN products p ON o.product_id = p.id
+WHERE o.created_at > '2024-01-01';
+```
+
+**Pattern 4: Using functions in WHERE clause**
+```sql
+-- SLOW: Function call on every row (can't use index)
+SELECT * FROM users WHERE LOWER(email) = 'test@example.com';
+
+-- FAST: Query data as stored (can use index)
+SELECT * FROM users WHERE email = 'test@example.com';
+
+-- SLOW: Date calculation
+SELECT * FROM orders WHERE DATE(created_at) = '2024-01-15';
+
+-- FAST: Date range
+SELECT * FROM orders WHERE created_at >= '2024-01-15' AND created_at < '2024-01-16';
+```
+
+</Accordion>
+
+<Accordion title="Index optimization strategies">
+
+### When to Create Indexes
+
+Create indexes on columns frequently used in:
+- WHERE clauses (filter conditions)
+- JOIN conditions (ON clauses)
+- ORDER BY clauses (sorting)
+- GROUP BY clauses (grouping)
+
+Do NOT index:
+- Columns rarely queried
+- Columns with mostly NULL values
+- Boolean columns (only 2 values)
+- Very small tables
+
+### Creating Effective Indexes
+
+**Single Column Index:**
+```sql
+-- Index on frequently searched column
+CREATE INDEX idx_orders_customer_id ON orders(customer_id);
+
+-- PostgreSQL: Include additional columns
+CREATE INDEX idx_orders_lookup ON orders(customer_id) INCLUDE (status, amount);
+```
+
+**Composite Index (Multiple Columns):**
+```sql
+-- For queries with multiple filters
+-- Good for: WHERE status = 'pending' AND created_at > '2024-01-01'
+CREATE INDEX idx_orders_status_created ON orders(status, created_at);
+
+-- Column order matters! Put equality conditions first
+-- Good for: WHERE status = 'pending' AND amount > 100 AND customer_id = 5
+CREATE INDEX idx_orders_multi ON orders(status, amount, customer_id);
+```
+
+**Partial Index (Filtered Rows):**
+```sql
+-- Only index active records (smaller index, faster)
+-- PostgreSQL and SQLite
+CREATE INDEX idx_orders_active ON orders(created_at)
+WHERE status = 'pending';
+```
+
+**Full-Text Index (Text Search):**
+```sql
+-- PostgreSQL: For text search
+CREATE INDEX idx_products_name_tsvector ON products
+USING GIN(to_tsvector('english', name));
+
+SELECT * FROM products WHERE to_tsvector('english', name) @@ plainto_tsquery('english', 'laptop');
+
+-- MySQL: Full-text index
+CREATE FULLTEXT INDEX idx_products_name_ft ON products(name);
+
+SELECT * FROM products WHERE MATCH(name) AGAINST('laptop');
+```
+
+### Index Maintenance
+
+```sql
+-- PostgreSQL: Reindex to optimize
+REINDEX INDEX idx_orders_customer_id;
+
+-- MySQL: Analyze table statistics
+ANALYZE TABLE orders;
+
+-- SQLite: Analyze
+ANALYZE;
+
+-- Find unused indexes
+-- PostgreSQL
+SELECT schemaname, tablename, indexname
+FROM pg_indexes
+WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
+ORDER BY tablename, indexname;
+```
+
+### Index Performance Trade-offs
+
+- Indexes speed up reads but slow down writes (INSERT/UPDATE/DELETE)
+- Each index uses disk space
+- Composite indexes help some queries but not others
+- Too many indexes can confuse query optimizer
+
+**Best practice: Index strategically**
+- Index most important queries first
+- Remove indexes that aren't used
+- Monitor query performance after index changes
+
+</Accordion>
+
+<Accordion title="Query result optimization">
+
+### Use LIMIT to Reduce Data Transfer
+
+```sql
+-- SLOW: Get all million rows
+SELECT * FROM orders;
+
+-- FAST: Get first 100 rows
+SELECT * FROM orders LIMIT 100;
+
+-- FAST: Get rows 100-200 (pagination)
+SELECT * FROM orders LIMIT 100 OFFSET 100;
+```
+
+WhoDB implements pagination automatically, but explicit LIMIT helps the database optimize.
+
+### Select Only Needed Columns
+
+```sql
+-- SLOW: Get all 50 columns
+SELECT * FROM users;
+
+-- FAST: Get only needed columns
+SELECT id, name, email FROM users;
+
+-- Much faster: Reduces network transfer and memory
+SELECT id, name FROM users;  -- Only 2 columns
+```
+
+Large columns slow down queries:
+```sql
+-- SLOW: Includes large JSON column
+SELECT *, metadata FROM products;
+
+-- FAST: Exclude large columns
+SELECT id, name, price FROM products;
+
+-- Get large column separately when needed
+SELECT metadata FROM products WHERE id = 123;
+```
+
+### Aggregate Remotely, Not Locally
+
+```sql
+-- SLOW: Get all data and count locally
+SELECT * FROM orders;
+-- Then count in application
+
+-- FAST: Count in database
+SELECT COUNT(*) FROM orders;
+
+-- SLOW: Get all orders for averaging
+SELECT * FROM orders WHERE user_id = 5;
+-- Then average in application
+
+-- FAST: Average in database
+SELECT AVG(amount) FROM orders WHERE user_id = 5;
+
+-- SLOW: Get all amounts for SUM
+SELECT amount FROM orders WHERE status = 'completed';
+
+-- FAST: Sum in database
+SELECT SUM(amount) FROM orders WHERE status = 'completed';
+```
+
+### Filter Early with WHERE Clauses
+
+```sql
+-- SLOW: Filter after JOINs
+SELECT * FROM orders o
+JOIN customers c ON o.customer_id = c.id
+JOIN products p ON o.product_id = p.id;
+-- Then filter 10M rows in application
+
+-- FAST: Filter before JOINs
+SELECT o.*, c.name, p.name FROM orders o
+JOIN customers c ON o.customer_id = c.id
+JOIN products p ON o.product_id = p.id
+WHERE o.created_at > '2024-01-01'
+  AND o.status = 'completed';
+-- Database filters before JOIN, fewer rows to process
+```
+
+</Accordion>
+
+<Accordion title="Complex query optimization">
+
+### Optimize Subqueries
+
+```sql
+-- SLOW: Subquery runs for every row (N+1 problem)
+SELECT o.*,
+  (SELECT COUNT(*) FROM order_items WHERE order_id = o.id) as item_count
+FROM orders o;
+
+-- FAST: Use JOIN with GROUP BY
+SELECT o.*, COUNT(oi.id) as item_count
+FROM orders o
+LEFT JOIN order_items oi ON o.id = oi.order_id
+GROUP BY o.id;
+```
+
+### Use CTEs for Complex Queries
+
+```sql
+-- Organize complex logic with Common Table Expressions
+WITH recent_orders AS (
+  SELECT * FROM orders
+  WHERE created_at > '2024-01-01'
+),
+high_value_orders AS (
+  SELECT * FROM recent_orders
+  WHERE amount > 1000
+)
+SELECT * FROM high_value_orders;
+```
+
+### Optimize UNION Operations
+
+```sql
+-- SLOW: Multiple queries (each scans table)
+SELECT * FROM orders WHERE status = 'pending'
+UNION
+SELECT * FROM orders WHERE status = 'processing';
+
+-- FAST: Single query with OR
+SELECT * FROM orders
+WHERE status = 'pending' OR status = 'processing';
+
+-- FAST: Use IN for multiple values
+SELECT * FROM orders
+WHERE status IN ('pending', 'processing');
+```
+
+### DISTINCT and GROUP BY Performance
+
+```sql
+-- SLOW: DISTINCT on large result set
+SELECT DISTINCT customer_id FROM orders;
+
+-- FAST: GROUP BY (if database optimizes it)
+SELECT customer_id FROM orders GROUP BY customer_id;
+
+-- Check execution plan to see which is faster
+EXPLAIN SELECT DISTINCT customer_id FROM orders;
+EXPLAIN SELECT customer_id FROM orders GROUP BY customer_id;
+```
+
+</Accordion>
+</AccordionGroup>
+
+## Database Configuration Tuning
+
+<AccordionGroup>
+<Accordion title="Connection pool optimization">
+
+### Configure Connection Pooling in WhoDB
+
+```yaml
+version: "3.8"
+services:
+  whodb:
+    image: clidey/whodb
+    environment:
+      # Connection pool settings
+      DB_MAX_CONNECTIONS: 50
+      DB_MAX_IDLE_CONNECTIONS: 10
+      DB_CONNECTION_MAX_LIFETIME: 3600
+      DB_CONNECTION_TIMEOUT: 10
+      DB_QUERY_TIMEOUT: 60
+```
+
+**Parameter Explanation:**
+
+- `DB_MAX_CONNECTIONS`: Maximum connections to database (typical: 20-100)
+  - Higher = more concurrent queries
+  - Don't exceed database max connections / number of apps
+  - PostgreSQL default: 100, MySQL default: 100-200
+
+- `DB_MAX_IDLE_CONNECTIONS`: Idle connections to keep open (typical: 5-20)
+  - Speeds up next query if connection available
+  - Too high = wastes database connections
+  - Usually 20-30% of max connections
+
+- `DB_CONNECTION_MAX_LIFETIME`: Max connection age in seconds (typical: 1800-7200)
+  - Recycle old connections periodically
+  - Prevents stale connection issues
+  - 1-2 hours is reasonable
+
+- `DB_CONNECTION_TIMEOUT`: How long to wait for connection (seconds)
+  - If pool exhausted, wait this long for idle connection
+  - 10-30 seconds is typical
+
+- `DB_QUERY_TIMEOUT`: How long query can run (seconds)
+  - Kill queries taking longer
+  - Prevent runaway queries
+  - 30-120 seconds is reasonable
+
+### Database-Side Connection Limits
+
+**PostgreSQL:**
+```sql
+-- Check current settings
+SHOW max_connections;
+
+-- Adjust in postgresql.conf
+max_connections = 200
+```
+
+**MySQL:**
+```sql
+-- Check current max connections
+SHOW VARIABLES LIKE 'max_connections';
+
+-- Increase limit
+SET GLOBAL max_connections = 200;
+
+-- Add to my.cnf for persistent change
+[mysqld]
+max_connections = 200
+```
+
+### Connection Pooling Best Practices
+
+- Monitor actual connection usage: `DB_MAX_CONNECTIONS >= (concurrent users * 2)`
+- Don't set max connections higher than database allows
+- Use connection pooling proxy (PgBouncer, ProxySQL) for high concurrency
+- Regularly review and adjust based on actual usage
+
+</Accordion>
+
+<Accordion title="Memory and cache configuration">
+
+### Configure WhoDB Memory
+
+```yaml
+environment:
+  # Memory for query results and caching
+  DB_MAX_MEMORY: 1gb
+  # Schema cache duration (seconds)
+  SCHEMA_CACHE_TTL: 300
+  # Query result cache (not for production)
+  QUERY_CACHE_ENABLED: "false"
+```
+
+### Database Buffer Pool Configuration
+
+**PostgreSQL:**
+```sql
+-- Show current buffer pool setting
+SHOW shared_buffers;
+
+-- Set in postgresql.conf (need restart)
+shared_buffers = '256MB'  -- Usually 25% of system RAM
+
+-- Effective cache size (helps query optimizer)
+effective_cache_size = '1GB'  -- Usually 50% of system RAM
+```
+
+**MySQL:**
+```sql
+-- Show current buffer pool
+SHOW VARIABLES LIKE 'innodb_buffer_pool%';
+
+-- Increase buffer pool in my.cnf
+innodb_buffer_pool_size = 1G
+
+-- Multiple buffer pool instances for high concurrency
+innodb_buffer_pool_instances = 4
+```
+
+### Query Cache (MySQL only)
+
+```sql
+-- Check if query cache enabled
+SHOW VARIABLES LIKE 'have_query_cache';
+
+-- Query cache usually disabled in modern MySQL
+-- Disable it for better performance
+query_cache_type = 0
+query_cache_size = 0
+```
+
+</Accordion>
+
+<Accordion title="Table and storage optimization">
+
+### Table Statistics
+
+Database needs up-to-date statistics for query optimization:
+
+**PostgreSQL:**
+```sql
+-- Update table statistics
+ANALYZE users;
+
+-- Update all table statistics
+ANALYZE;
+
+-- Check statistics are recent
+SELECT schemaname, tablename, last_vacuum, last_analyze
+FROM pg_stat_user_tables;
+```
+
+**MySQL:**
+```sql
+-- Update table statistics
+ANALYZE TABLE users;
+
+-- Auto-stats collection usually enabled
+SHOW VARIABLES LIKE 'innodb_stats%';
+
+-- Force stats update
+ANALYZE TABLE users;
+```
+
+### Table Partitioning for Very Large Tables
+
+For tables with 100M+ rows:
+
+**PostgreSQL Range Partitioning:**
+```sql
+-- Create partitioned table
+CREATE TABLE orders (
+  id INT,
+  created_at TIMESTAMP,
+  amount DECIMAL
+) PARTITION BY RANGE (YEAR(created_at));
+
+-- Create partitions by year
+CREATE TABLE orders_2023 PARTITION OF orders
+  FOR VALUES FROM (2023) TO (2024);
+
+CREATE TABLE orders_2024 PARTITION OF orders
+  FOR VALUES FROM (2024) TO (2025);
+```
+
+Benefits:
+- Faster queries on specific date ranges
+- Faster deletion of old data (drop partition)
+- Parallel query execution
+
+### Maintenance Tasks
+
+```sql
+-- PostgreSQL: Vacuum removes dead rows
+VACUUM FULL users;
+
+-- PostgreSQL: Reindex to compact index
+REINDEX TABLE users;
+
+-- MySQL: Check and repair table
+CHECK TABLE users;
+REPAIR TABLE users;
+
+-- SQLite: Vacuum to shrink database
+VACUUM;
+```
+
+Schedule these during low-traffic periods.
+
+</Accordion>
+</AccordionGroup>
+
+## Large Dataset Handling
+
+<AccordionGroup>
+<Accordion title="Working with millions of rows">
+
+### Pagination Strategy
+
+Instead of loading all data at once:
+
+```sql
+-- Inefficient: Get all million rows
+SELECT * FROM orders;
+
+-- Efficient: Paginate through results
+SELECT * FROM orders LIMIT 1000 OFFSET 0;      -- Page 1
+SELECT * FROM orders LIMIT 1000 OFFSET 1000;   -- Page 2
+SELECT * FROM orders LIMIT 1000 OFFSET 2000;   -- Page 3
+```
+
+WhoDB automatically paginates. For manual pagination:
+- Use LIMIT for page size (100-1000)
+- Use OFFSET for page number
+- Always sort consistently for pagination
+
+### Batch Processing
+
+```sql
+-- Process in batches instead of all at once
+-- Batch 1: Process first 10,000 rows
+UPDATE orders SET status = 'processed'
+WHERE id > 0 AND id <= 10000
+AND status = 'pending';
+
+-- Batch 2: Process next 10,000 rows
+UPDATE orders SET status = 'processed'
+WHERE id > 10000 AND id <= 20000
+AND status = 'pending';
+```
+
+Benefits:
+- Lower memory usage
+- Doesn't lock table for entire operation
+- Can resume if failed
+
+### Data Archival
+
+Move old data to separate tables:
+
+```sql
+-- Create archive table
+CREATE TABLE orders_archive AS
+SELECT * FROM orders
+WHERE created_at < '2023-01-01'
+AND status = 'completed';
+
+-- Delete from main table
+DELETE FROM orders
+WHERE created_at < '2023-01-01'
+AND status = 'completed';
+
+-- Keep table small and fast
+VACUUM orders;
+```
+
+### Indexing Strategy for Large Tables
+
+```sql
+-- Partial index: Only index active records
+CREATE INDEX idx_orders_pending ON orders(created_at)
+WHERE status = 'pending';
+
+-- More selective than full table index
+-- Smaller size, faster queries
+
+-- Covering index: Includes columns needed
+CREATE INDEX idx_orders_full ON orders(customer_id)
+INCLUDE (amount, status, created_at);
+
+-- Query doesn't need to read main table
+```
+
+</Accordion>
+
+<Accordion title="Exporting large datasets">
+
+### Export Strategies
+
+**CSV Export (Recommended for Large Data):**
+```sql
+-- PostgreSQL: Direct CSV export
+COPY (SELECT * FROM orders WHERE created_at > '2024-01-01')
+TO '/tmp/orders.csv' WITH CSV HEADER;
+
+-- MySQL: CSV export
+SELECT * FROM orders
+WHERE created_at > '2024-01-01'
+INTO OUTFILE '/tmp/orders.csv'
+FIELDS TERMINATED BY ',' ENCLOSED BY '"'
+LINES TERMINATED BY '\n';
+```
+
+**Selective Export:**
+```sql
+-- Export only needed columns
+SELECT id, customer_id, amount, created_at
+FROM orders
+WHERE created_at > '2024-01-01';
+
+-- Use date ranges to split export
+SELECT * FROM orders WHERE created_at BETWEEN '2024-01-01' AND '2024-01-31';
+SELECT * FROM orders WHERE created_at BETWEEN '2024-02-01' AND '2024-02-28';
+```
+
+### In WhoDB UI
+
+1. Use filters to reduce result set before export
+2. Export in smaller batches if memory is limited
+3. CSV is usually faster than JSON for large data
+4. Multiple exports with different filters is better than one huge export
+
+</Accordion>
+
+<Accordion title="Query result caching strategies">
+
+### What WhoDB Caches
+
+WhoDB caches schema information to improve performance:
+
+```yaml
+environment:
+  # Schema cache duration (seconds)
+  SCHEMA_CACHE_TTL: 300  # 5 minutes default
+```
+
+Cached items:
+- Table list
+- Column definitions
+- Index information
+- Foreign key relationships
+
+### Manual Cache Management
+
+```sql
+-- Force schema refresh in database
+-- This invalidates WhoDB cache
+
+-- PostgreSQL: Table structure changed
+ALTER TABLE users ADD COLUMN new_column VARCHAR;
+-- Cache invalidated, WhoDB will see new column
+
+-- MySQL: Same
+ALTER TABLE users ADD COLUMN new_column VARCHAR(255);
+-- Cache invalidated
+```
+
+### Client-Side Caching
+
+Browser caches:
+- Already-viewed data
+- Query history
+- Connection profiles
+
+Clear browser cache:
+- Press Ctrl+Shift+Delete (Chrome/Firefox/Edge)
+- Cmd+Shift+Delete (macOS)
+- Or refresh page with F5
+
+### Best Practices
+
+- Don't cache live transaction data
+- Cache is mostly for schema/metadata
+- Results are not cached (always fresh)
+- Refreshing table structure clears cache
+
+</Accordion>
+</AccordionGroup>
+
+## Monitoring Performance
+
+<AccordionGroup>
+<Accordion title="Query performance monitoring">
+
+### Using EXPLAIN to Profile Queries
+
+**PostgreSQL Example:**
+```sql
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT o.*, c.name
+FROM orders o
+JOIN customers c ON o.customer_id = c.id
+WHERE o.created_at > '2024-01-01'
+LIMIT 100;
+```
+
+Look for:
+- Seq Scan (slow) vs Index Scan (fast)
+- Actual Rows vs Planned Rows (huge difference = optimization issue)
+- Buffer Hits (high is good, misses = slower)
+
+**MySQL Example:**
+```sql
+EXPLAIN
+SELECT o.*, c.name
+FROM orders o
+JOIN customers c ON o.customer_id = c.id
+WHERE o.created_at > '2024-01-01'
+LIMIT 100;
+
+-- Look at 'type' column:
+-- system/const/eq_ref/ref/range/index/ALL (ALL is slowest)
+-- Look at 'key' column - should show index used
+```
+
+### Identifying Slow Queries
+
+**PostgreSQL Slow Query Log:**
+```sql
+-- Enable query logging
+ALTER SYSTEM SET log_min_duration_statement = 1000;  -- Log queries > 1 second
+SELECT pg_reload_conf();
+
+-- View logs
+tail -f /var/log/postgresql/postgresql.log | grep duration
+```
+
+**MySQL Slow Query Log:**
+```sql
+-- Enable slow query log
+SET GLOBAL slow_query_log = 'ON';
+SET GLOBAL long_query_time = 1;  -- 1 second threshold
+
+-- View log
+tail -f /var/log/mysql/slow.log
+```
+
+### Query Performance Dashboard
+
+In WhoDB Scratchpad, queries show execution time. Track:
+- First run time (includes compilation)
+- Second run time (should be faster if using cache)
+- Large variations indicate resource contention
+
+</Accordion>
+
+<Accordion title="Database server monitoring">
+
+### System Resource Monitoring
+
+Monitor while running queries in WhoDB:
+
+```bash
+# macOS: Watch real-time stats
+top -o MEM
+
+# Linux: Similar view
+top
+
+# More detailed: iostat
+iostat -x 1
+
+# Network I/O
+iftop
+
+# Disk usage
+du -sh /path/to/database
+```
+
+**Key metrics:**
+- CPU: Should stay below 80% (headroom for spikes)
+- Memory: Active memory should be 70-80% (80-100% is risky)
+- Disk I/O: Watch %util (>50% sustained is concerning)
+- Network: Check throughput matches expectations
+
+### Database-Specific Monitoring
+
+**PostgreSQL:**
+```sql
+-- Active queries
+SELECT pid, usename, query, query_start
+FROM pg_stat_activity
+WHERE state != 'idle';
+
+-- Table size
+SELECT schemaname, tablename, pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size
+FROM pg_tables
+ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
+```
+
+**MySQL:**
+```sql
+-- Active queries
+SHOW PROCESSLIST;
+
+-- Kill long-running query
+KILL <process_id>;
+
+-- Table size
+SELECT table_name, ROUND(((data_length + index_length) / 1024 / 1024), 2) AS size_mb
+FROM information_schema.TABLES
+WHERE table_schema = 'your_database'
+ORDER BY (data_length + index_length) DESC;
+```
+
+</Accordion>
+</AccordionGroup>
+
+## Performance Tuning Checklist
+
+<AccordionGroup>
+<Accordion title="Quick optimization checklist">
+
+Use this checklist to systematically improve performance:
+
+**Analysis Phase:**
+- [ ] Identify slow queries using EXPLAIN
+- [ ] Check which queries run most frequently
+- [ ] Measure current baseline performance
+- [ ] Monitor server resource usage
+
+**Indexing:**
+- [ ] Create indexes on WHERE clause columns
+- [ ] Create indexes on JOIN columns
+- [ ] Create indexes on ORDER BY columns
+- [ ] Remove unused indexes
+- [ ] Consider composite indexes for common query patterns
+
+**Query Optimization:**
+- [ ] Remove SELECT * (select only needed columns)
+- [ ] Add WHERE clauses to filter early
+- [ ] Use LIMIT to reduce results
+- [ ] Avoid functions in WHERE clauses
+- [ ] Use appropriate JOIN types
+
+**Database Configuration:**
+- [ ] Tune buffer pool size (25% system RAM)
+- [ ] Set effective_cache_size (50% system RAM)
+- [ ] Configure connection pooling
+- [ ] Enable query statistics collection
+- [ ] Set appropriate timeout values
+
+**Data Management:**
+- [ ] Archive old data to keep tables small
+- [ ] Update table statistics regularly
+- [ ] Partition very large tables
+- [ ] Clean up unused tables and indexes
+- [ ] Defragment tables (VACUUM, OPTIMIZE)
+
+**Monitoring:**
+- [ ] Set up slow query logging
+- [ ] Monitor query times over time
+- [ ] Track resource usage during peak load
+- [ ] Create performance baselines
+- [ ] Set up alerts for degradation
+
+**Testing:**
+- [ ] Test changes in non-production first
+- [ ] Measure impact of each change
+- [ ] Rollback if performance doesn't improve
+- [ ] Document what worked and what didn't
+
+</Accordion>
+</AccordionGroup>
+
+## Additional Resources
+
+<CardGroup cols={2}>
+<Card title="Troubleshooting Guide" icon="wrench" href="/resources/troubleshooting">
+Solve common performance issues and errors
+</Card>
+<Card title="Common Errors" icon="triangle-exclamation" href="/resources/common-errors">
+Understand and fix error messages
+</Card>
+<Card title="FAQ" icon="question" href="/resources/faq">
+Frequently asked questions about performance
+</Card>
+<Card title="GitHub Discussions" icon="github" href="https://github.com/clidey/whodb/discussions">
+Ask community for performance advice
+</Card>
+</CardGroup>

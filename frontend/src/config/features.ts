@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { reduxStore } from '../store';
+import { SettingsActions } from '../store/settings';
 import {FeatureFlags} from './ee-types';
 
 // Default feature flags (all disabled for open source version)
@@ -40,21 +42,19 @@ const checkEEAvailability = (): boolean => {
     }
 };
 
-// Store the loaded EE feature flags
 export let featureFlags: FeatureFlags = {} as FeatureFlags;
 export let extensions: Record<string, any> = {};
 export let sources: Record<string, any> = {};
+export let settingsDefaults: Record<string, any> = {};
 
-// Get feature flags based on environment and EE availability
 export const initialize = () => {
     const isEEAvailable = checkEEAvailability();
-    
+
     if (!isEEAvailable) {
         featureFlags = defaultFeatures;
         return;
     }
-    
-    // Try to load EE features asynchronously
+
     if (isEEAvailable) {
         import('@ee/config.tsx').then(eeConfig => {
             if (eeConfig?.eeFeatures) {
@@ -66,12 +66,15 @@ export const initialize = () => {
             if (eeConfig?.eeSources) {
                 sources = eeConfig.eeSources;
             }
+            if (eeConfig?.eeSettingsDefaults) {
+                settingsDefaults = eeConfig.eeSettingsDefaults;
+                reduxStore.dispatch(SettingsActions.setWhereConditionMode(settingsDefaults.whereConditionMode));
+            }
         }).catch(() => {
             console.warn('Could not load EE feature flags');
         });
     }
-    
-    // Return default enabled features for EE mode until async load completes
+
     return {
         analyzeView: true,
         explainView: true,
@@ -81,8 +84,8 @@ export const initialize = () => {
         aiChat: true,
         multiProfile: true,
         advancedDatabases: true,
-        contactUsPage: false, // Disabled in EE
-        settingsPage: false, // Disabled in EE
+        contactUsPage: false,
+        settingsPage: false,
     };
 };
 

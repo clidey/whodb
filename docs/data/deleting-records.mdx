@@ -1,0 +1,315 @@
+---
+title: "Deleting Records"
+description: "Learn how to remove records from your tables safely with WhoDB"
+---
+
+# Deleting Records
+
+WhoDB provides secure methods for deleting records from your tables with safeguards to prevent accidental data loss. This guide covers different deletion methods, confirmation dialogs, and best practices for safe record removal.
+
+## Single Record Deletion
+
+### Accessing the Delete Option
+
+To delete a single record:
+
+1. Locate the row you want to delete in the data grid
+2. Right-click on the row to open the context menu
+3. Select the delete option from the menu
+
+![Context Menu Delete Option](/images/43-context-menu-delete-option.png)
+
+<Warning>
+Deleting records is permanent. Once deleted, the record cannot be recovered unless you have a backup of your database.
+</Warning>
+
+### Delete Confirmation Dialog
+
+After selecting delete:
+
+1. A confirmation dialog appears
+2. It shows the record details or a confirmation message
+3. You must confirm the deletion to proceed
+4. Option to cancel available if you change your mind
+
+### Confirmation Process
+
+The confirmation dialog typically shows:
+
+- **Record Identifier**: Which record will be deleted
+- **Warning Message**: Clear statement that deletion is permanent
+- **Confirm Button**: To proceed with deletion
+- **Cancel Button**: To abort the deletion
+
+<Tip>
+Always review the record being deleted in the confirmation dialog to ensure you're deleting the correct row.
+</Tip>
+
+## Batch Record Deletion
+
+For deleting multiple records at once:
+
+### Selecting Multiple Rows
+
+First, select the records you want to delete:
+
+1. Click the checkbox at the start of a row to select it
+2. Click additional checkboxes to select more rows
+3. Use the header checkbox to select all rows on the current page
+
+![Table Row Selection Single](/images/44-table-row-selection-single.png)
+
+<Warning>
+Note that batch selection typically works only on the current page. Pagination may limit selections to visible rows.
+</Warning>
+
+### Accessing Batch Delete
+
+Once rows are selected:
+
+![Context Menu Select Row](/images/45-context-menu-select-row.png)
+
+1. Right-click on any selected row
+2. Select the delete option from the context menu
+3. A bulk delete confirmation appears
+
+### Batch Delete Confirmation
+
+The confirmation for batch deletion shows:
+
+- **Count of Records**: How many records will be deleted
+- **Warning**: Clear indication that multiple records will be removed
+- **Confirm Button**: Proceeds with deleting all selected records
+- **Cancel Button**: Abandons the deletion
+
+<Info>
+Batch deletion is faster than deleting records one by one, but use it carefully to avoid accidentally deleting multiple records.
+</Info>
+
+## Delete Operations
+
+### Successful Deletion
+
+When deletion is confirmed:
+
+1. The deletion processes
+2. A success message appears
+3. The row(s) disappear from the data grid
+4. Page count updates if all records on a page are deleted
+5. The view refreshes to show remaining data
+
+<Tip>
+After deletion, if you're on a page that now has no records, you'll automatically be moved to the previous page with data.
+</Tip>
+
+### Failed Deletions
+
+If deletion fails, you'll see an error message. Common reasons include:
+
+**Foreign Key Constraint Violations**
+- Another table has records referencing this one
+- You must delete the referencing records first
+- The error message specifies which constraint is violated
+
+**Permission Denied**
+- Your database user lacks delete permissions
+- Contact your database administrator
+- Check your user role and permissions
+
+**Record Locked**
+- Another user or process is accessing the record
+- Wait a moment and try again
+- The record may be in use elsewhere
+
+## Cascade Deletion
+
+When deleting a record with foreign key references:
+
+### Understanding Cascade Rules
+
+Your database may have cascade delete rules:
+
+- **CASCADE**: Deletes referencing records automatically
+- **RESTRICT**: Prevents deletion if references exist
+- **SET NULL**: Sets referencing foreign keys to NULL
+- **NO ACTION**: Similar to RESTRICT, prevents deletion
+
+### Before Confirming Deletion
+
+Understanding cascade behavior is important:
+- Check if related records will be automatically deleted
+- Be aware of any cascading effects on related tables
+- Some deletions might remove more data than expected
+
+<Warning>
+If your table has cascading deletes enabled, deleting one record might remove multiple related records across tables. Understand your schema before deleting.
+</Warning>
+
+## Advanced Deletion Methods
+
+### Using the Scratchpad for Complex Deletions
+
+For more sophisticated deletion patterns:
+
+1. Navigate to the Scratchpad query interface
+2. Write a DELETE query with WHERE conditions
+3. Execute to delete multiple records matching criteria
+
+Example:
+```sql
+DELETE FROM users WHERE status = 'inactive' AND created_at < '2020-01-01';
+```
+
+<Info>
+The Scratchpad gives you more control for conditional deletions affecting many records. See the Query section for more details.
+</Info>
+
+### Batch Operations with Filters
+
+Delete groups of records matching criteria:
+
+1. Apply filters to show only records you want to delete
+2. Select the filtered records
+3. Perform batch deletion on the filtered set
+
+<Tip>
+Using filters before batch deletion helps you verify which records will be removed, reducing the risk of accidental deletion.
+</Tip>
+
+## Safety Features
+
+### Confirmation Dialogs
+
+- **Required Confirmation**: Every deletion requires explicit confirmation
+- **Clear Messaging**: Dialog clearly states what will be deleted
+- **Easy Cancellation**: Cancel button always available
+
+### Undo Limitations
+
+<Warning>
+WhoDB does not provide an undo function for deletions. Once confirmed and completed, the deletion is permanent. Only database backups can restore deleted data.
+</Warning>
+
+### Best Practices for Safety
+
+<Steps>
+<Step title="Double-Check Record Identifiers">
+Always verify you're deleting the correct record before confirming.
+</Step>
+<Step title="Review Filter Results">
+When deleting multiple records, apply filters first and review the filtered results.
+</Step>
+<Step title="Understand Cascade Effects">
+Know whether your deletion will cascade to related tables.
+</Step>
+<Step title="Check Database Backups">
+Ensure recent backups exist before performing bulk deletions.
+</Step>
+<Step title="Use Test Environment First">
+Practice deletions in a non-production environment if unfamiliar.
+</Step>
+</Steps>
+
+## Deletion Scenarios
+
+### Scenario 1: Delete a Single User Record
+
+1. Find the user record in the table
+2. Right-click to open context menu
+3. Select "Delete Row"
+4. Review the user details in confirmation dialog
+5. Click "Confirm Delete"
+6. Record is removed and grid updates
+
+### Scenario 2: Delete Multiple Inactive Records
+
+1. Use filters to show only inactive records
+2. Select all visible inactive records
+3. Right-click and select batch delete
+4. Confirm in the bulk deletion dialog
+5. All selected inactive records are removed
+
+### Scenario 3: Delete Records with Cascade
+
+1. Understand the cascade rules for your table
+2. Select the record(s) to delete
+3. Note that related records may also be deleted
+4. Confirm the deletion knowing the cascade impact
+5. All related records are removed automatically
+
+## Troubleshooting
+
+**Can't Delete - Foreign Key Error**
+- Other tables reference this record
+- Delete the referencing records first
+- Or modify the foreign key references
+- Then retry the deletion
+
+**Can't Delete - Permission Denied**
+- You lack delete permissions
+- Contact your database administrator
+- Request appropriate user permissions
+- Check your database user role
+
+**Delete Confirmation Won't Appear**
+- Ensure you right-clicked on the row
+- Try again with a different selection method
+- Check if the record is already deleted
+
+**Wrong Records Deleted**
+- Unfortunately, this is permanent
+- Recovery requires restoring from backup
+- Always verify selections before confirming
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Delete` key | May open delete menu (context-dependent) |
+| `Escape` | Cancel deletion confirmation |
+| `Ctrl/Cmd + Z` | Note: Undo is NOT available for deletions |
+
+## Limitations
+
+- **No Undo**: Deletions cannot be undone through WhoDB
+- **Permanent**: No soft-delete recovery mechanism
+- **One Operation at a Time**: Must wait for each deletion to complete
+- **Page-Limited Batch Ops**: Batch operations limited to current page
+- **No Scheduled Deletion**: Cannot schedule deletions for later
+
+<Info>
+If you need to recover deleted data, you'll need to restore from a database backup. Always maintain regular backups of critical databases.
+</Info>
+
+## Preventing Accidental Deletions
+
+### Strategies to Stay Safe
+
+1. **Use Filters First**: Always filter to verify what you're about to delete
+2. **Batch Operations Carefully**: Carefully select rows before batch operations
+3. **Read Confirmations**: Always read and review confirmation dialogs
+4. **Test in Dev First**: Practice deletions in development before production
+5. **Keep Backups**: Maintain recent backups for recovery if needed
+
+## Next Steps
+
+After managing record deletions, explore related features:
+
+<CardGroup cols={2}>
+<Card title="Editing Records" icon="pen" href="/data/editing-records">
+Learn how to modify existing records
+</Card>
+<Card title="Adding Records" icon="plus" href="/data/adding-records">
+Insert new records into your tables
+</Card>
+<Card title="Viewing Data" icon="table" href="/data/viewing-data">
+Navigate and review your table data
+</Card>
+<Card title="Scratchpad Queries" icon="code" href="/query/writing-queries">
+Use SQL queries for complex deletions
+</Card>
+</CardGroup>
+
+<Warning>
+Remember: Deletions in WhoDB affect your actual database. Be cautious and always verify before confirming deletion of any records. When in doubt, check a backup first before attempting significant deletions.
+</Warning>

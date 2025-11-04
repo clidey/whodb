@@ -1,0 +1,957 @@
+---
+title: "Debugging Production Issues"
+description: "Use WhoDB to safely debug production database issues. Read-only access, query patterns for troubleshooting, and methods to find root causes without risking data."
+---
+
+# Debugging Production Issues
+
+Production database issues are stressful and urgent. When users report problems, data looks corrupt, or queries are slow, you need to diagnose the root cause quickly. WhoDB provides a safe, read-only way to investigate production databases without risking data integrity or performance.
+
+<Tip>
+This guide covers safe debugging techniques, SQL patterns for investigation, and systematic approaches to finding and understanding production issues.
+</Tip>
+
+## The Challenge of Production Debugging
+
+Production databases contain real, critical data. This reality shapes how you investigate issues:
+
+**Constraints**:
+- Read-only access only (you shouldn't modify production data)
+- Performance matters (heavy queries affect users)
+- Interruptions cost money (downtime is unacceptable)
+- High stakes (wrong diagnosis leads to wrong solutions)
+
+**Objectives**:
+- Understand the root cause quickly
+- Minimize impact on production traffic
+- Provide evidence-based diagnosis
+- Enable targeted fixes
+
+WhoDB's read-only interface, efficient querying, and data visualization make it ideal for this challenging task.
+
+## Before You Start: Connection Setup
+
+### Use a Read-Only Connection
+
+Never debug production with write access. Set up a read-only database user:
+
+```sql
+-- PostgreSQL: Create read-only role
+CREATE ROLE readonly_debugger WITH LOGIN PASSWORD 'secure_password';
+GRANT CONNECT ON DATABASE production TO readonly_debugger;
+GRANT USAGE ON SCHEMA public TO readonly_debugger;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO readonly_debugger;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO readonly_debugger;
+
+-- MySQL: Create read-only user
+CREATE USER 'readonly_debugger'@'%' IDENTIFIED BY 'secure_password';
+GRANT SELECT ON production.* TO 'readonly_debugger'@'%';
+FLUSH PRIVILEGES;
+```
+
+Connect to production in WhoDB using this read-only account:
+
+![Database Types](/images/01-login-page.png)
+
+This prevents accidental modifications while you're investigating.
+
+### Understand Performance Impact
+
+Even SELECT queries impact production if they're heavy. Follow these guidelines:
+
+- **Add LIMIT**: Always limit result sets (LIMIT 1000 not LIMIT 1000000)
+- **Use WHERE clauses**: Filter aggressively to reduce rows scanned
+- **Check indexes**: Use indexed columns in WHERE conditions
+- **Test first**: Run queries in non-peak hours when possible
+- **Monitor queries**: Watch for slow-running investigations
+
+```sql
+-- GOOD: Targets specific data with LIMIT
+SELECT * FROM user_events
+WHERE user_id = 12345
+AND created_at > NOW() - INTERVAL '1 hour'
+LIMIT 1000;
+
+-- BAD: Could scan entire table and return millions
+SELECT * FROM user_events;
+```
+
+## Common Production Issues and Debugging Approaches
+
+### Issue 1: Users Reporting Missing or Corrupt Data
+
+When users report data problems, start with systematic investigation.
+
+<Steps>
+<Step title="Understand the Scope">
+Determine how widespread the problem is:
+
+```sql
+-- Is it one user or many?
+SELECT
+  user_id,
+  COUNT(*) as event_count,
+  MAX(created_at) as last_event
+FROM user_events
+WHERE status = 'lost'  -- or whatever indicates the problem
+GROUP BY user_id
+ORDER BY event_count DESC
+LIMIT 20;
+
+-- Is it recent or historical?
+SELECT
+  DATE(created_at) as date,
+  COUNT(*) as affected_count
+FROM user_events
+WHERE status = 'lost'
+GROUP BY DATE(created_at)
+ORDER BY date DESC
+LIMIT 30;
+
+-- What percentage of data is affected?
+SELECT
+  COUNT(*) as total_records,
+  COUNT(CASE WHEN status = 'lost' THEN 1 END) as affected,
+  ROUND(100.0 * COUNT(CASE WHEN status = 'lost' THEN 1 END) / COUNT(*), 2) as percent_affected
+FROM user_events;
+```
+
+A small percentage (1-5%) might be a data entry error. A large percentage (>50%) suggests a systematic bug.
+</Step>
+
+<Step title="Compare Before and After">
+Look for changes around the problem time:
+
+```sql
+-- Recent data patterns
+SELECT
+  DATE_TRUNC('hour', created_at) as hour,
+  COUNT(*) as record_count,
+  COUNT(CASE WHEN status = 'lost' THEN 1 END) as affected_count,
+  ROUND(100.0 * COUNT(CASE WHEN status = 'lost' THEN 1 END) / COUNT(*), 2) as percent_affected
+FROM user_events
+WHERE created_at > NOW() - INTERVAL '72 hours'
+GROUP BY DATE_TRUNC('hour', created_at)
+ORDER BY hour DESC;
+```
+
+Look for a sharp change in the percentage affected. The hour where it jumps is likely when the problem started.
+</Step>
+
+<Step title="Identify the Pattern">
+Understand what specifically is wrong:
+
+```sql
+-- Sample affected records
+SELECT * FROM user_events
+WHERE status = 'lost'
+LIMIT 10;
+
+-- Compare with normal records
+SELECT * FROM user_events
+WHERE status != 'lost'
+LIMIT 10;
+```
+
+Use WhoDB's data view to spot the differences:
+
+![Data View](/images/09-data-view-users-table.png)
+
+Look for patterns:
+- Missing fields (NULLs where there should be values)
+- Wrong values (zeros instead of actual amounts)
+- Encoding issues (garbled characters)
+- Incomplete data (truncated text)
+</Step>
+
+<Step title="Find the Root Cause">
+Correlate the data problem with application behavior:
+
+```sql
+-- Did something change in related tables?
+SELECT
+  table_name,
+  MAX(updated_at) as last_modified
+FROM information_schema.tables
+WHERE table_schema = 'public'
+ORDER BY last_modified DESC
+LIMIT 10;
+
+-- Do affected records share characteristics?
+SELECT
+  CASE
+    WHEN price > 1000 THEN 'high_price'
+    WHEN price > 100 THEN 'medium_price'
+    ELSE 'low_price'
+  END as price_category,
+  COUNT(*) as affected_count
+FROM user_events
+WHERE status = 'lost'
+GROUP BY price_category;
+
+-- Check for NULL values or default values
+SELECT
+  *,
+  CASE
+    WHEN amount IS NULL THEN 'missing_amount'
+    WHEN amount = 0 THEN 'zero_amount'
+    WHEN created_at = updated_at THEN 'never_updated'
+    ELSE 'normal'
+  END as status
+FROM orders
+WHERE id IN (SELECT order_id FROM user_events WHERE status = 'lost')
+LIMIT 20;
+```
+
+The pattern often points to the cause (e.g., a bug in a recent code deployment, a data import error, or a configuration change).
+</Step>
+
+<Step title="Create Evidence Report">
+Document your findings:
+
+```markdown
+# Production Issue Investigation Report
+Issue: User reported missing order data
+Date Discovered: 2024-10-31 14:30 UTC
+
+## Scope
+- Affected Users: 127 (0.8% of active user base)
+- Affected Records: 3,247 orders
+- Time Period: 2024-10-31 08:00 - 12:00 UTC
+- Severity: Medium (small user base affected)
+
+## Pattern
+- All affected orders have `total_amount = 0`
+- All affected orders created between 08:00-12:00
+- Unaffected orders have correct amounts
+- Problem started 2024-10-31 08:00 UTC
+
+## Findings
+- Correlation: Application deployed 2024-10-31 07:45 UTC (15 minutes before problem)
+- Hypothesis: New deployment introduced bug calculating order totals
+
+## Recommendation
+- Revert to previous deployment
+- Verify order totals in test environment
+- Manually correct affected orders (or regenerate from logs)
+- Deploy fix after validation
+
+## Evidence
+- Query results: [attached]
+- Sample affected records: [attached]
+- Timeline correlation: [attached]
+```
+
+This report provides actionable evidence to your team.
+</Step>
+</Steps>
+
+### Issue 2: Slow Queries or Performance Degradation
+
+When performance suddenly degrades, systematic investigation reveals the cause.
+
+<Steps>
+<Step title="Identify the Slow Operation">
+Run the Scratchpad to test your key queries:
+
+![Scratchpad Code Editor](/images/27-scratchpad-main-view.png)
+
+```sql
+-- Test a common query
+SELECT
+  u.id,
+  u.email,
+  COUNT(o.id) as order_count,
+  SUM(o.total) as lifetime_value
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+WHERE u.created_at > '2024-01-01'
+GROUP BY u.id
+LIMIT 1000;
+```
+
+Check execution time. If it's notably slower than usual, continue investigating.
+
+![Query Results](/images/29-scratchpad-query-results.png)
+</Step>
+
+<Step title="Check for Missing Indexes">
+Missing or broken indexes cause performance problems:
+
+```sql
+-- PostgreSQL: Check index status
+SELECT
+  schemaname,
+  tablename,
+  indexname,
+  idx_scan,
+  idx_tup_read,
+  idx_tup_fetch
+FROM pg_stat_user_indexes
+ORDER BY idx_scan DESC
+LIMIT 20;
+
+-- MySQL: Check table statistics
+SHOW INDEX FROM users;
+
+-- Verify a specific index is being used
+EXPLAIN SELECT * FROM users WHERE email = 'test@example.com';
+-- Should show "Using index" in the output
+```
+
+Look for:
+- Indexes with zero or very low `idx_scan` count (might be unused)
+- Queries that should use indexes but don't
+</Step>
+
+<Step title="Analyze Row Counts and Data Growth">
+Query results:
+
+```sql
+-- Count rows by table
+SELECT
+  'users' as table_name, COUNT(*) as count FROM users
+UNION ALL
+SELECT 'orders', COUNT(*) FROM orders
+UNION ALL
+SELECT 'order_items', COUNT(*) FROM order_items;
+
+-- Check growth rate
+SELECT
+  DATE(created_at) as date,
+  COUNT(*) as records_created
+FROM orders
+WHERE created_at > NOW() - INTERVAL '30 days'
+GROUP BY DATE(created_at)
+ORDER BY date DESC;
+
+-- Are some tables growing unusually fast?
+SELECT
+  'orders_yesterday' as period,
+  COUNT(*) as count
+FROM orders
+WHERE created_at > NOW() - INTERVAL '1 day'
+AND created_at < NOW() - INTERVAL '2 days'
+
+UNION ALL
+
+SELECT 'orders_today',
+  COUNT(*)
+FROM orders
+WHERE created_at > NOW() - INTERVAL '1 day';
+```
+
+Rapid growth can cause query slowdowns if indexes aren't updated.
+</Step>
+
+<Step title="Check for Table Locks or Blocking Queries">
+Lock contention causes slow queries:
+
+```sql
+-- PostgreSQL: Check for locks
+SELECT
+  pid,
+  usename,
+  application_name,
+  state,
+  query
+FROM pg_stat_activity
+WHERE state != 'idle'
+ORDER BY query_start ASC;
+
+-- MySQL: Check processlist
+SHOW PROCESSLIST;
+
+-- Look for long-running transactions
+SELECT
+  pid,
+  now() - pg_stat_activity.query_start AS duration,
+  query,
+  state
+FROM pg_stat_activity
+WHERE (now() - pg_stat_activity.query_start) > interval '5 minutes';
+```
+
+Long-running queries or locks indicate contention. Document PIDs and queries.
+</Step>
+
+<Step title="Verify Stats are Current">
+Outdated statistics cause poor query plans:
+
+```sql
+-- PostgreSQL: Check stats freshness
+SELECT
+  schemaname,
+  tablename,
+  last_vacuum,
+  last_autovacuum,
+  last_analyze,
+  last_autoanalyze
+FROM pg_stat_user_tables
+WHERE schemaname = 'public'
+ORDER BY last_analyze DESC;
+
+-- MySQL: Check table statistics
+SELECT
+  TABLE_SCHEMA,
+  TABLE_NAME,
+  UPDATE_TIME
+FROM information_schema.TABLES
+WHERE TABLE_SCHEMA = 'your_database'
+ORDER BY UPDATE_TIME DESC;
+```
+
+If stats are days old, they may be causing poor query plans.
+</Step>
+
+<Step title="Compare Execution Plans">
+Use EXPLAIN to see how queries are executing:
+
+```sql
+-- PostgreSQL: Detailed execution plan
+EXPLAIN ANALYZE
+SELECT
+  o.id,
+  c.email,
+  COUNT(oi.id) as item_count
+FROM orders o
+JOIN customers c ON o.customer_id = c.id
+LEFT JOIN order_items oi ON o.id = oi.order_id
+WHERE o.created_at > NOW() - INTERVAL '7 days'
+GROUP BY o.id, c.email;
+
+-- MySQL: Execution plan
+EXPLAIN
+SELECT * FROM orders WHERE customer_id = 123;
+```
+
+Look for:
+- Sequential scans that should use indexes
+- Nested loop joins when hash joins would be better
+- High "Actual rows" vs estimated rows (indicates bad statistics)
+</Step>
+
+<Step title="Document Performance Findings">
+Record your investigation:
+
+```markdown
+# Performance Issue Report
+Issue: User reports slow order list loading
+Occurred: 2024-10-31 between 14:00-15:00 UTC
+
+## Diagnosis
+**Slow Query**: Get user's orders (normally 200ms, now 8000ms)
+
+**Root Cause**: Missing index on orders.customer_id
+- Query doing full table scan of 5.2M orders
+- Index should exist but was dropped during recent migration
+
+## Evidence
+- Query: [query from Scratchpad]
+- Execution time: 8,234ms (vs normal 200ms)
+- Rows scanned: 5,200,000 (vs expected 50)
+- Execution plan: [EXPLAIN output]
+
+## Solution
+Create index: `CREATE INDEX idx_orders_customer_id ON orders(customer_id);`
+Expected improvement: 40x faster
+
+## Recommendation
+- Create the index immediately
+- Monitor query performance after
+- Add index creation to post-deployment checklist
+```
+</Step>
+</Steps>
+
+### Issue 3: Data Inconsistency or Referential Integrity Problems
+
+When relationships between tables are broken, queries fail or show wrong results.
+
+<Steps>
+<Step title="Check for Orphaned Records">
+Find records with missing parent references:
+
+![Where Conditions](/images/16-data-view-where-conditions-popover.png)
+
+```sql
+-- Find orders with no matching customer
+SELECT o.id, o.customer_id, o.created_at
+FROM orders o
+LEFT JOIN customers c ON o.customer_id = c.id
+WHERE c.id IS NULL
+LIMIT 100;
+
+-- Find order_items with no matching order
+SELECT oi.* FROM order_items oi
+LEFT JOIN orders o ON oi.order_id = o.id
+WHERE o.id IS NULL
+LIMIT 100;
+
+-- Find payments with no matching order
+SELECT p.* FROM payments p
+LEFT JOIN orders o ON p.order_id = o.id
+WHERE o.id IS NULL
+LIMIT 100;
+```
+
+Orphaned records indicate:
+- Data deletion that didn't cascade properly
+- Failed foreign key constraint enforcement
+- Data corruption or import errors
+</Step>
+
+<Step title="Check for Duplicate Keys">
+Duplicates break unique constraints:
+
+```sql
+-- Find duplicate emails (should be unique)
+SELECT email, COUNT(*) as cnt
+FROM customers
+GROUP BY email
+HAVING COUNT(*) > 1
+ORDER BY cnt DESC;
+
+-- Find duplicate order numbers
+SELECT order_number, COUNT(*) as cnt
+FROM orders
+GROUP BY order_number
+HAVING COUNT(*) > 1;
+
+-- Find likely duplicates (same email, different ID)
+SELECT
+  email,
+  GROUP_CONCAT(id) as duplicate_ids,
+  COUNT(*) as cnt
+FROM customers
+WHERE email IS NOT NULL
+GROUP BY email
+HAVING COUNT(*) > 1
+ORDER BY cnt DESC;
+```
+
+Duplicates indicate:
+- Race conditions during record creation
+- Data import errors
+- Failed constraint enforcement
+</Step>
+
+<Step title="Check for Constraint Violations">
+Some rows violate defined constraints:
+
+```sql
+-- Check for NULLs in NOT NULL fields
+SELECT COUNT(*) as null_count FROM users WHERE email IS NULL;
+SELECT COUNT(*) as null_count FROM orders WHERE customer_id IS NULL;
+
+-- Check for invalid statuses
+SELECT DISTINCT status FROM orders;
+-- Then check if these are valid enum values
+
+-- Check for negative amounts (if not allowed)
+SELECT * FROM orders WHERE total_amount < 0 LIMIT 10;
+
+-- Check for future dates (if not allowed)
+SELECT * FROM orders WHERE created_at > NOW() LIMIT 10;
+```
+</Step>
+
+<Step title="Identify the Cause">
+Correlate problems with application changes:
+
+```sql
+-- When did the problem start?
+SELECT
+  DATE(created_at) as date,
+  COUNT(CASE WHEN customer_id IS NULL THEN 1 END) as null_customer_count,
+  COUNT(*) as total_orders
+FROM orders
+WHERE created_at > NOW() - INTERVAL '30 days'
+GROUP BY DATE(created_at)
+ORDER BY date DESC;
+
+-- Is it in old or new data?
+SELECT
+  COUNT(CASE WHEN created_at < '2024-10-01' AND customer_id IS NULL THEN 1 END) as old_data_issues,
+  COUNT(CASE WHEN created_at >= '2024-10-01' AND customer_id IS NULL THEN 1 END) as new_data_issues;
+```
+
+Sudden increases correlate with code deployments or data changes.
+</Step>
+
+<Step title="Report Findings">
+Document data integrity issues:
+
+```markdown
+# Data Integrity Issue Report
+Issue: Orphaned order records found
+Discovered: 2024-10-31
+
+## Problem Summary
+- 347 orders have customer_id values that don't exist
+- These orders cannot be viewed in application
+- Affects approximately 0.02% of all orders
+
+## When Did It Occur?
+- Problem exists in records from 2024-10-15 onward
+- Likely caused by data import on 2024-10-15 14:30
+
+## Impact Assessment
+- 347 affected orders (low impact)
+- ~$2,300 in affected order value
+- Users cannot see these orders in their order history
+
+## Remediation Options
+1. **Delete**: Remove the 347 orphaned orders
+2. **Reassign**: Assign to a customer based on context
+3. **Create placeholders**: Create customer records for these orders
+
+## Recommendation
+Reassign orders to customer based on last activity context, or delete if > 30 days old
+```
+</Step>
+</Steps>
+
+## Debugging SQL: Common Patterns
+
+### Finding Recently Changed Data
+
+```sql
+-- Records modified today
+SELECT * FROM orders
+WHERE DATE(updated_at) = TODAY()
+ORDER BY updated_at DESC
+LIMIT 100;
+
+-- Bulk operations (many updates at once)
+SELECT
+  updated_at,
+  COUNT(*) as update_count
+FROM orders
+WHERE updated_at > NOW() - INTERVAL '24 hours'
+GROUP BY updated_at
+ORDER BY update_count DESC
+LIMIT 20;
+
+-- Records with unexpected changes
+SELECT
+  *,
+  CASE
+    WHEN status = 'cancelled' AND updated_at > NOW() - INTERVAL '1 hour' THEN 'recently_cancelled'
+    WHEN total_amount != original_total_amount THEN 'amount_changed'
+    WHEN customer_id IS NULL AND created_at < NOW() - INTERVAL '7 days' THEN 'old_orphan'
+    ELSE 'normal'
+  END as concern
+FROM orders
+WHERE updated_at > NOW() - INTERVAL '24 hours'
+LIMIT 50;
+```
+
+### Finding N+1 Query Patterns
+
+Sometimes applications execute N queries when they should do 1:
+
+```sql
+-- Look for repeated queries in logs
+-- Example: If you see 10,000 queries like:
+-- SELECT * FROM inventory WHERE product_id = 1
+-- SELECT * FROM inventory WHERE product_id = 2
+-- ... repeated 9,998 times
+-- This is an N+1 problem
+
+-- Better approach: One query that joins everything
+SELECT
+  p.id,
+  p.name,
+  i.quantity
+FROM products p
+LEFT JOIN inventory i ON p.id = i.product_id;
+```
+
+### Identifying Expensive Operations
+
+```sql
+-- Find queries with expensive DISTINCT
+SELECT DISTINCT user_id FROM user_events;
+-- If this scans millions of rows, it's expensive
+
+-- Find queries doing table-wide aggregations
+SELECT COUNT(*) FROM user_events;  -- Scans entire table
+SELECT SUM(amount) FROM orders;    -- Scans entire table
+
+-- Better approach: Keep running totals
+SELECT COUNT(*) FROM user_events_totals WHERE date = TODAY();
+```
+
+## Safe Query Patterns for Production Debugging
+
+Always use these patterns when debugging production:
+
+<AccordionGroup>
+<Accordion title="Pattern 1: Sample Data with LIMIT">
+```sql
+-- Always limit result sets
+SELECT * FROM large_table LIMIT 100;
+
+-- For analysis, use OFFSET carefully
+SELECT * FROM orders
+WHERE created_at > NOW() - INTERVAL '7 days'
+LIMIT 1000;  -- Don't do LIMIT 1000000
+```
+</Accordion>
+
+<Accordion title="Pattern 2: Aggregates First">
+```sql
+-- Always run counts/aggregates before drilling into details
+SELECT COUNT(*) as total_records FROM user_events;
+SELECT COUNT(*) as affected_records FROM user_events WHERE status = 'error';
+
+-- Only then drill into specific rows
+SELECT * FROM user_events WHERE status = 'error' LIMIT 10;
+```
+</Accordion>
+
+<Accordion title="Pattern 3: Use WHERE Clauses">
+```sql
+-- Bad: Scans entire table
+SELECT * FROM orders;
+
+-- Good: Filters to relevant records
+SELECT * FROM orders
+WHERE created_at > NOW() - INTERVAL '24 hours'
+LIMIT 100;
+
+-- Best: Even more specific
+SELECT * FROM orders
+WHERE customer_id = 123
+AND created_at > NOW() - INTERVAL '7 days'
+ORDER BY created_at DESC
+LIMIT 100;
+```
+</Accordion>
+
+<Accordion title="Pattern 4: Index-Friendly Queries">
+```sql
+-- Queries that use indexes run fast
+SELECT * FROM orders WHERE customer_id = 123;
+SELECT * FROM users WHERE email = 'test@example.com';
+
+-- Add ORDER BY with indexed columns
+SELECT * FROM orders
+WHERE customer_id = 123
+ORDER BY created_at DESC;
+
+-- Avoid functions on indexed columns (prevents index use)
+SELECT * FROM orders
+WHERE MONTH(created_at) = 10;  -- Can't use index on created_at
+
+-- Better: Use ranges
+SELECT * FROM orders
+WHERE created_at >= '2024-10-01'
+AND created_at < '2024-11-01';  -- Can use index
+```
+</Accordion>
+
+<Accordion title="Pattern 5: Explain First">
+```sql
+-- Always check execution plan before running slow query
+EXPLAIN
+SELECT * FROM orders WHERE customer_id = 123;
+
+-- Look for:
+-- - Sequential Scan (bad - uses index)
+-- - Index Scan (good - uses index)
+-- - Nested Loop Join (ok for small tables, bad for large)
+-- - Hash Join (good for large joins)
+```
+</Accordion>
+</AccordionGroup>
+
+## Debugging Workflow Checklist
+
+Use this systematic approach when debugging production:
+
+<AccordionGroup>
+<Accordion title="1. Understand the Problem">
+- [ ] Get exact description of the problem from user
+- [ ] Determine which users/data are affected
+- [ ] Note when problem started
+- [ ] Determine impact (how many users, lost revenue, etc.)
+</Accordion>
+
+<Accordion title="2. Scope the Investigation">
+- [ ] Check row counts and data volume
+- [ ] Determine if problem is widespread or localized
+- [ ] Look for time-based patterns
+- [ ] Check if similar problems exist elsewhere
+</Accordion>
+
+<Accordion title="3. Find the Root Cause">
+- [ ] Query for affected records
+- [ ] Compare with unaffected records
+- [ ] Look for patterns in the differences
+- [ ] Correlate with application deployments
+- [ ] Check query performance
+- [ ] Look for data integrity issues
+</Accordion>
+
+<Accordion title="4. Create Evidence Report">
+- [ ] Document all queries run
+- [ ] Save query results
+- [ ] Take screenshots of WhoDB views
+- [ ] Note timings and scope
+- [ ] List possible causes and evidence
+</Accordion>
+
+<Accordion title="5. Recommend Action">
+- [ ] Propose solution with confidence level
+- [ ] Explain expected outcome
+- [ ] Note any risks or side effects
+- [ ] Suggest monitoring after fix
+</Accordion>
+</AccordionGroup>
+
+## Monitoring After a Fix
+
+After identifying and fixing a production issue, verify the fix worked:
+
+```sql
+-- Re-run your investigation query
+SELECT
+  COUNT(*) as total_records,
+  COUNT(CASE WHEN status = 'lost' THEN 1 END) as affected_count
+FROM user_events
+WHERE created_at > NOW() - INTERVAL '1 hour';
+
+-- The affected_count should be zero or much lower
+
+-- Monitor for regression
+SELECT
+  DATE_TRUNC('hour', created_at) as hour,
+  COUNT(*) as record_count,
+  COUNT(CASE WHEN status = 'lost' THEN 1 END) as affected_count
+FROM user_events
+WHERE created_at > NOW() - INTERVAL '24 hours'
+GROUP BY DATE_TRUNC('hour', created_at)
+ORDER BY hour DESC;
+```
+
+Save these queries for future reference. When similar issues occur, you can quickly run the same diagnostics.
+
+## Error Queries: Common Debugging Examples
+
+These are ready-to-use queries for common debugging scenarios:
+
+<Steps>
+<Step title="Query 1: Find Recently Failed Transactions">
+```sql
+SELECT
+  id,
+  user_id,
+  amount,
+  error_message,
+  created_at,
+  updated_at
+FROM transactions
+WHERE status = 'failed'
+AND created_at > NOW() - INTERVAL '1 hour'
+ORDER BY created_at DESC
+LIMIT 50;
+```
+
+Use this to investigate payment failures or transaction errors.
+</Step>
+
+<Step title="Query 2: Find Data With Invalid References">
+```sql
+SELECT o.id, o.customer_id, c.id
+FROM orders o
+LEFT JOIN customers c ON o.customer_id = c.id
+WHERE o.customer_id IS NOT NULL
+AND c.id IS NULL
+LIMIT 100;
+```
+
+Use this to find orphaned records and foreign key issues.
+</Step>
+
+<Step title="Query 3: Detect Suspicious Activity">
+```sql
+SELECT
+  user_id,
+  DATE(created_at) as date,
+  COUNT(*) as event_count,
+  MAX(created_at) as last_event
+FROM user_activity_log
+WHERE created_at > NOW() - INTERVAL '7 days'
+GROUP BY user_id, DATE(created_at)
+HAVING COUNT(*) > 1000  -- Unusually high activity
+ORDER BY event_count DESC
+LIMIT 20;
+```
+
+Use this to find suspicious user behavior or data pipeline issues.
+</Step>
+
+<Step title="Query 4: Monitor Query Performance">
+```sql
+SELECT
+  query,
+  calls,
+  ROUND(total_time::numeric, 2) as total_ms,
+  ROUND(mean_time::numeric, 2) as avg_ms,
+  ROUND(max_time::numeric, 2) as max_ms
+FROM pg_stat_statements
+WHERE query NOT LIKE '%pg_stat_statements%'
+ORDER BY mean_time DESC
+LIMIT 20;
+```
+
+Use this to find slow or frequently-executed queries.
+</Step>
+
+<Step title="Query 5: Check Data Freshness">
+```sql
+SELECT
+  table_name,
+  MAX(updated_at) as last_update,
+  NOW() - MAX(updated_at) as time_since_update,
+  COUNT(*) as row_count
+FROM (
+  SELECT table_name, MAX(created_at) as updated_at FROM users UNION ALL
+  SELECT 'orders', MAX(updated_at) FROM orders UNION ALL
+  SELECT 'payments', MAX(updated_at) FROM payments
+) AS tables
+GROUP BY table_name
+ORDER BY last_update DESC;
+```
+
+Use this to detect stale data that indicates pipeline failures.
+</Step>
+</Steps>
+
+## Next Steps
+
+Master debugging with these related guides:
+
+<CardGroup cols={2}>
+<Card title="Query Interface" href="/query/scratchpad-intro">
+Learn advanced SQL techniques for investigation
+</Card>
+
+<Card title="Data Analysis" href="/use-cases/data-analysis">
+Apply analytical patterns to diagnosis
+</Card>
+
+<Card title="Where Conditions" href="/advanced/where-conditions">
+Master filtering for targeted queries
+</Card>
+
+<Card title="Schema Explorer" href="/features/schema-explorer">
+Understand your database structure for debugging
+</Card>
+</CardGroup>
+
+<Check>
+Systematic, evidence-based debugging transforms you from guessing to knowing. With WhoDB's read-only access, efficient queries, and data visualization, you can safely investigate production issues without risking your data. By following these patterns and maintaining a library of debugging queries, you'll become the person who solves production problems with confidence, armed with data and clear analysis.
+</Check>
