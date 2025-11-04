@@ -39,6 +39,10 @@ on:
       APPLE_MAS_PROVISIONING_PROFILE:
         required: false
 
+permissions:
+  contents: read
+  actions: write
+
 jobs:
   build-desktop:
     name: Build Desktop (${{ matrix.platform }}-${{ matrix.arch }})

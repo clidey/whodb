@@ -8,6 +8,10 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: read
+  actions: write
+
 jobs:
   generate-homebrew-cask:
     name: Generate Homebrew Cask

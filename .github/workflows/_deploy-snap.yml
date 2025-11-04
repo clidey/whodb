@@ -16,6 +16,10 @@ on:
       SNAPCRAFT_STORE_CREDENTIALS:
         required: false
 
+permissions:
+  contents: read
+  actions: read
+
 jobs:
   deploy-snap:
     name: Deploy to Snap Store
