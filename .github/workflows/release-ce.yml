@@ -65,6 +65,7 @@ on:
 permissions:
   contents: write
   actions: write
+  id-token: write
 
 jobs:
   # Step 1: Calculate version and deployment parameters
