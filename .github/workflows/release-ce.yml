@@ -120,8 +120,7 @@ jobs:
           deploy-snap: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-snap) && 'true' || 'false') }}
           deploy-microsoft: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-microsoft) && 'true' || 'false') }}
           deploy-apple: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-apple) && 'true' || 'false') }}
-          # Disable AppImage on production runs triggered by release merges (pull_request closed on 'release')
-          deploy-appimage: ${{ github.event_name == 'pull_request' && 'false' || (fromJSON(inputs.deploy-appimage) && 'true' || 'false') }}
+          deploy-appimage: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-appimage) && 'true' || 'false') }}
           publish-github-release: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.publish-github-release) && 'true' || 'false') }}
 
       - name: Display configuration
