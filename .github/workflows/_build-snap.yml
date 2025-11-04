@@ -96,7 +96,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/go/bin/wails
-          key: ${{ runner.os }}-wails-v2-latest
+          key: ${{ runner.os }}-${{ runner.arch }}-wails-v2-latest
 
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
