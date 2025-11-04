@@ -89,7 +89,12 @@ find "$APPDIR" -maxdepth 4 -type f -exec file {} \;
 echo "Binary details:"
 ls -l "$APPDIR/usr/bin/"
 file "$APPDIR/usr/bin/whodb"
-echo "Running appimagetool with ARCH=${APPIMAGE_ARCH}"
-env ARCH="${APPIMAGE_ARCH}" "./appimagetool-${TARGET_ARCH}.AppImage" --verbose "$APPDIR" "WhoDB-${VERSION}-${TARGET_ARCH}.AppImage"
+OUTPUT_APPIMAGE="WhoDB-${VERSION}-${TARGET_ARCH}.AppImage"
 
-echo "✓ AppImage created: WhoDB-${VERSION}-${TARGET_ARCH}.AppImage"
+echo "Running appimagetool with ARCH=${APPIMAGE_ARCH}"
+env ARCH="${APPIMAGE_ARCH}" "./appimagetool-${TARGET_ARCH}.AppImage" --verbose "$APPDIR" "$OUTPUT_APPIMAGE"
+
+# Ensure resulting AppImage is marked executable
+chmod +x "$OUTPUT_APPIMAGE"
+
+echo "✓ AppImage created: $OUTPUT_APPIMAGE"
