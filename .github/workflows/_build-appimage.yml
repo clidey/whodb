@@ -20,10 +20,14 @@ permissions:
 jobs:
   build-appimage:
     name: Build AppImage (${{ matrix.arch }})
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
-        arch: [ amd64, arm64 ]
+        include:
+          - runner: ubuntu-latest
+            arch: amd64
+          - runner: ubuntu-24.04-arm
+            arch: arm64
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -132,17 +136,12 @@ jobs:
           fi
 
       - name: Build Wails app for ${{ matrix.arch }}
-        env:
-          GOWORK: ${{ steps.gowork.outputs.workspace }}
         run: |
           cd ${{ steps.gowork.outputs.source_dir }}
 
-          if [ "${{ matrix.arch }}" = "amd64" ]; then
-            GOARCH=amd64 wails build -clean -platform linux/amd64
-          else
-            # For ARM64, cross-compile
-            GOARCH=arm64 wails build -clean -platform linux/arm64
-          fi
+          # Use make ci-build-prod-linux which handles webkit2_41 tags
+          # Frontend is already built and copied to frontend/dist
+          make ci-build-prod-linux
 
       - name: Build AppImage
         run: |

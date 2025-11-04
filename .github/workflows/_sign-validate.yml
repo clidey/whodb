@@ -7,11 +7,6 @@ on:
         description: 'Version being signed'
         required: true
         type: string
-      validate-docker:
-        description: 'Whether to validate Docker builds'
-        required: false
-        type: boolean
-        default: true
       validate-snap:
         description: 'Whether to validate Snap builds'
         required: false
@@ -69,8 +64,8 @@ jobs:
         run: |
           echo "🔏 Signing artifacts with Sigstore..."
 
-          # Find all artifacts to sign
-          find artifacts -type f \( -name "*.tar" -o -name "*.snap" -o -name "*.AppImage" -o -name "*.exe" -o -name "*.dmg" -o -name "*.pkg" -o -name "*.msix" -o -name "*.msixbundle" \) | while read -r file; do
+          # Find all artifacts to sign (excluding Docker .tar files)
+          find artifacts -type f \( -name "*.snap" -o -name "*.AppImage" -o -name "*.exe" -o -name "*.dmg" -o -name "*.pkg" -o -name "*.msix" -o -name "*.msixbundle" \) | while read -r file; do
             echo "Signing: $file"
 
             # Sign the artifact
@@ -139,49 +134,6 @@ jobs:
 
       - name: Install Cosign for verification
         uses: sigstore/cosign-installer@v3
-
-      - name: Validate Docker artifacts
-        if: inputs.validate-docker
-        run: |
-          echo "🐳 Validating Docker artifacts..."
-          FAILED=false
-
-          for arch in amd64 arm64; do
-            ARTIFACT_DIR="artifacts/docker-image-${arch}"
-            if [ -d "$ARTIFACT_DIR" ]; then
-              TAR_FILE=$(find "$ARTIFACT_DIR" -name "*.tar" | head -1)
-              if [ -n "$TAR_FILE" ]; then
-                echo "✅ Found Docker ${arch} image: $(basename "$TAR_FILE")"
-
-                # Verify signature if available
-                SIG_FILE="signatures/$(basename "$TAR_FILE").sig"
-                CERT_FILE="signatures/$(basename "$TAR_FILE").pem"
-                if [ -f "$SIG_FILE" ] && [ -f "$CERT_FILE" ]; then
-                  echo "Verifying signature..."
-                  cosign verify-blob \
-                    --signature "$SIG_FILE" \
-                    --certificate "$CERT_FILE" \
-                    --certificate-identity-regexp ".*" \
-                    --certificate-oidc-issuer-regexp ".*" \
-                    "$TAR_FILE"
-                  echo "✅ Signature verified"
-                else
-                  echo "⚠️ No signature found for Docker ${arch} image"
-                fi
-              else
-                echo "❌ Docker ${arch} image missing"
-                FAILED=true
-              fi
-            else
-              echo "❌ Docker ${arch} artifact directory missing"
-              FAILED=true
-            fi
-          done
-
-          if [ "$FAILED" = "true" ]; then
-            echo "::error::Docker validation failed"
-            exit 1
-          fi
 
       - name: Validate Snap artifacts
         if: inputs.validate-snap
@@ -311,12 +263,11 @@ jobs:
             "version": "${{ inputs.version }}",
             "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
             "validation": {
-              "docker": ${{ inputs.validate-docker }},
               "snap": ${{ inputs.validate-snap }},
               "desktop": ${{ inputs.validate-desktop }},
               "appimage": ${{ inputs.validate-appimage }}
             },
-            "artifacts": $(find artifacts -type f -name "*.tar" -o -name "*.snap" -o -name "*.AppImage" -o -name "*.exe" -o -name "*.dmg" | wc -l)
+            "artifacts": $(find artifacts -type f -name "*.snap" -o -name "*.AppImage" -o -name "*.exe" -o -name "*.dmg" | wc -l)
           }
           EOF
 

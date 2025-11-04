@@ -56,6 +56,11 @@ on:
         required: false
         type: boolean
         default: false
+      deploy-appimage:
+        description: 'Build AppImage (for GitHub Release)'
+        required: false
+        type: boolean
+        default: false
       publish-github-release:
         description: 'Publish GitHub release to production (leave unchecked to keep as draft)'
         required: false
@@ -114,6 +119,7 @@ jobs:
           deploy-snap: ${{ github.event_name == 'pull_request' && 'true' || inputs.deploy-snap }}
           deploy-microsoft: ${{ github.event_name == 'pull_request' && 'true' || inputs.deploy-microsoft }}
           deploy-apple: ${{ github.event_name == 'pull_request' && 'true' || inputs.deploy-apple }}
+          deploy-appimage: ${{ github.event_name == 'pull_request' && 'true' || inputs.deploy-appimage }}
           publish-github-release: ${{ github.event_name == 'pull_request' && 'true' || inputs.publish-github-release }}
 
       - name: Display configuration
@@ -137,6 +143,7 @@ jobs:
             echo "| Snap Store | ${{ steps.calc.outputs.deploy-snap }} | stable |" >> $GITHUB_STEP_SUMMARY
             echo "| Microsoft Store | ${{ steps.calc.outputs.deploy-microsoft }} | production |" >> $GITHUB_STEP_SUMMARY
             echo "| Apple App Store | ${{ steps.calc.outputs.deploy-apple }} | App Store |" >> $GITHUB_STEP_SUMMARY
+            echo "| AppImage | ${{ steps.calc.outputs.deploy-appimage }} | GitHub Release |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| Store | Deploy | Channel |" >> $GITHUB_STEP_SUMMARY
             echo "|-------|--------|---------|" >> $GITHUB_STEP_SUMMARY
@@ -144,6 +151,7 @@ jobs:
             echo "| Snap Store | ${{ steps.calc.outputs.deploy-snap }} | edge |" >> $GITHUB_STEP_SUMMARY
             echo "| Microsoft Store | ${{ steps.calc.outputs.deploy-microsoft }} | draft |" >> $GITHUB_STEP_SUMMARY
             echo "| Apple App Store | ${{ steps.calc.outputs.deploy-apple }} | TestFlight |" >> $GITHUB_STEP_SUMMARY
+            echo "| AppImage | ${{ steps.calc.outputs.deploy-appimage }} | GitHub Release |" >> $GITHUB_STEP_SUMMARY
           fi
 
   # Step 2: Build artifacts in parallel (only what's selected)
@@ -199,7 +207,7 @@ jobs:
   build-appimage:
     name: Build AppImage
     needs: [ calculate-version ]
-    if: false
+    if: needs.calculate-version.outputs.deploy-appimage == 'true'
     uses: ./.github/workflows/_build-appimage.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
@@ -219,7 +227,6 @@ jobs:
     uses: ./.github/workflows/_sign-validate.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
-      validate-docker: ${{ needs.build-docker.result == 'success' }}
       validate-snap: ${{ needs.build-snap.result == 'success' }}
       validate-desktop: ${{ needs.build-desktop.result == 'success' }}
       validate-appimage: ${{ needs.build-appimage.result == 'success' }}

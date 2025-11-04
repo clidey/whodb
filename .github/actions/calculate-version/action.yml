@@ -24,6 +24,10 @@ inputs:
     description: 'Deploy to Apple App Store'
     required: false
     default: 'true'
+  deploy-appimage:
+    description: 'Build AppImage'
+    required: false
+    default: 'true'
   publish-github-release:
     description: 'Publish GitHub release to production (production mode only)'
     required: false
@@ -53,6 +57,9 @@ outputs:
   deploy-apple:
     description: 'Deploy Apple flag'
     value: ${{ steps.stores.outputs.deploy-apple }}
+  deploy-appimage:
+    description: 'Deploy AppImage flag'
+    value: ${{ steps.stores.outputs.deploy-appimage }}
   publish-github-release:
     description: 'Publish GitHub release flag'
     value: ${{ steps.flags.outputs.publish-github-release }}
@@ -148,6 +155,7 @@ runs:
         echo "deploy-snap=${{ inputs.deploy-snap }}" >> $GITHUB_OUTPUT
         echo "deploy-microsoft=${{ inputs.deploy-microsoft }}" >> $GITHUB_OUTPUT
         echo "deploy-apple=${{ inputs.deploy-apple }}" >> $GITHUB_OUTPUT
+        echo "deploy-appimage=${{ inputs.deploy-appimage }}" >> $GITHUB_OUTPUT
 
         if [ "$MODE" = "production" ]; then
           echo "Production mode: deploying selected stores to production channels"
