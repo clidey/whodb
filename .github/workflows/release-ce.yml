@@ -110,11 +110,11 @@ jobs:
         with:
           deployment-mode: ${{ steps.deployment_mode.outputs.mode }}
           version-bump: ${{ steps.deployment_mode.outputs.version_bump }}
-          deploy-docker: ${{ inputs.deploy-docker }}
-          deploy-snap: ${{ inputs.deploy-snap }}
-          deploy-microsoft: ${{ inputs.deploy-microsoft }}
-          deploy-apple: ${{ inputs.deploy-apple }}
-          publish-github-release: ${{ inputs.publish-github-release }}
+          deploy-docker: ${{ github.event_name == 'pull_request' && 'true' || inputs.deploy-docker }}
+          deploy-snap: ${{ github.event_name == 'pull_request' && 'true' || inputs.deploy-snap }}
+          deploy-microsoft: ${{ github.event_name == 'pull_request' && 'true' || inputs.deploy-microsoft }}
+          deploy-apple: ${{ github.event_name == 'pull_request' && 'true' || inputs.deploy-apple }}
+          publish-github-release: ${{ github.event_name == 'pull_request' && 'true' || inputs.publish-github-release }}
 
       - name: Display configuration
         run: |
