@@ -322,22 +322,30 @@ jobs:
             echo "Not triggered by PR merge - no PR description"
           fi
 
-          # Replace template variables
-          BODY="$TEMPLATE"
-          BODY="${BODY//\{\{VERSION\}\}/$VERSION}"
-
           # Replace PR description or remove the placeholder
           if [ -n "$PR_DESCRIPTION" ]; then
-            # Escape for use in sed
-            PR_ESCAPED=$(echo "$PR_DESCRIPTION" | sed ':a;N;$!ba;s/\n/\\n/g' | sed 's/[&/\]/\\&/g')
-            BODY=$(echo "$BODY" | sed "s|{{PR_DESCRIPTION}}|$PR_ESCAPED|")
-          else
-            # Remove PR_DESCRIPTION placeholder and extra newline
-            BODY=$(echo "$BODY" | sed '/{{PR_DESCRIPTION}}/d')
-          fi
+            # Save PR description to temp file to preserve newlines
+            echo "$PR_DESCRIPTION" > /tmp/pr_description.txt
 
-          # Save to file
-          echo "$BODY" > /tmp/release-body.md
+            # Replace version in template
+            TEMPLATE="${TEMPLATE//\{\{VERSION\}\}/$VERSION}"
+
+            # Replace PR_DESCRIPTION with actual file content using awk
+            awk '
+              /{{PR_DESCRIPTION}}/ {
+                while ((getline line < "/tmp/pr_description.txt") > 0) {
+                  print line
+                }
+                close("/tmp/pr_description.txt")
+                next
+              }
+              { print }
+            ' <<< "$TEMPLATE" > /tmp/release-body.md
+          else
+            # Replace version and remove PR_DESCRIPTION placeholder
+            TEMPLATE="${TEMPLATE//\{\{VERSION\}\}/$VERSION}"
+            echo "$TEMPLATE" | sed '/{{PR_DESCRIPTION}}/d' > /tmp/release-body.md
+          fi
 
           echo "✅ Release body prepared"
           echo "Preview:"
