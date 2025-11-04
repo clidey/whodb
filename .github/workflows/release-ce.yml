@@ -284,14 +284,11 @@ jobs:
         run: |
           mkdir -p final-assets
 
-          # Copy Snap packages
-          find artifacts -name "*.snap" -exec cp {} final-assets/ \; 2>/dev/null || true
-
           # Copy AppImage packages
           find artifacts -name "*.AppImage" -exec cp {} final-assets/ \; 2>/dev/null || true
 
           # Copy desktop builds
-          find artifacts -name "*.exe" -o -name "*.dmg" -o -name "*.pkg" \
+          find artifacts -name "*.exe" -o -name "*.dmg" \
             -o -name "*.msixbundle" -exec cp {} final-assets/ \; 2>/dev/null || true
 
           # Copy signatures
