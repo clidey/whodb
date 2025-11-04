@@ -46,9 +46,62 @@ jobs:
             fuse \
             file
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Cache frontend build
+        id: frontend-cache
+        uses: actions/cache@v4
+        with:
+          path: frontend/build
+          key: frontend-build-${{ inputs.edition }}-${{ hashFiles('frontend/package.json', 'frontend/pnpm-lock.yaml', 'frontend/tsconfig.json') }}
+          restore-keys: |
+            frontend-build-${{ inputs.edition }}-
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        env:
+          CYPRESS_INSTALL_BINARY: "0"
+        run: pnpm i
+
+      - name: Cache Wails binary
+        id: cache-wails
+        uses: actions/cache@v4
+        with:
+          path: ~/go/bin/wails
+          key: ${{ runner.os }}-wails-v2-latest
+
       - name: Set up Wails
+        if: steps.cache-wails.outputs.cache-hit != 'true'
         run: |
           go install github.com/wailsapp/wails/v2/cmd/wails@latest
+          echo "$HOME/go/bin" >> $GITHUB_PATH
+
+      - name: Add Wails to PATH
+        if: steps.cache-wails.outputs.cache-hit == 'true'
+        run: |
           echo "$HOME/go/bin" >> $GITHUB_PATH
 
       - name: Determine Go workspace
