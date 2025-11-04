@@ -251,17 +251,37 @@ jobs:
         with:
           submodules: false
 
-      - name: Download all artifacts
+      - name: Download Snap packages
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
+          pattern: snap-package-*
           path: artifacts/
+
+      - name: Download Desktop builds
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: desktop-*
+          path: artifacts/
+
+      - name: Download AppImages
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: appimage-*
+          path: artifacts/
+
+      - name: Download signatures
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: signatures
+          path: artifacts/signatures/
 
       - name: Prepare release assets
         run: |
           mkdir -p final-assets
-
-          # Copy Docker images
-          find artifacts -name "*.tar" -exec cp {} final-assets/ \; 2>/dev/null || true
 
           # Copy Snap packages
           find artifacts -name "*.snap" -exec cp {} final-assets/ \; 2>/dev/null || true
