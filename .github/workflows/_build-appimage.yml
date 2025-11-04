@@ -157,6 +157,7 @@ jobs:
             exit 1
           fi
 
+          chmod +x "$APPIMAGE"
           echo "✅ AppImage created: $APPIMAGE"
           ls -lh "$APPIMAGE"
           file "$APPIMAGE"
