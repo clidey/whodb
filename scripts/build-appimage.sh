@@ -33,14 +33,17 @@ case "$TARGET_ARCH" in
     amd64)
         BUILD_ARCH="x86_64"
         APPIMAGETOOL_ARCH="x86_64"
+        APPIMAGE_ARCH_ENV="x86_64"
         ;;
     arm64)
         BUILD_ARCH="aarch64"
         APPIMAGETOOL_ARCH="aarch64"
+        APPIMAGE_ARCH_ENV="arm64"
         ;;
     *)
         BUILD_ARCH="$TARGET_ARCH"
         APPIMAGETOOL_ARCH="$TARGET_ARCH"
+        APPIMAGE_ARCH_ENV="$TARGET_ARCH"
         ;;
 esac
 
@@ -87,7 +90,8 @@ if [ ! -f "appimagetool-${TARGET_ARCH}.AppImage" ]; then
 fi
 
 # Build AppImage
-export ARCH="$APPIMAGETOOL_ARCH"
+echo "Using AppImage ARCH override: ${APPIMAGE_ARCH_ENV:-$APPIMAGETOOL_ARCH}"
+export ARCH="${APPIMAGE_ARCH_ENV:-$APPIMAGETOOL_ARCH}"
 "./appimagetool-${TARGET_ARCH}.AppImage" "$APPDIR" "WhoDB-${VERSION}-${TARGET_ARCH}.AppImage"
 
 echo "✓ AppImage created: WhoDB-${VERSION}-${TARGET_ARCH}.AppImage"
