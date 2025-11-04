@@ -66,16 +66,8 @@ chmod +x "$APPDIR/usr/bin/whodb"
 cp linux/whodb.desktop "$APPDIR/usr/share/applications/"
 cp linux/icon.png "$APPDIR/usr/share/icons/hicolor/256x256/apps/whodb.png"
 
-# Create AppRun
-cat > "$APPDIR/AppRun" << 'EOF'
-#!/bin/bash
-SELF=$(readlink -f "$0")
-HERE=${SELF%/*}
-export PATH="${HERE}/usr/bin:${PATH}"
-export LD_LIBRARY_PATH="${HERE}/usr/lib:${LD_LIBRARY_PATH}"
-exec "${HERE}/usr/bin/whodb" "$@"
-EOF
-chmod +x "$APPDIR/AppRun"
+# Create AppRun symlink so appimagetool infers the same architecture as the main binary
+ln -sf usr/bin/whodb "$APPDIR/AppRun"
 
 # Create symlinks for AppImage structure
 ln -sf usr/share/applications/whodb.desktop "$APPDIR/whodb.desktop"
