@@ -111,7 +111,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/go/bin/wails
-          key: ${{ runner.os }}-wails-v2-latest
+          key: ${{ runner.os }}-${{ runner.arch }}-wails-v2-latest
 
       - name: Set up Wails
         if: steps.cache-wails.outputs.cache-hit != 'true'
@@ -141,7 +141,7 @@ jobs:
 
           # Use make ci-build-prod-linux which handles webkit2_41 tags
           # Frontend is already built and copied to frontend/dist
-          make ci-build-prod-linux
+          TARGET_ARCH=${{ matrix.arch }} make ci-build-prod-linux
 
       - name: Build AppImage
         run: |

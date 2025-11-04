@@ -162,7 +162,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/go/bin/wails
-          key: ${{ runner.os }}-wails-v2-latest
+          key: ${{ runner.os }}-${{ runner.arch }}-wails-v2-latest
 
       - name: Install Wails CLI
         if: matrix.enabled != false && steps.cache-wails.outputs.cache-hit != 'true'
