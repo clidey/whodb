@@ -1,6 +1,10 @@
 {
   "name": "WhoDB",
-  "favicon": "logo/logo.png",
+  "colors": {
+    "primary": "#ca6f1e",
+    "light": "#ca6f1e",
+    "dark": "#F18D3B"
+  },
   "fonts": {
     "family": "Montserrat",
     "source": "https://fonts.gstatic.com/s/googlesansflex/v5/t5sJIQcYNIWbFgDgAAzZ34auoVyXkJCOvp3SFWJbN5hF8Ju1x6sKCyp0l9sI40swNJwGpVd4AZzz0v6lJ4qFXNZhGjLvDSkV4USKMo6qQzwliVdHAy9jxTDHg_ugnAakpwGc-cxgUqDCIUI.woff2",
@@ -189,7 +193,7 @@
     ]
   },
   "logo": {
-    "light": "./logo/logo.svg",
-    "dark": "./logo/logo.svg"
+    "light": "./logo/logo.png",
+    "dark": "./logo/logo.png"
   }
 }

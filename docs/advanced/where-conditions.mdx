@@ -137,7 +137,7 @@ SELECT * FROM products WHERE inventory < 10
 
 #### Greater Than or Equal (>=)
 
-![Greater Than or Equal Operator](/images/63-where-operator-greater-than-equal.png)
+![Greater Than or Equal Operator](/images/63-where-operator-gte.png)
 
 Inclusive greater than comparison.
 
@@ -171,7 +171,7 @@ SELECT * FROM tasks WHERE deadline <= '2024-12-31'
 
 Click **Add Condition** to add additional filters. Multiple conditions are combined with AND logic by default.
 
-![Multiple Where Conditions](/images/40-data-view-multiple-where-conditions.png)
+![Multiple Where Conditions](/images/39-data-view-multiple-conditions.png)
 
 **AND Logic**: All conditions must be true
 ```sql
@@ -379,7 +379,7 @@ WHERE category = 'Electronics' OR category = 'Computers'
 
 When filters are applied, the filter button shows a badge indicating the number of active conditions.
 
-![Where Conditions Badge](/images/19-data-view-where-conditions-badge.png)
+![Where Conditions Badge](/images/19-data-view-search-highlight.png)
 
 - **1 condition**: One filter is active
 - **2+ conditions**: Multiple filters applied
@@ -445,21 +445,21 @@ This is perfect for:
 
 ### Filtering Large Tables
 
+<AccordionGroup>
 <Accordion title="Tips for Large Datasets">
-**Use Specific Filters**: More specific conditions execute faster
-- Good: status = 'active' AND created_at > '2024-01-01'
-- Slow: status NOT IN ('deleted', 'archived', 'inactive')
+**Use Indexes for Fast Filtering**: Filters on indexed columns deliver the best performance.
+- Fast: status = 'active' AND created_at > '2024-01-01' (if both columns are indexed)
+- Slow: status NOT IN ('deleted', 'archived', 'inactive') (especially if status isn't indexed)
 
-**Filter Early**: Apply restrictions before other operations
-- Apply WHERE conditions before sorting
-- Filter before searching
-- Paginate filtered results
+**Apply Filters Before Other Operations**: Filtering at the start reduces workload for subsequent steps.
+- Filter using WHERE conditions before applying sorting or searching
+- Paginate after filtering to minimize total data processed
 
-**Avoid Full Table Scans**: Don't filter on unindexed columns if possible
-- Indexed columns: id, status, created_at (usually)
-- Unindexed columns: arbitrary text fields
-- Check your Explore tab for index information
+**Check Column Indexing**: Filtering on unindexed columns can result in slower queries.
+- Commonly indexed columns: id, status, created_at (see Explore tab for details)
+- Avoid filtering heavily on text fields or columns without indexes for large tables
 </Accordion>
+</AccordionGroup>
 
 ### Complex Query Alternatives
 
