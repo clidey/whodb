@@ -308,7 +308,7 @@ jobs:
           echo "📝 Preparing release body from template..."
 
           # Read the template
-          TEMPLATE=$(cat .github/RELEASE_TEMPLATE.md)
+          TEMPLATE=$(cat .github/templates/RELEASE_TEMPLATE.md)
 
           # Get PR description if this was triggered by a PR merge
           PR_DESCRIPTION=""
