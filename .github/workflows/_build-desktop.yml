@@ -313,7 +313,7 @@ jobs:
           echo "Preparing MAS-specific entitlements..."
           mkdir -p build/darwin
           # Use MAS entitlements for MAS builds
-          cp ../macos/entitlements.mas.plist build/darwin/entitlements.plist
+          cp ../.github/templates/entitlements.mas.plist build/darwin/entitlements.plist
           echo "✅ MAS entitlements prepared"
 
       - name: Verify entitlements before build

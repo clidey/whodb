@@ -32,7 +32,7 @@ website: https://whodb.com
 source-code: https://github.com/clidey/whodb
 issues: https://github.com/clidey/whodb/issues
 donation: https://github.com/sponsors/clidey
-icon: linux/icon.png
+icon: .github/linux/icon.png
 
 platforms:
   amd64:

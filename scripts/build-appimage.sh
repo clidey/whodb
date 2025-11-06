@@ -63,8 +63,8 @@ cp "$BINARY_PATH" "$APPDIR/usr/bin/"
 chmod +x "$APPDIR/usr/bin/whodb"
 
 # Copy desktop file and icon
-cp linux/whodb.desktop "$APPDIR/usr/share/applications/"
-cp linux/icon.png "$APPDIR/usr/share/icons/hicolor/256x256/apps/whodb.png"
+cp .github/linux/whodb.desktop "$APPDIR/usr/share/applications/"
+cp .github/linux/icon.png "$APPDIR/usr/share/icons/hicolor/256x256/apps/whodb.png"
 
 # Create AppRun symlink so appimagetool infers the same architecture as the main binary
 ln -sf usr/bin/whodb "$APPDIR/AppRun"
