@@ -176,7 +176,7 @@ if (Test-Path $IconPath) {
 }
 
 # Generate AppxManifest.xml from template
-$ManifestTemplate = Get-Content "windows\AppxManifest.xml.template" -Raw
+$ManifestTemplate = Get-Content ".github\templates\AppxManifest.xml.template" -Raw
 $Manifest = $ManifestTemplate `
     -replace '__VERSION__', $Version `
     -replace '__PUBLISHER_CN__', $PublisherCN `
