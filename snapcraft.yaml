@@ -723,7 +723,8 @@ parts:
 
   desktop-file:
     plugin: dump
-    source: linux
+    source: .github/linux
+    source-type: local
     override-build: |
       install -D whodb.desktop $CRAFT_PART_INSTALL/share/applications/whodb.desktop
       install -D icon.png $CRAFT_PART_INSTALL/share/icons/hicolor/256x256/apps/whodb.png
