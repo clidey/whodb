@@ -28,8 +28,8 @@ let activeClient: PostHog | null = null;
 let handlersRegistered = false;
 let cachedDistinctId: string | null = null;
 
-const posthogKey = "phc_hbXcCoPTdxm5ADL8PmLSYTIUvS6oRWFM2JAK8SMbfnH"
-const apiHost = "https://us.i.posthog.com"
+const posthogKey = "phc_hbXcCoPTdxm5ADL8PmLSYTIUvS6oRWFM2JAK8SMbfnH";
+const apiHost = "https://us.i.posthog.com";
 const getEnvEnvironment = () => import.meta.env.MODE ?? 'development';
 const getBuildEdition = () => import.meta.env.VITE_BUILD_EDITION ?? 'ce';
 
