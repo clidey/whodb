@@ -25,7 +25,7 @@ jobs:
       - name: Download macOS DMG
         uses: actions/download-artifact@v4
         with:
-          name: desktop-darwin-universal
+          name: desktop-darwin-dmg
           path: desktop-builds/
 
       - name: Generate Homebrew cask file
