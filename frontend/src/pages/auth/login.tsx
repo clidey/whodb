@@ -102,7 +102,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     const [loginWithProfile, { loading: loginWithProfileLoading }] = useLoginWithProfileMutation();
     const [getDatabases, { loading: databasesLoading, data: foundDatabases }] = useGetDatabaseLazyQuery();
     const { loading: profilesLoading, data: profiles } = useGetProfilesQuery();
-    const [searchParams, ] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
 
     const [databaseTypeItems, setDatabaseTypeItems] = useState<IDatabaseDropdownItem[]>(baseDatabaseTypes);
     const [databaseType, setDatabaseType] = useState<IDatabaseDropdownItem>(baseDatabaseTypes[0]);
@@ -305,7 +305,9 @@ export const LoginForm: FC<LoginFormProps> = ({
             } else if (searchParams.has("login")) {
                 setTimeout(() => {
                     handleSubmit();
-                    searchParams.delete("login");
+                    const newParams = new URLSearchParams(searchParams);
+                    newParams.delete("login");
+                    setSearchParams(newParams, { replace: true });
                 }, 10);
             } else {
                 setSelectedAvailableProfile(undefined);
