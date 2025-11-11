@@ -687,6 +687,9 @@ func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.Moc
 
 // Version is the resolver for the Version field.
 func (r *queryResolver) Version(ctx context.Context) (string, error) {
+	if env.ApplicationVersion != "" {
+		return env.ApplicationVersion, nil
+	}
 	return env.GetClideyQuickContainerImage(), nil
 }
 
