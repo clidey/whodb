@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-import { PayloadAction, createSlice } from '@reduxjs/toolkit';
+import {createSlice, PayloadAction} from '@reduxjs/toolkit';
+
+const ANALYTICS_CONSENT_KEY = 'whodb.analytics.consent';
 
 type ISettingsState = {
-    metricsEnabled: true | false;
+    metricsEnabled: boolean;
     storageUnitView: 'list' | 'card';
     fontSize: 'small' | 'medium' | 'large';
     borderRadius: 'none' | 'small' | 'medium' | 'large';
@@ -25,17 +27,27 @@ type ISettingsState = {
     whereConditionMode: 'popover' | 'sheet';
 }
 
+const getInitialMetricsEnabled = (): boolean => {
+    if (typeof window === 'undefined') {
+        return true;
+    }
+
+    const consent = window.localStorage.getItem(ANALYTICS_CONSENT_KEY);
+    if (consent === 'denied') {
+        return false;
+    }
+    return true;
+};
+
 const getInitialState = (): ISettingsState => {
-    const baseState: ISettingsState = {
-        metricsEnabled: true,
+    return {
+        metricsEnabled: getInitialMetricsEnabled(),
         storageUnitView: 'card',
         fontSize: 'medium',
         borderRadius: 'medium',
         spacing: 'comfortable',
         whereConditionMode: 'popover',
     };
-
-    return baseState;
 };
 
 const initialState = getInitialState();

@@ -23,23 +23,29 @@ if [ -z "$1" ] || [ -z "$2" ]; then
     exit 1
 fi
 
-ARCH=$1
+TARGET_ARCH=$1
 VERSION=$2
-APPDIR="WhoDB-${ARCH}.AppDir"
+echo "Building AppImage for ${TARGET_ARCH}..."
 
-echo "Building AppImage for ${ARCH}..."
-
-case "$ARCH" in
+case "$TARGET_ARCH" in
     amd64)
         BUILD_ARCH="x86_64"
+        APPIMAGETOOL_ARCH="x86_64"
+        APPIMAGE_ARCH_ENV="x86_64"
         ;;
     arm64)
         BUILD_ARCH="aarch64"
+        APPIMAGETOOL_ARCH="aarch64"
+        APPIMAGE_ARCH_ENV="aarch64"
         ;;
     *)
-        BUILD_ARCH="$ARCH"
+        BUILD_ARCH="$TARGET_ARCH"
+        APPIMAGETOOL_ARCH="$TARGET_ARCH"
+        APPIMAGE_ARCH_ENV="$TARGET_ARCH"
         ;;
 esac
+
+APPDIR="WhoDB-${APPIMAGE_ARCH_ENV}.AppDir"
 
 # Create AppDir structure
 rm -rf "$APPDIR"
@@ -57,19 +63,11 @@ cp "$BINARY_PATH" "$APPDIR/usr/bin/"
 chmod +x "$APPDIR/usr/bin/whodb"
 
 # Copy desktop file and icon
-cp linux/whodb.desktop "$APPDIR/usr/share/applications/"
-cp linux/icon.png "$APPDIR/usr/share/icons/hicolor/256x256/apps/whodb.png"
+cp .github/linux/whodb.desktop "$APPDIR/usr/share/applications/"
+cp .github/linux/icon.png "$APPDIR/usr/share/icons/hicolor/256x256/apps/whodb.png"
 
-# Create AppRun
-cat > "$APPDIR/AppRun" << 'EOF'
-#!/bin/bash
-SELF=$(readlink -f "$0")
-HERE=${SELF%/*}
-export PATH="${HERE}/usr/bin:${PATH}"
-export LD_LIBRARY_PATH="${HERE}/usr/lib:${LD_LIBRARY_PATH}"
-exec "${HERE}/usr/bin/whodb" "$@"
-EOF
-chmod +x "$APPDIR/AppRun"
+# Create AppRun symlink so appimagetool infers the same architecture as the main binary
+ln -sf usr/bin/whodb "$APPDIR/AppRun"
 
 # Create symlinks for AppImage structure
 ln -sf usr/share/applications/whodb.desktop "$APPDIR/whodb.desktop"
@@ -77,18 +75,26 @@ ln -sf usr/share/icons/hicolor/256x256/apps/whodb.png "$APPDIR/whodb.png"
 ln -sf usr/share/icons/hicolor/256x256/apps/whodb.png "$APPDIR/.DirIcon"
 
 # Download appimagetool if not present
-if [ ! -f "appimagetool-${ARCH}.AppImage" ]; then
-    echo "Downloading appimagetool for ${ARCH}..."
-    if [ "$ARCH" = "amd64" ]; then
-        APPIMAGETOOL_ARCH="x86_64"
-    else
-        APPIMAGETOOL_ARCH="aarch64"
-    fi
-    wget -q "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-${APPIMAGETOOL_ARCH}.AppImage" -O "appimagetool-${ARCH}.AppImage"
-    chmod +x "appimagetool-${ARCH}.AppImage"
+if [ ! -f "appimagetool-${TARGET_ARCH}.AppImage" ]; then
+    echo "Downloading appimagetool for ${TARGET_ARCH}..."
+    wget -q "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-${APPIMAGETOOL_ARCH}.AppImage" -O "appimagetool-${TARGET_ARCH}.AppImage"
+    chmod +x "appimagetool-${TARGET_ARCH}.AppImage"
 fi
 
 # Build AppImage
-ARCH=$ARCH "./appimagetool-${ARCH}.AppImage" "$APPDIR" "WhoDB-${VERSION}-${ARCH}.AppImage"
+APPIMAGE_ARCH="${APPIMAGE_ARCH_ENV:-$APPIMAGETOOL_ARCH}"
+echo "Using AppImage ARCH override: ${APPIMAGE_ARCH}"
+echo "Inspecting AppDir executables:"
+find "$APPDIR" -maxdepth 4 -type f -exec file {} \;
+echo "Binary details:"
+ls -l "$APPDIR/usr/bin/"
+file "$APPDIR/usr/bin/whodb"
+OUTPUT_APPIMAGE="WhoDB-${VERSION}-${TARGET_ARCH}.AppImage"
 
-echo "✓ AppImage created: WhoDB-${VERSION}-${ARCH}.AppImage"
+echo "Running appimagetool with ARCH=${APPIMAGE_ARCH}"
+env ARCH="${APPIMAGE_ARCH}" "./appimagetool-${TARGET_ARCH}.AppImage" --verbose "$APPDIR" "$OUTPUT_APPIMAGE"
+
+# Ensure resulting AppImage is marked executable
+chmod +x "$OUTPUT_APPIMAGE"
+
+echo "✓ AppImage created: $OUTPUT_APPIMAGE"

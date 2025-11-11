@@ -272,7 +272,7 @@ jobs:
 
           Write-Host "Using Makefile to build..."
           # Use the CI-specific target that doesn't rebuild frontend
-          make ${{ matrix.make-target }}
+          make ${{ matrix.make-target }} VERSION="${{ inputs.version }}"
 
           if ($LASTEXITCODE -ne 0) {
               Write-Error "Make build failed with exit code: $LASTEXITCODE"
@@ -313,7 +313,7 @@ jobs:
           echo "Preparing MAS-specific entitlements..."
           mkdir -p build/darwin
           # Use MAS entitlements for MAS builds
-          cp ../macos/entitlements.mas.plist build/darwin/entitlements.plist
+          cp ../.github/templates/entitlements.mas.plist build/darwin/entitlements.plist
           echo "✅ MAS entitlements prepared"
 
       - name: Verify entitlements before build

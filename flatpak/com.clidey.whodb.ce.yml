@@ -53,9 +53,9 @@ modules:
         only-arches:
           - aarch64
       - type: file
-        path: ../linux/whodb.desktop
+        path: ../.github/linux/whodb.desktop
       - type: file
-        path: ../linux/icon.png
+        path: ../.github/linux/icon.png
 
 # External data checker for automatic version updates
 x-checker-data:

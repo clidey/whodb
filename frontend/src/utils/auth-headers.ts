@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-import { reduxStore } from '../store';
+import {reduxStore} from '../store';
+import {getAnalyticsDistinctId} from '../config/posthog';
+
+const analyticsHeaderName = 'X-WhoDB-Analytics-Id';
 
 /**
  * Checks if the app is running in a desktop/webview environment
@@ -83,12 +86,17 @@ export function getAuthorizationHeader(): string | null {
  * @returns Headers object with Authorization added if needed
  */
 export function addAuthHeader(headers: HeadersInit = {}): HeadersInit {
-  const authHeader = getAuthorizationHeader();
-  if (authHeader) {
-    return {
-      ...headers,
-      Authorization: authHeader,
-    };
-  }
-  return headers;
+    const authHeader = getAuthorizationHeader();
+    const id = getAnalyticsDistinctId()
+    headers = {
+        ...headers,
+        [analyticsHeaderName]: id != null ? id : ""
+    }
+    if (authHeader) {
+        return {
+            ...headers,
+            Authorization: authHeader,
+        };
+    }
+    return headers;
 }

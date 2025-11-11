@@ -141,7 +141,7 @@ jobs:
 
           # Use make ci-build-prod-linux which handles webkit2_41 tags
           # Frontend is already built and copied to frontend/dist
-          TARGET_ARCH=${{ matrix.arch }} make ci-build-prod-linux
+          TARGET_ARCH=${{ matrix.arch }} make ci-build-prod-linux VERSION=${{ inputs.version }}
 
       - name: Build AppImage
         run: |
@@ -157,6 +157,7 @@ jobs:
             exit 1
           fi
 
+          chmod +x "$APPIMAGE"
           echo "✅ AppImage created: $APPIMAGE"
           ls -lh "$APPIMAGE"
           file "$APPIMAGE"

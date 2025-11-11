@@ -66,6 +66,12 @@ var AllowedOrigins = common.FilterList(strings.Split(os.Getenv("WHODB_ALLOWED_OR
 var LogLevel = getLogLevel()
 var DisableMockDataGeneration = os.Getenv("WHODB_DISABLE_MOCK_DATA_GENERATION")
 
+var ApplicationEnvironment = os.Getenv("WHODB_APPLICATION_ENVIRONMENT")
+var ApplicationVersion = os.Getenv("WHODB_APPLICATION_VERSION")
+
+var PosthogAPIKey = "phc_hbXcCoPTdxm5ADL8PmLSYTIUvS6oRWFM2JAK8SMbfnH"
+var PosthogHost = "https://us.i.posthog.com"
+
 type ChatProvider struct {
 	Type       string
 	APIKey     string

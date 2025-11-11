@@ -67,6 +67,8 @@ func (e *ConditionalEntry) WithError(err error) *ConditionalEntry {
 // isLevelEnabled checks if the given level should be logged based on current log level
 func isLevelEnabled(level string) bool {
 	switch logLevel {
+	case "none":
+		return false
 	case "info":
 		return level == "info"
 	case "warning":
@@ -149,6 +151,8 @@ func getLogLevel() string {
 		return "warning"
 	case "error", "ERROR", "Error":
 		return "error"
+	case "none", "NONE", "None", "off", "OFF", "Off", "disabled", "DISABLED", "Disabled":
+		return "none"
 	default:
 		return "info" // Default to info level
 	}
@@ -156,4 +160,8 @@ func getLogLevel() string {
 
 func LogFields(fields Fields) *ConditionalEntry {
 	return Logger.WithFields(logrus.Fields(fields))
+}
+
+func SetLogLevel(level string) {
+	logLevel = level
 }
