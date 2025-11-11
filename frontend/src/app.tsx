@@ -14,21 +14,24 @@
  * limitations under the License.
  */
 
-import { Toaster } from "@clidey/ux";
-import { useUpdateSettingsMutation } from '@graphql';
+import {Toaster} from "@clidey/ux";
+import {useUpdateSettingsMutation} from '@graphql';
 import map from "lodash/map";
-import { useCallback, useEffect } from "react";
-import { Route, Routes } from "react-router-dom";
-import { optInUser, optOutUser } from "./config/posthog";
-import { PrivateRoute, PublicRoutes, getRoutes } from './config/routes';
-import { NavigateToDefault } from "./pages/chat/default-chat-route";
-import { useAppSelector } from "./store/hooks";
-import { useThemeCustomization } from "./hooks/use-theme-customization";
-import { useDesktopMenu } from "./hooks/useDesktop";
+import {useCallback, useEffect} from "react";
+import {Route, Routes} from "react-router-dom";
+import {getStoredConsentState, identifyProfile, optInUser, optOutUser, resetAnalyticsIdentity} from "./config/posthog";
+import {getRoutes, PrivateRoute, PublicRoutes} from './config/routes';
+import {NavigateToDefault} from "./pages/chat/default-chat-route";
+import {useAppDispatch, useAppSelector} from "./store/hooks";
+import {SettingsActions} from "./store/settings";
+import {useThemeCustomization} from "./hooks/use-theme-customization";
+import {useDesktopMenu} from "./hooks/useDesktop";
 
 export const App = () => {
   const [updateSettings, ] = useUpdateSettingsMutation();
+    const dispatch = useAppDispatch();
   const metricsEnabled = useAppSelector(state => state.settings.metricsEnabled);
+    const currentProfile = useAppSelector(state => state.auth.current);
 
   // Apply UI customization settings
   useThemeCustomization();
@@ -37,12 +40,41 @@ export const App = () => {
   useDesktopMenu();
 
   useEffect(() => {
-      if (metricsEnabled) {
-        optInUser();
-      } else {
-        optOutUser();
+      const consent = getStoredConsentState();
+
+      if (consent === 'denied' && metricsEnabled) {
+          dispatch(SettingsActions.setMetricsEnabled(false));
+          return;
       }
-  }, [metricsEnabled]);
+
+      if (consent === 'granted' && !metricsEnabled) {
+          dispatch(SettingsActions.setMetricsEnabled(true));
+          return;
+      }
+
+      if (consent === 'unknown') {
+          return;
+      }
+
+      if (!metricsEnabled) {
+          optOutUser();
+          return;
+      }
+
+      optInUser();
+  }, [metricsEnabled, dispatch]);
+
+    useEffect(() => {
+        const consent = getStoredConsentState();
+        if (consent !== 'granted') {
+            if (!metricsEnabled || consent === 'denied') {
+                resetAnalyticsIdentity().catch(() => undefined);
+      }
+            return;
+        }
+
+        identifyProfile(currentProfile).catch(() => undefined);
+    }, [metricsEnabled, currentProfile]);
 
   const updateBackendWithSettings = useCallback(() => {
     updateSettings({
