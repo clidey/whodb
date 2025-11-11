@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/clidey/whodb/core/src"
+	"github.com/clidey/whodb/core/src/analytics"
 	"github.com/clidey/whodb/core/src/auth"
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/env"
@@ -45,8 +46,19 @@ func main() {
 	log.Logger.Info("Starting WhoDB...")
 
 	settingsCfg := settings.Get()
-	if settingsCfg.MetricsEnabled {
+
+	if err := analytics.Initialize(analytics.Config{
+		APIKey:      env.PosthogAPIKey,
+		Host:        env.PosthogHost,
+		Environment: env.PosthogEnvironment,
+		AppVersion:  env.ApplicationVersion,
+	}); err != nil {
+		log.Logger.WithError(err).Warn("Analytics: PostHog initialization failed, metrics disabled")
+	} else {
+		defer analytics.Shutdown()
 	}
+	analytics.SetEnabled(settingsCfg.MetricsEnabled)
+
 	src.InitializeEngine()
 	log.Logger.Infof("Auth configured: sources=[Authorization header, Cookie]; keyring service=%s", auth.GetKeyringServiceName())
 	r := router.InitializeRouter(staticFiles)
