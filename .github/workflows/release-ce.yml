@@ -285,15 +285,17 @@ jobs:
           mkdir -p final-assets
 
           # Copy AppImage packages
-          find artifacts -name "*.AppImage" -exec cp {} final-assets/ \; 2>/dev/null || true
+          find artifacts -type f -name "*.AppImage" -exec cp {} final-assets/ \; 2>/dev/null || true
 
-          # Copy desktop builds
-          find artifacts -name "*.exe" -o -name "*.dmg" \
-            -o -name "*.msixbundle" -exec cp {} final-assets/ \; 2>/dev/null || true
+          # Copy desktop builds (exe, dmg, msixbundle)
+          find artifacts -type f \( -name "*.exe" -o -name "*.dmg" -o -name "*.msixbundle" \) -exec cp {} final-assets/ \; 2>/dev/null || true
 
-          # Copy signatures
+          # Copy signatures (extract and copy only files, not directories)
           if [ -f artifacts/signatures/signatures.tar.gz ]; then
-            tar -xzf artifacts/signatures/signatures.tar.gz -C final-assets/
+            mkdir -p /tmp/sig-extract
+            tar -xzf artifacts/signatures/signatures.tar.gz -C /tmp/sig-extract/
+            find /tmp/sig-extract -type f -exec cp {} final-assets/ \; 2>/dev/null || true
+            rm -rf /tmp/sig-extract
           fi
 
           echo "📦 Release assets prepared:"
