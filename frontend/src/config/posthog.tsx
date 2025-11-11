@@ -19,16 +19,6 @@ import {isEEMode} from './ee-imports';
 
 type ConsentState = 'granted' | 'denied' | 'unknown';
 
-type AnalyticsProfileLike = {
-    Id?: string;
-    Type?: string;
-    Hostname?: string;
-    Username?: string;
-    Database?: string;
-    Saved?: boolean;
-    IsEnvironmentDefined?: boolean;
-};
-
 const CONSENT_STORAGE_KEY = 'whodb.analytics.consent';
 const DISTINCT_ID_STORAGE_KEY = 'whodb.analytics.distinct_id';
 
@@ -137,56 +127,6 @@ const registerGlobalHandlers = (client: PostHog) => {
     });
 };
 
-const normalizeIdentityComponent = (value: unknown, fallback: string): string => {
-    if (typeof value !== 'string') {
-        return fallback;
-    }
-    const normalized = value.trim().toLowerCase();
-    return normalized.length > 0 ? normalized : fallback;
-};
-
-const hashString = async (value: string): Promise<string> => {
-    if (value.length === 0) {
-        return '';
-    }
-
-    const encoder = new TextEncoder();
-    const data = encoder.encode(value);
-
-    if (typeof crypto !== 'undefined' && crypto.subtle) {
-        const digest = await crypto.subtle.digest('SHA-256', data);
-        return Array.from(new Uint8Array(digest))
-            .map((byte) => byte.toString(16).padStart(2, '0'))
-            .join('');
-    }
-
-    console.warn('Secure hashing unavailable; analytics identity may not align with backend data.');
-    return value;
-};
-
-const buildProfileHash = async (profile?: AnalyticsProfileLike | null): Promise<string | null> => {
-    if (!profile) {
-        return null;
-    }
-
-    const id = typeof profile.Id === 'string' ? profile.Id.trim() : '';
-    const hostname = typeof profile.Hostname === 'string' ? profile.Hostname.trim() : '';
-    const username = typeof profile.Username === 'string' ? profile.Username.trim() : '';
-
-    if (id && !hostname && !username) {
-        return hashString(id);
-    }
-
-    const components = [
-        normalizeIdentityComponent(profile.Type, 'unknown'),
-        normalizeIdentityComponent(hostname, 'localhost'),
-        normalizeIdentityComponent(username, 'anonymous'),
-        normalizeIdentityComponent(profile.Database, 'default'),
-    ];
-
-    return hashString(components.join('|'));
-};
-
 const ensureInitializedClient = async (): Promise<PostHog | null> => {
     if (activeClient) {
         return activeClient;
@@ -204,10 +144,13 @@ const ensureInitializedClient = async (): Promise<PostHog | null> => {
     const consent = getStoredConsent();
     if (consent === 'denied') {
         persistDistinctId(null);
-        if (activeClient) {
+        const existingClient = activeClient;
+        if (existingClient) {
             try {
-                activeClient.opt_out_capturing();
-                activeClient.reset();
+                // @ts-ignore
+                existingClient.opt_out_capturing();
+                // @ts-ignore
+                existingClient.reset();
             } catch {
                 // ignore errors during shutdown
             }
@@ -221,21 +164,11 @@ const ensureInitializedClient = async (): Promise<PostHog | null> => {
 
         posthog.init(posthogKey, {
             api_host: apiHost,
-            autocapture: true,
-            capture_pageview: 'history_change',
             capture_pageleave: true,
             persistence: 'localStorage+cookie',
-            cross_subdomain_cookie: true,
-            debug: import.meta.env.DEV,
-            session_recording: {
-                maskAllInputs: false,
-                // @ts-ignore
-                recordCanvas: true,
-            },
             enable_recording_console_log: true,
-            disable_surveys: false,
+            //@ts-ignore
             opt_out_capturing_by_default: consent === 'denied',
-            error_tracking: {},
             loaded: (client) => {
                 activeClient = client;
                 registerContext(client);
@@ -243,6 +176,7 @@ const ensureInitializedClient = async (): Promise<PostHog | null> => {
 
                 if (consent === 'granted') {
                     client.opt_in_capturing();
+                    //@ts-ignore
                 } else if (consent === 'denied') {
                     client.opt_out_capturing();
                 }
@@ -277,14 +211,19 @@ export const getStoredConsentState = (): ConsentState => getStoredConsent();
 export const optOutUser = async (): Promise<void> => {
     persistConsent('denied');
     const client = activeClient ?? await ensureInitializedClient();
-    if (client) {
-        try {
-            client.opt_out_capturing();
-            client.reset();
-        } catch {
-            // best-effort shutdown
-        }
+    if (!client) {
+        activeClient = null;
+        persistDistinctId(null);
+        return;
     }
+
+    try {
+        client.opt_out_capturing();
+        client.reset();
+    } catch {
+        // best-effort shutdown
+    }
+
     activeClient = null;
     persistDistinctId(null);
 };
@@ -297,57 +236,6 @@ export const optInUser = async (): Promise<void> => {
     }
     client.opt_in_capturing();
     persistDistinctId(client.get_distinct_id());
-};
-
-export const identifyProfile = async (profile?: AnalyticsProfileLike | null): Promise<void> => {
-    const client = await ensureInitializedClient();
-    if (!client) {
-        return;
-    }
-
-    if (!profile) {
-        client.unregister('current_profile_type');
-        client.unregister('current_profile_saved');
-        client.unregister('current_profile_hash');
-        client.unregister('current_profile_host_hash');
-        client.unregister('current_profile_database_hash');
-        persistDistinctId(client.get_distinct_id());
-        return;
-    }
-
-    const distinctId = client.get_distinct_id();
-    const profileHash = await buildProfileHash(profile);
-    const hashedHost = profile?.Hostname ? await hashString(profile.Hostname) : '';
-    const hashedDatabase = profile?.Database ? await hashString(profile.Database) : '';
-
-    const traits: Record<string, unknown> = {
-        last_used_profile_type: profile.Type ?? 'unknown',
-        last_used_profile_saved: Boolean(profile.Saved),
-    };
-
-    if (profile.IsEnvironmentDefined) {
-        traits.environment_defined_profile = true;
-    }
-    if (profileHash) {
-        traits.last_used_profile_hash = profileHash;
-    }
-    if (hashedHost) {
-        traits.last_used_host_hash = hashedHost;
-    }
-    if (hashedDatabase) {
-        traits.last_used_database_hash = hashedDatabase;
-    }
-
-    client.identify(distinctId, traits);
-    client.register({
-        current_profile_type: profile.Type ?? 'unknown',
-        current_profile_saved: Boolean(profile.Saved),
-        ...(profileHash ? {current_profile_hash: profileHash} : {}),
-        ...(hashedHost ? {current_profile_host_hash: hashedHost} : {}),
-        ...(hashedDatabase ? {current_profile_database_hash: hashedDatabase} : {}),
-    });
-
-    persistDistinctId(distinctId);
 };
 
 export const resetAnalyticsIdentity = async (): Promise<void> => {

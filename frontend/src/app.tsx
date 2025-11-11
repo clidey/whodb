@@ -19,7 +19,7 @@ import {useUpdateSettingsMutation} from '@graphql';
 import map from "lodash/map";
 import {useCallback, useEffect} from "react";
 import {Route, Routes} from "react-router-dom";
-import {getStoredConsentState, identifyProfile, optInUser, optOutUser, resetAnalyticsIdentity} from "./config/posthog";
+import {getStoredConsentState, optInUser, optOutUser, resetAnalyticsIdentity} from "./config/posthog";
 import {getRoutes, PrivateRoute, PublicRoutes} from './config/routes';
 import {NavigateToDefault} from "./pages/chat/default-chat-route";
 import {useAppDispatch, useAppSelector} from "./store/hooks";
@@ -31,7 +31,6 @@ export const App = () => {
   const [updateSettings, ] = useUpdateSettingsMutation();
     const dispatch = useAppDispatch();
   const metricsEnabled = useAppSelector(state => state.settings.metricsEnabled);
-    const currentProfile = useAppSelector(state => state.auth.current);
 
   // Apply UI customization settings
   useThemeCustomization();
@@ -69,12 +68,14 @@ export const App = () => {
         if (consent !== 'granted') {
             if (!metricsEnabled || consent === 'denied') {
                 resetAnalyticsIdentity().catch(() => undefined);
-      }
+            }
             return;
         }
 
-        identifyProfile(currentProfile).catch(() => undefined);
-    }, [metricsEnabled, currentProfile]);
+        if (!metricsEnabled) {
+            resetAnalyticsIdentity().catch(() => undefined);
+        }
+    }, [metricsEnabled]);
 
   const updateBackendWithSettings = useCallback(() => {
     updateSettings({
