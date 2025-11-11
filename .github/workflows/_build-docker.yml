@@ -99,6 +99,9 @@ jobs:
           outputs: type=docker,dest=/tmp/whodb-docker-${{ matrix.arch }}.tar
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=${{ inputs.version }}
+            PLATFORM=docker
 
       - name: Upload Docker artifact
         uses: actions/upload-artifact@v4

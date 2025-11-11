@@ -27,7 +27,7 @@
     "graphql": "^16.11.0",
     "html-to-image": "^1.11.13",
     "lodash": "^4.17.21",
-    "posthog-js": "^1.257.0",
+    "posthog-js": "^1.290.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-json-view": "^1.21.3",

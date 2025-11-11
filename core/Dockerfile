@@ -33,6 +33,10 @@ RUN mkdir -p ee/frontend/src/components/theme ee/frontend/src/components/charts 
 
 RUN pnpm run build
 
+ARG VERSION=dev
+ARG TARGETARCH
+ARG PLATFORM=docker
+
 FROM golang:alpine AS backend-stage
 RUN apk update && apk add --no-cache gcc musl-dev git
 WORKDIR /app
@@ -43,8 +47,13 @@ COPY ./core/ ./
 
 COPY --from=build-stage /app/build/ ./build/
 
-# Build backend
-RUN CGO_ENABLED=1 GOOS=linux go build -o /core
+# Build backend with version and environment
+ARG VERSION
+ARG TARGETARCH
+ARG PLATFORM
+RUN CGO_ENABLED=1 GOOS=linux go build \
+	-ldflags="-X github.com/clidey/whodb/core/src/env.ApplicationVersion=${VERSION} -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=${PLATFORM}-${TARGETARCH}" \
+	-o /core
 
 FROM alpine:3.22
 RUN apk update && apk add --no-cache ca-certificates
