@@ -272,7 +272,7 @@ jobs:
 
           Write-Host "Using Makefile to build..."
           # Use the CI-specific target that doesn't rebuild frontend
-          make ${{ matrix.make-target }}
+          make ${{ matrix.make-target }} VERSION="${{ inputs.version }}"
 
           if ($LASTEXITCODE -ne 0) {
               Write-Error "Make build failed with exit code: $LASTEXITCODE"

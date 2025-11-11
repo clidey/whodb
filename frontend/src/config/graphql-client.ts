@@ -15,11 +15,11 @@
  */
 
 import {ApolloClient, createHttpLink, InMemoryCache} from '@apollo/client';
-import { setContext } from '@apollo/client/link/context';
+import {setContext} from '@apollo/client/link/context';
 import {onError} from '@apollo/client/link/error';
 import {toast} from '@clidey/ux';
 import {reduxStore} from '../store';
-import { addAuthHeader } from '../utils/auth-headers';
+import {addAuthHeader} from '../utils/auth-headers';
 
 // Always use a relative URI so that:
 // - Desktop/Wails uses the embedded router handler
@@ -83,9 +83,9 @@ async function handleAutoLogin(currentProfile: any) {
             // Login with profile
             response = await fetch(uri, {
                 method: 'POST',
-                headers: {
+                headers: addAuthHeader({
                     'Content-Type': 'application/json',
-                },
+                }),
                 credentials: 'include',
                 body: JSON.stringify({
                     operationName: 'LoginWithProfile',
@@ -118,9 +118,9 @@ async function handleAutoLogin(currentProfile: any) {
             // Normal login with credentials
             response = await fetch(uri, {
                 method: 'POST',
-                headers: {
+                headers: addAuthHeader({
                     'Content-Type': 'application/json',
-                },
+                }),
                 credentials: 'include',
                 body: JSON.stringify({
                     operationName: 'Login',

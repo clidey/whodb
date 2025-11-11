@@ -16,6 +16,8 @@
 
 package settings
 
+import "github.com/clidey/whodb/core/src/analytics"
+
 type Settings struct {
 	MetricsEnabled bool `json:"metricsEnabled"`
 }
@@ -33,7 +35,15 @@ func Get() Settings {
 }
 
 func (m MetricsEnabledField) Apply(s *Settings) bool {
-	return false
+	enabled := bool(m)
+	if s.MetricsEnabled == enabled {
+		analytics.SetEnabled(enabled)
+		return false
+	}
+
+	s.MetricsEnabled = enabled
+	analytics.SetEnabled(enabled)
+	return true
 }
 
 // UpdateSettings todo: this isn't a good idea when your settings are larger. you'll end up pushing more data than is needed back and forth. refactor so it's more flexible
