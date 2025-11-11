@@ -28,7 +28,7 @@ import {useThemeCustomization} from "./hooks/use-theme-customization";
 import {useDesktopMenu} from "./hooks/useDesktop";
 
 export const App = () => {
-  const [updateSettings, ] = useUpdateSettingsMutation();
+    const [updateSettings] = useUpdateSettingsMutation();
     const dispatch = useAppDispatch();
   const metricsEnabled = useAppSelector(state => state.settings.metricsEnabled);
 

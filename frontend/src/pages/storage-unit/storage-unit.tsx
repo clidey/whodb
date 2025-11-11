@@ -14,28 +14,70 @@
  * limitations under the License.
  */
 
-import { Badge, Button, Checkbox, cn, Input, Label, SearchInput, Separator, StackList, StackListItem, Table, TableCell, TableHead, Tabs, TabsContent, TabsList, TabsTrigger, toast, TableRow, VirtualizedTableBody, TableHeader, TableHeadRow, SheetTitle } from '@clidey/ux';
-import { SearchSelect } from "../../components/ux";
-import { DatabaseType, RecordInput, StorageUnit, useAddStorageUnitMutation, useGetColumnsLazyQuery, useGetStorageUnitsQuery } from '@graphql';
-import { ArrowPathRoundedSquareIcon, CheckCircleIcon, CircleStackIcon, CommandLineIcon, ListBulletIcon, MagnifyingGlassIcon, PlusCircleIcon, TableCellsIcon, XCircleIcon, XMarkIcon } from '../../components/heroicons';
+import {
+    Badge,
+    Button,
+    Checkbox,
+    cn,
+    Input,
+    Label,
+    SearchInput,
+    Separator,
+    SheetTitle,
+    StackList,
+    StackListItem,
+    Table,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableHeadRow,
+    TableRow,
+    Tabs,
+    TabsList,
+    TabsTrigger,
+    toast,
+    VirtualizedTableBody
+} from '@clidey/ux';
+import {SearchSelect} from "../../components/ux";
+import {
+    DatabaseType,
+    RecordInput,
+    StorageUnit,
+    useAddStorageUnitMutation,
+    useGetColumnsLazyQuery,
+    useGetStorageUnitsQuery
+} from '@graphql';
+import {
+    ArrowPathRoundedSquareIcon,
+    CheckCircleIcon,
+    CircleStackIcon,
+    CommandLineIcon,
+    ListBulletIcon,
+    MagnifyingGlassIcon,
+    PlusCircleIcon,
+    TableCellsIcon,
+    XCircleIcon,
+    XMarkIcon
+} from '../../components/heroicons';
 import classNames from "classnames";
 import clone from "lodash/clone";
 import cloneDeep from "lodash/cloneDeep";
 import filter from "lodash/filter";
-import { FC, useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { Handle, Node, Position, useReactFlow } from "reactflow";
-import { Card, ExpandableCard } from "../../components/card";
-import { IGraphCardProps } from "../../components/graph/graph";
-import { Loading, LoadingPage } from "../../components/loading";
-import { InternalPage } from "../../components/page";
-import { InternalRoutes } from "../../config/routes";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { databaseSupportsModifiers, getDatabaseDataTypes } from "../../utils/database-data-types";
-import { databaseSupportsScratchpad } from "../../utils/database-features";
-import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
-import { Tip } from '../../components/tip';
-import { SettingsActions } from '../../store/settings';
+import {FC, useCallback, useEffect, useMemo, useState} from "react";
+import {useNavigate, useSearchParams} from "react-router-dom";
+import {Handle, Position} from "reactflow";
+import {Card, ExpandableCard} from "../../components/card";
+import {IGraphCardProps} from "../../components/graph/graph";
+import {Loading, LoadingPage} from "../../components/loading";
+import {InternalPage} from "../../components/page";
+import {InternalRoutes} from "../../config/routes";
+import {trackFrontendEvent} from "../../config/posthog";
+import {useAppDispatch, useAppSelector} from "../../store/hooks";
+import {databaseSupportsModifiers, getDatabaseDataTypes} from "../../utils/database-data-types";
+import {databaseSupportsScratchpad} from "../../utils/database-features";
+import {getDatabaseStorageUnitLabel, isNoSQL} from "../../utils/functions";
+import {Tip} from '../../components/tip';
+import {SettingsActions} from '../../store/settings';
 
 const StorageUnitCard: FC<{ unit: StorageUnit, columns?: any[] }> = ({ unit, columns }) => {
     const [expanded, setExpanded] = useState(false);
@@ -156,6 +198,13 @@ export const StorageUnitPage: FC = () => {
     const [tableColumns, setTableColumns] = useState<Record<string, any[]>>({});
     const [fetchColumns] = useGetColumnsLazyQuery();
 
+    useEffect(() => {
+        void trackFrontendEvent('ui.storage_unit_viewed', {
+            database_type: current?.Type ?? 'unknown',
+            view_mode: view,
+        });
+    }, [current?.Type, trackFrontendEvent, view]);
+
     // For databases that don't have schemas (MongoDB, ClickHouse), pass the database name as the schema parameter
     // todo: is there a different way to do this? clickhouse doesn't have schemas as a table is considered a schema. people mainly switch between DB
     if (current?.Type === DatabaseType.ClickHouse || current?.Type === DatabaseType.MongoDb) {
@@ -180,8 +229,13 @@ export const StorageUnitPage: FC = () => {
     }, [current]);
 
     const handleCreate = useCallback(() => {
-        setCreate(!create);
-    }, [create]);
+        const next = !create;
+        setCreate(next);
+        void trackFrontendEvent('ui.storage_unit_create_toggle', {
+            database_type: current?.Type ?? 'unknown',
+            open: next,
+        });
+    }, [create, current?.Type, trackFrontendEvent]);
 
     const handleSubmit = useCallback(() => {
         if (storageUnitName.length === 0) {
@@ -199,6 +253,10 @@ export const StorageUnitPage: FC = () => {
             },
             onCompleted() {
                 toast.success(`${getDatabaseStorageUnitLabel(current?.Type, true)} ${storageUnitName} created successfully!`);
+                void trackFrontendEvent('ui.storage_unit_created', {
+                    database_type: current?.Type ?? 'unknown',
+                    field_count: fields.length,
+                });
                 setStorageUnitName("");
                 setFields([]);
                 refetch();
@@ -208,11 +266,14 @@ export const StorageUnitPage: FC = () => {
                 toast.error(e.message);
             },
         });
-    }, [addStorageUnit, current?.Type, fields, refetch, schema, storageUnitName]);
+    }, [addStorageUnit, current?.Type, fields, refetch, schema, storageUnitName, trackFrontendEvent]);
 
     const handleAddField = useCallback(() => {
         setFields(f => [...f, { Key: "", Value: "", Extra: [] }]);
-    }, []);
+        void trackFrontendEvent('ui.storage_unit_field_added', {
+            database_type: current?.Type ?? 'unknown',
+        });
+    }, [current?.Type, trackFrontendEvent]);
 
     const handleFieldValueChange = useCallback((type: string, index: number, value: string | boolean) => {
         setFields(f => {

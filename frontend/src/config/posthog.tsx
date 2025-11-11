@@ -208,6 +208,23 @@ export const initPosthog = async (): Promise<PostHog | null> => {
 
 export const getStoredConsentState = (): ConsentState => getStoredConsent();
 
+export const trackFrontendEvent = async (event: string, properties?: Record<string, unknown>) => {
+    if (!event) {
+        return;
+    }
+
+    if (getStoredConsentState() !== 'granted') {
+        return;
+    }
+
+    try {
+        const client = await ensureInitializedClient();
+        client?.capture(event, properties ?? {});
+    } catch (error) {
+        // do nothing
+    }
+};
+
 export const optOutUser = async (): Promise<void> => {
     persistConsent('denied');
     const client = activeClient ?? await ensureInitializedClient();
