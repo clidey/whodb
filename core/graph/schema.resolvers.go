@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package graph
 
 // This file will be automatically regenerated based on the schema, any resolver implementations
@@ -12,6 +28,7 @@ import (
 
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src"
+	"github.com/clidey/whodb/core/src/analytics"
 	"github.com/clidey/whodb/core/src/auth"
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
@@ -25,13 +42,25 @@ import (
 
 // Login is the resolver for the Login field.
 func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCredentials) (*model.StatusResponse, error) {
-	advanced := []engine.Record{}
+	var advanced []engine.Record
 	for _, recordInput := range credentials.Advanced {
 		advanced = append(advanced, engine.Record{
 			Key:   recordInput.Key,
 			Value: recordInput.Value,
 		})
 	}
+
+	hasProfileID := credentials.ID != nil && strings.TrimSpace(*credentials.ID) != ""
+	identity := strings.TrimSpace(analytics.MetadataFromContext(ctx).DistinctID)
+	hasIdentity := identity != "" && identity != "disabled"
+
+	if hasIdentity {
+		analytics.CaptureWithDistinctID(ctx, identity, "login.attempt", map[string]any{
+			"database_type":      credentials.Type,
+			"profile_id_present": hasProfileID,
+		})
+	}
+
 	if !src.MainEngine.Choose(engine.DatabaseType(credentials.Type)).IsAvailable(&engine.PluginConfig{
 		Credentials: &engine.Credentials{
 			Type:     credentials.Type,
@@ -48,9 +77,46 @@ func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCre
 			"username": credentials.Username,
 			"database": credentials.Database,
 		}).Error("Database connection failed during login - credentials unauthorized")
+
+		if hasIdentity {
+			analytics.CaptureWithDistinctID(ctx, identity, "login.denied", map[string]any{
+				"database_type":      credentials.Type,
+				"profile_id_present": hasProfileID,
+			})
+		}
 		return nil, errors.New("unauthorized")
 	}
-	return auth.Login(ctx, &credentials)
+
+	resp, err := auth.Login(ctx, &credentials)
+	if err != nil {
+		if hasIdentity {
+			analytics.CaptureError(ctx, "login.execute", err, map[string]any{
+				"database_type":      credentials.Type,
+				"profile_id_present": hasProfileID,
+			})
+		}
+		return nil, err
+	}
+
+	if hasIdentity {
+		traits := map[string]any{
+			"profile_id_present": hasProfileID,
+		}
+		if hashedHost := analytics.HashIdentifier(credentials.Hostname); hashedHost != "" {
+			traits["hostname_hash"] = hashedHost
+		}
+		if hashedDatabase := analytics.HashIdentifier(credentials.Database); hashedDatabase != "" {
+			traits["database_hash"] = hashedDatabase
+		}
+
+		analytics.IdentifyWithDistinctID(ctx, identity, traits)
+		analytics.CaptureWithDistinctID(ctx, identity, "login.success", map[string]any{
+			"database_type":      credentials.Type,
+			"profile_id_present": hasProfileID,
+		})
+	}
+
+	return resp, nil
 }
 
 // LoginWithProfile is the resolver for the LoginWithProfile field.
@@ -59,16 +125,7 @@ func (r *mutationResolver) LoginWithProfile(ctx context.Context, profile model.L
 	for i, loginProfile := range profiles {
 		profileId := src.GetLoginProfileId(i, loginProfile)
 		if profile.ID == profileId {
-			if !src.MainEngine.Choose(engine.DatabaseType(loginProfile.Type)).IsAvailable(&engine.PluginConfig{
-				Credentials: src.GetLoginCredentials(loginProfile),
-			}) {
-				log.LogFields(log.Fields{
-					"profile_id": profile.ID,
-					"type":       loginProfile.Type,
-				}).Error("Database connection failed for login profile - credentials unauthorized")
-				return nil, errors.New("unauthorized")
-			}
-			// Build full credentials so the auth layer can persist them to keyring
+
 			resolved := src.GetLoginCredentials(loginProfile)
 			credentials := &model.LoginCredentials{
 				ID:       &profile.ID,
@@ -87,8 +144,67 @@ func (r *mutationResolver) LoginWithProfile(ctx context.Context, profile model.L
 			}
 			if profile.Database != nil && *profile.Database != "" {
 				credentials.Database = *profile.Database
+				resolved.Database = credentials.Database
 			}
-			return auth.Login(ctx, credentials)
+
+			identity := strings.TrimSpace(analytics.MetadataFromContext(ctx).DistinctID)
+			hasIdentity := identity != "" && identity != "disabled"
+
+			if hasIdentity {
+				analytics.CaptureWithDistinctID(ctx, identity, "login_with_profile.attempt", map[string]any{
+					"database_type":  loginProfile.Type,
+					"profile_source": loginProfile.Source,
+				})
+			}
+
+			if !src.MainEngine.Choose(engine.DatabaseType(loginProfile.Type)).IsAvailable(&engine.PluginConfig{
+				Credentials: resolved,
+			}) {
+				log.LogFields(log.Fields{
+					"profile_id": profile.ID,
+					"type":       loginProfile.Type,
+				}).Error("Database connection failed for login profile - credentials unauthorized")
+
+				if hasIdentity {
+					analytics.CaptureWithDistinctID(ctx, identity, "login_with_profile.denied", map[string]any{
+						"database_type":  loginProfile.Type,
+						"profile_source": loginProfile.Source,
+					})
+				}
+				return nil, errors.New("unauthorized")
+			}
+
+			resp, err := auth.Login(ctx, credentials)
+			if err != nil {
+				if hasIdentity {
+					analytics.CaptureError(ctx, "login_with_profile.execute", err, map[string]any{
+						"database_type":  loginProfile.Type,
+						"profile_source": loginProfile.Source,
+					})
+				}
+				return nil, err
+			}
+
+			if hasIdentity {
+				traits := map[string]any{
+					"profile_source": loginProfile.Source,
+					"saved_profile":  true,
+				}
+				if hashedHost := analytics.HashIdentifier(credentials.Hostname); hashedHost != "" {
+					traits["hostname_hash"] = hashedHost
+				}
+				if hashedDatabase := analytics.HashIdentifier(credentials.Database); hashedDatabase != "" {
+					traits["database_hash"] = hashedDatabase
+				}
+
+				analytics.IdentifyWithDistinctID(ctx, identity, traits)
+				analytics.CaptureWithDistinctID(ctx, identity, "login_with_profile.success", map[string]any{
+					"database_type":  loginProfile.Type,
+					"profile_source": loginProfile.Source,
+				})
+			}
+
+			return resp, nil
 		}
 	}
 	log.LogFields(log.Fields{
@@ -99,7 +215,42 @@ func (r *mutationResolver) LoginWithProfile(ctx context.Context, profile model.L
 
 // Logout is the resolver for the Logout field.
 func (r *mutationResolver) Logout(ctx context.Context) (*model.StatusResponse, error) {
-	return auth.Logout(ctx)
+	creds := auth.GetCredentials(ctx)
+	identity := strings.TrimSpace(analytics.MetadataFromContext(ctx).DistinctID)
+	hasIdentity := identity != "" && identity != "disabled"
+	hasProfile := false
+	dbType := ""
+	if creds != nil {
+		hasProfile = creds.Id != nil && strings.TrimSpace(*creds.Id) != ""
+		dbType = creds.Type
+	}
+
+	if hasIdentity {
+		analytics.CaptureWithDistinctID(ctx, identity, "logout.attempt", map[string]any{
+			"database_type":      dbType,
+			"profile_id_present": hasProfile,
+		})
+	}
+
+	resp, err := auth.Logout(ctx)
+	if err != nil {
+		if hasIdentity {
+			analytics.CaptureError(ctx, "logout.execute", err, map[string]any{
+				"database_type":      dbType,
+				"profile_id_present": hasProfile,
+			})
+		}
+		return nil, err
+	}
+
+	if hasIdentity {
+		analytics.CaptureWithDistinctID(ctx, identity, "logout.success", map[string]any{
+			"database_type":      dbType,
+			"profile_id_present": hasProfile,
+		})
+	}
+
+	return resp, nil
 }
 
 // UpdateSettings is the resolver for the UpdateSettings field.
@@ -107,7 +258,12 @@ func (r *mutationResolver) UpdateSettings(ctx context.Context, newSettings model
 	var fields []settings.ISettingsField
 
 	if newSettings.MetricsEnabled != nil {
-		fields = append(fields, settings.MetricsEnabledField(common.StrPtrToBool(newSettings.MetricsEnabled)))
+		metricsEnabled := common.StrPtrToBool(newSettings.MetricsEnabled)
+		fields = append(fields, settings.MetricsEnabledField(metricsEnabled))
+
+		analytics.TrackMutation(ctx, "UpdateSettings.metrics", map[string]any{
+			"metrics_enabled": metricsEnabled,
+		})
 	}
 
 	updated := settings.UpdateSettings(fields...)
@@ -141,8 +297,21 @@ func (r *mutationResolver) AddStorageUnit(ctx context.Context, schema string, st
 			"database_type": typeArg,
 			"error":         err.Error(),
 		}).Error("Database operation failed")
+		analytics.CaptureError(ctx, "AddStorageUnit", err, map[string]any{
+			"database_type": typeArg,
+			"schema_hash":   analytics.HashIdentifier(schema),
+			"storage_hash":  analytics.HashIdentifier(storageUnit),
+		})
 		return nil, err
 	}
+
+	analytics.TrackMutation(ctx, "AddStorageUnit", map[string]any{
+		"database_type": typeArg,
+		"schema_hash":   analytics.HashIdentifier(schema),
+		"storage_hash":  analytics.HashIdentifier(storageUnit),
+		"field_count":   len(fields),
+	})
+
 	return &model.StatusResponse{
 		Status: status,
 	}, nil
@@ -166,8 +335,24 @@ func (r *mutationResolver) UpdateStorageUnit(ctx context.Context, schema string,
 			"updated_columns": len(updatedColumns),
 			"error":           err.Error(),
 		}).Error("Database operation failed")
+		analytics.CaptureError(ctx, "UpdateStorageUnit", err, map[string]any{
+			"database_type":   typeArg,
+			"schema_hash":     analytics.HashIdentifier(schema),
+			"storage_hash":    analytics.HashIdentifier(storageUnit),
+			"updated_columns": len(updatedColumns),
+			"values_supplied": len(values),
+		})
 		return nil, err
 	}
+
+	analytics.TrackMutation(ctx, "UpdateStorageUnit", map[string]any{
+		"database_type":   typeArg,
+		"schema_hash":     analytics.HashIdentifier(schema),
+		"storage_hash":    analytics.HashIdentifier(storageUnit),
+		"updated_columns": len(updatedColumns),
+		"values_supplied": len(values),
+	})
+
 	return &model.StatusResponse{
 		Status: status,
 	}, nil
@@ -200,7 +385,6 @@ func (r *mutationResolver) AddRow(ctx context.Context, schema string, storageUni
 		})
 	}
 	status, err := src.MainEngine.Choose(engine.DatabaseType(typeArg)).AddRow(config, schema, storageUnit, valuesRecords)
-
 	if err != nil {
 		log.LogFields(log.Fields{
 			"operation":     "AddRow",
@@ -209,8 +393,22 @@ func (r *mutationResolver) AddRow(ctx context.Context, schema string, storageUni
 			"database_type": typeArg,
 			"error":         err.Error(),
 		}).Error("Database operation failed")
+		analytics.CaptureError(ctx, "AddRow", err, map[string]any{
+			"database_type": typeArg,
+			"schema_hash":   analytics.HashIdentifier(schema),
+			"storage_hash":  analytics.HashIdentifier(storageUnit),
+			"value_count":   len(values),
+		})
 		return nil, err
 	}
+
+	analytics.TrackMutation(ctx, "AddRow", map[string]any{
+		"database_type": typeArg,
+		"schema_hash":   analytics.HashIdentifier(schema),
+		"storage_hash":  analytics.HashIdentifier(storageUnit),
+		"value_count":   len(values),
+	})
+
 	return &model.StatusResponse{
 		Status: status,
 	}, nil
@@ -233,8 +431,22 @@ func (r *mutationResolver) DeleteRow(ctx context.Context, schema string, storage
 			"database_type": typeArg,
 			"error":         err.Error(),
 		}).Error("Database operation failed")
+		analytics.CaptureError(ctx, "DeleteRow", err, map[string]any{
+			"database_type": typeArg,
+			"schema_hash":   analytics.HashIdentifier(schema),
+			"storage_hash":  analytics.HashIdentifier(storageUnit),
+			"value_count":   len(values),
+		})
 		return nil, err
 	}
+
+	analytics.TrackMutation(ctx, "DeleteRow", map[string]any{
+		"database_type": typeArg,
+		"schema_hash":   analytics.HashIdentifier(schema),
+		"storage_hash":  analytics.HashIdentifier(storageUnit),
+		"value_count":   len(values),
+	})
+
 	return &model.StatusResponse{
 		Status: status,
 	}, nil
@@ -480,7 +692,7 @@ func (r *queryResolver) Version(ctx context.Context) (string, error) {
 
 // Profiles is the resolver for the Profiles field.
 func (r *queryResolver) Profiles(ctx context.Context) ([]*model.LoginProfile, error) {
-	profiles := []*model.LoginProfile{}
+	var profiles []*model.LoginProfile
 	for i, profile := range src.GetLoginProfiles() {
 		profileName := src.GetLoginProfileId(i, profile)
 		loginProfile := &model.LoginProfile{
@@ -546,7 +758,7 @@ func (r *queryResolver) StorageUnit(ctx context.Context, schema string) ([]*mode
 		}).Error("Database operation failed")
 		return nil, err
 	}
-	storageUnits := []*model.StorageUnit{}
+	var storageUnits []*model.StorageUnit
 	for _, unit := range units {
 		storageUnit := engine.GetStorageUnitModel(unit)
 		storageUnit.IsMockDataGenerationAllowed = env.IsMockDataGenerationAllowed(unit.Name)
@@ -598,7 +810,7 @@ func (r *queryResolver) Row(ctx context.Context, schema string, storageUnit stri
 		foreignKeys = make(map[string]*engine.ForeignKeyRelationship)
 	}
 
-	columns := []*model.Column{}
+	var columns []*model.Column
 	for _, column := range rowsResult.Columns {
 		isPrimary := false
 		if colConstraints, ok := constraints[column.Name]; ok {
@@ -676,7 +888,7 @@ func (r *queryResolver) Columns(ctx context.Context, schema string, storageUnit 
 		foreignKeys = make(map[string]*engine.ForeignKeyRelationship)
 	}
 
-	columns := []*model.Column{}
+	var columns []*model.Column
 	for _, column := range columnsResult {
 		// Use column's IsPrimary if already set, otherwise check constraints
 		isPrimary := column.IsPrimary
@@ -728,7 +940,7 @@ func (r *queryResolver) RawExecute(ctx context.Context, query string) (*model.Ro
 		}).Error("Database operation failed")
 		return nil, err
 	}
-	columns := []*model.Column{}
+	var columns []*model.Column
 	for _, column := range rowsResult.Columns {
 		columns = append(columns, &model.Column{
 			Type:         column.Type,
@@ -757,9 +969,9 @@ func (r *queryResolver) Graph(ctx context.Context, schema string) ([]*model.Grap
 		}).Error("Database operation failed")
 		return nil, err
 	}
-	graphUnitsModel := []*model.GraphUnit{}
+	var graphUnitsModel []*model.GraphUnit
 	for _, graphUnit := range graphUnits {
-		relations := []*model.GraphUnitRelationship{}
+		var relations []*model.GraphUnitRelationship
 		for _, relation := range graphUnit.Relations {
 			relations = append(relations, &model.GraphUnitRelationship{
 				Name:         relation.Name,
@@ -779,7 +991,7 @@ func (r *queryResolver) Graph(ctx context.Context, schema string) ([]*model.Grap
 // AIProviders is the resolver for the AIProviders field.
 func (r *queryResolver) AIProviders(ctx context.Context) ([]*model.AIProvider, error) {
 	providers := env.GetConfiguredChatProviders()
-	aiProviders := []*model.AIProvider{}
+	var aiProviders []*model.AIProvider
 	for _, provider := range providers {
 		aiProviders = append(aiProviders, &model.AIProvider{
 			Type:                 provider.Type,
@@ -861,12 +1073,12 @@ func (r *queryResolver) AIChat(ctx context.Context, providerID *string, modelTyp
 		return nil, err
 	}
 
-	chatResponse := []*model.AIChatMessage{}
+	var chatResponse []*model.AIChatMessage
 
 	for _, message := range messages {
 		var result *model.RowsResult
 		if strings.HasPrefix(message.Type, "sql") {
-			columns := []*model.Column{}
+			var columns []*model.Column
 			for _, column := range message.Result.Columns {
 				columns = append(columns, &model.Column{
 					Type: column.Type,
