@@ -50,7 +50,7 @@ func main() {
 	if err := analytics.Initialize(analytics.Config{
 		APIKey:      env.PosthogAPIKey,
 		Host:        env.PosthogHost,
-		Environment: env.PosthogEnvironment,
+		Environment: env.ApplicationEnvironment,
 		AppVersion:  env.ApplicationVersion,
 	}); err != nil {
 		log.Logger.WithError(err).Warn("Analytics: PostHog initialization failed, metrics disabled")
