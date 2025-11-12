@@ -447,7 +447,7 @@ parts:
       - -**/*.pyc
     override-build: |
       # Install Wails (required by Makefile)
-      go install github.com/wailsapp/wails/v2/cmd/wails@latest
+      go install github.com/wailsapp/wails/v2/cmd/wails@2.11.0
       export PATH=$PATH:$HOME/go/bin
 
       # Read version from .snap_version file created by GitHub Actions
