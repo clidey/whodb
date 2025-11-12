@@ -5,7 +5,7 @@ inputs:
     description: 'Deployment mode (stage-only, production)'
     required: true
   version-bump:
-    description: 'Version bump type (major, minor, patch)'
+    description: 'Version bump type (major, minor, patch, current)'
     required: false
     default: 'minor'
   deploy-docker:
@@ -132,6 +132,10 @@ runs:
           "patch")
             patch=$((patch + 1))
             ;;
+          "current")
+            # Use current version without incrementing
+            echo "Using current version without incrementing"
+            ;;
           *)
             echo "Invalid version bump type: $BUMP_TYPE"
             exit 1
@@ -142,7 +146,12 @@ runs:
 
         echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
         echo "previous-version=$PREVIOUS_VERSION" >> $GITHUB_OUTPUT
-        echo "📦 Version: $NEXT_VERSION (previous: $PREVIOUS_VERSION, bump: $BUMP_TYPE)"
+
+        if [ "$BUMP_TYPE" = "current" ]; then
+          echo "📦 Version: $NEXT_VERSION (rebuild of current version)"
+        else
+          echo "📦 Version: $NEXT_VERSION (previous: $PREVIOUS_VERSION, bump: $BUMP_TYPE)"
+        fi
 
     - name: Set store selection
       id: stores
