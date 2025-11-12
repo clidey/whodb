@@ -21,15 +21,17 @@ import (
 	"os"
 	"strings"
 
-	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 
 	"github.com/clidey/whodb/core/src"
+	"github.com/clidey/whodb/core/src/analytics"
+	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/router"
+	"github.com/clidey/whodb/core/src/settings"
 )
 
 // RunApp starts the Wails application with the given configuration
@@ -40,6 +42,20 @@ func RunApp(edition string, title string, assets embed.FS) error {
 	// Initialize WhoDB engine (same as server.go)
 	src.InitializeEngine()
 	log.Logger.Infof("Running WhoDB Desktop %s Edition", strings.ToUpper(edition))
+
+	// Initialize PostHog analytics
+	settingsCfg := settings.Get()
+	if err := analytics.Initialize(analytics.Config{
+		APIKey:      env.PosthogAPIKey,
+		Host:        env.PosthogHost,
+		Environment: env.ApplicationEnvironment,
+		AppVersion:  env.ApplicationVersion,
+	}); err != nil {
+		log.Logger.WithError(err).Warn("Analytics: PostHog initialization failed, metrics disabled")
+	} else {
+		defer analytics.Shutdown()
+	}
+	analytics.SetEnabled(settingsCfg.MetricsEnabled)
 
 	// Get the Chi router with embedded assets
 	r := router.InitializeRouter(assets)
