@@ -271,7 +271,9 @@ jobs:
           Set-Location ../desktop-${{ inputs.edition }}
 
           Write-Host "Using Makefile to build..."
+          Write-Host "Building with VERSION=${{ inputs.version }}"
           # Use the CI-specific target that doesn't rebuild frontend
+          $env:VERSION = "${{ inputs.version }}"
           make ${{ matrix.make-target }} VERSION="${{ inputs.version }}"
 
           if ($LASTEXITCODE -ne 0) {
