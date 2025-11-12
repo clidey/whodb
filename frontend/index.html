@@ -1,20 +1,19 @@
-<!--
-  ~ Copyright 2025 Clidey, Inc.
-  ~
-  ~ Licensed under the Apache License, Version 2.0 (the "License");
-  ~ you may not use this file except in compliance with the License.
-  ~ You may obtain a copy of the License at
-  ~
-  ~     http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and
-  ~ limitations under the License.
-  -->
-
 <!DOCTYPE html>
+<!--
+ Copyright 2025 Clidey, Inc.
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
 
 <html lang="en">
   <head>
@@ -33,34 +32,6 @@
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
-    <script>
-        // Debug script for CI white screen issue
-        window.addEventListener('error', function (e) {
-            const errorDiv = document.createElement('div');
-            errorDiv.style.cssText = 'position:fixed;top:10px;left:10px;right:10px;background:red;color:white;padding:10px;z-index:9999;font-family:monospace;';
-            errorDiv.textContent = 'ERROR: ' + e.message + ' at ' + e.filename + ':' + e.lineno + ':' + e.colno;
-            document.body.appendChild(errorDiv);
-            console.error('Caught error:', e);
-        });
-        window.addEventListener('unhandledrejection', function (e) {
-            const errorDiv = document.createElement('div');
-            errorDiv.style.cssText = 'position:fixed;top:60px;left:10px;right:10px;background:orange;color:white;padding:10px;z-index:9999;font-family:monospace;';
-            errorDiv.textContent = 'PROMISE REJECTION: ' + (e.reason?.message || e.reason || 'Unknown');
-            document.body.appendChild(errorDiv);
-            console.error('Caught rejection:', e);
-        });
-        // Log that we're starting
-        console.log('WhoDB: Error handlers installed, waiting for app to load...');
-
-        // Check for Wails after a delay
-        setTimeout(function () {
-            const statusDiv = document.createElement('div');
-            statusDiv.style.cssText = 'position:fixed;bottom:10px;left:10px;background:blue;color:white;padding:5px;z-index:9999;font-size:10px;';
-            statusDiv.textContent = 'Wails: ' + (window.go ? 'FOUND' : 'MISSING') + ', Runtime: ' + (window.runtime ? 'FOUND' : 'MISSING');
-            document.body.appendChild(statusDiv);
-            console.log('Wails check:', {go: !!window.go, runtime: !!window.runtime});
-        }, 1000);
-    </script>
     <script type="module" src="/src/index.tsx"></script>
   </body>
 </html>
