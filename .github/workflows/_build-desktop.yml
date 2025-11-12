@@ -273,23 +273,37 @@ jobs:
           if ($LASTEXITCODE -eq 0) {
             Write-Host "✅ Extracted WebView2 Runtime to $extractPath"
 
-            # List extracted files
-            Write-Host "Extracted files:"
-            Get-ChildItem $extractPath -Recurse | Select-Object -First 10 | ForEach-Object {
-              Write-Host "  - $($_.FullName.Replace($extractPath, ''))"
+            # Find the actual runtime directory (should be Microsoft.WebView2.FixedVersionRuntime.141.0.3537.99.x64)
+            $runtimeDir = Get-ChildItem $extractPath -Directory | Where-Object { $_.Name -like "Microsoft.WebView2.FixedVersionRuntime.*" } | Select-Object -First 1
+
+            if ($runtimeDir) {
+              $fullRuntimePath = $runtimeDir.FullName
+              Write-Host "Found WebView2 runtime directory: $fullRuntimePath"
+
+              # Verify msedgewebview2.exe exists
+              $exePath = Join-Path $fullRuntimePath "msedgewebview2.exe"
+              if (Test-Path $exePath) {
+                Write-Host "✅ Found msedgewebview2.exe at: $exePath"
+              } else {
+                Write-Host "⚠️ msedgewebview2.exe not found at expected location"
+              }
+
+              # Set environment variable to the actual runtime directory
+              $env:WEBVIEW2_BROWSER_EXECUTABLE_FOLDER = $fullRuntimePath
+              Write-Host "Set WEBVIEW2_BROWSER_EXECUTABLE_FOLDER=$fullRuntimePath"
+
+              # Also set a GitHub Actions output for use in the build step
+              echo "WEBVIEW2_PATH=$fullRuntimePath" >> $env:GITHUB_ENV
+            } else {
+              Write-Host "⚠️ Could not find WebView2 runtime directory"
+              # Fallback to the extract path
+              $env:WEBVIEW2_BROWSER_EXECUTABLE_FOLDER = $extractPath
+              echo "WEBVIEW2_PATH=$extractPath" >> $env:GITHUB_ENV
             }
           } else {
-            Write-Host "⚠️ Failed to extract CAB file, attempting alternate method..."
-            # Try using Shell.Application COM object as fallback
-            $shell = New-Object -ComObject Shell.Application
-            $zip = $shell.Namespace($cabPath)
-            $destination = $shell.Namespace($extractPath)
-            $destination.CopyHere($zip.Items(), 16)
+            Write-Host "⚠️ Failed to extract CAB file"
+            exit 1
           }
-
-          # Set environment variable for Wails to find the WebView2 runtime
-          $env:WEBVIEW2_BROWSER_EXECUTABLE_FOLDER = $extractPath
-          Write-Host "Set WEBVIEW2_BROWSER_EXECUTABLE_FOLDER=$extractPath"
 
           # Also install system-wide for the build process (using bootstrapper as backup)
           Write-Host "Installing WebView2 Runtime for build environment..."
@@ -307,9 +321,27 @@ jobs:
         shell: pwsh
         env:
           GOARCH: ${{ matrix.arch }}
-          WEBVIEW2_BROWSER_EXECUTABLE_FOLDER: ${{ github.workspace }}\desktop-${{ inputs.edition }}\webview2\runtime
+          WEBVIEW2_BROWSER_EXECUTABLE_FOLDER: ${{ env.WEBVIEW2_PATH }}
         run: |
           Write-Host "Building Windows executable for MSIX packaging..."
+
+          # Log WebView2 path for debugging
+          Write-Host "WEBVIEW2_BROWSER_EXECUTABLE_FOLDER=$env:WEBVIEW2_BROWSER_EXECUTABLE_FOLDER"
+          if ($env:WEBVIEW2_BROWSER_EXECUTABLE_FOLDER) {
+            if (Test-Path $env:WEBVIEW2_BROWSER_EXECUTABLE_FOLDER) {
+              Write-Host "✅ WebView2 runtime path exists"
+              $exePath = Join-Path $env:WEBVIEW2_BROWSER_EXECUTABLE_FOLDER "msedgewebview2.exe"
+              if (Test-Path $exePath) {
+                Write-Host "✅ msedgewebview2.exe found at: $exePath"
+              } else {
+                Write-Host "⚠️ msedgewebview2.exe not found in runtime directory"
+              }
+            } else {
+              Write-Host "⚠️ WebView2 runtime path does not exist: $env:WEBVIEW2_BROWSER_EXECUTABLE_FOLDER"
+            }
+          } else {
+            Write-Host "⚠️ WEBVIEW2_BROWSER_EXECUTABLE_FOLDER not set"
+          }
 
           # Prepare frontend
           Write-Host "Preparing frontend..."
