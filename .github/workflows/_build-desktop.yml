@@ -287,17 +287,13 @@ jobs:
                 Write-Host "⚠️ msedgewebview2.exe not found at expected location"
               }
 
-              # Set environment variable to the actual runtime directory
-              $env:WEBVIEW2_BROWSER_EXECUTABLE_FOLDER = $fullRuntimePath
-              Write-Host "Set WEBVIEW2_BROWSER_EXECUTABLE_FOLDER=$fullRuntimePath"
-
-              # Also set a GitHub Actions output for use in the build step
-              echo "WEBVIEW2_PATH=$fullRuntimePath" >> $env:GITHUB_ENV
+              # Don't set as global environment variable - we don't want it hardcoded in the binary!
+              # Just log the path for reference
+              Write-Host "WebView2 extracted to: $fullRuntimePath"
+              Write-Host "This path will be used for bundling but NOT hardcoded in the exe"
             } else {
               Write-Host "⚠️ Could not find WebView2 runtime directory"
-              # Fallback to the extract path
-              $env:WEBVIEW2_BROWSER_EXECUTABLE_FOLDER = $extractPath
-              echo "WEBVIEW2_PATH=$extractPath" >> $env:GITHUB_ENV
+              Write-Host "WebView2 extracted to fallback path: $extractPath"
             }
           } else {
             Write-Host "⚠️ Failed to extract CAB file"
@@ -320,27 +316,16 @@ jobs:
         shell: pwsh
         env:
           GOARCH: ${{ matrix.arch }}
-          WEBVIEW2_BROWSER_EXECUTABLE_FOLDER: ${{ env.WEBVIEW2_PATH }}
+          # DO NOT set WEBVIEW2_BROWSER_EXECUTABLE_FOLDER here - it gets hardcoded into the binary!
+          # The exe should use the system WebView2 or the one bundled in MSIX
         run: |
           Write-Host "Building Windows executable for MSIX packaging..."
 
-          # Log WebView2 path for debugging
-          Write-Host "WEBVIEW2_BROWSER_EXECUTABLE_FOLDER=$env:WEBVIEW2_BROWSER_EXECUTABLE_FOLDER"
-          if ($env:WEBVIEW2_BROWSER_EXECUTABLE_FOLDER) {
-            if (Test-Path $env:WEBVIEW2_BROWSER_EXECUTABLE_FOLDER) {
-              Write-Host "✅ WebView2 runtime path exists"
-              $exePath = Join-Path $env:WEBVIEW2_BROWSER_EXECUTABLE_FOLDER "msedgewebview2.exe"
-              if (Test-Path $exePath) {
-                Write-Host "✅ msedgewebview2.exe found at: $exePath"
-              } else {
-                Write-Host "⚠️ msedgewebview2.exe not found in runtime directory"
-              }
-            } else {
-              Write-Host "⚠️ WebView2 runtime path does not exist: $env:WEBVIEW2_BROWSER_EXECUTABLE_FOLDER"
-            }
-          } else {
-            Write-Host "⚠️ WEBVIEW2_BROWSER_EXECUTABLE_FOLDER not set"
-          }
+          # Explicitly unset the WebView2 path to ensure it's not hardcoded into the binary
+          $env:WEBVIEW2_BROWSER_EXECUTABLE_FOLDER = $null
+          Remove-Item Env:\WEBVIEW2_BROWSER_EXECUTABLE_FOLDER -ErrorAction SilentlyContinue
+          Write-Host "✅ WEBVIEW2_BROWSER_EXECUTABLE_FOLDER is not set (preventing hardcoded paths in the binary)"
+          Write-Host "The exe will use the system-installed WebView2 or the one bundled in MSIX"
 
           # Prepare frontend
           Write-Host "Preparing frontend..."
