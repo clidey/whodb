@@ -116,7 +116,7 @@ jobs:
       - name: Set up Wails
         if: steps.cache-wails.outputs.cache-hit != 'true'
         run: |
-          go install github.com/wailsapp/wails/v2/cmd/wails@v2.11.0
+          go install github.com/wailsapp/wails/v2/cmd/wails@2.11.0
           echo "$HOME/go/bin" >> $GITHUB_PATH
 
       - name: Add Wails to PATH

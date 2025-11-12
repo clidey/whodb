@@ -166,7 +166,7 @@ jobs:
 
       - name: Install Wails CLI
         if: matrix.enabled != false && steps.cache-wails.outputs.cache-hit != 'true'
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.11.0
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@2.11.0
 
       # Import Apple Developer certificates for macOS DMG signing
       - name: Import Apple Developer Certificates (Developer ID)
