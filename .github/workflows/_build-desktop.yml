@@ -267,26 +267,7 @@ jobs:
               pnpm run build:${{ inputs.edition }}
           }
 
-          # Copy all contents from build to frontend/dist (preserve structure)
-          Write-Host "Contents of frontend/build:"
-          Get-ChildItem -Path build -Recurse | Select-Object FullName
-
-          Remove-Item -Path ../desktop-${{ inputs.edition }}/frontend/dist/* -Recurse -Force -ErrorAction SilentlyContinue
-          Copy-Item -Path build/* -Destination ../desktop-${{ inputs.edition }}/frontend/dist/ -Recurse -Force
-
-          Write-Host "Contents of desktop/frontend/dist after copy:"
-          Get-ChildItem -Path ../desktop-${{ inputs.edition }}/frontend/dist -Recurse | Select-Object FullName
-
-          # Verify index.html exists
-          if (Test-Path "../desktop-${{ inputs.edition }}/frontend/dist/index.html") {
-              Write-Host "✓ index.html found in frontend/dist"
-              Write-Host "First 10 lines of index.html:"
-              Get-Content "../desktop-${{ inputs.edition }}/frontend/dist/index.html" | Select-Object -First 10
-          } else {
-              Write-Error "✗ index.html NOT found in frontend/dist!"
-              exit 1
-          }
-
+          Copy-Item -Path build/* -Destination ../desktop-${{ inputs.edition }}/frontend/dist/ -Recurse
           Set-Location ../desktop-${{ inputs.edition }}
 
           Write-Host "Using Makefile to build..."
