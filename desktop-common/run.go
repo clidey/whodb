@@ -19,6 +19,7 @@ package common
 import (
 	"embed"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/wailsapp/wails/v2"
@@ -69,6 +70,10 @@ func RunApp(edition string, title string, assets embed.FS) error {
 			WebviewIsTransparent: false,
 			WindowIsTranslucent:  false,
 			DisableWindowIcon:    false,
+			// Set WebView2 user data path to avoid permission issues in MSIX
+			WebviewUserDataPath: filepath.Join(os.Getenv("LOCALAPPDATA"), "WhoDB", "WebView2"),
+			// Use fixed WebView2 runtime if specified in environment
+			WebviewBrowserPath: os.Getenv("WEBVIEW2_BROWSER_EXECUTABLE_FOLDER"),
 		},
 		Mac: &mac.Options{
 			TitleBar:             mac.TitleBarDefault(),

@@ -243,6 +243,63 @@ jobs:
           echo "$MAS_PROVISIONING_PROFILE" | base64 --decode -o desktop-${{ inputs.edition }}/build/darwin/embedded.provisionprofile
           echo "✅ Provisioning profile saved"
 
+      # Download and Extract WebView2 Fixed Version for bundling
+      - name: Setup WebView2 Fixed Version
+        if: matrix.platform == 'windows' && matrix.enabled != false
+        shell: pwsh
+        run: |
+          Write-Host "Setting up WebView2 Fixed Version Runtime (141.0.3537.99)..."
+
+          # Create WebView2 directory
+          $webview2Dir = "desktop-${{ inputs.edition }}\webview2"
+          New-Item -ItemType Directory -Force -Path $webview2Dir | Out-Null
+
+          # Download WebView2 Fixed Version 141.0.3537.99 CAB file for AMD64
+          $cabUrl = "https://msedge.sf.dl.delivery.mp.microsoft.com/filestreamingservice/files/454b3964-bfe5-4eff-82da-74c3125b592b/Microsoft.WebView2.FixedVersionRuntime.141.0.3537.99.x64.cab"
+          $cabPath = "$webview2Dir\webview2-fixed.cab"
+
+          Write-Host "Downloading WebView2 Fixed Version CAB (141.0.3537.99)..."
+          Invoke-WebRequest -Uri $cabUrl -OutFile $cabPath -UseBasicParsing
+          Write-Host "✅ Downloaded WebView2 Fixed Version CAB"
+
+          # Extract the CAB file
+          Write-Host "Extracting WebView2 Runtime..."
+          $extractPath = "$webview2Dir\runtime"
+          New-Item -ItemType Directory -Force -Path $extractPath | Out-Null
+
+          # Use expand.exe to extract CAB file
+          & expand.exe -F:* $cabPath $extractPath
+
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "✅ Extracted WebView2 Runtime to $extractPath"
+
+            # List extracted files
+            Write-Host "Extracted files:"
+            Get-ChildItem $extractPath -Recurse | Select-Object -First 10 | ForEach-Object {
+              Write-Host "  - $($_.FullName.Replace($extractPath, ''))"
+            }
+          } else {
+            Write-Host "⚠️ Failed to extract CAB file, attempting alternate method..."
+            # Try using Shell.Application COM object as fallback
+            $shell = New-Object -ComObject Shell.Application
+            $zip = $shell.Namespace($cabPath)
+            $destination = $shell.Namespace($extractPath)
+            $destination.CopyHere($zip.Items(), 16)
+          }
+
+          # Set environment variable for Wails to find the WebView2 runtime
+          $env:WEBVIEW2_BROWSER_EXECUTABLE_FOLDER = $extractPath
+          Write-Host "Set WEBVIEW2_BROWSER_EXECUTABLE_FOLDER=$extractPath"
+
+          # Also install system-wide for the build process (using bootstrapper as backup)
+          Write-Host "Installing WebView2 Runtime for build environment..."
+          $bootstrapperUrl = "https://go.microsoft.com/fwlink/p/?LinkId=2124703"
+          $bootstrapperPath = "$env:TEMP\MicrosoftEdgeWebview2Setup.exe"
+          Invoke-WebRequest -Uri $bootstrapperUrl -OutFile $bootstrapperPath -UseBasicParsing
+          Start-Process -FilePath $bootstrapperPath -ArgumentList "/silent", "/install" -Wait -NoNewWindow
+
+          Write-Host "✅ WebView2 setup complete"
+
       # Windows AMD64 Build
       - name: Build Windows AMD64
         if: matrix.platform == 'windows' && matrix.arch == 'amd64' && matrix.enabled != false
@@ -250,6 +307,7 @@ jobs:
         shell: pwsh
         env:
           GOARCH: ${{ matrix.arch }}
+          WEBVIEW2_BROWSER_EXECUTABLE_FOLDER: ${{ github.workspace }}\desktop-${{ inputs.edition }}\webview2\runtime
         run: |
           Write-Host "Building Windows executable for MSIX packaging..."
 
