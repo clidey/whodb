@@ -162,11 +162,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/go/bin/wails
-          key: ${{ runner.os }}-${{ runner.arch }}-wails-v2-latest
+          key: ${{ runner.os }}-${{ runner.arch }}-wails-v2.10.2
 
       - name: Install Wails CLI
         if: matrix.enabled != false && steps.cache-wails.outputs.cache-hit != 'true'
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.10.2
 
       # Import Apple Developer certificates for macOS DMG signing
       - name: Import Apple Developer Certificates (Developer ID)

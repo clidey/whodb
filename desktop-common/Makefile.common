@@ -12,11 +12,12 @@ NOTARY_PROFILE ?=
 APPLE_ID ?=
 TEAM_ID ?=
 APPLE_APP_PASSWORD ?=
+PLATFORM_ENV ?= unknown
 
-# Build flags with version and environment
+# Build flags with version and environment (properly quoted)
 LDFLAGS = -s -w \
-  -X github.com/clidey/whodb/core/src/env.ApplicationVersion=$(VERSION) \
-  -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=$(PLATFORM_ENV)
+  -X "github.com/clidey/whodb/core/src/env.ApplicationVersion=$(VERSION)" \
+  -X "github.com/clidey/whodb/core/src/env.ApplicationEnvironment=$(PLATFORM_ENV)"
 
 # Prepare frontend assets
 prepare:
@@ -403,7 +404,7 @@ clean:
 
 # Install Wails CLI
 install-wails:
-	go install github.com/wailsapp/wails/v2/cmd/wails@latest
+	go install github.com/wailsapp/wails/v2/cmd/wails@2.10.2
 
 # Check Wails dependencies
 doctor:
