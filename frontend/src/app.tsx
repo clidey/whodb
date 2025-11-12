@@ -84,18 +84,11 @@ export const App = () => {
           MetricsEnabled: String(metricsEnabled)
         }
       }
-    }).catch(err => {
-        // Silently fail if backend is not accessible (e.g., in desktop mode without backend running)
-        console.warn('Failed to update backend settings:', err);
     });
   }, [updateSettings, metricsEnabled])
 
   useEffect(() => {
-      // Delay the settings update to avoid blocking initial render
-      const timer = setTimeout(() => {
-          updateBackendWithSettings();
-      }, 100);
-      return () => clearTimeout(timer);
+    updateBackendWithSettings();
   }, [updateBackendWithSettings]);
 
   return (
