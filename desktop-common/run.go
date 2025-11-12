@@ -73,7 +73,14 @@ func RunApp(edition string, title string, assets embed.FS) error {
 			// Set WebView2 user data path to avoid permission issues in MSIX
 			WebviewUserDataPath: filepath.Join(os.Getenv("LOCALAPPDATA"), "WhoDB", "WebView2"),
 			// Use fixed WebView2 runtime if specified in environment
-			WebviewBrowserPath: os.Getenv("WEBVIEW2_BROWSER_EXECUTABLE_FOLDER"),
+			// WebviewBrowserPath expects the full path to the executable folder
+			WebviewBrowserPath: func() string {
+				path := os.Getenv("WEBVIEW2_BROWSER_EXECUTABLE_FOLDER")
+				if path != "" {
+					log.Logger.Infof("Using WebView2 from: %s", path)
+				}
+				return path
+			}(),
 		},
 		Mac: &mac.Options{
 			TitleBar:             mac.TitleBarDefault(),

@@ -145,9 +145,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: frontend/build
-          key: frontend-build-${{ inputs.edition }}-${{ hashFiles('frontend/package.json', 'frontend/pnpm-lock.yaml', 'frontend/tsconfig.json') }}
-          restore-keys: |
-            frontend-build-${{ inputs.edition }}-
+          key: frontend-build-${{ inputs.edition }}-${{ hashFiles('frontend/src/**', 'frontend/package.json', 'frontend/pnpm-lock.yaml', 'frontend/tsconfig.json') }}-v2
 
       - name: Install frontend dependencies
         if: matrix.enabled != false
