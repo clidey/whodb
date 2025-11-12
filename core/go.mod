@@ -14,11 +14,11 @@ require (
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.6
-	github.com/posthog/posthog-go v1.6.12
 	github.com/pkg/errors v0.9.1
+	github.com/posthog/posthog-go v1.6.12
 	github.com/shopspring/decimal v1.4.0
 	github.com/sirupsen/logrus v1.9.3
-	github.com/vektah/gqlparser/v2 v2.5.30
+	github.com/vektah/gqlparser/v2 v2.5.31
 	github.com/xuri/excelize/v2 v2.9.1
 	github.com/zalando/go-keyring v0.2.6
 	go.mongodb.org/mongo-driver v1.17.4
