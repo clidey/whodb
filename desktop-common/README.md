@@ -6,7 +6,7 @@ This is the WhoDB desktop application built with [Wails](https://wails.io/), pro
 
 1. **Install Wails CLI:**
    ```bash
-   go install github.com/wailsapp/wails/v2/cmd/wails@v2.10.2
+   go install github.com/wailsapp/wails/v2/cmd/wails@v2.11.0
    ```
 
 2. **Check dependencies:**
