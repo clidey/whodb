@@ -41,6 +41,27 @@ func RunApp(edition string, title string, assets embed.FS) error {
 	src.InitializeEngine()
 	log.Logger.Infof("Running WhoDB Desktop %s Edition", strings.ToUpper(edition))
 
+	// Debug: Log embedded files
+	log.Logger.Info("Checking embedded assets...")
+	entries, err := assets.ReadDir(".")
+	if err != nil {
+		log.Logger.Errorf("Failed to read root of embedded FS: %v", err)
+	} else {
+		for _, entry := range entries {
+			log.Logger.Infof("  Found at root: %s (dir: %v)", entry.Name(), entry.IsDir())
+		}
+	}
+
+	// Try to read frontend/dist
+	if entries, err := assets.ReadDir("frontend/dist"); err == nil {
+		log.Logger.Info("Found frontend/dist in embedded FS:")
+		for _, entry := range entries {
+			log.Logger.Infof("  - %s", entry.Name())
+		}
+	} else {
+		log.Logger.Warnf("frontend/dist not found in embedded FS: %v", err)
+	}
+
 	// Get the Chi router with embedded assets
 	r := router.InitializeRouter(assets)
 
