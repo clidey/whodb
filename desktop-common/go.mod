@@ -4,7 +4,7 @@ go 1.25.1
 
 require (
 	github.com/clidey/whodb/core v0.0.0
-	github.com/wailsapp/wails/v2 v2.10.2
+	github.com/wailsapp/wails/v2 v2.11.0
 )
 
 require (
