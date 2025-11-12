@@ -69,7 +69,7 @@ func RunApp(edition string, title string, assets embed.FS) error {
 	app := NewApp(edition)
 
 	// Create application with options
-	err = wails.Run(&options.App{
+	err := wails.Run(&options.App{
 		Title:     title,
 		Width:     1400,
 		Height:    900,
