@@ -18,7 +18,7 @@ PLATFORM_ENV ?= unknown
 WINDOWS_TAGS := -tags native_webview2loader
 WINDOWS_CONSOLE ?= true
 WINDOWS_DEVTOOLS ?= true
-WINDOWS_DEBUG ?= false
+WINDOWS_DEBUG ?= true
 
 ifeq ($(WINDOWS_CONSOLE),true)
 WINDOWS_GUI_LDFLAG :=
