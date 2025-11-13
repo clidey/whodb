@@ -28,6 +28,8 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/menu"
 	"github.com/wailsapp/wails/v2/pkg/menu/keys"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+
+	"github.com/clidey/whodb/core/src/analytics"
 )
 
 const (
@@ -65,11 +67,23 @@ func (a *App) Startup(ctx context.Context) {
 	a.RestoreWindowState()
 	a.SetupApplicationMenu()
 	a.SetupSystemTray()
+
+	// Track desktop app launch
+	analytics.Capture(ctx, "desktop_app_launched", map[string]any{
+		"edition":  a.edition,
+		"platform": goruntime.GOOS,
+		"arch":     goruntime.GOARCH,
+	})
 }
 
 // Shutdown is called when the app is closing
 func (a *App) Shutdown(ctx context.Context) {
 	a.SaveWindowState()
+
+	// Track desktop app shutdown
+	analytics.Capture(ctx, "desktop_app_closed", map[string]any{
+		"edition": a.edition,
+	})
 }
 
 // DomReady is called when the frontend is loaded

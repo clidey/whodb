@@ -109,10 +109,16 @@ const registerContext = (client: PostHog) => {
         return;
     }
     const domain = window.location.hostname || 'localhost';
+
+    // Check if running as desktop app
+    const isDesktop = !!(window as any).go?.main?.App || !!(window as any).go?.common?.App;
+
     client.register({
         site_domain: domain,
         build_environment: getEnvEnvironment(),
         build_edition: getBuildEdition(),
+        app_type: isDesktop ? 'desktop' : 'web',
+        platform: isDesktop ? 'wails' : 'browser',
     });
 };
 
@@ -188,6 +194,17 @@ const ensureInitializedClient = async (): Promise<PostHog | null> => {
     initPromise = (async () => {
         const {default: posthog} = await ensurePosthogModule();
 
+        // Debug logging for desktop environments
+        const isDesktop = !!(window as any).go?.main?.App || !!(window as any).go?.common?.App;
+        if (isDesktop) {
+            console.log('[PostHog] Initializing for desktop app', {
+                key: posthogKey.substring(0, 10) + '...',
+                consent,
+                edition: getBuildEdition(),
+                environment: getEnvEnvironment(),
+            });
+        }
+
         posthog.init(posthogKey, {
             api_host: apiHost,
             capture_pageleave: true,
@@ -208,6 +225,23 @@ const ensureInitializedClient = async (): Promise<PostHog | null> => {
                 }
 
                 persistDistinctId(client.get_distinct_id());
+
+                // Log successful initialization for desktop
+                if (isDesktop) {
+                    console.log('[PostHog] Successfully initialized for desktop app', {
+                        distinctId: client.get_distinct_id(),
+                        capturing: consent === 'granted',
+                    });
+
+                    // Track desktop app launch
+                    if (consent === 'granted') {
+                        client.capture('desktop_app_launched', {
+                            platform: 'wails',
+                            build_edition: getBuildEdition(),
+                            build_environment: getEnvEnvironment(),
+                        });
+                    }
+                }
             },
         });
 

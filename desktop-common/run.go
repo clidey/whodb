@@ -28,14 +28,31 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 
 	"github.com/clidey/whodb/core/src"
+	"github.com/clidey/whodb/core/src/analytics"
+	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/router"
+	"github.com/clidey/whodb/core/src/settings"
 )
 
 // RunApp starts the Wails application with the given configuration
 func RunApp(edition string, title string, assets embed.FS) error {
 	// Set desktop mode for backend (SQLite path handling, auth, etc.)
 	os.Setenv("WHODB_DESKTOP", "true")
+
+	// Initialize analytics for desktop app (same as server.go)
+	settingsCfg := settings.Get()
+	if err := analytics.Initialize(analytics.Config{
+		APIKey:      env.PosthogAPIKey,
+		Host:        env.PosthogHost,
+		Environment: env.ApplicationEnvironment,
+		AppVersion:  env.ApplicationVersion,
+	}); err != nil {
+		log.Logger.WithError(err).Warn("Analytics: PostHog initialization failed, metrics disabled")
+	} else {
+		defer analytics.Shutdown()
+	}
+	analytics.SetEnabled(settingsCfg.MetricsEnabled)
 
 	// Initialize WhoDB engine (same as server.go)
 	src.InitializeEngine()
@@ -69,17 +86,6 @@ func RunApp(edition string, title string, assets embed.FS) error {
 			WebviewIsTransparent: false,
 			WindowIsTranslucent:  false,
 			DisableWindowIcon:    false,
-			// Set WebView2 user data path to avoid permission issues in MSIX
-			//WebviewUserDataPath: filepath.Join(os.Getenv("LOCALAPPDATA"), "WhoDB", "WebView2"),
-			//// Use fixed WebView2 runtime if specified in environment
-			//// WebviewBrowserPath expects the full path to the executable folder
-			//WebviewBrowserPath: func() string {
-			//	path := os.Getenv("WEBVIEW2_BROWSER_EXECUTABLE_FOLDER")
-			//	if path != "" {
-			//		log.Logger.Infof("Using WebView2 from: %s", path)
-			//	}
-			//	return path
-			//}(),
 		},
 		Mac: &mac.Options{
 			TitleBar:             mac.TitleBarDefault(),
