@@ -1,6 +1,10 @@
 {
   "name": "WhoDB",
-  "favicon": "logo/logo.png",
+  "colors": {
+    "primary": "#ca6f1e",
+    "light": "#ca6f1e",
+    "dark": "#F18D3B"
+  },
   "fonts": {
     "family": "Montserrat",
     "source": "https://fonts.gstatic.com/s/googlesansflex/v5/t5sJIQcYNIWbFgDgAAzZ34auoVyXkJCOvp3SFWJbN5hF8Ju1x6sKCyp0l9sI40swNJwGpVd4AZzz0v6lJ4qFXNZhGjLvDSkV4USKMo6qQzwliVdHAy9jxTDHg_ugnAakpwGc-cxgUqDCIUI.woff2",
@@ -28,6 +32,16 @@
               "features/schema-explorer",
               "features/sidebar-navigation",
               "features/storage-units"
+            ]
+          },
+          {
+            "group": "AI Chat Assistant",
+            "pages": [
+              "ai/introduction",
+              "ai/setup-providers",
+              "ai/querying-data",
+              "ai/modifying-data",
+              "ai/conversation-features"
             ]
           },
           {
@@ -89,7 +103,8 @@
               "guides/tutorials/data-exploration-workflow",
               "guides/tutorials/building-complex-queries",
               "guides/tutorials/data-export-analysis",
-              "guides/tutorials/schema-visualization"
+              "guides/tutorials/schema-visualization",
+              "guides/tutorials/ai-first-query"
             ]
           },
           {
@@ -109,7 +124,8 @@
               "use-cases/testing-development",
               "use-cases/data-migration",
               "use-cases/debugging-production",
-              "use-cases/api-development"
+              "use-cases/api-development",
+              "use-cases/ai-data-exploration"
             ]
           }
         ]
@@ -123,7 +139,8 @@
               "best-practices/security",
               "best-practices/performance",
               "best-practices/data-management",
-              "best-practices/query-optimization"
+              "best-practices/query-optimization",
+              "best-practices/ai-usage"
             ]
           },
           {
@@ -189,7 +206,7 @@
     ]
   },
   "logo": {
-    "light": "./logo/logo.svg",
-    "dark": "./logo/logo.svg"
+    "light": "./logo/logo.png",
+    "dark": "./logo/logo.png"
   }
 }

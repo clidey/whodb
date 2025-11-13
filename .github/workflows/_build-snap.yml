@@ -51,25 +51,26 @@ jobs:
             desktop-ce/go.sum
             desktop-ce/go.mod
 
-      - name: Cache Go build artifacts
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/go-build
-          key: ${{ runner.os }}-${{ runner.arch }}-go-build-snap-${{ hashFiles('core/go.sum', 'desktop-ce/go.sum', 'core/go.mod', 'desktop-ce/go.mod') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-go-build-snap-
-            ${{ runner.os }}-go-build-
+      # CACHING DISABLED TO AVOID STALE CACHE ISSUES
+      # - name: Cache Go build artifacts
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: |
+      #       ~/.cache/go-build
+      #     key: ${{ runner.os }}-${{ runner.arch }}-go-build-snap-${{ hashFiles('core/go.sum', 'desktop-ce/go.sum', 'core/go.mod', 'desktop-ce/go.mod') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-${{ runner.arch }}-go-build-snap-
+      #       ${{ runner.os }}-go-build-
 
-      - name: Cache Snapcraft downloads
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/snapcraft/download
-            ~/.cache/snapcraft/stage-packages
-          key: ${{ runner.os }}-${{ runner.arch }}-snapcraft-${{ hashFiles('snapcraft.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-snapcraft-
+      # - name: Cache Snapcraft downloads
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: |
+      #       ~/.cache/snapcraft/download
+      #       ~/.cache/snapcraft/stage-packages
+      #     key: ${{ runner.os }}-${{ runner.arch }}-snapcraft-${{ hashFiles('snapcraft.yaml') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-${{ runner.arch }}-snapcraft-
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -96,7 +97,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/go/bin/wails
-          key: ${{ runner.os }}-wails-v2-latest
+          key: ${{ runner.os }}-${{ runner.arch }}-wails-v2-latest
 
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2

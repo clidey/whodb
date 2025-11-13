@@ -14,13 +14,24 @@
  * limitations under the License.
  */
 
-import { reduxStore } from '../store';
+import {reduxStore} from '../store';
+import {getAnalyticsDistinctId} from '../config/posthog';
+
+const analyticsHeaderName = 'X-WhoDB-Analytics-Id';
 
 /**
  * Checks if the app is running in a desktop/webview environment
  * where cookies might not be properly supported.
  */
 function isDesktopScheme(): boolean {
+    // Check if Wails bindings are available - more reliable than protocol check
+    if (typeof window !== 'undefined') {
+        const wailsGo = (window as any).go;
+        if (wailsGo?.main?.App || wailsGo?.common?.App) {
+            return true;
+        }
+    }
+    // Fallback to protocol check for compatibility
   return typeof window !== 'undefined' && !['http:', 'https:'].includes(window.location.protocol);
 }
 
@@ -83,12 +94,17 @@ export function getAuthorizationHeader(): string | null {
  * @returns Headers object with Authorization added if needed
  */
 export function addAuthHeader(headers: HeadersInit = {}): HeadersInit {
-  const authHeader = getAuthorizationHeader();
-  if (authHeader) {
-    return {
-      ...headers,
-      Authorization: authHeader,
-    };
-  }
-  return headers;
+    const authHeader = getAuthorizationHeader();
+    const id = getAnalyticsDistinctId()
+    headers = {
+        ...headers,
+        [analyticsHeaderName]: id != null ? id : ""
+    }
+    if (authHeader) {
+        return {
+            ...headers,
+            Authorization: authHeader,
+        };
+    }
+    return headers;
 }

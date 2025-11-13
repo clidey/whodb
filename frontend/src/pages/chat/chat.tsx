@@ -383,6 +383,8 @@ export const ChatPage: FC = () => {
 
     const handleClear = useCallback(() => {
         dispatch(HoudiniActions.clear());
+        setQuery("");
+        setCurrentSearchIndex(undefined);
     }, [dispatch]);
 
     const disableAll = useMemo(() => {
@@ -441,7 +443,7 @@ export const ChatPage: FC = () => {
                                                         {!chat.isUserInput && chats[i-1]?.isUserInput
                                                             ? extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
                                                             : <div className="pl-4" />}
-                                                        <ErrorState error={toTitleCase(chat.Text.replaceAll("ERROR: ", ""))} />
+                                                        <ErrorState error={chat.Text.replace(/^ERROR:\s*/i, "")} />
                                                     </div>
                                                 );
                                             } else if (isEEFeatureEnabled('dataVisualization') && (chat.Type === "sql:pie-chart" || chat.Type === "sql:line-chart")) {
@@ -484,6 +486,8 @@ export const ChatPage: FC = () => {
                         onSubmit={handleSubmitQuery}
                         disabled={disableAll}
                         onKeyUp={handleKeyUp}
+                        autoComplete="off"
+                        data-testid="chat-input"
                     />
                     <Button tabIndex={0} onClick={loading ? undefined : handleSubmitQuery} className={cn("rounded-full", {
                         "opacity-50": loading,

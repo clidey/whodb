@@ -32,7 +32,7 @@ website: https://whodb.com
 source-code: https://github.com/clidey/whodb
 issues: https://github.com/clidey/whodb/issues
 donation: https://github.com/sponsors/clidey
-icon: linux/icon.png
+icon: .github/linux/icon.png
 
 platforms:
   amd64:
@@ -447,8 +447,18 @@ parts:
       - -**/*.pyc
     override-build: |
       # Install Wails (required by Makefile)
-      go install github.com/wailsapp/wails/v2/cmd/wails@latest
+      go install github.com/wailsapp/wails/v2/cmd/wails@v2.11.0
       export PATH=$PATH:$HOME/go/bin
+
+      # Read version from .snap_version file created by GitHub Actions
+      VERSION_FILE="${SNAPCRAFT_PROJECT_DIR}/.snap_version"
+      if [ -f "$VERSION_FILE" ]; then
+        VERSION=$(cat "$VERSION_FILE")
+        echo "Building with version: $VERSION"
+      else
+        VERSION="dev"
+        echo "No .snap_version file found, using default version: $VERSION"
+      fi
 
       # Copy frontend build from previous part to expected location
       mkdir -p desktop-ce/frontend/dist
@@ -458,7 +468,7 @@ parts:
       cd desktop-ce
 
       # Use the Makefile's CI build target (which handles all proper configuration)
-      make ci-build-prod-linux
+      make ci-build-prod-linux VERSION="$VERSION"
 
       # The Makefile places the binary in build/linux/$(uname -m)/
       ARCH=$(uname -m)
@@ -723,7 +733,8 @@ parts:
 
   desktop-file:
     plugin: dump
-    source: linux
+    source: .github/linux
+    source-type: local
     override-build: |
       install -D whodb.desktop $CRAFT_PART_INSTALL/share/applications/whodb.desktop
       install -D icon.png $CRAFT_PART_INSTALL/share/icons/hicolor/256x256/apps/whodb.png

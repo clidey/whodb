@@ -1,0 +1,545 @@
+---
+title: "Your First AI-Powered Query"
+description: "A beginner's guide to making your first query using WhoDB's AI Chat Assistant"
+---
+
+# Your First AI-Powered Query
+
+The AI Chat Assistant makes database exploration accessible to everyone, regardless of SQL knowledge. This tutorial walks you through your first AI-powered query, from opening the Chat page to understanding results. By the end, you'll be comfortable asking questions in natural language and interpreting what the AI tells you about your data.
+
+## What You'll Learn
+
+By the end of this tutorial, you'll be able to:
+- Navigate to the Chat interface
+- Understand the Chat page layout
+- Configure an AI provider (simplified approach)
+- Ask your first simple question
+- Interpret AI responses
+- Request data from specific tables
+- View the SQL code behind AI responses
+- Handle and learn from errors
+- Ask follow-up questions to refine results
+
+<Info>
+This tutorial assumes you've already connected to a database. If you haven't, complete the [First Database Connection](/guides/tutorials/first-database-connection) tutorial first.
+</Info>
+
+## Prerequisites
+
+Before starting, make sure you have:
+- WhoDB connected to a database with data
+- An AI provider configured (OpenAI, Anthropic, or Ollama)
+- Basic familiarity with your database structure (what tables exist)
+
+<Note>
+If you haven't set up an AI provider yet, see the [Setting Up AI Providers](/ai/setup-providers) guide. For this tutorial, any provider will work fine.
+</Note>
+
+## Step 1: Opening the Chat Page
+
+After connecting to your database, navigate to the Chat page:
+
+![Chat Initial Page](/images/101-chat-initial-page.png)
+
+The Chat page is your gateway to natural language database interaction. You'll notice several elements:
+
+**AI Provider Dropdown**: At the top left, shows your current AI provider (OpenAI, Anthropic, or Ollama).
+
+**AI Model Dropdown**: Next to the provider, displays the specific model being used (GPT-4, Claude 3.5 Sonnet, Llama 3.1, etc.).
+
+**Chat Interface**: The main area where your conversation with the AI will appear.
+
+**Input Box**: At the bottom, where you type your questions.
+
+**Example Prompts**: Helpful suggestions to get you started with common questions.
+
+<Tip>
+The Chat page remembers your conversation history. You can refer back to previous questions and answers throughout your session.
+</Tip>
+
+## Step 2: Understanding Your AI Configuration
+
+Before asking questions, let's verify your AI configuration. Click the AI Provider dropdown to see available providers:
+
+![AI Provider Dropdown](/images/102-chat-ai-provider-dropdown.png)
+
+You should see at least one configured provider:
+- **OpenAI**: Cloud-based, fast and accurate
+- **Anthropic**: Cloud-based, excellent for complex queries
+- **Ollama**: Local, privacy-focused
+
+Select your preferred provider if it's not already active.
+
+Next, click the AI Model dropdown to see available models:
+
+![AI Model Dropdown](/images/103-chat-ai-model-dropdown.png)
+
+Different models offer different trade-offs:
+- **More capable models** (GPT-4, Claude 3.5 Sonnet): Better accuracy, slightly slower
+- **Faster models** (GPT-3.5 Turbo, Claude Haiku): Quick responses, good for simple queries
+- **Local models** (Llama 3.1, Mistral): Complete privacy, speed varies by hardware
+
+<Note>
+For your first query, any model will work well. Don't overthink this choice—you can always change it later.
+</Note>
+
+## Step 3: Using Example Prompts
+
+WhoDB provides example prompts to help you understand what kinds of questions you can ask:
+
+![Example Prompts](/images/104-chat-example-prompts.png)
+
+These examples demonstrate different query types:
+- **List queries**: "Show me all users"
+- **Filtered queries**: "Find products with price greater than 100"
+- **Aggregation queries**: "Count orders by status"
+- **Date-based queries**: "Show orders from last month"
+
+Click any example prompt to see how it works. For this tutorial, let's start with something even simpler.
+
+## Step 4: Asking Your First Question
+
+Let's start with the most basic question possible. In the input box at the bottom, type:
+
+```
+What tables exist in this database?
+```
+
+Press Enter or click the send button.
+
+Within a few seconds, you'll receive a response:
+
+![Simple Text Response](/images/105-chat-simple-text-response.png)
+
+The AI will list all tables in your database, providing a clear overview of your data structure. This simple question demonstrates the AI's awareness of your database schema.
+
+**What just happened?**
+1. Your question was sent to the AI provider
+2. The AI analyzed your database structure
+3. It generated an appropriate query (in this case, a schema query)
+4. The results were formatted into a readable response
+
+<Tip>
+Questions about database structure ("What tables exist?", "What columns are in the users table?", "How are these tables related?") are great for learning and exploration.
+</Tip>
+
+## Step 5: Retrieving Actual Data
+
+Now let's ask for actual data. Type this question:
+
+```
+Show me all users
+```
+
+Press Enter and watch what happens:
+
+![SQL Query Results](/images/106-chat-sql-query-results.png)
+
+The AI understands you want data from the users table and presents results in an interactive table. You'll see:
+
+**Column Headers**: The fields from your users table (id, name, email, etc.)
+
+**Data Rows**: Actual user records from your database
+
+**Pagination Controls**: If there are many users, results are paginated for easy browsing
+
+**Interactive Features**: You can scroll, sort columns, and explore the data just like in the Data view
+
+<Check>
+You just retrieved data without writing any SQL. The AI understood your intent and generated the appropriate query automatically.
+</Check>
+
+## Step 6: Viewing the SQL Code
+
+Want to see what SQL query the AI generated? Click the "View Code" or code toggle button above the results:
+
+![SQL Code View](/images/107-chat-sql-code-view.png)
+
+You'll see the actual SQL query that was executed:
+
+```sql
+SELECT * FROM users;
+```
+
+This is valuable for several reasons:
+- **Learning SQL**: See how natural language translates to SQL syntax
+- **Verification**: Confirm the AI understood your question correctly
+- **Refinement**: Copy and modify queries in the Scratchpad if needed
+- **Debugging**: Understand what went wrong if results aren't what you expected
+
+<Tip>
+Toggle between the code view and results view to learn SQL patterns. Over time, you'll develop intuition about how questions map to queries.
+</Tip>
+
+## Step 7: Handling Errors Gracefully
+
+Not all questions succeed on the first try. Let's see what happens when something goes wrong. Try asking:
+
+```
+Show me all customers from the products table
+```
+
+This question has a logical inconsistency—products tables don't typically have customer data:
+
+![Error Message](/images/108-chat-error-message.png)
+
+When errors occur, the AI provides helpful feedback:
+- **What went wrong**: Clear explanation of the issue
+- **Why it failed**: Context about the error
+- **How to fix it**: Suggestions for rephrasing or correcting the query
+
+Common error scenarios:
+- **Ambiguous questions**: "Show me the data" (which table?)
+- **Invalid operations**: Asking for columns that don't exist
+- **Logic errors**: Combining incompatible filters
+- **Permission issues**: Requesting operations your database user can't perform
+
+<Note>
+Errors are learning opportunities. Read the error message carefully—it often tells you exactly how to fix your question.
+</Note>
+
+## Step 8: Asking Follow-Up Questions
+
+The real power of the AI assistant comes from conversation. The AI remembers your previous questions, enabling natural follow-ups.
+
+After asking "Show me all users", try this follow-up:
+
+```
+How many are there?
+```
+
+The AI understands "there" refers to users from your previous question:
+
+![Aggregation Query](/images/109-chat-aggregation-query.png)
+
+The response shows a count of total users. Notice you didn't need to repeat "users"—the AI maintained context from your conversation.
+
+**More follow-up examples:**
+
+After viewing users:
+- "Show only active ones" (filters to active users)
+- "Sort by creation date" (reorders results)
+- "What about users from last month?" (adds date filter)
+
+Each question builds on the previous context, creating a natural exploration flow.
+
+<Tip>
+Think of the AI as a knowledgeable colleague sitting next to you. Have a conversation rather than asking isolated questions.
+</Tip>
+
+## Step 9: Filtering and Refining Results
+
+Let's practice refining queries with specific criteria. Ask:
+
+```
+Show me users created in the last 7 days
+```
+
+The AI generates a query with date filtering and displays recent users. The results are automatically filtered to match your timeframe criteria.
+
+Try more refined queries:
+- "Show users with gmail addresses"
+- "Find users who haven't logged in for 30 days"
+- "Show the 10 most recent signups"
+
+Each question demonstrates different filtering capabilities:
+- **Pattern matching**: Email domain filtering
+- **Date calculations**: Relative time periods
+- **Sorting and limiting**: Top N results
+
+<Note>
+You don't need to know date functions, pattern matching syntax, or sorting keywords. Just describe what you want in plain language.
+</Note>
+
+## Step 10: Understanding Confirmations for Changes
+
+The AI assistant is safe by design. When you ask to modify data, it requires explicit confirmation.
+
+Try asking:
+
+```
+Delete the oldest user account
+```
+
+Instead of immediately deleting data, you'll see:
+
+![Action Confirmation](/images/110-chat-action-confirmation.png)
+
+The AI shows:
+- **What will happen**: Clear description of the action
+- **Which data will be affected**: Preview of rows to be changed
+- **Confirmation required**: Explicit prompt to proceed or cancel
+
+This safety feature prevents accidental data loss. You must respond with explicit confirmation:
+- "Yes, proceed"
+- "Confirm"
+- "Do it"
+
+Or cancel the operation:
+- "No"
+- "Cancel"
+- "Never mind"
+
+<Warning>
+Always review confirmation prompts carefully before confirming deletions or updates. These operations cannot be undone.
+</Warning>
+
+After confirming:
+
+![Action Executed](/images/111-chat-action-executed.png)
+
+The AI confirms the action was executed and shows how many rows were affected.
+
+## Step 11: Building a Multi-Message Conversation
+
+Let's see how a real exploration session might flow with multiple related questions:
+
+![Multiple Messages](/images/112-chat-multiple-messages.png)
+
+A typical conversation might look like:
+
+**You**: "What tables are related to orders?"
+
+**AI**: Lists tables with foreign key relationships to orders
+
+**You**: "Show me the most recent 5 orders"
+
+**AI**: Displays last 5 orders with all columns
+
+**You**: "What's the total value of these orders?"
+
+**AI**: Calculates and shows the sum
+
+**You**: "Show me the customer details for these orders"
+
+**AI**: Joins orders with customers table, showing combined data
+
+This conversation demonstrates:
+- **Context preservation**: Each question builds on previous ones
+- **Progressive refinement**: Starting broad, then getting specific
+- **Natural flow**: Questions you'd naturally ask when exploring data
+
+<Check>
+The AI maintains conversation context throughout your session, enabling natural, iterative exploration.
+</Check>
+
+## Step 12: Moving Queries to Scratchpad
+
+When you find a useful query, you might want to save it or modify it further. Click the "Move to Scratchpad" option on any AI response:
+
+![Move to Scratchpad Dialog](/images/113-chat-move-to-scratchpad-dialog.png)
+
+A dialog appears showing:
+- The SQL query that will be moved
+- Option to add notes or description
+- Confirmation button
+
+After moving to Scratchpad, you can:
+- Edit and refine the SQL manually
+- Save the query for future use
+- Combine it with other queries
+- Execute it repeatedly with modifications
+
+This bridges AI exploration with traditional SQL workflow, giving you the best of both worlds.
+
+## Step 13: Starting a New Chat
+
+Each conversation session maintains its own context. When you want to start fresh, click the "New Chat" button:
+
+![New Chat Button](/images/114-chat-new-chat-button.png)
+
+This clears the conversation history and starts a new session. Use this when:
+- Switching to a completely different topic
+- Context from previous questions is confusing the AI
+- You want a clean slate for a new analysis
+
+<Note>
+Previous chat history is not saved. If you need to reference earlier queries, move important ones to Scratchpad before starting a new chat.
+</Note>
+
+## Best Practices for AI Queries
+
+<AccordionGroup>
+<Accordion title="Be Specific but Natural">
+**Good**: "Show me users who signed up in January 2024"
+**Too vague**: "Show me some users"
+**Too technical**: "SELECT * FROM users WHERE EXTRACT(MONTH FROM created_at) = 1"
+
+Find the middle ground—specific intent in natural language.
+</Accordion>
+<Accordion title="Start Simple, Then Refine">
+Don't try to ask perfect questions immediately:
+
+1. "Show me orders"
+2. "Only completed ones"
+3. "From the last month"
+4. "With total value over 100"
+
+Build complexity gradually through conversation.
+</Accordion>
+<Accordion title="Provide Context When Needed">
+If your database has ambiguous naming:
+
+**Better**: "Show me user orders" (not just "orders")
+**Better**: "Count active subscriptions" (not just "count subscriptions")
+
+Clarify which table or status you mean.
+</Accordion>
+<Accordion title="Learn from the Generated SQL">
+Toggle to code view regularly to see how your questions translate to SQL. Over time, you'll:
+- Understand SQL patterns
+- Learn your database structure
+- Write better natural language queries
+- Develop SQL skills organically
+</Accordion>
+<Accordion title="Use Follow-Ups Effectively">
+The AI remembers context, so leverage it:
+
+Instead of:
+- "Show me all users"
+- "Show me all active users"
+- "Show me all active users from 2024"
+
+Do this:
+- "Show me all users"
+- "Only active ones"
+- "From 2024"
+
+Each question refines the previous result.
+</Accordion>
+<Accordion title="Review Before Confirming Changes">
+For INSERT, UPDATE, or DELETE operations:
+1. Read the confirmation message carefully
+2. Check which rows will be affected
+3. Verify it matches your intent
+4. Consider testing on a small dataset first
+
+Data modifications are permanent.
+</Accordion>
+</AccordionGroup>
+
+## Common First-Time Questions
+
+When starting with the AI assistant, these questions are particularly useful:
+
+<CardGroup cols={2}>
+<Card title="Schema Exploration" icon="database">
+- "What tables exist?"
+- "Describe the users table"
+- "How are orders and customers related?"
+- "Show me all column names in products"
+</Card>
+<Card title="Data Sampling" icon="eye">
+- "Show me 10 sample rows from users"
+- "What does the data in products look like?"
+- "Show me a few examples from orders"
+</Card>
+<Card title="Data Validation" icon="check-circle">
+- "Are there any NULL values in the email column?"
+- "How many users have incomplete profiles?"
+- "Find duplicate email addresses"
+</Card>
+<Card title="Basic Statistics" icon="chart-simple">
+- "How many total users are there?"
+- "What's the average order value?"
+- "Count products by category"
+</Card>
+</CardGroup>
+
+## Troubleshooting Common Issues
+
+<AccordionGroup>
+<Accordion title="AI Response is Too Slow">
+**Possible causes**:
+- Large database schema being analyzed
+- Complex query generated
+- Slow AI provider or network
+- Local model (Ollama) processing on limited hardware
+
+**Solutions**:
+- Try a faster model (GPT-3.5 Turbo instead of GPT-4)
+- Be more specific to reduce query complexity
+- Switch to a cloud provider for faster response
+- Simplify the question
+</Accordion>
+<Accordion title="Results Don't Match Expectations">
+**Possible causes**:
+- Question was ambiguous
+- AI misunderstood context
+- Wrong table was queried
+
+**Solutions**:
+- View the generated SQL code
+- Rephrase your question more specifically
+- Provide table name explicitly: "from the users table"
+- Ask a follow-up to clarify: "I meant the products table"
+</Accordion>
+<Accordion title="Error: Column Not Found">
+**Cause**: Asked for a column that doesn't exist in the table
+
+**Solution**:
+- Ask: "What columns are in the users table?"
+- Check the Explore view for actual column names
+- Use exact column names from your schema
+</Accordion>
+<Accordion title="AI Says It Can't Help">
+**Possible causes**:
+- Request is outside database operations
+- Asking for external data not in your database
+- Question is too ambiguous
+
+**Solution**:
+- Rephrase to focus on data in your database
+- Be more specific about what you want
+- Start with a simpler related question
+</Accordion>
+</AccordionGroup>
+
+## What You Learned
+
+In this tutorial, you successfully:
+- Navigated to the Chat interface
+- Understood the Chat page layout and controls
+- Verified your AI provider configuration
+- Asked questions in natural language
+- Retrieved data without writing SQL
+- Viewed and understood generated SQL code
+- Handled errors and learned from them
+- Used conversation context for follow-up questions
+- Applied filters and refinements naturally
+- Understood safety confirmations for data changes
+- Built multi-turn conversations
+- Moved useful queries to Scratchpad
+
+<Check>
+You've completed your first AI-powered database exploration. These fundamentals apply to all future interactions with the AI assistant.
+</Check>
+
+## Next Steps
+
+Now that you're comfortable with basic AI queries, explore more advanced capabilities:
+
+<CardGroup cols={2}>
+<Card title="Querying Data" icon="magnifying-glass" href="/ai/querying-data">
+Learn advanced querying techniques with joins and aggregations
+</Card>
+<Card title="Modifying Data" icon="pen-to-square" href="/ai/modifying-data">
+Safely update, insert, and delete records using natural language
+</Card>
+<Card title="Conversation Features" icon="comments" href="/ai/conversation-features">
+Master context management and multi-turn dialogues
+</Card>
+<Card title="Data Exploration Workflow" icon="compass" href="/guides/tutorials/data-exploration-workflow">
+Combine AI queries with traditional data views
+</Card>
+</CardGroup>
+
+## Congratulations
+
+You've taken your first steps into AI-powered database interaction. The skills you learned here—asking clear questions, interpreting responses, refining through conversation—will serve you well as you explore more complex queries and analysis tasks.
+
+Remember: the AI assistant is a tool to augment your capabilities, not replace your judgment. Use it to explore faster, learn SQL patterns, and focus on insights rather than syntax. With practice, you'll develop intuition about how to phrase questions effectively and when to leverage AI assistance versus traditional SQL.
+
+<Tip>
+The best way to improve is practice. Try asking different types of questions about your data. Each interaction teaches you more about both your database and how to communicate with the AI assistant.
+</Tip>

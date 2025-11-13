@@ -3,10 +3,12 @@
 ## Installation
 
 ### Mac App Store
-Coming soon
+
+[Download from the Apple Store](https://apps.apple.com/app/whodb/id6754566536)
 
 ### Microsoft Store
-[Download from Microsoft Store](https://apps.microsoft.com/detail/9pftx5bv4ds6)
+
+[Download from the Microsoft Store](https://apps.microsoft.com/detail/9pftx5bv4ds6)
 
 ### Snap Store
 ```bash

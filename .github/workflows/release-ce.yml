@@ -35,6 +35,7 @@ on:
           - 'major'          # 1.0.0 -> 2.0.0
           - 'minor'          # 0.61.0 -> 0.62.0
           - 'patch'          # 0.61.0 -> 0.61.1
+          - 'current'        # Use current version (rebuild without increment)
       # Store selection (applies to both stage and production modes)
       deploy-docker:
         description: 'Deploy to Docker Hub'
@@ -120,8 +121,7 @@ jobs:
           deploy-snap: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-snap) && 'true' || 'false') }}
           deploy-microsoft: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-microsoft) && 'true' || 'false') }}
           deploy-apple: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-apple) && 'true' || 'false') }}
-          # Disable AppImage on production runs triggered by release merges (pull_request closed on 'release')
-          deploy-appimage: ${{ github.event_name == 'pull_request' && 'false' || (fromJSON(inputs.deploy-appimage) && 'true' || 'false') }}
+          deploy-appimage: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-appimage) && 'true' || 'false') }}
           publish-github-release: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.publish-github-release) && 'true' || 'false') }}
 
       - name: Display configuration
@@ -285,19 +285,18 @@ jobs:
         run: |
           mkdir -p final-assets
 
-          # Copy Snap packages
-          find artifacts -name "*.snap" -exec cp {} final-assets/ \; 2>/dev/null || true
-
           # Copy AppImage packages
-          find artifacts -name "*.AppImage" -exec cp {} final-assets/ \; 2>/dev/null || true
+          find artifacts -type f -name "*.AppImage" -exec cp {} final-assets/ \; 2>/dev/null || true
 
-          # Copy desktop builds
-          find artifacts -name "*.exe" -o -name "*.dmg" -o -name "*.pkg" \
-            -o -name "*.msixbundle" -exec cp {} final-assets/ \; 2>/dev/null || true
+          # Copy desktop builds (exe, dmg, msixbundle)
+          find artifacts -type f \( -name "*.exe" -o -name "*.dmg" -o -name "*.msixbundle" \) -exec cp {} final-assets/ \; 2>/dev/null || true
 
-          # Copy signatures
+          # Copy signatures (extract and copy only files, not directories)
           if [ -f artifacts/signatures/signatures.tar.gz ]; then
-            tar -xzf artifacts/signatures/signatures.tar.gz -C final-assets/
+            mkdir -p /tmp/sig-extract
+            tar -xzf artifacts/signatures/signatures.tar.gz -C /tmp/sig-extract/
+            find /tmp/sig-extract -type f -exec cp {} final-assets/ \; 2>/dev/null || true
+            rm -rf /tmp/sig-extract
           fi
 
           echo "📦 Release assets prepared:"
@@ -312,7 +311,7 @@ jobs:
           echo "📝 Preparing release body from template..."
 
           # Read the template
-          TEMPLATE=$(cat .github/RELEASE_TEMPLATE.md)
+          TEMPLATE=$(cat .github/templates/RELEASE_TEMPLATE.md)
 
           # Get PR description if this was triggered by a PR merge
           PR_DESCRIPTION=""
@@ -440,8 +439,8 @@ jobs:
       version: ${{ needs.calculate-version.outputs.version }}
       stage-only: ${{ needs.calculate-version.outputs.stage-only == 'true' }}
     secrets:
-      DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      DOCKER_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
   # Step 7: Generate Homebrew cask (production only)
   generate-homebrew-cask:

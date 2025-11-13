@@ -1,0 +1,1036 @@
+---
+title: "Querying Data with AI Chat"
+description: "Master the art of retrieving and analyzing database data using natural language queries"
+---
+
+# Querying Data with AI Chat
+
+WhoDB's AI Chat Assistant transforms database querying from a technical task into a natural conversation. Ask questions in plain English and get instant results with interactive tables, generated SQL, and intelligent error handling.
+
+<Tip>
+The AI assistant understands your database schema and generates optimized queries specific to your database type
+</Tip>
+
+## Introduction to AI-Powered Querying
+
+Traditional database querying requires knowledge of SQL syntax, table structures, and join relationships. The AI Chat Assistant eliminates these barriers by translating natural language into accurate SQL queries.
+
+![Example Prompts](/images/104-chat-example-prompts.png)
+
+### What Makes AI Querying Different?
+
+<CardGroup cols={2}>
+<Card title="Natural Language" icon="comment-dots">
+Ask questions conversationally without memorizing syntax
+</Card>
+<Card title="Schema Aware" icon="sitemap">
+The assistant knows your tables, columns, and relationships
+</Card>
+<Card title="Instant Results" icon="bolt">
+See data immediately without writing a single line of SQL
+</Card>
+<Card title="Learning Tool" icon="graduation-cap">
+View generated SQL to understand how queries work
+</Card>
+</CardGroup>
+
+## Getting Started with Simple Queries
+
+### Asking Your First Question
+
+The simplest way to start is by asking basic questions about your data:
+
+<Steps>
+<Step title="Navigate to Chat">
+Click the Chat icon in the sidebar to access the AI assistant.
+</Step>
+<Step title="Type Your Question">
+In the input field at the bottom, type a natural language question:
+
+```text Example Questions
+Show me all users
+List all products
+Display recent orders
+```
+</Step>
+<Step title="Press Enter">
+Send your message and wait for the AI to respond.
+</Step>
+<Step title="View Results">
+The assistant will display the results in an interactive table.
+
+![SQL Query Results](/images/106-chat-sql-query-results.png)
+</Step>
+</Steps>
+
+### Simple Text Responses
+
+For general questions or informational queries, the assistant provides text responses:
+
+![Simple Text Response](/images/105-chat-simple-text-response.png)
+
+**Example interactions:**
+- "Hello" - Gets a greeting and overview of capabilities
+- "What tables are available?" - Lists your database tables
+- "Explain what the users table contains" - Provides schema information
+
+<Info>
+Text responses are perfect for understanding your database structure before diving into queries
+</Info>
+
+## Retrieving Data with SELECT Queries
+
+The AI assistant excels at generating SELECT queries that retrieve data from your tables.
+
+### Basic Data Retrieval
+
+Ask for data in natural language:
+
+```text Natural Language
+Show me all users
+```
+
+The assistant generates and executes:
+
+```sql Generated SQL
+SELECT * FROM users ORDER BY id
+```
+
+**Result**: Interactive table with all user records
+
+### Retrieving Specific Columns
+
+Be more specific about what you want to see:
+
+```text Natural Language
+Show me usernames and emails from the users table
+```
+
+**Generated SQL**:
+```sql
+SELECT username, email FROM users
+```
+
+<Tip>
+Specify column names in your questions for more focused results
+</Tip>
+
+### Limiting Results
+
+Control how much data you retrieve:
+
+```text Natural Language Examples
+Show me the first 10 users
+Get 5 recent orders
+Display 20 products
+```
+
+**Generated SQL**:
+```sql
+SELECT * FROM users ORDER BY id LIMIT 10
+```
+
+### Filtering Data
+
+Add conditions to narrow down results:
+
+```text Natural Language Examples
+Show me users created after 2024-01-01
+Find products that cost more than $100
+Get orders with status 'completed'
+Show me users with admin in their username
+```
+
+**Example Generated SQL**:
+```sql
+SELECT * FROM users
+WHERE created_at > '2024-01-01'
+ORDER BY created_at DESC
+```
+
+### Sorting Results
+
+Request specific ordering:
+
+```text Natural Language Examples
+Show me users sorted by creation date
+List products ordered by price descending
+Display orders sorted by most recent first
+```
+
+**Generated SQL**:
+```sql
+SELECT * FROM users
+ORDER BY created_at DESC
+```
+
+## Viewing SQL Code
+
+One of the most powerful features is the ability to toggle between table results and the generated SQL code.
+
+### SQL Code Toggle
+
+When the assistant returns query results:
+
+<Steps>
+<Step title="Locate the SQL Toggle">
+Above the results table, find the "View SQL" or code icon button.
+</Step>
+<Step title="Click to View SQL">
+Click the toggle to switch from table view to SQL code view.
+
+![SQL Code View](/images/107-chat-sql-code-view.png)
+</Step>
+<Step title="Review the Query">
+Examine the generated SQL to understand how your question was translated.
+</Step>
+<Step title="Toggle Back">
+Click the toggle again to return to the table view.
+</Step>
+</Steps>
+
+### Why View SQL Code?
+
+<AccordionGroup>
+<Accordion title="Learn SQL">
+See how natural language maps to SQL syntax. This is invaluable for learning or improving your SQL skills.
+
+```sql Example Learning
+Question: "Count users by email domain"
+
+Generated SQL:
+SELECT
+  SUBSTRING(email FROM POSITION('@' IN email) + 1) as domain,
+  COUNT(*) as user_count
+FROM users
+GROUP BY domain
+ORDER BY user_count DESC
+```
+
+You learn about string functions, aggregation, and grouping all at once.
+</Accordion>
+<Accordion title="Verify Query Logic">
+For important queries, review the SQL to ensure it matches your intent:
+
+- Check JOIN conditions
+- Verify WHERE clauses
+- Confirm GROUP BY logic
+- Validate ORDER BY direction
+</Accordion>
+<Accordion title="Copy for Reuse">
+Copy generated SQL to:
+- Use in your application code
+- Save in the Scratchpad for refinement
+- Share with teammates
+- Document your analysis process
+</Accordion>
+<Accordion title="Debug Issues">
+If results aren't what you expected, viewing the SQL helps identify:
+- Wrong table references
+- Incorrect column names
+- Missing filters
+- Unexpected joins
+</Accordion>
+</AccordionGroup>
+
+## Complex Queries
+
+The AI assistant handles sophisticated queries including aggregations, joins, and multi-step logic.
+
+### Aggregation Queries
+
+Count, sum, average, and other statistical operations:
+
+```text Natural Language Examples
+Count users by email domain
+What's the average order value?
+Show me total revenue by product category
+Count orders grouped by status
+Find the minimum and maximum prices
+```
+
+**Example Generated SQL**:
+```sql
+SELECT
+  SUBSTRING(email FROM POSITION('@' IN email) + 1) as domain,
+  COUNT(*) as user_count
+FROM users
+GROUP BY domain
+ORDER BY user_count DESC
+```
+
+![Aggregation Query](/images/109-chat-aggregation-query.png)
+
+### Available Aggregation Functions
+
+<CardGroup cols={2}>
+<Card title="COUNT" icon="hashtag">
+Count records or non-null values
+- "How many users do we have?"
+- "Count orders by status"
+</Card>
+<Card title="SUM" icon="plus">
+Calculate totals
+- "What's the total revenue?"
+- "Sum order amounts by month"
+</Card>
+<Card title="AVG" icon="chart-line">
+Calculate averages
+- "Average order value"
+- "Mean product price by category"
+</Card>
+<Card title="MIN/MAX" icon="arrows-left-right">
+Find extremes
+- "Highest and lowest prices"
+- "Most recent order date"
+</Card>
+</CardGroup>
+
+### Multi-Table Queries (Joins)
+
+Ask questions that span multiple tables:
+
+```text Natural Language Examples
+Show me users and their order counts
+List products with their category names
+Display orders with customer information
+Find users who have placed orders
+```
+
+**Example Generated SQL**:
+```sql
+SELECT
+  u.id,
+  u.username,
+  COUNT(o.id) as order_count,
+  SUM(o.total) as total_spent
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+GROUP BY u.id, u.username
+ORDER BY total_spent DESC
+```
+
+<Info>
+The AI assistant automatically determines the correct JOIN type and conditions based on your schema
+</Info>
+
+### Date-Based Queries
+
+Filter and group by time periods:
+
+```text Natural Language Examples
+Show me orders from last month
+Count signups by day for the past week
+Display users created in 2024
+Find orders placed this year
+Show revenue grouped by month
+```
+
+**Example Generated SQL**:
+```sql
+SELECT
+  DATE_TRUNC('month', created_at) as month,
+  COUNT(*) as order_count,
+  SUM(total) as revenue
+FROM orders
+WHERE created_at >= '2024-01-01'
+GROUP BY DATE_TRUNC('month', created_at)
+ORDER BY month DESC
+```
+
+### Pattern Matching
+
+Search for records with specific patterns:
+
+```text Natural Language Examples
+Find users with gmail email addresses
+Show products containing 'laptop' in the name
+Get orders where customer name starts with 'A'
+Find entries with 'test' in any field
+```
+
+**Generated SQL**:
+```sql
+SELECT * FROM users
+WHERE email LIKE '%@gmail.com'
+```
+
+### Combining Multiple Conditions
+
+Ask complex questions with multiple criteria:
+
+```text Natural Language Examples
+Show me active users who joined after 2024-01-01 and have made at least 5 orders
+Find expensive products (over $100) that are in stock and on sale
+Display recent orders that are completed and have a total over $50
+```
+
+**Example Generated SQL**:
+```sql
+SELECT u.*
+FROM users u
+WHERE u.status = 'active'
+  AND u.created_at > '2024-01-01'
+  AND (
+    SELECT COUNT(*)
+    FROM orders o
+    WHERE o.user_id = u.id
+  ) >= 5
+```
+
+## Understanding Query Results
+
+When the AI assistant returns data, you get an interactive table with powerful features.
+
+### Interactive Results Table
+
+![SQL Query Results](/images/106-chat-sql-query-results.png)
+
+**Table Features**:
+- **Column Headers**: Show field names from your query
+- **Sortable Columns**: Click headers to sort (if supported)
+- **Scrollable**: Navigate large result sets
+- **Readable Formatting**: Data types displayed appropriately
+- **Row Numbers**: Track position in results
+
+### Result Metadata
+
+The assistant provides context about your results:
+
+```text Example Result Context
+"I'll retrieve all users from the database for you."
+
+3 rows returned
+Columns: id, username, email, password, created_at
+```
+
+### Null Values
+
+NULL values in your data are clearly indicated:
+- Empty cells for NULL
+- Special indicators (varies by theme)
+- Distinguishable from empty strings
+
+### Large Result Sets
+
+For queries returning many rows:
+- Results may be paginated
+- Scroll to view all data
+- Consider adding LIMIT in your question
+
+<Warning>
+Very large result sets may take longer to load. Ask the assistant to limit results if you only need a sample
+</Warning>
+
+## Handling Errors
+
+The AI assistant provides clear, helpful error messages when queries fail.
+
+![Error Message](/images/108-chat-error-message.png)
+
+### Common Error Types
+
+<AccordionGroup>
+<Accordion title="Table or Column Not Found">
+**Error Example**:
+```
+ERROR: relation "test_schema.nonexistent_table" does not exist
+```
+
+**What It Means**: The table or column name doesn't exist in your schema.
+
+**Solutions**:
+- Check your table/column names
+- Rephrase your question more clearly
+- Ask "What tables are available?"
+- Verify spelling and schema name
+</Accordion>
+<Accordion title="Permission Denied">
+**Error Example**:
+```
+ERROR: permission denied for table users
+```
+
+**What It Means**: Your database user lacks permissions for this operation.
+
+**Solutions**:
+- Contact your database administrator
+- Use a different database connection with appropriate permissions
+- Ask for read-only alternatives
+</Accordion>
+<Accordion title="Syntax Error">
+**Error Example**:
+```
+ERROR: syntax error at or near "FROM"
+```
+
+**What It Means**: The generated SQL has invalid syntax (rare but possible).
+
+**Solutions**:
+- Rephrase your question more clearly
+- Break complex questions into simpler steps
+- Provide more specific details about what you want
+</Accordion>
+<Accordion title="Type Mismatch">
+**Error Example**:
+```
+ERROR: column "price" is of type numeric but expression is of type text
+```
+
+**What It Means**: Data type incompatibility in the query.
+
+**Solutions**:
+- Clarify data types in your question
+- Ask about the schema first
+- Rephrase with correct type expectations
+</Accordion>
+<Accordion title="Timeout">
+**Error Example**:
+```
+ERROR: query execution timeout
+```
+
+**What It Means**: The query took too long to execute.
+
+**Solutions**:
+- Add more specific filters to reduce data volume
+- Ask for a limited result set
+- Break down into smaller queries
+- Contact administrator about database performance
+</Accordion>
+</AccordionGroup>
+
+### Recovering from Errors
+
+<Steps>
+<Step title="Read the Error Message">
+The error message contains clues about what went wrong.
+</Step>
+<Step title="Rephrase Your Question">
+Try asking the same thing in a different way:
+
+```text Original
+Show me data from nonexistent_table
+
+Rephrased
+What tables are available?
+```
+</Step>
+<Step title="Simplify">
+Break complex queries into steps:
+
+```text Complex (may fail)
+Show me average order value by month for premium users who joined in 2024
+
+Simpler (more reliable)
+1. Show me premium users
+2. [After reviewing] Show me order values for these users
+3. [After reviewing] Calculate average by month
+```
+</Step>
+<Step title="Ask for Help">
+The assistant can explain what went wrong:
+
+```text
+Why did my last query fail?
+Can you explain the error message?
+```
+</Step>
+</Steps>
+
+## Multi-Turn Conversations
+
+One of the AI assistant's most powerful features is maintaining conversation context for follow-up questions.
+
+![Multiple Messages](/images/112-chat-multiple-messages.png)
+
+### Building on Previous Queries
+
+The assistant remembers your conversation:
+
+```text Conversation Flow
+You: What is in the users table?
+AI: The users table contains user account information including
+    usernames, emails, and creation timestamps.
+
+You: Show me when users were created
+AI: [Executes query grouping users by creation date]
+```
+
+The second question builds on the context of the first without needing to specify "users table" again.
+
+### Refining Results
+
+Iteratively refine your queries:
+
+```text Iterative Refinement
+You: Show me all users
+AI: [Returns 1000 users]
+
+You: Just the first 10
+AI: [Returns 10 users]
+
+You: Sort by most recent
+AI: [Returns 10 users sorted by created_at DESC]
+
+You: Only active users
+AI: [Returns 10 active users sorted by created_at DESC]
+```
+
+Each question builds on the previous context.
+
+### Contextual Follow-Ups
+
+Ask follow-up questions naturally:
+
+```text Contextual Questions
+You: Show me all orders
+AI: [Returns orders]
+
+You: How many are there?
+AI: [Returns count of orders]
+
+You: What about completed ones?
+AI: [Returns count of completed orders]
+
+You: Show me those
+AI: [Returns completed orders]
+```
+
+<Tip>
+Use pronouns like "them," "those," "these" naturally—the assistant understands what you're referring to
+</Tip>
+
+### Chat History Navigation
+
+Navigate through your conversation history using keyboard shortcuts:
+
+<Steps>
+<Step title="Press Up Arrow">
+In the input field, press the Up arrow key.
+</Step>
+<Step title="Previous Message Loads">
+Your previous message appears in the input field.
+</Step>
+<Step title="Continue Pressing Up">
+Keep pressing Up to go further back in your history.
+</Step>
+<Step title="Press Down Arrow">
+Press Down to move forward through your history.
+</Step>
+<Step title="Edit and Resend">
+Modify the loaded message and press Enter to resend.
+</Step>
+</Steps>
+
+**Keyboard Shortcuts**:
+- `Up Arrow`: Previous message
+- `Down Arrow`: Next message
+- `Ctrl/Cmd + Enter`: Send message
+
+## Example Workflows
+
+### Workflow 1: Data Exploration
+
+Explore an unfamiliar database systematically:
+
+<Steps>
+<Step title="List Tables">
+```text
+What tables are available?
+```
+</Step>
+<Step title="Examine Schema">
+```text
+Describe the users table
+```
+</Step>
+<Step title="Sample Data">
+```text
+Show me 5 sample users
+```
+</Step>
+<Step title="Check Relationships">
+```text
+How are users related to orders?
+```
+</Step>
+<Step title="Analyze Data">
+```text
+Count users by status
+```
+</Step>
+</Steps>
+
+### Workflow 2: Ad-Hoc Reporting
+
+Generate a quick business report:
+
+<Steps>
+<Step title="Get Baseline Metrics">
+```text
+How many orders were placed this month?
+```
+</Step>
+<Step title="Revenue Analysis">
+```text
+What's the total revenue?
+```
+</Step>
+<Step title="Segment by Category">
+```text
+Show me revenue by product category
+```
+</Step>
+<Step title="Identify Top Performers">
+```text
+Which products generated the most revenue?
+```
+</Step>
+<Step title="Customer Insights">
+```text
+How many customers made purchases this month?
+```
+</Step>
+</Steps>
+
+### Workflow 3: Data Quality Check
+
+Validate data integrity:
+
+<Steps>
+<Step title="Check for Nulls">
+```text
+Show me users with missing email addresses
+```
+</Step>
+<Step title="Find Duplicates">
+```text
+Find duplicate email addresses in the users table
+```
+</Step>
+<Step title="Validate Ranges">
+```text
+Show me products with negative prices
+```
+</Step>
+<Step title="Check Relationships">
+```text
+Find orders without corresponding users
+```
+</Step>
+<Step title="Verify Formats">
+```text
+Show me invalid email formats in the users table
+```
+</Step>
+</Steps>
+
+### Workflow 4: Learning SQL
+
+Use the AI as a SQL tutor:
+
+<Steps>
+<Step title="Start Simple">
+```text
+Show me all users
+```
+View the generated SQL (SELECT * FROM users)
+</Step>
+<Step title="Add Filtering">
+```text
+Show me active users
+```
+View SQL to learn WHERE clauses
+</Step>
+<Step title="Learn Aggregation">
+```text
+Count users by status
+```
+View SQL to understand GROUP BY
+</Step>
+<Step title="Try Joins">
+```text
+Show me users and their order counts
+```
+View SQL to learn JOIN syntax
+</Step>
+<Step title="Copy to Scratchpad">
+Use the "Move to Scratchpad" feature to experiment with modifications
+</Step>
+</Steps>
+
+## Moving Queries to Scratchpad
+
+When you generate a useful query, save it for future use:
+
+![Move to Scratchpad Dialog](/images/113-chat-move-to-scratchpad-dialog.png)
+
+<Steps>
+<Step title="Find the Query">
+Locate a query result with SQL you want to save.
+</Step>
+<Step title="Click Move to Scratchpad">
+Click the "Move to Scratchpad" button (usually near the SQL view toggle).
+</Step>
+<Step title="Choose Destination">
+**New Page**: Creates a new Scratchpad page with this query
+**Existing Page**: Adds to an existing Scratchpad page
+
+Provide a page name if creating new.
+</Step>
+<Step title="Confirm">
+Click Confirm to move the query.
+</Step>
+<Step title="Access in Scratchpad">
+Navigate to Scratchpad to find your saved query, where you can:
+- Edit and refine it
+- Add comments
+- Execute multiple times
+- Share with teammates
+</Step>
+</Steps>
+
+<Info>
+Queries moved to Scratchpad retain their original SQL exactly as generated by the AI
+</Info>
+
+## Best Practices
+
+<Steps>
+<Step title="Start Specific, Then Generalize">
+Begin with clear, specific questions:
+
+**Good**: "Show me users created after January 1, 2024"
+**Avoid**: "Show me some users"
+</Step>
+<Step title="Mention Table Names When Ambiguous">
+If you have multiple tables with similar columns:
+
+**Good**: "Count active records in the users table"
+**Avoid**: "Count active records" (which table?)
+</Step>
+<Step title="Use Natural Language">
+Don't try to speak SQL syntax:
+
+**Good**: "Show me users who joined in the last week"
+**Avoid**: "SELECT * FROM users WHERE created_at > NOW() - INTERVAL '7 days'"
+</Step>
+<Step title="Review Generated SQL for Important Operations">
+Before acting on results for critical decisions:
+
+1. Toggle to SQL view
+2. Verify the query logic
+3. Check JOINs and WHERE conditions
+4. Confirm aggregation functions
+</Step>
+<Step title="Build Complex Queries Incrementally">
+For sophisticated analysis:
+
+1. Start with basic query
+2. Verify results
+3. Add filters or aggregations
+4. Verify again
+5. Continue building
+</Step>
+<Step title="Use Context">
+Take advantage of conversation history:
+
+- Reference previous queries
+- Use follow-up questions
+- Build on earlier results
+</Step>
+<Step title="Be Patient with Large Queries">
+Complex queries on large tables may take time:
+
+- Add LIMIT for initial exploration
+- Use specific filters to reduce data volume
+- Break very complex operations into steps
+</Step>
+</Steps>
+
+## Keyboard Shortcuts
+
+Efficient keyboard navigation speeds up your workflow:
+
+| Shortcut | Action |
+|----------|--------|
+| `Up Arrow` | Previous message in history |
+| `Down Arrow` | Next message in history |
+| `Enter` | Send message |
+| `Ctrl/Cmd + Enter` | Send message (alternative) |
+| `Escape` | Clear input field |
+| `Ctrl/Cmd + K` | Focus on input field |
+
+## Troubleshooting
+
+<AccordionGroup>
+<Accordion title="AI Doesn't Understand My Question">
+**Symptom**: The generated query doesn't match what you wanted.
+
+**Solutions**:
+1. Rephrase using different words
+2. Be more specific about table and column names
+3. Break complex questions into simpler parts
+4. Ask the assistant to explain what it understood
+5. Provide an example of what you want to see
+
+Try: "Show me users who signed up recently" instead of "Get the new people"
+</Accordion>
+<Accordion title="Results Are Different Than Expected">
+**Symptom**: Query executes but returns unexpected data.
+
+**Solutions**:
+1. View the generated SQL to understand the logic
+2. Check if filters are applied correctly
+3. Verify you're querying the right table
+4. Ask "What columns are in the [table] table?"
+5. Add more specific conditions to your question
+
+Try: "Show me active users with more than 5 orders" to clarify conditions
+</Accordion>
+<Accordion title="Query Takes Too Long">
+**Symptom**: The assistant or query execution is very slow.
+
+**Solutions**:
+1. Add LIMIT to your question: "Show me the first 100 users"
+2. Add specific filters to reduce data volume
+3. Break large operations into smaller queries
+4. Check with your administrator about database performance
+5. Use more specific time ranges for date filters
+
+Try: "Show me users from the last month limit 50" instead of "Show me all users"
+</Accordion>
+<Accordion title="Can't Find My Previous Query">
+**Symptom**: You want to re-run a query but can't find it.
+
+**Solutions**:
+1. Use Up arrow to navigate through message history
+2. Scroll up in the chat to find the previous response
+3. Check Scratchpad if you moved the query there
+4. Ask the assistant to repeat: "Can you show me that last query again?"
+
+Next time: Move important queries to Scratchpad for permanent storage
+</Accordion>
+<Accordion title="AI Returns Text Instead of Data">
+**Symptom**: You expected a table but got a text explanation.
+
+**Solutions**:
+1. Make your question more action-oriented
+2. Use verbs like "show," "list," "display," "find"
+3. Specify what data you want to see
+4. Avoid purely informational questions when you want data
+
+Try: "Show me all users" instead of "Tell me about users"
+</Accordion>
+<Accordion title="Results Missing Expected Columns">
+**Symptom**: The result table doesn't include columns you need.
+
+**Solutions**:
+1. Explicitly mention the columns you want
+2. Review the generated SQL to see what was selected
+3. Ask a follow-up: "Show me the same data but include [column name]"
+4. Be specific: "Show me id, username, and email from users"
+
+Try: "Show me user id, username, email, and status" for complete results
+</Accordion>
+</AccordionGroup>
+
+## Limitations
+
+Understanding limitations helps set appropriate expectations:
+
+<AccordionGroup>
+<Accordion title="Extremely Complex Logic">
+While the AI handles sophisticated queries well, some extremely complex operations may require:
+- Manual SQL in Scratchpad
+- Breaking into multiple simpler queries
+- Custom query optimization
+
+**Example Complex Cases**:
+- Recursive CTEs with deep nesting
+- Dynamic pivot operations
+- Complex window functions with multiple partitions
+</Accordion>
+<Accordion title="Database-Specific Functions">
+The AI adapts to your database type but:
+- Some advanced, database-specific functions may need clarification
+- Proprietary extensions might not be fully understood
+- Non-standard syntax may require manual refinement
+
+**Solution**: Move to Scratchpad for advanced database-specific features
+</Accordion>
+<Accordion title="Performance Optimization">
+The AI generates correct queries but may not always produce the most optimized version for:
+- Very large tables (millions of rows)
+- Complex join scenarios
+- Specific index usage
+
+**Solution**: Review and optimize generated SQL in Scratchpad for performance-critical queries
+</Accordion>
+<Accordion title="Ambiguous Questions">
+If your question could be interpreted multiple ways:
+- The AI will make its best guess
+- May ask clarifying questions
+- Might not choose the interpretation you intended
+
+**Solution**: Be as specific as possible, especially with column names and conditions
+</Accordion>
+</AccordionGroup>
+
+## Privacy and Security
+
+<Warning>
+For sensitive data, consider using local AI models (Ollama) instead of cloud providers
+</Warning>
+
+### What Gets Sent to AI Providers
+
+**Sent to AI**:
+- Your question text
+- Database schema (table and column names)
+- Database type (PostgreSQL, MySQL, etc.)
+
+**Never Sent**:
+- Actual data from your tables
+- Query results
+- Connection credentials
+- Passwords or sensitive configuration
+
+### Best Practices for Sensitive Data
+
+<Steps>
+<Step title="Use Local Models">
+Configure Ollama for complete data privacy—nothing leaves your machine.
+</Step>
+<Step title="Review Organization Policies">
+Check your company's policies on using external AI services before enabling cloud providers.
+</Step>
+<Step title="Avoid Sensitive Schema Names">
+If table/column names contain sensitive information, use Ollama or rename schema elements.
+</Step>
+<Step title="Use Read-Only Connections">
+Configure your database connection with read-only permissions for exploratory querying.
+</Step>
+</Steps>
+
+## Next Steps
+
+<CardGroup cols={2}>
+<Card title="Modifying Data" icon="pen-to-square" href="/ai/modifying-data">
+Learn how to safely update, insert, and delete data using the AI assistant
+</Card>
+<Card title="Conversation Features" icon="comments" href="/ai/conversation-features">
+Master advanced conversation features and context management
+</Card>
+<Card title="Scratchpad Integration" icon="code" href="/query/scratchpad-intro">
+Move generated queries to Scratchpad for refinement and reuse
+</Card>
+<Card title="Best Practices" icon="star" href="/best-practices/ai-usage">
+Discover optimal patterns for AI-assisted database work
+</Card>
+</CardGroup>
+
+<Check>
+You now have the skills to query databases naturally using AI, view and understand generated SQL, and handle complex data retrieval scenarios
+</Check>
