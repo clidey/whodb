@@ -707,7 +707,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: desktop-${{ matrix.platform }}-${{ matrix.arch || 'all' }}
-          path: desktop-${{ inputs.edition }}/build/
+          path: |
+            desktop-${{ inputs.edition }}/build/
+            desktop-${{ inputs.edition }}/webview2/
           retention-days: 1
 
       # Cleanup keychain (macOS only)
