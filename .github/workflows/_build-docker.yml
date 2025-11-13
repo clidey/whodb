@@ -59,25 +59,26 @@ jobs:
         run: |
           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
 
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('frontend/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+      # CACHING DISABLED TO AVOID STALE CACHE ISSUES
+      # - name: Setup pnpm cache
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+      #     key: ${{ runner.os }}-pnpm-store-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-pnpm-store-
 
-      - name: Cache frontend build
-        id: frontend-cache
-        uses: actions/cache@v4
-        with:
-          path: frontend/build
-          key: frontend-build-${{ inputs.edition }}-${{ hashFiles('frontend/package.json', 'frontend/pnpm-lock.yaml', 'frontend/tsconfig.json') }}
-          restore-keys: |
-            frontend-build-${{ inputs.edition }}-
+      # - name: Cache frontend build
+      #   id: frontend-cache
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: frontend/build
+      #     key: frontend-build-${{ inputs.edition }}-${{ hashFiles('frontend/package.json', 'frontend/pnpm-lock.yaml', 'frontend/tsconfig.json') }}
+      #     restore-keys: |
+      #       frontend-build-${{ inputs.edition }}-
 
-      - name: Build frontend if needed
-        if: steps.frontend-cache.outputs.cache-hit != 'true'
+      - name: Build frontend
+        # Always build frontend since cache is disabled
         working-directory: ./frontend
         env:
           CYPRESS_INSTALL_BINARY: "0"

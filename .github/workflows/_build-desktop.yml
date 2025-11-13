@@ -98,18 +98,19 @@ jobs:
             core/go.sum
             core/go.mod
 
-      - name: Cache Go build artifacts
-        if: matrix.enabled != false
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/Library/Caches/go-build
-            ~/AppData/Local/go-build
-          key: ${{ runner.os }}-${{ runner.arch }}-go-build-${{ hashFiles('core/go.sum', 'desktop-ce/go.sum', 'desktop-ee/go.sum', 'core/go.mod', 'desktop-ce/go.mod', 'desktop-ee/go.mod') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-go-build-
-            ${{ runner.os }}-go-build-
+      # CACHING DISABLED TO AVOID STALE CACHE ISSUES
+      # - name: Cache Go build artifacts
+      #   if: matrix.enabled != false
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: |
+      #       ~/.cache/go-build
+      #       ~/Library/Caches/go-build
+      #       ~/AppData/Local/go-build
+      #     key: ${{ runner.os }}-${{ runner.arch }}-go-build-${{ hashFiles('core/go.sum', 'desktop-ce/go.sum', 'desktop-ee/go.sum', 'core/go.mod', 'desktop-ce/go.mod', 'desktop-ee/go.mod') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-${{ runner.arch }}-go-build-
+      #       ${{ runner.os }}-go-build-
 
       - name: Setup Node.js and pnpm
         if: matrix.enabled != false
@@ -130,24 +131,22 @@ jobs:
         run: |
           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
 
-      - name: Setup pnpm cache
-        if: matrix.enabled != false
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('frontend/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+      # - name: Setup pnpm cache
+      #   if: matrix.enabled != false
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+      #     key: ${{ runner.os }}-pnpm-store-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-pnpm-store-
 
-      - name: Cache frontend build
-        if: matrix.enabled != false
-        id: frontend-cache
-        uses: actions/cache@v4
-        with:
-          path: frontend/build
-          key: frontend-build-${{ inputs.edition }}-${{ hashFiles('frontend/package.json', 'frontend/pnpm-lock.yaml', 'frontend/tsconfig.json') }}
-          restore-keys: |
-            frontend-build-${{ inputs.edition }}-
+      # - name: Cache frontend build
+      #   if: matrix.enabled != false
+      #   id: frontend-cache
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: frontend/build
+      #     key: frontend-build-${{ inputs.edition }}-${{ hashFiles('frontend/src/**', 'frontend/package.json', 'frontend/pnpm-lock.yaml', 'frontend/tsconfig.json') }}-v2
 
       - name: Install frontend dependencies
         if: matrix.enabled != false
@@ -156,17 +155,17 @@ jobs:
           CYPRESS_INSTALL_BINARY: "0"  # Skip Cypress binary - not needed for production builds
         run: pnpm i
 
-      - name: Cache Wails binary
-        if: matrix.enabled != false
-        id: cache-wails
-        uses: actions/cache@v4
-        with:
-          path: ~/go/bin/wails
-          key: ${{ runner.os }}-${{ runner.arch }}-wails-v2-latest
+      # - name: Cache Wails binary
+      #   if: matrix.enabled != false
+      #   id: cache-wails
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: ~/go/bin/wails
+      #     key: ${{ runner.os }}-${{ runner.arch }}-wails-v2.10.2
 
       - name: Install Wails CLI
-        if: matrix.enabled != false && steps.cache-wails.outputs.cache-hit != 'true'
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+        if: matrix.enabled != false
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.11.0
 
       # Import Apple Developer certificates for macOS DMG signing
       - name: Import Apple Developer Certificates (Developer ID)
@@ -243,6 +242,7 @@ jobs:
           echo "$MAS_PROVISIONING_PROFILE" | base64 --decode -o desktop-${{ inputs.edition }}/build/darwin/embedded.provisionprofile
           echo "✅ Provisioning profile saved"
 
+
       # Windows AMD64 Build
       - name: Build Windows AMD64
         if: matrix.platform == 'windows' && matrix.arch == 'amd64' && matrix.enabled != false
@@ -271,7 +271,9 @@ jobs:
           Set-Location ../desktop-${{ inputs.edition }}
 
           Write-Host "Using Makefile to build..."
+          Write-Host "Building with VERSION=${{ inputs.version }}"
           # Use the CI-specific target that doesn't rebuild frontend
+          $env:VERSION = "${{ inputs.version }}"
           make ${{ matrix.make-target }} VERSION="${{ inputs.version }}"
 
           if ($LASTEXITCODE -ne 0) {
@@ -631,7 +633,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: desktop-${{ matrix.platform }}-${{ matrix.arch || 'all' }}
-          path: desktop-${{ inputs.edition }}/build/
+          path: |
+            desktop-${{ inputs.edition }}/build/
           retention-days: 1
 
       # Cleanup keychain (macOS only)

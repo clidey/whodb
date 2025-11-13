@@ -37,9 +37,13 @@ const getStoredConsent = (): ConsentState => {
     if (typeof window === 'undefined') {
         return 'unknown';
     }
-    const stored = window.localStorage.getItem(CONSENT_STORAGE_KEY);
-    if (stored === 'granted' || stored === 'denied') {
-        return stored;
+    try {
+        const stored = window.localStorage?.getItem(CONSENT_STORAGE_KEY);
+        if (stored === 'granted' || stored === 'denied') {
+            return stored;
+        }
+    } catch (e) {
+        console.warn('Failed to access localStorage for consent:', e);
     }
     return 'unknown';
 };
@@ -48,10 +52,14 @@ const persistConsent = (consent: ConsentState) => {
     if (typeof window === 'undefined') {
         return;
     }
-    if (consent === 'unknown') {
-        window.localStorage.removeItem(CONSENT_STORAGE_KEY);
-    } else {
-        window.localStorage.setItem(CONSENT_STORAGE_KEY, consent);
+    try {
+        if (consent === 'unknown') {
+            window.localStorage?.removeItem(CONSENT_STORAGE_KEY);
+        } else {
+            window.localStorage?.setItem(CONSENT_STORAGE_KEY, consent);
+        }
+    } catch (e) {
+        console.warn('Failed to persist consent to localStorage:', e);
     }
 };
 
@@ -60,10 +68,14 @@ const persistDistinctId = (distinctId: string | null) => {
     if (typeof window === 'undefined') {
         return;
     }
-    if (distinctId) {
-        window.localStorage.setItem(DISTINCT_ID_STORAGE_KEY, distinctId);
-    } else {
-        window.localStorage.removeItem(DISTINCT_ID_STORAGE_KEY);
+    try {
+        if (distinctId) {
+            window.localStorage?.setItem(DISTINCT_ID_STORAGE_KEY, distinctId);
+        } else {
+            window.localStorage?.removeItem(DISTINCT_ID_STORAGE_KEY);
+        }
+    } catch (e) {
+        console.warn('Failed to persist distinct ID to localStorage:', e);
     }
 };
 
@@ -74,13 +86,20 @@ const loadStoredDistinctId = (): string | null => {
     if (typeof window === 'undefined') {
         return null;
     }
-    cachedDistinctId = window.localStorage.getItem(DISTINCT_ID_STORAGE_KEY);
+    try {
+        cachedDistinctId = window.localStorage?.getItem(DISTINCT_ID_STORAGE_KEY) || null;
+    } catch (e) {
+        console.warn('Failed to load distinct ID from localStorage:', e);
+    }
     return cachedDistinctId;
 };
 
 const ensurePosthogModule = async () => {
     if (!posthogModulePromise) {
-        posthogModulePromise = import('posthog-js');
+        posthogModulePromise = import('posthog-js').catch(err => {
+            console.warn('Failed to load PostHog module:', err);
+            throw err;
+        });
     }
     return posthogModulePromise;
 };
@@ -90,10 +109,16 @@ const registerContext = (client: PostHog) => {
         return;
     }
     const domain = window.location.hostname || 'localhost';
+
+    // Check if running as desktop app
+    const isDesktop = !!(window as any).go?.main?.App || !!(window as any).go?.common?.App;
+
     client.register({
         site_domain: domain,
         build_environment: getEnvEnvironment(),
         build_edition: getBuildEdition(),
+        app_type: isDesktop ? 'desktop' : 'web',
+        platform: isDesktop ? 'wails' : 'browser',
     });
 };
 
@@ -111,20 +136,27 @@ const registerGlobalHandlers = (client: PostHog) => {
     }
     handlersRegistered = true;
 
-    window.addEventListener('error', (event) => {
-        if (!event?.error) {
-            return;
-        }
-        captureClientException(client, event.error, {source: 'window.error'});
-    });
+    // Delay handler registration to ensure Wails is fully initialized
+    setTimeout(() => {
+        try {
+            window.addEventListener('error', (event) => {
+                if (!event?.error) {
+                    return;
+                }
+                captureClientException(client, event.error, {source: 'window.error'});
+            });
 
-    window.addEventListener('unhandledrejection', (event) => {
-        if (!event) {
-            return;
+            window.addEventListener('unhandledrejection', (event) => {
+                if (!event) {
+                    return;
+                }
+                const reason = event.reason instanceof Error ? event.reason : new Error(String(event.reason ?? 'unknown rejection'));
+                captureClientException(client, reason, {source: 'window.unhandledrejection'});
+            });
+        } catch (e) {
+            console.warn('Failed to register global error handlers:', e);
         }
-        const reason = event.reason instanceof Error ? event.reason : new Error(String(event.reason ?? 'unknown rejection'));
-        captureClientException(client, reason, {source: 'window.unhandledrejection'});
-    });
+    }, 100);
 };
 
 const ensureInitializedClient = async (): Promise<PostHog | null> => {
@@ -162,6 +194,17 @@ const ensureInitializedClient = async (): Promise<PostHog | null> => {
     initPromise = (async () => {
         const {default: posthog} = await ensurePosthogModule();
 
+        // Debug logging for desktop environments
+        const isDesktop = !!(window as any).go?.main?.App || !!(window as any).go?.common?.App;
+        if (isDesktop) {
+            console.log('[PostHog] Initializing for desktop app', {
+                key: posthogKey.substring(0, 10) + '...',
+                consent,
+                edition: getBuildEdition(),
+                environment: getEnvEnvironment(),
+            });
+        }
+
         posthog.init(posthogKey, {
             api_host: apiHost,
             capture_pageleave: true,
@@ -182,6 +225,23 @@ const ensureInitializedClient = async (): Promise<PostHog | null> => {
                 }
 
                 persistDistinctId(client.get_distinct_id());
+
+                // Log successful initialization for desktop
+                if (isDesktop) {
+                    console.log('[PostHog] Successfully initialized for desktop app', {
+                        distinctId: client.get_distinct_id(),
+                        capturing: consent === 'granted',
+                    });
+
+                    // Track desktop app launch
+                    if (consent === 'granted') {
+                        client.capture('desktop_app_launched', {
+                            platform: 'wails',
+                            build_edition: getBuildEdition(),
+                            build_environment: getEnvEnvironment(),
+                        });
+                    }
+                }
             },
         });
 

@@ -67,22 +67,23 @@ jobs:
         run: |
           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
 
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('frontend/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+      # CACHING DISABLED TO AVOID STALE CACHE ISSUES
+      # - name: Setup pnpm cache
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+      #     key: ${{ runner.os }}-pnpm-store-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-pnpm-store-
 
-      - name: Cache frontend build
-        id: frontend-cache
-        uses: actions/cache@v4
-        with:
-          path: frontend/build
-          key: frontend-build-${{ inputs.edition }}-${{ hashFiles('frontend/package.json', 'frontend/pnpm-lock.yaml', 'frontend/tsconfig.json') }}
-          restore-keys: |
-            frontend-build-${{ inputs.edition }}-
+      # - name: Cache frontend build
+      #   id: frontend-cache
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: frontend/build
+      #     key: frontend-build-${{ inputs.edition }}-${{ hashFiles('frontend/package.json', 'frontend/pnpm-lock.yaml', 'frontend/tsconfig.json') }}
+      #     restore-keys: |
+      #       frontend-build-${{ inputs.edition }}-
 
       - name: Build frontend
         working-directory: ./frontend
@@ -106,22 +107,16 @@ jobs:
           echo "✅ Frontend files copied successfully"
           ls -la desktop-${{ inputs.edition }}/frontend/dist
 
-      - name: Cache Wails binary
-        id: cache-wails
-        uses: actions/cache@v4
-        with:
-          path: ~/go/bin/wails
-          key: ${{ runner.os }}-${{ runner.arch }}-wails-v2-latest
+      # - name: Cache Wails binary
+      #   id: cache-wails
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: ~/go/bin/wails
+      #     key: ${{ runner.os }}-${{ runner.arch }}-wails-v2.10.2
 
       - name: Set up Wails
-        if: steps.cache-wails.outputs.cache-hit != 'true'
         run: |
-          go install github.com/wailsapp/wails/v2/cmd/wails@latest
-          echo "$HOME/go/bin" >> $GITHUB_PATH
-
-      - name: Add Wails to PATH
-        if: steps.cache-wails.outputs.cache-hit == 'true'
-        run: |
+          go install github.com/wailsapp/wails/v2/cmd/wails@v2.11.0
           echo "$HOME/go/bin" >> $GITHUB_PATH
 
       - name: Determine Go workspace

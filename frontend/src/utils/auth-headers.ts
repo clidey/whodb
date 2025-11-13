@@ -24,6 +24,14 @@ const analyticsHeaderName = 'X-WhoDB-Analytics-Id';
  * where cookies might not be properly supported.
  */
 function isDesktopScheme(): boolean {
+    // Check if Wails bindings are available - more reliable than protocol check
+    if (typeof window !== 'undefined') {
+        const wailsGo = (window as any).go;
+        if (wailsGo?.main?.App || wailsGo?.common?.App) {
+            return true;
+        }
+    }
+    // Fallback to protocol check for compatibility
   return typeof window !== 'undefined' && !['http:', 'https:'].includes(window.location.protocol);
 }
 
