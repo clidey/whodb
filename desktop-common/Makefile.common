@@ -18,6 +18,12 @@ PLATFORM_ENV ?= unknown
 WINDOWS_TAGS := -tags native_webview2loader
 WINDOWS_CONSOLE ?= true
 
+ifeq ($(WINDOWS_CONSOLE),true)
+WINDOWS_GUI_LDFLAG :=
+else
+WINDOWS_GUI_LDFLAG := -H windowsgui
+endif
+
 # Build flags with version and environment (properly quoted)
 LDFLAGS = -s -w \
   -X "github.com/clidey/whodb/core/src/env.ApplicationVersion=$(VERSION)" \
@@ -142,7 +148,7 @@ build-prod-windows-amd64: prepare
 	@mkdir -p build/windows/amd64
 	$(eval PLATFORM_ENV := windows-amd64)
 	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean -platform windows/amd64 \
-		$(BUILD_TAGS) $(WINDOWS_TAGS) -windowsconsole=$(WINDOWS_CONSOLE) -ldflags="$(LDFLAGS) -H windowsgui" \
+		$(BUILD_TAGS) $(WINDOWS_TAGS) -windowsconsole=$(WINDOWS_CONSOLE) -ldflags="$(LDFLAGS) $(WINDOWS_GUI_LDFLAG)" \
 		-o $(OUTPUT_PREFIX).exe
 	@mv build/bin/$(OUTPUT_PREFIX).exe build/windows/amd64/
 
@@ -152,7 +158,7 @@ ci-build-prod-windows-amd64:
 	@mkdir -p build/windows/amd64
 	$(eval PLATFORM_ENV := windows-amd64)
 	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean -platform windows/amd64 \
-		$(BUILD_TAGS) $(WINDOWS_TAGS) -windowsconsole=$(WINDOWS_CONSOLE) -ldflags="$(LDFLAGS) -H windowsgui" \
+		$(BUILD_TAGS) $(WINDOWS_TAGS) -windowsconsole=$(WINDOWS_CONSOLE) -ldflags="$(LDFLAGS) $(WINDOWS_GUI_LDFLAG)" \
 		-o $(OUTPUT_PREFIX).exe
 	@mv build/bin/$(OUTPUT_PREFIX).exe build/windows/amd64/
 
