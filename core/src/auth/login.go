@@ -43,7 +43,7 @@ func Login(ctx context.Context, input *model.LoginCredentials) (*model.StatusRes
 		HttpOnly: true,
 		MaxAge:   7 * 24 * 60 * 60,
 		Expires:  time.Now().Add(7 * 24 * time.Hour),
-		// SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteLaxMode,
 	}
 	// Ensure cookies are HTTPS-only in production
 	// cookie.Secure = !env.IsDevelopment
