@@ -14,6 +14,10 @@ TEAM_ID ?=
 APPLE_APP_PASSWORD ?=
 PLATFORM_ENV ?= unknown
 
+# Build tags specific to Windows targets
+WINDOWS_TAGS := -tags native_webview2loader
+WINDOWS_CONSOLE ?= true
+
 # Build flags with version and environment (properly quoted)
 LDFLAGS = -s -w \
   -X "github.com/clidey/whodb/core/src/env.ApplicationVersion=$(VERSION)" \
@@ -35,13 +39,13 @@ prepare:
 
 # Development mode
 dev: prepare
-	ENVIRONMENT=dev GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails dev $(BUILD_TAGS)
+	ENVIRONMENT=dev GOWORK=$$PWD/../$(GOWORK) /mnt/c/Users/ah/go/bin/wails dev $(BUILD_TAGS)
 
 # Build for current platform
 build: prepare
 	@echo "Building WhoDB Desktop for current platform..."
 	$(eval PLATFORM_ENV := unknown)
-	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean $(BUILD_TAGS) -ldflags="$(LDFLAGS)" -o $(OUTPUT_PREFIX)
+	GOWORK=$$PWD/../$(GOWORK) /mnt/c/Users/ah/go/bin/wails build -clean $(BUILD_TAGS) -ldflags="$(LDFLAGS)" -o $(OUTPUT_PREFIX)
 
 # Build for all platforms
 build-all: build-windows build-mac build-linux
@@ -52,13 +56,13 @@ build-windows: prepare
 	@mkdir -p build/windows/amd64
 	$(eval PLATFORM_ENV := windows-amd64)
 	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean -platform windows/amd64 \
-		$(BUILD_TAGS) -windowsconsole=false -ldflags="$(LDFLAGS)" -o $(OUTPUT_PREFIX).exe
+		$(BUILD_TAGS) $(WINDOWS_TAGS) -windowsconsole=$(WINDOWS_CONSOLE) -ldflags="$(LDFLAGS)" -o $(OUTPUT_PREFIX).exe
 	@mv build/bin/$(OUTPUT_PREFIX).exe build/windows/amd64/
 	@echo "Building WhoDB for Windows ARM64..."
 	@mkdir -p build/windows/arm64
 	$(eval PLATFORM_ENV := windows-arm64)
 	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean \
-		$(BUILD_TAGS) -windowsconsole=false -ldflags="$(LDFLAGS)" -o $(OUTPUT_PREFIX).exe
+		$(BUILD_TAGS) $(WINDOWS_TAGS) -windowsconsole=$(WINDOWS_CONSOLE) -ldflags="$(LDFLAGS)" -o $(OUTPUT_PREFIX).exe
 	@mv build/bin/$(OUTPUT_PREFIX).exe build/windows/arm64/
 
 # macOS builds
@@ -138,7 +142,7 @@ build-prod-windows-amd64: prepare
 	@mkdir -p build/windows/amd64
 	$(eval PLATFORM_ENV := windows-amd64)
 	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean -platform windows/amd64 \
-		$(BUILD_TAGS) -windowsconsole=false -ldflags="$(LDFLAGS) -H windowsgui" \
+		$(BUILD_TAGS) $(WINDOWS_TAGS) -windowsconsole=$(WINDOWS_CONSOLE) -ldflags="$(LDFLAGS) -H windowsgui" \
 		-o $(OUTPUT_PREFIX).exe
 	@mv build/bin/$(OUTPUT_PREFIX).exe build/windows/amd64/
 
@@ -148,7 +152,7 @@ ci-build-prod-windows-amd64:
 	@mkdir -p build/windows/amd64
 	$(eval PLATFORM_ENV := windows-amd64)
 	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean -platform windows/amd64 \
-		$(BUILD_TAGS) -windowsconsole=false -ldflags="$(LDFLAGS) -H windowsgui" \
+		$(BUILD_TAGS) $(WINDOWS_TAGS) -windowsconsole=$(WINDOWS_CONSOLE) -ldflags="$(LDFLAGS) -H windowsgui" \
 		-o $(OUTPUT_PREFIX).exe
 	@mv build/bin/$(OUTPUT_PREFIX).exe build/windows/amd64/
 
@@ -157,8 +161,8 @@ build-prod-windows-arm64: prepare
 	@echo "Building WhoDB Windows executable for ARM64..."
 	@mkdir -p build/windows/arm64
 	$(eval PLATFORM_ENV := windows-arm64)
-	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean \
-		$(BUILD_TAGS) -windowsconsole=false -ldflags="$(LDFLAGS) -H windowsgui" \
+	GOWORK=$$PWD/../$(GOWORK) /mnt/c/Users/ah/go/bin/wails build -clean \
+		$(BUILD_TAGS) $(WINDOWS_TAGS) -windowsconsole=$(WINDOWS_CONSOLE) -ldflags="$(LDFLAGS) -H windowsgui" \
 		-o $(OUTPUT_PREFIX).exe
 	@mv build/bin/$(OUTPUT_PREFIX).exe build/windows/arm64/
 
@@ -167,8 +171,8 @@ ci-build-prod-windows-arm64:
 	@echo "Building WhoDB Windows executable for ARM64 (CI)..."
 	@mkdir -p build/windows/arm64
 	$(eval PLATFORM_ENV := windows-arm64)
-	GOWORK=$$PWD/../$(GOWORK) ~/go/bin/wails build -clean \
-		$(BUILD_TAGS) -windowsconsole=false -ldflags="$(LDFLAGS) -H windowsgui" \
+	GOWORK=$$PWD/../$(GOWORK) /mnt/c/Users/ah/go/bin/wails build -clean \
+		$(BUILD_TAGS) $(WINDOWS_TAGS) -windowsconsole=$(WINDOWS_CONSOLE) -ldflags="$(LDFLAGS) -H windowsgui" \
 		-o $(OUTPUT_PREFIX).exe
 	@mv build/bin/$(OUTPUT_PREFIX).exe build/windows/arm64/
 
