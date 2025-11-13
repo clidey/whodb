@@ -674,6 +674,252 @@ describe('Postgres E2E test', () => {
     cy.contains('Mock data generation is not allowed for this table').should('exist');
 
     cy.get('body').type('{esc}');
+
+    // 15) Chat feature with AI integration
+    // Setup chat mocks for AI provider and model
+    cy.setupChatMock({ modelType: 'Ollama', model: 'llama3.1' });
+
+    // Navigate to chat page
+    cy.gotoChat();
+
+    // Verify chat is initially empty
+    cy.verifyChatEmpty();
+
+    // Test 1: Basic text response
+    cy.mockChatResponse([{
+      type: 'text',
+      text: 'Hello! I can help you query your PostgreSQL database. What would you like to know?'
+    }]);
+    cy.sendChatMessage('Hello');
+    cy.waitForChatResponse();
+    cy.verifyChatUserMessage('Hello');
+    cy.verifyChatSystemMessage('Hello! I can help you query your PostgreSQL database. What would you like to know?');
+
+    // Test 2: SQL query generation - SELECT all users
+    cy.mockChatResponse([{
+      type: 'text',
+      text: 'I\'ll retrieve all users from the database for you.'
+    }, {
+      type: 'sql:get',
+      text: 'SELECT * FROM test_schema.users ORDER BY id',
+      result: {
+        Columns: [
+          { Name: 'id', Type: 'integer', __typename: 'Column' },
+          { Name: 'username', Type: 'character varying', __typename: 'Column' },
+          { Name: 'email', Type: 'character varying', __typename: 'Column' },
+          { Name: 'password', Type: 'character varying', __typename: 'Column' },
+          { Name: 'created_at', Type: 'timestamp without time zone', __typename: 'Column' }
+        ],
+        Rows: [
+          ['1', 'john_doe', 'john@example.com', 'securepassword1', '2024-01-01 00:00:00'],
+          ['2', 'jane_smith', 'jane@example.com', 'securepassword2', '2024-01-02 00:00:00'],
+          ['3', 'admin_user', 'admin@example.com', 'adminpass', '2024-01-03 00:00:00']
+        ],
+        __typename: 'RowsResult'
+      }
+    }]);
+    cy.sendChatMessage('Show me all users');
+    cy.waitForChatResponse();
+    cy.verifyChatUserMessage('Show me all users');
+    cy.verifyChatSystemMessage('I\'ll retrieve all users from the database for you.');
+    cy.verifyChatSQLResult({
+      columns: ['id', 'username', 'email', 'password', 'created_at'],
+      rowCount: 3
+    });
+
+    // Test 3: Toggle between table and SQL view
+    cy.toggleChatSQLView();
+    cy.verifyChatSQL('SELECT * FROM test_schema.users');
+    cy.toggleChatSQLView(); // Toggle back to table view
+
+    // Test 4: SQL query with filtering
+    cy.mockChatResponse([{
+      type: 'text',
+      text: 'Here are the users with admin roles.'
+    }, {
+      type: 'sql:get',
+      text: 'SELECT * FROM test_schema.users WHERE username LIKE \'%admin%\'',
+      result: {
+        Columns: [
+          { Name: 'id', Type: 'integer', __typename: 'Column' },
+          { Name: 'username', Type: 'character varying', __typename: 'Column' },
+          { Name: 'email', Type: 'character varying', __typename: 'Column' }
+        ],
+        Rows: [
+          ['3', 'admin_user', 'admin@example.com']
+        ],
+        __typename: 'RowsResult'
+      }
+    }]);
+    cy.sendChatMessage('Find users with admin in their username');
+    cy.waitForChatResponse();
+    cy.verifyChatSQLResult({ rowCount: 1 });
+
+    // Test 5: INSERT operation
+    cy.mockChatResponse([{
+      type: 'text',
+      text: 'I\'ll add a new user to the database.'
+    }, {
+      type: 'sql:insert',
+      text: 'INSERT INTO test_schema.users (username, email, password) VALUES (\'test_user\', \'test@example.com\', \'testpass123\')',
+      result: {
+        Columns: [],
+        Rows: [],
+        __typename: 'RowsResult'
+      }
+    }]);
+    cy.sendChatMessage('Add a new user named test_user with email test@example.com');
+    cy.waitForChatResponse();
+    cy.verifyChatActionExecuted();
+
+    // Test 6: UPDATE operation
+    cy.mockChatResponse([{
+      type: 'text',
+      text: 'I\'ll update the user\'s email address.'
+    }, {
+      type: 'sql:update',
+      text: 'UPDATE test_schema.users SET email = \'newemail@example.com\' WHERE username = \'test_user\'',
+      result: {
+        Columns: [],
+        Rows: [],
+        __typename: 'RowsResult'
+      }
+    }]);
+    cy.sendChatMessage('Update test_user email to newemail@example.com');
+    cy.waitForChatResponse();
+    cy.verifyChatActionExecuted();
+
+    // Test 7: DELETE operation confirmation
+    cy.mockChatResponse([{
+      type: 'text',
+      text: 'Are you sure you want to delete this user? This action cannot be undone. Please confirm to proceed.'
+    }]);
+    cy.sendChatMessage('Delete test_user from the database');
+    cy.waitForChatResponse();
+    cy.verifyChatSystemMessage('Are you sure you want to delete this user?');
+
+    // User confirms deletion
+    cy.mockChatResponse([{
+      type: 'sql:delete',
+      text: 'DELETE FROM test_schema.users WHERE username = \'test_user\'',
+      result: {
+        Columns: [],
+        Rows: [],
+        __typename: 'RowsResult'
+      }
+    }]);
+    cy.sendChatMessage('Yes, delete it');
+    cy.waitForChatResponse();
+    cy.verifyChatActionExecuted();
+
+    // Test 8: Error handling - Invalid query
+    cy.mockChatResponse([{
+      type: 'error',
+      text: 'ERROR: relation "test_schema.nonexistent_table" does not exist (SQLSTATE 42P01)'
+    }]);
+    cy.sendChatMessage('Show me data from nonexistent_table');
+    cy.waitForChatResponse();
+    cy.verifyChatError('relation "test_schema.nonexistent_table" does not exist');
+
+    // Test 9: Complex query with aggregation
+    cy.mockChatResponse([{
+      type: 'text',
+      text: 'Here\'s the user count by domain.'
+    }, {
+      type: 'sql:get',
+      text: 'SELECT SUBSTRING(email FROM POSITION(\'@\' IN email) + 1) as domain, COUNT(*) as user_count FROM test_schema.users GROUP BY domain ORDER BY user_count DESC',
+      result: {
+        Columns: [
+          { Name: 'domain', Type: 'text', __typename: 'Column' },
+          { Name: 'user_count', Type: 'bigint', __typename: 'Column' }
+        ],
+        Rows: [
+          ['example.com', '3']
+        ],
+        __typename: 'RowsResult'
+      }
+    }]);
+    cy.sendChatMessage('Count users by email domain');
+    cy.waitForChatResponse();
+    cy.verifyChatSQLResult({
+      columns: ['domain', 'user_count'],
+      rowCount: 1
+    });
+
+    // Test 10: Move to scratchpad functionality
+    cy.openMoveToScratchpad();
+    cy.confirmMoveToScratchpad({ pageOption: 'new', newPageName: 'Chat Queries' });
+
+    // Verify we're on scratchpad and the query is there
+    cy.get('.cm-activeLine', { timeout: 5000 }).eq(1).invoke('text').should('include', 'SELECT SUBSTRING(email');
+
+    // Navigate back to chat
+    cy.gotoChat();
+
+    // Test 11: Chat history navigation with arrow keys
+    cy.mockChatResponse([{
+      type: 'text',
+      text: 'I understand you want to explore the database structure.'
+    }]);
+    cy.sendChatMessage('What tables are available?');
+    cy.waitForChatResponse();
+
+    cy.mockChatResponse([{
+      type: 'text',
+      text: 'Let me show you the schema details.'
+    }]);
+    cy.sendChatMessage('Show me the schema structure');
+    cy.waitForChatResponse();
+
+    // Use arrow up to navigate back through history
+    cy.navigateChatHistory('up');
+    cy.getChatInputValue().should('equal', 'Show me the schema structure');
+
+    cy.navigateChatHistory('up');
+    cy.getChatInputValue().should('equal', 'What tables are available?');
+
+    cy.navigateChatHistory('up');
+    cy.getChatInputValue().should('equal', 'Count users by email domain');
+
+    // Test 12: Clear chat history
+    cy.clearChat();
+    cy.verifyChatEmpty();
+
+    // Test 13: Multi-step conversation context
+    cy.mockChatResponse([{
+      type: 'text',
+      text: 'The users table contains user account information including usernames, emails, and creation timestamps.'
+    }]);
+    cy.sendChatMessage('What is in the users table?');
+    cy.waitForChatResponse();
+
+    cy.mockChatResponse([{
+      type: 'sql:get',
+      text: 'SELECT created_at, COUNT(*) as count FROM test_schema.users GROUP BY created_at ORDER BY created_at',
+      result: {
+        Columns: [
+          { Name: 'created_at', Type: 'timestamp without time zone', __typename: 'Column' },
+          { Name: 'count', Type: 'bigint', __typename: 'Column' }
+        ],
+        Rows: [
+          ['2024-01-01 00:00:00', '1'],
+          ['2024-01-02 00:00:00', '1'],
+          ['2024-01-03 00:00:00', '1']
+        ],
+        __typename: 'RowsResult'
+      }
+    }]);
+    cy.sendChatMessage('Show me when users were created');
+    cy.waitForChatResponse();
+    cy.verifyChatSQLResult({ rowCount: 3 });
+
+    // Test 14: Verify chat messages count
+    cy.getChatMessages().then(messages => {
+      expect(messages.length).to.be.greaterThan(0);
+      const userMessages = messages.filter(m => m.type === 'user');
+      expect(userMessages.length).to.equal(2);
+    });
+
     cy.logout()
   });
 });

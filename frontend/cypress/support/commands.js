@@ -1045,3 +1045,515 @@ Cypress.Commands.add('disableAutocomplete', () => {
     // Disables the SQL autocomplete for the duration of the test
     Cypress.env('disableAutocomplete', true);
 });
+
+// ============================================================================
+// Chat Commands
+// ============================================================================
+
+// Global variable to store chat responses for the intercept
+let nextChatResponse = null;
+
+/**
+ * Sets up a mock AI provider for chat testing
+ * This creates a comprehensive intercept that handles all GraphQL operations for chat
+ * @param {Object} options - Configuration options
+ * @param {string} options.modelType - The model type (e.g., 'Ollama', 'OpenAI')
+ * @param {string} options.model - The specific model name (e.g., 'llama3.1')
+ * @param {string} options.providerId - Optional provider ID
+ */
+Cypress.Commands.add('setupChatMock', ({ modelType = 'Ollama', model = 'llama3.1', providerId = 'test-provider' } = {}) => {
+    // Reset chat response
+    nextChatResponse = null;
+
+    // Single comprehensive intercept that handles all chat-related GraphQL operations
+    // Note: The actual endpoint is /api/query, not /graphql
+    cy.intercept('POST', '**/api/query', (req) => {
+        const operation = req.body.operationName;
+        console.log('[CYPRESS] Intercepted GraphQL operation:', operation);
+
+        if (operation === 'GetAIProviders') {
+            console.log('[CYPRESS] Handling GetAIProviders');
+            req.reply({
+                data: {
+                    AIProviders: [{
+                        Type: modelType,
+                        ProviderId: providerId,
+                        IsEnvironmentDefined: false
+                    }]
+                }
+            });
+            return;
+        }
+
+        if (operation === 'GetAIModels') {
+            console.log('[CYPRESS] Handling GetAIModels, returning:', [model]);
+            req.reply({
+                data: {
+                    AIModel: [model]
+                }
+            });
+            return;
+        }
+
+        if (operation === 'GetAIChat') {
+            console.log('[CYPRESS] Intercepted GetAIChat');
+            console.log('[CYPRESS] Request body:', JSON.stringify(req.body, null, 2));
+            console.log('[CYPRESS] nextChatResponse:', JSON.stringify(nextChatResponse, null, 2));
+
+            // Use the stored response from the global variable
+            const responseData = nextChatResponse || [];
+
+            if (responseData.length === 0) {
+                console.warn('[CYPRESS] WARNING: No chat response configured! Sending empty array.');
+            }
+
+            const chatMessages = responseData.map(response => {
+                const msg = {
+                    Type: response.type || 'text',
+                    Text: response.text || '',
+                    __typename: 'AIChatMessage',
+                    Result: response.result || null
+                };
+
+                return msg;
+            });
+
+            console.log('[CYPRESS] Mapped chat messages:', JSON.stringify(chatMessages, null, 2));
+
+            // Clear the response BEFORE replying
+            const responseCopy = [...chatMessages];
+            nextChatResponse = null;
+
+            // Reply immediately with GraphQL format
+            req.reply({
+                statusCode: 200,
+                headers: {
+                    'content-type': 'application/json'
+                },
+                body: {
+                    data: {
+                        AIChat: responseCopy
+                    }
+                }
+            });
+
+            console.log('[CYPRESS] Response sent successfully');
+            return;
+        }
+
+        // Let other GraphQL operations pass through
+        req.continue();
+    }).as('graphqlMock');
+});
+
+/**
+ * Mocks a chat response with specific content
+ * Must be called after setupChatMock
+ * @param {Array<Object>} responses - Array of chat message responses
+ * Each response can have:
+ * - type: 'message', 'text', 'sql:get', 'sql:insert', 'sql:update', 'sql:delete', 'error', 'sql:pie-chart', 'sql:line-chart'
+ * - text: The message or SQL query text
+ * - result: Optional result object with Columns and Rows for SQL queries
+ */
+Cypress.Commands.add('mockChatResponse', (responses) => {
+    // Store the responses in the global variable for the intercept to use
+    console.log('[CYPRESS] mockChatResponse called with:', responses);
+    nextChatResponse = responses;
+    console.log('[CYPRESS] nextChatResponse now set to:', nextChatResponse);
+});
+
+/**
+ * Navigates to the chat page
+ * Expects setupChatMock to be called first with providerId and model values
+ */
+Cypress.Commands.add('gotoChat', () => {
+    cy.visit('/chat');
+
+    // Wait for the AI provider section to be loaded
+    cy.get('[data-testid="ai-provider"]', { timeout: 10000 }).should('exist');
+
+    // Wait a bit for initial GraphQL requests to complete
+    cy.wait(1000);
+
+    // Wait for the AI provider dropdown to be visible
+    cy.get('[data-testid="ai-provider-select"]', { timeout: 10000 }).should('be.visible');
+
+    // Check the button text to determine if we need to select
+    cy.get('[data-testid="ai-provider-select"]').invoke('text').then((buttonText) => {
+        // If "Select Model Type" is shown, we need to click and select
+        if (buttonText.includes('Select Model Type') || buttonText.trim() === '') {
+            cy.log('Selecting AI provider from dropdown');
+
+            // Click the provider dropdown to open it
+            cy.get('[data-testid="ai-provider-select"]').click();
+
+            // Wait for the dropdown options to appear
+            cy.get('[role="option"]', { timeout: 5000 }).should('be.visible');
+
+            // Select the first option (Ollama from our mock)
+            cy.get('[role="option"]').first().click();
+
+            // Wait for models to load after provider selection
+            cy.wait(1500);
+
+            // Verify provider was selected by checking button text changed
+            cy.get('[data-testid="ai-provider-select"]', { timeout: 5000 })
+                .invoke('text')
+                .should('not.include', 'Select Model Type');
+        } else {
+            cy.log('AI provider already selected: ' + buttonText);
+        }
+    });
+
+    // Wait for the model dropdown to be visible and enabled
+    cy.get('[data-testid="ai-model-select"]', { timeout: 10000 })
+        .should('be.visible')
+        .should('not.be.disabled');
+
+    // Check if model needs to be selected
+    cy.get('[data-testid="ai-model-select"]').invoke('text').then((buttonText) => {
+        // If "Select Model" is shown, we need to click and select
+        if (buttonText.includes('Select Model') || buttonText.trim() === '') {
+            cy.log('Selecting AI model from dropdown');
+
+            // Click the model dropdown to open it
+            cy.get('[data-testid="ai-model-select"]').click();
+
+            // Wait for model options to appear
+            cy.get('[role="option"]', { timeout: 5000 }).should('be.visible');
+
+            // Select the first model option (llama3.1 from our mock)
+            cy.get('[role="option"]').first().click();
+
+            // Wait for selection to complete and state to update
+            cy.wait(1000);
+
+            // Verify model was selected by checking button text changed
+            cy.get('[data-testid="ai-model-select"]', { timeout: 5000 })
+                .invoke('text')
+                .should('not.include', 'Select Model');
+        } else {
+            cy.log('AI model already selected: ' + buttonText);
+        }
+    });
+
+    // Ensure chat input is enabled and ready
+    cy.get('[data-testid="chat-input"]', { timeout: 10000 })
+        .should('be.visible')
+        .should('not.be.disabled');
+
+    // Verify input is empty (no autofill or stale state)
+    cy.get('[data-testid="chat-input"]').should('have.value', '');
+
+    // Additional wait to ensure Redux state has fully propagated
+    cy.wait(1000);
+});
+
+/**
+ * Sends a chat message
+ * @param {string} message - The message to send
+ */
+Cypress.Commands.add('sendChatMessage', (message) => {
+    // Get the chat input and ensure it's ready
+    cy.get('[data-testid="chat-input"]')
+        .should('be.visible')
+        .should('not.be.disabled');
+
+    // Clear the input - use force:true to handle any autofill issues
+    cy.get('[data-testid="chat-input"]').clear({ force: true });
+
+    // Verify it's actually cleared
+    cy.get('[data-testid="chat-input"]').should('have.value', '');
+
+    // Type the message
+    cy.get('[data-testid="chat-input"]').type(message);
+
+    // Wait a moment for React state to update after typing
+    cy.wait(300);
+
+    // Verify the send button is enabled before clicking
+    // The button becomes enabled when query.trim().length > 0 and model is selected
+    cy.get('[data-testid="icon-button"]').last()
+        .should('be.visible')
+        .should('not.be.disabled', { timeout: 5000 })
+        .click();
+
+    // Small wait for the request to be initiated
+    cy.wait(200);
+});
+
+/**
+ * Verifies a user chat message appears in the conversation
+ * @param {string} expectedMessage - The expected message text
+ */
+Cypress.Commands.add('verifyChatUserMessage', (expectedMessage) => {
+    cy.get('[data-input-message="user"]').last().should('contain.text', expectedMessage);
+});
+
+/**
+ * Verifies a system chat message appears in the conversation
+ * @param {string} expectedMessage - The expected message text
+ */
+Cypress.Commands.add('verifyChatSystemMessage', (expectedMessage) => {
+    cy.get('[data-input-message="system"]').last().should('contain.text', expectedMessage);
+});
+
+/**
+ * Verifies a SQL query result is displayed in the chat
+ * @param {Object} options - Verification options
+ * @param {Array<string>} options.columns - Expected column names
+ * @param {number} options.rowCount - Expected number of rows (optional)
+ */
+Cypress.Commands.add('verifyChatSQLResult', ({ columns, rowCount }) => {
+    // Wait for the table to appear
+    cy.get('table', { timeout: 10000 }).should('be.visible').last().within(() => {
+        // Verify columns
+        if (columns) {
+            columns.forEach(column => {
+                cy.get('thead th').should('contain.text', column);
+            });
+        }
+
+        // Verify row count if specified
+        if (rowCount !== undefined) {
+            cy.get('tbody tr').should('have.length', rowCount);
+        }
+    });
+});
+
+/**
+ * Verifies an error message appears in the chat
+ * @param {string} errorText - Expected error text (can be partial, case-insensitive)
+ */
+Cypress.Commands.add('verifyChatError', (errorText) => {
+    cy.get('[data-testid="error-state"]', { timeout: 10000 })
+        .should('be.visible')
+        .invoke('text')
+        .should('match', new RegExp(errorText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'));
+});
+
+/**
+ * Verifies an action executed message appears
+ */
+Cypress.Commands.add('verifyChatActionExecuted', () => {
+    cy.contains('Action Executed', { timeout: 10000 }).should('be.visible');
+});
+
+/**
+ * Gets all chat messages
+ * @returns {Array<Object>} Array of message objects with type and text
+ */
+Cypress.Commands.add('getChatMessages', () => {
+    return cy.document().then(doc => {
+        const messages = [];
+        const messageElements = doc.querySelectorAll('[data-input-message]');
+        messageElements.forEach(el => {
+            messages.push({
+                type: el.getAttribute('data-input-message'),
+                text: el.textContent.trim()
+            });
+        });
+        return messages;
+    });
+});
+
+/**
+ * Clears the chat history
+ */
+Cypress.Commands.add('clearChat', () => {
+    cy.get('[data-testid="chat-new-chat"]').click();
+
+    // Wait for messages to be cleared
+    cy.get('[data-input-message]').should('not.exist');
+
+    // Ensure the input field is not disabled and is ready for interaction
+    cy.get('input[placeholder*="Type your message"]')
+        .should('be.visible')
+        .should('not.be.disabled')
+        .should('have.value', ''); // Should be empty after clear
+
+    // Additional wait to ensure React state has settled
+    cy.wait(300);
+});
+
+/**
+ * Toggles between SQL and table view in chat
+ */
+Cypress.Commands.add('toggleChatSQLView', () => {
+    // Find the last table preview group and click its toggle button
+    cy.get('.group\\/table-preview').last().within(() => {
+        cy.get('[data-testid="icon-button"]').first().click({ force: true });
+    });
+    cy.wait(300);
+});
+
+/**
+ * Verifies SQL code is displayed in the chat
+ * @param {string} expectedSQL - The expected SQL query (can be partial)
+ */
+Cypress.Commands.add('verifyChatSQL', (expectedSQL) => {
+    cy.get('[data-testid="code-editor"]').last().should('contain.text', expectedSQL);
+});
+
+/**
+ * Opens the move to scratchpad dialog from the last chat result
+ */
+Cypress.Commands.add('openMoveToScratchpad', () => {
+    cy.get('.group\\/table-preview').last().within(() => {
+        cy.get('[title="Move to Scratchpad"]').click({ force: true });
+    });
+    cy.contains('h2', 'Move to Scratchpad', { timeout: 5000 }).should('be.visible');
+});
+
+/**
+ * Confirms moving a query to scratchpad
+ * @param {Object} options - Options for moving to scratchpad
+ * @param {string} options.pageOption - 'new' or page ID
+ * @param {string} options.newPageName - Name for new page (if pageOption is 'new')
+ */
+Cypress.Commands.add('confirmMoveToScratchpad', ({ pageOption = 'new', newPageName = '' } = {}) => {
+    if (pageOption !== 'new') {
+        // Select existing page
+        cy.get('[role="dialog"]').within(() => {
+            cy.get('[role="combobox"]').click();
+        });
+        cy.get('[role="listbox"]').within(() => {
+            cy.get(`[value="${pageOption}"]`).click();
+        });
+    } else if (newPageName) {
+        // Enter new page name
+        cy.get('[role="dialog"]').within(() => {
+            cy.get('input[placeholder="Enter page name"]').clear().type(newPageName);
+        });
+    }
+
+    // Click the Move to Scratchpad button
+    cy.get('[role="dialog"]').within(() => {
+        cy.contains('button', 'Move to Scratchpad').click();
+    });
+
+    // Wait for navigation and verify we're on scratchpad
+    cy.url({ timeout: 10000 }).should('include', '/scratchpad');
+});
+
+/**
+ * Navigates chat history using arrow keys
+ * @param {string} direction - 'up' or 'down'
+ */
+Cypress.Commands.add('navigateChatHistory', (direction = 'up') => {
+    const key = direction === 'up' ? '{upArrow}' : '{downArrow}';
+    cy.get('input[placeholder*="Type your message"]').focus().type(key);
+    cy.wait(200);
+});
+
+/**
+ * Gets the current value in the chat input
+ * @returns {string} The current input value
+ */
+Cypress.Commands.add('getChatInputValue', () => {
+    return cy.get('input[placeholder*="Type your message"]').invoke('val');
+});
+
+/**
+ * Verifies the chat is empty (no messages)
+ */
+Cypress.Commands.add('verifyChatEmpty', () => {
+    cy.get('[data-input-message]').should('not.exist');
+});
+
+/**
+ * Waits for chat response to complete
+ */
+Cypress.Commands.add('waitForChatResponse', () => {
+    // First, wait for the user message to appear (confirming send worked)
+    cy.get('[data-input-message="user"]', { timeout: 5000 }).should('exist');
+
+    // Wait for loading indicator to disappear if it appears
+    cy.get('body').then($body => {
+        if ($body.find('[data-testid="loading"]').length > 0) {
+            cy.get('[data-testid="loading"]', { timeout: 10000 }).should('not.exist');
+        }
+    });
+
+    // Wait for either a system response or an error state to appear
+    cy.get('body', { timeout: 10000 }).should($body => {
+        const hasSystemMessage = $body.find('[data-input-message="system"]').length > 0;
+        const hasErrorState = $body.find('[data-testid="error-state"]').length > 0;
+        expect(hasSystemMessage || hasErrorState, 'Expected either system message or error state').to.be.true;
+    });
+
+    // Additional wait for UI to fully render the response
+    cy.wait(500);
+});
+
+// ============================================================================
+// Screenshot Highlighting Utilities
+// ============================================================================
+
+/**
+ * Highlights an element with a rounded border overlay for screenshots
+ * @param {string} selector - The CSS selector or test-id of the element to highlight
+ * @param {Object} options - Styling options for the highlight
+ * @param {string} options.borderColor - Border color (default: '#ff0000')
+ * @param {string} options.borderWidth - Border width (default: '2px')
+ * @param {string} options.borderRadius - Border radius (default: '8px')
+ * @param {string} options.padding - Extra padding around the element (default: '4px')
+ * @param {boolean} options.shadow - Whether to add a shadow (default: false)
+ * @returns {Cypress.Chainable} Chainable for further commands
+ */
+Cypress.Commands.add('highlightElement', (selector, {
+    borderColor = '#ca6f1e',
+    borderWidth = '2px',
+    borderRadius = '8px',
+    padding = '4px',
+    shadow = true
+} = {}) => {
+    cy.get(selector).scrollIntoView().should('be.visible').then($el => {
+        const rect = $el[0].getBoundingClientRect();
+        cy.document().then(doc => {
+            const overlay = doc.createElement('div');
+            const paddingPx = parseInt(padding);
+
+            overlay.style.position = 'fixed';
+            overlay.style.top = `${rect.top - paddingPx}px`;
+            overlay.style.left = `${rect.left - paddingPx}px`;
+            overlay.style.width = `${rect.width + paddingPx * 2}px`;
+            overlay.style.height = `${rect.height + paddingPx * 2}px`;
+            overlay.style.border = `${borderWidth} solid ${borderColor}`;
+            overlay.style.borderRadius = borderRadius;
+            overlay.style.pointerEvents = 'none';
+            overlay.style.zIndex = '9999';
+
+            if (shadow) {
+                overlay.style.boxShadow = `0 0 0 4px rgba(202, 111, 30, 0.1)`;
+            }
+
+            overlay.setAttribute('data-testid', 'cypress-highlight-overlay');
+            doc.body.appendChild(overlay);
+        });
+    });
+});
+
+/**
+ * Removes all highlight overlays from the page
+ */
+Cypress.Commands.add('removeHighlights', () => {
+    cy.document().then(doc => {
+        const overlays = doc.querySelectorAll('[data-testid="cypress-highlight-overlay"]');
+        overlays.forEach(overlay => overlay.remove());
+    });
+});
+
+/**
+ * Highlights an element and takes a screenshot, then removes the highlight
+ * @param {string} selector - The CSS selector or test-id of the element to highlight
+ * @param {string} screenshotName - Name for the screenshot file
+ * @param {Object} highlightOptions - Options for the highlight (see highlightElement)
+ * @param {Object} screenshotOptions - Options for the screenshot (Cypress screenshot options)
+ */
+Cypress.Commands.add('screenshotWithHighlight', (selector, screenshotName, highlightOptions = {}, screenshotOptions = {}) => {
+    cy.highlightElement(selector, highlightOptions);
+    cy.wait(300);
+    cy.screenshot(screenshotName, { overwrite: true, ...screenshotOptions });
+    cy.removeHighlights();
+});

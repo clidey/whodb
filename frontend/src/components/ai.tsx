@@ -405,6 +405,9 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         </CommandItem>
                     }
                     rightIcon={<ChevronDownIcon className="w-4 h-4" />}
+                    buttonProps={{
+                        "data-testid": "ai-provider-select",
+                    }}
                 />
                 <SearchSelect
                     disabled={modelType == null}
@@ -422,6 +425,9 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                     side="right"
                     align="start"
                     rightIcon={<ChevronDownIcon className="w-4 h-4" />}
+                    buttonProps={{
+                        "data-testid": "ai-model-select",
+                    }}
                 />
             </div>
             <AlertDialog>

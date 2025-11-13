@@ -1,0 +1,856 @@
+---
+title: "Conversation Management & Advanced Features"
+description: "Master multi-turn conversations, chat history navigation, scratchpad integration, and provider management in WhoDB's AI assistant"
+---
+
+# Conversation Management & Advanced Features
+
+WhoDB's AI Chat Assistant is designed for interactive, contextual conversations that build on previous exchanges. This guide covers advanced features that help you work more efficiently with the AI, including conversation history, chat navigation, scratchpad integration, and provider management.
+
+<Tip>
+The AI assistant maintains full context throughout your conversation, allowing natural follow-up questions without repeating information
+</Tip>
+
+## Understanding Conversational Context
+
+Unlike traditional SQL editors where each query is independent, WhoDB's AI assistant maintains conversational context throughout your session. This enables a natural, iterative approach to data exploration and analysis.
+
+### How Context Works
+
+When you ask a question, the AI assistant considers:
+1. Your current question
+2. All previous messages in the conversation
+3. Your database schema
+4. Previous query results (implicitly)
+
+This context awareness allows the assistant to:
+- Understand pronouns and references ("show me that data", "what about the previous month?")
+- Refine previous queries based on feedback
+- Build complex analyses through multiple steps
+- Maintain topic continuity across questions
+
+![Multiple Messages Conversation](/images/112-chat-multiple-messages.png)
+
+### Context Window Limitations
+
+Each AI provider has limits on how much conversation history can be maintained:
+
+| Provider | Context Window | Approximate Messages |
+|----------|---------------|---------------------|
+| OpenAI GPT-4 Turbo | 128K tokens | 150-200 messages |
+| OpenAI GPT-3.5 Turbo | 16K tokens | 20-30 messages |
+| Anthropic Claude 3.5 Sonnet | 200K tokens | 250-300 messages |
+| Anthropic Claude 3 Haiku | 200K tokens | 250-300 messages |
+| Ollama (varies by model) | 2K-128K tokens | 10-150 messages |
+
+<Info>
+One token is approximately 4 characters. Longer schemas and verbose queries consume more tokens
+</Info>
+
+When the context window approaches its limit, consider starting a new conversation to maintain optimal performance.
+
+## Multi-Turn Conversations
+
+Multi-turn conversations allow you to build complex analyses through natural dialogue, refining and iterating on results.
+
+### Basic Follow-Up Questions
+
+After receiving initial results, ask follow-up questions that reference previous context:
+
+**Initial Query**:
+```text
+Show me all users
+```
+
+**Follow-Up Questions**:
+```text
+How many are there?
+```
+```text
+What about users created this week?
+```
+```text
+Can you group them by email domain?
+```
+
+The assistant understands that "them" refers to the users from your initial query.
+
+### Refining Queries
+
+Use follow-up questions to refine and improve results:
+
+**You**: "Show me recent orders"
+
+**Assistant**: [Returns orders from the last 30 days]
+
+**You**: "Actually, just from the last week"
+
+**Assistant**: [Adjusts the query to show 7 days instead]
+
+**You**: "Sort by total amount descending"
+
+**Assistant**: [Adds ORDER BY clause to the refined query]
+
+### Building Complex Analysis
+
+Break down complex questions into multiple steps:
+
+<Steps>
+<Step title="Start Broad">
+**You**: "What tables contain customer information?"
+
+**Assistant**: Lists relevant tables with descriptions
+</Step>
+<Step title="Explore Structure">
+**You**: "Show me the structure of the customers table"
+
+**Assistant**: Displays columns, types, and relationships
+</Step>
+<Step title="Retrieve Data">
+**You**: "Get all customers from California"
+
+**Assistant**: Generates SELECT query with WHERE clause
+</Step>
+<Step title="Analyze">
+**You**: "What's the average order value for these customers?"
+
+**Assistant**: Generates aggregation query building on previous context
+</Step>
+<Step title="Visualize or Export">
+**You**: "Show me monthly trends"
+
+**Assistant**: Creates time-series query with grouping
+</Step>
+</Steps>
+
+### Conversation Patterns
+
+<AccordionGroup>
+<Accordion title="Exploration Pattern">
+Discover database contents through iterative questions:
+
+1. "What tables exist in this database?"
+2. "Tell me about the products table"
+3. "Show me a sample of products"
+4. "How many products are out of stock?"
+5. "Which categories have the most out-of-stock items?"
+</Accordion>
+
+<Accordion title="Refinement Pattern">
+Start general and narrow down results:
+
+1. "Show me all sales data"
+2. "Just from Q4 2024"
+3. "Only sales over $10,000"
+4. "Group by sales representative"
+5. "Show only the top 10 performers"
+</Accordion>
+
+<Accordion title="Comparison Pattern">
+Compare different data sets:
+
+1. "Show me revenue for January"
+2. "Now show me February"
+3. "What's the percentage difference?"
+4. "Which products drove the increase?"
+5. "Compare to the same period last year"
+</Accordion>
+
+<Accordion title="Investigation Pattern">
+Drill down into specific issues:
+
+1. "Are there any duplicate email addresses?"
+2. "Show me the duplicates"
+3. "Which accounts were created most recently?"
+4. "What other data do these accounts have in common?"
+5. "Generate a query to merge the duplicates"
+</Accordion>
+</AccordionGroup>
+
+## Chat History Navigation
+
+WhoDB provides keyboard shortcuts to quickly access your previous questions, making it easy to rerun or modify earlier queries.
+
+### Keyboard Shortcuts
+
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| <kbd>↑</kbd> (Arrow Up) | Previous message | Navigate backward through your message history |
+| <kbd>↓</kbd> (Arrow Down) | Next message | Navigate forward through your message history |
+| <kbd>Enter</kbd> | Send message | Submit your current message to the AI |
+
+### Using Arrow Keys
+
+<Steps>
+<Step title="Focus the Input">
+Click in the chat input field at the bottom of the screen.
+</Step>
+<Step title="Press Arrow Up">
+Press <kbd>↑</kbd> to load your most recent message.
+
+The input field will populate with your last sent message.
+</Step>
+<Step title="Navigate History">
+Continue pressing <kbd>↑</kbd> to move backward through your message history.
+
+Press <kbd>↓</kbd> to move forward.
+</Step>
+<Step title="Modify or Resend">
+Edit the message if needed, then press <kbd>Enter</kbd> to send.
+
+Or press <kbd>Enter</kbd> without changes to rerun the exact same query.
+</Step>
+</Steps>
+
+### Use Cases for History Navigation
+
+**Rerunning Queries**:
+- Check for data changes after modifications
+- Refresh results periodically during active development
+- Verify that updates or deletes completed successfully
+
+**Modifying Previous Queries**:
+- Change date ranges (e.g., "last week" → "last month")
+- Adjust filters (e.g., "status = active" → "status = pending")
+- Refine search terms
+
+**Learning from History**:
+- Review what questions produced useful results
+- Build on successful query patterns
+- Recall exact phrasing that worked well
+
+<Tip>
+Use <kbd>↑</kbd> to quickly access and modify your last query instead of retyping similar questions
+</Tip>
+
+## Starting New Conversations
+
+When you need to start fresh or when your current conversation becomes too long, use the New Chat feature to clear context and begin a new session.
+
+### When to Start a New Chat
+
+Consider starting a new conversation when:
+
+<CardGroup cols={2}>
+<Card title="Context Shift" icon="arrow-right-arrow-left">
+You're switching to a completely different topic or database area
+</Card>
+<Card title="Long Conversations" icon="messages">
+Your conversation has 30+ messages and performance is slowing
+</Card>
+<Card title="Confusion Detected" icon="circle-question">
+The AI seems confused by mixed context from different topics
+</Card>
+<Card title="Fresh Start" icon="rotate">
+You want to approach a problem with a clean slate
+</Card>
+</CardGroup>
+
+### Creating a New Chat
+
+<Steps>
+<Step title="Locate the New Chat Button">
+Find the **New Chat** button at the top of the Chat interface, next to the AI provider dropdowns.
+
+![New Chat Button](/images/114-chat-new-chat-button.png)
+</Step>
+<Step title="Click New Chat">
+Click the button to clear all messages from the current conversation.
+
+<Warning>
+This action cannot be undone. All conversation history will be cleared
+</Warning>
+</Step>
+<Step title="Start Fresh">
+The chat interface will reset to the initial state with example prompts.
+
+Your provider and model selections remain unchanged.
+</Step>
+</Steps>
+
+### Preserving Important Queries
+
+Before starting a new chat, consider saving important queries to Scratchpad:
+
+1. Hover over any query result
+2. Click the **Scratchpad icon** (command line symbol)
+3. Choose or create a page for the query
+4. Start your new chat
+
+<Info>
+Moving queries to Scratchpad lets you preserve useful queries before clearing conversation history
+</Info>
+
+## Moving Queries to Scratchpad
+
+The Scratchpad integration allows you to save generated SQL queries for later use, modification, or documentation. This bridges the gap between conversational exploration and traditional SQL editing.
+
+### What is Scratchpad Integration?
+
+Scratchpad is WhoDB's SQL editor with support for:
+- Multiple query pages
+- Saved query history
+- Direct query execution
+- Query sharing and documentation
+
+When you move a chat query to Scratchpad, the generated SQL becomes available for:
+- Manual refinement and optimization
+- Saving for future use
+- Sharing with team members
+- Building complex multi-query workflows
+
+![Move to Scratchpad Dialog](/images/113-chat-move-to-scratchpad-dialog.png)
+
+### Moving a Query to Scratchpad
+
+<Steps>
+<Step title="Generate a Query">
+Ask the AI assistant a question that generates SQL. Wait for the query to execute and display results.
+
+<Note>
+Only SQL queries can be moved to Scratchpad. Text responses and errors cannot be transferred
+</Note>
+</Step>
+<Step title="Hover Over Results">
+Move your mouse over the query results table or chart.
+
+A toolbar will appear with action buttons.
+</Step>
+<Step title="Click Scratchpad Icon">
+Click the **command line icon** (⌘) in the toolbar.
+
+This opens the "Move to Scratchpad" dialog.
+</Step>
+<Step title="Choose Destination">
+Select where to add the query:
+
+**Option A: Existing Page**
+- Select a page from the dropdown
+- Query will be added as a new cell at the bottom
+
+**Option B: New Page**
+- Select "Create new page" from the dropdown
+- Enter a descriptive name (e.g., "User Analysis Queries")
+- A new page will be created with your query
+</Step>
+<Step title="Confirm">
+Click **Move to Scratchpad** to complete the transfer.
+
+WhoDB will:
+- Save the query to the selected page
+- Navigate you to the Scratchpad
+- Highlight the newly added query
+</Step>
+</Steps>
+
+### Database Support
+
+Scratchpad integration is available for SQL databases:
+
+| Database Type | Scratchpad Support | Notes |
+|--------------|-------------------|-------|
+| PostgreSQL | ✅ Full support | All features available |
+| MySQL | ✅ Full support | All features available |
+| SQLite | ✅ Full support | All features available |
+| MariaDB | ✅ Full support | All features available |
+| Redis | ❌ Not supported | Key-value store, no SQL |
+| MongoDB | ❌ Not supported | Uses query language, not SQL |
+| Cassandra | ❌ Not supported | Uses CQL, not standard SQL |
+
+<Info>
+For NoSQL databases, copy the generated query manually if needed for documentation
+</Info>
+
+### Organizing Scratchpad Queries
+
+Develop a structure for organizing saved queries:
+
+**By Functionality**:
+- User Queries
+- Order Analysis
+- Reporting Queries
+- Data Cleanup
+
+**By Frequency**:
+- Daily Reports
+- Weekly Analytics
+- Monthly Summaries
+- Ad-Hoc Queries
+
+**By Complexity**:
+- Simple Lookups
+- Complex Joins
+- Aggregation Queries
+- Multi-Step Operations
+
+<Tip>
+Create descriptive page names that make it easy to find queries later
+</Tip>
+
+### Best Practices for Scratchpad
+
+1. **Save Before Modifying**: Move the AI-generated query to Scratchpad before making manual changes
+2. **Add Comments**: Document why the query was saved and what it accomplishes
+3. **Test Modifications**: When you modify a saved query, test it thoroughly
+4. **Archive Old Queries**: Create an "Archive" page for queries you no longer use but want to keep
+5. **Share with Team**: Use descriptive names so teammates can understand saved queries
+
+## Managing Conversation History
+
+As you work with the AI assistant, managing your conversation history becomes important for maintaining clarity and performance.
+
+### Conversation Lifecycle
+
+<Steps>
+<Step title="Initial Questions">
+Start with exploratory questions to understand your data.
+
+Context is minimal, responses are quick.
+</Step>
+<Step title="Active Conversation">
+Build on previous questions, refine queries, and drill into details.
+
+Context accumulates, enabling sophisticated follow-ups.
+</Step>
+<Step title="Context Accumulation">
+After 20-30 messages, the conversation has substantial context.
+
+Performance may slow slightly as more history is processed.
+</Step>
+<Step title="Context Limits">
+Approaching provider limits (varies by model).
+
+Consider starting a new chat or being more concise.
+</Step>
+</Steps>
+
+### Signs You Should Start a New Chat
+
+Watch for these indicators:
+- Responses become slower (>10 seconds for simple queries)
+- The AI references incorrect previous context
+- You're switching to a completely different task
+- Error messages about context length
+- You've had 50+ messages in one conversation
+
+### Strategies for Long Sessions
+
+If you need extended conversations:
+
+**Use Claude for Long Context**:
+- Anthropic's Claude models have 200K token context windows
+- Can maintain 200+ message conversations
+- Best for extended analysis sessions
+
+**Be Concise**:
+- Avoid unnecessarily verbose questions
+- Use shorthand in follow-ups ("show top 10" vs. "can you please show me the top 10 results")
+- Reference previous results by position ("those top 3" instead of repeating criteria)
+
+**Periodically Summarize**:
+```text
+Summarize what we've learned about the users table so far
+```
+This helps the AI consolidate context and identify what's important.
+
+**Save to Scratchpad**:
+Move important queries to Scratchpad, then start a new chat with a fresh context.
+
+## Provider Management
+
+Managing your AI providers allows you to switch between different AI services, update credentials, and remove unused providers.
+
+### Viewing Current Provider
+
+Your active provider and model are displayed in two dropdowns at the top of the Chat interface:
+- **Left dropdown**: AI Provider (OpenAI, Anthropic, Ollama, etc.)
+- **Right dropdown**: Specific model (GPT-4, Claude 3.5 Sonnet, etc.)
+
+### Switching Providers
+
+<Steps>
+<Step title="Click Provider Dropdown">
+Click the AI Provider dropdown on the left.
+
+All configured providers appear in the list.
+</Step>
+<Step title="Select Different Provider">
+Click on another provider to switch immediately.
+
+The model dropdown will update with available models for that provider.
+</Step>
+<Step title="Select Model">
+Choose the desired model from the updated model dropdown.
+
+You can now chat using the new provider and model.
+</Step>
+</Steps>
+
+<Info>
+Switching providers does NOT clear your conversation history. The new provider will have access to previous messages
+</Info>
+
+### Adding New Providers
+
+<Steps>
+<Step title="Open Provider Dropdown">
+Click the AI Provider dropdown.
+</Step>
+<Step title="Click 'Add a Provider'">
+At the bottom of the dropdown, click the green **"Add a provider"** option with the plus icon.
+</Step>
+<Step title="Configure Provider">
+Select the provider type and enter the required credentials (API key).
+
+See [Setting Up AI Providers](/ai/setup-providers) for detailed instructions.
+</Step>
+<Step title="Submit">
+Click Submit to save the provider.
+
+The new provider will appear in your provider list.
+</Step>
+</Steps>
+
+### Deleting Providers
+
+When you no longer need a provider (e.g., expired API key, switching to different service), you can remove it:
+
+![Delete Provider Button](/images/115-chat-delete-provider-button.png)
+
+<Steps>
+<Step title="Select Provider to Delete">
+Use the provider dropdown to select the provider you want to remove.
+
+This ensures you're deleting the correct provider.
+</Step>
+<Step title="Click Delete Provider">
+Click the **Delete Provider** button next to the New Chat button.
+
+A confirmation dialog will appear.
+</Step>
+<Step title="Confirm Deletion">
+Click **Delete** in the confirmation dialog.
+
+<Warning>
+This action cannot be undone. You'll need to re-enter credentials to use this provider again
+</Warning>
+</Step>
+<Step title="Provider Removed">
+The provider is removed from your configuration.
+
+If this was your only provider, you'll need to add a new one to continue using the AI assistant.
+</Step>
+</Steps>
+
+### Managing Multiple Providers
+
+You can configure multiple providers simultaneously, useful for:
+
+**Cost Optimization**:
+- Use GPT-3.5 Turbo for simple queries (cheaper)
+- Switch to GPT-4 for complex analysis (more accurate)
+
+**Feature Comparison**:
+- Compare how different models handle the same question
+- Identify which provider works best for your schema
+
+**Redundancy**:
+- Have backup providers if primary service is down
+- Avoid being blocked by rate limits on one provider
+
+**Privacy Flexibility**:
+- Use Ollama for sensitive queries (local processing)
+- Use cloud providers for faster responses on non-sensitive data
+
+<Tip>
+Keep at least two providers configured for reliability and flexibility
+</Tip>
+
+### Provider-Specific Settings
+
+Each provider has different characteristics to consider:
+
+<CardGroup cols={2}>
+<Card title="OpenAI" icon="openai">
+**Credentials**: API key (starts with `sk-proj-`)
+**Best Models**: GPT-4 Turbo, GPT-3.5 Turbo
+**Notes**: Fast, accurate, pay-per-use
+</Card>
+<Card title="Anthropic" icon="anthropic">
+**Credentials**: API key (starts with `sk-ant-api`)
+**Best Models**: Claude 3.5 Sonnet
+**Notes**: Large context window, excellent reasoning
+</Card>
+<Card title="Ollama" icon="server">
+**Credentials**: None (local installation)
+**Best Models**: Llama 3.1, Mistral, CodeLlama
+**Notes**: Privacy-focused, free, requires local setup
+</Card>
+<Card title="Custom" icon="plug">
+**Credentials**: Varies by implementation
+**Best Models**: Depends on your deployment
+**Notes**: Full control, enterprise features
+</Card>
+</CardGroup>
+
+## Advanced Conversation Patterns
+
+Master these advanced patterns to get more from your conversations with the AI assistant.
+
+### Iterative Refinement
+
+Build complex queries through gradual refinement:
+
+<Steps>
+<Step title="Start Simple">
+```text
+Show me user signups
+```
+</Step>
+<Step title="Add Time Filter">
+```text
+Just from the last 30 days
+```
+</Step>
+<Step title="Add Grouping">
+```text
+Group them by day
+```
+</Step>
+<Step title="Add Comparison">
+```text
+Compare to the previous 30 days
+```
+</Step>
+<Step title="Calculate Metrics">
+```text
+What's the percentage change?
+```
+</Step>
+</Steps>
+
+### Context Anchoring
+
+Reference specific previous results:
+
+```text
+Using the results from two questions ago, show me...
+```
+
+```text
+Take that query and add a filter for...
+```
+
+```text
+Apply the same logic to the orders table instead
+```
+
+### Explaining AI Decisions
+
+Ask the AI to explain its query choices:
+
+```text
+Why did you use a LEFT JOIN instead of INNER JOIN?
+```
+
+```text
+Explain how this aggregation query works
+```
+
+```text
+Is there a more efficient way to write this?
+```
+
+This helps you learn SQL while using the assistant.
+
+### Multi-Step Workflows
+
+Combine conversation with Scratchpad for complex workflows:
+
+1. **Explore with AI**: Ask questions to understand data structure
+2. **Generate Base Query**: Get AI to create initial query
+3. **Move to Scratchpad**: Save the query for refinement
+4. **Refine Manually**: Add complexity or optimization
+5. **Return to AI**: Ask follow-up questions about results
+6. **Iterate**: Move refined queries back to Scratchpad
+
+This hybrid approach combines AI speed with manual control.
+
+### Conversation Templates
+
+Common conversation templates for recurring tasks:
+
+**Data Quality Check**:
+```text
+1. Show me row counts for all tables
+2. Are there any null values in critical columns?
+3. Find duplicate records in [table]
+4. Identify records with invalid data formats
+5. Generate a summary of data quality issues
+```
+
+**Performance Analysis**:
+```text
+1. What are the largest tables in the database?
+2. Show me tables without indexes
+3. Find the slowest queries (if query logs available)
+4. Identify tables with many relationships
+5. Suggest optimization opportunities
+```
+
+**Business Intelligence**:
+```text
+1. What's our total revenue this month?
+2. How does that compare to last month?
+3. Which products contributed most to revenue?
+4. Show me revenue by customer segment
+5. Identify trends over the last 6 months
+```
+
+## Troubleshooting Conversation Issues
+
+Common issues and solutions when working with conversations:
+
+<AccordionGroup>
+<Accordion title="AI Misunderstands My Question">
+**Symptoms**: Incorrect query generated, wrong table used, unexpected results
+
+**Solutions**:
+- Be more specific with table and column names
+- Provide examples in your question
+- Ask the AI to confirm understanding before generating query
+- Break complex questions into smaller parts
+- Use full names instead of pronouns in early messages
+
+**Example Fix**:
+- ❌ "Show me the data" (too vague)
+- ✅ "Show me all rows from the users table"
+</Accordion>
+
+<Accordion title="Slow Response Times">
+**Symptoms**: Queries take >10 seconds, loading messages appear for extended periods
+
+**Solutions**:
+- Start a new chat to clear context
+- Switch to a faster model (GPT-3.5 Turbo, Claude Haiku)
+- Reduce complexity of questions
+- Check your internet connection (for cloud providers)
+- For Ollama, ensure sufficient local resources
+
+**For Long Conversations**:
+- Context size affects performance
+- Save important queries to Scratchpad and start fresh
+- Use providers with larger context windows (Claude)
+</Accordion>
+
+<Accordion title="AI References Wrong Previous Context">
+**Symptoms**: Follow-up questions use incorrect table or data from earlier in conversation
+
+**Solutions**:
+- Be explicit in your question (mention table name)
+- Start a new chat if context is too mixed
+- Ask the AI to confirm what it's referencing
+- Use more recent context by being specific
+
+**Example Fix**:
+- ❌ "Now show me those records" (ambiguous)
+- ✅ "Show me users from the last query who have orders"
+</Accordion>
+
+<Accordion title="Cannot Move Query to Scratchpad">
+**Symptoms**: Scratchpad button is missing or disabled
+
+**Reasons**:
+- Current database doesn't support SQL (Redis, MongoDB)
+- Message is a text response, not a SQL query
+- Message is an error response
+
+**Solutions**:
+- Only SQL query results can be moved to Scratchpad
+- For NoSQL databases, manually copy query text
+- Ensure query executed successfully before moving
+</Accordion>
+
+<Accordion title="Provider Keeps Disconnecting">
+**Symptoms**: "Provider not available" errors, need to reconfigure frequently
+
+**Solutions**:
+- Verify API key is still valid
+- Check billing status on provider's website
+- Ensure API key has correct permissions
+- For Ollama, verify service is running
+- Check for rate limiting from provider
+
+**For Ollama Specifically**:
+```bash
+# Verify Ollama is running
+ollama list
+
+# Restart Ollama service if needed
+```
+</Accordion>
+
+<Accordion title="History Navigation Not Working">
+**Symptoms**: Arrow keys don't populate previous messages
+
+**Solutions**:
+- Ensure input field is focused (click in input box)
+- Verify messages were actually sent (look for user messages in chat)
+- Check that chat has history (arrow keys only work with existing messages)
+- Try clicking in input field before pressing arrow keys
+
+**Note**: Arrow keys only navigate through your sent messages, not AI responses
+</Accordion>
+</AccordionGroup>
+
+## Best Practices Summary
+
+<CardGroup cols={2}>
+<Card title="Be Specific" icon="bullseye">
+Mention table names and columns explicitly in your questions
+</Card>
+<Card title="Build Incrementally" icon="layer-group">
+Start simple and refine through follow-up questions
+</Card>
+<Card title="Save Important Queries" icon="floppy-disk">
+Move valuable queries to Scratchpad before clearing chat
+</Card>
+<Card title="Start Fresh When Needed" icon="rotate">
+Use New Chat when switching topics or after long conversations
+</Card>
+<Card title="Use Keyboard Shortcuts" icon="keyboard">
+Press <kbd>↑</kbd> to quickly access and modify previous questions
+</Card>
+<Card title="Organize Scratchpad" icon="folder">
+Create well-named pages to organize saved queries
+</Card>
+<Card title="Multiple Providers" icon="network-wired">
+Configure backup providers for reliability
+</Card>
+<Card title="Monitor Context" icon="gauge">
+Watch for performance degradation in long conversations
+</Card>
+</CardGroup>
+
+## Next Steps
+
+Now that you understand conversation management and advanced features:
+
+<CardGroup cols={2}>
+<Card title="Querying Data" icon="magnifying-glass" href="/ai/querying-data">
+Learn techniques for effective data retrieval with natural language
+</Card>
+<Card title="Modifying Data" icon="pen-to-square" href="/ai/modifying-data">
+Safely update, insert, and delete data with AI assistance
+</Card>
+<Card title="Scratchpad Guide" icon="code" href="/features/scratchpad">
+Master the Scratchpad for advanced SQL editing and query management
+</Card>
+<Card title="Best Practices" icon="star" href="/best-practices/ai-usage">
+Discover tips for optimal AI assistant usage
+</Card>
+</CardGroup>
+
+<Check>
+Mastering conversation features transforms the AI assistant from a query generator into a powerful collaborative partner for database work
+</Check>

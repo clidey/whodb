@@ -35,6 +35,16 @@
             ]
           },
           {
+            "group": "AI Chat Assistant",
+            "pages": [
+              "ai/introduction",
+              "ai/setup-providers",
+              "ai/querying-data",
+              "ai/modifying-data",
+              "ai/conversation-features"
+            ]
+          },
+          {
             "group": "Data Management",
             "pages": [
               "data/viewing-data",
@@ -93,7 +103,8 @@
               "guides/tutorials/data-exploration-workflow",
               "guides/tutorials/building-complex-queries",
               "guides/tutorials/data-export-analysis",
-              "guides/tutorials/schema-visualization"
+              "guides/tutorials/schema-visualization",
+              "guides/tutorials/ai-first-query"
             ]
           },
           {
@@ -113,7 +124,8 @@
               "use-cases/testing-development",
               "use-cases/data-migration",
               "use-cases/debugging-production",
-              "use-cases/api-development"
+              "use-cases/api-development",
+              "use-cases/ai-data-exploration"
             ]
           }
         ]
@@ -127,7 +139,8 @@
               "best-practices/security",
               "best-practices/performance",
               "best-practices/data-management",
-              "best-practices/query-optimization"
+              "best-practices/query-optimization",
+              "best-practices/ai-usage"
             ]
           },
           {

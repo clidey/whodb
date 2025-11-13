@@ -476,11 +476,7 @@ describe('Postgres Screenshot Generation', () => {
     cy.get('[data-testid="add-row-field-email"] input').clear().type('test@example.com');
     cy.get('[data-testid="add-row-field-password"] input').clear().type('password');
     cy.get('[data-testid="add-row-field-created_at"] input').clear().type('2025-01-01');
-    cy.get('[data-testid="submit-add-row-button"]').trigger('mouseover');
-    cy.wait(200);
-    cy.screenshot(`${screenshotDir}/41-add-row-submit-button`, {
-      overwrite: true
-    });
+    cy.screenshotWithHighlight('[data-testid="submit-add-row-button"]', `${screenshotDir}/41-add-row-submit-button`);
     cy.get('body').type('{esc}');
   });
 
@@ -490,11 +486,7 @@ describe('Postgres Screenshot Generation', () => {
     cy.get('[data-testid="context-menu-edit-row"]').click();
     cy.wait(300);
     cy.get('[data-testid="editable-field-2"]').clear().type('updated_name');
-    cy.get('[data-testid="update-button"]').trigger('mouseover');
-    cy.wait(200);
-    cy.screenshot(`${screenshotDir}/42-edit-row-update-hover`, {
-      overwrite: true
-    });
+    cy.screenshotWithHighlight('[data-testid="update-button"]', `${screenshotDir}/42-edit-row-update-hover`);
     cy.get('body').type('{esc}');
   });
 
@@ -503,11 +495,7 @@ describe('Postgres Screenshot Generation', () => {
     cy.get('table tbody tr').first().rightclick({ force: true });
     cy.get('[data-testid="context-menu-more-actions"]').click();
     cy.wait(200);
-    cy.get('[data-testid="context-menu-delete-row"]').trigger('mouseover');
-    cy.wait(200);
-    cy.screenshot(`${screenshotDir}/43-context-menu-delete-option`, {
-      overwrite: true
-    });
+    cy.screenshotWithHighlight('[data-testid="context-menu-delete-row"]', `${screenshotDir}/43-context-menu-delete-option`);
     cy.get('body').click(0, 0);
   });
 
@@ -525,11 +513,7 @@ describe('Postgres Screenshot Generation', () => {
     cy.wait(200);
     cy.get('table tbody tr').first().rightclick({ force: true });
     cy.wait(200);
-    cy.contains('[data-slot="context-menu-item"]', 'Select Row').trigger('mouseover');
-    cy.wait(200);
-    cy.screenshot(`${screenshotDir}/45-context-menu-select-row`, {
-      overwrite: true
-    });
+    cy.screenshotWithHighlight('[data-slot="context-menu-item"]:contains("Select Row")', `${screenshotDir}/45-context-menu-select-row`);
     cy.get('body').click(0, 0);
   });
 
@@ -597,22 +581,14 @@ describe('Postgres Screenshot Generation', () => {
     cy.wait(1000);
     cy.openQueryHistory(0);
     cy.wait(500);
-    cy.get('[data-testid="clone-to-editor-button"]').first().trigger('mouseover');
-    cy.wait(200);
-    cy.screenshot(`${screenshotDir}/49-scratchpad-history-clone-button`, {
-      overwrite: true
-    });
+    cy.screenshotWithHighlight('[data-testid="clone-to-editor-button"]', `${screenshotDir}/49-scratchpad-history-clone-button`);
     cy.get('body').type('{esc}');
   });
 
   it('50 - Graph - Click Node Data Button', () => {
     cy.goto('graph');
     cy.wait(1500);
-    cy.get('[data-testid="rf__node-users"] [data-testid="data-button"]').trigger('mouseover', {force: true});
-    cy.wait(200);
-    cy.screenshot(`${screenshotDir}/50-graph-node-data-button-hover`, {
-      overwrite: true
-    });
+    cy.screenshotWithHighlight('[data-testid="rf__node-users"] [data-testid="data-button"]', `${screenshotDir}/50-graph-node-data-button-hover`);
   });
   });
 
@@ -779,11 +755,7 @@ describe('Postgres Screenshot Generation', () => {
       cy.contains('label', 'Format').parent().find('[role="combobox"]').first().click();
     });
       cy.wait(300);
-      cy.get('[role="option"]').contains('CSV').trigger('mouseover');
-      cy.wait(200);
-      cy.screenshot(`${screenshotDir}/65-export-format-csv-option`, {
-      overwrite: true
-    });
+      cy.screenshotWithHighlight('[role="option"]:contains("CSV")', `${screenshotDir}/65-export-format-csv-option`);
       cy.get('body').type('{esc}');
     });
 
@@ -795,11 +767,7 @@ describe('Postgres Screenshot Generation', () => {
       cy.contains('label', 'Format').parent().find('[role="combobox"]').first().click();
     });
       cy.wait(300);
-      cy.get('[role="option"]').contains('Excel').trigger('mouseover');
-      cy.wait(200);
-      cy.screenshot(`${screenshotDir}/66-export-format-excel-option`, {
-      overwrite: true
-    });
+      cy.screenshotWithHighlight('[role="option"]:contains("Excel")', `${screenshotDir}/66-export-format-excel-option`);
       cy.get('body').type('{esc}');
     });
 
@@ -811,11 +779,7 @@ describe('Postgres Screenshot Generation', () => {
         cy.contains('label', 'Delimiter').parent().find('[role="combobox"]').first().click();
       });
       cy.wait(300);
-      cy.get('[role="option"]').contains('Comma').trigger('mouseover');
-      cy.wait(200);
-      cy.screenshot(`${screenshotDir}/67-export-delimiter-comma`, {
-        overwrite: true
-      });
+      cy.screenshotWithHighlight('[role="option"]:contains("Comma")', `${screenshotDir}/67-export-delimiter-comma`);
       cy.get('body').type('{esc}');
     });
 
@@ -845,11 +809,7 @@ describe('Postgres Screenshot Generation', () => {
         cy.contains('label', 'Delimiter').parent().find('[role="combobox"]').eq(1).should('be.visible').click({force: true});
       });
       cy.wait(500);
-      cy.get('[role="option"][data-value="|"]').should('be.visible').trigger('mouseover');
-      cy.wait(300);
-      cy.screenshot(`${screenshotDir}/69-export-delimiter-pipe`, {
-        overwrite: true
-      });
+      cy.screenshotWithHighlight('[role="option"][data-value="|"]', `${screenshotDir}/69-export-delimiter-pipe`);
       cy.get('body').type('{esc}');
       cy.wait(200);
       cy.get('body').type('{esc}');
@@ -864,11 +824,7 @@ describe('Postgres Screenshot Generation', () => {
         cy.contains('label', 'Delimiter').parent().find('[role="combobox"]').eq(1).should('be.visible').click({force: true});
       });
       cy.wait(500);
-      cy.get('[role="option"][data-value="\t"]').should('be.visible').trigger('mouseover');
-      cy.wait(300);
-      cy.screenshot(`${screenshotDir}/70-export-delimiter-tab`, {
-        overwrite: true
-      });
+      cy.screenshotWithHighlight('[role="option"][data-value="\t"]', `${screenshotDir}/70-export-delimiter-tab`);
       cy.get('body').type('{esc}');
       cy.wait(200);
       cy.get('body').type('{esc}');
@@ -1163,11 +1119,7 @@ describe('Postgres Screenshot Generation', () => {
     it('97 - Graph - Fit View Control', () => {
       cy.goto('graph');
       cy.wait(1500);
-      cy.get('.react-flow__controls-fitview').trigger('mouseover');
-      cy.wait(200);
-      cy.screenshot(`${screenshotDir}/97-graph-fit-view-control`, {
-      overwrite: true
-    });
+      cy.screenshotWithHighlight('.react-flow__controls-fitview', `${screenshotDir}/97-graph-fit-view-control`);
     });
 
     it('98 - Explore - Primary Key Column', () => {
@@ -1193,9 +1145,300 @@ describe('Postgres Screenshot Generation', () => {
         overwrite: true
       });
     });
+
+  // ============================================================================
+  // SECTION: CHAT (AI ASSISTANT) FUNCTIONALITY (101-115)
+  // ============================================================================
+
+    it('101 - Chat - Initial Page with Model Selection', () => {
+      cy.setupChatMock();
+      cy.gotoChat();
+      cy.wait(500);
+      cy.screenshot(`${screenshotDir}/101-chat-initial-page`, {
+        capture: 'fullPage',
+        overwrite: true
+      });
+    });
+
+    it('102 - Chat - AI Provider Dropdown', () => {
+      cy.setupChatMock();
+      cy.visit('/chat');
+      cy.wait(1500);
+      cy.get('[data-testid="ai-provider-select"]').click();
+      cy.wait(300);
+      cy.screenshot(`${screenshotDir}/102-chat-ai-provider-dropdown`, {
+        overwrite: true
+      });
+      cy.get('body').type('{esc}');
+    });
+
+    it('103 - Chat - AI Model Dropdown', () => {
+      cy.setupChatMock();
+      cy.gotoChat();
+      cy.get('[data-testid="ai-model-select"]').click();
+      cy.wait(300);
+      cy.screenshot(`${screenshotDir}/103-chat-ai-model-dropdown`, {
+        overwrite: true
+      });
+      cy.get('body').type('{esc}');
+    });
+
+    it('104 - Chat - Example Prompts', () => {
+      cy.setupChatMock();
+      cy.gotoChat();
+      cy.wait(500);
+      cy.screenshot(`${screenshotDir}/104-chat-example-prompts`, {
+        overwrite: true
+      });
+    });
+
+    it('105 - Chat - Simple Text Response', () => {
+      cy.setupChatMock();
+      cy.gotoChat();
+      cy.mockChatResponse([{
+        type: 'text',
+        text: 'Hello! I can help you query and explore your database. What would you like to know?'
+      }]);
+      cy.sendChatMessage('Hello!');
+      cy.waitForChatResponse();
+      cy.wait(500);
+      cy.screenshot(`${screenshotDir}/105-chat-simple-text-response`, {
+        capture: 'fullPage',
+        overwrite: true
+      });
+    });
+
+    it('106 - Chat - SQL Query with Results', () => {
+      cy.setupChatMock();
+      cy.gotoChat();
+      cy.mockChatResponse([{
+        type: 'text',
+        text: 'Here are all the users in the database.'
+      }, {
+        type: 'sql:get',
+        text: 'SELECT * FROM test_schema.users ORDER BY id',
+        result: {
+          Columns: [
+            { Name: 'id', Type: 'integer', __typename: 'Column' },
+            { Name: 'username', Type: 'text', __typename: 'Column' },
+            { Name: 'email', Type: 'text', __typename: 'Column' }
+          ],
+          Rows: [
+            ['1', 'john_doe', 'john@example.com'],
+            ['2', 'jane_smith', 'jane@example.com'],
+            ['3', 'admin_user', 'admin@example.com']
+          ],
+          __typename: 'RowsResult'
+        }
+      }]);
+      cy.sendChatMessage('Show me all users');
+      cy.waitForChatResponse();
+      cy.wait(500);
+      cy.screenshot(`${screenshotDir}/106-chat-sql-query-results`, {
+        capture: 'fullPage',
+        overwrite: true
+      });
+    });
+
+    it('107 - Chat - SQL Query Code View', () => {
+      cy.setupChatMock();
+      cy.gotoChat();
+      cy.mockChatResponse([{
+        type: 'text',
+        text: 'Here are all the users in the database.'
+      }, {
+        type: 'sql:get',
+        text: 'SELECT * FROM test_schema.users ORDER BY id',
+        result: {
+          Columns: [
+            { Name: 'id', Type: 'integer', __typename: 'Column' },
+            { Name: 'username', Type: 'text', __typename: 'Column' }
+          ],
+          Rows: [
+            ['1', 'john_doe'],
+            ['2', 'jane_smith']
+          ],
+          __typename: 'RowsResult'
+        }
+      }]);
+      cy.sendChatMessage('Show me all users');
+      cy.waitForChatResponse();
+      cy.get('[data-testid="icon-button"]').first().click();
+      cy.wait(500);
+      cy.screenshot(`${screenshotDir}/107-chat-sql-code-view`, {
+        overwrite: true
+      });
+    });
+
+    it('108 - Chat - Error Message', () => {
+      cy.setupChatMock();
+      cy.gotoChat();
+      cy.mockChatResponse([{
+        type: 'error',
+        text: 'ERROR: relation "test_schema.nonexistent_table" does not exist (SQLSTATE 42P01)'
+      }]);
+      cy.sendChatMessage('Show me data from nonexistent_table');
+      cy.waitForChatResponse();
+      cy.wait(500);
+      cy.screenshot(`${screenshotDir}/108-chat-error-message`, {
+        capture: 'fullPage',
+        overwrite: true
+      });
+    });
+
+    it('109 - Chat - Aggregation Query', () => {
+      cy.setupChatMock();
+      cy.gotoChat();
+      cy.mockChatResponse([{
+        type: 'text',
+        text: 'Here is the user count by email domain.'
+      }, {
+        type: 'sql:get',
+        text: 'SELECT SUBSTRING(email FROM POSITION(\'@\' IN email) + 1) as domain, COUNT(*) as user_count FROM test_schema.users GROUP BY domain',
+        result: {
+          Columns: [
+            { Name: 'domain', Type: 'text', __typename: 'Column' },
+            { Name: 'user_count', Type: 'bigint', __typename: 'Column' }
+          ],
+          Rows: [
+            ['example.com', '3']
+          ],
+          __typename: 'RowsResult'
+        }
+      }]);
+      cy.sendChatMessage('Count users by email domain');
+      cy.waitForChatResponse();
+      cy.wait(500);
+      cy.screenshot(`${screenshotDir}/109-chat-aggregation-query`, {
+        capture: 'fullPage',
+        overwrite: true
+      });
+    });
+
+    it('110 - Chat - Action Query Confirmation', () => {
+      cy.setupChatMock();
+      cy.gotoChat();
+      cy.mockChatResponse([{
+        type: 'text',
+        text: 'I can help you delete that user. Would you like me to proceed?'
+      }]);
+      cy.sendChatMessage('Delete user with id 5');
+      cy.waitForChatResponse();
+      cy.wait(500);
+      cy.screenshot(`${screenshotDir}/110-chat-action-confirmation`, {
+        capture: 'fullPage',
+        overwrite: true
+      });
+    });
+
+    it('111 - Chat - Action Query Executed', () => {
+      cy.setupChatMock();
+      cy.gotoChat();
+      cy.mockChatResponse([{
+        type: 'text',
+        text: 'I can help you delete that user. Would you like me to proceed?'
+      }]);
+      cy.sendChatMessage('Delete user with id 5');
+      cy.waitForChatResponse();
+      cy.mockChatResponse([{
+        type: 'sql:delete',
+        text: 'DELETE FROM test_schema.users WHERE id = 5',
+        result: {
+          Columns: [],
+          Rows: [],
+          __typename: 'RowsResult'
+        }
+      }]);
+      cy.sendChatMessage('Yes, delete it');
+      cy.waitForChatResponse();
+      cy.wait(500);
+      cy.screenshot(`${screenshotDir}/111-chat-action-executed`, {
+        capture: 'fullPage',
+        overwrite: true
+      });
+    });
+
+    it('112 - Chat - Multiple Messages Conversation', () => {
+      cy.setupChatMock();
+      cy.gotoChat();
+
+      cy.mockChatResponse([{
+        type: 'text',
+        text: 'The users table contains user account information including usernames, emails, and creation dates.'
+      }]);
+      cy.sendChatMessage('What is in the users table?');
+      cy.waitForChatResponse();
+
+      cy.mockChatResponse([{
+        type: 'sql:get',
+        text: 'SELECT COUNT(*) as total FROM test_schema.users',
+        result: {
+          Columns: [{ Name: 'total', Type: 'bigint', __typename: 'Column' }],
+          Rows: [['3']],
+          __typename: 'RowsResult'
+        }
+      }]);
+      cy.sendChatMessage('How many users are there?');
+      cy.waitForChatResponse();
+
+      cy.wait(500);
+      cy.screenshot(`${screenshotDir}/112-chat-multiple-messages`, {
+        capture: 'fullPage',
+        overwrite: true
+      });
+    });
+
+    it('113 - Chat - Move to Scratchpad Dialog', () => {
+      cy.setupChatMock();
+      cy.gotoChat();
+      cy.mockChatResponse([{
+        type: 'text',
+        text: 'Here are all the users.'
+      }, {
+        type: 'sql:get',
+        text: 'SELECT * FROM test_schema.users',
+        result: {
+          Columns: [
+            { Name: 'id', Type: 'integer', __typename: 'Column' },
+            { Name: 'username', Type: 'text', __typename: 'Column' }
+          ],
+          Rows: [['1', 'john_doe']],
+          __typename: 'RowsResult'
+        }
+      }]);
+      cy.sendChatMessage('Show me all users');
+      cy.waitForChatResponse();
+
+      // Hover over the table to make the button visible and click it
+      cy.get('.group\\/table-preview').last().within(() => {
+        cy.get('[title="Move to Scratchpad"]').click({ force: true });
+      });
+      cy.wait(500);
+      cy.screenshot(`${screenshotDir}/113-chat-move-to-scratchpad-dialog`, {
+        overwrite: true
+      });
+    });
+
+    it('114 - Chat - New Chat Button', () => {
+      cy.setupChatMock();
+      cy.gotoChat();
+      cy.mockChatResponse([{
+        type: 'text',
+        text: 'Hello! How can I help you?'
+      }]);
+      cy.sendChatMessage('Hello');
+      cy.waitForChatResponse();
+      cy.screenshotWithHighlight('[data-testid="chat-new-chat"]', `${screenshotDir}/114-chat-new-chat-button`);
+    });
+
+    it('115 - Chat - Delete Provider Button', () => {
+      cy.setupChatMock();
+      cy.gotoChat();
+      cy.screenshotWithHighlight('[data-testid="chat-delete-provider"]', `${screenshotDir}/115-chat-delete-provider-button`);
+    });
   });
 
   after(() => {
-    cy.log('Completed comprehensive Postgres screenshot generation with 100 tests');
+    cy.log('Completed comprehensive Postgres screenshot generation with 115 tests');
   });
 });
