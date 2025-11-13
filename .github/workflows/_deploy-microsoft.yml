@@ -107,35 +107,6 @@ jobs:
             exit 1
           }
 
-          # Copy WebView2 Fixed Runtime files if they exist in the build artifacts
-          Write-Host "Looking for WebView2 runtime files to bundle..."
-          $webview2Paths = @(
-            "desktop-builds/webview2/runtime/Microsoft.WebView2.FixedVersionRuntime.141.0.3537.99.x64",
-            "desktop-builds/build/webview2/runtime/Microsoft.WebView2.FixedVersionRuntime.141.0.3537.99.x64",
-            "desktop-builds/webview2/Microsoft.WebView2.FixedVersionRuntime.141.0.3537.99.x64"
-          )
-
-          $webview2Found = $false
-          #          foreach ($path in $webview2Paths) {
-          #            if (Test-Path $path) {
-          #              Write-Host "✅ Found WebView2 runtime at: $path"
-          #              Write-Host "Copying WebView2 runtime files to MSIX package..."
-          #
-          #              # Create WebView2 directory structure in MSIX
-          #              $webview2Dir = "$msixDir\Microsoft.WebView2.FixedVersionRuntime.141.0.3537.99.x64"
-          #              New-Item -ItemType Directory -Force -Path $webview2Dir | Out-Null
-          #
-          #              # Copy all WebView2 files
-          #              Copy-Item -Path "$path\*" -Destination $webview2Dir -Recurse -Force
-          #              Write-Host "✅ WebView2 runtime bundled in MSIX package"
-          #              $webview2Found = $true
-          #              break
-          #            }
-          #          }
-
-          if (-not $webview2Found) {
-            Write-Host "⚠️ WebView2 runtime not found in build artifacts - app will require system WebView2"
-          }
 
           $semVersion = "${{ inputs.version }}".Trim()
           if ($semVersion.StartsWith("v")) {
