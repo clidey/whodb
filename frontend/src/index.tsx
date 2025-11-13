@@ -25,10 +25,13 @@ import {App} from './app';
 import {BrowserRouter, HashRouter} from "react-router-dom";
 import {PersistGate} from 'redux-persist/integration/react';
 import {PostHogProvider} from 'posthog-js/react';
+import type {PostHog} from 'posthog-js';
 import {initPosthog} from "./config/posthog";
 import {ThemeProvider} from '@clidey/ux'
 import {isEEMode} from './config/ee-imports';
 import {isDesktopApp} from './utils/external-links';
+import {useAppSelector} from './store/hooks';
+import {PosthogConsentBanner} from './components/analytics/posthog-consent-banner';
 
 // Detect desktop Linux and add a class for CSS-based overrides (e.g., fonts)
 try {
@@ -51,21 +54,37 @@ const root = ReactDOM.createRoot(
 
 // Component to handle async PostHog initialization
 const AppWithProviders = () => {
-  const [posthogClient, setPosthogClient] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(!isEEMode); // Only load for CE
+    const metricsEnabled = useAppSelector(state => state.settings.metricsEnabled);
+    const [posthogClient, setPosthogClient] = useState<PostHog | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (!isEEMode) {
-      initPosthog().then(client => {
+      if (isEEMode) {
+          return;
+      }
+
+      if (!metricsEnabled) {
+          setPosthogClient(null);
+          return;
+      }
+
+      setIsLoading(true);
+      initPosthog()
+          .then(client => {
         setPosthogClient(client);
+          })
+          .catch(() => {
+              setPosthogClient(null);
+          })
+          .finally(() => {
         setIsLoading(false);
       });
-    }
-  }, []);
+  }, [metricsEnabled]);
 
   const app = (
     <ThemeProvider>
       <App />
+        <PosthogConsentBanner/>
     </ThemeProvider>
   );
 
@@ -81,7 +100,6 @@ const AppWithProviders = () => {
 
   // Wrap with PostHogProvider once loaded (CE builds)
   if (posthogClient) {
-    // @ts-ignore
     return <PostHogProvider client={posthogClient}>{app}</PostHogProvider>;
   }
 

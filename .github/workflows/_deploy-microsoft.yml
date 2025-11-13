@@ -107,6 +107,7 @@ jobs:
             exit 1
           }
 
+
           $semVersion = "${{ inputs.version }}".Trim()
           if ($semVersion.StartsWith("v")) {
             $semVersion = $semVersion.Substring(1)
@@ -218,23 +219,67 @@ jobs:
           $assetsDir = "$msixDir/Assets"
           New-Item -ItemType Directory -Force -Path $assetsDir
 
-          Add-Type -AssemblyName System.Drawing
-          $sizes = @(
-            @{Name="StoreLogo.png"; Width=50; Height=50},
-            @{Name="Square150x150Logo.png"; Width=150; Height=150},
-            @{Name="Square44x44Logo.png"; Width=44; Height=44},
-            @{Name="Wide310x150Logo.png"; Width=310; Height=150},
-            @{Name="SplashScreen.png"; Width=620; Height=300}
+          $iconPaths = @(
+            "desktop-builds/appicon.png",
+            "desktop-builds/build/appicon.png"
           )
-
-          foreach ($size in $sizes) {
-            $bitmap = New-Object System.Drawing.Bitmap $size.Width, $size.Height
-            $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
-            $graphics.Clear([System.Drawing.Color]::FromArgb(0, 120, 215))
-            $graphics.Dispose()
-            $bitmap.Save("$assetsDir\$($size.Name)", [System.Drawing.Imaging.ImageFormat]::Png)
-            $bitmap.Dispose()
+          $iconPath = $null
+          foreach ($path in $iconPaths) {
+            if (Test-Path $path) {
+              $iconPath = $path
+              Write-Host "✅ Found icon at: $iconPath"
+              break
+            }
           }
+
+          if (-not $iconPath) {
+            Write-Error "❌ Icon file (appicon.png) not found in artifact"
+            exit 1
+          }
+
+          Write-Host "Generating icon sizes with ImageMagick..."
+          $iconSizes = @{
+            "icon-50x50.png" = "50x50"
+            "icon-150x150.png" = "150x150"
+            "icon-44x44.png" = "44x44"
+            "icon-310x150.png" = "310x150"
+            "icon-620x300.png" = "620x300"
+          }
+
+          foreach ($filename in $iconSizes.Keys) {
+            $size = $iconSizes[$filename]
+            $outputPath = Join-Path $assetsDir $filename
+            Write-Host "  Generating $filename ($size)..."
+            & magick $iconPath -resize $size -background transparent -gravity center -extent $size -quality 85 $outputPath
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "Failed to generate $filename"
+              exit 1
+            }
+          }
+
+          Write-Host "Creating manifest-required icon files..."
+          $manifestIcons = @{
+            "StoreLogo.png" = "icon-50x50.png"
+            "Square150x150Logo.png" = "icon-150x150.png"
+            "Square44x44Logo.png" = "icon-44x44.png"
+            "Wide310x150Logo.png" = "icon-310x150.png"
+            "SplashScreen.png" = "icon-620x300.png"
+          }
+
+          foreach ($manifestName in $manifestIcons.Keys) {
+            $sourceFile = $manifestIcons[$manifestName]
+            $sourcePath = Join-Path $assetsDir $sourceFile
+            $destPath = Join-Path $assetsDir $manifestName
+            if (Test-Path $sourcePath) {
+              Copy-Item $sourcePath $destPath -Force
+              Write-Host "  Created $manifestName"
+            } else {
+              Write-Error "Source file not found: $sourcePath"
+              exit 1
+            }
+          }
+
+          Write-Host "✅ WhoDB icons generated successfully"
 
           $makeAppx = (where.exe makeappx.exe 2>$null | Select-Object -First 1)
           if (-not $makeAppx) {

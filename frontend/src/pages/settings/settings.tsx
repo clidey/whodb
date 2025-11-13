@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-import { FC, useCallback } from "react";
-import { InternalPage } from "../../components/page";
-import { InternalRoutes } from "../../config/routes";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { SettingsActions } from "../../store/settings";
-import { isEEMode } from "@/config/ee-imports";
-import { Label, Switch, Separator, DropdownMenu, DropdownMenuTrigger, Button, DropdownMenuContent, DropdownMenuItem, SelectTrigger, Select, SelectContent, SelectItem, SelectValue, Card, CardContent, CardHeader, Badge } from "@clidey/ux";
-import { ExternalLink } from "../../utils/external-links";
+import {FC, useCallback, useEffect} from "react";
+import {InternalPage} from "../../components/page";
+import {InternalRoutes} from "../../config/routes";
+import {useAppDispatch, useAppSelector} from "../../store/hooks";
+import {SettingsActions} from "../../store/settings";
+import {isEEMode} from "@/config/ee-imports";
+import {Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Separator, Switch} from "@clidey/ux";
+import {optInUser, optOutUser, trackFrontendEvent} from "@/config/posthog";
+import {ExternalLink} from "../../utils/external-links";
 
 export const SettingsPage: FC = () => {
     const dispatch = useAppDispatch();
@@ -32,9 +33,20 @@ export const SettingsPage: FC = () => {
     const spacing = useAppSelector(state => state.settings.spacing);
     const whereConditionMode = useAppSelector(state => state.settings.whereConditionMode);
 
+    useEffect(() => {
+        void trackFrontendEvent('ui.settings_viewed');
+    }, []);
+
     const handleMetricsToggle = useCallback((enabled: boolean) => {
+        if (enabled) {
+            optInUser();
+            void trackFrontendEvent('ui.telemetry_toggled', {enabled: true});
+        } else {
+            void trackFrontendEvent('ui.telemetry_toggled', {enabled: false});
+            optOutUser();
+        }
         dispatch(SettingsActions.setMetricsEnabled(enabled));
-    }, [dispatch]);
+    }, [dispatch, trackFrontendEvent]);
 
     const handleStorageUnitViewToggle = useCallback((view: 'list' | 'card') => {
         dispatch(SettingsActions.setStorageUnitView(view));
