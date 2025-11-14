@@ -33,3 +33,4 @@ msix-package-*/
 *.msix
 *.msixbundle
 test-cert.*
+whodb-test.cer

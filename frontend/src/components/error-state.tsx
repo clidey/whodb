@@ -33,7 +33,7 @@ export const ErrorState = ({ error }: ErrorStateProps) => {
     };
 
     return (
-        <Alert variant="destructive" title="Error" description={message} className="group relative">
+        <Alert variant="destructive" title="Error" description={message} className="group relative" data-testid="error-state">
             <BellAlertIcon className="w-4 h-4" />
             <AlertTitle>Error</AlertTitle>
             <AlertDescription>{message}</AlertDescription>

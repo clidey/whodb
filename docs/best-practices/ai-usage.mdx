@@ -1,0 +1,1479 @@
+---
+title: AI Chat Assistant Best Practices
+description: Comprehensive guidance for optimal and safe use of WhoDB's AI Chat Assistant
+---
+
+# AI Chat Assistant Best Practices
+
+The AI Chat Assistant transforms database interaction from technical SQL writing to natural conversation. This guide provides comprehensive best practices for using the AI assistant effectively, safely, and efficiently in production environments.
+
+<Tip>
+Effective AI assistant usage combines clear communication, security awareness, and strategic provider selection
+</Tip>
+
+## Understanding AI-Powered Database Interaction
+
+The AI Chat Assistant is fundamentally different from traditional database tools. Rather than writing SQL directly, you describe what you want in natural language, and the AI generates appropriate queries based on your database schema.
+
+### How AI Assistants Work
+
+<Steps>
+<Step title="Schema Analysis">
+The AI assistant analyzes your complete database schema, including tables, columns, data types, and relationships.
+</Step>
+<Step title="Natural Language Processing">
+Your question is processed to understand intent, entities, conditions, and desired operations.
+</Step>
+<Step title="Query Generation">
+Based on schema and intent, the AI generates database-specific SQL optimized for your database type.
+</Step>
+<Step title="Execution and Feedback">
+WhoDB executes the query and presents results, which become part of conversation context.
+</Step>
+</Steps>
+
+### Key Differences from Traditional SQL
+
+| Aspect | Traditional SQL | AI Assistant |
+|--------|----------------|-------------|
+| **Input Method** | Write exact syntax | Describe desired outcome |
+| **Schema Knowledge** | Must memorize or reference | Automatically aware |
+| **Error Handling** | Syntax errors require fixes | Rephrase in natural language |
+| **Learning Curve** | Steep for beginners | Accessible immediately |
+| **Precision** | Exact control | Interpretation required |
+| **Speed** | Fast for experts | Fast for everyone |
+
+## Query Formulation Best Practices
+
+Effective communication with the AI assistant follows specific patterns that produce accurate, efficient results.
+
+### Be Specific and Explicit
+
+Vague questions produce unreliable results. Specificity ensures the AI understands your exact intent.
+
+<AccordionGroup>
+<Accordion title="Specify Table Names">
+**Good Examples:**
+```text
+Show me all records from the users table
+Count orders in the orders table
+Display products from the inventory.products table
+```
+
+**Avoid:**
+```text
+Show me the data
+Get everything
+Display records
+```
+
+When table names might be ambiguous, include schema names: `test_schema.users`
+</Accordion>
+
+<Accordion title="Name Columns Explicitly">
+**Good Examples:**
+```text
+Show user_id, email, and created_at from users
+Display product names and prices
+Get order totals and statuses
+```
+
+**Avoid:**
+```text
+Show some user information
+Display product details
+Get order stuff
+```
+
+Explicit column names help the AI generate precise SELECT statements.
+</Accordion>
+
+<Accordion title="Specify Time Ranges Clearly">
+**Good Examples:**
+```text
+Show orders from the last 7 days
+Display users created after 2024-01-01
+Find logs between 2024-01-01 and 2024-01-15
+```
+
+**Avoid:**
+```text
+Show recent orders
+Display new users
+Find old logs
+```
+
+Use specific dates or clear relative ranges (last 7 days, this month, last year).
+</Accordion>
+
+<Accordion title="Define Conditions Precisely">
+**Good Examples:**
+```text
+Show users where status is active and email_verified is true
+Find products where price is greater than 100 and stock is less than 10
+Display orders where total exceeds 500 and shipping_country is USA
+```
+
+**Avoid:**
+```text
+Show active users
+Find expensive products
+Display big orders
+```
+
+Explicitly state field names, comparison operators, and values.
+</Accordion>
+</AccordionGroup>
+
+### Provide Context
+
+Context helps the AI understand your intent and generate more accurate queries.
+
+**Include Business Context:**
+```text
+Show revenue by product category for the last quarter (for quarterly report)
+Find users who haven't logged in for 90 days (for cleanup campaign)
+Display top 10 customers by total order value (for rewards program)
+```
+
+**Mention Expected Results:**
+```text
+Show all orders (expecting about 1000 records)
+Count active subscriptions (should be around 500)
+Display failed payment attempts today (usually less than 50)
+```
+
+Expected results help you quickly identify when queries return unexpected data.
+
+### Use Proper Database Terminology
+
+Use terminology appropriate to your database type.
+
+<AccordionGroup>
+<Accordion title="SQL Databases (PostgreSQL, MySQL, SQLite)">
+**Correct Terms:**
+- Tables (not collections)
+- Rows (not documents)
+- Columns (not fields)
+- JOIN operations
+- WHERE clauses
+- Indexes
+
+**Example:**
+```text
+Join the orders table with customers table on customer_id and show customer names with their order totals
+```
+</Accordion>
+
+<Accordion title="NoSQL Databases (MongoDB, Redis)">
+**MongoDB Terms:**
+- Collections (not tables)
+- Documents (not rows)
+- Fields (not columns)
+- Aggregation pipelines
+- Match stages
+
+**Example:**
+```text
+Aggregate users collection grouped by email domain with count
+```
+
+**Redis Terms:**
+- Keys
+- Values
+- Sets
+- Hashes
+- Sorted sets
+
+**Example:**
+```text
+Get all keys matching pattern user:*
+```
+</Accordion>
+</AccordionGroup>
+
+### Start Simple, Then Refine
+
+Build complex queries through iterative refinement rather than trying to get everything perfect in one question.
+
+<Steps>
+<Step title="Initial Broad Query">
+```text
+Show me all orders
+```
+
+Review the structure and available data.
+</Step>
+<Step title="Add Time Filter">
+```text
+Just orders from the last 30 days
+```
+
+The AI understands you're refining the previous query.
+</Step>
+<Step title="Add Grouping">
+```text
+Group those by customer
+```
+
+Continues building on previous context.
+</Step>
+<Step title="Add Aggregation">
+```text
+Show total order value for each customer
+```
+
+Further refines the analysis.
+</Step>
+<Step title="Add Sorting">
+```text
+Sort by total value descending
+```
+
+Final refinement to see top customers.
+</Step>
+</Steps>
+
+This iterative approach is faster and more reliable than trying to construct complex queries in a single request.
+
+## Safety and Security Best Practices
+
+Using AI assistants safely requires understanding what data is shared, potential risks, and protective measures.
+
+### Understand Data Sharing
+
+Different AI providers have different data handling policies.
+
+<Warning>
+Your database schema structure and query text are sent to AI providers. However, actual data values and query results are not transmitted.
+</Warning>
+
+**What Gets Sent to AI Providers:**
+- Your natural language questions
+- Database table names and schemas
+- Column names and data types
+- Database type (PostgreSQL, MySQL, etc.)
+- Previous conversation context
+
+**What Does NOT Get Sent:**
+- Actual row data from your database
+- Query result contents
+- Stored data values
+- Connection credentials
+
+**For Maximum Privacy:**
+- Use Ollama (local models) for complete data isolation
+- Avoid mentioning sensitive values in questions
+- Use generic terms instead of revealing schema names
+
+### Verify Before Modifying Data
+
+Always review and verify before confirming data modification operations.
+
+<AccordionGroup>
+<Accordion title="Review SQL in Confirmation Dialog">
+Before clicking Confirm on any INSERT, UPDATE, or DELETE operation:
+
+**Checklist:**
+- [ ] Correct table is targeted
+- [ ] WHERE clause is present and accurate
+- [ ] Values are correct and properly formatted
+- [ ] Estimated row count matches expectations
+- [ ] No unintended side effects
+
+**Example Review:**
+```sql
+DELETE FROM users WHERE last_login < '2020-01-01'
+```
+
+Ask yourself:
+- Is the date correct?
+- Does this match my intent?
+- How many rows will this affect?
+- Do I have a backup?
+</Accordion>
+
+<Accordion title="Use SELECT Before DELETE or UPDATE">
+Always verify which records will be affected before modifying them.
+
+**Two-Step Pattern:**
+
+**Step 1 - Verify:**
+```text
+Show me all users where last_login is before 2020-01-01
+```
+
+Review the results carefully. Count the records. Verify these are the records you want to modify.
+
+**Step 2 - Modify:**
+```text
+Delete all users where last_login is before 2020-01-01
+```
+
+This two-step approach prevents accidental data loss.
+</Accordion>
+
+<Accordion title="Test in Development First">
+For critical operations, test the query in a development environment before running in production.
+
+**Development Testing Workflow:**
+1. Connect to development database
+2. Ask the AI assistant to generate the query
+3. Review the generated SQL
+4. Execute and verify results
+5. Copy the verified SQL to production (via Scratchpad)
+6. Execute in production during appropriate window
+
+This ensures the AI generates correct SQL for your specific schema before affecting production data.
+</Accordion>
+</AccordionGroup>
+
+### Use Read-Only Users When Possible
+
+For data exploration and analysis tasks, connect with read-only database credentials.
+
+**PostgreSQL Read-Only User:**
+```sql
+CREATE ROLE readonly_user WITH LOGIN PASSWORD 'secure_password';
+GRANT CONNECT ON DATABASE mydb TO readonly_user;
+GRANT USAGE ON SCHEMA public TO readonly_user;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO readonly_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT SELECT ON TABLES TO readonly_user;
+```
+
+**MySQL Read-Only User:**
+```sql
+CREATE USER 'readonly_user'@'%' IDENTIFIED BY 'secure_password';
+GRANT SELECT ON mydb.* TO 'readonly_user'@'%';
+FLUSH PRIVILEGES;
+```
+
+**Benefits:**
+- Prevents accidental data modification
+- Safe for exploration and learning
+- Appropriate for analyst and reporting use cases
+- Eliminates need for confirmation dialogs
+
+<Tip>
+Use read-only credentials for 80% of your database work. Only use write credentials when actually modifying data.
+</Tip>
+
+### Backup Before Bulk Operations
+
+Before executing bulk modifications, ensure current backups exist.
+
+**Pre-Operation Backup Checklist:**
+- [ ] Recent full backup exists (within 24 hours)
+- [ ] Backup has been tested and can be restored
+- [ ] Backup includes all affected tables
+- [ ] Restoration procedure is documented
+- [ ] Backup location is accessible
+
+**Quick Backup Commands:**
+
+PostgreSQL:
+```bash
+pg_dump -h localhost -U username -d database -t table_name > backup_$(date +%Y%m%d_%H%M%S).sql
+```
+
+MySQL:
+```bash
+mysqldump -h localhost -u username -p database table_name > backup_$(date +%Y%m%d_%H%M%S).sql
+```
+
+### Review Generated SQL
+
+The AI assistant shows generated SQL before execution. Use this visibility to verify correctness.
+
+**SQL Review Checklist:**
+
+**For SELECT Queries:**
+- [ ] Correct tables referenced
+- [ ] Appropriate JOIN conditions
+- [ ] WHERE filters match intent
+- [ ] Column selection is complete
+- [ ] No expensive operations (LIKE, complex functions) on large tables
+
+**For UPDATE Queries:**
+- [ ] WHERE clause is present and correct
+- [ ] SET values are appropriate
+- [ ] No syntax errors
+- [ ] Estimated affected rows is reasonable
+
+**For DELETE Queries:**
+- [ ] WHERE clause is present (unless intentionally deleting all)
+- [ ] Correct table targeted
+- [ ] Deletion won't violate foreign key constraints
+- [ ] Backup exists
+
+**For INSERT Queries:**
+- [ ] All required columns included
+- [ ] Values match column data types
+- [ ] No duplicate key violations expected
+
+## Provider Selection Strategy
+
+Choosing the right AI provider for each situation optimizes cost, performance, privacy, and accuracy.
+
+### When to Use Each Provider
+
+<AccordionGroup>
+<Accordion title="OpenAI (GPT Models)">
+**Best For:**
+- General-purpose queries across all database types
+- Fast response requirements
+- Users without local AI infrastructure
+- Production environments with moderate query volume
+
+**Optimal Scenarios:**
+- Quick data exploration
+- Ad-hoc reporting
+- Team members learning SQL
+- Standard CRUD operations
+
+**Cost Optimization:**
+- Use GPT-3.5 Turbo for simple queries (lower cost)
+- Reserve GPT-4 for complex multi-table operations
+- Start new conversations when switching topics (reduces context cost)
+
+**Example Cost Analysis:**
+- Simple query (10 queries/day): ~$3-5/month
+- Moderate usage (50 queries/day): ~$15-25/month
+- Heavy usage (200 queries/day): ~$60-100/month
+</Accordion>
+
+<Accordion title="Anthropic (Claude Models)">
+**Best For:**
+- Complex analytical queries
+- Large database schemas (100+ tables)
+- Long conversation contexts
+- Sophisticated reasoning requirements
+
+**Optimal Scenarios:**
+- Multi-step analysis building on previous results
+- Complex JOIN operations across many tables
+- Ambiguous questions requiring clarification
+- Databases with intricate relationships
+
+**Model Selection:**
+- **Claude 3.5 Sonnet**: Best balance for most use cases
+- **Claude 3 Opus**: Maximum capability for most complex scenarios
+- **Claude 3 Haiku**: Cost-effective for simpler queries
+
+**When Claude Excels:**
+- Queries involving 5+ table joins
+- Conversations with 30+ messages
+- Complex aggregations with multiple grouping levels
+- Schemas with hundreds of tables
+</Accordion>
+
+<Accordion title="Ollama (Local Models)">
+**Best For:**
+- Privacy-sensitive environments
+- Regulated industries (healthcare, finance)
+- Air-gapped or offline deployments
+- Unlimited usage without API costs
+- Development and learning
+
+**Optimal Scenarios:**
+- Sensitive data that cannot leave your infrastructure
+- High-volume query workloads
+- Cost-sensitive operations
+- Complete data sovereignty requirements
+
+**Model Recommendations:**
+- **Llama 3.1 (8B)**: Best general-purpose local model
+- **CodeLlama**: Optimized for SQL generation
+- **Mistral (7B)**: Fast responses, good for simple queries
+- **Llama 3.1 (70B)**: Maximum local accuracy (requires 64GB RAM)
+
+**Trade-offs:**
+- Slower than cloud providers (2-10 seconds vs. 1-2 seconds)
+- Lower accuracy than GPT-4 or Claude Opus
+- Requires local hardware investment
+- Complete privacy and zero ongoing costs
+</Accordion>
+</AccordionGroup>
+
+### Cost Optimization Strategies
+
+<CardGroup cols={2}>
+<Card title="Use Cheaper Models for Simple Tasks" icon="dollar-sign">
+GPT-3.5 Turbo costs 10x less than GPT-4 while handling simple queries equally well
+</Card>
+<Card title="Start New Conversations" icon="rotate">
+Long conversations consume more tokens. Start fresh when switching topics
+</Card>
+<Card title="Be Concise" icon="compress">
+Shorter questions and responses reduce token usage and costs
+</Card>
+<Card title="Local for High Volume" icon="server">
+Ollama eliminates per-query costs for high-volume usage
+</Card>
+</CardGroup>
+
+**Cost Comparison Example:**
+
+Query load: 50 queries per day
+
+| Provider | Model | Monthly Cost | Response Time | Privacy |
+|----------|-------|-------------|---------------|---------|
+| OpenAI | GPT-3.5 Turbo | $10-15 | 1-2 sec | External |
+| OpenAI | GPT-4 | $60-100 | 3-5 sec | External |
+| Anthropic | Claude 3.5 Sonnet | $30-45 | 2-4 sec | External |
+| Ollama | Llama 3.1 (8B) | $0 | 5-10 sec | Complete |
+
+### Privacy Considerations
+
+Choose providers based on data sensitivity and organizational policies.
+
+<Steps>
+<Step title="Assess Data Sensitivity">
+**Highly Sensitive:**
+- Personal health information (PHI)
+- Financial records
+- Trade secrets
+- Personally identifiable information (PII)
+
+**Action:** Use Ollama exclusively
+
+**Moderately Sensitive:**
+- Internal business data
+- Customer information (non-PII)
+- Analytics data
+
+**Action:** Review provider terms of service, consider Ollama or ensure provider compliance
+
+**Public or Non-Sensitive:**
+- Public datasets
+- Demonstration databases
+- Educational use cases
+
+**Action:** Any provider acceptable
+</Step>
+<Step title="Review Organizational Policies">
+Consult with:
+- Information security team
+- Data governance team
+- Legal/compliance department
+- Privacy officer
+
+Verify alignment with:
+- Data residency requirements
+- Third-party data processing policies
+- Regulatory compliance (GDPR, HIPAA, PCI DSS)
+- Industry-specific requirements
+</Step>
+<Step title="Implement Provider Controls">
+**For External Providers:**
+- Document approved use cases
+- Train users on privacy boundaries
+- Monitor for policy violations
+- Establish escalation procedures
+
+**For Local Models:**
+- Document installation and configuration
+- Maintain model versions
+- Monitor resource usage
+- Plan capacity for user growth
+</Step>
+</Steps>
+
+<Warning>
+Schema names and table names are sent to external AI providers. Avoid using sensitive or revealing names if privacy is critical.
+</Warning>
+
+## Performance Optimization
+
+Optimize AI assistant performance through efficient query patterns and conversation management.
+
+### Efficient Query Patterns
+
+<AccordionGroup>
+<Accordion title="Aggregate Before Retrieving">
+Request aggregated data rather than retrieving all rows.
+
+**Efficient:**
+```text
+Count users by email domain
+Show average order value by month
+Get total revenue by product category
+```
+
+**Inefficient:**
+```text
+Show me all users (then manually count by domain)
+Display all orders (then calculate average)
+Get all products with their sales (then sum revenue)
+```
+
+Let the database perform aggregations rather than retrieving large datasets.
+</Accordion>
+
+<Accordion title="Limit Large Result Sets">
+Request only necessary data for large tables.
+
+**Efficient:**
+```text
+Show top 100 users by registration date
+Display 50 most recent orders
+Get 25 highest-value products
+```
+
+**Inefficient:**
+```text
+Show me all users (millions of rows)
+Display all orders from all time
+Get every product in inventory
+```
+
+Use LIMIT clauses for exploratory queries on large tables.
+</Accordion>
+
+<Accordion title="Use Indexes Effectively">
+Structure queries to leverage existing indexes.
+
+**Index-Friendly:**
+```text
+Find users where user_id equals 12345
+Show orders where order_date is 2024-01-15
+Get products where sku is ABC-123
+```
+
+**Index-Inefficient:**
+```text
+Find users where email contains gmail
+Show orders where YEAR(order_date) equals 2024
+Get products where LOWER(name) like '%phone%'
+```
+
+Ask about indexed columns: "What indexes exist on the orders table?"
+</Accordion>
+
+<Accordion title="Avoid Cartesian Products">
+Ensure JOINs have proper conditions.
+
+**Efficient:**
+```text
+Join orders with customers on customer_id and show customer names with order totals
+```
+
+**Inefficient:**
+```text
+Show all combinations of orders and customers
+```
+
+The AI generally avoids this, but verify JOIN conditions in the generated SQL.
+</Accordion>
+</AccordionGroup>
+
+### Managing Conversation Context
+
+Long conversations accumulate context that slows response times and increases costs.
+
+**Optimal Conversation Length:**
+- **Short Conversations (1-10 messages)**: Fastest, lowest cost
+- **Medium Conversations (10-30 messages)**: Still efficient
+- **Long Conversations (30-50 messages)**: Noticeable slowdown
+- **Very Long Conversations (50+ messages)**: Significantly slower, higher cost
+
+**When to Start New Conversations:**
+
+<Steps>
+<Step title="Topic Changes">
+When switching to a completely different database area or analysis focus, start fresh.
+
+**Example:**
+- Old conversation: Analyzing user signups
+- New topic: Investigating order fulfillment issues
+
+**Action:** Click "New Chat" button
+</Step>
+<Step title="Performance Degradation">
+When queries take noticeably longer to respond (>5 seconds for simple questions).
+
+**Symptom:** Loading indicators persist longer than usual
+
+**Action:** Save important queries to Scratchpad, then start new chat
+</Step>
+<Step title="Context Confusion">
+When the AI references incorrect previous context or misunderstands follow-up questions.
+
+**Example:** You ask about "users" but the AI references "products" from earlier
+
+**Action:** Start new conversation with clear, explicit questions
+</Step>
+<Step title="Reaching Provider Limits">
+Some models have context limits. Approaching limits degrades quality.
+
+**GPT-3.5 Turbo:** 30+ messages may approach limits
+**GPT-4:** 100+ messages
+**Claude Models:** 200+ messages
+
+**Action:** Monitor conversation length and start fresh proactively
+</Step>
+</Steps>
+
+### Conversation Management Best Practices
+
+<CardGroup cols={2}>
+<Card title="Save Before Clearing" icon="floppy-disk">
+Move important queries to Scratchpad before starting new chat
+</Card>
+<Card title="Use Concise Follow-Ups" icon="message">
+"Show top 10" instead of "Can you please show me the top 10 results"
+</Card>
+<Card title="Restart for New Analysis" icon="rotate">
+Fresh context prevents confusion and improves accuracy
+</Card>
+<Card title="Monitor Response Times" icon="clock">
+Watch for performance degradation as indicator to start fresh
+</Card>
+</CardGroup>
+
+## Collaboration and Documentation
+
+Build organizational knowledge by documenting and sharing effective query patterns.
+
+### Saving Useful Queries to Scratchpad
+
+Preserve valuable queries for reuse and team sharing.
+
+<Steps>
+<Step title="Identify Reusable Queries">
+Queries worth saving:
+- Regular reporting queries
+- Complex analytical queries you'll repeat
+- Well-crafted queries that were hard to formulate
+- Queries that revealed useful insights
+- Templates for common operations
+</Step>
+<Step title="Move to Scratchpad">
+Hover over query results and click the Scratchpad icon (command line symbol).
+
+Choose or create an appropriately named page.
+</Step>
+<Step title="Add Context Comments">
+In Scratchpad, add comments explaining:
+- What the query does
+- When to use it
+- Any important caveats
+- Expected result count or format
+
+```sql
+-- Monthly Revenue Report
+-- Use at end of month for executive summary
+-- Returns revenue by product category with YoY comparison
+-- Expected: ~12 categories with revenue figures
+
+SELECT ...
+```
+</Step>
+<Step title="Organize by Purpose">
+Create Scratchpad pages organized by:
+- **Reporting Queries**: Regular reports and dashboards
+- **Analysis Templates**: Patterns for common analysis tasks
+- **Data Quality**: Validation and integrity checks
+- **Maintenance**: Cleanup and optimization queries
+- **Troubleshooting**: Diagnostic queries for common issues
+</Step>
+</Steps>
+
+### Sharing Query Patterns with Team
+
+Build a team knowledge base of effective query patterns.
+
+**Query Library Structure:**
+
+**By Department:**
+- Sales Queries
+- Marketing Analytics
+- Customer Support Queries
+- Operations Reports
+
+**By Frequency:**
+- Daily Reports
+- Weekly Analysis
+- Monthly Summaries
+- Quarterly Reviews
+
+**By Complexity:**
+- Simple Lookups (for beginners)
+- Intermediate Analysis
+- Advanced Multi-Table Queries
+- Expert-Level Operations
+
+**Documentation Template:**
+
+```sql
+-- QUERY NAME: Customer Lifetime Value by Segment
+-- AUTHOR: Jane Smith
+-- DATE: 2024-01-15
+-- FREQUENCY: Monthly
+-- DEPARTMENT: Marketing
+--
+-- DESCRIPTION:
+-- Calculates total revenue per customer segment for
+-- customer acquisition cost analysis
+--
+-- USAGE:
+-- Run on first business day of month
+-- Export results to marketing dashboard
+--
+-- EXPECTED RESULTS:
+-- 5-8 customer segments with revenue totals
+-- Usually between $50K-$500K per segment
+--
+-- NOTES:
+-- Excludes test accounts (customer_id < 1000)
+-- Uses previous month's complete data
+
+SELECT ...
+```
+
+### Building a Query Knowledge Base
+
+<AccordionGroup>
+<Accordion title="Document Common Patterns">
+Record natural language patterns that work well with your specific database.
+
+**Pattern Library Example:**
+
+| Task | Effective Phrasing | Notes |
+|------|-------------------|-------|
+| User Analysis | "Show users where registration_source is X grouped by country" | Always specify registration_source values |
+| Revenue Reports | "Calculate total revenue by product_category for last N days" | Use specific day counts, not "recent" |
+| Data Quality | "Find records in TABLE where COLUMN is null or empty" | Be explicit about null vs. empty string |
+| Performance | "Show top 100 records from LARGE_TABLE ordered by timestamp desc" | Always limit large table queries |
+
+Share these patterns with team members to accelerate onboarding.
+</Accordion>
+
+<Accordion title="Create Troubleshooting Guides">
+Document common issues and their solutions.
+
+**Common Issue Templates:**
+
+**Issue:** "AI returns wrong table"
+**Solution:** "Always specify schema name: schema_name.table_name"
+
+**Issue:** "Query times out on large table"
+**Solution:** "Add WHERE clause to filter by date: 'last 30 days' or 'after 2024-01-01'"
+
+**Issue:** "JOIN returns unexpected results"
+**Solution:** "Be explicit about JOIN conditions: 'join orders with customers on customer_id'"
+
+**Issue:** "Aggregation query is slow"
+**Solution:** "Verify indexes exist on grouped columns: 'show indexes on table_name'"
+</Accordion>
+
+<Accordion title="Maintain Schema Documentation">
+Help the AI and team members by maintaining clear schema documentation.
+
+**Document in Database:**
+- Add comments to tables describing their purpose
+- Add column comments explaining non-obvious fields
+- Document relationships and foreign keys
+- Maintain up-to-date ER diagrams
+
+**PostgreSQL Example:**
+```sql
+COMMENT ON TABLE users IS 'Customer user accounts with authentication';
+COMMENT ON COLUMN users.email_verified IS 'True if email verification completed';
+COMMENT ON COLUMN users.last_login IS 'UTC timestamp of most recent successful login';
+```
+
+Well-documented schemas help the AI generate more accurate queries.
+</Accordion>
+</AccordionGroup>
+
+## Error Handling and Recovery
+
+Understand common mistakes and recovery strategies.
+
+### Common Mistakes to Avoid
+
+<AccordionGroup>
+<Accordion title="Modifying Production Without Testing">
+**Mistake:**
+```text
+Delete all users where status is inactive
+```
+
+Executed directly in production without verification.
+
+**Prevention:**
+1. Test in development database first
+2. Use SELECT to verify before DELETE
+3. Check row count before confirming
+4. Ensure backup exists
+
+**Recovery:**
+If executed accidentally, restore from most recent backup.
+</Accordion>
+
+<Accordion title="Missing WHERE Clauses">
+**Mistake:**
+```text
+Update all users to set role to admin
+```
+
+Missing WHERE clause affects all records.
+
+**Prevention:**
+- Always specify which records to modify
+- Review confirmation dialog carefully
+- Watch for "This will affect ALL records" warnings
+- Use SELECT first to verify target records
+
+**Recovery:**
+If backup exists, restore affected table. Otherwise, manually identify and correct affected records.
+</Accordion>
+
+<Accordion title="Ambiguous Questions">
+**Mistake:**
+```text
+Show me the data
+```
+
+Too vague, AI must guess intent.
+
+**Prevention:**
+- Name specific tables and columns
+- Provide context and expected results
+- Use precise terminology
+- Be explicit about conditions
+
+**Better:**
+```text
+Show user_id, email, and created_at from users table where created_at is in the last 7 days
+```
+</Accordion>
+
+<Accordion title="Ignoring Generated SQL">
+**Mistake:**
+Clicking Confirm without reviewing the SQL statement in the confirmation dialog.
+
+**Prevention:**
+- Always read generated SQL before confirming
+- Verify table names, WHERE clauses, and values
+- Check estimated row counts
+- Cancel and rephrase if anything looks wrong
+
+**Impact:**
+Unreviewed SQL might target wrong tables, use incorrect filters, or affect unintended records.
+</Accordion>
+
+<Accordion title="Relying on Context Too Long">
+**Mistake:**
+Continuing conversations for 50+ messages, assuming the AI remembers early context accurately.
+
+**Prevention:**
+- Start new conversations when switching topics
+- Be explicit in follow-up questions
+- Reference specific previous results
+- Watch for signs of context confusion
+
+**Impact:**
+Long contexts lead to misunderstandings, slower responses, and incorrect query generation.
+</Accordion>
+</AccordionGroup>
+
+### Troubleshooting Approach
+
+When queries don't work as expected, follow a systematic troubleshooting process.
+
+<Steps>
+<Step title="Identify the Issue">
+**Symptoms:**
+- Wrong data returned
+- Error message displayed
+- Empty result set when expecting data
+- Query times out
+- Incorrect aggregation results
+
+**Initial Assessment:**
+- What did you ask for?
+- What did you actually receive?
+- What error message appeared?
+- Does the generated SQL match your intent?
+</Step>
+<Step title="Review Generated SQL">
+Click the code view toggle to see the generated SQL.
+
+**Check for:**
+- Correct table and column names
+- Appropriate WHERE conditions
+- Proper JOIN conditions
+- Expected aggregations
+- Reasonable LIMIT clauses
+
+**Compare against intent:**
+- Does the SQL represent what you asked?
+- Are there missing or extra conditions?
+- Are JOINs correct?
+</Step>
+<Step title="Simplify the Question">
+If the query is complex, break it into smaller parts.
+
+**Original Complex Question:**
+```text
+Show me total revenue by product category for customers in California who made purchases in the last quarter, grouped by month
+```
+
+**Simplified Steps:**
+```text
+1. Show me all orders from the last quarter
+2. Now filter those to only California customers
+3. Join with products to get categories
+4. Calculate total revenue by category and month
+```
+
+Incremental refinement is more reliable than complex single questions.
+</Step>
+<Step title="Verify Data Exists">
+Ensure the data you're querying actually exists.
+
+**Verification Queries:**
+```text
+Count records in the users table
+Show me a sample of 5 records from orders
+What columns exist in the products table
+```
+
+Empty result sets might indicate:
+- Table is empty
+- Filters are too restrictive
+- Wrong table referenced
+- Data is in different schema
+</Step>
+<Step title="Check for Schema Issues">
+Verify table and column names match your schema.
+
+**Schema Verification:**
+```text
+What tables exist in this database
+Show me the structure of the users table
+What columns exist in the orders table
+```
+
+Common issues:
+- Table name typos
+- Wrong schema referenced
+- Column name variations (user_id vs. userId vs. id)
+</Step>
+<Step title="Rephrase and Retry">
+If the AI misunderstood, rephrase your question with more explicit details.
+
+**Original (vague):**
+```text
+Show user data
+```
+
+**Rephrased (explicit):**
+```text
+Show user_id, email, first_name, last_name, and created_at from the users table for all active users
+```
+
+**Add examples:**
+```text
+Show users created after January 1, 2024 (format: 2024-01-01)
+```
+</Step>
+</Steps>
+
+### Recovery Strategies
+
+<CardGroup cols={2}>
+<Card title="Compensating Updates" icon="rotate-left">
+For incorrect UPDATE operations, run compensating query to restore values
+</Card>
+<Card title="Restore from Backup" icon="database">
+For significant data loss, restore affected tables from recent backup
+</Card>
+<Card title="Transaction Rollback" icon="ban">
+If using Scratchpad with transactions, ROLLBACK before COMMIT
+</Card>
+<Card title="Manual Correction" icon="pen">
+For small-scale errors, manually correct affected records
+</Card>
+</CardGroup>
+
+## Production Environment Guidelines
+
+Using AI assistants in production requires additional discipline and procedures.
+
+### Testing Queries
+
+Never execute untested queries directly in production.
+
+<Steps>
+<Step title="Develop in Development Environment">
+Connect to development or staging database first.
+
+Generate and test queries in non-production environment.
+</Step>
+<Step title="Verify Query Logic">
+Execute generated query and verify:
+- Returns expected data
+- Performance is acceptable
+- No unintended side effects
+- Handles edge cases correctly
+</Step>
+<Step title="Review for Production Impact">
+Assess potential production impact:
+- How many rows will be affected?
+- Will this lock tables?
+- Could this impact application performance?
+- What's the rollback plan?
+</Step>
+<Step title="Transfer to Production">
+Move verified SQL to production:
+- Copy SQL from Scratchpad
+- Execute during appropriate window
+- Monitor execution closely
+- Verify results immediately
+</Step>
+</Steps>
+
+### Change Management
+
+Follow established change management procedures for data modifications.
+
+**Pre-Change Checklist:**
+- [ ] Change request documented
+- [ ] Stakeholder approval obtained
+- [ ] Testing completed in non-production
+- [ ] Backup verified and accessible
+- [ ] Maintenance window scheduled (if needed)
+- [ ] Rollback procedure documented
+- [ ] Team members notified
+
+**During Change:**
+- [ ] Execute during scheduled window
+- [ ] Monitor execution progress
+- [ ] Watch for errors or unexpected behavior
+- [ ] Verify results match expectations
+- [ ] Document any deviations
+
+**Post-Change:**
+- [ ] Verify change completed successfully
+- [ ] Update documentation
+- [ ] Notify stakeholders of completion
+- [ ] Retain backup for appropriate period
+- [ ] Archive change records
+
+### Audit Requirements
+
+Maintain audit trails for compliance and troubleshooting.
+
+**What to Log:**
+- Natural language questions asked
+- Generated SQL statements
+- Execution timestamps
+- Database user credentials used
+- Affected row counts
+- Success or failure status
+- Error messages (if any)
+
+**WhoDB Automatic Logging:**
+WhoDB logs all executed queries with timestamps and user attribution.
+
+**Additional Audit Measures:**
+- Enable database-level query logging
+- Review audit logs regularly
+- Alert on suspicious patterns
+- Retain logs per compliance requirements
+- Protect logs from tampering
+
+**Compliance Considerations:**
+- GDPR: Log data access to personal information
+- HIPAA: Track all PHI access
+- SOX: Document all financial data queries
+- PCI DSS: Log access to cardholder data
+
+## Learning and Improvement
+
+Use the AI assistant as a learning tool to improve SQL skills.
+
+### Using AI to Learn SQL
+
+The AI assistant is an excellent SQL tutor.
+
+<Steps>
+<Step title="Ask for Explanations">
+```text
+Explain how this query works
+Why did you use LEFT JOIN instead of INNER JOIN
+What does GROUP BY do in this query
+```
+
+The AI can explain SQL concepts in context.
+</Step>
+<Step title="Request Alternative Approaches">
+```text
+Is there a more efficient way to write this query
+Show me another way to achieve the same result
+What are the trade-offs between these two approaches
+```
+
+Learn multiple solutions to the same problem.
+</Step>
+<Step title="Explore SQL Features">
+```text
+How do window functions work in PostgreSQL
+Show me an example of a CTE (common table expression)
+What are the benefits of using indexes
+```
+
+Use the AI to explore advanced SQL features.
+</Step>
+<Step title="Practice Query Optimization">
+```text
+How can I make this query faster
+What indexes would help this query perform better
+Is this query using indexes efficiently
+```
+
+Learn performance optimization techniques.
+</Step>
+</Steps>
+
+### Building Query Skills
+
+<AccordionGroup>
+<Accordion title="Start with Simple Queries">
+Begin with basic SELECT queries and gradually increase complexity.
+
+**Progression:**
+1. Simple SELECT from single table
+2. SELECT with WHERE conditions
+3. SELECT with ORDER BY and LIMIT
+4. SELECT with aggregations (COUNT, SUM, AVG)
+5. JOIN two tables
+6. Complex multi-table JOINs
+7. Subqueries and CTEs
+8. Window functions and advanced features
+
+Don't rush to complex queries. Master each level before advancing.
+</Accordion>
+
+<Accordion title="Compare AI-Generated SQL to Manual SQL">
+Write SQL manually, then ask the AI to generate equivalent query.
+
+**Learning Exercise:**
+1. Write a query manually in Scratchpad
+2. Ask AI to generate same query using natural language
+3. Compare the two approaches
+4. Identify differences and improvements
+5. Understand why AI chose its approach
+
+This reveals patterns and techniques you might not have considered.
+</Accordion>
+
+<Accordion title="Study Generated SQL">
+Don't just use queries blindly. Study them to understand patterns.
+
+**What to Look For:**
+- How does AI structure JOIN conditions?
+- What aliasing patterns does it use?
+- How does it handle date filtering?
+- What aggregation patterns appear?
+- How are subqueries structured?
+
+Copy interesting patterns into your personal SQL knowledge base.
+</Accordion>
+
+<Accordion title="Ask 'Why' Questions">
+Understanding reasoning improves your SQL knowledge.
+
+**Examples:**
+```text
+Why did you use HAVING instead of WHERE
+Why is this subquery necessary
+Why did you choose this JOIN type
+Why use COALESCE here
+```
+
+The AI can explain the reasoning behind SQL choices.
+</Accordion>
+</AccordionGroup>
+
+## Anti-Patterns (What NOT to Do)
+
+Avoid these common anti-patterns that lead to problems.
+
+### Do's and Don'ts
+
+| Don't | Do | Reason |
+|-------|-----|--------|
+| ❌ "Show data" | ✅ "Show user_id, email from users table" | Vagueness leads to incorrect results |
+| ❌ Execute without reviewing SQL | ✅ Always review confirmation dialogs | Catch errors before execution |
+| ❌ Delete without SELECT first | ✅ SELECT, review, then DELETE | Verify targets before modification |
+| ❌ Use write credentials for exploration | ✅ Use read-only credentials when possible | Prevent accidental modifications |
+| ❌ Trust AI blindly | ✅ Verify results make sense | AI can generate incorrect queries |
+| ❌ Continue 50+ message conversations | ✅ Start fresh after 20-30 messages | Context degrades over time |
+| ❌ Skip backups before bulk operations | ✅ Always backup before modifications | Enable recovery from mistakes |
+| ❌ Use production for testing | ✅ Test in development first | Protect production data |
+| ❌ Ignore performance of queries | ✅ Add LIMIT clauses and filters | Prevent slow or expensive queries |
+| ❌ Mention sensitive values in questions | ✅ Use generic terms | Protect privacy with external providers |
+
+### Critical Anti-Patterns
+
+<Warning>
+These anti-patterns can cause serious data loss or security issues
+</Warning>
+
+<AccordionGroup>
+<Accordion title="The Blind Confirmation">
+**Anti-Pattern:**
+Clicking Confirm on modification dialogs without reading the SQL.
+
+**Impact:**
+- Incorrect data modifications
+- Accidental deletion of wrong records
+- Updates to unintended tables
+- Bulk changes affecting entire tables
+
+**Correct Approach:**
+Always read the complete SQL statement in the confirmation dialog. Verify table names, WHERE clauses, and values before confirming.
+</Accordion>
+
+<Accordion title="The Vague Deletion">
+**Anti-Pattern:**
+```text
+Delete users
+```
+
+Without specifying which users, or clicking confirm despite missing WHERE clause.
+
+**Impact:**
+All records deleted from table.
+
+**Correct Approach:**
+```text
+Delete users where user_id equals 12345
+```
+
+Always specify exact criteria. If you see "This will affect ALL records," cancel unless you truly intend to delete everything.
+</Accordion>
+
+<Accordion title="The Production Test">
+**Anti-Pattern:**
+"Let me try this in production to see if it works."
+
+**Impact:**
+- Corrupted production data
+- Service disruptions
+- Data loss requiring restore operations
+- Customer impact
+
+**Correct Approach:**
+Always test queries in development environment first. Only execute in production after thorough testing and verification.
+</Accordion>
+
+<Accordion title="The Context Overload">
+**Anti-Pattern:**
+Continuing single conversation for 100+ messages, assuming AI remembers everything accurately.
+
+**Impact:**
+- Misunderstood follow-up questions
+- Incorrect table references
+- Confused context leading to wrong queries
+- Very slow response times
+
+**Correct Approach:**
+Start new conversations every 20-30 messages, especially when switching topics. Be explicit in follow-up questions rather than relying on distant context.
+</Accordion>
+
+<Accordion title="The Trust Fall">
+**Anti-Pattern:**
+"AI generated it, so it must be correct."
+
+**Impact:**
+- Executing incorrect queries
+- Missing data quality issues
+- Accepting suboptimal performance
+- Not learning underlying SQL
+
+**Correct Approach:**
+Always verify results make logical sense. Review generated SQL. Cross-check aggregation results. Treat AI as a helpful assistant, not an infallible oracle.
+</Accordion>
+</AccordionGroup>
+
+## Quick Reference Checklist
+
+Use this checklist for every AI assistant session.
+
+### Before Starting
+
+- [ ] Connected to correct database (dev vs. prod)
+- [ ] Using appropriate credentials (read-only for exploration)
+- [ ] AI provider configured and working
+- [ ] Understanding of data sensitivity level
+- [ ] Backup exists if modifying data
+
+### During Query Formulation
+
+- [ ] Question is specific with table/column names
+- [ ] Context provided where helpful
+- [ ] Terminology appropriate to database type
+- [ ] Expected results mentioned
+- [ ] Starting simple before adding complexity
+
+### Before Confirmation
+
+- [ ] Reviewed generated SQL completely
+- [ ] Verified correct table targeted
+- [ ] Checked WHERE clause accuracy
+- [ ] Estimated affected rows is reasonable
+- [ ] Backup exists (for modifications)
+
+### After Execution
+
+- [ ] Results reviewed and make sense
+- [ ] Row count matches expectations
+- [ ] No unexpected errors
+- [ ] Performance was acceptable
+- [ ] Important queries saved to Scratchpad
+
+### Conversation Management
+
+- [ ] Conversation length is reasonable (\<30 messages)
+- [ ] No signs of context confusion
+- [ ] Response times are acceptable
+- [ ] New chat started when switching topics
+
+## Next Steps
+
+<CardGroup cols={2}>
+<Card title="AI Introduction" icon="brain" href="/ai/introduction">
+Review AI Chat Assistant capabilities and features
+</Card>
+<Card title="Setup Providers" icon="gear" href="/ai/setup-providers">
+Configure OpenAI, Anthropic, or Ollama for your needs
+</Card>
+<Card title="Querying Data" icon="magnifying-glass" href="/ai/querying-data">
+Learn effective techniques for data retrieval
+</Card>
+<Card title="Modifying Data" icon="pen-to-square" href="/ai/modifying-data">
+Understand safe data modification with AI assistance
+</Card>
+<Card title="Conversation Features" icon="comments" href="/ai/conversation-features">
+Master multi-turn conversations and context management
+</Card>
+<Card title="Security Best Practices" icon="shield" href="/best-practices/security">
+Comprehensive security practices for database management
+</Card>
+</CardGroup>
+
+## Summary
+
+Effective AI Chat Assistant usage combines clear communication, security awareness, strategic provider selection, and systematic verification. Always be specific in questions, review generated SQL before execution, use read-only credentials for exploration, and backup before modifications. Choose AI providers based on your privacy, cost, and performance requirements. Build team knowledge by documenting effective query patterns and sharing learnings.
+
+The AI assistant is a powerful tool that makes databases accessible to everyone while maintaining safety through confirmation workflows and visibility into generated SQL. By following these best practices, you can leverage AI assistance confidently while protecting your data and building your SQL skills.
+
+<Check>
+Combine AI assistance with human judgment for optimal database management—the AI generates queries efficiently, and you verify they're correct before execution
+</Check>

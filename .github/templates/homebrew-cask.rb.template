@@ -2,8 +2,7 @@ cask "whodb" do
   version "{{VERSION}}"
   sha256 "{{SHA256}}"
 
-  url "https://github.com/clidey/whodb/releases/download/v{{VERSION}}/whodb.dmg",
-      verified: "github.com/clidey/whodb"
+  url "https://github.com/clidey/whodb/releases/download/{{VERSION}}/whodb.dmg",
   name "WhoDB"
   desc "Database management tool with AI-powered features"
   homepage "https://github.com/clidey/whodb"
@@ -16,8 +15,12 @@ cask "whodb" do
   app "WhoDB.app"
 
   zap trash: [
-    "~/Library/Application Support/WhoDB",
+    "~/Library/Application Support/whodb",
     "~/Library/Preferences/com.clidey.whodb.plist",
-    "~/Library/Saved Application State/com.clidey.whodb.savedState"
+    "~/Library/Saved Application State/com.clidey.whodb.savedState",
   ]
+
+  caveats do
+    "WhoDB documentation is available at https://docs.whodb.com."
+  end
 end

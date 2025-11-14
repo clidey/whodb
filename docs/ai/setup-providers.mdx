@@ -1,0 +1,544 @@
+---
+title: "Setting Up AI Providers"
+description: "Configure OpenAI, Anthropic, Ollama, or custom AI providers for WhoDB's chat assistant"
+---
+
+# Setting Up AI Providers
+
+Before you can use WhoDB's AI Chat Assistant, you need to configure at least one AI provider. This guide walks you through setting up each supported provider and choosing the right model for your needs.
+
+## Accessing the AI Configuration
+
+Navigate to the Chat page in WhoDB to access AI provider settings:
+
+![Chat Initial Page](/images/101-chat-initial-page.png)
+
+The provider configuration is located at the top of the Chat interface with two dropdowns:
+1. **AI Provider**: Select your provider (OpenAI, Anthropic, Ollama, etc.)
+2. **AI Model**: Choose the specific model to use
+
+## Choosing Your AI Provider
+
+Different providers offer different trade-offs between accuracy, speed, cost, and privacy:
+
+<CardGroup cols={2}>
+<Card title="OpenAI" icon="openai">
+**Best for**: Most users, general-purpose queries
+- Industry-leading accuracy
+- Fast response times
+- Pay-per-use pricing
+</Card>
+<Card title="Anthropic" icon="anthropic">
+**Best for**: Complex reasoning, large contexts
+- Excellent with sophisticated queries
+- Very large context windows
+- Strong safety features
+</Card>
+<Card title="Ollama" icon="server">
+**Best for**: Privacy, zero API costs
+- Complete data privacy
+- No internet required
+- Free to use
+</Card>
+<Card title="Custom" icon="plug">
+**Best for**: Enterprise deployments
+- Self-hosted models
+- Organization-specific configurations
+- Complete control
+</Card>
+</CardGroup>
+
+## Setting Up OpenAI
+
+OpenAI provides GPT models that offer excellent SQL generation capabilities with fast response times.
+
+### Prerequisites
+
+Before configuring OpenAI:
+1. Create an OpenAI account at https://platform.openai.com/
+2. Add payment method to your account
+3. Generate an API key from https://platform.openai.com/api-keys
+
+<Warning>
+Keep your OpenAI API key secure. Never share it or commit it to version control
+</Warning>
+
+### Configuration Steps
+
+<Steps>
+<Step title="Access Provider Configuration">
+On the Chat page, click the AI Provider dropdown.
+
+![AI Provider Dropdown](/images/102-chat-ai-provider-dropdown.png)
+</Step>
+<Step title="Add New Provider">
+Click **"Add a provider"** at the bottom of the dropdown menu.
+
+A sheet will slide in from the right side of the screen.
+</Step>
+<Step title="Select OpenAI">
+In the Model Type dropdown, select **OpenAI**.
+
+The dropdown shows icons for each provider to help identify them quickly.
+</Step>
+<Step title="Enter API Key">
+Paste your OpenAI API key in the Token field.
+
+```text Example API Key Format
+sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+<Info>
+API keys starting with `sk-proj-` are project-specific keys recommended by OpenAI
+</Info>
+</Step>
+<Step title="Submit Configuration">
+Click the **Submit** button to test the connection and save your configuration.
+
+WhoDB will:
+- Verify the API key is valid
+- Fetch available models
+- Save the configuration for future use
+</Step>
+<Step title="Select Model">
+Once configured, the AI Model dropdown will populate with available models:
+- **GPT-4**: Best accuracy, slower, higher cost
+- **GPT-3.5 Turbo**: Fast, cost-effective, good accuracy
+
+![AI Model Dropdown](/images/103-chat-ai-model-dropdown.png)
+</Step>
+</Steps>
+
+### Available OpenAI Models
+
+| Model | Best Use Case | Speed | Cost per 1M Tokens (Input) | Context Window |
+|-------|--------------|-------|---------------------------|----------------|
+| GPT-4 | Complex queries, highest accuracy | Slower | ~$10 | 8K tokens |
+| GPT-4 Turbo | Balanced performance | Medium | ~$1 | 128K tokens |
+| GPT-3.5 Turbo | Simple queries, fast results | Fast | ~$0.50 | 16K tokens |
+
+<Tip>
+Start with GPT-3.5 Turbo for most queries. Upgrade to GPT-4 if you need better accuracy for complex scenarios
+</Tip>
+
+### Cost Considerations
+
+OpenAI charges based on tokens used (roughly 4 characters per token):
+
+**Typical Costs Per Query**:
+- Simple query (e.g., "show me all users"): $0.001 - $0.002
+- Complex query with large schema: $0.005 - $0.01
+- Conversation with follow-ups: $0.02 - $0.05
+
+**Estimate Monthly Costs**:
+- Light use (10 queries/day): $3 - $5/month
+- Moderate use (50 queries/day): $15 - $25/month
+- Heavy use (200 queries/day): $60 - $100/month
+
+<Note>
+Costs vary based on schema size, conversation length, and model choice. Monitor usage in your OpenAI dashboard
+</Note>
+
+## Setting Up Anthropic (Claude)
+
+Anthropic's Claude models excel at complex reasoning and handle large database schemas exceptionally well.
+
+### Prerequisites
+
+1. Create an Anthropic account at https://console.anthropic.com/
+2. Add payment method
+3. Generate an API key from the console
+
+### Configuration Steps
+
+<Steps>
+<Step title="Open Provider Configuration">
+Click the AI Provider dropdown and select **"Add a provider"**.
+</Step>
+<Step title="Select Anthropic">
+Choose **Anthropic** from the Model Type dropdown.
+</Step>
+<Step title="Enter API Key">
+Paste your Anthropic API key in the Token field.
+
+```text Example API Key Format
+sk-ant-api03-xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+</Step>
+<Step title="Submit and Select Model">
+Click Submit to verify and save the configuration.
+
+Available Claude models will appear in the Model dropdown:
+- **Claude 3.5 Sonnet**: Balanced speed and capability
+- **Claude 3 Opus**: Maximum reasoning capability
+- **Claude 3 Haiku**: Fastest, most cost-effective
+</Step>
+</Steps>
+
+### Available Claude Models
+
+| Model | Best Use Case | Speed | Cost per 1M Tokens (Input) | Context Window |
+|-------|--------------|-------|---------------------------|----------------|
+| Claude 3 Opus | Most complex queries | Slower | ~$15 | 200K tokens |
+| Claude 3.5 Sonnet | Best balance | Medium | ~$3 | 200K tokens |
+| Claude 3 Haiku | Speed and cost efficiency | Fast | ~$0.25 | 200K tokens |
+
+<Tip>
+Claude 3.5 Sonnet provides the best balance of speed, accuracy, and cost for most database queries
+</Tip>
+
+### When to Use Claude
+
+Claude excels in these scenarios:
+- **Large Schemas**: Handles databases with hundreds of tables
+- **Complex Joins**: Better at understanding multi-table relationships
+- **Contextual Queries**: Superior at maintaining long conversation contexts
+- **Ambiguous Requests**: Better at asking clarifying questions
+
+## Setting Up Ollama (Local Models)
+
+Ollama allows you to run AI models locally on your machine, providing complete privacy with zero API costs.
+
+### Prerequisites
+
+<Steps>
+<Step title="Install Ollama">
+Download and install Ollama from https://ollama.com
+
+**Supported Platforms**:
+- macOS (Apple Silicon and Intel)
+- Linux (x86_64, ARM64)
+- Windows (via WSL2)
+</Step>
+<Step title="Download a Model">
+Open a terminal and download your preferred model:
+
+```bash Popular Models
+# Recommended: Llama 3.1 (8B)
+ollama run llama3.1
+
+# Alternative: CodeLlama (optimized for code)
+ollama run codellama
+
+# Alternative: Mistral (fast and efficient)
+ollama run mistral
+
+# Alternative: Llama 3.1 (70B - requires significant RAM)
+ollama run llama3.1:70b
+```
+
+<Info>
+The first `ollama run` command downloads the model (several GB). Subsequent runs use the cached model
+</Info>
+</Step>
+<Step title="Verify Ollama is Running">
+Check that Ollama is accessible:
+
+```bash
+curl http://localhost:11434/api/tags
+```
+
+You should see a JSON response with available models.
+</Step>
+</Steps>
+
+### Configuring Ollama in WhoDB
+
+<Steps>
+<Step title="Access Chat Page">
+Navigate to the Chat page. If Ollama is running locally, it should appear automatically in the AI Provider dropdown.
+</Step>
+<Step title="Select Ollama">
+Choose **Ollama** from the provider dropdown.
+
+![AI Provider Dropdown](/images/102-chat-ai-provider-dropdown.png)
+
+<Note>
+No API key required—Ollama connects automatically to localhost:11434
+</Note>
+</Step>
+<Step title="Choose Model">
+Select your downloaded model from the AI Model dropdown.
+
+Available models are those you've downloaded via `ollama run`.
+</Step>
+</Steps>
+
+### Recommended Ollama Models for SQL
+
+| Model | Size | RAM Required | Best For | Download Command |
+|-------|------|-------------|----------|------------------|
+| Llama 3.1 (8B) | 4.7 GB | 8 GB | General use, good balance | `ollama run llama3.1` |
+| CodeLlama (7B) | 3.8 GB | 8 GB | Code/SQL generation | `ollama run codellama` |
+| Mistral (7B) | 4.1 GB | 8 GB | Fast responses | `ollama run mistral` |
+| Llama 3.1 (70B) | 40 GB | 64 GB | Maximum accuracy | `ollama run llama3.1:70b` |
+
+<Tip>
+Start with Llama 3.1 (8B) for the best balance of performance and resource usage
+</Tip>
+
+### Ollama Performance Optimization
+
+<AccordionGroup>
+<Accordion title="Hardware Requirements">
+**Minimum**:
+- CPU: 4 cores
+- RAM: 8 GB
+- Disk: 10 GB free
+
+**Recommended**:
+- CPU: 8+ cores
+- RAM: 16 GB+
+- GPU: NVIDIA GPU with 8GB+ VRAM (optional but faster)
+- Disk: 50 GB free for multiple models
+</Accordion>
+<Accordion title="GPU Acceleration">
+Ollama automatically uses GPU if available:
+
+**NVIDIA GPU**:
+- Requires CUDA drivers
+- Dramatically faster inference
+- Supports larger models with less RAM
+
+**Apple Silicon (M1/M2/M3)**:
+- Native Metal acceleration
+- Excellent performance
+- No additional configuration needed
+
+Check GPU usage:
+```bash
+ollama ps
+```
+</Accordion>
+<Accordion title="Model Performance">
+Adjust model size based on your hardware:
+
+**If queries are slow**:
+- Use smaller models (7B instead of 70B)
+- Close other applications
+- Enable GPU acceleration
+- Consider using cloud providers for complex queries
+
+**If accuracy is poor**:
+- Upgrade to larger models (70B)
+- Provide more specific queries
+- Use cloud providers (OpenAI/Anthropic) for critical tasks
+</Accordion>
+</AccordionGroup>
+
+### Ollama Privacy Benefits
+
+<CardGroup cols={2}>
+<Card title="Complete Data Privacy" icon="lock">
+Your database schema never leaves your machine
+</Card>
+<Card title="No Internet Required" icon="wifi-slash">
+Works in air-gapped or offline environments
+</Card>
+<Card title="Zero Ongoing Costs" icon="dollar-sign">
+No API charges regardless of usage
+</Card>
+<Card title="Full Control" icon="sliders">
+Choose models, control updates, customize behavior
+</Card>
+</CardGroup>
+
+<Check>
+Ollama is ideal for regulated industries, sensitive data, or organizations requiring complete data sovereignty
+</Check>
+
+## Advanced Configuration
+
+### Multiple Providers
+
+You can configure multiple AI providers and switch between them:
+
+<Steps>
+<Step title="Add Multiple Providers">
+Add OpenAI, Anthropic, and Ollama providers using the "Add a provider" option.
+</Step>
+<Step title="Switch Between Providers">
+Use the AI Provider dropdown to switch between configured providers at any time.
+</Step>
+<Step title="Use Case-Specific Providers">
+**Strategy**:
+- Use Ollama for exploration and learning
+- Use GPT-3.5 for quick production queries
+- Use GPT-4 or Claude for complex analytics
+
+This optimizes both cost and performance.
+</Step>
+</Steps>
+
+### Removing Providers
+
+<Steps>
+<Step title="Access Provider Management">
+On the Chat page, click the **Delete Provider** button.
+
+![Delete Provider Button](/images/115-chat-delete-provider-button.png)
+</Step>
+<Step title="Confirm Deletion">
+A confirmation dialog appears. Click **Delete** to remove the current provider configuration.
+
+<Warning>
+This removes the API key and disconnects the provider. You'll need to reconfigure to use it again
+</Warning>
+</Step>
+</Steps>
+
+## Provider Comparison
+
+Choose the right provider for your needs:
+
+| Feature | OpenAI | Anthropic | Ollama |
+|---------|--------|-----------|--------|
+| **Setup Complexity** | Easy | Easy | Moderate |
+| **Cost** | Pay per use | Pay per use | Free |
+| **Privacy** | External | External | Complete |
+| **Speed** | Fast | Medium | Varies |
+| **Accuracy** | Excellent | Excellent | Good |
+| **Internet Required** | Yes | Yes | No |
+| **Best For** | General use | Complex queries | Privacy/Cost |
+
+## Troubleshooting
+
+<AccordionGroup>
+<Accordion title="OpenAI API Key Invalid">
+**Symptom**: "Invalid API key" error when adding OpenAI provider
+
+**Solutions**:
+1. Verify key is copied correctly (no extra spaces)
+2. Check key hasn't been revoked in OpenAI dashboard
+3. Ensure billing is set up on your OpenAI account
+4. Try generating a new API key
+5. Verify you're using a valid key format (starts with `sk-`)
+</Accordion>
+<Accordion title="Anthropic Connection Failed">
+**Symptom**: Cannot connect to Anthropic after entering API key
+
+**Solutions**:
+1. Verify API key from https://console.anthropic.com/
+2. Check your account has available credits
+3. Ensure no network/firewall blocking claude.ai
+4. Try a new API key
+5. Check Anthropic service status
+</Accordion>
+<Accordion title="Ollama Not Detected">
+**Symptom**: Ollama doesn't appear in provider dropdown
+
+**Solutions**:
+1. Verify Ollama is running: `curl http://localhost:11434/api/tags`
+2. Restart Ollama service
+3. Check Ollama is accessible on port 11434
+4. Ensure no firewall blocking localhost connections
+5. Verify at least one model is downloaded
+
+Test Ollama:
+```bash
+ollama list  # Shows downloaded models
+ollama ps    # Shows running models
+```
+</Accordion>
+<Accordion title="No Models Available">
+**Symptom**: Model dropdown is empty after adding provider
+
+**Solutions**:
+1. Wait a few seconds for models to load
+2. Refresh the page
+3. Verify API key has proper permissions
+4. Check provider dashboard for account status
+5. Try removing and re-adding the provider
+
+For Ollama:
+```bash
+ollama list  # Verify models are downloaded
+```
+</Accordion>
+<Accordion title="Slow Ollama Response">
+**Symptom**: Ollama queries take very long to respond
+
+**Solutions**:
+1. Close resource-intensive applications
+2. Use smaller models (7B instead of 70B)
+3. Verify GPU acceleration is working: `ollama ps`
+4. Increase system RAM allocation
+5. Consider cloud providers for time-sensitive queries
+
+Check resource usage:
+```bash
+# Monitor Ollama resource usage
+ollama ps
+top -p $(pgrep ollama)
+```
+</Accordion>
+<Accordion title="Rate Limit Errors">
+**Symptom**: "Rate limit exceeded" from OpenAI or Anthropic
+
+**Solutions**:
+1. Wait before retrying (limits reset after time window)
+2. Upgrade your API plan for higher limits
+3. Reduce query frequency
+4. Check usage in provider dashboard
+5. Consider switching to Ollama for unlimited queries
+</Accordion>
+</AccordionGroup>
+
+## Security Best Practices
+
+<Steps>
+<Step title="Secure API Keys">
+- Never share API keys publicly
+- Don't commit keys to git repositories
+- Use environment variables in production
+- Rotate keys regularly (every 90 days)
+- Monitor usage for unauthorized access
+</Step>
+<Step title="Choose Provider Based on Data Sensitivity">
+**Highly Sensitive Data**:
+- Use Ollama exclusively
+- Never send to external providers
+
+**Moderately Sensitive Data**:
+- Review provider terms of service
+- Verify data handling policies
+- Consider data residency requirements
+
+**Public or Non-Sensitive Data**:
+- Any provider acceptable
+</Step>
+<Step title="Monitor Provider Usage">
+**OpenAI**: https://platform.openai.com/usage
+**Anthropic**: https://console.anthropic.com/settings/usage
+
+Set up billing alerts to prevent unexpected charges.
+</Step>
+<Step title="Use Least Privilege">
+When creating API keys:
+- Limit permissions to only what's needed
+- Create separate keys for development/production
+- Set spending limits where available
+- Enable key restrictions (IP allowlists, etc.)
+</Step>
+</Steps>
+
+## Next Steps
+
+<CardGroup cols={2}>
+<Card title="Querying Data" icon="magnifying-glass" href="/ai/querying-data">
+Learn how to ask questions and retrieve data using your configured provider
+</Card>
+<Card title="Your First AI Query" icon="rocket" href="/guides/tutorials/ai-first-query">
+Step-by-step tutorial to get started with the AI assistant
+</Card>
+<Card title="Conversation Features" icon="comments" href="/ai/conversation-features">
+Master multi-turn conversations and context management
+</Card>
+<Card title="Best Practices" icon="star" href="/best-practices/ai-usage">
+Learn optimal patterns for using the AI assistant
+</Card>
+</CardGroup>
+
+<Info>
+With your AI provider configured, you're ready to start querying your database using natural language
+</Info>
