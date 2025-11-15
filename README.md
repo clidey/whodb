@@ -4,10 +4,33 @@
 
 ### *Lightweight, Fast, and Beautiful Database Management*
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/clidey/whodb/core)](https://goreportcard.com/report/github.com/clidey/whodb/core)
 <!-- [![Build Status](https://hello.clidey.com/api/flows/status?id=b32257fa-1415-4847-a0f3-e684f5f76608&secret=cd74dbd5-36ec-42f9-b4f0-12ce9fcc762b)](https://clidey.com) -->
+![Release workflow](https://img.shields.io/github/actions/workflow/status/clidey/whodb/release-ce.yml?branch=main)
+![release version](https://img.shields.io/github/v/release/clidey/whodb)
+![release date](https://img.shields.io/github/release-date/clidey/whodb)
+![docker pulls](https://img.shields.io/docker/pulls/clidey/whodb)
+![release downloads](https://img.shields.io/github/downloads/clidey/whodb/total)
+![docker size](https://img.shields.io/docker/image-size/clidey/whodb/latest)
+
+![Commits per month](https://img.shields.io/github/commit-activity/m/clidey/whodb)
+![last commit](https://img.shields.io/github/last-commit/clidey/whodb)
+![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
+![contributors](https://img.shields.io/github/contributors/clidey/whodb)
+![closed issues](https://img.shields.io/github/issues-closed/clidey/whodb)
+![closed PRs](https://img.shields.io/github/issues-pr-closed/clidey/whodb)
+
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![GitHub Stars](https://img.shields.io/github/stars/clidey/whodb?style=social)](https://github.com/clidey/whodb/stargazers)
+![Go](https://img.shields.io/badge/language-Go-00ADD8?logo=go&logoColor=white)
+![TypeScript](https://img.shields.io/badge/language-TypeScript-3178c6?logo=typescript&logoColor=white)
+[![Go Report Card](https://goreportcard.com/badge/github.com/clidey/whodb/core)](https://goreportcard.com/report/github.com/clidey/whodb/core)
+
+## Available on
+
+[![Docker](https://img.shields.io/badge/Docker-available-brightgreen)](https://hub.docker.com/repository/docker/clidey/whodb)
+[![Windows](https://img.shields.io/badge/Windows-available-brightgreen)](https://apps.microsoft.com/detail/9pftx5bv4ds6)
+[![macOS](https://img.shields.io/badge/macOS-available-brightgreen)](https://apps.apple.com/app/whodb/id6754566536)
+[![Snap](https://img.shields.io/badge/Snap-available-brightgreen)](http://snapcraft.io/whodb)
 
 [🚀 Quick Start](#quick-start) • [📖 Documentation](https://whodb.com/docs/) • [🎮 Live Demo](https://whodb.com/demo/login?host=quick-container-491288b0-3138-48fa-93b4-1e730296c0b7.hello.svc.cluster.local&username=user&password=password&database=Adventureworks) • [💬 Community](https://github.com/clidey/whodb/discussions)
 

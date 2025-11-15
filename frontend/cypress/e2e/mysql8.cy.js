@@ -472,7 +472,7 @@ describe('MySQL 8 E2E test', () => {
         cy.get('[role="listbox"]').should('be.visible');
 
         // Select the third option (Pipe) - index 2
-        cy.get('[role="option"]').eq(-1).click({force: true});
+        cy.get('[role="option"]').eq(2).click({force: true});
         // Ensure dropdown is closed
         cy.get('[role="listbox"]').should('not.exist');
         // UI: verify delimiter was selected - the combobox should show the pipe delimiter

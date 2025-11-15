@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { Badge, Button, cn, Input, Label, ModeToggle, Separator, toast } from '@clidey/ux';
-import { SearchSelect } from '../../components/ux';
+import {Badge, Button, cn, Input, Label, ModeToggle, Separator, toast} from '@clidey/ux';
+import {SearchSelect} from '../../components/ux';
 import {
     DatabaseType,
     LoginCredentials,
@@ -26,23 +26,23 @@ import {
 } from '@graphql';
 import classNames from "classnames";
 import entries from "lodash/entries";
-import { FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { v4 } from 'uuid';
+import {FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {useNavigate, useSearchParams} from "react-router-dom";
+import {v4} from 'uuid';
 import logoImage from "../../../public/images/logo.png";
-import { AdjustmentsHorizontalIcon, CheckCircleIcon, ChevronDownIcon, CircleStackIcon } from '../../components/heroicons';
-import { Icons } from "../../components/icons";
-import { Loading } from "../../components/loading";
-import { Container } from "../../components/page";
-import { updateProfileLastAccessed } from "../../components/profile-info-tooltip";
-import { baseDatabaseTypes, getDatabaseTypeDropdownItems, IDatabaseDropdownItem } from "../../config/database-types";
-import { extensions, sources } from '../../config/features';
-import { InternalRoutes } from "../../config/routes";
-import { useDesktopFile } from '../../hooks/useDesktop';
-import { AuthActions } from "../../store/auth";
-import { DatabaseActions } from "../../store/database";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { isDesktopApp } from '../../utils/external-links';
+import {AdjustmentsHorizontalIcon, CheckCircleIcon, ChevronDownIcon, CircleStackIcon} from '../../components/heroicons';
+import {Icons} from "../../components/icons";
+import {Loading} from "../../components/loading";
+import {Container} from "../../components/page";
+import {updateProfileLastAccessed} from "../../components/profile-info-tooltip";
+import {baseDatabaseTypes, getDatabaseTypeDropdownItems, IDatabaseDropdownItem} from "../../config/database-types";
+import {extensions, sources} from '../../config/features';
+import {InternalRoutes} from "../../config/routes";
+import {useDesktopFile} from '../../hooks/useDesktop';
+import {AuthActions} from "../../store/auth";
+import {DatabaseActions} from "../../store/database";
+import {useAppDispatch, useAppSelector} from "../../store/hooks";
+import {isDesktopApp} from '../../utils/external-links';
 
 /**
  * Generate a consistent ID for desktop credentials based on connection details.
@@ -452,10 +452,10 @@ export const LoginForm: FC<LoginFormProps> = ({
         if (databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Redis) {
             return hostName.length > 0;
         }
-        if (databaseType.id === DatabaseType.MySql || databaseType.id === DatabaseType.Postgres) {
-            return hostName.length > 0 && username.length > 0 && password.length > 0 && database.length > 0;
+        if (databaseType.id === DatabaseType.ElasticSearch) {
+            return hostName.length > 0 && username.length > 0 && password.length > 0;
         }
-        return false;
+        return hostName.length > 0 && username.length > 0 && password.length > 0 && database.length > 0;
     }, [databaseType.id, hostName, username, password, database]);
 
     const loginWithProfileEnabled = useMemo(() => {
