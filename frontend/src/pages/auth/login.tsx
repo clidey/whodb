@@ -478,7 +478,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     return (
         <div className={classNames("w-fit h-fit", className, {
             "w-full h-full": advancedDirection === "vertical",
-        })}>
+        })} data-testid="login-form-container">
             <div className="fixed top-4 right-4" data-testid="mode-toggle">
                 <ModeToggle />
             </div>

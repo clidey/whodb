@@ -89,9 +89,10 @@ const GraphSidebar: FC<GraphSidebarProps> = ({
                                     return next;
                                 });
                             }} />
-                            
-                            <TableCellsIcon className="w-4 h-4" />
-                            <p className="text-sm">{u.Name}</p>
+                            <TableCellsIcon className="w-4 h-4 min-w-4 min-h-4" />
+                            <p className="text-sm truncate max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
+                                {u.Name}
+                            </p>
                         </label>
                     );
                 })}
