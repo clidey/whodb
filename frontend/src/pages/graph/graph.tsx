@@ -29,7 +29,7 @@ import {getDatabaseStorageUnitLabel} from "../../utils/functions";
 import {StorageUnitGraphCard} from "../storage-unit/storage-unit";
 import {Button, Checkbox, EmptyState, SearchInput, Sidebar as SidebarComponent, SidebarContent, SidebarGroup, SidebarHeader, SidebarProvider, toTitleCase} from "@clidey/ux";
 import {useNavigate} from "react-router-dom";
-import {CircleStackIcon, FolderIcon, TableCellsIcon} from "../../components/heroicons";
+import {FolderIcon, RectangleGroupIcon, TableCellsIcon} from "../../components/heroicons";
 import {databaseUsesSchemaForGraph} from "../../utils/database-features";
 
 // Helper function to group storage units by type
@@ -365,7 +365,7 @@ export const GraphPage: FC = () => {
                 {
                     !graphLoading && nodes.length === 0
                         ? <EmptyState
-                            icon={<CircleStackIcon className="w-4 h-4" />}
+                            icon={<RectangleGroupIcon className="w-4 h-4" />}
                             title={`No nodes selected`}
                             description={`Select ${getDatabaseStorageUnitLabel(current?.Type).toLowerCase()} on the left to add them to the graph.`}>
                             <Button onClick={() => navigate(InternalRoutes.Dashboard.StorageUnit.path + "?create=true")}>

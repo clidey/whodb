@@ -85,6 +85,8 @@ import {
   XCircleIcon as XCircleIconCE,
   XMarkIcon as XMarkIconCE,
   AdjustmentsVerticalIcon as AdjustmentsVerticalIconCE,
+  Bars3Icon as Bars3IconCE,
+  Squares2X2Icon as Squares2X2IconCE,
 } from '@heroicons/react/24/outline';
 
 // EE may provide overrides for selected icons. In CE builds this should resolve
@@ -160,3 +162,5 @@ export const UsersIcon = EEOverrides.UsersIcon ?? UsersIconCE;
 export const XCircleIcon = EEOverrides.XCircleIcon ?? XCircleIconCE;
 export const XMarkIcon = EEOverrides.XMarkIcon ?? XMarkIconCE;
 export const AdjustmentsVerticalIcon = EEOverrides.AdjustmentsVerticalIcon ?? AdjustmentsVerticalIconCE;
+export const Bars3Icon = EEOverrides.Bars3Icon ?? Bars3IconCE;
+export const Squares2X2Icon = EEOverrides.Squares2X2Icon ?? Squares2X2IconCE;

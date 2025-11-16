@@ -403,9 +403,10 @@ export const ChatPage: FC = () => {
                 })}>
                     {
                         chats.length === 0
-                        ? <div className="flex flex-col justify-center items-center w-full gap-8">
-                            {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-16" />}
-                            <div className="flex flex-wrap justify-center items-center gap-4">
+                        ? <div className="flex flex-col justify-center items-center w-full gap-8" data-testid="chat-empty-state-container">
+                            {/* {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-16" />} */}
+                            <EmptyState title="What can I help you with?" description="" icon={<SparklesIcon className="w-16 h-16" data-testid="empty-state-sparkles-icon" />} />
+                            <div className="flex flex-wrap justify-center items-center gap-4" data-testid="chat-examples-list">
                                 {
                                     examples.map((example, i) => (
                                         <Card key={`chat-${i}`} className="flex flex-col gap-sm w-[250px] h-[120px] p-4 text-sm cursor-pointer hover:opacity-80 transition-all"
@@ -426,7 +427,7 @@ export const ChatPage: FC = () => {
                                                 return <div key={`chat-${i}`} className={classNames("flex gap-lg overflow-hidden break-words leading-6 shrink-0 relative", {
                                                     "self-end ml-3": chat.isUserInput,
                                                     "self-start": !chat.isUserInput,
-                                                })}>
+                                                })} data-testid={chat.isUserInput ? "user-message" : "system-message"}>
                                                     {!chat.isUserInput && chats[i-1]?.isUserInput
                                                         ? extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8 mt-2" />
                                                         : <div className="pl-4" />}
@@ -439,7 +440,7 @@ export const ChatPage: FC = () => {
                                                 </div>
                                             } else if (chat.Type === "error") {
                                                 return (
-                                                    <div key={`chat-${i}`} className="flex gap-lg overflow-hidden break-words leading-6 shrink-0 self-start pt-6">
+                                                    <div key={`chat-${i}`} className="flex gap-lg overflow-hidden break-words leading-6 shrink-0 self-start pt-6 relative" data-testid="error-message">
                                                         {!chat.isUserInput && chats[i-1]?.isUserInput
                                                             ? extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
                                                             : <div className="pl-4" />}
@@ -447,7 +448,7 @@ export const ChatPage: FC = () => {
                                                     </div>
                                                 );
                                             } else if (isEEFeatureEnabled('dataVisualization') && (chat.Type === "sql:pie-chart" || chat.Type === "sql:line-chart")) {
-                                                return <div key={`chat-${i}`} className="flex items-center self-start">
+                                                return <div key={`chat-${i}`} className="flex items-center self-start relative" data-testid="visual-message">
                                                     {!chat.isUserInput && chats[i-1]?.isUserInput && (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
                                                     {/* @ts-ignore */}
                                                     {chat.Type === "sql:pie-chart" && PieChart && <PieChart columns={chat.Result?.Columns.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} />}
