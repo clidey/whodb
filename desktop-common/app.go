@@ -385,25 +385,8 @@ func (a *App) SetupApplicationMenu() {
 		runtime.Quit(a.ctx)
 	})
 
-	// Edit Menu
-	if goruntime.GOOS == "darwin" {
-		appMenu.Append(menu.EditMenu())
-	} else {
-		editMenu := appMenu.AddSubmenu("Edit")
-		editMenu.AddText("Copy", keys.CmdOrCtrl("c"), func(_ *menu.CallbackData) {
-			runtime.EventsEmit(a.ctx, "menu:copy")
-		})
-		editMenu.AddText("Paste", keys.CmdOrCtrl("v"), func(_ *menu.CallbackData) {
-			runtime.EventsEmit(a.ctx, "menu:paste")
-		})
-		editMenu.AddText("Select All", keys.CmdOrCtrl("a"), func(_ *menu.CallbackData) {
-			runtime.EventsEmit(a.ctx, "menu:select-all")
-		})
-		editMenu.AddSeparator()
-		editMenu.AddText("Find", keys.CmdOrCtrl("f"), func(_ *menu.CallbackData) {
-			runtime.EventsEmit(a.ctx, "menu:find")
-		})
-	}
+	// Edit Menu - Use Wails' built-in EditMenu on all platforms for native clipboard handling
+	appMenu.Append(menu.EditMenu())
 
 	// View Menu
 	viewMenu := appMenu.AddSubmenu("View")

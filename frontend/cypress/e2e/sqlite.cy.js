@@ -476,7 +476,7 @@ describe('Sqlite3 E2E test', () => {
 
         cy.get('[role="listbox"]').should('be.visible');
 
-        cy.get('[role="option"]').eq(-1).click({force: true});
+        cy.get('[role="option"]').eq(2).click({force: true});
         cy.get('[role="listbox"]').should('not.exist');
         cy.get('[role="dialog"]').within(() => {
             cy.contains('label', 'Delimiter').parent().find('[role="combobox"]').eq(-1).invoke('text').should('include', '|');
