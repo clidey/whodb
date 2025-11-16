@@ -29,6 +29,7 @@ import {
   ArrowUpCircleIcon as ArrowUpCircleIconCE,
   BanknotesIcon as BanknotesIconCE,
   BellAlertIcon as BellAlertIconCE,
+  BookOpenIcon as BookOpenIconCE,
   BuildingStorefrontIcon as BuildingStorefrontIconCE,
   CalculatorIcon as CalculatorIconCE,
   CalendarIcon as CalendarIconCE,
@@ -103,6 +104,7 @@ export const ArrowTopRightOnSquareIcon = EEOverrides.ArrowTopRightOnSquareIcon ?
 export const ArrowUpCircleIcon = EEOverrides.ArrowUpCircleIcon ?? ArrowUpCircleIconCE;
 export const BanknotesIcon = EEOverrides.BanknotesIcon ?? BanknotesIconCE;
 export const BellAlertIcon = EEOverrides.BellAlertIcon ?? BellAlertIconCE;
+export const BookOpenIcon = EEOverrides.BookOpenIcon ?? BookOpenIconCE;
 export const BuildingStorefrontIcon = EEOverrides.BuildingStorefrontIcon ?? BuildingStorefrontIconCE;
 export const CalculatorIcon = EEOverrides.CalculatorIcon ?? CalculatorIconCE;
 export const CalendarIcon = EEOverrides.CalendarIcon ?? CalendarIconCE;

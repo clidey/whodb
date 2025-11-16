@@ -25,3 +25,23 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
+
+interface DoryDocsAPI {
+  init(config: {
+    baseUrl: string;
+    position?: 'left' | 'right';
+    width?: number;
+    theme?: 'light' | 'dark' | 'inherit';
+    closeOnEscape?: boolean;
+    closeOnOverlayClick?: boolean;
+    onOpen?: () => void;
+    onClose?: () => void;
+  }): void;
+  open(path?: string): void;
+  close(): void;
+  toggle(): void;
+}
+
+interface Window {
+  DoryDocs?: DoryDocsAPI;
+}
