@@ -229,7 +229,6 @@ jobs:
     uses: ./.github/workflows/_build-linux-cli.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
-      edition: 'ce'
 
   # Step 3: Sign and validate all builds (best effort - continues even if any build fails)
   sign-and-validate:
