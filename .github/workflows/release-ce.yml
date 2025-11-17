@@ -62,6 +62,11 @@ on:
         required: false
         type: boolean
         default: false
+      deploy-linux-cli:
+        description: 'Build Linux CLI binaries (amd64, arm64, riscv64, armv6, armv7)'
+        required: false
+        type: boolean
+        default: false
       publish-github-release:
         description: 'Publish GitHub release to production (leave unchecked to keep as draft)'
         required: false
@@ -89,6 +94,7 @@ jobs:
       deploy-microsoft: ${{ steps.calc.outputs.deploy-microsoft }}
       deploy-apple: ${{ steps.calc.outputs.deploy-apple }}
       deploy-appimage: ${{ steps.calc.outputs.deploy-appimage }}
+      deploy-linux-cli: ${{ steps.calc.outputs.deploy-linux-cli }}
       publish-github-release: ${{ steps.calc.outputs.publish-github-release }}
     steps:
       - name: Checkout
@@ -122,6 +128,7 @@ jobs:
           deploy-microsoft: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-microsoft) && 'true' || 'false') }}
           deploy-apple: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-apple) && 'true' || 'false') }}
           deploy-appimage: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-appimage) && 'true' || 'false') }}
+          deploy-linux-cli: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-linux-cli) && 'true' || 'false') }}
           publish-github-release: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.publish-github-release) && 'true' || 'false') }}
 
       - name: Display configuration
@@ -215,17 +222,27 @@ jobs:
       version: ${{ needs.calculate-version.outputs.version }}
       edition: 'ce'
 
+  build-linux-cli:
+    name: Build Linux CLI
+    needs: [ calculate-version ]
+    if: needs.calculate-version.outputs.deploy-linux-cli == 'true'
+    uses: ./.github/workflows/_build-linux-cli.yml
+    with:
+      version: ${{ needs.calculate-version.outputs.version }}
+      edition: 'ce'
+
   # Step 3: Sign and validate all builds (best effort - continues even if any build fails)
   sign-and-validate:
     name: Sign and Validate
-    needs: [ calculate-version, build-docker, build-desktop, build-snap, build-appimage ]
+    needs: [ calculate-version, build-docker, build-desktop, build-snap, build-appimage, build-linux-cli ]
     if: |
       always() &&
       needs.calculate-version.result == 'success' &&
       (needs.build-docker.result == 'success' || needs.build-docker.result == 'skipped' || needs.build-docker.result == 'failure') &&
       (needs.build-desktop.result == 'success' || needs.build-desktop.result == 'skipped' || needs.build-desktop.result == 'failure') &&
       (needs.build-snap.result == 'success' || needs.build-snap.result == 'skipped' || needs.build-snap.result == 'failure') &&
-      (needs.build-appimage.result == 'success' || needs.build-appimage.result == 'skipped' || needs.build-appimage.result == 'failure')
+      (needs.build-appimage.result == 'success' || needs.build-appimage.result == 'skipped' || needs.build-appimage.result == 'failure') &&
+      (needs.build-linux-cli.result == 'success' || needs.build-linux-cli.result == 'skipped' || needs.build-linux-cli.result == 'failure')
     uses: ./.github/workflows/_sign-validate.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
@@ -237,14 +254,15 @@ jobs:
   create-github-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [ calculate-version, build-docker, build-desktop, build-snap, build-appimage ]
+    needs: [ calculate-version, build-docker, build-desktop, build-snap, build-appimage, build-linux-cli ]
     if: |
       always() &&
       needs.calculate-version.result == 'success' &&
       (needs.calculate-version.outputs.deploy-docker != 'true' || needs.build-docker.result == 'success') &&
       (needs.calculate-version.outputs.deploy-snap != 'true' || needs.build-snap.result == 'success') &&
       ((needs.calculate-version.outputs.deploy-microsoft != 'true' && needs.calculate-version.outputs.deploy-apple != 'true') || needs.build-desktop.result == 'success') &&
-      (needs.calculate-version.outputs.deploy-appimage != 'true' || needs.build-appimage.result == 'success')
+      (needs.calculate-version.outputs.deploy-appimage != 'true' || needs.build-appimage.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-linux-cli != 'true' || needs.build-linux-cli.result == 'success')
     permissions:
       contents: write
     steps:
@@ -274,6 +292,13 @@ jobs:
           pattern: appimage-*
           path: artifacts/
 
+      - name: Download Linux CLI binaries
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: cli-binaries-*
+          path: artifacts/
+
       - name: Download signatures
         uses: actions/download-artifact@v4
         continue-on-error: true
@@ -290,6 +315,9 @@ jobs:
 
           # Copy desktop builds (exe, dmg, msixbundle)
           find artifacts -type f \( -name "*.exe" -o -name "*.dmg" -o -name "*.msixbundle" \) -exec cp {} final-assets/ \; 2>/dev/null || true
+
+          # Copy Linux CLI binaries
+          find artifacts -type f -name "whodb-*-linux-*" -exec cp {} final-assets/ \; 2>/dev/null || true
 
           # Copy signatures (extract and copy only files, not directories)
           if [ -f artifacts/signatures/signatures.tar.gz ]; then
@@ -465,6 +493,7 @@ jobs:
       build-desktop,
       build-snap,
       build-appimage,
+      build-linux-cli,
       sign-and-validate,
       deploy-docker,
       deploy-snap,
@@ -517,6 +546,14 @@ jobs:
             echo "| AppImage | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| AppImage | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.build-linux-cli.result }}" = "success" ]; then
+            echo "| Linux CLI | ✅ Success |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.build-linux-cli.result }}" = "skipped" ]; then
+            echo "| Linux CLI | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Linux CLI | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
           fi
 
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -578,10 +615,14 @@ jobs:
           # GitHub Release
           if [ "${{ needs.create-github-release.result }}" = "success" ]; then
             if [ "${{ needs.calculate-version.outputs.stage-only }}" = "true" ] || [ "${{ needs.calculate-version.outputs.publish-github-release }}" != "true" ]; then
-              echo "| GitHub Release | ✅ Created | Draft release |" >> $GITHUB_STEP_SUMMARY
+              RELEASE_NOTE="Draft release"
             else
-              echo "| GitHub Release | ✅ Created | Published |" >> $GITHUB_STEP_SUMMARY
+              RELEASE_NOTE="Published"
             fi
+            if [ "${{ needs.calculate-version.outputs.deploy-linux-cli }}" = "true" ]; then
+              RELEASE_NOTE="$RELEASE_NOTE (includes CLI)"
+            fi
+            echo "| GitHub Release | ✅ Created | $RELEASE_NOTE |" >> $GITHUB_STEP_SUMMARY
           elif [ "${{ needs.create-github-release.result }}" = "skipped" ]; then
             echo "| GitHub Release | ⏭️ Skipped | Stage-only mode |" >> $GITHUB_STEP_SUMMARY
           else

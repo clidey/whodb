@@ -425,7 +425,63 @@ clean:
 		(command -v chflags >/dev/null 2>&1 && chflags -R -f nouchg,noschg build) || true; \
 		chmod -R u+rwX build || true; \
 	fi
-	@rm -rf build/windows build/darwin build/linux build/bin build/assets build/index.html wails.lock frontend/dist || true
+	@rm -rf build/windows build/darwin build/linux build/bin build/assets build/index.html wails.lock frontend/dist build-cli || true
+
+# CLI Binary Cross-Compilation Targets (no bundled Wails, runs as cli)
+# Build WhoDB CLI binaries for various Linux architectures
+
+CLI_BUILD_DIR = build-cli
+CLI_BINARY_NAME = whodb
+x
+# Ensure CLI build directory exists
+$(CLI_BUILD_DIR):
+	@mkdir -p $(CLI_BUILD_DIR)
+
+# Build CLI for amd64
+cli-amd64: | $(CLI_BUILD_DIR)
+	@echo "Building WhoDB CLI for Linux AMD64..."
+	@cd ../core && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+		-ldflags="-s -w -X github.com/clidey/whodb/core/src/env.ApplicationVersion=$(VERSION) -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=linux-amd64" \
+		-o ../desktop-common/$(CLI_BUILD_DIR)/$(CLI_BINARY_NAME)-$(VERSION)-linux-amd64 .
+	@echo "✅ Built: $(CLI_BUILD_DIR)/$(CLI_BINARY_NAME)-$(VERSION)-linux-amd64"
+
+# Build CLI for arm64
+cli-arm64: | $(CLI_BUILD_DIR)
+	@echo "Building WhoDB CLI for Linux ARM64..."
+	@cd ../core && CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build \
+		-ldflags="-s -w -X github.com/clidey/whodb/core/src/env.ApplicationVersion=$(VERSION) -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=linux-arm64" \
+		-o ../desktop-common/$(CLI_BUILD_DIR)/$(CLI_BINARY_NAME)-$(VERSION)-linux-arm64 .
+	@echo "✅ Built: $(CLI_BUILD_DIR)/$(CLI_BINARY_NAME)-$(VERSION)-linux-arm64"
+
+# Build CLI for riscv64
+cli-riscv64: | $(CLI_BUILD_DIR)
+	@echo "Building WhoDB CLI for Linux RISC-V64..."
+	@cd ../core && CGO_ENABLED=0 GOOS=linux GOARCH=riscv64 go build \
+		-ldflags="-s -w -X github.com/clidey/whodb/core/src/env.ApplicationVersion=$(VERSION) -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=linux-riscv64" \
+		-o ../desktop-common/$(CLI_BUILD_DIR)/$(CLI_BINARY_NAME)-$(VERSION)-linux-riscv64 .
+	@echo "✅ Built: $(CLI_BUILD_DIR)/$(CLI_BINARY_NAME)-$(VERSION)-linux-riscv64"
+
+# Build CLI for armv6
+cli-armv6: | $(CLI_BUILD_DIR)
+	@echo "Building WhoDB CLI for Linux ARMv6..."
+	@cd ../core && CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=6 go build \
+		-ldflags="-s -w -X github.com/clidey/whodb/core/src/env.ApplicationVersion=$(VERSION) -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=linux-armv6" \
+		-o ../desktop-common/$(CLI_BUILD_DIR)/$(CLI_BINARY_NAME)-$(VERSION)-linux-armv6 .
+	@echo "✅ Built: $(CLI_BUILD_DIR)/$(CLI_BINARY_NAME)-$(VERSION)-linux-armv6"
+
+# Build CLI for armv7
+cli-armv7: | $(CLI_BUILD_DIR)
+	@echo "Building WhoDB CLI for Linux ARMv7..."
+	@cd ../core && CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build \
+		-ldflags="-s -w -X github.com/clidey/whodb/core/src/env.ApplicationVersion=$(VERSION) -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=linux-armv7" \
+		-o ../desktop-common/$(CLI_BUILD_DIR)/$(CLI_BINARY_NAME)-$(VERSION)-linux-armv7 .
+	@echo "✅ Built: $(CLI_BUILD_DIR)/$(CLI_BINARY_NAME)-$(VERSION)-linux-armv7"
+
+# Build all CLI binaries
+cli-all: cli-amd64 cli-arm64 cli-riscv64 cli-armv6 cli-armv7
+	@echo ""
+	@echo "✅ All CLI binaries built successfully"
+	@ls -lh $(CLI_BUILD_DIR)/
 
 # Install Wails CLI
 install-wails:
