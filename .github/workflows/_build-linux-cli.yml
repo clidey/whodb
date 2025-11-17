@@ -27,8 +27,13 @@ jobs:
         with:
           go-version: '1.25'
 
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential gcc libc6-dev
+
       - name: Build all CLI binaries
-        working-directory: ./desktop-common
+        working-directory: ./desktop-ce
         env:
           VERSION: ${{ inputs.version }}
         run: |
