@@ -1,4 +1,4 @@
-name: Build Linux CLI Binaries
+name: Build Linux Terminal Binaries
 
 on:
   workflow_call:
@@ -13,8 +13,8 @@ permissions:
   actions: write
 
 jobs:
-  build-cli:
-    name: Build Linux CLI Binaries (CE)
+  build-terminal:
+    name: Build Linux Terminal Binaries (CE)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -27,10 +27,35 @@ jobs:
         with:
           go-version: '1.25'
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
       - name: Install build dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential gcc libc6-dev
+
+      - name: Build frontend
+        working-directory: ./frontend
+        env:
+          CYPRESS_INSTALL_BINARY: "0"
+        run: |
+          pnpm install
+          pnpm run build:ce
+
+      - name: Copy frontend to core build directory
+        run: |
+          rm -rf core/build
+          mkdir -p core/build
+          cp -r frontend/build/* core/build/
 
       - name: Build all CLI binaries
         working-directory: ./desktop-ce
@@ -39,9 +64,9 @@ jobs:
         run: |
           make cli-all VERSION=${{ inputs.version }}
 
-      - name: Verify CLI binaries
+      - name: Verify Terminal binaries
         run: |
-          echo "Verifying built CLI binaries..."
+          echo "Verifying built Terminal binaries..."
           ls -lh desktop-common/build-cli/
 
           for binary in desktop-common/build-cli/whodb-*-linux-*; do
@@ -54,9 +79,9 @@ jobs:
             fi
           done
 
-      - name: Upload CLI binaries artifact
+      - name: Upload Terminal binaries artifact
         uses: actions/upload-artifact@v4
         with:
-          name: cli-binaries-ce
+          name: terminal-binaries-ce
           path: desktop-common/build-cli/whodb-*-linux-*
           retention-days: 1
