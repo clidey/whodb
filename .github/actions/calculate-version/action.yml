@@ -28,6 +28,10 @@ inputs:
     description: 'Build AppImage'
     required: false
     default: 'false'
+  deploy-linux-cli:
+    description: 'Build Linux CLI binaries'
+    required: false
+    default: 'false'
   publish-github-release:
     description: 'Publish GitHub release to production (production mode only)'
     required: false
@@ -60,6 +64,9 @@ outputs:
   deploy-appimage:
     description: 'Deploy AppImage flag'
     value: ${{ steps.stores.outputs.deploy-appimage }}
+  deploy-linux-cli:
+    description: 'Deploy Linux CLI flag'
+    value: ${{ steps.stores.outputs.deploy-linux-cli }}
   publish-github-release:
     description: 'Publish GitHub release flag'
     value: ${{ steps.flags.outputs.publish-github-release }}
@@ -165,6 +172,7 @@ runs:
         echo "deploy-microsoft=${{ inputs.deploy-microsoft }}" >> $GITHUB_OUTPUT
         echo "deploy-apple=${{ inputs.deploy-apple }}" >> $GITHUB_OUTPUT
         echo "deploy-appimage=${{ inputs.deploy-appimage }}" >> $GITHUB_OUTPUT
+        echo "deploy-linux-cli=${{ inputs.deploy-linux-cli }}" >> $GITHUB_OUTPUT
 
         if [ "$MODE" = "production" ]; then
           echo "Production mode: deploying selected stores to production channels"
