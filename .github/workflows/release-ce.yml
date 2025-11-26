@@ -172,6 +172,7 @@ jobs:
     with:
       version: ${{ needs.calculate-version.outputs.version }}
       edition: 'ce'
+    secrets: inherit
 
   build-windows:
     name: Build Windows
@@ -182,6 +183,7 @@ jobs:
       version: ${{ needs.calculate-version.outputs.version }}
       edition: 'ce'
       platforms: 'windows-amd64,windows-arm64'
+    secrets: inherit
 
   build-apple:
     name: Build Apple
@@ -191,6 +193,7 @@ jobs:
     with:
       version: ${{ needs.calculate-version.outputs.version }}
       edition: 'ce'
+    secrets: inherit
 
   build-snap:
     name: Build Snap
@@ -199,6 +202,7 @@ jobs:
     uses: ./.github/workflows/_build-snap.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
+    secrets: inherit
 
   build-appimage:
     name: Build AppImage
@@ -208,6 +212,7 @@ jobs:
     with:
       version: ${{ needs.calculate-version.outputs.version }}
       edition: 'ce'
+    secrets: inherit
 
   build-linux-terminal:
     name: Build Linux Terminal
@@ -216,6 +221,7 @@ jobs:
     uses: ./.github/workflows/_build-linux-terminal.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
+    secrets: inherit
 
   # Step 3: Sign and validate all builds (best effort - continues even if any build fails)
   sign-and-validate:
@@ -391,6 +397,7 @@ jobs:
     with:
       version: ${{ needs.calculate-version.outputs.version }}
       channel: ${{ needs.calculate-version.outputs.stage-only == 'true' && 'edge' || 'stable' }}
+    secrets: inherit
 
   deploy-microsoft:
     name: Deploy Microsoft
@@ -403,6 +410,7 @@ jobs:
     with:
       version: ${{ needs.calculate-version.outputs.version }}
       stage-only: ${{ needs.calculate-version.outputs.stage-only == 'true' }}
+    secrets: inherit
 
   deploy-apple:
     name: Deploy Apple
@@ -415,6 +423,7 @@ jobs:
     with:
       version: ${{ needs.calculate-version.outputs.version }}
       stage-only: ${{ needs.calculate-version.outputs.stage-only == 'true' }}
+    secrets: inherit
 
   # Step 6: Deploy to Docker Hub (after GitHub release)
   deploy-docker:
@@ -428,6 +437,7 @@ jobs:
     with:
       version: ${{ needs.calculate-version.outputs.version }}
       stage-only: ${{ needs.calculate-version.outputs.stage-only == 'true' }}
+    secrets: inherit
 
   # Step 7: Generate Homebrew cask (production only)
   generate-homebrew-cask:
