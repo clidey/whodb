@@ -277,7 +277,7 @@ jobs:
           else
             echo "### ⚠️ Some deployments could not be verified" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Please check the failed verifications and consider manual verification or rollback." >> $GITHUB_STEP_SUMMARY
+            echo "Please check the failed verifications and consider manual verification." >> $GITHUB_STEP_SUMMARY
           fi
 
           echo "all-verified=$ALL_VERIFIED" >> $GITHUB_OUTPUT
