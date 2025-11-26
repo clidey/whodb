@@ -1,5 +1,4 @@
 node_modules
-dist
 .DS_Store
 *.log
 .env
@@ -8,4 +7,4 @@ dist
 .pnpm-debug.log
 # Build artifacts from docs generation
 dory_cache
-images
+Dockerfile

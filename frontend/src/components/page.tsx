@@ -67,6 +67,19 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
                 <div className="flex flex-col grow py-6">
                     <div className="flex w-full justify-between items-center px-8">
                         <Breadcrumb routes={props.routes ?? []} active={props.routes?.at(-1)} />
+                        {/* <div className="flex flex-row gap-sm">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => window.DoryDocs?.open()}
+                                data-testid="docs-button"
+                            >
+                                <BookOpenIcon className="h-5 w-5" />
+                            </Button>
+                            <div data-testid="mode-toggle">
+                                <ModeToggle />
+                            </div>
+                        </div> */}
                         <div data-testid="mode-toggle">
                             <ModeToggle />
                         </div>

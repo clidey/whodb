@@ -267,7 +267,7 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
     const totalConditions = filters.And?.Children?.length ?? 0;
     const getConditionButtonText = () => {
         if (totalConditions === 0) {
-            return "Add";
+            return "Add Condition";
         } else if (totalConditions > 10) {
             return "10+ Conditions";
         } else {

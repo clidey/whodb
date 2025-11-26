@@ -12,9 +12,6 @@ on:
         required: false
         type: string
         default: 'stable'
-    secrets:
-      SNAPCRAFT_STORE_CREDENTIALS:
-        required: false
 
 permissions:
   contents: read
@@ -24,9 +21,10 @@ jobs:
   deploy-snap:
     name: Deploy to Snap Store
     runs-on: ubuntu-latest
+    environment: deploy-snap
     steps:
       - name: Checkout for scripts
-        uses: actions/checkout@v4
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
           submodules: false
 
@@ -37,12 +35,12 @@ jobs:
           echo "  Channel: ${{ inputs.channel }}"
 
       - name: Download snap amd64 artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: snap-package-amd64
 
       - name: Download snap arm64 artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: snap-package-arm64
 
@@ -93,7 +91,7 @@ jobs:
 
       - name: Publish AMD64 snap
         if: steps.check_creds.outputs.has_creds == 'true' && steps.locate_snaps.outputs.amd64_snap != ''
-        uses: canonical/action-publish@v1
+        uses: canonical/action-publish@214b86e5ca036ead1668c79afb81e550e6c54d40 # v1.2.0
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
         with:
@@ -102,7 +100,7 @@ jobs:
 
       - name: Publish ARM64 snap
         if: steps.check_creds.outputs.has_creds == 'true' && steps.locate_snaps.outputs.arm64_snap != ''
-        uses: canonical/action-publish@v1
+        uses: canonical/action-publish@214b86e5ca036ead1668c79afb81e550e6c54d40 # v1.2.0
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
         with:

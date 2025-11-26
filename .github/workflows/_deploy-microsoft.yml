@@ -12,21 +12,6 @@ on:
         required: false
         type: boolean
         default: false
-    secrets:
-      MS_TENANT_ID:
-        required: false
-      MS_CLIENT_ID:
-        required: false
-      MS_CLIENT_SECRET:
-        required: false
-      MS_APP_ID:
-        required: false
-      MS_PACKAGE_IDENTITY_NAME:
-        required: true
-      WINDOWS_PUBLISHER_CN:
-        required: true
-      MS_PACKAGE_PUBLISHER_DISPLAY_NAME:
-        required: true
 
 permissions:
   contents: read
@@ -36,9 +21,10 @@ jobs:
   package-windows-msix:
     name: Package Windows MSIX
     runs-on: windows-latest
+    environment: deploy-microsoft
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
 
       - name: Setup Windows SDK
         shell: pwsh
@@ -74,7 +60,7 @@ jobs:
           exit 0
 
       - name: Download Windows executables
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: desktop-windows-amd64
           path: desktop-builds/
@@ -293,7 +279,7 @@ jobs:
           Write-Host "✅ MSIX package created: $outputPath"
 
       - name: Upload Windows package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: windows-msix
           path: "*.msix"
@@ -303,10 +289,11 @@ jobs:
     name: Submit to Microsoft Store
     runs-on: windows-latest
     needs: [ package-windows-msix ]
+    environment: deploy-microsoft
     continue-on-error: ${{ inputs.stage-only }}
     steps:
       - name: Checkout for scripts
-        uses: actions/checkout@v4
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
 
       - name: Check Microsoft Store credentials
         id: check_creds
@@ -332,7 +319,7 @@ jobs:
 
       - name: Download MSIX package
         if: steps.check_creds.outputs.has_creds == 'true'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: windows-msix
           path: .

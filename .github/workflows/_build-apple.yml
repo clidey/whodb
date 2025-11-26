@@ -1,4 +1,4 @@
-name: Build Desktop Applications
+name: Build Apple Applications
 
 on:
   workflow_call:
@@ -13,82 +13,43 @@ on:
         type: string
         default: 'ce'
       platforms:
-        description: 'Platforms to build (comma-separated: windows-amd64,windows-arm64,darwin-universal)'
+        description: 'Platforms to build (comma-separated, e.g., darwin-universal)'
         required: false
         type: string
-        default: 'windows-amd64,windows-arm64,darwin-universal'
-    secrets:
-      APPLE_CERTIFICATES_P12:
-        required: false
-      APPLE_CERTIFICATES_PASSWORD:
-        required: false
-      KEYCHAIN_PASSWORD:
-        required: false
-      APPLE_DEVELOPER_ID_APPLICATION:
-        required: false
-      APPLE_ID:
-        required: false
-      APPLE_APP_PASSWORD:
-        required: false
-      APPLE_TEAM_ID:
-        required: false
-      APPLE_MAS_CERTIFICATES_P12:
-        required: false
-      APPLE_MAS_CERTIFICATES_PASSWORD:
-        required: false
-      APPLE_MAS_PROVISIONING_PROFILE:
-        required: false
+        default: 'darwin-universal'
 
 permissions:
   contents: read
   actions: write
 
 jobs:
-  build-desktop:
-    name: Build Desktop (${{ matrix.platform }}-${{ matrix.arch }})
-    runs-on: ${{ matrix.os }}
+  build-apple:
+    name: Build macOS (${{ matrix.build-type }})
+    runs-on: macos-latest
+    environment: deploy-apple
     strategy:
       matrix:
         include:
-          # Windows builds for Microsoft Store
-          - os: windows-latest
-            platform: windows
-            arch: amd64
-            make-target: ci-build-prod-windows-amd64
-            enabled: ${{ contains(inputs.platforms, 'windows-amd64') }}
-          - os: windows-11-arm
-            platform: windows
-            arch: arm64
-            make-target: ci-build-prod-windows-arm64
-            enabled: ${{ contains(inputs.platforms, 'windows-arm64') }}
-          # macOS build for DMG distribution (Developer ID)
-          - os: macos-latest
-            platform: darwin
-            arch: universal
-            build-type: dmg
+          - build-type: dmg
             make-target: build-prod-mac
             enabled: ${{ contains(inputs.platforms, 'darwin-universal') }}
-          # macOS build for Mac App Store (MAS certificates)
-          - os: macos-latest
-            platform: darwin
-            arch: universal
-            build-type: mas
+          - build-type: mas
             make-target: build-prod-mac
             enabled: ${{ contains(inputs.platforms, 'darwin-universal') }}
     steps:
       - name: Skip if not enabled
         if: matrix.enabled == false
-        run: echo "Skipping ${{ matrix.platform }}-${{ matrix.arch }}"
+        run: echo "Skipping darwin-universal-${{ matrix.build-type }}"
 
       - name: Checkout
         if: matrix.enabled != false
-        uses: actions/checkout@v4
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
           submodules: false
 
       - name: Setup Go
         if: matrix.enabled != false
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
           go-version-file: 'desktop-${{ inputs.edition }}/go.mod'
           cache: true
@@ -98,27 +59,13 @@ jobs:
             core/go.sum
             core/go.mod
 
-      # CACHING DISABLED TO AVOID STALE CACHE ISSUES
-      # - name: Cache Go build artifacts
-      #   if: matrix.enabled != false
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: |
-      #       ~/.cache/go-build
-      #       ~/Library/Caches/go-build
-      #       ~/AppData/Local/go-build
-      #     key: ${{ runner.os }}-${{ runner.arch }}-go-build-${{ hashFiles('core/go.sum', 'desktop-ce/go.sum', 'desktop-ee/go.sum', 'core/go.mod', 'desktop-ce/go.mod', 'desktop-ee/go.mod') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-${{ runner.arch }}-go-build-
-      #       ${{ runner.os }}-go-build-
-
       - name: Setup Node.js and pnpm
         if: matrix.enabled != false
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
         with:
           node-version: 'lts/*'
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
         if: matrix.enabled != false
         with:
           version: 10
@@ -131,37 +78,12 @@ jobs:
         run: |
           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
 
-      # - name: Setup pnpm cache
-      #   if: matrix.enabled != false
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-      #     key: ${{ runner.os }}-pnpm-store-${{ hashFiles('frontend/pnpm-lock.yaml') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-pnpm-store-
-
-      # - name: Cache frontend build
-      #   if: matrix.enabled != false
-      #   id: frontend-cache
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: frontend/build
-      #     key: frontend-build-${{ inputs.edition }}-${{ hashFiles('frontend/src/**', 'frontend/package.json', 'frontend/pnpm-lock.yaml', 'frontend/tsconfig.json') }}-v2
-
       - name: Install frontend dependencies
         if: matrix.enabled != false
         working-directory: ./frontend
         env:
-          CYPRESS_INSTALL_BINARY: "0"  # Skip Cypress binary - not needed for production builds
+          CYPRESS_INSTALL_BINARY: "0"
         run: pnpm i
-
-      # - name: Cache Wails binary
-      #   if: matrix.enabled != false
-      #   id: cache-wails
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: ~/go/bin/wails
-      #     key: ${{ runner.os }}-${{ runner.arch }}-wails-v2.10.2
 
       - name: Install Wails CLI
         if: matrix.enabled != false
@@ -169,7 +91,7 @@ jobs:
 
       # Import Apple Developer certificates for macOS DMG signing
       - name: Import Apple Developer Certificates (Developer ID)
-        if: matrix.platform == 'darwin' && matrix.build-type == 'dmg' && matrix.enabled != false
+        if: matrix.build-type == 'dmg' && matrix.enabled != false
         env:
           CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_CERTIFICATES_P12 }}
           CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATES_PASSWORD }}
@@ -228,7 +150,7 @@ jobs:
 
       # Save MAS provisioning profile for later (after build)
       - name: Prepare MAS Provisioning Profile
-        if: matrix.platform == 'darwin' && matrix.build-type == 'mas' && matrix.enabled != false
+        if: matrix.build-type == 'mas' && matrix.enabled != false
         env:
           MAS_PROVISIONING_PROFILE: ${{ secrets.APPLE_MAS_PROVISIONING_PROFILE }}
         run: |
@@ -242,84 +164,26 @@ jobs:
           echo "$MAS_PROVISIONING_PROFILE" | base64 --decode -o desktop-${{ inputs.edition }}/build/darwin/embedded.provisionprofile
           echo "✅ Provisioning profile saved"
 
-
-      # Windows AMD64 Build
-      - name: Build Windows AMD64
-        if: matrix.platform == 'windows' && matrix.arch == 'amd64' && matrix.enabled != false
-        working-directory: ./desktop-${{ inputs.edition }}
-        shell: pwsh
-        env:
-          GOARCH: ${{ matrix.arch }}
-        run: |
-          Write-Host "Building Windows executable for MSIX packaging..."
-
-          # Prepare frontend
-          Write-Host "Preparing frontend..."
-          New-Item -ItemType Directory -Path frontend/dist -Force | Out-Null
-          Set-Location ../frontend
-
-          # Check if frontend is already built from cache
-          if (Test-Path "build/index.html") {
-              Write-Host "Using cached frontend build"
-          } else {
-              Write-Host "Building frontend..."
-              $env:CYPRESS_INSTALL_BINARY = "0"  # Skip Cypress binary for production build
-              pnpm run build:${{ inputs.edition }}
-          }
-
-          Copy-Item -Path build/* -Destination ../desktop-${{ inputs.edition }}/frontend/dist/ -Recurse
-          Set-Location ../desktop-${{ inputs.edition }}
-
-          Write-Host "Using Makefile to build..."
-          Write-Host "Building with VERSION=${{ inputs.version }}"
-          # Use the CI-specific target that doesn't rebuild frontend
-          $env:VERSION = "${{ inputs.version }}"
-          make ${{ matrix.make-target }} VERSION="${{ inputs.version }}"
-
-          if ($LASTEXITCODE -ne 0) {
-              Write-Error "Make build failed with exit code: $LASTEXITCODE"
-              exit 1
-          }
-
-          # Verify the executable is in the expected location
-          if (Test-Path "build/windows/amd64/whodb.exe") {
-              Write-Host "✅ Executable ready: build/windows/amd64/whodb.exe"
-          } else {
-              Write-Error "Could not find whodb.exe at expected location"
-              exit 1
-          }
-
-      # Windows ARM64 Build (temporarily disabled)
-      - name: Skip Windows ARM64 Build
-        if: matrix.platform == 'windows' && matrix.arch == 'arm64' && matrix.enabled != false
-        shell: pwsh
-        run: |
-          Write-Host "⚠️ Windows ARM64 build is temporarily disabled due to toolchain issues"
-          New-Item -ItemType Directory -Force -Path "./desktop-${{ inputs.edition }}/build/windows/arm64"
-
-      # macOS Build
       - name: Clean previous macOS build
-        if: matrix.platform == 'darwin' && matrix.enabled != false
+        if: matrix.enabled != false
         working-directory: ./desktop-${{ inputs.edition }}
         run: |
           echo "Cleaning previous build to ensure bundle ID changes take effect..."
-          # Clean build outputs but preserve template files
           rm -rf build/darwin/universal build/darwin/amd64 build/darwin/arm64 build/dmgroot || true
           rm -rf build/bin wails.lock || true
           echo "Template files preserved in build/darwin/"
 
       - name: Prepare MAS entitlements and provisioning profile
-        if: matrix.platform == 'darwin' && matrix.build-type == 'mas' && matrix.enabled != false
+        if: matrix.build-type == 'mas' && matrix.enabled != false
         working-directory: ./desktop-${{ inputs.edition }}
         run: |
           echo "Preparing MAS-specific entitlements..."
           mkdir -p build/darwin
-          # Use MAS entitlements for MAS builds
           cp ../.github/templates/entitlements.mas.plist build/darwin/entitlements.plist
           echo "✅ MAS entitlements prepared"
 
       - name: Verify entitlements before build
-        if: matrix.platform == 'darwin' && matrix.enabled != false
+        if: matrix.enabled != false
         working-directory: ./desktop-${{ inputs.edition }}
         run: |
           echo "Checking for entitlements.plist before build..."
@@ -332,12 +196,12 @@ jobs:
           fi
 
       - name: Build macOS
-        if: matrix.platform == 'darwin' && matrix.enabled != false
+        if: matrix.enabled != false
         working-directory: ./desktop-${{ inputs.edition }}
         run: make ${{ matrix.make-target }} VERSION=${{ inputs.version }}
 
       - name: Verify entitlements after build
-        if: matrix.platform == 'darwin' && matrix.enabled != false
+        if: matrix.enabled != false
         working-directory: ./desktop-${{ inputs.edition }}
         run: |
           echo "Checking for entitlements.plist after build..."
@@ -348,14 +212,13 @@ jobs:
           else
             echo "❌ Entitlements deleted during build"
             echo "Recreating from source..."
-            # Fallback: copy from source if it was deleted
             if [ -f ../../desktop-${{ inputs.edition }}/build/darwin/entitlements.plist ]; then
               cp ../../desktop-${{ inputs.edition }}/build/darwin/entitlements.plist build/darwin/
             fi
           fi
 
       - name: Patch Bundle ID and Sign (DMG)
-        if: matrix.platform == 'darwin' && matrix.build-type == 'dmg' && matrix.enabled != false
+        if: matrix.build-type == 'dmg' && matrix.enabled != false
         env:
           APPLE_DEVELOPER_ID_APPLICATION: ${{ secrets.APPLE_DEVELOPER_ID_APPLICATION }}
         working-directory: ./desktop-${{ inputs.edition }}
@@ -406,7 +269,7 @@ jobs:
           echo "✅ App patched, signed, and verified for DMG distribution"
 
       - name: Import MAS Certificates for Signing
-        if: matrix.platform == 'darwin' && matrix.build-type == 'mas' && matrix.enabled != false
+        if: matrix.build-type == 'mas' && matrix.enabled != false
         env:
           MAS_CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_MAS_CERTIFICATES_P12 }}
           MAS_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_MAS_CERTIFICATES_PASSWORD }}
@@ -451,7 +314,7 @@ jobs:
           echo "Using certificate: $MAS_CERT"
 
       - name: Patch Bundle ID, Embed Profile, and Sign (MAS)
-        if: matrix.platform == 'darwin' && matrix.build-type == 'mas' && matrix.enabled != false
+        if: matrix.build-type == 'mas' && matrix.enabled != false
         working-directory: ./desktop-${{ inputs.edition }}
         run: |
           APP_PATH="build/darwin/universal/WhoDB.app"
@@ -538,12 +401,12 @@ jobs:
           echo "✅ MAS build complete and verified"
 
       - name: Create macOS DMG
-        if: matrix.platform == 'darwin' && matrix.build-type == 'dmg' && matrix.enabled != false
+        if: matrix.build-type == 'dmg' && matrix.enabled != false
         working-directory: ./desktop-${{ inputs.edition }}
         run: make dmg-mac-only VERSION=${{ inputs.version }}
 
       - name: Sign and Notarize DMG
-        if: matrix.platform == 'darwin' && matrix.build-type == 'dmg' && matrix.enabled != false
+        if: matrix.build-type == 'dmg' && matrix.enabled != false
         env:
           APPLE_DEVELOPER_ID_APPLICATION: ${{ secrets.APPLE_DEVELOPER_ID_APPLICATION }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
@@ -582,30 +445,27 @@ jobs:
           echo "✅ DMG signed and notarized"
 
       - name: Cleanup build artifacts before upload
-        if: matrix.platform == 'darwin' && matrix.enabled != false
+        if: matrix.enabled != false
         working-directory: ./desktop-${{ inputs.edition }}
         run: |
           echo "Cleaning up intermediate build files..."
-          # Remove DMG staging directory (duplicate of app bundle)
           rm -rf build/dmgroot
-          # Remove bin directory if it exists
           rm -rf build/bin
-          # List what's left
           echo "Remaining files to upload:"
           du -sh build/darwin/universal/* || true
 
       # Upload DMG artifacts (only for DMG builds)
       - name: Upload macOS DMG
-        if: matrix.platform == 'darwin' && matrix.build-type == 'dmg' && matrix.enabled != false
-        uses: actions/upload-artifact@v4
+        if: matrix.build-type == 'dmg' && matrix.enabled != false
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: desktop-darwin-dmg
           path: desktop-${{ inputs.edition }}/build/darwin/universal/*.dmg
           retention-days: 1
 
       - name: Upload macOS App Bundle (DMG)
-        if: matrix.platform == 'darwin' && matrix.build-type == 'dmg' && matrix.enabled != false
-        uses: actions/upload-artifact@v4
+        if: matrix.build-type == 'dmg' && matrix.enabled != false
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: desktop-darwin-app
           path: desktop-${{ inputs.edition }}/build/darwin/universal/*.app
@@ -613,33 +473,24 @@ jobs:
 
       # Upload MAS artifacts (only for MAS builds)
       - name: Upload macOS App Bundle (MAS)
-        if: matrix.platform == 'darwin' && matrix.build-type == 'mas' && matrix.enabled != false
-        uses: actions/upload-artifact@v4
+        if: matrix.build-type == 'mas' && matrix.enabled != false
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: desktop-darwin-mas-app
           path: desktop-${{ inputs.edition }}/build/darwin/universal/*.app
           retention-days: 1
 
       - name: Upload macOS MAS Entitlements
-        if: matrix.platform == 'darwin' && matrix.build-type == 'mas' && matrix.enabled != false
-        uses: actions/upload-artifact@v4
+        if: matrix.build-type == 'mas' && matrix.enabled != false
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: desktop-darwin-entitlements
           path: desktop-${{ inputs.edition }}/build/darwin/entitlements.plist
           retention-days: 1
 
-      - name: Upload artifacts (non-macOS)
-        if: matrix.enabled != false && matrix.platform != 'darwin' && (matrix.arch != 'arm64' || matrix.platform != 'windows')
-        uses: actions/upload-artifact@v4
-        with:
-          name: desktop-${{ matrix.platform }}-${{ matrix.arch || 'all' }}
-          path: |
-            desktop-${{ inputs.edition }}/build/
-          retention-days: 1
-
-      # Cleanup keychain (macOS only)
+      # Cleanup keychain
       - name: Cleanup Keychain
-        if: always() && matrix.platform == 'darwin' && matrix.enabled != false
+        if: always() && matrix.enabled != false
         run: |
           echo "🧹 Cleaning up keychains..."
           # Clean up DMG keychain

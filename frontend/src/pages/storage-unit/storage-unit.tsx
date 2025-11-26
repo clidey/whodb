@@ -49,12 +49,14 @@ import {
 } from '@graphql';
 import {
     ArrowPathRoundedSquareIcon,
+    Bars3Icon,
     CheckCircleIcon,
     CircleStackIcon,
     CommandLineIcon,
     ListBulletIcon,
     MagnifyingGlassIcon,
     PlusCircleIcon,
+    Squares2X2Icon,
     TableCellsIcon,
     XCircleIcon,
     XMarkIcon
@@ -396,8 +398,8 @@ export const StorageUnitPage: FC = () => {
                 }
                 <Tabs value={view} onValueChange={value => dispatch(SettingsActions.setStorageUnitView(value as 'list' | 'card'))}>
                     <TabsList>
-                        <TabsTrigger value="card" data-testid="icon-button"><TableCellsIcon className="w-4 h-4" /></TabsTrigger>
-                        <TabsTrigger value="list" data-testid="icon-button"><ListBulletIcon className="w-4 h-4" /></TabsTrigger>
+                        <TabsTrigger value="card" data-testid="icon-button"><Squares2X2Icon className="w-4 h-4" /></TabsTrigger>
+                        <TabsTrigger value="list" data-testid="icon-button"><Bars3Icon className="w-4 h-4" /></TabsTrigger>
                     </TabsList>
                 </Tabs>
             </div>
