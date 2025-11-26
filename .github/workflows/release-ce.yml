@@ -173,24 +173,24 @@ jobs:
       version: ${{ needs.calculate-version.outputs.version }}
       edition: 'ce'
 
-  build-desktop:
-    name: Build Desktop
+  build-windows:
+    name: Build Windows
     needs: [ calculate-version ]
-    if: |
-      needs.calculate-version.outputs.deploy-microsoft == 'true' ||
-      needs.calculate-version.outputs.deploy-apple == 'true'
-    uses: ./.github/workflows/_build-desktop.yml
+    if: needs.calculate-version.outputs.deploy-microsoft == 'true'
+    uses: ./.github/workflows/_build-windows.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
       edition: 'ce'
-      platforms: >-
-        ${{
-          needs.calculate-version.outputs.deploy-microsoft == 'true'
-            && 'windows-amd64,windows-arm64,' || ''
-        }}${{
-          needs.calculate-version.outputs.deploy-apple == 'true'
-            && 'darwin-universal' || ''
-        }}
+      platforms: 'windows-amd64,windows-arm64'
+
+  build-apple:
+    name: Build Apple
+    needs: [ calculate-version ]
+    if: needs.calculate-version.outputs.deploy-apple == 'true'
+    uses: ./.github/workflows/_build-apple.yml
+    with:
+      version: ${{ needs.calculate-version.outputs.version }}
+      edition: 'ce'
     secrets:
       APPLE_CERTIFICATES_P12: ${{ secrets.APPLE_CERTIFICATES_P12 }}
       APPLE_CERTIFICATES_PASSWORD: ${{ secrets.APPLE_CERTIFICATES_PASSWORD }}
@@ -233,12 +233,13 @@ jobs:
   # Step 3: Sign and validate all builds (best effort - continues even if any build fails)
   sign-and-validate:
     name: Sign and Validate
-    needs: [ calculate-version, build-docker, build-desktop, build-snap, build-appimage, build-linux-terminal ]
+    needs: [ calculate-version, build-docker, build-windows, build-apple, build-snap, build-appimage, build-linux-terminal ]
     if: |
       always() &&
       needs.calculate-version.result == 'success' &&
       (needs.build-docker.result == 'success' || needs.build-docker.result == 'skipped' || needs.build-docker.result == 'failure') &&
-      (needs.build-desktop.result == 'success' || needs.build-desktop.result == 'skipped' || needs.build-desktop.result == 'failure') &&
+      (needs.build-windows.result == 'success' || needs.build-windows.result == 'skipped' || needs.build-windows.result == 'failure') &&
+      (needs.build-apple.result == 'success' || needs.build-apple.result == 'skipped' || needs.build-apple.result == 'failure') &&
       (needs.build-snap.result == 'success' || needs.build-snap.result == 'skipped' || needs.build-snap.result == 'failure') &&
       (needs.build-appimage.result == 'success' || needs.build-appimage.result == 'skipped' || needs.build-appimage.result == 'failure') &&
       (needs.build-linux-terminal.result == 'success' || needs.build-linux-terminal.result == 'skipped' || needs.build-linux-terminal.result == 'failure')
@@ -246,20 +247,21 @@ jobs:
     with:
       version: ${{ needs.calculate-version.outputs.version }}
       validate-snap: ${{ needs.build-snap.result == 'success' }}
-      validate-desktop: ${{ needs.build-desktop.result == 'success' }}
+      validate-desktop: ${{ needs.build-windows.result == 'success' || needs.build-apple.result == 'success' }}
       validate-appimage: ${{ needs.build-appimage.result == 'success' }}
 
   # Step 4: Create GitHub release (only if ALL selected platforms built successfully)
   create-github-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [ calculate-version, build-docker, build-desktop, build-snap, build-appimage, build-linux-terminal ]
+    needs: [ calculate-version, build-docker, build-windows, build-apple, build-snap, build-appimage, build-linux-terminal ]
     if: |
       always() &&
       needs.calculate-version.result == 'success' &&
       (needs.calculate-version.outputs.deploy-docker != 'true' || needs.build-docker.result == 'success') &&
       (needs.calculate-version.outputs.deploy-snap != 'true' || needs.build-snap.result == 'success') &&
-      ((needs.calculate-version.outputs.deploy-microsoft != 'true' && needs.calculate-version.outputs.deploy-apple != 'true') || needs.build-desktop.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-microsoft != 'true' || needs.build-windows.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-apple != 'true' || needs.build-apple.result == 'success') &&
       (needs.calculate-version.outputs.deploy-appimage != 'true' || needs.build-appimage.result == 'success') &&
       (needs.calculate-version.outputs.deploy-linux-terminal != 'true' || needs.build-linux-terminal.result == 'success')
     permissions:
@@ -489,7 +491,8 @@ jobs:
     needs: [
       calculate-version,
       build-docker,
-      build-desktop,
+      build-windows,
+      build-apple,
       build-snap,
       build-appimage,
       build-linux-terminal,
@@ -523,12 +526,20 @@ jobs:
             echo "| Docker | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
           fi
 
-          if [ "${{ needs.build-desktop.result }}" = "success" ]; then
-            echo "| Desktop | ✅ Success |" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.build-desktop.result }}" = "skipped" ]; then
-            echo "| Desktop | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ needs.build-windows.result }}" = "success" ]; then
+            echo "| Windows | ✅ Success |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.build-windows.result }}" = "skipped" ]; then
+            echo "| Windows | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
           else
-            echo "| Desktop | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+            echo "| Windows | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.build-apple.result }}" = "success" ]; then
+            echo "| Apple | ✅ Success |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.build-apple.result }}" = "skipped" ]; then
+            echo "| Apple | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Apple | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
           fi
 
           if [ "${{ needs.build-snap.result }}" = "success" ]; then
