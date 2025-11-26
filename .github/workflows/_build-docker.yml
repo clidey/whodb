@@ -28,6 +28,7 @@ jobs:
   build-docker:
     name: Build Docker (${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
+    environment: permission-required
     strategy:
       matrix:
         include:

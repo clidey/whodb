@@ -21,6 +21,7 @@ jobs:
   build-appimage:
     name: Build AppImage (${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
+    environment: permission-required
     strategy:
       matrix:
         include:

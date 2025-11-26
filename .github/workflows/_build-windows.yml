@@ -26,6 +26,7 @@ jobs:
   build-windows:
     name: Build Windows (${{ matrix.arch }})
     runs-on: ${{ matrix.os }}
+    environment: permission-required
     strategy:
       matrix:
         include:
