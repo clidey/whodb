@@ -140,8 +140,8 @@ jobs:
 
       - name: Build AppImage
         run: |
-          chmod +x scripts/build-appimage.sh
-          ./scripts/build-appimage.sh ${{ matrix.arch }} ${{ inputs.version }}
+          chmod +x .github/scripts/build-appimage.sh
+          ./.github/scripts/build-appimage.sh ${{ matrix.arch }} ${{ inputs.version }}
 
       - name: Verify AppImage
         run: |
