@@ -33,6 +33,7 @@ jobs:
           github.event.issue.author_association == 'COLLABORATOR'))
       )
     runs-on: ubuntu-latest
+    environment: claude-review
     permissions:
       contents: read
       pull-requests: read

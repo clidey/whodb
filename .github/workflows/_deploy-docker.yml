@@ -27,6 +27,7 @@ jobs:
   deploy-docker:
     name: Deploy to Docker Hub
     runs-on: ubuntu-latest
+    environment: deploy-docker
     steps:
       - name: Checkout for scripts
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
