@@ -32,26 +32,26 @@ jobs:
       id-token: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
           submodules: false
 
       - name: Download Snap packages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         continue-on-error: true
         with:
           pattern: snap-package-*
           path: artifacts/
 
       - name: Download Desktop builds
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         continue-on-error: true
         with:
           pattern: desktop-*
           path: artifacts/
 
       - name: Download AppImages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         continue-on-error: true
         with:
           pattern: appimage-*
@@ -64,7 +64,7 @@ jobs:
           echo "✅ Permissions restored"
 
       - name: Install Cosign
-        uses: sigstore/cosign-installer@v3
+        uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
 
       - name: Sign artifacts
         run: |
@@ -92,7 +92,7 @@ jobs:
           tar czf signatures.tar.gz signatures/
 
       - name: Upload signatures
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: signatures
           path: signatures.tar.gz
@@ -106,26 +106,26 @@ jobs:
       contents: read
     steps:
       - name: Checkout for scripts
-        uses: actions/checkout@v4
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
           submodules: false
 
       - name: Download Snap packages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         continue-on-error: true
         with:
           pattern: snap-package-*
           path: artifacts/
 
       - name: Download Desktop builds
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         continue-on-error: true
         with:
           pattern: desktop-*
           path: artifacts/
 
       - name: Download AppImages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         continue-on-error: true
         with:
           pattern: appimage-*
@@ -138,7 +138,7 @@ jobs:
           echo "✅ Permissions restored"
 
       - name: Download signatures
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: signatures
           path: .
@@ -147,7 +147,7 @@ jobs:
         run: tar xzf signatures.tar.gz
 
       - name: Install Cosign for verification
-        uses: sigstore/cosign-installer@v3
+        uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
 
       - name: Validate Snap artifacts
         if: inputs.validate-snap
@@ -286,7 +286,7 @@ jobs:
           EOF
 
       - name: Upload validation manifest
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: deployment-manifest-validated
           path: validation_manifest.json

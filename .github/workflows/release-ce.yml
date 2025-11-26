@@ -98,7 +98,7 @@ jobs:
       publish-github-release: ${{ steps.calc.outputs.publish-github-release }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
           fetch-depth: 0
           submodules: false
@@ -266,40 +266,40 @@ jobs:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
           submodules: false
 
       - name: Download Snap packages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         continue-on-error: true
         with:
           pattern: snap-package-*
           path: artifacts/
 
       - name: Download Desktop builds
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         continue-on-error: true
         with:
           pattern: desktop-*
           path: artifacts/
 
       - name: Download AppImages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         continue-on-error: true
         with:
           pattern: appimage-*
           path: artifacts/
 
-      - name: Download Linux Terminal binaries
-        uses: actions/download-artifact@v4
+      - name: Download Linux server binaries
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         continue-on-error: true
         with:
-          pattern: terminal-binaries-*
+          pattern: server-binaries-*
           path: artifacts/
 
       - name: Download signatures
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         continue-on-error: true
         with:
           name: signatures
@@ -315,7 +315,7 @@ jobs:
           # Copy desktop builds (exe, dmg, msixbundle)
           find artifacts -type f \( -name "*.exe" -o -name "*.dmg" -o -name "*.msixbundle" \) -exec cp {} final-assets/ \; 2>/dev/null || true
 
-          # Copy Linux Terminal binaries
+          # Copy Linux server binaries
           find artifacts -type f -name "whodb-*-linux-*" -exec cp {} final-assets/ \; 2>/dev/null || true
 
           # Copy signatures (extract and copy only files, not directories)
@@ -380,7 +380,7 @@ jobs:
           cat /tmp/release-body.md
 
       - name: Create GitHub release
-        uses: ncipollo/release-action@v1
+        uses: ncipollo/release-action@b7eabc95ff50cbeeedec83973935c8f306dfcd0b # v1.20.0
         with:
           tag: ${{ needs.calculate-version.outputs.version }}
           name: Release ${{ needs.calculate-version.outputs.version }}

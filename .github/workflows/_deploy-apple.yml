@@ -54,16 +54,16 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
 
       - name: Download macOS DMG
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: desktop-darwin-dmg
           path: desktop-builds/
 
       - name: Download macOS App Bundle (MAS)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: desktop-darwin-mas-app
           path: desktop-builds/
@@ -121,7 +121,7 @@ jobs:
           echo "📋 Testing instructions created"
 
       - name: Upload Homebrew cask
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: homebrew-cask-apple
           path: |
@@ -272,7 +272,7 @@ jobs:
           fi
 
       - name: Upload Mac App Store package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: mac-app-store-package
           path: "*.pkg"
@@ -295,7 +295,7 @@ jobs:
     continue-on-error: ${{ inputs.stage-only }}
     steps:
       - name: Checkout for scripts
-        uses: actions/checkout@v4
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
 
       - name: Check Apple Store credentials
         id: check_creds
@@ -315,7 +315,7 @@ jobs:
 
       - name: Download Mac App Store package
         if: steps.check_creds.outputs.has_creds == 'true'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: mac-app-store-package
           path: .

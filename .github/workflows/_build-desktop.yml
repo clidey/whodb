@@ -82,13 +82,13 @@ jobs:
 
       - name: Checkout
         if: matrix.enabled != false
-        uses: actions/checkout@v4
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
           submodules: false
 
       - name: Setup Go
         if: matrix.enabled != false
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
           go-version-file: 'desktop-${{ inputs.edition }}/go.mod'
           cache: true
@@ -114,11 +114,11 @@ jobs:
 
       - name: Setup Node.js and pnpm
         if: matrix.enabled != false
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
         with:
           node-version: 'lts/*'
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
         if: matrix.enabled != false
         with:
           version: 10
@@ -597,7 +597,7 @@ jobs:
       # Upload DMG artifacts (only for DMG builds)
       - name: Upload macOS DMG
         if: matrix.platform == 'darwin' && matrix.build-type == 'dmg' && matrix.enabled != false
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: desktop-darwin-dmg
           path: desktop-${{ inputs.edition }}/build/darwin/universal/*.dmg
@@ -605,7 +605,7 @@ jobs:
 
       - name: Upload macOS App Bundle (DMG)
         if: matrix.platform == 'darwin' && matrix.build-type == 'dmg' && matrix.enabled != false
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: desktop-darwin-app
           path: desktop-${{ inputs.edition }}/build/darwin/universal/*.app
@@ -614,7 +614,7 @@ jobs:
       # Upload MAS artifacts (only for MAS builds)
       - name: Upload macOS App Bundle (MAS)
         if: matrix.platform == 'darwin' && matrix.build-type == 'mas' && matrix.enabled != false
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: desktop-darwin-mas-app
           path: desktop-${{ inputs.edition }}/build/darwin/universal/*.app
@@ -622,7 +622,7 @@ jobs:
 
       - name: Upload macOS MAS Entitlements
         if: matrix.platform == 'darwin' && matrix.build-type == 'mas' && matrix.enabled != false
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: desktop-darwin-entitlements
           path: desktop-${{ inputs.edition }}/build/darwin/entitlements.plist
@@ -630,7 +630,7 @@ jobs:
 
       - name: Upload artifacts (non-macOS)
         if: matrix.enabled != false && matrix.platform != 'darwin' && (matrix.arch != 'arm64' || matrix.platform != 'windows')
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: desktop-${{ matrix.platform }}-${{ matrix.arch || 'all' }}
           path: |
