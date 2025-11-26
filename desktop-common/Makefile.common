@@ -425,63 +425,63 @@ clean:
 		(command -v chflags >/dev/null 2>&1 && chflags -R -f nouchg,noschg build) || true; \
 		chmod -R u+rwX build || true; \
 	fi
-	@rm -rf build/windows build/darwin build/linux build/bin build/assets build/index.html wails.lock frontend/dist build-cli || true
+	@rm -rf build/windows build/darwin build/linux build/bin build/assets build/index.html wails.lock frontend/dist build-server || true
 
-# Linux Terminal Binary Cross-Compilation Targets (no bundled Wails, runs as headless server)
-# Build WhoDB Terminal binaries for various Linux architectures
+# Linux Server Binary Cross-Compilation Targets (no bundled Wails, runs as web server)
+# Build WhoDB server binaries for various Linux architectures
 
-CLI_BUILD_DIR = build-cli
-CLI_BINARY_NAME = whodb
+SERVER_BUILD_DIR = build-server
+SERVER_BINARY_NAME = whodb
 
 # Ensure build directory exists
-$(CLI_BUILD_DIR):
-	@mkdir -p $(CLI_BUILD_DIR)
+$(SERVER_BUILD_DIR):
+	@mkdir -p $(SERVER_BUILD_DIR)
 
-# Build Terminal for amd64
-cli-amd64: | $(CLI_BUILD_DIR)
-	@echo "Building WhoDB Terminal for Linux AMD64..."
+# Build server for amd64
+server-amd64: | $(SERVER_BUILD_DIR)
+	@echo "Building WhoDB server for Linux AMD64..."
 	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build \
 		-ldflags="-s -w -X github.com/clidey/whodb/core/src/env.ApplicationVersion=$(VERSION) -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=linux-amd64" \
-		-o ../desktop-common/$(CLI_BUILD_DIR)/$(CLI_BINARY_NAME)-$(VERSION)-linux-amd64 .
-	@echo "✅ Built: $(CLI_BUILD_DIR)/$(CLI_BINARY_NAME)-$(VERSION)-linux-amd64"
+		-o ../desktop-common/$(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-amd64 .
+	@echo "✅ Built: $(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-amd64"
 
-# Build Terminal for arm64
-cli-arm64: | $(CLI_BUILD_DIR)
-	@echo "Building WhoDB Terminal for Linux ARM64..."
-	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=arm64 go build \
+# Build server for arm64
+server-arm64: | $(SERVER_BUILD_DIR)
+	@echo "Building WhoDB server for Linux ARM64..."
+	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=arm64 CC=aarch64-linux-gnu-gcc go build \
 		-ldflags="-s -w -X github.com/clidey/whodb/core/src/env.ApplicationVersion=$(VERSION) -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=linux-arm64" \
-		-o ../desktop-common/$(CLI_BUILD_DIR)/$(CLI_BINARY_NAME)-$(VERSION)-linux-arm64 .
-	@echo "✅ Built: $(CLI_BUILD_DIR)/$(CLI_BINARY_NAME)-$(VERSION)-linux-arm64"
+		-o ../desktop-common/$(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-arm64 .
+	@echo "✅ Built: $(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-arm64"
 
-# Build Terminal for riscv64
-cli-riscv64: | $(CLI_BUILD_DIR)
-	@echo "Building WhoDB Terminal for Linux RISC-V64..."
-	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=riscv64 go build \
+# Build server for riscv64
+server-riscv64: | $(SERVER_BUILD_DIR)
+	@echo "Building WhoDB server for Linux RISC-V64..."
+	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=riscv64 CC=riscv64-linux-gnu-gcc go build \
 		-ldflags="-s -w -X github.com/clidey/whodb/core/src/env.ApplicationVersion=$(VERSION) -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=linux-riscv64" \
-		-o ../desktop-common/$(CLI_BUILD_DIR)/$(CLI_BINARY_NAME)-$(VERSION)-linux-riscv64 .
-	@echo "✅ Built: $(CLI_BUILD_DIR)/$(CLI_BINARY_NAME)-$(VERSION)-linux-riscv64"
+		-o ../desktop-common/$(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-riscv64 .
+	@echo "✅ Built: $(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-riscv64"
 
-# Build Terminal for armv6
-cli-armv6: | $(CLI_BUILD_DIR)
-	@echo "Building WhoDB Terminal for Linux ARMv6..."
-	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=arm GOARM=6 go build \
+# Build server for armv6
+server-armv6: | $(SERVER_BUILD_DIR)
+	@echo "Building WhoDB server for Linux ARMv6..."
+	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=arm GOARM=6 CC=arm-linux-gnueabihf-gcc go build \
 		-ldflags="-s -w -X github.com/clidey/whodb/core/src/env.ApplicationVersion=$(VERSION) -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=linux-armv6" \
-		-o ../desktop-common/$(CLI_BUILD_DIR)/$(CLI_BINARY_NAME)-$(VERSION)-linux-armv6 .
-	@echo "✅ Built: $(CLI_BUILD_DIR)/$(CLI_BINARY_NAME)-$(VERSION)-linux-armv6"
+		-o ../desktop-common/$(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-armv6 .
+	@echo "✅ Built: $(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-armv6"
 
-# Build Terminal for armv7
-cli-armv7: | $(CLI_BUILD_DIR)
-	@echo "Building WhoDB Terminal for Linux ARMv7..."
-	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=arm GOARM=7 go build \
+# Build server for armv7
+server-armv7: | $(SERVER_BUILD_DIR)
+	@echo "Building WhoDB server for Linux ARMv7..."
+	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=arm GOARM=7 CC=arm-linux-gnueabihf-gcc go build \
 		-ldflags="-s -w -X github.com/clidey/whodb/core/src/env.ApplicationVersion=$(VERSION) -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=linux-armv7" \
-		-o ../desktop-common/$(CLI_BUILD_DIR)/$(CLI_BINARY_NAME)-$(VERSION)-linux-armv7 .
-	@echo "✅ Built: $(CLI_BUILD_DIR)/$(CLI_BINARY_NAME)-$(VERSION)-linux-armv7"
+		-o ../desktop-common/$(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-armv7 .
+	@echo "✅ Built: $(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-armv7"
 
-# Build all Terminal binaries
-cli-all: cli-amd64 cli-arm64 cli-riscv64 cli-armv6 cli-armv7
+# Build all server binaries
+server-all: server-amd64 server-arm64 server-riscv64 server-armv6 server-armv7
 	@echo ""
-	@echo "✅ All Terminal binaries built successfully"
-	@ls -lh $(CLI_BUILD_DIR)/
+	@echo "✅ All server binaries built successfully"
+	@ls -lh $(SERVER_BUILD_DIR)/
 
 # Install Wails CLI
 install-wails:
