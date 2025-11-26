@@ -41,7 +41,10 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential gcc libc6-dev
+          sudo apt-get install -y build-essential gcc libc6-dev \
+            gcc-aarch64-linux-gnu \
+            gcc-riscv64-linux-gnu \
+            gcc-arm-linux-gnueabihf
 
       - name: Build frontend
         working-directory: ./frontend
@@ -57,19 +60,19 @@ jobs:
           mkdir -p core/build
           cp -r frontend/build/* core/build/
 
-      - name: Build all CLI binaries
+      - name: Build all server binaries
         working-directory: ./desktop-ce
         env:
           VERSION: ${{ inputs.version }}
         run: |
-          make cli-all VERSION=${{ inputs.version }}
+          make server-all VERSION=${{ inputs.version }}
 
-      - name: Verify Terminal binaries
+      - name: Verify server binaries
         run: |
-          echo "Verifying built Terminal binaries..."
-          ls -lh desktop-common/build-cli/
+          echo "Verifying built server binaries..."
+          ls -lh desktop-common/build-server/
 
-          for binary in desktop-common/build-cli/whodb-*-linux-*; do
+          for binary in desktop-common/build-server/whodb-*-linux-*; do
             if [ -f "$binary" ]; then
               echo "✅ Binary: $(basename $binary)"
               file "$binary"
@@ -82,6 +85,6 @@ jobs:
       - name: Upload server binaries artifact
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
-          name: terminal-binaries-ce
-          path: desktop-common/build-cli/whodb-*-linux-*
+          name: server-binaries-ce
+          path: desktop-common/build-server/whodb-*-linux-*
           retention-days: 1
