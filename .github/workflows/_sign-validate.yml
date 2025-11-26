@@ -17,11 +17,12 @@ on:
         required: false
         type: boolean
         default: true
+      # DISABLED: AppImage builds disabled - requires system WebKit2GTK
       validate-appimage:
         description: 'Whether to validate AppImage builds'
         required: false
         type: boolean
-        default: true
+        default: false
 
 jobs:
   sign-with-sigstore:
@@ -50,18 +51,19 @@ jobs:
           pattern: desktop-*
           path: artifacts/
 
-      - name: Download AppImages
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
-        continue-on-error: true
-        with:
-          pattern: appimage-*
-          path: artifacts/
+      # DISABLED: AppImage builds disabled
+      # - name: Download AppImages
+      #   uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+      #   continue-on-error: true
+      #   with:
+      #     pattern: appimage-*
+      #     path: artifacts/
 
-      - name: Restore executable permissions
-        run: |
-          echo "Restoring executable permissions for AppImages..."
-          find artifacts -name "*.AppImage" -type f -exec chmod +x {} \;
-          echo "✅ Permissions restored"
+      # - name: Restore executable permissions
+      #   run: |
+      #     echo "Restoring executable permissions for AppImages..."
+      #     find artifacts -name "*.AppImage" -type f -exec chmod +x {} \;
+      #     echo "✅ Permissions restored"
 
       - name: Install Cosign
         uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
@@ -123,18 +125,19 @@ jobs:
           pattern: desktop-*
           path: artifacts/
 
-      - name: Download AppImages
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
-        continue-on-error: true
-        with:
-          pattern: appimage-*
-          path: artifacts/
+      # DISABLED: AppImage builds disabled
+      # - name: Download AppImages
+      #   uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+      #   continue-on-error: true
+      #   with:
+      #     pattern: appimage-*
+      #     path: artifacts/
 
-      - name: Restore executable permissions
-        run: |
-          echo "Restoring executable permissions for AppImages..."
-          find artifacts -name "*.AppImage" -type f -exec chmod +x {} \;
-          echo "✅ Permissions restored"
+      # - name: Restore executable permissions
+      #   run: |
+      #     echo "Restoring executable permissions for AppImages..."
+      #     find artifacts -name "*.AppImage" -type f -exec chmod +x {} \;
+      #     echo "✅ Permissions restored"
 
       - name: Download signatures
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
@@ -218,8 +221,9 @@ jobs:
             exit 1
           fi
 
+      # DISABLED: AppImage builds disabled - requires system WebKit2GTK
       - name: Validate AppImage artifacts
-        if: inputs.validate-appimage
+        if: inputs.validate-appimage  # Will be false - AppImage disabled
         run: |
           echo "🐧 Validating AppImage artifacts..."
           FAILED=false
@@ -280,7 +284,7 @@ jobs:
               "desktop": ${{ inputs.validate-desktop }},
               "appimage": ${{ inputs.validate-appimage }}
             },
-            "artifacts": $(find artifacts -type f -name "*.snap" -o -name "*.AppImage" -o -name "*.exe" -o -name "*.dmg" | wc -l)
+            "artifacts": $(find artifacts -type f -name "*.snap" -o -name "*.exe" -o -name "*.dmg" | wc -l)
           }
           EOF
 

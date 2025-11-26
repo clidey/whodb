@@ -57,11 +57,12 @@ on:
         required: false
         type: boolean
         default: false
-      deploy-appimage:
-        description: 'Build AppImage (for GitHub Release)'
-        required: false
-        type: boolean
-        default: false
+      # DISABLED: AppImage requires system WebKit2GTK - not truly portable
+      # deploy-appimage:
+      #   description: 'Build AppImage (for GitHub Release)'
+      #   required: false
+      #   type: boolean
+      #   default: false
       deploy-linux-terminal:
         description: 'Build Linux terminal binaries (amd64, arm64, riscv64, armv6, armv7)'
         required: false
@@ -93,7 +94,7 @@ jobs:
       deploy-snap: ${{ steps.calc.outputs.deploy-snap }}
       deploy-microsoft: ${{ steps.calc.outputs.deploy-microsoft }}
       deploy-apple: ${{ steps.calc.outputs.deploy-apple }}
-      deploy-appimage: ${{ steps.calc.outputs.deploy-appimage }}
+      # deploy-appimage: ${{ steps.calc.outputs.deploy-appimage }}  # DISABLED
       deploy-linux-terminal: ${{ steps.calc.outputs.deploy-linux-terminal }}
       publish-github-release: ${{ steps.calc.outputs.publish-github-release }}
     steps:
@@ -127,7 +128,7 @@ jobs:
           deploy-snap: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-snap) && 'true' || 'false') }}
           deploy-microsoft: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-microsoft) && 'true' || 'false') }}
           deploy-apple: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-apple) && 'true' || 'false') }}
-          deploy-appimage: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-appimage) && 'true' || 'false') }}
+          deploy-appimage: 'false'  # DISABLED: AppImage requires system WebKit2GTK
           deploy-linux-terminal: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-linux-terminal) && 'true' || 'false') }}
           publish-github-release: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.publish-github-release) && 'true' || 'false') }}
 
@@ -152,7 +153,6 @@ jobs:
             echo "| Snap Store | ${{ steps.calc.outputs.deploy-snap }} | stable |" >> $GITHUB_STEP_SUMMARY
             echo "| Microsoft Store | ${{ steps.calc.outputs.deploy-microsoft }} | production |" >> $GITHUB_STEP_SUMMARY
             echo "| Apple App Store | ${{ steps.calc.outputs.deploy-apple }} | App Store |" >> $GITHUB_STEP_SUMMARY
-            echo "| AppImage | ${{ steps.calc.outputs.deploy-appimage }} | GitHub Release |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| Store | Deploy | Channel |" >> $GITHUB_STEP_SUMMARY
             echo "|-------|--------|---------|" >> $GITHUB_STEP_SUMMARY
@@ -160,7 +160,6 @@ jobs:
             echo "| Snap Store | ${{ steps.calc.outputs.deploy-snap }} | edge |" >> $GITHUB_STEP_SUMMARY
             echo "| Microsoft Store | ${{ steps.calc.outputs.deploy-microsoft }} | draft |" >> $GITHUB_STEP_SUMMARY
             echo "| Apple App Store | ${{ steps.calc.outputs.deploy-apple }} | TestFlight |" >> $GITHUB_STEP_SUMMARY
-            echo "| AppImage | ${{ steps.calc.outputs.deploy-appimage }} | GitHub Release |" >> $GITHUB_STEP_SUMMARY
           fi
 
   # Step 2: Build artifacts in parallel (only what's selected)
@@ -204,15 +203,16 @@ jobs:
       version: ${{ needs.calculate-version.outputs.version }}
     secrets: inherit
 
-  build-appimage:
-    name: Build AppImage
-    needs: [ calculate-version ]
-    if: needs.calculate-version.outputs.deploy-appimage == 'true'
-    uses: ./.github/workflows/_build-appimage.yml
-    with:
-      version: ${{ needs.calculate-version.outputs.version }}
-      edition: 'ce'
-    secrets: inherit
+  # DISABLED: AppImage requires system WebKit2GTK - not truly portable
+  # build-appimage:
+  #   name: Build AppImage
+  #   needs: [ calculate-version ]
+  #   if: needs.calculate-version.outputs.deploy-appimage == 'true'
+  #   uses: ./.github/workflows/_build-appimage.yml
+  #   with:
+  #     version: ${{ needs.calculate-version.outputs.version }}
+  #     edition: 'ce'
+  #   secrets: inherit
 
   build-linux-terminal:
     name: Build Linux Terminal
@@ -226,7 +226,7 @@ jobs:
   # Step 3: Sign and validate all builds (best effort - continues even if any build fails)
   sign-and-validate:
     name: Sign and Validate
-    needs: [ calculate-version, build-docker, build-windows, build-apple, build-snap, build-appimage, build-linux-terminal ]
+    needs: [ calculate-version, build-docker, build-windows, build-apple, build-snap, build-linux-terminal ]
     if: |
       always() &&
       needs.calculate-version.result == 'success' &&
@@ -234,20 +234,19 @@ jobs:
       (needs.build-windows.result == 'success' || needs.build-windows.result == 'skipped' || needs.build-windows.result == 'failure') &&
       (needs.build-apple.result == 'success' || needs.build-apple.result == 'skipped' || needs.build-apple.result == 'failure') &&
       (needs.build-snap.result == 'success' || needs.build-snap.result == 'skipped' || needs.build-snap.result == 'failure') &&
-      (needs.build-appimage.result == 'success' || needs.build-appimage.result == 'skipped' || needs.build-appimage.result == 'failure') &&
       (needs.build-linux-terminal.result == 'success' || needs.build-linux-terminal.result == 'skipped' || needs.build-linux-terminal.result == 'failure')
     uses: ./.github/workflows/_sign-validate.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
       validate-snap: ${{ needs.build-snap.result == 'success' }}
       validate-desktop: ${{ needs.build-windows.result == 'success' || needs.build-apple.result == 'success' }}
-      validate-appimage: ${{ needs.build-appimage.result == 'success' }}
+      validate-appimage: false  # DISABLED: AppImage builds disabled
 
   # Step 4: Create GitHub release (only if ALL selected platforms built successfully)
   create-github-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [ calculate-version, build-docker, build-windows, build-apple, build-snap, build-appimage, build-linux-terminal ]
+    needs: [ calculate-version, build-docker, build-windows, build-apple, build-snap, build-linux-terminal ]
     if: |
       always() &&
       needs.calculate-version.result == 'success' &&
@@ -255,7 +254,6 @@ jobs:
       (needs.calculate-version.outputs.deploy-snap != 'true' || needs.build-snap.result == 'success') &&
       (needs.calculate-version.outputs.deploy-microsoft != 'true' || needs.build-windows.result == 'success') &&
       (needs.calculate-version.outputs.deploy-apple != 'true' || needs.build-apple.result == 'success') &&
-      (needs.calculate-version.outputs.deploy-appimage != 'true' || needs.build-appimage.result == 'success') &&
       (needs.calculate-version.outputs.deploy-linux-terminal != 'true' || needs.build-linux-terminal.result == 'success')
     permissions:
       contents: write
@@ -279,12 +277,13 @@ jobs:
           pattern: desktop-*
           path: artifacts/
 
-      - name: Download AppImages
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
-        continue-on-error: true
-        with:
-          pattern: appimage-*
-          path: artifacts/
+      # DISABLED: AppImage builds disabled
+      # - name: Download AppImages
+      #   uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+      #   continue-on-error: true
+      #   with:
+      #     pattern: appimage-*
+      #     path: artifacts/
 
       - name: Download Linux server binaries
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
@@ -303,9 +302,6 @@ jobs:
       - name: Prepare release assets
         run: |
           mkdir -p final-assets
-
-          # Copy AppImage packages
-          find artifacts -type f -name "*.AppImage" -exec cp {} final-assets/ \; 2>/dev/null || true
 
           # Copy desktop builds (exe, dmg, msixbundle)
           find artifacts -type f \( -name "*.exe" -o -name "*.dmg" -o -name "*.msixbundle" \) -exec cp {} final-assets/ \; 2>/dev/null || true
@@ -462,7 +458,6 @@ jobs:
       build-windows,
       build-apple,
       build-snap,
-      build-appimage,
       build-linux-terminal,
       sign-and-validate,
       deploy-docker,
@@ -516,14 +511,6 @@ jobs:
             echo "| Snap | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| Snap | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          if [ "${{ needs.build-appimage.result }}" = "success" ]; then
-            echo "| AppImage | ✅ Success |" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.build-appimage.result }}" = "skipped" ]; then
-            echo "| AppImage | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| AppImage | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
           fi
 
           if [ "${{ needs.build-linux-terminal.result }}" = "success" ]; then
