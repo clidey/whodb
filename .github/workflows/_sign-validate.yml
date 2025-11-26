@@ -74,10 +74,9 @@ jobs:
           find artifacts -type f \( -name "*.snap" -o -name "*.AppImage" -o -name "*.exe" -o -name "*.dmg" -o -name "*.pkg" -o -name "*.msix" -o -name "*.msixbundle" \) | while read -r file; do
             echo "Signing: $file"
 
-            # Sign the artifact
+            # Sign the artifact using bundle format (modern cosign approach)
             cosign sign-blob --yes \
-              --output-signature "${file}.sig" \
-              --output-certificate "${file}.pem" \
+              --bundle "${file}.bundle" \
               "$file"
 
             echo "✅ Signed: $(basename "$file")"
@@ -86,7 +85,7 @@ jobs:
       - name: Create signatures archive
         run: |
           mkdir -p signatures
-          find artifacts -name "*.sig" -o -name "*.pem" | while read -r file; do
+          find artifacts -name "*.bundle" | while read -r file; do
             cp "$file" signatures/
           done
           tar czf signatures.tar.gz signatures/
