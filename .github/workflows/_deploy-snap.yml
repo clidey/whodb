@@ -12,9 +12,6 @@ on:
         required: false
         type: string
         default: 'stable'
-    secrets:
-      SNAPCRAFT_STORE_CREDENTIALS:
-        required: false
 
 permissions:
   contents: read

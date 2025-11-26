@@ -12,21 +12,6 @@ on:
         required: false
         type: boolean
         default: false
-    secrets:
-      MS_TENANT_ID:
-        required: false
-      MS_CLIENT_ID:
-        required: false
-      MS_CLIENT_SECRET:
-        required: false
-      MS_APP_ID:
-        required: false
-      MS_PACKAGE_IDENTITY_NAME:
-        required: true
-      WINDOWS_PUBLISHER_CN:
-        required: true
-      MS_PACKAGE_PUBLISHER_DISPLAY_NAME:
-        required: true
 
 permissions:
   contents: read

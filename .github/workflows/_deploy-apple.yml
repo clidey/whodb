@@ -12,37 +12,6 @@ on:
         required: false
         type: boolean
         default: false
-    secrets:
-      APPLE_CERTIFICATES_P12:
-        required: false
-      APPLE_CERTIFICATES_PASSWORD:
-        required: false
-      KEYCHAIN_PASSWORD:
-        required: false
-      APPLE_MAS_CERTIFICATES_P12:
-        required: false
-      APPLE_MAS_CERTIFICATES_PASSWORD:
-        required: false
-      APPLE_MAS_CERT_APPLICATION:
-        required: false
-      APPLE_MAS_CERT_INSTALLER:
-        required: false
-      APPLE_MAS_PROVISIONING_PROFILE:
-        required: false
-      APP_STORE_CONNECT_API_KEY:
-        required: false
-      APP_STORE_CONNECT_API_KEY_ID:
-        required: false
-      APP_STORE_CONNECT_ISSUER_ID:
-        required: false
-      APPLE_DEVELOPER_ID:
-        required: false
-      APPLE_DEVELOPER_TEAM_ID:
-        required: false
-      APPLE_APP_ID:
-        required: false
-      ASC_PUBLIC_ID:
-        required: false
 
 permissions:
   contents: read

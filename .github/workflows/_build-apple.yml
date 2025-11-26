@@ -17,27 +17,6 @@ on:
         required: false
         type: string
         default: 'darwin-universal'
-    secrets:
-      APPLE_CERTIFICATES_P12:
-        required: false
-      APPLE_CERTIFICATES_PASSWORD:
-        required: false
-      KEYCHAIN_PASSWORD:
-        required: false
-      APPLE_DEVELOPER_ID_APPLICATION:
-        required: false
-      APPLE_ID:
-        required: false
-      APPLE_APP_PASSWORD:
-        required: false
-      APPLE_TEAM_ID:
-        required: false
-      APPLE_MAS_CERTIFICATES_P12:
-        required: false
-      APPLE_MAS_CERTIFICATES_PASSWORD:
-        required: false
-      APPLE_MAS_PROVISIONING_PROFILE:
-        required: false
 
 permissions:
   contents: read
