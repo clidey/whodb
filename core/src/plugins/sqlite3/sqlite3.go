@@ -75,15 +75,16 @@ func (p *Sqlite3Plugin) FormTableName(schema string, storageUnit string) string 
 }
 
 func (p *Sqlite3Plugin) GetDatabases(config *engine.PluginConfig) ([]string, error) {
-	// In desktop mode, return empty list - users will browse for files
 	if env.GetIsDesktopMode() {
 		return []string{}, nil
 	}
 
-	// Server mode: scan default directory
 	directory := getDefaultDirectory()
 	entries, err := os.ReadDir(directory)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return []string{}, nil
+		}
 		return nil, err
 	}
 
