@@ -72,6 +72,14 @@ func GetLoginProfiles() []types.DatabaseCredentials {
 
 	profiles = append(profiles, MainEngine.LoginProfiles...)
 
+	for _, retriever := range MainEngine.ProfileRetrievers {
+		retrievedProfiles, err := retriever()
+		if err != nil {
+			continue
+		}
+		profiles = append(profiles, retrievedProfiles...)
+	}
+
 	for _, plugin := range MainEngine.Plugins {
 		databaseProfiles := env.GetDefaultDatabaseCredentials(string(plugin.Type))
 		for _, databaseProfile := range databaseProfiles {
