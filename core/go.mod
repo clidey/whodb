@@ -21,7 +21,7 @@ require (
 	github.com/vektah/gqlparser/v2 v2.5.30
 	github.com/xuri/excelize/v2 v2.10.0
 	github.com/zalando/go-keyring v0.2.6
-	go.mongodb.org/mongo-driver v1.17.4
+	go.mongodb.org/mongo-driver v1.17.6
 	gorm.io/driver/clickhouse v0.7.0
 	gorm.io/driver/mysql v1.6.0
 	gorm.io/driver/postgres v1.6.0
