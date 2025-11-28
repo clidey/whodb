@@ -56,6 +56,13 @@ jobs:
           pattern: desktop-*
           path: artifacts/
 
+      - name: Download Linux server binaries
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        continue-on-error: true
+        with:
+          pattern: server-binaries-*
+          path: artifacts/
+
       # DISABLED: AppImage builds disabled
       # - name: Download AppImages
       #   uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
@@ -78,7 +85,7 @@ jobs:
           echo "🔏 Signing artifacts with Sigstore..."
 
           # Find all artifacts to sign (excluding Docker .tar files)
-          find artifacts -type f \( -name "*.snap" -o -name "*.AppImage" -o -name "*.exe" -o -name "*.dmg" -o -name "*.pkg" -o -name "*.msix" -o -name "*.msixbundle" \) | while read -r file; do
+          find artifacts -type f \( -name "*.snap" -o -name "*.AppImage" -o -name "*.exe" -o -name "*.dmg" -o -name "*.pkg" -o -name "*.msix" -o -name "*.msixbundle" -o -name "whodb-*-linux-*" \) | while read -r file; do
             echo "Signing: $file"
 
             # Sign the artifact using bundle format (modern cosign approach)

@@ -97,6 +97,7 @@ jobs:
       # deploy-appimage: ${{ steps.calc.outputs.deploy-appimage }}  # DISABLED
       deploy-linux-terminal: ${{ steps.calc.outputs.deploy-linux-terminal }}
       publish-github-release: ${{ steps.calc.outputs.publish-github-release }}
+      release-notes: ${{ steps.release_notes.outputs.notes }}
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
@@ -251,10 +252,11 @@ jobs:
   create-github-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [ calculate-version, build-docker, build-windows, build-apple, build-snap, build-linux-terminal ]
+    needs: [ calculate-version, build-docker, build-windows, build-apple, build-snap, build-linux-terminal, sign-and-validate ]
     if: |
       always() &&
       needs.calculate-version.result == 'success' &&
+      needs.sign-and-validate.result == 'success' &&
       (needs.calculate-version.outputs.deploy-docker != 'true' || needs.build-docker.result == 'success') &&
       (needs.calculate-version.outputs.deploy-snap != 'true' || needs.build-snap.result == 'success') &&
       (needs.calculate-version.outputs.deploy-microsoft != 'true' || needs.build-windows.result == 'success') &&
