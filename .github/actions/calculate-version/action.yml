@@ -76,6 +76,11 @@ outputs:
 runs:
   using: 'composite'
   steps:
+    - name: Harden Runner
+      uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+      with:
+        egress-policy: audit
+
     - name: Set deployment mode
       id: mode
       shell: bash
