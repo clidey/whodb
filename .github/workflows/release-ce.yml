@@ -138,6 +138,38 @@ jobs:
           deploy-linux-terminal: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-linux-terminal) && 'true' || 'false') }}
           publish-github-release: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.publish-github-release) && 'true' || 'false') }}
 
+      - name: Extract release notes from PR
+        id: release_notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES=""
+
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.event.pull_request.merged }}" = "true" ]; then
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+            echo "Extracting release notes from PR #$PR_NUMBER..."
+
+            # Get PR body using gh cli
+            NOTES=$(gh pr view "$PR_NUMBER" --json body --jq '.body // empty')
+
+            if [ -n "$NOTES" ]; then
+              echo "Found release notes from PR description"
+            fi
+          fi
+
+          # Default if no notes found
+          if [ -z "$NOTES" ]; then
+            NOTES="Bug fixes and performance improvements."
+            echo "Using default release notes"
+          fi
+
+          # Output using heredoc for multiline support
+          {
+            echo "notes<<EOF"
+            echo "$NOTES"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
       - name: Display configuration
         run: |
           echo "# 🎯 Release Configuration" >> $GITHUB_STEP_SUMMARY
@@ -431,6 +463,7 @@ jobs:
     with:
       version: ${{ needs.calculate-version.outputs.version }}
       stage-only: ${{ needs.calculate-version.outputs.stage-only == 'true' }}
+      release-notes: ${{ needs.calculate-version.outputs.release-notes }}
     secrets: inherit
 
   # Step 6: Deploy to Docker Hub (after GitHub release)
