@@ -98,6 +98,7 @@ jobs:
       deploy-linux-terminal: ${{ steps.calc.outputs.deploy-linux-terminal }}
       publish-github-release: ${{ steps.calc.outputs.publish-github-release }}
       release-notes: ${{ steps.release_notes.outputs.notes }}
+
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
@@ -300,7 +301,11 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            uploads.github.com:443
 
       - name: Checkout
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
@@ -516,7 +521,8 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >+
 
       - name: Generate comprehensive summary
         run: |
