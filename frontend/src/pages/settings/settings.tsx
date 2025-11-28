@@ -14,15 +14,27 @@
  * limitations under the License.
  */
 
-import {FC, useCallback, useEffect} from "react";
+import {FC, useCallback, useEffect, useState} from "react";
 import {InternalPage} from "../../components/page";
 import {InternalRoutes} from "../../config/routes";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {SettingsActions} from "../../store/settings";
 import {isEEMode} from "@/config/ee-imports";
-import {Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Separator, Switch} from "@clidey/ux";
+import {
+    Input,
+    Label,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+    Separator,
+    Switch
+} from "@clidey/ux";
 import {optInUser, optOutUser, trackFrontendEvent} from "@/config/posthog";
 import {ExternalLink} from "../../utils/external-links";
+
+const PRESET_PAGE_SIZES = ["10", "25", "50", "100", "250", "500", "1000"];
 
 export const SettingsPage: FC = () => {
     const dispatch = useAppDispatch();
@@ -32,6 +44,10 @@ export const SettingsPage: FC = () => {
     const borderRadius = useAppSelector(state => state.settings.borderRadius);
     const spacing = useAppSelector(state => state.settings.spacing);
     const whereConditionMode = useAppSelector(state => state.settings.whereConditionMode);
+    const defaultPageSize = useAppSelector(state => state.settings.defaultPageSize);
+
+    const [isCustomPageSize, setIsCustomPageSize] = useState(!PRESET_PAGE_SIZES.includes(String(defaultPageSize)));
+    const [customPageSizeInput, setCustomPageSizeInput] = useState(String(defaultPageSize));
 
     useEffect(() => {
         void trackFrontendEvent('ui.settings_viewed');
@@ -68,6 +84,24 @@ export const SettingsPage: FC = () => {
         dispatch(SettingsActions.setWhereConditionMode(mode));
     }, [dispatch]);
 
+    const handleDefaultPageSizeChange = useCallback((value: string) => {
+        if (value === "custom") {
+            setIsCustomPageSize(true);
+            setCustomPageSizeInput(String(defaultPageSize));
+        } else {
+            setIsCustomPageSize(false);
+            dispatch(SettingsActions.setDefaultPageSize(Number.parseInt(value)));
+        }
+    }, [dispatch, defaultPageSize]);
+
+    const handleCustomPageSizeApply = useCallback(() => {
+        const parsed = Number.parseInt(customPageSizeInput);
+        if (!Number.isNaN(parsed) && parsed >= 1 && parsed <= 1000) {
+            dispatch(SettingsActions.setDefaultPageSize(parsed));
+        } else {
+            setCustomPageSizeInput(String(defaultPageSize));
+        }
+    }, [dispatch, customPageSizeInput, defaultPageSize]);
 
     return (
         <InternalPage routes={[InternalRoutes.Settings!]}>
@@ -188,6 +222,45 @@ export const SettingsPage: FC = () => {
                                     <SelectItem value="sheet">Sheet</SelectItem>
                                 </SelectContent>
                             </Select>
+                        </div>
+                        <div className="flex justify-between">
+                            <Label>Default Page Size</Label>
+                            <div className="flex gap-2">
+                                <Select
+                                    value={isCustomPageSize ? "custom" : String(defaultPageSize)}
+                                    onValueChange={handleDefaultPageSizeChange}
+                                >
+                                    <SelectTrigger id="default-page-size" className="w-[135px]">
+                                        <SelectValue placeholder="Select page size"/>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="10">10</SelectItem>
+                                        <SelectItem value="25">25</SelectItem>
+                                        <SelectItem value="50">50</SelectItem>
+                                        <SelectItem value="100">100</SelectItem>
+                                        <SelectItem value="250">250</SelectItem>
+                                        <SelectItem value="500">500</SelectItem>
+                                        <SelectItem value="1000">1000</SelectItem>
+                                        <SelectItem value="custom">Custom</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                {isCustomPageSize && (
+                                    <Input
+                                        type="number"
+                                        min={1}
+                                        max={1000}
+                                        className="w-24"
+                                        value={customPageSizeInput}
+                                        onChange={(e) => setCustomPageSizeInput(e.target.value)}
+                                        onBlur={handleCustomPageSizeApply}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                                handleCustomPageSizeApply();
+                                            }
+                                        }}
+                                    />
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

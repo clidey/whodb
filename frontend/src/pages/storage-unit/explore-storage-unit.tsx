@@ -55,24 +55,32 @@ import {
     WhereConditionType
 } from '@graphql';
 import keys from "lodash/keys";
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
-import { CodeEditor } from "../../components/editor";
-import { ErrorState } from "../../components/error-state";
-import { CheckCircleIcon, CommandLineIcon, MagnifyingGlassIcon, PlayIcon, PlusCircleIcon, TableCellsIcon, XMarkIcon } from "../../components/heroicons";
-import { LoadingPage } from "../../components/loading";
-import { InternalPage } from "../../components/page";
-import { SchemaViewer } from "../../components/schema-viewer";
-import { getColumnIcons, StorageUnitTable } from "../../components/table";
-import { Tip } from "../../components/tip";
-import { BUILD_EDITION } from "../../config/edition";
-import { InternalRoutes } from "../../config/routes";
-import { useAppSelector } from "../../store/hooks";
-import { databaseSupportsScratchpad, databaseTypesThatUseDatabaseInsteadOfSchema } from "../../utils/database-features";
-import { getDatabaseOperators } from "../../utils/database-operators";
-import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
-import { ExploreStorageUnitWhereCondition } from "./explore-storage-unit-where-condition";
-import { ExploreStorageUnitWhereConditionSheet } from "./explore-storage-unit-where-condition-sheet";
+import {FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {Navigate, useLocation, useNavigate} from "react-router-dom";
+import {CodeEditor} from "../../components/editor";
+import {ErrorState} from "../../components/error-state";
+import {
+    CheckCircleIcon,
+    CommandLineIcon,
+    MagnifyingGlassIcon,
+    PlayIcon,
+    PlusCircleIcon,
+    TableCellsIcon,
+    XMarkIcon
+} from "../../components/heroicons";
+import {LoadingPage} from "../../components/loading";
+import {InternalPage} from "../../components/page";
+import {SchemaViewer} from "../../components/schema-viewer";
+import {getColumnIcons, StorageUnitTable} from "../../components/table";
+import {Tip} from "../../components/tip";
+import {BUILD_EDITION} from "../../config/edition";
+import {InternalRoutes} from "../../config/routes";
+import {useAppSelector} from "../../store/hooks";
+import {databaseSupportsScratchpad, databaseTypesThatUseDatabaseInsteadOfSchema} from "../../utils/database-features";
+import {getDatabaseOperators} from "../../utils/database-operators";
+import {getDatabaseStorageUnitLabel, isNoSQL} from "../../utils/functions";
+import {ExploreStorageUnitWhereCondition} from "./explore-storage-unit-where-condition";
+import {ExploreStorageUnitWhereConditionSheet} from "./explore-storage-unit-where-condition-sheet";
 
 // Conditionally import EE query utilities
 let generateInitialQuery: ((databaseType: string | undefined, schema: string | undefined, tableName: string | undefined) => string) | undefined;
@@ -87,9 +95,14 @@ if (BUILD_EDITION === 'ee') {
     });
 }
 
-export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad }) => {
+const PRESET_PAGE_SIZES = ["10", "25", "50", "100", "250", "500", "1000"];
 
-    const [bufferPageSize, setBufferPageSize] = useState("100");
+export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad }) => {
+    const defaultPageSize = useAppSelector(state => state.settings.defaultPageSize);
+
+    const [bufferPageSize, setBufferPageSize] = useState(String(defaultPageSize));
+    const [isCustomPageSize, setIsCustomPageSize] = useState(!PRESET_PAGE_SIZES.includes(String(defaultPageSize)));
+    const [customPageSizeInput, setCustomPageSizeInput] = useState(String(defaultPageSize));
     const [currentPage, setCurrentPage] = useState(1);
     const [whereCondition, setWhereCondition] = useState<WhereCondition>();
     const [sortConditions, setSortConditions] = useState<SortCondition[]>([]);
@@ -179,6 +192,25 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         setCurrentPage(page);
         handleSubmitRequest(page - 1);
     }, [handleSubmitRequest]);
+
+    const handlePageSizeChange = useCallback((value: string) => {
+        if (value === "custom") {
+            setIsCustomPageSize(true);
+            setCustomPageSizeInput(bufferPageSize);
+        } else {
+            setIsCustomPageSize(false);
+            setBufferPageSize(value);
+        }
+    }, [bufferPageSize]);
+
+    const handleCustomPageSizeApply = useCallback(() => {
+        const parsed = Number.parseInt(customPageSizeInput);
+        if (!Number.isNaN(parsed) && parsed >= 1 && parsed <= 1000) {
+            setBufferPageSize(String(parsed));
+        } else {
+            setCustomPageSizeInput(bufferPageSize);
+        }
+    }, [customPageSizeInput, bufferPageSize]);
 
     const handleColumnSort = useCallback((columnName: string) => {
         setSortConditions(prev => {
@@ -567,26 +599,49 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                         </div>
                         <div className="flex flex-col gap-2">
                             <Label>Page Size</Label>
-                            <Select value={bufferPageSize} onValueChange={setBufferPageSize}>
-                                <SelectTrigger className="w-32" data-testid="table-page-size">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {import.meta.env.VITE_E2E_TEST === "true" &&
-                                        <SelectItem value="1" data-value="1">1</SelectItem>
-                                    }
-                                    {import.meta.env.VITE_E2E_TEST === "true" &&
-                                        <SelectItem value="2" data-value="2">2</SelectItem>
-                                    }
-                                    <SelectItem value="10" data-value="10">10</SelectItem>
-                                    <SelectItem value="25" data-value="25">25</SelectItem>
-                                    <SelectItem value="50" data-value="50">50</SelectItem>
-                                    <SelectItem value="100" data-value="100">100</SelectItem>
-                                    <SelectItem value="250" data-value="250">250</SelectItem>
-                                    <SelectItem value="500" data-value="500">500</SelectItem>
-                                    <SelectItem value="1000" data-value="1000">1000</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <div className="flex gap-2">
+                                <Select
+                                    value={isCustomPageSize ? "custom" : bufferPageSize}
+                                    onValueChange={handlePageSizeChange}
+                                >
+                                    <SelectTrigger className="w-32" data-testid="table-page-size">
+                                        <SelectValue/>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {import.meta.env.VITE_E2E_TEST === "true" &&
+                                            <SelectItem value="1" data-value="1">1</SelectItem>
+                                        }
+                                        {import.meta.env.VITE_E2E_TEST === "true" &&
+                                            <SelectItem value="2" data-value="2">2</SelectItem>
+                                        }
+                                        <SelectItem value="10" data-value="10">10</SelectItem>
+                                        <SelectItem value="25" data-value="25">25</SelectItem>
+                                        <SelectItem value="50" data-value="50">50</SelectItem>
+                                        <SelectItem value="100" data-value="100">100</SelectItem>
+                                        <SelectItem value="250" data-value="250">250</SelectItem>
+                                        <SelectItem value="500" data-value="500">500</SelectItem>
+                                        <SelectItem value="1000" data-value="1000">1000</SelectItem>
+                                        <SelectItem value="custom" data-value="custom">Custom</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                {isCustomPageSize && (
+                                    <Input
+                                        type="number"
+                                        min={1}
+                                        max={1000}
+                                        className="w-24"
+                                        value={customPageSizeInput}
+                                        onChange={(e) => setCustomPageSizeInput(e.target.value)}
+                                        onBlur={handleCustomPageSizeApply}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                                handleCustomPageSizeApply();
+                                            }
+                                        }}
+                                        data-testid="table-page-size-custom"
+                                    />
+                                )}
+                            </div>
                         </div>
                         {current?.Type !== DatabaseType.Redis && (
                             whereConditionMode === 'sheet' ? (
