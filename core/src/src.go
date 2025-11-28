@@ -59,6 +59,8 @@ func InitializeEngine() *engine.Engine {
 	MainEngine.RegistryPlugin(elasticsearch.NewElasticSearchPlugin())
 	MainEngine.RegistryPlugin(clickhouse.NewClickHousePlugin())
 
+	MainEngine.AddLoginProfile(sqlite3.GetSampleProfile())
+
 	// Initialize Enterprise Edition plugins if available
 	if initEE != nil {
 		initEE(MainEngine)

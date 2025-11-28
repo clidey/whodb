@@ -48,6 +48,10 @@ func (p *Sqlite3Plugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	}
 	database := connectionInput.Database
 
+	if IsSampleDatabase(database) {
+		return GetSampleDatabase()
+	}
+
 	var fileNameDatabase string
 
 	// Desktop mode: treat database field as full path

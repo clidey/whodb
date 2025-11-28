@@ -26,7 +26,7 @@ jobs:
   build-apple:
     name: Build macOS (${{ matrix.build-type }})
     runs-on: macos-latest
-    environment: deploy-apple
+    environment: build-apple
     strategy:
       matrix:
         include:

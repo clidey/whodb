@@ -50,6 +50,11 @@ jobs:
       github-verified: ${{ steps.verify-github.outputs.verified }}
       all-verified: ${{ steps.summary.outputs.all-verified }}
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: audit
+
       - name: Checkout
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
 
