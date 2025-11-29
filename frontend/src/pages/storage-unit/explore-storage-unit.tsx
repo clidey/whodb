@@ -36,7 +36,7 @@ import {
     SheetTitle,
     StackList,
     StackListItem,
-    toast
+    toast,
 } from "@clidey/ux";
 import {
     DatabaseType,
@@ -79,6 +79,7 @@ import {useAppSelector} from "../../store/hooks";
 import {databaseSupportsScratchpad, databaseTypesThatUseDatabaseInsteadOfSchema} from "../../utils/database-features";
 import {getDatabaseOperators} from "../../utils/database-operators";
 import {getDatabaseStorageUnitLabel, isNoSQL} from "../../utils/functions";
+import {usePageSize} from "../../hooks/use-page-size";
 import {ExploreStorageUnitWhereCondition} from "./explore-storage-unit-where-condition";
 import {ExploreStorageUnitWhereConditionSheet} from "./explore-storage-unit-where-condition-sheet";
 
@@ -95,14 +96,18 @@ if (BUILD_EDITION === 'ee') {
     });
 }
 
-const PRESET_PAGE_SIZES = ["10", "25", "50", "100", "250", "500", "1000"];
-
 export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad }) => {
     const defaultPageSize = useAppSelector(state => state.settings.defaultPageSize);
+    const {
+        pageSize,
+        pageSizeString,
+        isCustom: isCustomPageSize,
+        customInput: customPageSizeInput,
+        setCustomInput: setCustomPageSizeInput,
+        handleSelectChange: handlePageSizeChange,
+        handleCustomApply: handleCustomPageSizeApply,
+    } = usePageSize(defaultPageSize);
 
-    const [bufferPageSize, setBufferPageSize] = useState(String(defaultPageSize));
-    const [isCustomPageSize, setIsCustomPageSize] = useState(!PRESET_PAGE_SIZES.includes(String(defaultPageSize)));
-    const [customPageSizeInput, setCustomPageSizeInput] = useState(String(defaultPageSize));
     const [currentPage, setCurrentPage] = useState(1);
     const [whereCondition, setWhereCondition] = useState<WhereCondition>();
     const [sortConditions, setSortConditions] = useState<SortCondition[]>([]);
@@ -177,11 +182,11 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 storageUnit: tableNameToUse,
                 where: whereCondition,
                 sort: sortConditions.length > 0 ? sortConditions : undefined,
-                pageSize: Number.parseInt(bufferPageSize),
+                pageSize,
                 pageOffset: pageOffset ?? currentPage - 1,
             },
         });
-    }, [getStorageUnitRows, schema, unitName, currentTableName, whereCondition, sortConditions, bufferPageSize, currentPage]);
+    }, [getStorageUnitRows, schema, unitName, currentTableName, whereCondition, sortConditions, pageSize, currentPage]);
 
     const handleQuery = useCallback(() => {
         handleSubmitRequest();
@@ -192,25 +197,6 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         setCurrentPage(page);
         handleSubmitRequest(page - 1);
     }, [handleSubmitRequest]);
-
-    const handlePageSizeChange = useCallback((value: string) => {
-        if (value === "custom") {
-            setIsCustomPageSize(true);
-            setCustomPageSizeInput(bufferPageSize);
-        } else {
-            setIsCustomPageSize(false);
-            setBufferPageSize(value);
-        }
-    }, [bufferPageSize]);
-
-    const handleCustomPageSizeApply = useCallback(() => {
-        const parsed = Number.parseInt(customPageSizeInput);
-        if (!Number.isNaN(parsed) && parsed > 0) {
-            setBufferPageSize(String(parsed));
-        } else {
-            setCustomPageSizeInput(bufferPageSize);
-        }
-    }, [customPageSizeInput, bufferPageSize]);
 
     const handleColumnSort = useCallback((columnName: string) => {
         setSortConditions(prev => {
@@ -601,7 +587,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                             <Label>Page Size</Label>
                             <div className="flex gap-2">
                                 <Select
-                                    value={isCustomPageSize ? "custom" : bufferPageSize}
+                                    value={isCustomPageSize ? "custom" : pageSizeString}
                                     onValueChange={handlePageSizeChange}
                                 >
                                     <SelectTrigger className="w-32" data-testid="table-page-size">
@@ -734,9 +720,9 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                         onColumnSort={handleColumnSort}
                         sortedColumns={sortedColumnsMap}
                         searchRef={searchRef}
-                        pageSize={Number.parseInt(bufferPageSize)}
+                        pageSize={pageSize}
                         // Server-side pagination props
-                        totalCount={Number.parseInt(totalCount)}
+                        totalCount={Number.parseInt(totalCount, 10)}
                         currentPage={currentPage}
                         onPageChange={handlePageChange}
                         showPagination={true}

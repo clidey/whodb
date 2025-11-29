@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {FC, useCallback, useEffect, useState} from "react";
+import {FC, useCallback, useEffect, useMemo} from "react";
 import {InternalPage} from "../../components/page";
 import {InternalRoutes} from "../../config/routes";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
@@ -29,12 +29,11 @@ import {
     SelectTrigger,
     SelectValue,
     Separator,
-    Switch
+    Switch,
 } from "@clidey/ux";
 import {optInUser, optOutUser, trackFrontendEvent} from "@/config/posthog";
 import {ExternalLink} from "../../utils/external-links";
-
-const PRESET_PAGE_SIZES = ["10", "25", "50", "100", "250", "500", "1000"];
+import {usePageSize} from "../../hooks/use-page-size";
 
 export const SettingsPage: FC = () => {
     const dispatch = useAppDispatch();
@@ -46,8 +45,18 @@ export const SettingsPage: FC = () => {
     const whereConditionMode = useAppSelector(state => state.settings.whereConditionMode);
     const defaultPageSize = useAppSelector(state => state.settings.defaultPageSize);
 
-    const [isCustomPageSize, setIsCustomPageSize] = useState(!PRESET_PAGE_SIZES.includes(String(defaultPageSize)));
-    const [customPageSizeInput, setCustomPageSizeInput] = useState(String(defaultPageSize));
+    const pageSizeOptions = useMemo(() => ({
+        onPageSizeChange: (size: number) => dispatch(SettingsActions.setDefaultPageSize(size)),
+    }), [dispatch]);
+
+    const {
+        pageSizeString,
+        isCustom: isCustomPageSize,
+        customInput: customPageSizeInput,
+        setCustomInput: setCustomPageSizeInput,
+        handleSelectChange: handleDefaultPageSizeChange,
+        handleCustomApply: handleCustomPageSizeApply,
+    } = usePageSize(defaultPageSize, pageSizeOptions);
 
     useEffect(() => {
         void trackFrontendEvent('ui.settings_viewed');
@@ -83,25 +92,6 @@ export const SettingsPage: FC = () => {
     const handleWhereConditionModeChange = useCallback((mode: 'popover' | 'sheet') => {
         dispatch(SettingsActions.setWhereConditionMode(mode));
     }, [dispatch]);
-
-    const handleDefaultPageSizeChange = useCallback((value: string) => {
-        if (value === "custom") {
-            setIsCustomPageSize(true);
-            setCustomPageSizeInput(String(defaultPageSize));
-        } else {
-            setIsCustomPageSize(false);
-            dispatch(SettingsActions.setDefaultPageSize(Number.parseInt(value)));
-        }
-    }, [dispatch, defaultPageSize]);
-
-    const handleCustomPageSizeApply = useCallback(() => {
-        const parsed = Number.parseInt(customPageSizeInput);
-        if (!Number.isNaN(parsed) && parsed > 0) {
-            dispatch(SettingsActions.setDefaultPageSize(parsed));
-        } else {
-            setCustomPageSizeInput(String(defaultPageSize));
-        }
-    }, [dispatch, customPageSizeInput, defaultPageSize]);
 
     return (
         <InternalPage routes={[InternalRoutes.Settings!]}>
@@ -227,7 +217,7 @@ export const SettingsPage: FC = () => {
                             <Label>Default Page Size</Label>
                             <div className="flex gap-2">
                                 <Select
-                                    value={isCustomPageSize ? "custom" : String(defaultPageSize)}
+                                    value={isCustomPageSize ? "custom" : pageSizeString}
                                     onValueChange={handleDefaultPageSizeChange}
                                 >
                                     <SelectTrigger id="default-page-size" className="w-[135px]">
