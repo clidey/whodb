@@ -32,7 +32,8 @@ jobs:
         uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
         with:
           egress-policy: block
-          allowed-endpoints: >+
+          allowed-endpoints: >
+            github.com:443
 
       - name: Checkout
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
@@ -280,7 +281,10 @@ jobs:
         uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
         with:
           egress-policy: block
-          allowed-endpoints: >+
+          allowed-endpoints: >
+            api.appstoreconnect.apple.com:443
+            contentdelivery.itunes.apple.com:443
+            github.com:443
 
       - name: Checkout for scripts
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
