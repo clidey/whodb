@@ -36,9 +36,12 @@ const (
 	DatabaseType_ClickHouse    = "ClickHouse"
 )
 
+type LoginProfileRetriever func() ([]types.DatabaseCredentials, error)
+
 type Engine struct {
-	Plugins       []*Plugin
-	LoginProfiles []types.DatabaseCredentials
+	Plugins                []*Plugin
+	LoginProfiles          []types.DatabaseCredentials
+	ProfileRetrievers      []LoginProfileRetriever
 }
 
 func (e *Engine) RegistryPlugin(plugin *Plugin) {
@@ -62,6 +65,13 @@ func (e *Engine) AddLoginProfile(profile types.DatabaseCredentials) {
 		e.LoginProfiles = []types.DatabaseCredentials{}
 	}
 	e.LoginProfiles = append(e.LoginProfiles, profile)
+}
+
+func (e *Engine) RegisterProfileRetriever(retriever LoginProfileRetriever) {
+	if e.ProfileRetrievers == nil {
+		e.ProfileRetrievers = []LoginProfileRetriever{}
+	}
+	e.ProfileRetrievers = append(e.ProfileRetrievers, retriever)
 }
 
 func GetStorageUnitModel(unit StorageUnit) *model.StorageUnit {

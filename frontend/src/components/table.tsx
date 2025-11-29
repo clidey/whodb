@@ -906,7 +906,7 @@ export const StorageUnitTable: FC<TableProps> = ({
         <div ref={tableRef} className="h-full flex">
             <div className="flex flex-col h-full space-y-4 w-0" style={{
                 width: `${containerWidth}px`,
-            }}>
+            }} data-testid="table-container">
                 <TableComponent>
                     <TableHeader>
                         <ContextMenu>
@@ -1051,8 +1051,8 @@ export const StorageUnitTable: FC<TableProps> = ({
                 {paginatedRows.length === 0 && (
                     <ContextMenu>
                         <ContextMenuTrigger asChild>
-                            <div className="flex items-center justify-center h-full min-h-[250px] cursor-pointer">
-                                <EmptyState title="No data available" description="No data available" icon={<DocumentTextIcon className="w-4 h-4" />} />
+                            <div className="flex items-center justify-center cursor-pointer border rounded-lg h-[200px]">
+                                <EmptyState className="table-empty-state" title="No data available" description="No data available" icon={<DocumentTextIcon className="w-4 h-4" />} />
                             </div>
                         </ContextMenuTrigger>
                         <ContextMenuContent

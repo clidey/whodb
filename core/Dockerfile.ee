@@ -44,13 +44,17 @@ COPY ./go.work.ee ./
 # Copy core module files
 COPY ./core/go.mod ./core/go.sum ./core/
 WORKDIR /app/core
-RUN go mod download
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    for i in 1 2 3; do go mod download && break || sleep 5; done
 
 # Copy EE module files
 WORKDIR /app
 COPY ./ee/go.mod ./ee/go.sum ./ee/
 WORKDIR /app/ee
-RUN go mod download
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    for i in 1 2 3; do go mod download && break || sleep 5; done
 
 # Copy all source code
 WORKDIR /app
@@ -62,7 +66,9 @@ COPY --from=build-stage /app/build/ ./core/build/
 
 # Build backend with EE features using workspace
 WORKDIR /app/core
-RUN GOWORK=/app/go.work.ee CGO_ENABLED=1 GOOS=linux go build -tags ee -o /core
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    GOWORK=/app/go.work.ee CGO_ENABLED=1 GOOS=linux go build -tags ee -o /core
 
 # Final stage
 FROM alpine:3.22

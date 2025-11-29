@@ -37,7 +37,7 @@ import {
     toast,
     useSidebar
 } from "@clidey/ux";
-import { SearchSelect } from "../ux";
+import {SearchSelect} from "../ux";
 import {
     DatabaseType,
     useGetDatabaseQuery,
@@ -46,21 +46,26 @@ import {
     useLoginMutation,
     useLoginWithProfileMutation
 } from '@graphql';
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import {VisuallyHidden} from "@radix-ui/react-visually-hidden";
 import classNames from "classnames";
-import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
-import { useDispatch } from "react-redux";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import {FC, ReactElement, useCallback, useEffect, useMemo, useState} from "react";
+import {useDispatch} from "react-redux";
+import {Link, useLocation, useNavigate} from "react-router-dom";
 import logoImage from "../../../public/images/logo.png";
-import { extensions } from "../../config/features";
-import { InternalRoutes } from "../../config/routes";
-import { LoginForm } from "../../pages/auth/login";
-import { AuthActions, LocalLoginProfile } from "../../store/auth";
-import { DatabaseActions } from "../../store/database";
-import { useAppSelector } from "../../store/hooks";
-import { databaseSupportsDatabaseSwitching, databaseSupportsSchema, databaseSupportsScratchpad, databaseTypesThatUseDatabaseInsteadOfSchema } from "../../utils/database-features";
-import { isEEFeatureEnabled } from "../../utils/ee-loader";
-import { getDatabaseStorageUnitLabel, isNoSQL } from "../../utils/functions";
+import {extensions} from "../../config/features";
+import {InternalRoutes} from "../../config/routes";
+import {LoginForm} from "../../pages/auth/login";
+import {AuthActions, LocalLoginProfile} from "../../store/auth";
+import {DatabaseActions} from "../../store/database";
+import {useAppSelector} from "../../store/hooks";
+import {
+    databaseSupportsDatabaseSwitching,
+    databaseSupportsSchema,
+    databaseSupportsScratchpad,
+    databaseTypesThatUseDatabaseInsteadOfSchema
+} from "../../utils/database-features";
+import {isEEFeatureEnabled} from "../../utils/ee-loader";
+import {getDatabaseStorageUnitLabel, isNoSQL} from "../../utils/functions";
 import {
     ArrowLeftStartOnRectangleIcon,
     ChevronDownIcon,
@@ -72,9 +77,9 @@ import {
     SparklesIcon,
     TableCellsIcon
 } from "../heroicons";
-import { Icons } from "../icons";
-import { Loading } from "../loading";
-import { updateProfileLastAccessed } from "../profile-info-tooltip";
+import {Icons} from "../icons";
+import {Loading} from "../loading";
+import {updateProfileLastAccessed} from "../profile-info-tooltip";
 
 function getProfileLabel(profile: LocalLoginProfile) {
     if (profile.Saved) return profile.Id;
@@ -142,7 +147,7 @@ export const Sidebar: FC = () => {
                     profile: {
                         Id: selectedProfile.Id,
                         Type: selectedProfile.Type as DatabaseType,
-                        Database: database ?? current?.Database,
+                        Database: database ?? selectedProfile.Database,
                     },
                 },
                 onCompleted(status) {
@@ -441,7 +446,7 @@ export const Sidebar: FC = () => {
                                     <SidebarMenuButton asChild>
                                         <div className="flex items-center gap-sm text-nowrap w-fit cursor-pointer" onClick={handleLogout}>
                                             <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />
-                                            {open && <span>Logout Profile</span>}
+                                            {open && <span>Log Out Profile</span>}
                                         </div>
                                     </SidebarMenuButton>
                                     {/* Dropdown for additional logout options */}

@@ -25,6 +25,7 @@ type ISettingsState = {
     borderRadius: 'none' | 'small' | 'medium' | 'large';
     spacing: 'compact' | 'comfortable' | 'spacious';
     whereConditionMode: 'popover' | 'sheet';
+    defaultPageSize: number;
 }
 
 const getInitialMetricsEnabled = (): boolean => {
@@ -47,6 +48,7 @@ const getInitialState = (): ISettingsState => {
         borderRadius: 'medium',
         spacing: 'comfortable',
         whereConditionMode: 'popover',
+        defaultPageSize: 100,
     };
 };
 
@@ -74,6 +76,9 @@ export const settingsSlice = createSlice({
         },
         setWhereConditionMode: (state, action: PayloadAction<ISettingsState["whereConditionMode"]>) => {
             state.whereConditionMode = action.payload;
+        },
+        setDefaultPageSize: (state, action: PayloadAction<ISettingsState["defaultPageSize"]>) => {
+            state.defaultPageSize = action.payload;
         },
     },
 });

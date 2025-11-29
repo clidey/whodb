@@ -4,27 +4,48 @@
 # https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 
 version: 2
+
+multi-ecosystem-groups:
+  all-go:
+    schedule:
+      interval: "weekly"
+
 updates:
   - package-ecosystem: "gomod" # See documentation for possible values
     directory: "/core" # Location of package manifests
+    multi-ecosystem-group: "all-go"
+    patterns: [ "*" ]
     schedule:
       interval: "daily"
+
   - package-ecosystem: "gomod" # See documentation for possible values
     directory: "/ee-stub" # Location of package manifests
+    multi-ecosystem-group: "all-go"
+    patterns: [ "*" ]
     schedule:
       interval: "daily"
+
   - package-ecosystem: "gomod" # See documentation for possible values
     directory: "/desktop-ce" # Location of package manifests
+    multi-ecosystem-group: "all-go"
+    patterns: [ "*" ]
     schedule:
       interval: "daily"
+
   - package-ecosystem: "gomod" # See documentation for possible values
     directory: "/desktop-ee" # Location of package manifests
+    multi-ecosystem-group: "all-go"
+    patterns: [ "*" ]
     schedule:
       interval: "daily"
+
   - package-ecosystem: "gomod" # See documentation for possible values
     directory: "/desktop-common" # Location of package manifests
+    multi-ecosystem-group: "all-go"
+    patterns: [ "*" ]
     schedule:
       interval: "daily"
+
   - package-ecosystem: "npm"
     directory: "/frontend"
     schedule:

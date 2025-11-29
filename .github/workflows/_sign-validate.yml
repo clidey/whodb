@@ -29,13 +29,20 @@ jobs:
     name: Sign with Sigstore
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       id-token: write
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            fulcio.sigstore.dev:443
+            github.com:443
+            rekor.sigstore.dev:443
+            release-assets.githubusercontent.com:443
+            timestamp.sigstore.dev:443
+            tuf-repo-cdn.sigstore.dev:443
 
       - name: Checkout
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
@@ -54,6 +61,13 @@ jobs:
         continue-on-error: true
         with:
           pattern: desktop-*
+          path: artifacts/
+
+      - name: Download Linux server binaries
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        continue-on-error: true
+        with:
+          pattern: server-binaries-*
           path: artifacts/
 
       # DISABLED: AppImage builds disabled
@@ -78,7 +92,7 @@ jobs:
           echo "🔏 Signing artifacts with Sigstore..."
 
           # Find all artifacts to sign (excluding Docker .tar files)
-          find artifacts -type f \( -name "*.snap" -o -name "*.AppImage" -o -name "*.exe" -o -name "*.dmg" -o -name "*.pkg" -o -name "*.msix" -o -name "*.msixbundle" \) | while read -r file; do
+          find artifacts -type f \( -name "*.snap" -o -name "*.AppImage" -o -name "*.exe" -o -name "*.dmg" -o -name "*.pkg" -o -name "*.msix" -o -name "*.msixbundle" -o -name "whodb-*-linux-*" \) | while read -r file; do
             echo "Signing: $file"
 
             # Sign the artifact using bundle format (modern cosign approach)
@@ -114,7 +128,10 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            github.com:443
+            release-assets.githubusercontent.com:443
 
       - name: Checkout for scripts
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0

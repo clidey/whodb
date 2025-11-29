@@ -410,6 +410,12 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
         setSubmittedCode(currentCode);
         setError(null);
         setLoading(true);
+
+        // todo: temporary delay to simulate loading state, fix this in the future
+        setTimeout(() => {
+            setLoading(false);
+        }, 1000);
+        
         handleExecute.current(currentCode).then((data) => {
             historyItem.status = true;
             setRows(data);
@@ -418,10 +424,10 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
         }).finally(() => {
             setLoading(false);
             setHistory(h => [historyItem, ...h]);
-            dispatch(ScratchpadActions.addCellHistory({ 
-                cellId, 
-                item: currentCode, 
-                status: historyItem.status 
+            dispatch(ScratchpadActions.addCellHistory({
+                cellId,
+                item: currentCode,
+                status: historyItem.status
             }));
         });
     }, [code, current, mode, allActionOptions, handleExecute, cellId, dispatch]);
