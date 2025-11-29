@@ -17,67 +17,87 @@ on:
         required: false
         type: boolean
         default: true
+      # DISABLED: AppImage builds disabled - requires system WebKit2GTK
       validate-appimage:
         description: 'Whether to validate AppImage builds'
         required: false
         type: boolean
-        default: true
+        default: false
 
 jobs:
   sign-with-sigstore:
     name: Sign with Sigstore
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       id-token: write
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            fulcio.sigstore.dev:443
+            github.com:443
+            rekor.sigstore.dev:443
+            release-assets.githubusercontent.com:443
+            timestamp.sigstore.dev:443
+            tuf-repo-cdn.sigstore.dev:443
+
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
           submodules: false
 
       - name: Download Snap packages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         continue-on-error: true
         with:
           pattern: snap-package-*
           path: artifacts/
 
       - name: Download Desktop builds
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         continue-on-error: true
         with:
           pattern: desktop-*
           path: artifacts/
 
-      - name: Download AppImages
-        uses: actions/download-artifact@v4
+      - name: Download Linux server binaries
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         continue-on-error: true
         with:
-          pattern: appimage-*
+          pattern: server-binaries-*
           path: artifacts/
 
-      - name: Restore executable permissions
-        run: |
-          echo "Restoring executable permissions for AppImages..."
-          find artifacts -name "*.AppImage" -type f -exec chmod +x {} \;
-          echo "✅ Permissions restored"
+      # DISABLED: AppImage builds disabled
+      # - name: Download AppImages
+      #   uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+      #   continue-on-error: true
+      #   with:
+      #     pattern: appimage-*
+      #     path: artifacts/
+
+      # - name: Restore executable permissions
+      #   run: |
+      #     echo "Restoring executable permissions for AppImages..."
+      #     find artifacts -name "*.AppImage" -type f -exec chmod +x {} \;
+      #     echo "✅ Permissions restored"
 
       - name: Install Cosign
-        uses: sigstore/cosign-installer@v3
+        uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
 
       - name: Sign artifacts
         run: |
           echo "🔏 Signing artifacts with Sigstore..."
 
           # Find all artifacts to sign (excluding Docker .tar files)
-          find artifacts -type f \( -name "*.snap" -o -name "*.AppImage" -o -name "*.exe" -o -name "*.dmg" -o -name "*.pkg" -o -name "*.msix" -o -name "*.msixbundle" \) | while read -r file; do
+          find artifacts -type f \( -name "*.snap" -o -name "*.AppImage" -o -name "*.exe" -o -name "*.dmg" -o -name "*.pkg" -o -name "*.msix" -o -name "*.msixbundle" -o -name "whodb-*-linux-*" \) | while read -r file; do
             echo "Signing: $file"
 
-            # Sign the artifact
+            # Sign the artifact using bundle format (modern cosign approach)
             cosign sign-blob --yes \
-              --output-signature "${file}.sig" \
-              --output-certificate "${file}.pem" \
+              --bundle "${file}.bundle" \
               "$file"
 
             echo "✅ Signed: $(basename "$file")"
@@ -86,13 +106,13 @@ jobs:
       - name: Create signatures archive
         run: |
           mkdir -p signatures
-          find artifacts -name "*.sig" -o -name "*.pem" | while read -r file; do
+          find artifacts -name "*.bundle" | while read -r file; do
             cp "$file" signatures/
           done
           tar czf signatures.tar.gz signatures/
 
       - name: Upload signatures
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: signatures
           path: signatures.tar.gz
@@ -105,40 +125,49 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            github.com:443
+            release-assets.githubusercontent.com:443
+
       - name: Checkout for scripts
-        uses: actions/checkout@v4
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
           submodules: false
 
       - name: Download Snap packages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         continue-on-error: true
         with:
           pattern: snap-package-*
           path: artifacts/
 
       - name: Download Desktop builds
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         continue-on-error: true
         with:
           pattern: desktop-*
           path: artifacts/
 
-      - name: Download AppImages
-        uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          pattern: appimage-*
-          path: artifacts/
+      # DISABLED: AppImage builds disabled
+      # - name: Download AppImages
+      #   uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+      #   continue-on-error: true
+      #   with:
+      #     pattern: appimage-*
+      #     path: artifacts/
 
-      - name: Restore executable permissions
-        run: |
-          echo "Restoring executable permissions for AppImages..."
-          find artifacts -name "*.AppImage" -type f -exec chmod +x {} \;
-          echo "✅ Permissions restored"
+      # - name: Restore executable permissions
+      #   run: |
+      #     echo "Restoring executable permissions for AppImages..."
+      #     find artifacts -name "*.AppImage" -type f -exec chmod +x {} \;
+      #     echo "✅ Permissions restored"
 
       - name: Download signatures
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: signatures
           path: .
@@ -147,7 +176,7 @@ jobs:
         run: tar xzf signatures.tar.gz
 
       - name: Install Cosign for verification
-        uses: sigstore/cosign-installer@v3
+        uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
 
       - name: Validate Snap artifacts
         if: inputs.validate-snap
@@ -219,8 +248,9 @@ jobs:
             exit 1
           fi
 
+      # DISABLED: AppImage builds disabled - requires system WebKit2GTK
       - name: Validate AppImage artifacts
-        if: inputs.validate-appimage
+        if: inputs.validate-appimage  # Will be false - AppImage disabled
         run: |
           echo "🐧 Validating AppImage artifacts..."
           FAILED=false
@@ -281,12 +311,12 @@ jobs:
               "desktop": ${{ inputs.validate-desktop }},
               "appimage": ${{ inputs.validate-appimage }}
             },
-            "artifacts": $(find artifacts -type f -name "*.snap" -o -name "*.AppImage" -o -name "*.exe" -o -name "*.dmg" | wc -l)
+            "artifacts": $(find artifacts -type f -name "*.snap" -o -name "*.exe" -o -name "*.dmg" | wc -l)
           }
           EOF
 
       - name: Upload validation manifest
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: deployment-manifest-validated
           path: validation_manifest.json

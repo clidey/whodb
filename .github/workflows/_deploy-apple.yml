@@ -12,37 +12,11 @@ on:
         required: false
         type: boolean
         default: false
-    secrets:
-      APPLE_CERTIFICATES_P12:
+      release-notes:
+        description: 'Release notes for App Store (What is New)'
         required: false
-      APPLE_CERTIFICATES_PASSWORD:
-        required: false
-      KEYCHAIN_PASSWORD:
-        required: false
-      APPLE_MAS_CERTIFICATES_P12:
-        required: false
-      APPLE_MAS_CERTIFICATES_PASSWORD:
-        required: false
-      APPLE_MAS_CERT_APPLICATION:
-        required: false
-      APPLE_MAS_CERT_INSTALLER:
-        required: false
-      APPLE_MAS_PROVISIONING_PROFILE:
-        required: false
-      APP_STORE_CONNECT_API_KEY:
-        required: false
-      APP_STORE_CONNECT_API_KEY_ID:
-        required: false
-      APP_STORE_CONNECT_ISSUER_ID:
-        required: false
-      APPLE_DEVELOPER_ID:
-        required: false
-      APPLE_DEVELOPER_TEAM_ID:
-        required: false
-      APPLE_APP_ID:
-        required: false
-      ASC_PUBLIC_ID:
-        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -52,18 +26,25 @@ jobs:
   package-mac-app-store:
     name: Package for Mac App Store
     runs-on: macos-latest
+    environment: deploy-apple
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: block
+          allowed-endpoints: >+
+
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
 
       - name: Download macOS DMG
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: desktop-darwin-dmg
           path: desktop-builds/
 
       - name: Download macOS App Bundle (MAS)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: desktop-darwin-mas-app
           path: desktop-builds/
@@ -121,7 +102,7 @@ jobs:
           echo "📋 Testing instructions created"
 
       - name: Upload Homebrew cask
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: homebrew-cask-apple
           path: |
@@ -272,7 +253,7 @@ jobs:
           fi
 
       - name: Upload Mac App Store package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: mac-app-store-package
           path: "*.pkg"
@@ -292,10 +273,17 @@ jobs:
     name: Submit to Apple App Store
     runs-on: macos-latest
     needs: [ package-mac-app-store ]
+    environment: deploy-apple
     continue-on-error: ${{ inputs.stage-only }}
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: block
+          allowed-endpoints: >+
+
       - name: Checkout for scripts
-        uses: actions/checkout@v4
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
 
       - name: Check Apple Store credentials
         id: check_creds
@@ -315,7 +303,7 @@ jobs:
 
       - name: Download Mac App Store package
         if: steps.check_creds.outputs.has_creds == 'true'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: mac-app-store-package
           path: .
@@ -607,23 +595,51 @@ jobs:
             echo "3️⃣  Monitor processing:"
             echo "    🔗 https://appstoreconnect.apple.com/apps"
           else
-            echo "1️⃣  Build will appear in App Store Connect shortly"
-            echo "    🔗 https://appstoreconnect.apple.com/apps"
-            echo ""
-            echo "2️⃣  Wait for 'Ready to Submit' status"
-            echo ""
-            echo "3️⃣  Complete submission information:"
-            echo "    • App description"
-            echo "    • Screenshots"
-            echo "    • Privacy info"
-            echo ""
-            echo "4️⃣  Submit for App Store review"
-            echo "    ⏱️  Review typically takes 1-3 business days"
+            echo "➡️  Next: Automated submission for App Store review..."
+            echo "    The workflow will now wait for the build to process"
+            echo "    and automatically submit for review."
           fi
           echo ""
           echo "═══════════════════════════════════════════════════════════"
-          echo "✅ Workflow complete!"
+          echo "✅ Upload complete!"
           echo "═══════════════════════════════════════════════════════════"
+
+      - name: Submit for App Store Review
+        if: steps.check_creds.outputs.has_creds == 'true' && inputs.stage-only != true
+        env:
+          APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          set -e
+
+          VERSION="${{ inputs.version }}"
+          # Strip 'v' prefix if present for build number
+          BUILD_NUMBER="${VERSION#v}"
+          BUNDLE_ID="com.clidey.whodb"
+
+          # Prepare release notes - use input or default message
+          RELEASE_NOTES="${{ inputs.release-notes }}"
+          if [ -z "$RELEASE_NOTES" ]; then
+            RELEASE_NOTES="Bug fixes and performance improvements."
+          fi
+
+          echo ""
+          echo "═══════════════════════════════════════════════════════════"
+          echo "  Submitting for App Store Review"
+          echo "═══════════════════════════════════════════════════════════"
+          echo ""
+          echo "Version: $VERSION"
+          echo "Build: $BUILD_NUMBER"
+          echo ""
+
+          # Run the submission script
+          chmod +x .github/scripts/appstore-connect.sh
+          .github/scripts/appstore-connect.sh submit-version \
+            "$BUNDLE_ID" \
+            "$BUILD_NUMBER" \
+            "$BUILD_NUMBER" \
+            "$RELEASE_NOTES"
 
       - name: Clean up API key
         if: always() && steps.check_creds.outputs.has_creds == 'true'
@@ -643,8 +659,16 @@ jobs:
             echo "📦 **Status:** TestFlight upload completed" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "Package is available for TestFlight testing." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Next steps:**" >> $GITHUB_STEP_SUMMARY
+            echo "- Wait for build processing to complete" >> $GITHUB_STEP_SUMMARY
+            echo "- Add testers in TestFlight" >> $GITHUB_STEP_SUMMARY
+            echo "- Submit for App Store review when ready" >> $GITHUB_STEP_SUMMARY
           else
             echo "🚀 **Status:** Submitted for App Store review" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Monitor review status in App Store Connect." >> $GITHUB_STEP_SUMMARY
+            echo "The app has been automatically submitted for review." >> $GITHUB_STEP_SUMMARY
+            echo "Apple typically reviews apps within 24-48 hours." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Monitor status: [App Store Connect](https://appstoreconnect.apple.com/apps)" >> $GITHUB_STEP_SUMMARY
           fi

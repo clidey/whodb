@@ -24,8 +24,13 @@ inputs:
     description: 'Deploy to Apple App Store'
     required: false
     default: 'false'
+  # DISABLED: AppImage requires system WebKit2GTK - not truly portable
   deploy-appimage:
-    description: 'Build AppImage'
+    description: 'Build AppImage (DISABLED)'
+    required: false
+    default: 'false'
+  deploy-linux-terminal:
+    description: 'Build Linux Terminal binaries'
     required: false
     default: 'false'
   publish-github-release:
@@ -57,9 +62,13 @@ outputs:
   deploy-apple:
     description: 'Deploy Apple flag'
     value: ${{ steps.stores.outputs.deploy-apple }}
+  # DISABLED: AppImage builds disabled
   deploy-appimage:
-    description: 'Deploy AppImage flag'
-    value: ${{ steps.stores.outputs.deploy-appimage }}
+    description: 'Deploy AppImage flag (DISABLED)'
+    value: 'false'
+  deploy-linux-terminal:
+    description: 'Deploy Linux Terminal flag'
+    value: ${{ steps.stores.outputs.deploy-linux-terminal }}
   publish-github-release:
     description: 'Publish GitHub release flag'
     value: ${{ steps.flags.outputs.publish-github-release }}
@@ -67,6 +76,13 @@ outputs:
 runs:
   using: 'composite'
   steps:
+    - name: Harden Runner
+      uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+      with:
+        egress-policy: block
+        allowed-endpoints: >
+          github.com:443
+
     - name: Set deployment mode
       id: mode
       shell: bash
@@ -164,7 +180,8 @@ runs:
         echo "deploy-snap=${{ inputs.deploy-snap }}" >> $GITHUB_OUTPUT
         echo "deploy-microsoft=${{ inputs.deploy-microsoft }}" >> $GITHUB_OUTPUT
         echo "deploy-apple=${{ inputs.deploy-apple }}" >> $GITHUB_OUTPUT
-        echo "deploy-appimage=${{ inputs.deploy-appimage }}" >> $GITHUB_OUTPUT
+        echo "deploy-appimage=false" >> $GITHUB_OUTPUT  # DISABLED: AppImage requires system WebKit2GTK
+        echo "deploy-linux-terminal=${{ inputs.deploy-linux-terminal }}" >> $GITHUB_OUTPUT
 
         if [ "$MODE" = "production" ]; then
           echo "Production mode: deploying selected stores to production channels"

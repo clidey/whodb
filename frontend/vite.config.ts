@@ -35,7 +35,11 @@ const eeModulePlugin = () => ({
   },
   load(id: string) {
     if (id.startsWith('\0virtual:ee-fallback:')) {
-      // Return minimal module code with default export
+        const originalId = id.replace('\0virtual:ee-fallback:', '');
+        // Return empty CSS for CSS files, minimal JS for other modules
+        if (originalId.endsWith('.css')) {
+            return '';
+        }
       return 'export default {};';
     }
   }

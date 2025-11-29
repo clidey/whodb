@@ -21,6 +21,7 @@ jobs:
   build-appimage:
     name: Build AppImage (${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
+    environment: permission-required
     strategy:
       matrix:
         include:
@@ -29,13 +30,18 @@ jobs:
           - runner: ubuntu-24.04-arm
             arch: arm64
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: audit
+
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
           submodules: false
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
           go-version: '1.25'
 
@@ -51,12 +57,12 @@ jobs:
             file
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
         with:
           node-version: 'lts/*'
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
         with:
           version: 10
           run_install: false
@@ -140,8 +146,8 @@ jobs:
 
       - name: Build AppImage
         run: |
-          chmod +x scripts/build-appimage.sh
-          ./scripts/build-appimage.sh ${{ matrix.arch }} ${{ inputs.version }}
+          chmod +x .github/scripts/build-appimage.sh
+          ./.github/scripts/build-appimage.sh ${{ matrix.arch }} ${{ inputs.version }}
 
       - name: Verify AppImage
         run: |
@@ -158,7 +164,7 @@ jobs:
           file "$APPIMAGE"
 
       - name: Upload AppImage artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: appimage-${{ inputs.edition }}-${{ matrix.arch }}
           path: WhoDB-${{ inputs.version }}-${{ matrix.arch }}.AppImage

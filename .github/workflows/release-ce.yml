@@ -57,13 +57,14 @@ on:
         required: false
         type: boolean
         default: false
-      deploy-appimage:
-        description: 'Build AppImage (for GitHub Release)'
-        required: false
-        type: boolean
-        default: false
-      deploy-linux-cli:
-        description: 'Build Linux CLI binaries (amd64, arm64, riscv64, armv6, armv7)'
+      # DISABLED: AppImage requires system WebKit2GTK - not truly portable
+      # deploy-appimage:
+      #   description: 'Build AppImage (for GitHub Release)'
+      #   required: false
+      #   type: boolean
+      #   default: false
+      deploy-linux-terminal:
+        description: 'Build Linux terminal binaries (amd64, arm64, riscv64, armv6, armv7)'
         required: false
         type: boolean
         default: false
@@ -93,12 +94,19 @@ jobs:
       deploy-snap: ${{ steps.calc.outputs.deploy-snap }}
       deploy-microsoft: ${{ steps.calc.outputs.deploy-microsoft }}
       deploy-apple: ${{ steps.calc.outputs.deploy-apple }}
-      deploy-appimage: ${{ steps.calc.outputs.deploy-appimage }}
-      deploy-linux-cli: ${{ steps.calc.outputs.deploy-linux-cli }}
+      # deploy-appimage: ${{ steps.calc.outputs.deploy-appimage }}  # DISABLED
+      deploy-linux-terminal: ${{ steps.calc.outputs.deploy-linux-terminal }}
       publish-github-release: ${{ steps.calc.outputs.publish-github-release }}
+      release-notes: ${{ steps.release_notes.outputs.notes }}
+
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: audit
+
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
           fetch-depth: 0
           submodules: false
@@ -127,9 +135,41 @@ jobs:
           deploy-snap: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-snap) && 'true' || 'false') }}
           deploy-microsoft: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-microsoft) && 'true' || 'false') }}
           deploy-apple: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-apple) && 'true' || 'false') }}
-          deploy-appimage: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-appimage) && 'true' || 'false') }}
-          deploy-linux-cli: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-linux-cli) && 'true' || 'false') }}
+          deploy-appimage: 'false'  # DISABLED: AppImage requires system WebKit2GTK
+          deploy-linux-terminal: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-linux-terminal) && 'true' || 'false') }}
           publish-github-release: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.publish-github-release) && 'true' || 'false') }}
+
+      - name: Extract release notes from PR
+        id: release_notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES=""
+
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.event.pull_request.merged }}" = "true" ]; then
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+            echo "Extracting release notes from PR #$PR_NUMBER..."
+
+            # Get PR body using gh cli
+            NOTES=$(gh pr view "$PR_NUMBER" --json body --jq '.body // empty')
+
+            if [ -n "$NOTES" ]; then
+              echo "Found release notes from PR description"
+            fi
+          fi
+
+          # Default if no notes found
+          if [ -z "$NOTES" ]; then
+            NOTES="Bug fixes and performance improvements."
+            echo "Using default release notes"
+          fi
+
+          # Output using heredoc for multiline support
+          {
+            echo "notes<<EOF"
+            echo "$NOTES"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
 
       - name: Display configuration
         run: |
@@ -152,7 +192,6 @@ jobs:
             echo "| Snap Store | ${{ steps.calc.outputs.deploy-snap }} | stable |" >> $GITHUB_STEP_SUMMARY
             echo "| Microsoft Store | ${{ steps.calc.outputs.deploy-microsoft }} | production |" >> $GITHUB_STEP_SUMMARY
             echo "| Apple App Store | ${{ steps.calc.outputs.deploy-apple }} | App Store |" >> $GITHUB_STEP_SUMMARY
-            echo "| AppImage | ${{ steps.calc.outputs.deploy-appimage }} | GitHub Release |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| Store | Deploy | Channel |" >> $GITHUB_STEP_SUMMARY
             echo "|-------|--------|---------|" >> $GITHUB_STEP_SUMMARY
@@ -160,7 +199,6 @@ jobs:
             echo "| Snap Store | ${{ steps.calc.outputs.deploy-snap }} | edge |" >> $GITHUB_STEP_SUMMARY
             echo "| Microsoft Store | ${{ steps.calc.outputs.deploy-microsoft }} | draft |" >> $GITHUB_STEP_SUMMARY
             echo "| Apple App Store | ${{ steps.calc.outputs.deploy-apple }} | TestFlight |" >> $GITHUB_STEP_SUMMARY
-            echo "| AppImage | ${{ steps.calc.outputs.deploy-appimage }} | GitHub Release |" >> $GITHUB_STEP_SUMMARY
           fi
 
   # Step 2: Build artifacts in parallel (only what's selected)
@@ -172,36 +210,28 @@ jobs:
     with:
       version: ${{ needs.calculate-version.outputs.version }}
       edition: 'ce'
+    secrets: inherit
 
-  build-desktop:
-    name: Build Desktop
+  build-windows:
+    name: Build Windows
     needs: [ calculate-version ]
-    if: |
-      needs.calculate-version.outputs.deploy-microsoft == 'true' ||
-      needs.calculate-version.outputs.deploy-apple == 'true'
-    uses: ./.github/workflows/_build-desktop.yml
+    if: needs.calculate-version.outputs.deploy-microsoft == 'true'
+    uses: ./.github/workflows/_build-windows.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
       edition: 'ce'
-      platforms: >-
-        ${{
-          needs.calculate-version.outputs.deploy-microsoft == 'true'
-            && 'windows-amd64,windows-arm64,' || ''
-        }}${{
-          needs.calculate-version.outputs.deploy-apple == 'true'
-            && 'darwin-universal' || ''
-        }}
-    secrets:
-      APPLE_CERTIFICATES_P12: ${{ secrets.APPLE_CERTIFICATES_P12 }}
-      APPLE_CERTIFICATES_PASSWORD: ${{ secrets.APPLE_CERTIFICATES_PASSWORD }}
-      KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-      APPLE_DEVELOPER_ID_APPLICATION: ${{ secrets.APPLE_DEVELOPER_ID_APPLICATION }}
-      APPLE_ID: ${{ secrets.APPLE_ID }}
-      APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
-      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      APPLE_MAS_CERTIFICATES_P12: ${{ secrets.APPLE_MAS_CERTIFICATES_P12 }}
-      APPLE_MAS_CERTIFICATES_PASSWORD: ${{ secrets.APPLE_MAS_CERTIFICATES_PASSWORD }}
-      APPLE_MAS_PROVISIONING_PROFILE: ${{ secrets.APPLE_MAS_PROVISIONING_PROFILE }}
+      platforms: 'windows-amd64,windows-arm64'
+    secrets: inherit
+
+  build-apple:
+    name: Build Apple
+    needs: [ calculate-version ]
+    if: needs.calculate-version.outputs.deploy-apple == 'true'
+    uses: ./.github/workflows/_build-apple.yml
+    with:
+      version: ${{ needs.calculate-version.outputs.version }}
+      edition: 'ce'
+    secrets: inherit
 
   build-snap:
     name: Build Snap
@@ -210,96 +240,109 @@ jobs:
     uses: ./.github/workflows/_build-snap.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
-    secrets:
-      SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+    secrets: inherit
 
-  build-appimage:
-    name: Build AppImage
+  # DISABLED: AppImage requires system WebKit2GTK - not truly portable
+  # build-appimage:
+  #   name: Build AppImage
+  #   needs: [ calculate-version ]
+  #   if: needs.calculate-version.outputs.deploy-appimage == 'true'
+  #   uses: ./.github/workflows/_build-appimage.yml
+  #   with:
+  #     version: ${{ needs.calculate-version.outputs.version }}
+  #     edition: 'ce'
+  #   secrets: inherit
+
+  build-linux-terminal:
+    name: Build Linux Terminal
     needs: [ calculate-version ]
-    if: needs.calculate-version.outputs.deploy-appimage == 'true'
-    uses: ./.github/workflows/_build-appimage.yml
+    if: needs.calculate-version.outputs.deploy-linux-terminal == 'true'
+    uses: ./.github/workflows/_build-linux-terminal.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
-      edition: 'ce'
-
-  build-linux-cli:
-    name: Build Linux CLI
-    needs: [ calculate-version ]
-    if: needs.calculate-version.outputs.deploy-linux-cli == 'true'
-    uses: ./.github/workflows/_build-linux-cli.yml
-    with:
-      version: ${{ needs.calculate-version.outputs.version }}
+    secrets: inherit
 
   # Step 3: Sign and validate all builds (best effort - continues even if any build fails)
   sign-and-validate:
     name: Sign and Validate
-    needs: [ calculate-version, build-docker, build-desktop, build-snap, build-appimage, build-linux-cli ]
+    needs: [ calculate-version, build-docker, build-windows, build-apple, build-snap, build-linux-terminal ]
     if: |
       always() &&
       needs.calculate-version.result == 'success' &&
       (needs.build-docker.result == 'success' || needs.build-docker.result == 'skipped' || needs.build-docker.result == 'failure') &&
-      (needs.build-desktop.result == 'success' || needs.build-desktop.result == 'skipped' || needs.build-desktop.result == 'failure') &&
+      (needs.build-windows.result == 'success' || needs.build-windows.result == 'skipped' || needs.build-windows.result == 'failure') &&
+      (needs.build-apple.result == 'success' || needs.build-apple.result == 'skipped' || needs.build-apple.result == 'failure') &&
       (needs.build-snap.result == 'success' || needs.build-snap.result == 'skipped' || needs.build-snap.result == 'failure') &&
-      (needs.build-appimage.result == 'success' || needs.build-appimage.result == 'skipped' || needs.build-appimage.result == 'failure') &&
-      (needs.build-linux-cli.result == 'success' || needs.build-linux-cli.result == 'skipped' || needs.build-linux-cli.result == 'failure')
+      (needs.build-linux-terminal.result == 'success' || needs.build-linux-terminal.result == 'skipped' || needs.build-linux-terminal.result == 'failure')
     uses: ./.github/workflows/_sign-validate.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
       validate-snap: ${{ needs.build-snap.result == 'success' }}
-      validate-desktop: ${{ needs.build-desktop.result == 'success' }}
-      validate-appimage: ${{ needs.build-appimage.result == 'success' }}
+      validate-desktop: ${{ needs.build-windows.result == 'success' || needs.build-apple.result == 'success' }}
+      validate-appimage: false  # DISABLED: AppImage builds disabled
 
   # Step 4: Create GitHub release (only if ALL selected platforms built successfully)
   create-github-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [ calculate-version, build-docker, build-desktop, build-snap, build-appimage, build-linux-cli ]
+    needs: [ calculate-version, build-docker, build-windows, build-apple, build-snap, build-linux-terminal, sign-and-validate ]
     if: |
       always() &&
       needs.calculate-version.result == 'success' &&
+      needs.sign-and-validate.result == 'success' &&
       (needs.calculate-version.outputs.deploy-docker != 'true' || needs.build-docker.result == 'success') &&
       (needs.calculate-version.outputs.deploy-snap != 'true' || needs.build-snap.result == 'success') &&
-      ((needs.calculate-version.outputs.deploy-microsoft != 'true' && needs.calculate-version.outputs.deploy-apple != 'true') || needs.build-desktop.result == 'success') &&
-      (needs.calculate-version.outputs.deploy-appimage != 'true' || needs.build-appimage.result == 'success') &&
-      (needs.calculate-version.outputs.deploy-linux-cli != 'true' || needs.build-linux-cli.result == 'success')
+      (needs.calculate-version.outputs.deploy-microsoft != 'true' || needs.build-windows.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-apple != 'true' || needs.build-apple.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-linux-terminal != 'true' || needs.build-linux-terminal.result == 'success')
     permissions:
       contents: write
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            uploads.github.com:443
+
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
           submodules: false
 
       - name: Download Snap packages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         continue-on-error: true
         with:
           pattern: snap-package-*
           path: artifacts/
 
       - name: Download Desktop builds
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         continue-on-error: true
         with:
           pattern: desktop-*
           path: artifacts/
 
-      - name: Download AppImages
-        uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          pattern: appimage-*
-          path: artifacts/
+      # DISABLED: AppImage builds disabled
+      # - name: Download AppImages
+      #   uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+      #   continue-on-error: true
+      #   with:
+      #     pattern: appimage-*
+      #     path: artifacts/
 
-      - name: Download Linux CLI binaries
-        uses: actions/download-artifact@v4
+      - name: Download Linux server binaries
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         continue-on-error: true
         with:
-          pattern: cli-binaries-*
+          pattern: server-binaries-*
           path: artifacts/
 
       - name: Download signatures
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         continue-on-error: true
         with:
           name: signatures
@@ -309,13 +352,10 @@ jobs:
         run: |
           mkdir -p final-assets
 
-          # Copy AppImage packages
-          find artifacts -type f -name "*.AppImage" -exec cp {} final-assets/ \; 2>/dev/null || true
-
           # Copy desktop builds (exe, dmg, msixbundle)
           find artifacts -type f \( -name "*.exe" -o -name "*.dmg" -o -name "*.msixbundle" \) -exec cp {} final-assets/ \; 2>/dev/null || true
 
-          # Copy Linux CLI binaries
+          # Copy Linux server binaries
           find artifacts -type f -name "whodb-*-linux-*" -exec cp {} final-assets/ \; 2>/dev/null || true
 
           # Copy signatures (extract and copy only files, not directories)
@@ -380,7 +420,7 @@ jobs:
           cat /tmp/release-body.md
 
       - name: Create GitHub release
-        uses: ncipollo/release-action@v1
+        uses: ncipollo/release-action@b7eabc95ff50cbeeedec83973935c8f306dfcd0b # v1.20.0
         with:
           tag: ${{ needs.calculate-version.outputs.version }}
           name: Release ${{ needs.calculate-version.outputs.version }}
@@ -402,8 +442,7 @@ jobs:
     with:
       version: ${{ needs.calculate-version.outputs.version }}
       channel: ${{ needs.calculate-version.outputs.stage-only == 'true' && 'edge' || 'stable' }}
-    secrets:
-      SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+    secrets: inherit
 
   deploy-microsoft:
     name: Deploy Microsoft
@@ -416,14 +455,7 @@ jobs:
     with:
       version: ${{ needs.calculate-version.outputs.version }}
       stage-only: ${{ needs.calculate-version.outputs.stage-only == 'true' }}
-    secrets:
-      MS_TENANT_ID: ${{ secrets.MS_TENANT_ID }}
-      MS_CLIENT_ID: ${{ secrets.MS_CLIENT_ID }}
-      MS_CLIENT_SECRET: ${{ secrets.MS_CLIENT_SECRET }}
-      MS_APP_ID: ${{ secrets.MS_APP_ID }}
-      MS_PACKAGE_IDENTITY_NAME: ${{ secrets.MS_PACKAGE_IDENTITY_NAME }}
-      WINDOWS_PUBLISHER_CN: ${{ secrets.WINDOWS_PUBLISHER_CN }}
-      MS_PACKAGE_PUBLISHER_DISPLAY_NAME: ${{ secrets.MS_PACKAGE_PUBLISHER_DISPLAY_NAME }}
+    secrets: inherit
 
   deploy-apple:
     name: Deploy Apple
@@ -436,22 +468,8 @@ jobs:
     with:
       version: ${{ needs.calculate-version.outputs.version }}
       stage-only: ${{ needs.calculate-version.outputs.stage-only == 'true' }}
-    secrets:
-      APPLE_CERTIFICATES_P12: ${{ secrets.APPLE_CERTIFICATES_P12 }}
-      APPLE_CERTIFICATES_PASSWORD: ${{ secrets.APPLE_CERTIFICATES_PASSWORD }}
-      KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-      APPLE_MAS_CERTIFICATES_P12: ${{ secrets.APPLE_MAS_CERTIFICATES_P12 }}
-      APPLE_MAS_CERTIFICATES_PASSWORD: ${{ secrets.APPLE_MAS_CERTIFICATES_PASSWORD }}
-      APPLE_MAS_CERT_APPLICATION: ${{ secrets.APPLE_MAS_CERT_APPLICATION }}
-      APPLE_MAS_CERT_INSTALLER: ${{ secrets.APPLE_MAS_CERT_INSTALLER }}
-      APPLE_MAS_PROVISIONING_PROFILE: ${{ secrets.APPLE_MAS_PROVISIONING_PROFILE }}
-      APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
-      APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
-      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-      APPLE_DEVELOPER_ID: ${{ secrets.APPLE_DEVELOPER_ID }}
-      APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
-      APPLE_APP_ID: ${{ secrets.APPLE_APP_ID }}
-      ASC_PUBLIC_ID: ${{ secrets.ASC_PUBLIC_ID }}
+      release-notes: ${{ needs.calculate-version.outputs.release-notes }}
+    secrets: inherit
 
   # Step 6: Deploy to Docker Hub (after GitHub release)
   deploy-docker:
@@ -465,9 +483,7 @@ jobs:
     with:
       version: ${{ needs.calculate-version.outputs.version }}
       stage-only: ${{ needs.calculate-version.outputs.stage-only == 'true' }}
-    secrets:
-      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+    secrets: inherit
 
   # Step 7: Generate Homebrew cask (production only)
   generate-homebrew-cask:
@@ -489,10 +505,10 @@ jobs:
     needs: [
       calculate-version,
       build-docker,
-      build-desktop,
+      build-windows,
+      build-apple,
       build-snap,
-      build-appimage,
-      build-linux-cli,
+      build-linux-terminal,
       sign-and-validate,
       deploy-docker,
       deploy-snap,
@@ -502,6 +518,12 @@ jobs:
       generate-homebrew-cask
     ]
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: block
+          allowed-endpoints: >+
+
       - name: Generate comprehensive summary
         run: |
           echo "# 📊 Release Summary for ${{ needs.calculate-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
@@ -523,12 +545,20 @@ jobs:
             echo "| Docker | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
           fi
 
-          if [ "${{ needs.build-desktop.result }}" = "success" ]; then
-            echo "| Desktop | ✅ Success |" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.build-desktop.result }}" = "skipped" ]; then
-            echo "| Desktop | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ needs.build-windows.result }}" = "success" ]; then
+            echo "| Windows | ✅ Success |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.build-windows.result }}" = "skipped" ]; then
+            echo "| Windows | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
           else
-            echo "| Desktop | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+            echo "| Windows | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.build-apple.result }}" = "success" ]; then
+            echo "| Apple | ✅ Success |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.build-apple.result }}" = "skipped" ]; then
+            echo "| Apple | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Apple | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
           fi
 
           if [ "${{ needs.build-snap.result }}" = "success" ]; then
@@ -539,20 +569,12 @@ jobs:
             echo "| Snap | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
           fi
 
-          if [ "${{ needs.build-appimage.result }}" = "success" ]; then
-            echo "| AppImage | ✅ Success |" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.build-appimage.result }}" = "skipped" ]; then
-            echo "| AppImage | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ needs.build-linux-terminal.result }}" = "success" ]; then
+            echo "| Linux Terminal | ✅ Success |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.build-linux-terminal.result }}" = "skipped" ]; then
+            echo "| Linux Terminal | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
           else
-            echo "| AppImage | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          if [ "${{ needs.build-linux-cli.result }}" = "success" ]; then
-            echo "| Linux CLI | ✅ Success |" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.build-linux-cli.result }}" = "skipped" ]; then
-            echo "| Linux CLI | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| Linux CLI | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+            echo "| Linux Terminal | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
           fi
 
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -618,8 +640,8 @@ jobs:
             else
               RELEASE_NOTE="Published"
             fi
-            if [ "${{ needs.calculate-version.outputs.deploy-linux-cli }}" = "true" ]; then
-              RELEASE_NOTE="$RELEASE_NOTE (includes CLI)"
+            if [ "${{ needs.calculate-version.outputs.deploy-linux-terminal }}" = "true" ]; then
+              RELEASE_NOTE="$RELEASE_NOTE (includes Linux Terminal)"
             fi
             echo "| GitHub Release | ✅ Created | $RELEASE_NOTE |" >> $GITHUB_STEP_SUMMARY
           elif [ "${{ needs.create-github-release.result }}" = "skipped" ]; then
