@@ -44,6 +44,7 @@ jobs:
             _https._tcp.motd.ubuntu.com:443
             _https._tcp.packages.microsoft.com:443
             api.github.com:443
+            api.snapcraft.io:443
             azure.archive.ubuntu.com:80
             canonical-bos01.cdn.snapcraftcontent.com:443
             canonical-lgw01.cdn.snapcraftcontent.com:443
