@@ -28,6 +28,7 @@ jobs:
         with:
           egress-policy: block
           allowed-endpoints: >
+            api.snapcraft.io:443
             canonical-bos01.cdn.snapcraftcontent.com:443
             canonical-lgw01.cdn.snapcraftcontent.com:443
             dashboard.snapcraft.io:443
