@@ -53,7 +53,6 @@ import {
     CheckCircleIcon,
     CircleStackIcon,
     CommandLineIcon,
-    ListBulletIcon,
     MagnifyingGlassIcon,
     PlusCircleIcon,
     Squares2X2Icon,
@@ -218,6 +217,15 @@ export const StorageUnitPage: FC = () => {
             schema,
         },
     });
+
+    // Refetch storage units when profile changes (current?.Id changes means different server/credentials)
+    const currentProfileId = current?.Id;
+    useEffect(() => {
+        if (currentProfileId) {
+            refetch();
+        }
+    }, [currentProfileId, refetch]);
+
     const [filterValue, setFilterValue] = useState("");
 
     const routes = useMemo(() => {

@@ -61,11 +61,11 @@ services:
     environment:
       MYSQL_USER: user
       MYSQL_PASSWORD: password
-      MYSQL_DATABASE: test_db
+      MYSQL_DATABASE: test_db_842
       MYSQL_ROOT_PASSWORD: password
     volumes:
       - e2e_mysql_842:/var/lib/mysql
-      - ./sample-data/mysql/data.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./sample-data/mysql/data842.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "3308:3306"
     networks:
