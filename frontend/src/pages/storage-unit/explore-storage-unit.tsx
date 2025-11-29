@@ -205,7 +205,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
 
     const handleCustomPageSizeApply = useCallback(() => {
         const parsed = Number.parseInt(customPageSizeInput);
-        if (!Number.isNaN(parsed) && parsed >= 1 && parsed <= 1000) {
+        if (!Number.isNaN(parsed) && parsed > 0) {
             setBufferPageSize(String(parsed));
         } else {
             setCustomPageSizeInput(bufferPageSize);
@@ -628,7 +628,6 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                                     <Input
                                         type="number"
                                         min={1}
-                                        max={1000}
                                         className="w-24"
                                         value={customPageSizeInput}
                                         onChange={(e) => setCustomPageSizeInput(e.target.value)}

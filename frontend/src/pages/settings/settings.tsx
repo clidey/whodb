@@ -96,7 +96,7 @@ export const SettingsPage: FC = () => {
 
     const handleCustomPageSizeApply = useCallback(() => {
         const parsed = Number.parseInt(customPageSizeInput);
-        if (!Number.isNaN(parsed) && parsed >= 1 && parsed <= 1000) {
+        if (!Number.isNaN(parsed) && parsed > 0) {
             dispatch(SettingsActions.setDefaultPageSize(parsed));
         } else {
             setCustomPageSizeInput(String(defaultPageSize));
@@ -248,7 +248,6 @@ export const SettingsPage: FC = () => {
                                     <Input
                                         type="number"
                                         min={1}
-                                        max={1000}
                                         className="w-24"
                                         value={customPageSizeInput}
                                         onChange={(e) => setCustomPageSizeInput(e.target.value)}
