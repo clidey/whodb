@@ -67,7 +67,8 @@ var LogLevel = getLogLevel()
 var DisableMockDataGeneration = os.Getenv("WHODB_DISABLE_MOCK_DATA_GENERATION")
 
 var ApplicationEnvironment = os.Getenv("WHODB_APPLICATION_ENVIRONMENT")
-var ApplicationVersion = os.Getenv("WHODB_APPLICATION_VERSION")
+
+var ApplicationVersion string
 
 var PosthogAPIKey = "phc_hbXcCoPTdxm5ADL8PmLSYTIUvS6oRWFM2JAK8SMbfnH"
 var PosthogHost = "https://us.i.posthog.com"
@@ -157,18 +158,6 @@ func GetOpenAICompatibleEndpoint() string {
 		return OpenAICompatibleEndpoint
 	}
 	return "https://api.openai.com/v1"
-}
-
-func GetClideyQuickContainerImage() string {
-	image := os.Getenv("CLIDEY_QUICK_CONTAINER_IMAGE")
-	if len(image) == 0 {
-		return ""
-	}
-	splitImage := strings.Split(image, ":")
-	if len(splitImage) != 2 {
-		return ""
-	}
-	return splitImage[1]
 }
 
 func GetDefaultDatabaseCredentials(databaseType string) []types.DatabaseCredentials {

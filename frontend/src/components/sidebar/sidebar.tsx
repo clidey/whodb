@@ -481,7 +481,7 @@ export const Sidebar: FC = () => {
                 <div className={cn("absolute right-4 bottom-4 text-xs text-muted-foreground", {
                     "hidden": !open,
                 })}>
-                    {version?.Version}
+                    Version: {version?.Version}
                 </div>
             </SidebarComponent>
             <Sheet open={showLoginCard} onOpenChange={setShowLoginCard}>

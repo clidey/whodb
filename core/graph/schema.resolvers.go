@@ -690,7 +690,8 @@ func (r *queryResolver) Version(ctx context.Context) (string, error) {
 	if env.ApplicationVersion != "" {
 		return env.ApplicationVersion, nil
 	}
-	return env.GetClideyQuickContainerImage(), nil
+	// Default fallback for development
+	return "development", nil
 }
 
 // Profiles is the resolver for the Profiles field.
