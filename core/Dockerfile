@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM node:lts-alpine AS build-stage
+FROM node:24.11.1-alpine3.22 AS build-stage
 RUN npm i -g pnpm
 WORKDIR /app
 COPY ./frontend/package.json ./frontend/pnpm-lock.yaml ./
@@ -37,7 +37,7 @@ ARG VERSION=dev
 ARG TARGETARCH
 ARG PLATFORM=docker
 
-FROM golang:alpine AS backend-stage
+FROM golang:1.25.4-alpine3.22 AS backend-stage
 RUN apk update && apk add --no-cache gcc musl-dev git
 WORKDIR /app
 COPY ./core/go.mod ./core/go.sum ./
