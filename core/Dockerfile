@@ -57,7 +57,7 @@ COPY --from=build-stage /app/build/ ./build/
 ARG VERSION
 ARG TARGETARCH
 ARG PLATFORM
-RUN CGO_ENABLED=1 GOOS=linux go build \
+RUN CGO_ENABLED=1 GOOS=linux go build -tags prod \
 	-ldflags="-X github.com/clidey/whodb/core/src/env.ApplicationVersion=${VERSION} -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=${PLATFORM}-${TARGETARCH}" \
 	-o /core
 

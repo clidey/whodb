@@ -443,7 +443,7 @@ $(SERVER_BUILD_DIR):
 # Build server for amd64
 server-amd64: | $(SERVER_BUILD_DIR)
 	@echo "Building WhoDB server for Linux AMD64..."
-	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build \
+	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -tags prod \
 		-ldflags="-s -w -X github.com/clidey/whodb/core/src/env.ApplicationVersion=$(VERSION) -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=linux-amd64" \
 		-o ../desktop-common/$(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-amd64 .
 	@echo "✅ Built: $(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-amd64"
@@ -451,7 +451,7 @@ server-amd64: | $(SERVER_BUILD_DIR)
 # Build server for arm64
 server-arm64: | $(SERVER_BUILD_DIR)
 	@echo "Building WhoDB server for Linux ARM64..."
-	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=arm64 CC=aarch64-linux-gnu-gcc go build \
+	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=arm64 CC=aarch64-linux-gnu-gcc go build -tags prod \
 		-ldflags="-s -w -X github.com/clidey/whodb/core/src/env.ApplicationVersion=$(VERSION) -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=linux-arm64" \
 		-o ../desktop-common/$(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-arm64 .
 	@echo "✅ Built: $(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-arm64"
@@ -459,7 +459,7 @@ server-arm64: | $(SERVER_BUILD_DIR)
 # Build server for riscv64
 server-riscv64: | $(SERVER_BUILD_DIR)
 	@echo "Building WhoDB server for Linux RISC-V64..."
-	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=riscv64 CC=riscv64-linux-gnu-gcc go build \
+	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=riscv64 CC=riscv64-linux-gnu-gcc go build -tags prod \
 		-ldflags="-s -w -X github.com/clidey/whodb/core/src/env.ApplicationVersion=$(VERSION) -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=linux-riscv64" \
 		-o ../desktop-common/$(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-riscv64 .
 	@echo "✅ Built: $(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-riscv64"
@@ -467,7 +467,7 @@ server-riscv64: | $(SERVER_BUILD_DIR)
 # Build server for armv6
 server-armv6: | $(SERVER_BUILD_DIR)
 	@echo "Building WhoDB server for Linux ARMv6..."
-	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=arm GOARM=6 CC=arm-linux-gnueabihf-gcc go build \
+	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=arm GOARM=6 CC=arm-linux-gnueabihf-gcc go build -tags prod \
 		-ldflags="-s -w -X github.com/clidey/whodb/core/src/env.ApplicationVersion=$(VERSION) -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=linux-armv6" \
 		-o ../desktop-common/$(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-armv6 .
 	@echo "✅ Built: $(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-armv6"
@@ -475,7 +475,7 @@ server-armv6: | $(SERVER_BUILD_DIR)
 # Build server for armv7
 server-armv7: | $(SERVER_BUILD_DIR)
 	@echo "Building WhoDB server for Linux ARMv7..."
-	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=arm GOARM=7 CC=arm-linux-gnueabihf-gcc go build \
+	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=arm GOARM=7 CC=arm-linux-gnueabihf-gcc go build -tags prod \
 		-ldflags="-s -w -X github.com/clidey/whodb/core/src/env.ApplicationVersion=$(VERSION) -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=linux-armv7" \
 		-o ../desktop-common/$(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-armv7 .
 	@echo "✅ Built: $(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-armv7"
