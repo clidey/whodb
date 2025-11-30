@@ -58,12 +58,14 @@ updates:
   - package-ecosystem: "docker"
     directory: "/core"
     multi-ecosystem-group: "all-docker"
+    patterns: [ "*" ]
     schedule:
       interval: "weekly"
 
   - package-ecosystem: "docker"
     directory: "/docs"
     multi-ecosystem-group: "all-docker"
+    patterns: [ "*" ]
     schedule:
       interval: "weekly"
 
