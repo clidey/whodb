@@ -108,91 +108,79 @@ jobs:
       - name: Build Windows AMD64
         if: matrix.arch == 'amd64' && matrix.enabled != false
         working-directory: ./desktop-${{ inputs.edition }}
-        shell: pwsh
+        shell: bash
         env:
           GOARCH: ${{ matrix.arch }}
+          VERSION: ${{ inputs.version }}
         run: |
-          Write-Host "Building Windows executable for MSIX packaging..."
+          echo "Building Windows executable for MSIX packaging..."
 
           # Prepare frontend
-          Write-Host "Preparing frontend..."
-          New-Item -ItemType Directory -Path frontend/dist -Force | Out-Null
-          Set-Location ../frontend
+          echo "Preparing frontend..."
+          mkdir -p frontend/dist
+          cd ../frontend
 
           # Check if frontend is already built from cache
-          if (Test-Path "build/index.html") {
-              Write-Host "Using cached frontend build"
-          } else {
-              Write-Host "Building frontend..."
-              $env:CYPRESS_INSTALL_BINARY = "0"
-              pnpm run build:${{ inputs.edition }}
-          }
+          if [ -f "build/index.html" ]; then
+              echo "Using cached frontend build"
+          else
+              echo "Building frontend..."
+              CYPRESS_INSTALL_BINARY=0 pnpm run build:${{ inputs.edition }}
+          fi
 
-          Copy-Item -Path build/* -Destination ../desktop-${{ inputs.edition }}/frontend/dist/ -Recurse
-          Set-Location ../desktop-${{ inputs.edition }}
+          cp -r build/* ../desktop-${{ inputs.edition }}/frontend/dist/
+          cd ../desktop-${{ inputs.edition }}
 
-          Write-Host "Using Makefile to build..."
-          Write-Host "Building with VERSION=${{ inputs.version }}"
-          $env:VERSION = "${{ inputs.version }}"
-          make ${{ matrix.make-target }} VERSION="${{ inputs.version }}"
-
-          if ($LASTEXITCODE -ne 0) {
-              Write-Error "Make build failed with exit code: $LASTEXITCODE"
-              exit 1
-          }
+          echo "Using Makefile to build..."
+          echo "Building with VERSION=$VERSION"
+          make ${{ matrix.make-target }} VERSION="$VERSION"
 
           # Verify the executable is in the expected location
-          if (Test-Path "build/windows/amd64/whodb.exe") {
-              Write-Host "✅ Executable ready: build/windows/amd64/whodb.exe"
-          } else {
-              Write-Error "Could not find whodb.exe at expected location"
+          if [ -f "build/windows/amd64/whodb.exe" ]; then
+              echo "Executable ready: build/windows/amd64/whodb.exe"
+          else
+              echo "Could not find whodb.exe at expected location"
               exit 1
-          }
+          fi
 
       # Windows ARM64 Build
       - name: Build Windows ARM64
         if: matrix.arch == 'arm64' && matrix.enabled != false
         working-directory: ./desktop-${{ inputs.edition }}
-        shell: pwsh
+        shell: bash
         env:
           GOARCH: ${{ matrix.arch }}
+          VERSION: ${{ inputs.version }}
         run: |
-          Write-Host "Building Windows executable for ARM64..."
+          echo "Building Windows executable for ARM64..."
 
           # Prepare frontend
-          Write-Host "Preparing frontend..."
-          New-Item -ItemType Directory -Path frontend/dist -Force | Out-Null
-          Set-Location ../frontend
+          echo "Preparing frontend..."
+          mkdir -p frontend/dist
+          cd ../frontend
 
           # Check if frontend is already built from cache
-          if (Test-Path "build/index.html") {
-              Write-Host "Using cached frontend build"
-          } else {
-              Write-Host "Building frontend..."
-              $env:CYPRESS_INSTALL_BINARY = "0"
-              pnpm run build:${{ inputs.edition }}
-          }
+          if [ -f "build/index.html" ]; then
+              echo "Using cached frontend build"
+          else
+              echo "Building frontend..."
+              CYPRESS_INSTALL_BINARY=0 pnpm run build:${{ inputs.edition }}
+          fi
 
-          Copy-Item -Path build/* -Destination ../desktop-${{ inputs.edition }}/frontend/dist/ -Recurse
-          Set-Location ../desktop-${{ inputs.edition }}
+          cp -r build/* ../desktop-${{ inputs.edition }}/frontend/dist/
+          cd ../desktop-${{ inputs.edition }}
 
-          Write-Host "Using Makefile to build..."
-          Write-Host "Building with VERSION=${{ inputs.version }}"
-          $env:VERSION = "${{ inputs.version }}"
-          make ${{ matrix.make-target }} VERSION="${{ inputs.version }}"
-
-          if ($LASTEXITCODE -ne 0) {
-              Write-Error "Make build failed with exit code: $LASTEXITCODE"
-              exit 1
-          }
+          echo "Using Makefile to build..."
+          echo "Building with VERSION=$VERSION"
+          make ${{ matrix.make-target }} VERSION="$VERSION"
 
           # Verify the executable is in the expected location
-          if (Test-Path "build/windows/arm64/whodb.exe") {
-              Write-Host "Executable ready: build/windows/arm64/whodb.exe"
-          } else {
-              Write-Error "Could not find whodb.exe at expected location"
+          if [ -f "build/windows/arm64/whodb.exe" ]; then
+              echo "Executable ready: build/windows/arm64/whodb.exe"
+          else
+              echo "Could not find whodb.exe at expected location"
               exit 1
-          }
+          fi
 
       - name: Upload Windows artifacts
         if: matrix.enabled != false

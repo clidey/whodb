@@ -450,15 +450,20 @@ parts:
       go install github.com/wailsapp/wails/v2/cmd/wails@v2.11.0
       export PATH=$PATH:$HOME/go/bin
 
-      # Read version from .snap_version file created by GitHub Actions
-      VERSION_FILE="${SNAPCRAFT_PROJECT_DIR}/.snap_version"
-      if [ -f "$VERSION_FILE" ]; then
-        VERSION=$(cat "$VERSION_FILE")
-        echo "Building with version: $VERSION"
+      # Get version from SNAPCRAFT_PROJECT_VERSION (set by CI) or .snap_version file
+      if [ -n "$SNAPCRAFT_PROJECT_VERSION" ]; then
+        VERSION="$SNAPCRAFT_PROJECT_VERSION"
+        echo "Building with version from SNAPCRAFT_PROJECT_VERSION: $VERSION"
+      elif [ -f "${SNAPCRAFT_PROJECT_DIR}/.snap_version" ]; then
+        VERSION=$(cat "${SNAPCRAFT_PROJECT_DIR}/.snap_version" | tr -d '[:space:]')
+        echo "Building with version from .snap_version: $VERSION"
       else
         VERSION="dev"
-        echo "No .snap_version file found, using default version: $VERSION"
+        echo "No version source found, using default: $VERSION"
       fi
+
+      # Export VERSION for make
+      export VERSION
 
       # Copy frontend build from previous part to expected location
       mkdir -p desktop-ce/frontend/dist
