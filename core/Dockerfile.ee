@@ -15,7 +15,7 @@
 # WhoDB Enterprise Edition Dockerfile
 
 # Build frontend with EE modules
-from node:24.11.1-alpine3.22 AS build-stage
+from node:25.2.1-alpine3.22 AS build-stage
 RUN npm i -g pnpm
 WORKDIR /app
 
