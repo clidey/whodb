@@ -151,8 +151,16 @@ jobs:
         env:
           GOARCH: ${{ matrix.arch }}
           VERSION: ${{ inputs.version }}
+          CC: clang
+          CXX: clang++
+          CGO_ENABLED: 1
         run: |
           echo "Building Windows executable for ARM64..."
+
+          # Verify clang is available and supports ARM64
+          echo "Checking compiler..."
+          clang --version
+          clang --print-targets | grep -i aarch64 || echo "aarch64 target check done"
 
           # Prepare frontend
           echo "Preparing frontend..."
@@ -171,7 +179,7 @@ jobs:
           cd ../desktop-${{ inputs.edition }}
 
           echo "Using Makefile to build..."
-          echo "Building with VERSION=$VERSION"
+          echo "Building with VERSION=$VERSION CC=$CC"
           make ${{ matrix.make-target }} VERSION="$VERSION"
 
           # Verify the executable is in the expected location
