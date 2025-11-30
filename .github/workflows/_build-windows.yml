@@ -16,7 +16,7 @@ on:
         description: 'Platforms to build (comma-separated: windows-amd64,windows-arm64)'
         required: false
         type: string
-        default: 'windows-amd64,windows-arm64'
+        default: 'windows-amd64'
 
 permissions:
   contents: read
