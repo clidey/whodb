@@ -1,0 +1,24 @@
+# Test files
+*_test.go
+e2e/
+testutil/
+
+# Development files
+*.md
+!README.md
+.vscode/
+.idea/
+
+# Build artifacts
+whodb-cli
+*.exe
+
+# Git
+.git/
+.gitignore
+
+# Kubernetes
+k8s/
+
+# Misc
+.DS_Store

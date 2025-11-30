@@ -1,0 +1,579 @@
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package database
+
+import (
+	"encoding/csv"
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"github.com/clidey/whodb/cli/internal/config"
+	"github.com/clidey/whodb/core/graph/model"
+	"github.com/clidey/whodb/core/src"
+	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/env"
+	"github.com/clidey/whodb/core/src/llm"
+	"github.com/xuri/excelize/v2"
+)
+
+type Connection = config.Connection
+
+type Manager struct {
+	engine            *engine.Engine
+	currentConnection *Connection
+	config            *config.Config
+}
+
+func (m *Manager) buildCredentials(conn *Connection) *engine.Credentials {
+	credentials := &engine.Credentials{
+		Type:     conn.Type,
+		Hostname: conn.Host,
+		Username: conn.Username,
+		Password: conn.Password,
+		Database: conn.Database,
+	}
+
+	if conn.Port > 0 {
+		credentials.Advanced = append(credentials.Advanced, engine.Record{
+			Key:   "Port",
+			Value: fmt.Sprintf("%d", conn.Port),
+		})
+	}
+
+	return credentials
+}
+
+func NewManager() (*Manager, error) {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return nil, fmt.Errorf("error loading config: %w", err)
+	}
+
+	eng := src.InitializeEngine()
+
+	return &Manager{
+		engine: eng,
+		config: cfg,
+	}, nil
+}
+
+func (m *Manager) ListConnections() []Connection {
+	return m.config.Connections
+}
+
+func (m *Manager) GetConnection(name string) (*Connection, error) {
+	return m.config.GetConnection(name)
+}
+
+func (m *Manager) Connect(conn *Connection) error {
+	dbType := engine.DatabaseType(conn.Type)
+
+	credentials := m.buildCredentials(conn)
+
+	plugin := m.engine.Choose(dbType)
+	if plugin == nil {
+		// Don't expose database type in error for security
+		return fmt.Errorf("unsupported database type")
+	}
+
+	pluginConfig := engine.NewPluginConfig(credentials)
+	if !plugin.IsAvailable(pluginConfig) {
+		// Don't expose connection details in error message for security
+		return fmt.Errorf("cannot connect to database. please check your credentials and ensure the database is accessible")
+	}
+
+	m.currentConnection = conn
+	return nil
+}
+
+func (m *Manager) Disconnect() error {
+	m.currentConnection = nil
+	return nil
+}
+
+func (m *Manager) GetCurrentConnection() *Connection {
+	return m.currentConnection
+}
+
+func (m *Manager) GetSchemas() ([]string, error) {
+	if m.currentConnection == nil {
+		return nil, fmt.Errorf("not connected to any database")
+	}
+
+	dbType := engine.DatabaseType(m.currentConnection.Type)
+
+	plugin := m.engine.Choose(dbType)
+	if plugin == nil {
+		return nil, fmt.Errorf("plugin not found")
+	}
+
+	credentials := m.buildCredentials(m.currentConnection)
+	pluginConfig := engine.NewPluginConfig(credentials)
+	return plugin.GetAllSchemas(pluginConfig)
+}
+
+func (m *Manager) GetStorageUnits(schema string) ([]engine.StorageUnit, error) {
+	if m.currentConnection == nil {
+		return nil, fmt.Errorf("not connected to any database")
+	}
+
+	dbType := engine.DatabaseType(m.currentConnection.Type)
+
+	plugin := m.engine.Choose(dbType)
+	if plugin == nil {
+		return nil, fmt.Errorf("plugin not found")
+	}
+
+	credentials := m.buildCredentials(m.currentConnection)
+
+	pluginConfig := engine.NewPluginConfig(credentials)
+	return plugin.GetStorageUnits(pluginConfig, schema)
+}
+
+func (m *Manager) ExecuteQuery(query string) (*engine.GetRowsResult, error) {
+	if m.currentConnection == nil {
+		return nil, fmt.Errorf("not connected to any database")
+	}
+
+	dbType := engine.DatabaseType(m.currentConnection.Type)
+
+	plugin := m.engine.Choose(dbType)
+	if plugin == nil {
+		return nil, fmt.Errorf("plugin not found")
+	}
+
+	credentials := m.buildCredentials(m.currentConnection)
+
+	pluginConfig := engine.NewPluginConfig(credentials)
+	return plugin.RawExecute(pluginConfig, query)
+}
+
+func (m *Manager) GetRows(schema, storageUnit string, where *model.WhereCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+	if m.currentConnection == nil {
+		return nil, fmt.Errorf("not connected to any database")
+	}
+
+	dbType := engine.DatabaseType(m.currentConnection.Type)
+
+	plugin := m.engine.Choose(dbType)
+	if plugin == nil {
+		return nil, fmt.Errorf("plugin not found")
+	}
+
+	credentials := m.buildCredentials(m.currentConnection)
+
+	pluginConfig := engine.NewPluginConfig(credentials)
+	return plugin.GetRows(pluginConfig, schema, storageUnit, where, nil, pageSize, pageOffset)
+}
+
+func (m *Manager) GetColumns(schema, storageUnit string) ([]engine.Column, error) {
+	if m.currentConnection == nil {
+		return nil, fmt.Errorf("not connected to any database")
+	}
+
+	dbType := engine.DatabaseType(m.currentConnection.Type)
+
+	plugin := m.engine.Choose(dbType)
+	if plugin == nil {
+		return nil, fmt.Errorf("plugin not found")
+	}
+
+	credentials := m.buildCredentials(m.currentConnection)
+
+	pluginConfig := engine.NewPluginConfig(credentials)
+	return plugin.GetColumnsForTable(pluginConfig, schema, storageUnit)
+}
+
+func (m *Manager) ExportToCSV(schema, storageUnit, filename, delimiter string) error {
+	if m.currentConnection == nil {
+		return fmt.Errorf("not connected to any database")
+	}
+
+	dbType := engine.DatabaseType(m.currentConnection.Type)
+	plugin := m.engine.Choose(dbType)
+	if plugin == nil {
+		return fmt.Errorf("plugin not found")
+	}
+
+	credentials := m.buildCredentials(m.currentConnection)
+
+	pluginConfig := engine.NewPluginConfig(credentials)
+
+	// Get all rows
+	result, err := plugin.GetRows(pluginConfig, schema, storageUnit, nil, nil, 0, 0)
+	if err != nil {
+		return fmt.Errorf("failed to fetch data: %w", err)
+	}
+
+	// Write to a temp file first for atomic replace
+	dir := filepath.Dir(filename)
+	tmp, err := os.CreateTemp(dir, ".whodb-export-*.csv")
+	if err != nil {
+		return fmt.Errorf("failed to create temp file: %w", err)
+	}
+	tmpPath := tmp.Name()
+	writer := csv.NewWriter(tmp)
+	delimRune := rune(delimiter[0])
+	writer.Comma = delimRune
+
+	// Write headers
+	headers := make([]string, len(result.Columns))
+	for i, col := range result.Columns {
+		headers[i] = col.Name
+	}
+	if err := writer.Write(headers); err != nil {
+		return fmt.Errorf("failed to write headers: %w", err)
+	}
+
+	// Write rows
+	for _, row := range result.Rows {
+		if err := writer.Write(row); err != nil {
+			return fmt.Errorf("failed to write row: %w", err)
+		}
+	}
+
+	writer.Flush()
+	if err := writer.Error(); err != nil {
+		_ = tmp.Close()
+		_ = os.Remove(tmpPath)
+		return fmt.Errorf("failed to flush CSV writer: %w", err)
+	}
+	_ = tmp.Sync()
+	if err := tmp.Close(); err != nil {
+		_ = os.Remove(tmpPath)
+		return fmt.Errorf("failed to close temp file: %w", err)
+	}
+	// Rename into place (replace if exists)
+	if err := os.Rename(tmpPath, filename); err != nil {
+		// On Windows, need to remove destination first
+		_ = os.Remove(filename)
+		if err2 := os.Rename(tmpPath, filename); err2 != nil {
+			_ = os.Remove(tmpPath)
+			return fmt.Errorf("failed to save file: %w", err2)
+		}
+	}
+	// Best-effort fsync of directory to persist rename
+	syncDir(filepath.Dir(filename))
+	_ = os.Chmod(filename, 0600)
+	return nil
+}
+
+func (m *Manager) ExportToExcel(schema, storageUnit, filename string) error {
+	if m.currentConnection == nil {
+		return fmt.Errorf("not connected to any database")
+	}
+
+	dbType := engine.DatabaseType(m.currentConnection.Type)
+	plugin := m.engine.Choose(dbType)
+	if plugin == nil {
+		return fmt.Errorf("plugin not found")
+	}
+
+	credentials := m.buildCredentials(m.currentConnection)
+
+	pluginConfig := engine.NewPluginConfig(credentials)
+
+	// Get all rows
+	result, err := plugin.GetRows(pluginConfig, schema, storageUnit, nil, nil, 0, 0)
+	if err != nil {
+		return fmt.Errorf("failed to fetch data: %w", err)
+	}
+
+	// Create Excel file
+	f := excelize.NewFile()
+	defer f.Close()
+
+	sheetName := "Sheet1"
+	index, err := f.NewSheet(sheetName)
+	if err != nil {
+		return fmt.Errorf("failed to create sheet: %w", err)
+	}
+
+	// Write headers
+	for i, col := range result.Columns {
+		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
+		f.SetCellValue(sheetName, cell, col.Name)
+	}
+
+	// Write rows
+	for rowIdx, row := range result.Rows {
+		for colIdx, value := range row {
+			cell, _ := excelize.CoordinatesToCellName(colIdx+1, rowIdx+2)
+			f.SetCellValue(sheetName, cell, value)
+		}
+	}
+
+	f.SetActiveSheet(index)
+
+	// Save to temp file then atomically replace
+	dir := filepath.Dir(filename)
+	tmp, err := os.CreateTemp(dir, ".whodb-export-*.xlsx")
+	if err != nil {
+		return fmt.Errorf("failed to create temp file: %w", err)
+	}
+	tmpPath := tmp.Name()
+	tmp.Close()
+	if err := f.SaveAs(tmpPath); err != nil {
+		_ = os.Remove(tmpPath)
+		return fmt.Errorf("failed to save file: %w", err)
+	}
+	// Best-effort sync of the temp file's contents
+	if tf, err := os.OpenFile(tmpPath, os.O_RDWR, 0); err == nil {
+		_ = tf.Sync()
+		_ = tf.Close()
+	}
+	if err := os.Rename(tmpPath, filename); err != nil {
+		_ = os.Remove(filename)
+		if err2 := os.Rename(tmpPath, filename); err2 != nil {
+			_ = os.Remove(tmpPath)
+			return fmt.Errorf("failed to save file: %w", err2)
+		}
+	}
+	// Best-effort fsync of directory to persist rename
+	syncDir(filepath.Dir(filename))
+	_ = os.Chmod(filename, 0600)
+	return nil
+}
+
+func (m *Manager) ExportResultsToCSV(result *engine.GetRowsResult, filename, delimiter string) error {
+	if result == nil {
+		return fmt.Errorf("no results to export")
+	}
+
+	dir := filepath.Dir(filename)
+	tmp, err := os.CreateTemp(dir, ".whodb-export-*.csv")
+	if err != nil {
+		return fmt.Errorf("failed to create temp file: %w", err)
+	}
+	tmpPath := tmp.Name()
+
+	writer := csv.NewWriter(tmp)
+	delimRune := rune(delimiter[0])
+	writer.Comma = delimRune
+	// Flush explicitly before syncing/closing
+
+	// Write headers
+	headers := make([]string, len(result.Columns))
+	for i, col := range result.Columns {
+		headers[i] = col.Name
+	}
+	if err := writer.Write(headers); err != nil {
+		return fmt.Errorf("failed to write headers: %w", err)
+	}
+
+	// Write rows
+	for _, row := range result.Rows {
+		if err := writer.Write(row); err != nil {
+			return fmt.Errorf("failed to write row: %w", err)
+		}
+	}
+	writer.Flush()
+	if err := writer.Error(); err != nil {
+		_ = tmp.Close()
+		_ = os.Remove(tmpPath)
+		return fmt.Errorf("failed to flush CSV writer: %w", err)
+	}
+	_ = tmp.Sync()
+	if err := tmp.Close(); err != nil {
+		_ = os.Remove(tmpPath)
+		return fmt.Errorf("failed to close temp file: %w", err)
+	}
+	if err := os.Rename(tmpPath, filename); err != nil {
+		_ = os.Remove(filename)
+		if err2 := os.Rename(tmpPath, filename); err2 != nil {
+			_ = os.Remove(tmpPath)
+			return fmt.Errorf("failed to save file: %w", err2)
+		}
+	}
+	// Best-effort fsync of directory to persist rename
+	syncDir(filepath.Dir(filename))
+	_ = os.Chmod(filename, 0600)
+	return nil
+}
+
+func (m *Manager) ExportResultsToExcel(result *engine.GetRowsResult, filename string) error {
+	if result == nil {
+		return fmt.Errorf("no results to export")
+	}
+
+	f := excelize.NewFile()
+	defer f.Close()
+
+	sheetName := "Sheet1"
+	index, err := f.NewSheet(sheetName)
+	if err != nil {
+		return fmt.Errorf("failed to create sheet: %w", err)
+	}
+
+	// Write headers
+	for i, col := range result.Columns {
+		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
+		f.SetCellValue(sheetName, cell, col.Name)
+	}
+
+	// Write rows
+	for rowIdx, row := range result.Rows {
+		for colIdx, value := range row {
+			cell, _ := excelize.CoordinatesToCellName(colIdx+1, rowIdx+2)
+			f.SetCellValue(sheetName, cell, value)
+		}
+	}
+
+	f.SetActiveSheet(index)
+
+	dir := filepath.Dir(filename)
+	tmp, err := os.CreateTemp(dir, ".whodb-export-*.xlsx")
+	if err != nil {
+		return fmt.Errorf("failed to create temp file: %w", err)
+	}
+	tmpPath := tmp.Name()
+	tmp.Close()
+	if err := f.SaveAs(tmpPath); err != nil {
+		_ = os.Remove(tmpPath)
+		return fmt.Errorf("failed to save file: %w", err)
+	}
+	if tf, err := os.OpenFile(tmpPath, os.O_RDWR, 0); err == nil {
+		_ = tf.Sync()
+		_ = tf.Close()
+	}
+	if err := os.Rename(tmpPath, filename); err != nil {
+		_ = os.Remove(filename)
+		if err2 := os.Rename(tmpPath, filename); err2 != nil {
+			_ = os.Remove(tmpPath)
+			return fmt.Errorf("failed to save file: %w", err2)
+		}
+	}
+	// Best-effort fsync of directory to persist rename
+	syncDir(filepath.Dir(filename))
+	_ = os.Chmod(filename, 0600)
+	return nil
+}
+
+// syncDir attempts to fsync a directory so the rename of a file inside it is
+// durably recorded on disk. Not all platforms support syncing directories; any
+// resulting errors are ignored as this is a best-effort durability improvement.
+func syncDir(dir string) {
+	if dir == "" || dir == "." {
+		return
+	}
+	if f, err := os.Open(dir); err == nil {
+		_ = f.Sync()
+		_ = f.Close()
+	}
+}
+
+type AIProvider struct {
+	Type       string
+	ProviderId string
+}
+
+func (m *Manager) GetAIProviders() []AIProvider {
+	providers := env.GetConfiguredChatProviders()
+	aiProviders := []AIProvider{}
+	for _, provider := range providers {
+		aiProviders = append(aiProviders, AIProvider{
+			Type:       provider.Type,
+			ProviderId: provider.ProviderId,
+		})
+	}
+	return aiProviders
+}
+
+func (m *Manager) GetAIModels(providerID, modelType, token string) ([]string, error) {
+	if m.currentConnection == nil {
+		return nil, fmt.Errorf("not connected to any database")
+	}
+
+	credentials := m.buildCredentials(m.currentConnection)
+	config := engine.NewPluginConfig(credentials)
+
+	config.ExternalModel = &engine.ExternalModel{
+		Type: modelType,
+	}
+
+	if providerID != "" {
+		providers := env.GetConfiguredChatProviders()
+		for _, provider := range providers {
+			if provider.ProviderId == providerID {
+				config.ExternalModel.Token = provider.APIKey
+				break
+			}
+		}
+	} else if token != "" {
+		config.ExternalModel.Token = token
+	}
+
+	return llm.Instance(config).GetSupportedModels()
+}
+
+type ChatMessage struct {
+	Type   string
+	Result *engine.GetRowsResult
+	Text   string
+}
+
+func (m *Manager) SendAIChat(providerID, modelType, token, schema, model, previousConversation, query string) ([]*ChatMessage, error) {
+	if m.currentConnection == nil {
+		return nil, fmt.Errorf("not connected to any database")
+	}
+
+	dbType := engine.DatabaseType(m.currentConnection.Type)
+	plugin := m.engine.Choose(dbType)
+	if plugin == nil {
+		return nil, fmt.Errorf("plugin not found")
+	}
+
+	credentials := m.buildCredentials(m.currentConnection)
+	config := engine.NewPluginConfig(credentials)
+
+	if providerID != "" {
+		providers := env.GetConfiguredChatProviders()
+		for _, provider := range providers {
+			if provider.ProviderId == providerID {
+				config.ExternalModel = &engine.ExternalModel{
+					Type:  modelType,
+					Token: provider.APIKey,
+				}
+				break
+			}
+		}
+	} else {
+		config.ExternalModel = &engine.ExternalModel{
+			Type: modelType,
+		}
+		if token != "" {
+			config.ExternalModel.Token = token
+		}
+	}
+
+	messages, err := plugin.Chat(config, schema, model, previousConversation, query)
+	if err != nil {
+		return nil, err
+	}
+
+	chatMessages := []*ChatMessage{}
+	for _, msg := range messages {
+		chatMessages = append(chatMessages, &ChatMessage{
+			Type:   msg.Type,
+			Result: msg.Result,
+			Text:   msg.Text,
+		})
+	}
+
+	return chatMessages, nil
+}
