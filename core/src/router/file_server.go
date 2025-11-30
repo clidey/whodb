@@ -1,57 +1,61 @@
-// Copyright 2025 Clidey, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package router
 
 import (
-    "embed"
-    "io"
-    "io/fs"
-    "net/http"
-    "path"
-    "strings"
+	"embed"
+	"io"
+	"io/fs"
+	"net/http"
+	"path"
+	"strings"
 
-    "github.com/clidey/whodb/core/src/log"
-    "github.com/go-chi/chi/v5"
+	"github.com/clidey/whodb/core/src/log"
+	"github.com/go-chi/chi/v5"
 )
 
 func fileServer(r chi.Router, staticFiles embed.FS) {
-    // Support assets embedded under different roots (server: "build", desktop: "frontend/dist").
-    // Prefer a root that actually contains index.html. If not found (e.g., during build-time), proceed without fatal.
-    candidates := []string{"build", "frontend/dist", "dist", "."}
-    var staticFS fs.FS
-    var err error
-    found := false
-    for _, base := range candidates {
-        var sub fs.FS
-        if base == "." {
-            sub = staticFiles
-        } else {
-            if sub, err = fs.Sub(staticFiles, base); err != nil {
-                continue
-            }
-        }
-        if f, openErr := sub.Open("index.html"); openErr == nil {
-            _ = f.Close()
-            staticFS = sub
-            found = true
-            break
-        }
-    }
-    if !found {
-        log.Logger.Fatal("Failed to locate embedded frontend assets (index.html not found in any known root)")
-    }
+	// Support assets embedded under different roots (server: "build", desktop: "frontend/dist").
+	// Prefer a root that actually contains index.html. If not found (e.g., during build-time), proceed without fatal.
+	candidates := []string{"build", "frontend/dist", "dist", "."}
+	var staticFS fs.FS
+	var err error
+	found := false
+	for _, base := range candidates {
+		var sub fs.FS
+		if base == "." {
+			sub = staticFiles
+		} else {
+			if sub, err = fs.Sub(staticFiles, base); err != nil {
+				continue
+			}
+		}
+		if f, openErr := sub.Open("index.html"); openErr == nil {
+			_ = f.Close()
+			staticFS = sub
+			found = true
+			break
+		}
+	}
+	if !found {
+		// In dev mode (no embedded frontend), skip file serving - frontend is served separately
+		log.Logger.Warn("No embedded frontend assets found - running in API-only mode (use pnpm start for frontend)")
+		return
+	}
 
 	server := http.FileServer(http.FS(staticFS))
 
