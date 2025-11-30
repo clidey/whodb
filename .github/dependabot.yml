@@ -50,6 +50,13 @@ updates:
     schedule:
       interval: "daily"
 
+  - package-ecosystem: "gomod" # See documentation for possible values
+    directory: "/cli" # Location of package manifests
+    multi-ecosystem-group: "all-go"
+    patterns: [ "*" ]
+    schedule:
+      interval: "daily"
+
   - package-ecosystem: "npm"
     directory: "/frontend"
     schedule:
