@@ -99,7 +99,7 @@ if [ "$NEEDS_REBUILD" = "true" ]; then
         fi
         echo "🔧 Building EE test binary with coverage..."
         cd "$PROJECT_ROOT/core"
-        GOWORK="$PROJECT_ROOT/go.work.ee" go test -tags ee -coverpkg=./...,../ee/... -c -o server.test
+        GOWORK="$PROJECT_ROOT/ee/go.work" go test -tags ee -coverpkg=./...,../ee/... -c -o server.test
         echo "✅ EE test binary built successfully"
     else
         echo "🔧 Building CE test binary with coverage..."

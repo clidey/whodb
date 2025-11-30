@@ -33,11 +33,6 @@ desktop-ce/build/*
 !desktop-ce/build/darwin/
 !desktop-ce/build/darwin/*.plist
 !desktop-ce/build/appicon.png
-desktop-ee/frontend/
-desktop-ee/build/*
-!desktop-ee/build/darwin/
-!desktop-ee/build/darwin/*.plist
-!desktop-ee/build/appicon.png
 *.bak
 frontend/package.json.md5
 frontend/wailsjs/

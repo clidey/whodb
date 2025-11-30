@@ -40,7 +40,13 @@ ARG PLATFORM=docker
 FROM golang:1.25.4-alpine3.22 AS backend-stage
 RUN apk update && apk add --no-cache gcc musl-dev git
 WORKDIR /app
+
+# Copy ee-stub for CE builds (provides stub packages for EE imports)
+COPY ./ee-stub/ ./ee-stub/
+
+# Copy core module files and fix replace path for Docker context
 COPY ./core/go.mod ./core/go.sum ./
+RUN sed -i 's|../ee-stub|./ee-stub|g' go.mod
 RUN go mod download
 COPY ./core/ ./
 

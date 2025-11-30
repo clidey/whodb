@@ -1,6 +1,7 @@
 go 1.25.4
 
 use (
-    ./core
-    ./ee-stub
+	./cli
+	./core
+	./ee-stub
 )

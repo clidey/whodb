@@ -1,8 +1,0 @@
-go 1.25.4
-
-use (
-    ./core
-    ./ee
-    ./desktop-ee
-    ./desktop-common
-)

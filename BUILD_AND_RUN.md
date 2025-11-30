@@ -8,8 +8,8 @@
 cd core
 go run .
 
-# Enterprise Edition (from root)
-GOWORK=$PWD/go.work.ee go run -tags ee ./core
+# Enterprise Edition (from ee directory)
+cd ee && go run -tags ee ../core
 ```
 
 ## GraphQL Generation
@@ -20,16 +20,15 @@ GOWORK=$PWD/go.work.ee go run -tags ee ./core
 cd core
 go generate ./...
 
-# Enterprise Edition
-cd ee
-GOWORK=$PWD/../go.work.ee go generate .
+# Enterprise Edition (from ee directory)
+cd ee && go generate .
 ```
 
 ### Frontend
 ```bash
 # Start backend first
-cd core && go run .              # CE
-GOWORK=$PWD/go.work.ee go run -tags ee ./core  # EE
+cd core && go run .                     # CE
+cd ee && go run -tags ee ../core        # EE
 
 # Generate types
 cd frontend
@@ -77,8 +76,8 @@ go mod tidy
 cd core
 go run .
 
-# Enterprise Edition (from root)
-GOWORK=$PWD/go.work.ee go run -tags ee ./core
+# Enterprise Edition (from ee directory)
+cd ee && go run -tags ee ../core
 ```
 
 ### Frontend

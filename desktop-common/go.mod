@@ -105,5 +105,3 @@ require (
 )
 
 replace github.com/clidey/whodb/core => ../core
-
-replace github.com/clidey/whodb/ee => ../ee-stub

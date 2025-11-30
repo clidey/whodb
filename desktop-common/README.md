@@ -33,7 +33,7 @@ make build     # Build for current platform
 make help      # See all available commands
 
 # Enterprise Edition
-cd desktop-ee
+cd ee/desktop
 make dev       # Development mode with EE features
 make build     # Build for current platform
 make help      # See all available commands
@@ -116,7 +116,7 @@ Binaries are generated in `build/` organized by platform:
 - macOS AMD64: `build/darwin/amd64/WhoDB.app`
 - Linux: `build/linux/[arch]/whodb-ce`
 
-### Enterprise Edition (desktop-ee)
+### Enterprise Edition (ee/desktop)
 - Windows: `build/windows/[arch]/whodb-ee.exe`
 - macOS Universal: `build/darwin/universal/WhoDB - Enterprise.app`
 - macOS ARM64: `build/darwin/arm64/WhoDB - Enterprise.app`
@@ -135,8 +135,8 @@ cd desktop-ce
 GOWORK=$PWD/../go.work.desktop-ce wails build -o whodb-ce
 
 # Enterprise Edition
-cd desktop-ee
-GOWORK=$PWD/../go.work.desktop-ee wails build -tags ee -o whodb-ee
+cd ee/desktop
+wails build -tags ee -o whodb-ee
 ```
 
 ## Architecture
@@ -158,11 +158,11 @@ The desktop application:
   - `./desktop-ce` - CE desktop module
   - `./desktop-common` - Shared desktop code
 
-- **EE workspace** (`go.work.desktop-ee`):
-  - `./core` - Core WhoDB functionality
-  - `./ee` - Enterprise Edition modules
-  - `./desktop-ee` - EE desktop module
-  - `./desktop-common` - Shared desktop code
+- **EE workspace** (`ee/go.work.desktop`):
+    - `../core` - Core WhoDB functionality
+    - `.` - Enterprise Edition modules (ee)
+    - `./desktop` - EE desktop module
+    - `../desktop-common` - Shared desktop code
 
 ## Development Tips
 
@@ -182,8 +182,7 @@ cd desktop-ce
 GOWORK=$PWD/../go.work.desktop-ce go mod tidy
 
 # For EE
-cd desktop-ee
-GOWORK=$PWD/../go.work.desktop-ee go mod tidy
+cd ee/desktop && go mod tidy
 ```
 
 ### Platform-Specific Issues

@@ -6,6 +6,7 @@ require (
 	github.com/99designs/gqlgen v0.17.84
 	github.com/ClickHouse/clickhouse-go/v2 v2.41.0
 	github.com/brianvoe/gofakeit/v7 v7.11.0
+	github.com/clidey/whodb/ee v0.0.0-00010101000000-000000000000
 	github.com/deckarep/golang-set/v2 v2.8.0
 	github.com/elastic/go-elasticsearch/v8 v8.19.0
 	github.com/go-chi/chi/v5 v5.2.3
@@ -39,7 +40,7 @@ require (
 	github.com/danieljoos/wincred v1.2.2 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/elastic/elastic-transport-go/v8 v8.7.0 // indirect
-	github.com/fsnotify/fsnotify v1.7.0 // indirect
+	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/go-faster/city v1.0.1 // indirect
 	github.com/go-faster/errors v0.7.1 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
@@ -86,3 +87,5 @@ require (
 	golang.org/x/text v0.31.0 // indirect
 	golang.org/x/tools v0.39.0 // indirect
 )
+
+replace github.com/clidey/whodb/ee => ../ee-stub

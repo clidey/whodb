@@ -37,13 +37,6 @@ updates:
       interval: "daily"
 
   - package-ecosystem: "gomod" # See documentation for possible values
-    directory: "/desktop-ee" # Location of package manifests
-    multi-ecosystem-group: "all-go"
-    patterns: [ "*" ]
-    schedule:
-      interval: "daily"
-
-  - package-ecosystem: "gomod" # See documentation for possible values
     directory: "/desktop-common" # Location of package manifests
     multi-ecosystem-group: "all-go"
     patterns: [ "*" ]
