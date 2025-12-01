@@ -90,16 +90,28 @@ Output formats:
 			out.Info("Using connection: %s", conn.Name)
 		}
 
-		out.Info("Connecting to %s...", conn.Type)
+		var spinner *output.Spinner
+		if !queryQuiet {
+			spinner = output.NewSpinner(fmt.Sprintf("Connecting to %s...", conn.Type))
+		}
+		spinner.Start()
 		if err := mgr.Connect(conn); err != nil {
+			spinner.StopWithError("Connection failed")
 			return fmt.Errorf("cannot connect to database: %w", err)
 		}
+		spinner.StopWithSuccess("Connected")
 		defer mgr.Disconnect()
 
+		if !queryQuiet {
+			spinner = output.NewSpinner("Executing query...")
+		}
+		spinner.Start()
 		result, err := mgr.ExecuteQuery(sql)
 		if err != nil {
+			spinner.StopWithError("Query failed")
 			return fmt.Errorf("query failed: %w", err)
 		}
+		spinner.Stop()
 
 		columns := make([]output.Column, len(result.Columns))
 		for i, col := range result.Columns {
