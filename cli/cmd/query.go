@@ -17,7 +17,10 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
+	"os"
+	"strings"
 
 	dbmgr "github.com/clidey/whodb/cli/internal/database"
 	"github.com/clidey/whodb/cli/pkg/output"
@@ -31,8 +34,10 @@ var (
 )
 
 var queryCmd = &cobra.Command{
-	Use:   "query [SQL]",
-	Short: "Execute a SQL query",
+	Use:           "query [SQL]",
+	Short:         "Execute a SQL query",
+	SilenceUsage:  true,
+	SilenceErrors: true,
 	Long: `Execute a SQL query against a saved connection.
 
 Prerequisites:
@@ -55,10 +60,37 @@ Output formats:
   whodb-cli query --format csv "SELECT * FROM orders" > orders.csv
 
   # Use with grep (auto-selects plain format when piped)
-  whodb-cli query "SELECT * FROM logs" | grep ERROR`,
-	Args: cobra.ExactArgs(1),
+  whodb-cli query "SELECT * FROM logs" | grep ERROR
+
+  # Read SQL from stdin
+  echo "SELECT * FROM users" | whodb-cli query -
+  cat query.sql | whodb-cli query -`,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) == 0 {
+			return fmt.Errorf("missing SQL query\n\nUsage: whodb-cli query [SQL]\n\nExample:\n  whodb-cli query \"SELECT * FROM users LIMIT 10\"\n\nRun 'whodb-cli query --help' for more options")
+		}
+		if len(args) > 1 {
+			return fmt.Errorf("too many arguments (expected 1 SQL query, got %d)\n\nTip: Wrap your SQL in quotes:\n  whodb-cli query \"SELECT * FROM users\"", len(args))
+		}
+		return nil
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		sql := args[0]
+
+		if sql == "-" {
+			scanner := bufio.NewScanner(os.Stdin)
+			var lines []string
+			for scanner.Scan() {
+				lines = append(lines, scanner.Text())
+			}
+			if err := scanner.Err(); err != nil {
+				return fmt.Errorf("reading from stdin: %w", err)
+			}
+			sql = strings.Join(lines, "\n")
+			if strings.TrimSpace(sql) == "" {
+				return fmt.Errorf("no SQL provided via stdin")
+			}
+		}
 
 		format, err := output.ParseFormat(queryFormat)
 		if err != nil {
