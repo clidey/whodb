@@ -17,8 +17,35 @@
 package styles
 
 import (
+	"os"
+	"sync/atomic"
+
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/termenv"
 )
+
+var colorDisabled atomic.Bool
+
+func init() {
+	if _, exists := os.LookupEnv("NO_COLOR"); exists {
+		colorDisabled.Store(true)
+	}
+	if os.Getenv("TERM") == "dumb" {
+		colorDisabled.Store(true)
+	}
+	if colorDisabled.Load() {
+		lipgloss.SetColorProfile(termenv.Ascii)
+	}
+}
+
+func DisableColor() {
+	colorDisabled.Store(true)
+	lipgloss.SetColorProfile(termenv.Ascii)
+}
+
+func ColorEnabled() bool {
+	return !colorDisabled.Load()
+}
 
 var (
 	Primary   = lipgloss.Color("#fafafa")
