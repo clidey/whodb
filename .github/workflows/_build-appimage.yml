@@ -129,8 +129,8 @@ jobs:
         id: gowork
         run: |
           if [ "${{ inputs.edition }}" = "ee" ]; then
-            echo "workspace=$PWD/go.work.desktop-ee" >> $GITHUB_OUTPUT
-            echo "source_dir=desktop-ee" >> $GITHUB_OUTPUT
+            echo "workspace=$PWD/ee/go.work.desktop" >> $GITHUB_OUTPUT
+            echo "source_dir=ee/desktop" >> $GITHUB_OUTPUT
           else
             echo "workspace=$PWD/go.work.desktop-ce" >> $GITHUB_OUTPUT
             echo "source_dir=desktop-ce" >> $GITHUB_OUTPUT

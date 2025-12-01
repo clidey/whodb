@@ -16,7 +16,7 @@ on:
         description: 'Platforms to build (comma-separated: windows-amd64,windows-arm64)'
         required: false
         type: string
-        default: 'windows-amd64,windows-arm64'
+        default: 'windows-amd64'
 
 permissions:
   contents: read
@@ -43,7 +43,14 @@ jobs:
         uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
         with:
           egress-policy: block
-          allowed-endpoints: >+
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            proxy.golang.org:443
+            storage.googleapis.com:443
+            sum.golang.org:443
+            registry.npmjs.org:443
+            objects.githubusercontent.com:443
 
       - name: Skip if not enabled
         if: matrix.enabled == false
@@ -101,57 +108,102 @@ jobs:
       - name: Build Windows AMD64
         if: matrix.arch == 'amd64' && matrix.enabled != false
         working-directory: ./desktop-${{ inputs.edition }}
-        shell: pwsh
+        shell: bash
         env:
           GOARCH: ${{ matrix.arch }}
+          VERSION: ${{ inputs.version }}
         run: |
-          Write-Host "Building Windows executable for MSIX packaging..."
+          echo "Building Windows executable for MSIX packaging..."
 
           # Prepare frontend
-          Write-Host "Preparing frontend..."
-          New-Item -ItemType Directory -Path frontend/dist -Force | Out-Null
-          Set-Location ../frontend
+          echo "Preparing frontend..."
+          mkdir -p frontend/dist
+          cd ../frontend
 
           # Check if frontend is already built from cache
-          if (Test-Path "build/index.html") {
-              Write-Host "Using cached frontend build"
-          } else {
-              Write-Host "Building frontend..."
-              $env:CYPRESS_INSTALL_BINARY = "0"
-              pnpm run build:${{ inputs.edition }}
-          }
+          if [ -f "build/index.html" ]; then
+              echo "Using cached frontend build"
+          else
+              echo "Building frontend..."
+              CYPRESS_INSTALL_BINARY=0 pnpm run build:${{ inputs.edition }}
+          fi
 
-          Copy-Item -Path build/* -Destination ../desktop-${{ inputs.edition }}/frontend/dist/ -Recurse
-          Set-Location ../desktop-${{ inputs.edition }}
+          cp -r build/* ../desktop-${{ inputs.edition }}/frontend/dist/
+          cd ../desktop-${{ inputs.edition }}
 
-          Write-Host "Using Makefile to build..."
-          Write-Host "Building with VERSION=${{ inputs.version }}"
-          $env:VERSION = "${{ inputs.version }}"
-          make ${{ matrix.make-target }} VERSION="${{ inputs.version }}"
-
-          if ($LASTEXITCODE -ne 0) {
-              Write-Error "Make build failed with exit code: $LASTEXITCODE"
-              exit 1
-          }
+          echo "Using Makefile to build..."
+          echo "Building with VERSION=$VERSION"
+          make ${{ matrix.make-target }} VERSION="$VERSION"
 
           # Verify the executable is in the expected location
-          if (Test-Path "build/windows/amd64/whodb.exe") {
-              Write-Host "✅ Executable ready: build/windows/amd64/whodb.exe"
-          } else {
-              Write-Error "Could not find whodb.exe at expected location"
+          if [ -f "build/windows/amd64/whodb.exe" ]; then
+              echo "Executable ready: build/windows/amd64/whodb.exe"
+          else
+              echo "Could not find whodb.exe at expected location"
               exit 1
-          }
+          fi
 
-      # Windows ARM64 Build (temporarily disabled)
-      - name: Skip Windows ARM64 Build
+      # Windows ARM64 Build - Prepare frontend first
+      - name: Prepare frontend for ARM64
+        if: matrix.arch == 'arm64' && matrix.enabled != false
+        shell: bash
+        run: |
+          echo "Preparing frontend..."
+          mkdir -p desktop-${{ inputs.edition }}/frontend/dist
+          cd frontend
+          if [ -f "build/index.html" ]; then
+              echo "Using cached frontend build"
+          else
+              echo "Building frontend..."
+              CYPRESS_INSTALL_BINARY=0 pnpm run build:${{ inputs.edition }}
+          fi
+          cp -r build/* ../desktop-${{ inputs.edition }}/frontend/dist/
+
+      # Windows ARM64 Build - Use PowerShell with MSVC
+      - name: Build Windows ARM64
         if: matrix.arch == 'arm64' && matrix.enabled != false
         shell: pwsh
+        env:
+          VERSION: ${{ inputs.version }}
         run: |
-          Write-Host "⚠️ Windows ARM64 build is temporarily disabled due to toolchain issues"
-          New-Item -ItemType Directory -Force -Path "./desktop-${{ inputs.edition }}/build/windows/arm64"
+          Write-Host "Building Windows executable for ARM64 with MSVC..."
+
+          # Find and run vcvarsall.bat for ARM64
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsPath = & $vswhere -latest -property installationPath
+          $vcvarsall = Join-Path $vsPath "VC\Auxiliary\Build\vcvarsall.bat"
+
+          if (-not (Test-Path $vcvarsall)) {
+            Write-Error "vcvarsall.bat not found at: $vcvarsall"
+            exit 1
+          }
+
+          Write-Host "Setting up MSVC ARM64 environment..."
+
+          # Create a batch file to set up environment and run the build
+          $batchScript = @"
+          call "$vcvarsall" arm64
+          set CC=cl
+          set CXX=cl
+          set CGO_ENABLED=1
+          cd desktop-${{ inputs.edition }}
+          make ${{ matrix.make-target }} VERSION=$env:VERSION
+          "@
+
+          $batchScript | Out-File -FilePath "build-arm64.bat" -Encoding ASCII
+          cmd /c build-arm64.bat
+
+          # Verify the executable
+          $exePath = "desktop-${{ inputs.edition }}/build/windows/arm64/whodb.exe"
+          if (Test-Path $exePath) {
+            Write-Host "Executable ready: $exePath"
+          } else {
+            Write-Error "Could not find whodb.exe at expected location"
+            exit 1
+          }
 
       - name: Upload Windows artifacts
-        if: matrix.enabled != false && (matrix.arch != 'arm64')
+        if: matrix.enabled != false
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: desktop-windows-${{ matrix.arch }}

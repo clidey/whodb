@@ -98,7 +98,7 @@ export const Sidebar: FC = () => {
     const pathname = useLocation().pathname;
     const current = useAppSelector(state => state.auth.current);
     const profiles = useAppSelector(state => state.auth.profiles);
-    const { data: availableDatabases, loading: availableDatabasesLoading } = useGetDatabaseQuery({
+    const {data: availableDatabases, loading: availableDatabasesLoading, refetch: getDatabases} = useGetDatabaseQuery({
         variables: {
             type: current?.Type as DatabaseType,
         },
@@ -156,7 +156,8 @@ export const Sidebar: FC = () => {
                         dispatch(DatabaseActions.setSchema(""));
                         dispatch(AuthActions.switch({ id: selectedProfile.Id }));
                         navigate(InternalRoutes.Dashboard.StorageUnit.path);
-                        if (databaseSupportsSchema(current?.Type)) getSchemas();
+                        if (databaseSupportsDatabaseSwitching(selectedProfile.Type)) getDatabases();
+                        if (databaseSupportsSchema(selectedProfile.Type)) getSchemas();
                     }
                 },
                 onError(error) {
@@ -181,7 +182,8 @@ export const Sidebar: FC = () => {
                         dispatch(DatabaseActions.setSchema(""));
                         dispatch(AuthActions.switch({ id: selectedProfile.Id }));
                         navigate(InternalRoutes.Dashboard.StorageUnit.path);
-                        getSchemas();
+                        if (databaseSupportsDatabaseSwitching(selectedProfile.Type)) getDatabases();
+                        if (databaseSupportsSchema(selectedProfile.Type)) getSchemas();
                     }
                 },
                 onError(error) {
@@ -189,7 +191,7 @@ export const Sidebar: FC = () => {
                 },
             });
         }
-    }, [profiles, login, loginWithProfile, dispatch, navigate, getSchemas, current?.Database, current?.Type]);
+    }, [profiles, login, loginWithProfile, dispatch, navigate, getDatabases, getSchemas]);
 
     // Database select logic
     const databaseOptions = useMemo(() => {
@@ -481,7 +483,7 @@ export const Sidebar: FC = () => {
                 <div className={cn("absolute right-4 bottom-4 text-xs text-muted-foreground", {
                     "hidden": !open,
                 })}>
-                    {version?.Version}
+                    Version: {version?.Version}
                 </div>
             </SidebarComponent>
             <Sheet open={showLoginCard} onOpenChange={setShowLoginCard}>

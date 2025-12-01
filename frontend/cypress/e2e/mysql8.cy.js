@@ -23,8 +23,8 @@ describe('MySQL 8 E2E test', () => {
 
     it('runs full MySQL 8 E2E flow', () => {
         // login and setup
-        cy.login('MySQL', dbHost, dbUser, dbPassword, 'test_db', {"Port": "3308"});
-        cy.selectSchema("test_db");
+        cy.login('MySQL', dbHost, dbUser, dbPassword, 'test_db_842', {"Port": "3308"});
+        cy.selectSchema("test_db_842");
 
         // 1) Lists tables
         cy.getTables().then(storageUnitNames => {

@@ -24,15 +24,15 @@ import {
     Tree,
     TreeDataItem,
 } from "@clidey/ux";
-import { StorageUnit, useGetStorageUnitsQuery } from "@graphql";
-import { FolderIcon, TableCellsIcon } from "./heroicons";
-import { FC, useCallback, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { InternalRoutes } from "../config/routes";
-import { useAppSelector } from "../store/hooks";
-import { databaseTypesThatUseDatabaseInsteadOfSchema } from "../utils/database-features";
-import { getDatabaseStorageUnitLabel } from "../utils/functions";
-import { Loading } from "./loading";
+import {StorageUnit, useGetStorageUnitsQuery} from "@graphql";
+import {FolderIcon, TableCellsIcon} from "./heroicons";
+import {FC, useCallback, useEffect, useMemo, useState} from "react";
+import {useLocation, useNavigate} from "react-router-dom";
+import {InternalRoutes} from "../config/routes";
+import {useAppSelector} from "../store/hooks";
+import {databaseTypesThatUseDatabaseInsteadOfSchema} from "../utils/database-features";
+import {getDatabaseStorageUnitLabel} from "../utils/functions";
+import {Loading} from "./loading";
 
 function groupByType(units: StorageUnit[]) {
     const groups: Record<string, any[]> = {};
@@ -55,12 +55,20 @@ export const SchemaViewer: FC = () => {
     const [search, setSearch] = useState("");
 
     // Query for storage units (tables, views, etc.)
-    const { data, loading } = useGetStorageUnitsQuery({
+    const {data, loading, refetch} = useGetStorageUnitsQuery({
         variables: {
             schema: databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type) ? current?.Database ?? selectedSchema : selectedSchema,
         },
         skip: !current || !selectedSchema,
     });
+
+    // Refetch when profile changes (current?.Id changes means different server/credentials)
+    const currentProfileId = current?.Id;
+    useEffect(() => {
+        if (currentProfileId) {
+            refetch();
+        }
+    }, [currentProfileId, refetch]);
 
     // Group storage units by type for tree display, with search filter
     const treeData: TreeDataItem[] = useMemo(() => {

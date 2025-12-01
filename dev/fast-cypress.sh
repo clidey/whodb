@@ -2,10 +2,17 @@
 #
 # Copyright 2025 Clidey, Inc.
 #
-# Fast-track Cypress runner for testing specific databases only
-# Usage: ./fast-cypress.sh [ce|ee] [database1,database2,...] [headless]
-# Example: ./fast-cypress.sh ce postgres,mysql true
-#          ./fast-cypress.sh ee redis false
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
 
 set -e
@@ -154,7 +161,7 @@ cd "$PROJECT_ROOT/core"
 if [ ! -f "server.test" ]; then
     echo "🔧 Building test binary..."
     if [ "$EDITION" = "ee" ]; then
-        GOWORK="$PROJECT_ROOT/go.work.ee" go test -tags ee -coverpkg=./...,../ee/... -c -o server.test
+        GOWORK="$PROJECT_ROOT/ee/go.work" go test -tags ee -coverpkg=./...,../ee/... -c -o server.test
     else
         go test -coverpkg=./... -c -o server.test
     fi

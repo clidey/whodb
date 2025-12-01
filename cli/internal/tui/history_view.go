@@ -1,0 +1,164 @@
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package tui
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/charmbracelet/bubbles/list"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/clidey/whodb/cli/internal/history"
+	"github.com/clidey/whodb/cli/pkg/styles"
+)
+
+type historyItem struct {
+	entry history.Entry
+}
+
+func (i historyItem) Title() string {
+	query := i.entry.Query
+	if len(query) > 60 {
+		query = query[:60] + "..."
+	}
+	return query
+}
+
+func (i historyItem) Description() string {
+	status := "✓"
+	if !i.entry.Success {
+		status = "✗"
+	}
+	return fmt.Sprintf("%s %s - %s", status, i.entry.Database, i.entry.Timestamp.Format("2006-01-02 15:04:05"))
+}
+
+func (i historyItem) FilterValue() string {
+	return i.entry.Query
+}
+
+type HistoryView struct {
+	parent *MainModel
+	list   list.Model
+}
+
+func NewHistoryView(parent *MainModel) *HistoryView {
+	l := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
+	l.Title = "Query History"
+	l.SetShowStatusBar(false)
+	l.SetFilteringEnabled(true)
+
+	return &HistoryView{
+		parent: parent,
+		list:   l,
+	}
+}
+
+func (v *HistoryView) Update(msg tea.Msg) (*HistoryView, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		v.list.SetSize(msg.Width-4, msg.Height-15)
+		return v, nil
+
+	case tea.MouseMsg:
+		switch msg.Button {
+		case tea.MouseButtonWheelUp:
+			v.list.CursorUp()
+			return v, nil
+		case tea.MouseButtonWheelDown:
+			v.list.CursorDown()
+			return v, nil
+		}
+
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "enter":
+			if item, ok := v.list.SelectedItem().(historyItem); ok {
+				v.parent.editorView.textarea.SetValue(item.entry.Query)
+				v.parent.mode = ViewEditor
+				return v, nil
+			}
+
+		case "r":
+			if item, ok := v.list.SelectedItem().(historyItem); ok {
+				result, err := v.parent.dbManager.ExecuteQuery(item.entry.Query)
+				if err != nil {
+					v.parent.err = err
+					return v, nil
+				}
+
+				v.parent.resultsView.SetResults(result, item.entry.Query)
+				v.parent.mode = ViewResults
+				return v, nil
+			}
+
+		case "c":
+			v.parent.histMgr.Clear()
+			v.refreshList()
+			return v, nil
+
+		case "esc":
+			v.parent.mode = ViewBrowser
+			return v, nil
+		}
+	}
+
+	var cmd tea.Cmd
+	v.list, cmd = v.list.Update(msg)
+	return v, cmd
+}
+
+func (v *HistoryView) View() string {
+	var b strings.Builder
+
+	b.WriteString(styles.RenderTitle("Query History"))
+	b.WriteString("\n\n")
+
+	entries := v.parent.histMgr.GetAll()
+	if len(entries) == 0 {
+		b.WriteString(styles.MutedStyle.Render("No history entries"))
+	} else {
+		b.WriteString(v.list.View())
+	}
+
+	b.WriteString("\n\n")
+	b.WriteString(styles.RenderHelp(
+		"↑/k", "up",
+		"↓/j", "down",
+		"enter", "edit",
+		"[r]", "re-run",
+		"[c]", "clear",
+		"tab", "next view",
+		"esc", "back",
+		"ctrl+c", "quit",
+	))
+
+	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
+}
+
+func (v *HistoryView) refreshList() {
+	entries := v.parent.histMgr.GetAll()
+	items := make([]list.Item, len(entries))
+	for i, entry := range entries {
+		items[i] = historyItem{entry: entry}
+	}
+	v.list.SetItems(items)
+}
+
+func (v *HistoryView) Init() {
+	v.refreshList()
+}

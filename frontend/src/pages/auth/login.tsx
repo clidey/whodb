@@ -21,6 +21,7 @@ import {
     LoginCredentials,
     useGetDatabaseLazyQuery,
     useGetProfilesQuery,
+    useGetVersionQuery,
     useLoginMutation,
     useLoginWithProfileMutation
 } from '@graphql';
@@ -605,9 +606,14 @@ export const LoginForm: FC<LoginFormProps> = ({
 };
 
 export const LoginPage: FC = () => {
+    const {data: version} = useGetVersionQuery();
+
     return (
         <Container className="justify-center items-center">
             <LoginForm />
+            <div className="fixed bottom-4 left-1/2 -translate-x-1/2 text-xs text-foreground/60">
+                Version: {version?.Version}
+            </div>
         </Container>
     );
 };

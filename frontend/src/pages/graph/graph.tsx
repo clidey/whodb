@@ -23,11 +23,28 @@ import {createEdge, createNode} from "../../components/graph/utils";
 import {LoadingPage} from "../../components/loading";
 import {InternalPage} from "../../components/page";
 import {InternalRoutes} from "../../config/routes";
-import {GetGraphDocument, GetGraphQuery, GetGraphQueryVariables, StorageUnit, useGetStorageUnitsQuery, useGetColumnsLazyQuery} from '@graphql';
+import {
+    GetGraphDocument,
+    GetGraphQuery,
+    GetGraphQueryVariables,
+    StorageUnit,
+    useGetColumnsLazyQuery,
+    useGetStorageUnitsQuery
+} from '@graphql';
 import {useAppSelector} from "../../store/hooks";
 import {getDatabaseStorageUnitLabel} from "../../utils/functions";
 import {StorageUnitGraphCard} from "../storage-unit/storage-unit";
-import {Button, Checkbox, EmptyState, SearchInput, Sidebar as SidebarComponent, SidebarContent, SidebarGroup, SidebarHeader, SidebarProvider, toTitleCase} from "@clidey/ux";
+import {
+    Button,
+    Checkbox,
+    EmptyState,
+    SearchInput,
+    Sidebar as SidebarComponent,
+    SidebarContent,
+    SidebarGroup,
+    SidebarHeader,
+    toTitleCase
+} from "@clidey/ux";
 import {useNavigate} from "react-router-dom";
 import {FolderIcon, RectangleGroupIcon, TableCellsIcon} from "../../components/heroicons";
 import {databaseUsesSchemaForGraph} from "../../utils/database-features";
@@ -147,7 +164,10 @@ export const GraphPage: FC = () => {
 
     const [fetchColumns] = useGetColumnsLazyQuery();
 
-    const { loading: graphLoading } = useQuery<GetGraphQuery, GetGraphQueryVariables>(GetGraphDocument, {
+    const {
+        loading: graphLoading,
+        refetch: refetchGraph
+    } = useQuery<GetGraphQuery, GetGraphQueryVariables>(GetGraphDocument, {
         variables: {
             schema: databaseUsesSchemaForGraph(current?.Type) ? schema : current?.Database ?? "",
         },
@@ -178,13 +198,22 @@ export const GraphPage: FC = () => {
     });
 
     // Fetch all storage units for sidebar selection
-    const { data: storageUnitsData, loading: unitsLoading } = useGetStorageUnitsQuery({
+    const {data: storageUnitsData, loading: unitsLoading, refetch: refetchStorageUnits} = useGetStorageUnitsQuery({
         variables: {
             schema: databaseUsesSchemaForGraph(current?.Type) ? schema : current?.Database ?? "",
         },
         skip: !current,
         fetchPolicy: "cache-and-network",
     });
+
+    // Refetch when profile changes (current?.Id changes means different server/credentials)
+    const currentProfileId = current?.Id;
+    useEffect(() => {
+        if (currentProfileId) {
+            refetchGraph();
+            refetchStorageUnits();
+        }
+    }, [currentProfileId, refetchGraph, refetchStorageUnits]);
 
     // Default selection logic: auto-select all if < 10 units, else none
     useEffect(() => {

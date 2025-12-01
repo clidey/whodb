@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM node:lts-alpine AS build-stage
+FROM node:24.11.1-alpine3.22 AS build-stage
 RUN npm i -g pnpm
 WORKDIR /app
 COPY ./frontend/package.json ./frontend/pnpm-lock.yaml ./
@@ -37,10 +37,16 @@ ARG VERSION=dev
 ARG TARGETARCH
 ARG PLATFORM=docker
 
-FROM golang:alpine AS backend-stage
+FROM golang:1.25.4-alpine3.22 AS backend-stage
 RUN apk update && apk add --no-cache gcc musl-dev git
 WORKDIR /app
+
+# Copy ee-stub for CE builds (provides stub packages for EE imports)
+COPY ./ee-stub/ ./ee-stub/
+
+# Copy core module files and fix replace path for Docker context
 COPY ./core/go.mod ./core/go.sum ./
+RUN sed -i 's|../ee-stub|./ee-stub|g' go.mod
 RUN go mod download
 COPY ./core/ ./
 
@@ -51,7 +57,7 @@ COPY --from=build-stage /app/build/ ./build/
 ARG VERSION
 ARG TARGETARCH
 ARG PLATFORM
-RUN CGO_ENABLED=1 GOOS=linux go build \
+RUN CGO_ENABLED=1 GOOS=linux go build -tags prod \
 	-ldflags="-X github.com/clidey/whodb/core/src/env.ApplicationVersion=${VERSION} -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=${PLATFORM}-${TARGETARCH}" \
 	-o /core
 

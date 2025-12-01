@@ -8,6 +8,10 @@ version: 2
 multi-ecosystem-groups:
   all-go:
     schedule:
+      interval: "daily"
+
+  all-docker:
+    schedule:
       interval: "weekly"
 
 updates:
@@ -33,14 +37,14 @@ updates:
       interval: "daily"
 
   - package-ecosystem: "gomod" # See documentation for possible values
-    directory: "/desktop-ee" # Location of package manifests
+    directory: "/desktop-common" # Location of package manifests
     multi-ecosystem-group: "all-go"
     patterns: [ "*" ]
     schedule:
       interval: "daily"
 
   - package-ecosystem: "gomod" # See documentation for possible values
-    directory: "/desktop-common" # Location of package manifests
+    directory: "/cli" # Location of package manifests
     multi-ecosystem-group: "all-go"
     patterns: [ "*" ]
     schedule:
@@ -50,3 +54,22 @@ updates:
     directory: "/frontend"
     schedule:
       interval: "daily"
+
+  - package-ecosystem: "docker"
+    directory: "/core"
+    multi-ecosystem-group: "all-docker"
+    patterns: [ "*" ]
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "docker"
+    directory: "/docs"
+    multi-ecosystem-group: "all-docker"
+    patterns: [ "*" ]
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "github-actions"
+    directory: "/.github"
+    schedule:
+      interval: "weekly"

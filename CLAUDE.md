@@ -46,7 +46,9 @@ These are non-negotiable principles. Follow them at all times.
 9. Use `any` instead of `interface{}` in all Go code (Go 1.18+ modern syntax). In general use modern Go syntax
    everywhere.
 10. When updating dependencies, ensure versions are identical between Community Edition (`core/go.mod`) and Enterprise
-    Edition (`ee/go.mod`) for shared dependencies. This also includes the desktop versions for CE (`desktop-ce/go.mod`) and EE (`desktop-ee/go.mod`). In general, the Community Edition (`core/go.mod`) has to be the reference point for dependency versions.
+    Edition (`ee/go.mod`) for shared dependencies. This also includes the desktop versions for CE (`desktop-ce/go.mod`)
+    and EE (`ee/desktop/go.mod`). In general, the Community Edition (`core/go.mod`) has to be the reference point for
+    dependency versions.
 11. Never log sensitive data such as passwords, API keys, tokens, or full connection strings.
 12. Always use PNPM instead of NPM.
 
@@ -286,8 +288,8 @@ cd frontend && pnpm run generate
 ### Enterprise Edition (EE)
 
 ```bash
-# Run backend (from project root)
-GOWORK=$PWD/go.work.ee go run -tags ee ./core
+# Run backend (from ee directory)
+cd ee && go run -tags ee ../core
 
 # Run frontend (separate terminal)
 cd frontend && pnpm start:ee
@@ -297,7 +299,7 @@ cd frontend && pnpm run cypress:ee
 
 # GraphQL Generation
 # Backend:
-cd ee && GOWORK=$PWD/../go.work.ee go generate .
+cd ee && go generate .
 # Frontend (backend must be running):
 cd frontend && pnpm run generate:ee
 ```
