@@ -18,6 +18,7 @@ package main
 
 import (
 	"github.com/clidey/whodb/cli/cmd"
+	"github.com/clidey/whodb/cli/pkg/crash"
 	"github.com/clidey/whodb/core/src/log"
 	_ "github.com/clidey/whodb/core/src/plugins"
 )
@@ -27,5 +28,6 @@ func init() {
 }
 
 func main() {
+	defer crash.Handler()
 	cmd.Execute()
 }
