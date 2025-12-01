@@ -101,6 +101,7 @@ api_request() {
     local url="${API_BASE}${endpoint}"
     local curl_args=(
         -s
+        --fail-with-body
         -X "$method"
         -H "Authorization: Bearer $JWT_TOKEN"
         -H "Content-Type: application/json"
@@ -112,11 +113,33 @@ api_request() {
 
     local response
     local http_code
+    local curl_exit
 
     # Capture both response body and HTTP status code
-    response=$(curl "${curl_args[@]}" -w "\n%{http_code}" "$url")
+    set +e
+    response=$(curl "${curl_args[@]}" -w "\n%{http_code}" "$url" 2>&1)
+    curl_exit=$?
+    set -e
+
     http_code=$(echo "$response" | tail -n1)
     response=$(echo "$response" | sed '$d')
+
+    # Check for curl errors (connection issues, etc.)
+    if [[ $curl_exit -ne 0 ]]; then
+        error "Curl failed with exit code $curl_exit"
+        error "Endpoint: $method $url"
+        error "Response: $response"
+        return 1
+    fi
+
+    # Validate response is JSON
+    if ! echo "$response" | jq -e . > /dev/null 2>&1; then
+        error "API returned non-JSON response"
+        error "Endpoint: $method $endpoint"
+        error "HTTP Code: $http_code"
+        error "Response (first 500 chars): ${response:0:500}"
+        return 1
+    fi
 
     if [[ "$http_code" -ge 400 ]]; then
         error "API request failed with HTTP $http_code"
