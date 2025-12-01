@@ -52,6 +52,7 @@ jobs:
             registry-1.docker.io:443
             registry.npmjs.org:443
             release-assets.githubusercontent.com:443
+            storage.googleapis.com:443
             sum.golang.org:443
 
       - name: Checkout
