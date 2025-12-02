@@ -30,6 +30,8 @@ const defaultFeatures: FeatureFlags = {
     advancedDatabases: false,
     contactUsPage: true, // Enabled in CE
     settingsPage: true, // Enabled in CE
+    sampleDatabaseTour: true, // Enabled in CE
+    autoStartTourOnLogin: true, // Enabled in CE
 };
 
 // Check if EE modules are available

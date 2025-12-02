@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {Badge, Button, cn, Input, Label, ModeToggle, Separator, toast} from '@clidey/ux';
+import {Badge, Button, Card, cn, Input, Label, ModeToggle, Separator, toast} from '@clidey/ux';
 import {SearchSelect} from '../../components/ux';
 import {
     DatabaseType,
@@ -31,17 +31,18 @@ import {FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState} fro
 import {useNavigate, useSearchParams} from "react-router-dom";
 import {v4} from 'uuid';
 import logoImage from "../../../public/images/logo.png";
-import {AdjustmentsHorizontalIcon, CheckCircleIcon, ChevronDownIcon, CircleStackIcon} from '../../components/heroicons';
+import {AdjustmentsHorizontalIcon, ChatBubbleLeftRightIcon, CheckCircleIcon, ChevronDownIcon, CircleStackIcon, CodeBracketIcon, ShareIcon, SparklesIcon, TableCellsIcon} from '../../components/heroicons';
 import {Icons} from "../../components/icons";
 import {Loading} from "../../components/loading";
 import {Container} from "../../components/page";
 import {updateProfileLastAccessed} from "../../components/profile-info-tooltip";
 import {baseDatabaseTypes, getDatabaseTypeDropdownItems, IDatabaseDropdownItem} from "../../config/database-types";
-import {extensions, sources} from '../../config/features';
+import {extensions, sources, featureFlags} from '../../config/features';
 import {InternalRoutes} from "../../config/routes";
 import {useDesktopFile} from '../../hooks/useDesktop';
 import {AuthActions} from "../../store/auth";
 import {DatabaseActions} from "../../store/database";
+import {TourActions} from "../../store/tour";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {isDesktopApp} from '../../utils/external-links';
 
@@ -213,6 +214,52 @@ export const LoginForm: FC<LoginFormProps> = ({
         });
     }, [dispatch, loginWithProfile, navigate, profiles?.Profiles, selectedAvailableProfile, onLoginSuccess]);
 
+    const handleSampleDatabaseLogin = useCallback(() => {
+        const sampleProfile = profiles?.Profiles.find(p => p.Source === "builtin");
+        if (!sampleProfile) {
+            return toast.error("Sample database not found");
+        }
+
+        setError(undefined);
+
+        loginWithProfile({
+            variables: {
+                profile: {
+                    Id: sampleProfile.Id,
+                    Type: sampleProfile.Type as DatabaseType,
+                },
+            },
+            onCompleted(data) {
+                if (data.LoginWithProfile.Status) {
+                    updateProfileLastAccessed(sampleProfile.Id);
+                    dispatch(AuthActions.login({
+                        Type: sampleProfile.Type as DatabaseType,
+                        Id: sampleProfile.Id,
+                        Database: sampleProfile.Database ?? "",
+                        Hostname: "",
+                        Password: "",
+                        Username: "",
+                        Saved: true,
+                        IsEnvironmentDefined: sampleProfile.IsEnvironmentDefined ?? false,
+                    }));
+                    if (featureFlags.autoStartTourOnLogin) {
+                        dispatch(TourActions.scheduleTourOnLoad('sample-database-tour'));
+                    }
+                    if (onLoginSuccess) {
+                        onLoginSuccess();
+                    } else {
+                        navigate(InternalRoutes.Dashboard.StorageUnit.path);
+                    }
+                    return toast.success("Welcome to WhoDB");
+                }
+                return toast.error("Login failed");
+            },
+            onError(error) {
+                return toast.error(`Login failed: ${error.message}`);
+            }
+        });
+    }, [dispatch, loginWithProfile, navigate, profiles?.Profiles, onLoginSuccess]);
+
     const handleDatabaseTypeChange = useCallback((item: IDatabaseDropdownItem) => {
         if (item.id === DatabaseType.Sqlite3) {
             getDatabases({
@@ -277,12 +324,18 @@ export const LoginForm: FC<LoginFormProps> = ({
     }, [currentProfile]);
 
     const availableProfiles = useMemo(() => {
-        return profiles?.Profiles.map(profile => ({
-            value: profile.Id,
-            label: profile.Alias ?? profile.Id,
-            icon: (Icons.Logos as Record<string, ReactElement>)[profile.Type],
-            rightIcon: sources[profile.Source],
-        })) ?? [];
+        return profiles?.Profiles
+            .filter(profile => profile.Source !== "builtin")
+            .map(profile => ({
+                value: profile.Id,
+                label: profile.Alias ?? profile.Id,
+                icon: (Icons.Logos as Record<string, ReactElement>)[profile.Type],
+                rightIcon: sources[profile.Source],
+            })) ?? [];
+    }, [profiles?.Profiles]);
+
+    const sampleProfile = useMemo(() => {
+        return profiles?.Profiles.find(p => p.Source === "builtin");
     }, [profiles?.Profiles]);
     
     useEffect(() => {
@@ -476,11 +529,14 @@ export const LoginForm: FC<LoginFormProps> = ({
         );
     }
 
+    const showSidePanel = sampleProfile && !hideHeader && featureFlags.sampleDatabaseTour;
+
     return (
         <div className={classNames("w-fit h-fit", className, {
             "w-full h-full": advancedDirection === "vertical",
+            "flex gap-8": showSidePanel && advancedDirection === "horizontal",
         })} data-testid="login-form-container">
-            <div className="fixed top-4 right-4" data-testid="mode-toggle">
+            <div className="fixed top-4 right-4 z-20" data-testid="mode-toggle">
                 <ModeToggle />
             </div>
             <div className={classNames("flex flex-col grow gap-lg", {
@@ -577,29 +633,114 @@ export const LoginForm: FC<LoginFormProps> = ({
                         </Button>
                     </div>
                 )}
+                {
+                    availableProfiles.length > 0 &&
+                    <>
+                        <Separator className="my-8" />
+                        <div className="flex flex-col gap-lg">
+                            <Label>Available profiles</Label>
+                            <SearchSelect
+                                value={selectedAvailableProfile}
+                                onChange={handleAvailableProfileChange}
+                                placeholder="Select a profile"
+                                contentClassName="w-[var(--radix-popover-trigger-width)]"
+                                options={availableProfiles}
+                                buttonProps={{
+                                    "data-testid": "available-profiles-select",
+                                }}
+                                rightIcon={<ChevronDownIcon className="w-4 h-4"/>}
+                            />
+                            <Button onClick={() => handleLoginWithProfileSubmit()} data-testid="login-with-profile-button" variant={loginWithProfileEnabled ? "default" : "secondary"} disabled={!loginWithProfileEnabled}>
+                                <CheckCircleIcon className="w-4 h-4" /> Login
+                            </Button>
+                        </div>
+                    </>
+                }
             </div>
             {
-                availableProfiles.length > 0 &&
-                <>
-                    <Separator className="my-8" />
-                    <div className="flex flex-col gap-lg">
-                        <Label>Available profiles</Label>
-                        <SearchSelect
-                            value={selectedAvailableProfile}
-                            onChange={handleAvailableProfileChange}
-                            placeholder="Select a profile"
-                            contentClassName="w-[var(--radix-popover-trigger-width)]"
-                            options={availableProfiles}
-                            buttonProps={{
-                                "data-testid": "available-profiles-select",
-                            }}
-                            rightIcon={<ChevronDownIcon className="w-4 h-4"/>}
-                        />
-                        <Button onClick={() => handleLoginWithProfileSubmit()} data-testid="login-with-profile-button" variant={loginWithProfileEnabled ? "default" : "secondary"} disabled={!loginWithProfileEnabled}>
-                            <CheckCircleIcon className="w-4 h-4" /> Login
+                showSidePanel && advancedDirection === "horizontal" && (
+                    <Card className="flex flex-col gap-6 p-8 w-[380px] shadow-xl" data-testid="sample-database-panel">
+                        <div className="flex flex-col gap-4">
+                            <div className="flex items-center gap-3">
+                                <div className="h-14 w-14 rounded-2xl flex justify-center items-center bg-gradient-to-br from-brand to-brand/80 shadow-lg">
+                                    <SparklesIcon className="w-7 h-7 text-brand-foreground" />
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                    <h2 className="text-2xl font-bold text-foreground">
+                                        Try WhoDB
+                                    </h2>
+                                    <Badge variant="secondary" className="w-fit">
+                                        No setup required
+                                    </Badge>
+                                </div>
+                            </div>
+
+                            <p className="text-base text-muted-foreground leading-relaxed">
+                                Experience the power of WhoDB with our interactive sample database. Explore all features with real data.
+                            </p>
+                        </div>
+
+                        <Separator />
+
+                        <div className="flex flex-col gap-3">
+                            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
+                                What's Included
+                            </h3>
+                            <div className="flex flex-col gap-3">
+                                <div className="flex items-start gap-3">
+                                    <div className="h-6 w-6 rounded-lg flex justify-center items-center bg-brand/10 mt-0.5">
+                                        <ChatBubbleLeftRightIcon className="w-3.5 h-3.5 stroke-brand" />
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <p className="text-sm font-medium text-foreground">AI Chat Assistant</p>
+                                        <p className="text-xs text-muted-foreground">Query in natural language</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <div className="h-6 w-6 rounded-lg flex justify-center items-center bg-brand/10 mt-0.5">
+                                        <ShareIcon className="w-3.5 h-3.5 stroke-brand" />
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <p className="text-sm font-medium text-foreground">Visual Schema</p>
+                                        <p className="text-xs text-muted-foreground">Interactive graph view</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <div className="h-6 w-6 rounded-lg flex justify-center items-center bg-brand/10 mt-0.5">
+                                        <TableCellsIcon className="w-3.5 h-3.5 stroke-brand" />
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <p className="text-sm font-medium text-foreground">Data Grid</p>
+                                        <p className="text-xs text-muted-foreground">Edit like a spreadsheet</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <div className="h-6 w-6 rounded-lg flex justify-center items-center bg-brand/10 mt-0.5">
+                                        <CodeBracketIcon className="w-3.5 h-3.5 stroke-brand" />
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <p className="text-sm font-medium text-foreground">SQL Editor</p>
+                                        <p className="text-xs text-muted-foreground">Powerful query tools</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <Button
+                            onClick={handleSampleDatabaseLogin}
+                            data-testid="get-started-sample-db"
+                            size="lg"
+                            className="w-full mt-2"
+                        >
+                            <SparklesIcon className="w-4 h-4" />
+                            Get Started
                         </Button>
-                    </div>
-                </>
+
+                        <p className="text-xs text-center text-muted-foreground">
+                            Takes less than a minute • No credit card required
+                        </p>
+                    </Card>
+                )
             }
         </div>
     );
