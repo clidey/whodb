@@ -16,7 +16,7 @@ on:
         description: 'Platforms to build (comma-separated: windows-amd64,windows-arm64)'
         required: false
         type: string
-        default: 'windows-amd64,windows-arm64'
+        default: 'windows-amd64'
 
 permissions:
   contents: read
@@ -143,59 +143,22 @@ jobs:
 
           # Verify the executable is in the expected location
           if (Test-Path "build/windows/amd64/whodb.exe") {
-              Write-Host "✅ Executable ready: build/windows/amd64/whodb.exe"
+              Write-Host "Executable ready: build/windows/amd64/whodb.exe"
           } else {
               Write-Error "Could not find whodb.exe at expected location"
               exit 1
           }
 
-      # Windows ARM64 Build
-      - name: Build Windows ARM64
+      # Windows ARM64 Build (temporarily disabled)
+      - name: Skip Windows ARM64 Build
         if: matrix.arch == 'arm64' && matrix.enabled != false
-        working-directory: ./desktop-${{ inputs.edition }}
         shell: pwsh
-        env:
-          GOARCH: ${{ matrix.arch }}
         run: |
-          Write-Host "Building Windows executable for ARM64..."
-
-          # Prepare frontend
-          Write-Host "Preparing frontend..."
-          New-Item -ItemType Directory -Path frontend/dist -Force | Out-Null
-          Set-Location ../frontend
-
-          # Check if frontend is already built from cache
-          if (Test-Path "build/index.html") {
-              Write-Host "Using cached frontend build"
-          } else {
-              Write-Host "Building frontend..."
-              $env:CYPRESS_INSTALL_BINARY = "0"
-              pnpm run build:${{ inputs.edition }}
-          }
-
-          Copy-Item -Path build/* -Destination ../desktop-${{ inputs.edition }}/frontend/dist/ -Recurse
-          Set-Location ../desktop-${{ inputs.edition }}
-
-          Write-Host "Using Makefile to build..."
-          Write-Host "Building with VERSION=${{ inputs.version }}"
-          $env:VERSION = "${{ inputs.version }}"
-          make ${{ matrix.make-target }} VERSION="${{ inputs.version }}"
-
-          if ($LASTEXITCODE -ne 0) {
-              Write-Error "Make build failed with exit code: $LASTEXITCODE"
-              exit 1
-          }
-
-          # Verify the executable is in the expected location
-          if (Test-Path "build/windows/arm64/whodb.exe") {
-              Write-Host "Executable ready: build/windows/arm64/whodb.exe"
-          } else {
-              Write-Error "Could not find whodb.exe at expected location"
-              exit 1
-          }
+          Write-Host "Windows ARM64 build is temporarily disabled due to toolchain issues"
+          New-Item -ItemType Directory -Force -Path "./desktop-${{ inputs.edition }}/build/windows/arm64"
 
       - name: Upload Windows artifacts
-        if: matrix.enabled != false
+        if: matrix.enabled != false && (matrix.arch != 'arm64')
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: desktop-windows-${{ matrix.arch }}

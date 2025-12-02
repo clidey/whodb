@@ -14,20 +14,31 @@
  * limitations under the License.
  */
 
-package main
+package cmd
 
 import (
-	"github.com/clidey/whodb/cli/cmd"
-	"github.com/clidey/whodb/cli/pkg/crash"
-	"github.com/clidey/whodb/core/src/log"
-	_ "github.com/clidey/whodb/core/src/plugins"
+	"fmt"
+
+	"github.com/clidey/whodb/cli/pkg/version"
+	"github.com/spf13/cobra"
 )
 
-func init() {
-	log.SetLogLevel("none")
+var versionShort bool
+
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Print version information",
+	Long:  `Print detailed version information including build date, commit hash, and Go version.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		if versionShort {
+			fmt.Println(version.Short())
+		} else {
+			fmt.Println(version.Get())
+		}
+	},
 }
 
-func main() {
-	defer crash.Handler()
-	cmd.Execute()
+func init() {
+	rootCmd.AddCommand(versionCmd)
+	versionCmd.Flags().BoolVarP(&versionShort, "short", "s", false, "print short version")
 }

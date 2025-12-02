@@ -21,6 +21,15 @@ BUILD_DIR=build
 INSTALL_PATH=/usr/local/bin
 DOCKER_IMAGE=whodb-cli:latest
 
+# Version info
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+BUILD_DATE ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+# ldflags for version injection
+VERSION_PKG=github.com/clidey/whodb/cli/pkg/version
+LDFLAGS=-ldflags "-s -w -X $(VERSION_PKG).Version=$(VERSION) -X $(VERSION_PKG).Commit=$(COMMIT) -X $(VERSION_PKG).BuildDate=$(BUILD_DATE)"
+
 help:
 	@echo "WhoDB CLI - Makefile targets:"
 	@echo "  make build              - Build the CLI binary"
@@ -38,9 +47,9 @@ help:
 	@echo "  make docker-compose-down - Stop all Docker services"
 
 build:
-	@echo "Building $(BINARY_NAME)..."
+	@echo "Building $(BINARY_NAME) $(VERSION)..."
 	@mkdir -p $(BUILD_DIR)
-	@go build -o $(BUILD_DIR)/$(BINARY_NAME) .
+	@go build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) .
 	@echo "Build complete: $(BUILD_DIR)/$(BINARY_NAME)"
 
 clean:

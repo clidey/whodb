@@ -27,7 +27,9 @@ jobs:
         uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
         with:
           egress-policy: block
-          allowed-endpoints: >+
+          allowed-endpoints: >-
+            api.github.com:443
+            github.com:443
 
       - name: Checkout
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
@@ -97,7 +99,7 @@ jobs:
           }
           $rawParts = $semVersion.Split(".")
           if ($rawParts.Count -gt 3) {
-            Write-Error "Semantic version '$semVersion' has more than three numeric segments which is not supported for this mapping."
+            Write-Error "Semantic version '$semVersion' has more than three numeric segments."
             exit 1
           }
           $versionParts = @()
@@ -108,7 +110,7 @@ jobs:
               exit 1
             }
             if ($parsed -lt 0 -or $parsed -gt 65535) {
-              Write-Error "Semantic version segment '$part' is out of range for MSIX (0-65535)."
+              Write-Error "Semantic version segment '$part' is out of range (0-65535)."
               exit 1
             }
             $versionParts += $parsed
@@ -126,42 +128,23 @@ jobs:
           $windowsBuild = $minor
           $windowsRevision = $patch
 
-          foreach ($segment in @($windowsMajor, $windowsMinor, $windowsBuild, $windowsRevision)) {
-            if ($segment -lt 0 -or $segment -gt 65535) {
-              Write-Error "Computed Windows version segment '$segment' is out of range for MSIX (0-65535)."
-              exit 1
-            }
-          }
-
           $windowsVersion = "{0}.{1}.{2}.{3}" -f $windowsMajor, $windowsMinor, $windowsBuild, $windowsRevision
-          Write-Host "Windows package version resolved to $windowsVersion"
+          Write-Host "Windows package version: $windowsVersion"
 
           # Validate secrets
           $packageIdentityName = $env:MS_PACKAGE_IDENTITY_NAME.Trim()
           $publisherCnBase = $env:WINDOWS_PUBLISHER_CN.Trim()
           $packagePublisherDisplayName = $env:MS_PACKAGE_PUBLISHER_DISPLAY_NAME.Trim()
 
-          foreach ($pair in @(
-            @{ Name = "MS_PACKAGE_IDENTITY_NAME"; Value = $packageIdentityName },
-            @{ Name = "WINDOWS_PUBLISHER_CN"; Value = $publisherCnBase },
-            @{ Name = "MS_PACKAGE_PUBLISHER_DISPLAY_NAME"; Value = $packagePublisherDisplayName }
-          )) {
-            if ([string]::IsNullOrWhiteSpace($pair.Value)) {
-              Write-Error "Missing required secret $($pair.Name) for Microsoft Store packaging."
-              exit 1
-            }
-          }
-          if ($packageIdentityName -notmatch '^[A-Za-z0-9][A-Za-z0-9\.]*$') {
-            Write-Error "MS_PACKAGE_IDENTITY_NAME must match the package identity pattern (e.g. Contoso.App). Current value '$packageIdentityName' is invalid."
-            exit 1
-          }
-          if ($publisherCnBase -match '^\s*$' -or $publisherCnBase -match ',') {
-            Write-Error "WINDOWS_PUBLISHER_CN should only contain the certificate common name without CN= or commas. Current value '$publisherCnBase' is invalid."
+          if ([string]::IsNullOrWhiteSpace($packageIdentityName) -or
+              [string]::IsNullOrWhiteSpace($publisherCnBase) -or
+              [string]::IsNullOrWhiteSpace($packagePublisherDisplayName)) {
+            Write-Error "Missing required secrets for Microsoft Store packaging."
             exit 1
           }
           $packagePublisherId = "CN=$publisherCnBase"
 
-          # Find icon for asset generation
+          # Find icon
           $iconPaths = @(
             "desktop-builds-amd64/appicon.png",
             "desktop-builds-amd64/build/appicon.png",
@@ -176,56 +159,35 @@ jobs:
               break
             }
           }
-
           if (-not $iconPath) {
-            Write-Error "Icon file (appicon.png) not found in any artifact"
+            Write-Error "Icon file (appicon.png) not found"
             exit 1
           }
 
-          # Generate icons once (shared across both architectures)
+          # Generate icons
           $sharedAssetsDir = "shared-assets"
           New-Item -ItemType Directory -Force -Path $sharedAssetsDir | Out-Null
 
-          Write-Host "Generating icon sizes with ImageMagick..."
           $iconSizes = @{
-            "icon-50x50.png" = "50x50"
-            "icon-150x150.png" = "150x150"
-            "icon-44x44.png" = "44x44"
-            "icon-310x150.png" = "310x150"
-            "icon-620x300.png" = "620x300"
+            "StoreLogo.png" = "50x50"
+            "Square150x150Logo.png" = "150x150"
+            "Square44x44Logo.png" = "44x44"
+            "Wide310x150Logo.png" = "310x150"
+            "SplashScreen.png" = "620x300"
           }
 
           foreach ($filename in $iconSizes.Keys) {
             $size = $iconSizes[$filename]
             $outputPath = Join-Path $sharedAssetsDir $filename
-            Write-Host "  Generating $filename ($size)..."
             & magick $iconPath -resize $size -background transparent -gravity center -extent $size -quality 85 $outputPath
             if ($LASTEXITCODE -ne 0) {
               Write-Error "Failed to generate $filename"
               exit 1
             }
           }
-
-          $manifestIcons = @{
-            "StoreLogo.png" = "icon-50x50.png"
-            "Square150x150Logo.png" = "icon-150x150.png"
-            "Square44x44Logo.png" = "icon-44x44.png"
-            "Wide310x150Logo.png" = "icon-310x150.png"
-            "SplashScreen.png" = "icon-620x300.png"
-          }
-
-          foreach ($manifestName in $manifestIcons.Keys) {
-            $sourceFile = $manifestIcons[$manifestName]
-            $sourcePath = Join-Path $sharedAssetsDir $sourceFile
-            $destPath = Join-Path $sharedAssetsDir $manifestName
-            if (Test-Path $sourcePath) {
-              Copy-Item $sourcePath $destPath -Force
-            }
-          }
-
           Write-Host "Icons generated successfully"
 
-          # Function to create MSIX package for a given architecture
+          # Function to create MSIX package
           function Create-MsixPackage {
             param(
               [string]$Architecture,
@@ -234,8 +196,7 @@ jobs:
               [string]$OutputName
             )
 
-            Write-Host "`nCreating MSIX package for $Architecture..."
-
+            Write-Host "Creating MSIX package for $Architecture..."
             $msixDir = "msix-package-$Architecture"
             New-Item -ItemType Directory -Force -Path $msixDir | Out-Null
 
@@ -249,123 +210,121 @@ jobs:
             foreach ($path in $possiblePaths) {
               if (Test-Path $path) {
                 Copy-Item $path "$msixDir/whodb.exe"
-                Write-Host "  Found and copied executable from: $path"
+                Write-Host "  Found executable: $path"
                 $exeFound = $true
                 break
               }
             }
-
             if (-not $exeFound) {
               Write-Host "  Executable not found for $Architecture - skipping"
               return $null
             }
 
-            # Create manifest with correct architecture
-            $manifest = @"
-  <?xml version="1.0" encoding="utf-8"?>
-  <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
-  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
-  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
-  <Identity Name="$packageIdentityName"
-  Publisher="$packagePublisherId"
-  Version="$windowsVersion"
-  ProcessorArchitecture="$MsixArchitecture" />
-  <Properties>
-  <DisplayName>WhoDB</DisplayName>
-  <PublisherDisplayName>$packagePublisherDisplayName</PublisherDisplayName>
-  <Logo>Assets\StoreLogo.png</Logo>
-  </Properties>
-  <Dependencies>
-  <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.22621.0" />
-  </Dependencies>
-  <Resources>
-  <Resource Language="en-US" />
-  </Resources>
-  <Applications>
-  <Application Id="App" Executable="whodb.exe" EntryPoint="Windows.FullTrustApplication">
-  <uap:VisualElements DisplayName="WhoDB"
-  Description="Database management tool"
-  BackgroundColor="transparent"
-  Square150x150Logo="Assets\Square150x150Logo.png"
-  Square44x44Logo="Assets\Square44x44Logo.png">
-  <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
-  <uap:SplashScreen Image="Assets\SplashScreen.png" />
-  </uap:VisualElements>
-  </Application>
-  </Applications>
-  <Capabilities>
-  <rescap:Capability Name="runFullTrust" />
-  </Capabilities>
-  </Package>
-  "@
-            $manifest | Out-File -FilePath "$msixDir/AppxManifest.xml" -Encoding UTF8
-  
-  # Copy assets
-  $assetsDir = "$msixDir/Assets"
-  New-Item -ItemType Directory -Force -Path $assetsDir | Out-Null
-  Copy-Item "$sharedAssetsDir/*" $assetsDir -Force
-  
-  # Create MSIX package
-  $makeAppx = (where.exe makeappx.exe 2>$null | Select-Object -First 1)
-  if (-not $makeAppx) {
-  Write-Error "MakeAppx.exe not found"
-  exit 1
-  }
+            # Create manifest
+            $manifestContent = @"
+          <?xml version="1.0" encoding="utf-8"?>
+          <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+                   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+                   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
+            <Identity Name="$packageIdentityName"
+                      Publisher="$packagePublisherId"
+                      Version="$windowsVersion"
+                      ProcessorArchitecture="$MsixArchitecture" />
+            <Properties>
+              <DisplayName>WhoDB</DisplayName>
+              <PublisherDisplayName>$packagePublisherDisplayName</PublisherDisplayName>
+              <Logo>Assets\StoreLogo.png</Logo>
+            </Properties>
+            <Dependencies>
+              <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.22621.0" />
+            </Dependencies>
+            <Resources>
+              <Resource Language="en-US" />
+            </Resources>
+            <Applications>
+              <Application Id="App" Executable="whodb.exe" EntryPoint="Windows.FullTrustApplication">
+                <uap:VisualElements DisplayName="WhoDB"
+                                    Description="Database management tool"
+                                    BackgroundColor="transparent"
+                                    Square150x150Logo="Assets\Square150x150Logo.png"
+                                    Square44x44Logo="Assets\Square44x44Logo.png">
+                  <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
+                  <uap:SplashScreen Image="Assets\SplashScreen.png" />
+                </uap:VisualElements>
+              </Application>
+            </Applications>
+            <Capabilities>
+              <rescap:Capability Name="runFullTrust" />
+            </Capabilities>
+          </Package>
+          "@
+            $manifestContent | Out-File -FilePath "$msixDir/AppxManifest.xml" -Encoding UTF8
 
-  & $makeAppx pack /d $msixDir /p $OutputName /v
-            if ($LASTEXITCODE -ne 0) {
-  Write-Error "Failed to create MSIX package for $Architecture"
+            # Copy assets
+            $assetsDir = "$msixDir/Assets"
+            New-Item -ItemType Directory -Force -Path $assetsDir | Out-Null
+            Copy-Item "$sharedAssetsDir/*" $assetsDir -Force
+
+            # Create MSIX package
+            $makeAppx = (where.exe makeappx.exe 2>$null | Select-Object -First 1)
+            if (-not $makeAppx) {
+              Write-Error "MakeAppx.exe not found"
               exit 1
             }
 
-Write-Host "  MSIX package created: $OutputName"
-  return $OutputName
+            & $makeAppx pack /d $msixDir /p $OutputName /v
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "Failed to create MSIX package for $Architecture"
+              exit 1
+            }
+
+            Write-Host "  MSIX package created: $OutputName"
+            return $OutputName
           }
 
-# Create directory for MSIX bundle contents
-  $bundleDir = "msix-bundle-contents"
-  New-Item -ItemType Directory -Force -Path $bundleDir | Out-Null
-  
-  # Track created packages
-  $createdPackages = @()
-  
-  # Create AMD64 package (required)
-  $amd64Package = Create-MsixPackage -Architecture "amd64" -MsixArchitecture "x64" -BuildDir "desktop-builds-amd64" -OutputName "$bundleDir/WhoDB_$($env:INPUT_VERSION)_x64.msix"
-  if ($amd64Package) {
-  $createdPackages += $amd64Package
-} else {
-  Write-Error "AMD64 package is required but could not be created"
-  exit 1
-}
+          # Create bundle directory
+          $bundleDir = "msix-bundle-contents"
+          New-Item -ItemType Directory -Force -Path $bundleDir | Out-Null
 
-# Create ARM64 package (optional - only if artifact was downloaded)
-  $arm64Available = $env:ARM64_DOWNLOAD_OUTCOME -eq "success"
-  if ($arm64Available) {
-  $arm64Package = Create-MsixPackage -Architecture "arm64" -MsixArchitecture "arm64" -BuildDir "desktop-builds-arm64" -OutputName "$bundleDir/WhoDB_$($env:INPUT_VERSION)_arm64.msix"
-  if ($arm64Package) {
-  $createdPackages += $arm64Package
-} else {
-  Write-Host "ARM64 build artifact downloaded but executable not found - continuing with x64 only"
-}
-} else {
-  Write-Host "ARM64 artifact not available - creating x64-only bundle"
-          }
+          $createdPackages = @()
 
-# Create MSIX bundle from all packages
-  Write-Host "`nCreating MSIX bundle from $($createdPackages.Count) package(s)..."
-          $makeAppx = (where.exe makeappx.exe 2>$null | Select-Object -First 1)
-  $bundleOutput = "WhoDB_$($env:INPUT_VERSION).msixbundle"
-  
-  & $makeAppx bundle /d $bundleDir /p $bundleOutput /v
-  if ($LASTEXITCODE -ne 0) {
-  Write-Error "Failed to create MSIX bundle"
+          # Create AMD64 package (required)
+          $amd64Package = Create-MsixPackage -Architecture "amd64" -MsixArchitecture "x64" -BuildDir "desktop-builds-amd64" -OutputName "$bundleDir/WhoDB_$($env:INPUT_VERSION)_x64.msix"
+          if ($amd64Package) {
+            $createdPackages += $amd64Package
+          } else {
+            Write-Error "AMD64 package is required but could not be created"
             exit 1
           }
 
-Write-Host "MSIX bundle created: $bundleOutput"
-Write-Host "Bundle contains: $($createdPackages.Count) architecture(s)"
+          # Create ARM64 package (optional)
+          $arm64Available = $env:ARM64_DOWNLOAD_OUTCOME -eq "success"
+          if ($arm64Available) {
+            $arm64Package = Create-MsixPackage -Architecture "arm64" -MsixArchitecture "arm64" -BuildDir "desktop-builds-arm64" -OutputName "$bundleDir/WhoDB_$($env:INPUT_VERSION)_arm64.msix"
+            if ($arm64Package) {
+              $createdPackages += $arm64Package
+            } else {
+              Write-Host "ARM64 executable not found - continuing with x64 only"
+            }
+          } else {
+            Write-Host "ARM64 artifact not available - creating x64-only bundle"
+          }
 
-- name: Upload Windows package bundle
+          # Create MSIX bundle
+          Write-Host "Creating MSIX bundle from $($createdPackages.Count) package(s)..."
+          $makeAppx = (where.exe makeappx.exe 2>$null | Select-Object -First 1)
+          $bundleOutput = "WhoDB_$($env:INPUT_VERSION).msixbundle"
+
+          & $makeAppx bundle /d $bundleDir /p $bundleOutput /v
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Failed to create MSIX bundle"
+            exit 1
+          }
+
+          Write-Host "MSIX bundle created: $bundleOutput"
+          Write-Host "Bundle contains: $($createdPackages.Count) architecture(s)"
+
+      - name: Upload Windows package bundle
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: windows-msix
@@ -383,7 +342,9 @@ Write-Host "Bundle contains: $($createdPackages.Count) architecture(s)"
         uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
         with:
           egress-policy: block
-          allowed-endpoints: >+
+          allowed-endpoints: >-
+            api.github.com:443
+            github.com:443
 
       - name: Checkout for scripts
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
@@ -451,7 +412,7 @@ Write-Host "Bundle contains: $($createdPackages.Count) architecture(s)"
 
           $appId = $env:MS_APP_ID
 
-          # Look for .msixbundle first, fall back to .msix
+          # Find package
           $packagePath = Get-ChildItem -Path "." -Filter "*.msixbundle" | Select-Object -First 1
           if (-not $packagePath) {
             $packagePath = Get-ChildItem -Path "." -Filter "*.msix" | Select-Object -First 1
@@ -460,9 +421,9 @@ Write-Host "Bundle contains: $($createdPackages.Count) architecture(s)"
             Write-Error "MSIX bundle or package artifact not found"
             exit 1
           }
-
           Write-Host "Using package: $($packagePath.FullName)"
 
+          # Clone latest submission
           $submission = New-ApplicationSubmission -AppId $appId -NoStatus
           if (-not $submission) {
             Write-Error "Failed to clone latest submission for application $appId"
@@ -470,61 +431,42 @@ Write-Host "Bundle contains: $($createdPackages.Count) architecture(s)"
           }
 
           if (-not $submission.applicationPackages -or $submission.applicationPackages.Count -eq 0) {
-            Write-Error "Submission clone does not contain any packages; cannot continue"
+            Write-Error "Submission clone does not contain any packages"
             exit 1
           }
 
+          # Mark existing packages for deletion
           $originalPackages = $submission.applicationPackages | ForEach-Object { $_ }
           $submission.applicationPackages | ForEach-Object { $_.fileStatus = "PendingDelete" }
 
+          # Create new package entry
           $primaryPackage = $originalPackages | Select-Object -First 1
           $packageJson = $primaryPackage | ConvertTo-Json -Depth 32
           $newPackage = $packageJson | ConvertFrom-Json
 
+          # Parse version
           $semVersion = $env:INPUT_VERSION.Trim()
           if ($semVersion.StartsWith("v")) {
             $semVersion = $semVersion.Substring(1)
           }
           $rawParts = $semVersion.Split(".")
-          if ($rawParts.Count -gt 3) {
-            Write-Error "Semantic version '$semVersion' has more than three numeric segments which is not supported for this mapping."
-            exit 1
-          }
           $versionParts = @()
           foreach ($part in $rawParts) {
             $parsed = 0
-            if (-not [int]::TryParse($part, [ref]$parsed)) {
-              Write-Error "Semantic version segment '$part' is not numeric."
-              exit 1
+            if ([int]::TryParse($part, [ref]$parsed)) {
+              $versionParts += $parsed
             }
-            if ($parsed -lt 0 -or $parsed -gt 65535) {
-              Write-Error "Semantic version segment '$part' is out of range for MSIX (0-65535)."
-              exit 1
-            }
-            $versionParts += $parsed
           }
           while ($versionParts.Count -lt 3) {
             $versionParts += 0
           }
 
-          $major = $versionParts[0]
-          $minor = $versionParts[1]
-          $patch = $versionParts[2]
-
           $windowsMajor = 10
-          $windowsMinor = 100 + $major
-          $windowsBuild = $minor
-          $windowsRevision = $patch
-
-          foreach ($segment in @($windowsMajor, $windowsMinor, $windowsBuild, $windowsRevision)) {
-            if ($segment -lt 0 -or $segment -gt 65535) {
-              Write-Error "Computed Windows version segment '$segment' is out of range for MSIX (0-65535)."
-              exit 1
-            }
-          }
-
+          $windowsMinor = 100 + $versionParts[0]
+          $windowsBuild = $versionParts[1]
+          $windowsRevision = $versionParts[2]
           $windowsVersion = "{0}.{1}.{2}.{3}" -f $windowsMajor, $windowsMinor, $windowsBuild, $windowsRevision
-          Write-Host "Microsoft Store submission version resolved to $windowsVersion"
+          Write-Host "Submission version: $windowsVersion"
 
           $packageName = $packagePath.Name
           $packageSize = (Get-Item $packagePath.FullName).Length
@@ -542,6 +484,7 @@ Write-Host "Bundle contains: $($createdPackages.Count) architecture(s)"
             $newPackage | Add-Member -NotePropertyName version -NotePropertyValue $windowsVersion
           }
 
+          # Remove read-only properties
           foreach ($prop in @("fileUploadUrl", "fileUploadStatus", "uploadUrl", "id")) {
             if ($newPackage.PSObject.Properties.Name -contains $prop) {
               $newPackage.PSObject.Properties.Remove($prop)
@@ -550,6 +493,7 @@ Write-Host "Bundle contains: $($createdPackages.Count) architecture(s)"
 
           $submission.applicationPackages += $newPackage
 
+          # Clean submission object
           foreach ($prop in @("appId", "iapId")) {
             if ($submission.PSObject.Properties.Name -contains $prop) {
               $submission.PSObject.Properties.Remove($prop)
@@ -563,6 +507,7 @@ Write-Host "Bundle contains: $($createdPackages.Count) architecture(s)"
             }
           }
 
+          # Set publish mode
           $isStageOnly = $env:STAGE_ONLY -eq "true"
           if (-not $isStageOnly) {
             $submission.targetPublishMode = "Immediate"
@@ -571,43 +516,39 @@ Write-Host "Bundle contains: $($createdPackages.Count) architecture(s)"
             }
           }
 
+          # Update submission
           $updatedSubmission = Set-ApplicationSubmission -AppId $appId -UpdatedSubmission $submission -NoStatus
           if (-not $updatedSubmission) {
-            Write-Error "Failed to update submission with new package metadata"
+            Write-Error "Failed to update submission"
             exit 1
           }
 
           $uploadUrl = $updatedSubmission.fileUploadUrl
           if ([string]::IsNullOrWhiteSpace($uploadUrl)) {
-            Write-Error "Store API did not return an upload URL for the submission"
+            Write-Error "Store API did not return an upload URL"
             exit 1
           }
 
+          # Upload package
           $stagingDir = Join-Path $PWD "ms-store-upload"
-          if (Test-Path $stagingDir) {
-            Remove-Item $stagingDir -Recurse -Force
-          }
+          if (Test-Path $stagingDir) { Remove-Item $stagingDir -Recurse -Force }
           New-Item -ItemType Directory -Path $stagingDir | Out-Null
           Copy-Item $packagePath.FullName (Join-Path $stagingDir $packageName)
 
           $submissionZip = Join-Path $PWD "submission-package.zip"
-          if (Test-Path $submissionZip) {
-            Remove-Item $submissionZip -Force
-          }
+          if (Test-Path $submissionZip) { Remove-Item $submissionZip -Force }
           Compress-Archive -Path (Join-Path $stagingDir $packageName) -DestinationPath $submissionZip -CompressionLevel Optimal
 
           Set-SubmissionPackage -PackagePath $submissionZip -UploadUrl $uploadUrl -NoStatus
 
-          if (Test-Path $submissionZip) {
-            Remove-Item $submissionZip -Force
-          }
-          if (Test-Path $stagingDir) {
-            Remove-Item $stagingDir -Recurse -Force
-          }
+          # Cleanup
+          if (Test-Path $submissionZip) { Remove-Item $submissionZip -Force }
+          if (Test-Path $stagingDir) { Remove-Item $stagingDir -Recurse -Force }
 
+          # Complete or leave as draft
           if ($isStageOnly) {
             Write-Host "Submission updated and left as draft (stage-only mode)"
           } else {
             Complete-ApplicationSubmission -AppId $appId -SubmissionId $updatedSubmission.id -NoStatus
-            Write-Host "Submission committed for certification and will publish immediately after approval"
+            Write-Host "Submission committed for certification"
           }

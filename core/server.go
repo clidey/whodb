@@ -18,7 +18,6 @@ package main
 
 import (
 	"context"
-	"embed"
 	"fmt"
 	"net/http"
 	"os"
@@ -36,9 +35,6 @@ import (
 	"github.com/clidey/whodb/core/src/settings"
 	"github.com/pkg/errors"
 )
-
-//go:embed build/*
-var staticFiles embed.FS
 
 const defaultPort = "8080"
 

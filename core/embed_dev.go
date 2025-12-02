@@ -1,3 +1,5 @@
+//go:build !prod
+
 /*
  * Copyright 2025 Clidey, Inc.
  *
@@ -16,18 +18,8 @@
 
 package main
 
-import (
-	"github.com/clidey/whodb/cli/cmd"
-	"github.com/clidey/whodb/cli/pkg/crash"
-	"github.com/clidey/whodb/core/src/log"
-	_ "github.com/clidey/whodb/core/src/plugins"
-)
+import "embed"
 
-func init() {
-	log.SetLogLevel("none")
-}
-
-func main() {
-	defer crash.Handler()
-	cmd.Execute()
-}
+// In dev mode, frontend is served separately (e.g., via pnpm start).
+// This provides an empty embed.FS so compilation succeeds without build/.
+var staticFiles embed.FS

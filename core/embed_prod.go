@@ -1,3 +1,5 @@
+//go:build prod
+
 /*
  * Copyright 2025 Clidey, Inc.
  *
@@ -16,18 +18,7 @@
 
 package main
 
-import (
-	"github.com/clidey/whodb/cli/cmd"
-	"github.com/clidey/whodb/cli/pkg/crash"
-	"github.com/clidey/whodb/core/src/log"
-	_ "github.com/clidey/whodb/core/src/plugins"
-)
+import "embed"
 
-func init() {
-	log.SetLogLevel("none")
-}
-
-func main() {
-	defer crash.Handler()
-	cmd.Execute()
-}
+//go:embed build/*
+var staticFiles embed.FS

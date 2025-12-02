@@ -283,6 +283,7 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             api.appstoreconnect.apple.com:443
+            appstoreconnect.apple.com:443
             contentdelivery.itunes.apple.com:443
             github.com:443
 

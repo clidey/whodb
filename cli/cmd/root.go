@@ -22,6 +22,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/clidey/whodb/cli/internal/tui"
+	"github.com/clidey/whodb/cli/pkg/styles"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -31,8 +32,7 @@ var cfgFile string
 var rootCmd = &cobra.Command{
 	Use:   "whodb-cli",
 	Short: "WhoDB CLI - Interactive database management tool",
-	Long: `WhoDB CLI is an interactive, production-ready command-line interface
-for WhoDB with a Claude Code-like experience.
+	Long: `WhoDB CLI is an interactive, production-ready command-line interface for WhoDB with a Claude Code-like experience.
 
 Features:
   - Interactive TUI with responsive design
@@ -62,15 +62,23 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig)
+	cobra.OnInitialize(initConfig, initColorMode)
 
 	// Disable Cobra's default completion command; we provide our own with install support
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.whodb-cli/config.yaml)")
 	rootCmd.PersistentFlags().Bool("debug", false, "enable debug mode")
+	rootCmd.PersistentFlags().Bool("no-color", false, "disable colored output")
 
 	viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))
+	viper.BindPFlag("no-color", rootCmd.PersistentFlags().Lookup("no-color"))
+}
+
+func initColorMode() {
+	if viper.GetBool("no-color") {
+		styles.DisableColor()
+	}
 }
 
 func initConfig() {
