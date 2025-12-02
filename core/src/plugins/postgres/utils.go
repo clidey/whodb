@@ -38,5 +38,3 @@ func (p *PostgresPlugin) GetColTypeQuery() string {
 		WHERE table_schema = ? AND table_name = ?;
 	`
 }
-
-// Identifier quoting handled by GORM Dialector
