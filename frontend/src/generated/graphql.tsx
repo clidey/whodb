@@ -216,6 +216,7 @@ export type Query = {
   AIModel: Array<Scalars['String']['output']>;
   AIProviders: Array<AiProvider>;
   Columns: Array<Column>;
+    ColumnsBatch: Array<StorageUnitColumns>;
   Database: Array<Scalars['String']['output']>;
   Graph: Array<GraphUnit>;
   MockDataMaxRowCount: Scalars['Int']['output'];
@@ -248,6 +249,12 @@ export type QueryAiModelArgs = {
 export type QueryColumnsArgs = {
   schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
+};
+
+
+export type QueryColumnsBatchArgs = {
+    schema: Scalars['String']['input'];
+    storageUnits: Array<Scalars['String']['input']>;
 };
 
 
@@ -329,6 +336,12 @@ export type StorageUnit = {
   Attributes: Array<Record>;
   IsMockDataGenerationAllowed: Scalars['Boolean']['output'];
   Name: Scalars['String']['output'];
+};
+
+export type StorageUnitColumns = {
+    __typename?: 'StorageUnitColumns';
+    Columns: Array<Column>;
+    StorageUnit: Scalars['String']['output'];
 };
 
 export type WhereCondition = {
@@ -492,6 +505,29 @@ export type DeleteRowMutationVariables = Exact<{
 
 
 export type DeleteRowMutation = { __typename?: 'Mutation', DeleteRow: { __typename?: 'StatusResponse', Status: boolean } };
+
+export type GetColumnsBatchQueryVariables = Exact<{
+    schema: Scalars['String']['input'];
+    storageUnits: Array<Scalars['String']['input']> | Scalars['String']['input'];
+}>;
+
+
+export type GetColumnsBatchQuery = {
+    __typename?: 'Query',
+    ColumnsBatch: Array<{
+        __typename?: 'StorageUnitColumns',
+        StorageUnit: string,
+        Columns: Array<{
+            __typename?: 'Column',
+            Name: string,
+            Type: string,
+            IsPrimary: boolean,
+            IsForeignKey: boolean,
+            ReferencedTable?: string | null,
+            ReferencedColumn?: string | null
+        }>
+    }>
+};
 
 export type GetStorageUnitRowsQueryVariables = Exact<{
   schema: Scalars['String']['input'];
@@ -1370,6 +1406,61 @@ export function useDeleteRowMutation(baseOptions?: Apollo.MutationHookOptions<De
 export type DeleteRowMutationHookResult = ReturnType<typeof useDeleteRowMutation>;
 export type DeleteRowMutationResult = Apollo.MutationResult<DeleteRowMutation>;
 export type DeleteRowMutationOptions = Apollo.BaseMutationOptions<DeleteRowMutation, DeleteRowMutationVariables>;
+export const GetColumnsBatchDocument = gql`
+    query GetColumnsBatch($schema: String!, $storageUnits: [String!]!) {
+        ColumnsBatch(schema: $schema, storageUnits: $storageUnits) {
+            StorageUnit
+            Columns {
+                Name
+                Type
+                IsPrimary
+                IsForeignKey
+                ReferencedTable
+                ReferencedColumn
+            }
+        }
+    }
+`;
+
+/**
+ * __useGetColumnsBatchQuery__
+ *
+ * To run a query within a React component, call `useGetColumnsBatchQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetColumnsBatchQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetColumnsBatchQuery({
+ *   variables: {
+ *      schema: // value for 'schema'
+ *      storageUnits: // value for 'storageUnits'
+ *   },
+ * });
+ */
+export function useGetColumnsBatchQuery(baseOptions: Apollo.QueryHookOptions<GetColumnsBatchQuery, GetColumnsBatchQueryVariables> & ({
+    variables: GetColumnsBatchQueryVariables;
+    skip?: boolean;
+} | { skip: boolean; })) {
+    const options = {...defaultOptions, ...baseOptions}
+    return Apollo.useQuery<GetColumnsBatchQuery, GetColumnsBatchQueryVariables>(GetColumnsBatchDocument, options);
+}
+
+export function useGetColumnsBatchLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetColumnsBatchQuery, GetColumnsBatchQueryVariables>) {
+    const options = {...defaultOptions, ...baseOptions}
+    return Apollo.useLazyQuery<GetColumnsBatchQuery, GetColumnsBatchQueryVariables>(GetColumnsBatchDocument, options);
+}
+
+export function useGetColumnsBatchSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetColumnsBatchQuery, GetColumnsBatchQueryVariables>) {
+    const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+    return Apollo.useSuspenseQuery<GetColumnsBatchQuery, GetColumnsBatchQueryVariables>(GetColumnsBatchDocument, options);
+}
+
+export type GetColumnsBatchQueryHookResult = ReturnType<typeof useGetColumnsBatchQuery>;
+export type GetColumnsBatchLazyQueryHookResult = ReturnType<typeof useGetColumnsBatchLazyQuery>;
+export type GetColumnsBatchSuspenseQueryHookResult = ReturnType<typeof useGetColumnsBatchSuspenseQuery>;
+export type GetColumnsBatchQueryResult = Apollo.QueryResult<GetColumnsBatchQuery, GetColumnsBatchQueryVariables>;
 export const GetStorageUnitRowsDocument = gql`
     query GetStorageUnitRows($schema: String!, $storageUnit: String!, $where: WhereCondition, $sort: [SortCondition!], $pageSize: Int!, $pageOffset: Int!) {
   Row(

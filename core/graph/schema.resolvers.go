@@ -895,83 +895,54 @@ func (r *queryResolver) Row(ctx context.Context, schema string, storageUnit stri
 // Columns is the resolver for the Columns field.
 func (r *queryResolver) Columns(ctx context.Context, schema string, storageUnit string) ([]*model.Column, error) {
 	plugin, config := GetPluginForContext(ctx)
-	typeArg := config.Credentials.Type
-
-	if err := ValidateStorageUnit(plugin, config, schema, storageUnit); err != nil {
-		return nil, err
-	}
-
-	columnsResult, err := plugin.GetColumnsForTable(config, schema, storageUnit)
+	columns, err := FetchColumnsForStorageUnit(plugin, config, schema, storageUnit)
 	if err != nil {
 		log.LogFields(log.Fields{
-			"operation":     "GetColumnsForTable",
+			"operation":     "Columns",
 			"schema":        schema,
 			"storage_unit":  storageUnit,
-			"database_type": typeArg,
+			"database_type": config.Credentials.Type,
 			"error":         err.Error(),
-		}).Error("Database operation failed")
+		}).Error("Failed to fetch columns")
+		return nil, err
+	}
+	return columns, nil
+}
+
+// ColumnsBatch is the resolver for the ColumnsBatch field.
+func (r *queryResolver) ColumnsBatch(ctx context.Context, schema string, storageUnits []string) ([]*model.StorageUnitColumns, error) {
+	plugin, config := GetPluginForContext(ctx)
+
+	results := make([]*model.StorageUnitColumns, len(storageUnits))
+	g, _ := errgroup.WithContext(ctx)
+
+	for i, storageUnit := range storageUnits {
+		i, storageUnit := i, storageUnit
+		g.Go(func() error {
+			columns, err := FetchColumnsForStorageUnit(plugin, config, schema, storageUnit)
+			if err != nil {
+				log.LogFields(log.Fields{
+					"operation":     "ColumnsBatch",
+					"schema":        schema,
+					"storage_unit":  storageUnit,
+					"database_type": config.Credentials.Type,
+					"error":         err.Error(),
+				}).Error("Failed to fetch columns")
+				return err
+			}
+			results[i] = &model.StorageUnitColumns{
+				StorageUnit: storageUnit,
+				Columns:     columns,
+			}
+			return nil
+		})
+	}
+
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 
-	constraints, err := plugin.GetColumnConstraints(config, schema, storageUnit)
-	if err != nil {
-		log.LogFields(log.Fields{
-			"operation":    "GetColumnConstraints",
-			"schema":       schema,
-			"storage_unit": storageUnit,
-			"error":        err.Error(),
-		}).Warn("Failed to get column constraints, primary key detection unavailable")
-		constraints = make(map[string]map[string]any)
-	}
-
-	// Get foreign key relationships from actual database constraints
-	foreignKeys, err := plugin.GetForeignKeyRelationships(config, schema, storageUnit)
-	if err != nil {
-		log.LogFields(log.Fields{
-			"operation":    "GetForeignKeyRelationships",
-			"schema":       schema,
-			"storage_unit": storageUnit,
-			"error":        err.Error(),
-		}).Warn("Failed to get foreign key relationships")
-		foreignKeys = make(map[string]*engine.ForeignKeyRelationship)
-	}
-
-	var columns []*model.Column
-	for _, column := range columnsResult {
-		// Use column's IsPrimary if already set, otherwise check constraints
-		isPrimary := column.IsPrimary
-		if !isPrimary {
-			if colConstraints, ok := constraints[column.Name]; ok {
-				if primary, exists := colConstraints["primary"]; exists {
-					if primaryBool, isBool := primary.(bool); isBool {
-						isPrimary = primaryBool
-					}
-				}
-			}
-		}
-
-		// Use column's IsForeignKey if already set, otherwise check foreign key relationships
-		isForeignKey := column.IsForeignKey
-		referencedTable := column.ReferencedTable
-		referencedColumn := column.ReferencedColumn
-		if !isForeignKey {
-			if fk, exists := foreignKeys[column.Name]; exists {
-				isForeignKey = true
-				referencedTable = &fk.ReferencedTable
-				referencedColumn = &fk.ReferencedColumn
-			}
-		}
-
-		columns = append(columns, &model.Column{
-			Type:             column.Type,
-			Name:             column.Name,
-			IsPrimary:        isPrimary,
-			IsForeignKey:     isForeignKey,
-			ReferencedTable:  referencedTable,
-			ReferencedColumn: referencedColumn,
-		})
-	}
-	return columns, nil
+	return results, nil
 }
 
 // RawExecute is the resolver for the RawExecute field.

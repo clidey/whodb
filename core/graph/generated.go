@@ -126,6 +126,7 @@ type ComplexityRoot struct {
 		AIModel             func(childComplexity int, providerID *string, modelType string, token *string) int
 		AIProviders         func(childComplexity int) int
 		Columns             func(childComplexity int, schema string, storageUnit string) int
+		ColumnsBatch        func(childComplexity int, schema string, storageUnits []string) int
 		Database            func(childComplexity int, typeArg string) int
 		Graph               func(childComplexity int, schema string) int
 		MockDataMaxRowCount func(childComplexity int) int
@@ -163,6 +164,11 @@ type ComplexityRoot struct {
 		IsMockDataGenerationAllowed func(childComplexity int) int
 		Name                        func(childComplexity int) int
 	}
+
+	StorageUnitColumns struct {
+		Columns     func(childComplexity int) int
+		StorageUnit func(childComplexity int) int
+	}
 }
 
 type MutationResolver interface {
@@ -184,6 +190,7 @@ type QueryResolver interface {
 	StorageUnit(ctx context.Context, schema string) ([]*model.StorageUnit, error)
 	Row(ctx context.Context, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) (*model.RowsResult, error)
 	Columns(ctx context.Context, schema string, storageUnit string) ([]*model.Column, error)
+	ColumnsBatch(ctx context.Context, schema string, storageUnits []string) ([]*model.StorageUnitColumns, error)
 	RawExecute(ctx context.Context, query string) (*model.RowsResult, error)
 	Graph(ctx context.Context, schema string) ([]*model.GraphUnit, error)
 	AIProviders(ctx context.Context) ([]*model.AIProvider, error)
@@ -503,6 +510,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Columns(childComplexity, args["schema"].(string), args["storageUnit"].(string)), true
+	case "Query.ColumnsBatch":
+		if e.complexity.Query.ColumnsBatch == nil {
+			break
+		}
+
+		args, err := ec.field_Query_ColumnsBatch_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.ColumnsBatch(childComplexity, args["schema"].(string), args["storageUnits"].([]string)), true
 	case "Query.Database":
 		if e.complexity.Query.Database == nil {
 			break
@@ -659,6 +677,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.StorageUnit.Name(childComplexity), true
+
+	case "StorageUnitColumns.Columns":
+		if e.complexity.StorageUnitColumns.Columns == nil {
+			break
+		}
+
+		return e.complexity.StorageUnitColumns.Columns(childComplexity), true
+	case "StorageUnitColumns.StorageUnit":
+		if e.complexity.StorageUnitColumns.StorageUnit == nil {
+			break
+		}
+
+		return e.complexity.StorageUnitColumns.StorageUnit(childComplexity), true
 
 	}
 	return 0, false
@@ -976,6 +1007,22 @@ func (ec *executionContext) field_Query_AIModel_args(ctx context.Context, rawArg
 		return nil, err
 	}
 	args["token"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_ColumnsBatch_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "schema", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["schema"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "storageUnits", ec.unmarshalNString2ᚕstringᚄ)
+	if err != nil {
+		return nil, err
+	}
+	args["storageUnits"] = arg1
 	return args, nil
 }
 
@@ -2581,6 +2628,53 @@ func (ec *executionContext) fieldContext_Query_Columns(ctx context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_ColumnsBatch(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_ColumnsBatch,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().ColumnsBatch(ctx, fc.Args["schema"].(string), fc.Args["storageUnits"].([]string))
+		},
+		nil,
+		ec.marshalNStorageUnitColumns2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐStorageUnitColumnsᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_ColumnsBatch(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "StorageUnit":
+				return ec.fieldContext_StorageUnitColumns_StorageUnit(ctx, field)
+			case "Columns":
+				return ec.fieldContext_StorageUnitColumns_Columns(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type StorageUnitColumns", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_ColumnsBatch_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_RawExecute(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3310,6 +3404,78 @@ func (ec *executionContext) fieldContext_StorageUnit_IsMockDataGenerationAllowed
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StorageUnitColumns_StorageUnit(ctx context.Context, field graphql.CollectedField, obj *model.StorageUnitColumns) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_StorageUnitColumns_StorageUnit,
+		func(ctx context.Context) (any, error) {
+			return obj.StorageUnit, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_StorageUnitColumns_StorageUnit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StorageUnitColumns",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StorageUnitColumns_Columns(ctx context.Context, field graphql.CollectedField, obj *model.StorageUnitColumns) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_StorageUnitColumns_Columns,
+		func(ctx context.Context) (any, error) {
+			return obj.Columns, nil
+		},
+		nil,
+		ec.marshalNColumn2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐColumnᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_StorageUnitColumns_Columns(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StorageUnitColumns",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "Type":
+				return ec.fieldContext_Column_Type(ctx, field)
+			case "Name":
+				return ec.fieldContext_Column_Name(ctx, field)
+			case "IsPrimary":
+				return ec.fieldContext_Column_IsPrimary(ctx, field)
+			case "IsForeignKey":
+				return ec.fieldContext_Column_IsForeignKey(ctx, field)
+			case "ReferencedTable":
+				return ec.fieldContext_Column_ReferencedTable(ctx, field)
+			case "ReferencedColumn":
+				return ec.fieldContext_Column_ReferencedColumn(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Column", field.Name)
 		},
 	}
 	return fc, nil
@@ -5827,6 +5993,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "ColumnsBatch":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_ColumnsBatch(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "RawExecute":
 			field := field
 
@@ -6208,6 +6396,50 @@ func (ec *executionContext) _StorageUnit(ctx context.Context, sel ast.SelectionS
 			}
 		case "IsMockDataGenerationAllowed":
 			out.Values[i] = ec._StorageUnit_IsMockDataGenerationAllowed(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var storageUnitColumnsImplementors = []string{"StorageUnitColumns"}
+
+func (ec *executionContext) _StorageUnitColumns(ctx context.Context, sel ast.SelectionSet, obj *model.StorageUnitColumns) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, storageUnitColumnsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("StorageUnitColumns")
+		case "StorageUnit":
+			out.Values[i] = ec._StorageUnitColumns_StorageUnit(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Columns":
+			out.Values[i] = ec._StorageUnitColumns_Columns(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -7167,6 +7399,60 @@ func (ec *executionContext) marshalNStorageUnit2ᚖgithubᚗcomᚋclideyᚋwhodb
 		return graphql.Null
 	}
 	return ec._StorageUnit(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNStorageUnitColumns2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐStorageUnitColumnsᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.StorageUnitColumns) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNStorageUnitColumns2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐStorageUnitColumns(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNStorageUnitColumns2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐStorageUnitColumns(ctx context.Context, sel ast.SelectionSet, v *model.StorageUnitColumns) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._StorageUnitColumns(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {

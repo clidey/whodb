@@ -216,6 +216,7 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 	countDone := make(chan error, 1)
 	go func() {
 		var countErr error
+		// codeql[go/nosql-injection]: collection name validated by StorageUnitExists before reaching this code
 		totalCount, countErr = coll.CountDocuments(context.TODO(), bsonFilter)
 		countDone <- countErr
 	}()
@@ -305,6 +306,7 @@ func (p *MongoDBPlugin) GetRowCount(config *engine.PluginConfig, database, colle
 		return 0, fmt.Errorf("error converting where condition: %v", err)
 	}
 
+	// codeql[go/nosql-injection]: collection name validated by StorageUnitExists before reaching this code
 	count, err := coll.CountDocuments(context.TODO(), bsonFilter)
 	if err != nil {
 		return 0, err

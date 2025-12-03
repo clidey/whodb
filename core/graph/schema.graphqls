@@ -18,6 +18,11 @@ type Column {
   ReferencedColumn: String
 }
 
+type StorageUnitColumns {
+    StorageUnit: String!
+    Columns: [Column!]!
+}
+
 enum WhereConditionType {
   Atomic
   And
@@ -173,6 +178,7 @@ type Query {
   StorageUnit(schema: String!): [StorageUnit!]!
   Row(schema: String!, storageUnit: String!, where: WhereCondition, sort: [SortCondition!], pageSize: Int!, pageOffset: Int!): RowsResult!
   Columns(schema: String!, storageUnit: String!): [Column!]!
+    ColumnsBatch(schema: String!, storageUnits: [String!]!): [StorageUnitColumns!]!
   RawExecute(query: String!): RowsResult!
   Graph(schema: String!): [GraphUnit!]!
   AIProviders: [AIProvider!]!

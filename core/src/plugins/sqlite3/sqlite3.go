@@ -191,6 +191,7 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, schema string, stor
 		countDone := make(chan error, 1)
 		go func() {
 			columnTypes, _ := p.GetColumnTypes(db, schema, storageUnit)
+			// codeql[go/sql-injection]: table name validated by StorageUnitExists before reaching this code
 			countQuery := db.Table(fullTable)
 			var err error
 			countQuery, err = p.ApplyWhereConditions(countQuery, where, columnTypes)
@@ -208,6 +209,7 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, schema string, stor
 
 		// For STRICT tables, delegate to parent GORM implementation without CAST
 		if isStrict {
+			// codeql[go/sql-injection]: table name validated by StorageUnitExists before reaching this code
 			query := db.Table(fullTable)
 
 			// Get column types for WHERE conditions
@@ -268,6 +270,7 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, schema string, stor
 				}
 			}
 
+			// codeql[go/sql-injection]: table name validated by StorageUnitExists before reaching this code
 			query := db.Table(fullTable).Select(selects)
 
 			query, err = p.ApplyWhereConditions(query, where, columnTypes)

@@ -160,6 +160,11 @@ type StorageUnit struct {
 	IsMockDataGenerationAllowed bool      `json:"IsMockDataGenerationAllowed"`
 }
 
+type StorageUnitColumns struct {
+	StorageUnit string    `json:"StorageUnit"`
+	Columns     []*Column `json:"Columns"`
+}
+
 type WhereCondition struct {
 	Type   WhereConditionType       `json:"Type"`
 	Atomic *AtomicWhereCondition    `json:"Atomic,omitempty"`

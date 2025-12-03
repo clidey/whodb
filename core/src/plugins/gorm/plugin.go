@@ -225,6 +225,7 @@ func (p *GormPlugin) GetRowCount(config *engine.PluginConfig, schema string, sto
 		builder := p.GormPluginFunctions.CreateSQLBuilder(db)
 		fullTable := builder.BuildFullTableName(schema, storageUnit)
 
+		// codeql[go/sql-injection]: table name validated by StorageUnitExists before reaching this code
 		query := db.Table(fullTable)
 		query, err := p.ApplyWhereConditions(query, where, columnTypes)
 		if err != nil {
@@ -315,6 +316,7 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 	var totalCount int64
 	countDone := make(chan error, 1)
 	go func() {
+		// codeql[go/sql-injection]: table name validated by StorageUnitExists before reaching this code
 		countQuery := db.Table(fullTable)
 		var err error
 		countQuery, err = p.ApplyWhereConditions(countQuery, where, columnTypes)
@@ -325,6 +327,7 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 		countDone <- countQuery.Count(&totalCount).Error
 	}()
 
+	// codeql[go/sql-injection]: table name validated by StorageUnitExists before reaching this code
 	query := db.Table(fullTable)
 	query, err := p.ApplyWhereConditions(query, where, columnTypes)
 	if err != nil {
