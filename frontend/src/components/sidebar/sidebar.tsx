@@ -491,7 +491,7 @@ export const Sidebar: FC = () => {
                     <VisuallyHidden>
                         <SheetTitle>Database Login</SheetTitle>
                     </VisuallyHidden>
-                    <LoginForm advancedDirection="vertical" />
+                    <LoginForm advancedDirection="vertical" onLoginSuccess={() => setShowLoginCard(false)}/>
                 </SheetContent>
             </Sheet>
         </div>
