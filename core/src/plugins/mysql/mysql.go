@@ -86,42 +86,33 @@ func (p *MySQLPlugin) GetTableInfoQuery() string {
 			TABLE_NAME,
 			TABLE_TYPE,
 			IFNULL(ROUND(((DATA_LENGTH + INDEX_LENGTH) / 1024 / 1024), 2), 0) AS total_size,
-			IFNULL(ROUND((DATA_LENGTH / 1024 / 1024), 2), 0) AS data_size,
-			IFNULL(TABLE_ROWS, 0) AS row_count
+			IFNULL(ROUND((DATA_LENGTH / 1024 / 1024), 2), 0) AS data_size
 		FROM
 			INFORMATION_SCHEMA.TABLES
 		WHERE
 			TABLE_SCHEMA = ?`
 }
 
+func (p *MySQLPlugin) GetStorageUnitExistsQuery() string {
+	return `SELECT EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?)`
+}
+
 func (p *MySQLPlugin) GetPlaceholder(index int) string {
 	return "?"
 }
 
-func (p *MySQLPlugin) GetTableNameAndAttributes(rows *sql.Rows, db *gorm.DB) (string, []engine.Record) {
+func (p *MySQLPlugin) GetTableNameAndAttributes(rows *sql.Rows) (string, []engine.Record) {
 	var tableName, tableType string
 	var totalSize, dataSize float64
-	var rowCount int64
-	if err := rows.Scan(&tableName, &tableType, &totalSize, &dataSize, &rowCount); err != nil {
+	if err := rows.Scan(&tableName, &tableType, &totalSize, &dataSize); err != nil {
 		log.Logger.WithError(err).Error("Failed to scan MySQL table information")
 		return "", []engine.Record{}
-	}
-
-	// If row count is 0 or suspiciously low, do a select count which shouldn't be too expensive
-	// MySQL's TABLE_ROWS is just an estimate that can be very inaccurate
-	if rowCount < 100 {
-		var actualCount int64
-		countQuery := db.Table(tableName).Select("COUNT(*)")
-		if err := countQuery.Scan(&actualCount).Error; err == nil {
-			rowCount = actualCount
-		}
 	}
 
 	attributes := []engine.Record{
 		{Key: "Type", Value: tableType},
 		{Key: "Total Size", Value: fmt.Sprintf("%.2f MB", totalSize)},
 		{Key: "Data Size", Value: fmt.Sprintf("%.2f MB", dataSize)},
-		{Key: "Count", Value: fmt.Sprintf("%d", rowCount)},
 	}
 	return tableName, attributes
 }

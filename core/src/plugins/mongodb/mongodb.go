@@ -165,6 +165,21 @@ func (p *MongoDBPlugin) GetStorageUnits(config *engine.PluginConfig, database st
 	return storageUnits, nil
 }
 
+func (p *MongoDBPlugin) StorageUnitExists(config *engine.PluginConfig, database string, collection string) (bool, error) {
+	client, err := DB(config)
+	if err != nil {
+		return false, err
+	}
+	defer client.Disconnect(context.TODO())
+
+	db := client.Database(database)
+	names, err := db.ListCollectionNames(context.TODO(), bson.M{"name": collection})
+	if err != nil {
+		return false, err
+	}
+	return len(names) > 0, nil
+}
+
 func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collection string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	client, err := DB(config)
 	if err != nil {
@@ -189,6 +204,15 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 		}).Error("Failed to convert where condition to MongoDB filter")
 		return nil, fmt.Errorf("error converting where condition: %v", err)
 	}
+
+	// Start count query in parallel
+	var totalCount int64
+	countDone := make(chan error, 1)
+	go func() {
+		var countErr error
+		totalCount, countErr = coll.CountDocuments(context.TODO(), bsonFilter)
+		countDone <- countErr
+	}()
 
 	findOptions := options.Find()
 	findOptions.SetLimit(int64(pageSize))
@@ -250,7 +274,37 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 		result.Rows = append(result.Rows, []string{string(jsonBytes)})
 	}
 
+	// Wait for count query to complete
+	if countErr := <-countDone; countErr != nil {
+		log.Logger.WithError(countErr).Warn("Failed to get MongoDB document count")
+	} else {
+		result.TotalCount = totalCount
+	}
+
 	return result, nil
+}
+
+func (p *MongoDBPlugin) GetRowCount(config *engine.PluginConfig, database, collection string, where *model.WhereCondition) (int64, error) {
+	client, err := DB(config)
+	if err != nil {
+		return 0, err
+	}
+	defer client.Disconnect(context.TODO())
+
+	db := client.Database(database)
+	coll := db.Collection(collection)
+
+	bsonFilter, err := convertWhereConditionToMongoDB(where)
+	if err != nil {
+		return 0, fmt.Errorf("error converting where condition: %v", err)
+	}
+
+	count, err := coll.CountDocuments(context.TODO(), bsonFilter)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 func (p *MongoDBPlugin) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {
@@ -258,8 +312,8 @@ func (p *MongoDBPlugin) GetColumnsForTable(config *engine.PluginConfig, schema s
 	client, err := DB(config)
 	if err != nil {
 		log.Logger.WithError(err).WithFields(map[string]any{
-			"hostname": config.Credentials.Hostname,
-			"database": schema,
+			"hostname":   config.Credentials.Hostname,
+			"database":   schema,
 			"collection": storageUnit,
 		}).Error("Failed to connect to MongoDB for column inference")
 		return nil, err
@@ -372,7 +426,6 @@ func inferMongoDBType(value any) string {
 		return "mixed"
 	}
 }
-
 
 func convertWhereConditionToMongoDB(where *model.WhereCondition) (bson.M, error) {
 	if where == nil {

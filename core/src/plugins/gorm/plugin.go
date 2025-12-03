@@ -67,6 +67,7 @@ type GormPluginFunctions interface {
 	GetPlaceholder(index int) string
 
 	GetTableInfoQuery() string
+	GetStorageUnitExistsQuery() string
 	GetSchemaTableQuery() string
 	GetPrimaryKeyColQuery() string
 	GetColTypeQuery() string
@@ -79,7 +80,7 @@ type GormPluginFunctions interface {
 	GetSupportedOperators() map[string]string
 
 	GetGraphQueryDB(db *gorm.DB, schema string) *gorm.DB
-	GetTableNameAndAttributes(rows *sql.Rows, db *gorm.DB) (string, []engine.Record)
+	GetTableNameAndAttributes(rows *sql.Rows) (string, []engine.Record)
 
 	// GetRowsOrderBy returns the ORDER BY clause for pagination queries
 	GetRowsOrderBy(db *gorm.DB, schema string, storageUnit string) string
@@ -137,9 +138,8 @@ func (p *GormPlugin) GetStorageUnits(config *engine.PluginConfig, schema string)
 		}
 
 		for rows.Next() {
-			tableName, attributes := p.GetTableNameAndAttributes(rows, db)
+			tableName, attributes := p.GetTableNameAndAttributes(rows)
 			if attributes == nil && tableName == "" {
-				// skip if error getting attributes
 				continue
 			}
 
@@ -150,7 +150,19 @@ func (p *GormPlugin) GetStorageUnits(config *engine.PluginConfig, schema string)
 				Attributes: attributes,
 			})
 		}
+
 		return storageUnits, nil
+	})
+}
+
+func (p *GormPlugin) StorageUnitExists(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
+		var exists bool
+		err := db.Raw(p.GetStorageUnitExistsQuery(), schema, storageUnit).Scan(&exists).Error
+		if err != nil {
+			return false, err
+		}
+		return exists, nil
 	})
 }
 
@@ -200,6 +212,30 @@ func (p *GormPlugin) GetRows(config *engine.PluginConfig, schema string, storage
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
 		// Use generic implementation; database-specific behavior should be handled in each plugin
 		return p.getGenericRows(db, schema, storageUnit, where, sort, pageSize, pageOffset)
+	})
+}
+
+func (p *GormPlugin) GetRowCount(config *engine.PluginConfig, schema string, storageUnit string, where *model.WhereCondition) (int64, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (int64, error) {
+		var columnTypes map[string]string
+		if where != nil {
+			columnTypes, _ = p.GetColumnTypes(db, schema, storageUnit)
+		}
+
+		builder := p.GormPluginFunctions.CreateSQLBuilder(db)
+		fullTable := builder.BuildFullTableName(schema, storageUnit)
+
+		query := db.Table(fullTable)
+		query, err := p.ApplyWhereConditions(query, where, columnTypes)
+		if err != nil {
+			return 0, err
+		}
+
+		var count int64
+		if err := query.Count(&count).Error; err != nil {
+			return 0, err
+		}
+		return count, nil
 	})
 }
 
@@ -275,6 +311,20 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 	builder := p.GormPluginFunctions.CreateSQLBuilder(db)
 	fullTable := builder.BuildFullTableName(schema, storageUnit)
 
+	// Start count query in a separate goroutine for parallel execution
+	var totalCount int64
+	countDone := make(chan error, 1)
+	go func() {
+		countQuery := db.Table(fullTable)
+		var err error
+		countQuery, err = p.ApplyWhereConditions(countQuery, where, columnTypes)
+		if err != nil {
+			countDone <- err
+			return
+		}
+		countDone <- countQuery.Count(&totalCount).Error
+	}()
+
 	query := db.Table(fullTable)
 	query, err := p.ApplyWhereConditions(query, where, columnTypes)
 	if err != nil {
@@ -327,6 +377,14 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 		if _, err := strconv.Atoi(col.Type); err == nil {
 			result.Columns[i].Type = p.FindMissingDataType(db, col.Type)
 		}
+	}
+
+	// Wait for count query to complete and set TotalCount
+	if countErr := <-countDone; countErr != nil {
+		log.Logger.WithError(countErr).Warn(fmt.Sprintf("Failed to get row count for table %s.%s", schema, storageUnit))
+		// Don't fail the whole operation if count fails
+	} else {
+		result.TotalCount = totalCount
 	}
 
 	return result, nil

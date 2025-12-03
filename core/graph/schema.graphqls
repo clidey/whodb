@@ -56,6 +56,7 @@ type RowsResult {
   Columns: [Column!]!
   Rows: [[String!]!]!
   DisableUpdate: Boolean!
+    TotalCount: Int!
 }
 
 type Record {

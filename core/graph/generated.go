@@ -147,6 +147,7 @@ type ComplexityRoot struct {
 		Columns       func(childComplexity int) int
 		DisableUpdate func(childComplexity int) int
 		Rows          func(childComplexity int) int
+		TotalCount    func(childComplexity int) int
 	}
 
 	SettingsConfig struct {
@@ -619,6 +620,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.RowsResult.Rows(childComplexity), true
+	case "RowsResult.TotalCount":
+		if e.complexity.RowsResult.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.RowsResult.TotalCount(childComplexity), true
 
 	case "SettingsConfig.MetricsEnabled":
 		if e.complexity.SettingsConfig.MetricsEnabled == nil {
@@ -1190,6 +1197,8 @@ func (ec *executionContext) fieldContext_AIChatMessage_Result(_ context.Context,
 				return ec.fieldContext_RowsResult_Rows(ctx, field)
 			case "DisableUpdate":
 				return ec.fieldContext_RowsResult_DisableUpdate(ctx, field)
+			case "TotalCount":
+				return ec.fieldContext_RowsResult_TotalCount(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type RowsResult", field.Name)
 		},
@@ -2497,6 +2506,8 @@ func (ec *executionContext) fieldContext_Query_Row(ctx context.Context, field gr
 				return ec.fieldContext_RowsResult_Rows(ctx, field)
 			case "DisableUpdate":
 				return ec.fieldContext_RowsResult_DisableUpdate(ctx, field)
+			case "TotalCount":
+				return ec.fieldContext_RowsResult_TotalCount(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type RowsResult", field.Name)
 		},
@@ -2601,6 +2612,8 @@ func (ec *executionContext) fieldContext_Query_RawExecute(ctx context.Context, f
 				return ec.fieldContext_RowsResult_Rows(ctx, field)
 			case "DisableUpdate":
 				return ec.fieldContext_RowsResult_DisableUpdate(ctx, field)
+			case "TotalCount":
+				return ec.fieldContext_RowsResult_TotalCount(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type RowsResult", field.Name)
 		},
@@ -3117,6 +3130,35 @@ func (ec *executionContext) fieldContext_RowsResult_DisableUpdate(_ context.Cont
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RowsResult_TotalCount(ctx context.Context, field graphql.CollectedField, obj *model.RowsResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RowsResult_TotalCount,
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_RowsResult_TotalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RowsResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6037,6 +6079,11 @@ func (ec *executionContext) _RowsResult(ctx context.Context, sel ast.SelectionSe
 			}
 		case "DisableUpdate":
 			out.Values[i] = ec._RowsResult_DisableUpdate(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "TotalCount":
+			out.Values[i] = ec._RowsResult_TotalCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

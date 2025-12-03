@@ -64,6 +64,7 @@ type GetRowsResult struct {
 	Columns       []Column
 	Rows          [][]string
 	DisableUpdate bool
+	TotalCount    int64
 }
 
 type GraphUnitRelationshipType string
@@ -105,11 +106,13 @@ type PluginFunctions interface {
 	IsAvailable(config *PluginConfig) bool
 	GetAllSchemas(config *PluginConfig) ([]string, error)
 	GetStorageUnits(config *PluginConfig, schema string) ([]StorageUnit, error)
+	StorageUnitExists(config *PluginConfig, schema string, storageUnit string) (bool, error)
 	AddStorageUnit(config *PluginConfig, schema string, storageUnit string, fields []Record) (bool, error)
 	UpdateStorageUnit(config *PluginConfig, schema string, storageUnit string, values map[string]string, updatedColumns []string) (bool, error)
 	AddRow(config *PluginConfig, schema string, storageUnit string, values []Record) (bool, error)
 	DeleteRow(config *PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error)
 	GetRows(config *PluginConfig, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) (*GetRowsResult, error)
+	GetRowCount(config *PluginConfig, schema string, storageUnit string, where *model.WhereCondition) (int64, error)
 	GetGraph(config *PluginConfig, schema string) ([]GraphUnit, error)
 	RawExecute(config *PluginConfig, query string) (*GetRowsResult, error)
 	Chat(config *PluginConfig, schema string, model string, previousConversation string, query string) ([]*ChatMessage, error)

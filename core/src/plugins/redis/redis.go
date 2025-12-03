@@ -211,6 +211,21 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 	return storageUnits, nil
 }
 
+func (p *RedisPlugin) StorageUnitExists(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {
+	ctx := context.Background()
+	client, err := DB(config)
+	if err != nil {
+		return false, err
+	}
+	defer client.Close()
+
+	exists, err := client.Exists(ctx, storageUnit).Result()
+	if err != nil {
+		return false, err
+	}
+	return exists > 0, nil
+}
+
 func (p *RedisPlugin) GetRows(
 	config *engine.PluginConfig,
 	schema, storageUnit string,
@@ -316,7 +331,56 @@ func (p *RedisPlugin) GetRows(
 		return nil, err
 	}
 
+	// Set TotalCount from the number of rows (Redis data is fully loaded)
+	result.TotalCount = int64(len(result.Rows))
+
 	return result, nil
+}
+
+func (p *RedisPlugin) GetRowCount(config *engine.PluginConfig, schema, storageUnit string, where *model.WhereCondition) (int64, error) {
+	ctx := context.Background()
+
+	client, err := DB(config)
+	if err != nil {
+		return 0, err
+	}
+	defer client.Close()
+
+	keyType, err := client.Type(ctx, storageUnit).Result()
+	if err != nil {
+		return 0, err
+	}
+
+	switch keyType {
+	case "string":
+		return 1, nil
+	case "hash":
+		count, err := client.HLen(ctx, storageUnit).Result()
+		if err != nil {
+			return 0, err
+		}
+		return count, nil
+	case "list":
+		count, err := client.LLen(ctx, storageUnit).Result()
+		if err != nil {
+			return 0, err
+		}
+		return count, nil
+	case "set":
+		count, err := client.SCard(ctx, storageUnit).Result()
+		if err != nil {
+			return 0, err
+		}
+		return count, nil
+	case "zset":
+		count, err := client.ZCard(ctx, storageUnit).Result()
+		if err != nil {
+			return 0, err
+		}
+		return count, nil
+	default:
+		return 0, errors.New("unsupported Redis data type")
+	}
 }
 
 func (p *RedisPlugin) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {

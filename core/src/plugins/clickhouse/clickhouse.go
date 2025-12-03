@@ -109,7 +109,7 @@ func (p *ClickHousePlugin) GetTableInfoQuery() string {
 	`
 }
 
-func (p *ClickHousePlugin) GetTableNameAndAttributes(rows *sql.Rows, db *gorm.DB) (string, []engine.Record) {
+func (p *ClickHousePlugin) GetTableNameAndAttributes(rows *sql.Rows) (string, []engine.Record) {
 	var tableName, tableType string
 	var totalRows *uint64
 	var totalSize *string

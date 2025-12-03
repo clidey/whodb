@@ -10,5 +10,6 @@ query GetStorageUnitRows($schema: String!, $storageUnit: String!, $where: WhereC
     }
     Rows
     DisableUpdate
+      TotalCount
   }
 }
