@@ -197,6 +197,43 @@ services:
     networks:
       - db
 
+#  e2e_elasticsearch_922:
+#    image: elasticsearch:9.2.2
+#    container_name: e2e_elasticsearch_922
+#    platform: linux/amd64
+#    environment:
+#      - discovery.type=single-node
+#      - xpack.security.enabled=false
+#      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+#      - bootstrap.memory_lock=true
+#    ulimits:
+#      memlock:
+#        soft: -1
+#        hard: -1
+#    ports:
+#      - "9201:9200"
+#      - "9301:9300"
+#    volumes:
+#      - e2e_elasticsearch_922:/usr/share/elasticsearch/data
+#    networks:
+#      - db
+#    healthcheck:
+#      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health || exit 1"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 5
+#
+#  elasticsearch-init-922:
+#    image: curlimages/curl:latest
+#    depends_on:
+#      e2e_elasticsearch_922:
+#        condition: service_healthy
+#    volumes:
+#      - ./sample-data/elasticsearch/upload922.sh:/upload.sh:ro
+#    entrypoint: ["/bin/sh", "-c", "sh /upload.sh"]
+#    networks:
+#      - db
+
 
 networks:
   db:
@@ -211,4 +248,5 @@ volumes:
   e2e_clickhouse:
   e2e_redis:
   e2e_elasticsearch:
+  #  e2e_elasticsearch_922:
   e2e_mysql_842:
