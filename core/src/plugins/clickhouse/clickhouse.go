@@ -106,6 +106,7 @@ func (p *ClickHousePlugin) GetTableInfoQuery() string {
 			formatReadableSize(total_bytes) as total_size
 		FROM system.tables
 		WHERE database = ?
+		AND name NOT LIKE '.inner%'
 	`
 }
 
