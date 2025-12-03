@@ -99,7 +99,8 @@ func (p *MongoDBPlugin) GetStorageUnits(config *engine.PluginConfig, database st
 	defer client.Disconnect(context.TODO())
 
 	db := client.Database(database)
-	cursor, err := db.ListCollections(context.TODO(), bson.M{})
+	listOpts := options.ListCollections().SetAuthorizedCollections(true)
+	cursor, err := db.ListCollections(context.TODO(), bson.M{}, listOpts)
 	if err != nil {
 		log.Logger.WithError(err).WithFields(map[string]interface{}{
 			"hostname": config.Credentials.Hostname,
@@ -122,6 +123,11 @@ func (p *MongoDBPlugin) GetStorageUnits(config *engine.PluginConfig, database st
 
 		collectionName, _ := collectionInfo["name"].(string)
 		collectionType, _ := collectionInfo["type"].(string)
+
+		// Skip MongoDB system collections (e.g., system.views, system.profile)
+		if strings.HasPrefix(collectionName, "system.") {
+			continue
+		}
 
 		storageUnit := engine.StorageUnit{Name: collectionName}
 
