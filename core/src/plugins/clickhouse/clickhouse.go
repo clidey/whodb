@@ -99,14 +99,18 @@ func (p *ClickHousePlugin) GetAllSchemas(config *engine.PluginConfig) ([]string,
 
 func (p *ClickHousePlugin) GetTableInfoQuery() string {
 	return `
-		SELECT 
+		SELECT
 			name,
 			engine,
 			total_rows,
 			formatReadableSize(total_bytes) as total_size
-		FROM system.tables 
+		FROM system.tables
 		WHERE database = ?
 	`
+}
+
+func (p *ClickHousePlugin) GetStorageUnitExistsQuery() string {
+	return `SELECT EXISTS(SELECT 1 FROM system.tables WHERE database = ? AND name = ?)`
 }
 
 func (p *ClickHousePlugin) GetTableNameAndAttributes(rows *sql.Rows) (string, []engine.Record) {
