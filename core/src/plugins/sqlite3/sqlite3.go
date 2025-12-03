@@ -113,7 +113,9 @@ func (p *Sqlite3Plugin) GetTableInfoQuery() string {
 }
 
 func (p *Sqlite3Plugin) GetStorageUnitExistsQuery() string {
-	return `SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name = ?)`
+	// First param is schema (ignored for SQLite), second is table name
+	// LENGTH(IFNULL(?, '')) >= 0 always evaluates to true, consuming the schema param
+	return `SELECT LENGTH(IFNULL(?, '')) >= 0 AND EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name = ?)`
 }
 
 // IsTableStrict checks if a table is STRICT using PRAGMA table_list

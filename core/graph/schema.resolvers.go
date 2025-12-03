@@ -733,7 +733,8 @@ func (r *queryResolver) Profiles(ctx context.Context) ([]*model.LoginProfile, er
 
 // Database is the resolver for the Database field.
 func (r *queryResolver) Database(ctx context.Context, typeArg string) ([]string, error) {
-	plugin, config := GetPluginForContext(ctx)
+	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	plugin := src.MainEngine.Choose(engine.DatabaseType(typeArg))
 	databases, err := plugin.GetDatabases(config)
 	if err != nil {
 		log.LogFields(log.Fields{
