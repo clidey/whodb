@@ -64,7 +64,7 @@ describe('Mock Data Generation', () => {
 
             // Switch to Overwrite mode
             cy.contains('label', 'Data Handling').parent().find('[role="combobox"]').eq(-1).click();
-            cy.contains('[role="option"]', 'Overwrite existing data').click();
+            cy.contains('[role="option"]', 'Overwrite Existing Data').click();
 
             // Click Generate
             cy.contains('button', 'Generate').click();
@@ -84,7 +84,7 @@ describe('Mock Data Generation', () => {
             cy.contains('button', 'Generate').click();
 
             // Should show error about foreign key constraint
-            cy.contains('Mock data generation is not allowed for this table').should('exist');
+            cy.contains('Mock Data Generation Is Not Allowed for This Table').should('exist');
         });
     });
 
@@ -101,7 +101,7 @@ describe('Mock Data Generation', () => {
 
             cy.contains('button', 'Generate').click();
 
-            cy.contains('Mock data generation is not allowed for this table').should('exist');
+            cy.contains('Mock Data Generation Is Not Allowed for This Table').should('exist');
         });
     });
 
