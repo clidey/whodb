@@ -1,0 +1,286 @@
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import {forEachDatabase, hasFeature} from '../../support/test-runner';
+import {getDocumentId, parseDocument} from '../../support/categories/document';
+
+/**
+ * Get the operator for a given database
+ * @param {Object} db - Database configuration
+ * @param {string} operatorKey - Operator key (e.g., 'equals', 'notEquals')
+ * @returns {string} Operator string for this database
+ */
+function getOperator(db, operatorKey) {
+    if (db.whereOperators && db.whereOperators[operatorKey]) {
+        return db.whereOperators[operatorKey];
+    }
+    // Default fallbacks
+    const defaults = {
+        equals: '=',
+        notEquals: '!=',
+        greaterThan: '>',
+        lessThan: '<',
+    };
+    return defaults[operatorKey] || '=';
+}
+
+describe('Where Conditions', () => {
+
+    // SQL Databases
+    forEachDatabase('sql', (db) => {
+        if (!hasFeature(db, 'whereConditions')) {
+            return;
+        }
+
+        const eq = getOperator(db, 'equals');
+
+        it('applies where condition and filters data', () => {
+            cy.data('users');
+
+            cy.whereTable([['id', eq, '3']]);
+            cy.submitTable();
+
+            cy.getTableData().then(({rows}) => {
+                expect(rows.length).to.equal(1);
+                expect(rows[0][1]).to.equal('3'); // id column
+            });
+
+            // Clear conditions
+            cy.clearWhereConditions();
+            cy.submitTable();
+
+            cy.getTableData().then(({rows}) => {
+                expect(rows.length).to.be.greaterThan(1);
+            });
+        });
+
+        it('applies multiple conditions', () => {
+            cy.setWhereConditionMode('sheet');
+            cy.data('users');
+
+            cy.whereTable([
+                ['id', eq, '1'],
+                ['username', eq, 'john_doe'],
+            ]);
+            cy.submitTable();
+
+            cy.getConditionCount().should('equal', 2);
+
+            cy.getTableData().then(({rows}) => {
+                expect(rows.length).to.equal(1);
+                expect(rows[0][2]).to.equal('john_doe');
+            });
+
+            cy.clearWhereConditions();
+            cy.submitTable();
+        });
+
+        it('edits existing condition', () => {
+            cy.data('users');
+
+            cy.whereTable([['id', eq, '1']]);
+            cy.submitTable();
+
+            cy.getWhereConditionMode().then(mode => {
+                if (mode === 'popover') {
+                    cy.clickConditionToEdit(0);
+                    cy.updateConditionValue('2');
+                    cy.get('[data-testid="update-condition-button"]').click();
+                    cy.submitTable();
+
+                    cy.verifyCondition(0, `id ${eq} 2`);
+
+                    cy.getTableData().then(({rows}) => {
+                        expect(rows[0][1]).to.equal('2');
+                    });
+                }
+            });
+
+            cy.clearWhereConditions();
+            cy.submitTable();
+        });
+
+        it('removes individual condition', () => {
+            cy.data('users');
+
+            cy.whereTable([
+                ['id', eq, '1'],
+                ['username', eq, 'john_doe'],
+            ]);
+            cy.submitTable();
+
+            cy.getConditionCount().should('equal', 2);
+
+            cy.removeCondition(1);
+            cy.submitTable();
+
+            cy.getConditionCount().should('equal', 1);
+
+            cy.clearWhereConditions();
+            cy.submitTable();
+        });
+
+        it('shows more conditions button when exceeding visible limit', () => {
+            cy.data('users');
+
+            // Clear any existing conditions first
+            cy.clearWhereConditions();
+            cy.wait(500);
+
+            const neq = getOperator(db, 'notEquals');
+
+            // Add 3 conditions - should show "+1 more" button
+            cy.whereTable([
+                ['id', eq, '3'],
+                ['username', eq, 'admin_user'],
+                ['email', neq, 'jane@example.com'],
+            ]);
+
+            cy.getWhereConditionMode().then(mode => {
+                if (mode === 'popover') {
+                    // Should show first 2 conditions as badges
+                    cy.getConditionCount().should('equal', 3);
+                    cy.verifyCondition(0, `id ${eq} 3`);
+                    cy.verifyCondition(1, `username ${eq} admin_user`);
+
+                    // Check for more conditions button
+                    cy.checkMoreConditionsButton('+1 more');
+
+                    // Click to open sheet with all conditions
+                    cy.clickMoreConditions();
+
+                    // Remove conditions in sheet
+                    cy.removeConditionsInSheet(true);
+                    cy.saveSheetChanges();
+
+                    // After closing sheet, should have only 1 condition
+                    cy.getConditionCount().should('equal', 1);
+                    cy.verifyCondition(0, `id ${eq} 3`);
+                } else {
+                    // In sheet mode, just verify count
+                    cy.getConditionCount().should('equal', 3);
+                }
+            });
+
+            cy.submitTable();
+            cy.getTableData().then(({rows}) => {
+                expect(rows[0][2]).to.equal('admin_user');
+            });
+
+            cy.clearWhereConditions();
+            cy.submitTable();
+        });
+
+        it('cancels condition edit', () => {
+            cy.data('users');
+
+            cy.whereTable([['id', eq, '1']]);
+            cy.submitTable();
+
+            cy.getWhereConditionMode().then(mode => {
+                if (mode === 'popover') {
+                    cy.clickConditionToEdit(0);
+                    cy.updateConditionValue('2');
+                    cy.get('[data-testid="cancel-button"]').click();
+
+                    // Condition should remain unchanged
+                    cy.verifyCondition(0, `id ${eq} 1`);
+                }
+            });
+
+            cy.clearWhereConditions();
+            cy.submitTable();
+        });
+    });
+
+    // Document Databases
+    forEachDatabase('document', (db) => {
+        if (!hasFeature(db, 'whereConditions')) {
+            return;
+        }
+
+        const eq = getOperator(db, 'equals');
+
+        it('applies where condition and filters documents', () => {
+            cy.data('users');
+            cy.sortBy(0);
+
+            cy.getTableData().then(({rows}) => {
+                // For Elasticsearch, use username field; for MongoDB, use _id
+                if (db.type === 'ElasticSearch') {
+                    cy.whereTable([['username', eq, 'john_doe']]);
+                    cy.submitTable();
+
+                    cy.getTableData().then(({rows: filteredRows}) => {
+                        expect(filteredRows.length).to.equal(1);
+                        const doc = parseDocument(filteredRows[0]);
+                        expect(doc.username).to.equal('john_doe');
+                    });
+                } else {
+                    const firstDocId = getDocumentId(rows[0]);
+
+                    cy.whereTable([['_id', eq, firstDocId]]);
+                    cy.submitTable();
+
+                    cy.getTableData().then(({rows: filteredRows}) => {
+                        expect(filteredRows.length).to.equal(1);
+                        expect(getDocumentId(filteredRows[0])).to.equal(firstDocId);
+                    });
+                }
+
+                cy.clearWhereConditions();
+                cy.submitTable();
+
+                cy.getTableData().then(({rows: clearedRows}) => {
+                    expect(clearedRows.length).to.be.greaterThan(1);
+                });
+            });
+        });
+
+        it('applies multiple conditions on documents', () => {
+            cy.setWhereConditionMode('sheet');
+            cy.data('users');
+            cy.sortBy(0);
+
+            cy.getTableData().then(({rows}) => {
+                if (db.type === 'ElasticSearch') {
+                    cy.whereTable([
+                        ['username', eq, 'john_doe'],
+                        ['email', eq, 'john@example.com'],
+                    ]);
+                } else {
+                    const firstDocId = getDocumentId(rows[0]);
+                    cy.whereTable([
+                        ['_id', eq, firstDocId],
+                        ['username', eq, 'john_doe'],
+                    ]);
+                }
+                cy.submitTable();
+
+                cy.getConditionCount().should('equal', 2);
+
+                cy.getTableData().then(({rows: filtered}) => {
+                    const doc = parseDocument(filtered[0]);
+                    expect(doc.username).to.equal('john_doe');
+                });
+
+                cy.clearWhereConditions();
+                cy.submitTable();
+            });
+        });
+    });
+
+});

@@ -1,0 +1,149 @@
+{
+  "type": "MySQL8",
+  "uiType": "MySQL",
+  "category": "sql",
+  "id": "mysql8",
+  "connection": {
+    "host": "localhost",
+    "dockerHost": "e2e_mysql_842",
+    "port": 3308,
+    "user": "user",
+    "password": "password",
+    "database": "test_db_842",
+    "advanced": {
+      "Port": "3308"
+    }
+  },
+  "schema": "test_db_842",
+  "whereOperators": {
+    "equals": "=",
+    "notEquals": "!=",
+    "greaterThan": ">",
+    "lessThan": "<",
+    "greaterOrEqual": ">=",
+    "lessOrEqual": "<="
+  },
+  "features": {
+    "graph": true,
+    "export": true,
+    "scratchpad": true,
+    "mockData": true,
+    "chat": false,
+    "whereConditions": true,
+    "queryHistory": true
+  },
+  "expectedTables": [
+    "order_items",
+    "order_summary",
+    "orders",
+    "payments",
+    "products",
+    "test_casting",
+    "users"
+  ],
+  "tables": {
+    "users": {
+      "columns": {
+        "id": "int",
+        "username": "varchar",
+        "email": "varchar",
+        "password": "varchar",
+        "created_at": "timestamp"
+      },
+      "expectedColumns": [
+        "",
+        "id",
+        "username",
+        "email",
+        "password",
+        "created_at"
+      ],
+      "testData": {
+        "initial": [
+          [
+            "",
+            "1",
+            "john_doe",
+            "john@example.com",
+            "securepassword1"
+          ],
+          [
+            "",
+            "2",
+            "jane_smith",
+            "jane@example.com",
+            "securepassword2"
+          ],
+          [
+            "",
+            "3",
+            "admin_user",
+            "admin@example.com",
+            "adminpass"
+          ]
+        ],
+        "newRow": {
+          "id": "9999",
+          "username": "alice_wonder",
+          "email": "alice@example.com",
+          "password": "securepassword2",
+          "created_at": "2022-02-02"
+        }
+      },
+      "metadata": {
+        "type": "BASE TABLE",
+        "hasSize": true,
+        "hasCount": false
+      }
+    },
+    "test_casting": {
+      "columns": {
+        "id": "int",
+        "bigint_col": "bigint",
+        "integer_col": "int",
+        "smallint_col": "smallint",
+        "numeric_col": "decimal",
+        "description": "text"
+      },
+      "testData": {
+        "newRow": {
+          "bigint_col": "5000000000",
+          "integer_col": "42",
+          "smallint_col": "256",
+          "numeric_col": "9876.54",
+          "description": "Test casting from strings"
+        }
+      }
+    }
+  },
+  "graph": {
+    "expectedNodes": {
+      "users": [
+        "orders"
+      ],
+      "orders": [
+        "order_items",
+        "payments"
+      ],
+      "order_items": [],
+      "products": [
+        "order_items"
+      ],
+      "payments": [],
+      "order_summary": []
+    }
+  },
+  "sql": {
+    "schemaPrefix": "test_db_842.",
+    "selectAllUsers": "SELECT * FROM test_db_842.users ORDER BY id;",
+    "selectUserById": "SELECT * FROM test_db_842.users WHERE id=1;",
+    "updateUser": "UPDATE test_db_842.users SET username='john_doe1' WHERE id=1",
+    "revertUser": "UPDATE test_db_842.users SET username='john_doe' WHERE id=1",
+    "countUsers": "SELECT COUNT(*) as user_count FROM test_db_842.users;",
+    "selectUsersFiltered": "SELECT username, email FROM test_db_842.users WHERE id > 1;",
+    "invalidQuery": "SELECT * FROM test_db_842.users1;",
+    "errorPatterns": {
+      "tableNotFound": "Error 1146 (42S02): Table 'test_db_842.users1' doesn't exist"
+    }
+  }
+}

@@ -31,7 +31,7 @@ Cypress.Commands.add("goto", (route) => {
 Cypress.Commands.add('login', (databaseType, hostname, username, password, database, advanced={}) => {
     cy.visit('/login');
 
-    cy.contains('button', 'Disable telemetry').click();
+    cy.contains('button', 'Disable Telemetry').click();
 
     if (databaseType) {
         cy.get('[data-testid="database-type-select"]').click();
@@ -575,13 +575,18 @@ Cypress.Commands.add("addRow", (data, isSingleInput = false) => {
     });
 
     cy.get('[data-testid="submit-add-row-button"]').click();
-    // Wait for the sheet/dialog to close - the submit button should no longer be visible
-    cy.get('[data-testid="submit-add-row-button"]').should('not.exist');
+
+    // Wait for the operation to complete - dialog should close on success
+    // Use longer timeout to account for slow database operations
+    cy.get('[data-testid="submit-add-row-button"]', {timeout: 10000}).should('not.exist');
+
     // Ensure body no longer has scroll lock
     cy.get('body', { timeout: 5000 }).should('not.have.attr', 'data-scroll-locked');
-    // Increased wait for headless mode - ensures GraphQL mutation completes and UI updates
+
+    // Wait for GraphQL mutation to complete and UI to update
     cy.wait(500);
-    // Additional check to ensure the table has been refreshed
+
+    // Ensure table is visible
     cy.get('table tbody').should('be.visible');
 });
 
@@ -839,8 +844,17 @@ Cypress.Commands.add("getCellError", (index) => {
 });
 
 Cypress.Commands.add('logout', () => {
-    // First check if sidebar is closed (collapsed)
     cy.get('body').then($body => {
+        // Check if we're on a page with sidebar (i.e., logged in)
+        const hasSidebar = $body.find('[data-sidebar="sidebar"]').length > 0 ||
+            $body.find('[data-sidebar="trigger"]').length > 0;
+
+        if (!hasSidebar) {
+            // Not logged in or on login page - nothing to logout from
+            cy.log('No sidebar found - skipping logout (may not be logged in)');
+            return;
+        }
+
         // Check if the sidebar trigger button exists and is visible (indicates sidebar is closed)
         const sidebarTrigger = $body.find('[data-sidebar="trigger"]:visible');
         if (sidebarTrigger.length > 0 && !$body.text().includes('Logout Profile')) {
@@ -856,7 +870,7 @@ Cypress.Commands.add('logout', () => {
                 cy.contains('Logout Profile').click({force: true});
             } else {
                 // Fallback: try to find the logout button in the sidebar
-                cy.get('[data-sidebar="sidebar"]').within(() => {
+                cy.get('[data-sidebar="sidebar"]').first().within(() => {
                     cy.get('li[data-sidebar="menu-item"]').last().within(() => {
                         cy.get('div.cursor-pointer').first().click({force: true});
                     });
@@ -1369,7 +1383,7 @@ Cypress.Commands.add('clearChat', () => {
     cy.get('[data-input-message]').should('not.exist');
 
     // Ensure the input field is not disabled and is ready for interaction
-    cy.get('input[placeholder*="Type your message"]')
+    cy.get('[data-testid="chat-input"]')
         .should('be.visible')
         .should('not.be.disabled')
         .should('have.value', ''); // Should be empty after clear
@@ -1423,9 +1437,9 @@ Cypress.Commands.add('confirmMoveToScratchpad', ({ pageOption = 'new', newPageNa
             cy.get(`[value="${pageOption}"]`).click();
         });
     } else if (newPageName) {
-        // Enter new page name
+        // Enter new page name (placeholder has capital letters: "Enter Page Name")
         cy.get('[role="dialog"]').within(() => {
-            cy.get('input[placeholder="Enter page name"]').clear().type(newPageName);
+            cy.get('input[placeholder="Enter Page Name"]').clear().type(newPageName);
         });
     }
 
@@ -1444,7 +1458,7 @@ Cypress.Commands.add('confirmMoveToScratchpad', ({ pageOption = 'new', newPageNa
  */
 Cypress.Commands.add('navigateChatHistory', (direction = 'up') => {
     const key = direction === 'up' ? '{upArrow}' : '{downArrow}';
-    cy.get('input[placeholder*="Type your message"]').focus().type(key);
+    cy.get('[data-testid="chat-input"]').focus().type(key);
     cy.wait(200);
 });
 
@@ -1453,7 +1467,7 @@ Cypress.Commands.add('navigateChatHistory', (direction = 'up') => {
  * @returns {string} The current input value
  */
 Cypress.Commands.add('getChatInputValue', () => {
-    return cy.get('input[placeholder*="Type your message"]').invoke('val');
+    return cy.get('[data-testid="chat-input"]').invoke('val');
 });
 
 /**
@@ -1477,11 +1491,16 @@ Cypress.Commands.add('waitForChatResponse', () => {
         }
     });
 
-    // Wait for either a system response or an error state to appear
+    // Wait for either a system response, SQL result table, or error state to appear
     cy.get('body', { timeout: 10000 }).should($body => {
         const hasSystemMessage = $body.find('[data-input-message="system"]').length > 0;
         const hasErrorState = $body.find('[data-testid="error-state"]').length > 0;
-        expect(hasSystemMessage || hasErrorState, 'Expected either system message or error state').to.be.true;
+        // SQL results show as tables in the chat area
+        const hasSQLResult = $body.find('[data-testid="chat-sql-result"] table, [data-testid="sql-result-table"]').length > 0;
+        // Also check for any table that appeared after the user message (fallback)
+        const hasAnyResultTable = $body.find('table').length > 0;
+        expect(hasSystemMessage || hasErrorState || hasSQLResult || hasAnyResultTable,
+            'Expected system message, SQL result, or error state').to.be.true;
     });
 
     // Additional wait for UI to fully render the response

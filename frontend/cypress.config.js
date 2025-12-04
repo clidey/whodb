@@ -22,6 +22,12 @@ export default defineConfig({
     experimentalStudio: true,
     viewportWidth: 1280,
     viewportHeight: 768,
+    // Screenshot and video settings
+    screenshotOnRunFailure: true,
+    screenshotsFolder: 'cypress/screenshots',
+    video: true,
+    videosFolder: 'cypress/videos',
+    trashAssetsBeforeRuns: false,
   e2e: {
       baseUrl: 'http://localhost:3000', // Default for local development
       testIsolation: true, // Ensure clean state between tests

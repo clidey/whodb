@@ -1,18 +1,68 @@
 #!/bin/bash
 #
-# Simple parallel Cypress - one process per test file
+# Copyright 2025 Clidey, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
 
 set -e
 
 EDITION="${1:-ce}"
 HEADLESS="${2:-true}"
+TARGET_DB="${3:-all}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
-echo "🚀 Running Cypress tests in parallel (1 process per test)"
+# Database configurations
+DATABASES=(postgres mysql mysql8 mariadb sqlite mongodb redis elasticsearch clickhouse)
+
+# Map database to category for logging
+declare -A DB_CATEGORIES=(
+    [postgres]="sql"
+    [mysql]="sql"
+    [mysql8]="sql"
+    [mariadb]="sql"
+    [sqlite]="sql"
+    [mongodb]="document"
+    [redis]="keyvalue"
+    [elasticsearch]="document"
+    [clickhouse]="sql"
+)
+
+echo "🚀 Running Cypress tests in parallel (1 process per database)"
 echo "   Edition: $EDITION"
+echo "   Headless: $HEADLESS"
+echo "   Target DB: $TARGET_DB"
+
+# Filter databases if specific one requested
+if [ "$TARGET_DB" != "all" ]; then
+    FOUND=false
+    for db in "${DATABASES[@]}"; do
+        if [ "$db" = "$TARGET_DB" ]; then
+            FOUND=true
+            break
+        fi
+    done
+    if [ "$FOUND" = "false" ]; then
+        echo "❌ Unknown database: $TARGET_DB"
+        echo "   Available: ${DATABASES[*]}"
+        exit 1
+    fi
+    DATABASES=("$TARGET_DB")
+fi
+
+echo "   Databases: ${DATABASES[*]}"
 
 # Setup backend
 echo "⚙️ Setting up test environment..."
@@ -44,72 +94,66 @@ mkdir -p cypress/logs
 # Clean previous logs
 rm -f cypress/logs/*.log cypress/logs/*.json 2>/dev/null || true
 
-# Get all test files
-TESTS=(cypress/e2e/*.cy.js)
-if [ "$EDITION" = "ee" ] && [ -d "../ee/frontend/cypress/e2e" ]; then
-    EE_TESTS=(../ee/frontend/cypress/e2e/*.cy.js)
-    TESTS=("${TESTS[@]}" "${EE_TESTS[@]}")
-fi
+echo "📋 Running ${#DATABASES[@]} database tests in parallel..."
 
-echo "📋 Running ${#TESTS[@]} tests in parallel..."
-
-# Run all tests in parallel - one process each with stagger for stability
-PIDS=()
-COUNTER=0
-
-# Calculate stagger time based on number of tests
-# For 9 tests: ~0.3s each, for 12 tests: ~0.25s each
-# This spreads starts over 2-3 seconds total
-if [ ${#TESTS[@]} -le 6 ]; then
+# Calculate stagger time based on number of databases
+if [ ${#DATABASES[@]} -le 4 ]; then
     STAGGER_TIME=0.5
-elif [ ${#TESTS[@]} -le 10 ]; then
-    STAGGER_TIME=0.3
+elif [ ${#DATABASES[@]} -le 7 ]; then
+    STAGGER_TIME=0.4
 else
-    STAGGER_TIME=0.25
+    STAGGER_TIME=0.3
 fi
 
 echo "📊 Staggering test starts by ${STAGGER_TIME}s to ensure stable connections"
 
-for test in "${TESTS[@]}"; do
-    if [ -f "$test" ]; then
-        TEST_NAME=$(basename "$test" .cy.js)
-        echo "🚀 Starting: $TEST_NAME"
+# Run each database in parallel
+PIDS=()
+COUNTER=0
 
-        if [ "$HEADLESS" = "true" ]; then
-            # Set retry environment variables for more resilient connections
-            CYPRESS_retries__runMode=2 \
-            CYPRESS_retries__openMode=0 \
-            NODE_ENV=test npx cypress run --spec "$test" --browser chromium \
-                --reporter json --reporter-options "output=cypress/logs/results-$TEST_NAME.json" \
-                > "cypress/logs/$TEST_NAME.log" 2>&1 &
-            PIDS+=($!)
+for db in "${DATABASES[@]}"; do
+    echo "🚀 Starting: $db (${DB_CATEGORIES[$db]})"
 
-            # Stagger all test starts to avoid connection storms
-            COUNTER=$((COUNTER + 1))
-            if [ $COUNTER -lt ${#TESTS[@]} ]; then
-                sleep $STAGGER_TIME
-            fi
-        else
-            echo "⚠️ Parallel mode requires headless"
-            exit 1
+    if [ "$HEADLESS" = "true" ]; then
+        # Run all feature tests for this database
+        CYPRESS_database="$db" \
+        CYPRESS_category="${DB_CATEGORIES[$db]}" \
+        CYPRESS_isDocker="true" \
+        CYPRESS_retries__runMode=2 \
+        CYPRESS_retries__openMode=0 \
+        NODE_ENV=test npx cypress run \
+            --spec "cypress/e2e/features/**/*.cy.js" \
+            --browser chromium \
+            --reporter json \
+            --reporter-options "output=cypress/logs/results-$db.json" \
+            > "cypress/logs/$db.log" 2>&1 &
+
+        PIDS+=($!)
+
+        # Stagger all test starts to avoid connection storms
+        COUNTER=$((COUNTER + 1))
+        if [ $COUNTER -lt ${#DATABASES[@]} ]; then
+            sleep $STAGGER_TIME
         fi
+    else
+        echo "⚠️ Parallel mode requires headless"
+        exit 1
     fi
 done
 
 # Wait for all tests and collect results
-echo "⏳ Waiting for all tests to complete..."
-FAILED_TESTS=()
+echo "⏳ Waiting for all database tests to complete..."
+FAILED_DBS=()
 
 for i in "${!PIDS[@]}"; do
     PID=${PIDS[$i]}
-    TEST=${TESTS[$i]}
-    TEST_NAME=$(basename "$TEST" .cy.js)
+    DB=${DATABASES[$i]}
 
     if wait $PID; then
-        echo "✅ $TEST_NAME passed"
+        echo "✅ $DB passed"
     else
-        echo "❌ $TEST_NAME failed"
-        FAILED_TESTS+=("$TEST_NAME")
+        echo "❌ $DB failed"
+        FAILED_DBS+=("$DB")
     fi
 done
 
@@ -121,19 +165,19 @@ bash "$SCRIPT_DIR/cleanup-e2e.sh" "$EDITION"
 # Report results
 echo ""
 echo "📊 Test Results:"
-echo "   Total: ${#TESTS[@]} tests"
-echo "   Failed: ${#FAILED_TESTS[@]} tests"
+echo "   Total: ${#DATABASES[@]} databases"
+echo "   Failed: ${#FAILED_DBS[@]} databases"
 
-if [ ${#FAILED_TESTS[@]} -gt 0 ]; then
+if [ ${#FAILED_DBS[@]} -gt 0 ]; then
     echo ""
-    echo "❌ Failed tests:"
-    for test in "${FAILED_TESTS[@]}"; do
-        echo "   - $test"
-        echo "     Log: cypress/logs/$test.log"
+    echo "❌ Failed databases:"
+    for db in "${FAILED_DBS[@]}"; do
+        echo "   - $db (${DB_CATEGORIES[$db]})"
+        echo "     Log: cypress/logs/$db.log"
     done
     exit 1
 else
-    echo "✅ All tests passed!"
+    echo "✅ All database tests passed!"
     echo "📁 Logs available in: frontend/cypress/logs/"
     exit 0
 fi

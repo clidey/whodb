@@ -1,0 +1,73 @@
+{
+  "type": "ElasticSearch",
+  "category": "document",
+  "connection": {
+    "host": "localhost",
+    "dockerHost": "e2e_elasticsearch",
+    "port": 9200,
+    "user": "elastic",
+    "password": "pgmio430fe$$#@@",
+    "database": null
+  },
+  "schema": null,
+  "indexRefreshDelay": 1500,
+  "features": {
+    "graph": false,
+    "export": true,
+    "scratchpad": false,
+    "mockData": false,
+    "chat": false,
+    "whereConditions": true,
+    "queryHistory": false
+  },
+  "whereOperators": {
+    "equals": "match",
+    "notEquals": "ne"
+  },
+  "expectedIndices": [
+    "order_items",
+    "orders",
+    "payments",
+    "products",
+    "users"
+  ],
+  "tables": {
+    "users": {
+      "columns": {
+        "document": "object"
+      },
+      "expectedColumns": [
+        "",
+        "document"
+      ],
+      "testData": {
+        "initial": [
+          {
+            "username": "john_doe",
+            "email": "john@example.com",
+            "password": "securepassword1"
+          },
+          {
+            "username": "jane_smith",
+            "email": "jane@example.com",
+            "password": "securepassword2"
+          },
+          {
+            "username": "admin_user",
+            "email": "admin@example.com",
+            "password": "adminpass"
+          }
+        ],
+        "newDoc": {
+          "username": "test_user",
+          "email": "test@example.com",
+          "password": "testpass"
+        }
+      },
+      "metadata": {
+        "type": "Index",
+        "hasCount": true
+      }
+    }
+  }
+}

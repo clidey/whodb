@@ -1,0 +1,87 @@
+{
+  "type": "MongoDB",
+  "category": "document",
+  "connection": {
+    "host": "localhost",
+    "dockerHost": "e2e_mongo",
+    "port": 27017,
+    "user": "user",
+    "password": "password",
+    "database": "test_db"
+  },
+  "schema": null,
+  "features": {
+    "graph": true,
+    "export": true,
+    "scratchpad": false,
+    "mockData": false,
+    "chat": false,
+    "whereConditions": true,
+    "queryHistory": false
+  },
+  "whereOperators": {
+    "equals": "eq",
+    "notEquals": "ne"
+  },
+  "expectedTables": [
+    "order_items",
+    "order_summary",
+    "orders",
+    "payments",
+    "products",
+    "users"
+  ],
+  "includesSystemViews": true,
+  "tables": {
+    "users": {
+      "columns": {
+        "document": "object"
+      },
+      "expectedColumns": [
+        "",
+        "document"
+      ],
+      "testData": {
+        "initial": [
+          {
+            "username": "john_doe",
+            "email": "john@example.com",
+            "password": "securepassword1"
+          },
+          {
+            "username": "jane_smith",
+            "email": "jane@example.com",
+            "password": "securepassword2"
+          },
+          {
+            "username": "admin_user",
+            "email": "admin@example.com",
+            "password": "adminpass"
+          }
+        ]
+      },
+      "metadata": {
+        "type": "Collection",
+        "hasStorageSize": true,
+        "hasCount": true
+      }
+    }
+  },
+  "graph": {
+    "expectedNodes": {
+      "users": [
+        "orders"
+      ],
+      "orders": [
+        "order_items",
+        "payments"
+      ],
+      "order_items": [],
+      "products": [
+        "order_items"
+      ],
+      "payments": [],
+      "order_summary": []
+    }
+  }
+}
