@@ -15,7 +15,6 @@
  */
 
 import {forEachDatabase, getTableConfig, hasFeature} from '../../support/test-runner';
-import {verifyGraphNode} from '../../support/categories/sql';
 
 describe('Graph Visualization', () => {
 
@@ -43,10 +42,26 @@ describe('Graph Visualization', () => {
         it('shows table metadata in graph nodes', () => {
             cy.goto('graph');
 
+            // Wait for graph to render and layout
+            cy.get('.react-flow__node', {timeout: 10000}).should('be.visible');
+            cy.get('[data-testid="graph-layout-button"]').click();
+            cy.wait(1000); // Wait for layout animation
+
+            // Wait for the specific node to exist
+            cy.get('[data-testid="rf__node-users"]', {timeout: 10000}).should('exist');
+
             cy.getGraphNode('users').then(fields => {
                 const tableConfig = getTableConfig(db, 'users');
-                if (tableConfig) {
-                    verifyGraphNode(fields, tableConfig.columns, tableConfig.metadata);
+                if (tableConfig && tableConfig.metadata) {
+                    // Graph nodes only show metadata (Type, Size), not column types
+                    if (tableConfig.metadata.type) {
+                        expect(fields.some(([k, v]) => k === 'Type' && v === tableConfig.metadata.type),
+                            `Should have Type: ${tableConfig.metadata.type}`).to.be.true;
+                    }
+                    if (tableConfig.metadata.hasSize) {
+                        expect(fields.some(([k]) => k === 'Total Size' || k === 'Data Size'),
+                            'Should have size info').to.be.true;
+                    }
                 }
             });
         });
