@@ -1,0 +1,30 @@
+en:
+  title: Tables
+  search: Search
+  searchPlaceholder: Enter Filter Value...
+  scratchpad: Scratchpad
+  cardView: Card View
+  listView: List View
+  describe: Describe
+  data: Data
+  createPrefix: Create a
+  create: Create
+  createTitle: Create a
+  nameLabel: Name
+  namePlaceholder: Enter Name...
+  fieldNameLabel: Field Name
+  fieldNamePlaceholder: Enter Field Name
+  fieldTypeLabel: Field Type
+  fieldTypePlaceholder: Select Type
+  searchTypePlaceholder: Search Type...
+  modifiersLabel: Modifiers
+  primaryModifier: Primary
+  nullableModifier: Nullable
+  removeField: Remove
+  addField: Add Field
+  createButton: Create
+  nameRequired: Name Is Required
+  fieldsCannotBeEmpty: Fields Cannot Be Empty
+  createSuccessMessage: "{storageUnit} Created Successfully!"
+  actionsColumn: Actions
+  close: Close

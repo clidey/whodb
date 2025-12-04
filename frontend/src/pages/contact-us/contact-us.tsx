@@ -20,8 +20,10 @@ import {FC} from "react";
 import {InternalPage} from "../../components/page";
 import {InternalRoutes} from "../../config/routes";
 import {openExternalLink} from "../../utils/external-links";
+import {useTranslation} from '@/hooks/use-translation';
 
 export const ContactUsPage: FC = () => {
+    const { t } = useTranslation('pages/contact-us');
     return (
         <InternalPage routes={[InternalRoutes.ContactUs!]}>
             <div className="flex flex-col items-center w-full max-w-2xl mx-auto py-10 gap-8">
@@ -29,28 +31,28 @@ export const ContactUsPage: FC = () => {
                     <div className="flex flex-col gap-sm mb-4">
                         <div className="text-2xl font-bold flex items-center gap-2">
                             <EnvelopeIcon className="w-6 h-6"/>
-                            Contact Us
+                            {t('title')}
                         </div>
-                        <p className="mt-2">We're here to help! Reach out to us for support, questions, or feedback.</p>
+                        <p className="mt-2">{t('description')}</p>
                     </div>
                     <Separator/>
                     <div className="flex flex-col gap-xl py-6">
                         <div className="flex flex-col gap-2">
-                            <Label className="text-lg font-semibold">Email</Label>
+                            <Label className="text-lg font-semibold">{t('emailTitle')}</Label>
                             <Badge>
                                 <a
-                                    href="mailto:support@clidey.com"
+                                    href={`mailto:${t('emailAddress')}`}
                                     className="transition-colors text-base font-medium"
                                     data-testid="contact-email"
                                 >
-                                    support@clidey.com
+                                    {t('emailAddress')}
                                 </a>
                             </Badge>
-                            <p className="text-sm">Our support team typically responds within 1 business day.</p>
+                            <p className="text-sm">{t('emailDescription')}</p>
                         </div>
                         <Separator/>
                         <div className="flex flex-col gap-2">
-                            <Label className="text-lg font-semibold">Community & Issues</Label>
+                            <Label className="text-lg font-semibold">{t('communityTitle')}</Label>
                             <Button
                                 variant="secondary"
                                 className="w-fit gap-2"
@@ -58,33 +60,31 @@ export const ContactUsPage: FC = () => {
                                 onClick={(e) => openExternalLink("https://github.com/clidey/whodb/issues", e)}
                             >
                                 <GlobeAltIcon className="w-5 h-5"/>
-                                Submit an Issue on GitHub
+                                {t('submitIssue')}
                             </Button>
-                            <p className="text-sm">For bug reports, feature requests, or to join the discussion, visit
-                                our GitHub issues page.</p>
+                            <p className="text-sm">{t('communityDescription')}</p>
                         </div>
                         <Separator/>
                         <div className="flex flex-col gap-2">
-                            <Label className="text-lg font-semibold">Live Chat (Coming Soon)</Label>
+                            <Label className="text-lg font-semibold">{t('liveChatTitle')}</Label>
                             <Button
                                 variant="ghost"
                                 className="w-fit gap-sm cursor-not-allowed opacity-60"
                                 disabled
                             >
                                 <ChatBubbleLeftRightIcon className="w-5 h-5"/>
-                                Chat with Support
+                                {t('chatButton')}
                             </Button>
-                            <p className="text-sm">Live chat support will be available soon. Stay tuned!</p>
+                            <p className="text-sm">{t('liveChatDescription')}</p>
                         </div>
                     </div>
                     <div className="flex flex-col items-start gap-sm text-xs text-gray-500 py-4">
                         <div>
-                            <span className="font-semibold">Clidey, Inc.</span> &middot; 2025 &middot; All rights
-                            reserved.
+                            {t('companyInfo')}
                         </div>
                         <div>
-                            For urgent matters, please mention <span
-                            className="font-mono bg-gray-100 px-1 rounded">[URGENT]</span> in your email subject.
+                            {t('urgentNote')} <span
+                            className="font-mono bg-gray-100 px-1 rounded">{t('urgentLabel')}</span> {t('urgentNoteEnd')}
                         </div>
                     </div>
                 </div>

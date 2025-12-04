@@ -1,0 +1,24 @@
+en:
+  title: Query
+  clear: Clear
+  copyCode: Copy Code
+  queryHistory: Query History
+  addCell: Add a New Cell
+  clearEditor: Clear the Editor
+  deleteCell: Delete the Cell
+  noHistoryTitle: No History Yet
+  noHistoryDescription: Run a Query to See Your History
+  success: Success
+  error: Error
+  copyToClipboard: Copy to Clipboard
+  copied: Copied!
+  cloneToEditor: Clone to Editor
+  run: Run
+  clearHistory: Clear History
+  clearHistoryTitle: Clear Query History
+  clearHistoryDescription: Are you sure you want to clear all query history? This action cannot be undone.
+  cancel: Cancel
+  deletePage: Delete {pageName}?
+  deletePageDescription: This action cannot be undone. This will permanently delete "{pageName}" and remove its data.
+  continue: Continue
+  doubleClickEdit: Double click to edit

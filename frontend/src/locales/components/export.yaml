@@ -1,0 +1,23 @@
+en:
+  title: Export Data
+  selectedRows: You are about to export {{count}} selected rows.
+  allData: You are about to export all data from the table. This may take some time for large tables.
+  format: Format
+  delimiter: Delimiter
+  delimiterHelp: Choose a delimiter that doesn't appear in your data
+  cancel: Cancel
+  export: Export
+  exportFailed: Export Failed
+  exportDetailsTitle: "Export Details:"
+  csvHeaders: Headers Include Column Names and Data Types
+  csvEncoding: UTF-8 Encoding
+  csvDelimiter: Customizable Delimiter
+  excelFormat: Excel XLSX Format
+  excelHeaders: Formatted Headers with Styling
+  excelColumns: Auto-Sized Columns
+  formatCsv: CSV - Comma Separated Values
+  formatExcel: Excel - XLSX Format
+  delimiterComma: Comma (,) - Standard CSV
+  delimiterSemicolon: Semicolon (;) - Excel in some locales
+  delimiterPipe: Pipe (|) - Less common in data
+  delimiterTab: Tab - TSV Format

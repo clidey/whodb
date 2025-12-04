@@ -34,6 +34,7 @@ import {
 import {useAppSelector} from "../../store/hooks";
 import {getDatabaseStorageUnitLabel} from "../../utils/functions";
 import {StorageUnitGraphCard} from "../storage-unit/storage-unit";
+import {useTranslation} from '@/hooks/use-translation';
 import {
     Button,
     Checkbox,
@@ -82,13 +83,14 @@ const GraphSidebar: FC<GraphSidebarProps> = ({
     storageUnitsData,
     unitsLoading
 }) => {
+    const { t } = useTranslation('pages/graph');
     const children = useMemo(() => {
         const units: StorageUnit[] = (storageUnitsData?.StorageUnit ?? [])
             .filter((u: StorageUnit) => u.Name.toLowerCase().includes(search.trim().toLowerCase()));
         const groups = groupByType(units);
         const groupEntries = Object.entries(groups);
         if (groupEntries.length === 0) {
-            return <div className="text-sm text-muted-foreground px-2">No items</div>;
+            return <div className="text-sm text-muted-foreground px-2">{t('noItems')}</div>;
         }
         return groupEntries.map(([type, units]) => (
             <div key={type} className="mb-3">
@@ -115,7 +117,7 @@ const GraphSidebar: FC<GraphSidebarProps> = ({
                 })}
             </div>
         ));
-    }, [search, selectedUnits, setSelectedUnits, storageUnitsData]);
+    }, [search, selectedUnits, setSelectedUnits, storageUnitsData, t]);
 
     return (
         <div className="dark flex grow">
@@ -130,8 +132,8 @@ const GraphSidebar: FC<GraphSidebarProps> = ({
                         <SearchInput
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            placeholder="Search tables..."
-                            aria-label="Search tables"
+                            placeholder={t('searchPlaceholder')}
+                            aria-label={t('searchAriaLabel')}
                         />
                     </div>
                     <SidebarGroup>
@@ -150,6 +152,7 @@ const GraphSidebar: FC<GraphSidebarProps> = ({
 };
 
 export const GraphPage: FC = () => {
+    const { t } = useTranslation('pages/graph');
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const reactFlowRef = useRef<IGraphInstance>();
@@ -395,10 +398,10 @@ export const GraphPage: FC = () => {
                     !graphLoading && nodes.length === 0
                         ? <EmptyState
                             icon={<RectangleGroupIcon className="w-4 h-4" />}
-                            title={`No nodes selected`}
-                            description={`Select ${getDatabaseStorageUnitLabel(current?.Type).toLowerCase()} on the left to add them to the graph.`}>
+                            title={t('noNodesTitle')}
+                            description={t('noNodesDescription', { storageUnit: getDatabaseStorageUnitLabel(current?.Type).toLowerCase() })}>
                             <Button onClick={() => navigate(InternalRoutes.Dashboard.StorageUnit.path + "?create=true")}>
-                                Create {getDatabaseStorageUnitLabel(current?.Type, true)}
+                                {t('createButton', { storageUnit: getDatabaseStorageUnitLabel(current?.Type, true) })}
                             </Button>
                         </EmptyState>
                         : <Graph nodes={nodes} edges={edges} nodeTypes={nodeTypes}

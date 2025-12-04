@@ -22,8 +22,10 @@ import { LogoutDocument, LogoutMutation, LogoutMutationVariables } from '@graphq
 import { AuthActions } from "../../store/auth";
 import { Loading } from "../../components/loading";
 import { toast } from "@clidey/ux";
+import { useTranslation } from '@/hooks/use-translation';
 
 export const LogoutPage: FC = () => {
+  const { t } = useTranslation('pages/logout');
   const [logout, ] = useMutation<LogoutMutation, LogoutMutationVariables>(LogoutDocument);
   const dispatch = useDispatch();
 
@@ -31,13 +33,13 @@ export const LogoutPage: FC = () => {
     logout({
       onCompleted() {
         dispatch(AuthActions.logout());
-        toast.success("Logged out successfully");
+        toast.success(t('success'));
       },
       onError() {
-        toast.error("Error logging out");
+        toast.error(t('error'));
       }
     });
-  }, [dispatch, logout]);
+  }, [dispatch, logout, t]);
 
   return <Container>
       <div className="flex flex-col justify-center items-center gap-lg w-full">
@@ -45,7 +47,7 @@ export const LogoutPage: FC = () => {
               <Loading hideText={true} />
           </div>
           <div className="text-neutral-800 dark:text-neutral-300">
-              Logging out
+              {t('loggingOut')}
           </div>
       </div>
   </Container>

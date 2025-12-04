@@ -46,6 +46,7 @@ import {
     useLoginMutation,
     useLoginWithProfileMutation
 } from '@graphql';
+import { useTranslation } from '@/hooks/use-translation';
 import {VisuallyHidden} from "@radix-ui/react-visually-hidden";
 import classNames from "classnames";
 import {FC, ReactElement, useCallback, useEffect, useMemo, useState} from "react";
@@ -93,6 +94,7 @@ function getProfileIcon(profile: LocalLoginProfile) {
 }
 
 export const Sidebar: FC = () => {
+    const { t } = useTranslation('components/sidebar');
     const schema = useAppSelector(state => state.database.schema);
     const dispatch = useDispatch();
     const pathname = useLocation().pathname;
@@ -161,7 +163,7 @@ export const Sidebar: FC = () => {
                     }
                 },
                 onError(error) {
-                    toast.error(`Error signing you in: ${error.message}`);
+                    toast.error(`${t('errorSigningIn')} ${error.message}`);
                 },
             });
         } else {
@@ -187,7 +189,7 @@ export const Sidebar: FC = () => {
                     }
                 },
                 onError(error) {
-                    toast.error(`Error signing you in: ${error.message}`);
+                    toast.error(`${t('errorSigningIn')} ${error.message}`);
                 },
             });
         }
@@ -242,27 +244,27 @@ export const Sidebar: FC = () => {
                 path: InternalRoutes.Dashboard.StorageUnit.path,
             },
             {
-                title: "Graph",
+                title: t('graph'),
                 icon: <RectangleGroupIcon className="w-4 h-4" />,
                 path: InternalRoutes.Graph.path,
             },
         ];
         if (!isNoSQL(current.Type)) {
             routes.unshift({
-                title: "Chat",
+                title: t('chat'),
                 icon: <SparklesIcon className="w-4 h-4" />,
                 path: InternalRoutes.Chat.path,
             });
         }
         if (databaseSupportsScratchpad(current.Type)) {
             routes.push({
-                title: "Scratchpad",
+                title: t('scratchpad'),
                 icon: <CommandLineIcon className="w-4 h-4" />,
                 path: InternalRoutes.RawExecute.path,
             });
         }
         return routes;
-    }, [current]);
+    }, [current, t]);
 
     // Logout logic
     const handleLogout = useCallback(() => {
@@ -333,14 +335,14 @@ export const Sidebar: FC = () => {
                             <div className="flex flex-col gap-lg">
                                 {/* Profile Select */}
                                 <div className="flex flex-col gap-sm w-full">
-                                    <h2 className={cn("text-sm", !open &&  "hidden")}>Profile</h2>
+                                    <h2 className={cn("text-sm", !open &&  "hidden")}>{t('profile')}</h2>
                                     <SearchSelect
-                                        label="Profile"
+                                        label={t('profile')}
                                         options={profileOptions}
                                         value={currentProfileOption?.value}
                                         onChange={handleProfileChange}
-                                        placeholder="Select profile"
-                                        searchPlaceholder="Search profile..."
+                                        placeholder={t('selectProfile')}
+                                        searchPlaceholder={t('searchProfile')}
                                         onlyIcon={!open}
                                         extraOptions={
                                             <CommandItem
@@ -350,7 +352,7 @@ export const Sidebar: FC = () => {
                                             >
                                                 <span className="flex items-center gap-sm text-green-500">
                                                     <PlusCircleIcon className="w-4 h-4 stroke-green-500" />
-                                                    Add another profile
+                                                    {t('addAnotherProfile')}
                                                 </span>
                                             </CommandItem>
                                         }
@@ -366,14 +368,14 @@ export const Sidebar: FC = () => {
                                     "opacity-0 pointer-events-none": !open,
                                     "hidden": !databaseSupportsDatabaseSwitching(current?.Type),
                                 })}>
-                                    <h2 className="text-sm">Database</h2>
+                                    <h2 className="text-sm">{t('database')}</h2>
                                     <SearchSelect
-                                        label="Database"
+                                        label={t('database')}
                                         options={databaseOptions}
                                         value={current?.Database}
                                         onChange={handleDatabaseChange}
-                                        placeholder="Select database"
-                                        searchPlaceholder="Search database..."
+                                        placeholder={t('selectDatabase')}
+                                        searchPlaceholder={t('searchDatabase')}
                                         side="left" align="start"
                                         buttonProps={{
                                             "data-testid": "sidebar-database",
@@ -384,14 +386,14 @@ export const Sidebar: FC = () => {
                                     "opacity-0 pointer-events-none": !open || pathname.includes(InternalRoutes.RawExecute.path),
                                     "hidden": !databaseSupportsSchema(current?.Type),
                                 })}>
-                                    <h2 className="text-sm">Schema</h2>
+                                    <h2 className="text-sm">{t('schema')}</h2>
                                     <SearchSelect
-                                        label="Schema"
+                                        label={t('schema')}
                                         options={schemaOptions}
                                         value={schema}
                                         onChange={handleSchemaChange}
-                                        placeholder="Select schema"
-                                        searchPlaceholder="Search schema..."
+                                        placeholder={t('selectSchema')}
+                                        searchPlaceholder={t('searchSchema')}
                                         side="left" align="start"
                                         buttonProps={{
                                             "data-testid": "sidebar-schema",
@@ -427,7 +429,7 @@ export const Sidebar: FC = () => {
                                         <SidebarMenuButton asChild>
                                             <Link to={InternalRoutes.ContactUs.path} className="flex items-center gap-2">
                                                 <QuestionMarkCircleIcon className="w-4 h-4" />
-                                                {open && <span>Contact Us</span>}
+                                                {open && <span>{t('contactUs')}</span>}
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
@@ -437,7 +439,7 @@ export const Sidebar: FC = () => {
                                         <SidebarMenuButton asChild>
                                             <Link to={InternalRoutes.Settings.path} className="flex items-center gap-2">
                                                 <CogIcon className="w-4 h-4" />
-                                                {open && <span>Settings</span>}
+                                                {open && <span>{t('settings')}</span>}
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
@@ -448,7 +450,7 @@ export const Sidebar: FC = () => {
                                     <SidebarMenuButton asChild>
                                         <div className="flex items-center gap-sm text-nowrap w-fit cursor-pointer" onClick={handleLogout}>
                                             <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />
-                                            {open && <span>Log Out Profile</span>}
+                                            {open && <span>{t('logOutProfile')}</span>}
                                         </div>
                                     </SidebarMenuButton>
                                     {/* Dropdown for additional logout options */}
@@ -459,7 +461,7 @@ export const Sidebar: FC = () => {
                                             })}>
                                                 <Button
                                                     className="flex items-center justify-center p-1 rounded hover:bg-gray-100 dark:hover:bg-neutral-800 ml-2"
-                                                    aria-label="More logout options"
+                                                    aria-label={t('moreLogoutOptions')}
                                                     variant="ghost"
                                                 >
                                                     <ChevronDownIcon className="w-4 h-4" />
@@ -470,7 +472,7 @@ export const Sidebar: FC = () => {
                                                     onClick={handleLogout}
                                                 >
                                                     <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />
-                                                    <span className="ml-2">Logout All Profiles</span>
+                                                    <span className="ml-2">{t('logoutAllProfiles')}</span>
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
@@ -483,13 +485,13 @@ export const Sidebar: FC = () => {
                 <div className={cn("absolute right-4 bottom-4 text-xs text-muted-foreground", {
                     "hidden": !open,
                 })}>
-                    Version: {version?.Version}
+                    {t('version')} {version?.Version}
                 </div>
             </SidebarComponent>
             <Sheet open={showLoginCard} onOpenChange={setShowLoginCard}>
                 <SheetContent side="right" className="p-8">
                     <VisuallyHidden>
-                        <SheetTitle>Database Login</SheetTitle>
+                        <SheetTitle>{t('databaseLogin')}</SheetTitle>
                     </VisuallyHidden>
                     <LoginForm advancedDirection="vertical" />
                 </SheetContent>

@@ -82,6 +82,7 @@ import {getDatabaseStorageUnitLabel, isNoSQL} from "../../utils/functions";
 import {usePageSize} from "../../hooks/use-page-size";
 import {ExploreStorageUnitWhereCondition} from "./explore-storage-unit-where-condition";
 import {ExploreStorageUnitWhereConditionSheet} from "./explore-storage-unit-where-condition-sheet";
+import {useTranslation} from "../../hooks/use-translation";
 
 // Conditionally import EE query utilities
 let generateInitialQuery: ((databaseType: string | undefined, schema: string | undefined, tableName: string | undefined) => string) | undefined;
@@ -107,6 +108,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         handleSelectChange: handlePageSizeChange,
         handleCustomApply: handleCustomPageSizeApply,
     } = usePageSize(defaultPageSize);
+    const { t } = useTranslation('pages/explore-storage-unit');
 
     const [currentPage, setCurrentPage] = useState(1);
     const [whereCondition, setWhereCondition] = useState<WhereCondition>();
@@ -378,7 +380,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                     });
                 }
             } catch (e) {
-                setAddRowError("Invalid JSON.");
+                setAddRowError(t('invalidJson'));
                 return;
             }
         } else {
@@ -393,7 +395,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         }
 
         if (values.length === 0) {
-            setAddRowError("Please fill at least one value.");
+            setAddRowError(t('fillAtLeastOneValue'));
             return;
         }
         addRow({
@@ -403,7 +405,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 values,
             },
             onCompleted() {
-                toast.success("Added data row successfully!");
+                toast.success(t('addRowSuccess'));
                 setShowAdd(false);
                 setTimeout(() => {
                     handleSubmitRequest();
@@ -411,10 +413,11 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
             },
             onError(e) {
                 setAddRowError(e.message);
-                toast.error(`Unable to add the data row: ${e.message}`);
+                const errorMessage = t('addRowError').replace('{error}', e.message);
+                toast.error(errorMessage);
             },
         });
-    }, [addRow, addRowData, handleSubmitRequest, rows?.Columns, schema, unit?.Name, current?.Type]);
+    }, [addRow, addRowData, handleSubmitRequest, rows?.Columns, schema, t, unit?.Name, current?.Type]);
 
     const handleScratchpad = useCallback((specificCode?: string) => {
         if (current == null) {
@@ -479,7 +482,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     const handleEntitySearch = useCallback((columnName: string, value: string) => {
         const targetTable = getTargetTableName(columnName);
         if (!targetTable) {
-            toast.error("Could not determine target table for foreign key");
+            toast.error(t('couldNotDetermineTargetTable'));
             return;
         }
 
@@ -500,7 +503,8 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 const targetPrimaryKey = columnsData.Columns?.find(col => col.IsPrimary);
 
                 if (!targetPrimaryKey) {
-                    toast.error(`No primary key found for table ${targetTable}`);
+                    const errorMessage = t('noPrimaryKeyFound').replace('{table}', targetTable);
+                    toast.error(errorMessage);
                     return;
                 }
 
@@ -528,15 +532,17 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                         setShowEntitySearchSheet(true);
                     },
                     onError: (error) => {
-                        toast.error(`Failed to search for entity: ${error.message}`);
+                        const errorMessage = t('failedToSearchEntity').replace('{error}', error.message);
+                        toast.error(errorMessage);
                     }
                 });
             },
             onError: (error) => {
-                toast.error(`Failed to get target table structure: ${error.message}`);
+                const errorMessage = t('failedToGetTargetTableStructure').replace('{error}', error.message);
+                toast.error(errorMessage);
             }
         });
-    }, [getColumns, getStorageUnitRows, getTargetTableName, schema]);
+    }, [getColumns, getStorageUnitRows, getTargetTableName, schema, t]);
 
     const handleCloseEntitySearchSheet = useCallback(() => {
         setShowEntitySearchSheet(false);
@@ -567,14 +573,14 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 <div className="flex gap-sm items-center">
                     <h1 className="text-xl font-bold mr-4">{unitName}</h1>
                 </div>
-                <div className="text-sm" data-testid="total-count-top"><span className="font-semibold">Total Count:</span> {totalCount}</div>
+                <div className="text-sm" data-testid="total-count-top"><span className="font-semibold">{t('totalCount')}</span> {totalCount}</div>
             </div>
             <div className="flex w-full relative" data-testid="explore-storage-unit-options">
                 <div className="flex justify-between items-end w-full">
                     <div className="flex gap-2">
                         <div className="flex flex-col gap-2">
-                            <Label>Search</Label>
-                            <SearchInput placeholder="Search query..." className="w-64" value={search} onChange={e => setSearch(e.target.value)}
+                            <Label>{t('searchLabel')}</Label>
+                            <SearchInput placeholder={t('searchPlaceholder')} className="w-64" value={search} onChange={e => setSearch(e.target.value)}
                                 onKeyDown={e => {
                                     if (e.key === "Enter") {
                                         searchRef.current?.(search);
@@ -584,7 +590,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                             />
                         </div>
                         <div className="flex flex-col gap-2">
-                            <Label>Page Size</Label>
+                            <Label>{t('pageSizeLabel')}</Label>
                             <div className="flex gap-2">
                                 <Select
                                     value={isCustomPageSize ? "custom" : pageSizeString}
@@ -648,19 +654,19 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                             )
                         )}
                         <Button className="ml-6 mt-[22px]" onClick={handleQuery} data-testid="submit-button">
-                            <CheckCircleIcon className="w-4 h-4" /> Query
+                            <CheckCircleIcon className="w-4 h-4" /> {t('queryButton')}
                         </Button>
                     </div>
                     <Button onClick={handleOpenScratchpad} data-testid="embedded-scratchpad-button" variant="secondary"
                         className={cn({
                             "hidden": !databaseSupportsScratchpad(current?.Type),
                         })}>
-                        <CommandLineIcon className="w-4 h-4" /> Scratchpad
+                        <CommandLineIcon className="w-4 h-4" /> {t('scratchpad')}
                     </Button>
                 </div>
                 <Sheet open={showAdd} onOpenChange={setShowAdd}>
                     <SheetContent side="right" className="flex flex-col p-8">
-                        <SheetTitle className="flex items-center gap-2"><TableCellsIcon className="w-5 h-5" /> Add new row</SheetTitle>
+                        <SheetTitle className="flex items-center gap-2"><TableCellsIcon className="w-5 h-5" /> {t('addRowTitle')}</SheetTitle>
                         <div className="flex-1 overflow-y-auto pr-2">
                             <div className="flex flex-col gap-4">
                                 {rows?.Columns?.map((col, index) => (
@@ -694,10 +700,10 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                                 onClick={() => setShowAdd(false)}
                                 data-testid="cancel-add-row"
                             >
-                                Cancel
+                                {t('cancel')}
                             </Button>
                             <Button className="flex-1" onClick={handleAddRowSubmit} data-testid="submit-add-row-button" disabled={adding}>
-                                <CheckCircleIcon className="w-4 h-4" /> Submit
+                                <CheckCircleIcon className="w-4 h-4" /> {t('submit')}
                             </Button>
                         </SheetFooter>
                     </SheetContent>
@@ -732,7 +738,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                     >
                         <div className="flex gap-2">
                             <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-row-button">
-                                <PlusCircleIcon className="w-4 h-4" /> Add Row
+                                <PlusCircleIcon className="w-4 h-4" /> {t('addRowButton')}
                             </Button>
                         </div>
                     </StorageUnitTable>
@@ -746,11 +752,11 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 </Button>
                 <DrawerHeader className="px-0">
                     <DrawerTitle className="flex justify-between items-center">
-                        <h2 className="text-lg font-semibold">Scratchpad</h2>
+                        <h2 className="text-lg font-semibold">{t('scratchpadTitle')}</h2>
                         <div className="flex gap-sm items-center">
                             <Button onClick={() => handleScratchpad()} data-testid="run-submit-button">
                                 <PlayIcon className="w-4 h-4" />
-                                Run
+                                {t('run')}
                             </Button>
                         </div>
                     </DrawerTitle>
@@ -774,11 +780,11 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
             <SheetContent side="right" className="flex flex-col p-8 min-w-[600px]">
                 <div className="text-lg font-semibold mb-4 flex items-center gap-2">
                     <MagnifyingGlassIcon className="w-5 h-5" />
-                    Search around
+                    {t('searchAround')}
                 </div>
                 {entitySearchData && (
                     <div className="text-sm text-gray-500">
-                        Query: {entitySearchData.targetTable} (ID: {entitySearchData.value})
+                        {t('query').replace('{table}', entitySearchData.targetTable).replace('{id}', entitySearchData.value)}
                     </div>
                 )}
                 <div className="flex-1 overflow-y-auto pr-2">
@@ -808,13 +814,13 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                         </div>
                     ) : (
                         <div className="text-center text-gray-500 py-8">
-                            No entity found with the specified ID
+                            {t('noEntityFound')}
                         </div>
                     )}
                 </div>
                 <SheetFooter>
                     <Button onClick={handleCloseEntitySearchSheet} variant="outline">
-                        Close
+                        {t('close')}
                     </Button>
                 </SheetFooter>
             </SheetContent>

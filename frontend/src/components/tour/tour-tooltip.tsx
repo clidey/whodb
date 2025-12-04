@@ -18,6 +18,7 @@ import { Badge, Button, Card } from '@clidey/ux';
 import { motion } from 'framer-motion';
 import { FC, ReactElement, useEffect, useState } from 'react';
 import { CheckCircleIcon, ChevronRightIcon, XMarkIcon } from '../heroicons';
+import { useTranslation } from '../../hooks/use-translation';
 
 export type TooltipPosition = 'top' | 'bottom' | 'left' | 'right' | 'center';
 
@@ -50,6 +51,7 @@ export const TourTooltip: FC<TourTooltipProps> = ({
     isFirstStep,
     isLastStep,
 }) => {
+    const { t } = useTranslation('components/tour');
     const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
 
     useEffect(() => {
@@ -205,18 +207,18 @@ export const TourTooltip: FC<TourTooltipProps> = ({
                         {!isFirstStep && (
                             <Button onClick={onPrev} variant="outline" size="sm">
                                 <ChevronRightIcon className="w-4 h-4 rotate-180" />
-                                Back
+                                {t('back')}
                             </Button>
                         )}
                         <Button onClick={onNext} size="sm">
                             {isLastStep ? (
                                 <>
                                     <CheckCircleIcon className="w-4 h-4" />
-                                    Finish
+                                    {t('finish')}
                                 </>
                             ) : (
                                 <>
-                                    Next
+                                    {t('next')}
                                     <ChevronRightIcon className="w-4 h-4" />
                                 </>
                             )}

@@ -67,6 +67,7 @@ import { useLocation } from "react-router-dom";
 import { v4 } from "uuid";
 import { AIProvider, useAI } from "../../components/ai";
 import { CodeEditor } from "../../components/editor";
+import {useTranslation} from '@/hooks/use-translation';
 import { ErrorState } from "../../components/error-state";
 import {
     ArrowPathIcon,
@@ -266,6 +267,7 @@ const SQLHighlighter: FC<{ code: string }> = ({ code }) => {
 };
 
 const CopyButton: FC<{ text: string }> = ({text}) => {
+    const { t } = useTranslation('pages/raw-execute');
     const [copied, setCopied] = useState(false);
 
     const handleCopyToClipboard = useCallback(() => {
@@ -281,7 +283,7 @@ const CopyButton: FC<{ text: string }> = ({text}) => {
             variant="secondary"
             className="border border-input"
             onClick={handleCopyToClipboard}
-            title={copied ? "Copied!" : "Copy to clipboard"}
+            title={copied ? t('copied') : t('copyToClipboard')}
             type="button"
             data-testid="copy-to-clipboard-button"
         >
@@ -291,6 +293,7 @@ const CopyButton: FC<{ text: string }> = ({text}) => {
 }
 
 const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, showTools, cellData }) => {
+    const { t } = useTranslation('pages/raw-execute');
     const dispatch = useAppDispatch();
     const [mode, setMode] = useState<string>(cellData?.mode || ActionOptions.Query);
     const [code, setCode] = useState(cellData?.code || "");
@@ -622,19 +625,19 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => setCode("")}>
                                 <ArrowPathIcon className="w-4 h-4"/>
-                                Clear
+                                {t('clear')}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => {
                                 navigator.clipboard.writeText(code).then(() => {
-                                    toast.success("Code copied to clipboard");
+                                    toast.success(t('copyCode'));
                                 });
                             }}>
                                 <ClipboardDocumentIcon className="w-4 h-4"/>
-                                Copy Code
+                                {t('copyCode')}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setHistoryOpen(true)}>
                                 <ClockIcon className="w-4 h-4"/>
-                                Query History
+                                {t('queryHistory')}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -677,14 +680,14 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                     className="border border-input">
                                 <PlusCircleIcon className="w-4 h-4" />
                             </Button>
-                                <p>Add a new cell</p>
+                                <p>{t('addCell')}</p>
                         </Tip>
                         <Tip>
                             <Button onClick={() => setCode("")} data-testid="clear-cell-button" variant="secondary"
                                     className="border border-input">
                                 <ArrowPathIcon className="w-4 h-4" />
                             </Button>
-                            <p>Clear the editor</p>
+                            <p>{t('clearEditor')}</p>
                         </Tip>
                         {
                             onDelete != null &&
@@ -693,7 +696,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                         className="border border-input bg-white hover:bg-white/95">
                                     <XCircleIcon className="w-4 h-4 text-destructive"/>
                                 </Button>
-                                <p>Delete the cell</p>
+                                <p>{t('deleteCell')}</p>
                             </Tip>
                         }
                     </div>
@@ -734,12 +737,12 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                             <div className="flex items-center gap-2">
                                 <ClockIcon className="w-5 h-5" />
-                                <span className="font-semibold text-lg">Query History</span>
+                                <span className="font-semibold text-lg">{t('queryHistory')}</span>
                             </div>
                         </div>
                         <div className="flex-1 px-2 py-4 overflow-y-auto">
                             {history.length === 0 ? (
-                                <EmptyState title="No history yet" description="Run a query to see your history" icon={<ClockIcon className="w-10 h-10" />} />
+                                <EmptyState title={t('noHistoryTitle')} description={t('noHistoryDescription')} icon={<ClockIcon className="w-10 h-10" />} />
                             ) : (
                                 <div className="flex flex-col gap-lg p-4">
                                     {history.map(({ id, item, status, date }) => (
@@ -748,7 +751,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                                 variant={status ? "default" : "destructive"}
                                                 className="absolute top-0 -translate-y-1/2 right-2"
                                             >
-                                                {status ? "Success" : "Error"}
+                                                {status ? t('success') : t('error')}
                                             </Badge>
                                             <div className="flex flex-col min-h-[60px]">
                                                 <div className="pr-12">
@@ -774,7 +777,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                                                 setHistoryOpen(false);
                                                                 setCode(item);
                                                             }}
-                                                            title="Clone to editor"
+                                                            title={t('cloneToEditor')}
                                                             data-testid="clone-to-editor-button"
                                                         >
                                                             <PencilIcon className="w-4 h-4" />
@@ -784,7 +787,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                                             variant="secondary"
                                                             className="border border-input"
                                                             onClick={() => handleRawExecute(item)}
-                                                            title="Run"
+                                                            title={t('run')}
                                                             data-testid="run-history-button"
                                                         >
                                                             <PlayIcon className="w-4 h-4" />
@@ -808,18 +811,18 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                         className="self-end"
                                     >
                                         <ArrowPathIcon className="w-4 h-4 mr-1" />
-                                        Clear History
+                                        {t('clearHistory')}
                                     </Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                     <AlertDialogHeader>
-                                        <AlertDialogTitle>Clear Query History</AlertDialogTitle>
+                                        <AlertDialogTitle>{t('clearHistoryTitle')}</AlertDialogTitle>
                                         <AlertDialogDescription>
-                                            Are you sure you want to clear all query history? This action cannot be undone.
+                                            {t('clearHistoryDescription')}
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
-                                        <AlertDialogCancel data-testid="clear-history-cancel">Cancel</AlertDialogCancel>
+                                        <AlertDialogCancel data-testid="clear-history-cancel">{t('cancel')}</AlertDialogCancel>
                                         <AlertDialogAction asChild>
                                             <Button
                                                 variant="destructive"
@@ -829,7 +832,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                                 }}
                                                 data-testid="clear-history-confirm"
                                             >
-                                                Clear History
+                                                {t('clearHistory')}
                                             </Button>
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
@@ -888,6 +891,7 @@ const RawExecuteSubPage: FC<{
 }
 
 const EditableInput: FC<{ page: Page; setValue: (value: string) => void }> = ({ page, setValue }) => {
+    const { t } = useTranslation('pages/raw-execute');
     const [currentContent, setCurrentContent] = useState(page.name);
     const [isEditing, setIsEditing] = useState(false);
     const inputRef = useRef<HTMLInputElement | null>(null);
@@ -922,7 +926,7 @@ const EditableInput: FC<{ page: Page; setValue: (value: string) => void }> = ({ 
           />
         ) : (
           <span className="text-sm text-nowrap">
-            {currentContent || "Double click to edit"}
+            {currentContent || t('doubleClickEdit')}
           </span>
         )}
       </div>
@@ -936,6 +940,7 @@ type Page = {
 }
 
 export const RawExecutePage: FC = () => {
+    const { t } = useTranslation('pages/raw-execute');
     const location = useLocation();
     const dispatch = useAppDispatch();
     const { pages = [], cells = {}, activePageId } = useAppSelector(state => state.scratchpad);
@@ -1103,14 +1108,14 @@ export const RawExecutePage: FC = () => {
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>
-                    {`Delete ${pages.find(p => p.id === pageToDelete)?.name ?? 'page'}?`}
+                    {t('deletePage', { pageName: pages.find(p => p.id === pageToDelete)?.name ?? 'page' })}
                   </AlertDialogTitle>
                   <AlertDialogDescription>
-                    {`This action cannot be undone. This will permanently delete "${pages.find(p => p.id === pageToDelete)?.name ?? 'this page'}" and remove its data.`}
+                    {t('deletePageDescription', { pageName: pages.find(p => p.id === pageToDelete)?.name ?? 'this page' })}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel data-testid="delete-page-button-cancel">Cancel</AlertDialogCancel>
+                    <AlertDialogCancel data-testid="delete-page-button-cancel">{t('cancel')}</AlertDialogCancel>
                   <AlertDialogAction asChild>
                     <Button
                       variant="destructive"
@@ -1123,7 +1128,7 @@ export const RawExecutePage: FC = () => {
                       }}
                       data-testid="delete-page-button-confirm"
                     >
-                      Continue
+                      {t('continue')}
                     </Button>
                   </AlertDialogAction>
                 </AlertDialogFooter>

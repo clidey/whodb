@@ -63,6 +63,7 @@ import {
 import { useDeleteRowMutation, useGenerateMockDataMutation, useMockDataMaxRowCountQuery } from '@graphql';
 import { FC, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Export } from "./export";
+import { useTranslation } from '@/hooks/use-translation';
 import {
     ArrowDownCircleIcon,
     ArrowDownTrayIcon,
@@ -226,6 +227,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     isValidForeignKey,
     onEntitySearch,
 }) => {
+    const { t } = useTranslation('components/table');
     const [editIndex, setEditIndex] = useState<number | null>(null);
     const [editRow, setEditRow] = useState<string[] | null>(null);
     const [editRowInitialLengths, setEditRowInitialLengths] = useState<number[]>([]);
@@ -288,14 +290,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                     setEditIndex(null);
                     setEditRow(null);
                     setEditRowInitialLengths([]);
-                    toast.success("Row updated");
+                    toast.success(t('rowUpdated'));
                     onRefresh?.();
                 })
                 .catch(() => {
-                    toast.error("Error updating row");
+                    toast.error(t('errorUpdatingRow'));
                 });
         }
-    }, [editIndex, editRow, columns, onRowUpdate, rows, onRefresh]);
+    }, [editIndex, editRow, columns, onRowUpdate, rows, onRefresh, t]);
 
     // --- Export logic ---
     const hasSelectedRows = checked.length > 0;
@@ -329,7 +331,7 @@ export const StorageUnitTable: FC<TableProps> = ({
             indexesToDelete = selectedRowsData.map((_, idx) => idx);
         }
         if (indexesToDelete.length === 0) return;
-        toast.info(indexesToDelete.length === 1 ? "Deleting row..." : "Deleting rows...");
+        toast.info(indexesToDelete.length === 1 ? t('deletingRow') : t('deletingRows'));
         for (const index of indexesToDelete) {
             const row = rows[index];
             if (!row) continue;
@@ -347,16 +349,16 @@ export const StorageUnitTable: FC<TableProps> = ({
                 });
                 deletedIndexes.push(index);
             } catch (e: any) {
-                toast.error(`Unable to delete the row: ${e?.message || e}`);
+                toast.error(t('unableToDeleteRow', { message: e?.message || e }));
                 unableToDeleteAll = true;
                 break;
             }
         }
         if (!unableToDeleteAll) {
-            toast.success("Row deleted");
+            toast.success(t('rowDeleted'));
         }
         onRefresh?.();
-    }, [deleteRow, schema, storageUnit, rows, columns, selectedRowsData, onRefresh]);
+    }, [deleteRow, schema, storageUnit, rows, columns, selectedRowsData, onRefresh, t]);
 
     const paginatedRows = useMemo(() => {
         // For server-side pagination, rows are already paginated
@@ -435,14 +437,14 @@ export const StorageUnitTable: FC<TableProps> = ({
             if (cell !== undefined && cell !== null) {
                 if (typeof navigator !== "undefined" && navigator.clipboard) {
                     navigator.clipboard.writeText(String(cell));
-                    toast.success("Copied to clipboard");
+                    toast.success(t('copiedToClipboard'));
                 }
             }
             clickTimeouts.current.delete(cellKey);
         }, 200); // 200ms delay to detect double-click
-        
+
         clickTimeouts.current.set(cellKey, timeout);
-    }, [paginatedRows]);
+    }, [paginatedRows, t]);
 
     const handleCellDoubleClick = useCallback((rowIndex: number) => {
         // Clear any pending single-click timeouts for all cells in this row
@@ -460,10 +462,10 @@ export const StorageUnitTable: FC<TableProps> = ({
             const rowString = row.map(cell => cell ?? "").join("\t");
             if (typeof navigator !== "undefined" && navigator.clipboard) {
                 navigator.clipboard.writeText(rowString);
-                toast.success("Row copied to clipboard");
+                toast.success(t('rowCopiedToClipboard'));
             }
         }
-    }, [paginatedRows, columns.length]);
+    }, [paginatedRows, columns.length, t]);
 
 
     // --- End export logic ---
@@ -477,16 +479,16 @@ export const StorageUnitTable: FC<TableProps> = ({
         // Enforce max limit
         if (parsedValue > maxRowCount) {
             setMockDataRowCount(maxRowCount.toString());
-            toast.error(`Maximum row count is ${maxRowCount}`);
+            toast.error(t('maximumRowCount', { max: maxRowCount }));
         } else {
             setMockDataRowCount(numericValue);
         }
-    }, [maxRowCount]);
+    }, [maxRowCount, t]);
 
     const handleMockDataGenerate = useCallback(async () => {
         // For databases without schemas (like SQLite), only storageUnit is required
         if (!storageUnit) {
-            toast.error("Storage unit is required for mock data generation");
+            toast.error(t('storageUnitRequired'));
             return;
         }
 
@@ -496,10 +498,10 @@ export const StorageUnitTable: FC<TableProps> = ({
         }
 
         const count = parseInt(mockDataRowCount) || 100;
-        
+
         // Double-check the limit
         if (count > maxRowCount) {
-            toast.error(`Row count cannot exceed ${maxRowCount}`);
+            toast.error(t('rowCountExceedsMax', { max: maxRowCount }));
             return;
         }
         
@@ -518,7 +520,7 @@ export const StorageUnitTable: FC<TableProps> = ({
 
             const data = result.data?.GenerateMockData;
             if (data?.AmountGenerated) {
-                toast.success(`Successfully generated ${data.AmountGenerated} rows`);
+                toast.success(t('successfullyGenerated', { count: data.AmountGenerated }));
                 setShowMockDataSheet(false);
                 setShowMockDataConfirmation(false);
                 // Trigger a refresh by calling the onRefresh callback if provided
@@ -526,16 +528,16 @@ export const StorageUnitTable: FC<TableProps> = ({
                     onRefresh();
                 }
             } else {
-                toast.error(`Failed to mock data`);
+                toast.error(t('failedToMockData'));
             }
         } catch (error: any) {
             if (error.message === "mock data generation is not allowed for this table") {
-                toast.error("Mock data generation is not allowed for this table");
+                toast.error(t('mockDataNotAllowed'));
             } else {
-                toast.error(`Failed to mock data: ${error.message}`);
+                toast.error(t('mockDataFailed', { message: error.message }));
             }
         }
-    }, [generateMockData, schema, storageUnit, mockDataRowCount, mockDataMethod, mockDataOverwriteExisting, showMockDataConfirmation, maxRowCount]);
+    }, [generateMockData, schema, storageUnit, mockDataRowCount, mockDataMethod, mockDataOverwriteExisting, showMockDataConfirmation, maxRowCount, onRefresh, t]);
 
     const columnIcons = useMemo(() => getColumnIcons(columns, columnTypes), [columns, columnTypes]);
 
@@ -759,14 +761,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                         if (cell !== undefined && cell !== null) {
                             if (typeof navigator !== "undefined" && navigator.clipboard) {
                                 navigator.clipboard.writeText(String(cell));
-                                toast.success("Copied cell to clipboard");
+                                toast.success(t('copiedCellToClipboard'));
                             }
                         }
                     }}
                     disabled={contextMenuCellIdx == null}
                 >
                     <DocumentDuplicateIcon className="w-4 h-4" />
-                    Copy Cell
+                    {t('copyCell')}
                     <ContextMenuShortcut><CursorArrowRaysIcon className="w-4 h-4" /></ContextMenuShortcut>
                 </ContextMenuItem>
                 {onEntitySearch && contextMenuCellIdx !== null && columnIsForeignKey?.[contextMenuCellIdx] && !columnIsPrimary?.[contextMenuCellIdx] && (
@@ -781,7 +783,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         }}
                     >
                         <MagnifyingGlassIcon className="w-4 h-4" />
-                        Search for Entity
+                        {t('searchForEntity')}
                     </ContextMenuItem>
                 )}
                 <ContextMenuItem
@@ -791,40 +793,40 @@ export const StorageUnitTable: FC<TableProps> = ({
                             const rowString = row.map(cell => cell ?? "").join("\t");
                             if (typeof navigator !== "undefined" && navigator.clipboard) {
                                 navigator.clipboard.writeText(rowString);
-                                toast.success("Copied row to clipboard");
+                                toast.success(t('rowCopiedToClipboard'));
                             }
                         }
                     }}
                     className="[&>[data-slot='context-menu-shortcut']]:flex"
                 >
                     <DocumentTextIcon className="w-4 h-4" />
-                    Copy Row
+                    {t('copyRow')}
                     <ContextMenuShortcut><CursorArrowRaysIcon className="w-4 h-4" /><CursorArrowRaysIcon className="w-4 h-4" /></ContextMenuShortcut>
                 </ContextMenuItem>
                 <ContextMenuItem onSelect={() => handleSelectRow(index)}>
                     {checked.includes(index) ? (
                         <>
                             <CheckCircleIcon className="w-4 h-4 text-primary" />
-                            Deselect Row
+                            {t('deselectRow')}
                             <ContextMenuShortcut>{renderShortcut(["Mod", "D"])}</ContextMenuShortcut>
                         </>
                     ) : (
                         <>
                             <CheckCircleIcon className="w-4 h-4 text-primary" />
-                            Select Row
+                            {t('selectRow')}
                             <ContextMenuShortcut>{renderShortcut(["Mod", "S"])}</ContextMenuShortcut>
                         </>
                     )}
                 </ContextMenuItem>
                 <ContextMenuItem onSelect={() => handleEdit(index)} disabled={checked.length > 0} data-testid="context-menu-edit-row">
                     <PencilSquareIcon className="w-4 h-4" />
-                    Edit Row
+                    {t('editRow')}
                     <ContextMenuShortcut>{renderShortcut(["Mod", "E"])}</ContextMenuShortcut>
                 </ContextMenuItem>
                 <ContextMenuSub>
                     <ContextMenuSubTrigger>
                         <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
-                        Export
+                        {t('export')}
                     </ContextMenuSubTrigger>
                     <ContextMenuSubContent
                         collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
@@ -833,14 +835,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                             onSelect={() => setShowExportConfirm(true)}
                         >
                             <DocumentIcon className="w-4 h-4" />
-                            Export All as CSV
+                            {t('exportAllAsCsv')}
                             <ContextMenuShortcut>{renderShortcut(["Mod", "Shift", "C"])}</ContextMenuShortcut>
                         </ContextMenuItem>
                         <ContextMenuItem
                             onSelect={() => setShowExportConfirm(true)}
                         >
                             <DocumentIcon className="w-4 h-4" />
-                            Export All as Excel
+                            {t('exportAllAsExcel')}
                             <ContextMenuShortcut>{renderShortcut(["Mod", "Shift", "X"])}</ContextMenuShortcut>
                         </ContextMenuItem>
                         <ContextMenuSeparator />
@@ -849,7 +851,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                             disabled={checked.length === 0}
                         >
                             <DocumentIcon className="w-4 h-4" />
-                            Export Selected as CSV
+                            {t('exportSelectedAsCsv')}
                             <ContextMenuShortcut>{renderShortcut(["Mod", "C"])}</ContextMenuShortcut>
                         </ContextMenuItem>
                         <ContextMenuItem
@@ -857,7 +859,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                             disabled={checked.length === 0}
                         >
                             <DocumentIcon className="w-4 h-4" />
-                            Export Selected as Excel
+                            {t('exportSelectedAsExcel')}
                             <ContextMenuShortcut>{renderShortcut(["Mod", "X"])}</ContextMenuShortcut>
                         </ContextMenuItem>
                     </ContextMenuSubContent>
@@ -866,13 +868,13 @@ export const StorageUnitTable: FC<TableProps> = ({
                     onSelect={() => setShowMockDataSheet(true)}
                 >
                     <DocumentDuplicateIcon className="w-4 h-4" />
-                    Mock Data
+                    {t('mockData')}
                     <ContextMenuShortcut>{renderShortcut(["Mod", "M"])}</ContextMenuShortcut>
                 </ContextMenuItem>
                 <ContextMenuSub>
                     <ContextMenuSubTrigger data-testid="context-menu-more-actions">
                         <EllipsisHorizontalIcon className="w-4 h-4 mr-2" />
-                        More Actions
+                        {t('moreActions')}
                     </ContextMenuSubTrigger>
                     <ContextMenuSubContent
                         className="w-44"
@@ -887,7 +889,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                             data-testid="context-menu-delete-row"
                         >
                             <TrashIcon className="w-4 h-4 text-destructive" />
-                            Delete Row
+                            {t('deleteRow')}
                             <ContextMenuShortcut>{renderShortcut(["Mod", "Delete"])}</ContextMenuShortcut>
                         </ContextMenuItem>
                     </ContextMenuSubContent>
@@ -895,12 +897,12 @@ export const StorageUnitTable: FC<TableProps> = ({
                 <ContextMenuSeparator />
                 <ContextMenuItem disabled={true}>
                     <ShareIcon className="w-4 h-4" />
-                    Open in Graph
+                    {t('openInGraph')}
                     <ContextMenuShortcut>{renderShortcut(["Mod", "G"])}</ContextMenuShortcut>
                 </ContextMenuItem>
             </ContextMenuContent>
         </ContextMenu>
-    }, [checked, handleCellClick, handleEdit, handleSelectRow, handleDeleteRow, paginatedRows, disableEdit, onRefresh]);
+    }, [checked, handleCellClick, handleEdit, handleSelectRow, handleDeleteRow, paginatedRows, disableEdit, onRefresh, t, contextMenuCellIdx, columns, columnIsForeignKey, columnIsPrimary, onEntitySearch, deleting]);
 
     return (
         <div ref={tableRef} className="h-full flex">
@@ -911,7 +913,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     <TableHeader>
                         <ContextMenu>
                             <ContextMenuTrigger asChild>
-                                <TableHeadRow className="group relative cursor-context-menu hover:bg-muted/50 transition-colors" title="Right-click for table options">
+                                <TableHeadRow className="group relative cursor-context-menu hover:bg-muted/50 transition-colors" title={t('rightClickForOptions')}>
                                     <TableHead className={cn("min-w-[40px] w-[40px] relative", {
                                         "hidden": disableEdit,
                                     })}>
@@ -968,14 +970,14 @@ export const StorageUnitTable: FC<TableProps> = ({
             >
                                 <ContextMenuItem onSelect={() => setShowMockDataSheet(true)} data-testid="context-menu-mock-data">
                                     <CalculatorIcon className="w-4 h-4" />
-                                    Mock Data
+                                    {t('mockData')}
                                     <ContextMenuShortcut>{renderShortcut(["Mod", "M"])}</ContextMenuShortcut>
                                 </ContextMenuItem>
                                 <ContextMenuSeparator />
                                 <ContextMenuSub>
                                     <ContextMenuSubTrigger>
                                         <ArrowDownCircleIcon className="w-4 h-4 mr-2" />
-                                        Export Data
+                                        {t('exportData')}
                                     </ContextMenuSubTrigger>
                                     <ContextMenuSubContent
                         collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
@@ -984,13 +986,13 @@ export const StorageUnitTable: FC<TableProps> = ({
                                             onSelect={() => setShowExportConfirm(true)}
                                         >
                                             <DocumentIcon className="w-4 h-4" />
-                                            Export All as CSV
+                                            {t('exportAllAsCsv')}
                                         </ContextMenuItem>
                                         <ContextMenuItem
                                             onSelect={() => setShowExportConfirm(true)}
                                         >
                                             <DocumentIcon className="w-4 h-4" />
-                                            Export All as Excel
+                                            {t('exportAllAsExcel')}
                                         </ContextMenuItem>
                                         <ContextMenuSeparator />
                                         <ContextMenuItem
@@ -998,41 +1000,41 @@ export const StorageUnitTable: FC<TableProps> = ({
                                             disabled={checked.length === 0}
                                         >
                                             <DocumentIcon className="w-4 h-4" />
-                                            Export Selected as CSV
+                                            {t('exportSelectedAsCsv')}
                                         </ContextMenuItem>
                                         <ContextMenuItem
                                             onSelect={() => setShowExportConfirm(true)}
                                             disabled={checked.length === 0}
                                         >
                                             <DocumentIcon className="w-4 h-4" />
-                                            Export Selected as Excel
+                                            {t('exportSelectedAsExcel')}
                                         </ContextMenuItem>
                                     </ContextMenuSubContent>
                                 </ContextMenuSub>
                                 <ContextMenuSeparator />
                                 <ContextMenuItem onSelect={() => onRefresh?.()}>
                                     <CircleStackIcon className="w-4 h-4" />
-                                    Refresh Data
+                                    {t('refreshData')}
                                     <ContextMenuShortcut>{renderShortcut(["Mod", "R"])}</ContextMenuShortcut>
                                 </ContextMenuItem>
-                                <ContextMenuItem 
+                                <ContextMenuItem
                                     onSelect={() => {
                                         setChecked(checked.length === paginatedRows.length ? [] : paginatedRows.map((_, index) => index));
                                     }}
                                 >
                                     <CheckCircleIcon className="w-4 h-4" />
-                                    {checked.length === paginatedRows.length ? "Deselect All" : "Select All"}
+                                    {checked.length === paginatedRows.length ? t('deselectAll') : t('selectAll')}
                                     <ContextMenuShortcut>{renderShortcut(["Mod", "A"])}</ContextMenuShortcut>
                                 </ContextMenuItem>
                                 <ContextMenuSeparator />
                                 <ContextMenuItem disabled={true}>
                                     <CalculatorIcon className="w-4 h-4" />
-                                    Column Statistics
+                                    {t('columnStatistics')}
                                     <ContextMenuShortcut>{renderShortcut(["Mod", "S"])}</ContextMenuShortcut>
                                 </ContextMenuItem>
                                 <ContextMenuItem disabled={true}>
                                     <DocumentTextIcon className="w-4 h-4" />
-                                    Schema Information
+                                    {t('schemaInformation')}
                                 </ContextMenuItem>
                             </ContextMenuContent>
                         </ContextMenu>
@@ -1052,7 +1054,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     <ContextMenu>
                         <ContextMenuTrigger asChild>
                             <div className="flex items-center justify-center cursor-pointer border rounded-lg h-[200px]">
-                                <EmptyState className="table-empty-state" title="No data available" description="No data available" icon={<DocumentTextIcon className="w-4 h-4" />} />
+                                <EmptyState className="table-empty-state" title={t('noDataAvailable')} description={t('noDataAvailable')} icon={<DocumentTextIcon className="w-4 h-4" />} />
                             </div>
                         </ContextMenuTrigger>
                         <ContextMenuContent
@@ -1063,13 +1065,13 @@ export const StorageUnitTable: FC<TableProps> = ({
                                 "hidden": disableEdit,
                             })}>
                                 <CalculatorIcon className="w-4 h-4" />
-                                Mock Data
+                                {t('mockData')}
                                 <ContextMenuShortcut>{renderShortcut(["Mod", "G"])}</ContextMenuShortcut>
                             </ContextMenuItem>
                             <ContextMenuSub>
                                 <ContextMenuSubTrigger>
                                     <ArrowDownCircleIcon className="w-4 h-4 mr-2" />
-                                    Export
+                                    {t('export')}
                                 </ContextMenuSubTrigger>
                                 <ContextMenuSubContent
                         collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
@@ -1078,14 +1080,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                                         onSelect={() => setShowExportConfirm(true)}
                                     >
                                         <DocumentIcon className="w-4 h-4" />
-                                        Export All as CSV
+                                        {t('exportAllAsCsv')}
                                         <ContextMenuShortcut>⌘C</ContextMenuShortcut>
                                     </ContextMenuItem>
                                     <ContextMenuItem
                                         onSelect={() => setShowExportConfirm(true)}
                                     >
                                         <DocumentIcon className="w-4 h-4" />
-                                        Export All as Excel
+                                        {t('exportAllAsExcel')}
                                         <ContextMenuShortcut>⌘E</ContextMenuShortcut>
                                     </ContextMenuItem>
                                 </ContextMenuSubContent>
@@ -1135,17 +1137,17 @@ export const StorageUnitTable: FC<TableProps> = ({
                     </Pagination>
                 </div>
                 <div className="flex justify-end items-center mb-2 gap-4">
-                    <div className="text-sm hidden" data-testid="total-count-bottom"><span className="font-semibold">Total Count:</span> {totalCount}</div>
+                    <div className="text-sm hidden" data-testid="total-count-bottom"><span className="font-semibold">{t('totalCount')}</span> {totalCount}</div>
                     <Button
                         variant="secondary"
                         onClick={() => setShowExportConfirm(true)}
                         className="flex gap-sm"
                     >
                         <ArrowDownCircleIcon className="w-4 h-4" />
-                        {hasSelectedRows ? `Export ${checked.length} selected` : "Export all"}
+                        {hasSelectedRows ? t('exportSelected', { count: checked.length }) : t('exportAll')}
                     </Button>
                 </div>
-                <Sheet open={editIndex !== null} onOpenChange={open => { 
+                <Sheet open={editIndex !== null} onOpenChange={open => {
                     if (!open) {
                         setEditIndex(null);
                         setEditRow(null);
@@ -1153,7 +1155,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     }
                 }}>
                     <SheetContent side="right" className="w-[400px] max-w-full p-8 flex flex-col">
-                        <SheetTitle>Edit Row</SheetTitle>
+                        <SheetTitle>{t('editRowTitle')}</SheetTitle>
                         <div className="flex-1 overflow-y-auto mt-4">
                             <div className="flex flex-col gap-lg pr-2">
                                 {editRow &&
@@ -1192,10 +1194,10 @@ export const StorageUnitTable: FC<TableProps> = ({
                                 }}
                                 data-testid="cancel-edit-row"
                             >
-                                Cancel
+                                {t('cancel')}
                             </Button>
                             <Button className="flex-1" onClick={handleUpdate} disabled={!editRow} data-testid="update-button">
-                                Update
+                                {t('update')}
                             </Button>
                         </SheetFooter>
                     </SheetContent>
@@ -1209,10 +1211,10 @@ export const StorageUnitTable: FC<TableProps> = ({
                 }}>
                 <SheetContent side="right" className="p-8">
                     <div className="flex flex-col gap-lg h-full">
-                        <SheetTitle className="flex items-center gap-2"><CalculatorIcon className="w-4 h-4" /> Mock Data</SheetTitle>
+                        <SheetTitle className="flex items-center gap-2"><CalculatorIcon className="w-4 h-4" /> {t('mockDataTitle')}</SheetTitle>
                         {!showMockDataConfirmation ? (
                             <div className="space-y-4">
-                                <Label>Number of Rows (max: {maxRowCount})</Label>
+                                <Label>{t('numberOfRows', { max: maxRowCount })}</Label>
                                 <Input
                                     value={mockDataRowCount}
                                     onChange={e => handleMockDataRowCountChange(e.target.value)}
@@ -1220,25 +1222,25 @@ export const StorageUnitTable: FC<TableProps> = ({
                                     inputMode="numeric"
                                     pattern="[0-9]*"
                                     max={maxRowCount.toString()}
-                                    placeholder={`Enter number of rows (1-${maxRowCount})`}
+                                    placeholder={t('enterNumberOfRows', { max: maxRowCount })}
                                 />
-                                <Label>Method</Label>
+                                <Label>{t('method')}</Label>
                                 <Select value={mockDataMethod} onValueChange={setMockDataMethod}>
                                     <SelectTrigger className="w-full">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="Normal">Normal</SelectItem>
+                                        <SelectItem value="Normal">{t('methodNormal')}</SelectItem>
                                     </SelectContent>
                                 </Select>
-                                <Label>Data Handling</Label>
+                                <Label>{t('dataHandling')}</Label>
                                 <Select value={mockDataOverwriteExisting} onValueChange={setMockDataOverwriteExisting}>
                                     <SelectTrigger className="w-full">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="append">Append to existing data</SelectItem>
-                                        <SelectItem value="overwrite">Overwrite existing data</SelectItem>
+                                        <SelectItem value="append">{t('appendToExisting')}</SelectItem>
+                                        <SelectItem value="overwrite">{t('overwriteExisting')}</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 {generatingMockData && (
@@ -1255,16 +1257,16 @@ export const StorageUnitTable: FC<TableProps> = ({
                                     </div>
                                 </div>
                                 <p className="text-center text-gray-700 dark:text-gray-300">
-                                    Are you sure you want to overwrite all existing data in {storageUnit}? This action cannot be undone.
+                                    {t('overwriteConfirmation', { storageUnit })}
                                 </p>
                             </div>
                         )}
                     </div>
                     <SheetFooter className="flex gap-sm px-0">
                         <Alert variant="info" className="mb-4">
-                            <AlertTitle>Note</AlertTitle>
+                            <AlertTitle>{t('mockDataNote')}</AlertTitle>
                             <AlertDescription>
-                                Mock data generation does not yet fully support foreign keys and all constraints. You may experience some errors or missing data.
+                                {t('mockDataWarning')}
                             </AlertDescription>
                         </Alert>
                         <Button
@@ -1273,15 +1275,15 @@ export const StorageUnitTable: FC<TableProps> = ({
                             onClick={() => setShowMockDataSheet(false)}
                             data-testid="cancel-mock-data"
                         >
-                            Cancel
+                            {t('cancel')}
                         </Button>
                         {!showMockDataConfirmation ? (
                             <Button className="flex-1" onClick={handleMockDataGenerate} disabled={generatingMockData}>
-                                Generate
+                                {t('generate')}
                             </Button>
                         ) : (
                             <Button className="flex-1" onClick={handleMockDataGenerate} disabled={generatingMockData} variant="destructive">
-                                Yes, Overwrite
+                                {t('yesOverwrite')}
                             </Button>
                         )}
                     </SheetFooter>

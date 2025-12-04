@@ -1,0 +1,20 @@
+en:
+  title: Chat
+  placeholder: Type Your Message Here...
+  emptyStateTitle: What Can I Help You With?
+  noModelTitle: No Model Available
+  noModelDescription: Please choose an available model to start chatting with your data.
+  scratchpadNotSupported: Scratchpad Is Not Supported for This Database Type
+  queryMoved: Query Moved to Scratchpad
+  moveToScratchpad: Move to Scratchpad
+  unableToQuery: Unable to Query. Try Again.
+  actionExecuted: Action Executed
+  noDataReturned: No Data Was Returned.
+  dialogTitle: Move to Scratchpad
+  dialogDescription: Choose which scratchpad page to add this query to.
+  selectPageLabel: Select a Page
+  selectPagePlaceholder: Choose a Page...
+  newPageLabel: New Page Name
+  newPagePlaceholder: Enter Page Name
+  createNewPage: Create New Page
+  cancel: Cancel

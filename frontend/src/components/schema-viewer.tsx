@@ -33,6 +33,7 @@ import {useAppSelector} from "../store/hooks";
 import {databaseTypesThatUseDatabaseInsteadOfSchema} from "../utils/database-features";
 import {getDatabaseStorageUnitLabel} from "../utils/functions";
 import {Loading} from "./loading";
+import {useTranslation} from "@/hooks/use-translation";
 
 function groupByType(units: StorageUnit[]) {
     const groups: Record<string, any[]> = {};
@@ -46,6 +47,7 @@ function groupByType(units: StorageUnit[]) {
 }
 
 export const SchemaViewer: FC = () => {
+    const { t } = useTranslation('components/schema-viewer');
     const current = useAppSelector(state => state.auth.current);
     const selectedSchema = useAppSelector(state => state.database.schema);
     const navigate = useNavigate();
@@ -143,8 +145,8 @@ export const SchemaViewer: FC = () => {
                         <SearchInput
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            placeholder="Search tables..."
-                            aria-label="Search tables"
+                            placeholder={t('searchPlaceholder')}
+                            aria-label={t('searchAriaLabel')}
                         />
                     </div>
                     <SidebarGroup>

@@ -1,0 +1,46 @@
+en:
+  loggingIn: Logging In
+  title: Login
+  databaseType: Database Type
+  hostName: Host Name
+  hostNameOrUrl: Host Name (or Paste Connection URL)
+  enterHostName: Enter Host Name
+  username: Username
+  enterUsername: Enter Username
+  password: Password
+  enterPassword: Enter Password
+  database: Database
+  selectOrEnterDatabasePath: Select or Enter Database File Path
+  browseForSqliteFile: Browse for SQLite File
+  selectDatabase: Select Database
+  enterDatabase: Enter Database
+  advancedButton: Advanced
+  lessAdvancedButton: Less Advanced
+  loginButton: Login
+  availableProfiles: Available Profiles
+  selectProfile: Select a Profile
+  allFieldsRequired: All Fields Are Required
+  selectProfileRequired: Select a Profile
+  loginSuccessful: Login Successful
+  loginSuccessfully: Login Successfully
+  loginFailed: Login Failed
+  loginFailedWithError: "Login Failed: {error}"
+  sampleDatabaseNotFound: Sample Database Not Found
+  welcomeToWhodb: Welcome to WhoDB
+  failedToSelectDatabaseFile: Failed to Select Database File
+  urlParseWarning: We could not extract all required details (host, username, password, or database) from this URL. Please enter the information manually.
+  tryWhodb: Try WhoDB
+  noSetupRequired: No Setup Required
+  experienceDescription: Experience the power of WhoDB with our interactive sample database. Explore all features with real data.
+  whatsIncluded: What's Included
+  aiChatAssistant: AI Chat Assistant
+  aiChatDescription: Query in Natural Language
+  visualSchema: Visual Schema
+  visualSchemaDescription: Interactive Graph View
+  dataGrid: Data Grid
+  dataGridDescription: Edit Like a Spreadsheet
+  sqlEditor: SQL Editor
+  sqlEditorDescription: Powerful Query Tools
+  getStarted: Get Started
+  quickStartFooter: Takes less than a minute • No credit card required
+  version: Version
