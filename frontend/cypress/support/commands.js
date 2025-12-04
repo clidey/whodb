@@ -784,6 +784,7 @@ Cypress.Commands.add("writeCode", (index, text) => {
     // Click to focus, clear, and then type.
     // Using {force: true} for type to handle cases where the editor might be partially obscured.
     cy.get(selector)
+        .scrollIntoView()
         .should('be.visible')
         .click()
         .clear()

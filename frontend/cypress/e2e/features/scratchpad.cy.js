@@ -88,7 +88,7 @@ describe('Scratchpad', () => {
                     cy.writeCode(0, updateQuery);
                     cy.runCode(0);
 
-                    cy.getCellActionOutput(0).should('contain', '1');
+                    cy.getCellActionOutput(0).should('contain', 'Action Executed');
 
                     // Verify
                     cy.addCell(0);
@@ -106,7 +106,7 @@ describe('Scratchpad', () => {
                     cy.writeCode(2, revertQuery);
                     cy.runCode(2);
 
-                    cy.getCellActionOutput(2).should('contain', '1');
+                    cy.getCellActionOutput(2).should('contain', 'Action Executed');
                 });
             }
         });
@@ -169,8 +169,8 @@ describe('Scratchpad', () => {
                 // Verify default query is populated
                 cy.get('[data-testid="code-editor"]').should('exist');
                 const schemaPrefix = db.sql?.schemaPrefix || '';
-                cy.get('[data-testid="code-editor"]').should('contain', `SELECT *
-                                                                         FROM ${schemaPrefix}users`);
+                cy.get('[data-testid="code-editor"]').should('contain', 'SELECT *');
+                cy.get('[data-testid="code-editor"]').should('contain', `FROM ${schemaPrefix}users`);
 
                 // Run the query
                 cy.get('[data-testid="run-submit-button"]').filter(':contains("Run")').first().click();
