@@ -40,6 +40,7 @@ import MarkdownPreview from 'react-markdown';
 import remarkGfm from "remark-gfm";
 import {useApolloClient} from "@apollo/client";
 import {createSQLAutocomplete} from "./editor-autocomplete";
+import { useTranslation } from "@/hooks/use-translation";
 
 // SQL validation function
 const isValidSQLQuery = (text: string): boolean => {
@@ -216,6 +217,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
   defaultShowPreview = false,
   disabled,
 }) => {
+  const { t } = useTranslation('components/editor');
   const [showPreview, setShowPreview] = useState(defaultShowPreview);
   const [showDestructiveDialog, setShowDestructiveDialog] = useState(false);
   const [pendingQuery, setPendingQuery] = useState<string>("");
@@ -484,21 +486,21 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
       <AlertDialog open={showDestructiveDialog} onOpenChange={setShowDestructiveDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Operation</AlertDialogTitle>
+            <AlertDialogTitle>{t('confirmOperationTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This query will modify data or schema. Are you sure you want to execute it? This action cannot be undone.
+              {t('confirmOperationDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleCancelDestructiveQuery}>
-              Cancel
+              {t('cancel')}
             </AlertDialogCancel>
             <AlertDialogAction asChild>
               <Button
                 onClick={handleConfirmDestructiveQuery}
                 variant="destructive"
               >
-                Execute Query
+                {t('executeQuery')}
               </Button>
             </AlertDialogAction>
           </AlertDialogFooter>

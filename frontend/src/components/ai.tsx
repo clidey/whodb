@@ -49,6 +49,7 @@ import { AIModelsActions, availableExternalModelTypes } from "../store/ai-models
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { ensureModelsArray, ensureModelTypesArray } from "../utils/ai-models-helper";
 import { ExternalLink } from "../utils/external-links";
+import { useTranslation } from "../hooks/use-translation";
 import {
     ArrowPathIcon,
     ArrowTopRightOnSquareIcon,
@@ -216,7 +217,7 @@ export const useAI = () => {
     }
 }
 
-export const AIProvider: FC<ReturnType<typeof useAI> & { 
+export const AIProvider: FC<ReturnType<typeof useAI> & {
     disableNewChat?: boolean;
     onClear?: () => void;
     onAddExternalModel?: () => void;
@@ -239,6 +240,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
     onClear,
     onAddExternalModel,
 }) => {
+    const { t } = useTranslation('components/ai');
     const dispatch = useAppDispatch();
     const [addExternalModel, setAddExternalModel] = useState(false);
     const [externalModelType, setExternalModel] = useState<string>(externalModelTypes[0].id);
@@ -278,7 +280,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                 }
             },
             onError(error) {
-                toast.error(`Unable to connect to the model: ${error.message}`);
+                toast.error(`${t('unableToConnect')}: ${error.message}`);
             },
         });
     }, [getAIModels, externalModelType, externalModelToken, dispatch]);
@@ -304,15 +306,15 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
         <Sheet open={addExternalModel} onOpenChange={setAddExternalModel}>
             <SheetContent className="max-w-md mx-auto w-full px-8 py-10 flex flex-col gap-4">
                 <div className="flex flex-col gap-4">
-                    <div className="text-lg font-semibold mb-2">Add External Model</div>
+                    <div className="text-lg font-semibold mb-2">{t('addExternalModel')}</div>
                     <div className="flex flex-col gap-2">
-                        <Label>Model Type</Label>
+                        <Label>{t('modelType')}</Label>
                         <Select
                             value={externalModelType}
                             onValueChange={handleExternalModelChange}
                         >
                             <SelectTrigger className="w-full" data-testid="external-model-type-select">
-                                <SelectValue placeholder="Select Model Type" />
+                                <SelectValue placeholder={t('selectModelType')} />
                             </SelectTrigger>
                             <SelectContent>
                                 {externalModelTypes.map(item => (
@@ -327,7 +329,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         </Select>
                     </div>
                     <div className="flex flex-col gap-2">
-                        <Label>Token</Label>
+                        <Label>{t('token')}</Label>
                         <Input
                             value={externalModelToken ?? ""}
                             onChange={e => setExternalModelToken(e.target.value)}
@@ -341,34 +343,38 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         data-testid="external-model-cancel"
                         variant="secondary"
                     >
-                        <XMarkIcon className="w-4 h-4" /> Cancel
+                        <XMarkIcon className="w-4 h-4" /> {t('cancel')}
                     </Button>
                     <Button
                         onClick={handleExternalModelSubmit}
                         disabled={getAIModelsLoading}
                         data-testid="external-model-submit"
                     >
-                        <CheckCircleIcon className="w-4 h-4" /> Submit
+                        <CheckCircleIcon className="w-4 h-4" /> {t('submit')}
                     </Button>
                 </div>
                 <SheetFooter className="p-0">
                     <div className="text-xs text-neutral-500 mt-4 flex flex-col gap-2">
-                        <div className="font-bold">Local Setup</div>
+                        <div className="font-bold">{t('localSetup')}</div>
                         <div>
-                            Go to <ExternalLink href="https://ollama.com/" className="font-semibold underline text-blue-600 hover:text-blue-800">Ollama</ExternalLink> and follow the installation instructions.
+                            {t('ollamaSetupText').split('<0>')[0]}
+                            <ExternalLink href="https://ollama.com/" className="font-semibold underline text-blue-600 hover:text-blue-800">Ollama</ExternalLink>
+                            {t('ollamaSetupText').split('</0>')[1]}
                         </div>
-                        <div className="font-semibold">Downloading the Ollama Model</div>
+                        <div className="font-semibold">{t('downloadingModel')}</div>
                         <div>
-                            Once installed, install the desired model you would like to use. In this guide, we will use <ExternalLink href="https://ollama.com/library/llama3.1" className="font-semibold underline text-blue-600 hover:text-blue-800">Llama3.1 8b</ExternalLink>. To install this model, run:
+                            {t('ollamaDownloadText').split('<0>')[0]}
+                            <ExternalLink href="https://ollama.com/library/llama3.1" className="font-semibold underline text-blue-600 hover:text-blue-800">Llama3.1 8b</ExternalLink>
+                            {t('ollamaDownloadText').split('</0>')[1]}
                         </div>
                         <div className="font-mono bg-neutral-100 dark:bg-neutral-900 rounded px-2 py-1 mb-1">
-                            ollama run llama3.1
+                            {t('ollamaRunCommand')}
                         </div>
                         <div>
-                            Check our documentation for more information on how to setup Ollama.
+                            {t('ollamaDocsText')}
                         </div>
                         <Button variant="secondary" className="w-full mt-2" onClick={handleOpenDocs}>
-                            Docs
+                            {t('docs')}
                             <ArrowTopRightOnSquareIcon className="w-4 h-4" />
                         </Button>
                     </div>
@@ -389,7 +395,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         const item = modelTypesDropdownItems.find(i => i.id === id);
                         if (item) handleAIProviderChange(item.id);
                     }}
-                    placeholder="Select Model Type"
+                    placeholder={t('selectModelType')}
                     side="right"
                     align="start"
                     extraOptions={
@@ -400,7 +406,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         >
                             <span className="flex items-center gap-sm text-green-500">
                                 <PlusCircleIcon className="w-4 h-4 stroke-green-500" />
-                                Add a provider
+                                {t('addProvider')}
                             </span>
                         </CommandItem>
                     }
@@ -421,7 +427,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         const item = modelDropdownItems.find(i => i.id === id);
                         if (item) handleAIModelChange(item.id);
                     }}
-                    placeholder="Select Model"
+                    placeholder={t('selectModel')}
                     side="right"
                     align="start"
                     rightIcon={<ChevronDownIcon className="w-4 h-4" />}
@@ -439,25 +445,25 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                             "hidden": disableNewChat,
                         })}
                     >
-                        <TrashIcon className="w-4 h-4" /> Delete Provider
+                        <TrashIcon className="w-4 h-4" /> {t('deleteProvider')}
                     </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Provider</AlertDialogTitle>
+                        <AlertDialogTitle>{t('deleteProvider')}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Are you sure you want to delete this provider? This action cannot be undone.
+                            {t('deleteProviderConfirm')}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
                         <AlertDialogAction asChild>
                             <Button
                                 data-testid="chat-delete-provider-confirm"
                                 onClick={() => handleDeleteProvider(modelType?.id)}
                                 variant="destructive"
                             >
-                                Delete
+                                {t('delete')}
                             </Button>
                         </AlertDialogAction>
                     </AlertDialogFooter>
@@ -468,7 +474,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
             "hidden": disableNewChat,
         })}>
             <Button onClick={handleClear} disabled={loading} data-testid="chat-new-chat" variant="secondary">
-                <ArrowPathIcon className="w-4 h-4" /> New Chat
+                <ArrowPathIcon className="w-4 h-4" /> {t('newChat')}
             </Button>
         </div>
     </div>

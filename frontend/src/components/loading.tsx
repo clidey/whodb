@@ -18,6 +18,7 @@ import {FC} from "react";
 import {Container} from "./page";
 
 import {Spinner} from "@clidey/ux";
+import { useTranslation } from "@/hooks/use-translation";
 
 type ILoadingProps = {
   className?: string;
@@ -27,6 +28,7 @@ type ILoadingProps = {
 }
 
 export const Loading: FC<ILoadingProps> = ({className, size = "md", hideText, loadingText}) => {
+  const { t } = useTranslation('components/loading');
   let textSize = "text-base";
   if (size === "sm") {
       textSize = "text-xs";
@@ -39,7 +41,7 @@ export const Loading: FC<ILoadingProps> = ({className, size = "md", hideText, lo
     return (
         <div className="flex justify-center items-center w-fit h-fit gap-sm" data-testid="loading-spinner">
             <Spinner className={className} size={size}/>
-            {!hideText && <p className={textSize}>{loadingText}</p>}
+            {!hideText && <p className={textSize}>{loadingText || t('loading')}</p>}
         </div>
     );
 };

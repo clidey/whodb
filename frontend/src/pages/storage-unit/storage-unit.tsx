@@ -79,10 +79,12 @@ import {databaseSupportsScratchpad} from "../../utils/database-features";
 import {getDatabaseStorageUnitLabel, isNoSQL} from "../../utils/functions";
 import {Tip} from '../../components/tip';
 import {SettingsActions} from '../../store/settings';
+import {useTranslation} from '../../hooks/use-translation';
 
 const StorageUnitCard: FC<{ unit: StorageUnit, columns?: any[] }> = ({ unit, columns }) => {
     const [expanded, setExpanded] = useState(false);
     const navigate = useNavigate();
+    const { t } = useTranslation('pages/storage-unit');
 
     const handleNavigateToDatabase = useCallback(() => {
         navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
@@ -134,10 +136,10 @@ const StorageUnitCard: FC<{ unit: StorageUnit, columns?: any[] }> = ({ unit, col
             </div>
             <div className="flex flex-row justify-end gap-xs" onClick={(e) => e.stopPropagation()}>
                 <Button onClick={handleExpand} data-testid="explore-button" variant="secondary">
-                    <MagnifyingGlassIcon className="w-4 h-4" /> Describe
+                    <MagnifyingGlassIcon className="w-4 h-4" /> {t('describe')}
                 </Button>
                 <Button onClick={handleNavigateToDatabase} data-testid="data-button" variant="secondary">
-                    <CircleStackIcon className="w-4 h-4" /> Data
+                    <CircleStackIcon className="w-4 h-4" /> {t('data')}
                 </Button>
             </div>
         </div>
@@ -176,7 +178,7 @@ const StorageUnitCard: FC<{ unit: StorageUnit, columns?: any[] }> = ({ unit, col
             </div>
             <div className="flex items-end grow">
                 <Button onClick={handleNavigateToDatabase} data-testid="data-button" variant="secondary" className="w-full">
-                    <CircleStackIcon className="w-4 h-4" /> Data
+                    <CircleStackIcon className="w-4 h-4" /> {t('data')}
                 </Button>
             </div>
         </div>
@@ -198,6 +200,7 @@ export const StorageUnitPage: FC = () => {
     const dispatch = useAppDispatch();
     const [tableColumns, setTableColumns] = useState<Record<string, any[]>>({});
     const [fetchColumnsBatch] = useGetColumnsBatchLazyQuery();
+    const { t } = useTranslation('pages/storage-unit');
 
     useEffect(() => {
         void trackFrontendEvent('ui.storage_unit_viewed', {
@@ -249,10 +252,10 @@ export const StorageUnitPage: FC = () => {
 
     const handleSubmit = useCallback(() => {
         if (storageUnitName.length === 0) {
-            return setError("Name is required");
+            return setError(t('nameRequired'));
         }
         if (!isNoSQL(current?.Type as DatabaseType) && fields.some(field => field.Key.length === 0 || field.Value.length === 0)) {
-            return setError("Fields cannot be empty");
+            return setError(t('fieldsCannotBeEmpty'));
         }
         setError(undefined);
         addStorageUnit({
@@ -262,7 +265,8 @@ export const StorageUnitPage: FC = () => {
                 fields,
             },
             onCompleted() {
-                toast.success(`${getDatabaseStorageUnitLabel(current?.Type, true)} ${storageUnitName} created successfully!`);
+                const message = t('createSuccessMessage').replace('{storageUnit}', `${getDatabaseStorageUnitLabel(current?.Type, true)} ${storageUnitName}`);
+                toast.success(message);
                 void trackFrontendEvent('ui.storage_unit_created', {
                     database_type: current?.Type ?? 'unknown',
                     field_count: fields.length,
@@ -276,7 +280,7 @@ export const StorageUnitPage: FC = () => {
                 toast.error(e.message);
             },
         });
-    }, [addStorageUnit, current?.Type, fields, refetch, schema, storageUnitName, trackFrontendEvent]);
+    }, [addStorageUnit, current?.Type, fields, refetch, schema, storageUnitName, t, trackFrontendEvent]);
 
     const handleAddField = useCallback(() => {
         setFields(f => [...f, { Key: "", Value: "", Extra: [] }]);
@@ -392,13 +396,13 @@ export const StorageUnitPage: FC = () => {
     return <InternalPage routes={routes}>
         <div className="flex w-full h-fit my-2 gap-lg justify-between">
             <div className="flex justify-between items-center">
-                <SearchInput value={filterValue} onChange={e => setFilterValue(e.target.value)} placeholder="Enter filter value..." />
+                <SearchInput value={filterValue} onChange={e => setFilterValue(e.target.value)} placeholder={t('searchPlaceholder')} />
             </div>
             <div className="flex items-center gap-2">
                 {
                     databaseSupportsScratchpad(current?.Type) &&
                     <Button onClick={() => navigate(InternalRoutes.RawExecute.path)} data-testid="scratchpad-button" variant="secondary">
-                        <CommandLineIcon className="w-4 h-4" /> Scratchpad
+                        <CommandLineIcon className="w-4 h-4" /> {t('scratchpad')}
                     </Button>
                 }
                 <Tabs value={view} onValueChange={value => dispatch(SettingsActions.setStorageUnitView(value as 'list' | 'card'))}>
@@ -416,20 +420,20 @@ export const StorageUnitPage: FC = () => {
                 "hidden": current?.Type === DatabaseType.Redis,
             })} icon={<PlusCircleIcon className="w-4 h-4" />} isExpanded={create} setExpanded={setCreate} tag={<Badge variant="destructive">{error}</Badge>}>
                 <div className="flex flex-col grow h-full justify-between mt-2 gap-2" data-testid="create-storage-unit-card">
-                    <h1 className="text-lg"><span className="prefix-create-storage-unit">Create a</span> {getDatabaseStorageUnitLabel(current?.Type, true)}</h1>
+                    <h1 className="text-lg"><span className="prefix-create-storage-unit">{t('createPrefix')}</span> {getDatabaseStorageUnitLabel(current?.Type, true)}</h1>
                     <Button className="self-end" onClick={handleCreate} variant="secondary">
-                        <PlusCircleIcon  className='w-4 h-4' /> Create
+                        <PlusCircleIcon  className='w-4 h-4' /> {t('create')}
                     </Button>
                 </div>
                 <div className="flex grow flex-col my-2 gap-4">
                     <div className="flex flex-col gap-4">
                         <SheetTitle className="flex items-center gap-2">
                             <PlusCircleIcon className="w-5 h-5" />
-                            Create a {getDatabaseStorageUnitLabel(current?.Type, true)}
+                            {t('createTitle')} {getDatabaseStorageUnitLabel(current?.Type, true)}
                         </SheetTitle>
                         <div className="flex flex-col gap-2">
-                            <Label>Name</Label>
-                            <Input value={storageUnitName} onChange={e => setStorageUnitName(e.target.value)} placeholder="Enter name..." />
+                            <Label>{t('nameLabel')}</Label>
+                            <Input value={storageUnitName} onChange={e => setStorageUnitName(e.target.value)} placeholder={t('namePlaceholder')} />
                         </div>
                         <div className={classNames("flex flex-col gap-sm overflow-y-auto max-h-[75vh]", {
                             "hidden": isNoSQL(current?.Type as DatabaseType),
@@ -438,9 +442,9 @@ export const StorageUnitPage: FC = () => {
                                 {
                                     fields.map((field, index) => (
                                         <div className="flex flex-col gap-lg relative" key={`field-${index}`} data-testid="create-field-card">
-                                            <Label>Field Name</Label>
-                                            <Input value={field.Key} onChange={e => handleFieldValueChange("Key", index, e.target.value)} placeholder="Enter field name"/>
-                                            <Label>Field Type</Label>
+                                            <Label>{t('fieldNameLabel')}</Label>
+                                            <Input value={field.Key} onChange={e => handleFieldValueChange("Key", index, e.target.value)} placeholder={t('fieldNamePlaceholder')}/>
+                                            <Label>{t('fieldTypeLabel')}</Label>
                                             <SearchSelect
                                                 options={storageUnitTypesDropdownItems.map(item => ({
                                                     value: item.id,
@@ -448,8 +452,8 @@ export const StorageUnitPage: FC = () => {
                                                 }))}
                                                 value={field.Value}
                                                 onChange={value => handleFieldValueChange("Value", index, value)}
-                                                placeholder="Select type"
-                                                searchPlaceholder="Search type..."
+                                                placeholder={t('fieldTypePlaceholder')}
+                                                searchPlaceholder={t('searchTypePlaceholder')}
                                                 buttonProps={{
                                                     "data-testid": `field-type-${index}`,
                                                 }}
@@ -457,19 +461,19 @@ export const StorageUnitPage: FC = () => {
 
                                             {showModifiers && (
                                                 <>
-                                                    <Label>Modifiers</Label>
+                                                    <Label>{t('modifiersLabel')}</Label>
                                                     <div className="flex items-center w-1/3 justify-start gap-2">
                                                         <Checkbox checked={field.Extra?.find(extra => extra.Key === "Primary") != null} onCheckedChange={() => handleFieldValueChange("Primary", index, !field.Extra?.find(extra => extra.Key === "Primary") != null)}/>
-                                                        <Label>Primary</Label>
+                                                        <Label>{t('primaryModifier')}</Label>
                                                         <Checkbox checked={field.Extra?.find(extra => extra.Key === "Nullable") != null} onCheckedChange={() => handleFieldValueChange("Nullable", index, !field.Extra?.find(extra => extra.Key === "Nullable") != null)}/>
-                                                        <Label>Nullable</Label>
+                                                        <Label>{t('nullableModifier')}</Label>
                                                     </div>
                                                 </>
                                             )}
                                             {
                                                 fields.length > 1 &&
                                                 <Button variant="destructive" onClick={() => handleRemove(index)} data-testid="remove-field-button" className="w-full mt-1">
-                                                    <XCircleIcon className="w-4 h-4"/> <span>Remove</span>
+                                                    <XCircleIcon className="w-4 h-4"/> <span>{t('removeField')}</span>
                                                 </Button>
                                             }
                                             {index !== fields.length - 1 && <Separator className="mt-2" />}
@@ -478,13 +482,13 @@ export const StorageUnitPage: FC = () => {
                                 } 
                             </div>
                             <Button className="self-end" onClick={handleAddField} data-testid="add-field-button" variant="secondary">
-                                <PlusCircleIcon  className='w-4 h-4' /> Add field
+                                <PlusCircleIcon  className='w-4 h-4' /> {t('addField')}
                             </Button>
                         </div>
                     </div>
                     <div className="flex grow" />
                     <Button onClick={handleSubmit} data-testid="submit-button" className="w-full">
-                        <CheckCircleIcon className="w-4 h-4" /> Create
+                        <CheckCircleIcon className="w-4 h-4" /> {t('createButton')}
                     </Button>
                 </div>
             </ExpandableCard>
@@ -500,12 +504,12 @@ export const StorageUnitPage: FC = () => {
             <Table>
                 <TableHeader>
                     <TableHeadRow>
-                        <TableHead>Name</TableHead>
+                        <TableHead>{t('nameLabel')}</TableHead>
                         {/** Dynamically render shared attribute keys as columns */}
                         {sharedAttributeKeys.map(key => (
                             <TableHead key={key}>{key}</TableHead>
                         ))}
-                        <TableHead>Actions</TableHead>
+                        <TableHead>{t('actionsColumn')}</TableHead>
                     </TableHeadRow>
                 </TableHeader>
                 <VirtualizedTableBody
@@ -522,18 +526,18 @@ export const StorageUnitPage: FC = () => {
                                 ))}
                                 <TableCell className="relative">
                                     <div className="flex gap-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Button 
+                                        <Button
                                             onClick={() => {
                                                 navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
                                                     state: { unit },
                                                 });
-                                            }} 
+                                            }}
                                             data-testid="data-button"
                                             variant="secondary"
                                             size="sm"
                                             className="!cursor-pointer"
                                         >
-                                            <CircleStackIcon className="w-4 h-4" /> Data
+                                            <CircleStackIcon className="w-4 h-4" /> {t('data')}
                                         </Button>
                                     </div>
                                 </TableCell>
@@ -594,13 +598,13 @@ export const StorageUnitPage: FC = () => {
                                             data-testid="data-button"
                                             variant="secondary"
                                         >
-                                            <CircleStackIcon className="w-4 h-4" /> Data
+                                            <CircleStackIcon className="w-4 h-4" /> {t('data')}
                                         </Button>
                                         <Button
                                             onClick={() => setExpandedUnit(null)}
                                             variant="outline"
                                         >
-                                            <XMarkIcon className="w-4 h-4" /> Close
+                                            <XMarkIcon className="w-4 h-4" /> {t('close')}
                                         </Button>
                                     </div>
                                 </div>
@@ -617,6 +621,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit & { columns?: 
     const navigate = useNavigate();
     const schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
+    const { t } = useTranslation('pages/storage-unit');
 
     const handleNavigateTo = useCallback(() => {
         if (data == null) {
@@ -692,7 +697,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit & { columns?: 
                         </StackList>
                     </div>
                     <Button onClick={handleNavigateTo} data-testid="data-button">
-                        <CircleStackIcon className="w-4 h-4" /> Data
+                        <CircleStackIcon className="w-4 h-4" /> {t('data')}
                     </Button>
                 </div>
             </Card>

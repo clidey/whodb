@@ -20,6 +20,7 @@ import {InternalRoutes} from "../../config/routes";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {SettingsActions} from "../../store/settings";
 import {isEEMode} from "@/config/ee-imports";
+import {useTranslation} from "@/hooks/use-translation";
 import {
     Input,
     Label,
@@ -36,6 +37,7 @@ import {ExternalLink} from "../../utils/external-links";
 import {usePageSize} from "../../hooks/use-page-size";
 
 export const SettingsPage: FC = () => {
+    const {t} = useTranslation('pages/settings');
     const dispatch = useAppDispatch();
     const metricsEnabled = useAppSelector(state => state.settings.metricsEnabled);
     const storageUnitView = useAppSelector(state => state.settings.storageUnitView);
@@ -44,6 +46,7 @@ export const SettingsPage: FC = () => {
     const spacing = useAppSelector(state => state.settings.spacing);
     const whereConditionMode = useAppSelector(state => state.settings.whereConditionMode);
     const defaultPageSize = useAppSelector(state => state.settings.defaultPageSize);
+    const language = useAppSelector(state => state.settings.language);
 
     const pageSizeOptions = useMemo(() => ({
         onPageSizeChange: (size: number) => dispatch(SettingsActions.setDefaultPageSize(size)),
@@ -93,49 +96,45 @@ export const SettingsPage: FC = () => {
         dispatch(SettingsActions.setWhereConditionMode(mode));
     }, [dispatch]);
 
+    const handleLanguageChange = useCallback((lang: 'en' | 'es') => {
+        dispatch(SettingsActions.setLanguage(lang));
+    }, [dispatch]);
+
     return (
         <InternalPage routes={[InternalRoutes.Settings!]}>
             <div className="flex flex-col items-center w-full max-w-2xl mx-auto py-10 gap-8">
                 <div className="w-full flex flex-col gap-0">
                     <div className="flex flex-col gap-2">
                         <p className="text-2xl font-bold flex items-center gap-2">
-                            Telemetry and Performance Metrics
+                            {t('telemetryTitle')}
                         </p>
                     </div>
                     <div className="flex flex-col gap-xl py-6">
                         {isEEMode ? (
-                            <div className="flex flex-col gap-sm items-center">
+                            <div className="flex flex-col gap-sm">
                                 <h3 className="text-base">
-                                    WhoDB Enterprise does not collect telemetry and performance metrics.
+                                    {t('eeNoTelemetry')}
                                 </h3>
                             </div>
                         ) : (
                             <div className="flex flex-col gap-4">
                                 <h3 className="text-base">
-                                    We use this information solely to enhance the performance of WhoDB.
-                                    For details on what data we collect, how it's collected, stored, and used, please
-                                    refer to our <ExternalLink
+                                    {t('telemetryDescription')}
+                                    {t('dataCollectionDetails')}
+                                    <ExternalLink
                                     href={"https://clidey.com/privacy-policy"}
-                                    className={"underline text-blue-500"}>Privacy Policy.</ExternalLink>
+                                    className={"underline text-blue-500"}>{t('privacyPolicy')}</ExternalLink>.
                                     <br/>
                                     <br/>
-                                    WhoDB uses <ExternalLink href={"https://posthog.com/"}
-                                                  className={"underline text-blue-500"}>Posthog</ExternalLink> to collect and
-                                    manage this
-                                    data. More information about this tool can be found on its <ExternalLink
-                                    href={"https://github.com/PostHog/posthog"}
-                                    className={"underline text-blue-500"}>Github</ExternalLink>.
-                                    We have taken measures to redact as much sensitive information as we can and will
-                                    continuously
-                                    evaluate to make sure that it fits yours and our needs without sacrificing anything.
+                                    {t('posthogInfo')}
+                                    <br/>
+                                    {t('sensitiveDataInfo')}
                                     <br/>
                                     <br/>
-                                    If you know of a tool that might serve us better, we’d love to hear from you! Just
-                                    reach out via the
-                                    "Contact Us" option in the bottom left corner of the screen.
+                                    {t('contactUsInfo')}
                                 </h3>
                                 <div className="flex justify-between">
-                                    <Label>{metricsEnabled ? "Enable Telemetry" : "Disable Telemetry"}</Label>
+                                    <Label>{metricsEnabled ? t('enableTelemetry') : t('disableTelemetry')}</Label>
                                     <Switch checked={metricsEnabled} onCheckedChange={handleMetricsToggle}/>
                                 </div>
                                 <Separator className="mt-4" />
@@ -143,85 +142,85 @@ export const SettingsPage: FC = () => {
                         )}
                         <div className="flex flex-col gap-sm mb-2">
                             <p className="text-lg font-bold">
-                                Personalize Your Experience
+                                {t('personalizeTitle')}
                             </p>
                             <p className="text-base">
-                                Make WhoDB your own by customizing the appearance and feel of the WhoDB interface
+                                {t('personalizeDescription')}
                             </p>
                         </div>
                         <div className="flex justify-between">
-                            <Label>Storage Unit Default View</Label>
+                            <Label>{t('storageUnitView')}</Label>
                             <Select value={storageUnitView} onValueChange={handleStorageUnitViewToggle}>
                                 <SelectTrigger id="storage-unit-view" className="w-[135px]">
-                                    <SelectValue placeholder="Select a view" />
+                                    <SelectValue placeholder={t('selectView')} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="list">List</SelectItem>
-                                    <SelectItem value="card">Card</SelectItem>
+                                    <SelectItem value="list">{t('list')}</SelectItem>
+                                    <SelectItem value="card">{t('card')}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                         <div className="flex justify-between">
-                            <Label>Font Size</Label>
+                            <Label>{t('fontSize')}</Label>
                             <Select value={fontSize} onValueChange={handleFontSizeChange}>
                                 <SelectTrigger id="font-size" className="w-[135px]">
-                                    <SelectValue placeholder="Select font size" />
+                                    <SelectValue placeholder={t('selectFontSize')} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="small">Small</SelectItem>
-                                    <SelectItem value="medium">Medium</SelectItem>
-                                    <SelectItem value="large">Large</SelectItem>
+                                    <SelectItem value="small">{t('small')}</SelectItem>
+                                    <SelectItem value="medium">{t('medium')}</SelectItem>
+                                    <SelectItem value="large">{t('large')}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                         <div className="flex justify-between">
-                            <Label>Border Radius</Label>
+                            <Label>{t('borderRadius')}</Label>
                             <Select value={borderRadius} onValueChange={handleBorderRadiusChange}>
                                 <SelectTrigger id="border-radius" className="w-[135px]">
-                                    <SelectValue placeholder="Select border radius" />
+                                    <SelectValue placeholder={t('selectBorderRadius')} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="none">None</SelectItem>
-                                    <SelectItem value="small">Small</SelectItem>
-                                    <SelectItem value="medium">Medium</SelectItem>
-                                    <SelectItem value="large">Large</SelectItem>
+                                    <SelectItem value="none">{t('none')}</SelectItem>
+                                    <SelectItem value="small">{t('small')}</SelectItem>
+                                    <SelectItem value="medium">{t('medium')}</SelectItem>
+                                    <SelectItem value="large">{t('large')}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                         <div className="flex justify-between">
-                            <Label>Spacing</Label>
+                            <Label>{t('spacing')}</Label>
                             <Select value={spacing} onValueChange={handleSpacingChange}>
                                 <SelectTrigger id="spacing" className="w-[135px]">
-                                    <SelectValue placeholder="Select spacing" />
+                                    <SelectValue placeholder={t('selectSpacing')} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="compact">Compact</SelectItem>
-                                    <SelectItem value="comfortable">Comfortable</SelectItem>
-                                    <SelectItem value="spacious">Spacious</SelectItem>
+                                    <SelectItem value="compact">{t('compact')}</SelectItem>
+                                    <SelectItem value="comfortable">{t('comfortable')}</SelectItem>
+                                    <SelectItem value="spacious">{t('spacious')}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                         <div className="flex justify-between">
-                            <Label>Where Condition Mode</Label>
+                            <Label>{t('whereConditionMode')}</Label>
                             <Select value={whereConditionMode} onValueChange={handleWhereConditionModeChange}>
                                 <SelectTrigger id="where-condition-mode" className="w-[135px]">
-                                    <SelectValue placeholder="Select mode" />
+                                    <SelectValue placeholder={t('selectMode')} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="popover">Popover</SelectItem>
-                                    <SelectItem value="sheet">Sheet</SelectItem>
+                                    <SelectItem value="popover">{t('popover')}</SelectItem>
+                                    <SelectItem value="sheet">{t('sheet')}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                         <div className="flex justify-between">
-                            <Label>Default Page Size</Label>
+                            <Label>{t('defaultPageSize')}</Label>
                             <div className="flex gap-2">
                                 <Select
                                     value={isCustomPageSize ? "custom" : pageSizeString}
                                     onValueChange={handleDefaultPageSizeChange}
                                 >
                                     <SelectTrigger id="default-page-size" className="w-[135px]">
-                                        <SelectValue placeholder="Select page size"/>
+                                        <SelectValue placeholder={t('selectPageSize')}/>
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="10">10</SelectItem>
@@ -231,7 +230,7 @@ export const SettingsPage: FC = () => {
                                         <SelectItem value="250">250</SelectItem>
                                         <SelectItem value="500">500</SelectItem>
                                         <SelectItem value="1000">1000</SelectItem>
-                                        <SelectItem value="custom">Custom</SelectItem>
+                                        <SelectItem value="custom">{t('custom')}</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 {isCustomPageSize && (
@@ -251,6 +250,20 @@ export const SettingsPage: FC = () => {
                                 )}
                             </div>
                         </div>
+                        {isEEMode && (
+                            <div className="flex justify-between">
+                                <Label>{t('language')}</Label>
+                                <Select value={language} onValueChange={handleLanguageChange}>
+                                    <SelectTrigger id="language" className="w-[135px]">
+                                        <SelectValue placeholder={t('selectLanguage')} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="en">English</SelectItem>
+                                        <SelectItem value="es">Español</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

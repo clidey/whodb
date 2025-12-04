@@ -40,11 +40,13 @@ import {baseDatabaseTypes, getDatabaseTypeDropdownItems, IDatabaseDropdownItem} 
 import {extensions, sources, featureFlags} from '../../config/features';
 import {InternalRoutes} from "../../config/routes";
 import {useDesktopFile} from '../../hooks/useDesktop';
+import {useTranslation} from '@/hooks/use-translation';
 import {AuthActions} from "../../store/auth";
 import {DatabaseActions} from "../../store/database";
 import {TourActions} from "../../store/tour";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {isDesktopApp} from '../../utils/external-links';
+import {hasCompletedOnboarding, markOnboardingComplete} from '../../utils/onboarding';
 
 /**
  * Generate a consistent ID for desktop credentials based on connection details.
@@ -95,10 +97,16 @@ export const LoginForm: FC<LoginFormProps> = ({
     className = "",
     advancedDirection = "horizontal",
 }) => {
+    const { t } = useTranslation('pages/login');
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const currentProfile = useAppSelector(state => state.auth.current);
     const shouldUpdateLastAccessed = useRef(false);
+
+    const FIRST_LOGIN_KEY = 'whodb_has_logged_in';
+    const [isFirstLogin, setIsFirstLogin] = useState(() => {
+        return !localStorage.getItem(FIRST_LOGIN_KEY);
+    });
 
     const [login, { loading: loginLoading }] = useLoginMutation();
     const [loginWithProfile, { loading: loginWithProfileLoading }] = useLoginWithProfileMutation();
@@ -125,11 +133,19 @@ export const LoginForm: FC<LoginFormProps> = ({
         return loginLoading || loginWithProfileLoading;
     }, [loginLoading, loginWithProfileLoading]);
 
+    const markFirstLoginComplete = useCallback(() => {
+        if (isFirstLogin) {
+            localStorage.setItem(FIRST_LOGIN_KEY, 'true');
+            setIsFirstLogin(false);
+            markOnboardingComplete();
+        }
+    }, [isFirstLogin, FIRST_LOGIN_KEY]);
+
     const handleSubmit = useCallback(() => {
         if (([DatabaseType.MySql, DatabaseType.Postgres].includes(databaseType.id as DatabaseType) && (hostName.length === 0 || database.length === 0 || username.length === 0))
             || (databaseType.id === DatabaseType.Sqlite3 && database.length === 0)
             || ((databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Redis) && (hostName.length === 0))) {
-            return setError("All fields are required");
+            return setError(t('allFieldsRequired'));
         }
         setError(undefined);
 
@@ -155,25 +171,26 @@ export const LoginForm: FC<LoginFormProps> = ({
                     const profileData = { ...credentials };
                     shouldUpdateLastAccessed.current = true;
                     dispatch(AuthActions.login(profileData));
+                    markFirstLoginComplete();
                     if (onLoginSuccess) {
                         onLoginSuccess();
                     } else {
                         navigate(InternalRoutes.Dashboard.StorageUnit.path);
                     }
-                    return toast.success("Login successful");
+                    return toast.success(t('loginSuccessful'));
                 }
-                return toast.error("Login failed");
+                return toast.error(t('loginFailed'));
             },
             onError(error) {
-                return toast.error(`Login failed: ${error.message}`);
+                return toast.error(t('loginFailedWithError', { error: error.message }));
             }
         });
-    }, [databaseType.id, hostName, database, username, password, advancedForm, login, dispatch, navigate, onLoginSuccess]);
+    }, [databaseType.id, hostName, database, username, password, advancedForm, login, dispatch, navigate, onLoginSuccess, markFirstLoginComplete, t]);
 
     const handleLoginWithProfileSubmit = useCallback((overrideProfileId?: string) => {
         const profileId = overrideProfileId ?? selectedAvailableProfile;
         if (profileId == null) {
-            return setError("Select a profile");
+            return setError(t('selectProfileRequired'));
         }
         setError(undefined);
 
@@ -199,25 +216,26 @@ export const LoginForm: FC<LoginFormProps> = ({
                         Saved: true,
                         IsEnvironmentDefined: profile?.IsEnvironmentDefined ?? false,
                     }));
+                    markFirstLoginComplete();
                     if (onLoginSuccess) {
                         onLoginSuccess();
                     } else {
                         navigate(InternalRoutes.Dashboard.StorageUnit.path);
                     }
-                    return toast.success("Login successfully");
+                    return toast.success(t('loginSuccessfully'));
                 }
-                return toast.error("Login failed");
+                return toast.error(t('loginFailed'));
             },
             onError(error) {
-                return toast.error(`Login failed: ${error.message}`);
+                return toast.error(t('loginFailedWithError', { error: error.message }));
             }
         });
-    }, [dispatch, loginWithProfile, navigate, profiles?.Profiles, selectedAvailableProfile, onLoginSuccess]);
+    }, [dispatch, loginWithProfile, navigate, profiles?.Profiles, selectedAvailableProfile, onLoginSuccess, markFirstLoginComplete, t]);
 
     const handleSampleDatabaseLogin = useCallback(() => {
         const sampleProfile = profiles?.Profiles.find(p => p.Source === "builtin");
         if (!sampleProfile) {
-            return toast.error("Sample database not found");
+            return toast.error(t('sampleDatabaseNotFound'));
         }
 
         setError(undefined);
@@ -242,6 +260,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                         Saved: true,
                         IsEnvironmentDefined: sampleProfile.IsEnvironmentDefined ?? false,
                     }));
+                    markFirstLoginComplete();
                     if (featureFlags.autoStartTourOnLogin) {
                         dispatch(TourActions.scheduleTourOnLoad('sample-database-tour'));
                     }
@@ -250,15 +269,15 @@ export const LoginForm: FC<LoginFormProps> = ({
                     } else {
                         navigate(InternalRoutes.Dashboard.StorageUnit.path);
                     }
-                    return toast.success("Welcome to WhoDB");
+                    return toast.success(t('welcomeToWhodb'));
                 }
-                return toast.error("Login failed");
+                return toast.error(t('loginFailed'));
             },
             onError(error) {
-                return toast.error(`Login failed: ${error.message}`);
+                return toast.error(t('loginFailedWithError', { error: error.message }));
             }
         });
-    }, [dispatch, loginWithProfile, navigate, profiles?.Profiles, onLoginSuccess]);
+    }, [dispatch, loginWithProfile, navigate, profiles?.Profiles, onLoginSuccess, markFirstLoginComplete, t]);
 
     const handleDatabaseTypeChange = useCallback((item: IDatabaseDropdownItem) => {
         if (item.id === DatabaseType.Sqlite3) {
@@ -300,9 +319,9 @@ export const LoginForm: FC<LoginFormProps> = ({
             }
         } catch (error) {
             console.error('Failed to select SQLite database:', error);
-            toast.error('Failed to select database file');
+            toast.error(t('failedToSelectDatabaseFile'));
         }
-    }, [selectSQLiteDatabase]);
+    }, [selectSQLiteDatabase, t]);
 
     useEffect(() => {
         dispatch(DatabaseActions.setSchema(""));
@@ -382,9 +401,8 @@ export const LoginForm: FC<LoginFormProps> = ({
                     const password = url.password;
                     const database = url.pathname.substring(1);
 
-                    // gives warning
                     if (!hostname || !username || !password || !database) {
-                        toast.warning("We could not extract all required details (host, username, password, or database) from this URL. Please enter the information manually.");
+                        toast.warning(t('urlParseWarning'));
                     }
                     setHostName(hostname);
                     setUsername(username);
@@ -400,7 +418,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                         setShowAdvanced(true);
                     }
                 } catch (error) {
-                    toast.warning("We could not extract all required details (host, username, password, or database) from this URL. Please enter the information manually.");
+                    toast.warning(t('urlParseWarning'));
                 }
             } else {
                 return setHostName(newHostName);
@@ -423,19 +441,19 @@ export const LoginForm: FC<LoginFormProps> = ({
             setAdvancedForm(advancedForm);
             setShowAdvanced(true);
         }
-    }, [databaseType.id]);
+    }, [databaseType.id, t]);
 
     const fields = useMemo(() => {
         if (databaseType.id === DatabaseType.Sqlite3) {
             return <div className="flex flex-col gap-lg w-full">
                 <div className="flex flex-col gap-xs w-full">
-                    <Label>Database</Label>
+                    <Label>{t('database')}</Label>
                     {isDesktop ? (
                         <div className="flex flex-col gap-sm w-full">
                             <Input
                                 value={database}
                                 onChange={(e) => setDatabase(e.target.value)}
-                                placeholder="Select or enter database file path"
+                                placeholder={t('selectOrEnterDatabasePath')}
                                 data-testid="database"
                             />
                             <Button
@@ -443,7 +461,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                                 variant="outline"
                                 className="w-full"
                             >
-                                Browse for SQLite File
+                                {t('browseForSqliteFile')}
                             </Button>
                         </div>
                     ) : (
@@ -460,7 +478,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                                     icon: <CircleStackIcon className="w-4 h-4"/>,
                                 })) ?? []
                             }
-                            placeholder="Select Database"
+                            placeholder={t('selectDatabase')}
                             buttonProps={{
                                 "data-testid": "database",
                             }}
@@ -474,30 +492,30 @@ export const LoginForm: FC<LoginFormProps> = ({
         return <div className="flex flex-col gap-lg w-full">
             { databaseType.fields?.hostname && (
                 <div className="flex flex-col gap-sm w-full">
-                    <Label>{databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Postgres ? "Host Name (or paste Connection URL)" : "Host Name"}</Label>
-                    <Input value={hostName} onChange={(e) => handleHostNameChange(e.target.value)} data-testid="hostname" placeholder="Enter host name" />
+                    <Label>{databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Postgres ? t('hostNameOrUrl') : t('hostName')}</Label>
+                    <Input value={hostName} onChange={(e) => handleHostNameChange(e.target.value)} data-testid="hostname" placeholder={t('enterHostName')} />
                 </div>
             )}
             { databaseType.fields?.username && (
                 <div className="flex flex-col gap-sm w-full">
-                    <Label>Username</Label>
-                    <Input value={username} onChange={(e) => setUsername(e.target.value)} data-testid="username" placeholder="Enter username" />
+                    <Label>{t('username')}</Label>
+                    <Input value={username} onChange={(e) => setUsername(e.target.value)} data-testid="username" placeholder={t('enterUsername')} />
                 </div>
             )}
             { databaseType.fields?.password && (
                 <div className="flex flex-col gap-sm w-full">
-                    <Label>Password</Label>
-                    <Input value={password} onChange={(e) => setPassword(e.target.value)} type="password" data-testid="password" placeholder="Enter password" />
+                    <Label>{t('password')}</Label>
+                    <Input value={password} onChange={(e) => setPassword(e.target.value)} type="password" data-testid="password" placeholder={t('enterPassword')} />
                 </div>
             )}
             { databaseType.fields?.database && (
                 <div className="flex flex-col gap-sm w-full">
-                    <Label>Database</Label>
-                    <Input value={database} onChange={(e) => setDatabase(e.target.value)} data-testid="database" placeholder="Enter database" />
+                    <Label>{t('database')}</Label>
+                    <Input value={database} onChange={(e) => setDatabase(e.target.value)} data-testid="database" placeholder={t('enterDatabase')} />
                 </div>
             )}
         </div>
-    }, [database, databaseType.id, databaseType.fields, databasesLoading, foundDatabases?.Database, handleHostNameChange, hostName, password, username, isDesktop, handleBrowseSQLiteFile]);
+    }, [database, databaseType.id, databaseType.fields, databasesLoading, foundDatabases?.Database, handleHostNameChange, hostName, password, username, isDesktop, handleBrowseSQLiteFile, t]);
 
     const loginWithCredentialsEnabled = useMemo(() => {
         if (databaseType.id === DatabaseType.Sqlite3) {
@@ -523,13 +541,13 @@ export const LoginForm: FC<LoginFormProps> = ({
                     <Loading hideText={true} />
                 </div>
                 <h1 className="text-xl">
-                    Logging in
+                    {t('loggingIn')}
                 </h1>
             </div>
         );
     }
 
-    const showSidePanel = sampleProfile && !hideHeader && featureFlags.sampleDatabaseTour;
+    const showSidePanel = sampleProfile && !hideHeader && featureFlags.sampleDatabaseTour && isFirstLogin && !hasCompletedOnboarding();
 
     return (
         <div className={classNames("w-fit h-fit", className, {
@@ -548,7 +566,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                         <div className="flex items-center gap-sm text-xl">
                             {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4"/>}
                             <h1 className="text-brand-foreground">{extensions.AppName ?? "WhoDB"}</h1>
-                            <h1>Login</h1>
+                            <h1>{t('title')}</h1>
                         </div>
                         {
                             error &&
@@ -564,10 +582,10 @@ export const LoginForm: FC<LoginFormProps> = ({
                 })} data-testid="login-form">
                     <div className={classNames("flex flex-col gap-lg grow", advancedDirection === "vertical" ? "w-full" : "w-[350px]")}>
                         <div className={cn("flex flex-col grow gap-lg", {
-                            "justify-center": advancedDirection === "horizontal",
+                            "justify-center": advancedDirection === "horizontal" && !showSidePanel,
                         })}>
                             <div className="flex flex-col gap-sm w-full">
-                                <Label>Database Type</Label>
+                                <Label>{t('databaseType')}</Label>
                                 <SearchSelect
                                     value={databaseType?.id || ""}
                                     onChange={(value) => {
@@ -616,11 +634,11 @@ export const LoginForm: FC<LoginFormProps> = ({
                     <Button className={classNames({
                         "hidden": advancedForm == null,
                     })} onClick={handleAdvancedToggle} data-testid="advanced-button" variant="secondary">
-                        <AdjustmentsHorizontalIcon className="w-4 h-4" /> {showAdvanced ? "Less Advanced" : "Advanced"}
+                        <AdjustmentsHorizontalIcon className="w-4 h-4" /> {showAdvanced ? t('lessAdvancedButton') : t('advancedButton')}
                     </Button>
                     {advancedDirection === "horizontal" && (
                         <Button onClick={handleSubmit} data-testid="login-button" variant={loginWithCredentialsEnabled ? "default" : "secondary"} disabled={!loginWithCredentialsEnabled}>
-                            <CheckCircleIcon className="w-4 h-4" /> Login
+                            <CheckCircleIcon className="w-4 h-4" /> {t('loginButton')}
                         </Button>
                     )}
                 </div>
@@ -629,7 +647,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                         "grow": availableProfiles.length === 0,
                     })}>
                         <Button onClick={handleSubmit} data-testid="login-button" variant={loginWithCredentialsEnabled ? "default" : "secondary"} disabled={!loginWithCredentialsEnabled}>
-                            <CheckCircleIcon className="w-4 h-4" /> Login
+                            <CheckCircleIcon className="w-4 h-4" /> {t('loginButton')}
                         </Button>
                     </div>
                 )}
@@ -638,11 +656,11 @@ export const LoginForm: FC<LoginFormProps> = ({
                     <>
                         <Separator className="my-8" />
                         <div className="flex flex-col gap-lg">
-                            <Label>Available profiles</Label>
+                            <Label>{t('availableProfiles')}</Label>
                             <SearchSelect
                                 value={selectedAvailableProfile}
                                 onChange={handleAvailableProfileChange}
-                                placeholder="Select a profile"
+                                placeholder={t('selectProfile')}
                                 contentClassName="w-[var(--radix-popover-trigger-width)]"
                                 options={availableProfiles}
                                 buttonProps={{
@@ -651,7 +669,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                                 rightIcon={<ChevronDownIcon className="w-4 h-4"/>}
                             />
                             <Button onClick={() => handleLoginWithProfileSubmit()} data-testid="login-with-profile-button" variant={loginWithProfileEnabled ? "default" : "secondary"} disabled={!loginWithProfileEnabled}>
-                                <CheckCircleIcon className="w-4 h-4" /> Login
+                                <CheckCircleIcon className="w-4 h-4" /> {t('loginButton')}
                             </Button>
                         </div>
                     </>
@@ -667,16 +685,16 @@ export const LoginForm: FC<LoginFormProps> = ({
                                 </div>
                                 <div className="flex flex-col gap-1">
                                     <h2 className="text-2xl font-bold text-foreground">
-                                        Try WhoDB
+                                        {t('tryWhodb')}
                                     </h2>
                                     <Badge variant="secondary" className="w-fit">
-                                        No setup required
+                                        {t('noSetupRequired')}
                                     </Badge>
                                 </div>
                             </div>
 
                             <p className="text-base text-muted-foreground leading-relaxed">
-                                Experience the power of WhoDB with our interactive sample database. Explore all features with real data.
+                                {t('experienceDescription')}
                             </p>
                         </div>
 
@@ -684,7 +702,7 @@ export const LoginForm: FC<LoginFormProps> = ({
 
                         <div className="flex flex-col gap-3">
                             <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
-                                What's Included
+                                {t('whatsIncluded')}
                             </h3>
                             <div className="flex flex-col gap-3">
                                 <div className="flex items-start gap-3">
@@ -692,8 +710,8 @@ export const LoginForm: FC<LoginFormProps> = ({
                                         <ChatBubbleLeftRightIcon className="w-3.5 h-3.5 stroke-brand" />
                                     </div>
                                     <div className="flex flex-col gap-1">
-                                        <p className="text-sm font-medium text-foreground">AI Chat Assistant</p>
-                                        <p className="text-xs text-muted-foreground">Query in natural language</p>
+                                        <p className="text-sm font-medium text-foreground">{t('aiChatAssistant')}</p>
+                                        <p className="text-xs text-muted-foreground">{t('aiChatDescription')}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-3">
@@ -701,8 +719,8 @@ export const LoginForm: FC<LoginFormProps> = ({
                                         <ShareIcon className="w-3.5 h-3.5 stroke-brand" />
                                     </div>
                                     <div className="flex flex-col gap-1">
-                                        <p className="text-sm font-medium text-foreground">Visual Schema</p>
-                                        <p className="text-xs text-muted-foreground">Interactive graph view</p>
+                                        <p className="text-sm font-medium text-foreground">{t('visualSchema')}</p>
+                                        <p className="text-xs text-muted-foreground">{t('visualSchemaDescription')}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-3">
@@ -710,8 +728,8 @@ export const LoginForm: FC<LoginFormProps> = ({
                                         <TableCellsIcon className="w-3.5 h-3.5 stroke-brand" />
                                     </div>
                                     <div className="flex flex-col gap-1">
-                                        <p className="text-sm font-medium text-foreground">Data Grid</p>
-                                        <p className="text-xs text-muted-foreground">Edit like a spreadsheet</p>
+                                        <p className="text-sm font-medium text-foreground">{t('dataGrid')}</p>
+                                        <p className="text-xs text-muted-foreground">{t('dataGridDescription')}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-3">
@@ -719,8 +737,8 @@ export const LoginForm: FC<LoginFormProps> = ({
                                         <CodeBracketIcon className="w-3.5 h-3.5 stroke-brand" />
                                     </div>
                                     <div className="flex flex-col gap-1">
-                                        <p className="text-sm font-medium text-foreground">SQL Editor</p>
-                                        <p className="text-xs text-muted-foreground">Powerful query tools</p>
+                                        <p className="text-sm font-medium text-foreground">{t('sqlEditor')}</p>
+                                        <p className="text-xs text-muted-foreground">{t('sqlEditorDescription')}</p>
                                     </div>
                                 </div>
                             </div>
@@ -733,11 +751,11 @@ export const LoginForm: FC<LoginFormProps> = ({
                             className="w-full mt-2"
                         >
                             <SparklesIcon className="w-4 h-4" />
-                            Get Started
+                            {t('getStarted')}
                         </Button>
 
                         <p className="text-xs text-center text-muted-foreground">
-                            Takes less than a minute • No credit card required
+                            {t('quickStartFooter')}
                         </p>
                     </Card>
                 )
@@ -747,13 +765,14 @@ export const LoginForm: FC<LoginFormProps> = ({
 };
 
 export const LoginPage: FC = () => {
+    const { t } = useTranslation('pages/login');
     const {data: version} = useGetVersionQuery();
 
     return (
         <Container className="justify-center items-center">
             <LoginForm />
             <div className="fixed bottom-4 left-1/2 -translate-x-1/2 text-xs text-foreground/60">
-                Version: {version?.Version}
+                {t('version')}: {version?.Version}
             </div>
         </Container>
     );

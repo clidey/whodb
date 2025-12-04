@@ -28,6 +28,7 @@ import {
 } from "@clidey/ux";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import {cloneElement, FC, ReactElement, ReactNode, useEffect, useRef, useState,} from "react";
+import {useTranslation} from "@/hooks/use-translation";
 
 
 type ICardProps = {
@@ -97,6 +98,7 @@ type IExpandableCardProps = {
 } & ICardProps;
 
 export const ExpandableCard: FC<IExpandableCardProps> = (props) => {
+  const { t } = useTranslation('components/card');
   const [expand, setExpand] = useState(props.isExpanded ?? false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
 
@@ -128,7 +130,7 @@ export const ExpandableCard: FC<IExpandableCardProps> = (props) => {
         </div>
         <SheetContent side="right" className="p-0">
           <VisuallyHidden>
-            <SheetTitle>Card Details</SheetTitle>
+            <SheetTitle>{t('details')}</SheetTitle>
           </VisuallyHidden>
           <div className="flex flex-col w-full justify-center p-8 h-full">
             {props.loading ? null : props.children[1]}

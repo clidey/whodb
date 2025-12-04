@@ -32,19 +32,7 @@ import {FC, useCallback, useMemo, useState} from "react";
 import {useExportToCSV} from "./hooks";
 import { ShareIcon } from "./heroicons";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-
-// Export options as lists - CE version only has basic download
-const exportFormatOptions = [
-    {value: 'csv', label: 'CSV - Comma Separated Values'},
-    {value: 'excel', label: 'Excel - XLSX Format'},
-] as const;
-
-const exportDelimiterOptions = [
-    {value: ',', label: 'Comma (,) - Standard CSV'},
-    {value: ';', label: 'Semicolon (;) - Excel in some locales'},
-    {value: '|', label: 'Pipe (|) - Less common in data'},
-    {value: '\t', label: 'Tab - TSV Format'},
-] as const;
+import { useTranslation } from "@/hooks/use-translation";
 
 interface IExportProps {
     open: boolean;
@@ -65,8 +53,22 @@ export const Export: FC<IExportProps> = ({
                                              selectedRowsData,
                                              checkedRowsCount,
                                          }) => {
+    const { t } = useTranslation('components/export');
     const [exportDelimiter, setExportDelimiter] = useState(',');
     const [exportFormat, setExportFormat] = useState<'csv' | 'excel'>('csv');
+
+    // Export options as lists - CE version only has basic download
+    const exportFormatOptions = useMemo(() => [
+        {value: 'csv', label: t('formatCsv')},
+        {value: 'excel', label: t('formatExcel')},
+    ] as const, [t]);
+
+    const exportDelimiterOptions = useMemo(() => [
+        {value: ',', label: t('delimiterComma')},
+        {value: ';', label: t('delimiterSemicolon')},
+        {value: '|', label: t('delimiterPipe')},
+        {value: '\t', label: t('delimiterTab')},
+    ] as const, [t]);
 
     // Selected rows are already in the correct format for the hook.
     const selectedRowsForExport = useMemo(() => {
@@ -91,28 +93,28 @@ export const Export: FC<IExportProps> = ({
             await backendExport();
             onOpenChange(false);
         } catch (error: any) {
-            toast.error(error.message || 'Export failed');
+            toast.error(error.message || t('exportFailed'));
         }
-    }, [backendExport, onOpenChange]);
+    }, [backendExport, onOpenChange, t]);
 
     return (
         <>
             <Sheet open={open} onOpenChange={onOpenChange}>
                 <SheetContent side="right" className="max-w-md w-full p-8">
-                    <SheetTitle className="flex items-center gap-2"><ShareIcon className="w-4 h-4" /> Export Data</SheetTitle>
+                    <SheetTitle className="flex items-center gap-2"><ShareIcon className="w-4 h-4" /> {t('title')}</SheetTitle>
                     <VisuallyHidden>
-                        <SheetTitle>Export Data</SheetTitle>
+                        <SheetTitle>{t('title')}</SheetTitle>
                     </VisuallyHidden>
                     <div className="flex flex-col gap-lg grow">
                         <div className="space-y-4 grow">
                             <p>
                                 {hasSelectedRows
-                                    ? `You are about to export ${checkedRowsCount} selected rows.`
-                                    : `You are about to export all data from the table. This may take some time for large tables.`}
+                                    ? t('selectedRows', { count: checkedRowsCount })
+                                    : t('allData')}
                             </p>
                             <div className="mb-4 flex flex-col gap-2">
                                 <Label>
-                                    Format
+                                    {t('format')}
                                 </Label>
                                 <Select
                                     value={exportFormat}
@@ -136,7 +138,7 @@ export const Export: FC<IExportProps> = ({
                                 {exportFormat === 'csv' && (
                                     <>
                                         <Label>
-                                            Delimiter
+                                            {t('delimiter')}
                                         </Label>
                                         <Select
                                             value={exportDelimiter}
@@ -157,28 +159,26 @@ export const Export: FC<IExportProps> = ({
                                                 ))}
                                             </SelectContent>
                                         </Select>
-                                        <p className="text-sm mt-2">Choose a delimiter that doesn't appear in your
-                                            data</p>
+                                        <p className="text-sm mt-2">{t('delimiterHelp')}</p>
                                     </>
                                 )}
                             </div>
                         </div>
                         <SheetFooter className="flex gap-sm px-0">
                             <div className="text-xs text-muted-foreground mb-8">
-                                <p className="font-medium mb-1">Export Details:</p>
+                                <p className="font-medium mb-1">{t('exportDetailsTitle')}</p>
                                 <ul className="list-disc list-inside space-y-1">
                                     {exportFormat === 'csv' ? (
                                         <>
-                                            <li><p className="inline-block">Headers include column names and data
-                                                types</p></li>
-                                            <li><p className="inline-block">UTF-8 encoding</p></li>
-                                            <li><p className="inline-block">Customizable delimiter</p></li>
+                                            <li><p className="inline-block">{t('csvHeaders')}</p></li>
+                                            <li><p className="inline-block">{t('csvEncoding')}</p></li>
+                                            <li><p className="inline-block">{t('csvDelimiter')}</p></li>
                                         </>
                                     ) : (
                                         <>
-                                            <li><p className="inline-block">Excel XLSX format</p></li>
-                                            <li><p className="inline-block">Formatted headers with styling</p></li>
-                                            <li><p className="inline-block">Auto-sized columns</p></li>
+                                            <li><p className="inline-block">{t('excelFormat')}</p></li>
+                                            <li><p className="inline-block">{t('excelHeaders')}</p></li>
+                                            <li><p className="inline-block">{t('excelColumns')}</p></li>
                                         </>
                                     )}
                                 </ul>
@@ -190,10 +190,10 @@ export const Export: FC<IExportProps> = ({
                                     onClick={() => onOpenChange(false)}
                                     data-testid="cancel-export"
                                 >
-                                    Cancel
+                                    {t('cancel')}
                                 </Button>
                                 <Button className="flex-1" onClick={handleExportConfirm}>
-                                    Export
+                                    {t('export')}
                                 </Button>
                             </div>
                         </SheetFooter>

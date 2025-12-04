@@ -20,8 +20,10 @@ import {useAppDispatch, useAppSelector} from '../../store/hooks';
 import {SettingsActions} from '../../store/settings';
 import {getStoredConsentState, optInUser, optOutUser} from '../../config/posthog';
 import {isEEMode} from '../../config/ee-imports';
+import {useTranslation} from '../../hooks/use-translation';
 
 export const PosthogConsentBanner = () => {
+    const { t } = useTranslation('components/posthog-consent-banner');
     const dispatch = useAppDispatch();
     const metricsEnabled = useAppSelector((state) => state.settings.metricsEnabled);
     const [visible, setVisible] = useState(false);
@@ -61,19 +63,17 @@ export const PosthogConsentBanner = () => {
             >
                 <div className="flex flex-col gap-3 text-sm">
                     <div>
-                        <p className="text-base font-semibold">Telemetry is enabled</p>
+                        <p className="text-base font-semibold">{t('title')}</p>
                         <p className="text-muted-foreground mt-1 leading-relaxed">
-                            We collect anonymous usage analytics, redacted session replay, and error reports through
-                            PostHog to keep WhoDB fast and reliable.
-                            You can turn this off now or at any time from Settings.
+                            {t('message')}
                         </p>
                     </div>
                     <div className="flex flex-wrap justify-end gap-2">
                         <Button variant="ghost" size="sm" onClick={handleDecline}>
-                            Disable telemetry
+                            {t('decline')}
                         </Button>
                         <Button size="sm" onClick={handleAllow}>
-                            Keep enabled
+                            {t('accept')}
                         </Button>
                     </div>
                 </div>

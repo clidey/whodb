@@ -26,6 +26,7 @@ type ISettingsState = {
     spacing: 'compact' | 'comfortable' | 'spacious';
     whereConditionMode: 'popover' | 'sheet';
     defaultPageSize: number;
+    language: 'en' | 'es';
 }
 
 const getInitialMetricsEnabled = (): boolean => {
@@ -49,6 +50,7 @@ const getInitialState = (): ISettingsState => {
         spacing: 'comfortable',
         whereConditionMode: 'popover',
         defaultPageSize: 100,
+        language: 'en',
     };
 };
 
@@ -79,6 +81,9 @@ export const settingsSlice = createSlice({
         },
         setDefaultPageSize: (state, action: PayloadAction<ISettingsState["defaultPageSize"]>) => {
             state.defaultPageSize = action.payload;
+        },
+        setLanguage: (state, action: PayloadAction<ISettingsState["language"]>) => {
+            state.language = action.payload;
         },
     },
 });

@@ -1,0 +1,40 @@
+en:
+  title: Settings
+  telemetryTitle: Telemetry and Performance Metrics
+  telemetryDescription: We use this information solely to enhance the performance of WhoDB.
+  dataCollectionDetails: For details on what data we collect, how it's collected, stored, and used, please refer to our
+  privacyPolicy: Privacy Policy
+  posthogInfo: WhoDB uses Posthog to collect and manage this data. More information about this tool can be found on its Github.
+  sensitiveDataInfo: We have taken measures to redact as much sensitive information as we can and will continuously evaluate to make sure that it fits yours and our needs without sacrificing anything.
+  contactUsInfo: If you know of a tool that might serve us better, we'd love to hear from you! Just reach out via the "Contact Us" option in the bottom left corner of the screen.
+  enableTelemetry: Enable Telemetry
+  disableTelemetry: Disable Telemetry
+  eeNoTelemetry: WhoDB Enterprise does not collect telemetry and performance metrics.
+  personalizeTitle: Personalize Your Experience
+  personalizeDescription: Make WhoDB your own by customizing the appearance and feel of the WhoDB interface
+  storageUnitView: Storage Unit Default View
+  list: List
+  card: Card
+  fontSize: Font Size
+  small: Small
+  medium: Medium
+  large: Large
+  borderRadius: Border Radius
+  none: None
+  spacing: Spacing
+  compact: Compact
+  comfortable: Comfortable
+  spacious: Spacious
+  whereConditionMode: Where Condition Mode
+  popover: Popover
+  sheet: Sheet
+  defaultPageSize: Default Page Size
+  custom: Custom
+  language: Language
+  selectView: Select a View
+  selectFontSize: Select Font Size
+  selectBorderRadius: Select Border Radius
+  selectSpacing: Select Spacing
+  selectMode: Select Mode
+  selectPageSize: Select Page Size
+  selectLanguage: Select Language

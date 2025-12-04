@@ -1,0 +1,22 @@
+en:
+  profile: Profile
+  selectProfile: Select Profile
+  searchProfile: Search Profile...
+  addAnotherProfile: Add Another Profile
+  database: Database
+  selectDatabase: Select Database
+  searchDatabase: Search Database...
+  schema: Schema
+  selectSchema: Select Schema
+  searchSchema: Search Schema...
+  chat: Chat
+  graph: Graph
+  scratchpad: Scratchpad
+  contactUs: Contact Us
+  settings: Settings
+  logOutProfile: Log Out Profile
+  moreLogoutOptions: More Logout Options
+  logoutAllProfiles: Logout All Profiles
+  version: "Version:"
+  databaseLogin: Database Login
+  errorSigningIn: "Error Signing You In:"

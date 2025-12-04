@@ -1,0 +1,17 @@
+en:
+  title: Schema
+  columns: Columns
+  indexes: Indexes
+  relationships: Relationships
+  refresh: Refresh
+  searchPlaceholder: Search Tables...
+  searchAriaLabel: Search Tables
+
+es:
+  title: Esquema
+  columns: Columnas
+  indexes: Índices
+  relationships: Relaciones
+  refresh: Actualizar
+  searchPlaceholder: Buscar tablas...
+  searchAriaLabel: Buscar tablas
