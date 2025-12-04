@@ -335,11 +335,22 @@ Cypress.Commands.add("getConditionCount", () => {
             if (match) return parseInt(match[1]);
         }
 
-        // In popover mode, count badges
+        // In popover mode, count badges + hidden conditions from "+N more" button
+        let count = 0;
         const badges = $body.find('[data-testid="where-condition-badge"]');
-        if (badges.length > 0) return badges.length;
+        count += badges.length;
 
-        return 0;
+        // Check for "+N more" button which indicates hidden conditions
+        const moreButton = $body.find('[data-testid="more-conditions-button"]');
+        if (moreButton.length > 0) {
+            const moreText = moreButton.text();
+            const moreMatch = moreText.match(/\+(\d+)/);
+            if (moreMatch) {
+                count += parseInt(moreMatch[1]);
+            }
+        }
+
+        return count;
     });
 });
 
@@ -436,9 +447,9 @@ Cypress.Commands.add("clickMoreConditions", () => {
 
 // Helper to save changes in a sheet
 Cypress.Commands.add("saveSheetChanges", () => {
-    // Click Add/Update button to save and close
+    // Click save button - matches various button texts used in different sheets
     cy.get('[role="dialog"]').within(() => {
-        cy.contains('button', /^(Add|Update|Add to Page)$/).click();
+        cy.contains('button', /^(Add|Update|Add to Page|Add Condition|Save Changes)$/).click();
     });
 });
 
