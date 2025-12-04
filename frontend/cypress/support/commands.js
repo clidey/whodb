@@ -621,11 +621,17 @@ Cypress.Commands.add("deleteRow", (rowIndex) => {
 });
 
 Cypress.Commands.add("updateRow", (rowIndex, columnIndex, text, cancel = true) => {
-    // Open the context menu for the row at rowIndex
-    cy.get('table tbody tr').eq(rowIndex).rightclick({ force: true });
+    // Wait for table to stabilize
+    cy.wait(500);
+
+    // Open the context menu for the row at rowIndex - scroll into view first
+    cy.get('table tbody tr').eq(rowIndex).scrollIntoView().rightclick({force: true});
+
+    // Wait for context menu to appear
+    cy.wait(300);
 
     // Wait for the menu to be visible, then click the "Edit row" item
-    cy.get('[data-testid="context-menu-edit-row"]').should('be.visible').click();
+    cy.get('[data-testid="context-menu-edit-row"]', {timeout: 5000}).should('be.visible').click();
 
     // Try to find the standard editable field first
     cy.get('body').then(($body) => {
