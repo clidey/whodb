@@ -88,12 +88,9 @@ func (p *PostgresPlugin) GetTableInfoQuery() string {
 			t.table_name,
 			t.table_type,
 			pg_size_pretty(pg_total_relation_size(quote_ident(t.table_schema) || '.' || quote_ident(t.table_name))) AS total_size,
-			pg_size_pretty(pg_relation_size(quote_ident(t.table_schema) || '.' || quote_ident(t.table_name))) AS data_size,
-			COALESCE(s.n_live_tup, 0) AS row_count
+			pg_size_pretty(pg_relation_size(quote_ident(t.table_schema) || '.' || quote_ident(t.table_name))) AS data_size
 		FROM
 			information_schema.tables t
-		LEFT JOIN
-			pg_stat_user_tables s ON t.table_name = s.relname
 		WHERE
 			t.table_schema = ?;
 	`
@@ -101,28 +98,25 @@ func (p *PostgresPlugin) GetTableInfoQuery() string {
 	// AND t.table_type = 'BASE TABLE' this removes the view tables
 }
 
+func (p *PostgresPlugin) GetStorageUnitExistsQuery() string {
+	return `SELECT to_regclass($1 || '.' || $2) IS NOT NULL`
+}
+
 func (p *PostgresPlugin) GetPlaceholder(index int) string {
 	return fmt.Sprintf("$%d", index)
 }
 
-func (p *PostgresPlugin) GetTableNameAndAttributes(rows *sql.Rows, db *gorm.DB) (string, []engine.Record) {
+func (p *PostgresPlugin) GetTableNameAndAttributes(rows *sql.Rows) (string, []engine.Record) {
 	var tableName, tableType, totalSize, dataSize string
-	var rowCount int64
-	if err := rows.Scan(&tableName, &tableType, &totalSize, &dataSize, &rowCount); err != nil {
+	if err := rows.Scan(&tableName, &tableType, &totalSize, &dataSize); err != nil {
 		log.Logger.WithError(err).Error("Failed to scan table info row data")
 		return "", nil
-	}
-
-	rowCountRecordValue := "unknown"
-	if rowCount >= 0 {
-		rowCountRecordValue = fmt.Sprintf("%d", rowCount)
 	}
 
 	attributes := []engine.Record{
 		{Key: "Type", Value: tableType},
 		{Key: "Total Size", Value: totalSize},
 		{Key: "Data Size", Value: dataSize},
-		{Key: "Count", Value: rowCountRecordValue},
 	}
 
 	return tableName, attributes

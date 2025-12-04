@@ -28,7 +28,7 @@ import {
     GetGraphQuery,
     GetGraphQueryVariables,
     StorageUnit,
-    useGetColumnsLazyQuery,
+    useGetColumnsBatchLazyQuery,
     useGetStorageUnitsQuery
 } from '@graphql';
 import {useAppSelector} from "../../store/hooks";
@@ -44,6 +44,7 @@ import {
     SidebarContent,
     SidebarGroup,
     SidebarHeader,
+    toast,
     toTitleCase
 } from "@clidey/ux";
 import {useNavigate} from "react-router-dom";
@@ -165,7 +166,7 @@ export const GraphPage: FC = () => {
     const [isInitialized, setIsInitialized] = useState(false);
     const [tableColumns, setTableColumns] = useState<Record<string, any[]>>({});
 
-    const [fetchColumns] = useGetColumnsLazyQuery();
+    const [fetchColumnsBatch] = useGetColumnsBatchLazyQuery();
 
     const {
         loading: graphLoading,
@@ -176,27 +177,26 @@ export const GraphPage: FC = () => {
         },
         onCompleted(data) {
             setGraphData(data.Graph);
-            // Fetch columns for each table
-            const fetchAllColumns = async () => {
-                const columnsMap: Record<string, any[]> = {};
-                for (const graphUnit of data.Graph) {
-                    try {
-                        const result = await fetchColumns({
-                            variables: {
-                                schema: databaseUsesSchemaForGraph(current?.Type) ? schema : current?.Database ?? "",
-                                storageUnit: graphUnit.Unit.Name,
-                            },
-                        });
-                        if (result.data?.Columns) {
-                            columnsMap[graphUnit.Unit.Name] = result.data.Columns;
-                        }
-                    } catch (error) {
-                        console.error(`Failed to fetch columns for ${graphUnit.Unit.Name}:`, error);
+            if (data.Graph.length === 0) return;
+
+            const storageUnitNames = data.Graph.map(graphUnit => graphUnit.Unit.Name);
+            fetchColumnsBatch({
+                variables: {
+                    schema: databaseUsesSchemaForGraph(current?.Type) ? schema : current?.Database ?? "",
+                    storageUnits: storageUnitNames,
+                },
+            }).then(result => {
+                if (result.data?.ColumnsBatch) {
+                    const columnsMap: Record<string, any[]> = {};
+                    for (const item of result.data.ColumnsBatch) {
+                        columnsMap[item.StorageUnit] = item.Columns;
                     }
+                    setTableColumns(columnsMap);
                 }
-                setTableColumns(columnsMap);
-            };
-            fetchAllColumns();
+            }).catch(error => {
+                console.error('Failed to fetch columns batch:', error);
+                toast.error('Failed to load column information');
+            });
         },
     });
 

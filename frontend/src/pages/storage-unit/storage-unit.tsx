@@ -44,7 +44,7 @@ import {
     RecordInput,
     StorageUnit,
     useAddStorageUnitMutation,
-    useGetColumnsLazyQuery,
+    useGetColumnsBatchLazyQuery,
     useGetStorageUnitsQuery
 } from '@graphql';
 import {
@@ -199,7 +199,7 @@ export const StorageUnitPage: FC = () => {
     const [expandedUnit, setExpandedUnit] = useState<string | null>(null);
     const dispatch = useAppDispatch();
     const [tableColumns, setTableColumns] = useState<Record<string, any[]>>({});
-    const [fetchColumns] = useGetColumnsLazyQuery();
+    const [fetchColumnsBatch] = useGetColumnsBatchLazyQuery();
     const { t } = useTranslation('pages/storage-unit');
 
     useEffect(() => {
@@ -337,30 +337,27 @@ export const StorageUnitPage: FC = () => {
     }, [current, refetch]);
 
     useEffect(() => {
-        if (!data?.StorageUnit) return;
+        if (!data?.StorageUnit || data.StorageUnit.length === 0) return;
 
-        const fetchAllColumns = async () => {
-            const columnsMap: Record<string, any[]> = {};
-            for (const unit of data.StorageUnit) {
-                try {
-                    const result = await fetchColumns({
-                        variables: {
-                            schema,
-                            storageUnit: unit.Name,
-                        },
-                    });
-                    if (result.data?.Columns) {
-                        columnsMap[unit.Name] = result.data.Columns;
-                    }
-                } catch (error) {
-                    console.error(`Failed to fetch columns for ${unit.Name}:`, error);
+        const storageUnitNames = data.StorageUnit.map(unit => unit.Name);
+        fetchColumnsBatch({
+            variables: {
+                schema,
+                storageUnits: storageUnitNames,
+            },
+        }).then(result => {
+            if (result.data?.ColumnsBatch) {
+                const columnsMap: Record<string, any[]> = {};
+                for (const item of result.data.ColumnsBatch) {
+                    columnsMap[item.StorageUnit] = item.Columns;
                 }
+                setTableColumns(columnsMap);
             }
-            setTableColumns(columnsMap);
-        };
-
-        fetchAllColumns();
-    }, [data?.StorageUnit, fetchColumns, schema]);
+        }).catch(error => {
+            console.error('Failed to fetch columns batch:', error);
+            toast.error('Failed to load column information');
+        });
+    }, [data?.StorageUnit, fetchColumnsBatch, schema]);
 
     const filterStorageUnits = useMemo(() => {
         const lowerCaseFilterValue = filterValue.toLowerCase();
