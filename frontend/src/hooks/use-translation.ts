@@ -30,8 +30,8 @@ export const useTranslation = (componentPath: string) => {
             .finally(() => setIsLoading(false));
     }, [componentPath, language]);
 
-    const t = (key: string, fallback?: string): string => {
-        return getTranslation(translations, key, fallback);
+    const t = (key: string, fallbackOrParams?: string | Record<string, any>): string => {
+        return getTranslation(translations, key, fallbackOrParams);
     };
 
     return { t, isLoading, language };

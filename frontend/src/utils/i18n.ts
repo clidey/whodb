@@ -83,7 +83,15 @@ export const loadTranslations = async (
 export const getTranslation = (
     translations: Record<string, string>,
     key: string,
-    fallback?: string
+    fallbackOrParams?: string | Record<string, any>
 ): string => {
-    return translations[key] || fallback || key;
+    const template = translations[key] || (typeof fallbackOrParams === 'string' ? fallbackOrParams : key);
+
+    if (typeof fallbackOrParams === 'object' && fallbackOrParams !== null) {
+        return template.replace(/\{(\w+)\}/g, (match, paramKey) => {
+            return String(fallbackOrParams[paramKey] ?? match);
+        });
+    }
+
+    return template;
 };

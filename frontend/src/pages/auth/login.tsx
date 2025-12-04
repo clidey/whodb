@@ -46,6 +46,7 @@ import {DatabaseActions} from "../../store/database";
 import {TourActions} from "../../store/tour";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {isDesktopApp} from '../../utils/external-links';
+import {hasCompletedOnboarding, markOnboardingComplete} from '../../utils/onboarding';
 
 /**
  * Generate a consistent ID for desktop credentials based on connection details.
@@ -102,6 +103,11 @@ export const LoginForm: FC<LoginFormProps> = ({
     const currentProfile = useAppSelector(state => state.auth.current);
     const shouldUpdateLastAccessed = useRef(false);
 
+    const FIRST_LOGIN_KEY = 'whodb_has_logged_in';
+    const [isFirstLogin, setIsFirstLogin] = useState(() => {
+        return !localStorage.getItem(FIRST_LOGIN_KEY);
+    });
+
     const [login, { loading: loginLoading }] = useLoginMutation();
     const [loginWithProfile, { loading: loginWithProfileLoading }] = useLoginWithProfileMutation();
     const [getDatabases, { loading: databasesLoading, data: foundDatabases }] = useGetDatabaseLazyQuery();
@@ -126,6 +132,14 @@ export const LoginForm: FC<LoginFormProps> = ({
     const loading = useMemo(() => {
         return loginLoading || loginWithProfileLoading;
     }, [loginLoading, loginWithProfileLoading]);
+
+    const markFirstLoginComplete = useCallback(() => {
+        if (isFirstLogin) {
+            localStorage.setItem(FIRST_LOGIN_KEY, 'true');
+            setIsFirstLogin(false);
+            markOnboardingComplete();
+        }
+    }, [isFirstLogin, FIRST_LOGIN_KEY]);
 
     const handleSubmit = useCallback(() => {
         if (([DatabaseType.MySql, DatabaseType.Postgres].includes(databaseType.id as DatabaseType) && (hostName.length === 0 || database.length === 0 || username.length === 0))
@@ -157,6 +171,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                     const profileData = { ...credentials };
                     shouldUpdateLastAccessed.current = true;
                     dispatch(AuthActions.login(profileData));
+                    markFirstLoginComplete();
                     if (onLoginSuccess) {
                         onLoginSuccess();
                     } else {
@@ -170,7 +185,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 return toast.error(t('loginFailedWithError', { error: error.message }));
             }
         });
-    }, [databaseType.id, hostName, database, username, password, advancedForm, login, dispatch, navigate, onLoginSuccess, t]);
+    }, [databaseType.id, hostName, database, username, password, advancedForm, login, dispatch, navigate, onLoginSuccess, markFirstLoginComplete, t]);
 
     const handleLoginWithProfileSubmit = useCallback((overrideProfileId?: string) => {
         const profileId = overrideProfileId ?? selectedAvailableProfile;
@@ -201,6 +216,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                         Saved: true,
                         IsEnvironmentDefined: profile?.IsEnvironmentDefined ?? false,
                     }));
+                    markFirstLoginComplete();
                     if (onLoginSuccess) {
                         onLoginSuccess();
                     } else {
@@ -214,7 +230,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 return toast.error(t('loginFailedWithError', { error: error.message }));
             }
         });
-    }, [dispatch, loginWithProfile, navigate, profiles?.Profiles, selectedAvailableProfile, onLoginSuccess, t]);
+    }, [dispatch, loginWithProfile, navigate, profiles?.Profiles, selectedAvailableProfile, onLoginSuccess, markFirstLoginComplete, t]);
 
     const handleSampleDatabaseLogin = useCallback(() => {
         const sampleProfile = profiles?.Profiles.find(p => p.Source === "builtin");
@@ -244,6 +260,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                         Saved: true,
                         IsEnvironmentDefined: sampleProfile.IsEnvironmentDefined ?? false,
                     }));
+                    markFirstLoginComplete();
                     if (featureFlags.autoStartTourOnLogin) {
                         dispatch(TourActions.scheduleTourOnLoad('sample-database-tour'));
                     }
@@ -260,7 +277,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 return toast.error(t('loginFailedWithError', { error: error.message }));
             }
         });
-    }, [dispatch, loginWithProfile, navigate, profiles?.Profiles, onLoginSuccess, t]);
+    }, [dispatch, loginWithProfile, navigate, profiles?.Profiles, onLoginSuccess, markFirstLoginComplete, t]);
 
     const handleDatabaseTypeChange = useCallback((item: IDatabaseDropdownItem) => {
         if (item.id === DatabaseType.Sqlite3) {
@@ -530,7 +547,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         );
     }
 
-    const showSidePanel = sampleProfile && !hideHeader && featureFlags.sampleDatabaseTour;
+    const showSidePanel = sampleProfile && !hideHeader && featureFlags.sampleDatabaseTour && isFirstLogin && !hasCompletedOnboarding();
 
     return (
         <div className={classNames("w-fit h-fit", className, {
@@ -565,7 +582,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 })} data-testid="login-form">
                     <div className={classNames("flex flex-col gap-lg grow", advancedDirection === "vertical" ? "w-full" : "w-[350px]")}>
                         <div className={cn("flex flex-col grow gap-lg", {
-                            "justify-center": advancedDirection === "horizontal",
+                            "justify-center": advancedDirection === "horizontal" && !showSidePanel,
                         })}>
                             <div className="flex flex-col gap-sm w-full">
                                 <Label>{t('databaseType')}</Label>
