@@ -103,6 +103,13 @@ describe('Graph Visualization', () => {
         it('shows collection metadata in graph nodes', () => {
             cy.goto('graph');
 
+            // Wait for graph to render and layout
+            cy.get('.react-flow__node', {timeout: 10000}).should('be.visible');
+            cy.wait(500); // Wait for layout to stabilize
+
+            // Wait for the specific node to exist
+            cy.get('[data-testid="rf__node-users"]', {timeout: 10000}).should('exist');
+
             cy.getGraphNode('users').then(fields => {
                 const tableConfig = getTableConfig(db, 'users');
                 if (tableConfig && tableConfig.metadata) {

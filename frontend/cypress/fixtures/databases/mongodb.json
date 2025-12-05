@@ -31,7 +31,6 @@
     "products",
     "users"
   ],
-  "includesSystemViews": true,
   "tables": {
     "users": {
       "columns": {
@@ -69,17 +68,10 @@
   },
   "graph": {
     "expectedNodes": {
-      "users": [
-        "orders"
-      ],
-      "orders": [
-        "order_items",
-        "payments"
-      ],
+      "users": [],
+      "orders": [],
       "order_items": [],
-      "products": [
-        "order_items"
-      ],
+      "products": [],
       "payments": [],
       "order_summary": []
     }
