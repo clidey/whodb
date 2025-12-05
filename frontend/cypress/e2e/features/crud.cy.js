@@ -126,14 +126,6 @@ describe('CRUD Operations', () => {
         const refreshDelay = db.indexRefreshDelay || 0;
 
         describe('Add Document', () => {
-            // Skip for MongoDB - old tests didn't cover adding documents
-            // and the UI behavior may differ
-            if (db.type === 'MongoDB') {
-                it.skip('adds a new document (not tested for MongoDB)', () => {
-                });
-                return;
-            }
-
             it('adds a new document', () => {
                 cy.data('users');
 
