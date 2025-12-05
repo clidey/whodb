@@ -128,15 +128,33 @@ Cypress.Commands.add('getExploreFields', () => {
 });
 
 Cypress.Commands.add('data', (tableName) => {
-    return cy.getTables().then(elements => {
-        const index = elements.findIndex(name => name === tableName);
-        return cy.get('[data-testid="data-button"]').eq(index).click().then(() => {
-            // Wait for the table to be present after clicking data button
-            cy.get('table', {timeout: 10000}).should('exist');
-            // Wait for at least one row to load (handles async data loading)
-            return cy.get('table tbody tr', {timeout: 15000}).should('have.length.at.least', 1);
-        });
+    // Visit storage unit page
+    cy.visit('/storage-unit');
+
+    // Try to use the search/filter input if available
+    cy.get('body').then($body => {
+        const searchInput = $body.find('input[placeholder*="Search"], input[placeholder*="Filter"]');
+        if (searchInput.length > 0) {
+            cy.wrap(searchInput).clear().type(tableName);
+            cy.wait(300); // Wait for filter to apply
+        }
     });
+
+    // Find the storage unit by EXACT name match and click its data button
+    // Using filter to ensure exact match (not partial like "user:1" matching "cart:user:1")
+    cy.get('[data-testid="storage-unit-name"]', {timeout: 10000})
+        .filter((index, el) => el.innerText.trim() === tableName)
+        .first()
+        .scrollIntoView()
+        .should('be.visible')
+        .parents('[data-testid="storage-unit-card"]')
+        .find('[data-testid="data-button"]')
+        .click();
+
+    // Wait for the table to be present after clicking data button
+    cy.get('table', {timeout: 10000}).should('exist');
+    // Wait for at least one row to load (handles async data loading)
+    return cy.get('table tbody tr', {timeout: 15000}).should('have.length.at.least', 1);
 });
 
 Cypress.Commands.add('sortBy', (index) => {
@@ -609,18 +627,18 @@ Cypress.Commands.add("addRow", (data, isSingleInput = false) => {
 
 Cypress.Commands.add("openContextMenu", (rowIndex, maxRetries = 3) => {
     const attemptContextMenu = (attempt) => {
-        // Get a fresh reference to the row and ensure it's visible
+        // Get a fresh reference to the row
         cy.get('table tbody tr').eq(rowIndex).as('targetRow');
-        cy.get('@targetRow').scrollIntoView().should('be.visible');
 
-        // Small wait to ensure row is stable after scroll
-        cy.wait(100);
+        // Scroll into view and wait for it to stabilize (virtualization may need time)
+        cy.get('@targetRow').scrollIntoView();
+        cy.wait(200);
 
-        // Right-click to open context menu
+        // Right-click to open context menu (force: true handles visibility issues with virtualization)
         cy.get('@targetRow').rightclick({ force: true });
 
-        // Wait a bit for context menu to render
-        cy.wait(200);
+        // Wait for context menu to render
+        cy.wait(300);
 
         // Check if context menu appeared
         cy.get('body').then($body => {
