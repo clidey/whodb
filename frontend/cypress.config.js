@@ -27,7 +27,7 @@ export default defineConfig({
     screenshotsFolder: 'cypress/screenshots',
     video: true,
     videosFolder: 'cypress/videos',
-    trashAssetsBeforeRuns: false,
+    trashAssetsBeforeRuns: true,
   e2e: {
       baseUrl: 'http://localhost:3000', // Default for local development
       testIsolation: true, // Ensure clean state between tests
