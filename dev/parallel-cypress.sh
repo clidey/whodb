@@ -92,7 +92,7 @@ cd "$PROJECT_ROOT/frontend"
 mkdir -p cypress/logs
 
 # Clean previous logs
-rm -f cypress/logs/*.log cypress/logs/*.json 2>/dev/null || true
+rm -f cypress/logs/*.log 2>/dev/null || true
 
 echo "📋 Running ${#DATABASES[@]} database tests in parallel..."
 
@@ -124,8 +124,6 @@ for db in "${DATABASES[@]}"; do
         NODE_ENV=test npx cypress run \
             --spec "cypress/e2e/features/**/*.cy.js" \
             --browser chromium \
-            --reporter json \
-            --reporter-options "output=cypress/logs/results-$db.json" \
             > "cypress/logs/$db.log" 2>&1 &
 
         PIDS+=($!)
@@ -170,10 +168,38 @@ echo "   Failed: ${#FAILED_DBS[@]} databases"
 
 if [ ${#FAILED_DBS[@]} -gt 0 ]; then
     echo ""
-    echo "❌ Failed databases:"
+    echo "❌ Failed Tests:"
     for db in "${FAILED_DBS[@]}"; do
-        echo "   - $db (${DB_CATEGORIES[$db]})"
-        echo "     Log: cypress/logs/$db.log"
+        echo ""
+        echo "   [$db] (${DB_CATEGORIES[$db]})"
+
+        LOG_FILE="cypress/logs/$db.log"
+        if [ -f "$LOG_FILE" ]; then
+            # Parse the Cypress summary table to show failed specs
+            FAILED_SPECS=$(grep -E "│\s*✖" "$LOG_FILE" 2>/dev/null | sed 's/.*✖\s*//' | sed 's/│.*//' | while read -r line; do
+                # Extract spec name and test counts
+                SPEC=$(echo "$line" | awk '{print $1}')
+                TOTAL=$(echo "$line" | awk '{print $3}')
+                PASSED=$(echo "$line" | awk '{print $4}')
+                FAILED=$(echo "$line" | awk '{print $5}')
+                echo "     - $SPEC ($PASSED/$TOTAL passed, $FAILED failed)"
+            done)
+
+            if [ -n "$FAILED_SPECS" ]; then
+                echo "$FAILED_SPECS"
+            else
+                # Fallback: show summary line
+                SUMMARY=$(grep -E "✖.*failed" "$LOG_FILE" 2>/dev/null | tail -1)
+                if [ -n "$SUMMARY" ]; then
+                    echo "     $SUMMARY"
+                else
+                    echo "     (Could not parse test results)"
+                fi
+            fi
+        else
+            echo "     (Log file not found)"
+        fi
+        echo "     Log: $LOG_FILE"
     done
     exit 1
 else
