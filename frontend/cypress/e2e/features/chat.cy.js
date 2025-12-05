@@ -101,8 +101,7 @@ describe('Chat AI Integration', () => {
                 cy.waitForChatResponse();
 
                 cy.toggleChatSQLView();
-                cy.verifyChatSQL(`SELECT *
-                                  FROM ${schemaPrefix}users`);
+                cy.verifyChatSQL(`SELECT * FROM ${schemaPrefix}users`);
                 cy.toggleChatSQLView();
             });
 
