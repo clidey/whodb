@@ -19,6 +19,7 @@ set -e
 
 # Get edition from parameter (default to CE)
 EDITION="${1:-ce}"
+TARGET_DB="${2:-all}"
 
 # Check if this is EE-only mode (passed from run-cypress.sh)
 if [ "$EDITION" = "ee-only" ]; then
@@ -34,6 +35,53 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 echo "📁 Working from project root: $PROJECT_ROOT"
 echo "🔧 Setting up $EDITION E2E environment..."
+if [ "$TARGET_DB" != "all" ]; then
+    echo "🎯 Target database: $TARGET_DB"
+fi
+
+# Map database names to Docker service names and ports
+get_docker_services() {
+    local db=$1
+    case $db in
+        postgres)    echo "e2e_postgres" ;;
+        mysql)       echo "e2e_mysql" ;;
+        mysql8)      echo "e2e_mysql_842" ;;
+        mariadb)     echo "e2e_mariadb" ;;
+        sqlite)      echo "" ;;  # No Docker service needed
+        mongodb)     echo "e2e_mongo" ;;
+        redis)       echo "e2e_redis redis-init" ;;
+        elasticsearch) echo "e2e_elasticsearch elasticsearch-init" ;;
+        clickhouse)  echo "e2e_clickhouse clickhouse-init" ;;
+        all)         echo "" ;;  # Empty means start all
+        *)           echo "" ;;
+    esac
+}
+
+get_db_port() {
+    local db=$1
+    case $db in
+        postgres)    echo "5432" ;;
+        mysql)       echo "3306" ;;
+        mysql8)      echo "3308" ;;
+        mariadb)     echo "3307" ;;
+        mongodb)     echo "27017" ;;
+        redis)       echo "6379" ;;
+        elasticsearch) echo "9200" ;;
+        clickhouse)  echo "8123" ;;
+        *)           echo "" ;;
+    esac
+}
+
+get_db_wait_time() {
+    local db=$1
+    case $db in
+        postgres|mysql|mysql8|mariadb) echo "90" ;;  # Heavy init scripts
+        elasticsearch)                  echo "60" ;;  # Can be slow
+        mongodb|clickhouse)             echo "30" ;;  # Light init
+        redis)                          echo "20" ;;  # Very fast
+        *)                              echo "30" ;;
+    esac
+}
 
 
 # Run cleanup first to ensure clean state
@@ -148,17 +196,6 @@ if [ "$SKIP_CE_DATABASES" = "false" ]; then
     echo "🐳 Preparing Docker services..."
     cd "$SCRIPT_DIR"
 
-    # Pre-pull images in parallel to avoid delays during startup
-    echo "📦 Ensuring Docker images are available..."
-    docker-compose -f docker-compose.e2e.yaml pull --quiet 2>/dev/null || true
-
-    echo "🚀 Starting CE database services..."
-    # Start containers (docker-compose v2+ starts in parallel by default)
-    docker-compose -f docker-compose.e2e.yaml up -d --remove-orphans
-
-    # Wait for services using parallel port checks
-    echo "⏳ Waiting for services to be ready..."
-
     # Simple function to wait for a service by checking its port
     wait_for_port() {
         local service=$1
@@ -178,37 +215,71 @@ if [ "$SKIP_CE_DATABASES" = "false" ]; then
         return 1
     }
 
-    # Start all checks in parallel - simple port checks
-    wait_for_port "PostgreSQL" 5432 90 &  # Heavy init script with tables
-    PID_PG=$!
-    wait_for_port "MySQL" 3306 90 &  # Heavy init script with tables
-    PID_MYSQL=$!
-    wait_for_port "MySQL8" 3308 90 &  # Heavy init script with tables
-    PID_MYSQL8=$!
-    wait_for_port "MariaDB" 3307 90 &  # Heavy init script with tables
-    PID_MARIA=$!
-    wait_for_port "MongoDB" 27017 30 &  # Light init script
-    PID_MONGO=$!
-    wait_for_port "ClickHouse" 8123 30 &  # Quick startup
-    PID_CH=$!
-    wait_for_port "Redis" 6379 20 &  # Very fast startup
-    PID_REDIS=$!
-    wait_for_port "ElasticSearch" 9200 60 &  # Can be slow to start
-    PID_ES=$!
+    # Determine which services to start
+    DOCKER_SERVICES=$(get_docker_services "$TARGET_DB")
 
-    # Wait for all background processes
-    echo "⏳ Waiting for all services to be ready in parallel..."
-    FAILED=false
-    for pid in $PID_PG $PID_MYSQL $PID_MYSQL8 $PID_MARIA $PID_MONGO $PID_CH $PID_REDIS $PID_ES; do
-        if ! wait $pid; then
-            FAILED=true
+    if [ "$TARGET_DB" = "sqlite" ]; then
+        echo "⏭️ SQLite uses local file, no Docker services needed"
+    elif [ -n "$DOCKER_SERVICES" ]; then
+        # Start only specific services
+        echo "📦 Ensuring Docker images are available for: $TARGET_DB..."
+        docker-compose -f docker-compose.e2e.yaml pull --quiet $DOCKER_SERVICES 2>/dev/null || true
+
+        echo "🚀 Starting $TARGET_DB database service(s)..."
+        docker-compose -f docker-compose.e2e.yaml up -d --remove-orphans $DOCKER_SERVICES
+
+        # Wait for the specific service
+        DB_PORT=$(get_db_port "$TARGET_DB")
+        DB_WAIT=$(get_db_wait_time "$TARGET_DB")
+        if [ -n "$DB_PORT" ]; then
+            echo "⏳ Waiting for $TARGET_DB to be ready..."
+            wait_for_port "$TARGET_DB" "$DB_PORT" "$DB_WAIT"
         fi
-    done
 
-    if [ "$FAILED" = "true" ]; then
-        echo "⚠️ Some services failed to start, but continuing..."
+        echo "✅ $TARGET_DB service is ready!"
     else
-        echo "✅ All services are ready!"
+        # Start all services (TARGET_DB=all or unknown)
+        echo "📦 Ensuring Docker images are available..."
+        docker-compose -f docker-compose.e2e.yaml pull --quiet 2>/dev/null || true
+
+        echo "🚀 Starting all CE database services..."
+        docker-compose -f docker-compose.e2e.yaml up -d --remove-orphans
+
+        # Wait for services using parallel port checks
+        echo "⏳ Waiting for services to be ready..."
+
+        # Start all checks in parallel - simple port checks
+        wait_for_port "PostgreSQL" 5432 90 &
+        PID_PG=$!
+        wait_for_port "MySQL" 3306 90 &
+        PID_MYSQL=$!
+        wait_for_port "MySQL8" 3308 90 &
+        PID_MYSQL8=$!
+        wait_for_port "MariaDB" 3307 90 &
+        PID_MARIA=$!
+        wait_for_port "MongoDB" 27017 30 &
+        PID_MONGO=$!
+        wait_for_port "ClickHouse" 8123 30 &
+        PID_CH=$!
+        wait_for_port "Redis" 6379 20 &
+        PID_REDIS=$!
+        wait_for_port "ElasticSearch" 9200 60 &
+        PID_ES=$!
+
+        # Wait for all background processes
+        echo "⏳ Waiting for all services to be ready in parallel..."
+        FAILED=false
+        for pid in $PID_PG $PID_MYSQL $PID_MYSQL8 $PID_MARIA $PID_MONGO $PID_CH $PID_REDIS $PID_ES; do
+            if ! wait $pid; then
+                FAILED=true
+            fi
+        done
+
+        if [ "$FAILED" = "true" ]; then
+            echo "⚠️ Some services failed to start, but continuing..."
+        else
+            echo "✅ All services are ready!"
+        fi
     fi
 else
     echo "⏭️ Skipping CE database services (EE-only mode)"

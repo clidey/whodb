@@ -101,9 +101,9 @@ trap 'cleanup; exit ${EXIT_CODE:-0}' EXIT INT TERM
 
 # Main test execution with error handling
 run_tests() {
-    # Setup backend with edition parameter (pass ee-only directly)
+    # Setup backend with edition and database parameters
     echo "🚀 Setting up $EDITION test environment..."
-    bash "$SCRIPT_DIR/setup-e2e.sh" "$EDITION" || { echo "❌ Backend setup failed"; return 1; }
+    bash "$SCRIPT_DIR/setup-e2e.sh" "$EDITION" "$TARGET_DB" || { echo "❌ Backend setup failed"; return 1; }
 
     # Start frontend with appropriate edition and optimizations
     echo "🚀 Starting frontend ($EDITION mode)..."

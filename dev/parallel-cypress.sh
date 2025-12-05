@@ -64,9 +64,9 @@ fi
 
 echo "   Databases: ${DATABASES[*]}"
 
-# Setup backend
+# Setup backend (pass TARGET_DB to only start required containers)
 echo "⚙️ Setting up test environment..."
-bash "$SCRIPT_DIR/setup-e2e.sh" "$EDITION"
+bash "$SCRIPT_DIR/setup-e2e.sh" "$EDITION" "$TARGET_DB"
 
 # Start frontend
 echo "🌐 Starting frontend..."

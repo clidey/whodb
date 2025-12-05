@@ -104,9 +104,40 @@ Cypress.Commands.add("selectSchema", (value) => {
 });
 
 Cypress.Commands.add('explore', (tableName) => {
-    return cy.getTables().then(elements => {
-        const index = elements.findIndex(name => name === tableName);
-        return cy.get('[data-testid="explore-button"]').eq(index).click();
+    // Ensure card view is set for consistent test behavior
+    cy.window().then(win => {
+        const settings = JSON.parse(win.localStorage.getItem('persist:settings') || '{}');
+        settings.storageUnitView = '"card"';
+        win.localStorage.setItem('persist:settings', JSON.stringify(settings));
+    });
+
+    // Visit the storage-unit page (will use card view)
+    cy.visit('/storage-unit');
+    // Wait for cards to load
+    cy.get('[data-testid="storage-unit-card"]', {timeout: 15000})
+        .should('have.length.at.least', 1);
+
+    // Find the card containing the exact table name by iterating through cards
+    return cy.get('[data-testid="storage-unit-card"]', {timeout: 10000}).then($cards => {
+        let targetCard = null;
+        $cards.each((_, card) => {
+            const nameEl = Cypress.$(card).find('[data-testid="storage-unit-name"]');
+            if (nameEl.length && nameEl.text().trim() === tableName) {
+                targetCard = card;
+                return false; // break the loop
+            }
+        });
+
+        if (!targetCard) {
+            throw new Error(`Could not find storage unit card with name: ${tableName}`);
+        }
+
+        // Click the explore button within the found card
+        cy.wrap(targetCard)
+            .find('[data-testid="explore-button"]')
+            .scrollIntoView()
+            .should('be.visible')
+            .click({force: true});
     });
 });
 
@@ -128,33 +159,51 @@ Cypress.Commands.add('getExploreFields', () => {
 });
 
 Cypress.Commands.add('data', (tableName) => {
-    // Visit storage unit page
-    cy.visit('/storage-unit');
-
-    // Try to use the search/filter input if available
-    cy.get('body').then($body => {
-        const searchInput = $body.find('input[placeholder*="Search"], input[placeholder*="Filter"]');
-        if (searchInput.length > 0) {
-            cy.wrap(searchInput).clear().type(tableName);
-            cy.wait(300); // Wait for filter to apply
-        }
+    // Ensure card view is set for consistent test behavior
+    cy.window().then(win => {
+        const settings = JSON.parse(win.localStorage.getItem('persist:settings') || '{}');
+        settings.storageUnitView = '"card"';
+        win.localStorage.setItem('persist:settings', JSON.stringify(settings));
     });
 
-    // Find the storage unit by EXACT name match and click its data button
-    // Using filter to ensure exact match (not partial like "user:1" matching "cart:user:1")
-    cy.get('[data-testid="storage-unit-name"]', {timeout: 10000})
-        .filter((index, el) => el.innerText.trim() === tableName)
-        .first()
-        .scrollIntoView()
-        .should('be.visible')
-        .parents('[data-testid="storage-unit-card"]')
-        .find('[data-testid="data-button"]')
-        .click();
+    // Visit the storage-unit page (will use card view)
+    cy.visit('/storage-unit');
+    // Wait for cards to load
+    cy.get('[data-testid="storage-unit-card"]', {timeout: 15000})
+        .should('have.length.at.least', 1);
 
-    // Wait for the table to be present after clicking data button
-    cy.get('table', {timeout: 10000}).should('exist');
-    // Wait for at least one row to load (handles async data loading)
-    return cy.get('table tbody tr', {timeout: 15000}).should('have.length.at.least', 1);
+    // Find the card containing the exact table name by iterating through cards
+    cy.get('[data-testid="storage-unit-card"]', {timeout: 10000}).then($cards => {
+        let targetCard = null;
+        $cards.each((_, card) => {
+            const nameEl = Cypress.$(card).find('[data-testid="storage-unit-name"]');
+            if (nameEl.length && nameEl.text().trim() === tableName) {
+                targetCard = card;
+                return false; // break the loop
+            }
+        });
+
+        if (!targetCard) {
+            throw new Error(`Could not find storage unit card with name: ${tableName}`);
+        }
+
+        // Click the data button within the found card
+        cy.wrap(targetCard)
+            .find('[data-testid="data-button"]')
+            .first()
+            .scrollIntoView()
+            .should('be.visible')
+            .click({force: true});
+    });
+
+    // Wait for URL to change to explore page
+    cy.url().should('include', '/storage-unit/explore');
+    // Wait for the page to stabilize - ensure we're not on the list page anymore
+    // The list view has a hidden table, so we must check cards are gone
+    cy.get('[data-testid="storage-unit-card"]', {timeout: 5000}).should('not.exist');
+    // Wait for a VISIBLE table (not the hidden list view table)
+    cy.get('table:visible', {timeout: 10000}).should('exist');
+    return cy.get('table:visible tbody tr', {timeout: 15000}).should('have.length.at.least', 1);
 });
 
 Cypress.Commands.add('sortBy', (index) => {
@@ -168,16 +217,16 @@ Cypress.Commands.add('assertNoDataAvailable', () => {
 
 
 Cypress.Commands.add('getTableData', () => {
-    // First wait for the table to exist
-    return cy.get('table', {timeout: 10000}).should('exist').then(() => {
+    // First wait for a VISIBLE table to exist (not hidden list view tables)
+    return cy.get('table:visible', {timeout: 10000}).should('exist').then(() => {
         // Wait for at least one table row to be present with proper scoping
-        return cy.get('table tbody tr', {timeout: 10000})
+        return cy.get('table:visible tbody tr', {timeout: 10000})
             .then(() => {
                 // Additional wait to ensure data is fully rendered
                 cy.wait(100);
-                
-                // Now get the table and extract data
-                return cy.get('table').then($table => {
+
+                // Now get the visible table and extract data
+                return cy.get('table:visible').first().then($table => {
                     const columns = Cypress.$.makeArray($table.find('th'))
                         .map(el => el.innerText.trim());
 
@@ -962,7 +1011,18 @@ Cypress.Commands.add('logout', () => {
 });
 
 Cypress.Commands.add('getTables', () => {
+    // Ensure card view is set for consistent test behavior
+    cy.window().then(win => {
+        const settings = JSON.parse(win.localStorage.getItem('persist:settings') || '{}');
+        settings.storageUnitView = '"card"';
+        win.localStorage.setItem('persist:settings', JSON.stringify(settings));
+    });
+
     cy.visit('/storage-unit');
+    // Wait for cards to load
+    cy.get('[data-testid="storage-unit-card"]', {timeout: 15000})
+        .should('have.length.at.least', 1);
+
     return cy.get('[data-testid="storage-unit-name"]')
         .then($elements => {
             return Cypress.$.makeArray($elements).map(el => el.innerText);
