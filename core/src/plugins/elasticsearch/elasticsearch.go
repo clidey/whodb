@@ -471,8 +471,16 @@ func convertAtomicConditionToES(atomic *model.AtomicWhereCondition) (map[string]
 			},
 		}, nil
 
-	case "=", "eq", "EQ", "equals", "EQUALS":
-		// Exact match
+	case "=", "eq", "EQ", "equals", "EQUALS", "term", "TERM":
+		// Special handling for _id field - use ids query
+		if atomic.Key == "_id" {
+			return map[string]any{
+				"ids": map[string]any{
+					"values": []any{atomic.Value},
+				},
+			}, nil
+		}
+		// Exact match for other fields
 		return map[string]any{
 			"term": map[string]any{
 				atomic.Key: atomic.Value,
@@ -569,6 +577,48 @@ func convertAtomicConditionToES(atomic *model.AtomicWhereCondition) (map[string]
 		// Prefix search
 		return map[string]any{
 			"prefix": map[string]any{
+				atomic.Key: atomic.Value,
+			},
+		}, nil
+
+	case "terms", "TERMS":
+		// Multiple exact matches
+		return map[string]any{
+			"terms": map[string]any{
+				atomic.Key: atomic.Value,
+			},
+		}, nil
+
+	case "match_phrase", "MATCH_PHRASE":
+		// Phrase match
+		return map[string]any{
+			"match_phrase": map[string]any{
+				atomic.Key: atomic.Value,
+			},
+		}, nil
+
+	case "wildcard", "WILDCARD":
+		// Wildcard pattern match
+		return map[string]any{
+			"wildcard": map[string]any{
+				atomic.Key: map[string]any{
+					"value": atomic.Value,
+				},
+			},
+		}, nil
+
+	case "regexp", "REGEXP":
+		// Regular expression match
+		return map[string]any{
+			"regexp": map[string]any{
+				atomic.Key: atomic.Value,
+			},
+		}, nil
+
+	case "fuzzy", "FUZZY":
+		// Fuzzy match
+		return map[string]any{
+			"fuzzy": map[string]any{
 				atomic.Key: atomic.Value,
 			},
 		}, nil

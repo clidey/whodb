@@ -21,7 +21,7 @@
     "queryHistory": false
   },
   "whereOperators": {
-    "equals": "match",
+    "equals": "term",
     "notEquals": "ne"
   },
   "expectedIndices": [

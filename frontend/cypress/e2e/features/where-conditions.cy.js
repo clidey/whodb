@@ -218,31 +218,35 @@ describe('Where Conditions', () => {
             cy.data('users');
             cy.sortBy(0);
 
+            const refreshDelay = db.indexRefreshDelay || 0;
+
             cy.getTableData().then(({rows}) => {
-                // For Elasticsearch, use username field; for MongoDB, use _id
-                if (db.type === 'ElasticSearch') {
-                    cy.whereTable([['username', eq, 'john_doe']]);
-                    cy.submitTable();
+                // Use _id field for filtering (works for both Elasticsearch and MongoDB)
+                const firstDocId = getDocumentId(rows[0]);
 
-                    cy.getTableData().then(({rows: filteredRows}) => {
-                        expect(filteredRows.length).to.equal(1);
-                        const doc = parseDocument(filteredRows[0]);
-                        expect(doc.username).to.equal('john_doe');
-                    });
-                } else {
-                    const firstDocId = getDocumentId(rows[0]);
+                cy.whereTable([['_id', eq, firstDocId]]);
+                cy.submitTable();
 
-                    cy.whereTable([['_id', eq, firstDocId]]);
-                    cy.submitTable();
-
-                    cy.getTableData().then(({rows: filteredRows}) => {
-                        expect(filteredRows.length).to.equal(1);
-                        expect(getDocumentId(filteredRows[0])).to.equal(firstDocId);
-                    });
+                // Wait for query to process
+                if (refreshDelay > 0) {
+                    cy.wait(refreshDelay);
                 }
+
+                // Use Cypress retry to wait for filtered results
+                cy.get('table:visible tbody tr', {timeout: 10000}).should('have.length', 1);
+
+                cy.getTableData().then(({rows: filteredRows}) => {
+                    expect(filteredRows.length).to.equal(1);
+                    expect(getDocumentId(filteredRows[0])).to.equal(firstDocId);
+                });
 
                 cy.clearWhereConditions();
                 cy.submitTable();
+
+                // Wait for data to reload after clearing conditions
+                if (refreshDelay > 0) {
+                    cy.wait(refreshDelay);
+                }
 
                 cy.getTableData().then(({rows: clearedRows}) => {
                     expect(clearedRows.length).to.be.greaterThan(1);
@@ -255,30 +259,41 @@ describe('Where Conditions', () => {
             cy.data('users');
             cy.sortBy(0);
 
+            const refreshDelay = db.indexRefreshDelay || 0;
+
             cy.getTableData().then(({rows}) => {
-                if (db.type === 'ElasticSearch') {
-                    cy.whereTable([
-                        ['username', eq, 'john_doe'],
-                        ['email', eq, 'john@example.com'],
-                    ]);
-                } else {
-                    const firstDocId = getDocumentId(rows[0]);
-                    cy.whereTable([
-                        ['_id', eq, firstDocId],
-                        ['username', eq, 'john_doe'],
-                    ]);
-                }
+                // Use _id for exact matching (works for both Elasticsearch and MongoDB)
+                const firstDocId = getDocumentId(rows[0]);
+                const firstDoc = parseDocument(rows[0]);
+
+                cy.whereTable([
+                    ['_id', eq, firstDocId],
+                    ['username', eq, firstDoc.username],
+                ]);
                 cy.submitTable();
+
+                // Wait for query to process
+                if (refreshDelay > 0) {
+                    cy.wait(refreshDelay);
+                }
 
                 cy.getConditionCount().should('equal', 2);
 
+                // Wait for filtered results
+                cy.get('table:visible tbody tr', {timeout: 10000}).should('have.length.at.least', 1);
+
                 cy.getTableData().then(({rows: filtered}) => {
                     const doc = parseDocument(filtered[0]);
-                    expect(doc.username).to.equal('john_doe');
+                    expect(doc.username).to.equal(firstDoc.username);
                 });
 
                 cy.clearWhereConditions();
                 cy.submitTable();
+
+                // Wait for data to reload after clearing
+                if (refreshDelay > 0) {
+                    cy.wait(refreshDelay);
+                }
             });
         });
     });
