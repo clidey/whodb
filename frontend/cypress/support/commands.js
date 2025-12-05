@@ -86,6 +86,10 @@ Cypress.Commands.add('login', (databaseType, hostname, username, password, datab
     }
 
     cy.get('[data-testid="login-button"]').click();
+
+    // Wait for successful login - sidebar should appear after navigation
+    cy.get('[data-testid="sidebar-database"], [data-testid="sidebar-schema"]', {timeout: 30000})
+        .should('exist');
 });
 
 Cypress.Commands.add('setAdvanced', (type, value) => {
@@ -128,7 +132,9 @@ Cypress.Commands.add('data', (tableName) => {
         const index = elements.findIndex(name => name === tableName);
         return cy.get('[data-testid="data-button"]').eq(index).click().then(() => {
             // Wait for the table to be present after clicking data button
-            return cy.get('table', {timeout: 10000}).should('exist');
+            cy.get('table', {timeout: 10000}).should('exist');
+            // Wait for at least one row to load (handles async data loading)
+            return cy.get('table tbody tr', {timeout: 15000}).should('have.length.at.least', 1);
         });
     });
 });
@@ -601,14 +607,50 @@ Cypress.Commands.add("addRow", (data, isSingleInput = false) => {
     cy.get('table tbody').should('be.visible');
 });
 
+Cypress.Commands.add("openContextMenu", (rowIndex, maxRetries = 3) => {
+    const attemptContextMenu = (attempt) => {
+        // Get a fresh reference to the row and ensure it's visible
+        cy.get('table tbody tr').eq(rowIndex).as('targetRow');
+        cy.get('@targetRow').scrollIntoView().should('be.visible');
+
+        // Small wait to ensure row is stable after scroll
+        cy.wait(100);
+
+        // Right-click to open context menu
+        cy.get('@targetRow').rightclick({ force: true });
+
+        // Wait a bit for context menu to render
+        cy.wait(200);
+
+        // Check if context menu appeared
+        cy.get('body').then($body => {
+            const menuExists = $body.find('[data-testid="context-menu-edit-row"], [data-testid="context-menu-more-actions"]').length > 0;
+
+            if (!menuExists && attempt < maxRetries) {
+                // Close any partial menu state by clicking elsewhere
+                cy.get('body').click(0, 0);
+                cy.wait(100);
+                // Retry
+                attemptContextMenu(attempt + 1);
+            } else if (!menuExists) {
+                // Final attempt failed, let Cypress assertion handle it
+                cy.get('[data-testid="context-menu-edit-row"], [data-testid="context-menu-more-actions"]', { timeout: 5000 })
+                    .should('exist');
+            }
+        });
+    };
+
+    attemptContextMenu(1);
+});
+
 Cypress.Commands.add("deleteRow", (rowIndex) => {
     // Get initial row count to verify deletion
     cy.get('table tbody tr').its('length').then(initialRowCount => {
         // Ensure the target row exists before interacting
         cy.get('table tbody tr').should('have.length.greaterThan', rowIndex);
 
-        // Right-click to open the context menu
-        cy.get('table tbody tr').eq(rowIndex).rightclick({ force: true });
+        // Use the helper to open context menu with retry logic
+        cy.openContextMenu(rowIndex);
 
         // Wait for the menu to be visible, then click the items
         cy.get('[data-testid="context-menu-more-actions"]').should('be.visible').click();
@@ -624,11 +666,8 @@ Cypress.Commands.add("updateRow", (rowIndex, columnIndex, text, cancel = true) =
     // Wait for table to stabilize
     cy.wait(500);
 
-    // Open the context menu for the row at rowIndex - scroll into view first
-    cy.get('table tbody tr').eq(rowIndex).scrollIntoView().rightclick({force: true});
-
-    // Wait for context menu to appear
-    cy.wait(300);
+    // Use the helper to open context menu with retry logic
+    cy.openContextMenu(rowIndex);
 
     // Wait for the menu to be visible, then click the "Edit row" item
     cy.get('[data-testid="context-menu-edit-row"]', {timeout: 5000}).should('be.visible').click();
@@ -689,7 +728,11 @@ Cypress.Commands.add("getPageNumbers", () => {
 });
 
 Cypress.Commands.add("searchTable", (search) => {
-    cy.get('[data-testid="table-search"]').clear().type(`${search}{enter}`);
+    // Break up the chain to avoid element detachment after clear
+    cy.get('[data-testid="table-search"]').clear();
+    cy.get('[data-testid="table-search"]').type(`${search}{enter}`);
+    // Wait for search to process and highlight to appear
+    cy.wait(300);
 });
 
 Cypress.Commands.add("getGraph", () => {

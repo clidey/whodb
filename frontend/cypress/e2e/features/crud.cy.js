@@ -150,18 +150,19 @@ describe('CRUD Operations', () => {
                     cy.wait(refreshDelay);
                 }
 
-                // Always refresh the data view after adding
-                cy.data('users');
+                // Force refresh by clicking Query button
+                cy.submitTable();
+
+                // Wait for data to load after refresh
+                cy.get('table tbody tr', {timeout: 15000}).should('have.length.at.least', 1);
 
                 cy.getTableData().then(({rows}) => {
                     // Check row count increased
                     expect(rows.length).to.be.at.least(4);
-                    // Find the new document
+                    // Find the new document - search case-insensitively in all text
                     const addedRow = rows.find(r => {
-                        const text = r[1];
-                        return text.includes('"username":"new_user"') ||
-                            text.includes('new_user') ||
-                            text.includes('new@example.com');
+                        const text = (r[1] || '').toLowerCase();
+                        return text.includes('new_user') || text.includes('new@example.com');
                     });
                     expect(addedRow, 'New document should be found').to.exist;
                 });
@@ -169,10 +170,8 @@ describe('CRUD Operations', () => {
                 // Clean up
                 cy.getTableData().then(({rows}) => {
                     const rowIndex = rows.findIndex(r => {
-                        const text = r[1];
-                        return text.includes('"username":"new_user"') ||
-                            text.includes('new_user') ||
-                            text.includes('new@example.com');
+                        const text = (r[1] || '').toLowerCase();
+                        return text.includes('new_user') || text.includes('new@example.com');
                     });
                     if (rowIndex >= 0) {
                         cy.deleteRow(rowIndex);
@@ -190,11 +189,18 @@ describe('CRUD Operations', () => {
                 it('cancels edit without saving', () => {
                     cy.data('users');
 
-                    cy.getTableData().then(({rows}) => {
-                        let janeRowIndex = rows.findIndex(r => r[1].includes('jane@example.com'));
-                        expect(janeRowIndex).to.be.greaterThan(-1);
+                    // Wait for data to fully load
+                    cy.get('table tbody tr', {timeout: 15000}).should('have.length.at.least', 1);
 
-                        cy.get('table tbody tr').eq(janeRowIndex).rightclick({force: true});
+                    cy.getTableData().then(({rows}) => {
+                        // Search case-insensitively and handle null/undefined values
+                        let janeRowIndex = rows.findIndex(r => {
+                            const text = (r[1] || '').toLowerCase();
+                            return text.includes('jane@example.com') || text.includes('jane_smith');
+                        });
+                        expect(janeRowIndex, 'Jane row should exist').to.be.greaterThan(-1);
+
+                        cy.openContextMenu(janeRowIndex);
                         cy.get('[data-testid="context-menu-edit-row"]').should('be.visible').click();
                         cy.contains('Edit Row').should('be.visible');
                         cy.get('body').type('{esc}');

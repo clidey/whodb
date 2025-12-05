@@ -10,7 +10,7 @@
     "database": null
   },
   "schema": null,
-  "indexRefreshDelay": 1500,
+  "indexRefreshDelay": 2500,
   "features": {
     "graph": false,
     "export": true,
