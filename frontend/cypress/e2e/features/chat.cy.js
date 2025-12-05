@@ -90,8 +90,7 @@ describe('Chat AI Integration', () => {
 
                 cy.mockChatResponse([{
                     type: 'sql:get',
-                    text: `SELECT *
-                           FROM ${schemaPrefix}users`,
+                    text: `SELECT * FROM ${schemaPrefix}users`,
                     result: {
                         Columns: [{Name: 'id', Type: 'integer', __typename: 'Column'}],
                         Rows: [['1']],

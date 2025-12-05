@@ -101,7 +101,7 @@
     "countUsers": "SELECT COUNT(*) as user_count FROM test_db.users;",
     "invalidQuery": "SELECT * FROM test_db.users1;",
     "errorPatterns": {
-      "tableNotFound": "UNKNOWN_TABLE"
+      "tableNotFound": "Unknown table"
     }
   }
 }

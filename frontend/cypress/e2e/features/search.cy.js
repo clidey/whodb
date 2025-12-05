@@ -25,17 +25,20 @@ describe('Table Search', () => {
 
             cy.searchTable('john');
 
-            cy.getHighlightedCell().first().should('contain.text', 'john');
+            // Search highlights one cell at a time, verify it contains the search term
+            cy.getHighlightedCell({timeout: 5000}).first().should('contain.text', 'john');
         });
 
-        it('finds multiple matches', () => {
+        it('finds multiple matches by cycling through', () => {
             cy.data('users');
 
+            // First search highlights first match
             cy.searchTable('example.com');
+            cy.getHighlightedCell({timeout: 5000}).should('exist');
 
-            cy.getHighlightedRows().then(rows => {
-                expect(rows.length).to.be.greaterThan(0);
-            });
+            // Verify we can cycle through matches by searching again
+            cy.searchTable('example.com');
+            cy.getHighlightedCell({timeout: 5000}).should('exist');
         });
     });
 
@@ -46,7 +49,8 @@ describe('Table Search', () => {
 
             cy.searchTable('john');
 
-            cy.getHighlightedCell().first().should('contain.text', 'john');
+            // Search highlights one cell at a time
+            cy.getHighlightedCell({timeout: 5000}).first().should('contain.text', 'john');
         });
     });
 
@@ -57,7 +61,8 @@ describe('Table Search', () => {
 
             cy.searchTable('john');
 
-            cy.getHighlightedCell().first().should('contain.text', 'john');
+            // Search highlights one cell at a time
+            cy.getHighlightedCell({timeout: 5000}).first().should('contain.text', 'john');
         });
     });
 

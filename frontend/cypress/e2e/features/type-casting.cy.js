@@ -36,18 +36,14 @@ describe('Type Casting', () => {
 
                 const newRow = tableConfig.testData.newRow;
 
-                cy.getTableData().then(({rows}) => {
-                    const initialRowCount = rows.length;
+                // Add a row and verify it was added by checking for its description
+                cy.addRow(newRow);
 
-                    cy.addRow(newRow);
-
-                    cy.getTableData().its('rows.length').should('eq', initialRowCount + 1);
-                });
-
-                // Verify the row was added with correct types
+                // Verify the row was added with correct types by finding it via description
                 cy.sortBy(0);
                 cy.getTableData().then(({rows}) => {
-                    const addedRow = rows[rows.length - 1];
+                    const addedRow = rows.find(r => r.includes(newRow.description));
+                    expect(addedRow, 'Added row should exist').to.exist;
                     expect(addedRow[1]).to.match(/^\d+$/); // id should be a number
                     expect(addedRow[2]).to.equal(newRow.bigint_col);
                     expect(addedRow[3]).to.equal(newRow.integer_col);

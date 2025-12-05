@@ -550,8 +550,8 @@ Cypress.Commands.add("setWhereConditionMode", (mode) => {
     cy.reload();
 });
 
-Cypress.Commands.add("getHighlightedCell", () => {
-    return cy.get('td.table-search-highlight');
+Cypress.Commands.add("getHighlightedCell", (options = {}) => {
+    return cy.get('td.table-search-highlight', options);
 });
 
 Cypress.Commands.add("getHighlightedRows", () => {
@@ -749,9 +749,11 @@ Cypress.Commands.add("getGraph", () => {
 
                     const graph = {};
                     nodes.forEach(node => {
-                        graph[node] = edges
+                        const targets = edges
                             .filter(edge => edge.source === node)
                             .map(edge => edge.target);
+                        // Deduplicate targets (multiple FK columns can create duplicate edges)
+                        graph[node] = [...new Set(targets)];
                     });
                     return graph;
                 });

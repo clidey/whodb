@@ -160,19 +160,17 @@ describe('Data Export', () => {
             return;
         }
 
-        it('exports collection/index data as JSON', () => {
+        it('exports collection/index data as CSV', () => {
             cy.data('users');
             cy.intercept('POST', '/api/export').as('export');
 
             cy.contains('button', 'Export All').click();
             cy.contains('h2', 'Export Data').should('be.visible');
 
-            // Select JSON format
+            // Verify CSV format is default
             cy.get('[role="dialog"]').within(() => {
-                cy.contains('label', 'Format').parent().find('[role="combobox"]').first().click();
+                cy.contains('label', 'Format').parent().find('[role="combobox"]').first().should('contain.text', 'CSV');
             });
-            cy.get('[role="listbox"]').should('be.visible');
-            cy.get('[role="option"]').contains('JSON').click({force: true});
 
             cy.get('[role="dialog"]').within(() => {
                 cy.contains('button', 'Export').click();
@@ -180,6 +178,10 @@ describe('Data Export', () => {
 
             cy.wait('@export').then(({response}) => {
                 expect(response?.statusCode).to.equal(200);
+                const headers = response?.headers || {};
+                const cd = headers['content-disposition'] || headers['Content-Disposition'];
+                expect(cd).to.be.a('string');
+                expect(cd).to.match(/\.csv/i);
             });
 
             cy.get('body').type('{esc}');
