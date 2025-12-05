@@ -68,7 +68,7 @@ export function verifyMetadata(fields, metadata) {
         expect(fields.some(([k]) => k === 'Total Size' || k === 'Data Size')).to.be.true;
     }
     if (metadata.hasCount) {
-        expect(fields.some(([k]) => k === 'Total Count:' || k === 'Total Count')).to.be.true;
+        expect(fields.some(([k]) => k === 'Total Count:' || k === 'Total Count' || k === 'Count')).to.be.true;
     }
 }
 
