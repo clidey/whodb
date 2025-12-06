@@ -123,6 +123,11 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     const [showAdd, setShowAdd] = useState(false);
     const searchRef = useRef<(search: string) => void>(() => {});
     const [search, setSearch] = useState("");
+
+    // Request counter to prevent race conditions - only the latest query's results should be used
+    const latestRequestIdRef = useRef(0);
+    // Ref to always have the latest whereCondition (avoids stale closure issues)
+    const whereConditionRef = useRef<WhereCondition | undefined>(whereCondition);
     const [currentTableName, setCurrentTableName] = useState<string>("");
     
     // For add row sheet logic
@@ -140,6 +145,11 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
 
     const [updateStorageUnit, {loading: updating}] = useUpdateStorageUnitMutation();
 
+    // Keep whereConditionRef in sync with whereCondition state
+    useEffect(() => {
+        whereConditionRef.current = whereCondition;
+    }, [whereCondition]);
+
     // For databases that don't have schemas (MongoDB, ClickHouse), pass the database name as the schema parameter
     // todo: is there a different way to do this? clickhouse doesn't have schemas as a table is considered a schema. people mainly switch between DB
     if (databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type) && current?.Database) {
@@ -147,9 +157,6 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     }
 
     const [getStorageUnitRows, { loading }] = useGetStorageUnitRowsLazyQuery({
-        onCompleted(data) {
-            setRows(data.Row);
-        },
         fetchPolicy: "no-cache",
     });
     const [getStorageUnits] = useGetStorageUnitsLazyQuery();
@@ -178,17 +185,35 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         if (tableNameToUse) {
             setCurrentTableName(tableNameToUse);
         }
+        // Increment request counter and capture this request's ID to prevent race conditions
+        latestRequestIdRef.current += 1;
+        const thisRequestId = latestRequestIdRef.current;
+        // Use ref to always get the latest whereCondition (avoids stale closure issues)
+        const currentWhereCondition = whereConditionRef.current;
+
+        console.log(`[Query ${thisRequestId}] Starting query with where:`, currentWhereCondition ? 'HAS FILTER' : 'NO FILTER', currentWhereCondition);
+
         getStorageUnitRows({
             variables: {
                 schema,
                 storageUnit: tableNameToUse,
-                where: whereCondition,
+                where: currentWhereCondition,
                 sort: sortConditions.length > 0 ? sortConditions : undefined,
                 pageSize,
                 pageOffset: pageOffset ?? currentPage - 1,
             },
+        }).then(result => {
+            const isLatest = thisRequestId === latestRequestIdRef.current;
+            console.log(`[Query ${thisRequestId}] Completed. isLatest: ${isLatest}, latestId: ${latestRequestIdRef.current}, rowCount: ${result.data?.Row?.Rows?.length}`);
+            // Only update rows if this is still the latest request (prevents race conditions)
+            if (isLatest && result.data) {
+                console.log(`[Query ${thisRequestId}] Updating rows with ${result.data.Row.Rows.length} results`);
+                setRows(result.data.Row);
+            } else {
+                console.log(`[Query ${thisRequestId}] SKIPPED - not latest request`);
+            }
         });
-    }, [getStorageUnitRows, schema, unitName, currentTableName, whereCondition, sortConditions, pageSize, currentPage]);
+    }, [getStorageUnitRows, schema, unitName, currentTableName, sortConditions, pageSize, currentPage]);
 
     const handleQuery = useCallback(() => {
         handleSubmitRequest();
@@ -323,6 +348,8 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     }, [navigate, unit, currentTableName]);
 
     const handleFilterChange = useCallback((filters: WhereCondition) => {
+        // Update ref synchronously to avoid stale closure issues
+        whereConditionRef.current = filters;
         setWhereCondition(filters);
     }, []);
 

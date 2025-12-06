@@ -171,9 +171,13 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 	}
 
 	// Apply sorting if provided
+	// Skip "document" column as it's a virtual column representing the entire JSON document
 	if len(sort) > 0 {
 		sortArray := []map[string]any{}
 		for _, s := range sort {
+			if s.Column == "document" {
+				continue
+			}
 			order := "asc"
 			if s.Direction == model.SortDirectionDesc {
 				order = "desc"
@@ -184,7 +188,9 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 				},
 			})
 		}
-		query["sort"] = sortArray
+		if len(sortArray) > 0 {
+			query["sort"] = sortArray
+		}
 	}
 
 	var buf bytes.Buffer

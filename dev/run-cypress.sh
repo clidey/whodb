@@ -40,13 +40,25 @@ TARGET_DB="${3:-all}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
-# Available databases
-AVAILABLE_DBS="postgres mysql mysql8 mariadb sqlite mongodb redis elasticsearch clickhouse"
+# Available databases by edition
+CE_DBS="postgres mysql mysql8 mariadb sqlite mongodb redis elasticsearch clickhouse"
+EE_ONLY_DBS="dynamodb mssql oracle"
+ALL_DBS="$CE_DBS $EE_ONLY_DBS"
 
 # Validate edition
 if [ "$EDITION" != "ce" ] && [ "$EDITION" != "ee" ] && [ "$EDITION" != "ee-only" ]; then
     echo "❌ Invalid edition: $EDITION. Use 'ce', 'ee', or 'ee-only'"
     exit 1
+fi
+
+# Determine available databases based on edition
+if [ "$EDITION" = "ce" ]; then
+    AVAILABLE_DBS="$CE_DBS"
+elif [ "$EDITION" = "ee-only" ]; then
+    AVAILABLE_DBS="$EE_ONLY_DBS"
+else
+    # For "ee" edition, all databases are available
+    AVAILABLE_DBS="$ALL_DBS"
 fi
 
 # Validate database if specified
@@ -60,7 +72,7 @@ if [ "$TARGET_DB" != "all" ]; then
     done
     if [ "$FOUND" = "false" ]; then
         echo "❌ Unknown database: $TARGET_DB"
-        echo "   Available: $AVAILABLE_DBS"
+        echo "   Available for $EDITION: $AVAILABLE_DBS"
         exit 1
     fi
 fi
@@ -132,28 +144,29 @@ run_tests() {
     cd "$PROJECT_ROOT/frontend"
 
     # Build spec pattern for feature-based tests
-    FEATURE_SPEC="cypress/e2e/features/**/*.cy.{js,jsx,ts,tsx}"
+    CE_FEATURE_SPEC="cypress/e2e/features/**/*.cy.{js,jsx,ts,tsx}"
+    EE_FEATURE_SPEC="../ee/frontend/cypress/e2e/features/**/*.cy.{js,jsx,ts,tsx}"
 
     if [ "$EDITION" = "ee" ]; then
         # For EE, check if EE test directory exists
-        if [ -d "$PROJECT_ROOT/ee/frontend/cypress/e2e" ]; then
-            # Include both CE and EE tests
-            CYPRESS_CONFIG="{\"specPattern\":[\"$FEATURE_SPEC\",\"../ee/frontend/cypress/e2e/**/*.cy.{js,jsx,ts,tsx}\"]}"
+        if [ -d "$PROJECT_ROOT/ee/frontend/cypress/e2e/features" ]; then
+            # Include both CE and EE feature tests
+            CYPRESS_CONFIG="{\"specPattern\":[\"$CE_FEATURE_SPEC\",\"$EE_FEATURE_SPEC\"],\"supportFile\":\"cypress/support/e2e.js\"}"
         else
             echo "⚠️ EE test directory not found, running CE tests only"
-            CYPRESS_CONFIG="{\"specPattern\":\"$FEATURE_SPEC\"}"
+            CYPRESS_CONFIG="{\"specPattern\":\"$CE_FEATURE_SPEC\"}"
         fi
     elif [ "$EDITION" = "ee-only" ]; then
-        # For EE-only, only run EE tests
-        if [ -d "$PROJECT_ROOT/ee/frontend/cypress/e2e" ]; then
-            CYPRESS_CONFIG="{\"specPattern\":\"../ee/frontend/cypress/e2e/**/*.cy.{js,jsx,ts,tsx}\"}"
+        # For EE-only, only run EE feature tests
+        if [ -d "$PROJECT_ROOT/ee/frontend/cypress/e2e/features" ]; then
+            CYPRESS_CONFIG="{\"specPattern\":\"$EE_FEATURE_SPEC\",\"supportFile\":\"../ee/frontend/cypress/support/e2e.js\"}"
         else
             echo "❌ EE test directory not found"
             return 1
         fi
     else
         # For CE, only run CE feature tests
-        CYPRESS_CONFIG="{\"specPattern\":\"$FEATURE_SPEC\"}"
+        CYPRESS_CONFIG="{\"specPattern\":\"$CE_FEATURE_SPEC\"}"
     fi
 
     # Detect available browser
