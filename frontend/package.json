@@ -59,7 +59,7 @@
     "# Available CE databases: postgres, mysql, mysql8, mariadb, sqlite, mongodb, redis, elasticsearch, clickhouse": "",
     "cypress:db": "VITE_E2E_TEST=true bash ../dev/run-cypress.sh ce false",
     "cypress:db:headless": "VITE_E2E_TEST=true bash ../dev/parallel-cypress.sh ce true",
-    "# EE database-specific commands - usage: pnpm cypress:ee:db [database]": "", ,
+    "# EE database-specific commands - usage: pnpm cypress:ee:db [database]": "",
     "cypress:ee:db": "VITE_E2E_TEST=true bash ../ee/dev/run-cypress-ee-only.sh false",
     "cypress:ee:db:headless": "VITE_E2E_TEST=true bash ../ee/dev/run-cypress-ee-only.sh true",
     "screenshot": "VITE_E2E_TEST=true bash ../dev/run-screenshot-tests.sh",
