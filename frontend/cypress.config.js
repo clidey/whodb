@@ -19,7 +19,6 @@ import codeCoverageTask from "@cypress/code-coverage/task.js";
 
 export default defineConfig({
     numTestsKeptInMemory: 0,
-    experimentalStudio: true,
     viewportWidth: 1280,
     viewportHeight: 768,
     // Screenshot and video settings
