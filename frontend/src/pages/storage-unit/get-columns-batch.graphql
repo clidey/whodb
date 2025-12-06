@@ -1,0 +1,13 @@
+query GetColumnsBatch($schema: String!, $storageUnits: [String!]!) {
+    ColumnsBatch(schema: $schema, storageUnits: $storageUnits) {
+        StorageUnit
+        Columns {
+            Name
+            Type
+            IsPrimary
+            IsForeignKey
+            ReferencedTable
+            ReferencedColumn
+        }
+    }
+}

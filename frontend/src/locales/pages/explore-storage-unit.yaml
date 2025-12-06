@@ -1,0 +1,27 @@
+en:
+  title: Explore Table
+  totalCount: "Total Count:"
+  searchLabel: Search
+  searchPlaceholder: Search query...
+  pageSizeLabel: Page Size
+  customPageSize: Custom
+  queryButton: Query
+  scratchpad: Scratchpad
+  addRowTitle: Add New Row
+  addRowButton: Add Row
+  cancel: Cancel
+  submit: Submit
+  scratchpadTitle: Scratchpad
+  run: Run
+  searchAround: Search Around
+  query: "Query: {table} (ID: {id})"
+  noEntityFound: No entity found with the specified ID
+  close: Close
+  addRowSuccess: Added data row successfully!
+  addRowError: "Unable to add the data row: {error}"
+  invalidJson: Invalid JSON.
+  fillAtLeastOneValue: Please fill at least one value.
+  couldNotDetermineTargetTable: Could not determine target table for foreign key
+  noPrimaryKeyFound: "No primary key found for table {table}"
+  failedToSearchEntity: "Failed to search for entity: {error}"
+  failedToGetTargetTableStructure: "Failed to get target table structure: {error}"

@@ -26,6 +26,7 @@ import {useAppDispatch, useAppSelector} from "./store/hooks";
 import {SettingsActions} from "./store/settings";
 import {useThemeCustomization} from "./hooks/use-theme-customization";
 import {useDesktopMenu} from "./hooks/useDesktop";
+import {TourProvider} from "./components/tour/tour-provider";
 
 export const App = () => {
     const [updateSettings] = useUpdateSettingsMutation();
@@ -92,17 +93,19 @@ export const App = () => {
   }, [updateBackendWithSettings]);
 
   return (
-    <div className="h-[100vh] w-[100vw]" id="whodb-app-container">
-      <Toaster />
-      <Routes>
-        <Route path="/" element={<PrivateRoute />}>
-          {map(getRoutes(), route => (
-            <Route key={route.path} path={route.path} element={route.component} />
-          ))}
-          <Route path="/" element={<NavigateToDefault />} />
-        </Route>
-        <Route path={PublicRoutes.Login.path} element={PublicRoutes.Login.component} />
-      </Routes>
-    </div>
+    <TourProvider>
+      <div className="h-[100vh] w-[100vw]" id="whodb-app-container">
+        <Toaster />
+        <Routes>
+          <Route path="/" element={<PrivateRoute />}>
+            {map(getRoutes(), route => (
+              <Route key={route.path} path={route.path} element={route.component} />
+            ))}
+            <Route path="/" element={<NavigateToDefault />} />
+          </Route>
+          <Route path={PublicRoutes.Login.path} element={PublicRoutes.Login.component} />
+        </Routes>
+      </div>
+    </TourProvider>
   );
 }

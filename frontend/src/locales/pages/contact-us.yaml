@@ -1,0 +1,16 @@
+en:
+  title: Contact Us
+  description: We're here to help! Reach out to us for support, questions, or feedback.
+  emailTitle: Email
+  emailAddress: support@clidey.com
+  emailDescription: Our support team typically responds within 1 business day.
+  communityTitle: Community & Issues
+  submitIssue: Submit an Issue on GitHub
+  communityDescription: For bug reports, feature requests, or to join the discussion, visit our GitHub issues page.
+  liveChatTitle: Live Chat (Coming Soon)
+  chatButton: Chat with Support
+  liveChatDescription: Live chat support will be available soon. Stay tuned!
+  companyInfo: Clidey, Inc. · 2025 · All rights reserved.
+  urgentNote: For urgent matters, please mention
+  urgentLabel: "[URGENT]"
+  urgentNoteEnd: in your email subject.

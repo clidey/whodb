@@ -30,6 +30,8 @@ const defaultFeatures: FeatureFlags = {
     advancedDatabases: false,
     contactUsPage: true, // Enabled in CE
     settingsPage: true, // Enabled in CE
+    sampleDatabaseTour: true, // Enabled in CE
+    autoStartTourOnLogin: true, // Enabled in CE
 };
 
 // Check if EE modules are available
@@ -56,6 +58,23 @@ export const initialize = () => {
     }
 
     if (isEEAvailable) {
+        // Set synchronous defaults for EE mode to avoid race condition
+        featureFlags = {
+            analyzeView: true,
+            explainView: true,
+            generateView: true,
+            customTheme: true,
+            dataVisualization: true,
+            aiChat: true,
+            multiProfile: true,
+            advancedDatabases: true,
+            contactUsPage: false,
+            settingsPage: true,
+            sampleDatabaseTour: false,
+            autoStartTourOnLogin: false,
+        };
+
+        // Load EE config asynchronously to override defaults if needed
         import('@ee/config.tsx').then(eeConfig => {
             if (eeConfig?.eeFeatures) {
                 featureFlags = eeConfig.eeFeatures;
@@ -74,19 +93,6 @@ export const initialize = () => {
             console.warn('Could not load EE feature flags');
         });
     }
-
-    return {
-        analyzeView: true,
-        explainView: true,
-        generateView: true,
-        customTheme: true,
-        dataVisualization: true,
-        aiChat: true,
-        multiProfile: true,
-        advancedDatabases: true,
-        contactUsPage: false,
-        settingsPage: false,
-    };
 };
 
 initialize();

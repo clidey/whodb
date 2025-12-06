@@ -1,0 +1,107 @@
+{
+  "type": "ClickHouse",
+  "category": "sql",
+  "connection": {
+    "host": "localhost",
+    "dockerHost": "e2e_clickhouse",
+    "port": 8123,
+    "user": "user",
+    "password": "password",
+    "database": "test_db"
+  },
+  "schema": null,
+  "whereOperators": {
+    "equals": "=",
+    "notEquals": "!=",
+    "greaterThan": ">",
+    "lessThan": "<",
+    "greaterOrEqual": ">=",
+    "lessOrEqual": "<="
+  },
+  "features": {
+    "graph": true,
+    "export": true,
+    "scratchpad": true,
+    "mockData": false,
+    "chat": false,
+    "whereConditions": true,
+    "queryHistory": true
+  },
+  "expectedTables": [
+    "order_items",
+    "order_summary",
+    "orders",
+    "payments",
+    "products",
+    "users"
+  ],
+  "tables": {
+    "users": {
+      "columns": {
+        "id": "UInt32",
+        "username": "String",
+        "email": "String",
+        "password": "String",
+        "created_at": "DateTime"
+      },
+      "expectedColumns": [
+        "",
+        "id",
+        "username",
+        "email",
+        "password",
+        "created_at"
+      ],
+      "testData": {
+        "initial": [
+          [
+            "",
+            "1",
+            "john_doe",
+            "john@example.com",
+            "securepassword1"
+          ],
+          [
+            "",
+            "2",
+            "jane_smith",
+            "jane@example.com",
+            "securepassword2"
+          ],
+          [
+            "",
+            "3",
+            "admin_user",
+            "admin@example.com",
+            "adminpass"
+          ]
+        ]
+      },
+      "metadata": {
+        "type": "MergeTree",
+        "hasSize": true,
+        "hasCount": true
+      }
+    }
+  },
+  "graph": {
+    "expectedNodes": {
+      "users": [],
+      "orders": [],
+      "order_items": [],
+      "products": [],
+      "payments": [],
+      "order_summary": []
+    }
+  },
+  "sql": {
+    "schemaPrefix": "test_db.",
+    "selectAllUsers": "SELECT * FROM test_db.users ORDER BY id;",
+    "selectUserById": "SELECT * FROM test_db.users WHERE id=1;",
+    "countUsers": "SELECT COUNT(*) as user_count FROM test_db.users;",
+    "invalidQuery": "SELECT * FROM test_db.users1;",
+    "errorPatterns": {
+      "tableNotFound": "Unknown table"
+    }
+  }
+}

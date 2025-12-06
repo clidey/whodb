@@ -28,12 +28,13 @@ import {
     GetGraphQuery,
     GetGraphQueryVariables,
     StorageUnit,
-    useGetColumnsLazyQuery,
+    useGetColumnsBatchLazyQuery,
     useGetStorageUnitsQuery
 } from '@graphql';
 import {useAppSelector} from "../../store/hooks";
 import {getDatabaseStorageUnitLabel} from "../../utils/functions";
 import {StorageUnitGraphCard} from "../storage-unit/storage-unit";
+import {useTranslation} from '@/hooks/use-translation';
 import {
     Button,
     Checkbox,
@@ -43,6 +44,7 @@ import {
     SidebarContent,
     SidebarGroup,
     SidebarHeader,
+    toast,
     toTitleCase
 } from "@clidey/ux";
 import {useNavigate} from "react-router-dom";
@@ -82,13 +84,14 @@ const GraphSidebar: FC<GraphSidebarProps> = ({
     storageUnitsData,
     unitsLoading
 }) => {
+    const { t } = useTranslation('pages/graph');
     const children = useMemo(() => {
         const units: StorageUnit[] = (storageUnitsData?.StorageUnit ?? [])
             .filter((u: StorageUnit) => u.Name.toLowerCase().includes(search.trim().toLowerCase()));
         const groups = groupByType(units);
         const groupEntries = Object.entries(groups);
         if (groupEntries.length === 0) {
-            return <div className="text-sm text-muted-foreground px-2">No items</div>;
+            return <div className="text-sm text-muted-foreground px-2">{t('noItems')}</div>;
         }
         return groupEntries.map(([type, units]) => (
             <div key={type} className="mb-3">
@@ -115,7 +118,7 @@ const GraphSidebar: FC<GraphSidebarProps> = ({
                 })}
             </div>
         ));
-    }, [search, selectedUnits, setSelectedUnits, storageUnitsData]);
+    }, [search, selectedUnits, setSelectedUnits, storageUnitsData, t]);
 
     return (
         <div className="dark flex grow">
@@ -130,8 +133,8 @@ const GraphSidebar: FC<GraphSidebarProps> = ({
                         <SearchInput
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            placeholder="Search tables..."
-                            aria-label="Search tables"
+                            placeholder={t('searchPlaceholder')}
+                            aria-label={t('searchAriaLabel')}
                         />
                     </div>
                     <SidebarGroup>
@@ -150,6 +153,7 @@ const GraphSidebar: FC<GraphSidebarProps> = ({
 };
 
 export const GraphPage: FC = () => {
+    const { t } = useTranslation('pages/graph');
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const reactFlowRef = useRef<IGraphInstance>();
@@ -162,7 +166,7 @@ export const GraphPage: FC = () => {
     const [isInitialized, setIsInitialized] = useState(false);
     const [tableColumns, setTableColumns] = useState<Record<string, any[]>>({});
 
-    const [fetchColumns] = useGetColumnsLazyQuery();
+    const [fetchColumnsBatch] = useGetColumnsBatchLazyQuery();
 
     const {
         loading: graphLoading,
@@ -173,27 +177,26 @@ export const GraphPage: FC = () => {
         },
         onCompleted(data) {
             setGraphData(data.Graph);
-            // Fetch columns for each table
-            const fetchAllColumns = async () => {
-                const columnsMap: Record<string, any[]> = {};
-                for (const graphUnit of data.Graph) {
-                    try {
-                        const result = await fetchColumns({
-                            variables: {
-                                schema: databaseUsesSchemaForGraph(current?.Type) ? schema : current?.Database ?? "",
-                                storageUnit: graphUnit.Unit.Name,
-                            },
-                        });
-                        if (result.data?.Columns) {
-                            columnsMap[graphUnit.Unit.Name] = result.data.Columns;
-                        }
-                    } catch (error) {
-                        console.error(`Failed to fetch columns for ${graphUnit.Unit.Name}:`, error);
+            if (data.Graph.length === 0) return;
+
+            const storageUnitNames = data.Graph.map(graphUnit => graphUnit.Unit.Name);
+            fetchColumnsBatch({
+                variables: {
+                    schema: databaseUsesSchemaForGraph(current?.Type) ? schema : current?.Database ?? "",
+                    storageUnits: storageUnitNames,
+                },
+            }).then(result => {
+                if (result.data?.ColumnsBatch) {
+                    const columnsMap: Record<string, any[]> = {};
+                    for (const item of result.data.ColumnsBatch) {
+                        columnsMap[item.StorageUnit] = item.Columns;
                     }
+                    setTableColumns(columnsMap);
                 }
-                setTableColumns(columnsMap);
-            };
-            fetchAllColumns();
+            }).catch(error => {
+                console.error('Failed to fetch columns batch:', error);
+                toast.error('Failed to load column information');
+            });
         },
     });
 
@@ -395,10 +398,10 @@ export const GraphPage: FC = () => {
                     !graphLoading && nodes.length === 0
                         ? <EmptyState
                             icon={<RectangleGroupIcon className="w-4 h-4" />}
-                            title={`No nodes selected`}
-                            description={`Select ${getDatabaseStorageUnitLabel(current?.Type).toLowerCase()} on the left to add them to the graph.`}>
+                            title={t('noNodesTitle')}
+                            description={t('noNodesDescription', { storageUnit: getDatabaseStorageUnitLabel(current?.Type).toLowerCase() })}>
                             <Button onClick={() => navigate(InternalRoutes.Dashboard.StorageUnit.path + "?create=true")}>
-                                Create {getDatabaseStorageUnitLabel(current?.Type, true)}
+                                {t('createButton', { storageUnit: getDatabaseStorageUnitLabel(current?.Type, true) })}
                             </Button>
                         </EmptyState>
                         : <Graph nodes={nodes} edges={edges} nodeTypes={nodeTypes}

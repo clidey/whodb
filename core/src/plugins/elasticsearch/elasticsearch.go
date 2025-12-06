@@ -133,6 +133,21 @@ func (p *ElasticSearchPlugin) GetStorageUnits(config *engine.PluginConfig, datab
 	return storageUnits, nil
 }
 
+func (p *ElasticSearchPlugin) StorageUnitExists(config *engine.PluginConfig, database string, index string) (bool, error) {
+	client, err := DB(config)
+	if err != nil {
+		return false, err
+	}
+
+	res, err := client.Indices.Exists([]string{index})
+	if err != nil {
+		return false, err
+	}
+	defer res.Body.Close()
+
+	return res.StatusCode == 200, nil
+}
+
 func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, collection string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	client, err := DB(config)
 	if err != nil {
@@ -156,9 +171,13 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 	}
 
 	// Apply sorting if provided
+	// Skip "document" column as it's a virtual column representing the entire JSON document
 	if len(sort) > 0 {
 		sortArray := []map[string]any{}
 		for _, s := range sort {
+			if s.Column == "document" {
+				continue
+			}
 			order := "asc"
 			if s.Direction == model.SortDirectionDesc {
 				order = "desc"
@@ -169,7 +188,9 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 				},
 			})
 		}
-		query["sort"] = sortArray
+		if len(sortArray) > 0 {
+			query["sort"] = sortArray
+		}
 	}
 
 	var buf bytes.Buffer
@@ -216,6 +237,15 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 		Rows: [][]string{},
 	}
 
+	// Extract total count from the response (already tracked via WithTrackTotalHits)
+	if hitsMap, ok := searchResult["hits"].(map[string]any); ok {
+		if total, ok := hitsMap["total"].(map[string]any); ok {
+			if value, ok := total["value"].(float64); ok {
+				result.TotalCount = int64(value)
+			}
+		}
+	}
+
 	for _, hit := range hits {
 		hitMap := hit.(map[string]any)
 		source := hitMap["_source"].(map[string]any)
@@ -230,6 +260,55 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 	}
 
 	return result, nil
+}
+
+func (p *ElasticSearchPlugin) GetRowCount(config *engine.PluginConfig, database, index string, where *model.WhereCondition) (int64, error) {
+	client, err := DB(config)
+	if err != nil {
+		return 0, err
+	}
+
+	elasticSearchConditions, err := convertWhereConditionToES(where)
+	if err != nil {
+		return 0, fmt.Errorf("error converting where condition: %v", err)
+	}
+
+	query := map[string]any{
+		"query": map[string]any{
+			"bool": elasticSearchConditions,
+		},
+	}
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(query); err != nil {
+		return 0, err
+	}
+
+	res, err := client.Count(
+		client.Count.WithContext(context.Background()),
+		client.Count.WithIndex(index),
+		client.Count.WithBody(&buf),
+	)
+	if err != nil {
+		return 0, err
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return 0, fmt.Errorf("error counting documents: %s", res.String())
+	}
+
+	var countResult map[string]any
+	if err := json.NewDecoder(res.Body).Decode(&countResult); err != nil {
+		return 0, err
+	}
+
+	count, ok := countResult["count"].(float64)
+	if !ok {
+		return 0, fmt.Errorf("unexpected count response format")
+	}
+
+	return int64(count), nil
 }
 
 func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {
@@ -311,9 +390,9 @@ func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, sc
 
 	// Add _id as primary key first (it's not in _source)
 	columns = append(columns, engine.Column{
-		Name:      "_id",
-		Type:      "keyword",
-		IsPrimary: true,
+		Name:         "_id",
+		Type:         "keyword",
+		IsPrimary:    true,
 		IsForeignKey: false,
 	})
 
@@ -398,8 +477,16 @@ func convertAtomicConditionToES(atomic *model.AtomicWhereCondition) (map[string]
 			},
 		}, nil
 
-	case "=", "eq", "EQ", "equals", "EQUALS":
-		// Exact match
+	case "=", "eq", "EQ", "equals", "EQUALS", "term", "TERM":
+		// Special handling for _id field - use ids query
+		if atomic.Key == "_id" {
+			return map[string]any{
+				"ids": map[string]any{
+					"values": []any{atomic.Value},
+				},
+			}, nil
+		}
+		// Exact match for other fields
 		return map[string]any{
 			"term": map[string]any{
 				atomic.Key: atomic.Value,
@@ -496,6 +583,48 @@ func convertAtomicConditionToES(atomic *model.AtomicWhereCondition) (map[string]
 		// Prefix search
 		return map[string]any{
 			"prefix": map[string]any{
+				atomic.Key: atomic.Value,
+			},
+		}, nil
+
+	case "terms", "TERMS":
+		// Multiple exact matches
+		return map[string]any{
+			"terms": map[string]any{
+				atomic.Key: atomic.Value,
+			},
+		}, nil
+
+	case "match_phrase", "MATCH_PHRASE":
+		// Phrase match
+		return map[string]any{
+			"match_phrase": map[string]any{
+				atomic.Key: atomic.Value,
+			},
+		}, nil
+
+	case "wildcard", "WILDCARD":
+		// Wildcard pattern match
+		return map[string]any{
+			"wildcard": map[string]any{
+				atomic.Key: map[string]any{
+					"value": atomic.Value,
+				},
+			},
+		}, nil
+
+	case "regexp", "REGEXP":
+		// Regular expression match
+		return map[string]any{
+			"regexp": map[string]any{
+				atomic.Key: atomic.Value,
+			},
+		}, nil
+
+	case "fuzzy", "FUZZY":
+		// Fuzzy match
+		return map[string]any{
+			"fuzzy": map[string]any{
 				atomic.Key: atomic.Value,
 			},
 		}, nil

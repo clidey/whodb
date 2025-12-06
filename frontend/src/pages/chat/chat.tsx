@@ -44,6 +44,7 @@ import { chooseRandomItems } from "../../utils/functions";
 import { databaseSupportsScratchpad } from "../../utils/database-features";
 import { useNavigate } from "react-router-dom";
 import { chatExamples } from "./examples";
+import { useTranslation } from '@/hooks/use-translation';
 
 // Lazy load chart components if EE is enabled
 const LineChart = isEEFeatureEnabled('dataVisualization') ? loadEEComponent(
@@ -88,6 +89,7 @@ const thinkingPhrases = [
 type TableData = GetAiChatQuery["AIChat"][0]["Result"];
 
 const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ type, data, text }) => {
+    const { t } = useTranslation('pages/chat');
     const dispatch = useAppDispatch();
     const [showSQL, setShowSQL] = useState(false);
     const [showScratchpadDialog, setShowScratchpadDialog] = useState(false);
@@ -105,13 +107,13 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
     const pageOptions = useMemo(() => {
         return [
             ...pages.map(page => ({ value: page.id, label: page.name })),
-            { value: "new", label: "Create new page" }
+            { value: "new", label: t('createNewPage') }
         ];
-    }, [pages, activePageId]);
+    }, [pages, activePageId, t]);
 
     const handleMoveToScratchpad = useCallback(() => {
         if (!databaseSupportsScratchpad(current?.Type)) {
-            toast.error("Scratchpad is not supported for this database type");
+            toast.error(t('scratchpadNotSupported'));
             return;
         }
         // Initialize scratchpad if needed
@@ -119,7 +121,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
             dispatch(ScratchpadActions.ensurePagesHaveCells());
         }
         setShowScratchpadDialog(true);
-    }, [current?.Type, pages.length, dispatch]);
+    }, [current?.Type, pages.length, dispatch, t]);
 
     const handleScratchpadConfirm = useCallback(() => {
         if (selectedPage === "new") {
@@ -148,15 +150,15 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
         setShowScratchpadDialog(false);
         setSelectedPage("new");
         setNewPageName("");
-        toast.success("Query moved to scratchpad");
-    }, [navigate, text, selectedPage, newPageName, pages.length, dispatch]);
+        toast.success(t('queryMoved'));
+    }, [navigate, text, selectedPage, newPageName, pages.length, dispatch, t]);
 
     const previewResult = useMemo(() => {
         if (data == null || data.Rows.length === 0) {
-            return "No data was returned.";
+            return t('noDataReturned');
         }
         return type.toUpperCase().split(":")?.[1];
-    }, [data, type]);
+    }, [data, type, t]);
 
     const canMoveToScratchpad = useMemo(() => {
         return databaseSupportsScratchpad(current?.Type) && type.startsWith("sql:");
@@ -170,11 +172,11 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
                 })}
             </Button>
             {canMoveToScratchpad && (
-                <Button 
+                <Button
                     variant="outline"
-                    onClick={handleMoveToScratchpad} 
+                    onClick={handleMoveToScratchpad}
                     data-testid="icon-button"
-                    title="Move to Scratchpad"
+                    title={t('moveToScratchpad')}
                 >
                     <CommandLineIcon className="w-6 h-6" />
                 </Button>
@@ -195,9 +197,9 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
                             disableEdit={true}
                         />
                     </div>
-                    : <Alert title="Action Executed" className="w-fit">
+                    : <Alert title={t('actionExecuted')} className="w-fit">
                         <CheckCircleIcon className="w-4 h-4" />
-                        <AlertTitle>Action Executed</AlertTitle>
+                        <AlertTitle>{t('actionExecuted')}</AlertTitle>
                         <AlertDescription>
                             {previewResult}
                         </AlertDescription>
@@ -208,17 +210,17 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
         <Dialog open={showScratchpadDialog} onOpenChange={setShowScratchpadDialog}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Move to Scratchpad</DialogTitle>
+                    <DialogTitle>{t('dialogTitle')}</DialogTitle>
                     <DialogDescription>
-                        Choose which scratchpad page to add this query to.
+                        {t('dialogDescription')}
                     </DialogDescription>
                 </DialogHeader>
                 <div className="py-4 space-y-4">
                     <div>
-                        <label className="text-sm font-medium mb-2 block">Select a page</label>
+                        <label className="text-sm font-medium mb-2 block">{t('selectPageLabel')}</label>
                         <Select value={selectedPage} onValueChange={setSelectedPage}>
                             <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Choose a page..." />
+                                <SelectValue placeholder={t('selectPagePlaceholder')} />
                             </SelectTrigger>
                             <SelectContent>
                                 {pageOptions.map((option) => (
@@ -231,11 +233,11 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
                     </div>
                     {selectedPage === "new" && (
                         <div>
-                            <label className="text-sm font-medium mb-2 block">New page name</label>
+                            <label className="text-sm font-medium mb-2 block">{t('newPageLabel')}</label>
                             <Input
                                 value={newPageName}
                                 onChange={(e) => setNewPageName(e.target.value)}
-                                placeholder="Enter page name"
+                                placeholder={t('newPagePlaceholder')}
                             />
                         </div>
                     )}
@@ -246,10 +248,10 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
                         setSelectedPage("new");
                         setNewPageName("");
                     }}>
-                        Cancel
+                        {t('cancel')}
                     </Button>
                     <Button onClick={handleScratchpadConfirm}>
-                        Move to Scratchpad
+                        {t('moveToScratchpad')}
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -262,6 +264,7 @@ type IChatMessage = AiChatMessage & {
 };
 
 export const ChatPage: FC = () => {
+    const { t } = useTranslation('pages/chat');
     const [query, setQuery] = useState("");
     const chats = useAppSelector(state => state.houdini.chats);
     const [getAIChat, { loading: getAIChatLoading }] = useGetAiChatLazyQuery();
@@ -333,11 +336,11 @@ export const ChatPage: FC = () => {
                 }, 250);
             },
             onError(error) {
-                toast.error("Unable to query. Try again. "+error.message);
+                toast.error(t('unableToQuery')+" "+error.message);
             },
         });
         setQuery("");
-    }, [chats, currentModel, getAIChat, modelType, query, schema, dispatch]);
+    }, [chats, currentModel, getAIChat, modelType, query, schema, dispatch, t]);
 
     const disableChat = useMemo(() => {
         return loading || models.length === 0 || !modelAvailable || query.trim().length === 0;
@@ -405,7 +408,7 @@ export const ChatPage: FC = () => {
                         chats.length === 0
                         ? <div className="flex flex-col justify-center items-center w-full gap-8" data-testid="chat-empty-state-container">
                             {/* {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-16" />} */}
-                            <EmptyState title="What can I help you with?" description="" icon={<SparklesIcon className="w-16 h-16" data-testid="empty-state-sparkles-icon" />} />
+                            <EmptyState title={t('emptyStateTitle')} description="" icon={<SparklesIcon className="w-16 h-16" data-testid="empty-state-sparkles-icon" />} />
                             <div className="flex flex-wrap justify-center items-center gap-4" data-testid="chat-examples-list">
                                 {
                                     examples.map((example, i) => (
@@ -474,7 +477,7 @@ export const ChatPage: FC = () => {
                 </div>
                 {
                     (!modelAvailable || models.length === 0) &&
-                    <EmptyState title="No Model Available" description="Please choose an available model to start chatting with your data." icon={<SparklesIcon className="w-16 h-16" data-testid="empty-state-sparkles-icon" />} />
+                    <EmptyState title={t('noModelTitle')} description={t('noModelDescription')} icon={<SparklesIcon className="w-16 h-16" data-testid="empty-state-sparkles-icon" />} />
                 }
                 <div className={classNames("flex justify-between items-center gap-2", {
                     "opacity-80": disableChat,
@@ -483,7 +486,7 @@ export const ChatPage: FC = () => {
                     <Input
                         value={query}
                         onChange={e => setQuery(e.target.value)}
-                        placeholder="Type your message here..."
+                        placeholder={t('placeholder')}
                         onSubmit={handleSubmitQuery}
                         disabled={disableAll}
                         onKeyUp={handleKeyUp}

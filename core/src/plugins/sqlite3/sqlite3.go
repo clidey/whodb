@@ -112,6 +112,12 @@ func (p *Sqlite3Plugin) GetTableInfoQuery() string {
 	`
 }
 
+func (p *Sqlite3Plugin) GetStorageUnitExistsQuery() string {
+	// First param is schema (ignored for SQLite), second is table name
+	// LENGTH(IFNULL(?, '')) >= 0 always evaluates to true, consuming the schema param
+	return `SELECT LENGTH(IFNULL(?, '')) >= 0 AND EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name = ?)`
+}
+
 // IsTableStrict checks if a table is STRICT using PRAGMA table_list
 // Returns false if detection fails or SQLite version doesn't support STRICT tables
 func (p *Sqlite3Plugin) IsTableStrict(db *gorm.DB, tableName string) bool {
@@ -148,23 +154,15 @@ func (p *Sqlite3Plugin) GetPlaceholder(index int) string {
 	return "?"
 }
 
-func (p *Sqlite3Plugin) GetTableNameAndAttributes(rows *sql.Rows, db *gorm.DB) (string, []engine.Record) {
+func (p *Sqlite3Plugin) GetTableNameAndAttributes(rows *sql.Rows) (string, []engine.Record) {
 	var tableName, tableType string
 	if err := rows.Scan(&tableName, &tableType); err != nil {
 		log.Logger.WithError(err).Error("Failed to scan SQLite table information from rows")
 		return "", nil
 	}
 
-	// Use SQL builder for count query
-	builder := gorm_plugin.NewSQLBuilder(db, p)
-	rowCount, err := builder.CountQuery("", tableName)
-	if err != nil {
-		return "", nil
-	}
-
 	attributes := []engine.Record{
 		{Key: "Type", Value: tableType},
-		{Key: "Count", Value: fmt.Sprintf("%d", rowCount)},
 	}
 
 	return tableName, attributes
@@ -185,15 +183,33 @@ func (p *Sqlite3Plugin) GetSchemaTableQuery() string {
 // GetRows overrides the base GORM implementation to handle SQLite datetime quirks
 func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
+		builder := gorm_plugin.NewSQLBuilder(db, p)
+		fullTable := builder.BuildFullTableName("", storageUnit)
+
+		// Start count query in a separate goroutine for parallel execution
+		var totalCount int64
+		countDone := make(chan error, 1)
+		go func() {
+			columnTypes, _ := p.GetColumnTypes(db, schema, storageUnit)
+			// codeql[go/sql-injection]: table name validated by StorageUnitExists before reaching this code
+			countQuery := db.Table(fullTable)
+			var err error
+			countQuery, err = p.ApplyWhereConditions(countQuery, where, columnTypes)
+			if err != nil {
+				countDone <- err
+				return
+			}
+			countDone <- countQuery.Count(&totalCount).Error
+		}()
+
 		// Check if table is STRICT
 		isStrict := p.IsTableStrict(db, storageUnit)
 
+		var result *engine.GetRowsResult
+
 		// For STRICT tables, delegate to parent GORM implementation without CAST
 		if isStrict {
-			// Build the query without CAST and let GORM handle the data types normally
-			builder := gorm_plugin.NewSQLBuilder(db, p)
-			fullTable := builder.BuildFullTableName("", storageUnit)
-
+			// codeql[go/sql-injection]: table name validated by StorageUnitExists before reaching this code
 			query := db.Table(fullTable)
 
 			// Get column types for WHERE conditions
@@ -231,66 +247,77 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, schema string, stor
 			defer rows.Close()
 
 			// Use parent's ConvertRawToRows for STRICT tables
-			return p.GormPlugin.ConvertRawToRows(rows)
-		}
-
-		// For non-STRICT tables, use custom handling with CAST for date/time types
-		orderedColumns, columnTypes, err := p.GetOrderedColumnsWithTypes(db, schema, storageUnit)
-		if err != nil {
-			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get column types for table %s.%s", schema, storageUnit))
-			return nil, err
-		}
-
-		builder := gorm_plugin.NewSQLBuilder(db, p)
-		fullTable := builder.BuildFullTableName("", storageUnit)
-
-		selects := make([]string, 0, len(orderedColumns))
-		columns := make([]string, 0, len(orderedColumns))
-		for _, col := range orderedColumns {
-			columns = append(columns, col.Name)
-			upper := strings.ToUpper(col.Type)
-			// Only apply CAST for non-STRICT tables
-			if upper == "DATE" || upper == "DATETIME" || upper == "TIMESTAMP" {
-				selects = append(selects, fmt.Sprintf("CAST(%s AS TEXT) AS %s", builder.QuoteIdentifier(col.Name), builder.QuoteIdentifier(col.Name)))
-			} else {
-				selects = append(selects, builder.QuoteIdentifier(col.Name))
+			result, err = p.GormPlugin.ConvertRawToRows(rows)
+			if err != nil {
+				return nil, err
 			}
-		}
+		} else {
+			// For non-STRICT tables, use custom handling with CAST for date/time types
+			orderedColumns, columnTypes, err := p.GetOrderedColumnsWithTypes(db, schema, storageUnit)
+			if err != nil {
+				log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get column types for table %s.%s", schema, storageUnit))
+				return nil, err
+			}
 
-		query := db.Table(fullTable).Select(selects)
-
-		query, err = p.ApplyWhereConditions(query, where, columnTypes)
-		if err != nil {
-			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to apply where conditions for table %s.%s", schema, storageUnit))
-			return nil, err
-		}
-
-		// Sorting
-		if len(sort) > 0 {
-			sortList := make([]plugins.Sort, len(sort))
-			for i, s := range sort {
-				sortList[i] = plugins.Sort{Column: s.Column, Direction: plugins.Down}
-				if s.Direction == model.SortDirectionAsc {
-					sortList[i].Direction = plugins.Up
+			selects := make([]string, 0, len(orderedColumns))
+			for _, col := range orderedColumns {
+				upper := strings.ToUpper(col.Type)
+				// Only apply CAST for non-STRICT tables
+				if upper == "DATE" || upper == "DATETIME" || upper == "TIMESTAMP" {
+					selects = append(selects, fmt.Sprintf("CAST(%s AS TEXT) AS %s", builder.QuoteIdentifier(col.Name), builder.QuoteIdentifier(col.Name)))
+				} else {
+					selects = append(selects, builder.QuoteIdentifier(col.Name))
 				}
 			}
-			query = builder.BuildOrderBy(query, sortList)
-		} else {
-			if orderBy := p.GormPluginFunctions.GetRowsOrderBy(db, schema, storageUnit); orderBy != "" {
-				query = query.Order(orderBy)
+
+			// codeql[go/sql-injection]: table name validated by StorageUnitExists before reaching this code
+			query := db.Table(fullTable).Select(selects)
+
+			query, err = p.ApplyWhereConditions(query, where, columnTypes)
+			if err != nil {
+				log.Logger.WithError(err).Error(fmt.Sprintf("Failed to apply where conditions for table %s.%s", schema, storageUnit))
+				return nil, err
+			}
+
+			// Sorting
+			if len(sort) > 0 {
+				sortList := make([]plugins.Sort, len(sort))
+				for i, s := range sort {
+					sortList[i] = plugins.Sort{Column: s.Column, Direction: plugins.Down}
+					if s.Direction == model.SortDirectionAsc {
+						sortList[i].Direction = plugins.Up
+					}
+				}
+				query = builder.BuildOrderBy(query, sortList)
+			} else {
+				if orderBy := p.GormPluginFunctions.GetRowsOrderBy(db, schema, storageUnit); orderBy != "" {
+					query = query.Order(orderBy)
+				}
+			}
+
+			query = query.Limit(pageSize).Offset(pageOffset)
+
+			rows, err := query.Rows()
+			if err != nil {
+				log.Logger.WithError(err).Error(fmt.Sprintf("Failed to execute SQLite rows query for table %s.%s", schema, storageUnit))
+				return nil, err
+			}
+			defer rows.Close()
+
+			result, err = p.ConvertRawToRows(rows)
+			if err != nil {
+				return nil, err
 			}
 		}
 
-		query = query.Limit(pageSize).Offset(pageOffset)
-
-		rows, err := query.Rows()
-		if err != nil {
-			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to execute SQLite rows query for table %s.%s", schema, storageUnit))
-			return nil, err
+		// Wait for count query to complete and set TotalCount
+		if countErr := <-countDone; countErr != nil {
+			log.Logger.WithError(countErr).Warn(fmt.Sprintf("Failed to get row count for table %s", storageUnit))
+		} else {
+			result.TotalCount = totalCount
 		}
-		defer rows.Close()
 
-		return p.ConvertRawToRows(rows)
+		return result, nil
 	})
 }
 

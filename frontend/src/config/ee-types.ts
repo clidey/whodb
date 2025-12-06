@@ -73,6 +73,8 @@ export interface FeatureFlags {
     advancedDatabases: boolean; // For additional enterprise databases
     contactUsPage: boolean; // Show Contact Us page (disabled in EE)
     settingsPage: boolean; // Show Settings page (disabled in EE)
+    sampleDatabaseTour: boolean; // Show sample database tour on login page
+    autoStartTourOnLogin: boolean; // Auto-start tour when logging in with sample database
 }
 
 // EE Database type definition

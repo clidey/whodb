@@ -17,32 +17,34 @@
 import { Alert, AlertTitle, AlertDescription, Button, toast } from "@clidey/ux";
 import { BellAlertIcon, CheckCircleIcon, ClipboardDocumentIcon } from "./heroicons";
 import { useState } from "react";
+import { useTranslation } from "@/hooks/use-translation";
 
 interface ErrorStateProps {
     error?: { message?: string } | string | null;
 }
 
 export const ErrorState = ({ error }: ErrorStateProps) => {
+    const { t } = useTranslation('components/error-state');
     const [copied, setCopied] = useState(false);
-    const message = typeof error === "string" ? error : error?.message ?? "An unknown error occurred.";
+    const message = typeof error === "string" ? error : error?.message ?? t('unknownError');
 
     const handleCopy = () => {
         navigator.clipboard.writeText(message);
         setCopied(true);
-        toast.success("Copied to clipboard");
+        toast.success(t('copySuccess'));
     };
 
     return (
-        <Alert variant="destructive" title="Error" description={message} className="group relative" data-testid="error-state">
+        <Alert variant="destructive" title={t('title')} description={message} className="group relative" data-testid="error-state">
             <BellAlertIcon className="w-4 h-4" />
-            <AlertTitle>Error</AlertTitle>
+            <AlertTitle>{t('title')}</AlertTitle>
             <AlertDescription>{message}</AlertDescription>
             <Button
                 variant="ghost"
                 size="icon"
                 className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-all"
                 onClick={handleCopy}
-                aria-label="Copy error message"
+                aria-label={t('copyLabel')}
             >
                 {copied ? <CheckCircleIcon className="w-4 h-4" /> : <ClipboardDocumentIcon className="w-4 h-4" />}
             </Button>

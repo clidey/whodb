@@ -1,0 +1,84 @@
+en:
+  # Toast messages
+  copiedToClipboard: Copied to Clipboard
+  rowCopiedToClipboard: Row Copied to Clipboard
+  rowUpdated: Row Updated
+  errorUpdatingRow: Error Updating Row
+  deletingRow: Deleting Row...
+  deletingRows: Deleting Rows...
+  unableToDeleteRow: "Unable to Delete the Row: {message}"
+  rowDeleted: Row Deleted
+  copiedCellToClipboard: Copied Cell to Clipboard
+  maximumRowCount: "Maximum Row Count Is {max}"
+  storageUnitRequired: Storage Unit Is Required for Mock Data Generation
+  rowCountExceedsMax: "Row Count Cannot Exceed {max}"
+  successfullyGenerated: "Successfully Generated {count} Rows"
+  failedToMockData: Failed to Mock Data
+  mockDataNotAllowed: Mock Data Generation Is Not Allowed for This Table
+  mockDataFailed: "Failed to Mock Data: {message}"
+
+  # Context menu - Cell actions
+  copyCell: Copy Cell
+  searchForEntity: Search for Entity
+  copyRow: Copy Row
+  deselectRow: Deselect Row
+  selectRow: Select Row
+  editRow: Edit Row
+
+  # Context menu - Export submenu
+  export: Export
+  exportAllAsCsv: Export All as CSV
+  exportAllAsExcel: Export All as Excel
+  exportSelectedAsCsv: Export Selected as CSV
+  exportSelectedAsExcel: Export Selected as Excel
+
+  # Context menu - Other actions
+  mockData: Mock Data
+  moreActions: More Actions
+  deleteRow: Delete Row
+  openInGraph: Open in Graph
+
+  # Context menu - Table header actions
+  exportData: Export Data
+  refreshData: Refresh Data
+  selectAll: Select All
+  deselectAll: Deselect All
+  columnStatistics: Column Statistics
+  schemaInformation: Schema Information
+
+  # Empty state
+  noDataAvailable: No Data Available
+
+  # Table header tooltip
+  rightClickForOptions: Right-Click for Table Options
+
+  # Export button
+  exportSelected: "Export {count} Selected"
+  exportAll: Export All
+
+  # Edit row sheet
+  editRowTitle: Edit Row
+  cancel: Cancel
+  update: Update
+
+  # Mock data sheet
+  mockDataTitle: Mock Data
+  numberOfRows: "Number of Rows (max: {max})"
+  enterNumberOfRows: "Enter Number of Rows (1-{max})"
+  method: Method
+  methodNormal: Normal
+  dataHandling: Data Handling
+  appendToExisting: Append to Existing Data
+  overwriteExisting: Overwrite Existing Data
+  generate: Generate
+
+  # Mock data confirmation
+  overwriteConfirmation: "Are you sure you want to overwrite all existing data in {storageUnit}? This action cannot be undone."
+  yesOverwrite: Yes, Overwrite
+
+  # Mock data alert
+  mockDataNote: Note
+  mockDataWarning: Mock data generation does not yet fully support foreign keys and all constraints. You may experience some errors or missing data.
+
+  # Total count
+  totalCount: "Total Count:"

@@ -1,0 +1,5 @@
+en:
+  title: Error
+  unknownError: An unknown error occurred.
+  copySuccess: Copied to Clipboard
+  copyLabel: Copy Error Message

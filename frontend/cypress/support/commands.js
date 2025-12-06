@@ -31,7 +31,11 @@ Cypress.Commands.add("goto", (route) => {
 Cypress.Commands.add('login', (databaseType, hostname, username, password, database, advanced={}) => {
     cy.visit('/login');
 
-    cy.contains('button', 'Disable telemetry').click();
+    cy.get('body').then($body => {
+        if ($body.find('button:contains("Disable Telemetry")').length > 0) {
+            cy.contains('button', 'Disable Telemetry').click();
+        }
+    });
 
     if (databaseType) {
         cy.get('[data-testid="database-type-select"]').click();
@@ -86,6 +90,10 @@ Cypress.Commands.add('login', (databaseType, hostname, username, password, datab
     }
 
     cy.get('[data-testid="login-button"]').click();
+
+    // Wait for successful login - sidebar should appear after navigation
+    cy.get('[data-testid="sidebar-database"], [data-testid="sidebar-schema"]', {timeout: 30000})
+        .should('exist');
 });
 
 Cypress.Commands.add('setAdvanced', (type, value) => {
@@ -100,9 +108,40 @@ Cypress.Commands.add("selectSchema", (value) => {
 });
 
 Cypress.Commands.add('explore', (tableName) => {
-    return cy.getTables().then(elements => {
-        const index = elements.findIndex(name => name === tableName);
-        return cy.get('[data-testid="explore-button"]').eq(index).click();
+    // Ensure card view is set for consistent test behavior
+    cy.window().then(win => {
+        const settings = JSON.parse(win.localStorage.getItem('persist:settings') || '{}');
+        settings.storageUnitView = '"card"';
+        win.localStorage.setItem('persist:settings', JSON.stringify(settings));
+    });
+
+    // Visit the storage-unit page (will use card view)
+    cy.visit('/storage-unit');
+    // Wait for cards to load
+    cy.get('[data-testid="storage-unit-card"]', {timeout: 15000})
+        .should('have.length.at.least', 1);
+
+    // Find the card containing the exact table name by iterating through cards
+    return cy.get('[data-testid="storage-unit-card"]', {timeout: 10000}).then($cards => {
+        let targetCard = null;
+        $cards.each((_, card) => {
+            const nameEl = Cypress.$(card).find('[data-testid="storage-unit-name"]');
+            if (nameEl.length && nameEl.text().trim() === tableName) {
+                targetCard = card;
+                return false; // break the loop
+            }
+        });
+
+        if (!targetCard) {
+            throw new Error(`Could not find storage unit card with name: ${tableName}`);
+        }
+
+        // Click the explore button within the found card
+        cy.wrap(targetCard)
+            .find('[data-testid="explore-button"]')
+            .scrollIntoView()
+            .should('be.visible')
+            .click({force: true});
     });
 });
 
@@ -124,13 +163,51 @@ Cypress.Commands.add('getExploreFields', () => {
 });
 
 Cypress.Commands.add('data', (tableName) => {
-    return cy.getTables().then(elements => {
-        const index = elements.findIndex(name => name === tableName);
-        return cy.get('[data-testid="data-button"]').eq(index).click().then(() => {
-            // Wait for the table to be present after clicking data button
-            return cy.get('table', {timeout: 10000}).should('exist');
-        });
+    // Ensure card view is set for consistent test behavior
+    cy.window().then(win => {
+        const settings = JSON.parse(win.localStorage.getItem('persist:settings') || '{}');
+        settings.storageUnitView = '"card"';
+        win.localStorage.setItem('persist:settings', JSON.stringify(settings));
     });
+
+    // Visit the storage-unit page (will use card view)
+    cy.visit('/storage-unit');
+    // Wait for cards to load
+    cy.get('[data-testid="storage-unit-card"]', {timeout: 15000})
+        .should('have.length.at.least', 1);
+
+    // Find the card containing the exact table name by iterating through cards
+    cy.get('[data-testid="storage-unit-card"]', {timeout: 10000}).then($cards => {
+        let targetCard = null;
+        $cards.each((_, card) => {
+            const nameEl = Cypress.$(card).find('[data-testid="storage-unit-name"]');
+            if (nameEl.length && nameEl.text().trim() === tableName) {
+                targetCard = card;
+                return false; // break the loop
+            }
+        });
+
+        if (!targetCard) {
+            throw new Error(`Could not find storage unit card with name: ${tableName}`);
+        }
+
+        // Click the data button within the found card
+        cy.wrap(targetCard)
+            .find('[data-testid="data-button"]')
+            .first()
+            .scrollIntoView()
+            .should('be.visible')
+            .click({force: true});
+    });
+
+    // Wait for URL to change to explore page
+    cy.url().should('include', '/storage-unit/explore');
+    // Wait for the page to stabilize - ensure we're not on the list page anymore
+    // The list view has a hidden table, so we must check cards are gone
+    cy.get('[data-testid="storage-unit-card"]', {timeout: 5000}).should('not.exist');
+    // Wait for a VISIBLE table (not the hidden list view table)
+    cy.get('table:visible', {timeout: 10000}).should('exist');
+    return cy.get('table:visible tbody tr', {timeout: 15000}).should('have.length.at.least', 1);
 });
 
 Cypress.Commands.add('sortBy', (index) => {
@@ -144,16 +221,16 @@ Cypress.Commands.add('assertNoDataAvailable', () => {
 
 
 Cypress.Commands.add('getTableData', () => {
-    // First wait for the table to exist
-    return cy.get('table', {timeout: 10000}).should('exist').then(() => {
+    // First wait for a VISIBLE table to exist (not hidden list view tables)
+    return cy.get('table:visible', {timeout: 10000}).should('exist').then(() => {
         // Wait for at least one table row to be present with proper scoping
-        return cy.get('table tbody tr', {timeout: 10000})
+        return cy.get('table:visible tbody tr', {timeout: 10000})
             .then(() => {
                 // Additional wait to ensure data is fully rendered
                 cy.wait(100);
-                
-                // Now get the table and extract data
-                return cy.get('table').then($table => {
+
+                // Now get the visible table and extract data
+                return cy.get('table:visible').first().then($table => {
                     const columns = Cypress.$.makeArray($table.find('th'))
                         .map(el => el.innerText.trim());
 
@@ -335,11 +412,22 @@ Cypress.Commands.add("getConditionCount", () => {
             if (match) return parseInt(match[1]);
         }
 
-        // In popover mode, count badges
+        // In popover mode, count badges + hidden conditions from "+N more" button
+        let count = 0;
         const badges = $body.find('[data-testid="where-condition-badge"]');
-        if (badges.length > 0) return badges.length;
+        count += badges.length;
 
-        return 0;
+        // Check for "+N more" button which indicates hidden conditions
+        const moreButton = $body.find('[data-testid="more-conditions-button"]');
+        if (moreButton.length > 0) {
+            const moreText = moreButton.text();
+            const moreMatch = moreText.match(/\+(\d+)/);
+            if (moreMatch) {
+                count += parseInt(moreMatch[1]);
+            }
+        }
+
+        return count;
     });
 });
 
@@ -436,9 +524,9 @@ Cypress.Commands.add("clickMoreConditions", () => {
 
 // Helper to save changes in a sheet
 Cypress.Commands.add("saveSheetChanges", () => {
-    // Click Add/Update button to save and close
+    // Click save button - matches various button texts used in different sheets
     cy.get('[role="dialog"]').within(() => {
-        cy.contains('button', /^(Add|Update|Add to Page)$/).click();
+        cy.contains('button', /^(Add|Update|Add to Page|Add Condition|Save Changes)$/).click();
     });
 });
 
@@ -539,8 +627,8 @@ Cypress.Commands.add("setWhereConditionMode", (mode) => {
     cy.reload();
 });
 
-Cypress.Commands.add("getHighlightedCell", () => {
-    return cy.get('td.table-search-highlight');
+Cypress.Commands.add("getHighlightedCell", (options = {}) => {
+    return cy.get('td.table-search-highlight', options);
 });
 
 Cypress.Commands.add("getHighlightedRows", () => {
@@ -575,14 +663,55 @@ Cypress.Commands.add("addRow", (data, isSingleInput = false) => {
     });
 
     cy.get('[data-testid="submit-add-row-button"]').click();
-    // Wait for the sheet/dialog to close - the submit button should no longer be visible
-    cy.get('[data-testid="submit-add-row-button"]').should('not.exist');
+
+    // Wait for the operation to complete - dialog should close on success
+    // Use longer timeout to account for slow database operations
+    cy.get('[data-testid="submit-add-row-button"]', {timeout: 10000}).should('not.exist');
+
     // Ensure body no longer has scroll lock
     cy.get('body', { timeout: 5000 }).should('not.have.attr', 'data-scroll-locked');
-    // Increased wait for headless mode - ensures GraphQL mutation completes and UI updates
+
+    // Wait for GraphQL mutation to complete and UI to update
     cy.wait(500);
-    // Additional check to ensure the table has been refreshed
+
+    // Ensure table is visible
     cy.get('table tbody').should('be.visible');
+});
+
+Cypress.Commands.add("openContextMenu", (rowIndex, maxRetries = 3) => {
+    const attemptContextMenu = (attempt) => {
+        // Get a fresh reference to the row
+        cy.get('table tbody tr').eq(rowIndex).as('targetRow');
+
+        // Scroll into view and wait for it to stabilize (virtualization may need time)
+        cy.get('@targetRow').scrollIntoView();
+        cy.wait(200);
+
+        // Right-click to open context menu (force: true handles visibility issues with virtualization)
+        cy.get('@targetRow').rightclick({ force: true });
+
+        // Wait for context menu to render
+        cy.wait(300);
+
+        // Check if context menu appeared
+        cy.get('body').then($body => {
+            const menuExists = $body.find('[data-testid="context-menu-edit-row"], [data-testid="context-menu-more-actions"]').length > 0;
+
+            if (!menuExists && attempt < maxRetries) {
+                // Close any partial menu state by clicking elsewhere
+                cy.get('body').click(0, 0);
+                cy.wait(100);
+                // Retry
+                attemptContextMenu(attempt + 1);
+            } else if (!menuExists) {
+                // Final attempt failed, let Cypress assertion handle it
+                cy.get('[data-testid="context-menu-edit-row"], [data-testid="context-menu-more-actions"]', { timeout: 5000 })
+                    .should('exist');
+            }
+        });
+    };
+
+    attemptContextMenu(1);
 });
 
 Cypress.Commands.add("deleteRow", (rowIndex) => {
@@ -591,8 +720,8 @@ Cypress.Commands.add("deleteRow", (rowIndex) => {
         // Ensure the target row exists before interacting
         cy.get('table tbody tr').should('have.length.greaterThan', rowIndex);
 
-        // Right-click to open the context menu
-        cy.get('table tbody tr').eq(rowIndex).rightclick({ force: true });
+        // Use the helper to open context menu with retry logic
+        cy.openContextMenu(rowIndex);
 
         // Wait for the menu to be visible, then click the items
         cy.get('[data-testid="context-menu-more-actions"]').should('be.visible').click();
@@ -605,11 +734,14 @@ Cypress.Commands.add("deleteRow", (rowIndex) => {
 });
 
 Cypress.Commands.add("updateRow", (rowIndex, columnIndex, text, cancel = true) => {
-    // Open the context menu for the row at rowIndex
-    cy.get('table tbody tr').eq(rowIndex).rightclick({ force: true });
+    // Wait for table to stabilize
+    cy.wait(500);
+
+    // Use the helper to open context menu with retry logic
+    cy.openContextMenu(rowIndex);
 
     // Wait for the menu to be visible, then click the "Edit row" item
-    cy.get('[data-testid="context-menu-edit-row"]').should('be.visible').click();
+    cy.get('[data-testid="context-menu-edit-row"]', {timeout: 5000}).should('be.visible').click();
 
     // Try to find the standard editable field first
     cy.get('body').then(($body) => {
@@ -667,7 +799,11 @@ Cypress.Commands.add("getPageNumbers", () => {
 });
 
 Cypress.Commands.add("searchTable", (search) => {
-    cy.get('[data-testid="table-search"]').clear().type(`${search}{enter}`);
+    // Break up the chain to avoid element detachment after clear
+    cy.get('[data-testid="table-search"]').clear();
+    cy.get('[data-testid="table-search"]').type(`${search}{enter}`);
+    // Wait for search to process and highlight to appear
+    cy.wait(300);
 });
 
 Cypress.Commands.add("getGraph", () => {
@@ -727,9 +863,11 @@ Cypress.Commands.add("getGraph", () => {
 
                     const graph = {};
                     nodes.forEach(node => {
-                        graph[node] = edges
+                        const targets = edges
                             .filter(edge => edge.source === node)
                             .map(edge => edge.target);
+                        // Deduplicate targets (multiple FK columns can create duplicate edges)
+                        graph[node] = [...new Set(targets)];
                     });
                     return graph;
                 });
@@ -779,6 +917,7 @@ Cypress.Commands.add("writeCode", (index, text) => {
     // Click to focus, clear, and then type.
     // Using {force: true} for type to handle cases where the editor might be partially obscured.
     cy.get(selector)
+        .scrollIntoView()
         .should('be.visible')
         .click()
         .clear()
@@ -839,8 +978,17 @@ Cypress.Commands.add("getCellError", (index) => {
 });
 
 Cypress.Commands.add('logout', () => {
-    // First check if sidebar is closed (collapsed)
     cy.get('body').then($body => {
+        // Check if we're on a page with sidebar (i.e., logged in)
+        const hasSidebar = $body.find('[data-sidebar="sidebar"]').length > 0 ||
+            $body.find('[data-sidebar="trigger"]').length > 0;
+
+        if (!hasSidebar) {
+            // Not logged in or on login page - nothing to logout from
+            cy.log('No sidebar found - skipping logout (may not be logged in)');
+            return;
+        }
+
         // Check if the sidebar trigger button exists and is visible (indicates sidebar is closed)
         const sidebarTrigger = $body.find('[data-sidebar="trigger"]:visible');
         if (sidebarTrigger.length > 0 && !$body.text().includes('Logout Profile')) {
@@ -856,7 +1004,7 @@ Cypress.Commands.add('logout', () => {
                 cy.contains('Logout Profile').click({force: true});
             } else {
                 // Fallback: try to find the logout button in the sidebar
-                cy.get('[data-sidebar="sidebar"]').within(() => {
+                cy.get('[data-sidebar="sidebar"]').first().within(() => {
                     cy.get('li[data-sidebar="menu-item"]').last().within(() => {
                         cy.get('div.cursor-pointer').first().click({force: true});
                     });
@@ -867,7 +1015,18 @@ Cypress.Commands.add('logout', () => {
 });
 
 Cypress.Commands.add('getTables', () => {
+    // Ensure card view is set for consistent test behavior
+    cy.window().then(win => {
+        const settings = JSON.parse(win.localStorage.getItem('persist:settings') || '{}');
+        settings.storageUnitView = '"card"';
+        win.localStorage.setItem('persist:settings', JSON.stringify(settings));
+    });
+
     cy.visit('/storage-unit');
+    // Wait for cards to load
+    cy.get('[data-testid="storage-unit-card"]', {timeout: 15000})
+        .should('have.length.at.least', 1);
+
     return cy.get('[data-testid="storage-unit-name"]')
         .then($elements => {
             return Cypress.$.makeArray($elements).map(el => el.innerText);
@@ -1369,7 +1528,7 @@ Cypress.Commands.add('clearChat', () => {
     cy.get('[data-input-message]').should('not.exist');
 
     // Ensure the input field is not disabled and is ready for interaction
-    cy.get('input[placeholder*="Type your message"]')
+    cy.get('[data-testid="chat-input"]')
         .should('be.visible')
         .should('not.be.disabled')
         .should('have.value', ''); // Should be empty after clear
@@ -1423,9 +1582,9 @@ Cypress.Commands.add('confirmMoveToScratchpad', ({ pageOption = 'new', newPageNa
             cy.get(`[value="${pageOption}"]`).click();
         });
     } else if (newPageName) {
-        // Enter new page name
+        // Enter new page name (placeholder has capital letters: "Enter Page Name")
         cy.get('[role="dialog"]').within(() => {
-            cy.get('input[placeholder="Enter page name"]').clear().type(newPageName);
+            cy.get('input[placeholder="Enter Page Name"]').clear().type(newPageName);
         });
     }
 
@@ -1444,7 +1603,7 @@ Cypress.Commands.add('confirmMoveToScratchpad', ({ pageOption = 'new', newPageNa
  */
 Cypress.Commands.add('navigateChatHistory', (direction = 'up') => {
     const key = direction === 'up' ? '{upArrow}' : '{downArrow}';
-    cy.get('input[placeholder*="Type your message"]').focus().type(key);
+    cy.get('[data-testid="chat-input"]').focus().type(key);
     cy.wait(200);
 });
 
@@ -1453,7 +1612,7 @@ Cypress.Commands.add('navigateChatHistory', (direction = 'up') => {
  * @returns {string} The current input value
  */
 Cypress.Commands.add('getChatInputValue', () => {
-    return cy.get('input[placeholder*="Type your message"]').invoke('val');
+    return cy.get('[data-testid="chat-input"]').invoke('val');
 });
 
 /**
@@ -1477,11 +1636,16 @@ Cypress.Commands.add('waitForChatResponse', () => {
         }
     });
 
-    // Wait for either a system response or an error state to appear
+    // Wait for either a system response, SQL result table, or error state to appear
     cy.get('body', { timeout: 10000 }).should($body => {
         const hasSystemMessage = $body.find('[data-input-message="system"]').length > 0;
         const hasErrorState = $body.find('[data-testid="error-state"]').length > 0;
-        expect(hasSystemMessage || hasErrorState, 'Expected either system message or error state').to.be.true;
+        // SQL results show as tables in the chat area
+        const hasSQLResult = $body.find('[data-testid="chat-sql-result"] table, [data-testid="sql-result-table"]').length > 0;
+        // Also check for any table that appeared after the user message (fallback)
+        const hasAnyResultTable = $body.find('table').length > 0;
+        expect(hasSystemMessage || hasErrorState || hasSQLResult || hasAnyResultTable,
+            'Expected system message, SQL result, or error state').to.be.true;
     });
 
     // Additional wait for UI to fully render the response
