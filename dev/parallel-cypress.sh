@@ -15,16 +15,18 @@
 # limitations under the License.
 #
 
+# Parallel Cypress test runner for Community Edition (CE)
+# Runs tests for multiple databases in parallel
+
 set -e
 
-EDITION="${1:-ce}"
-HEADLESS="${2:-true}"
-TARGET_DB="${3:-all}"
+HEADLESS="${1:-true}"
+TARGET_DB="${2:-all}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
-# Database configurations
+# CE database configurations
 DATABASES=(postgres mysql mysql8 mariadb sqlite mongodb redis elasticsearch clickhouse)
 
 # Map database to category for logging
@@ -40,8 +42,7 @@ declare -A DB_CATEGORIES=(
     [clickhouse]="sql"
 )
 
-echo "🚀 Running Cypress tests in parallel (1 process per database)"
-echo "   Edition: $EDITION"
+echo "🚀 Running Cypress tests in parallel (CE)"
 echo "   Headless: $HEADLESS"
 echo "   Target DB: $TARGET_DB"
 
@@ -66,16 +67,12 @@ echo "   Databases: ${DATABASES[*]}"
 
 # Setup backend (pass TARGET_DB to only start required containers)
 echo "⚙️ Setting up test environment..."
-bash "$SCRIPT_DIR/setup-e2e.sh" "$EDITION" "$TARGET_DB"
+bash "$SCRIPT_DIR/setup-e2e.sh" "ce" "$TARGET_DB"
 
 # Start frontend
 echo "🌐 Starting frontend..."
 cd "$PROJECT_ROOT/frontend"
-if [ "$EDITION" = "ee" ]; then
-    VITE_BUILD_EDITION=ee NODE_ENV=test vite --port 3000 --clearScreen false --logLevel error &
-else
-    NODE_ENV=test vite --port 3000 --clearScreen false --logLevel error &
-fi
+NODE_ENV=test vite --port 3000 --clearScreen false --logLevel error &
 FRONTEND_PID=$!
 
 # Wait for services
@@ -158,7 +155,7 @@ done
 # Cleanup
 echo "🧹 Cleaning up..."
 kill $FRONTEND_PID 2>/dev/null || true
-bash "$SCRIPT_DIR/cleanup-e2e.sh" "$EDITION"
+bash "$SCRIPT_DIR/cleanup-e2e.sh" "ce"
 
 # Report results
 echo ""

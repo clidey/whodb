@@ -15,56 +15,36 @@
 # limitations under the License.
 #
 
-# Unified Cypress test runner for both CE and EE
+# Cypress test runner for Community Edition (CE)
 #
 # Usage:
-#   ./run-cypress.sh [edition] [headless] [database]
+#   ./run-cypress.sh [headless] [database]
 #
 # Arguments:
-#   edition  - 'ce', 'ee', or 'ee-only' (default: ce)
 #   headless - 'true' or 'false' (default: false)
 #   database - specific database to test, or 'all' (default: all)
 #
 # Examples:
-#   ./run-cypress.sh ce false postgres   # Open Cypress UI for postgres only
-#   ./run-cypress.sh ce true mysql       # Headless run for mysql only
-#   ./run-cypress.sh ee false all        # Open Cypress UI for all EE databases
+#   ./run-cypress.sh false postgres   # Open Cypress UI for postgres only
+#   ./run-cypress.sh true mysql       # Headless run for mysql only
+#   ./run-cypress.sh false all        # Open Cypress UI for all CE databases
 
 set -e
 
 # Parse arguments
-EDITION="${1:-ce}"  # Default to CE
-HEADLESS="${2:-false}"
-TARGET_DB="${3:-all}"
+HEADLESS="${1:-false}"
+TARGET_DB="${2:-all}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
-# Available databases by edition
+# Available CE databases
 CE_DBS="postgres mysql mysql8 mariadb sqlite mongodb redis elasticsearch clickhouse"
-EE_ONLY_DBS="dynamodb mssql oracle"
-ALL_DBS="$CE_DBS $EE_ONLY_DBS"
-
-# Validate edition
-if [ "$EDITION" != "ce" ] && [ "$EDITION" != "ee" ] && [ "$EDITION" != "ee-only" ]; then
-    echo "❌ Invalid edition: $EDITION. Use 'ce', 'ee', or 'ee-only'"
-    exit 1
-fi
-
-# Determine available databases based on edition
-if [ "$EDITION" = "ce" ]; then
-    AVAILABLE_DBS="$CE_DBS"
-elif [ "$EDITION" = "ee-only" ]; then
-    AVAILABLE_DBS="$EE_ONLY_DBS"
-else
-    # For "ee" edition, all databases are available
-    AVAILABLE_DBS="$ALL_DBS"
-fi
 
 # Validate database if specified
 if [ "$TARGET_DB" != "all" ]; then
     FOUND=false
-    for db in $AVAILABLE_DBS; do
+    for db in $CE_DBS; do
         if [ "$db" = "$TARGET_DB" ]; then
             FOUND=true
             break
@@ -72,13 +52,12 @@ if [ "$TARGET_DB" != "all" ]; then
     done
     if [ "$FOUND" = "false" ]; then
         echo "❌ Unknown database: $TARGET_DB"
-        echo "   Available for $EDITION: $AVAILABLE_DBS"
+        echo "   Available CE databases: $CE_DBS"
         exit 1
     fi
 fi
 
-echo "🚀 Cypress Test Runner"
-echo "   Edition: $EDITION"
+echo "🚀 Cypress Test Runner (CE)"
 echo "   Headless: $HEADLESS"
 echo "   Database: $TARGET_DB"
 
@@ -91,13 +70,9 @@ cleanup() {
     pkill -TERM -f 'vite --port 3000' 2>/dev/null || true
     sleep 1
 
-    # Run cleanup script with edition parameter (ee-only uses ee cleanup)
+    # Run cleanup script
     echo "   Running cleanup script (preserving test binary cache)..."
-    if [ "$EDITION" = "ee-only" ]; then
-        bash "$SCRIPT_DIR/cleanup-e2e.sh" "ee"
-    else
-        bash "$SCRIPT_DIR/cleanup-e2e.sh" "$EDITION"
-    fi
+    bash "$SCRIPT_DIR/cleanup-e2e.sh" "ce"
 
     # Kill anything still on port 3000 (just in case)
     echo "   Ensuring port 3000 is free..."
@@ -113,70 +88,37 @@ trap 'cleanup; exit ${EXIT_CODE:-0}' EXIT INT TERM
 
 # Main test execution with error handling
 run_tests() {
-    # Setup backend with edition and database parameters
-    echo "🚀 Setting up $EDITION test environment..."
-    bash "$SCRIPT_DIR/setup-e2e.sh" "$EDITION" "$TARGET_DB" || { echo "❌ Backend setup failed"; return 1; }
+    # Setup backend with database parameters
+    echo "🚀 Setting up CE test environment..."
+    bash "$SCRIPT_DIR/setup-e2e.sh" "ce" "$TARGET_DB" || { echo "❌ Backend setup failed"; return 1; }
 
-    # Start frontend with appropriate edition and optimizations
-    echo "🚀 Starting frontend ($EDITION mode)..."
+    # Start frontend
+    echo "🚀 Starting frontend (CE mode)..."
     cd "$PROJECT_ROOT/frontend"
 
     # Vite optimizations for faster startup
     VITE_FLAGS="--port 3000 --clearScreen false --logLevel warn"
-
-    if [ "$EDITION" = "ee" ] || [ "$EDITION" = "ee-only" ]; then
-        VITE_BUILD_EDITION=ee NODE_ENV=test vite $VITE_FLAGS &
-    else
-        NODE_ENV=test vite $VITE_FLAGS &
-    fi
+    NODE_ENV=test vite $VITE_FLAGS &
     FRONTEND_PID=$!
 
     # Wait for services
     echo "⏳ Waiting for services..."
-    if [ "$EDITION" = "ee" ] || [ "$EDITION" = "ee-only" ]; then
-        MAX_WAIT=90 bash "$SCRIPT_DIR/wait-for-services.sh" || { echo "❌ Services failed to start"; return 1; }
-    else
-        MAX_WAIT=60 bash "$SCRIPT_DIR/wait-for-services.sh" || { echo "❌ Services failed to start"; return 1; }
-    fi
+    MAX_WAIT=60 bash "$SCRIPT_DIR/wait-for-services.sh" || { echo "❌ Services failed to start"; return 1; }
 
-    # Configure Cypress based on edition
-    echo "🧪 Running Cypress tests ($EDITION)..."
+    # Configure Cypress
+    echo "🧪 Running Cypress tests (CE)..."
     cd "$PROJECT_ROOT/frontend"
 
     # Build spec pattern for feature-based tests
     CE_FEATURE_SPEC="cypress/e2e/features/**/*.cy.{js,jsx,ts,tsx}"
-    EE_FEATURE_SPEC="../ee/frontend/cypress/e2e/features/**/*.cy.{js,jsx,ts,tsx}"
-
-    if [ "$EDITION" = "ee" ]; then
-        # For EE, check if EE test directory exists
-        if [ -d "$PROJECT_ROOT/ee/frontend/cypress/e2e/features" ]; then
-            # Include both CE and EE feature tests
-            CYPRESS_CONFIG="{\"specPattern\":[\"$CE_FEATURE_SPEC\",\"$EE_FEATURE_SPEC\"],\"supportFile\":\"cypress/support/e2e.js\"}"
-        else
-            echo "⚠️ EE test directory not found, running CE tests only"
-            CYPRESS_CONFIG="{\"specPattern\":\"$CE_FEATURE_SPEC\"}"
-        fi
-    elif [ "$EDITION" = "ee-only" ]; then
-        # For EE-only, only run EE feature tests
-        if [ -d "$PROJECT_ROOT/ee/frontend/cypress/e2e/features" ]; then
-            CYPRESS_CONFIG="{\"specPattern\":\"$EE_FEATURE_SPEC\",\"supportFile\":\"../ee/frontend/cypress/support/e2e.js\"}"
-        else
-            echo "❌ EE test directory not found"
-            return 1
-        fi
-    else
-        # For CE, only run CE feature tests
-        CYPRESS_CONFIG="{\"specPattern\":\"$CE_FEATURE_SPEC\"}"
-    fi
+    CYPRESS_CONFIG="{\"specPattern\":\"$CE_FEATURE_SPEC\"}"
 
     # Detect available browser
-    # Check for chromium first (common on Linux/Mac), then chrome
     if command -v chromium >/dev/null 2>&1 || command -v chromium-browser >/dev/null 2>&1; then
         BROWSER="chromium"
     elif command -v google-chrome >/dev/null 2>&1 || command -v google-chrome-stable >/dev/null 2>&1; then
         BROWSER="chrome"
     else
-        # Let Cypress use its default
         BROWSER=""
     fi
 
@@ -195,17 +137,9 @@ run_tests() {
             BROWSER_ARG=""
         fi
 
-        if [ -n "$CYPRESS_CONFIG" ]; then
-            env $ENV_VARS NODE_ENV=test npx cypress run $BROWSER_ARG --config "$CYPRESS_CONFIG" || { echo "❌ Cypress tests failed"; return 1; }
-        else
-            env $ENV_VARS NODE_ENV=test npx cypress run $BROWSER_ARG || { echo "❌ Cypress tests failed"; return 1; }
-        fi
+        env $ENV_VARS NODE_ENV=test npx cypress run $BROWSER_ARG --config "$CYPRESS_CONFIG" || { echo "❌ Cypress tests failed"; return 1; }
     else
-        if [ -n "$CYPRESS_CONFIG" ]; then
-            env $ENV_VARS NODE_ENV=test npx cypress open --config "$CYPRESS_CONFIG" || { echo "❌ Cypress failed to open"; return 1; }
-        else
-            env $ENV_VARS NODE_ENV=test npx cypress open || { echo "❌ Cypress failed to open"; return 1; }
-        fi
+        env $ENV_VARS NODE_ENV=test npx cypress open --config "$CYPRESS_CONFIG" || { echo "❌ Cypress failed to open"; return 1; }
     fi
 
     echo "✅ Test run complete"

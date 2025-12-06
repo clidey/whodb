@@ -31,7 +31,11 @@ Cypress.Commands.add("goto", (route) => {
 Cypress.Commands.add('login', (databaseType, hostname, username, password, database, advanced={}) => {
     cy.visit('/login');
 
-    cy.contains('button', 'Disable Telemetry').click();
+    cy.get('body').then($body => {
+        if ($body.find('button:contains("Disable Telemetry")').length > 0) {
+            cy.contains('button', 'Disable Telemetry').click();
+        }
+    });
 
     if (databaseType) {
         cy.get('[data-testid="database-type-select"]').click();
