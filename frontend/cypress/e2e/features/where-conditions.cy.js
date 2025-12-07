@@ -167,7 +167,7 @@ describe('Where Conditions', () => {
 
             // Add 3 conditions - should show "+1 more" button
             cy.whereTable([
-                [idField, eq, '3'],
+                [idField, eq, testId3],
                 [nameField, eq, expectedName],
                 [thirdCol, neq, thirdVal],
             ]);
@@ -176,7 +176,7 @@ describe('Where Conditions', () => {
                 if (mode === 'popover') {
                     // Should show first 2 conditions as badges
                     cy.getConditionCount().should('equal', 3);
-                    cy.verifyCondition(0, `${idField} ${eq} 3`);
+                    cy.verifyCondition(0, `${idField} ${eq} ${testId3}`);
                     cy.verifyCondition(1, `${nameField} ${eq} ${expectedName}`);
 
                     // Check for more conditions button
@@ -191,7 +191,7 @@ describe('Where Conditions', () => {
 
                     // After closing sheet, should have only 1 condition
                     cy.getConditionCount().should('equal', 1);
-                    cy.verifyCondition(0, `${idField} ${eq} 3`);
+                    cy.verifyCondition(0, `${idField} ${eq} ${testId3}`);
                 } else {
                     // In sheet mode, just verify count
                     cy.getConditionCount().should('equal', 3);
