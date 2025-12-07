@@ -31,11 +31,20 @@ Cypress.Commands.add("goto", (route) => {
 Cypress.Commands.add('login', (databaseType, hostname, username, password, database, advanced={}) => {
     cy.visit('/login');
 
-    cy.get('body').then($body => {
-        if ($body.find('button:contains("Disable Telemetry")').length > 0) {
-            cy.contains('button', 'Disable Telemetry').click();
-        }
-    });
+    // Poll for telemetry modal and dismiss if it appears (handles async React rendering)
+    const tryDismissTelemetry = (attemptsLeft = 5) => {
+        cy.get('body').then($body => {
+            const $btn = $body.find('button').filter(function() {
+                return this.textContent.includes('Disable Telemetry');
+            });
+            if ($btn.length) {
+                cy.wrap($btn).click();
+            } else if (attemptsLeft > 1) {
+                cy.wait(300).then(() => tryDismissTelemetry(attemptsLeft - 1));
+            }
+        });
+    };
+    tryDismissTelemetry();
 
     if (databaseType) {
         cy.get('[data-testid="database-type-select"]').click();
