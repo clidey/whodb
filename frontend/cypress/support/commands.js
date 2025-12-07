@@ -94,7 +94,6 @@ Cypress.Commands.add('login', (databaseType, hostname, username, password, datab
 
     cy.get('[data-testid="login-button"]').click();
 
-    // Wait for the login API response (Oracle can be slow to connect)
     cy.wait('@loginQuery', {timeout: 60000}).then((interception) => {
         // Log if there was an error in the response for debugging
         if (interception.response?.body?.errors) {

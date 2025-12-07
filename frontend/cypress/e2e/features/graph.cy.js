@@ -62,7 +62,9 @@ describe('Graph Visualization', () => {
                             `Should have Type: ${tableConfig.metadata.type}`).to.be.true;
                     }
                     if (tableConfig.metadata.hasSize) {
-                        expect(fields.some(([k]) => k === 'Total Size' || k === 'Data Size'),
+                        // Different databases use different size field names
+                        const sizeFields = ['Total Size', 'Data Size', 'Size', 'Table Size', 'Segment Size'];
+                        expect(fields.some(([k]) => sizeFields.some(sf => k.includes(sf) || k.toLowerCase().includes('size'))),
                             'Should have size info').to.be.true;
                     }
                 }

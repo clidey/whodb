@@ -25,6 +25,11 @@ describe('Scratchpad', () => {
         }
 
         describe('Query Execution', () => {
+            // Get expected column names from config or use defaults
+            const expectedIdentifierCol = db.testTable?.identifierField || 'username';
+            const expectedCountCol = db.sql?.countColumn || 'user_count';
+            const expectedUpdatedValue = db.sql?.scratchpadUpdatedValue || db.testTable?.testValues?.modified || 'john_doe1';
+
             it('executes SELECT query and shows results', () => {
                 cy.goto('scratchpad');
 
@@ -33,7 +38,7 @@ describe('Scratchpad', () => {
                 cy.runCode(0);
 
                 cy.getCellQueryOutput(0).then(({columns, rows}) => {
-                    expect(columns).to.include('username');
+                    expect(columns.map(c => c.toUpperCase())).to.include(expectedIdentifierCol.toUpperCase());
                     expect(rows.length).to.be.greaterThan(0);
                 });
             });
@@ -58,7 +63,7 @@ describe('Scratchpad', () => {
                 cy.runCode(0);
 
                 cy.getCellQueryOutput(0).then(({columns, rows}) => {
-                    expect(columns).to.include('user_count');
+                    expect(columns.map(c => c.toUpperCase())).to.include(expectedCountCol.toUpperCase());
                     expect(rows.length).to.equal(1);
                 });
             });
@@ -97,7 +102,7 @@ describe('Scratchpad', () => {
                     cy.runCode(1);
 
                     cy.getCellQueryOutput(1).then(({rows}) => {
-                        expect(rows[0]).to.include('john_doe1');
+                        expect(rows[0]).to.include(expectedUpdatedValue);
                     });
 
                     // Revert

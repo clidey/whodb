@@ -27,23 +27,21 @@ const ceDatabaseConfigs = {
     clickhouse: require('../fixtures/databases/clickhouse.json'),
 };
 
-// EE Database configurations - loaded dynamically if available
-let eeDatabaseConfigs = {};
+// Additional database configurations - dynamically loaded at build time using webpack's require.context
+// This scans for any JSON files without knowing specific database names
+let additionalConfigs = {};
 try {
-    // These will only exist when running from EE context
-    // Path: frontend/cypress/support/ -> ee/frontend/cypress/fixtures/databases/
-    eeDatabaseConfigs = {
-        dynamodb: require('../../../ee/frontend/cypress/fixtures/databases/dynamodb.json'),
-        mssql: require('../../../ee/frontend/cypress/fixtures/databases/mssql.json'),
-        oracle: require('../../../ee/frontend/cypress/fixtures/databases/oracle.json'),
-    };
-    console.log('[test-runner] Loaded EE databases:', Object.keys(eeDatabaseConfigs));
+    const context = require.context('../../../ee/frontend/cypress/fixtures/databases', false, /\.json$/);
+    context.keys().forEach(key => {
+        const name = key.replace('./', '').replace('.json', '');
+        additionalConfigs[name] = context(key);
+    });
 } catch (e) {
-    console.log('[test-runner] EE fixtures not available:', e.message);
+    // Extension fixtures directory not available
 }
 
-// Active database configs - CE + EE (if available)
-let databaseConfigs = {...ceDatabaseConfigs, ...eeDatabaseConfigs};
+// Active database configs
+let databaseConfigs = {...ceDatabaseConfigs, ...additionalConfigs};
 
 /**
  * Register additional database configurations (used by EE to add EE databases)
@@ -156,9 +154,6 @@ export function forEachDatabase(categoryFilter, testFn, options = {}) {
     // Get target database from env (if running single database)
     const targetDb = Cypress.env('database');
     const targetCategory = Cypress.env('category');
-
-    // Debug: log available databases
-    console.log(`[forEachDatabase] category=${categoryFilter}, targetDb=${targetDb}, available=${Object.keys(databaseConfigs).join(',')}`);
 
     // Get databases matching category filter
     let databases = getDatabasesByCategory(categoryFilter);

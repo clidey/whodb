@@ -59,15 +59,20 @@ describe('Where Conditions', () => {
         const colIndex = testTable.identifierColIndex || 1;
         const eq = getOperator(db, 'equals');
 
+        const whereConfig = testTable.whereConditions || {};
+        const testId1 = whereConfig.testId1 || '1';
+        const testId2 = whereConfig.testId2 || '2';
+        const testId3 = whereConfig.testId3 || '3';
+
         it('applies where condition and filters data', () => {
             cy.data(tableName);
 
-            cy.whereTable([[idField, eq, '3']]);
+            cy.whereTable([[idField, eq, testId3]]);
             cy.submitTable();
 
             cy.getTableData().then(({rows}) => {
                 expect(rows.length).to.equal(1);
-                expect(rows[0][1]).to.equal('3'); // id column
+                expect(rows[0][1]).to.equal(testId3); // id column
             });
 
             // Clear conditions
@@ -84,7 +89,7 @@ describe('Where Conditions', () => {
             cy.data(tableName);
 
             cy.whereTable([
-                [idField, eq, '1'],
+                [idField, eq, testId1],
                 [nameField, eq, firstName],
             ]);
             cy.submitTable();
@@ -103,20 +108,20 @@ describe('Where Conditions', () => {
         it('edits existing condition', () => {
             cy.data(tableName);
 
-            cy.whereTable([[idField, eq, '1']]);
+            cy.whereTable([[idField, eq, testId1]]);
             cy.submitTable();
 
             cy.getWhereConditionMode().then(mode => {
                 if (mode === 'popover') {
                     cy.clickConditionToEdit(0);
-                    cy.updateConditionValue('2');
+                    cy.updateConditionValue(testId2);
                     cy.get('[data-testid="update-condition-button"]').click();
                     cy.submitTable();
 
-                    cy.verifyCondition(0, `${idField} ${eq} 2`);
+                    cy.verifyCondition(0, `${idField} ${eq} ${testId2}`);
 
                     cy.getTableData().then(({rows}) => {
-                        expect(rows[0][1]).to.equal('2');
+                        expect(rows[0][1]).to.equal(testId2);
                     });
                 }
             });
@@ -129,7 +134,7 @@ describe('Where Conditions', () => {
             cy.data(tableName);
 
             cy.whereTable([
-                [idField, eq, '1'],
+                [idField, eq, testId1],
                 [nameField, eq, firstName],
             ]);
             cy.submitTable();
@@ -154,11 +159,17 @@ describe('Where Conditions', () => {
 
             const neq = getOperator(db, 'notEquals');
 
+            // Get config-driven values for third condition
+            const whereConfig = testTable.whereConditions || {};
+            const thirdCol = whereConfig.thirdColumn || 'email';
+            const thirdVal = whereConfig.thirdValue || 'jane@example.com';
+            const expectedName = whereConfig.expectedValue || 'admin_user';
+
             // Add 3 conditions - should show "+1 more" button
             cy.whereTable([
                 [idField, eq, '3'],
-                [nameField, eq, 'admin_user'],
-                ['email', neq, 'jane@example.com'],
+                [nameField, eq, expectedName],
+                [thirdCol, neq, thirdVal],
             ]);
 
             cy.getWhereConditionMode().then(mode => {
@@ -166,7 +177,7 @@ describe('Where Conditions', () => {
                     // Should show first 2 conditions as badges
                     cy.getConditionCount().should('equal', 3);
                     cy.verifyCondition(0, `${idField} ${eq} 3`);
-                    cy.verifyCondition(1, `${nameField} ${eq} admin_user`);
+                    cy.verifyCondition(1, `${nameField} ${eq} ${expectedName}`);
 
                     // Check for more conditions button
                     cy.checkMoreConditionsButton('+1 more');
@@ -189,7 +200,7 @@ describe('Where Conditions', () => {
 
             cy.submitTable();
             cy.getTableData().then(({rows}) => {
-                expect(rows[0][colIndex + 1]).to.equal('admin_user');
+                expect(rows[0][colIndex + 1]).to.equal(expectedName);
             });
 
             cy.clearWhereConditions();
