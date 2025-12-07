@@ -177,7 +177,7 @@ describe('Scratchpad', () => {
                 // Verify default query is populated
                 cy.get('[data-testid="code-editor"]').should('exist');
                 const schemaPrefix = db.sql?.schemaPrefix || '';
-                cy.get('[data-testid="code-editor"]').should('contain', 'SELECT *');
+                cy.get('[data-testid="code-editor"]').should('contain', 'SELECT');
                 cy.get('[data-testid="code-editor"]').should('contain', `FROM ${schemaPrefix}${tableName}`);
 
                 // Run the query

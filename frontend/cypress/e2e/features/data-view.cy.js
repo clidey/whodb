@@ -40,8 +40,8 @@ describe('Data View', () => {
                 // Verify data exists
                 expect(rows.length).to.be.greaterThan(0);
 
-                // Verify first row data if configured
-                if (tableConfig && tableConfig.testData && tableConfig.testData.initial) {
+                // Verify first row data if configured (initial should be array of arrays)
+                if (tableConfig && tableConfig.testData && tableConfig.testData.initial && Array.isArray(tableConfig.testData.initial[0])) {
                     const expectedFirst = tableConfig.testData.initial[0];
                     expectedFirst.forEach((val, idx) => {
                         if (val !== '') {

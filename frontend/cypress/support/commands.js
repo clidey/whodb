@@ -733,9 +733,15 @@ Cypress.Commands.add("deleteRow", (rowIndex) => {
         // Use the helper to open context menu with retry logic
         cy.openContextMenu(rowIndex);
 
-        // Wait for the menu to be visible, then click the items
-        cy.get('[data-testid="context-menu-more-actions"]').should('be.visible').click();
-        cy.get('[data-testid="context-menu-delete-row"]').should('be.visible').click();
+        // Use scrollIntoView and force click to handle overflow issues with wide tables
+        cy.get('[data-testid="context-menu-more-actions"]', {timeout: 5000})
+            .scrollIntoView()
+            .should('exist')
+            .click({force: true});
+        cy.get('[data-testid="context-menu-delete-row"]', {timeout: 5000})
+            .scrollIntoView()
+            .should('exist')
+            .click({force: true});
 
         // Wait for the row to be removed by checking the row count
         // Use a timeout to handle async deletion
@@ -751,7 +757,11 @@ Cypress.Commands.add("updateRow", (rowIndex, columnIndex, text, cancel = true) =
     cy.openContextMenu(rowIndex);
 
     // Wait for the menu to be visible, then click the "Edit row" item
-    cy.get('[data-testid="context-menu-edit-row"]', {timeout: 5000}).should('be.visible').click();
+    // Use scrollIntoView and force click to handle overflow issues with wide tables
+    cy.get('[data-testid="context-menu-edit-row"]', {timeout: 5000})
+        .scrollIntoView()
+        .should('exist')
+        .click({force: true});
 
     // Try to find the standard editable field first
     cy.get('body').then(($body) => {
@@ -1081,8 +1091,11 @@ Cypress.Commands.add('selectMockData', () => {
     cy.get('table thead tr.cursor-context-menu').first().rightclick({ force: true });
     // Wait for context menu to appear
     cy.wait(200);
-    // Click the "Mock Data" item using its stable test ID
-    cy.get('[data-testid="context-menu-mock-data"]').should('be.visible').click();
+    // Click the "Mock Data" item using scrollIntoView and force click to handle overflow issues
+    cy.get('[data-testid="context-menu-mock-data"]', {timeout: 5000})
+        .scrollIntoView()
+        .should('exist')
+        .click({force: true});
 });
 
 // Query History Commands
