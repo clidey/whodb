@@ -14,9 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Screenshot Environment Setup and Test Runner
-# This script sets up a dedicated environment for generating screenshots
-# for documentation and visual testing purposes.
 
 set -e
 
@@ -199,7 +196,7 @@ fi
 echo "   Using browser: $BROWSER"
 echo "   Test spec: cypress/e2e/postgres-screenshots.cy.js"
 
-NODE_ENV=test npx cypress run \
+NODE_ENV=test pnpx cypress run \
     --browser "$BROWSER" \
     --spec "cypress/e2e/postgres-screenshots.cy.js" \
     --config video=false

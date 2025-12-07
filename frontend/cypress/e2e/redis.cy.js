@@ -15,8 +15,7 @@
  */
 
 describe('Redis E2E test', () => {
-    const isDocker = Cypress.env('isDocker');
-    const dbHost = isDocker ? 'e2e_redis' : 'localhost';
+    const dbHost = 'localhost';
     const dbPassword = 'password';
 
 

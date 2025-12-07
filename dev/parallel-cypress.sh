@@ -115,10 +115,9 @@ for db in "${DATABASES[@]}"; do
         # Run all feature tests for this database
         CYPRESS_database="$db" \
         CYPRESS_category="${DB_CATEGORIES[$db]}" \
-        CYPRESS_isDocker="true" \
         CYPRESS_retries__runMode=2 \
         CYPRESS_retries__openMode=0 \
-        NODE_ENV=test npx cypress run \
+        NODE_ENV=test pnpx cypress run \
             --spec "cypress/e2e/features/**/*.cy.js" \
             --browser chromium \
             > "cypress/logs/$db.log" 2>&1 &

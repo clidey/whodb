@@ -15,8 +15,7 @@
  */
 
 describe('Postgres Screenshot Generation', () => {
-  const isDocker = Cypress.env('isDocker');
-  const dbHost = isDocker ? 'screenshot_postgres' : 'localhost';
+  const dbHost = 'localhost';
   const dbUser = 'user';
   const dbPassword = 'jio53$*(@nfe)';
   const screenshotDir = 'postgres';

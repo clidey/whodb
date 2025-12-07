@@ -77,11 +77,8 @@ export function getDatabaseId(dbConfig) {
  * @param {Object} dbConfig - Database configuration
  */
 export function loginToDatabase(dbConfig) {
-    const isDocker = Cypress.env('isDocker');
-    const rawHost = isDocker ? dbConfig.connection.dockerHost : dbConfig.connection.host;
-
     // Convert null to undefined for login command (it has special handling for undefined)
-    const host = rawHost ?? undefined;
+    const host = dbConfig.connection.host ?? undefined;
     const user = dbConfig.connection.user ?? undefined;
     const password = dbConfig.connection.password ?? undefined;
     const database = dbConfig.connection.database ?? undefined;

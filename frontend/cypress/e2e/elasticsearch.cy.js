@@ -15,8 +15,7 @@
  */
 
 describe('ElasticSearch E2E test', () => {
-    const isDocker = Cypress.env('isDocker');
-    const dbHost = isDocker ? 'e2e_elasticsearch' : 'localhost';
+    const dbHost = 'localhost';
     const password = 'pgmio430fe$$#@@';
     const username = 'elastic';
 

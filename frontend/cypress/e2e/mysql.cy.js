@@ -15,8 +15,7 @@
  */
 
 describe('MySQL E2E test', () => {
-    const isDocker = Cypress.env('isDocker');
-    const dbHost = isDocker ? 'e2e_mysql' : 'localhost';
+    const dbHost = 'localhost';
     const dbUser = 'user';
     const dbPassword = 'password';
 

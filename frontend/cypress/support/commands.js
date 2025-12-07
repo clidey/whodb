@@ -89,7 +89,18 @@ Cypress.Commands.add('login', (databaseType, hostname, username, password, datab
         }
     }
 
+    // Intercept login API call right before clicking to avoid catching other requests
+    cy.intercept('POST', '**/api/query').as('loginQuery');
+
     cy.get('[data-testid="login-button"]').click();
+
+    // Wait for the login API response (Oracle can be slow to connect)
+    cy.wait('@loginQuery', {timeout: 60000}).then((interception) => {
+        // Log if there was an error in the response for debugging
+        if (interception.response?.body?.errors) {
+            cy.log('Login API returned errors:', JSON.stringify(interception.response.body.errors));
+        }
+    });
 
     // Wait for successful login - sidebar should appear after navigation
     cy.get('[data-testid="sidebar-database"], [data-testid="sidebar-schema"]', {timeout: 30000})

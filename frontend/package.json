@@ -71,9 +71,9 @@
     "_test:ee:cleanup": "pkill -f 'vite --port 3000' || true; bash ../dev/cleanup-e2e.sh ee",
     "_cypress:ce:open": "NODE_ENV=test pnpm cypress open",
     "_cypress:ee:open": "NODE_ENV=test pnpm cypress open",
-    "_cypress:ce:run": "NODE_ENV=test npx cypress run --browser chromium",
-    "_cypress:ee:run": "NODE_ENV=test npx cypress run --browser chromium",
-    "_cypress:run:chromium": "NODE_ENV=test npx cypress run --browser chromium",
+    "_cypress:ce:run": "NODE_ENV=test pnpx cypress run --browser chromium",
+    "_cypress:ee:run": "NODE_ENV=test pnpx cypress run --browser chromium",
+    "_cypress:run:chromium": "NODE_ENV=test pnpx cypress run --browser chromium",
     "# Coverage and code generation utilities": "",
     "view:coverage": "nyc report --reporter=text-summary",
     "view:coverage:ce": "nyc report --reporter=text-summary",
@@ -83,9 +83,9 @@
     "coverage:clean": "rm -rf .nyc_output coverage",
     "coverage:clean:all": "bash ../dev/clean-coverage.sh",
     "view:coverage:backend": "cd ../core && go tool cover -html=coverage.out",
-    "generate": "npx graphql-codegen",
-    "generate:ce": "npx graphql-codegen --config codegen.ce.yml",
-    "generate:ee": "npx graphql-codegen --config codegen.ee.yml"
+    "generate": "pnpx graphql-codegen",
+    "generate:ce": "pnpx graphql-codegen --config codegen.ce.yml",
+    "generate:ee": "pnpx graphql-codegen --config codegen.ee.yml"
   },
   "browserslist": {
     "production": [

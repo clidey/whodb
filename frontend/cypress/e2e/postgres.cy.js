@@ -15,8 +15,7 @@
  */
 
 describe('Postgres E2E test', () => {
-  const isDocker = Cypress.env('isDocker');
-  const dbHost = isDocker ? 'e2e_postgres' : 'localhost';
+  const dbHost = 'localhost';
   const dbUser = 'user';
   const dbPassword = 'jio53$*(@nfe)';
 

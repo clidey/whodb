@@ -15,8 +15,7 @@
  */
 
 describe('MongoDB E2E test', () => {
-    const isDocker = Cypress.env('isDocker');
-    const dbHost = isDocker ? 'e2e_mongo' : 'localhost';
+    const dbHost = 'localhost';
     const dbUser = 'user';
     const dbPassword = 'password';
     const dbName = 'test_db';
