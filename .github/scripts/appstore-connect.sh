@@ -101,6 +101,7 @@ api_request() {
     local url="${API_BASE}${endpoint}"
     local curl_args=(
         -s
+        -g
         --fail-with-body
         -X "$method"
         -H "Authorization: Bearer $JWT_TOKEN"
