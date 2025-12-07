@@ -83,37 +83,34 @@ describe('Scratchpad', () => {
                 }
             });
 
-            // Skip UPDATE tests for ClickHouse
-            if (db.type !== 'ClickHouse') {
-                it('executes UPDATE query', () => {
-                    cy.goto('scratchpad');
+            it('executes UPDATE query', () => {
+                cy.goto('scratchpad');
 
-                    // Update
-                    const updateQuery = getSqlQuery(db, 'updateUser');
-                    cy.writeCode(0, updateQuery);
-                    cy.runCode(0);
+                // Update
+                const updateQuery = getSqlQuery(db, 'updateUser');
+                cy.writeCode(0, updateQuery);
+                cy.runCode(0);
 
-                    cy.getCellActionOutput(0).should('contain', 'Action Executed');
+                cy.getCellActionOutput(0).should('contain', 'Action Executed');
 
-                    // Verify
-                    cy.addCell(0);
-                    const selectQuery = getSqlQuery(db, 'selectUserById');
-                    cy.writeCode(1, selectQuery);
-                    cy.runCode(1);
+                // Verify
+                cy.addCell(0);
+                const selectQuery = getSqlQuery(db, 'selectUserById');
+                cy.writeCode(1, selectQuery);
+                cy.runCode(1);
 
-                    cy.getCellQueryOutput(1).then(({rows}) => {
-                        expect(rows[0]).to.include(expectedUpdatedValue);
-                    });
-
-                    // Revert
-                    cy.addCell(1);
-                    const revertQuery = getSqlQuery(db, 'revertUser');
-                    cy.writeCode(2, revertQuery);
-                    cy.runCode(2);
-
-                    cy.getCellActionOutput(2).should('contain', 'Action Executed');
+                cy.getCellQueryOutput(1).then(({rows}) => {
+                    expect(rows[0]).to.include(expectedUpdatedValue);
                 });
-            }
+
+                // Revert
+                cy.addCell(1);
+                const revertQuery = getSqlQuery(db, 'revertUser');
+                cy.writeCode(2, revertQuery);
+                cy.runCode(2);
+
+                cy.getCellActionOutput(2).should('contain', 'Action Executed');
+            });
         });
 
         describe('Cell Management', () => {

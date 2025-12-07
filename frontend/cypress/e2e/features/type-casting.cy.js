@@ -27,11 +27,6 @@ describe('Type Casting', () => {
 
     // SQL Databases only - tests numeric type handling
     forEachDatabase('sql', (db) => {
-        // Skip ClickHouse - doesn't support INSERT in the same way
-        if (db.type === 'ClickHouse') {
-            return;
-        }
-
         const testTable = db.testTable || {};
         const typeCastingTable = testTable.typeCastingTable || 'test_casting';
         const tableConfig = getTableConfig(db, typeCastingTable);

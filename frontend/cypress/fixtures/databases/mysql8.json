@@ -3,6 +3,19 @@
   "uiType": "MySQL",
   "category": "sql",
   "id": "mysql8",
+  "testTable": {
+    "name": "users",
+    "identifierField": "username",
+    "identifierColIndex": 1,
+    "idField": "id",
+    "firstId": "1",
+    "testValues": {
+      "original": "john_doe",
+      "modified": "john_doe1",
+      "rowIndex": 0
+    },
+    "searchTerm": "john"
+  },
   "connection": {
     "host": "localhost",
     "port": 3308,
@@ -27,10 +40,11 @@
     "export": true,
     "scratchpad": true,
     "mockData": true,
-    "chat": false,
+    "chat": true,
     "whereConditions": true,
     "queryHistory": true
   },
+  "featureNotes": {},
   "expectedTables": [
     "order_items",
     "order_summary",

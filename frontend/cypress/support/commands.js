@@ -1243,8 +1243,9 @@ Cypress.Commands.add('disableAutocomplete', () => {
 // Chat Commands
 // ============================================================================
 
-// Global variable to store chat responses for the intercept
-let nextChatResponse = null;
+// Test-scoped chat response storage using Cypress.env (cleared between tests)
+// Using Cypress.env instead of module-level global variable for test isolation
+const CHAT_RESPONSE_KEY = '__chatMockResponses__';
 
 /**
  * Sets up a mock AI provider for chat testing
@@ -1255,8 +1256,8 @@ let nextChatResponse = null;
  * @param {string} options.providerId - Optional provider ID
  */
 Cypress.Commands.add('setupChatMock', ({ modelType = 'Ollama', model = 'llama3.1', providerId = 'test-provider' } = {}) => {
-    // Reset chat response
-    nextChatResponse = null;
+    // Reset chat response using test-scoped storage
+    Cypress.env(CHAT_RESPONSE_KEY, null);
 
     // Single comprehensive intercept that handles all chat-related GraphQL operations
     // Note: The actual endpoint is /api/query, not /graphql
@@ -1291,10 +1292,11 @@ Cypress.Commands.add('setupChatMock', ({ modelType = 'Ollama', model = 'llama3.1
         if (operation === 'GetAIChat') {
             console.log('[CYPRESS] Intercepted GetAIChat');
             console.log('[CYPRESS] Request body:', JSON.stringify(req.body, null, 2));
-            console.log('[CYPRESS] nextChatResponse:', JSON.stringify(nextChatResponse, null, 2));
 
-            // Use the stored response from the global variable
-            const responseData = nextChatResponse || [];
+            // Use the stored response from test-scoped storage
+            const storedResponse = Cypress.env(CHAT_RESPONSE_KEY);
+            console.log('[CYPRESS] storedResponse:', JSON.stringify(storedResponse, null, 2));
+            const responseData = storedResponse || [];
 
             if (responseData.length === 0) {
                 console.warn('[CYPRESS] WARNING: No chat response configured! Sending empty array.');
@@ -1313,9 +1315,9 @@ Cypress.Commands.add('setupChatMock', ({ modelType = 'Ollama', model = 'llama3.1
 
             console.log('[CYPRESS] Mapped chat messages:', JSON.stringify(chatMessages, null, 2));
 
-            // Clear the response BEFORE replying
+            // Clear the response BEFORE replying using test-scoped storage
             const responseCopy = [...chatMessages];
-            nextChatResponse = null;
+            Cypress.env(CHAT_RESPONSE_KEY, null);
 
             // Reply immediately with GraphQL format
             req.reply({
@@ -1349,10 +1351,10 @@ Cypress.Commands.add('setupChatMock', ({ modelType = 'Ollama', model = 'llama3.1
  * - result: Optional result object with Columns and Rows for SQL queries
  */
 Cypress.Commands.add('mockChatResponse', (responses) => {
-    // Store the responses in the global variable for the intercept to use
+    // Store the responses using test-scoped storage for the intercept to use
     console.log('[CYPRESS] mockChatResponse called with:', responses);
-    nextChatResponse = responses;
-    console.log('[CYPRESS] nextChatResponse now set to:', nextChatResponse);
+    Cypress.env(CHAT_RESPONSE_KEY, responses);
+    console.log('[CYPRESS] chatMockResponses now set to:', Cypress.env(CHAT_RESPONSE_KEY));
 });
 
 /**

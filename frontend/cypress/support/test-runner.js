@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import {validateAllFixtures} from './helpers/fixture-validator';
+
 // CE Database configurations - loaded from fixtures
 const ceDatabaseConfigs = {
     postgres: require('../fixtures/databases/postgres.json'),
@@ -26,6 +28,12 @@ const ceDatabaseConfigs = {
     elasticsearch: require('../fixtures/databases/elasticsearch.json'),
     clickhouse: require('../fixtures/databases/clickhouse.json'),
 };
+
+// Validate CE fixtures on module load
+const ceValidation = validateAllFixtures(ceDatabaseConfigs);
+if (!ceValidation.allValid) {
+    console.error('CE fixture validation failed - some tests may be skipped');
+}
 
 // Additional database configurations - dynamically loaded at build time using webpack's require.context
 // This scans for any JSON files without knowing specific database names

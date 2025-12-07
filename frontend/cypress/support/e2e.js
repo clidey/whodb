@@ -34,51 +34,13 @@ import './commands'
 
 import '@cypress/code-coverage/support'
 
+// Import shared helpers
+import {clearBrowserState, disableAnimations} from './helpers/animation'
+
 // Clear browser state before each test to ensure isolation
 beforeEach(() => {
-    // Clear cookies for the current domain
-    cy.clearCookies();
-
-    // Clear all localStorage
-    cy.window().then((win) => {
-        win.localStorage.clear();
-    });
-
-    // Clear all sessionStorage
-    cy.window().then((win) => {
-        win.sessionStorage.clear();
-    });
-
-    // Clear IndexedDB if used (common for state persistence)
-    cy.window().then((win) => {
-        if (win.indexedDB && win.indexedDB.databases) {
-            win.indexedDB.databases().then(databases => {
-                databases.forEach(db => {
-                    win.indexedDB.deleteDatabase(db.name);
-                });
-            });
-        }
-    });
+    clearBrowserState();
 
     // Inject CSS to disable animations on every page visit
-    cy.on('window:before:load', (win) => {
-        const style = win.document.createElement('style');
-        style.innerHTML = `
-            *,
-            *::before,
-            *::after {
-                -moz-animation: none !important;
-                -moz-transition: none !important;
-                -webkit-animation: none !important;
-                -webkit-transition: none !important;
-                animation: none !important;
-                transition: none !important;
-                animation-duration: 0ms !important;
-                animation-delay: 0ms !important;
-                transition-duration: 0ms !important;
-                transition-delay: 0ms !important;
-            }
-        `;
-        win.document.head.appendChild(style);
-    });
+    cy.on('window:before:load', disableAnimations);
 });

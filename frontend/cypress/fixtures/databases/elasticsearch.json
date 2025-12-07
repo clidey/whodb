@@ -1,6 +1,16 @@
 {
   "type": "ElasticSearch",
   "category": "document",
+  "testTable": {
+    "name": "users",
+    "identifierField": "username",
+    "testValues": {
+      "original": "jane_smith",
+      "modified": "jane_smith1",
+      "rowIndex": 1
+    },
+    "searchTerm": "john"
+  },
   "connection": {
     "host": "localhost",
     "port": 9200,
@@ -15,9 +25,15 @@
     "export": true,
     "scratchpad": false,
     "mockData": false,
-    "chat": false,
+    "chat": true,
     "whereConditions": true,
     "queryHistory": false
+  },
+  "featureNotes": {
+    "graph": "Graph view not applicable for Elasticsearch indices - no foreign key relationships",
+    "scratchpad": "Scratchpad requires SQL execution which Elasticsearch does not support",
+    "mockData": "Mock data generation not implemented for document databases",
+    "queryHistory": "Query history not supported for document databases"
   },
   "whereOperators": {
     "equals": "term",
