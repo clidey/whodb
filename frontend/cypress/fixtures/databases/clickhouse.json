@@ -3,7 +3,6 @@
   "category": "sql",
   "connection": {
     "host": "localhost",
-    "dockerHost": "e2e_clickhouse",
     "port": 8123,
     "user": "user",
     "password": "password",

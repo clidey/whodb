@@ -24,6 +24,9 @@ describe('Graph Visualization', () => {
             return;
         }
 
+        const testTable = db.testTable || {name: 'users'};
+        const tableName = testTable.name;
+
         it('displays graph with expected topology', () => {
             cy.goto('graph');
 
@@ -48,10 +51,10 @@ describe('Graph Visualization', () => {
             cy.wait(1000); // Wait for layout animation
 
             // Wait for the specific node to exist
-            cy.get('[data-testid="rf__node-users"]', {timeout: 10000}).should('exist');
+            cy.get(`[data-testid="rf__node-${tableName}"]`, {timeout: 10000}).should('exist');
 
-            cy.getGraphNode('users').then(fields => {
-                const tableConfig = getTableConfig(db, 'users');
+            cy.getGraphNode(tableName).then(fields => {
+                const tableConfig = getTableConfig(db, tableName);
                 if (tableConfig && tableConfig.metadata) {
                     // Graph nodes only show metadata (Type, Size), not column types
                     if (tableConfig.metadata.type) {
@@ -72,7 +75,7 @@ describe('Graph Visualization', () => {
             cy.get('.react-flow__node', {timeout: 10000}).should('be.visible');
             cy.get('[data-testid="graph-layout-button"]').click();
 
-            cy.get('[data-testid="rf__node-users"] [data-testid="data-button"]').click({force: true});
+            cy.get(`[data-testid="rf__node-${tableName}"] [data-testid="data-button"]`).click({force: true});
 
             cy.url().should('include', '/storage-unit/explore');
             cy.contains('Total Count:').should('be.visible');

@@ -24,9 +24,12 @@ describe('Data Export', () => {
             return;
         }
 
+        const testTable = db.testTable || {name: 'users'};
+        const tableName = testTable.name;
+
         describe('Export All', () => {
             it('exports table data as CSV with default comma delimiter', () => {
-                cy.data('users');
+                cy.data(tableName);
                 cy.intercept('POST', '/api/export').as('export');
 
                 // Use Export All button
@@ -57,7 +60,7 @@ describe('Data Export', () => {
             });
 
             it('exports table data as Excel', () => {
-                cy.data('users');
+                cy.data(tableName);
                 cy.intercept('POST', '/api/export').as('export');
 
                 cy.contains('button', 'Export All').click();
@@ -93,7 +96,7 @@ describe('Data Export', () => {
 
         describe('Export Selected Rows', () => {
             it('exports selected rows with pipe delimiter', () => {
-                cy.data('users');
+                cy.data(tableName);
                 cy.intercept('POST', '/api/export').as('export');
 
                 // Wait for table to stabilize after data load

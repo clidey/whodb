@@ -3,7 +3,6 @@
   "category": "sql",
   "connection": {
     "host": "localhost",
-    "dockerHost": "e2e_mariadb",
     "port": 3307,
     "user": "user",
     "password": "password",

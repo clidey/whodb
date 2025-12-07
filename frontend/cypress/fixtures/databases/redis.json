@@ -3,7 +3,6 @@
   "category": "keyvalue",
   "connection": {
     "host": "localhost",
-    "dockerHost": "e2e_redis",
     "port": 6379,
     "user": null,
     "password": "password",

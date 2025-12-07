@@ -5,7 +5,6 @@
   "id": "mysql8",
   "connection": {
     "host": "localhost",
-    "dockerHost": "e2e_mysql_842",
     "port": 3308,
     "user": "user",
     "password": "password",

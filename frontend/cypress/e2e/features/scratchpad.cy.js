@@ -159,8 +159,11 @@ describe('Scratchpad', () => {
         });
 
         describe('Embedded Scratchpad Drawer', () => {
+            const testTable = db.testTable || {name: 'users'};
+            const tableName = testTable.name;
+
             it('opens from data view and runs query', () => {
-                cy.data('users');
+                cy.data(tableName);
 
                 // Open embedded scratchpad drawer
                 cy.get('[data-testid="embedded-scratchpad-button"]').click();
@@ -170,15 +173,13 @@ describe('Scratchpad', () => {
                 cy.get('[data-testid="code-editor"]').should('exist');
                 const schemaPrefix = db.sql?.schemaPrefix || '';
                 cy.get('[data-testid="code-editor"]').should('contain', 'SELECT *');
-                cy.get('[data-testid="code-editor"]').should('contain', `FROM ${schemaPrefix}users`);
+                cy.get('[data-testid="code-editor"]').should('contain', `FROM ${schemaPrefix}${tableName}`);
 
                 // Run the query
                 cy.get('[data-testid="run-submit-button"]').filter(':contains("Run")').first().click();
 
                 // Verify results appear in the drawer
                 cy.get('[role="dialog"] table', {timeout: 5000}).should('be.visible');
-                cy.get('[role="dialog"] table thead th').should('contain', 'id');
-                cy.get('[role="dialog"] table thead th').should('contain', 'username');
                 cy.get('[role="dialog"] table tbody tr').should('have.length.at.least', 1);
 
                 // Close the drawer

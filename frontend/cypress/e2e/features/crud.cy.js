@@ -21,37 +21,52 @@ describe('CRUD Operations', () => {
 
     // SQL Databases - Edit and Add
     forEachDatabase('sql', (db) => {
+        // Use testTable config if available, otherwise default to users table
+        const testTable = db.testTable || {
+            name: 'users',
+            identifierField: 'username',
+            identifierColIndex: 1,
+            testValues: {
+                original: 'john_doe',
+                modified: 'john_doe1',
+                rowIndex: 0
+            }
+        };
+        const tableName = testTable.name;
+        const colIndex = testTable.identifierColIndex;
+        const testValues = testTable.testValues;
+
         describe('Edit Row', () => {
             it('edits a row and saves changes', () => {
-                cy.data('users');
+                cy.data(tableName);
                 cy.sortBy(0);
 
-                // Edit first row
-                cy.updateRow(0, 1, 'john_doe1', false);
+                // Edit row
+                cy.updateRow(testValues.rowIndex, colIndex, testValues.modified, false);
 
                 // Verify change
                 cy.getTableData().then(({rows}) => {
-                    expect(rows[0][2]).to.equal('john_doe1');
+                    expect(rows[testValues.rowIndex][colIndex + 1]).to.equal(testValues.modified);
                 });
 
                 // Revert
-                cy.updateRow(0, 1, 'john_doe', false);
+                cy.updateRow(testValues.rowIndex, colIndex, testValues.original, false);
 
                 cy.getTableData().then(({rows}) => {
-                    expect(rows[0][2]).to.equal('john_doe');
+                    expect(rows[testValues.rowIndex][colIndex + 1]).to.equal(testValues.original);
                 });
             });
 
             it('cancels edit without saving', () => {
-                cy.data('users');
+                cy.data(tableName);
                 cy.sortBy(0);
 
                 // Edit and cancel
-                cy.updateRow(0, 1, 'temp_value', true); // true = cancel
+                cy.updateRow(testValues.rowIndex, colIndex, 'temp_value', true); // true = cancel
 
                 // Verify no change
                 cy.getTableData().then(({rows}) => {
-                    expect(rows[0][2]).to.equal('john_doe');
+                    expect(rows[testValues.rowIndex][colIndex + 1]).to.equal(testValues.original);
                 });
             });
         });
@@ -63,23 +78,26 @@ describe('CRUD Operations', () => {
             }
 
             it('adds a new row', () => {
-                cy.data('users');
+                cy.data(tableName);
 
-                const tableConfig = getTableConfig(db, 'users');
+                const tableConfig = getTableConfig(db, tableName);
                 const newRowData = tableConfig?.testData?.newRow;
 
                 if (newRowData) {
                     cy.addRow(newRowData);
 
+                    // Get the identifier field value from new row data
+                    const identifierValue = newRowData[testTable.identifierField];
+
                     // Verify row was added
                     cy.getTableData().then(({rows}) => {
-                        const addedRow = rows.find(r => r[2] === newRowData.username);
+                        const addedRow = rows.find(r => r[colIndex + 1] === identifierValue);
                         expect(addedRow).to.exist;
                     });
 
                     // Clean up - delete the added row
                     cy.getTableData().then(({rows}) => {
-                        const rowIndex = rows.findIndex(r => r[2] === newRowData.username);
+                        const rowIndex = rows.findIndex(r => r[colIndex + 1] === identifierValue);
                         if (rowIndex >= 0) {
                             cy.deleteRow(rowIndex);
                         }
@@ -95,18 +113,21 @@ describe('CRUD Operations', () => {
             }
 
             it('deletes a row and verifies removal', () => {
-                cy.data('users');
+                cy.data(tableName);
 
                 // First add a row to delete
-                const tableConfig = getTableConfig(db, 'users');
+                const tableConfig = getTableConfig(db, tableName);
                 const newRowData = tableConfig?.testData?.newRow;
 
                 if (newRowData) {
                     cy.addRow(newRowData);
 
+                    // Get the identifier field value from new row data
+                    const identifierValue = newRowData[testTable.identifierField];
+
                     cy.getTableData().then(({rows}) => {
                         const initialCount = rows.length;
-                        const rowIndex = rows.findIndex(r => r[2] === newRowData.username);
+                        const rowIndex = rows.findIndex(r => r[colIndex + 1] === identifierValue);
 
                         if (rowIndex >= 0) {
                             cy.deleteRow(rowIndex);

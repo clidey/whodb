@@ -3,7 +3,6 @@
   "category": "sql",
   "connection": {
     "host": "localhost",
-    "dockerHost": "e2e_postgres",
     "port": 5432,
     "user": "user",
     "password": "jio53$*(@nfe)",

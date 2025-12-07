@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-// Database configurations - loaded from fixtures
-const databaseConfigs = {
+// CE Database configurations - loaded from fixtures
+const ceDatabaseConfigs = {
     postgres: require('../fixtures/databases/postgres.json'),
     mysql: require('../fixtures/databases/mysql.json'),
     mysql8: require('../fixtures/databases/mysql8.json'),
@@ -26,6 +26,40 @@ const databaseConfigs = {
     elasticsearch: require('../fixtures/databases/elasticsearch.json'),
     clickhouse: require('../fixtures/databases/clickhouse.json'),
 };
+
+// EE Database configurations - loaded dynamically if available
+let eeDatabaseConfigs = {};
+try {
+    // These will only exist when running from EE context
+    // Path: frontend/cypress/support/ -> ee/frontend/cypress/fixtures/databases/
+    eeDatabaseConfigs = {
+        dynamodb: require('../../../ee/frontend/cypress/fixtures/databases/dynamodb.json'),
+        mssql: require('../../../ee/frontend/cypress/fixtures/databases/mssql.json'),
+        oracle: require('../../../ee/frontend/cypress/fixtures/databases/oracle.json'),
+    };
+    console.log('[test-runner] Loaded EE databases:', Object.keys(eeDatabaseConfigs));
+} catch (e) {
+    console.log('[test-runner] EE fixtures not available:', e.message);
+}
+
+// Active database configs - CE + EE (if available)
+let databaseConfigs = {...ceDatabaseConfigs, ...eeDatabaseConfigs};
+
+/**
+ * Register additional database configurations (used by EE to add EE databases)
+ * @param {Object} additionalConfigs - Map of database configs to add
+ */
+export function registerDatabases(additionalConfigs) {
+    databaseConfigs = {...databaseConfigs, ...additionalConfigs};
+}
+
+/**
+ * Get the current database configurations
+ * @returns {Object} Map of all registered database configs
+ */
+export function getDatabaseConfigs() {
+    return databaseConfigs;
+}
 
 /**
  * Get database configuration by name
@@ -122,6 +156,9 @@ export function forEachDatabase(categoryFilter, testFn, options = {}) {
     // Get target database from env (if running single database)
     const targetDb = Cypress.env('database');
     const targetCategory = Cypress.env('category');
+
+    // Debug: log available databases
+    console.log(`[forEachDatabase] category=${categoryFilter}, targetDb=${targetDb}, available=${Object.keys(databaseConfigs).join(',')}`);
 
     // Get databases matching category filter
     let databases = getDatabasesByCategory(categoryFilter);

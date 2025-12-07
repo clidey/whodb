@@ -3,7 +3,6 @@
   "category": "document",
   "connection": {
     "host": "localhost",
-    "dockerHost": "e2e_mongo",
     "port": 27017,
     "user": "user",
     "password": "password",

@@ -45,12 +45,24 @@ describe('Where Conditions', () => {
             return;
         }
 
+        const testTable = db.testTable || {
+            name: 'users',
+            idField: 'id',
+            identifierField: 'username',
+            firstName: 'john_doe',
+            identifierColIndex: 1
+        };
+        const tableName = testTable.name;
+        const idField = testTable.idField || 'id';
+        const nameField = testTable.identifierField || 'username';
+        const firstName = testTable.firstName || 'john_doe';
+        const colIndex = testTable.identifierColIndex || 1;
         const eq = getOperator(db, 'equals');
 
         it('applies where condition and filters data', () => {
-            cy.data('users');
+            cy.data(tableName);
 
-            cy.whereTable([['id', eq, '3']]);
+            cy.whereTable([[idField, eq, '3']]);
             cy.submitTable();
 
             cy.getTableData().then(({rows}) => {
@@ -69,11 +81,11 @@ describe('Where Conditions', () => {
 
         it('applies multiple conditions', () => {
             cy.setWhereConditionMode('sheet');
-            cy.data('users');
+            cy.data(tableName);
 
             cy.whereTable([
-                ['id', eq, '1'],
-                ['username', eq, 'john_doe'],
+                [idField, eq, '1'],
+                [nameField, eq, firstName],
             ]);
             cy.submitTable();
 
@@ -81,7 +93,7 @@ describe('Where Conditions', () => {
 
             cy.getTableData().then(({rows}) => {
                 expect(rows.length).to.equal(1);
-                expect(rows[0][2]).to.equal('john_doe');
+                expect(rows[0][colIndex + 1]).to.equal(firstName);
             });
 
             cy.clearWhereConditions();
@@ -89,9 +101,9 @@ describe('Where Conditions', () => {
         });
 
         it('edits existing condition', () => {
-            cy.data('users');
+            cy.data(tableName);
 
-            cy.whereTable([['id', eq, '1']]);
+            cy.whereTable([[idField, eq, '1']]);
             cy.submitTable();
 
             cy.getWhereConditionMode().then(mode => {
@@ -101,7 +113,7 @@ describe('Where Conditions', () => {
                     cy.get('[data-testid="update-condition-button"]').click();
                     cy.submitTable();
 
-                    cy.verifyCondition(0, `id ${eq} 2`);
+                    cy.verifyCondition(0, `${idField} ${eq} 2`);
 
                     cy.getTableData().then(({rows}) => {
                         expect(rows[0][1]).to.equal('2');
@@ -114,11 +126,11 @@ describe('Where Conditions', () => {
         });
 
         it('removes individual condition', () => {
-            cy.data('users');
+            cy.data(tableName);
 
             cy.whereTable([
-                ['id', eq, '1'],
-                ['username', eq, 'john_doe'],
+                [idField, eq, '1'],
+                [nameField, eq, firstName],
             ]);
             cy.submitTable();
 
@@ -134,7 +146,7 @@ describe('Where Conditions', () => {
         });
 
         it('shows more conditions button when exceeding visible limit', () => {
-            cy.data('users');
+            cy.data(tableName);
 
             // Clear any existing conditions first
             cy.clearWhereConditions();
@@ -144,8 +156,8 @@ describe('Where Conditions', () => {
 
             // Add 3 conditions - should show "+1 more" button
             cy.whereTable([
-                ['id', eq, '3'],
-                ['username', eq, 'admin_user'],
+                [idField, eq, '3'],
+                [nameField, eq, 'admin_user'],
                 ['email', neq, 'jane@example.com'],
             ]);
 
@@ -153,8 +165,8 @@ describe('Where Conditions', () => {
                 if (mode === 'popover') {
                     // Should show first 2 conditions as badges
                     cy.getConditionCount().should('equal', 3);
-                    cy.verifyCondition(0, `id ${eq} 3`);
-                    cy.verifyCondition(1, `username ${eq} admin_user`);
+                    cy.verifyCondition(0, `${idField} ${eq} 3`);
+                    cy.verifyCondition(1, `${nameField} ${eq} admin_user`);
 
                     // Check for more conditions button
                     cy.checkMoreConditionsButton('+1 more');
@@ -168,7 +180,7 @@ describe('Where Conditions', () => {
 
                     // After closing sheet, should have only 1 condition
                     cy.getConditionCount().should('equal', 1);
-                    cy.verifyCondition(0, `id ${eq} 3`);
+                    cy.verifyCondition(0, `${idField} ${eq} 3`);
                 } else {
                     // In sheet mode, just verify count
                     cy.getConditionCount().should('equal', 3);
@@ -177,7 +189,7 @@ describe('Where Conditions', () => {
 
             cy.submitTable();
             cy.getTableData().then(({rows}) => {
-                expect(rows[0][2]).to.equal('admin_user');
+                expect(rows[0][colIndex + 1]).to.equal('admin_user');
             });
 
             cy.clearWhereConditions();
@@ -185,9 +197,9 @@ describe('Where Conditions', () => {
         });
 
         it('cancels condition edit', () => {
-            cy.data('users');
+            cy.data(tableName);
 
-            cy.whereTable([['id', eq, '1']]);
+            cy.whereTable([[idField, eq, '1']]);
             cy.submitTable();
 
             cy.getWhereConditionMode().then(mode => {
@@ -197,7 +209,7 @@ describe('Where Conditions', () => {
                     cy.get('[data-testid="cancel-button"]').click();
 
                     // Condition should remain unchanged
-                    cy.verifyCondition(0, `id ${eq} 1`);
+                    cy.verifyCondition(0, `${idField} ${eq} 1`);
                 }
             });
 

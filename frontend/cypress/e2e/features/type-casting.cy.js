@@ -25,14 +25,16 @@ describe('Type Casting', () => {
             return;
         }
 
-        const tableConfig = getTableConfig(db, 'test_casting');
+        const testTable = db.testTable || {};
+        const typeCastingTable = testTable.typeCastingTable || 'test_casting';
+        const tableConfig = getTableConfig(db, typeCastingTable);
         if (!tableConfig || !tableConfig.testData || !tableConfig.testData.newRow) {
             return;
         }
 
         describe('Add Row Type Casting', () => {
             it('correctly casts string inputs to numeric types', () => {
-                cy.data('test_casting');
+                cy.data(typeCastingTable);
 
                 const newRow = tableConfig.testData.newRow;
 
@@ -62,7 +64,7 @@ describe('Type Casting', () => {
             });
 
             it('handles large bigint values', () => {
-                cy.data('test_casting');
+                cy.data(typeCastingTable);
 
                 const largeNumberRow = {
                     bigint_col: '5000000000',
@@ -92,7 +94,7 @@ describe('Type Casting', () => {
 
         describe('Edit Row Type Casting', () => {
             it('edits numeric values with type casting', () => {
-                cy.data('test_casting');
+                cy.data(typeCastingTable);
                 cy.sortBy(0);
 
                 // Edit bigint_col on second row
