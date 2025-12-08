@@ -68,12 +68,12 @@ ORDER BY id;
 
 -- Test Casting Table (for type casting tests)
 CREATE TABLE IF NOT EXISTS test_db.test_casting (
-    id UInt32,
-    bigint_col Int64,
-    integer_col Int32,
-    smallint_col Int16,
-    numeric_col Float64,
-    description String
+    id INT,
+    bigint_col BIGINT,
+    integer_col INT,
+    smallint_col SMALLINT,
+    numeric_col DOUBLE,
+    description TEXT
 ) ENGINE = MergeTree()
 ORDER BY id;
 
@@ -153,6 +153,15 @@ INSERT INTO test_db.order_items (id, order_id, product_id, quantity, price_at_pu
 INSERT INTO test_db.payments (id, order_id, payment_date, amount, payment_method) VALUES 
 (1, 1, now(), 2000.00, 'credit_card');
 
-INSERT INTO test_db.payments (id, order_id, payment_date, amount, payment_method) VALUES 
+INSERT INTO test_db.payments (id, order_id, payment_date, amount, payment_method) VALUES
 (2, 2, now(), 150.00, 'paypal');
 
+-- Test Casting Data
+INSERT INTO test_db.test_casting (id, bigint_col, integer_col, smallint_col, numeric_col, description) VALUES
+(1, 9223372036854775807, 2147483647, 32767, 12345.67, 'Max values test');
+
+INSERT INTO test_db.test_casting (id, bigint_col, integer_col, smallint_col, numeric_col, description) VALUES
+(2, 1000000, 1000, 100, 99.99, 'Standard values');
+
+INSERT INTO test_db.test_casting (id, bigint_col, integer_col, smallint_col, numeric_col, description) VALUES
+(3, -1000000, -1000, -100, -99.99, 'Negative values');

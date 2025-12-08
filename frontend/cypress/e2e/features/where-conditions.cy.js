@@ -84,7 +84,10 @@ describe('Where Conditions', () => {
             });
         });
 
-        it('applies multiple conditions', () => {
+        // Skip multi-condition tests for databases where data may be affected by async mutations
+        const multiConditionSupported = hasFeature(db, 'multiConditionFilter') !== false;
+
+        (multiConditionSupported ? it : it.skip)('applies multiple conditions', () => {
             cy.setWhereConditionMode('sheet');
             cy.data(tableName);
 

@@ -83,8 +83,13 @@ describe('Scratchpad', () => {
                 }
             });
 
-            it('executes UPDATE query', () => {
+            // Skip UPDATE test for databases with async mutations (e.g., ClickHouse)
+            const updateSupported = hasFeature(db, 'scratchpadUpdate') !== false;
+
+            (updateSupported ? it : it.skip)('executes UPDATE query', () => {
                 cy.goto('scratchpad');
+
+                const mutationDelay = db.mutationDelay || 0;
 
                 // Update
                 const updateQuery = getSqlQuery(db, 'updateUser');
@@ -92,6 +97,11 @@ describe('Scratchpad', () => {
                 cy.runCode(0);
 
                 cy.getCellActionOutput(0).should('contain', 'Action Executed');
+
+                // Wait for async mutations (e.g., ClickHouse)
+                if (mutationDelay > 0) {
+                    cy.wait(mutationDelay);
+                }
 
                 // Verify
                 cy.addCell(0);

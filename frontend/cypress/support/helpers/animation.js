@@ -57,12 +57,14 @@ export function setupAnimationDisabling() {
 /**
  * Clears browser state for test isolation.
  * Clears cookies, localStorage, sessionStorage, and IndexedDB.
+ * Sets telemetry consent to 'denied' to prevent the consent banner from appearing.
  */
 export function clearBrowserState() {
     cy.clearCookies();
 
     cy.window().then((win) => {
         win.localStorage.clear();
+        win.localStorage.setItem('whodb.analytics.consent', 'denied');
     });
 
     cy.window().then((win) => {

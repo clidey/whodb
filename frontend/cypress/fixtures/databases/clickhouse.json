@@ -34,11 +34,16 @@
     "graph": true,
     "export": true,
     "scratchpad": true,
+    "scratchpadUpdate": true,
     "mockData": false,
     "chat": true,
     "whereConditions": true,
-    "queryHistory": true
+    "multiConditionFilter": true,
+    "queryHistory": true,
+    "crud": true,
+    "typeCasting": true
   },
+  "mutationDelay": 2000,
   "featureNotes": {
     "mockData": "Mock data generation not supported for ClickHouse MergeTree tables"
   },

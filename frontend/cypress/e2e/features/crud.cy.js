@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {forEachDatabase, getTableConfig} from '../../support/test-runner';
+import {forEachDatabase, getTableConfig, hasFeature} from '../../support/test-runner';
 import {createUpdatedDocument, parseDocument} from '../../support/categories/document';
 
 /**
@@ -38,14 +38,25 @@ describe('CRUD Operations', () => {
         const tableName = testTable.name;
         const colIndex = testTable.identifierColIndex;
         const testValues = testTable.testValues;
+        const mutationDelay = db.mutationDelay || 0;
+
+        // Skip Edit Row tests for databases with async mutations (e.g., ClickHouse)
+        const crudSupported = hasFeature(db, 'crud') !== false;
 
         describe('Edit Row', () => {
-            it('edits a row and saves changes', () => {
+            (crudSupported ? it : it.skip)('edits a row and saves changes', () => {
                 cy.data(tableName);
                 cy.sortBy(0);
 
                 // Edit row
                 cy.updateRow(testValues.rowIndex, colIndex, testValues.modified, false);
+
+                // Wait for async mutations (e.g., ClickHouse)
+                if (mutationDelay > 0) {
+                    cy.wait(mutationDelay);
+                    cy.data(tableName);
+                    cy.sortBy(0);
+                }
 
                 // Verify change
                 cy.getTableData().then(({rows}) => {
@@ -55,12 +66,19 @@ describe('CRUD Operations', () => {
                 // Revert
                 cy.updateRow(testValues.rowIndex, colIndex, testValues.original, false);
 
+                // Wait for async mutations
+                if (mutationDelay > 0) {
+                    cy.wait(mutationDelay);
+                    cy.data(tableName);
+                    cy.sortBy(0);
+                }
+
                 cy.getTableData().then(({rows}) => {
                     expect(rows[testValues.rowIndex][colIndex + 1]).to.equal(testValues.original);
                 });
             });
 
-            it('cancels edit without saving', () => {
+            (crudSupported ? it : it.skip)('cancels edit without saving', () => {
                 cy.data(tableName);
                 cy.sortBy(0);
 
@@ -97,6 +115,12 @@ describe('CRUD Operations', () => {
                 cy.addRow(newRowData);
 
                 const identifierValue = newRowData[testTable.identifierField];
+
+                // Wait for async mutations (e.g., ClickHouse)
+                if (mutationDelay > 0) {
+                    cy.wait(mutationDelay);
+                    cy.data(tableName);
+                }
 
                 // Verify row was added
                 cy.getTableData().then(({rows}) => {
@@ -136,6 +160,12 @@ describe('CRUD Operations', () => {
 
                 cy.addRow(newRowData);
 
+                // Wait for async mutations (e.g., ClickHouse)
+                if (mutationDelay > 0) {
+                    cy.wait(mutationDelay);
+                    cy.data(tableName);
+                }
+
                 const identifierValue = newRowData[testTable.identifierField];
 
                 cy.getTableData().then(({rows}) => {
@@ -144,6 +174,12 @@ describe('CRUD Operations', () => {
 
                     if (rowIndex >= 0) {
                         cy.deleteRow(rowIndex);
+
+                        // Wait for async mutations
+                        if (mutationDelay > 0) {
+                            cy.wait(mutationDelay);
+                            cy.data(tableName);
+                        }
 
                         cy.getTableData().then(({rows: newRows}) => {
                             expect(newRows.length).to.equal(initialCount - 1);
