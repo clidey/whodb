@@ -127,7 +127,7 @@ sleep 5
 echo ""
 echo "🚀 Starting backend test server..."
 cd "$PROJECT_ROOT/core"
-GOMAXPROCS=4 ENVIRONMENT=dev WHODB_DISABLE_MOCK_DATA_GENERATION='orders' \
+ENVIRONMENT=dev WHODB_DISABLE_MOCK_DATA_GENERATION='orders' \
     ./server.test -test.run=^TestMain$ &
 TEST_SERVER_PID=$!
 echo $TEST_SERVER_PID > "$PROJECT_ROOT/core/tmp/screenshot-server.pid"
