@@ -163,6 +163,18 @@ func (p *ClickHousePlugin) executeRawSQL(config *engine.PluginConfig, query stri
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
 		rows, err := db.Raw(query, params...).Rows()
 		if err != nil {
+			// ClickHouse mutations (ALTER TABLE UPDATE/DELETE, INSERT, etc.) execute successfully
+			// but the driver returns "driver: bad connection" when trying to read the non-existent result set.
+			// Verify the connection is still healthy with a simple query - if so, the mutation succeeded.
+			if err.Error() == "driver: bad connection" {
+				var result int
+				if db.Raw("SELECT 1").Scan(&result).Error == nil {
+					return &engine.GetRowsResult{
+						Columns: []engine.Column{},
+						Rows:    [][]string{},
+					}, nil
+				}
+			}
 			return nil, err
 		}
 		defer rows.Close()
