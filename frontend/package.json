@@ -111,6 +111,7 @@
     "@types/react-window": "1.8.8",
     "@types/uuid": "10.0.0",
     "@vitejs/plugin-react": "4.7.0",
+    "baseline-browser-mapping": "2.8.32",
     "cypress": "15.7.0",
     "nyc": "17.1.0",
     "typescript": "5.8.3",
