@@ -695,7 +695,17 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                     </Button>
                 </div>
                 <Sheet open={showAdd} onOpenChange={setShowAdd}>
-                    <SheetContent side="right" className="flex flex-col p-8">
+                    <SheetContent
+                        side="right"
+                        className="flex flex-col p-8"
+                        onKeyDown={(e) => {
+                            if (e.key === 'Escape') {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setShowAdd(false);
+                            }
+                        }}
+                    >
                         <SheetTitle className="flex items-center gap-2"><TableCellsIcon className="w-5 h-5" /> {t('addRowTitle')}</SheetTitle>
                         <div className="flex-1 overflow-y-auto pr-2">
                             <div className="flex flex-col gap-4">
