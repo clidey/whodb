@@ -207,9 +207,13 @@ const ensureInitializedClient = async (): Promise<PostHog | null> => {
 
         posthog.init(posthogKey, {
             api_host: apiHost,
-            capture_pageleave: true,
+            capture_pageleave: consent === 'granted',
             persistence: 'localStorage+cookie',
-            enable_recording_console_log: true,
+            enable_recording_console_log: consent === 'granted',
+            autocapture: consent === 'granted',
+            capture_pageview: consent === 'granted',
+            enable_heatmaps: consent === 'granted',
+            disable_web_experiments: consent !== 'granted',
             //@ts-ignore
             opt_out_capturing_by_default: consent === 'denied',
             loaded: (client) => {
@@ -295,7 +299,13 @@ export const optOutUser = async (): Promise<void> => {
     }
 
     try {
+        // Stop all automatic capturing features
         client.opt_out_capturing();
+        client.stopSessionRecording?.();
+        client.config.autocapture = false;
+        client.config.capture_pageview = false;
+        client.config.capture_pageleave = false;
+        client.config.enable_heatmaps = false;
         client.reset();
     } catch {
         // best-effort shutdown
@@ -311,7 +321,12 @@ export const optInUser = async (): Promise<void> => {
     if (!client) {
         return;
     }
+    client.config.autocapture = true;
+    client.config.capture_pageview = true;
+    client.config.capture_pageleave = true;
+    client.config.enable_heatmaps = true;
     client.opt_in_capturing();
+    client.startSessionRecording?.();
     persistDistinctId(client.get_distinct_id());
 };
 
