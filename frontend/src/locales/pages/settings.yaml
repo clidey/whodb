@@ -7,8 +7,8 @@ en:
   posthogInfo: WhoDB uses Posthog to collect and manage this data. More information about this tool can be found on its Github.
   sensitiveDataInfo: We have taken measures to redact as much sensitive information as we can and will continuously evaluate to make sure that it fits yours and our needs without sacrificing anything.
   contactUsInfo: If you know of a tool that might serve us better, we'd love to hear from you! Just reach out via the "Contact Us" option in the bottom left corner of the screen.
-  enableTelemetry: Enable Telemetry
-  disableTelemetry: Disable Telemetry
+  enableTelemetry: Telemetry is enabled
+  disableTelemetry: Telemetry is disabled
   eeNoTelemetry: WhoDB Enterprise does not collect telemetry and performance metrics.
   personalizeTitle: Personalize Your Experience
   personalizeDescription: Make WhoDB your own by customizing the appearance and feel of the WhoDB interface
