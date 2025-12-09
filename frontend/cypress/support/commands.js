@@ -1021,8 +1021,8 @@ Cypress.Commands.add('logout', () => {
         // Check if the sidebar trigger button exists and is visible (indicates sidebar is closed)
         const sidebarTrigger = $body.find('[data-sidebar="trigger"]:visible');
         if (sidebarTrigger.length > 0 && !$body.text().includes('Logout Profile')) {
-            // Sidebar is closed, open it first
-            cy.get('[data-sidebar="trigger"]').first().click();
+            // Sidebar is closed, open it first (use force: true in case of overlays)
+            cy.get('[data-sidebar="trigger"]').first().click({force: true});
             cy.wait(300); // Wait for sidebar animation
         }
 
