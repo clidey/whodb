@@ -127,7 +127,6 @@ export const SettingsPage: FC = () => {
                                     <br/>
                                     <br/>
                                     {t('posthogInfo')}
-                                    <br/>
                                     {t('sensitiveDataInfo')}
                                     <br/>
                                     <br/>
