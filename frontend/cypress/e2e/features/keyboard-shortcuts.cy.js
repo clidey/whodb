@@ -92,6 +92,68 @@ describe('Keyboard Shortcuts', () => {
             }
         });
 
+        describe('Global Table Shortcuts', () => {
+            it('Ctrl+M opens Mock Data sheet', () => {
+                cy.data(tableName);
+
+                // Press Ctrl+M - events are on window, so use body
+                cy.get('body').type('{ctrl}m');
+
+                // Mock Data sheet should open
+                cy.contains('Mock Data').should('be.visible');
+
+                // Close it
+                cy.get('body').type('{esc}');
+            });
+
+            it('Ctrl+A selects all visible rows', () => {
+                cy.data(tableName);
+
+                // Ensure no rows are selected initially
+                cy.get('table tbody tr input[type="checkbox"]:checked').should('not.exist');
+
+                // Press Ctrl+A
+                cy.get('body').type('{ctrl}a');
+
+                // All row checkboxes should be checked
+                cy.get('table tbody tr input[type="checkbox"]').each(($checkbox) => {
+                    cy.wrap($checkbox).should('be.checked');
+                });
+
+                // Press Ctrl+A again to deselect
+                cy.get('body').type('{ctrl}a');
+
+                // All row checkboxes should be unchecked
+                cy.get('table tbody tr input[type="checkbox"]').each(($checkbox) => {
+                    cy.wrap($checkbox).should('not.be.checked');
+                });
+            });
+
+            it('Ctrl+E opens Export dialog', () => {
+                cy.data(tableName);
+
+                // Press Ctrl+E
+                cy.get('body').type('{ctrl}e');
+
+                // Export dialog should open
+                cy.contains('Export').should('be.visible');
+
+                // Close it
+                cy.get('body').type('{esc}');
+            });
+
+            it('Alt+R refreshes the table (non-conflicting shortcut)', () => {
+                cy.data(tableName);
+
+                // Press Alt+R (Ctrl+R on Mac) to refresh
+                // Using Alt for Windows/Linux to avoid browser refresh conflict
+                cy.get('body').type('{alt}r');
+
+                // Table should still have rows after refresh
+                cy.get('table tbody tr').should('have.length.at.least', 1);
+            });
+        });
+
         describe('Context Menu', () => {
             it('opens context menu with right-click', () => {
                 cy.data(tableName);
