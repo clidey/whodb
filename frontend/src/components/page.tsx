@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-import { ModeToggle, SidebarProvider } from "@clidey/ux";
+import {Button, ModeToggle, SidebarProvider, Tooltip, TooltipContent, TooltipTrigger} from "@clidey/ux";
 import classNames from "classnames";
-import { AnimatePresence, motion } from "framer-motion";
-import { FC, ReactNode } from "react";
-import { twMerge } from "tailwind-merge";
-import { IInternalRoute } from "../config/routes";
-import { useAppSelector } from "../store/hooks";
-import { Breadcrumb } from "./breadcrumbs";
-import { Loading } from "./loading";
-import { Sidebar } from "./sidebar/sidebar";
+import {AnimatePresence, motion} from "framer-motion";
+import {FC, ReactNode} from "react";
+import {twMerge} from "tailwind-merge";
+import {IInternalRoute} from "../config/routes";
+import {useAppSelector} from "../store/hooks";
+import {Breadcrumb} from "./breadcrumbs";
+import {Loading} from "./loading";
+import {Sidebar} from "./sidebar/sidebar";
+import {useTranslation} from "@/hooks/use-translation";
+import {CommandLineIcon} from "./heroicons";
 
 type IPageProps = {
     wrapperClassName?: string;
@@ -50,6 +52,35 @@ type IInternalPageProps = IPageProps & {
     children: ReactNode;
     routes?: IInternalRoute[];
 }
+
+const KeyboardShortcutsHint: FC = () => {
+    const { t } = useTranslation('components/keyboard-shortcuts-help');
+
+    const handleClick = () => {
+        // Dispatch a keyboard event to trigger the shortcuts modal
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: '?' }));
+    };
+
+    return (
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleClick}
+                    className="gap-1.5 h-9"
+                    aria-label={t('showShortcuts', 'Show keyboard shortcuts')}
+                >
+                    <CommandLineIcon className="h-4 w-4" />
+                    <span className="text-xs">{t('shortcuts', 'Shortcuts')}</span>
+                </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+                <p>{t('hint', 'Press ? to open')}</p>
+            </TooltipContent>
+        </Tooltip>
+    );
+};
 
 export const InternalPage: FC<IInternalPageProps> = (props) => {
     const current = useAppSelector(state => state.auth.current);
@@ -80,8 +111,11 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
                                 <ModeToggle />
                             </div>
                         </div> */}
-                        <div data-testid="mode-toggle">
-                            <ModeToggle />
+                        <div className="flex items-center gap-1">
+                            <KeyboardShortcutsHint />
+                            <div data-testid="mode-toggle">
+                                <ModeToggle />
+                            </div>
                         </div>
                     </div>
                     {

@@ -386,7 +386,7 @@ export const StorageUnitTable: FC<TableProps> = ({
         if (start > 1) {
             links.push(
                 <PaginationItem key={1}>
-                    <PaginationLink href="#" onClick={e => { e.preventDefault(); handlePageChange(1); }} size="sm">1</PaginationLink>
+                    <PaginationLink href="#" onClick={e => { e.preventDefault(); handlePageChange(1); }} size="sm" data-testid="table-page-number" data-page="1" data-active={currentPage === 1}>1</PaginationLink>
                 </PaginationItem>
             );
             if (start > 2) {
@@ -402,6 +402,9 @@ export const StorageUnitTable: FC<TableProps> = ({
                         isActive={i === currentPage}
                         onClick={e => { e.preventDefault(); handlePageChange(i); }}
                         size="sm"
+                        data-testid="table-page-number"
+                        data-page={i}
+                        data-active={i === currentPage}
                     >
                         {i}
                     </PaginationLink>
@@ -415,7 +418,7 @@ export const StorageUnitTable: FC<TableProps> = ({
             }
             links.push(
                 <PaginationItem key={totalPages}>
-                    <PaginationLink href="#" onClick={e => { e.preventDefault(); handlePageChange(totalPages); }} size="sm">{totalPages}</PaginationLink>
+                    <PaginationLink href="#" onClick={e => { e.preventDefault(); handlePageChange(totalPages); }} size="sm" data-testid="table-page-number" data-page={totalPages} data-active={currentPage === totalPages}>{totalPages}</PaginationLink>
                 </PaginationItem>
             );
         }
@@ -699,15 +702,6 @@ export const StorageUnitTable: FC<TableProps> = ({
                     }
                     return;
 
-                case 'Delete':
-                case 'Backspace':
-                    // Delete focused row (without modifier)
-                    if (!cmdKey && focusedRowIndex !== null && !disableEdit) {
-                        event.preventDefault();
-                        handleDeleteRow(focusedRowIndex);
-                    }
-                    break;
-
                 case 'Escape':
                     // Clear focus and selection
                     event.preventDefault();
@@ -754,10 +748,25 @@ export const StorageUnitTable: FC<TableProps> = ({
                         }
                         break;
                     case 'backspace':
-                        // Mod+Backspace: Delete focused or selected rows
+                    case 'delete':
+                        // Mod+Delete/Backspace: Delete focused row
                         if (focusedRowIndex !== null && !disableEdit) {
                             event.preventDefault();
                             handleDeleteRow(focusedRowIndex);
+                        }
+                        break;
+                    case 'arrowright':
+                        // Mod+ArrowRight: Next page
+                        if (onPageChange && currentPage < totalPages) {
+                            event.preventDefault();
+                            onPageChange(currentPage + 1);
+                        }
+                        break;
+                    case 'arrowleft':
+                        // Mod+ArrowLeft: Previous page
+                        if (onPageChange && currentPage > 1) {
+                            event.preventDefault();
+                            onPageChange(currentPage - 1);
                         }
                         break;
                 }
@@ -766,7 +775,7 @@ export const StorageUnitTable: FC<TableProps> = ({
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [onRefresh, checked, paginatedRows, handleDeleteRow, handleEdit, focusedRowIndex, moveFocus, visibleRowCount, handleSelectRow, disableEdit]);
+    }, [onRefresh, checked, paginatedRows, handleDeleteRow, handleEdit, focusedRowIndex, moveFocus, visibleRowCount, handleSelectRow, disableEdit, onPageChange, currentPage, totalPages]);
 
 
 

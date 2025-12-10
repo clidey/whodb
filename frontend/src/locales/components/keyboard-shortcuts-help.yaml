@@ -1,0 +1,31 @@
+en:
+  title: Keyboard Shortcuts
+  shortcuts: Shortcuts
+  hint: Press ? to open
+  categoryGlobal: Global
+  categoryTableNavigation: Table Navigation
+  categoryTableSelection: Table Selection
+  categoryTableActions: Table Actions
+  categoryEditor: Query Editor
+  showShortcuts: Show keyboard shortcuts
+  closeDialogs: Close dialogs/sheets
+  moveDown: Move to next row
+  moveUp: Move to previous row
+  moveFirst: Move to first row
+  moveLast: Move to last row
+  pageDown: Jump down by visible rows
+  pageUp: Jump up by visible rows
+  nextPage: Go to next page
+  prevPage: Go to previous page
+  toggleSelect: Toggle row selection
+  extendSelectDown: Extend selection down
+  extendSelectUp: Extend selection up
+  selectAll: Select/deselect all rows
+  editRow: Edit focused row
+  deleteRow: Delete focused row
+  deleteRowAlt: Delete focused row
+  editRowAlt: Edit focused row
+  mockData: Generate mock data
+  refresh: Refresh table
+  export: Export data
+  executeQuery: Execute query

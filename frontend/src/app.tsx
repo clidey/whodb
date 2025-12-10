@@ -27,6 +27,7 @@ import {SettingsActions} from "./store/settings";
 import {useThemeCustomization} from "./hooks/use-theme-customization";
 import {useDesktopMenu} from "./hooks/useDesktop";
 import {TourProvider} from "./components/tour/tour-provider";
+import {useKeyboardShortcutsHelp} from "./components/keyboard-shortcuts-help";
 
 export const App = () => {
     const [updateSettings] = useUpdateSettingsMutation();
@@ -38,6 +39,9 @@ export const App = () => {
 
   // Setup desktop menu and keyboard shortcuts
   useDesktopMenu();
+
+  // Setup keyboard shortcuts help modal (? key)
+  const { KeyboardShortcutsHelpModal } = useKeyboardShortcutsHelp();
 
   useEffect(() => {
       const consent = getStoredConsentState();
@@ -96,6 +100,7 @@ export const App = () => {
     <TourProvider>
       <div className="h-[100vh] w-[100vw]" id="whodb-app-container">
         <Toaster />
+        {KeyboardShortcutsHelpModal}
         <Routes>
           <Route path="/" element={<PrivateRoute />}>
             {map(getRoutes(), route => (

@@ -24,8 +24,7 @@ describe('Keyboard Shortcuts', () => {
             return;
         }
 
-        const testTable = db.testTable || {};
-        const tableName = testTable.name || 'users';
+        const tableName = 'products';
 
         describe('ESC Key', () => {
             it('closes context menu with ESC', () => {
@@ -277,40 +276,6 @@ describe('Keyboard Shortcuts', () => {
             });
         });
 
-        describe('Delete/Backspace Key - Delete Row', () => {
-            it('Delete key triggers delete for focused row', () => {
-                cy.data(tableName);
-
-                // Get initial row count
-                cy.get('table tbody tr').its('length').then(initialCount => {
-                    // Focus first row
-                    cy.get('body').type('{downarrow}');
-
-                    // Press Delete
-                    cy.get('body').type('{del}');
-
-                    // Row should be deleted (count decreased)
-                    cy.get('table tbody tr', {timeout: 10000}).should('have.length', initialCount - 1);
-                });
-            });
-
-            it('Backspace key triggers delete for focused row', () => {
-                cy.data(tableName);
-
-                // Get initial row count
-                cy.get('table tbody tr').its('length').then(initialCount => {
-                    // Focus first row
-                    cy.get('body').type('{downarrow}');
-
-                    // Press Backspace
-                    cy.get('body').type('{backspace}');
-
-                    // Row should be deleted (count decreased)
-                    cy.get('table tbody tr', {timeout: 10000}).should('have.length', initialCount - 1);
-                });
-            });
-        });
-
         describe('Global Table Shortcuts (Ctrl/Cmd)', () => {
             it('Ctrl+M opens Mock Data sheet', () => {
                 cy.data(tableName);
@@ -408,13 +373,12 @@ describe('Keyboard Shortcuts', () => {
 
                 // Check that shortcut hints are displayed
                 cy.get('[role="menu"]').should('be.visible');
-                // The menu should contain shortcut indicators for new shortcuts
+                // The menu should contain shortcut indicators for shortcuts
                 cy.get('[role="menu"]').then($menu => {
-                    // Verify menu items exist with new shortcut labels
+                    // Verify menu items exist with shortcut labels
                     expect($menu.text()).to.include('Edit');
-                    expect($menu.text()).to.include('Enter'); // New shortcut for Edit
-                    expect($menu.text()).to.include('Space'); // New shortcut for Select
-                    expect($menu.text()).to.include('Delete'); // New shortcut for Delete
+                    expect($menu.text()).to.include('Enter'); // Shortcut for Edit
+                    expect($menu.text()).to.include('Space'); // Shortcut for Select
                 });
             });
         });
@@ -469,6 +433,8 @@ describe('Keyboard Shortcuts', () => {
 
                 // Set page size to a small value to see pagination (2 is available in E2E mode)
                 cy.setTablePageSize(2);
+                cy.get('[data-testid="submit-button"]').click();
+                cy.get('[data-testid="table-page-number"]', { timeout: 10000 }).should('exist');
 
                 // Focus a row
                 cy.get('body').type('{downarrow}');
@@ -482,6 +448,154 @@ describe('Keyboard Shortcuts', () => {
                         // Focus should be reset
                         cy.get('table tbody tr[data-focused="true"]').should('not.exist');
                     }
+                });
+            });
+        });
+
+        describe('Pagination Shortcuts', () => {
+            it('Ctrl+ArrowRight goes to next page', () => {
+                cy.data(tableName);
+
+                // Set page size to a small value to see pagination
+                cy.setTablePageSize(2);
+                cy.get('[data-testid="submit-button"]').click();
+                cy.get('[data-testid="table-page-number"]', { timeout: 10000 }).should('exist');
+
+                // Check we're on page 1
+                cy.get('[data-testid="table-page-number"]').first().should('have.attr', 'data-active', 'true');
+
+                // Press Ctrl+ArrowRight to go to next page
+                cy.get('body').type('{ctrl}{rightarrow}');
+
+                // Should now be on page 2
+                cy.get('[data-testid="table-page-number"]').eq(1).should('have.attr', 'data-active', 'true');
+            });
+
+            it('Ctrl+ArrowLeft goes to previous page', () => {
+                cy.data(tableName);
+
+                // Set page size to a small value to see pagination
+                cy.setTablePageSize(2);
+                cy.get('[data-testid="submit-button"]').click();
+                cy.get('[data-testid="table-page-number"]', { timeout: 10000 }).should('exist');
+
+                // Go to page 2 first
+                cy.get('[data-testid="table-page-number"]').eq(1).click();
+                cy.get('[data-testid="table-page-number"]').eq(1).should('have.attr', 'data-active', 'true');
+
+                // Press Ctrl+ArrowLeft to go to previous page
+                cy.get('body').type('{ctrl}{leftarrow}');
+
+                // Should now be on page 1
+                cy.get('[data-testid="table-page-number"]').first().should('have.attr', 'data-active', 'true');
+            });
+
+            it('Ctrl+ArrowLeft does nothing on first page', () => {
+                cy.data(tableName);
+
+                // Set page size to a small value to see pagination
+                cy.setTablePageSize(2);
+                cy.get('[data-testid="submit-button"]').click();
+                cy.get('[data-testid="table-page-number"]', { timeout: 10000 }).should('exist');
+
+                // Ensure we're on page 1
+                cy.get('[data-testid="table-page-number"]').first().should('have.attr', 'data-active', 'true');
+
+                // Press Ctrl+ArrowLeft - should stay on page 1
+                cy.get('body').type('{ctrl}{leftarrow}');
+
+                // Should still be on page 1
+                cy.get('[data-testid="table-page-number"]').first().should('have.attr', 'data-active', 'true');
+            });
+        });
+
+        describe('Keyboard Shortcuts Help Modal', () => {
+            it('shortcuts button exists in page header', () => {
+                cy.data(tableName);
+
+                // Shortcuts button should be visible in the header
+                cy.contains('button', 'Shortcuts').should('be.visible');
+            });
+
+            it('clicking shortcuts button opens the modal', () => {
+                cy.data(tableName);
+
+                // Click the shortcuts button
+                cy.contains('button', 'Shortcuts').click();
+
+                // Modal should open with title
+                cy.contains('Keyboard Shortcuts').should('be.visible');
+
+                // Close with ESC
+                cy.get('body').type('{esc}');
+                cy.contains('Keyboard Shortcuts').should('not.exist');
+            });
+
+            it('pressing ? key opens the shortcuts modal', () => {
+                cy.data(tableName);
+
+                // Press ? key (Shift+/)
+                cy.get('body').type('?');
+
+                // Modal should open
+                cy.contains('Keyboard Shortcuts').should('be.visible');
+
+                // Verify the modal contains shortcut categories (use exist instead of visible for scrollable content)
+                cy.contains('Global').should('exist');
+                cy.contains('Table Navigation').should('exist');
+
+                // Close with ESC
+                cy.get('body').type('{esc}');
+            });
+        });
+
+        // Deletion tests are placed at the end because they modify data and could affect other tests
+        describe('Ctrl+Delete/Backspace - Delete Row', () => {
+            it('Delete key without Ctrl does not delete row', () => {
+                cy.data(tableName);
+
+                // Get initial row count
+                cy.get('table tbody tr').its('length').then(initialCount => {
+                    // Focus first row
+                    cy.get('body').type('{downarrow}');
+
+                    // Press Delete without Ctrl
+                    cy.get('body').type('{del}');
+
+                    // Row count should remain the same
+                    cy.get('table tbody tr').should('have.length', initialCount);
+                });
+            });
+
+            it('Ctrl+Delete triggers delete for focused row', () => {
+                cy.data(tableName);
+
+                // Get initial row count
+                cy.get('table tbody tr').its('length').then(initialCount => {
+                    // Focus first row
+                    cy.get('body').type('{downarrow}');
+
+                    // Press Ctrl+Delete
+                    cy.get('body').type('{ctrl}{del}');
+
+                    // Row should be deleted (count decreased)
+                    cy.get('table tbody tr', {timeout: 10000}).should('have.length', initialCount - 1);
+                });
+            });
+
+            it('Ctrl+Backspace triggers delete for focused row', () => {
+                cy.data(tableName);
+
+                // Get initial row count
+                cy.get('table tbody tr').its('length').then(initialCount => {
+                    // Focus first row
+                    cy.get('body').type('{downarrow}');
+
+                    // Press Ctrl+Backspace
+                    cy.get('body').type('{ctrl}{backspace}');
+
+                    // Row should be deleted (count decreased)
+                    cy.get('table tbody tr', {timeout: 10000}).should('have.length', initialCount - 1);
                 });
             });
         });
