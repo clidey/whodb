@@ -3,12 +3,18 @@ en:
   shortcuts: Shortcuts
   hint: Press ? to open
   categoryGlobal: Global
+  categoryNavigation: Navigation
   categoryTableNavigation: Table Navigation
   categoryTableSelection: Table Selection
   categoryTableActions: Table Actions
   categoryEditor: Query Editor
   showShortcuts: Show keyboard shortcuts
   closeDialogs: Close dialogs/sheets
+  toggleSidebar: Toggle sidebar
+  navFirst: Go to first view (Chat or Tables)
+  navSecond: Go to second view
+  navThird: Go to third view
+  navFourth: Go to fourth view (if available)
   moveDown: Move to next row
   moveUp: Move to previous row
   moveFirst: Move to first row

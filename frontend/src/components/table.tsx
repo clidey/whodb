@@ -89,6 +89,7 @@ import {
     XMarkIcon
 } from "./heroicons";
 import {Tip} from "./tip";
+import {formatShortcut, isModKeyPressed} from "@/utils/platform";
 
 // Dynamically load EE Export component
 // const EEExport = loadEEComponent(
@@ -159,17 +160,6 @@ export function getColumnIcons(columns: string[], columnTypes?: string[]) {
     });
 }
 
-// Render platform-specific shortcut labels: ⌘ on macOS, Ctrl on others
-const isMacPlatform = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
-function renderShortcut(parts: ("Mod" | "Shift" | "Delete" | "Backspace" | string)[]) {
-    const mapMac: Record<string, string> = { Mod: "⌘", Shift: "⇧", Delete: "⌫", Backspace: "⌫" };
-    const mapWin: Record<string, string> = { Mod: "Ctrl", Shift: "Shift", Delete: "Del", Backspace: "Backspace" };
-    const map = isMacPlatform ? mapMac : mapWin;
-    if (isMacPlatform) {
-        return parts.map(p => map[p] || p).join("");
-    }
-    return parts.map(p => map[p] || p).join("+");
-}
 
 interface TableProps {
     columns: string[];
@@ -637,8 +627,7 @@ export const StorageUnitTable: FC<TableProps> = ({
             // Skip if no rows
             if (paginatedRows.length === 0) return;
 
-            const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-            const cmdKey = isMac ? event.metaKey : event.ctrlKey;
+            const cmdKey = isModKeyPressed(event);
 
             // Arrow key navigation (no modifier required)
             switch (event.key) {
@@ -1011,7 +1000,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         >
                             <DocumentIcon className="w-4 h-4" />
                             {t('exportAllAsCsv')}
-                            <ContextMenuShortcut>{renderShortcut(["Mod", "Shift", "E"])}</ContextMenuShortcut>
+                            <ContextMenuShortcut>{formatShortcut(["Mod", "Shift", "E"])}</ContextMenuShortcut>
                         </ContextMenuItem>
                         <ContextMenuItem
                             onSelect={() => setShowExportConfirm(true)}
@@ -1041,7 +1030,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 >
                     <DocumentDuplicateIcon className="w-4 h-4" />
                     {t('mockData')}
-                    <ContextMenuShortcut>{renderShortcut(["Mod", "M"])}</ContextMenuShortcut>
+                    <ContextMenuShortcut>{formatShortcut(["Mod", "M"])}</ContextMenuShortcut>
                 </ContextMenuItem>
                 <ContextMenuItem
                     variant="destructive"
@@ -1131,7 +1120,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                 <ContextMenuItem onSelect={() => setShowMockDataSheet(true)} data-testid="context-menu-mock-data">
                                     <CalculatorIcon className="w-4 h-4" />
                                     {t('mockData')}
-                                    <ContextMenuShortcut>{renderShortcut(["Mod", "M"])}</ContextMenuShortcut>
+                                    <ContextMenuShortcut>{formatShortcut(["Mod", "M"])}</ContextMenuShortcut>
                                 </ContextMenuItem>
                                 <ContextMenuSeparator />
                                 <ContextMenuSub>
@@ -1147,7 +1136,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                         >
                                             <DocumentIcon className="w-4 h-4" />
                                             {t('exportAllAsCsv')}
-                                            <ContextMenuShortcut>{renderShortcut(["Mod", "Shift", "E"])}</ContextMenuShortcut>
+                                            <ContextMenuShortcut>{formatShortcut(["Mod", "Shift", "E"])}</ContextMenuShortcut>
                                         </ContextMenuItem>
                                         <ContextMenuItem
                                             onSelect={() => setShowExportConfirm(true)}
@@ -1176,7 +1165,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                 <ContextMenuItem onSelect={() => onRefresh?.()}>
                                     <CircleStackIcon className="w-4 h-4" />
                                     {t('refreshData')}
-                                    <ContextMenuShortcut>{renderShortcut(["Mod", "R"])}</ContextMenuShortcut>
+                                    <ContextMenuShortcut>{formatShortcut(["Mod", "R"])}</ContextMenuShortcut>
                                 </ContextMenuItem>
                                 <ContextMenuItem
                                     onSelect={() => {
@@ -1185,7 +1174,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                 >
                                     <CheckCircleIcon className="w-4 h-4" />
                                     {checked.length === paginatedRows.length ? t('deselectAll') : t('selectAll')}
-                                    <ContextMenuShortcut>{renderShortcut(["Mod", "A"])}</ContextMenuShortcut>
+                                    <ContextMenuShortcut>{formatShortcut(["Mod", "A"])}</ContextMenuShortcut>
                                 </ContextMenuItem>
                             </ContextMenuContent>
                         </ContextMenu>
@@ -1217,7 +1206,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                             })}>
                                 <CalculatorIcon className="w-4 h-4" />
                                 {t('mockData')}
-                                <ContextMenuShortcut>{renderShortcut(["Mod", "M"])}</ContextMenuShortcut>
+                                <ContextMenuShortcut>{formatShortcut(["Mod", "M"])}</ContextMenuShortcut>
                             </ContextMenuItem>
                             <ContextMenuSub>
                                 <ContextMenuSubTrigger>
@@ -1232,7 +1221,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                     >
                                         <DocumentIcon className="w-4 h-4" />
                                         {t('exportAllAsCsv')}
-                                        <ContextMenuShortcut>{renderShortcut(["Mod", "Shift", "E"])}</ContextMenuShortcut>
+                                        <ContextMenuShortcut>{formatShortcut(["Mod", "Shift", "E"])}</ContextMenuShortcut>
                                     </ContextMenuItem>
                                     <ContextMenuItem
                                         onSelect={() => setShowExportConfirm(true)}

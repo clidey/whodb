@@ -549,6 +549,68 @@ describe('Keyboard Shortcuts', () => {
             });
         });
 
+        describe('Sidebar Navigation Shortcuts', () => {
+            it('Ctrl+B toggles sidebar', () => {
+                cy.data(tableName);
+
+                // Get initial sidebar state
+                cy.get('[data-sidebar="sidebar"]').should('exist');
+
+                // Press Ctrl+B to toggle sidebar
+                cy.get('body').type('{ctrl}b');
+
+                // Wait for animation
+                cy.wait(300);
+
+                // Press Ctrl+B again to toggle back
+                cy.get('body').type('{ctrl}b');
+
+                // Sidebar should be visible again
+                cy.wait(300);
+                cy.get('[data-sidebar="sidebar"]').should('exist');
+            });
+
+            it('Alt+1 navigates to first view', () => {
+                cy.data(tableName);
+
+                // Press Alt+1 to go to first view (Chat for SQL databases)
+                cy.get('body').type('{alt}1');
+
+                // Should navigate to chat page
+                cy.url().should('include', '/chat');
+            });
+
+            it('Alt+2 navigates to second view', () => {
+                cy.data(tableName);
+
+                // Press Alt+2 to go to second view (Storage Units/Tables)
+                cy.get('body').type('{alt}2');
+
+                // Should navigate to storage-unit page
+                cy.url().should('include', '/storage-unit');
+            });
+
+            it('Alt+3 navigates to third view', () => {
+                cy.data(tableName);
+
+                // Press Alt+3 to go to third view (Graph)
+                cy.get('body').type('{alt}3');
+
+                // Should navigate to graph page
+                cy.url().should('include', '/graph');
+            });
+
+            it('Alt+4 navigates to fourth view (Scratchpad)', () => {
+                cy.data(tableName);
+
+                // Press Alt+4 to go to fourth view (Scratchpad)
+                cy.get('body').type('{alt}4');
+
+                // Should navigate to scratchpad page
+                cy.url().should('include', '/scratchpad');
+            });
+        });
+
         // Deletion tests are placed at the end because they modify data and could affect other tests
         describe('Ctrl+Delete/Backspace - Delete Row', () => {
             it('Delete key without Ctrl does not delete row', () => {

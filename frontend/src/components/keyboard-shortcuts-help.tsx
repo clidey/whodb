@@ -17,48 +17,10 @@
 import {Dialog, DialogContent, DialogHeader, DialogTitle,} from "@clidey/ux";
 import {FC, useCallback, useEffect, useState} from "react";
 import {useTranslation} from "@/hooks/use-translation";
-
-const isMacPlatform = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
-
-type ShortcutKey = "Mod" | "Shift" | "Delete" | "Backspace" | "Enter" | "Space" | "Escape" | "?" | string;
-
-function renderKey(key: ShortcutKey): string {
-    const macMap: Record<string, string> = {
-        Mod: "⌘",
-        Shift: "⇧",
-        Delete: "⌫",
-        Backspace: "⌫",
-        Enter: "↵",
-        Space: "Space",
-        Escape: "Esc",
-        ArrowUp: "↑",
-        ArrowDown: "↓",
-        Home: "Home",
-        End: "End",
-        PageUp: "PgUp",
-        PageDown: "PgDn",
-    };
-    const winMap: Record<string, string> = {
-        Mod: "Ctrl",
-        Shift: "Shift",
-        Delete: "Del",
-        Backspace: "Backspace",
-        Enter: "Enter",
-        Space: "Space",
-        Escape: "Esc",
-        ArrowUp: "↑",
-        ArrowDown: "↓",
-        Home: "Home",
-        End: "End",
-        PageUp: "PgUp",
-        PageDown: "PgDn",
-    };
-    const map = isMacPlatform ? macMap : winMap;
-    return map[key] || key;
-}
+import {getKeyDisplay, isMacPlatform} from "@/utils/platform";
 
 interface ShortcutDef {
-    keys: ShortcutKey[];
+    keys: string[];
     description: string;
 }
 
@@ -81,7 +43,7 @@ const ShortcutRow: FC<{ shortcut: ShortcutDef }> = ({ shortcut }) => (
         <div className="flex items-center gap-1">
             {shortcut.keys.map((key, idx) => (
                 <span key={idx} className="flex items-center gap-0.5">
-                    <Kbd>{renderKey(key)}</Kbd>
+                    <Kbd>{getKeyDisplay(key)}</Kbd>
                     {idx < shortcut.keys.length - 1 && !isMacPlatform && (
                         <span className="text-neutral-400 text-xs">+</span>
                     )}
@@ -121,6 +83,16 @@ export const KeyboardShortcutsHelp: FC<KeyboardShortcutsHelpProps> = ({
             shortcuts: [
                 { keys: ["?"], description: t('showShortcuts', 'Show keyboard shortcuts') },
                 { keys: ["Escape"], description: t('closeDialogs', 'Close dialogs/sheets') },
+                { keys: ["Mod", "B"], description: t('toggleSidebar', 'Toggle sidebar') },
+            ],
+        },
+        {
+            title: t('categoryNavigation', 'Navigation'),
+            shortcuts: [
+                { keys: ["Alt", "1"], description: t('navFirst', 'Go to first view (Chat or Tables)') },
+                { keys: ["Alt", "2"], description: t('navSecond', 'Go to second view') },
+                { keys: ["Alt", "3"], description: t('navThird', 'Go to third view') },
+                { keys: ["Alt", "4"], description: t('navFourth', 'Go to fourth view (if available)') },
             ],
         },
         {

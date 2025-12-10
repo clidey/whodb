@@ -26,6 +26,7 @@ import {useAppDispatch, useAppSelector} from "./store/hooks";
 import {SettingsActions} from "./store/settings";
 import {useThemeCustomization} from "./hooks/use-theme-customization";
 import {useDesktopMenu} from "./hooks/useDesktop";
+import {useSidebarShortcuts} from "./hooks/useSidebarShortcuts";
 import {TourProvider} from "./components/tour/tour-provider";
 import {useKeyboardShortcutsHelp} from "./components/keyboard-shortcuts-help";
 
@@ -42,6 +43,9 @@ export const App = () => {
 
   // Setup keyboard shortcuts help modal (? key)
   const { KeyboardShortcutsHelpModal } = useKeyboardShortcutsHelp();
+
+  // Setup sidebar navigation shortcuts (Cmd+1-4, Cmd+B)
+  useSidebarShortcuts();
 
   useEffect(() => {
       const consent = getStoredConsentState();
