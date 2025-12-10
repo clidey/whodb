@@ -25,7 +25,8 @@ import {Breadcrumb} from "./breadcrumbs";
 import {Loading} from "./loading";
 import {Sidebar} from "./sidebar/sidebar";
 import {useTranslation} from "@/hooks/use-translation";
-import {CommandLineIcon} from "./heroicons";
+import {CommandLineIcon, MagnifyingGlassIcon} from "./heroicons";
+import {getKeyDisplay, isMacPlatform} from "@/utils/platform";
 
 type IPageProps = {
     wrapperClassName?: string;
@@ -52,6 +53,42 @@ type IInternalPageProps = IPageProps & {
     children: ReactNode;
     routes?: IInternalRoute[];
 }
+
+const CommandPaletteTrigger: FC = () => {
+    const { t } = useTranslation('components/command-palette');
+
+    const handleClick = () => {
+        // Dispatch a keyboard event to trigger the command palette
+        window.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'k',
+            metaKey: isMacPlatform,
+            ctrlKey: !isMacPlatform,
+        }));
+    };
+
+    return (
+        <Button
+            variant="outline"
+            size="sm"
+            onClick={handleClick}
+            className="gap-2 h-9"
+            aria-label={t('searchPlaceholder', 'Type a command or search...')}
+            data-testid="command-palette-trigger"
+        >
+            <MagnifyingGlassIcon className="h-4 w-4" />
+            <span className="hidden sm:inline text-xs text-neutral-500 dark:text-neutral-400">{t('searchPlaceholder', 'Type a command or search...')}</span>
+            <div className="hidden sm:flex items-center gap-0.5 ml-1">
+                <kbd className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded shadow-sm">
+                    {getKeyDisplay("Mod")}
+                </kbd>
+                {!isMacPlatform && <span className="text-neutral-400 text-xs">+</span>}
+                <kbd className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded shadow-sm">
+                    K
+                </kbd>
+            </div>
+        </Button>
+    );
+};
 
 const KeyboardShortcutsHint: FC = () => {
     const { t } = useTranslation('components/keyboard-shortcuts-help');
@@ -111,7 +148,8 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
                                 <ModeToggle />
                             </div>
                         </div> */}
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-2">
+                            <CommandPaletteTrigger />
                             <KeyboardShortcutsHint />
                             <div data-testid="mode-toggle">
                                 <ModeToggle />

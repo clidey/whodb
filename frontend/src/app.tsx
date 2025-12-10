@@ -29,6 +29,7 @@ import {useDesktopMenu} from "./hooks/useDesktop";
 import {useSidebarShortcuts} from "./hooks/useSidebarShortcuts";
 import {TourProvider} from "./components/tour/tour-provider";
 import {useKeyboardShortcutsHelp} from "./components/keyboard-shortcuts-help";
+import {useCommandPalette} from "./components/command-palette";
 
 export const App = () => {
     const [updateSettings] = useUpdateSettingsMutation();
@@ -44,7 +45,10 @@ export const App = () => {
   // Setup keyboard shortcuts help modal (? key)
   const { KeyboardShortcutsHelpModal } = useKeyboardShortcutsHelp();
 
-  // Setup sidebar navigation shortcuts (Cmd+1-4, Cmd+B)
+  // Setup command palette (Cmd+K)
+  const { CommandPaletteModal } = useCommandPalette();
+
+  // Setup sidebar navigation shortcuts (Alt+1-4, Cmd+B)
   useSidebarShortcuts();
 
   useEffect(() => {
@@ -105,6 +109,7 @@ export const App = () => {
       <div className="h-[100vh] w-[100vw]" id="whodb-app-container">
         <Toaster />
         {KeyboardShortcutsHelpModal}
+        {CommandPaletteModal}
         <Routes>
           <Route path="/" element={<PrivateRoute />}>
             {map(getRoutes(), route => (

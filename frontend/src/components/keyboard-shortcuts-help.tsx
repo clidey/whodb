@@ -82,6 +82,7 @@ export const KeyboardShortcutsHelp: FC<KeyboardShortcutsHelpProps> = ({
             title: t('categoryGlobal', 'Global'),
             shortcuts: [
                 { keys: ["?"], description: t('showShortcuts', 'Show keyboard shortcuts') },
+                { keys: ["Mod", "K"], description: t('commandPalette', 'Open command palette') },
                 { keys: ["Escape"], description: t('closeDialogs', 'Close dialogs/sheets') },
                 { keys: ["Mod", "B"], description: t('toggleSidebar', 'Toggle sidebar') },
             ],

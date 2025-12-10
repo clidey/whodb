@@ -9,6 +9,7 @@ en:
   categoryTableActions: Table Actions
   categoryEditor: Query Editor
   showShortcuts: Show keyboard shortcuts
+  commandPalette: Open command palette
   closeDialogs: Close dialogs/sheets
   toggleSidebar: Toggle sidebar
   navFirst: Go to first view (Chat or Tables)

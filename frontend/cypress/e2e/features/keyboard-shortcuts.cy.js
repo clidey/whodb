@@ -611,6 +611,151 @@ describe('Keyboard Shortcuts', () => {
             });
         });
 
+        describe('Command Palette (Ctrl+K)', () => {
+            it('Ctrl+K opens command palette', () => {
+                cy.data(tableName);
+
+                // Press Ctrl+K
+                cy.get('body').type('{ctrl}k');
+
+                // Command palette should open
+                cy.get('[data-testid="command-palette"]').should('be.visible');
+
+                // Should have search input
+                cy.get('[data-testid="command-palette-input"]').should('be.visible');
+
+                // Close with ESC
+                cy.get('body').type('{esc}');
+                cy.get('[data-testid="command-palette"]').should('not.exist');
+            });
+
+            it('Command palette trigger button opens palette', () => {
+                cy.data(tableName);
+
+                // Click the trigger button
+                cy.get('[data-testid="command-palette-trigger"]').click();
+
+                // Command palette should open
+                cy.get('[data-testid="command-palette"]').should('be.visible');
+
+                // Close with ESC
+                cy.get('body').type('{esc}');
+            });
+
+            it('Command palette shows navigation options', () => {
+                cy.data(tableName);
+
+                // Open command palette
+                cy.get('body').type('{ctrl}k');
+
+                // Should show navigation commands
+                cy.get('[data-testid="command-nav-chat"]').should('exist');
+                cy.get('[data-testid="command-nav-storage-units"]').should('exist');
+                cy.get('[data-testid="command-nav-graph"]').should('exist');
+                cy.get('[data-testid="command-nav-scratchpad"]').should('exist');
+
+                // Close
+                cy.get('body').type('{esc}');
+            });
+
+            it('Command palette shows action options', () => {
+                cy.data(tableName);
+
+                // Open command palette
+                cy.get('body').type('{ctrl}k');
+
+                // Should show action commands
+                cy.get('[data-testid="command-action-refresh"]').should('exist');
+                cy.get('[data-testid="command-action-export"]').should('exist');
+                cy.get('[data-testid="command-action-toggle-sidebar"]').should('exist');
+                cy.get('[data-testid="command-action-disconnect"]').should('exist');
+
+                // Close
+                cy.get('body').type('{esc}');
+            });
+
+            it('Command palette navigates to Chat when selected', () => {
+                cy.data(tableName);
+
+                // Open command palette
+                cy.get('body').type('{ctrl}k');
+
+                // Click on Chat navigation
+                cy.get('[data-testid="command-nav-chat"]').click();
+
+                // Should navigate to chat
+                cy.url().should('include', '/chat');
+            });
+
+            it('Command palette search filters results', () => {
+                cy.data(tableName);
+
+                // Open command palette
+                cy.get('body').type('{ctrl}k');
+
+                // Type to search
+                cy.get('[data-testid="command-palette-input"]').type('graph');
+
+                // Should filter to show only graph
+                cy.get('[data-testid="command-nav-graph"]').should('exist');
+                cy.get('[data-testid="command-nav-chat"]').should('not.exist');
+
+                // Close
+                cy.get('body').type('{esc}');
+            });
+        });
+
+        describe('PageUp/PageDown Navigation', () => {
+            it('PageDown jumps down by visible rows', () => {
+                cy.data(tableName);
+
+                // Focus first row
+                cy.get('body').type('{downarrow}');
+
+                // Get the initial focused row
+                cy.get('table tbody tr').first().should('have.attr', 'data-focused', 'true');
+
+                // Press PageDown
+                cy.get('body').type('{pagedown}');
+
+                // First row should no longer be focused (focus moved down)
+                cy.get('table tbody tr').first().should('not.have.attr', 'data-focused', 'true');
+            });
+
+            it('PageUp jumps up by visible rows', () => {
+                cy.data(tableName);
+
+                // Focus last row using End key
+                cy.get('body').type('{downarrow}');
+                cy.get('body').type('{end}');
+
+                // Press PageUp
+                cy.get('body').type('{pageup}');
+
+                // Last row should no longer be focused (focus moved up)
+                cy.get('table tbody tr').last().should('not.have.attr', 'data-focused', 'true');
+            });
+        });
+
+        describe('Query Editor Shortcuts', () => {
+            it('Ctrl+Enter executes query in scratchpad', () => {
+                cy.goto('scratchpad');
+
+                // Write a simple query
+                cy.writeCode(0, 'SELECT 1 as test');
+
+                // Focus the editor and press Ctrl+Enter
+                const editorSelector = '[role="tabpanel"][data-state="active"] [data-testid="cell-0"] .cm-content';
+                cy.get(editorSelector).click().type('{ctrl}{enter}');
+
+                // Query should execute and show results
+                cy.get('[role="tabpanel"][data-state="active"] [data-testid="cell-0"]').within(() => {
+                    cy.get('[data-testid="cell-query-output"], [data-testid="cell-action-output"], [data-testid="cell-error"]', { timeout: 5000 })
+                        .should('exist');
+                });
+            });
+        });
+
         // Deletion tests are placed at the end because they modify data and could affect other tests
         describe('Ctrl+Delete/Backspace - Delete Row', () => {
             it('Delete key without Ctrl does not delete row', () => {
