@@ -75,6 +75,22 @@ describe('Keyboard Shortcuts', () => {
                 cy.get('[data-testid="submit-add-row-button"]').should('not.exist');
             });
 
+            it('clears row focus with ESC', () => {
+                cy.data(tableName);
+
+                // Focus a row using arrow key
+                cy.get('body').type('{downarrow}');
+
+                // Verify row is focused
+                cy.get('table tbody tr[data-focused="true"]').should('exist');
+
+                // Press ESC to clear focus
+                cy.get('body').type('{esc}');
+
+                // Focus should be cleared
+                cy.get('table tbody tr[data-focused="true"]').should('not.exist');
+            });
+
             if (hasFeature(db, 'scratchpad')) {
                 it('closes embedded scratchpad drawer with ESC', () => {
                     cy.data(tableName);
@@ -92,7 +108,210 @@ describe('Keyboard Shortcuts', () => {
             }
         });
 
-        describe('Global Table Shortcuts', () => {
+        describe('Arrow Key Navigation', () => {
+            it('ArrowDown focuses first row when no row is focused', () => {
+                cy.data(tableName);
+
+                // Ensure no row is focused initially
+                cy.get('table tbody tr[data-focused="true"]').should('not.exist');
+
+                // Press ArrowDown
+                cy.get('body').type('{downarrow}');
+
+                // First row should be focused
+                cy.get('table tbody tr').first().should('have.attr', 'data-focused', 'true');
+            });
+
+            it('ArrowDown moves focus to next row', () => {
+                cy.data(tableName);
+
+                // Focus first row
+                cy.get('body').type('{downarrow}');
+                cy.get('table tbody tr').first().should('have.attr', 'data-focused', 'true');
+
+                // Press ArrowDown again
+                cy.get('body').type('{downarrow}');
+
+                // Second row should be focused
+                cy.get('table tbody tr').eq(1).should('have.attr', 'data-focused', 'true');
+                cy.get('table tbody tr').first().should('not.have.attr', 'data-focused', 'true');
+            });
+
+            it('ArrowUp focuses last row when no row is focused', () => {
+                cy.data(tableName);
+
+                // Ensure no row is focused initially
+                cy.get('table tbody tr[data-focused="true"]').should('not.exist');
+
+                // Press ArrowUp
+                cy.get('body').type('{uparrow}');
+
+                // Last row should be focused
+                cy.get('table tbody tr').last().should('have.attr', 'data-focused', 'true');
+            });
+
+            it('ArrowUp moves focus to previous row', () => {
+                cy.data(tableName);
+
+                // Focus second row
+                cy.get('body').type('{downarrow}{downarrow}');
+                cy.get('table tbody tr').eq(1).should('have.attr', 'data-focused', 'true');
+
+                // Press ArrowUp
+                cy.get('body').type('{uparrow}');
+
+                // First row should be focused
+                cy.get('table tbody tr').first().should('have.attr', 'data-focused', 'true');
+            });
+
+            it('Home key focuses first row', () => {
+                cy.data(tableName);
+
+                // Focus a middle row first
+                cy.get('body').type('{downarrow}{downarrow}{downarrow}');
+
+                // Press Home
+                cy.get('body').type('{home}');
+
+                // First row should be focused
+                cy.get('table tbody tr').first().should('have.attr', 'data-focused', 'true');
+            });
+
+            it('End key focuses last row', () => {
+                cy.data(tableName);
+
+                // Focus first row
+                cy.get('body').type('{downarrow}');
+
+                // Press End
+                cy.get('body').type('{end}');
+
+                // Last row should be focused
+                cy.get('table tbody tr').last().should('have.attr', 'data-focused', 'true');
+            });
+
+            it('clicking a row sets focus to that row', () => {
+                cy.data(tableName);
+
+                // Click on a cell in the second row (not the checkbox area)
+                cy.get('table tbody tr').eq(1).find('td').eq(1).click();
+
+                // Wait for React state update
+                cy.wait(100);
+
+                // Second row should be focused
+                cy.get('table tbody tr').eq(1).should('have.attr', 'data-focused', 'true');
+            });
+        });
+
+        describe('Row Selection with Space', () => {
+            it('Space toggles selection of focused row', () => {
+                cy.data(tableName);
+
+                // Focus first row
+                cy.get('body').type('{downarrow}');
+
+                // Verify row is not selected (Radix checkbox uses data-state)
+                cy.get('table tbody tr').first().find('[data-slot="checkbox"]').should('have.attr', 'data-state', 'unchecked');
+
+                // Press Space to select
+                cy.get('body').type(' ');
+
+                // Row should be selected
+                cy.get('table tbody tr').first().find('[data-slot="checkbox"]').should('have.attr', 'data-state', 'checked');
+
+                // Press Space again to deselect
+                cy.get('body').type(' ');
+
+                // Row should be deselected
+                cy.get('table tbody tr').first().find('[data-slot="checkbox"]').should('have.attr', 'data-state', 'unchecked');
+            });
+        });
+
+        describe('Shift+Arrow Multi-Select', () => {
+            it('Shift+ArrowDown extends selection', () => {
+                cy.data(tableName);
+
+                // Focus first row
+                cy.get('body').type('{downarrow}');
+
+                // Shift+ArrowDown to extend selection
+                cy.get('body').type('{shift}{downarrow}');
+
+                // Both first and second rows should be selected (Radix checkbox uses data-state)
+                cy.get('table tbody tr').eq(0).find('[data-slot="checkbox"]').should('have.attr', 'data-state', 'checked');
+                cy.get('table tbody tr').eq(1).find('[data-slot="checkbox"]').should('have.attr', 'data-state', 'checked');
+            });
+
+            it('Shift+ArrowUp extends selection upward', () => {
+                cy.data(tableName);
+
+                // Focus third row
+                cy.get('body').type('{downarrow}{downarrow}{downarrow}');
+
+                // Shift+ArrowUp twice to extend selection
+                cy.get('body').type('{shift}{uparrow}{shift}{uparrow}');
+
+                // Rows 1, 2, and 3 should be selected (Radix checkbox uses data-state)
+                cy.get('table tbody tr').eq(0).find('[data-slot="checkbox"]').should('have.attr', 'data-state', 'checked');
+                cy.get('table tbody tr').eq(1).find('[data-slot="checkbox"]').should('have.attr', 'data-state', 'checked');
+                cy.get('table tbody tr').eq(2).find('[data-slot="checkbox"]').should('have.attr', 'data-state', 'checked');
+            });
+        });
+
+        describe('Enter Key - Edit Row', () => {
+            it('Enter opens edit dialog for focused row', () => {
+                cy.data(tableName);
+
+                // Focus first row
+                cy.get('body').type('{downarrow}');
+
+                // Press Enter to edit
+                cy.get('body').type('{enter}');
+
+                // Edit dialog should open
+                cy.contains('Edit Row').should('be.visible');
+
+                // Close with ESC
+                cy.get('body').type('{esc}');
+            });
+        });
+
+        describe('Delete/Backspace Key - Delete Row', () => {
+            it('Delete key triggers delete for focused row', () => {
+                cy.data(tableName);
+
+                // Get initial row count
+                cy.get('table tbody tr').its('length').then(initialCount => {
+                    // Focus first row
+                    cy.get('body').type('{downarrow}');
+
+                    // Press Delete
+                    cy.get('body').type('{del}');
+
+                    // Row should be deleted (count decreased)
+                    cy.get('table tbody tr', {timeout: 10000}).should('have.length', initialCount - 1);
+                });
+            });
+
+            it('Backspace key triggers delete for focused row', () => {
+                cy.data(tableName);
+
+                // Get initial row count
+                cy.get('table tbody tr').its('length').then(initialCount => {
+                    // Focus first row
+                    cy.get('body').type('{downarrow}');
+
+                    // Press Backspace
+                    cy.get('body').type('{backspace}');
+
+                    // Row should be deleted (count decreased)
+                    cy.get('table tbody tr', {timeout: 10000}).should('have.length', initialCount - 1);
+                });
+            });
+        });
+
+        describe('Global Table Shortcuts (Ctrl/Cmd)', () => {
             it('Ctrl+M opens Mock Data sheet', () => {
                 cy.data(tableName);
 
@@ -109,31 +328,31 @@ describe('Keyboard Shortcuts', () => {
             it('Ctrl+A selects all visible rows', () => {
                 cy.data(tableName);
 
-                // Ensure no rows are selected initially
-                cy.get('table tbody tr input[type="checkbox"]:checked').should('not.exist');
+                // Ensure no rows are selected initially (Radix checkbox uses data-state)
+                cy.get('table tbody tr [data-slot="checkbox"][data-state="checked"]').should('not.exist');
 
                 // Press Ctrl+A
                 cy.get('body').type('{ctrl}a');
 
-                // All row checkboxes should be checked
-                cy.get('table tbody tr input[type="checkbox"]').each(($checkbox) => {
-                    cy.wrap($checkbox).should('be.checked');
+                // All row checkboxes should be checked (Radix checkbox uses data-state)
+                cy.get('table tbody tr [data-slot="checkbox"]').each(($checkbox) => {
+                    cy.wrap($checkbox).should('have.attr', 'data-state', 'checked');
                 });
 
                 // Press Ctrl+A again to deselect
                 cy.get('body').type('{ctrl}a');
 
-                // All row checkboxes should be unchecked
-                cy.get('table tbody tr input[type="checkbox"]').each(($checkbox) => {
-                    cy.wrap($checkbox).should('not.be.checked');
+                // All row checkboxes should be unchecked (Radix checkbox uses data-state)
+                cy.get('table tbody tr [data-slot="checkbox"]').each(($checkbox) => {
+                    cy.wrap($checkbox).should('have.attr', 'data-state', 'unchecked');
                 });
             });
 
-            it('Ctrl+E opens Export dialog', () => {
+            it('Ctrl+Shift+E opens Export dialog', () => {
                 cy.data(tableName);
 
-                // Press Ctrl+E
-                cy.get('body').type('{ctrl}e');
+                // Press Ctrl+Shift+E
+                cy.get('body').type('{ctrl}{shift}e');
 
                 // Export dialog should open
                 cy.contains('Export').should('be.visible');
@@ -142,12 +361,27 @@ describe('Keyboard Shortcuts', () => {
                 cy.get('body').type('{esc}');
             });
 
-            it('Alt+R refreshes the table (non-conflicting shortcut)', () => {
+            it('Ctrl+E edits focused row', () => {
                 cy.data(tableName);
 
-                // Press Alt+R (Ctrl+R on Mac) to refresh
-                // Using Alt for Windows/Linux to avoid browser refresh conflict
-                cy.get('body').type('{alt}r');
+                // Focus first row
+                cy.get('body').type('{downarrow}');
+
+                // Press Ctrl+E
+                cy.get('body').type('{ctrl}e');
+
+                // Edit dialog should open
+                cy.contains('Edit Row').should('be.visible');
+
+                // Close it
+                cy.get('body').type('{esc}');
+            });
+
+            it('Ctrl+R refreshes the table', () => {
+                cy.data(tableName);
+
+                // Press Ctrl+R to refresh
+                cy.get('body').type('{ctrl}r');
 
                 // Table should still have rows after refresh
                 cy.get('table tbody tr').should('have.length.at.least', 1);
@@ -174,11 +408,80 @@ describe('Keyboard Shortcuts', () => {
 
                 // Check that shortcut hints are displayed
                 cy.get('[role="menu"]').should('be.visible');
-                // The menu should contain shortcut indicators
+                // The menu should contain shortcut indicators for new shortcuts
                 cy.get('[role="menu"]').then($menu => {
-                    // Verify menu items exist (Delete is inside "More Actions" submenu)
+                    // Verify menu items exist with new shortcut labels
                     expect($menu.text()).to.include('Edit');
-                    expect($menu.text()).to.include('Copy');
+                    expect($menu.text()).to.include('Enter'); // New shortcut for Edit
+                    expect($menu.text()).to.include('Space'); // New shortcut for Select
+                    expect($menu.text()).to.include('Delete'); // New shortcut for Delete
+                });
+            });
+        });
+
+        describe('ARIA Accessibility', () => {
+            it('table has correct ARIA attributes', () => {
+                cy.data(tableName);
+
+                // Table should have grid role
+                cy.get('table').should('have.attr', 'role', 'grid');
+
+                // Table should have aria-multiselectable
+                cy.get('table').should('have.attr', 'aria-multiselectable', 'true');
+            });
+
+            it('rows have correct ARIA attributes', () => {
+                cy.data(tableName);
+
+                // Focus a row
+                cy.get('body').type('{downarrow}');
+
+                // Focused row should have correct attributes
+                cy.get('table tbody tr[data-focused="true"]')
+                    .should('have.attr', 'role', 'row')
+                    .and('have.attr', 'tabindex', '0');
+
+                // Non-focused rows should have tabindex -1 (only check if multiple rows exist)
+                cy.get('table tbody tr').then($rows => {
+                    if ($rows.length > 1) {
+                        cy.get('table tbody tr:not([data-focused="true"])')
+                            .first()
+                            .should('have.attr', 'tabindex', '-1');
+                    }
+                });
+            });
+
+            it('selected rows have aria-selected attribute', () => {
+                cy.data(tableName);
+
+                // Focus and select first row
+                cy.get('body').type('{downarrow}');
+                cy.get('body').type(' ');
+
+                // Row should have aria-selected
+                cy.get('table tbody tr').first().should('have.attr', 'aria-selected', 'true');
+            });
+        });
+
+        describe('Focus Reset Behavior', () => {
+            it('focus resets when changing pages', () => {
+                cy.data(tableName);
+
+                // Set page size to a small value to see pagination (2 is available in E2E mode)
+                cy.setTablePageSize(2);
+
+                // Focus a row
+                cy.get('body').type('{downarrow}');
+                cy.get('table tbody tr[data-focused="true"]').should('exist');
+
+                // Go to next page (if available)
+                cy.get('body').then($body => {
+                    if ($body.find('[data-testid="table-page-number"]').length > 1) {
+                        cy.get('[data-testid="table-page-number"]').eq(1).click();
+
+                        // Focus should be reset
+                        cy.get('table tbody tr[data-focused="true"]').should('not.exist');
+                    }
                 });
             });
         });

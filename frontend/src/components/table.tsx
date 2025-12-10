@@ -50,8 +50,8 @@ import {
     SheetFooter,
     SheetTitle,
     Spinner,
-    TableCell,
     Table as TableComponent,
+    TableCell,
     TableHead,
     TableHeader,
     TableHeadRow,
@@ -60,10 +60,10 @@ import {
     toast,
     VirtualizedTableBody
 } from "@clidey/ux";
-import { useDeleteRowMutation, useGenerateMockDataMutation, useMockDataMaxRowCountQuery } from '@graphql';
-import { FC, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Export } from "./export";
-import { useTranslation } from '@/hooks/use-translation';
+import {useDeleteRowMutation, useGenerateMockDataMutation, useMockDataMaxRowCountQuery} from '@graphql';
+import {FC, Suspense, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {Export} from "./export";
+import {useTranslation} from '@/hooks/use-translation';
 import {
     ArrowDownCircleIcon,
     ArrowDownTrayIcon,
@@ -78,7 +78,6 @@ import {
     DocumentDuplicateIcon,
     DocumentIcon,
     DocumentTextIcon,
-    EllipsisHorizontalIcon,
     EllipsisVerticalIcon,
     HashtagIcon,
     KeyIcon,
@@ -89,7 +88,7 @@ import {
     TrashIcon,
     XMarkIcon
 } from "./heroicons";
-import { Tip } from "./tip";
+import {Tip} from "./tip";
 
 // Dynamically load EE Export component
 // const EEExport = loadEEComponent(
@@ -162,9 +161,9 @@ export function getColumnIcons(columns: string[], columnTypes?: string[]) {
 
 // Render platform-specific shortcut labels: ⌘ on macOS, Ctrl on others
 const isMacPlatform = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
-function renderShortcut(parts: ("Mod" | "Shift" | "Delete" | string)[]) {
-    const mapMac: Record<string, string> = { Mod: "⌘", Shift: "⇧", Delete: "⌫" };
-    const mapWin: Record<string, string> = { Mod: "Ctrl", Shift: "Shift", Delete: "Del" };
+function renderShortcut(parts: ("Mod" | "Shift" | "Delete" | "Backspace" | string)[]) {
+    const mapMac: Record<string, string> = { Mod: "⌘", Shift: "⇧", Delete: "⌫", Backspace: "⌫" };
+    const mapWin: Record<string, string> = { Mod: "Ctrl", Shift: "Shift", Delete: "Del", Backspace: "Backspace" };
     const map = isMacPlatform ? mapMac : mapWin;
     if (isMacPlatform) {
         return parts.map(p => map[p] || p).join("");
@@ -236,6 +235,9 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [showExportConfirm, setShowExportConfirm] = useState(false);
     const tableRef = useRef<HTMLDivElement>(null);
     const [contextMenuCellIdx, setContextMenuCellIdx] = useState<number | null>(null);
+
+    // Keyboard navigation state
+    const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
     
     // Mock data state
     const [showMockDataSheet, setShowMockDataSheet] = useState(false);
@@ -363,6 +365,12 @@ export const StorageUnitTable: FC<TableProps> = ({
     const paginatedRows = useMemo(() => {
         // For server-side pagination, rows are already paginated
         return rows;
+    }, [rows]);
+
+    // Reset focus when rows change (page change, refresh, etc.)
+    useEffect(() => {
+        setFocusedRowIndex(null);
+        setChecked([]);
     }, [rows]);
 
     const handlePageChange = useCallback((newPage: number) => {
@@ -583,7 +591,39 @@ export const StorageUnitTable: FC<TableProps> = ({
         };
     }, [onRefresh]);
 
-    // Keyboard shortcuts for table operations
+    // Helper to scroll focused row into view
+    const scrollRowIntoView = useCallback((rowIndex: number) => {
+        const rowElement = document.querySelector(`[data-row-idx="${rowIndex}"]`);
+        if (rowElement) {
+            rowElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }, []);
+
+    // Helper to move focus and optionally extend selection
+    const moveFocus = useCallback((newIndex: number, extendSelection: boolean = false) => {
+        if (newIndex < 0 || newIndex >= paginatedRows.length) return;
+
+        if (extendSelection && focusedRowIndex !== null) {
+            // Extend selection from current focus to new index
+            const start = Math.min(focusedRowIndex, newIndex);
+            const end = Math.max(focusedRowIndex, newIndex);
+            const newChecked = new Set(checked);
+            for (let i = start; i <= end; i++) {
+                newChecked.add(i);
+            }
+            setChecked(Array.from(newChecked));
+        }
+
+        setFocusedRowIndex(newIndex);
+        scrollRowIntoView(newIndex);
+    }, [paginatedRows.length, focusedRowIndex, checked, scrollRowIntoView]);
+
+    // Calculate visible rows for PageUp/PageDown
+    const visibleRowCount = useMemo(() => {
+        return Math.floor(height / rowHeight);
+    }, [height, rowHeight]);
+
+    // Keyboard navigation and shortcuts
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             // Only handle shortcuts when not in input fields
@@ -591,27 +631,134 @@ export const StorageUnitTable: FC<TableProps> = ({
                 return;
             }
 
+            // Skip if no rows
+            if (paginatedRows.length === 0) return;
+
             const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
             const cmdKey = isMac ? event.metaKey : event.ctrlKey;
 
+            // Arrow key navigation (no modifier required)
+            switch (event.key) {
+                case 'ArrowDown':
+                    event.preventDefault();
+                    if (focusedRowIndex === null) {
+                        moveFocus(0, event.shiftKey);
+                    } else {
+                        moveFocus(Math.min(focusedRowIndex + 1, paginatedRows.length - 1), event.shiftKey);
+                    }
+                    return;
+
+                case 'ArrowUp':
+                    event.preventDefault();
+                    if (focusedRowIndex === null) {
+                        moveFocus(paginatedRows.length - 1, event.shiftKey);
+                    } else {
+                        moveFocus(Math.max(focusedRowIndex - 1, 0), event.shiftKey);
+                    }
+                    return;
+
+                case 'Home':
+                    event.preventDefault();
+                    moveFocus(0, event.shiftKey);
+                    return;
+
+                case 'End':
+                    event.preventDefault();
+                    moveFocus(paginatedRows.length - 1, event.shiftKey);
+                    return;
+
+                case 'PageDown':
+                    event.preventDefault();
+                    if (focusedRowIndex === null) {
+                        moveFocus(Math.min(visibleRowCount - 1, paginatedRows.length - 1), event.shiftKey);
+                    } else {
+                        moveFocus(Math.min(focusedRowIndex + visibleRowCount, paginatedRows.length - 1), event.shiftKey);
+                    }
+                    return;
+
+                case 'PageUp':
+                    event.preventDefault();
+                    if (focusedRowIndex === null) {
+                        moveFocus(0, event.shiftKey);
+                    } else {
+                        moveFocus(Math.max(focusedRowIndex - visibleRowCount, 0), event.shiftKey);
+                    }
+                    return;
+
+                case ' ': // Space - toggle selection of focused row
+                    if (focusedRowIndex !== null) {
+                        event.preventDefault();
+                        handleSelectRow(focusedRowIndex);
+                    }
+                    return;
+
+                case 'Enter': // Enter - edit focused row
+                    if (focusedRowIndex !== null && !disableEdit) {
+                        event.preventDefault();
+                        handleEdit(focusedRowIndex);
+                    }
+                    return;
+
+                case 'Delete':
+                case 'Backspace':
+                    // Delete focused row (without modifier)
+                    if (!cmdKey && focusedRowIndex !== null && !disableEdit) {
+                        event.preventDefault();
+                        handleDeleteRow(focusedRowIndex);
+                    }
+                    break;
+
+                case 'Escape':
+                    // Clear focus and selection
+                    event.preventDefault();
+                    setFocusedRowIndex(null);
+                    return;
+            }
+
+            // Modifier key combinations (Cmd/Ctrl)
             if (cmdKey) {
+                // Handle Shift+Key combinations first
+                if (event.shiftKey) {
+                    switch (event.key.toLowerCase()) {
+                        case 'e':
+                            // Mod+Shift+E: Export (opens export dialog)
+                            event.preventDefault();
+                            setShowExportConfirm(true);
+                            break;
+                    }
+                    return;
+                }
+
+                // Handle Cmd/Ctrl+Key combinations (without Shift)
                 switch (event.key.toLowerCase()) {
                     case 'm':
+                        // Mod+M: Mock data
                         event.preventDefault();
                         setShowMockDataSheet(true);
                         break;
                     case 'r':
+                        // Mod+R: Refresh table
                         event.preventDefault();
                         onRefresh?.();
                         break;
                     case 'a':
+                        // Mod+A: Select/deselect all visible rows
                         event.preventDefault();
-                        // For server-side pagination, select all visible rows
                         setChecked(checked.length === paginatedRows.length ? [] : paginatedRows.map((_, index) => index));
                         break;
                     case 'e':
-                        event.preventDefault();
-                        setShowExportConfirm(true);
+                        // Mod+E: Edit focused row
+                        if (focusedRowIndex !== null && !disableEdit) {
+                            event.preventDefault();
+                            handleEdit(focusedRowIndex);
+                        }
+                        break;
+                    case 'backspace':
+                        // Mod+Backspace: Delete focused or selected rows
+                        if (focusedRowIndex !== null && !disableEdit) {
+                            event.preventDefault();
+                            handleDeleteRow(focusedRowIndex);
+                        }
                         break;
                 }
             }
@@ -619,7 +766,7 @@ export const StorageUnitTable: FC<TableProps> = ({
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [onRefresh, checked, paginatedRows, currentPage, pageSize]);
+    }, [onRefresh, checked, paginatedRows, handleDeleteRow, handleEdit, focusedRowIndex, moveFocus, visibleRowCount, handleSelectRow, disableEdit]);
 
 
 
@@ -712,15 +859,39 @@ export const StorageUnitTable: FC<TableProps> = ({
     }, [searchRef, rows, columns]);
 
     const contextMenu = useCallback((index: number, style: React.CSSProperties) => {
+        const isFocused = focusedRowIndex === index;
+        const isSelected = checked.includes(index);
+
         return <ContextMenu key={index}>
             <ContextMenuTrigger className="contents">
-                <TableRow data-row-idx={index} className="group relative" style={style}>
-                    <TableCell className={cn("min-w-[40px] w-[40px]", {
-                        "hidden": disableEdit,
-                    })}>
+                <TableRow
+                    data-row-idx={index}
+                    role="row"
+                    aria-rowindex={index + 1}
+                    aria-selected={isSelected}
+                    data-focused={isFocused || undefined}
+                    tabIndex={isFocused ? 0 : -1}
+                    className={cn(
+                        "group relative cursor-pointer outline-none",
+                        // Focus styling - visible ring around focused row
+                        isFocused && "ring-2 ring-primary ring-inset bg-primary/5",
+                        // Selected styling
+                        isSelected && "bg-muted"
+                    )}
+                    style={style}
+                    onClick={() => setFocusedRowIndex(index)}
+                    onFocus={() => setFocusedRowIndex(index)}
+                >
+                    <TableCell
+                        role="gridcell"
+                        className={cn("min-w-[40px] w-[40px]", {
+                            "hidden": disableEdit,
+                        })}
+                    >
                         <Checkbox
-                            checked={checked.includes(index)}
-                            onCheckedChange={() => setChecked(checked.includes(index) ? checked.filter(i => i !== index) : [...checked, index])}
+                            checked={isSelected}
+                            onCheckedChange={() => setChecked(isSelected ? checked.filter(i => i !== index) : [...checked, index])}
+                            aria-label={isSelected ? t('deselectRow') : t('selectRow')}
                         />
                         <Button variant="secondary" className="opacity-0 group-hover:opacity-100 absolute right-2 w-0 top-1.5" onClick={(e) => {
                             e.preventDefault();
@@ -732,15 +903,20 @@ export const StorageUnitTable: FC<TableProps> = ({
                                 clientY: e.clientY,
                             });
                             e.currentTarget.dispatchEvent(event);
-                            }} data-testid="icon-button">
+                            }} data-testid="icon-button" aria-label={t('moreActions')}>
                             <EllipsisVerticalIcon className="w-4 h-4" />
                         </Button>
                     </TableCell>
                     {paginatedRows[index]?.map((cell, cellIdx) => (
                         <TableCell
                             key={cellIdx}
+                            role="gridcell"
                             className="cursor-pointer"
-                            onClick={() => handleCellClick(index, cellIdx)}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setFocusedRowIndex(index);
+                                handleCellClick(index, cellIdx);
+                            }}
                             onDoubleClick={() => handleCellDoubleClick(index)}
                             onContextMenu={() => setContextMenuCellIdx(cellIdx)}
                             data-col-idx={cellIdx}
@@ -804,24 +980,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                     <ContextMenuShortcut><CursorArrowRaysIcon className="w-4 h-4" /><CursorArrowRaysIcon className="w-4 h-4" /></ContextMenuShortcut>
                 </ContextMenuItem>
                 <ContextMenuItem onSelect={() => handleSelectRow(index)}>
-                    {checked.includes(index) ? (
-                        <>
-                            <CheckCircleIcon className="w-4 h-4 text-primary" />
-                            {t('deselectRow')}
-                            <ContextMenuShortcut>{renderShortcut(["Mod", "D"])}</ContextMenuShortcut>
-                        </>
-                    ) : (
-                        <>
-                            <CheckCircleIcon className="w-4 h-4 text-primary" />
-                            {t('selectRow')}
-                            <ContextMenuShortcut>{renderShortcut(["Mod", "S"])}</ContextMenuShortcut>
-                        </>
-                    )}
+                    <CheckCircleIcon className="w-4 h-4 text-primary" />
+                    {checked.includes(index) ? t('deselectRow') : t('selectRow')}
+                    <ContextMenuShortcut>Space</ContextMenuShortcut>
                 </ContextMenuItem>
                 <ContextMenuItem onSelect={() => handleEdit(index)} disabled={checked.length > 0} data-testid="context-menu-edit-row">
                     <PencilSquareIcon className="w-4 h-4" />
                     {t('editRow')}
-                    <ContextMenuShortcut>{renderShortcut(["Mod", "E"])}</ContextMenuShortcut>
+                    <ContextMenuShortcut>Enter</ContextMenuShortcut>
                 </ContextMenuItem>
                 <ContextMenuSub>
                     <ContextMenuSubTrigger>
@@ -836,14 +1002,13 @@ export const StorageUnitTable: FC<TableProps> = ({
                         >
                             <DocumentIcon className="w-4 h-4" />
                             {t('exportAllAsCsv')}
-                            <ContextMenuShortcut>{renderShortcut(["Mod", "Shift", "C"])}</ContextMenuShortcut>
+                            <ContextMenuShortcut>{renderShortcut(["Mod", "Shift", "E"])}</ContextMenuShortcut>
                         </ContextMenuItem>
                         <ContextMenuItem
                             onSelect={() => setShowExportConfirm(true)}
                         >
                             <DocumentIcon className="w-4 h-4" />
                             {t('exportAllAsExcel')}
-                            <ContextMenuShortcut>{renderShortcut(["Mod", "Shift", "X"])}</ContextMenuShortcut>
                         </ContextMenuItem>
                         <ContextMenuSeparator />
                         <ContextMenuItem
@@ -852,7 +1017,6 @@ export const StorageUnitTable: FC<TableProps> = ({
                         >
                             <DocumentIcon className="w-4 h-4" />
                             {t('exportSelectedAsCsv')}
-                            <ContextMenuShortcut>{renderShortcut(["Mod", "C"])}</ContextMenuShortcut>
                         </ContextMenuItem>
                         <ContextMenuItem
                             onSelect={() => setShowExportConfirm(true)}
@@ -860,7 +1024,6 @@ export const StorageUnitTable: FC<TableProps> = ({
                         >
                             <DocumentIcon className="w-4 h-4" />
                             {t('exportSelectedAsExcel')}
-                            <ContextMenuShortcut>{renderShortcut(["Mod", "X"])}</ContextMenuShortcut>
                         </ContextMenuItem>
                     </ContextMenuSubContent>
                 </ContextMenuSub>
@@ -871,49 +1034,37 @@ export const StorageUnitTable: FC<TableProps> = ({
                     {t('mockData')}
                     <ContextMenuShortcut>{renderShortcut(["Mod", "M"])}</ContextMenuShortcut>
                 </ContextMenuItem>
-                <ContextMenuSub>
-                    <ContextMenuSubTrigger data-testid="context-menu-more-actions">
-                        <EllipsisHorizontalIcon className="w-4 h-4 mr-2" />
-                        {t('moreActions')}
-                    </ContextMenuSubTrigger>
-                    <ContextMenuSubContent
-                        className="w-44"
-                        collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
-                    >
-                        <ContextMenuItem
-                            variant="destructive"
-                            disabled={deleting}
-                            onSelect={async () => {
-                                await handleDeleteRow(index);
-                            }}
-                            data-testid="context-menu-delete-row"
-                        >
-                            <TrashIcon className="w-4 h-4 text-destructive" />
-                            {t('deleteRow')}
-                            <ContextMenuShortcut>{renderShortcut(["Mod", "Delete"])}</ContextMenuShortcut>
-                        </ContextMenuItem>
-                    </ContextMenuSubContent>
-                </ContextMenuSub>
-                <ContextMenuSeparator />
-                <ContextMenuItem disabled={true}>
-                    <ShareIcon className="w-4 h-4" />
-                    {t('openInGraph')}
-                    <ContextMenuShortcut>{renderShortcut(["Mod", "G"])}</ContextMenuShortcut>
+                <ContextMenuItem
+                    variant="destructive"
+                    disabled={deleting}
+                    onSelect={async () => {
+                        await handleDeleteRow(index);
+                    }}
+                    data-testid="context-menu-delete-row"
+                >
+                    <TrashIcon className="w-4 h-4 text-destructive" />
+                    {t('deleteRow')}
+                    <ContextMenuShortcut>Delete</ContextMenuShortcut>
                 </ContextMenuItem>
             </ContextMenuContent>
         </ContextMenu>
-    }, [checked, handleCellClick, handleEdit, handleSelectRow, handleDeleteRow, paginatedRows, disableEdit, onRefresh, t, contextMenuCellIdx, columns, columnIsForeignKey, columnIsPrimary, onEntitySearch, deleting]);
+    }, [checked, handleCellClick, handleEdit, handleSelectRow, handleDeleteRow, paginatedRows, disableEdit, onRefresh, t, contextMenuCellIdx, columns, columnIsForeignKey, columnIsPrimary, onEntitySearch, deleting, focusedRowIndex]);
 
     return (
         <div ref={tableRef} className="h-full flex">
             <div className="flex flex-col h-full space-y-4 w-0" style={{
                 width: `${containerWidth}px`,
             }} data-testid="table-container">
-                <TableComponent>
+                <TableComponent
+                    role="grid"
+                    aria-label={storageUnit ? `${storageUnit} data table` : 'Data table'}
+                    aria-rowcount={paginatedRows.length}
+                    aria-multiselectable={true}
+                >
                     <TableHeader>
                         <ContextMenu>
                             <ContextMenuTrigger asChild>
-                                <TableHeadRow className="group relative cursor-context-menu hover:bg-muted/50 transition-colors" title={t('rightClickForOptions')}>
+                                <TableHeadRow role="row" aria-rowindex={0} className="group relative cursor-context-menu hover:bg-muted/50 transition-colors" title={t('rightClickForOptions')}>
                                     <TableHead className={cn("min-w-[40px] w-[40px] relative", {
                                         "hidden": disableEdit,
                                     })}>
@@ -980,13 +1131,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                                         {t('exportData')}
                                     </ContextMenuSubTrigger>
                                     <ContextMenuSubContent
-                        collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
-                    >
+                                        collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
+                                    >
                                         <ContextMenuItem
                                             onSelect={() => setShowExportConfirm(true)}
                                         >
                                             <DocumentIcon className="w-4 h-4" />
                                             {t('exportAllAsCsv')}
+                                            <ContextMenuShortcut>{renderShortcut(["Mod", "Shift", "E"])}</ContextMenuShortcut>
                                         </ContextMenuItem>
                                         <ContextMenuItem
                                             onSelect={() => setShowExportConfirm(true)}
@@ -1026,16 +1178,6 @@ export const StorageUnitTable: FC<TableProps> = ({
                                     {checked.length === paginatedRows.length ? t('deselectAll') : t('selectAll')}
                                     <ContextMenuShortcut>{renderShortcut(["Mod", "A"])}</ContextMenuShortcut>
                                 </ContextMenuItem>
-                                <ContextMenuSeparator />
-                                <ContextMenuItem disabled={true}>
-                                    <CalculatorIcon className="w-4 h-4" />
-                                    {t('columnStatistics')}
-                                    <ContextMenuShortcut>{renderShortcut(["Mod", "S"])}</ContextMenuShortcut>
-                                </ContextMenuItem>
-                                <ContextMenuItem disabled={true}>
-                                    <DocumentTextIcon className="w-4 h-4" />
-                                    {t('schemaInformation')}
-                                </ContextMenuItem>
                             </ContextMenuContent>
                         </ContextMenu>
                     </TableHeader>
@@ -1066,7 +1208,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                             })}>
                                 <CalculatorIcon className="w-4 h-4" />
                                 {t('mockData')}
-                                <ContextMenuShortcut>{renderShortcut(["Mod", "G"])}</ContextMenuShortcut>
+                                <ContextMenuShortcut>{renderShortcut(["Mod", "M"])}</ContextMenuShortcut>
                             </ContextMenuItem>
                             <ContextMenuSub>
                                 <ContextMenuSubTrigger>
@@ -1074,21 +1216,20 @@ export const StorageUnitTable: FC<TableProps> = ({
                                     {t('export')}
                                 </ContextMenuSubTrigger>
                                 <ContextMenuSubContent
-                        collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
-                    >
+                                    collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
+                                >
                                     <ContextMenuItem
                                         onSelect={() => setShowExportConfirm(true)}
                                     >
                                         <DocumentIcon className="w-4 h-4" />
                                         {t('exportAllAsCsv')}
-                                        <ContextMenuShortcut>⌘C</ContextMenuShortcut>
+                                        <ContextMenuShortcut>{renderShortcut(["Mod", "Shift", "E"])}</ContextMenuShortcut>
                                     </ContextMenuItem>
                                     <ContextMenuItem
                                         onSelect={() => setShowExportConfirm(true)}
                                     >
                                         <DocumentIcon className="w-4 h-4" />
                                         {t('exportAllAsExcel')}
-                                        <ContextMenuShortcut>⌘E</ContextMenuShortcut>
                                     </ContextMenuItem>
                                 </ContextMenuSubContent>
                             </ContextMenuSub>

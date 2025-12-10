@@ -37,6 +37,18 @@ import '@cypress/code-coverage/support'
 // Import shared helpers
 import {clearBrowserState, disableAnimations} from './helpers/animation'
 
+// Handle uncaught exceptions that shouldn't fail tests
+Cypress.on('uncaught:exception', (err) => {
+    // Ignore clipboard errors that occur when document loses focus during test cleanup
+    if (err.message.includes('Document is not focused') ||
+        err.message.includes('writeText') ||
+        err.name === 'NotAllowedError') {
+        return false;
+    }
+    // Let other errors fail the test
+    return true;
+});
+
 // Clear browser state before each test to ensure isolation
 beforeEach(() => {
     clearBrowserState();
