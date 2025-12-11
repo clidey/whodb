@@ -22,12 +22,15 @@ describe('Data View', () => {
 
     // SQL Databases
     forEachDatabase('sql', (db) => {
+        const testTable = db.testTable || {name: 'users'};
+        const tableName = testTable.name;
+
         it('displays table data with correct columns', () => {
-            cy.data('users');
+            cy.data(tableName);
             cy.sortBy(0); // Sort by first column (id)
 
             cy.getTableData().then(({columns, rows}) => {
-                const tableConfig = getTableConfig(db, 'users');
+                const tableConfig = getTableConfig(db, tableName);
 
                 // Verify columns
                 if (tableConfig && tableConfig.expectedColumns) {
@@ -37,8 +40,8 @@ describe('Data View', () => {
                 // Verify data exists
                 expect(rows.length).to.be.greaterThan(0);
 
-                // Verify first row data if configured
-                if (tableConfig && tableConfig.testData && tableConfig.testData.initial) {
+                // Verify first row data if configured (initial should be array of arrays)
+                if (tableConfig && tableConfig.testData && tableConfig.testData.initial && Array.isArray(tableConfig.testData.initial[0])) {
                     const expectedFirst = tableConfig.testData.initial[0];
                     expectedFirst.forEach((val, idx) => {
                         if (val !== '') {
@@ -50,7 +53,7 @@ describe('Data View', () => {
         });
 
         it('respects page size pagination', () => {
-            cy.data('users');
+            cy.data(tableName);
             cy.setTablePageSize(1);
             cy.submitTable();
 

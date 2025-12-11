@@ -191,8 +191,6 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         // Use ref to always get the latest whereCondition (avoids stale closure issues)
         const currentWhereCondition = whereConditionRef.current;
 
-        console.log(`[Query ${thisRequestId}] Starting query with where:`, currentWhereCondition ? 'HAS FILTER' : 'NO FILTER', currentWhereCondition);
-
         getStorageUnitRows({
             variables: {
                 schema,
@@ -204,13 +202,8 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
             },
         }).then(result => {
             const isLatest = thisRequestId === latestRequestIdRef.current;
-            console.log(`[Query ${thisRequestId}] Completed. isLatest: ${isLatest}, latestId: ${latestRequestIdRef.current}, rowCount: ${result.data?.Row?.Rows?.length}`);
-            // Only update rows if this is still the latest request (prevents race conditions)
             if (isLatest && result.data) {
-                console.log(`[Query ${thisRequestId}] Updating rows with ${result.data.Row.Rows.length} results`);
                 setRows(result.data.Row);
-            } else {
-                console.log(`[Query ${thisRequestId}] SKIPPED - not latest request`);
             }
         });
     }, [getStorageUnitRows, schema, unitName, currentTableName, sortConditions, pageSize, currentPage]);
@@ -228,19 +221,16 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     const handleColumnSort = useCallback((columnName: string) => {
         setSortConditions(prev => {
             const existingSort = prev.find(s => s.Column === columnName);
-            
+
             if (!existingSort) {
-                // Add ascending sort for this column
                 return [...prev, { Column: columnName, Direction: SortDirection.Asc }];
             } else if (existingSort.Direction === SortDirection.Asc) {
-                // Change to descending
-                return prev.map(s => 
-                    s.Column === columnName 
+                return prev.map(s =>
+                    s.Column === columnName
                         ? { ...s, Direction: SortDirection.Desc }
                         : s
                 );
             } else {
-                // Remove sort for this column
                 return prev.filter(s => s.Column !== columnName);
             }
         });
@@ -340,6 +330,29 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
             columnIsForeignKey: rows?.Columns.map(column => column.IsForeignKey)
         };
     }, [rows?.Columns, rows?.Rows]);
+
+    // Broadcast available columns for Command Palette sorting
+    useEffect(() => {
+        window.dispatchEvent(new CustomEvent('table:columns-available', {
+            detail: { columns }
+        }));
+        return () => {
+            window.dispatchEvent(new CustomEvent('table:columns-available', {
+                detail: { columns: [] }
+            }));
+        };
+    }, [columns]);
+
+    // Listen for sort requests from Command Palette
+    useEffect(() => {
+        const handleSortColumn = (event: CustomEvent<{ column: string }>) => {
+            handleColumnSort(event.detail.column);
+        };
+        window.addEventListener('table:sort-column', handleSortColumn as EventListener);
+        return () => {
+            window.removeEventListener('table:sort-column', handleSortColumn as EventListener);
+        };
+    }, [handleColumnSort]);
 
     useEffect(() => {
         if (unit == null && !currentTableName) {
@@ -695,7 +708,17 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                     </Button>
                 </div>
                 <Sheet open={showAdd} onOpenChange={setShowAdd}>
-                    <SheetContent side="right" className="flex flex-col p-8">
+                    <SheetContent
+                        side="right"
+                        className="flex flex-col p-8"
+                        onKeyDown={(e) => {
+                            if (e.key === 'Escape') {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setShowAdd(false);
+                            }
+                        }}
+                    >
                         <SheetTitle className="flex items-center gap-2"><TableCellsIcon className="w-5 h-5" /> {t('addRowTitle')}</SheetTitle>
                         <div className="flex-1 overflow-y-auto pr-2">
                             <div className="flex flex-col gap-4">

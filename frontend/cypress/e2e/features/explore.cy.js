@@ -23,10 +23,13 @@ describe('Explore Metadata', () => {
 
     // SQL Databases
     forEachDatabase('sql', (db) => {
-        it('shows table metadata and column types for users table', () => {
-            cy.explore('users');
+        const testTable = db.testTable || {name: 'users'};
+        const tableName = testTable.name;
+
+        it('shows table metadata and column types', () => {
+            cy.explore(tableName);
             cy.getExploreFields().then(fields => {
-                const tableConfig = getTableConfig(db, 'users');
+                const tableConfig = getTableConfig(db, tableName);
                 if (tableConfig) {
                     verifyColumnTypes(fields, tableConfig.columns);
                     if (tableConfig.metadata) {

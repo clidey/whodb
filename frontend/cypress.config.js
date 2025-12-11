@@ -33,9 +33,7 @@ export default defineConfig({
     async setupNodeEvents(on, config) {
         codeCoverageTask(on, config);
 
-        // Pass Docker flag to tests
         config.env = config.env || {};
-        config.env.isDocker = process.env.CYPRESS_IN_DOCKER === 'true';
 
       on("task", {
         async execCommand(command) {

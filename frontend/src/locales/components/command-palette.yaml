@@ -1,0 +1,15 @@
+en:
+  searchPlaceholder: Type a command or search...
+  noResults: No results found.
+  navigation: Navigation
+  actions: Actions
+  sortBy: Sort By
+  goToChat: Go to Chat
+  goToStorageUnits: Go to Storage Units
+  goToGraph: Go to Graph
+  goToScratchpad: Go to Scratchpad
+  refreshData: Refresh Data
+  exportData: Export Data
+  toggleSidebar: Toggle Sidebar
+  disconnect: Disconnect
+  sortByColumn: Sort by {{column}}

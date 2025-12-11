@@ -66,6 +66,17 @@ CREATE TABLE IF NOT EXISTS test_db.payments (
 ) ENGINE = MergeTree()
 ORDER BY id;
 
+-- Test Casting Table (for type casting tests)
+CREATE TABLE IF NOT EXISTS test_db.test_casting (
+    id INT,
+    bigint_col BIGINT,
+    integer_col INT,
+    smallint_col SMALLINT,
+    numeric_col DOUBLE,
+    description TEXT
+) ENGINE = MergeTree()
+ORDER BY id;
+
 -- Materialized View for Order Summary
 CREATE MATERIALIZED VIEW IF NOT EXISTS test_db.order_summary
 ENGINE = MergeTree()
@@ -122,10 +133,35 @@ INSERT INTO test_db.order_items (id, order_id, product_id, quantity, price_at_pu
 INSERT INTO test_db.order_items (id, order_id, product_id, quantity, price_at_purchase) VALUES 
 (3, 2, 3, 1, 150.00);
 
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 -- Payments
 INSERT INTO test_db.payments (id, order_id, payment_date, amount, payment_method) VALUES 
 (1, 1, now(), 2000.00, 'credit_card');
 
-INSERT INTO test_db.payments (id, order_id, payment_date, amount, payment_method) VALUES 
+INSERT INTO test_db.payments (id, order_id, payment_date, amount, payment_method) VALUES
 (2, 2, now(), 150.00, 'paypal');
 
+-- Test Casting Data
+INSERT INTO test_db.test_casting (id, bigint_col, integer_col, smallint_col, numeric_col, description) VALUES
+(1, 9223372036854775807, 2147483647, 32767, 12345.67, 'Max values test');
+
+INSERT INTO test_db.test_casting (id, bigint_col, integer_col, smallint_col, numeric_col, description) VALUES
+(2, 1000000, 1000, 100, 99.99, 'Standard values');
+
+INSERT INTO test_db.test_casting (id, bigint_col, integer_col, smallint_col, numeric_col, description) VALUES
+(3, -1000000, -1000, -100, -99.99, 'Negative values');

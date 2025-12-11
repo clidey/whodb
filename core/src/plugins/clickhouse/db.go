@@ -70,12 +70,11 @@ func (p *ClickHousePlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	switch connectionInput.ReadOnly {
 	case "disable":
 		options.Settings = clickhouse.Settings{
-			"max_execution_time": 60,
+			"readonly": 0,
 		}
 	case "enable":
 		options.Settings = clickhouse.Settings{
-			"readonly":           1,
-			"max_execution_time": 60,
+			"readonly": 1,
 		}
 	}
 
@@ -85,7 +84,6 @@ func (p *ClickHousePlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 
 	conn := clickhouse.OpenDB(options)
 
-	conn.SetMaxOpenConns(5)
 	conn.SetMaxOpenConns(5)
 	conn.SetConnMaxLifetime(time.Hour)
 

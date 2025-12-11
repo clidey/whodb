@@ -485,11 +485,12 @@ jobs:
       stage-only: ${{ needs.calculate-version.outputs.stage-only == 'true' }}
     secrets: inherit
 
-  # Step 7: Generate Homebrew cask (production only)
+  # Step 7: Generate Homebrew cask (disabled - run manually when needed)
   generate-homebrew-cask:
     name: Generate Homebrew Cask
     needs: [ calculate-version, create-github-release ]
     if: |
+      false &&
       needs.calculate-version.outputs.stage-only != 'true' &&
       needs.calculate-version.outputs.deployment-mode == 'production' &&
       needs.create-github-release.result == 'success'

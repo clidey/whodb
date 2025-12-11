@@ -127,7 +127,6 @@ run_tests() {
     if [ "$TARGET_DB" != "all" ]; then
         ENV_VARS="CYPRESS_database=$TARGET_DB"
     fi
-    ENV_VARS="$ENV_VARS CYPRESS_isDocker=true"
 
     # Run Cypress
     if [ "$HEADLESS" = "true" ]; then
@@ -137,9 +136,9 @@ run_tests() {
             BROWSER_ARG=""
         fi
 
-        env $ENV_VARS NODE_ENV=test npx cypress run $BROWSER_ARG --config "$CYPRESS_CONFIG" || { echo "❌ Cypress tests failed"; return 1; }
+        env $ENV_VARS NODE_ENV=test pnpx cypress run $BROWSER_ARG --config "$CYPRESS_CONFIG" || { echo "❌ Cypress tests failed"; return 1; }
     else
-        env $ENV_VARS NODE_ENV=test npx cypress open --config "$CYPRESS_CONFIG" || { echo "❌ Cypress failed to open"; return 1; }
+        env $ENV_VARS NODE_ENV=test pnpx cypress open --config "$CYPRESS_CONFIG" || { echo "❌ Cypress failed to open"; return 1; }
     fi
 
     echo "✅ Test run complete"

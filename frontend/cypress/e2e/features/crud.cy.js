@@ -14,147 +14,219 @@
  * limitations under the License.
  */
 
-import {forEachDatabase, getTableConfig} from '../../support/test-runner';
+import {forEachDatabase, getTableConfig, hasFeature} from '../../support/test-runner';
 import {createUpdatedDocument, parseDocument} from '../../support/categories/document';
+
+/**
+ * Generates a unique test identifier for this test run.
+ * Uses timestamp to avoid conflicts within and across test runs.
+ */
+function getUniqueTestId() {
+    return `test_${Date.now()}`;
+}
 
 describe('CRUD Operations', () => {
 
     // SQL Databases - Edit and Add
     forEachDatabase('sql', (db) => {
+        const testTable = db.testTable;
+        if (!testTable) {
+            it.skip('testTable config missing in fixture', () => {});
+            return;
+        }
+
+        const tableName = testTable.name;
+        const colIndex = testTable.identifierColIndex;
+        const testValues = testTable.testValues;
+        const mutationDelay = db.mutationDelay || 0;
+
+        // Skip Edit Row tests for databases with async mutations (e.g., ClickHouse)
+        const crudSupported = hasFeature(db, 'crud') !== false;
+
         describe('Edit Row', () => {
-            it('edits a row and saves changes', () => {
-                cy.data('users');
+            (crudSupported ? it : it.skip)('edits a row and saves changes', () => {
+                cy.data(tableName);
                 cy.sortBy(0);
 
-                // Edit first row
-                cy.updateRow(0, 1, 'john_doe1', false);
+                // Edit row
+                cy.updateRow(testValues.rowIndex, colIndex, testValues.modified, false);
+
+                // Wait for async mutations (e.g., ClickHouse)
+                if (mutationDelay > 0) {
+                    cy.wait(mutationDelay);
+                    cy.data(tableName);
+                    cy.sortBy(0);
+                }
 
                 // Verify change
                 cy.getTableData().then(({rows}) => {
-                    expect(rows[0][2]).to.equal('john_doe1');
+                    expect(rows[testValues.rowIndex][colIndex + 1]).to.equal(testValues.modified);
                 });
 
                 // Revert
-                cy.updateRow(0, 1, 'john_doe', false);
+                cy.updateRow(testValues.rowIndex, colIndex, testValues.original, false);
+
+                // Wait for async mutations
+                if (mutationDelay > 0) {
+                    cy.wait(mutationDelay);
+                    cy.data(tableName);
+                    cy.sortBy(0);
+                }
 
                 cy.getTableData().then(({rows}) => {
-                    expect(rows[0][2]).to.equal('john_doe');
+                    expect(rows[testValues.rowIndex][colIndex + 1]).to.equal(testValues.original);
                 });
             });
 
-            it('cancels edit without saving', () => {
-                cy.data('users');
+            (crudSupported ? it : it.skip)('cancels edit without saving', () => {
+                cy.data(tableName);
                 cy.sortBy(0);
 
                 // Edit and cancel
-                cy.updateRow(0, 1, 'temp_value', true); // true = cancel
+                cy.updateRow(testValues.rowIndex, colIndex, 'temp_value', true);
 
                 // Verify no change
                 cy.getTableData().then(({rows}) => {
-                    expect(rows[0][2]).to.equal('john_doe');
+                    expect(rows[testValues.rowIndex][colIndex + 1]).to.equal(testValues.original);
                 });
             });
         });
 
         describe('Add Row', () => {
-            // Skip ClickHouse - doesn't support INSERT in the same way
-            if (db.type === 'ClickHouse') {
-                return;
-            }
-
             it('adds a new row', () => {
-                cy.data('users');
+                cy.data(tableName);
 
-                const tableConfig = getTableConfig(db, 'users');
-                const newRowData = tableConfig?.testData?.newRow;
+                const tableConfig = getTableConfig(db, tableName);
+                const newRowTemplate = tableConfig?.testData?.newRow;
 
-                if (newRowData) {
-                    cy.addRow(newRowData);
-
-                    // Verify row was added
-                    cy.getTableData().then(({rows}) => {
-                        const addedRow = rows.find(r => r[2] === newRowData.username);
-                        expect(addedRow).to.exist;
-                    });
-
-                    // Clean up - delete the added row
-                    cy.getTableData().then(({rows}) => {
-                        const rowIndex = rows.findIndex(r => r[2] === newRowData.username);
-                        if (rowIndex >= 0) {
-                            cy.deleteRow(rowIndex);
-                        }
-                    });
+                if (!newRowTemplate) {
+                    cy.log('No newRow test data configured, skipping');
+                    return;
                 }
+
+                // Create unique row data to avoid conflicts
+                const uniqueId = getUniqueTestId();
+                const newRowData = {...newRowTemplate};
+                newRowData[testTable.identifierField] = `${uniqueId}_user`;
+                if (newRowData.email) {
+                    newRowData.email = `${uniqueId}@example.com`;
+                }
+
+                cy.addRow(newRowData);
+
+                const identifierValue = newRowData[testTable.identifierField];
+
+                // Wait for async mutations (e.g., ClickHouse)
+                if (mutationDelay > 0) {
+                    cy.wait(mutationDelay);
+                    cy.data(tableName);
+                }
+
+                // Verify row was added
+                cy.getTableData().then(({rows}) => {
+                    const addedRow = rows.find(r => r[colIndex + 1] === identifierValue);
+                    expect(addedRow, `Row with ${testTable.identifierField}=${identifierValue} should exist`).to.exist;
+                });
+
+                // Clean up - delete the added row
+                cy.getTableData().then(({rows}) => {
+                    const rowIndex = rows.findIndex(r => r[colIndex + 1] === identifierValue);
+                    if (rowIndex >= 0) {
+                        cy.deleteRow(rowIndex);
+                    }
+                });
             });
         });
 
         describe('Delete Row', () => {
-            // Skip ClickHouse - doesn't support DELETE in the same way
-            if (db.type === 'ClickHouse') {
-                return;
-            }
-
             it('deletes a row and verifies removal', () => {
-                cy.data('users');
+                cy.data(tableName);
 
-                // First add a row to delete
-                const tableConfig = getTableConfig(db, 'users');
-                const newRowData = tableConfig?.testData?.newRow;
+                const tableConfig = getTableConfig(db, tableName);
+                const newRowTemplate = tableConfig?.testData?.newRow;
 
-                if (newRowData) {
-                    cy.addRow(newRowData);
-
-                    cy.getTableData().then(({rows}) => {
-                        const initialCount = rows.length;
-                        const rowIndex = rows.findIndex(r => r[2] === newRowData.username);
-
-                        if (rowIndex >= 0) {
-                            cy.deleteRow(rowIndex);
-
-                            cy.getTableData().then(({rows: newRows}) => {
-                                expect(newRows.length).to.equal(initialCount - 1);
-                            });
-                        }
-                    });
+                if (!newRowTemplate) {
+                    cy.log('No newRow test data configured, skipping');
+                    return;
                 }
+
+                // Create unique row data
+                const uniqueId = getUniqueTestId();
+                const newRowData = {...newRowTemplate};
+                newRowData[testTable.identifierField] = `${uniqueId}_delete`;
+                if (newRowData.email) {
+                    newRowData.email = `${uniqueId}@example.com`;
+                }
+
+                cy.addRow(newRowData);
+
+                // Wait for async mutations (e.g., ClickHouse)
+                if (mutationDelay > 0) {
+                    cy.wait(mutationDelay);
+                    cy.data(tableName);
+                }
+
+                const identifierValue = newRowData[testTable.identifierField];
+
+                cy.getTableData().then(({rows}) => {
+                    const initialCount = rows.length;
+                    const rowIndex = rows.findIndex(r => r[colIndex + 1] === identifierValue);
+
+                    if (rowIndex >= 0) {
+                        cy.deleteRow(rowIndex);
+
+                        // Wait for async mutations
+                        if (mutationDelay > 0) {
+                            cy.wait(mutationDelay);
+                            cy.data(tableName);
+                        }
+
+                        cy.getTableData().then(({rows: newRows}) => {
+                            expect(newRows.length).to.equal(initialCount - 1);
+                        });
+                    }
+                });
             });
         });
     });
 
     // Document Databases - Add, Edit, Delete
     forEachDatabase('document', (db) => {
+        const testTable = db.testTable;
+        if (!testTable) {
+            it.skip('testTable config missing in fixture', () => {});
+            return;
+        }
+
+        const tableName = testTable.name;
+        const testValues = testTable.testValues;
         const refreshDelay = db.indexRefreshDelay || 0;
 
         describe('Add Document', () => {
             it('adds a new document', () => {
-                cy.data('users');
+                cy.data(tableName);
 
+                // Create unique document to avoid conflicts
+                const uniqueId = getUniqueTestId();
                 const newDoc = {
-                    username: 'new_user',
-                    email: 'new@example.com',
+                    username: `${uniqueId}_user`,
+                    email: `${uniqueId}@example.com`,
                     password: 'newpassword'
                 };
 
                 cy.addRow(newDoc, true);
 
-                // Wait for index refresh (Elasticsearch needs this)
                 if (refreshDelay > 0) {
                     cy.wait(refreshDelay);
                 }
 
-                // Force refresh by clicking Query button
                 cy.submitTable();
-
-                // Wait for data to load after refresh
                 cy.get('table tbody tr', {timeout: 15000}).should('have.length.at.least', 1);
 
                 cy.getTableData().then(({rows}) => {
-                    // Check row count increased
-                    expect(rows.length).to.be.at.least(4);
-                    // Find the new document - search case-insensitively in all text
                     const addedRow = rows.find(r => {
                         const text = (r[1] || '').toLowerCase();
-                        return text.includes('new_user') || text.includes('new@example.com');
+                        return text.includes(uniqueId);
                     });
                     expect(addedRow, 'New document should be found').to.exist;
                 });
@@ -163,7 +235,7 @@ describe('CRUD Operations', () => {
                 cy.getTableData().then(({rows}) => {
                     const rowIndex = rows.findIndex(r => {
                         const text = (r[1] || '').toLowerCase();
-                        return text.includes('new_user') || text.includes('new@example.com');
+                        return text.includes(uniqueId);
                     });
                     if (rowIndex >= 0) {
                         cy.deleteRow(rowIndex);
@@ -179,20 +251,18 @@ describe('CRUD Operations', () => {
             // Skip full edit test for Elasticsearch due to truncated JSON display
             if (db.type === 'ElasticSearch') {
                 it('cancels edit without saving', () => {
-                    cy.data('users');
+                    cy.data(tableName);
 
-                    // Wait for data to fully load
                     cy.get('table tbody tr', {timeout: 15000}).should('have.length.at.least', 1);
 
                     cy.getTableData().then(({rows}) => {
-                        // Search case-insensitively and handle null/undefined values
-                        let janeRowIndex = rows.findIndex(r => {
+                        const targetRowIndex = rows.findIndex(r => {
                             const text = (r[1] || '').toLowerCase();
-                            return text.includes('jane@example.com') || text.includes('jane_smith');
+                            return text.includes(testValues.original);
                         });
-                        expect(janeRowIndex, 'Jane row should exist').to.be.greaterThan(-1);
+                        expect(targetRowIndex, `Row with ${testValues.original} should exist`).to.be.greaterThan(-1);
 
-                        cy.openContextMenu(janeRowIndex);
+                        cy.openContextMenu(targetRowIndex);
                         cy.get('[data-testid="context-menu-edit-row"]').should('be.visible').click();
                         cy.contains('Edit Row').should('be.visible');
                         cy.get('body').type('{esc}');
@@ -203,67 +273,73 @@ describe('CRUD Operations', () => {
             }
 
             it('edits a document and saves changes', () => {
-                cy.data('users');
+                cy.data(tableName);
                 cy.sortBy(0);
 
                 cy.getTableData().then(({rows}) => {
-                    const doc = parseDocument(rows[1]);
-                    const updatedDoc = createUpdatedDocument(rows[1], {username: 'jane_smith1'});
+                    const updatedDoc = createUpdatedDocument(rows[testValues.rowIndex], {
+                        [testTable.identifierField]: testValues.modified
+                    });
 
-                    cy.updateRow(1, 1, updatedDoc, false);
+                    cy.updateRow(testValues.rowIndex, 1, updatedDoc, false);
                 });
 
                 if (refreshDelay > 0) {
                     cy.wait(refreshDelay);
-                    cy.data('users');
+                    cy.data(tableName);
                     cy.sortBy(0);
                 }
 
                 cy.getTableData().then(({rows}) => {
-                    const doc = parseDocument(rows[1]);
-                    expect(doc.username).to.equal('jane_smith1');
+                    const doc = parseDocument(rows[testValues.rowIndex]);
+                    expect(doc[testTable.identifierField]).to.equal(testValues.modified);
 
                     // Revert
-                    const revertedDoc = createUpdatedDocument(rows[1], {username: 'jane_smith'});
-                    cy.updateRow(1, 1, revertedDoc, false);
+                    const revertedDoc = createUpdatedDocument(rows[testValues.rowIndex], {
+                        [testTable.identifierField]: testValues.original
+                    });
+                    cy.updateRow(testValues.rowIndex, 1, revertedDoc, false);
                 });
 
                 if (refreshDelay > 0) {
                     cy.wait(refreshDelay);
-                    cy.data('users');
+                    cy.data(tableName);
                     cy.sortBy(0);
                 }
 
                 cy.getTableData().then(({rows}) => {
-                    const doc = parseDocument(rows[1]);
-                    expect(doc.username).to.equal('jane_smith');
+                    const doc = parseDocument(rows[testValues.rowIndex]);
+                    expect(doc[testTable.identifierField]).to.equal(testValues.original);
                 });
             });
 
             it('cancels edit without saving', () => {
-                cy.data('users');
+                cy.data(tableName);
                 cy.sortBy(0);
 
                 cy.getTableData().then(({rows}) => {
-                    const updatedDoc = createUpdatedDocument(rows[1], {username: 'temp_value'});
-                    cy.updateRow(1, 1, updatedDoc, true); // true = cancel
+                    const updatedDoc = createUpdatedDocument(rows[testValues.rowIndex], {
+                        [testTable.identifierField]: 'temp_value'
+                    });
+                    cy.updateRow(testValues.rowIndex, 1, updatedDoc, true);
                 });
 
                 cy.getTableData().then(({rows}) => {
-                    const doc = parseDocument(rows[1]);
-                    expect(doc.username).to.equal('jane_smith');
+                    const doc = parseDocument(rows[testValues.rowIndex]);
+                    expect(doc[testTable.identifierField]).to.equal(testValues.original);
                 });
             });
         });
 
         describe('Delete Document', () => {
             it('deletes a document and verifies removal', () => {
-                cy.data('users');
+                cy.data(tableName);
 
-                // First add a document to delete
+                // Create unique document to delete
+                const uniqueId = getUniqueTestId();
                 const newDoc = {
-                    username: 'temp_delete_user',
-                    email: 'temp@example.com',
+                    username: `${uniqueId}_delete`,
+                    email: `${uniqueId}@example.com`,
                     password: 'temppass'
                 };
 
@@ -271,19 +347,22 @@ describe('CRUD Operations', () => {
 
                 if (refreshDelay > 0) {
                     cy.wait(refreshDelay);
-                    cy.data('users');
+                    cy.data(tableName);
                 }
 
                 cy.getTableData().then(({rows}) => {
                     const initialCount = rows.length;
-                    const rowIndex = rows.findIndex(r => r[1].includes('temp_delete_user') || r[1].includes('temp@example.com'));
+                    const rowIndex = rows.findIndex(r => {
+                        const text = (r[1] || '');
+                        return text.includes(uniqueId);
+                    });
 
                     if (rowIndex >= 0) {
                         cy.deleteRow(rowIndex);
 
                         if (refreshDelay > 0) {
                             cy.wait(refreshDelay);
-                            cy.data('users');
+                            cy.data(tableName);
                             cy.wait(1000);
                         }
 
@@ -298,38 +377,48 @@ describe('CRUD Operations', () => {
 
     // Key-Value Databases - Edit hash fields
     forEachDatabase('keyvalue', (db) => {
+        const testTable = db.testTable;
+        if (!testTable) {
+            it.skip('testTable config missing in fixture', () => {});
+            return;
+        }
+
+        const keyName = testTable.name;
+        const testValues = testTable.testValues;
+        const rowIndex = testTable.identifierRowIndex || testValues.rowIndex;
+
         describe('Edit Hash Field', () => {
             it('edits a hash field value and saves', () => {
-                cy.data('user:1');
+                cy.data(keyName);
 
-                // Edit username field (index 4)
-                cy.updateRow(4, 1, 'johndoe_updated', false);
+                cy.updateRow(rowIndex, 1, testValues.modified, false);
 
                 cy.getTableData().then(({rows}) => {
-                    expect(rows[4][2]).to.equal('johndoe_updated');
+                    expect(rows[rowIndex][2]).to.equal(testValues.modified);
                 });
 
                 // Revert
-                cy.updateRow(4, 1, 'johndoe', false);
+                cy.updateRow(rowIndex, 1, testValues.original, false);
 
                 cy.getTableData().then(({rows}) => {
-                    expect(rows[4][2]).to.equal('johndoe');
+                    expect(rows[rowIndex][2]).to.equal(testValues.original);
                 });
             });
 
             it('cancels edit without saving', () => {
-                cy.data('user:1');
+                cy.data(keyName);
 
-                cy.updateRow(4, 1, 'temp_value', true); // true = cancel
+                cy.updateRow(rowIndex, 1, 'temp_value', true);
 
                 cy.getTableData().then(({rows}) => {
-                    expect(rows[4][2]).to.equal('johndoe');
+                    expect(rows[rowIndex][2]).to.equal(testValues.original);
                 });
             });
         });
 
         describe('Delete Hash Field', () => {
             it('deletes a hash field', () => {
+                // Use user:2 for delete test to avoid affecting user:1 used in edit tests
                 cy.data('user:2');
 
                 cy.getTableData().then(({rows}) => {

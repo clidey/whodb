@@ -24,8 +24,11 @@ describe('Mock Data Generation', () => {
             return;
         }
 
+        const supportedTable = db.mockData?.supportedTable || 'users';
+        const unsupportedTable = db.mockData?.unsupportedTable || 'orders';
+
         it('shows mock data generation UI', () => {
-            cy.data('users');
+            cy.data(supportedTable);
 
             cy.selectMockData();
 
@@ -39,7 +42,7 @@ describe('Mock Data Generation', () => {
         });
 
         it('enforces maximum row count limit', () => {
-            cy.data('users');
+            cy.data(supportedTable);
 
             cy.selectMockData();
 
@@ -54,7 +57,7 @@ describe('Mock Data Generation', () => {
         });
 
         it('shows overwrite confirmation dialog', () => {
-            cy.data('users');
+            cy.data(supportedTable);
 
             cy.selectMockData();
 
@@ -77,7 +80,7 @@ describe('Mock Data Generation', () => {
         });
 
         it('prevents mock data on tables with foreign keys', () => {
-            cy.data('orders');
+            cy.data(unsupportedTable);
 
             cy.selectMockData();
 

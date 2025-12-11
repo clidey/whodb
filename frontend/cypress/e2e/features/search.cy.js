@@ -20,24 +20,28 @@ describe('Table Search', () => {
 
     // SQL Databases
     forEachDatabase('sql', (db) => {
-        it('highlights matching cells when searching', () => {
-            cy.data('users');
+        const testTable = db.testTable || {name: 'users', searchTerm: 'john'};
+        const tableName = testTable.name;
+        const searchTerm = testTable.searchTerm || 'john';
 
-            cy.searchTable('john');
+        it('highlights matching cells when searching', () => {
+            cy.data(tableName);
+
+            cy.searchTable(searchTerm);
 
             // Search highlights one cell at a time, verify it contains the search term
-            cy.getHighlightedCell({timeout: 5000}).first().should('contain.text', 'john');
+            cy.getHighlightedCell({timeout: 5000}).first().should('contain.text', searchTerm);
         });
 
         it('finds multiple matches by cycling through', () => {
-            cy.data('users');
+            cy.data(tableName);
 
             // First search highlights first match
-            cy.searchTable('example.com');
+            cy.searchTable(searchTerm);
             cy.getHighlightedCell({timeout: 5000}).should('exist');
 
             // Verify we can cycle through matches by searching again
-            cy.searchTable('example.com');
+            cy.searchTable(searchTerm);
             cy.getHighlightedCell({timeout: 5000}).should('exist');
         });
     });

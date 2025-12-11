@@ -194,13 +194,13 @@ cd "$PROJECT_ROOT/frontend"
 
 if [ "$HEADLESS" = "true" ]; then
     if [ -n "$CYPRESS_SPECS" ]; then
-        NODE_ENV=test npx cypress run --spec "$CYPRESS_SPECS" --browser chromium
+        NODE_ENV=test pnpx cypress run --spec "$CYPRESS_SPECS" --browser chromium
     else
-        NODE_ENV=test npx cypress run --browser chromium
+        NODE_ENV=test pnpx cypress run --browser chromium
     fi
 else
     if [ -n "$CYPRESS_SPECS" ]; then
-        NODE_ENV=test npx cypress open --config "specPattern=$CYPRESS_SPECS"
+        NODE_ENV=test pnpx cypress open --config "specPattern=$CYPRESS_SPECS"
     else
         NODE_ENV=test pnpm cypress open
     fi

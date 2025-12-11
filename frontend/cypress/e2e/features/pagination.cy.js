@@ -20,8 +20,13 @@ describe('Pagination', () => {
 
     // SQL Databases
     forEachDatabase('sql', (db) => {
+        const testTable = db.testTable || {name: 'users', firstName: 'john_doe', identifierColIndex: 1};
+        const tableName = testTable.name;
+        const firstName = testTable.firstName || 'john_doe';
+        const colIndex = testTable.identifierColIndex || 1;
+
         it('respects page size setting', () => {
-            cy.data('users');
+            cy.data(tableName);
             cy.sortBy(0);
 
             // Set page size to 1
@@ -30,7 +35,7 @@ describe('Pagination', () => {
 
             cy.getTableData().then(({rows}) => {
                 expect(rows.length).to.equal(1);
-                expect(rows[0][2]).to.equal('john_doe');
+                expect(rows[0][colIndex + 1]).to.equal(firstName);
             });
 
             // Set page size to 2

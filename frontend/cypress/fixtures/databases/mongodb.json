@@ -1,9 +1,18 @@
 {
   "type": "MongoDB",
   "category": "document",
+  "testTable": {
+    "name": "users",
+    "identifierField": "username",
+    "testValues": {
+      "original": "jane_smith",
+      "modified": "jane_smith1",
+      "rowIndex": 1
+    },
+    "searchTerm": "john"
+  },
   "connection": {
     "host": "localhost",
-    "dockerHost": "e2e_mongo",
     "port": 27017,
     "user": "user",
     "password": "password",
@@ -15,9 +24,14 @@
     "export": true,
     "scratchpad": false,
     "mockData": false,
-    "chat": false,
+    "chat": true,
     "whereConditions": true,
     "queryHistory": false
+  },
+  "featureNotes": {
+    "scratchpad": "Scratchpad requires SQL execution which MongoDB does not support natively",
+    "mockData": "Mock data generation not implemented for document databases",
+    "queryHistory": "Query history not supported for document databases"
   },
   "whereOperators": {
     "equals": "eq",

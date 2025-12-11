@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-// Database configurations - loaded from fixtures
-const databaseConfigs = {
+import {validateAllFixtures} from './helpers/fixture-validator';
+
+// CE Database configurations - loaded from fixtures
+const ceDatabaseConfigs = {
     postgres: require('../fixtures/databases/postgres.json'),
     mysql: require('../fixtures/databases/mysql.json'),
     mysql8: require('../fixtures/databases/mysql8.json'),
@@ -26,6 +28,44 @@ const databaseConfigs = {
     elasticsearch: require('../fixtures/databases/elasticsearch.json'),
     clickhouse: require('../fixtures/databases/clickhouse.json'),
 };
+
+// Validate CE fixtures on module load
+const ceValidation = validateAllFixtures(ceDatabaseConfigs);
+if (!ceValidation.allValid) {
+    console.error('CE fixture validation failed - some tests may be skipped');
+}
+
+// Additional database configurations - dynamically loaded at build time using webpack's require.context
+// This scans for any JSON files without knowing specific database names
+let additionalConfigs = {};
+try {
+    const context = require.context('../../../ee/frontend/cypress/fixtures/databases', false, /\.json$/);
+    context.keys().forEach(key => {
+        const name = key.replace('./', '').replace('.json', '');
+        additionalConfigs[name] = context(key);
+    });
+} catch (e) {
+    // Extension fixtures directory not available
+}
+
+// Active database configs
+let databaseConfigs = {...ceDatabaseConfigs, ...additionalConfigs};
+
+/**
+ * Register additional database configurations (used by EE to add EE databases)
+ * @param {Object} additionalConfigs - Map of database configs to add
+ */
+export function registerDatabases(additionalConfigs) {
+    databaseConfigs = {...databaseConfigs, ...additionalConfigs};
+}
+
+/**
+ * Get the current database configurations
+ * @returns {Object} Map of all registered database configs
+ */
+export function getDatabaseConfigs() {
+    return databaseConfigs;
+}
 
 /**
  * Get database configuration by name
@@ -77,11 +117,8 @@ export function getDatabaseId(dbConfig) {
  * @param {Object} dbConfig - Database configuration
  */
 export function loginToDatabase(dbConfig) {
-    const isDocker = Cypress.env('isDocker');
-    const rawHost = isDocker ? dbConfig.connection.dockerHost : dbConfig.connection.host;
-
     // Convert null to undefined for login command (it has special handling for undefined)
-    const host = rawHost ?? undefined;
+    const host = dbConfig.connection.host ?? undefined;
     const user = dbConfig.connection.user ?? undefined;
     const password = dbConfig.connection.password ?? undefined;
     const database = dbConfig.connection.database ?? undefined;

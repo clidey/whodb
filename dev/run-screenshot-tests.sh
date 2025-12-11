@@ -14,9 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Screenshot Environment Setup and Test Runner
-# This script sets up a dedicated environment for generating screenshots
-# for documentation and visual testing purposes.
 
 set -e
 
@@ -130,7 +127,7 @@ sleep 5
 echo ""
 echo "🚀 Starting backend test server..."
 cd "$PROJECT_ROOT/core"
-GOMAXPROCS=4 ENVIRONMENT=dev WHODB_DISABLE_MOCK_DATA_GENERATION='orders' \
+ENVIRONMENT=dev WHODB_DISABLE_MOCK_DATA_GENERATION='orders' \
     ./server.test -test.run=^TestMain$ &
 TEST_SERVER_PID=$!
 echo $TEST_SERVER_PID > "$PROJECT_ROOT/core/tmp/screenshot-server.pid"
@@ -199,7 +196,7 @@ fi
 echo "   Using browser: $BROWSER"
 echo "   Test spec: cypress/e2e/postgres-screenshots.cy.js"
 
-NODE_ENV=test npx cypress run \
+NODE_ENV=test pnpx cypress run \
     --browser "$BROWSER" \
     --spec "cypress/e2e/postgres-screenshots.cy.js" \
     --config video=false

@@ -127,12 +127,12 @@ export const SettingsPage: FC = () => {
                                     <br/>
                                     <br/>
                                     {t('posthogInfo')}
-                                    <br/>
                                     {t('sensitiveDataInfo')}
                                     <br/>
                                     <br/>
                                     {t('contactUsInfo')}
                                 </h3>
+                                <br/>
                                 <div className="flex justify-between">
                                     <Label>{metricsEnabled ? t('enableTelemetry') : t('disableTelemetry')}</Label>
                                     <Switch checked={metricsEnabled} onCheckedChange={handleMetricsToggle}/>

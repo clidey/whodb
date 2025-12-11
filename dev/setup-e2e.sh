@@ -314,8 +314,8 @@ echo "✅ Coverage cleanup complete"
 # Start the CE test server with coverage
 echo "🚀 Starting CE test server with coverage..."
 cd "$PROJECT_ROOT/core"
-# Increase connection limits for parallel tests
-GOMAXPROCS=4 ENVIRONMENT=dev WHODB_DISABLE_MOCK_DATA_GENERATION='orders,DEPARTMENTS' \
+# Let Go use all available CPU cores for better parallel test handling
+ENVIRONMENT=dev WHODB_DISABLE_MOCK_DATA_GENERATION='orders,DEPARTMENTS' \
     ./server.test -test.run=^TestMain$ -test.coverprofile=coverage.out &
 TEST_SERVER_PID=$!
 

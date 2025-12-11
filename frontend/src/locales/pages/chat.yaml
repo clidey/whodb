@@ -18,3 +18,8 @@ en:
   newPagePlaceholder: Enter Page Name
   createNewPage: Create New Page
   cancel: Cancel
+
+  # Accessibility
+  sendMessage: Send message
+  showTable: Show as table
+  showCode: Show as code

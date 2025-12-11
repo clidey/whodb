@@ -1,9 +1,21 @@
 {
   "type": "Postgres",
   "category": "sql",
+  "testTable": {
+    "name": "users",
+    "identifierField": "username",
+    "identifierColIndex": 1,
+    "idField": "id",
+    "firstId": "1",
+    "testValues": {
+      "original": "john_doe",
+      "modified": "john_doe1",
+      "rowIndex": 0
+    },
+    "searchTerm": "john"
+  },
   "connection": {
     "host": "localhost",
-    "dockerHost": "e2e_postgres",
     "port": 5432,
     "user": "user",
     "password": "jio53$*(@nfe)",
@@ -26,6 +38,9 @@
     "chat": true,
     "whereConditions": true,
     "queryHistory": true
+  },
+  "featureNotes": {
+    "chat": "Postgres supports all AI chat features including SQL generation"
   },
   "expectedTables": [
     "order_items",

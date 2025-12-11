@@ -25,6 +25,11 @@ describe('Scratchpad', () => {
         }
 
         describe('Query Execution', () => {
+            // Get expected column names from config or use defaults
+            const expectedIdentifierCol = db.testTable?.identifierField || 'username';
+            const expectedCountCol = db.sql?.countColumn || 'user_count';
+            const expectedUpdatedValue = db.sql?.scratchpadUpdatedValue || db.testTable?.testValues?.modified || 'john_doe1';
+
             it('executes SELECT query and shows results', () => {
                 cy.goto('scratchpad');
 
@@ -33,7 +38,7 @@ describe('Scratchpad', () => {
                 cy.runCode(0);
 
                 cy.getCellQueryOutput(0).then(({columns, rows}) => {
-                    expect(columns).to.include('username');
+                    expect(columns.map(c => c.toUpperCase())).to.include(expectedIdentifierCol.toUpperCase());
                     expect(rows.length).to.be.greaterThan(0);
                 });
             });
@@ -58,7 +63,7 @@ describe('Scratchpad', () => {
                 cy.runCode(0);
 
                 cy.getCellQueryOutput(0).then(({columns, rows}) => {
-                    expect(columns).to.include('user_count');
+                    expect(columns.map(c => c.toUpperCase())).to.include(expectedCountCol.toUpperCase());
                     expect(rows.length).to.equal(1);
                 });
             });
@@ -78,37 +83,44 @@ describe('Scratchpad', () => {
                 }
             });
 
-            // Skip UPDATE tests for ClickHouse
-            if (db.type !== 'ClickHouse') {
-                it('executes UPDATE query', () => {
-                    cy.goto('scratchpad');
+            // Skip UPDATE test for databases with async mutations (e.g., ClickHouse)
+            const updateSupported = hasFeature(db, 'scratchpadUpdate') !== false;
 
-                    // Update
-                    const updateQuery = getSqlQuery(db, 'updateUser');
-                    cy.writeCode(0, updateQuery);
-                    cy.runCode(0);
+            (updateSupported ? it : it.skip)('executes UPDATE query', () => {
+                cy.goto('scratchpad');
 
-                    cy.getCellActionOutput(0).should('contain', 'Action Executed');
+                const mutationDelay = db.mutationDelay || 0;
 
-                    // Verify
-                    cy.addCell(0);
-                    const selectQuery = getSqlQuery(db, 'selectUserById');
-                    cy.writeCode(1, selectQuery);
-                    cy.runCode(1);
+                // Update
+                const updateQuery = getSqlQuery(db, 'updateUser');
+                cy.writeCode(0, updateQuery);
+                cy.runCode(0);
 
-                    cy.getCellQueryOutput(1).then(({rows}) => {
-                        expect(rows[0]).to.include('john_doe1');
-                    });
+                cy.getCellActionOutput(0).should('contain', 'Action Executed');
 
-                    // Revert
-                    cy.addCell(1);
-                    const revertQuery = getSqlQuery(db, 'revertUser');
-                    cy.writeCode(2, revertQuery);
-                    cy.runCode(2);
+                // Wait for async mutations (e.g., ClickHouse)
+                if (mutationDelay > 0) {
+                    cy.wait(mutationDelay);
+                }
 
-                    cy.getCellActionOutput(2).should('contain', 'Action Executed');
+                // Verify
+                cy.addCell(0);
+                const selectQuery = getSqlQuery(db, 'selectUserById');
+                cy.writeCode(1, selectQuery);
+                cy.runCode(1);
+
+                cy.getCellQueryOutput(1).then(({rows}) => {
+                    expect(rows[0]).to.include(expectedUpdatedValue);
                 });
-            }
+
+                // Revert
+                cy.addCell(1);
+                const revertQuery = getSqlQuery(db, 'revertUser');
+                cy.writeCode(2, revertQuery);
+                cy.runCode(2);
+
+                cy.getCellActionOutput(2).should('contain', 'Action Executed');
+            });
         });
 
         describe('Cell Management', () => {
@@ -159,8 +171,11 @@ describe('Scratchpad', () => {
         });
 
         describe('Embedded Scratchpad Drawer', () => {
+            const testTable = db.testTable || {name: 'users'};
+            const tableName = testTable.name;
+
             it('opens from data view and runs query', () => {
-                cy.data('users');
+                cy.data(tableName);
 
                 // Open embedded scratchpad drawer
                 cy.get('[data-testid="embedded-scratchpad-button"]').click();
@@ -169,16 +184,14 @@ describe('Scratchpad', () => {
                 // Verify default query is populated
                 cy.get('[data-testid="code-editor"]').should('exist');
                 const schemaPrefix = db.sql?.schemaPrefix || '';
-                cy.get('[data-testid="code-editor"]').should('contain', 'SELECT *');
-                cy.get('[data-testid="code-editor"]').should('contain', `FROM ${schemaPrefix}users`);
+                cy.get('[data-testid="code-editor"]').should('contain', 'SELECT');
+                cy.get('[data-testid="code-editor"]').should('contain', `FROM ${schemaPrefix}${tableName}`);
 
                 // Run the query
                 cy.get('[data-testid="run-submit-button"]').filter(':contains("Run")').first().click();
 
                 // Verify results appear in the drawer
                 cy.get('[role="dialog"] table', {timeout: 5000}).should('be.visible');
-                cy.get('[role="dialog"] table thead th').should('contain', 'id');
-                cy.get('[role="dialog"] table thead th').should('contain', 'username');
                 cy.get('[role="dialog"] table tbody tr').should('have.length.at.least', 1);
 
                 // Close the drawer

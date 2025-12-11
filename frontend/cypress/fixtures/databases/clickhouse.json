@@ -1,9 +1,21 @@
 {
   "type": "ClickHouse",
   "category": "sql",
+  "testTable": {
+    "name": "users",
+    "identifierField": "username",
+    "identifierColIndex": 1,
+    "idField": "id",
+    "firstId": "1",
+    "testValues": {
+      "original": "john_doe",
+      "modified": "john_doe1",
+      "rowIndex": 0
+    },
+    "searchTerm": "john"
+  },
   "connection": {
     "host": "localhost",
-    "dockerHost": "e2e_clickhouse",
     "port": 8123,
     "user": "user",
     "password": "password",
@@ -22,10 +34,18 @@
     "graph": true,
     "export": true,
     "scratchpad": true,
+    "scratchpadUpdate": true,
     "mockData": false,
-    "chat": false,
+    "chat": true,
     "whereConditions": true,
-    "queryHistory": true
+    "multiConditionFilter": true,
+    "queryHistory": true,
+    "crud": true,
+    "typeCasting": true
+  },
+  "mutationDelay": 2000,
+  "featureNotes": {
+    "mockData": "Mock data generation not supported for ClickHouse MergeTree tables"
   },
   "expectedTables": [
     "order_items",
@@ -33,6 +53,7 @@
     "orders",
     "payments",
     "products",
+    "test_casting",
     "users"
   ],
   "tables": {
@@ -75,12 +96,37 @@
             "admin@example.com",
             "adminpass"
           ]
-        ]
+        ],
+        "newRow": {
+          "id": "9999",
+          "username": "alice_wonder",
+          "email": "alice@example.com",
+          "password": "alicepass123"
+        }
       },
       "metadata": {
         "type": "MergeTree",
         "hasSize": true,
         "hasCount": true
+      }
+    },
+    "test_casting": {
+      "columns": {
+        "id": "UInt32",
+        "bigint_col": "Int64",
+        "integer_col": "Int32",
+        "smallint_col": "Int16",
+        "numeric_col": "Float64",
+        "description": "String"
+      },
+      "testData": {
+        "newRow": {
+          "bigint_col": "5000000000",
+          "integer_col": "42",
+          "smallint_col": "256",
+          "numeric_col": "9876.54",
+          "description": "Test casting from strings"
+        }
       }
     }
   },
@@ -98,6 +144,8 @@
     "schemaPrefix": "test_db.",
     "selectAllUsers": "SELECT * FROM test_db.users ORDER BY id;",
     "selectUserById": "SELECT * FROM test_db.users WHERE id=1;",
+    "updateUser": "ALTER TABLE test_db.users UPDATE username='john_doe1' WHERE id=1",
+    "revertUser": "ALTER TABLE test_db.users UPDATE username='john_doe' WHERE id=1",
     "countUsers": "SELECT COUNT(*) as user_count FROM test_db.users;",
     "invalidQuery": "SELECT * FROM test_db.users1;",
     "errorPatterns": {

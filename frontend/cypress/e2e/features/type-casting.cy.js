@@ -14,47 +14,73 @@
  * limitations under the License.
  */
 
-import {forEachDatabase, getTableConfig} from '../../support/test-runner';
+import {forEachDatabase, getTableConfig, hasFeature} from '../../support/test-runner';
+
+// Helper to get value from object with case-insensitive key
+function getValue(obj, key) {
+    const lowerKey = key.toLowerCase();
+    const matchingKey = Object.keys(obj).find(k => k.toLowerCase() === lowerKey);
+    return matchingKey ? obj[matchingKey] : undefined;
+}
 
 describe('Type Casting', () => {
 
     // SQL Databases only - tests numeric type handling
     forEachDatabase('sql', (db) => {
-        // Skip ClickHouse - doesn't support INSERT in the same way
-        if (db.type === 'ClickHouse') {
+        // Skip type casting tests for databases with async mutations (e.g., ClickHouse)
+        if (hasFeature(db, 'typeCasting') === false) {
+            it.skip('type casting tests skipped - async mutations not supported', () => {});
             return;
         }
 
-        const tableConfig = getTableConfig(db, 'test_casting');
+        const testTable = db.testTable || {};
+        const typeCastingTable = testTable.typeCastingTable || 'test_casting';
+        const tableConfig = getTableConfig(db, typeCastingTable);
         if (!tableConfig || !tableConfig.testData || !tableConfig.testData.newRow) {
             return;
         }
 
+        const mutationDelay = db.mutationDelay || 0;
+        const columns = tableConfig.columns || {};
+        const columnNames = Object.keys(columns);
+        const bigintCol = columnNames.find(c => c.toLowerCase() === 'bigint_col') || 'bigint_col';
+        const integerCol = columnNames.find(c => c.toLowerCase() === 'integer_col') || 'integer_col';
+        const smallintCol = columnNames.find(c => c.toLowerCase() === 'smallint_col') || 'smallint_col';
+        const numericCol = columnNames.find(c => c.toLowerCase() === 'numeric_col') || 'numeric_col';
+        const descriptionCol = columnNames.find(c => c.toLowerCase() === 'description') || 'description';
+
         describe('Add Row Type Casting', () => {
             it('correctly casts string inputs to numeric types', () => {
-                cy.data('test_casting');
+                cy.data(typeCastingTable);
 
                 const newRow = tableConfig.testData.newRow;
 
                 // Add a row and verify it was added by checking for its description
                 cy.addRow(newRow);
 
+                // Wait for async mutations (e.g., ClickHouse)
+                if (mutationDelay > 0) {
+                    cy.wait(mutationDelay);
+                    cy.data(typeCastingTable);
+                }
+
                 // Verify the row was added with correct types by finding it via description
+                const descValue = getValue(newRow, 'description');
                 cy.sortBy(0);
                 cy.getTableData().then(({rows}) => {
-                    const addedRow = rows.find(r => r.includes(newRow.description));
+                    const addedRow = rows.find(r => r.includes(descValue));
                     expect(addedRow, 'Added row should exist').to.exist;
                     expect(addedRow[1]).to.match(/^\d+$/); // id should be a number
-                    expect(addedRow[2]).to.equal(newRow.bigint_col);
-                    expect(addedRow[3]).to.equal(newRow.integer_col);
-                    expect(addedRow[4]).to.equal(newRow.smallint_col);
-                    expect(addedRow[5]).to.equal(newRow.numeric_col);
-                    expect(addedRow[6]).to.equal(newRow.description);
+                    expect(addedRow[2]).to.equal(getValue(newRow, 'bigint_col'));
+                    expect(addedRow[3]).to.equal(getValue(newRow, 'integer_col'));
+                    expect(addedRow[4]).to.equal(getValue(newRow, 'smallint_col'));
+                    expect(addedRow[5]).to.equal(getValue(newRow, 'numeric_col'));
+                    expect(addedRow[6]).to.equal(descValue);
                 });
 
                 // Clean up
                 cy.getTableData().then(({rows}) => {
-                    const rowIndex = rows.findIndex(r => r.includes(newRow.description));
+                    const rowIndex = rows.findIndex(r => r.includes(descValue));
                     if (rowIndex >= 0) {
                         cy.deleteRow(rowIndex);
                     }
@@ -62,17 +88,24 @@ describe('Type Casting', () => {
             });
 
             it('handles large bigint values', () => {
-                cy.data('test_casting');
+                cy.data(typeCastingTable);
 
+                // Build row with correct column names for this database
                 const largeNumberRow = {
-                    bigint_col: '5000000000',
-                    integer_col: '42',
-                    smallint_col: '256',
-                    numeric_col: '9876.54',
-                    description: 'Large bigint test'
+                    [bigintCol]: '5000000000',
+                    [integerCol]: '42',
+                    [smallintCol]: '256',
+                    [numericCol]: '9876.54',
+                    [descriptionCol]: 'Large bigint test'
                 };
 
                 cy.addRow(largeNumberRow);
+
+                // Wait for async mutations (e.g., ClickHouse)
+                if (mutationDelay > 0) {
+                    cy.wait(mutationDelay);
+                    cy.data(typeCastingTable);
+                }
 
                 cy.getTableData().then(({rows}) => {
                     const addedRow = rows.find(r => r.includes('Large bigint test'));
@@ -92,11 +125,18 @@ describe('Type Casting', () => {
 
         describe('Edit Row Type Casting', () => {
             it('edits numeric values with type casting', () => {
-                cy.data('test_casting');
+                cy.data(typeCastingTable);
                 cy.sortBy(0);
 
                 // Edit bigint_col on second row
                 cy.updateRow(1, 1, '7500000000', false);
+
+                // Wait for async mutations (e.g., ClickHouse)
+                if (mutationDelay > 0) {
+                    cy.wait(mutationDelay);
+                    cy.data(typeCastingTable);
+                    cy.sortBy(0);
+                }
 
                 cy.getTableData().then(({rows}) => {
                     expect(rows[1][2]).to.equal('7500000000');
@@ -104,6 +144,13 @@ describe('Type Casting', () => {
 
                 // Restore original value
                 cy.updateRow(1, 1, '1000000', false);
+
+                // Wait for async mutations
+                if (mutationDelay > 0) {
+                    cy.wait(mutationDelay);
+                    cy.data(typeCastingTable);
+                    cy.sortBy(0);
+                }
 
                 cy.getTableData().then(({rows}) => {
                     expect(rows[1][2]).to.equal('1000000');

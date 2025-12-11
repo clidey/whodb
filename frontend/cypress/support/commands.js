@@ -31,11 +31,20 @@ Cypress.Commands.add("goto", (route) => {
 Cypress.Commands.add('login', (databaseType, hostname, username, password, database, advanced={}) => {
     cy.visit('/login');
 
-    cy.get('body').then($body => {
-        if ($body.find('button:contains("Disable Telemetry")').length > 0) {
-            cy.contains('button', 'Disable Telemetry').click();
-        }
-    });
+    // Poll for telemetry modal and dismiss if it appears (handles async React rendering)
+    const tryDismissTelemetry = (attemptsLeft = 5) => {
+        cy.get('body').then($body => {
+            const $btn = $body.find('button').filter(function() {
+                return this.textContent.includes('Disable Telemetry');
+            });
+            if ($btn.length) {
+                cy.wrap($btn).click();
+            } else if (attemptsLeft > 1) {
+                cy.wait(300).then(() => tryDismissTelemetry(attemptsLeft - 1));
+            }
+        });
+    };
+    tryDismissTelemetry();
 
     if (databaseType) {
         cy.get('[data-testid="database-type-select"]').click();
@@ -89,7 +98,17 @@ Cypress.Commands.add('login', (databaseType, hostname, username, password, datab
         }
     }
 
+    // Intercept login API call right before clicking to avoid catching other requests
+    cy.intercept('POST', '**/api/query').as('loginQuery');
+
     cy.get('[data-testid="login-button"]').click();
+
+    cy.wait('@loginQuery', {timeout: 60000}).then((interception) => {
+        // Log if there was an error in the response for debugging
+        if (interception.response?.body?.errors) {
+            cy.log('Login API returned errors:', JSON.stringify(interception.response.body.errors));
+        }
+    });
 
     // Wait for successful login - sidebar should appear after navigation
     cy.get('[data-testid="sidebar-database"], [data-testid="sidebar-schema"]', {timeout: 30000})
@@ -723,9 +742,15 @@ Cypress.Commands.add("deleteRow", (rowIndex) => {
         // Use the helper to open context menu with retry logic
         cy.openContextMenu(rowIndex);
 
-        // Wait for the menu to be visible, then click the items
-        cy.get('[data-testid="context-menu-more-actions"]').should('be.visible').click();
-        cy.get('[data-testid="context-menu-delete-row"]').should('be.visible').click();
+        // Use scrollIntoView and force click to handle overflow issues with wide tables
+        cy.get('[data-testid="context-menu-more-actions"]', {timeout: 5000})
+            .scrollIntoView()
+            .should('exist')
+            .click({force: true});
+        cy.get('[data-testid="context-menu-delete-row"]', {timeout: 5000})
+            .scrollIntoView()
+            .should('exist')
+            .click({force: true});
 
         // Wait for the row to be removed by checking the row count
         // Use a timeout to handle async deletion
@@ -741,7 +766,11 @@ Cypress.Commands.add("updateRow", (rowIndex, columnIndex, text, cancel = true) =
     cy.openContextMenu(rowIndex);
 
     // Wait for the menu to be visible, then click the "Edit row" item
-    cy.get('[data-testid="context-menu-edit-row"]', {timeout: 5000}).should('be.visible').click();
+    // Use scrollIntoView and force click to handle overflow issues with wide tables
+    cy.get('[data-testid="context-menu-edit-row"]', {timeout: 5000})
+        .scrollIntoView()
+        .should('exist')
+        .click({force: true});
 
     // Try to find the standard editable field first
     cy.get('body').then(($body) => {
@@ -992,8 +1021,8 @@ Cypress.Commands.add('logout', () => {
         // Check if the sidebar trigger button exists and is visible (indicates sidebar is closed)
         const sidebarTrigger = $body.find('[data-sidebar="trigger"]:visible');
         if (sidebarTrigger.length > 0 && !$body.text().includes('Logout Profile')) {
-            // Sidebar is closed, open it first
-            cy.get('[data-sidebar="trigger"]').first().click();
+            // Sidebar is closed, open it first (use force: true in case of overlays)
+            cy.get('[data-sidebar="trigger"]').first().click({force: true});
             cy.wait(300); // Wait for sidebar animation
         }
 
@@ -1071,8 +1100,11 @@ Cypress.Commands.add('selectMockData', () => {
     cy.get('table thead tr.cursor-context-menu').first().rightclick({ force: true });
     // Wait for context menu to appear
     cy.wait(200);
-    // Click the "Mock Data" item using its stable test ID
-    cy.get('[data-testid="context-menu-mock-data"]').should('be.visible').click();
+    // Click the "Mock Data" item using scrollIntoView and force click to handle overflow issues
+    cy.get('[data-testid="context-menu-mock-data"]', {timeout: 5000})
+        .scrollIntoView()
+        .should('exist')
+        .click({force: true});
 });
 
 // Query History Commands
@@ -1211,8 +1243,9 @@ Cypress.Commands.add('disableAutocomplete', () => {
 // Chat Commands
 // ============================================================================
 
-// Global variable to store chat responses for the intercept
-let nextChatResponse = null;
+// Test-scoped chat response storage using Cypress.env (cleared between tests)
+// Using Cypress.env instead of module-level global variable for test isolation
+const CHAT_RESPONSE_KEY = '__chatMockResponses__';
 
 /**
  * Sets up a mock AI provider for chat testing
@@ -1223,8 +1256,8 @@ let nextChatResponse = null;
  * @param {string} options.providerId - Optional provider ID
  */
 Cypress.Commands.add('setupChatMock', ({ modelType = 'Ollama', model = 'llama3.1', providerId = 'test-provider' } = {}) => {
-    // Reset chat response
-    nextChatResponse = null;
+    // Reset chat response using test-scoped storage
+    Cypress.env(CHAT_RESPONSE_KEY, null);
 
     // Single comprehensive intercept that handles all chat-related GraphQL operations
     // Note: The actual endpoint is /api/query, not /graphql
@@ -1259,10 +1292,11 @@ Cypress.Commands.add('setupChatMock', ({ modelType = 'Ollama', model = 'llama3.1
         if (operation === 'GetAIChat') {
             console.log('[CYPRESS] Intercepted GetAIChat');
             console.log('[CYPRESS] Request body:', JSON.stringify(req.body, null, 2));
-            console.log('[CYPRESS] nextChatResponse:', JSON.stringify(nextChatResponse, null, 2));
 
-            // Use the stored response from the global variable
-            const responseData = nextChatResponse || [];
+            // Use the stored response from test-scoped storage
+            const storedResponse = Cypress.env(CHAT_RESPONSE_KEY);
+            console.log('[CYPRESS] storedResponse:', JSON.stringify(storedResponse, null, 2));
+            const responseData = storedResponse || [];
 
             if (responseData.length === 0) {
                 console.warn('[CYPRESS] WARNING: No chat response configured! Sending empty array.');
@@ -1281,9 +1315,9 @@ Cypress.Commands.add('setupChatMock', ({ modelType = 'Ollama', model = 'llama3.1
 
             console.log('[CYPRESS] Mapped chat messages:', JSON.stringify(chatMessages, null, 2));
 
-            // Clear the response BEFORE replying
+            // Clear the response BEFORE replying using test-scoped storage
             const responseCopy = [...chatMessages];
-            nextChatResponse = null;
+            Cypress.env(CHAT_RESPONSE_KEY, null);
 
             // Reply immediately with GraphQL format
             req.reply({
@@ -1317,10 +1351,10 @@ Cypress.Commands.add('setupChatMock', ({ modelType = 'Ollama', model = 'llama3.1
  * - result: Optional result object with Columns and Rows for SQL queries
  */
 Cypress.Commands.add('mockChatResponse', (responses) => {
-    // Store the responses in the global variable for the intercept to use
+    // Store the responses using test-scoped storage for the intercept to use
     console.log('[CYPRESS] mockChatResponse called with:', responses);
-    nextChatResponse = responses;
-    console.log('[CYPRESS] nextChatResponse now set to:', nextChatResponse);
+    Cypress.env(CHAT_RESPONSE_KEY, responses);
+    console.log('[CYPRESS] chatMockResponses now set to:', Cypress.env(CHAT_RESPONSE_KEY));
 });
 
 /**

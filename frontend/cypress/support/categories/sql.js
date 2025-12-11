@@ -65,7 +65,12 @@ export function verifyMetadata(fields, metadata) {
         expect(fields.some(([k, v]) => k === 'Type' && v === metadata.type)).to.be.true;
     }
     if (metadata.hasSize) {
-        expect(fields.some(([k]) => k === 'Total Size' || k === 'Data Size')).to.be.true;
+        // Different databases use different size field names
+        expect(fields.some(([k]) =>
+            k === 'Total Size' || k === 'Data Size' || k === 'Size' ||
+            k === 'Table Size' || k === 'Segment Size' ||
+            k.toLowerCase().includes('size')
+        )).to.be.true;
     }
     if (metadata.hasCount) {
         expect(fields.some(([k]) => k === 'Total Count:' || k === 'Total Count' || k === 'Count')).to.be.true;

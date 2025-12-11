@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-import { ModeToggle, SidebarProvider } from "@clidey/ux";
+import {Button, ModeToggle, SidebarProvider, Tooltip, TooltipContent, TooltipTrigger} from "@clidey/ux";
 import classNames from "classnames";
-import { AnimatePresence, motion } from "framer-motion";
-import { FC, ReactNode } from "react";
-import { twMerge } from "tailwind-merge";
-import { IInternalRoute } from "../config/routes";
-import { useAppSelector } from "../store/hooks";
-import { Breadcrumb } from "./breadcrumbs";
-import { Loading } from "./loading";
-import { Sidebar } from "./sidebar/sidebar";
+import {AnimatePresence, motion} from "framer-motion";
+import {FC, ReactNode} from "react";
+import {twMerge} from "tailwind-merge";
+import {IInternalRoute} from "../config/routes";
+import {useAppSelector} from "../store/hooks";
+import {Breadcrumb} from "./breadcrumbs";
+import {Loading} from "./loading";
+import {Sidebar} from "./sidebar/sidebar";
+import {useTranslation} from "@/hooks/use-translation";
+import {CommandLineIcon, MagnifyingGlassIcon} from "./heroicons";
+import {getKeyDisplay, isMacPlatform} from "@/utils/platform";
 
 type IPageProps = {
     wrapperClassName?: string;
@@ -51,10 +54,83 @@ type IInternalPageProps = IPageProps & {
     routes?: IInternalRoute[];
 }
 
+const CommandPaletteTrigger: FC = () => {
+    const { t } = useTranslation('components/command-palette');
+
+    const handleClick = () => {
+        // Dispatch a keyboard event to trigger the command palette
+        window.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'k',
+            metaKey: isMacPlatform,
+            ctrlKey: !isMacPlatform,
+        }));
+    };
+
+    return (
+        <Button
+            variant="outline"
+            size="sm"
+            onClick={handleClick}
+            className="gap-2 h-9"
+            aria-label={t('searchPlaceholder', 'Type a command or search...')}
+            data-testid="command-palette-trigger"
+        >
+            <MagnifyingGlassIcon className="h-4 w-4" />
+            <span className="hidden sm:inline text-xs text-neutral-500 dark:text-neutral-400">{t('searchPlaceholder', 'Type a command or search...')}</span>
+            <div className="hidden sm:flex items-center gap-0.5 ml-1">
+                <kbd className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded shadow-sm">
+                    {getKeyDisplay("Mod")}
+                </kbd>
+                {!isMacPlatform && <span className="text-neutral-400 text-xs">+</span>}
+                <kbd className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded shadow-sm">
+                    K
+                </kbd>
+            </div>
+        </Button>
+    );
+};
+
+const KeyboardShortcutsHint: FC = () => {
+    const { t } = useTranslation('components/keyboard-shortcuts-help');
+
+    const handleClick = () => {
+        // Dispatch a keyboard event to trigger the shortcuts modal
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: '?' }));
+    };
+
+    return (
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleClick}
+                    className="gap-1.5 h-9"
+                    aria-label={t('showShortcuts', 'Show keyboard shortcuts')}
+                >
+                    <CommandLineIcon className="h-4 w-4" />
+                    <span className="text-xs">{t('shortcuts', 'Shortcuts')}</span>
+                </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+                <p>{t('hint', 'Press ? to open')}</p>
+            </TooltipContent>
+        </Tooltip>
+    );
+};
+
 export const InternalPage: FC<IInternalPageProps> = (props) => {
+    const { t } = useTranslation('components/page');
     const current = useAppSelector(state => state.auth.current);
     return (
         <Container>
+            {/* Skip link for keyboard navigation */}
+            <a
+                href="#main-content"
+                className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-4 focus:left-4 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+                {t('skipToContent', 'Skip to main content')}
+            </a>
             <div className="flex flex-row grow">
                 <SidebarProvider defaultOpen={props.sidebar == null}>
                     <Sidebar />
@@ -80,17 +156,25 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
                                 <ModeToggle />
                             </div>
                         </div> */}
-                        <div data-testid="mode-toggle">
-                            <ModeToggle />
+                        <div className="flex items-center gap-2">
+                            <CommandPaletteTrigger />
+                            <KeyboardShortcutsHint />
+                            <div data-testid="mode-toggle">
+                                <ModeToggle />
+                            </div>
                         </div>
                     </div>
                     {
                         current == null
                         ? <Loading />
-                            : <div className="flex grow flex-wrap gap-sm py-4 content-start relative px-8"
-                                   data-testid="page-content">
+                            : <main
+                                id="main-content"
+                                className="flex grow flex-wrap gap-sm py-4 content-start relative px-8"
+                                data-testid="page-content"
+                                tabIndex={-1}
+                            >
                             {props.children}
-                        </div>
+                        </main>
                     }
                 </div>
             </Page>

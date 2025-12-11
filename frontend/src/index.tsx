@@ -30,7 +30,6 @@ import {initPosthog} from "./config/posthog";
 import {ThemeProvider} from '@clidey/ux'
 import {isEEMode} from './config/ee-imports';
 import {isDesktopApp} from './utils/external-links';
-import {useAppSelector} from './store/hooks';
 import {PosthogConsentBanner} from './components/analytics/posthog-consent-banner';
 
 // Detect desktop Linux and add a class for CSS-based overrides (e.g., fonts)
@@ -52,58 +51,38 @@ const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 
-// Component to handle async PostHog initialization
+// Initialize PostHog once and keep provider stable to prevent remounting
 const AppWithProviders = () => {
-    const metricsEnabled = useAppSelector(state => state.settings.metricsEnabled);
     const [posthogClient, setPosthogClient] = useState<PostHog | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const [initialized, setInitialized] = useState(false);
 
-  useEffect(() => {
-      if (isEEMode) {
-          return;
-      }
+    useEffect(() => {
+        if (isEEMode || initialized) {
+            return;
+        }
+        setInitialized(true);
+        initPosthog()
+            .then(client => setPosthogClient(client))
+            .catch(() => setPosthogClient(null));
+    }, [initialized]);
 
-      if (!metricsEnabled) {
-          setPosthogClient(null);
-          return;
-      }
+    const app = (
+        <ThemeProvider>
+            <App />
+            <PosthogConsentBanner/>
+        </ThemeProvider>
+    );
 
-      setIsLoading(true);
-      initPosthog()
-          .then(client => {
-        setPosthogClient(client);
-          })
-          .catch(() => {
-              setPosthogClient(null);
-          })
-          .finally(() => {
-        setIsLoading(false);
-      });
-  }, [metricsEnabled]);
+    // For EE mode, no PostHog provider needed
+    if (isEEMode) {
+        return app;
+    }
 
-  const app = (
-    <ThemeProvider>
-      <App />
-        <PosthogConsentBanner/>
-    </ThemeProvider>
-  );
+    if (posthogClient) {
+        return <PostHogProvider client={posthogClient}>{app}</PostHogProvider>;
+    }
 
-  // For EE mode, no PostHog provider needed
-  if (isEEMode) {
     return app;
-  }
-
-  // For CE mode, wait for PostHog to initialize
-  if (isLoading) {
-    return app; // Show app without PostHog while loading
-  }
-
-  // Wrap with PostHogProvider once loaded (CE builds)
-  if (posthogClient) {
-    return <PostHogProvider client={posthogClient}>{app}</PostHogProvider>;
-  }
-
-  return app;
 };
 
 // Use HashRouter for desktop app (avoids full page reloads)
