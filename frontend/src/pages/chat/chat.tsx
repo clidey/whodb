@@ -14,37 +14,58 @@
  * limitations under the License.
  */
 
-import { isEEMode } from "@/config/ee-imports";
-import { Alert, AlertDescription, AlertTitle, Button, Card, cn, EmptyState, Input, toast, toTitleCase, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@clidey/ux";
-import { AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery } from '@graphql';
+import {isEEMode} from "@/config/ee-imports";
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+    Button,
+    Card,
+    cn,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    EmptyState,
+    Input,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+    toast
+} from "@clidey/ux";
+import {AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery} from '@graphql';
 import {
     ArrowUpCircleIcon,
     CheckCircleIcon,
     CodeBracketIcon,
+    CommandLineIcon,
     SparklesIcon,
-    TableCellsIcon,
-    CommandLineIcon
+    TableCellsIcon
 } from "../../components/heroicons";
 import classNames from "classnames";
-import { cloneElement, FC, KeyboardEventHandler, useCallback, useMemo, useRef, useState } from "react";
+import {cloneElement, FC, KeyboardEventHandler, useCallback, useMemo, useRef, useState} from "react";
 import logoImage from "../../../public/images/logo.png";
-import { AIProvider, useAI } from "../../components/ai";
-import { CodeEditor } from "../../components/editor";
-import { ErrorState } from "../../components/error-state";
-import { Loading } from "../../components/loading";
-import { InternalPage } from "../../components/page";
-import { StorageUnitTable } from "../../components/table";
-import { extensions } from "../../config/features";
-import { InternalRoutes } from "../../config/routes";
-import { HoudiniActions } from "../../store/chat";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { ScratchpadActions } from "../../store/scratchpad";
-import { isEEFeatureEnabled, loadEEComponent } from "../../utils/ee-loader";
-import { chooseRandomItems } from "../../utils/functions";
-import { databaseSupportsScratchpad } from "../../utils/database-features";
-import { useNavigate } from "react-router-dom";
-import { chatExamples } from "./examples";
-import { useTranslation } from '@/hooks/use-translation';
+import {AIProvider, useAI} from "../../components/ai";
+import {CodeEditor} from "../../components/editor";
+import {ErrorState} from "../../components/error-state";
+import {Loading} from "../../components/loading";
+import {InternalPage} from "../../components/page";
+import {StorageUnitTable} from "../../components/table";
+import {extensions} from "../../config/features";
+import {InternalRoutes} from "../../config/routes";
+import {HoudiniActions} from "../../store/chat";
+import {useAppDispatch, useAppSelector} from "../../store/hooks";
+import {ScratchpadActions} from "../../store/scratchpad";
+import {isEEFeatureEnabled, loadEEComponent} from "../../utils/ee-loader";
+import {chooseRandomItems} from "../../utils/functions";
+import {databaseSupportsScratchpad} from "../../utils/database-features";
+import {useNavigate} from "react-router-dom";
+import {chatExamples} from "./examples";
+import {useTranslation} from '@/hooks/use-translation';
 
 // Lazy load chart components if EE is enabled
 const LineChart = isEEFeatureEnabled('dataVisualization') ? loadEEComponent(
@@ -165,10 +186,11 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
     }, [current?.Type, type]);
 
     return <div className="flex flex-col w-[calc(100%-50px)] group/table-preview">
-        <div className="opacity-0 group-hover/table-preview:opacity-100 transition-all z-[1] flex gap-1 -transalte-y-full h-0">
-            <Button onClick={handleCodeToggle} data-testid="icon-button" variant="outline">
+        <div className="opacity-0 group-hover/table-preview:opacity-100 focus-within:opacity-100 transition-all z-[1] flex gap-1 -transalte-y-full h-0">
+            <Button onClick={handleCodeToggle} data-testid="icon-button" variant="outline" aria-label={showSQL ? t('showTable') : t('showCode')}>
                 {cloneElement(showSQL ? <TableCellsIcon className="w-6 h-6" /> : <CodeBracketIcon className="w-6 h-6" />, {
                     className: "w-6 h-6",
+                    "aria-hidden": true,
                 })}
             </Button>
             {canMoveToScratchpad && (
@@ -176,9 +198,9 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
                     variant="outline"
                     onClick={handleMoveToScratchpad}
                     data-testid="icon-button"
-                    title={t('moveToScratchpad')}
+                    aria-label={t('moveToScratchpad')}
                 >
-                    <CommandLineIcon className="w-6 h-6" />
+                    <CommandLineIcon className="w-6 h-6" aria-hidden="true" />
                 </Button>
             )}
         </div>
@@ -495,8 +517,8 @@ export const ChatPage: FC = () => {
                     />
                     <Button tabIndex={0} onClick={loading ? undefined : handleSubmitQuery} className={cn("rounded-full", {
                         "opacity-50": loading,
-                    })} disabled={disableChat} variant={disableChat ? "secondary" : undefined} data-testid="icon-button">
-                        <ArrowUpCircleIcon className="w-8 h-8" />
+                    })} disabled={disableChat} variant={disableChat ? "secondary" : undefined} data-testid="icon-button" aria-label={t('sendMessage')}>
+                        <ArrowUpCircleIcon className="w-8 h-8" aria-hidden="true" />
                     </Button>
                 </div>
             </div>

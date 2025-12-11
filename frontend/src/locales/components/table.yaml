@@ -82,3 +82,18 @@ en:
 
   # Total count
   totalCount: "Total Count:"
+
+  # Accessibility announcements
+  noRowsSelected: No rows selected
+  oneRowSelected: 1 row selected
+  rowsSelected: "{count} rows selected"
+  searchMatchFound: "Match {current} of {total}"
+  noSearchMatches: No matches found
+  cellInteractionHint: Click to copy cell, double-click to copy row, right-click for more options
+
+  # Pagination
+  tablePagination: Table pagination
+  previousPage: Go to previous page
+  nextPage: Go to next page
+  goToPage: "Go to page {page}"
+  currentPage: "Page {page}, current page"

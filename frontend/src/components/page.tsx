@@ -120,9 +120,17 @@ const KeyboardShortcutsHint: FC = () => {
 };
 
 export const InternalPage: FC<IInternalPageProps> = (props) => {
+    const { t } = useTranslation('components/page');
     const current = useAppSelector(state => state.auth.current);
     return (
         <Container>
+            {/* Skip link for keyboard navigation */}
+            <a
+                href="#main-content"
+                className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-4 focus:left-4 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+                {t('skipToContent', 'Skip to main content')}
+            </a>
             <div className="flex flex-row grow">
                 <SidebarProvider defaultOpen={props.sidebar == null}>
                     <Sidebar />
@@ -159,10 +167,14 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
                     {
                         current == null
                         ? <Loading />
-                            : <div className="flex grow flex-wrap gap-sm py-4 content-start relative px-8"
-                                   data-testid="page-content">
+                            : <main
+                                id="main-content"
+                                className="flex grow flex-wrap gap-sm py-4 content-start relative px-8"
+                                data-testid="page-content"
+                                tabIndex={-1}
+                            >
                             {props.children}
-                        </div>
+                        </main>
                     }
                 </div>
             </Page>

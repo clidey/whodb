@@ -46,7 +46,7 @@ import {
     useLoginMutation,
     useLoginWithProfileMutation
 } from '@graphql';
-import { useTranslation } from '@/hooks/use-translation';
+import {useTranslation} from '@/hooks/use-translation';
 import {VisuallyHidden} from "@radix-ui/react-visually-hidden";
 import classNames from "classnames";
 import {FC, ReactElement, useCallback, useEffect, useMemo, useState} from "react";
@@ -308,7 +308,7 @@ export const Sidebar: FC = () => {
     }, [open, toggleSidebar]);
 
     return (
-        <div className="dark">
+        <nav className="dark" aria-label={t('mainNavigation', 'Main navigation')}>
             <SidebarComponent variant="sidebar" collapsible="icon" className="dark:group-data-[side=left]:border-r-neutral-800 z-[50]">
                 <SidebarHeader className={cn({
                     "ml-4": open,
@@ -496,6 +496,6 @@ export const Sidebar: FC = () => {
                     <LoginForm advancedDirection="vertical" onLoginSuccess={() => setShowLoginCard(false)}/>
                 </SheetContent>
             </Sheet>
-        </div>
+        </nav>
     );
 };
