@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {Badge, Button, Card, cn, Input, Label, ModeToggle, Separator, toast} from '@clidey/ux';
+import {Badge, Button, Card, cn, Input, Label, ModeToggle, Separator, toast, useTheme} from '@clidey/ux';
 import {SearchSelect} from '../../components/ux';
 import {
     DatabaseType,
@@ -44,6 +44,7 @@ import {useTranslation} from '@/hooks/use-translation';
 import {AuthActions} from "../../store/auth";
 import {DatabaseActions} from "../../store/database";
 import {TourActions} from "../../store/tour";
+import {SettingsActions} from "../../store/settings";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {isDesktopApp} from '../../utils/external-links';
 import {hasCompletedOnboarding, markOnboardingComplete} from '../../utils/onboarding';
@@ -102,6 +103,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     const navigate = useNavigate();
     const currentProfile = useAppSelector(state => state.auth.current);
     const shouldUpdateLastAccessed = useRef(false);
+    const { setTheme } = useTheme();
 
     const FIRST_LOGIN_KEY = 'whodb_has_logged_in';
     const [isFirstLogin, setIsFirstLogin] = useState(() => {
@@ -327,6 +329,26 @@ export const LoginForm: FC<LoginFormProps> = ({
         dispatch(DatabaseActions.setSchema(""));
     }, [dispatch]);
 
+    // Handle locale URL parameter
+    useEffect(() => {
+        if (searchParams.has("locale")) {
+            const locale = searchParams.get("locale")?.toLowerCase();
+            if (locale === 'en' || locale === 'es') {
+                dispatch(SettingsActions.setLanguage(locale));
+            }
+        }
+    }, [searchParams, dispatch]);
+
+    // Handle theme URL parameter
+    useEffect(() => {
+        if (searchParams.has("theme")) {
+            const theme = searchParams.get("theme")?.toLowerCase();
+            if (theme === 'light' || theme === 'dark' || theme === 'system') {
+                setTheme(theme);
+            }
+        }
+    }, [searchParams, setTheme]);
+
     // Load EE database types if available
     useEffect(() => {
         getDatabaseTypeDropdownItems().then(items => {
@@ -359,15 +381,68 @@ export const LoginForm: FC<LoginFormProps> = ({
     
     useEffect(() => {
         if (searchParams.size > 0) {
-            if (searchParams.has("type")) {
-                const databaseType = searchParams.get("type")!;
-                setDatabaseType(databaseTypeItems.find(item => item.id === databaseType) ?? databaseTypeItems[0]);
-            }
+            // Handle credentials parameter (base64 encoded JSON)
+            if (searchParams.has("credentials")) {
+                try {
+                    const credentialsBase64 = searchParams.get("credentials")!;
+                    const credentialsJson = atob(credentialsBase64);
+                    const credentials = JSON.parse(credentialsJson);
 
-            if (searchParams.has("host")) setHostName(searchParams.get("host")!);
-            if (searchParams.has("username")) setUsername(searchParams.get("username")!);
-            if (searchParams.has("password")) setPassword(searchParams.get("password")!);
-            if (searchParams.has("database")) setDatabase(searchParams.get("database")!);
+                    // Map Go backend field names to frontend state
+                    if (credentials.type) {
+                        const dbType = databaseTypeItems.find(item =>
+                            item.id.toLowerCase() === credentials.type.toLowerCase()
+                        );
+                        if (dbType) {
+                            handleDatabaseTypeChange(dbType);
+                        }
+                    }
+                    if (credentials.host) setHostName(credentials.host);
+                    if (credentials.user) setUsername(credentials.user);
+                    if (credentials.password) setPassword(credentials.password);
+                    if (credentials.database) setDatabase(credentials.database);
+
+                    if (credentials.port) {
+                        setAdvancedForm(prev => ({...prev, 'Port': credentials.port}));
+                        setShowAdvanced(true);
+                    }
+
+                    // Handle advanced/config fields
+                    if (credentials.config && typeof credentials.config === 'object') {
+                        const advancedFormData: Record<string, string> = {};
+                        for (const [key, value] of Object.entries(credentials.config)) {
+                            advancedFormData[key] = String(value);
+                        }
+                        // Add port if provided
+                        if (credentials.port) {
+                            advancedFormData['Port'] = credentials.port;
+                        }
+                        setAdvancedForm(advancedFormData);
+                        if (Object.keys(advancedFormData).length > 0) {
+                            setShowAdvanced(true);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to parse credentials:', error);
+                    toast.error(t('failedToParseCredentials'));
+                }
+            } else {
+                // Handle individual URL parameters (existing logic)
+                if (searchParams.has("type")) {
+                    const typeParam = searchParams.get("type")!;
+                    const dbType = databaseTypeItems.find(item =>
+                        item.id.toLowerCase() === typeParam.toLowerCase()
+                    );
+                    if (dbType) {
+                        handleDatabaseTypeChange(dbType);
+                    }
+                }
+
+                if (searchParams.has("host")) setHostName(searchParams.get("host")!);
+                if (searchParams.has("username")) setUsername(searchParams.get("username")!);
+                if (searchParams.has("password")) setPassword(searchParams.get("password")!);
+                if (searchParams.has("database")) setDatabase(searchParams.get("database")!);
+            }
 
             if (searchParams.has("resource")) {
                 const selectedProfile = availableProfiles.find(profile => profile.value === searchParams.get("resource"));
@@ -388,7 +463,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         } else {
             setSelectedAvailableProfile(undefined);
         }
-    }, [searchParams, databaseTypeItems, profiles?.Profiles, availableProfiles]);
+    }, [searchParams, databaseTypeItems, profiles?.Profiles, availableProfiles, handleDatabaseTypeChange, handleLoginWithProfileSubmit, handleSubmit, setSearchParams, t]);
 
     const handleHostNameChange = useCallback((newHostName: string) => {
         if (databaseType.id !== DatabaseType.MongoDb || !newHostName.startsWith("mongodb+srv://")) {
