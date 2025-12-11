@@ -36,6 +36,7 @@ import {
     ArrowLeftStartOnRectangleIcon,
     ArrowPathIcon,
     ChatBubbleLeftRightIcon,
+    ChevronUpDownIcon,
     CircleStackIcon,
     CogIcon,
     CommandLineIcon,
@@ -61,9 +62,23 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
     const navigate = useNavigate();
     const current = useAppSelector(state => state.auth.current);
     const isLoggedIn = useAppSelector(state => state.auth.status === "logged-in");
+    const [availableColumns, setAvailableColumns] = useState<string[]>([]);
+
+    // Listen for columns broadcast from storage unit page
+    useEffect(() => {
+        const handleColumnsUpdate = (event: CustomEvent<{ columns: string[] }>) => {
+            setAvailableColumns(event.detail.columns || []);
+        };
+
+        window.addEventListener('table:columns-available', handleColumnsUpdate as EventListener);
+        return () => {
+            window.removeEventListener('table:columns-available', handleColumnsUpdate as EventListener);
+        };
+    }, []);
 
     const navigationActions: CommandAction[] = [];
     const tableActions: CommandAction[] = [];
+    const sortActions: CommandAction[] = [];
 
     if (isLoggedIn && current) {
         // Navigation actions - only show relevant ones based on database type
@@ -158,6 +173,21 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                 onOpenChange(false);
             },
         });
+
+        // Add sort actions for available columns
+        availableColumns.forEach((column) => {
+            sortActions.push({
+                id: `sort-${column}`,
+                label: t('sortByColumn', { column }),
+                icon: <ChevronUpDownIcon className="w-4 h-4" />,
+                onSelect: () => {
+                    window.dispatchEvent(new CustomEvent('table:sort-column', {
+                        detail: { column }
+                    }));
+                    onOpenChange(false);
+                },
+            });
+        });
     }
 
     const renderShortcut = (keys: string[]) => (
@@ -215,6 +245,22 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                                         {action.icon}
                                         <span className="ml-2">{action.label}</span>
                                         {action.shortcut && renderShortcut(action.shortcut)}
+                                    </CommandItem>
+                                ))}
+                            </CommandGroup>
+                        )}
+
+                        {sortActions.length > 0 && (
+                            <CommandGroup heading={t('sortBy', 'Sort By')}>
+                                {sortActions.map((action) => (
+                                    <CommandItem
+                                        key={action.id}
+                                        value={action.label}
+                                        onSelect={action.onSelect}
+                                        data-testid={`command-${action.id}`}
+                                    >
+                                        {action.icon}
+                                        <span className="ml-2">{action.label}</span>
                                     </CommandItem>
                                 ))}
                             </CommandGroup>

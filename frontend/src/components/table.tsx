@@ -228,6 +228,8 @@ export const StorageUnitTable: FC<TableProps> = ({
 
     // Keyboard navigation state
     const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
+    // Track focused column header for focus restoration after sort/refresh
+    const focusedColumnRef = useRef<string | null>(null);
     
     // Mock data state
     const [showMockDataSheet, setShowMockDataSheet] = useState(false);
@@ -357,10 +359,28 @@ export const StorageUnitTable: FC<TableProps> = ({
         return rows;
     }, [rows]);
 
-    // Reset focus when rows change (page change, refresh, etc.)
+    // Reset row focus and selection when rows change (page change, refresh, etc.)
+    // But restore column header focus if one was focused (for keyboard sorting)
     useEffect(() => {
         setFocusedRowIndex(null);
         setChecked([]);
+
+        // Restore column header focus after data refresh
+        const columnToFocus = focusedColumnRef.current;
+        console.log('[Table] rows changed, columnToFocus:', columnToFocus);
+        if (columnToFocus) {
+            // Use setTimeout to ensure DOM has updated after React render
+            const timeoutId = setTimeout(() => {
+                const header = document.querySelector(
+                    `[data-testid="column-header-${columnToFocus}"]`
+                ) as HTMLElement;
+                console.log('[Table] Restoring focus to:', columnToFocus, 'found:', !!header);
+                if (header) {
+                    header.focus();
+                }
+            }, 50);
+            return () => clearTimeout(timeoutId);
+        }
     }, [rows]);
 
     const handlePageChange = useCallback((newPage: number) => {
@@ -1092,8 +1112,18 @@ export const StorageUnitTable: FC<TableProps> = ({
                                             icon={columnIsPrimary?.[idx] ? <KeyIcon className="w-4 h-4" /> : columnIsForeignKey?.[idx] ? <ShareIcon className="w-4 h-4" /> : columnIcons?.[idx]}
                                             className={cn({
                                                 "cursor-pointer select-none": onColumnSort,
+                                                "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset": onColumnSort,
                                             })}
+                                            tabIndex={onColumnSort ? 0 : undefined}
                                             onClick={() => onColumnSort?.(col)}
+                                            onKeyDown={(e) => {
+                                                if (onColumnSort && (e.key === 'Enter' || e.key === ' ')) {
+                                                    e.preventDefault();
+                                                    onColumnSort(col);
+                                                }
+                                            }}
+                                            onFocus={() => { console.log('[Table] Column focused:', col); focusedColumnRef.current = col; }}
+                                            data-testid={`column-header-${col}`}
                                         >
                                             <Tip>
                                                 <p className={cn("flex items-center gap-xs", {

@@ -3,6 +3,7 @@ en:
   noResults: No results found.
   navigation: Navigation
   actions: Actions
+  sortBy: Sort By
   goToChat: Go to Chat
   goToStorageUnits: Go to Storage Units
   goToGraph: Go to Graph
@@ -11,3 +12,4 @@ en:
   exportData: Export Data
   toggleSidebar: Toggle Sidebar
   disconnect: Disconnect
+  sortByColumn: Sort by {{column}}
