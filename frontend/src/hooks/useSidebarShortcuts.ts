@@ -20,7 +20,7 @@ import {InternalRoutes} from "../config/routes";
 import {useAppSelector} from "../store/hooks";
 import {isNoSQL} from "../utils/functions";
 import {databaseSupportsScratchpad} from "../utils/database-features";
-import {isModKeyPressed} from "../utils/platform";
+import {isModKeyPressed, isMacPlatform} from "../utils/platform";
 
 export const useSidebarShortcuts = () => {
     const navigate = useNavigate();
@@ -34,8 +34,10 @@ export const useSidebarShortcuts = () => {
         // Check for Cmd (Mac) or Ctrl (Windows/Linux) for sidebar toggle
         const cmdKey = isModKeyPressed(event);
 
-        // Use Alt for number navigation to avoid conflicting with browser tab switching
-        const altKey = event.altKey;
+        // For number navigation:
+        // - Mac: Use Ctrl (avoids Cmd+Number tab switching and Option+Number special chars)
+        // - Windows/Linux: Use Alt (avoids Ctrl+Number tab switching in some browsers)
+        const numberNavKey = isMacPlatform ? event.ctrlKey : event.altKey;
 
         // Ignore if typing in an input or textarea
         if (
@@ -65,8 +67,8 @@ export const useSidebarShortcuts = () => {
             routes.push(InternalRoutes.RawExecute.path);
         }
 
-        // Alt+Number for view navigation (avoids browser tab switching conflict)
-        if (altKey) {
+        // Number navigation: Ctrl+Number on Mac, Alt+Number on Windows/Linux
+        if (numberNavKey && !event.shiftKey && !event.metaKey) {
             switch (event.key) {
                 case '1':
                     if (routes[0]) {

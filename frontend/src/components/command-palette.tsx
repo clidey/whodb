@@ -82,12 +82,15 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
 
     if (isLoggedIn && current) {
         // Navigation actions - only show relevant ones based on database type
+        // Use Ctrl+Number on Mac (to avoid Option special chars), Alt+Number on Windows/Linux
+        const navModKey = isMacPlatform ? "Ctrl" : "Alt";
+
         if (!isNoSQL(current.Type)) {
             navigationActions.push({
                 id: "nav-chat",
                 label: t('goToChat', 'Go to Chat'),
                 icon: <ChatBubbleLeftRightIcon className="w-4 h-4" />,
-                shortcut: ["Alt", "1"],
+                shortcut: [navModKey, "1"],
                 onSelect: () => {
                     navigate(InternalRoutes.Chat.path);
                     onOpenChange(false);
@@ -99,7 +102,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
             id: "nav-storage-units",
             label: t('goToStorageUnits', 'Go to Storage Units'),
             icon: <RectangleGroupIcon className="w-4 h-4" />,
-            shortcut: isNoSQL(current.Type) ? ["Alt", "1"] : ["Alt", "2"],
+            shortcut: isNoSQL(current.Type) ? [navModKey, "1"] : [navModKey, "2"],
             onSelect: () => {
                 navigate(InternalRoutes.Dashboard.StorageUnit.path);
                 onOpenChange(false);
@@ -110,7 +113,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
             id: "nav-graph",
             label: t('goToGraph', 'Go to Graph'),
             icon: <ShareIcon className="w-4 h-4" />,
-            shortcut: isNoSQL(current.Type) ? ["Alt", "2"] : ["Alt", "3"],
+            shortcut: isNoSQL(current.Type) ? [navModKey, "2"] : [navModKey, "3"],
             onSelect: () => {
                 navigate(InternalRoutes.Graph.path);
                 onOpenChange(false);
@@ -122,7 +125,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                 id: "nav-scratchpad",
                 label: t('goToScratchpad', 'Go to Scratchpad'),
                 icon: <CommandLineIcon className="w-4 h-4" />,
-                shortcut: isNoSQL(current.Type) ? ["Alt", "3"] : ["Alt", "4"],
+                shortcut: isNoSQL(current.Type) ? [navModKey, "3"] : [navModKey, "4"],
                 onSelect: () => {
                     navigate(InternalRoutes.RawExecute.path);
                     onOpenChange(false);
