@@ -36,6 +36,7 @@ import {
     ArrowLeftStartOnRectangleIcon,
     ArrowPathIcon,
     ChatBubbleLeftRightIcon,
+    ChevronUpDownIcon,
     CircleStackIcon,
     CogIcon,
     CommandLineIcon,
@@ -61,18 +62,35 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
     const navigate = useNavigate();
     const current = useAppSelector(state => state.auth.current);
     const isLoggedIn = useAppSelector(state => state.auth.status === "logged-in");
+    const [availableColumns, setAvailableColumns] = useState<string[]>([]);
+
+    // Listen for columns broadcast from storage unit page
+    useEffect(() => {
+        const handleColumnsUpdate = (event: CustomEvent<{ columns: string[] }>) => {
+            setAvailableColumns(event.detail.columns || []);
+        };
+
+        window.addEventListener('table:columns-available', handleColumnsUpdate as EventListener);
+        return () => {
+            window.removeEventListener('table:columns-available', handleColumnsUpdate as EventListener);
+        };
+    }, []);
 
     const navigationActions: CommandAction[] = [];
     const tableActions: CommandAction[] = [];
+    const sortActions: CommandAction[] = [];
 
     if (isLoggedIn && current) {
         // Navigation actions - only show relevant ones based on database type
+        // Use Ctrl+Number on Mac (to avoid Option special chars), Alt+Number on Windows/Linux
+        const navModKey = isMacPlatform ? "Ctrl" : "Alt";
+
         if (!isNoSQL(current.Type)) {
             navigationActions.push({
                 id: "nav-chat",
                 label: t('goToChat', 'Go to Chat'),
                 icon: <ChatBubbleLeftRightIcon className="w-4 h-4" />,
-                shortcut: ["Alt", "1"],
+                shortcut: [navModKey, "1"],
                 onSelect: () => {
                     navigate(InternalRoutes.Chat.path);
                     onOpenChange(false);
@@ -84,7 +102,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
             id: "nav-storage-units",
             label: t('goToStorageUnits', 'Go to Storage Units'),
             icon: <RectangleGroupIcon className="w-4 h-4" />,
-            shortcut: isNoSQL(current.Type) ? ["Alt", "1"] : ["Alt", "2"],
+            shortcut: isNoSQL(current.Type) ? [navModKey, "1"] : [navModKey, "2"],
             onSelect: () => {
                 navigate(InternalRoutes.Dashboard.StorageUnit.path);
                 onOpenChange(false);
@@ -95,7 +113,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
             id: "nav-graph",
             label: t('goToGraph', 'Go to Graph'),
             icon: <ShareIcon className="w-4 h-4" />,
-            shortcut: isNoSQL(current.Type) ? ["Alt", "2"] : ["Alt", "3"],
+            shortcut: isNoSQL(current.Type) ? [navModKey, "2"] : [navModKey, "3"],
             onSelect: () => {
                 navigate(InternalRoutes.Graph.path);
                 onOpenChange(false);
@@ -107,7 +125,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                 id: "nav-scratchpad",
                 label: t('goToScratchpad', 'Go to Scratchpad'),
                 icon: <CommandLineIcon className="w-4 h-4" />,
-                shortcut: isNoSQL(current.Type) ? ["Alt", "3"] : ["Alt", "4"],
+                shortcut: isNoSQL(current.Type) ? [navModKey, "3"] : [navModKey, "4"],
                 onSelect: () => {
                     navigate(InternalRoutes.RawExecute.path);
                     onOpenChange(false);
@@ -157,6 +175,21 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                 navigate(InternalRoutes.Logout.path);
                 onOpenChange(false);
             },
+        });
+
+        // Add sort actions for available columns
+        availableColumns.forEach((column) => {
+            sortActions.push({
+                id: `sort-${column}`,
+                label: t('sortByColumn', { column }),
+                icon: <ChevronUpDownIcon className="w-4 h-4" />,
+                onSelect: () => {
+                    window.dispatchEvent(new CustomEvent('table:sort-column', {
+                        detail: { column }
+                    }));
+                    onOpenChange(false);
+                },
+            });
         });
     }
 
@@ -215,6 +248,22 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                                         {action.icon}
                                         <span className="ml-2">{action.label}</span>
                                         {action.shortcut && renderShortcut(action.shortcut)}
+                                    </CommandItem>
+                                ))}
+                            </CommandGroup>
+                        )}
+
+                        {sortActions.length > 0 && (
+                            <CommandGroup heading={t('sortBy', 'Sort By')}>
+                                {sortActions.map((action) => (
+                                    <CommandItem
+                                        key={action.id}
+                                        value={action.label}
+                                        onSelect={action.onSelect}
+                                        data-testid={`command-${action.id}`}
+                                    >
+                                        {action.icon}
+                                        <span className="ml-2">{action.label}</span>
                                     </CommandItem>
                                 ))}
                             </CommandGroup>

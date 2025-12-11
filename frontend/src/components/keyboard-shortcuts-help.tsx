@@ -90,10 +90,10 @@ export const KeyboardShortcutsHelp: FC<KeyboardShortcutsHelpProps> = ({
         {
             title: t('categoryNavigation', 'Navigation'),
             shortcuts: [
-                { keys: ["Alt", "1"], description: t('navFirst', 'Go to first view (Chat or Tables)') },
-                { keys: ["Alt", "2"], description: t('navSecond', 'Go to second view') },
-                { keys: ["Alt", "3"], description: t('navThird', 'Go to third view') },
-                { keys: ["Alt", "4"], description: t('navFourth', 'Go to fourth view (if available)') },
+                { keys: isMacPlatform ? ["Ctrl", "1"] : ["Alt", "1"], description: t('navFirst', 'Go to first view (Chat or Tables)') },
+                { keys: isMacPlatform ? ["Ctrl", "2"] : ["Alt", "2"], description: t('navSecond', 'Go to second view') },
+                { keys: isMacPlatform ? ["Ctrl", "3"] : ["Alt", "3"], description: t('navThird', 'Go to third view') },
+                { keys: isMacPlatform ? ["Ctrl", "4"] : ["Alt", "4"], description: t('navFourth', 'Go to fourth view (if available)') },
             ],
         },
         {

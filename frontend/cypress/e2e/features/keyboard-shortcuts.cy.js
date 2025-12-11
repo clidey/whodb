@@ -756,6 +756,219 @@ describe('Keyboard Shortcuts', () => {
             });
         });
 
+        describe('Column Header Keyboard Sorting', () => {
+            it('column headers are focusable', () => {
+                cy.data(tableName);
+
+                // Focus the column header
+                cy.get('[data-testid="column-header-id"]').focus();
+
+                // Should have focus
+                cy.get('[data-testid="column-header-id"]').should('have.focus');
+            });
+
+            it('Enter key on focused column header triggers sort', () => {
+                cy.data(tableName);
+
+                // Focus and press Enter using trigger (more reliable than type)
+                cy.get('[data-testid="column-header-id"]').focus();
+                cy.get('[data-testid="column-header-id"]').trigger('keydown', { key: 'Enter' });
+
+                // Wait for sort to be applied and data to refresh
+                cy.wait(500);
+
+                // Column should now show sort indicator (chevron icon inside p.flex)
+                cy.get('[data-testid="column-header-id"]').find('p.flex svg').should('exist');
+            });
+
+            it('Space key on focused column header triggers sort', () => {
+                cy.data(tableName);
+
+                // Focus and press Space using trigger
+                cy.get('[data-testid="column-header-name"]').focus();
+                cy.get('[data-testid="column-header-name"]').trigger('keydown', { key: ' ' });
+
+                // Wait for sort to be applied and data to refresh
+                cy.wait(500);
+
+                // Column should now show sort indicator (chevron icon inside p.flex)
+                cy.get('[data-testid="column-header-name"]').find('p.flex svg').should('exist');
+            });
+
+            it('clicking column header sorts data ascending', () => {
+                cy.data(tableName);
+
+                // Click to sort by id ascending
+                cy.get('[data-testid="column-header-id"]').click();
+                cy.wait(500);
+
+                // Column should show sort indicator
+                cy.get('[data-testid="column-header-id"]').find('p.flex svg').should('exist');
+
+                // Verify data is sorted ascending - collect all id values and check order
+                cy.get('table tbody tr').then($rows => {
+                    const ids = [];
+                    $rows.each((_, row) => {
+                        // Get the first data cell (after checkbox column)
+                        const idCell = Cypress.$(row).find('td').eq(1).text().trim();
+                        if (idCell) ids.push(parseInt(idCell, 10));
+                    });
+
+                    // Check ascending order
+                    for (let i = 1; i < ids.length; i++) {
+                        expect(ids[i]).to.be.gte(ids[i - 1]);
+                    }
+                });
+            });
+
+            it('clicking column header twice sorts data descending', () => {
+                cy.data(tableName);
+
+                // Click twice to sort by id descending
+                cy.get('[data-testid="column-header-id"]').click();
+                cy.wait(500);
+                cy.get('[data-testid="column-header-id"]').click();
+                cy.wait(500);
+
+                // Column should show sort indicator
+                cy.get('[data-testid="column-header-id"]').find('p.flex svg').should('exist');
+
+                // Verify data is sorted descending
+                cy.get('table tbody tr').then($rows => {
+                    const ids = [];
+                    $rows.each((_, row) => {
+                        const idCell = Cypress.$(row).find('td').eq(1).text().trim();
+                        if (idCell) ids.push(parseInt(idCell, 10));
+                    });
+
+                    // Check descending order
+                    for (let i = 1; i < ids.length; i++) {
+                        expect(ids[i]).to.be.lte(ids[i - 1]);
+                    }
+                });
+            });
+
+            it('multiple sorts can be applied by clicking different columns', () => {
+                cy.data(tableName);
+
+                // Sort by id first
+                cy.get('[data-testid="column-header-id"]').click();
+                cy.wait(500);
+
+                // Sort by name second
+                cy.get('[data-testid="column-header-name"]').click();
+                cy.wait(500);
+
+                // Both columns should show sort indicators
+                cy.get('[data-testid="column-header-id"]').find('p.flex svg').should('exist');
+                cy.get('[data-testid="column-header-name"]').find('p.flex svg').should('exist');
+            });
+
+            it('clicking column three times cycles through asc, desc, and removes sort', () => {
+                cy.data(tableName);
+
+                // Get original order before any sorting
+                let originalIds = [];
+                cy.get('table tbody tr').then($rows => {
+                    $rows.each((_, row) => {
+                        const idCell = Cypress.$(row).find('td').eq(1).text().trim();
+                        if (idCell) originalIds.push(parseInt(idCell, 10));
+                    });
+                });
+
+                // First click: ascending sort
+                cy.get('[data-testid="column-header-id"]').click();
+                cy.wait(500);
+                cy.get('[data-testid="column-header-id"]').find('p.flex svg').should('exist');
+
+                // Verify ascending
+                cy.get('table tbody tr').then($rows => {
+                    const ids = [];
+                    $rows.each((_, row) => {
+                        const idCell = Cypress.$(row).find('td').eq(1).text().trim();
+                        if (idCell) ids.push(parseInt(idCell, 10));
+                    });
+                    for (let i = 1; i < ids.length; i++) {
+                        expect(ids[i]).to.be.gte(ids[i - 1]);
+                    }
+                });
+
+                // Second click: descending sort
+                cy.get('[data-testid="column-header-id"]').click();
+                cy.wait(500);
+                cy.get('[data-testid="column-header-id"]').find('p.flex svg').should('exist');
+
+                // Verify descending
+                cy.get('table tbody tr').then($rows => {
+                    const ids = [];
+                    $rows.each((_, row) => {
+                        const idCell = Cypress.$(row).find('td').eq(1).text().trim();
+                        if (idCell) ids.push(parseInt(idCell, 10));
+                    });
+                    for (let i = 1; i < ids.length; i++) {
+                        expect(ids[i]).to.be.lte(ids[i - 1]);
+                    }
+                });
+
+                // Third click: remove sort
+                cy.get('[data-testid="column-header-id"]').click();
+                cy.wait(500);
+
+                // Sort indicator (chevron) should be removed
+                cy.get('[data-testid="column-header-id"]').find('p.flex svg').should('not.exist');
+            });
+        });
+
+        describe('Command Palette Sort Commands', () => {
+            it('command palette shows sort options when on table view', () => {
+                cy.data(tableName);
+
+                // Open command palette
+                cy.get('body').type('{ctrl}k');
+
+                // Should show "Sort By" section with column options
+                cy.contains('Sort By').should('exist');
+                cy.get('[data-testid="command-sort-id"]').should('exist');
+                cy.get('[data-testid="command-sort-name"]').should('exist');
+
+                // Close
+                cy.get('body').type('{esc}');
+            });
+
+            it('selecting sort command from palette sorts the column', () => {
+                cy.data(tableName);
+
+                // Open command palette
+                cy.get('body').type('{ctrl}k');
+
+                // Click on sort by id
+                cy.get('[data-testid="command-sort-id"]').click();
+
+                // Wait for sort to be applied
+                cy.wait(500);
+
+                // Column should now show sort indicator
+                cy.get('[data-testid="column-header-id"]').find('svg').should('exist');
+            });
+
+            it('sort commands can be searched in command palette', () => {
+                cy.data(tableName);
+
+                // Open command palette
+                cy.get('body').type('{ctrl}k');
+
+                // Type to search for sort
+                cy.get('[data-testid="command-palette-input"]').type('sort by name');
+
+                // Should filter to show sort by name
+                cy.get('[data-testid="command-sort-name"]').should('exist');
+                cy.get('[data-testid="command-sort-id"]').should('not.exist');
+
+                // Close
+                cy.get('body').type('{esc}');
+            });
+        });
+
         // Deletion tests are placed at the end because they modify data and could affect other tests
         describe('Ctrl+Delete/Backspace - Delete Row', () => {
             it('Delete key without Ctrl does not delete row', () => {

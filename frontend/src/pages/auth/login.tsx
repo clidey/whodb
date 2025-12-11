@@ -31,13 +31,23 @@ import {FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState} fro
 import {useNavigate, useSearchParams} from "react-router-dom";
 import {v4} from 'uuid';
 import logoImage from "../../../public/images/logo.png";
-import {AdjustmentsHorizontalIcon, ChatBubbleLeftRightIcon, CheckCircleIcon, ChevronDownIcon, CircleStackIcon, CodeBracketIcon, ShareIcon, SparklesIcon, TableCellsIcon} from '../../components/heroicons';
+import {
+    AdjustmentsHorizontalIcon,
+    ChatBubbleLeftRightIcon,
+    CheckCircleIcon,
+    ChevronDownIcon,
+    CircleStackIcon,
+    CodeBracketIcon,
+    ShareIcon,
+    SparklesIcon,
+    TableCellsIcon
+} from '../../components/heroicons';
 import {Icons} from "../../components/icons";
 import {Loading} from "../../components/loading";
 import {Container} from "../../components/page";
 import {updateProfileLastAccessed} from "../../components/profile-info-tooltip";
 import {baseDatabaseTypes, getDatabaseTypeDropdownItems, IDatabaseDropdownItem} from "../../config/database-types";
-import {extensions, sources, featureFlags} from '../../config/features';
+import {extensions, featureFlags, sources} from '../../config/features';
 import {InternalRoutes} from "../../config/routes";
 import {useDesktopFile} from '../../hooks/useDesktop';
 import {useTranslation} from '@/hooks/use-translation';
@@ -522,14 +532,18 @@ export const LoginForm: FC<LoginFormProps> = ({
         if (databaseType.id === DatabaseType.Sqlite3) {
             return <div className="flex flex-col gap-lg w-full">
                 <div className="flex flex-col gap-xs w-full">
-                    <Label>{t('database')}</Label>
+                    <Label htmlFor="sqlite-database">{t('database')}</Label>
                     {isDesktop ? (
                         <div className="flex flex-col gap-sm w-full">
                             <Input
+                                id="sqlite-database"
                                 value={database}
                                 onChange={(e) => setDatabase(e.target.value)}
                                 placeholder={t('selectOrEnterDatabasePath')}
                                 data-testid="database"
+                                aria-required="true"
+                                aria-invalid={error ? "true" : undefined}
+                                aria-describedby={error ? "login-error" : undefined}
                             />
                             <Button
                                 onClick={handleBrowseSQLiteFile}
@@ -556,6 +570,9 @@ export const LoginForm: FC<LoginFormProps> = ({
                             placeholder={t('selectDatabase')}
                             buttonProps={{
                                 "data-testid": "database",
+                                "aria-required": "true",
+                                "aria-invalid": error ? "true" : undefined,
+                                "aria-describedby": error ? "login-error" : undefined,
                             }}
                             contentClassName="w-[var(--radix-popover-trigger-width)] login-select-popover"
                             rightIcon={<ChevronDownIcon className="w-4 h-4"/>}
@@ -567,30 +584,30 @@ export const LoginForm: FC<LoginFormProps> = ({
         return <div className="flex flex-col gap-lg w-full">
             { databaseType.fields?.hostname && (
                 <div className="flex flex-col gap-sm w-full">
-                    <Label>{databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Postgres ? t('hostNameOrUrl') : t('hostName')}</Label>
-                    <Input value={hostName} onChange={(e) => handleHostNameChange(e.target.value)} data-testid="hostname" placeholder={t('enterHostName')} />
+                    <Label htmlFor="login-hostname">{databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Postgres ? t('hostNameOrUrl') : t('hostName')}</Label>
+                    <Input id="login-hostname" value={hostName} onChange={(e) => handleHostNameChange(e.target.value)} data-testid="hostname" placeholder={t('enterHostName')} aria-required="true" aria-invalid={error ? "true" : undefined} aria-describedby={error ? "login-error" : undefined} />
                 </div>
             )}
             { databaseType.fields?.username && (
                 <div className="flex flex-col gap-sm w-full">
-                    <Label>{t('username')}</Label>
-                    <Input value={username} onChange={(e) => setUsername(e.target.value)} data-testid="username" placeholder={t('enterUsername')} />
+                    <Label htmlFor="login-username">{t('username')}</Label>
+                    <Input id="login-username" value={username} onChange={(e) => setUsername(e.target.value)} data-testid="username" placeholder={t('enterUsername')} aria-required="true" aria-invalid={error ? "true" : undefined} aria-describedby={error ? "login-error" : undefined} />
                 </div>
             )}
             { databaseType.fields?.password && (
                 <div className="flex flex-col gap-sm w-full">
-                    <Label>{t('password')}</Label>
-                    <Input value={password} onChange={(e) => setPassword(e.target.value)} type="password" data-testid="password" placeholder={t('enterPassword')} />
+                    <Label htmlFor="login-password">{t('password')}</Label>
+                    <Input id="login-password" value={password} onChange={(e) => setPassword(e.target.value)} type="password" data-testid="password" placeholder={t('enterPassword')} aria-required="true" aria-invalid={error ? "true" : undefined} aria-describedby={error ? "login-error" : undefined} />
                 </div>
             )}
             { databaseType.fields?.database && (
                 <div className="flex flex-col gap-sm w-full">
-                    <Label>{t('database')}</Label>
-                    <Input value={database} onChange={(e) => setDatabase(e.target.value)} data-testid="database" placeholder={t('enterDatabase')} />
+                    <Label htmlFor="login-database">{t('database')}</Label>
+                    <Input id="login-database" value={database} onChange={(e) => setDatabase(e.target.value)} data-testid="database" placeholder={t('enterDatabase')} aria-required="true" aria-invalid={error ? "true" : undefined} aria-describedby={error ? "login-error" : undefined} />
                 </div>
             )}
         </div>
-    }, [database, databaseType.id, databaseType.fields, databasesLoading, foundDatabases?.Database, handleHostNameChange, hostName, password, username, isDesktop, handleBrowseSQLiteFile, t]);
+    }, [database, databaseType.id, databaseType.fields, databasesLoading, foundDatabases?.Database, handleHostNameChange, hostName, password, username, isDesktop, handleBrowseSQLiteFile, t, error]);
 
     const loginWithCredentialsEnabled = useMemo(() => {
         if (databaseType.id === DatabaseType.Sqlite3) {
@@ -637,19 +654,19 @@ export const LoginForm: FC<LoginFormProps> = ({
                 "h-full": advancedDirection === "vertical" && availableProfiles.length === 0,
             })}>
                 {!hideHeader && (
-                    <div className="flex justify-between" data-testid="login-header">
-                        <div className="flex items-center gap-sm text-xl">
-                            {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4"/>}
-                            <h1 className="text-brand-foreground">{extensions.AppName ?? "WhoDB"}</h1>
-                            <h1>{t('title')}</h1>
-                        </div>
+                    <header className="flex justify-between" data-testid="login-header">
+                        <h1 className="flex items-center gap-sm text-xl">
+                            {extensions.Logo ?? <img src={logoImage} alt="" className="w-auto h-4"/>}
+                            <span className="text-brand-foreground">{extensions.AppName ?? "WhoDB"}</span>
+                            <span>{t('title')}</span>
+                        </h1>
                         {
                             error &&
-                            <Badge variant="destructive" className="self-end">
+                            <Badge id="login-error" variant="destructive" className="self-end" role="alert">
                                 {error}
                             </Badge>
                         }
-                    </div>
+                    </header>
                 )}
                 <div className={classNames("flex", {
                     "flex-row grow": advancedDirection === "horizontal",
@@ -752,14 +769,14 @@ export const LoginForm: FC<LoginFormProps> = ({
             </div>
             {
                 showSidePanel && advancedDirection === "horizontal" && (
-                    <Card className="flex flex-col gap-6 p-8 w-[380px] shadow-xl" data-testid="sample-database-panel">
+                    <Card className="flex flex-col gap-6 p-8 w-[380px] shadow-xl" data-testid="sample-database-panel" aria-labelledby="sample-db-heading">
                         <div className="flex flex-col gap-4">
                             <div className="flex items-center gap-3">
-                                <div className="h-14 w-14 rounded-2xl flex justify-center items-center bg-gradient-to-br from-brand to-brand/80 shadow-lg">
+                                <div className="h-14 w-14 rounded-2xl flex justify-center items-center bg-gradient-to-br from-brand to-brand/80 shadow-lg" aria-hidden="true">
                                     <SparklesIcon className="w-7 h-7 text-brand-foreground" />
                                 </div>
                                 <div className="flex flex-col gap-1">
-                                    <h2 className="text-2xl font-bold text-foreground">
+                                    <h2 id="sample-db-heading" className="text-2xl font-bold text-foreground">
                                         {t('tryWhodb')}
                                     </h2>
                                     <Badge variant="secondary" className="w-fit">
@@ -775,13 +792,13 @@ export const LoginForm: FC<LoginFormProps> = ({
 
                         <Separator />
 
-                        <div className="flex flex-col gap-3">
+                        <div className="flex flex-col gap-3" role="list" aria-label={t('whatsIncluded')}>
                             <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
                                 {t('whatsIncluded')}
                             </h3>
                             <div className="flex flex-col gap-3">
-                                <div className="flex items-start gap-3">
-                                    <div className="h-6 w-6 rounded-lg flex justify-center items-center bg-brand/10 mt-0.5">
+                                <div className="flex items-start gap-3" role="listitem">
+                                    <div className="h-6 w-6 rounded-lg flex justify-center items-center bg-brand/10 mt-0.5" aria-hidden="true">
                                         <ChatBubbleLeftRightIcon className="w-3.5 h-3.5 stroke-brand" />
                                     </div>
                                     <div className="flex flex-col gap-1">
@@ -789,8 +806,8 @@ export const LoginForm: FC<LoginFormProps> = ({
                                         <p className="text-xs text-muted-foreground">{t('aiChatDescription')}</p>
                                     </div>
                                 </div>
-                                <div className="flex items-start gap-3">
-                                    <div className="h-6 w-6 rounded-lg flex justify-center items-center bg-brand/10 mt-0.5">
+                                <div className="flex items-start gap-3" role="listitem">
+                                    <div className="h-6 w-6 rounded-lg flex justify-center items-center bg-brand/10 mt-0.5" aria-hidden="true">
                                         <ShareIcon className="w-3.5 h-3.5 stroke-brand" />
                                     </div>
                                     <div className="flex flex-col gap-1">
@@ -798,8 +815,8 @@ export const LoginForm: FC<LoginFormProps> = ({
                                         <p className="text-xs text-muted-foreground">{t('visualSchemaDescription')}</p>
                                     </div>
                                 </div>
-                                <div className="flex items-start gap-3">
-                                    <div className="h-6 w-6 rounded-lg flex justify-center items-center bg-brand/10 mt-0.5">
+                                <div className="flex items-start gap-3" role="listitem">
+                                    <div className="h-6 w-6 rounded-lg flex justify-center items-center bg-brand/10 mt-0.5" aria-hidden="true">
                                         <TableCellsIcon className="w-3.5 h-3.5 stroke-brand" />
                                     </div>
                                     <div className="flex flex-col gap-1">
@@ -807,8 +824,8 @@ export const LoginForm: FC<LoginFormProps> = ({
                                         <p className="text-xs text-muted-foreground">{t('dataGridDescription')}</p>
                                     </div>
                                 </div>
-                                <div className="flex items-start gap-3">
-                                    <div className="h-6 w-6 rounded-lg flex justify-center items-center bg-brand/10 mt-0.5">
+                                <div className="flex items-start gap-3" role="listitem">
+                                    <div className="h-6 w-6 rounded-lg flex justify-center items-center bg-brand/10 mt-0.5" aria-hidden="true">
                                         <CodeBracketIcon className="w-3.5 h-3.5 stroke-brand" />
                                     </div>
                                     <div className="flex flex-col gap-1">
@@ -825,7 +842,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                             size="lg"
                             className="w-full mt-2"
                         >
-                            <SparklesIcon className="w-4 h-4" />
+                            <SparklesIcon className="w-4 h-4" aria-hidden="true" />
                             {t('getStarted')}
                         </Button>
 

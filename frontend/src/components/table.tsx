@@ -147,16 +147,16 @@ const binaryTypes = new Set([
 export function getColumnIcons(columns: string[], columnTypes?: string[]) {
     return columns.map((col, idx) => {
         const type = columnTypes?.[idx]?.toUpperCase?.() || "";
-        if (intTypes.has(type) || uintTypes.has(type)) return <HashtagIcon className="w-4 h-4" />;
-        if (floatTypes.has(type)) return <CalculatorIcon className="w-4 h-4" />;
-        if (boolTypes.has(type)) return <CheckCircleIcon className="w-4 h-4" />;
-        if (dateTypes.has(type)) return <CalendarIcon className="w-4 h-4" />;
-        if (dateTimeTypes.has(type)) return <ClockIcon className="w-4 h-4" />;
-        if (uuidTypes.has(type)) return <KeyIcon className="w-4 h-4" />;
-        if (binaryTypes.has(type)) return <DocumentDuplicateIcon className="w-4 h-4" />;
-        if (type.startsWith("ARRAY")) return <ListBulletIcon className="w-4 h-4" />;
-        if (stringTypes.has(type)) return <DocumentTextIcon className="w-4 h-4" />;
-        return <CircleStackIcon className="w-4 h-4" />;
+        if (intTypes.has(type) || uintTypes.has(type)) return <HashtagIcon className="w-4 h-4" aria-label="Integer type" />;
+        if (floatTypes.has(type)) return <CalculatorIcon className="w-4 h-4" aria-label="Decimal type" />;
+        if (boolTypes.has(type)) return <CheckCircleIcon className="w-4 h-4" aria-label="Boolean type" />;
+        if (dateTypes.has(type)) return <CalendarIcon className="w-4 h-4" aria-label="Date type" />;
+        if (dateTimeTypes.has(type)) return <ClockIcon className="w-4 h-4" aria-label="DateTime type" />;
+        if (uuidTypes.has(type)) return <KeyIcon className="w-4 h-4" aria-label="UUID type" />;
+        if (binaryTypes.has(type)) return <DocumentDuplicateIcon className="w-4 h-4" aria-label="Binary type" />;
+        if (type.startsWith("ARRAY")) return <ListBulletIcon className="w-4 h-4" aria-label="Array type" />;
+        if (stringTypes.has(type)) return <DocumentTextIcon className="w-4 h-4" aria-label="Text type" />;
+        return <CircleStackIcon className="w-4 h-4" aria-label="Data type" />;
     });
 }
 
@@ -228,6 +228,8 @@ export const StorageUnitTable: FC<TableProps> = ({
 
     // Keyboard navigation state
     const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
+    // Track focused column header for focus restoration after sort/refresh
+    const focusedColumnRef = useRef<string | null>(null);
     
     // Mock data state
     const [showMockDataSheet, setShowMockDataSheet] = useState(false);
@@ -247,6 +249,9 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [deleteRow, ] = useDeleteRowMutation();
     const [containerWidth, setContainerWidth] = useState<number>(0);
     const lastSearchState = useRef<{ search: string; matchIdx: number }>({ search: '', matchIdx: 0 });
+
+    // Accessibility: live region for screen reader announcements
+    const [liveAnnouncement, setLiveAnnouncement] = useState<string>('');
 
     const handleEdit = (index: number) => {
         setEditIndex(index);
@@ -357,10 +362,28 @@ export const StorageUnitTable: FC<TableProps> = ({
         return rows;
     }, [rows]);
 
-    // Reset focus when rows change (page change, refresh, etc.)
+    // Reset row focus and selection when rows change (page change, refresh, etc.)
+    // But restore column header focus if one was focused (for keyboard sorting)
     useEffect(() => {
         setFocusedRowIndex(null);
         setChecked([]);
+
+        // Restore column header focus after data refresh
+        const columnToFocus = focusedColumnRef.current;
+        console.log('[Table] rows changed, columnToFocus:', columnToFocus);
+        if (columnToFocus) {
+            // Use setTimeout to ensure DOM has updated after React render
+            const timeoutId = setTimeout(() => {
+                const header = document.querySelector(
+                    `[data-testid="column-header-${columnToFocus}"]`
+                ) as HTMLElement;
+                console.log('[Table] Restoring focus to:', columnToFocus, 'found:', !!header);
+                if (header) {
+                    header.focus();
+                }
+            }, 50);
+            return () => clearTimeout(timeoutId);
+        }
     }, [rows]);
 
     const handlePageChange = useCallback((newPage: number) => {
@@ -376,11 +399,11 @@ export const StorageUnitTable: FC<TableProps> = ({
         if (start > 1) {
             links.push(
                 <PaginationItem key={1}>
-                    <PaginationLink href="#" onClick={e => { e.preventDefault(); handlePageChange(1); }} size="sm" data-testid="table-page-number" data-page="1" data-active={currentPage === 1}>1</PaginationLink>
+                    <PaginationLink href="#" onClick={e => { e.preventDefault(); handlePageChange(1); }} size="sm" data-testid="table-page-number" data-page="1" data-active={currentPage === 1} aria-label={t('goToPage', { page: 1 })}>1</PaginationLink>
                 </PaginationItem>
             );
             if (start > 2) {
-                links.push(<PaginationEllipsis key="start-ellipsis" />);
+                links.push(<PaginationEllipsis key="start-ellipsis" aria-hidden="true" />);
             }
         }
 
@@ -395,6 +418,8 @@ export const StorageUnitTable: FC<TableProps> = ({
                         data-testid="table-page-number"
                         data-page={i}
                         data-active={i === currentPage}
+                        aria-label={i === currentPage ? t('currentPage', { page: i }) : t('goToPage', { page: i })}
+                        aria-current={i === currentPage ? 'page' : undefined}
                     >
                         {i}
                     </PaginationLink>
@@ -404,11 +429,11 @@ export const StorageUnitTable: FC<TableProps> = ({
 
         if (end < totalPages) {
             if (end < totalPages - 1) {
-                links.push(<PaginationEllipsis key="end-ellipsis" />);
+                links.push(<PaginationEllipsis key="end-ellipsis" aria-hidden="true" />);
             }
             links.push(
                 <PaginationItem key={totalPages}>
-                    <PaginationLink href="#" onClick={e => { e.preventDefault(); handlePageChange(totalPages); }} size="sm" data-testid="table-page-number" data-page={totalPages} data-active={currentPage === totalPages}>{totalPages}</PaginationLink>
+                    <PaginationLink href="#" onClick={e => { e.preventDefault(); handlePageChange(totalPages); }} size="sm" data-testid="table-page-number" data-page={totalPages} data-active={currentPage === totalPages} aria-label={t('goToPage', { page: totalPages })}>{totalPages}</PaginationLink>
                 </PaginationItem>
             );
         }
@@ -417,8 +442,19 @@ export const StorageUnitTable: FC<TableProps> = ({
     };
 
     const handleSelectRow = useCallback((rowIndex: number) => {
-        setChecked(checked.includes(rowIndex) ? checked.filter(i => i !== rowIndex) : [...checked, rowIndex]);
-    }, [checked]);
+        const isCurrentlySelected = checked.includes(rowIndex);
+        const newChecked = isCurrentlySelected ? checked.filter(i => i !== rowIndex) : [...checked, rowIndex];
+        setChecked(newChecked);
+        // Announce selection change to screen readers
+        const selectedCount = newChecked.length;
+        if (selectedCount === 0) {
+            setLiveAnnouncement(t('noRowsSelected'));
+        } else if (selectedCount === 1) {
+            setLiveAnnouncement(t('oneRowSelected'));
+        } else {
+            setLiveAnnouncement(t('rowsSelected', { count: selectedCount }));
+        }
+    }, [checked, t]);
 
     // Track click timeouts to prevent single-click when double-click occurs
     const clickTimeouts = useRef<Map<string, number>>(new Map());
@@ -822,6 +858,9 @@ export const StorageUnitTable: FC<TableProps> = ({
                 // Update last search state
                 lastSearchState.current = { search, matchIdx };
 
+                // Announce search result to screen readers
+                setLiveAnnouncement(t('searchMatchFound', { current: matchIdx + 1, total: matches.length }));
+
                 const { rowIdx, colIdx } = matches[matchIdx];
                 // Compose a unique selector for the cell
                 const selector = `[data-row-idx="${rowIdx}"] [data-col-idx="${colIdx}"]`;
@@ -844,6 +883,7 @@ export const StorageUnitTable: FC<TableProps> = ({
             } else {
                 // No matches, reset state
                 lastSearchState.current = { search, matchIdx: 0 };
+                setLiveAnnouncement(t('noSearchMatches'));
             }
         };
 
@@ -910,6 +950,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                             key={cellIdx}
                             role="gridcell"
                             className="cursor-pointer"
+                            title={t('cellInteractionHint')}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 setFocusedRowIndex(index);
@@ -1050,6 +1091,15 @@ export const StorageUnitTable: FC<TableProps> = ({
 
     return (
         <div ref={tableRef} className="h-full flex">
+            {/* Screen reader live region for announcements */}
+            <div
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+                className="sr-only"
+            >
+                {liveAnnouncement}
+            </div>
             <div className="flex flex-col h-full space-y-4 w-0" style={{
                 width: `${containerWidth}px`,
             }} data-testid="table-container">
@@ -1067,10 +1117,11 @@ export const StorageUnitTable: FC<TableProps> = ({
                                         "hidden": disableEdit,
                                     })}>
                                         <Checkbox
-                                            checked={checked.length === paginatedRows.length}
+                                            checked={checked.length === paginatedRows.length && paginatedRows.length > 0}
                                             onCheckedChange={() => {
                                                 setChecked(checked.length === paginatedRows.length ? [] : paginatedRows.map((_, index) => index));
                                             }}
+                                            aria-label={checked.length === paginatedRows.length ? t('deselectAll') : t('selectAll')}
                                         />
                                         <Button variant="secondary" className="opacity-0 group-hover:opacity-100 absolute right-2 top-1.5 w-0" onClick={(e) => {
                                             e.preventDefault();
@@ -1082,18 +1133,28 @@ export const StorageUnitTable: FC<TableProps> = ({
                                                 clientY: e.clientY,
                                             });
                                             e.currentTarget.dispatchEvent(event);
-                                            }} data-testid="icon-button">
-                                            <EllipsisVerticalIcon className="w-4 h-4" />
+                                            }} data-testid="icon-button" aria-label={t('moreActions')}>
+                                            <EllipsisVerticalIcon className="w-4 h-4" aria-hidden="true" />
                                         </Button>
                                     </TableHead>
                                     {columns.map((col, idx) => (
                                         <TableHead
                                             key={col + idx}
-                                            icon={columnIsPrimary?.[idx] ? <KeyIcon className="w-4 h-4" /> : columnIsForeignKey?.[idx] ? <ShareIcon className="w-4 h-4" /> : columnIcons?.[idx]}
+                                            icon={columnIsPrimary?.[idx] ? <KeyIcon className="w-4 h-4" aria-label="Primary key" /> : columnIsForeignKey?.[idx] ? <ShareIcon className="w-4 h-4" aria-label="Foreign key" /> : columnIcons?.[idx]}
                                             className={cn({
                                                 "cursor-pointer select-none": onColumnSort,
+                                                "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset": onColumnSort,
                                             })}
+                                            tabIndex={onColumnSort ? 0 : undefined}
                                             onClick={() => onColumnSort?.(col)}
+                                            onKeyDown={(e) => {
+                                                if (onColumnSort && (e.key === 'Enter' || e.key === ' ')) {
+                                                    e.preventDefault();
+                                                    onColumnSort(col);
+                                                }
+                                            }}
+                                            onFocus={() => { console.log('[Table] Column focused:', col); focusedColumnRef.current = col; }}
+                                            data-testid={`column-header-${col}`}
                                         >
                                             <Tip>
                                                 <p className={cn("flex items-center gap-xs", {
@@ -1239,9 +1300,12 @@ export const StorageUnitTable: FC<TableProps> = ({
                     "mt-4": children != null,
                 })}>
                     {children}
-                    <Pagination className={cn("flex justify-end", {
-                        "hidden": !showPagination,
-                    })}>
+                    <Pagination
+                        className={cn("flex justify-end", {
+                            "hidden": !showPagination,
+                        })}
+                        aria-label={t('tablePagination')}
+                    >
                         <PaginationContent>
                             <PaginationItem>
                                 <PaginationPrevious
@@ -1251,6 +1315,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                         if (currentPage > 1) handlePageChange(currentPage - 1);
                                     }}
                                     aria-disabled={currentPage === 1}
+                                    aria-label={t('previousPage')}
                                     size="sm"
                                     className={cn({
                                         "opacity-50 pointer-events-none": currentPage === 1,
@@ -1266,6 +1331,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                         if (currentPage < totalPages) handlePageChange(currentPage + 1);
                                     }}
                                     aria-disabled={currentPage === totalPages}
+                                    aria-label={t('nextPage')}
                                     size="sm"
                                     className={cn({
                                         "opacity-50 pointer-events-none": currentPage === totalPages,

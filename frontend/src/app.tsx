@@ -48,7 +48,7 @@ export const App = () => {
   // Setup command palette (Cmd+K)
   const { CommandPaletteModal } = useCommandPalette();
 
-  // Setup sidebar navigation shortcuts (Alt+1-4, Cmd+B)
+  // Setup sidebar navigation shortcuts (Ctrl+1-4 on Mac, Alt+1-4 on Windows/Linux, Cmd/Ctrl+B)
   useSidebarShortcuts();
 
   useEffect(() => {
