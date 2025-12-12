@@ -16,10 +16,10 @@
 
 .PHONY: build clean install test run dev help docker-build docker-run docker-compose-up docker-compose-down
 
-BINARY_NAME=whodb-cli
+BINARY_NAME=clidey/whodb-cli
 BUILD_DIR=build
 INSTALL_PATH=/usr/local/bin
-DOCKER_IMAGE=whodb-cli:latest
+DOCKER_IMAGE=clidey/whodb-cli:latest
 
 # Version info
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
