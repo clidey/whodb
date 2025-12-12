@@ -17,6 +17,7 @@
 import { reduxStore } from '../store';
 import { SettingsActions } from '../store/settings';
 import {FeatureFlags} from './ee-types';
+import { updateDocumentMeta } from './meta';
 
 // Default feature flags (all disabled for open source version)
 const defaultFeatures: FeatureFlags = {
@@ -54,6 +55,7 @@ export const initialize = () => {
 
     if (!isEEAvailable) {
         featureFlags = defaultFeatures;
+        updateDocumentMeta({});
         return;
     }
 
@@ -81,6 +83,7 @@ export const initialize = () => {
             }
             if (eeConfig?.eeExtensions) {
                 extensions = eeConfig.eeExtensions;
+                updateDocumentMeta(extensions);
             }
             if (eeConfig?.eeSources) {
                 sources = eeConfig.eeSources;
