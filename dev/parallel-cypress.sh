@@ -17,11 +17,23 @@
 
 # Parallel Cypress test runner for Community Edition (CE)
 # Runs tests for multiple databases in parallel
+#
+# Usage:
+#   ./parallel-cypress.sh [headless] [database] [spec]
+#
+# Arguments:
+#   headless - 'true' or 'false' (default: true)
+#   database - specific database to test, or 'all' (default: all)
+#   spec     - specific spec file to run (default: all features)
+#
+# Examples:
+#   ./parallel-cypress.sh true postgres data-types    # Headless, postgres only, data-types spec
 
 set -e
 
 HEADLESS="${1:-true}"
 TARGET_DB="${2:-all}"
+SPEC_FILE="${3:-}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
@@ -45,6 +57,9 @@ declare -A DB_CATEGORIES=(
 echo "🚀 Running Cypress tests in parallel (CE)"
 echo "   Headless: $HEADLESS"
 echo "   Target DB: $TARGET_DB"
+if [ -n "$SPEC_FILE" ]; then
+    echo "   Spec: $SPEC_FILE"
+fi
 
 # Filter databases if specific one requested
 if [ "$TARGET_DB" != "all" ]; then
@@ -112,13 +127,24 @@ for db in "${DATABASES[@]}"; do
     echo "🚀 Starting: $db (${DB_CATEGORIES[$db]})"
 
     if [ "$HEADLESS" = "true" ]; then
-        # Run all feature tests for this database
+        # Build spec pattern
+        if [ -n "$SPEC_FILE" ]; then
+            if [[ "$SPEC_FILE" == *.cy.* ]]; then
+                SPEC_PATTERN="cypress/e2e/features/$SPEC_FILE"
+            else
+                SPEC_PATTERN="cypress/e2e/features/$SPEC_FILE.cy.js"
+            fi
+        else
+            SPEC_PATTERN="cypress/e2e/features/**/*.cy.js"
+        fi
+
+        # Run feature tests for this database
         CYPRESS_database="$db" \
         CYPRESS_category="${DB_CATEGORIES[$db]}" \
         CYPRESS_retries__runMode=2 \
         CYPRESS_retries__openMode=0 \
         NODE_ENV=test pnpx cypress run \
-            --spec "cypress/e2e/features/**/*.cy.js" \
+            --spec "$SPEC_PATTERN" \
             --browser chromium \
             > "cypress/logs/$db.log" 2>&1 &
 

@@ -18,22 +18,26 @@
 # Cypress test runner for Community Edition (CE)
 #
 # Usage:
-#   ./run-cypress.sh [headless] [database]
+#   ./run-cypress.sh [headless] [database] [spec]
 #
 # Arguments:
 #   headless - 'true' or 'false' (default: false)
 #   database - specific database to test, or 'all' (default: all)
+#   spec     - specific spec file to run (default: all features)
 #
 # Examples:
-#   ./run-cypress.sh false postgres   # Open Cypress UI for postgres only
-#   ./run-cypress.sh true mysql       # Headless run for mysql only
-#   ./run-cypress.sh false all        # Open Cypress UI for all CE databases
+#   ./run-cypress.sh false postgres                    # Open Cypress UI for postgres only
+#   ./run-cypress.sh true mysql                        # Headless run for mysql only
+#   ./run-cypress.sh false all                         # Open Cypress UI for all CE databases
+#   ./run-cypress.sh true postgres data-types          # Headless run for postgres, data-types spec only
+#   ./run-cypress.sh false postgres data-types.cy.js   # Open UI for postgres, data-types spec only
 
 set -e
 
 # Parse arguments
 HEADLESS="${1:-false}"
 TARGET_DB="${2:-all}"
+SPEC_FILE="${3:-}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
@@ -60,6 +64,9 @@ fi
 echo "🚀 Cypress Test Runner (CE)"
 echo "   Headless: $HEADLESS"
 echo "   Database: $TARGET_DB"
+if [ -n "$SPEC_FILE" ]; then
+    echo "   Spec: $SPEC_FILE"
+fi
 
 # Cleanup function
 cleanup() {
@@ -110,7 +117,16 @@ run_tests() {
     cd "$PROJECT_ROOT/frontend"
 
     # Build spec pattern for feature-based tests
-    CE_FEATURE_SPEC="cypress/e2e/features/**/*.cy.{js,jsx,ts,tsx}"
+    if [ -n "$SPEC_FILE" ]; then
+        # If spec file is provided, use it (add .cy.js if not present)
+        if [[ "$SPEC_FILE" == *.cy.* ]]; then
+            CE_FEATURE_SPEC="cypress/e2e/features/$SPEC_FILE"
+        else
+            CE_FEATURE_SPEC="cypress/e2e/features/$SPEC_FILE.cy.js"
+        fi
+    else
+        CE_FEATURE_SPEC="cypress/e2e/features/**/*.cy.{js,jsx,ts,tsx}"
+    fi
     CYPRESS_CONFIG="{\"specPattern\":\"$CE_FEATURE_SPEC\"}"
 
     # Detect available browser

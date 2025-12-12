@@ -676,7 +676,7 @@ Cypress.Commands.add("addRow", (data, isSingleInput = false) => {
         } else {
             // Traditional database - multiple fields
             for (const [key, value] of Object.entries(data)) {
-                cy.get(`[data-testid="add-row-field-${key}"] input`).clear().type(value);
+                cy.get(`[data-testid="add-row-field-${key}"] input`).clear().type(value, {parseSpecialCharSequences: false});
             }
         }
     });
@@ -742,11 +742,7 @@ Cypress.Commands.add("deleteRow", (rowIndex) => {
         // Use the helper to open context menu with retry logic
         cy.openContextMenu(rowIndex);
 
-        // Use scrollIntoView and force click to handle overflow issues with wide tables
-        cy.get('[data-testid="context-menu-more-actions"]', {timeout: 5000})
-            .scrollIntoView()
-            .should('exist')
-            .click({force: true});
+        // Click delete directly - no longer in a submenu
         cy.get('[data-testid="context-menu-delete-row"]', {timeout: 5000})
             .scrollIntoView()
             .should('exist')

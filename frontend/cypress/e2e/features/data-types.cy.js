@@ -43,38 +43,38 @@ describe('Data Types CRUD Operations', () => {
 
         Object.entries(typeTests).forEach(([columnName, testConfig]) => {
             describe(`Type: ${testConfig.type} (${columnName})`, () => {
+                const columnIndex = Object.keys(tableConfig.columns).indexOf(columnName);
+                const expectedAddDisplay = testConfig.displayAddValue || testConfig.addValue;
+                const expectedUpdateDisplay = testConfig.displayUpdateValue || testConfig.updateValue;
+                // DELETE test uses separate values to avoid conflicts with ADD test
+                const deleteValue = testConfig.deleteValue || testConfig.addValue;
+                const expectedDeleteDisplay = testConfig.displayDeleteValue || testConfig.displayAddValue || deleteValue;
 
                 it('ADD - creates row with type value', () => {
                     cy.data(tableName);
 
-                    const newRowData = {
-                        [columnName]: testConfig.addValue
-                    };
-
-                    cy.addRow(newRowData);
+                    cy.addRow({[columnName]: testConfig.addValue});
 
                     if (mutationDelay > 0) {
                         cy.wait(mutationDelay);
                         cy.data(tableName);
                     }
 
-                    const columnIndex = Object.keys(tableConfig.columns).indexOf(columnName);
-
                     cy.getTableData().then(({rows}) => {
-                        const addedRow = rows.find(r => {
+                        // Debug: Get all values in this column to see actual format
+                        const columnValues = rows.map(r => String(r[columnIndex + 1] || '').trim());
+
+                        const rowIndex = rows.findIndex(r => {
                             const cellValue = String(r[columnIndex + 1] || '').trim();
-                            const expected = String(testConfig.addValue).trim();
-                            return cellValue === expected;
+                            return cellValue === String(expectedAddDisplay).trim();
                         });
-                        expect(addedRow, `Row with ${columnName}=${testConfig.addValue} should exist`).to.exist;
+                        // Include actual values in assertion message for debugging
+                        expect(rowIndex, `Row with ${columnName}=${expectedAddDisplay} should exist. Actual values: ${JSON.stringify(columnValues)}`).to.not.equal(-1);
 
-                        if (addedRow) {
-                            const rowIndex = rows.indexOf(addedRow);
-                            cy.deleteRow(rowIndex);
-
-                            if (mutationDelay > 0) {
-                                cy.wait(mutationDelay);
-                            }
+                        // Clean up - delete the row we just added
+                        cy.deleteRow(rowIndex);
+                        if (mutationDelay > 0) {
+                            cy.wait(mutationDelay);
                         }
                     });
                 });
@@ -83,12 +83,13 @@ describe('Data Types CRUD Operations', () => {
                     cy.data(tableName);
                     cy.sortBy(0);
 
-                    const columnIndex = Object.keys(tableConfig.columns).indexOf(columnName);
-
                     cy.getTableData().then(({rows}) => {
                         if (rows.length === 0) {
                             throw new Error('No rows in data_types table');
                         }
+
+                        // Debug: Get all values in this column to see actual format
+                        const columnValues = rows.map(r => String(r[columnIndex + 1] || '').trim());
 
                         const originalValue = String(testConfig.originalValue).trim();
                         const targetRowIndex = rows.findIndex(r => {
@@ -97,7 +98,7 @@ describe('Data Types CRUD Operations', () => {
                         });
 
                         if (targetRowIndex === -1) {
-                            throw new Error(`Row with original value "${originalValue}" not found in column ${columnName}`);
+                            throw new Error(`Row with original value "${originalValue}" not found in column ${columnName}. Actual values: ${JSON.stringify(columnValues)}`);
                         }
 
                         cy.updateRow(targetRowIndex, columnIndex, testConfig.updateValue, false);
@@ -110,11 +111,11 @@ describe('Data Types CRUD Operations', () => {
 
                         cy.getTableData().then(({rows: updatedRows}) => {
                             const cellValue = String(updatedRows[targetRowIndex][columnIndex + 1] || '').trim();
-                            const expected = String(testConfig.updateValue).trim();
-                            expect(cellValue).to.equal(expected);
+                            expect(cellValue).to.equal(String(expectedUpdateDisplay).trim());
 
-                            // Revert
-                            cy.updateRow(targetRowIndex, columnIndex, testConfig.originalValue, false);
+                            // Revert using original input value
+                            const revertValue = testConfig.inputOriginalValue || testConfig.originalValue;
+                            cy.updateRow(targetRowIndex, columnIndex, revertValue, false);
 
                             if (mutationDelay > 0) {
                                 cy.wait(mutationDelay);
@@ -126,30 +127,22 @@ describe('Data Types CRUD Operations', () => {
                 it('DELETE - removes row with type value', () => {
                     cy.data(tableName);
 
-                    const newRowData = {
-                        [columnName]: testConfig.addValue
-                    };
-
-                    cy.addRow(newRowData);
+                    cy.addRow({[columnName]: deleteValue});
 
                     if (mutationDelay > 0) {
                         cy.wait(mutationDelay);
                         cy.data(tableName);
                     }
 
-                    const columnIndex = Object.keys(tableConfig.columns).indexOf(columnName);
-
                     cy.getTableData().then(({rows}) => {
                         const initialCount = rows.length;
-                        const addValue = String(testConfig.addValue).trim();
+                        const columnValues = rows.map(r => String(r[columnIndex + 1] || '').trim());
                         const rowIndex = rows.findIndex(r => {
                             const cellValue = String(r[columnIndex + 1] || '').trim();
-                            return cellValue === addValue;
+                            return cellValue === String(expectedDeleteDisplay).trim();
                         });
 
-                        if (rowIndex === -1) {
-                            throw new Error(`Could not find row with ${columnName}=${testConfig.addValue} to delete`);
-                        }
+                        expect(rowIndex, `Row with ${columnName}=${expectedDeleteDisplay} should exist to delete. Actual values: ${JSON.stringify(columnValues)}`).to.not.equal(-1);
 
                         cy.deleteRow(rowIndex);
 
