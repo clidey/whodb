@@ -286,6 +286,8 @@ jobs:
             appstoreconnect.apple.com:443
             contentdelivery.itunes.apple.com:443
             github.com:443
+            pypi.org:443
+            files.pythonhosted.org:443
 
       - name: Checkout for scripts
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
@@ -608,6 +610,10 @@ jobs:
           echo "═══════════════════════════════════════════════════════════"
           echo "✅ Upload complete!"
           echo "═══════════════════════════════════════════════════════════"
+
+      - name: Install PyJWT for API authentication
+        if: steps.check_creds.outputs.has_creds == 'true' && inputs.stage-only != true
+        run: pip3 install PyJWT cryptography
 
       - name: Submit for App Store Review
         if: steps.check_creds.outputs.has_creds == 'true' && inputs.stage-only != true

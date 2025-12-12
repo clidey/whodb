@@ -51,9 +51,6 @@ generate_jwt() {
     local now
     now=$(date +%s)
 
-    # Token valid for 20 minutes
-    local exp=$((now + 1200))
-
     # Check if current token is still valid (with 60s buffer)
     if [[ -n "$JWT_TOKEN" ]] && [[ $JWT_EXPIRY -gt $((now + 60)) ]]; then
         return 0
@@ -61,31 +58,42 @@ generate_jwt() {
 
     log "Generating new JWT token..."
 
-    # Header
-    local header
-    header=$(echo -n '{"alg":"ES256","kid":"'"$key_id"'","typ":"JWT"}' | openssl base64 -e -A | tr '+/' '-_' | tr -d '=')
+    # Use PyJWT which handles ES256 signature format correctly
+    # This avoids the complexity of manually converting OpenSSL's DER output to raw R||S format
+    local result
+    result=$(python3 -c "
+import jwt
+import time
+import sys
 
-    # Payload
-    local payload
-    payload=$(echo -n '{"iss":"'"$issuer_id"'","iat":'"$now"',"exp":'"$exp"',"aud":"appstoreconnect-v1"}' | openssl base64 -e -A | tr '+/' '-_' | tr -d '=')
+try:
+    now = int(time.time())
+    exp = now + 1200  # 20 minutes
 
-    # Create signature
-    local signing_input="${header}.${payload}"
+    token = jwt.encode(
+        {
+            'iss': '$issuer_id',
+            'iat': now,
+            'exp': exp,
+            'aud': 'appstoreconnect-v1'
+        },
+        '''$private_key''',
+        algorithm='ES256',
+        headers={'kid': '$key_id', 'typ': 'JWT'}
+    )
+    print(f'{token}|{exp}')
+except Exception as e:
+    print(f'ERROR: {e}', file=sys.stderr)
+    sys.exit(1)
+" 2>&1)
 
-    # Write private key to temp file
-    local key_file
-    key_file=$(mktemp)
-    echo "$private_key" > "$key_file"
-    chmod 600 "$key_file"
+    if [[ $? -ne 0 ]] || [[ "$result" == ERROR:* ]]; then
+        error "Failed to generate JWT: $result"
+        return 1
+    fi
 
-    # Sign with ES256
-    local signature
-    signature=$(echo -n "$signing_input" | openssl dgst -sha256 -sign "$key_file" | openssl base64 -e -A | tr '+/' '-_' | tr -d '=')
-
-    rm -f "$key_file"
-
-    JWT_TOKEN="${signing_input}.${signature}"
-    JWT_EXPIRY=$exp
+    JWT_TOKEN="${result%|*}"
+    JWT_EXPIRY="${result#*|}"
 
     log "JWT token generated successfully"
 }
