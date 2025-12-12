@@ -2,6 +2,10 @@ name: Release CE
 
 # Release workflow for WhoDB Community Edition
 #
+# Triggers:
+#   - Push to release branch (e.g., merging main → release)
+#   - Manual workflow_dispatch
+#
 # Modes:
 #   - stage-only: Deploys to edge/draft channels (for testing)
 #   - production: Deploys to stable/production channels (for users)
@@ -13,8 +17,7 @@ name: Release CE
 #   - Production deploys to: Docker (latest), Snap (stable), MS Store (prod), Apple (App Store)
 
 on:
-  pull_request:
-    types: [ closed ]
+  push:
     branches: [ release ]
   workflow_dispatch:
     inputs:
@@ -84,7 +87,7 @@ jobs:
   calculate-version:
     name: Calculate Version
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'release')
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
     outputs:
       version: ${{ steps.calc.outputs.version }}
       previous-version: ${{ steps.calc.outputs.previous-version }}
@@ -118,7 +121,7 @@ jobs:
             MODE="${{ inputs.deployment-mode }}"
             VERSION_BUMP="${{ inputs.version-bump || 'minor' }}"
           else
-            # PR merges to release branch are always production with minor bump
+            # Push to release branch triggers production with minor bump
             MODE="production"
             VERSION_BUMP="minor"
           fi
@@ -131,13 +134,13 @@ jobs:
         with:
           deployment-mode: ${{ steps.deployment_mode.outputs.mode }}
           version-bump: ${{ steps.deployment_mode.outputs.version_bump }}
-          deploy-docker: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-docker) && 'true' || 'false') }}
-          deploy-snap: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-snap) && 'true' || 'false') }}
-          deploy-microsoft: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-microsoft) && 'true' || 'false') }}
-          deploy-apple: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-apple) && 'true' || 'false') }}
+          deploy-docker: ${{ github.event_name == 'push' && 'true' || (fromJSON(inputs.deploy-docker) && 'true' || 'false') }}
+          deploy-snap: ${{ github.event_name == 'push' && 'true' || (fromJSON(inputs.deploy-snap) && 'true' || 'false') }}
+          deploy-microsoft: ${{ github.event_name == 'push' && 'true' || (fromJSON(inputs.deploy-microsoft) && 'true' || 'false') }}
+          deploy-apple: ${{ github.event_name == 'push' && 'true' || (fromJSON(inputs.deploy-apple) && 'true' || 'false') }}
           deploy-appimage: 'false'  # DISABLED: AppImage requires system WebKit2GTK
-          deploy-linux-terminal: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.deploy-linux-terminal) && 'true' || 'false') }}
-          publish-github-release: ${{ github.event_name == 'pull_request' && 'true' || (fromJSON(inputs.publish-github-release) && 'true' || 'false') }}
+          deploy-linux-terminal: ${{ github.event_name == 'push' && 'true' || (fromJSON(inputs.deploy-linux-terminal) && 'true' || 'false') }}
+          publish-github-release: ${{ github.event_name == 'push' && 'true' || (fromJSON(inputs.publish-github-release) && 'true' || 'false') }}
 
       - name: Extract release notes from PR
         id: release_notes
@@ -146,15 +149,15 @@ jobs:
         run: |
           NOTES=""
 
-          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.event.pull_request.merged }}" = "true" ]; then
-            PR_NUMBER="${{ github.event.pull_request.number }}"
-            echo "Extracting release notes from PR #$PR_NUMBER..."
-
-            # Get PR body using gh cli
-            NOTES=$(gh pr view "$PR_NUMBER" --json body --jq '.body // empty')
-
-            if [ -n "$NOTES" ]; then
-              echo "Found release notes from PR description"
+          if [ "${{ github.event_name }}" = "push" ]; then
+            # Find the PR that was merged from this push by looking at the commit
+            PR_NUMBER=$(gh pr list --state merged --base release --limit 1 --json number --jq '.[0].number // empty')
+            if [ -n "$PR_NUMBER" ]; then
+              echo "Extracting release notes from PR #$PR_NUMBER..."
+              NOTES=$(gh pr view "$PR_NUMBER" --json body --jq '.body // empty')
+              if [ -n "$NOTES" ]; then
+                echo "Found release notes from PR description"
+              fi
             fi
           fi
 
@@ -380,14 +383,19 @@ jobs:
           # Read the template
           TEMPLATE=$(cat .github/templates/RELEASE_TEMPLATE.md)
 
-          # Get PR description if this was triggered by a PR merge
+          # Get PR description if this was triggered by a push (merged PR)
           PR_DESCRIPTION=""
-          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.event.pull_request.merged }}" = "true" ]; then
-            PR_NUMBER="${{ github.event.pull_request.number }}"
-            PR_DESCRIPTION=$(gh pr view $PR_NUMBER --json body --jq '.body')
-            echo "Using PR #$PR_NUMBER description"
+          if [ "${{ github.event_name }}" = "push" ]; then
+            # Find the most recently merged PR to release branch
+            PR_NUMBER=$(gh pr list --state merged --base release --limit 1 --json number --jq '.[0].number // empty')
+            if [ -n "$PR_NUMBER" ]; then
+              PR_DESCRIPTION=$(gh pr view $PR_NUMBER --json body --jq '.body')
+              echo "Using PR #$PR_NUMBER description"
+            else
+              echo "No merged PR found"
+            fi
           else
-            echo "Not triggered by PR merge - no PR description"
+            echo "Not triggered by push - no PR description"
           fi
 
           # Replace PR description or remove the placeholder

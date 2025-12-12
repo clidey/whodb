@@ -28,6 +28,7 @@ en:
   sampleDatabaseNotFound: Sample Database Not Found
   welcomeToWhodb: Welcome to WhoDB
   failedToSelectDatabaseFile: Failed to Select Database File
+  failedToParseCredentials: Failed to Parse Credentials from URL
   urlParseWarning: We could not extract all required details (host, username, password, or database) from this URL. Please enter the information manually.
   tryWhodb: Try WhoDB
   noSetupRequired: No Setup Required
