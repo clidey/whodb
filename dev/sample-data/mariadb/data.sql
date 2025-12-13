@@ -217,3 +217,48 @@ INSERT INTO test_casting (bigint_col, integer_col, smallint_col, numeric_col, de
 VALUES (9223372036854775807, 2147483647, 32767, 99999999.99, 'Maximum values'),
        (1000000, 1000, 100, 1234.56, 'Regular values'),
        (-9223372036854775808, -2147483648, -32768, -99999999.99, 'Minimum values');
+
+-- Data Types Table for exhaustive type testing
+CREATE TABLE IF NOT EXISTS data_types (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    -- Numeric types
+    col_tinyint TINYINT,
+    col_smallint SMALLINT,
+    col_mediumint MEDIUMINT,
+    col_int INT,
+    col_bigint BIGINT,
+    col_float FLOAT,
+    col_double DOUBLE,
+    col_decimal DECIMAL(10,2),
+    -- Date/Time types
+    col_date DATE,
+    col_datetime DATETIME,
+    col_timestamp TIMESTAMP NULL,
+    col_time TIME,
+    col_year YEAR,
+    -- String types
+    col_char CHAR(10),
+    col_varchar VARCHAR(255),
+    col_tinytext TINYTEXT,
+    col_text TEXT,
+    col_mediumtext MEDIUMTEXT,
+    col_longtext LONGTEXT,
+    -- Special types
+    col_json JSON,
+    col_boolean BOOLEAN
+);
+
+-- Insert seed data for data_types
+INSERT INTO data_types (
+    col_tinyint, col_smallint, col_mediumint, col_int, col_bigint,
+    col_float, col_double, col_decimal, col_date, col_datetime,
+    col_timestamp, col_time, col_year, col_char, col_varchar,
+    col_tinytext, col_text, col_mediumtext, col_longtext,
+    col_json, col_boolean
+) VALUES (
+    50, 1000, 100000, 1000000, 10000000000,
+    1.5, 2.5, 123.45, '2025-01-01', '2025-01-01 12:00:00',
+    '2025-01-01 12:00:00', '12:00:00', 2025, 'test', 'varchar_val',
+    'tiny text', 'text value', 'medium text value', 'long text value',
+    '{"key":"value"}', 1
+);
