@@ -165,3 +165,28 @@ INSERT INTO test_db.test_casting (id, bigint_col, integer_col, smallint_col, num
 
 INSERT INTO test_db.test_casting (id, bigint_col, integer_col, smallint_col, numeric_col, description) VALUES
 (3, -1000000, -1000, -100, -99.99, 'Negative values');
+
+-- Data Types Table for exhaustive type testing
+CREATE TABLE IF NOT EXISTS test_db.data_types (
+    id UInt32,
+    -- Numeric types
+    col_int8 Int8,
+    col_int16 Int16,
+    col_int32 Int32,
+    col_int64 Int64,
+    col_float32 Float32,
+    col_float64 Float64,
+    col_decimal Decimal(10,2),
+    -- Date/Time types
+    col_date Date,
+    col_datetime DateTime,
+    -- String types
+    col_string String,
+    col_fixedstring FixedString(10),
+    -- Boolean (UInt8)
+    col_boolean UInt8
+) ENGINE = MergeTree()
+ORDER BY id;
+
+-- Insert seed data for data_types
+INSERT INTO test_db.data_types (id, col_int8, col_int16, col_int32, col_int64, col_float32, col_float64, col_decimal, col_date, col_datetime, col_string, col_fixedstring, col_boolean) VALUES (1, 50, 1000, 100000, 10000000000, 1.5, 2.5, 123.45, '2025-01-01', '2025-01-01 12:00:00', 'string_val', 'fixed', 1);
