@@ -15,8 +15,8 @@
 # limitations under the License.
 #
 
-# Parallel Cypress test runner for Community Edition (CE)
-# Runs tests for multiple databases in parallel
+# Sequential Cypress test runner for Community Edition (CE)
+# Runs tests for multiple databases sequentially with a single backend+frontend
 #
 # Usage:
 #   ./parallel-cypress.sh [headless] [database] [spec]
@@ -28,6 +28,13 @@
 #
 # Examples:
 #   ./parallel-cypress.sh true postgres data-types    # Headless, postgres only, data-types spec
+#
+# Architecture:
+#   Single shared stack for all database tests:
+#   - backend:8080 ← frontend:3000 ← cypress (sequential per database)
+#
+# Coverage:
+#   Backend writes coverage.out when terminated with SIGTERM.
 
 set -e
 
@@ -54,7 +61,7 @@ declare -A DB_CATEGORIES=(
     [clickhouse]="sql"
 )
 
-echo "🚀 Running Cypress tests in parallel (CE)"
+echo "🚀 Running Cypress tests sequentially (CE)"
 echo "   Headless: $HEADLESS"
 echo "   Target DB: $TARGET_DB"
 if [ -n "$SPEC_FILE" ]; then
@@ -80,23 +87,9 @@ fi
 
 echo "   Databases: ${DATABASES[*]}"
 
-# Setup backend (pass TARGET_DB to only start required containers)
+# Setup environment (databases + build binary + start backend)
 echo "⚙️ Setting up test environment..."
 bash "$SCRIPT_DIR/setup-e2e.sh" "ce" "$TARGET_DB"
-
-# Start frontend
-echo "🌐 Starting frontend..."
-cd "$PROJECT_ROOT/frontend"
-NODE_ENV=test vite --port 3000 --clearScreen false --logLevel error &
-FRONTEND_PID=$!
-
-# Wait for services
-echo "⏳ Waiting for services..."
-MAX_WAIT=60 bash "$SCRIPT_DIR/wait-for-services.sh"
-
-# Brief wait to ensure backend is fully ready to handle connections
-echo "⏳ Giving services a moment to stabilize..."
-sleep 2
 
 cd "$PROJECT_ROOT/frontend"
 
@@ -106,39 +99,54 @@ mkdir -p cypress/logs
 # Clean previous logs
 rm -f cypress/logs/*.log 2>/dev/null || true
 
-echo "📋 Running ${#DATABASES[@]} database tests in parallel..."
+# Start frontend dev server
+echo "🌐 Starting frontend dev server..."
+NODE_ENV=test pnpm exec vite --port 3000 --clearScreen false --logLevel error > cypress/logs/frontend.log 2>&1 &
+FRONTEND_PID=$!
 
-# Calculate stagger time based on number of databases
-if [ ${#DATABASES[@]} -le 4 ]; then
-    STAGGER_TIME=0.5
-elif [ ${#DATABASES[@]} -le 7 ]; then
-    STAGGER_TIME=0.4
-else
-    STAGGER_TIME=0.3
+# Wait for frontend to be ready
+echo "⏳ Waiting for frontend to be ready..."
+COUNTER=0
+while [ $COUNTER -lt 30 ]; do
+    if nc -z localhost 3000 2>/dev/null; then
+        echo "✅ Frontend is ready on port 3000"
+        break
+    fi
+    sleep 0.5
+    COUNTER=$((COUNTER + 1))
+done
+
+if ! nc -z localhost 3000 2>/dev/null; then
+    echo "❌ Frontend failed to start"
+    kill $FRONTEND_PID 2>/dev/null || true
+    exit 1
 fi
 
-echo "📊 Staggering test starts by ${STAGGER_TIME}s to ensure stable connections"
+echo "📋 Running ${#DATABASES[@]} database tests sequentially..."
 
-# Run each database in parallel
-PIDS=()
-COUNTER=0
+# Track results
+FAILED_DBS=()
 
+# Run tests for each database sequentially
 for db in "${DATABASES[@]}"; do
-    echo "🚀 Starting: $db (${DB_CATEGORIES[$db]})"
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "🧪 Testing: $db (${DB_CATEGORIES[$db]})"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-    if [ "$HEADLESS" = "true" ]; then
-        # Build spec pattern
-        if [ -n "$SPEC_FILE" ]; then
-            if [[ "$SPEC_FILE" == *.cy.* ]]; then
-                SPEC_PATTERN="cypress/e2e/features/$SPEC_FILE"
-            else
-                SPEC_PATTERN="cypress/e2e/features/$SPEC_FILE.cy.js"
-            fi
+    # Build spec pattern
+    if [ -n "$SPEC_FILE" ]; then
+        if [[ "$SPEC_FILE" == *.cy.* ]]; then
+            SPEC_PATTERN="cypress/e2e/features/$SPEC_FILE"
         else
-            SPEC_PATTERN="cypress/e2e/features/**/*.cy.js"
+            SPEC_PATTERN="cypress/e2e/features/$SPEC_FILE.cy.js"
         fi
+    else
+        SPEC_PATTERN="cypress/e2e/features/**/*.cy.js"
+    fi
 
-        # Run feature tests for this database
+    # Run Cypress test
+    if [ "$HEADLESS" = "true" ]; then
         CYPRESS_database="$db" \
         CYPRESS_category="${DB_CATEGORIES[$db]}" \
         CYPRESS_retries__runMode=2 \
@@ -146,40 +154,33 @@ for db in "${DATABASES[@]}"; do
         NODE_ENV=test pnpx cypress run \
             --spec "$SPEC_PATTERN" \
             --browser chromium \
-            > "cypress/logs/$db.log" 2>&1 &
-
-        PIDS+=($!)
-
-        # Stagger all test starts to avoid connection storms
-        COUNTER=$((COUNTER + 1))
-        if [ $COUNTER -lt ${#DATABASES[@]} ]; then
-            sleep $STAGGER_TIME
-        fi
+            2>&1 | tee "cypress/logs/$db.log"
+        RESULT=${PIPESTATUS[0]}
     else
-        echo "⚠️ Parallel mode requires headless"
-        exit 1
+        CYPRESS_database="$db" \
+        CYPRESS_category="${DB_CATEGORIES[$db]}" \
+        NODE_ENV=test pnpx cypress open \
+            --e2e \
+            --browser chromium
+        RESULT=$?
     fi
-done
 
-# Wait for all tests and collect results
-echo "⏳ Waiting for all database tests to complete..."
-FAILED_DBS=()
-
-for i in "${!PIDS[@]}"; do
-    PID=${PIDS[$i]}
-    DB=${DATABASES[$i]}
-
-    if wait $PID; then
-        echo "✅ $DB passed"
+    if [ $RESULT -eq 0 ]; then
+        echo "✅ $db passed"
     else
-        echo "❌ $DB failed"
-        FAILED_DBS+=("$DB")
+        echo "❌ $db failed"
+        FAILED_DBS+=("$db")
     fi
 done
 
 # Cleanup
+echo ""
 echo "🧹 Cleaning up..."
+
+# Kill frontend
 kill $FRONTEND_PID 2>/dev/null || true
+
+# Run standard cleanup (stops backend, docker containers)
 bash "$SCRIPT_DIR/cleanup-e2e.sh" "ce"
 
 # Report results
@@ -195,7 +196,7 @@ if [ ${#FAILED_DBS[@]} -gt 0 ]; then
         echo ""
         echo "   [$db] (${DB_CATEGORIES[$db]})"
 
-        LOG_FILE="cypress/logs/$db.log"
+        LOG_FILE="$PROJECT_ROOT/frontend/cypress/logs/$db.log"
         if [ -f "$LOG_FILE" ]; then
             # Parse the Cypress summary table to show failed specs
             FAILED_SPECS=$(grep -E "│\s*✖" "$LOG_FILE" 2>/dev/null | sed 's/.*✖\s*//' | sed 's/│.*//' | while read -r line; do
