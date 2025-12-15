@@ -20,21 +20,20 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"slices"
 	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 )
 
+// ContainsString checks if a string slice contains a specific element.
 func ContainsString(slice []string, element string) bool {
-	for _, item := range slice {
-		if item == element {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(slice, element)
 }
 
+// GetRecordValueOrDefault searches for a key in a slice of Records and returns its value,
+// or the provided default if the key is not found or has an empty value.
 func GetRecordValueOrDefault(records []engine.Record, key string, defaultValue string) string {
 	for _, record := range records {
 		if record.Key == key && len(record.Value) > 0 {
@@ -44,11 +43,14 @@ func GetRecordValueOrDefault(records []engine.Record, key string, defaultValue s
 	return defaultValue
 }
 
+// IsRunningInsideDocker detects if the current process is running inside a Docker container
+// by checking for the presence of the /.dockerenv file.
 func IsRunningInsideDocker() bool {
 	_, err := os.Stat("/.dockerenv")
 	return !os.IsNotExist(err)
 }
 
+// FilterList returns a new slice containing only the elements for which the predicate returns true.
 func FilterList[T any](items []T, by func(input T) bool) []T {
 	filteredItems := []T{}
 	for _, item := range items {
@@ -59,6 +61,8 @@ func FilterList[T any](items []T, by func(input T) bool) []T {
 	return filteredItems
 }
 
+// OpenBrowser opens the specified URL in the system's default browser.
+// Supports Windows, macOS, and Linux. Logs a warning if the browser cannot be opened.
 func OpenBrowser(url string) {
 	var err error
 	switch runtime.GOOS {
@@ -76,6 +80,8 @@ func OpenBrowser(url string) {
 	}
 }
 
+// StrPtrToBool converts a string pointer to a boolean.
+// Returns true if the string value is "true" (case-insensitive), false otherwise or if nil.
 func StrPtrToBool(s *string) bool {
 	if s == nil {
 		return false

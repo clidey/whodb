@@ -35,18 +35,12 @@ func Handler() {
 }
 
 func printCrashReport(err any) {
-	// Get stack trace
 	buf := make([]byte, 4096)
 	n := runtime.Stack(buf, false)
 	stackTrace := string(buf[:n])
-
-	// Get version info
 	v := version.Get()
-
-	// Get command line
 	cmdLine := strings.Join(os.Args, " ")
 
-	// Print user-friendly message
 	fmt.Fprintln(os.Stderr, "")
 	fmt.Fprintln(os.Stderr, "============================================================")
 	fmt.Fprintln(os.Stderr, "  WhoDB CLI crashed unexpectedly!")
@@ -60,7 +54,6 @@ func printCrashReport(err any) {
 	fmt.Fprintln(os.Stderr, "------------------------------------------------------------")
 	fmt.Fprintln(os.Stderr, "")
 
-	// Print pre-filled bug report in markdown format
 	fmt.Fprintf(os.Stderr, `**Describe the bug**
 WhoDB CLI crashed with an unexpected error.
 
@@ -68,7 +61,7 @@ WhoDB CLI crashed with an unexpected error.
 %v
 
 **To Reproduce**
-Command that caused the crash:
+The command that caused the crash:
 `+"```"+`
 %s
 `+"```"+`

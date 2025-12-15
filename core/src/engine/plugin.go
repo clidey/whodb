@@ -18,6 +18,7 @@ package engine
 
 import "github.com/clidey/whodb/core/graph/model"
 
+// Credentials holds authentication and connection details for a database.
 type Credentials struct {
 	Id          *string
 	Type        string
@@ -30,27 +31,33 @@ type Credentials struct {
 	IsProfile   bool
 }
 
+// ExternalModel represents an external AI model configuration for chat functionality.
 type ExternalModel struct {
 	Type  string
 	Token string
 }
 
+// PluginConfig contains all configuration needed to connect to and operate on a database.
 type PluginConfig struct {
 	Credentials   *Credentials
 	ExternalModel *ExternalModel
 }
 
+// Record represents a key-value pair with optional extra metadata,
+// used for column attributes, configuration, and data transfer.
 type Record struct {
 	Key   string
 	Value string
 	Extra map[string]string
 }
 
+// StorageUnit represents a database table, collection, or equivalent storage structure.
 type StorageUnit struct {
 	Name       string
 	Attributes []Record
 }
 
+// Column describes a database column including its type, name, and relationship metadata.
 type Column struct {
 	Type             string
 	Name             string
@@ -60,6 +67,7 @@ type Column struct {
 	ReferencedColumn *string
 }
 
+// GetRowsResult contains the result of a row query including columns, data, and pagination info.
 type GetRowsResult struct {
 	Columns       []Column
 	Rows          [][]string
@@ -67,6 +75,7 @@ type GetRowsResult struct {
 	TotalCount    int64
 }
 
+// GraphUnitRelationshipType defines the cardinality of a relationship between tables.
 type GraphUnitRelationshipType string
 
 const (
@@ -77,6 +86,7 @@ const (
 	GraphUnitRelationshipType_Unknown    = "Unknown"
 )
 
+// GraphUnitRelationship describes a foreign key relationship between two tables.
 type GraphUnitRelationship struct {
 	Name             string
 	RelationshipType GraphUnitRelationshipType
@@ -84,23 +94,28 @@ type GraphUnitRelationship struct {
 	TargetColumn     *string
 }
 
+// GraphUnit represents a table and its relationships for graph visualization.
 type GraphUnit struct {
 	Unit      StorageUnit
 	Relations []GraphUnitRelationship
 }
 
+// ChatMessage represents a message in an AI chat conversation with optional query results.
 type ChatMessage struct {
 	Type   string
 	Result *GetRowsResult
 	Text   string
 }
 
+// ForeignKeyRelationship describes a foreign key constraint on a column.
 type ForeignKeyRelationship struct {
 	ColumnName       string
 	ReferencedTable  string
 	ReferencedColumn string
 }
 
+// PluginFunctions defines the interface that all database plugins must implement.
+// Each method provides a specific database operation capability.
 type PluginFunctions interface {
 	GetDatabases(config *PluginConfig) ([]string, error)
 	IsAvailable(config *PluginConfig) bool
@@ -131,11 +146,13 @@ type PluginFunctions interface {
 	WithTransaction(config *PluginConfig, operation func(tx any) error) error
 }
 
+// Plugin wraps PluginFunctions with a database type identifier.
 type Plugin struct {
 	PluginFunctions
 	Type DatabaseType
 }
 
+// NewPluginConfig creates a new PluginConfig with the given credentials.
 func NewPluginConfig(credentials *Credentials) *PluginConfig {
 	return &PluginConfig{
 		Credentials: credentials,

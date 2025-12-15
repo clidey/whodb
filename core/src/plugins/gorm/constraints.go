@@ -25,7 +25,6 @@ import (
 // GetColumnConstraints gets column constraints using GORM's Migrator
 func (p *GormPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (map[string]map[string]any, error) {
-		// Build full table name
 		var fullTableName string
 		if schema != "" && p.Type != engine.DatabaseType_Sqlite3 {
 			fullTableName = schema + "." + storageUnit
@@ -33,7 +32,6 @@ func (p *GormPlugin) GetColumnConstraints(config *engine.PluginConfig, schema st
 			fullTableName = storageUnit
 		}
 
-		// Use Migrator to get constraints
 		migrator := NewMigratorHelper(db, p)
 		migratorConstraints, err := migrator.GetConstraints(fullTableName)
 		if err != nil {
@@ -42,10 +40,7 @@ func (p *GormPlugin) GetColumnConstraints(config *engine.PluginConfig, schema st
 			return make(map[string]map[string]any), nil
 		}
 
-		// Convert Migrator constraints to the expected format
 		constraints := make(map[string]map[string]any)
-
-		// Process each constraint type
 		for constraintType, columns := range migratorConstraints {
 			for _, col := range columns {
 				columnName := col.Name()
@@ -53,7 +48,6 @@ func (p *GormPlugin) GetColumnConstraints(config *engine.PluginConfig, schema st
 					constraints[columnName] = make(map[string]any)
 				}
 
-				// Map constraint types to properties
 				switch constraintType {
 				case "PRIMARY":
 					constraints[columnName]["primary"] = true
@@ -63,10 +57,7 @@ func (p *GormPlugin) GetColumnConstraints(config *engine.PluginConfig, schema st
 					constraints[columnName]["nullable"] = false
 				}
 
-				// Add data type information
 				constraints[columnName]["type"] = col.DatabaseTypeName()
-
-				// Add additional constraint info if available
 				if nullable, ok := col.Nullable(); ok {
 					constraints[columnName]["nullable"] = nullable
 				}
@@ -111,16 +102,15 @@ func (p *GormPlugin) getColumnConstraintsRaw(db *gorm.DB, schema string, storage
 	return make(map[string]map[string]any), nil
 }
 
-// ClearTableData clears all data from a table
 // clearTableDataWithDB performs the actual table data clearing using the provided database connection
 func (p *GormPlugin) clearTableDataWithDB(db *gorm.DB, schema string, storageUnit string) error {
-	// Use SQL builder for consistent delete operations
 	builder := p.GormPluginFunctions.CreateSQLBuilder(db)
-	// Delete all rows (empty conditions map means delete all)
+	// Delete all rows: {"1": 1} is a tautology condition that matches everything
 	result := builder.DeleteQuery(schema, storageUnit, map[string]any{"1": 1})
 	return result.Error
 }
 
+// ClearTableData clears all data from a table
 func (p *GormPlugin) ClearTableData(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
 		err := p.clearTableDataWithDB(db, schema, storageUnit)

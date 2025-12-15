@@ -66,6 +66,9 @@ type connectionResultMsg struct {
 
 type escTimeoutTickMsg struct{}
 
+// ConnectionView provides the TUI for managing database connections.
+// It supports both a list view (selecting from saved connections) and
+// a form view (creating new connections).
 type ConnectionView struct {
 	parent      *MainModel
 	list        list.Model
@@ -84,6 +87,8 @@ type ConnectionView struct {
 	escTimeoutSecs int
 }
 
+// NewConnectionView creates a connection view initialized with saved connections
+// from the parent's config. If no connections exist, it starts in form mode.
 func NewConnectionView(parent *MainModel) *ConnectionView {
 	var items []list.Item
 	for _, conn := range parent.config.Connections {

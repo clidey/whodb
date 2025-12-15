@@ -243,8 +243,6 @@ func (p *GormPlugin) GetRowCount(config *engine.PluginConfig, schema string, sto
 func (p *GormPlugin) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]engine.Column, error) {
 		migrator := NewMigratorHelper(db, p)
-
-		// Build full table name for Migrator
 		var fullTableName string
 		if schema != "" && p.Type != engine.DatabaseType_Sqlite3 {
 			fullTableName = schema + "." + storageUnit
@@ -252,21 +250,18 @@ func (p *GormPlugin) GetColumnsForTable(config *engine.PluginConfig, schema stri
 			fullTableName = storageUnit
 		}
 
-		// Get ordered columns
 		columns, err := migrator.GetOrderedColumns(fullTableName)
 		if err != nil {
 			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get columns for table %s.%s", schema, storageUnit))
 			return nil, err
 		}
 
-		// Get foreign key relationships
 		fkRelationships, err := p.GetForeignKeyRelationships(config, schema, storageUnit)
 		if err != nil {
 			log.Logger.WithError(err).Warn(fmt.Sprintf("Failed to get foreign key relationships for table %s.%s", schema, storageUnit))
 			fkRelationships = make(map[string]*engine.ForeignKeyRelationship)
 		}
 
-		// Get primary key columns using database-specific method
 		primaryKeys, err := p.GetPrimaryKeyColumns(db, schema, storageUnit)
 		if err != nil {
 			log.Logger.WithError(err).Warn(fmt.Sprintf("Failed to get primary keys for table %s.%s", schema, storageUnit))
@@ -290,7 +285,6 @@ func (p *GormPlugin) GetColumnsForTable(config *engine.PluginConfig, schema stri
 	})
 }
 
-// Helper function to check if a slice contains a string
 func contains(slice []string, item string) bool {
 	for _, s := range slice {
 		if s == item {
@@ -301,18 +295,16 @@ func contains(slice []string, item string) bool {
 }
 
 // SQLite-specific row retrieval is implemented in the sqlite3 plugin override.
-
 func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	var columnTypes map[string]string
 	if where != nil {
 		columnTypes, _ = p.GetColumnTypes(db, schema, storageUnit)
 	}
 
-	// Use SQL builder for table name construction
 	builder := p.GormPluginFunctions.CreateSQLBuilder(db)
 	fullTable := builder.BuildFullTableName(schema, storageUnit)
 
-	// Start count query in a separate goroutine for parallel execution
+	// Parallel count query improves performance for large tables
 	var totalCount int64
 	countDone := make(chan error, 1)
 	go func() {
@@ -537,19 +529,12 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 		Rows:    make([][]string, 0, 100),
 	}
 
-	// todo: might have to extract some of this stuff into db specific functions
-	// Build columns with type information
+	// TODO: Extract database-specific type handling into individual plugins
 	for _, col := range columns {
 		if colType, exists := typeMap[col]; exists {
 			colTypeName := colType.DatabaseTypeName()
-			// TODO: BIG EDGE CASE - PostgreSQL array types start with underscore
-			// This should be handled in the PostgreSQL plugin's GetCustomColumnTypeName
-			/*
-				if p.Type == engine.DatabaseType_Postgres && strings.HasPrefix(colTypeName, "_") {
-					colTypeName = strings.Replace(colTypeName, "_", "[]", 1)
-				}
-			*/
-			// Keep for now until PostgreSQL plugin properly handles this
+			// TODO: BIG EDGE CASE - PostgreSQL array types use underscore prefix (e.g., _int4 for int[])
+			// Move to PostgreSQL plugin's GetCustomColumnTypeName once all edge cases are tested
 			if p.Type == engine.DatabaseType_Postgres && strings.HasPrefix(colTypeName, "_") {
 				colTypeName = strings.Replace(colTypeName, "_", "[]", 1)
 			}
@@ -568,11 +553,9 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 			colType := typeMap[col]
 			typeName := colType.DatabaseTypeName()
 
-			// Check if the plugin wants to handle this column type
 			if p.GormPluginFunctions.ShouldHandleColumnType(typeName) {
 				columnPointers[i] = p.GormPluginFunctions.GetColumnScanner(typeName)
 			} else {
-				// Default handling
 				switch typeName {
 				case "VARBINARY", "BINARY", "IMAGE", "BYTEA", "BLOB", "HIERARCHYID",
 					"GEOMETRY", "POINT", "LINESTRING", "POLYGON", "GEOGRAPHY",
@@ -593,7 +576,6 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 			colType := typeMap[columns[i]]
 			typeName := colType.DatabaseTypeName()
 
-			// Check if the plugin wants to handle this column type
 			if p.GormPluginFunctions.ShouldHandleColumnType(typeName) {
 				value, err := p.GormPluginFunctions.FormatColumnValue(typeName, colPtr)
 				if err != nil {
@@ -602,7 +584,6 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 					row[i] = value
 				}
 			} else {
-				// Default handling
 				switch typeName {
 				case "VARBINARY", "BINARY", "IMAGE", "BYTEA", "BLOB":
 					rawBytes := colPtr.(*sql.RawBytes)
@@ -611,20 +592,16 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 					} else {
 						row[i] = "0x" + hex.EncodeToString(*rawBytes)
 					}
-				// todo: geometry types are not yet ready for production. please do not use them.
+				// TODO: Geometry types need more testing before production use
 				case "GEOMETRY", "POINT", "LINESTRING", "POLYGON", "GEOGRAPHY",
 					"MULTIPOINT", "MULTILINESTRING", "MULTIPOLYGON":
 					rawBytes := colPtr.(*sql.RawBytes)
 					if rawBytes == nil || len(*rawBytes) == 0 {
 						row[i] = ""
+					} else if formatted := p.GormPluginFunctions.FormatGeometryValue(*rawBytes, typeName); formatted != "" {
+						row[i] = formatted
 					} else {
-						// Try custom geometry formatting first
-						if formatted := p.GormPluginFunctions.FormatGeometryValue(*rawBytes, typeName); formatted != "" {
-							row[i] = formatted
-						} else {
-							// Fallback to hex
-							row[i] = "0x" + hex.EncodeToString(*rawBytes)
-						}
+						row[i] = "0x" + hex.EncodeToString(*rawBytes)
 					}
 				default:
 					val := colPtr.(*sql.NullString)
@@ -643,7 +620,7 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 	return result, nil
 }
 
-// todo: extract this into a gormplugin default if needed for other plugins
+// TODO: Extract into base GormPlugin if needed by other database plugins
 func (p *GormPlugin) FindMissingDataType(db *gorm.DB, columnType string) string {
 	if p.Type == engine.DatabaseType_Postgres {
 		var typname string

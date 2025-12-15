@@ -33,7 +33,6 @@ func (p *GormPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, 
 			return false, errors.New("no fields provided for table creation")
 		}
 
-		// Check if table already exists using Migrator
 		migrator := NewMigratorHelper(db, p)
 		var fullTableName string
 		if schema != "" && p.Type != engine.DatabaseType_Sqlite3 {
@@ -108,7 +107,6 @@ func (p *GormPlugin) addRowWithDB(db *gorm.DB, schema string, storageUnit string
 		columnTypes = make(map[string]string)
 	}
 
-	// Populate type information in values if not already present
 	for i, value := range values {
 		if values[i].Extra == nil {
 			values[i].Extra = make(map[string]string)
@@ -120,7 +118,6 @@ func (p *GormPlugin) addRowWithDB(db *gorm.DB, schema string, storageUnit string
 		}
 	}
 
-	// Use SQL builder for consistent insert operations
 	builder := p.GormPluginFunctions.CreateSQLBuilder(db)
 
 	valuesToAdd, err := p.ConvertRecordValuesToMap(values)
@@ -128,17 +125,14 @@ func (p *GormPlugin) addRowWithDB(db *gorm.DB, schema string, storageUnit string
 		return err
 	}
 
-	// Use SQLBuilder's InsertRow method which uses GORM's native Create
 	return builder.InsertRow(schema, storageUnit, valuesToAdd)
 }
 
 func (p *GormPlugin) AddRow(config *engine.PluginConfig, schema string, storageUnit string, values []engine.Record) (bool, error) {
-	// Initialize error handler if needed
 	if p.errorHandler == nil {
 		p.InitPlugin()
 	}
 
-	// Log for debugging
 	if storageUnit == "" {
 		log.Logger.Error("AddRow called with empty storageUnit name")
 		return false, fmt.Errorf("storage unit name cannot be empty")
@@ -147,7 +141,6 @@ func (p *GormPlugin) AddRow(config *engine.PluginConfig, schema string, storageU
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
 		err := p.addRowWithDB(db, schema, storageUnit, values)
 		if err != nil {
-			// Use error handler for user-friendly error messages
 			err = p.errorHandler.HandleError(err, "AddRow", map[string]any{
 				"schema":      schema,
 				"storageUnit": storageUnit,
