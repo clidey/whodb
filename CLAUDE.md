@@ -13,6 +13,9 @@ WhoDB is a database management tool with dual-edition architecture: Community Ed
 3. **No SQL injection** - Never use `fmt.Sprintf` with user input for SQL. Use parameterized queries or GORM builders. See `.claude/docs/sql-security.md`
 4. **Plugin architecture** - Never use `switch dbType` or `if dbType ==` in shared code. All database-specific logic goes in plugins. See `.claude/docs/plugin-architecture.md`
 5. **CE/EE separation** - EE code MUST stay in the ee submodule. All EE documentation is in `ee/`. No exceptions
+6. **Documentation requirements** - All exported Go functions/types need doc comments. All exported TypeScript functions/components need JSDoc. See `.claude/docs/documentation.md`
+7. **Localization requirements** - All user-facing strings must use `t()` with YAML keys. No fallback strings. No hardcoded UI text. See `.claude/docs/localization.md`
+8. **Verify before completing** - After finishing any task, verify: (1) type checks pass (`pnpm run typecheck` for frontend, `go build` for backend), (2) no linting errors, (3) all added code is actually used (no dead code). See `.claude/docs/verification.md`
 
 ## Project Structure
 
@@ -77,7 +80,7 @@ See `.claude/docs/commands.md` for full reference. EE commands are in `ee/CLAUDE
 - Do not modify existing functionality without justification
 - Do not rename variables/files unless necessary
 - Remove unused code - no leftovers
-- Only comment edge cases and complex logic, not obvious code
+- Comment WHY, not WHAT - explain reasoning, edge cases, and non-obvious behavior. Never comment obvious code
 - Ask questions to understand requirements fully
 - Use subagents to accomplish tasks faster
 - Maintain professional, neutral tone without excessive enthusiasm
