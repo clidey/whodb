@@ -15,6 +15,7 @@
  */
 
 import isNaN from "lodash/isNaN";
+import sampleSize from "lodash/sampleSize";
 import { DatabaseType } from '@graphql';
 
 /**
@@ -145,7 +146,7 @@ export function getDatabaseStorageUnitLabel(databaseType: string | undefined, si
 }
 
 /**
- * Returns n random items from an array using Fisher-Yates shuffle.
+ * Returns n random items from an array.
  * @param array - The source array
  * @param n - Number of items to return (default: 3)
  * @returns Array of n randomly selected items
@@ -155,12 +156,5 @@ export function chooseRandomItems<T>(array: T[], n: number = 3): T[] {
     if (n > array.length) {
         throw new Error("n cannot be greater than the array length");
     }
-
-    const shuffledArray = [...array];
-    for (let i = shuffledArray.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffledArray[i], shuffledArray[j]] = [shuffledArray[j], shuffledArray[i]];
-    }
-
-    return shuffledArray.slice(0, n);
+    return sampleSize(array, n);
 }
