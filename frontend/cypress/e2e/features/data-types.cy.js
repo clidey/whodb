@@ -50,6 +50,34 @@ describe('Data Types CRUD Operations', () => {
                 const deleteValue = testConfig.deleteValue || testConfig.addValue;
                 const expectedDeleteDisplay = testConfig.displayDeleteValue || testConfig.displayAddValue || deleteValue;
 
+                it('READ - displays seed data with correct format', () => {
+                    cy.data(tableName);
+                    cy.sortBy(0);
+
+                    cy.getTableData().then(({rows}) => {
+                        if (rows.length === 0) {
+                            throw new Error('No rows in data_types table');
+                        }
+
+                        const expectedDisplay = String(testConfig.originalValue).trim();
+                        const columnValues = rows.map(r => String(r[columnIndex + 1] || '').trim());
+
+                        const seedRowIndex = rows.findIndex(r => {
+                            const cellValue = String(r[columnIndex + 1] || '').trim();
+                            return cellValue === expectedDisplay;
+                        });
+
+                        expect(
+                            seedRowIndex,
+                            `Seed data with ${columnName}=${expectedDisplay} should exist. Actual values: ${JSON.stringify(columnValues)}`
+                        ).to.not.equal(-1);
+
+                        // Verify the exact value matches expected format
+                        const actualValue = String(rows[seedRowIndex][columnIndex + 1] || '').trim();
+                        expect(actualValue, `${testConfig.type} should display correctly`).to.equal(expectedDisplay);
+                    });
+                });
+
                 it('ADD - creates row with type value', () => {
                     cy.data(tableName);
 

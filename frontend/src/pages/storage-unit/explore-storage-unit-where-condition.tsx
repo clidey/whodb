@@ -34,6 +34,7 @@ import classNames from "classnames";
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
 import { AdjustmentsVerticalIcon, CheckCircleIcon, PlusCircleIcon, XCircleIcon, XMarkIcon } from "../../components/heroicons";
+import { useTranslation } from "@/hooks/use-translation";
 
 type IPopoverCardProps = {
     open: boolean;
@@ -50,6 +51,7 @@ type IPopoverCardProps = {
     className?: string;
     isEditing?: boolean;
     editingIndex?: number;
+    t: (key: string, params?: Record<string, any>) => string;
 }
 
 const PopoverCard: FC<IPopoverCardProps> = ({
@@ -66,7 +68,8 @@ const PopoverCard: FC<IPopoverCardProps> = ({
                                                 handleCancel,
                                                 className,
                                                 isEditing = false,
-                                                editingIndex = -1
+                                                editingIndex = -1,
+                                                t
                                             }) => {
     const handleAction = useCallback(() => {
         if (isEditing && handleSaveFilter && editingIndex !== -1) {
@@ -88,7 +91,7 @@ const PopoverCard: FC<IPopoverCardProps> = ({
         >
             <div className="flex flex-col gap-sm w-full">
                 <Label className="text-xs">
-                    Field
+                    {t('field')}
                 </Label>
                 <SearchSelect
                     value={currentFilter.Key}
@@ -102,7 +105,7 @@ const PopoverCard: FC<IPopoverCardProps> = ({
             </div>
             <div className="flex flex-col gap-sm w-full">
                 <Label className="text-xs">
-                    Operator
+                    {t('operator')}
                 </Label>
                 <SearchSelect
                     value={currentFilter.Operator}
@@ -116,11 +119,11 @@ const PopoverCard: FC<IPopoverCardProps> = ({
             </div>
             <div className="flex flex-col gap-sm w-full">
                 <Label className="text-xs">
-                    Value
+                    {t('value')}
                 </Label>
                 <Input
                     className="min-w-[150px] w-full"
-                    placeholder="Enter filter value"
+                    placeholder={t('enterFilterValue')}
                     value={currentFilter.Value}
                     onChange={e => handleInputChange(e.target.value)}
                     data-testid="field-value"
@@ -133,7 +136,7 @@ const PopoverCard: FC<IPopoverCardProps> = ({
                     data-testid="cancel-button"
                     variant="secondary"
                 >
-                    <XCircleIcon className="w-4 h-4" /> Cancel
+                    <XCircleIcon className="w-4 h-4" /> {t('cancel')}
                 </Button>
                 <Button
                     className="flex-1"
@@ -145,7 +148,7 @@ const PopoverCard: FC<IPopoverCardProps> = ({
                     }
                     data-testid={isEditing ? "update-condition-button" : "add-condition-button"}
                 >
-                    <CheckCircleIcon className="w-4 h-4"/> {isEditing ? "Update" : "Add"}
+                    <CheckCircleIcon className="w-4 h-4"/> {isEditing ? t('update') : t('add')}
                 </Button>
             </div>
         </PopoverContent>
@@ -161,6 +164,7 @@ type IExploreStorageUnitWhereConditionProps = {
 }
 
 export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereConditionProps> = ({ defaultWhere, columns, columnTypes, onChange, operators }) => {
+    const { t } = useTranslation('pages/where-condition');
     const [currentFilter, setCurrentFilter] = useState<AtomicWhereCondition>({ ColumnType: "string", Key: "", Operator: "", Value: "" });
     const [filters, setFilters] = useState<WhereCondition>(defaultWhere ?? {
         Type: WhereConditionType.And,
@@ -385,7 +389,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
 
     return (
         <div className="flex flex-col">
-            <Label className="mb-2">Where condition</Label>
+            <Label className="mb-2">{t('whereCondition')}</Label>
             <div className="flex flex-row gap-xs max-w-[min(500px,calc(100vw-20px))] flex-wrap">
                 {visibleFilters.map((filter, i) => (
                     <div
@@ -430,16 +434,17 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                             handleCancel={handleCancelEditFilter}
                             isEditing={true}
                             editingIndex={i}
+                            t={t}
                         />
                     </div>
                 ))}
                 {hiddenCount > 0 && (
                     <Button onClick={handleOpenSheet} data-testid="more-conditions-button" variant="secondary">
-                        +{hiddenCount} more
+                        {t('moreConditions', { count: hiddenCount })}
                     </Button>
                 )}
                 <Button onClick={handleClick} data-testid="where-button" variant="secondary">
-                    <PlusCircleIcon className="w-4 h-4" /> Add
+                    <PlusCircleIcon className="w-4 h-4" /> {t('add')}
                 </Button>
             </div>
             <PopoverCard
@@ -456,17 +461,18 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                 handleCancel={handleCancelNewFilter}
                 isEditing={false}
                 editingIndex={-1}
+                t={t}
             />
 
             {/* Sheet for managing all conditions */}
             <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                 <SheetContent side="right" className="w-[500px] max-w-full p-8">
-                    <SheetTitle><AdjustmentsVerticalIcon className="w-5 h-5" /> Manage Where Conditions</SheetTitle>
+                    <SheetTitle><AdjustmentsVerticalIcon className="w-5 h-5" /> {t('manageWhereConditions')}</SheetTitle>
                     <div className="flex flex-col gap-lg mt-6 overflow-y-auto max-h-[calc(100vh-200px)]">
                         {sheetFilters.map((filter, index) => (
                             <div key={index} className="flex flex-col gap-lg p-4 border rounded-lg">
                                 <div className="flex items-center justify-between">
-                                    <Label className="text-sm font-medium">Condition {index + 1}</Label>
+                                    <Label className="text-sm font-medium">{t('conditionNumber', { index: index + 1 })}</Label>
                                     <Button
                                         variant="ghost"
                                         size="icon"
@@ -477,7 +483,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                                     </Button>
                                 </div>
                                 <div className="flex flex-col gap-2">
-                                    <Label className="text-xs">Field</Label>
+                                    <Label className="text-xs">{t('field')}</Label>
                                     <SearchSelect
                                         value={filter.Key}
                                         options={fieldsDropdownItems}
@@ -488,7 +494,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                                     />
                                 </div>
                                 <div className="flex flex-col gap-2">
-                                    <Label className="text-xs">Operator</Label>
+                                    <Label className="text-xs">{t('operator')}</Label>
                                     <SearchSelect
                                         value={filter.Operator}
                                         options={validOperators}
@@ -499,11 +505,11 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                                     />
                                 </div>
                                 <div className="flex flex-col gap-2">
-                                    <Label className="text-xs">Value</Label>
+                                    <Label className="text-xs">{t('value')}</Label>
                                     <Input
                                         value={filter.Value}
                                         onChange={(e) => handleSheetFieldChange(index, 'Value', e.target.value)}
-                                        placeholder="Enter filter value"
+                                        placeholder={t('enterFilterValue')}
                                         data-testid={`sheet-field-value-${index}`}
                                     />
                                 </div>
@@ -511,7 +517,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                         ))}
                         <Button onClick={handleSheetAddFilter} data-testid="add-sheet-filter-button" variant="secondary"
                                 className="self-start">
-                            <PlusCircleIcon className="w-4 h-4"/> Add Condition
+                            <PlusCircleIcon className="w-4 h-4"/> {t('addCondition')}
                         </Button>
                     </div>
                     <SheetFooter className="flex gap-sm px-0 mt-6">
@@ -521,10 +527,10 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                             onClick={() => setSheetOpen(false)}
                             data-testid="cancel-manage-conditions"
                         >
-                            Cancel
+                            {t('cancel')}
                         </Button>
                         <Button className="flex-1" onClick={handleSheetSave}>
-                            Save Changes
+                            {t('saveChanges')}
                         </Button>
                     </SheetFooter>
                 </SheetContent>

@@ -109,6 +109,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         handleCustomApply: handleCustomPageSizeApply,
     } = usePageSize(defaultPageSize);
     const { t } = useTranslation('pages/explore-storage-unit');
+    const { t: tTable } = useTranslation('components/table');
 
     const [currentPage, setCurrentPage] = useState(1);
     const [whereCondition, setWhereCondition] = useState<WhereCondition>();
@@ -150,8 +151,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         whereConditionRef.current = whereCondition;
     }, [whereCondition]);
 
-    // For databases that don't have schemas (MongoDB, ClickHouse), pass the database name as the schema parameter
-    // todo: is there a different way to do this? clickhouse doesn't have schemas as a table is considered a schema. people mainly switch between DB
+    // TODO: ClickHouse/MongoDB use database name as schema parameter since they lack traditional schemas
     if (databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type) && current?.Database) {
         schema = current.Database
     }
@@ -492,7 +492,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         });
     }, [unit]);
 
-    const columnIcons = useMemo(() => getColumnIcons(columns, columnTypes), [columns, columnTypes]);
+    const columnIcons = useMemo(() => getColumnIcons(columns, columnTypes, tTable), [columns, columnTypes, tTable]);
 
     const {whereColumns, whereColumnTypes} = useMemo(() => {
         if (rows?.Columns == null || rows?.Columns.length === 0 || rows == null || rows.Rows.length === 0) {

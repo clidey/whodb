@@ -64,7 +64,7 @@ import {isEEFeatureEnabled, loadEEComponent} from "../../utils/ee-loader";
 import {chooseRandomItems} from "../../utils/functions";
 import {databaseSupportsScratchpad} from "../../utils/database-features";
 import {useNavigate} from "react-router-dom";
-import {chatExamples} from "./examples";
+import {useChatExamples} from "./examples";
 import {useTranslation} from '@/hooks/use-translation';
 
 // Lazy load chart components if EE is enabled
@@ -78,34 +78,8 @@ const PieChart = isEEFeatureEnabled('dataVisualization') ? loadEEComponent(
     () => null
 ) : () => null;
 
-const thinkingPhrases = [
-    "Thinking",
-    "Pondering life's mysteries",
-    "Consulting the cloud oracles",
-    "Googling furiously (just kidding)",
-    "Aligning the neural networks",
-    "Making it up as I go (shh)",
-    "Counting virtual sheep",
-    "Channeling Einstein",
-    "Tuning my algorithms",
-    "Drinking a byte of coffee",
-    "Running in circles virtually.",
-    "Pretending to be busy",
-    "Loading witty comeback",
-    "Downloading some wisdom",
-    "Cooking up some data stew",
-    "Doing AI things™",
-    "Hacking the mainframe (for fun)",
-    "Staring into the digital abyss",
-    "Flipping a quantum coin",
-    "Reading your mind (ethically)",
-    "Sharpening my sarcasm",
-    "Checking my vibes",
-    "Simulating deep thought",
-    "Rewiring my circuits",
-    "Polishing my crystal processor"
-  ];
-  
+const THINKING_PHRASES_COUNT = 25;
+
 
 type TableData = GetAiChatQuery["AIChat"][0]["Result"];
 
@@ -198,6 +172,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
                     variant="outline"
                     onClick={handleMoveToScratchpad}
                     data-testid="icon-button"
+                    title={t('moveToScratchpad')}
                     aria-label={t('moveToScratchpad')}
                 >
                     <CommandLineIcon className="w-6 h-6" aria-hidden="true" />
@@ -299,13 +274,19 @@ export const ChatPage: FC = () => {
     const aiState = useAI();
     const { modelType, currentModel, modelAvailable, models } = aiState;
 
+    const chatExamples = useChatExamples();
+
+    const thinkingPhrases = useMemo(() => {
+        return Array.from({ length: THINKING_PHRASES_COUNT }, (_, i) => t(`thinking${i}`));
+    }, [t]);
+
     const loading = useMemo(() => {
         return getAIChatLoading;
     }, [getAIChatLoading]);
 
     const examples = useMemo(() => {
         return chooseRandomItems(chatExamples);
-    }, []);
+    }, [chatExamples]);
 
     const handleSubmitQuery = useCallback(() => {
         const sanitizedQuery = query.trim();

@@ -168,5 +168,69 @@
       ],
       "expectedValue": "50"
     }
+  },
+  "keyTypeTests": {
+    "string": {
+      "typeName": "STRING",
+      "testKey": "inventory:product:1",
+      "expectedColumns": ["", "value"],
+      "testData": {
+        "originalValue": "50",
+        "updateValue": "999",
+        "valueColumnIndex": 1
+      },
+      "supportsUpdate": true,
+      "supportsDelete": false
+    },
+    "hash": {
+      "typeName": "HASH",
+      "testKey": "user:1",
+      "expectedColumns": ["", "field", "value"],
+      "testData": {
+        "testField": "username",
+        "originalValue": "johndoe",
+        "updateValue": "johndoe_keytype_test",
+        "fieldColumnIndex": 1,
+        "valueColumnIndex": 2
+      },
+      "supportsUpdate": true,
+      "supportsDelete": false
+    },
+    "list": {
+      "typeName": "LIST",
+      "testKey": "orders:recent",
+      "expectedColumns": ["", "index", "value"],
+      "testData": {
+        "testIndex": 0,
+        "indexColumnIndex": 1,
+        "valueColumnIndex": 2
+      },
+      "supportsUpdate": true,
+      "supportsDelete": false
+    },
+    "set": {
+      "typeName": "SET",
+      "testKey": "category:electronics",
+      "expectedColumns": ["", "index", "value"],
+      "testData": {
+        "expectedMembers": ["1", "2", "3", "4", "5"],
+        "indexColumnIndex": 1,
+        "valueColumnIndex": 2
+      },
+      "supportsUpdate": false,
+      "supportsDelete": false
+    },
+    "zset": {
+      "typeName": "SORTED SET (ZSET)",
+      "testKey": "products:by_price",
+      "expectedColumns": ["", "index", "member", "score"],
+      "testData": {
+        "indexColumnIndex": 1,
+        "memberColumnIndex": 2,
+        "scoreColumnIndex": 3
+      },
+      "supportsUpdate": false,
+      "supportsDelete": false
+    }
   }
 }

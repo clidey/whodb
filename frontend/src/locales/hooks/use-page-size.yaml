@@ -1,0 +1,3 @@
+en:
+  enterValidNumber: Please enter a number greater than 0
+  largePageSizeWarning: Large page sizes may result in slower performance

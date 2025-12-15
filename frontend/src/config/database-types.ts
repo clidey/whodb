@@ -67,7 +67,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         id: "MySQL",
         label: "MySQL",
         icon: Icons.Logos.MySQL,
-        extra: {"Port": "3306", "Parse Time": "True", "Loc": "Local", "Allow clear text passwords": "0"},
+        extra: {"Port": "3306", "Parse Time": "True", "Loc": "UTC", "Allow clear text passwords": "0"},
         fields: {
             hostname: true,
             username: true,
@@ -83,7 +83,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         id: "MariaDB",
         label: "MariaDB",
         icon: Icons.Logos.MariaDB,
-        extra: {"Port": "3306", "Parse Time": "True", "Loc": "Local", "Allow clear text passwords": "0"},
+        extra: {"Port": "3306", "Parse Time": "True", "Loc": "UTC", "Allow clear text passwords": "0"},
         fields: {
             hostname: true,
             username: true,

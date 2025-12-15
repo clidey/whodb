@@ -37,10 +37,7 @@ import (
 
 // RunApp starts the Wails application with the given configuration
 func RunApp(edition string, title string, assets embed.FS) error {
-	// Set desktop mode for backend (SQLite path handling, auth, etc.)
 	os.Setenv("WHODB_DESKTOP", "true")
-
-	// Initialize analytics for desktop app (same as server.go)
 	settingsCfg := settings.Get()
 	if err := analytics.Initialize(analytics.Config{
 		APIKey:      env.PosthogAPIKey,
@@ -54,17 +51,12 @@ func RunApp(edition string, title string, assets embed.FS) error {
 	}
 	analytics.SetEnabled(settingsCfg.MetricsEnabled)
 
-	// Initialize WhoDB engine (same as server.go)
 	src.InitializeEngine()
 	log.Logger.Infof("Running WhoDB Desktop %s Edition", strings.ToUpper(edition))
 
-	// Get the Chi router with embedded assets
 	r := router.InitializeRouter(assets)
-
-	// Create an instance of the app structure using common package
 	app := NewApp(edition)
 
-	// Create application with options
 	err := wails.Run(&options.App{
 		Title:     title,
 		Width:     1400,

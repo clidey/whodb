@@ -25,6 +25,8 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// SetupHTTPServer registers REST API endpoints that wrap GraphQL resolvers for clients
+// that cannot use GraphQL directly (e.g., simple HTTP clients, legacy integrations).
 func SetupHTTPServer(router chi.Router) {
 	router.Get("/api/profiles", getProfilesHandler)
 	router.Get("/api/databases", getDatabasesHandler)
@@ -40,7 +42,6 @@ func SetupHTTPServer(router chi.Router) {
 	router.Post("/api/rows", addRowHandler)
 	router.Delete("/api/rows", deleteRowHandler)
 
-	// Export endpoint with streaming support
 	router.Post("/api/export", HandleExport)
 }
 
@@ -99,11 +100,10 @@ func getStorageUnitsHandler(w http.ResponseWriter, r *http.Request) {
 func getRowsHandler(w http.ResponseWriter, r *http.Request) {
 	schema := r.URL.Query().Get("schema")
 	storageUnit := r.URL.Query().Get("storageUnit")
-	// where := r.URL.Query().Get("where")
 	pageSize := parseQueryParamToInt(r.URL.Query().Get("pageSize"))
 	pageOffset := parseQueryParamToInt(r.URL.Query().Get("pageOffset"))
 
-	// todo: add where condition if necessary
+	// TODO: Add where condition parsing from query params if needed
 	rowsResult, err := resolver.Query().Row(r.Context(), schema, storageUnit, &model.WhereCondition{}, []*model.SortCondition{}, pageSize, pageOffset)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

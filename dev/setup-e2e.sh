@@ -300,8 +300,7 @@ fi
 echo "🧹 Cleaning previous coverage artifacts..."
 (
     # Backend coverage
-    COVERAGE_FILE="$PROJECT_ROOT/core/coverage.out"
-    [ -f "$COVERAGE_FILE" ] && rm -f "$COVERAGE_FILE"
+    rm -f "$PROJECT_ROOT/core/coverage.out" "$PROJECT_ROOT/core/coverage_*.out" 2>/dev/null || true
 ) &
 (
     # Frontend coverage

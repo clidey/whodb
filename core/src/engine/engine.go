@@ -23,6 +23,7 @@ import (
 	"github.com/clidey/whodb/core/src/types"
 )
 
+// DatabaseType identifies a supported database system.
 type DatabaseType string
 
 const (
@@ -36,14 +37,17 @@ const (
 	DatabaseType_ClickHouse    = "ClickHouse"
 )
 
+// LoginProfileRetriever is a function that retrieves stored database credentials.
 type LoginProfileRetriever func() ([]types.DatabaseCredentials, error)
 
+// Engine manages database plugins and login profiles.
 type Engine struct {
-	Plugins                []*Plugin
-	LoginProfiles          []types.DatabaseCredentials
-	ProfileRetrievers      []LoginProfileRetriever
+	Plugins           []*Plugin
+	LoginProfiles     []types.DatabaseCredentials
+	ProfileRetrievers []LoginProfileRetriever
 }
 
+// RegistryPlugin adds a database plugin to the engine.
 func (e *Engine) RegistryPlugin(plugin *Plugin) {
 	if e.Plugins == nil {
 		e.Plugins = []*Plugin{}
@@ -51,6 +55,7 @@ func (e *Engine) RegistryPlugin(plugin *Plugin) {
 	e.Plugins = append(e.Plugins, plugin)
 }
 
+// Choose returns the plugin that matches the given database type, or nil if not found.
 func (e *Engine) Choose(databaseType DatabaseType) *Plugin {
 	for _, plugin := range e.Plugins {
 		if strings.EqualFold(string(plugin.Type), string(databaseType)) {
@@ -60,6 +65,7 @@ func (e *Engine) Choose(databaseType DatabaseType) *Plugin {
 	return nil
 }
 
+// AddLoginProfile adds database credentials to the engine's profile list.
 func (e *Engine) AddLoginProfile(profile types.DatabaseCredentials) {
 	if e.LoginProfiles == nil {
 		e.LoginProfiles = []types.DatabaseCredentials{}
@@ -67,6 +73,7 @@ func (e *Engine) AddLoginProfile(profile types.DatabaseCredentials) {
 	e.LoginProfiles = append(e.LoginProfiles, profile)
 }
 
+// RegisterProfileRetriever adds a function that retrieves database credentials on demand.
 func (e *Engine) RegisterProfileRetriever(retriever LoginProfileRetriever) {
 	if e.ProfileRetrievers == nil {
 		e.ProfileRetrievers = []LoginProfileRetriever{}
@@ -74,6 +81,7 @@ func (e *Engine) RegisterProfileRetriever(retriever LoginProfileRetriever) {
 	e.ProfileRetrievers = append(e.ProfileRetrievers, retriever)
 }
 
+// GetStorageUnitModel converts an engine StorageUnit to a GraphQL model StorageUnit.
 func GetStorageUnitModel(unit StorageUnit) *model.StorageUnit {
 	attributes := []*model.Record{}
 	for _, attribute := range unit.Attributes {

@@ -63,7 +63,6 @@ func (p *GormPlugin) DeleteRow(config *engine.PluginConfig, schema string, stora
 			}
 		}
 
-		// Use SQL builder for consistent delete operations
 		builder := p.GormPluginFunctions.CreateSQLBuilder(db)
 
 		var whereConditions map[string]any
