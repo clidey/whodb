@@ -15,16 +15,32 @@
  */
 
 import isNaN from "lodash/isNaN";
+import sampleSize from "lodash/sampleSize";
 import { DatabaseType } from '@graphql';
 
+/**
+ * Checks if a string can be parsed as a numeric value.
+ * @param str - The string to check
+ * @returns True if the string represents a valid number
+ */
 export function isNumeric(str: string) {
     return !isNaN(Number(str));
 }
 
+/**
+ * Converts a name to a URL-friendly slug.
+ * @param name - The name to convert
+ * @returns Lowercase hyphenated string (e.g., "My Name" -> "my-name")
+ */
 export function createStub(name: string) {
     return name.split(" ").map(word => word.toLowerCase()).join("-");
 }
 
+/**
+ * Detects if a string contains markdown formatting.
+ * @param text - The text to check
+ * @returns True if the text contains common markdown patterns
+ */
 export function isMarkdown(text: string): boolean {
     const markdownPatterns = [
         /^#{1,6}\s+/,
@@ -38,13 +54,17 @@ export function isMarkdown(text: string): boolean {
         /`{1,3}[^`]*`{1,3}/,
         /-{3,}/,
     ];
-    
+
     return markdownPatterns.some(pattern => pattern.test(text));
 }
 
+/**
+ * Checks if a string could be valid JSON by checking for opening brace.
+ * Used for early intellisense triggering before full JSON validation.
+ * @param str - The string to check
+ * @returns True if the string starts with "{"
+ */
 export function isValidJSON(str: string): boolean {
-    // this allows it to start showing intellisense when it starts with {
-    // even if it is not valid - better UX?
     return str.startsWith("{");
 }
 
@@ -62,12 +82,16 @@ if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
     });
 }
 
+/**
+ * Determines if a database type is a NoSQL database.
+ * @param databaseType - The database type string to check
+ * @returns True for MongoDB, Redis, ElasticSearch, and EE NoSQL databases
+ */
 export function isNoSQL(databaseType: string) {
-    // Check EE databases first if EE is enabled
     if (isEENoSQLDatabase && isEENoSQLDatabase(databaseType)) {
         return true;
     }
-    
+
     switch (databaseType) {
         case DatabaseType.MongoDb:
         case DatabaseType.Redis:
@@ -91,15 +115,20 @@ if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
     });
 }
 
+/**
+ * Returns the appropriate label for storage units based on database type.
+ * @param databaseType - The database type
+ * @param singular - Whether to return singular form (default: false)
+ * @returns The label (e.g., "Tables", "Collections", "Indices")
+ */
 export function getDatabaseStorageUnitLabel(databaseType: string | undefined, singular: boolean = false) {
-    // Check EE databases first if EE is enabled
     if (getEEDatabaseStorageUnitLabel) {
         const eeLabel = getEEDatabaseStorageUnitLabel(databaseType, singular);
         if (eeLabel !== null) {
             return eeLabel;
         }
     }
-    
+
     switch(databaseType) {
         case DatabaseType.ElasticSearch:
             return singular ? "Index" : "Indices";
@@ -116,16 +145,16 @@ export function getDatabaseStorageUnitLabel(databaseType: string | undefined, si
     return singular ? "Storage Unit" : "Storage Units";
 }
 
+/**
+ * Returns n random items from an array.
+ * @param array - The source array
+ * @param n - Number of items to return (default: 3)
+ * @returns Array of n randomly selected items
+ * @throws Error if n is greater than the array length
+ */
 export function chooseRandomItems<T>(array: T[], n: number = 3): T[] {
     if (n > array.length) {
         throw new Error("n cannot be greater than the array length");
     }
-
-    const shuffledArray = [...array];
-    for (let i = shuffledArray.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffledArray[i], shuffledArray[j]] = [shuffledArray[j], shuffledArray[i]];
-    }
-
-    return shuffledArray.slice(0, n);
+    return sampleSize(array, n);
 }

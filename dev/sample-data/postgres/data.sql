@@ -183,3 +183,64 @@ INSERT INTO test_schema.test_casting (bigint_col, integer_col, smallint_col, num
 VALUES (9223372036854775807, 2147483647, 32767, 99999999.99, 'Maximum values'),
        (1000000, 1000, 100, 1234.56, 'Regular values'),
        (-9223372036854775808, -2147483648, -32768, -99999999.99, 'Minimum values');
+
+-- Data Types Table for exhaustive type testing
+CREATE TABLE IF NOT EXISTS test_schema.data_types (
+    id SERIAL PRIMARY KEY,
+    -- Numeric types
+    col_smallint SMALLINT,
+    col_integer INTEGER,
+    col_bigint BIGINT,
+    col_decimal DECIMAL(10,2),
+    col_numeric NUMERIC(10,2),
+    col_real REAL,
+    col_double DOUBLE PRECISION,
+    col_money MONEY,
+    -- String types
+    col_char CHAR(10),
+    col_varchar VARCHAR(255),
+    col_text TEXT,
+    col_bytea BYTEA,
+    -- Date/Time types
+    col_timestamp TIMESTAMP,
+    col_timestamptz TIMESTAMPTZ,
+    col_date DATE,
+    col_time TIME,
+    col_timetz TIMETZ,
+    -- Boolean
+    col_boolean BOOLEAN,
+    -- Geometric types
+    col_point POINT,
+    col_line LINE,
+    col_lseg LSEG,
+    col_box BOX,
+    col_path PATH,
+    col_polygon POLYGON,
+    col_circle CIRCLE,
+    -- Network types
+    col_cidr CIDR,
+    col_inet INET,
+    col_macaddr MACADDR,
+    -- Special types
+    col_uuid UUID,
+    col_xml XML,
+    col_json JSON,
+    col_jsonb JSONB
+);
+
+-- Insert seed data for data_types
+INSERT INTO test_schema.data_types (
+    col_smallint, col_integer, col_bigint, col_decimal, col_numeric,
+    col_real, col_double, col_money, col_char, col_varchar, col_text,
+    col_bytea, col_timestamp, col_timestamptz, col_date, col_time, col_timetz,
+    col_boolean, col_point, col_line, col_lseg, col_box, col_path, col_polygon,
+    col_circle, col_cidr, col_inet, col_macaddr, col_uuid, col_xml, col_json, col_jsonb
+) VALUES (
+    100, 1000, 100000, 123.45, 678.90,
+    1.5, 2.5, 99.99, 'test', 'varchar_val', 'text_value',
+    E'\\x48454c4c4f', '2025-01-01 12:00:00', '2025-01-01 12:00:00+00', '2025-01-01', '12:00:00', '12:00:00+00',
+    true, '(1,2)', '{1,2,3}', '[(0,0),(1,1)]', '((0,0),(1,1))', '((0,0),(1,1),(1,0))', '((0,0),(1,0),(1,1),(0,1))',
+    '<(0,0),5>', '192.168.0.0/24', '192.168.0.1', '08:00:2b:01:02:03',
+    '550e8400-e29b-41d4-a716-446655440000', '<root>test</root>',
+    '{"key":"value"}', '{"key":"value"}'
+);

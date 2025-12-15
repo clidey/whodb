@@ -88,7 +88,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
         if (!isNoSQL(current.Type)) {
             navigationActions.push({
                 id: "nav-chat",
-                label: t('goToChat', 'Go to Chat'),
+                label: t('goToChat'),
                 icon: <ChatBubbleLeftRightIcon className="w-4 h-4" />,
                 shortcut: [navModKey, "1"],
                 onSelect: () => {
@@ -100,7 +100,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
 
         navigationActions.push({
             id: "nav-storage-units",
-            label: t('goToStorageUnits', 'Go to Storage Units'),
+            label: t('goToStorageUnits'),
             icon: <RectangleGroupIcon className="w-4 h-4" />,
             shortcut: isNoSQL(current.Type) ? [navModKey, "1"] : [navModKey, "2"],
             onSelect: () => {
@@ -111,7 +111,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
 
         navigationActions.push({
             id: "nav-graph",
-            label: t('goToGraph', 'Go to Graph'),
+            label: t('goToGraph'),
             icon: <ShareIcon className="w-4 h-4" />,
             shortcut: isNoSQL(current.Type) ? [navModKey, "2"] : [navModKey, "3"],
             onSelect: () => {
@@ -123,7 +123,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
         if (databaseSupportsScratchpad(current.Type)) {
             navigationActions.push({
                 id: "nav-scratchpad",
-                label: t('goToScratchpad', 'Go to Scratchpad'),
+                label: t('goToScratchpad'),
                 icon: <CommandLineIcon className="w-4 h-4" />,
                 shortcut: isNoSQL(current.Type) ? [navModKey, "3"] : [navModKey, "4"],
                 onSelect: () => {
@@ -136,7 +136,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
         // Table/Data actions
         tableActions.push({
             id: "action-refresh",
-            label: t('refreshData', 'Refresh Data'),
+            label: t('refreshData'),
             icon: <ArrowPathIcon className="w-4 h-4" />,
             shortcut: ["Mod", "R"],
             onSelect: () => {
@@ -147,7 +147,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
 
         tableActions.push({
             id: "action-export",
-            label: t('exportData', 'Export Data'),
+            label: t('exportData'),
             icon: <CircleStackIcon className="w-4 h-4" />,
             shortcut: ["Mod", "Shift", "E"],
             onSelect: () => {
@@ -158,7 +158,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
 
         tableActions.push({
             id: "action-toggle-sidebar",
-            label: t('toggleSidebar', 'Toggle Sidebar'),
+            label: t('toggleSidebar'),
             icon: <CogIcon className="w-4 h-4" />,
             shortcut: ["Mod", "B"],
             onSelect: () => {
@@ -169,7 +169,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
 
         tableActions.push({
             id: "action-disconnect",
-            label: t('disconnect', 'Disconnect'),
+            label: t('disconnect'),
             icon: <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />,
             onSelect: () => {
                 navigate(InternalRoutes.Logout.path);
@@ -213,14 +213,14 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
             <DialogContent className="p-0 overflow-hidden max-w-md" data-testid="command-palette">
                 <Command className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-neutral-500 dark:[&_[cmdk-group-heading]]:text-neutral-400">
                     <CommandInput
-                        placeholder={t('searchPlaceholder', 'Type a command or search...')}
+                        placeholder={t('searchPlaceholder')}
                         data-testid="command-palette-input"
                     />
                     <CommandList className="max-h-[400px]">
-                        <CommandEmpty>{t('noResults', 'No results found.')}</CommandEmpty>
+                        <CommandEmpty>{t('noResults')}</CommandEmpty>
 
                         {navigationActions.length > 0 && (
-                            <CommandGroup heading={t('navigation', 'Navigation')}>
+                            <CommandGroup heading={t('navigation')}>
                                 {navigationActions.map((action) => (
                                     <CommandItem
                                         key={action.id}
@@ -237,7 +237,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                         )}
 
                         {tableActions.length > 0 && (
-                            <CommandGroup heading={t('actions', 'Actions')}>
+                            <CommandGroup heading={t('actions')}>
                                 {tableActions.map((action) => (
                                     <CommandItem
                                         key={action.id}
@@ -254,7 +254,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                         )}
 
                         {sortActions.length > 0 && (
-                            <CommandGroup heading={t('sortBy', 'Sort By')}>
+                            <CommandGroup heading={t('sortBy')}>
                                 {sortActions.map((action) => (
                                     <CommandItem
                                         key={action.id}

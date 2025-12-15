@@ -374,7 +374,6 @@ func (r *mutationResolver) AddRow(ctx context.Context, schema string, storageUni
 		return nil, err
 	}
 
-	// Debug logging
 	log.LogFields(log.Fields{
 		"operation":     "AddRow-Resolver",
 		"schema":        schema,
@@ -395,6 +394,7 @@ func (r *mutationResolver) AddRow(ctx context.Context, schema string, storageUni
 			Extra: extraFields,
 		})
 	}
+
 	status, err := plugin.AddRow(config, schema, storageUnit, valuesRecords)
 	if err != nil {
 		log.LogFields(log.Fields{
@@ -472,14 +472,12 @@ func (r *mutationResolver) DeleteRow(ctx context.Context, schema string, storage
 func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.MockDataGenerationInput) (*model.MockDataGenerationStatus, error) {
 	log.Logger.WithField("schema", input.Schema).WithField("table", input.StorageUnit).WithField("rowCount", input.RowCount).WithField("overwrite", input.OverwriteExisting).Info("Starting mock data generation")
 
-	// Enforce maximum row limit
 	maxRowLimit := env.GetMockDataGenerationMaxRowCount()
 	if input.RowCount > maxRowLimit {
 		log.Logger.WithField("requested", input.RowCount).WithField("max", maxRowLimit).Error("Row count exceeds maximum limit")
 		return nil, fmt.Errorf("row count exceeds maximum limit of %d", maxRowLimit)
 	}
 
-	// Check if mock data generation is allowed for this table
 	if !env.IsMockDataGenerationAllowed(input.StorageUnit) {
 		log.Logger.WithField("table", input.StorageUnit).Error("Mock data generation not allowed for table")
 		return nil, errors.New("mock data generation is not allowed for this table")
@@ -487,8 +485,6 @@ func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.Moc
 
 	plugin, config := GetPluginForContext(ctx)
 
-	// Get table columns to understand the schema
-	log.Logger.Debug("Fetching table schema")
 	rowsResult, err := plugin.GetRows(config, input.Schema, input.StorageUnit, nil, []*model.SortCondition{}, 1, 0)
 	if err != nil {
 		log.Logger.WithError(err).Error("Failed to get table schema")
@@ -496,20 +492,16 @@ func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.Moc
 	}
 	log.Logger.WithField("columnCount", len(rowsResult.Columns)).Debug("Got table columns")
 
-	// Get column constraints from the database
-	log.Logger.Debug("Fetching column constraints")
 	constraints, err := plugin.GetColumnConstraints(config, input.Schema, input.StorageUnit)
 	if err != nil {
 		log.Logger.WithError(err).Warn("Failed to get column constraints, using empty constraints")
-		// Use empty constraints on error
 		constraints = make(map[string]map[string]any)
 	}
 	log.Logger.WithField("constraintCount", len(constraints)).Debug("Got column constraints")
 
-	// Pre-generate rows with brute force approach to ensure we get exactly the requested count
-	generator := src.NewMockDataGenerator()
 	// Generate extra rows as buffer for potential constraint violations
 	// We'll generate 50% more rows as buffer, capped at requested + 100
+	generator := src.NewMockDataGenerator()
 	bufferSize := min(input.RowCount/2, 100)
 	maxGenerationAttempts := input.RowCount + bufferSize
 
@@ -536,22 +528,19 @@ func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.Moc
 		return nil, errors.New("failed to generate any valid rows after multiple attempts")
 	}
 
-	// Check if this is a GORM-based plugin (SQL databases)
 	gormPlugin, isGormPlugin := plugin.PluginFunctions.(*gorm_plugin.GormPlugin)
 
 	generatedRows := 0
 	if isGormPlugin {
-		// Use transaction for SQL databases
+		// SQL databases use transactions for atomicity
 		err = gormPlugin.ExecuteInTransaction(config, func(tx *gorm.DB) error {
-			// Clear existing data if requested
 			if input.OverwriteExisting {
 				if err := gormPlugin.ClearTableDataInTx(tx, input.Schema, input.StorageUnit); err != nil {
 					return fmt.Errorf("failed to clear existing data: %w", err)
 				}
 			}
 
-			// Insert rows until we reach exactly the requested count
-			// Use brute force approach - keep trying from our buffer until we get the exact count
+			// keep trying from buffer until we hit the exact count
 			successfulRows := 0
 			bufferIndex := 0
 			retryWithDefaults := false
@@ -613,7 +602,6 @@ func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.Moc
 				}
 
 				if err := gormPlugin.AddRowInTx(tx, input.Schema, input.StorageUnit, newRow); err != nil {
-					// Try with defaults
 					defaultRow := generator.GenerateRowWithDefaults(rowsResult.Columns)
 					if retryErr := gormPlugin.AddRowInTx(tx, input.Schema, input.StorageUnit, defaultRow); retryErr == nil {
 						successfulRows++
@@ -635,14 +623,13 @@ func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.Moc
 			return nil
 		})
 	} else {
-		// For NoSQL databases, operations are not transactional
+		// NoSQL: no transaction support, operations may partially succeed
 		if input.OverwriteExisting {
 			if _, err := plugin.ClearTableData(config, input.Schema, input.StorageUnit); err != nil {
 				return nil, fmt.Errorf("failed to clear existing data: %w", err)
 			}
 		}
 
-		// Insert rows until we reach exactly the requested count
 		bufferIndex := 0
 		for generatedRows < input.RowCount && bufferIndex < len(generatedRowsBuffer) {
 			rowData := generatedRowsBuffer[bufferIndex]
@@ -650,7 +637,6 @@ func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.Moc
 
 			success, addErr := plugin.AddRow(config, input.Schema, input.StorageUnit, rowData)
 			if addErr != nil || !success {
-				// Try with defaults
 				defaultRow := generator.GenerateRowWithDefaults(rowsResult.Columns)
 				success2, err2 := plugin.AddRow(config, input.Schema, input.StorageUnit, defaultRow)
 				if err2 == nil && success2 {
@@ -661,7 +647,6 @@ func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.Moc
 			generatedRows++
 		}
 
-		// If we need more rows, generate them on the fly
 		additionalAttempts := 0
 		maxAdditionalAttempts := input.RowCount * 5
 
@@ -675,7 +660,6 @@ func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.Moc
 
 			success, addErr := plugin.AddRow(config, input.Schema, input.StorageUnit, newRow)
 			if addErr != nil || !success {
-				// Try with defaults
 				defaultRow := generator.GenerateRowWithDefaults(rowsResult.Columns)
 				success2, err2 := plugin.AddRow(config, input.Schema, input.StorageUnit, defaultRow)
 				if err2 == nil && success2 {
@@ -692,7 +676,6 @@ func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.Moc
 		return nil, fmt.Errorf("mock data generation failed: %w", err)
 	}
 
-	// Return success if any rows were generated
 	log.Logger.WithField("generatedRows", generatedRows).Info("Mock data generation completed successfully")
 	return &model.MockDataGenerationStatus{
 		AmountGenerated: generatedRows,

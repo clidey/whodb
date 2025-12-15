@@ -16,6 +16,7 @@
 
 import {defineConfig} from "cypress";
 import codeCoverageTask from "@cypress/code-coverage/task.js";
+import createBundler from "@bahmutov/cypress-esbuild-preprocessor";
 
 export default defineConfig({
     numTestsKeptInMemory: 0,
@@ -24,14 +25,16 @@ export default defineConfig({
     // Screenshot and video settings
     screenshotOnRunFailure: true,
     screenshotsFolder: 'cypress/screenshots',
-    video: true,
+    video: false,  // Disabled for performance - screenshots capture failures
     videosFolder: 'cypress/videos',
-    trashAssetsBeforeRuns: true,
+    trashAssetsBeforeRuns: false,  // Disabled - run-cypress.sh handles cleanup once at suite start
   e2e: {
       baseUrl: 'http://localhost:3000', // Default for local development
       testIsolation: true, // Ensure clean state between tests
+      experimentalMemoryManagement: true, // Reduce memory pressure during long test runs
     async setupNodeEvents(on, config) {
         codeCoverageTask(on, config);
+        on('file:preprocessor', createBundler());
 
         config.env = config.env || {};
 
@@ -43,6 +46,24 @@ export default defineConfig({
           } catch (error) {
             return { success: false, error: error.toString() };
           }
+        },
+        // JSON parsing tasks - faster in Node than browser
+        parseJSON(text) {
+          try {
+            return JSON.parse(text);
+          } catch (e) {
+            return null;
+          }
+        },
+        parseDocuments(rows) {
+          // Parse document column (index 1) from multiple rows
+          return rows.map(row => {
+            try {
+              return JSON.parse(row[1] || '{}');
+            } catch (e) {
+              return {};
+            }
+          });
         },
       });
 

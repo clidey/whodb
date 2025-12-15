@@ -79,61 +79,61 @@ export const KeyboardShortcutsHelp: FC<KeyboardShortcutsHelpProps> = ({
 
     const shortcutCategories: ShortcutCategory[] = [
         {
-            title: t('categoryGlobal', 'Global'),
+            title: t('categoryGlobal'),
             shortcuts: [
-                { keys: ["?"], description: t('showShortcuts', 'Show keyboard shortcuts') },
-                { keys: ["Mod", "K"], description: t('commandPalette', 'Open command palette') },
-                { keys: ["Escape"], description: t('closeDialogs', 'Close dialogs/sheets') },
-                { keys: ["Mod", "B"], description: t('toggleSidebar', 'Toggle sidebar') },
+                { keys: ["Shift", "?"], description: t('showShortcuts') },
+                { keys: ["Mod", "K"], description: t('commandPalette') },
+                { keys: ["Escape"], description: t('closeDialogs') },
+                { keys: ["Mod", "B"], description: t('toggleSidebar') },
             ],
         },
         {
-            title: t('categoryNavigation', 'Navigation'),
+            title: t('categoryNavigation'),
             shortcuts: [
-                { keys: isMacPlatform ? ["Ctrl", "1"] : ["Alt", "1"], description: t('navFirst', 'Go to first view (Chat or Tables)') },
-                { keys: isMacPlatform ? ["Ctrl", "2"] : ["Alt", "2"], description: t('navSecond', 'Go to second view') },
-                { keys: isMacPlatform ? ["Ctrl", "3"] : ["Alt", "3"], description: t('navThird', 'Go to third view') },
-                { keys: isMacPlatform ? ["Ctrl", "4"] : ["Alt", "4"], description: t('navFourth', 'Go to fourth view (if available)') },
+                { keys: isMacPlatform ? ["Ctrl", "1"] : ["Alt", "1"], description: t('navFirst') },
+                { keys: isMacPlatform ? ["Ctrl", "2"] : ["Alt", "2"], description: t('navSecond') },
+                { keys: isMacPlatform ? ["Ctrl", "3"] : ["Alt", "3"], description: t('navThird') },
+                { keys: isMacPlatform ? ["Ctrl", "4"] : ["Alt", "4"], description: t('navFourth') },
             ],
         },
         {
-            title: t('categoryTableNavigation', 'Table Navigation'),
+            title: t('categoryTableNavigation'),
             shortcuts: [
-                { keys: ["ArrowDown"], description: t('moveDown', 'Move to next row') },
-                { keys: ["ArrowUp"], description: t('moveUp', 'Move to previous row') },
-                { keys: ["Home"], description: t('moveFirst', 'Move to first row') },
-                { keys: ["End"], description: t('moveLast', 'Move to last row') },
-                { keys: ["PageDown"], description: t('pageDown', 'Jump down by visible rows') },
-                { keys: ["PageUp"], description: t('pageUp', 'Jump up by visible rows') },
-                { keys: ["Mod", "ArrowRight"], description: t('nextPage', 'Go to next page') },
-                { keys: ["Mod", "ArrowLeft"], description: t('prevPage', 'Go to previous page') },
+                { keys: ["ArrowDown"], description: t('moveDown') },
+                { keys: ["ArrowUp"], description: t('moveUp') },
+                { keys: ["Home"], description: t('moveFirst') },
+                { keys: ["End"], description: t('moveLast') },
+                { keys: ["PageDown"], description: t('pageDown') },
+                { keys: ["PageUp"], description: t('pageUp') },
+                { keys: ["Mod", "ArrowRight"], description: t('nextPage') },
+                { keys: ["Mod", "ArrowLeft"], description: t('prevPage') },
             ],
         },
         {
-            title: t('categoryTableSelection', 'Table Selection'),
+            title: t('categoryTableSelection'),
             shortcuts: [
-                { keys: ["Space"], description: t('toggleSelect', 'Toggle row selection') },
-                { keys: ["Shift", "ArrowDown"], description: t('extendSelectDown', 'Extend selection down') },
-                { keys: ["Shift", "ArrowUp"], description: t('extendSelectUp', 'Extend selection up') },
-                { keys: ["Mod", "A"], description: t('selectAll', 'Select/deselect all rows') },
+                { keys: ["Space"], description: t('toggleSelect') },
+                { keys: ["Shift", "ArrowDown"], description: t('extendSelectDown') },
+                { keys: ["Shift", "ArrowUp"], description: t('extendSelectUp') },
+                { keys: ["Mod", "A"], description: t('selectAll') },
             ],
         },
         {
-            title: t('categoryTableActions', 'Table Actions'),
+            title: t('categoryTableActions'),
             shortcuts: [
-                { keys: ["Enter"], description: t('editRow', 'Edit focused row') },
-                { keys: ["Mod", "Delete"], description: t('deleteRow', 'Delete focused row') },
-                { keys: ["Mod", "Backspace"], description: t('deleteRowAlt', 'Delete focused row') },
-                { keys: ["Mod", "E"], description: t('editRowAlt', 'Edit focused row') },
-                { keys: ["Mod", "M"], description: t('mockData', 'Generate mock data') },
-                { keys: ["Mod", "R"], description: t('refresh', 'Refresh table') },
-                { keys: ["Mod", "Shift", "E"], description: t('export', 'Export data') },
+                { keys: ["Enter"], description: t('editRow') },
+                { keys: ["Mod", "Delete"], description: t('deleteRow') },
+                { keys: ["Mod", "Backspace"], description: t('deleteRowAlt') },
+                { keys: ["Mod", "E"], description: t('editRowAlt') },
+                { keys: ["Mod", "M"], description: t('mockData') },
+                { keys: ["Mod", "R"], description: t('refresh') },
+                { keys: ["Mod", "Shift", "E"], description: t('export') },
             ],
         },
         {
-            title: t('categoryEditor', 'Query Editor'),
+            title: t('categoryEditor'),
             shortcuts: [
-                { keys: ["Mod", "Enter"], description: t('executeQuery', 'Execute query') },
+                { keys: ["Mod", "Enter"], description: t('executeQuery') },
             ],
         },
     ];
@@ -143,7 +143,7 @@ export const KeyboardShortcutsHelp: FC<KeyboardShortcutsHelpProps> = ({
             <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        {t('title', 'Keyboard Shortcuts')}
+                        {t('title')}
                     </DialogTitle>
                 </DialogHeader>
                 <div className="mt-4">
@@ -153,7 +153,7 @@ export const KeyboardShortcutsHelp: FC<KeyboardShortcutsHelpProps> = ({
                 </div>
                 <div className="mt-4 pt-4 border-t border-neutral-200 dark:border-neutral-700">
                     <p className="text-xs text-neutral-500 dark:text-neutral-400 text-center">
-                        {t('hint', 'Press ? anywhere to show this dialog')}
+                        {t('hint')}
                     </p>
                 </div>
             </DialogContent>

@@ -16,22 +16,26 @@
 
 package postgres
 
-import "encoding/hex"
+import (
+	"github.com/twpayne/go-geom/encoding/ewkb"
+	"github.com/twpayne/go-geom/encoding/wkt"
+)
 
-// FormatGeometryValue attempts to format PostGIS geometry data
-// PostGIS uses EWKB (Extended Well-Known Binary) format
-// For now, we'll just return hex format, but this can be extended
-// to parse and display WKT format if needed
+// FormatGeometryValue formats PostgreSQL geometry data for display.
+// PostGIS columns use EWKB format which we decode to WKT.
+// Native PostgreSQL geometric types (point, line, etc.) return text representation.
 func (p *PostgresPlugin) FormatGeometryValue(rawBytes []byte, columnType string) string {
-	// In a full implementation, you could:
-	// 1. Parse the EWKB format
-	// 2. Extract SRID if present
-	// 3. Convert to WKT (Well-Known Text) for display
-	// 4. Handle different geometry types appropriately
-	
-	// For now, just indicate it's PostGIS data
-	if len(rawBytes) > 0 {
-		return "GEOMETRY:0x" + hex.EncodeToString(rawBytes)
+	if len(rawBytes) == 0 {
+		return ""
 	}
-	return ""
+
+	// Try PostGIS EWKB decoding first
+	if geom, err := ewkb.Unmarshal(rawBytes); err == nil {
+		if wktStr, err := wkt.Marshal(geom); err == nil {
+			return wktStr
+		}
+	}
+
+	// Native PostgreSQL geometry types return text representation as bytes
+	return string(rawBytes)
 }

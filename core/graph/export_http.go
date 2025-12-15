@@ -62,15 +62,13 @@ func validateDelimiter(delimiter string) error {
 	return nil
 }
 
-// HandleExport handles HTTP requests for data export (CSV or Excel)
+// HandleExport handles HTTP requests for data export (CSV or Excel).
 func HandleExport(w http.ResponseWriter, r *http.Request) {
-	// Only allow POST requests
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Parse JSON body
 	var req struct {
 		Schema       string           `json:"schema"`
 		StorageUnit  string           `json:"storageUnit"`
@@ -89,23 +87,19 @@ func HandleExport(w http.ResponseWriter, r *http.Request) {
 	delimiter := req.Delimiter
 	format := req.Format
 
-	// Default format to CSV if not specified
 	if format == "" {
 		format = "csv"
 	}
 
-	// Validate format
 	if format != "csv" && format != "excel" {
 		http.Error(w, "Invalid format. Must be 'csv' or 'excel'", http.StatusBadRequest)
 		return
 	}
 
-	// Default to comma if no delimiter specified for CSV
 	if delimiter == "" {
 		delimiter = DefaultCSVDelimiter
 	}
 
-	// Validate delimiter for security and parsing safety
 	if err := validateDelimiter(delimiter); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -116,14 +110,12 @@ func HandleExport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get credentials
 	credentials := auth.GetCredentials(r.Context())
 	if credentials == nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	// Set up plugin
 	pluginConfig := engine.NewPluginConfig(credentials)
 	plugin := src.MainEngine.Choose(engine.DatabaseType(credentials.Type))
 
@@ -133,21 +125,15 @@ func HandleExport(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if format == "excel" {
-		// Handle Excel export
 		handleExcelExport(w, plugin, pluginConfig, schema, storageUnit, req.SelectedRows)
 	} else {
-		// Handle CSV export
 		handleCSVExport(w, plugin, pluginConfig, schema, storageUnit, delimiter, req.SelectedRows)
 	}
 }
 
 func handleCSVExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfig *engine.PluginConfig, schema, storageUnit, delimiter string, selectedRows []map[string]any) {
-	// Delimiter has already been validated in HandleExport
-	// Convert delimiter to rune
 	delimRune := rune(delimiter[0])
 
-	// Set response headers for CSV download
-	// Only include schema in filename if it exists (for SQLite, schema is empty)
 	var filename string
 	if schema != "" {
 		filename = fmt.Sprintf("%s_%s.csv", schema, storageUnit)
@@ -160,7 +146,6 @@ func handleCSVExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfig 
 	w.Header().Set("Pragma", "no-cache")
 	w.Header().Set("Expires", "0")
 
-	// Create CSV writer that writes directly to response
 	csvWriter := csv.NewWriter(w)
 	csvWriter.Comma = delimRune // Use user-specified delimiter
 	defer csvWriter.Flush()
@@ -168,7 +153,6 @@ func handleCSVExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfig 
 	// Track if we've written anything
 	rowsWritten := 0
 
-	// Create writer function that streams to HTTP response
 	writerFunc := func(row []string) error {
 		if err := csvWriter.Write(row); err != nil {
 			return err
@@ -196,11 +180,9 @@ func handleCSVExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfig 
 }
 
 func handleExcelExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfig *engine.PluginConfig, schema, storageUnit string, selectedRows []map[string]any) {
-	// Create a new Excel file
 	f := excelize.NewFile()
 	defer f.Close()
 
-	// Create a new sheet
 	sheetName := "Data"
 	index, err := f.NewSheet(sheetName)
 	if err != nil {
@@ -210,7 +192,6 @@ func handleExcelExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfi
 	f.SetActiveSheet(index)
 	f.DeleteSheet("Sheet1")
 
-	// Get stream writer for efficient memory usage
 	streamWriter, err := f.NewStreamWriter(sheetName)
 	if err != nil {
 		http.Error(w, "Failed to create Excel stream writer", http.StatusInternalServerError)
@@ -221,16 +202,13 @@ func handleExcelExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfi
 	rowCount := 0
 	currentRow := 1
 
-	// Create writer function that streams rows directly
 	writerFunc := func(row []string) error {
 		if rowCount >= MaxExcelRows {
 			return fmt.Errorf("excel export limit exceeded: maximum %d rows allowed", MaxExcelRows)
 		}
 
 		if len(headers) == 0 {
-			// First row is headers
 			headers = row
-			// Create header style
 			styleID, _ := f.NewStyle(&excelize.Style{
 				Font: &excelize.Font{Bold: true},
 				Fill: excelize.Fill{
@@ -275,7 +253,6 @@ func handleExcelExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfi
 		return
 	}
 
-	// Set column widths
 	if len(headers) > 0 {
 		for i := 0; i < len(headers); i++ {
 			streamWriter.SetColWidth(i+1, i+1, 15)
@@ -288,8 +265,7 @@ func handleExcelExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfi
 		return
 	}
 
-	// Set response headers for Excel download
-	// Only include schema in filename if it exists (for SQLite, schema is empty)
+	// Include schema in filename only if it exists (for SQLite, schema is empty)
 	var filename string
 	if schema != "" {
 		filename = fmt.Sprintf("%s_%s.xlsx", schema, storageUnit)

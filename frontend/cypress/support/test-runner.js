@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {validateAllFixtures} from './helpers/fixture-validator';
+import {validateAllFixtures, VALID_FEATURES} from './helpers/fixture-validator';
 
 // CE Database configurations - loaded from fixtures
 const ceDatabaseConfigs = {
@@ -113,7 +113,8 @@ export function getDatabaseId(dbConfig) {
 }
 
 /**
- * Login to database using configuration
+ * Login to database using configuration with session caching
+ * Uses cy.session() to cache login state and avoid re-authenticating on every test
  * @param {Object} dbConfig - Database configuration
  */
 export function loginToDatabase(dbConfig) {
@@ -127,19 +128,43 @@ export function loginToDatabase(dbConfig) {
     // Use uiType for dropdown selection if available, otherwise use type
     const databaseType = dbConfig.uiType || dbConfig.type;
 
-    cy.login(
+    // Create unique session key based on connection details
+    const sessionKey = [
         databaseType,
-        host,
-        user,
-        password,
-        database,
-        advanced
-    );
+        host || 'default',
+        database || 'default',
+        dbConfig.schema || 'default'
+    ];
 
-    // Select schema if applicable
-    if (dbConfig.schema) {
-        cy.selectSchema(dbConfig.schema);
-    }
+    cy.session(sessionKey, () => {
+        // Perform actual login (only runs if session not cached)
+        cy.login(
+            databaseType,
+            host,
+            user,
+            password,
+            database,
+            advanced
+        );
+
+        // Select schema if applicable
+        if (dbConfig.schema) {
+            cy.selectSchema(dbConfig.schema);
+        }
+    }, {
+        validate() {
+            // Quick validation that session is still valid
+            cy.visit('/storage-unit', { failOnStatusCode: false });
+            cy.get('[data-testid="sidebar-database"], [data-testid="sidebar-schema"]', { timeout: 5000 })
+                .should('exist');
+        },
+        cacheAcrossSpecs: true // Share session across spec files for same database
+    });
+
+    // After session restore, navigate to storage-unit page
+    cy.visit('/storage-unit');
+    cy.get('[data-testid="storage-unit-card"]', { timeout: 15000 })
+        .should('have.length.at.least', 1);
 }
 
 /**
@@ -150,14 +175,27 @@ export function loginToDatabase(dbConfig) {
  *     it('does something', () => { ... });
  *   });
  *
+ *   // Only run for databases that support specific features (skips others entirely)
+ *   forEachDatabase('sql', (db) => {
+ *     it('tests graph', () => { ... });
+ *   }, { features: ['graph'] });
+ *
  * @param {string} categoryFilter - 'sql', 'document', 'keyvalue', or 'all'
  * @param {Function} testFn - Function that receives database config and defines tests
  * @param {Object} options - Additional options
  * @param {boolean} options.login - Whether to auto-login before each test (default: true)
  * @param {boolean} options.logout - Whether to auto-logout after each test (default: true)
+ * @param {string[]} options.features - Required features; databases without ALL features are skipped entirely
  */
 export function forEachDatabase(categoryFilter, testFn, options = {}) {
-    const {login = true, logout = true} = options;
+    const {login = true, logout = true, features = []} = options;
+
+    // Validate requested features to catch typos early
+    for (const feature of features) {
+        if (!VALID_FEATURES.includes(feature)) {
+            throw new Error(`Unknown feature '${feature}' in forEachDatabase options. Valid features: ${VALID_FEATURES.join(', ')}`);
+        }
+    }
 
     // Get target database from env (if running single database)
     const targetDb = Cypress.env('database');
@@ -165,6 +203,14 @@ export function forEachDatabase(categoryFilter, testFn, options = {}) {
 
     // Get databases matching category filter
     let databases = getDatabasesByCategory(categoryFilter);
+
+    // Filter by required features BEFORE creating any test blocks
+    // This avoids login/setup overhead for databases that don't support the feature
+    if (features.length > 0) {
+        databases = databases.filter(db =>
+            features.every(feature => hasFeature(db, feature))
+        );
+    }
 
     // If running specific database, filter to just that one
     if (targetDb) {

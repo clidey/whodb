@@ -41,10 +41,6 @@ describe('Where Conditions', () => {
 
     // SQL Databases
     forEachDatabase('sql', (db) => {
-        if (!hasFeature(db, 'whereConditions')) {
-            return;
-        }
-
         const testTable = db.testTable || {
             name: 'users',
             idField: 'id',
@@ -230,14 +226,10 @@ describe('Where Conditions', () => {
             cy.clearWhereConditions();
             cy.submitTable();
         });
-    });
+    }, { features: ['whereConditions'] });
 
     // Document Databases
     forEachDatabase('document', (db) => {
-        if (!hasFeature(db, 'whereConditions')) {
-            return;
-        }
-
         const eq = getOperator(db, 'equals');
 
         it('applies where condition and filters documents', () => {
@@ -322,6 +314,6 @@ describe('Where Conditions', () => {
                 }
             });
         });
-    });
+    }, { features: ['whereConditions'] });
 
 });

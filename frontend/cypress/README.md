@@ -67,10 +67,10 @@ pnpm cypress:db elasticsearch
 pnpm cypress:db clickhouse
 ```
 
-### Headless Mode (CI/Parallel)
+### Headless Mode (CI)
 
 ```bash
-# All databases in parallel
+# All databases sequentially
 pnpm cypress:ce:headless
 
 # Specific database headless
@@ -81,11 +81,11 @@ pnpm cypress:db:headless mysql
 ### Direct Script Usage
 
 ```bash
-# Interactive: ./run-cypress.sh [edition] [headless] [database]
-../dev/run-cypress.sh ce false postgres
+# Interactive: ./run-cypress.sh [headless] [database]
+../dev/run-cypress.sh false postgres
 
-# Parallel: ./parallel-cypress.sh [edition] [headless] [database]
-../dev/parallel-cypress.sh ce true all
+# Headless: ./run-cypress.sh [headless] [database]
+../dev/run-cypress.sh true all
 ```
 
 ## Adding a New Feature Test
@@ -377,8 +377,8 @@ describe('SQL Autocomplete', () => {
 ## Adding a New Database
 
 1. Create `fixtures/databases/newdb.json` following the schema above
-2. Add to `DATABASES` array in `dev/parallel-cypress.sh`
-3. Add to `DB_CATEGORIES` map in `dev/parallel-cypress.sh`
+2. Add to `DATABASES` array in `dev/run-cypress.sh`
+3. Add to `DB_CATEGORIES` map in `dev/run-cypress.sh`
 4. Add to `databaseConfigs` in `support/test-runner.js`
 5. Add Docker service to `dev/docker-compose.e2e.yaml`
 6. Add npm script to `package.json` (optional)
@@ -388,7 +388,7 @@ describe('SQL Autocomplete', () => {
 ### Tests not running for a database
 
 Check that:
-- The database is in the `DATABASES` array in `parallel-cypress.sh`
+- The database is in the `DATABASES` array in `run-cypress.sh`
 - The fixture file exists in `fixtures/databases/`
 - The `forEachDatabase` category matches (`sql`, `document`, `keyvalue`, or `all`)
 

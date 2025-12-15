@@ -68,7 +68,6 @@ func (b *BatchProcessor) InsertBatch(db *gorm.DB, schema, tableName string, reco
 		return nil
 	}
 
-	// Build full table name
 	var fullTableName string
 	if schema != "" && b.dbType != engine.DatabaseType_Sqlite3 {
 		fullTableName = schema + "." + tableName
@@ -143,7 +142,6 @@ func (b *BatchProcessor) UpdateBatch(db *gorm.DB, schema, tableName string, upda
 		return nil
 	}
 
-	// Build full table name
 	var fullTableName string
 	if schema != "" && b.dbType != engine.DatabaseType_Sqlite3 {
 		fullTableName = schema + "." + tableName
@@ -226,7 +224,6 @@ func (b *BatchProcessor) DeleteBatch(db *gorm.DB, schema, tableName string, cond
 		return nil
 	}
 
-	// Build full table name
 	var fullTableName string
 	if schema != "" && b.dbType != engine.DatabaseType_Sqlite3 {
 		fullTableName = schema + "." + tableName
@@ -286,7 +283,6 @@ func (b *BatchProcessor) DeleteBatch(db *gorm.DB, schema, tableName string, cond
 
 // ExportInBatches exports data in batches to avoid memory issues
 func (b *BatchProcessor) ExportInBatches(db *gorm.DB, schema, tableName string, columns []string, writer func([]map[string]any) error) error {
-	// Build full table name
 	var fullTableName string
 	if schema != "" && b.dbType != engine.DatabaseType_Sqlite3 {
 		fullTableName = schema + "." + tableName
@@ -294,7 +290,6 @@ func (b *BatchProcessor) ExportInBatches(db *gorm.DB, schema, tableName string, 
 		fullTableName = tableName
 	}
 
-	// Build query
 	query := db.Table(fullTableName)
 	if len(columns) > 0 {
 		query = query.Select(columns)
@@ -348,7 +343,6 @@ func (b *BatchProcessor) ExportInBatches(db *gorm.DB, schema, tableName string, 
 
 // ProcessInBatches processes records in batches with a custom function
 func (b *BatchProcessor) ProcessInBatches(db *gorm.DB, schema, tableName string, processor func(*gorm.DB, []map[string]any) error) error {
-	// Build full table name
 	var fullTableName string
 	if schema != "" && b.dbType != engine.DatabaseType_Sqlite3 {
 		fullTableName = schema + "." + tableName

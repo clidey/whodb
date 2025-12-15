@@ -128,7 +128,7 @@ export const TourTooltip: FC<TourTooltipProps> = ({
             }
 
             if (style.top && typeof style.top === 'number') {
-                // todo: weird offset
+                // TODO: Compensate for unknown offset in tooltip positioning
                 style.top -= 25;
                 if (style.top + tooltipHeight > window.innerHeight) {
                     style.top = window.innerHeight - tooltipHeight - 20;

@@ -165,14 +165,8 @@ export const useDesktopMenu = () => {
         window.dispatchEvent(new CustomEvent('menu:trigger-export'));
       }),
       'menu:refresh': safeHandler(() => {
-        // For HashRouter, we should refresh data not reload the page
-        // Emit an event that components can listen to for refreshing their data
+        // Emit refresh event instead of page reload for HashRouter compatibility
         window.dispatchEvent(new CustomEvent('app:refresh-data'));
-        // Alternatively, if we need to reload the window properly with Wails:
-        // const wailsGo = (window as any).go;
-        // if (wailsGo?.main?.App?.ReloadWindow) {
-        //   wailsGo.main.App.ReloadWindow();
-        // }
       }),
       'menu:toggle-sidebar': safeHandler(() => {
         // Use the proper sidebar toggle mechanism - click the trigger button
@@ -202,13 +196,6 @@ export const useDesktopMenu = () => {
         }
         // If not on Scratchpad page, do nothing (shortcut is context-sensitive)
       }),
-      // Window and about operations could be implemented when needed
-      // 'menu:toggle-always-on-top': safeHandler(() => {
-      //   window.dispatchEvent(new CustomEvent('desktop:toggle-always-on-top'));
-      // }),
-      // 'menu:about': safeHandler(() => {
-      //   window.dispatchEvent(new CustomEvent('desktop:show-about'));
-      // }),
     };
 
     // Register all event handlers
@@ -226,34 +213,3 @@ export const useDesktopMenu = () => {
     };
   }, [isDesktop]);
 };
-
-// Hook for keyboard shortcuts (in addition to menu shortcuts)
-// Currently unused but kept for future keyboard shortcuts implementation
-// export const useDesktopKeyboard = () => {
-//   const isDesktop = isDesktopApp();
-//
-//   useEffect(() => {
-//     if (!isDesktop) return;
-//
-//     const handleKeyDown = (e: KeyboardEvent) => {
-//       const isMac = navigator.userAgent.toUpperCase().indexOf('MAC') >= 0;
-//       const ctrlOrCmd = isMac ? e.metaKey : e.ctrlKey;
-//
-//       // Additional keyboard shortcuts not in menu
-//       if (ctrlOrCmd && e.shiftKey) {
-//         switch (e.key.toLowerCase()) {
-//           case 'p':
-//             e.preventDefault();
-//             // Command palette could be implemented when needed
-//             break;
-//         }
-//       }
-//     };
-//
-//     window.addEventListener('keydown', handleKeyDown);
-//
-//     return () => {
-//       window.removeEventListener('keydown', handleKeyDown);
-//     };
-//   }, [isDesktop]);
-// };

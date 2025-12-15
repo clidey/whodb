@@ -83,7 +83,7 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to parse parseTime setting for database type %s", p.Type))
 		return nil, err
 	}
-	loc, err := time.LoadLocation(common.GetRecordValueOrDefault(config.Credentials.Advanced, locKey, "Local"))
+	loc, err := time.LoadLocation(common.GetRecordValueOrDefault(config.Credentials.Advanced, locKey, "UTC"))
 	if err != nil {
 		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to load time location for database type %s", p.Type))
 		return nil, err

@@ -209,8 +209,7 @@ export const StorageUnitPage: FC = () => {
         });
     }, [current?.Type, trackFrontendEvent, view]);
 
-    // For databases that don't have schemas (MongoDB, ClickHouse), pass the database name as the schema parameter
-    // todo: is there a different way to do this? clickhouse doesn't have schemas as a table is considered a schema. people mainly switch between DB
+    // TODO: ClickHouse/MongoDB use database name as schema parameter since they lack traditional schemas
     if (current?.Type === DatabaseType.ClickHouse || current?.Type === DatabaseType.MongoDb) {
         schema = current.Database
     }

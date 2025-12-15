@@ -41,6 +41,7 @@
   },
   "featureNotes": {},
   "expectedTables": [
+    "data_types",
     "order_items",
     "order_summary",
     "orders",
@@ -120,6 +121,199 @@
           "smallint_col": "256",
           "numeric_col": "9876.54",
           "description": "Test casting from strings"
+        }
+      }
+    },
+    "data_types": {
+      "columns": {
+        "id": "int",
+        "col_tinyint": "tinyint",
+        "col_smallint": "smallint",
+        "col_mediumint": "mediumint",
+        "col_int": "int",
+        "col_bigint": "bigint",
+        "col_float": "float",
+        "col_double": "double",
+        "col_decimal": "decimal",
+        "col_date": "date",
+        "col_datetime": "datetime",
+        "col_timestamp": "timestamp",
+        "col_time": "time",
+        "col_year": "year",
+        "col_char": "char",
+        "col_varchar": "varchar",
+        "col_tinytext": "tinytext",
+        "col_text": "text",
+        "col_mediumtext": "mediumtext",
+        "col_longtext": "longtext",
+        "col_json": "json",
+        "col_boolean": "tinyint"
+      },
+      "testData": {
+        "typeTests": {
+          "col_tinyint": {
+            "type": "TINYINT",
+            "addValue": "100",
+            "deleteValue": "110",
+            "originalValue": "50",
+            "updateValue": "75"
+          },
+          "col_smallint": {
+            "type": "SMALLINT",
+            "addValue": "30000",
+            "deleteValue": "31000",
+            "originalValue": "1000",
+            "updateValue": "25000"
+          },
+          "col_mediumint": {
+            "type": "MEDIUMINT",
+            "addValue": "5000000",
+            "deleteValue": "5100000",
+            "originalValue": "100000",
+            "updateValue": "4000000"
+          },
+          "col_int": {
+            "type": "INT",
+            "addValue": "2000000000",
+            "deleteValue": "2100000000",
+            "originalValue": "1000000",
+            "updateValue": "1500000000"
+          },
+          "col_bigint": {
+            "type": "BIGINT",
+            "addValue": "9000000000000",
+            "deleteValue": "9100000000000",
+            "originalValue": "10000000000",
+            "updateValue": "8000000000000"
+          },
+          "col_float": {
+            "type": "FLOAT",
+            "addValue": "3.5",
+            "deleteValue": "6.5",
+            "originalValue": "1.5",
+            "updateValue": "2.5"
+          },
+          "col_double": {
+            "type": "DOUBLE",
+            "addValue": "3.5",
+            "deleteValue": "6.5",
+            "originalValue": "2.5",
+            "updateValue": "4.5"
+          },
+          "col_decimal": {
+            "type": "DECIMAL",
+            "addValue": "12345.67",
+            "deleteValue": "54321.89",
+            "originalValue": "123.45",
+            "updateValue": "98765.43"
+          },
+          "col_date": {
+            "type": "DATE",
+            "addValue": "2025-12-31",
+            "displayAddValue": "2025-12-31T00:00:00Z",
+            "deleteValue": "2025-11-15",
+            "displayDeleteValue": "2025-11-15T00:00:00Z",
+            "originalValue": "2025-01-01T00:00:00Z",
+            "inputOriginalValue": "2025-01-01",
+            "updateValue": "2025-06-15",
+            "displayUpdateValue": "2025-06-15T00:00:00Z"
+          },
+          "col_datetime": {
+            "type": "DATETIME",
+            "addValue": "2025-12-31 23:59:59",
+            "displayAddValue": "2025-12-31T23:59:59Z",
+            "deleteValue": "2025-11-15 10:30:00",
+            "displayDeleteValue": "2025-11-15T10:30:00Z",
+            "originalValue": "2025-01-01T12:00:00Z",
+            "inputOriginalValue": "2025-01-01 12:00:00",
+            "updateValue": "2025-06-15 12:30:00",
+            "displayUpdateValue": "2025-06-15T12:30:00Z"
+          },
+          "col_timestamp": {
+            "type": "TIMESTAMP",
+            "addValue": "2025-12-31 23:59:59",
+            "displayAddValue": "2025-12-31T23:59:59Z",
+            "deleteValue": "2025-11-15 10:30:00",
+            "displayDeleteValue": "2025-11-15T10:30:00Z",
+            "originalValue": "2025-01-01T12:00:00Z",
+            "inputOriginalValue": "2025-01-01 12:00:00",
+            "updateValue": "2025-06-15 12:30:00",
+            "displayUpdateValue": "2025-06-15T12:30:00Z"
+          },
+          "col_time": {
+            "type": "TIME",
+            "addValue": "23:59:59",
+            "deleteValue": "10:30:00",
+            "originalValue": "12:00:00",
+            "updateValue": "12:30:00"
+          },
+          "col_year": {
+            "type": "YEAR",
+            "addValue": "2030",
+            "deleteValue": "2029",
+            "originalValue": "2025",
+            "updateValue": "2028"
+          },
+          "col_char": {
+            "type": "CHAR",
+            "addValue": "X",
+            "deleteValue": "Z",
+            "originalValue": "test",
+            "updateValue": "Y"
+          },
+          "col_varchar": {
+            "type": "VARCHAR",
+            "addValue": "new_varchar",
+            "deleteValue": "delete_varchar",
+            "originalValue": "varchar_val",
+            "updateValue": "updated_varchar"
+          },
+          "col_tinytext": {
+            "type": "TINYTEXT",
+            "addValue": "new tinytext",
+            "deleteValue": "delete tinytext",
+            "originalValue": "tiny text",
+            "updateValue": "updated tinytext"
+          },
+          "col_text": {
+            "type": "TEXT",
+            "addValue": "new text content",
+            "deleteValue": "delete text content",
+            "originalValue": "text value",
+            "updateValue": "updated text content"
+          },
+          "col_mediumtext": {
+            "type": "MEDIUMTEXT",
+            "addValue": "new mediumtext",
+            "deleteValue": "delete mediumtext",
+            "originalValue": "medium text value",
+            "updateValue": "updated mediumtext"
+          },
+          "col_longtext": {
+            "type": "LONGTEXT",
+            "addValue": "new longtext",
+            "deleteValue": "delete longtext",
+            "originalValue": "long text value",
+            "updateValue": "updated longtext"
+          },
+          "col_json": {
+            "type": "JSON",
+            "addValue": "{\"test\":\"new\"}",
+            "displayAddValue": "{\"test\": \"new\"}",
+            "deleteValue": "{\"delete\":\"test\"}",
+            "displayDeleteValue": "{\"delete\": \"test\"}",
+            "originalValue": "{\"key\": \"value\"}",
+            "inputOriginalValue": "{\"key\":\"value\"}",
+            "updateValue": "{\"test\":\"updated\"}",
+            "displayUpdateValue": "{\"test\": \"updated\"}"
+          },
+          "col_boolean": {
+            "type": "BOOLEAN",
+            "addValue": "0",
+            "deleteValue": "0",
+            "originalValue": "1",
+            "updateValue": "0"
+          }
         }
       }
     }

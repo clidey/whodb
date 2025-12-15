@@ -24,6 +24,77 @@ function extractText(chain) {
     });
 }
 
+// ============================================================================
+// Platform-Aware Keyboard Shortcuts
+// ============================================================================
+// The app uses different modifier keys based on platform:
+// - Mac: Ctrl+Number for sidebar nav, Cmd+K for command palette, Cmd+X for other shortcuts
+// - Windows/Linux: Alt+Number for sidebar nav, Ctrl+K for command palette, Ctrl+X for other shortcuts
+
+/**
+ * Detect if the test is running on macOS
+ * Uses Cypress.platform which returns 'darwin' for macOS
+ */
+const isMac = Cypress.platform === 'darwin';
+
+/**
+ * Platform-aware keyboard shortcuts object
+ * Use these instead of hardcoded modifiers to ensure tests work cross-platform
+ */
+const platformKeys = {
+    // Navigation shortcuts (sidebar navigation)
+    // Mac: Ctrl+Number, Windows/Linux: Alt+Number
+    navMod: isMac ? '{ctrl}' : '{alt}',
+
+    // Command/Control modifier for general shortcuts
+    // Mac: Cmd (meta), Windows/Linux: Ctrl
+    cmdMod: isMac ? '{cmd}' : '{ctrl}',
+};
+
+/**
+ * Get the navigation key combo for a number (1-9)
+ * @param {number} num - The number key (1-9)
+ * @returns {string} The Cypress key sequence
+ */
+function getNavShortcut(num) {
+    return `${platformKeys.navMod}${num}`;
+}
+
+/**
+ * Get the command/control key combo for a letter
+ * @param {string} key - The letter key
+ * @returns {string} The Cypress key sequence
+ */
+function getCmdShortcut(key) {
+    return `${platformKeys.cmdMod}${key}`;
+}
+
+// Export for use in test files
+Cypress.env('platformKeys', platformKeys);
+Cypress.env('isMac', isMac);
+
+/**
+ * Type a platform-aware navigation shortcut (Alt/Ctrl + Number)
+ * @param {number} num - The number key (1-4)
+ */
+Cypress.Commands.add('typeNavShortcut', (num) => {
+    cy.get('body').type(getNavShortcut(num));
+});
+
+/**
+ * Type a platform-aware command shortcut (Cmd/Ctrl + Key)
+ * @param {string} key - The key to combine with Cmd/Ctrl
+ * @param {Object} options - Additional options like shift
+ */
+Cypress.Commands.add('typeCmdShortcut', (key, options = {}) => {
+    let combo = platformKeys.cmdMod;
+    if (options.shift) {
+        combo += '{shift}';
+    }
+    combo += key;
+    cy.get('body').type(combo);
+});
+
 Cypress.Commands.add("goto", (route) => {
     cy.visit(`/${route}`);
 });
@@ -244,10 +315,8 @@ Cypress.Commands.add('getTableData', () => {
     return cy.get('table:visible', {timeout: 10000}).should('exist').then(() => {
         // Wait for at least one table row to be present with proper scoping
         return cy.get('table:visible tbody tr', {timeout: 10000})
+            .should('have.length.at.least', 1)
             .then(() => {
-                // Additional wait to ensure data is fully rendered
-                cy.wait(100);
-
                 // Now get the visible table and extract data
                 return cy.get('table:visible').first().then($table => {
                     const columns = Cypress.$.makeArray($table.find('th'))
@@ -676,7 +745,7 @@ Cypress.Commands.add("addRow", (data, isSingleInput = false) => {
         } else {
             // Traditional database - multiple fields
             for (const [key, value] of Object.entries(data)) {
-                cy.get(`[data-testid="add-row-field-${key}"] input`).clear().type(value);
+                cy.get(`[data-testid="add-row-field-${key}"] input`).clear().type(value, {parseSpecialCharSequences: false});
             }
         }
     });
@@ -690,7 +759,8 @@ Cypress.Commands.add("addRow", (data, isSingleInput = false) => {
     // Ensure body no longer has scroll lock
     cy.get('body', { timeout: 5000 }).should('not.have.attr', 'data-scroll-locked');
 
-    // Wait for GraphQL mutation to complete and UI to update
+    // Wait for GraphQL mutation to complete and UI to re-fetch/render
+    // This cannot be assertion-based because table already has rows
     cy.wait(500);
 
     // Ensure table is visible
@@ -742,11 +812,7 @@ Cypress.Commands.add("deleteRow", (rowIndex) => {
         // Use the helper to open context menu with retry logic
         cy.openContextMenu(rowIndex);
 
-        // Use scrollIntoView and force click to handle overflow issues with wide tables
-        cy.get('[data-testid="context-menu-more-actions"]', {timeout: 5000})
-            .scrollIntoView()
-            .should('exist')
-            .click({force: true});
+        // Click delete directly - no longer in a submenu
         cy.get('[data-testid="context-menu-delete-row"]', {timeout: 5000})
             .scrollIntoView()
             .should('exist')
@@ -759,7 +825,7 @@ Cypress.Commands.add("deleteRow", (rowIndex) => {
 });
 
 Cypress.Commands.add("updateRow", (rowIndex, columnIndex, text, cancel = true) => {
-    // Wait for table to stabilize
+    // Wait for table to stabilize before interacting
     cy.wait(500);
 
     // Use the helper to open context menu with retry logic
@@ -831,8 +897,8 @@ Cypress.Commands.add("searchTable", (search) => {
     // Break up the chain to avoid element detachment after clear
     cy.get('[data-testid="table-search"]').clear();
     cy.get('[data-testid="table-search"]').type(`${search}{enter}`);
-    // Wait for search to process and highlight to appear
-    cy.wait(300);
+    // Search completes when the input value is stable (no loading)
+    cy.get('[data-testid="table-search"]').should('have.value', search);
 });
 
 Cypress.Commands.add("getGraph", () => {
@@ -1595,7 +1661,8 @@ Cypress.Commands.add('verifyChatSQL', (expectedSQL) => {
  */
 Cypress.Commands.add('openMoveToScratchpad', () => {
     cy.get('.group\\/table-preview').last().within(() => {
-        cy.get('[title="Move to Scratchpad"]').click({ force: true });
+        // The button uses aria-label instead of title for accessibility
+        cy.get('[aria-label="Move to Scratchpad"]').click({ force: true });
     });
     cy.contains('h2', 'Move to Scratchpad', { timeout: 5000 }).should('be.visible');
 });

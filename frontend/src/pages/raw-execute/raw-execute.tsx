@@ -414,7 +414,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
         setError(null);
         setLoading(true);
 
-        // todo: temporary delay to simulate loading state, fix this in the future
+        // TODO: Remove artificial delay - exists to show loading state for fast queries
         setTimeout(() => {
             setLoading(false);
         }, 1000);
@@ -1053,7 +1053,7 @@ export const RawExecutePage: FC = () => {
                                                             <EditableInput page={page} setValue={(newName) => handleUpdatePageName(page, newName)} />
                                                             <button
                                                                 type="button"
-                                                                title="Delete page"
+                                                                title={t('deletePageButton')}
                                                                 onClick={(e) => {
                                                                     e.preventDefault();
                                                                     e.stopPropagation();
@@ -1062,7 +1062,7 @@ export const RawExecutePage: FC = () => {
                                                                 className={cn("opacity-0 group-hover:opacity-100 transition-opacity", {
                                                                     "hidden": pages.length <= 1,
                                                                 })}
-                                                                aria-label="Delete page"
+                                                                aria-label={t('deletePageButton')}
                                                                 data-testid={`delete-page-tab-${index}`}
                                                             >
                                                                 <XMarkIcon className="w-3 h-3" />
@@ -1084,7 +1084,7 @@ export const RawExecutePage: FC = () => {
                                                 className={classNames({
                                                     "hidden": page.id !== activePageId,
                                                 })}
-                                                // todo this animation
+                                                // TODO: Improve page transition animation
                                                 initial={{ opacity: 0, y: 10 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 exit={{ opacity: 0, y: -10 }}

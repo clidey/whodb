@@ -21,7 +21,7 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-// Sort direction constants
+// SortDirection indicates ascending or descending sort order.
 type SortDirection int
 
 const (
@@ -29,27 +29,30 @@ const (
 	Down                      // DESC
 )
 
-// Sort represents a sort condition
+// Sort represents a column sort condition with direction.
 type Sort struct {
 	Column    string
 	Direction SortDirection
 }
 
-// SearchCondition types for WHERE clauses
+// SearchCondition represents a WHERE clause condition that can be atomic, AND, or OR.
 type SearchCondition struct {
 	And    *AndCondition
 	Or     *OrCondition
 	Atomic *AtomicCondition
 }
 
+// AndCondition represents multiple conditions joined with AND.
 type AndCondition struct {
 	Conditions []SearchCondition
 }
 
+// OrCondition represents multiple conditions joined with OR.
 type OrCondition struct {
 	Conditions []SearchCondition
 }
 
+// AtomicCondition represents a single comparison condition (e.g., column = value).
 type AtomicCondition struct {
 	Key        string
 	Operator   string
@@ -57,7 +60,7 @@ type AtomicCondition struct {
 	ColumnType string
 }
 
-// AtomicOperator represents comparison operators
+// AtomicOperator represents SQL comparison operators.
 type AtomicOperator string
 
 const (
@@ -75,9 +78,13 @@ const (
 	IsNotNull          AtomicOperator = "IS NOT NULL"
 )
 
+// DBOperation is a function that performs database operations with a GORM connection.
 type DBOperation[T any] func(*gorm.DB) (T, error)
+
+// DBCreationFunc is a function that creates a new GORM database connection.
 type DBCreationFunc func(pluginConfig *engine.PluginConfig) (*gorm.DB, error)
 
+// GetGormLogConfig returns the GORM logger level based on the environment log level setting.
 func GetGormLogConfig() logger.LogLevel {
 	switch env.LogLevel {
 	case "warning":
@@ -89,7 +96,8 @@ func GetGormLogConfig() logger.LogLevel {
 	}
 }
 
-// WithConnection handles database connection lifecycle and executes the operation
+// WithConnection manages the database connection lifecycle for an operation.
+// It creates a connection, executes the operation, and ensures the connection is closed.
 func WithConnection[T any](config *engine.PluginConfig, DB DBCreationFunc, operation DBOperation[T]) (T, error) {
 	db, err := DB(config)
 	if err != nil {

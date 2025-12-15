@@ -209,3 +209,25 @@ INSERT INTO test_casting (bigint_col, integer_col, smallint_col, numeric_col, de
 VALUES (9223372036854775807, 2147483647, 32767, 99999999.99, 'Maximum values'),
        (1000000, 1000, 100, 1234.56, 'Regular values'),
        (-9223372036854775808, -2147483648, -32768, -99999999.99, 'Minimum values');
+
+-- Data Types Table for exhaustive type testing
+DROP TABLE IF EXISTS data_types;
+CREATE TABLE IF NOT EXISTS data_types (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    col_integer INTEGER,
+    col_real REAL,
+    col_text TEXT,
+    col_numeric NUMERIC,
+    col_boolean INTEGER,
+    col_date TEXT,
+    col_datetime TEXT
+);
+
+-- Insert seed data for data_types
+INSERT INTO data_types (
+    col_integer, col_real, col_text, col_numeric,
+    col_boolean, col_date, col_datetime
+) VALUES (
+    1000000, 3.14159, 'text_value', 123.45,
+    1, '2025-01-01', '2025-01-01 12:00:00'
+);

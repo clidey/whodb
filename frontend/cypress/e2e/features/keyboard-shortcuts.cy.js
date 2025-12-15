@@ -277,11 +277,11 @@ describe('Keyboard Shortcuts', () => {
         });
 
         describe('Global Table Shortcuts (Ctrl/Cmd)', () => {
-            it('Ctrl+M opens Mock Data sheet', () => {
+            it('Cmd/Ctrl+M opens Mock Data sheet', () => {
                 cy.data(tableName);
 
-                // Press Ctrl+M - events are on window, so use body
-                cy.get('body').type('{ctrl}m');
+                // Press Cmd+M (Mac) or Ctrl+M (Win/Linux)
+                cy.typeCmdShortcut('m');
 
                 // Mock Data sheet should open
                 cy.contains('Mock Data').should('be.visible');
@@ -290,22 +290,22 @@ describe('Keyboard Shortcuts', () => {
                 cy.get('body').type('{esc}');
             });
 
-            it('Ctrl+A selects all visible rows', () => {
+            it('Cmd/Ctrl+A selects all visible rows', () => {
                 cy.data(tableName);
 
                 // Ensure no rows are selected initially (Radix checkbox uses data-state)
                 cy.get('table tbody tr [data-slot="checkbox"][data-state="checked"]').should('not.exist');
 
-                // Press Ctrl+A
-                cy.get('body').type('{ctrl}a');
+                // Press Cmd+A (Mac) or Ctrl+A (Win/Linux)
+                cy.typeCmdShortcut('a');
 
                 // All row checkboxes should be checked (Radix checkbox uses data-state)
                 cy.get('table tbody tr [data-slot="checkbox"]').each(($checkbox) => {
                     cy.wrap($checkbox).should('have.attr', 'data-state', 'checked');
                 });
 
-                // Press Ctrl+A again to deselect
-                cy.get('body').type('{ctrl}a');
+                // Press Cmd/Ctrl+A again to deselect
+                cy.typeCmdShortcut('a');
 
                 // All row checkboxes should be unchecked (Radix checkbox uses data-state)
                 cy.get('table tbody tr [data-slot="checkbox"]').each(($checkbox) => {
@@ -313,11 +313,11 @@ describe('Keyboard Shortcuts', () => {
                 });
             });
 
-            it('Ctrl+Shift+E opens Export dialog', () => {
+            it('Cmd/Ctrl+Shift+E opens Export dialog', () => {
                 cy.data(tableName);
 
-                // Press Ctrl+Shift+E
-                cy.get('body').type('{ctrl}{shift}e');
+                // Press Cmd+Shift+E (Mac) or Ctrl+Shift+E (Win/Linux)
+                cy.typeCmdShortcut('e', { shift: true });
 
                 // Export dialog should open
                 cy.contains('Export').should('be.visible');
@@ -326,14 +326,14 @@ describe('Keyboard Shortcuts', () => {
                 cy.get('body').type('{esc}');
             });
 
-            it('Ctrl+E edits focused row', () => {
+            it('Cmd/Ctrl+E edits focused row', () => {
                 cy.data(tableName);
 
                 // Focus first row
                 cy.get('body').type('{downarrow}');
 
-                // Press Ctrl+E
-                cy.get('body').type('{ctrl}e');
+                // Press Cmd+E (Mac) or Ctrl+E (Win/Linux)
+                cy.typeCmdShortcut('e');
 
                 // Edit dialog should open
                 cy.contains('Edit Row').should('be.visible');
@@ -342,11 +342,11 @@ describe('Keyboard Shortcuts', () => {
                 cy.get('body').type('{esc}');
             });
 
-            it('Ctrl+R refreshes the table', () => {
+            it('Cmd/Ctrl+R refreshes the table', () => {
                 cy.data(tableName);
 
-                // Press Ctrl+R to refresh
-                cy.get('body').type('{ctrl}r');
+                // Press Cmd+R (Mac) or Ctrl+R (Win/Linux)
+                cy.typeCmdShortcut('r');
 
                 // Table should still have rows after refresh
                 cy.get('table tbody tr').should('have.length.at.least', 1);
@@ -453,7 +453,7 @@ describe('Keyboard Shortcuts', () => {
         });
 
         describe('Pagination Shortcuts', () => {
-            it('Ctrl+ArrowRight goes to next page', () => {
+            it('Cmd/Ctrl+ArrowRight goes to next page', () => {
                 cy.data(tableName);
 
                 // Set page size to a small value to see pagination
@@ -464,14 +464,14 @@ describe('Keyboard Shortcuts', () => {
                 // Check we're on page 1
                 cy.get('[data-testid="table-page-number"]').first().should('have.attr', 'data-active', 'true');
 
-                // Press Ctrl+ArrowRight to go to next page
-                cy.get('body').type('{ctrl}{rightarrow}');
+                // Press Cmd+ArrowRight (Mac) or Ctrl+ArrowRight (Win/Linux) to go to next page
+                cy.typeCmdShortcut('{rightarrow}');
 
                 // Should now be on page 2
                 cy.get('[data-testid="table-page-number"]').eq(1).should('have.attr', 'data-active', 'true');
             });
 
-            it('Ctrl+ArrowLeft goes to previous page', () => {
+            it('Cmd/Ctrl+ArrowLeft goes to previous page', () => {
                 cy.data(tableName);
 
                 // Set page size to a small value to see pagination
@@ -483,14 +483,14 @@ describe('Keyboard Shortcuts', () => {
                 cy.get('[data-testid="table-page-number"]').eq(1).click();
                 cy.get('[data-testid="table-page-number"]').eq(1).should('have.attr', 'data-active', 'true');
 
-                // Press Ctrl+ArrowLeft to go to previous page
-                cy.get('body').type('{ctrl}{leftarrow}');
+                // Press Cmd+ArrowLeft (Mac) or Ctrl+ArrowLeft (Win/Linux) to go to previous page
+                cy.typeCmdShortcut('{leftarrow}');
 
                 // Should now be on page 1
                 cy.get('[data-testid="table-page-number"]').first().should('have.attr', 'data-active', 'true');
             });
 
-            it('Ctrl+ArrowLeft does nothing on first page', () => {
+            it('Cmd/Ctrl+ArrowLeft does nothing on first page', () => {
                 cy.data(tableName);
 
                 // Set page size to a small value to see pagination
@@ -501,8 +501,8 @@ describe('Keyboard Shortcuts', () => {
                 // Ensure we're on page 1
                 cy.get('[data-testid="table-page-number"]').first().should('have.attr', 'data-active', 'true');
 
-                // Press Ctrl+ArrowLeft - should stay on page 1
-                cy.get('body').type('{ctrl}{leftarrow}');
+                // Press Cmd/Ctrl+ArrowLeft - should stay on page 1
+                cy.typeCmdShortcut('{leftarrow}');
 
                 // Should still be on page 1
                 cy.get('[data-testid="table-page-number"]').first().should('have.attr', 'data-active', 'true');
@@ -556,67 +556,67 @@ describe('Keyboard Shortcuts', () => {
                 // Get initial sidebar state
                 cy.get('[data-sidebar="sidebar"]').should('exist');
 
-                // Press Ctrl+B to toggle sidebar
-                cy.get('body').type('{ctrl}b');
+                // Press Cmd/Ctrl+B to toggle sidebar
+                cy.typeCmdShortcut('b');
 
                 // Wait for animation
                 cy.wait(300);
 
-                // Press Ctrl+B again to toggle back
-                cy.get('body').type('{ctrl}b');
+                // Press Cmd/Ctrl+B again to toggle back
+                cy.typeCmdShortcut('b');
 
                 // Sidebar should be visible again
                 cy.wait(300);
                 cy.get('[data-sidebar="sidebar"]').should('exist');
             });
 
-            it('Alt+1 navigates to first view', () => {
+            it('navigates to first view with number shortcut', () => {
                 cy.data(tableName);
 
-                // Press Alt+1 to go to first view (Chat for SQL databases)
-                cy.get('body').type('{alt}1');
+                // Press Ctrl+1 (Mac) or Alt+1 (Win/Linux) to go to first view (Chat for SQL databases)
+                cy.typeNavShortcut(1);
 
                 // Should navigate to chat page
                 cy.url().should('include', '/chat');
             });
 
-            it('Alt+2 navigates to second view', () => {
+            it('navigates to second view with number shortcut', () => {
                 cy.data(tableName);
 
-                // Press Alt+2 to go to second view (Storage Units/Tables)
-                cy.get('body').type('{alt}2');
+                // Press Ctrl+2 (Mac) or Alt+2 (Win/Linux) to go to second view (Storage Units/Tables)
+                cy.typeNavShortcut(2);
 
                 // Should navigate to storage-unit page
                 cy.url().should('include', '/storage-unit');
             });
 
-            it('Alt+3 navigates to third view', () => {
+            it('navigates to third view with number shortcut', () => {
                 cy.data(tableName);
 
-                // Press Alt+3 to go to third view (Graph)
-                cy.get('body').type('{alt}3');
+                // Press Ctrl+3 (Mac) or Alt+3 (Win/Linux) to go to third view (Graph)
+                cy.typeNavShortcut(3);
 
                 // Should navigate to graph page
                 cy.url().should('include', '/graph');
             });
 
-            it('Alt+4 navigates to fourth view (Scratchpad)', () => {
+            it('navigates to fourth view (Scratchpad) with number shortcut', () => {
                 cy.data(tableName);
 
-                // Press Alt+4 to go to fourth view (Scratchpad)
-                cy.get('body').type('{alt}4');
+                // Press Ctrl+4 (Mac) or Alt+4 (Win/Linux) to go to fourth view (Scratchpad)
+                cy.typeNavShortcut(4);
 
                 // Should navigate to scratchpad page
                 cy.url().should('include', '/scratchpad');
             });
         });
 
-        describe('Command Palette (Ctrl+K)', () => {
-            it('Ctrl+K opens command palette', () => {
+        describe('Command Palette (Cmd/Ctrl+K)', () => {
+            it('Cmd/Ctrl+K opens command palette', () => {
                 cy.data(tableName);
 
-                // Press Ctrl+K
-                cy.get('body').type('{ctrl}k');
+                // Press Cmd+K (Mac) or Ctrl+K (Win/Linux)
+                cy.typeCmdShortcut('k');
 
                 // Command palette should open
                 cy.get('[data-testid="command-palette"]').should('be.visible');
@@ -646,7 +646,7 @@ describe('Keyboard Shortcuts', () => {
                 cy.data(tableName);
 
                 // Open command palette
-                cy.get('body').type('{ctrl}k');
+                cy.typeCmdShortcut('k');
 
                 // Should show navigation commands
                 cy.get('[data-testid="command-nav-chat"]').should('exist');
@@ -662,7 +662,7 @@ describe('Keyboard Shortcuts', () => {
                 cy.data(tableName);
 
                 // Open command palette
-                cy.get('body').type('{ctrl}k');
+                cy.typeCmdShortcut('k');
 
                 // Should show action commands
                 cy.get('[data-testid="command-action-refresh"]').should('exist');
@@ -678,7 +678,7 @@ describe('Keyboard Shortcuts', () => {
                 cy.data(tableName);
 
                 // Open command palette
-                cy.get('body').type('{ctrl}k');
+                cy.typeCmdShortcut('k');
 
                 // Click on Chat navigation
                 cy.get('[data-testid="command-nav-chat"]').click();
@@ -691,7 +691,7 @@ describe('Keyboard Shortcuts', () => {
                 cy.data(tableName);
 
                 // Open command palette
-                cy.get('body').type('{ctrl}k');
+                cy.typeCmdShortcut('k');
 
                 // Type to search
                 cy.get('[data-testid="command-palette-input"]').type('graph');
@@ -924,7 +924,7 @@ describe('Keyboard Shortcuts', () => {
                 cy.data(tableName);
 
                 // Open command palette
-                cy.get('body').type('{ctrl}k');
+                cy.typeCmdShortcut('k');
 
                 // Should show "Sort By" section with column options
                 cy.contains('Sort By').should('exist');
@@ -939,7 +939,7 @@ describe('Keyboard Shortcuts', () => {
                 cy.data(tableName);
 
                 // Open command palette
-                cy.get('body').type('{ctrl}k');
+                cy.typeCmdShortcut('k');
 
                 // Click on sort by id
                 cy.get('[data-testid="command-sort-id"]').click();
@@ -955,7 +955,7 @@ describe('Keyboard Shortcuts', () => {
                 cy.data(tableName);
 
                 // Open command palette
-                cy.get('body').type('{ctrl}k');
+                cy.typeCmdShortcut('k');
 
                 // Type to search for sort
                 cy.get('[data-testid="command-palette-input"]').type('sort by name');
@@ -970,8 +970,8 @@ describe('Keyboard Shortcuts', () => {
         });
 
         // Deletion tests are placed at the end because they modify data and could affect other tests
-        describe('Ctrl+Delete/Backspace - Delete Row', () => {
-            it('Delete key without Ctrl does not delete row', () => {
+        describe('Cmd/Ctrl+Delete/Backspace - Delete Row', () => {
+            it('Delete key without Cmd/Ctrl does not delete row', () => {
                 cy.data(tableName);
 
                 // Get initial row count
@@ -979,7 +979,7 @@ describe('Keyboard Shortcuts', () => {
                     // Focus first row
                     cy.get('body').type('{downarrow}');
 
-                    // Press Delete without Ctrl
+                    // Press Delete without Cmd/Ctrl
                     cy.get('body').type('{del}');
 
                     // Row count should remain the same
@@ -987,7 +987,7 @@ describe('Keyboard Shortcuts', () => {
                 });
             });
 
-            it('Ctrl+Delete triggers delete for focused row', () => {
+            it('Cmd/Ctrl+Delete triggers delete for focused row', () => {
                 cy.data(tableName);
 
                 // Get initial row count
@@ -995,15 +995,15 @@ describe('Keyboard Shortcuts', () => {
                     // Focus first row
                     cy.get('body').type('{downarrow}');
 
-                    // Press Ctrl+Delete
-                    cy.get('body').type('{ctrl}{del}');
+                    // Press Cmd+Delete (Mac) or Ctrl+Delete (Win/Linux)
+                    cy.typeCmdShortcut('{del}');
 
                     // Row should be deleted (count decreased)
                     cy.get('table tbody tr', {timeout: 10000}).should('have.length', initialCount - 1);
                 });
             });
 
-            it('Ctrl+Backspace triggers delete for focused row', () => {
+            it('Cmd/Ctrl+Backspace triggers delete for focused row', () => {
                 cy.data(tableName);
 
                 // Get initial row count
@@ -1011,8 +1011,8 @@ describe('Keyboard Shortcuts', () => {
                     // Focus first row
                     cy.get('body').type('{downarrow}');
 
-                    // Press Ctrl+Backspace
-                    cy.get('body').type('{ctrl}{backspace}');
+                    // Press Cmd+Backspace (Mac) or Ctrl+Backspace (Win/Linux)
+                    cy.typeCmdShortcut('{backspace}');
 
                     // Row should be deleted (count decreased)
                     cy.get('table tbody tr', {timeout: 10000}).should('have.length', initialCount - 1);

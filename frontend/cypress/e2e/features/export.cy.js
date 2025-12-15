@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 
-import {forEachDatabase, hasFeature} from '../../support/test-runner';
+import {forEachDatabase} from '../../support/test-runner';
 
 describe('Data Export', () => {
 
     // SQL Databases
     forEachDatabase('sql', (db) => {
-        if (!hasFeature(db, 'export')) {
-            return;
-        }
-
         const testTable = db.testTable || {name: 'users'};
         const tableName = testTable.name;
 
@@ -155,14 +151,10 @@ describe('Data Export', () => {
                 cy.get('[role="dialog"]').should('not.exist');
             });
         });
-    });
+    }, { features: ['export'] });
 
     // Document Databases
     forEachDatabase('document', (db) => {
-        if (!hasFeature(db, 'export')) {
-            return;
-        }
-
         it('exports collection/index data as CSV', () => {
             cy.data('users');
             cy.intercept('POST', '/api/export').as('export');
@@ -190,6 +182,6 @@ describe('Data Export', () => {
             cy.get('body').type('{esc}');
             cy.get('[role="dialog"]').should('not.exist');
         });
-    });
+    }, { features: ['export'] });
 
 });

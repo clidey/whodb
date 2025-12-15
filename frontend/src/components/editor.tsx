@@ -42,12 +42,10 @@ import {useApolloClient} from "@apollo/client";
 import {createSQLAutocomplete} from "./editor-autocomplete";
 import { useTranslation } from "@/hooks/use-translation";
 
-// SQL validation function
 const isValidSQLQuery = (text: string): boolean => {
   const trimmed = text.trim();
   if (!trimmed) return false;
-  
-  // Basic SQL validation - check for common SQL keywords at the start
+
   const sqlKeywords = [
     'SELECT', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'ALTER', 
     'WITH', 'EXPLAIN', 'DESCRIBE', 'SHOW', 'USE', 'SET'
@@ -57,19 +55,16 @@ const isValidSQLQuery = (text: string): boolean => {
   return sqlKeywords.some(keyword => upperText.startsWith(keyword));
 };
 
-// Function to detect if a query is destructive (modifies data)
 const isDestructiveQuery = (text: string): boolean => {
   const trimmed = text.trim();
   if (!trimmed) return false;
-  
+
   const upperText = trimmed.toUpperCase();
-  
-  // Safe read-only operations
+
   const safeKeywords = [
     'SELECT', 'WITH', 'EXPLAIN', 'DESCRIBE', 'SHOW', 'USE'
   ];
-  
-  // Destructive operations that modify data or schema
+
   const destructiveKeywords = [
     'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'ALTER', 
     'TRUNCATE', 'REPLACE', 'MERGE', 'CALL', 'EXEC', 'EXECUTE'
@@ -105,18 +100,15 @@ const findValidQueriesWithPositions = (doc: any): Array<{query: string, startLin
     const line = lines[i];
     const trimmedLine = line.trim();
     
-    // Skip empty lines unless we're already in a query
     if (!trimmedLine && !inQuery) {
       continue;
     }
-    
-    // If this line starts a new query (contains SQL keywords)
+
     if (!inQuery && isValidSQLQuery(trimmedLine)) {
       currentQuery = trimmedLine;
       queryStartLine = i + 1; // Convert to 1-based line number
       inQuery = true;
     }
-    // If we're in a query, append to current query
     else if (inQuery) {
       currentQuery += '\n' + line;
     }
@@ -161,7 +153,6 @@ type ICodeEditorProps = {
   disabled?: boolean;
 };
 
-// Custom gutter marker for play button
 class PlayButtonMarker extends GutterMarker {
   constructor(private onRun: (lineText?: string) => void, private queryText: string) {
     super();
@@ -231,7 +222,6 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
     onRunReference.current = onRun;
   }, [onRun]);
 
-  // Handler for executing queries with destructive confirmation
   const handleQueryExecution = useCallback((queryText: string) => {
     if (language === "sql" && isDestructiveQuery(queryText)) {
       setPendingQuery(queryText);
@@ -242,14 +232,12 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
     }
   }, [language, onRun]);
 
-  // Handler for confirming destructive query execution
   const handleConfirmDestructiveQuery = useCallback(() => {
     onRun?.(pendingQuery);
     setShowDestructiveDialog(false);
     setPendingQuery("");
   }, [onRun, pendingQuery]);
 
-  // Handler for canceling destructive query execution
   const handleCancelDestructiveQuery = useCallback(() => {
     setShowDestructiveDialog(false);
     setPendingQuery("");
@@ -433,7 +421,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
       if (language === "markdown") {
         return (
           <div className="h-full bg-white p-4 pl-8 dark:bg-[#252526] dark:backdrop-blur-md markdown-preview dark:*:text-neutral-300 overflow-y-auto">
-            {/* todo: there seems to be an issue with links in markdown with the library */}
+            {/* TODO: Links in markdown don't render correctly with this library version */}
             <MarkdownPreview remarkPlugins={[remarkGfm]}>{value}</MarkdownPreview>
           </div>
         );

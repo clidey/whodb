@@ -1,5 +1,6 @@
 {
   "type": "Sqlite3",
+  "id": "sqlite",
   "category": "sql",
   "testTable": {
     "name": "users",
@@ -37,10 +38,12 @@
     "mockData": true,
     "chat": true,
     "whereConditions": true,
-    "queryHistory": true
+    "queryHistory": true,
+    "crud": true
   },
   "featureNotes": {},
   "expectedTables": [
+    "data_types",
     "order_items",
     "orders",
     "payments",
@@ -119,6 +122,71 @@
           "smallint_col": "256",
           "numeric_col": "9876.54",
           "description": "Test casting from strings"
+        }
+      }
+    },
+    "data_types": {
+      "columns": {
+        "id": "INTEGER",
+        "col_integer": "INTEGER",
+        "col_real": "REAL",
+        "col_text": "TEXT",
+        "col_numeric": "NUMERIC",
+        "col_boolean": "INTEGER",
+        "col_date": "TEXT",
+        "col_datetime": "TEXT"
+      },
+      "testData": {
+        "typeTests": {
+          "col_integer": {
+            "type": "INTEGER",
+            "addValue": "2000000000",
+            "deleteValue": "2100000000",
+            "originalValue": "1000000",
+            "updateValue": "1500000000"
+          },
+          "col_real": {
+            "type": "REAL",
+            "addValue": "3.5",
+            "deleteValue": "6.5",
+            "originalValue": "3.14159",
+            "updateValue": "2.5"
+          },
+          "col_text": {
+            "type": "TEXT",
+            "addValue": "new text content",
+            "deleteValue": "delete text content",
+            "originalValue": "text_value",
+            "updateValue": "updated text content"
+          },
+          "col_numeric": {
+            "type": "NUMERIC",
+            "addValue": "12345.67",
+            "deleteValue": "54321.89",
+            "originalValue": "123.45",
+            "updateValue": "98765.43"
+          },
+          "col_boolean": {
+            "type": "BOOLEAN",
+            "addValue": "0",
+            "deleteValue": "0",
+            "originalValue": "1",
+            "updateValue": "0"
+          },
+          "col_date": {
+            "type": "DATE",
+            "addValue": "2025-12-31",
+            "deleteValue": "2025-11-15",
+            "originalValue": "2025-01-01",
+            "updateValue": "2025-06-15"
+          },
+          "col_datetime": {
+            "type": "DATETIME",
+            "addValue": "2025-12-31 23:59:59",
+            "deleteValue": "2025-11-15 10:30:00",
+            "originalValue": "2025-01-01 12:00:00",
+            "updateValue": "2025-06-15 12:30:00"
+          }
         }
       }
     }

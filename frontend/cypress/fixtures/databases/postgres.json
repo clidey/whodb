@@ -43,6 +43,7 @@
     "chat": "Postgres supports all AI chat features including SQL generation"
   },
   "expectedTables": [
+    "data_types",
     "order_items",
     "order_summary",
     "orders",
@@ -122,6 +123,220 @@
           "smallint_col": "256",
           "numeric_col": "9876.54",
           "description": "Test casting from strings"
+        }
+      }
+    },
+    "data_types": {
+      "columns": {
+        "id": "integer",
+        "col_smallint": "smallint",
+        "col_integer": "integer",
+        "col_bigint": "bigint",
+        "col_decimal": "numeric",
+        "col_numeric": "numeric",
+        "col_real": "real",
+        "col_double": "double precision",
+        "col_money": "money",
+        "col_char": "character",
+        "col_varchar": "character varying",
+        "col_text": "text",
+        "col_bytea": "bytea",
+        "col_timestamp": "timestamp without time zone",
+        "col_timestamptz": "timestamp with time zone",
+        "col_date": "date",
+        "col_time": "time without time zone",
+        "col_timetz": "time with time zone",
+        "col_boolean": "boolean",
+        "col_point": "point",
+        "col_line": "line",
+        "col_lseg": "lseg",
+        "col_box": "box",
+        "col_path": "path",
+        "col_polygon": "polygon",
+        "col_circle": "circle",
+        "col_cidr": "cidr",
+        "col_inet": "inet",
+        "col_macaddr": "macaddr",
+        "col_uuid": "uuid",
+        "col_xml": "xml",
+        "col_json": "json",
+        "col_jsonb": "jsonb"
+      },
+      "testData": {
+        "typeTests": {
+          "col_smallint": {
+            "type": "SMALLINT",
+            "addValue": "30000",
+            "deleteValue": "31000",
+            "originalValue": "100",
+            "updateValue": "25000"
+          },
+          "col_integer": {
+            "type": "INTEGER",
+            "addValue": "2000000",
+            "deleteValue": "2100000",
+            "originalValue": "1000",
+            "updateValue": "1500000"
+          },
+          "col_bigint": {
+            "type": "BIGINT",
+            "addValue": "9000000000000",
+            "deleteValue": "9100000000000",
+            "originalValue": "100000",
+            "updateValue": "8000000000000"
+          },
+          "col_decimal": {
+            "type": "DECIMAL",
+            "addValue": "12345.67",
+            "deleteValue": "12399.99",
+            "originalValue": "123.45",
+            "updateValue": "98765.43"
+          },
+          "col_numeric": {
+            "type": "NUMERIC",
+            "addValue": "54321.98",
+            "deleteValue": "54399.99",
+            "originalValue": "678.90",
+            "updateValue": "11111.11"
+          },
+          "col_real": {
+            "type": "REAL",
+            "addValue": "3.5",
+            "deleteValue": "6.5",
+            "originalValue": "1.5",
+            "updateValue": "2.5"
+          },
+          "col_double": {
+            "type": "DOUBLE PRECISION",
+            "addValue": "3.5",
+            "deleteValue": "6.5",
+            "originalValue": "2.5",
+            "updateValue": "4.5"
+          },
+          "col_money": {
+            "type": "MONEY",
+            "addValue": "1234.56",
+            "displayAddValue": "$1,234.56",
+            "deleteValue": "5678.90",
+            "displayDeleteValue": "$5,678.90",
+            "originalValue": "$99.99",
+            "inputOriginalValue": "99.99",
+            "updateValue": "9876.54",
+            "displayUpdateValue": "$9,876.54"
+          },
+          "col_char": {
+            "type": "CHAR",
+            "addValue": "X",
+            "deleteValue": "Z",
+            "originalValue": "test",
+            "updateValue": "Y"
+          },
+          "col_varchar": {
+            "type": "VARCHAR",
+            "addValue": "new_varchar",
+            "deleteValue": "delete_varchar",
+            "originalValue": "varchar_val",
+            "updateValue": "updated_varchar"
+          },
+          "col_text": {
+            "type": "TEXT",
+            "addValue": "new text content",
+            "deleteValue": "delete text content",
+            "originalValue": "text_value",
+            "updateValue": "updated text content"
+          },
+          "col_timestamp": {
+            "type": "TIMESTAMP",
+            "addValue": "2025-12-31 23:59:59",
+            "displayAddValue": "2025-12-31T23:59:59Z",
+            "deleteValue": "2025-11-15 10:30:00",
+            "displayDeleteValue": "2025-11-15T10:30:00Z",
+            "originalValue": "2025-01-01T12:00:00Z",
+            "inputOriginalValue": "2025-01-01 12:00:00",
+            "updateValue": "2025-06-15 12:30:00",
+            "displayUpdateValue": "2025-06-15T12:30:00Z"
+          },
+          "col_date": {
+            "type": "DATE",
+            "addValue": "2025-12-31",
+            "displayAddValue": "2025-12-31T00:00:00Z",
+            "deleteValue": "2025-11-15",
+            "displayDeleteValue": "2025-11-15T00:00:00Z",
+            "originalValue": "2025-01-01T00:00:00Z",
+            "inputOriginalValue": "2025-01-01",
+            "updateValue": "2025-06-15",
+            "displayUpdateValue": "2025-06-15T00:00:00Z"
+          },
+          "col_time": {
+            "type": "TIME",
+            "addValue": "23:59:59",
+            "deleteValue": "10:30:00",
+            "originalValue": "12:00:00",
+            "updateValue": "12:30:00"
+          },
+          "col_boolean": {
+            "type": "BOOLEAN",
+            "addValue": "false",
+            "deleteValue": "false",
+            "originalValue": "true",
+            "updateValue": "false"
+          },
+          "col_point": {
+            "type": "POINT",
+            "addValue": "(10,20)",
+            "displayAddValue": "(10,20)",
+            "deleteValue": "(50,60)",
+            "displayDeleteValue": "(50,60)",
+            "originalValue": "(1,2)",
+            "updateValue": "(30,40)",
+            "displayUpdateValue": "(30,40)"
+          },
+          "col_cidr": {
+            "type": "CIDR",
+            "addValue": "10.0.0.0/8",
+            "deleteValue": "192.0.2.0/24",
+            "originalValue": "192.168.0.0/24",
+            "updateValue": "172.16.0.0/12"
+          },
+          "col_inet": {
+            "type": "INET",
+            "addValue": "10.0.0.1",
+            "deleteValue": "192.0.2.1",
+            "originalValue": "192.168.0.1",
+            "updateValue": "172.16.0.1"
+          },
+          "col_macaddr": {
+            "type": "MACADDR",
+            "addValue": "08:00:2b:01:02:04",
+            "deleteValue": "08:00:2b:01:02:99",
+            "originalValue": "08:00:2b:01:02:03",
+            "updateValue": "08:00:2b:01:02:05"
+          },
+          "col_uuid": {
+            "type": "UUID",
+            "addValue": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "deleteValue": "c2ffde00-be2d-4ef0-dd8f-8dd1df602c33",
+            "originalValue": "550e8400-e29b-41d4-a716-446655440000",
+            "updateValue": "b1ffcd00-ad1c-4ef9-cc7e-7cc0ce491b22"
+          },
+          "col_json": {
+            "type": "JSON",
+            "addValue": "{\"test\":\"new\"}",
+            "deleteValue": "{\"delete\":\"test\"}",
+            "originalValue": "{\"key\":\"value\"}",
+            "updateValue": "{\"test\":\"updated\"}"
+          },
+          "col_jsonb": {
+            "type": "JSONB",
+            "addValue": "{\"data\":\"new\"}",
+            "displayAddValue": "{\"data\": \"new\"}",
+            "deleteValue": "{\"delete\":\"test\"}",
+            "displayDeleteValue": "{\"delete\": \"test\"}",
+            "originalValue": "{\"key\": \"value\"}",
+            "inputOriginalValue": "{\"key\":\"value\"}",
+            "updateValue": "{\"data\":\"updated\"}",
+            "displayUpdateValue": "{\"data\": \"updated\"}"
+          }
         }
       }
     }

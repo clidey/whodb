@@ -1,0 +1,21 @@
+en:
+  # Form labels
+  field: Field
+  operator: Operator
+  value: Value
+  whereCondition: Where condition
+
+  # Placeholders
+  enterFilterValue: Enter filter value
+
+  # Buttons
+  cancel: Cancel
+  update: Update
+  add: Add
+  addCondition: Add Condition
+  saveChanges: Save Changes
+
+  # Sheet
+  manageWhereConditions: Manage Where Conditions
+  conditionNumber: "Condition {index}"
+  moreConditions: "+{count} more"

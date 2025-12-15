@@ -102,11 +102,11 @@ export default defineConfig(async () => {
     },
   },
   server: {
-    port: 3000,
+    port: parseInt(process.env.VITE_PORT || '3000'),
     open: process.env.NODE_ENV !== 'test',
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: `http://localhost:${process.env.VITE_BACKEND_PORT || '8080'}`,
         changeOrigin: true,
       },
     },
