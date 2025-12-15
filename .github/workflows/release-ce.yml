@@ -427,16 +427,74 @@ jobs:
           echo "Preview:"
           cat /tmp/release-body.md
 
-      - name: Create GitHub release
+      - name: Create GitHub release (as draft)
         uses: ncipollo/release-action@b7eabc95ff50cbeeedec83973935c8f306dfcd0b # v1.20.0
         with:
           tag: ${{ needs.calculate-version.outputs.version }}
           name: Release ${{ needs.calculate-version.outputs.version }}
-          draft: ${{ needs.calculate-version.outputs.stage-only == 'true' || needs.calculate-version.outputs.publish-github-release != 'true' }}
+          # IMPORTANT: Always create as draft first to support immutable releases
+          # Assets must be attached BEFORE publishing, as immutable releases
+          # cannot have assets added after publication
+          draft: true
           prerelease: false
           generateReleaseNotes: true
           artifacts: final-assets/*
           bodyFile: /tmp/release-body.md
+
+      # Verify and publish the draft release (production runs only)
+      # This step runs AFTER assets are uploaded by the release-action above
+      - name: Verify and publish release (if not stage-only)
+        if: needs.calculate-version.outputs.stage-only != 'true' && needs.calculate-version.outputs.publish-github-release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.calculate-version.outputs.version }}
+        run: |
+          echo "🔍 Verifying draft release ${VERSION} before publishing..."
+
+          # Step 1: Verify release exists and is a draft
+          RELEASE_INFO=$(gh release view "${VERSION}" --json isDraft,assets,body)
+          IS_DRAFT=$(echo "$RELEASE_INFO" | jq -r '.isDraft')
+
+          if [ "$IS_DRAFT" != "true" ]; then
+            echo "⚠️ Release is not a draft (isDraft=${IS_DRAFT}). It may have been published already."
+            echo "Skipping publish step."
+            exit 0
+          fi
+          echo "✅ Release is in draft state"
+
+          # Step 2: Verify assets were uploaded
+          ASSET_COUNT=$(echo "$RELEASE_INFO" | jq '.assets | length')
+          echo "📦 Found ${ASSET_COUNT} assets attached to release"
+
+          if [ "$ASSET_COUNT" -eq 0 ]; then
+            echo "❌ ERROR: No assets found on draft release!"
+            echo "This may indicate an upload failure. Check previous steps."
+            exit 1
+          fi
+          echo "✅ Assets verified (${ASSET_COUNT} files)"
+
+          # Step 3: Verify release body is present
+          BODY_LENGTH=$(echo "$RELEASE_INFO" | jq '.body | length')
+          if [ "$BODY_LENGTH" -lt 50 ]; then
+            echo "⚠️ Warning: Release body seems short (${BODY_LENGTH} chars)"
+          else
+            echo "✅ Release body present (${BODY_LENGTH} chars)"
+          fi
+
+          # Step 4: Publish the release
+          echo ""
+          echo "🚀 Publishing release ${VERSION}..."
+          gh release edit "${VERSION}" --draft=false
+          echo "✅ Release ${VERSION} published successfully!"
+
+          # Step 5: Final verification
+          FINAL_STATE=$(gh release view "${VERSION}" --json isDraft --jq '.isDraft')
+          if [ "$FINAL_STATE" = "false" ]; then
+            echo "✅ Verified: Release is now public and immutable"
+          else
+            echo "❌ ERROR: Release still in draft state after publish attempt"
+            exit 1
+          fi
 
   # Step 5: Deploy to various platforms (after GitHub release created)
   deploy-snap:
