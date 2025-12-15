@@ -308,7 +308,7 @@ export const Sidebar: FC = () => {
     }, [open, toggleSidebar]);
 
     return (
-        <nav className="dark" aria-label={t('mainNavigation', 'Main navigation')}>
+        <nav className="dark" aria-label={t('mainNavigation')}>
             <SidebarComponent variant="sidebar" collapsible="icon" className="dark:group-data-[side=left]:border-r-neutral-800 z-[50]">
                 <SidebarHeader className={cn({
                     "ml-4": open,

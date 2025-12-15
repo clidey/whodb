@@ -16,6 +16,7 @@
 
 import {useCallback, useState} from "react";
 import {toast} from "@clidey/ux";
+import {useTranslation} from "./use-translation";
 
 export const PRESET_PAGE_SIZES = ["10", "25", "50", "100", "250", "500", "1000"];
 
@@ -24,6 +25,7 @@ interface UsePageSizeOptions {
 }
 
 export function usePageSize(initialSize: number, options?: UsePageSizeOptions) {
+    const { t } = useTranslation('hooks/use-page-size');
     const [pageSize, setPageSize] = useState(String(initialSize));
     const [isCustom, setIsCustom] = useState(!PRESET_PAGE_SIZES.includes(String(initialSize)));
     const [customInput, setCustomInput] = useState(String(initialSize));
@@ -42,17 +44,17 @@ export function usePageSize(initialSize: number, options?: UsePageSizeOptions) {
     const handleCustomApply = useCallback(() => {
         const parsed = Number.parseInt(customInput, 10);
         if (Number.isNaN(parsed) || parsed <= 0) {
-            toast.error("Please enter a number greater than 0");
+            toast.error(t('enterValidNumber'));
             setCustomInput(pageSize);
             return false;
         }
         if (parsed > 20000) {
-            toast.warning("Large page sizes may result in slower performance");
+            toast.warning(t('largePageSizeWarning'));
         }
         setPageSize(String(parsed));
         options?.onPageSizeChange?.(parsed);
         return true;
-    }, [customInput, pageSize, options]);
+    }, [customInput, pageSize, options, t]);
 
     return {
         pageSize: Number.parseInt(pageSize, 10),

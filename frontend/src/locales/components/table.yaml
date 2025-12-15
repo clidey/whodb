@@ -97,3 +97,22 @@ en:
   nextPage: Go to next page
   goToPage: "Go to page {page}"
   currentPage: "Page {page}, current page"
+
+  # Column type aria-labels
+  integerType: Integer type
+  decimalType: Decimal type
+  booleanType: Boolean type
+  dateType: Date type
+  dateTimeType: DateTime type
+  uuidType: UUID type
+  binaryType: Binary type
+  arrayType: Array type
+  textType: Text type
+  dataType: Data type
+
+  # Key indicators
+  primaryKey: Primary key
+  foreignKey: Foreign key
+
+  # Context menu shortcuts
+  delete: Delete

@@ -22,3 +22,4 @@ en:
   deletePageDescription: This action cannot be undone. This will permanently delete "{pageName}" and remove its data.
   continue: Continue
   doubleClickEdit: Double click to edit
+  deletePageButton: Delete page

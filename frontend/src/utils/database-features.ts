@@ -126,11 +126,15 @@ export function databaseUsesSchemaForGraph(databaseType: DatabaseType | string |
     return !databaseSupportsDatabaseSwitching(databaseType);
 }
 
+/**
+ * Check if a database type uses the "database" concept instead of "schema".
+ * @param databaseType - The database type (can be CE or EE type)
+ * @returns True for databases that use database-level organization instead of schemas
+ */
 export function databaseTypesThatUseDatabaseInsteadOfSchema(databaseType: DatabaseType | string | undefined): boolean {
     if (!databaseType) {
         return false;
     }
 
-    // MongoDB mainly uses the database instead of schema
     return databaseType === DatabaseType.MongoDb || databaseType === DatabaseType.ClickHouse;
 }

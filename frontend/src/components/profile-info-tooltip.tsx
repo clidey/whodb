@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { LocalLoginProfile } from "../store/auth";
 import { databaseTypeDropdownItems } from "../config/database-types";
 import { InformationCircleIcon } from "./heroicons";
+import { useTranslation } from "@/hooks/use-translation";
 
 interface ProfileInfoTooltipProps {
   profile: LocalLoginProfile;
@@ -74,6 +75,7 @@ const TOOLTIP_CLASSES = {
 };
 
 export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, className }) => {
+  const { t } = useTranslation('components/profile-info-tooltip');
   const [isVisible, setIsVisible] = useState(false);
   const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number } | null>(null);
   const btnRef = useRef<HTMLButtonElement | null>(null);
@@ -133,13 +135,13 @@ export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, class
       <div className="space-y-1">
         {port && (
           <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-400">Port:</span>
+            <span className="text-gray-600 dark:text-gray-400">{t('port')}</span>
             <span>{port}</span>
           </div>
         )}
         {lastAccessed && (
           <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-400">Last Logged In:&nbsp;</span>
+            <span className="text-gray-600 dark:text-gray-400">{t('lastLoggedIn')}&nbsp;</span>
             <span>{lastAccessed}</span>
           </div>
         )}
@@ -157,7 +159,7 @@ export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, class
         ref={btnRef}
         className={TOOLTIP_CLASSES.button}
         onClick={isVisible ? hideTooltip : showTooltip}
-        aria-label={`Profile information for ${profile.Id}`}
+        aria-label={t('profileInfo', { profileId: profile.Id })}
         aria-describedby={`tooltip-${profile.Id}`}
         tabIndex={0}
         type="button"

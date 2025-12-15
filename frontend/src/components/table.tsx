@@ -144,19 +144,19 @@ const binaryTypes = new Set([
 ]);
 
 
-export function getColumnIcons(columns: string[], columnTypes?: string[]) {
+export function getColumnIcons(columns: string[], columnTypes?: string[], t?: (key: string) => string) {
     return columns.map((col, idx) => {
         const type = columnTypes?.[idx]?.toUpperCase?.() || "";
-        if (intTypes.has(type) || uintTypes.has(type)) return <HashtagIcon className="w-4 h-4" aria-label="Integer type" />;
-        if (floatTypes.has(type)) return <CalculatorIcon className="w-4 h-4" aria-label="Decimal type" />;
-        if (boolTypes.has(type)) return <CheckCircleIcon className="w-4 h-4" aria-label="Boolean type" />;
-        if (dateTypes.has(type)) return <CalendarIcon className="w-4 h-4" aria-label="Date type" />;
-        if (dateTimeTypes.has(type)) return <ClockIcon className="w-4 h-4" aria-label="DateTime type" />;
-        if (uuidTypes.has(type)) return <KeyIcon className="w-4 h-4" aria-label="UUID type" />;
-        if (binaryTypes.has(type)) return <DocumentDuplicateIcon className="w-4 h-4" aria-label="Binary type" />;
-        if (type.startsWith("ARRAY")) return <ListBulletIcon className="w-4 h-4" aria-label="Array type" />;
-        if (stringTypes.has(type)) return <DocumentTextIcon className="w-4 h-4" aria-label="Text type" />;
-        return <CircleStackIcon className="w-4 h-4" aria-label="Data type" />;
+        if (intTypes.has(type) || uintTypes.has(type)) return <HashtagIcon className="w-4 h-4" aria-label={t?.('integerType') ?? 'Integer type'} />;
+        if (floatTypes.has(type)) return <CalculatorIcon className="w-4 h-4" aria-label={t?.('decimalType') ?? 'Decimal type'} />;
+        if (boolTypes.has(type)) return <CheckCircleIcon className="w-4 h-4" aria-label={t?.('booleanType') ?? 'Boolean type'} />;
+        if (dateTypes.has(type)) return <CalendarIcon className="w-4 h-4" aria-label={t?.('dateType') ?? 'Date type'} />;
+        if (dateTimeTypes.has(type)) return <ClockIcon className="w-4 h-4" aria-label={t?.('dateTimeType') ?? 'DateTime type'} />;
+        if (uuidTypes.has(type)) return <KeyIcon className="w-4 h-4" aria-label={t?.('uuidType') ?? 'UUID type'} />;
+        if (binaryTypes.has(type)) return <DocumentDuplicateIcon className="w-4 h-4" aria-label={t?.('binaryType') ?? 'Binary type'} />;
+        if (type.startsWith("ARRAY")) return <ListBulletIcon className="w-4 h-4" aria-label={t?.('arrayType') ?? 'Array type'} />;
+        if (stringTypes.has(type)) return <DocumentTextIcon className="w-4 h-4" aria-label={t?.('textType') ?? 'Text type'} />;
+        return <CircleStackIcon className="w-4 h-4" aria-label={t?.('dataType') ?? 'Data type'} />;
     });
 }
 
@@ -368,16 +368,14 @@ export const StorageUnitTable: FC<TableProps> = ({
         setFocusedRowIndex(null);
         setChecked([]);
 
-        // Restore column header focus after data refresh
+        // Restore column header focus after data refresh (for keyboard sorting UX)
         const columnToFocus = focusedColumnRef.current;
-        console.log('[Table] rows changed, columnToFocus:', columnToFocus);
         if (columnToFocus) {
-            // Use setTimeout to ensure DOM has updated after React render
+            // Delay needed for DOM to update after React render
             const timeoutId = setTimeout(() => {
                 const header = document.querySelector(
                     `[data-testid="column-header-${columnToFocus}"]`
                 ) as HTMLElement;
-                console.log('[Table] Restoring focus to:', columnToFocus, 'found:', !!header);
                 if (header) {
                     header.focus();
                 }
@@ -576,7 +574,7 @@ export const StorageUnitTable: FC<TableProps> = ({
         }
     }, [generateMockData, schema, storageUnit, mockDataRowCount, mockDataMethod, mockDataOverwriteExisting, showMockDataConfirmation, maxRowCount, onRefresh, t]);
 
-    const columnIcons = useMemo(() => getColumnIcons(columns, columnTypes), [columns, columnTypes]);
+    const columnIcons = useMemo(() => getColumnIcons(columns, columnTypes, t), [columns, columnTypes, t]);
 
     // Cleanup click timeouts on unmount
     useEffect(() => {
@@ -1158,7 +1156,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                                     onColumnSort(col);
                                                 }
                                             }}
-                                            onFocus={() => { console.log('[Table] Column focused:', col); focusedColumnRef.current = col; }}
+                                            onFocus={() => { focusedColumnRef.current = col; }}
                                             data-testid={`column-header-${col}`}
                                         >
                                             <Tip>

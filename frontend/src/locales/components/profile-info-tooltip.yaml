@@ -1,0 +1,4 @@
+en:
+  port: "Port:"
+  lastLoggedIn: "Last Logged In:"
+  profileInfo: Profile information for {profileId}

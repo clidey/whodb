@@ -18,6 +18,22 @@ import { useEffect, useState } from 'react';
 import { useAppSelector } from '@/store/hooks';
 import { loadTranslations, getTranslation } from '@/utils/i18n';
 
+/**
+ * Hook for loading and using translations from YAML locale files.
+ * Automatically reloads translations when the language setting changes.
+ *
+ * @param componentPath - Path to the YAML file relative to locales directory (e.g., "components/sidebar")
+ * @returns Object containing:
+ *   - t: Translation function that accepts a key and optional interpolation params
+ *   - isLoading: Whether translations are currently being loaded
+ *   - language: The current language code
+ *
+ * @example
+ * ```tsx
+ * const { t } = useTranslation('components/sidebar');
+ * return <span>{t('menuItem')}</span>;
+ * ```
+ */
 export const useTranslation = (componentPath: string) => {
     const language = useAppSelector(state => state.settings.language);
     const [translations, setTranslations] = useState<Record<string, string>>({});

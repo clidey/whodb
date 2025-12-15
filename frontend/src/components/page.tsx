@@ -72,11 +72,11 @@ const CommandPaletteTrigger: FC = () => {
             size="sm"
             onClick={handleClick}
             className="gap-2 h-9"
-            aria-label={t('searchPlaceholder', 'Type a command or search...')}
+            aria-label={t('searchPlaceholder')}
             data-testid="command-palette-trigger"
         >
             <MagnifyingGlassIcon className="h-4 w-4" />
-            <span className="hidden sm:inline text-xs text-neutral-500 dark:text-neutral-400">{t('searchPlaceholder', 'Type a command or search...')}</span>
+            <span className="hidden sm:inline text-xs text-neutral-500 dark:text-neutral-400">{t('searchPlaceholder')}</span>
             <div className="hidden sm:flex items-center gap-0.5 ml-1">
                 <kbd className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded shadow-sm">
                     {getKeyDisplay("Mod")}
@@ -106,14 +106,14 @@ const KeyboardShortcutsHint: FC = () => {
                     size="sm"
                     onClick={handleClick}
                     className="gap-1.5 h-9"
-                    aria-label={t('showShortcuts', 'Show keyboard shortcuts')}
+                    aria-label={t('showShortcuts')}
                 >
                     <CommandLineIcon className="h-4 w-4" />
-                    <span className="text-xs">{t('shortcuts', 'Shortcuts')}</span>
+                    <span className="text-xs">{t('shortcuts')}</span>
                 </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">
-                <p>{t('hint', 'Press ? to open')}</p>
+                <p>{t('hint')}</p>
             </TooltipContent>
         </Tooltip>
     );
@@ -129,7 +129,7 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
                 href="#main-content"
                 className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-4 focus:left-4 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
             >
-                {t('skipToContent', 'Skip to main content')}
+                {t('skipToContent')}
             </a>
             <div className="flex flex-row grow">
                 <SidebarProvider defaultOpen={props.sidebar == null}>
@@ -143,19 +143,6 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
                 <div className="flex flex-col grow py-6">
                     <div className="flex w-full justify-between items-center px-8">
                         <Breadcrumb routes={props.routes ?? []} active={props.routes?.at(-1)} />
-                        {/* <div className="flex flex-row gap-sm">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => window.DoryDocs?.open()}
-                                data-testid="docs-button"
-                            >
-                                <BookOpenIcon className="h-5 w-5" />
-                            </Button>
-                            <div data-testid="mode-toggle">
-                                <ModeToggle />
-                            </div>
-                        </div> */}
                         <div className="flex items-center gap-2">
                             <CommandPaletteTrigger />
                             <KeyboardShortcutsHint />
