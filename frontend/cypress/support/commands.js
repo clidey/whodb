@@ -24,6 +24,77 @@ function extractText(chain) {
     });
 }
 
+// ============================================================================
+// Platform-Aware Keyboard Shortcuts
+// ============================================================================
+// The app uses different modifier keys based on platform:
+// - Mac: Ctrl+Number for sidebar nav, Cmd+K for command palette, Cmd+X for other shortcuts
+// - Windows/Linux: Alt+Number for sidebar nav, Ctrl+K for command palette, Ctrl+X for other shortcuts
+
+/**
+ * Detect if the test is running on macOS
+ * Uses Cypress.platform which returns 'darwin' for macOS
+ */
+const isMac = Cypress.platform === 'darwin';
+
+/**
+ * Platform-aware keyboard shortcuts object
+ * Use these instead of hardcoded modifiers to ensure tests work cross-platform
+ */
+const platformKeys = {
+    // Navigation shortcuts (sidebar navigation)
+    // Mac: Ctrl+Number, Windows/Linux: Alt+Number
+    navMod: isMac ? '{ctrl}' : '{alt}',
+
+    // Command/Control modifier for general shortcuts
+    // Mac: Cmd (meta), Windows/Linux: Ctrl
+    cmdMod: isMac ? '{cmd}' : '{ctrl}',
+};
+
+/**
+ * Get the navigation key combo for a number (1-9)
+ * @param {number} num - The number key (1-9)
+ * @returns {string} The Cypress key sequence
+ */
+function getNavShortcut(num) {
+    return `${platformKeys.navMod}${num}`;
+}
+
+/**
+ * Get the command/control key combo for a letter
+ * @param {string} key - The letter key
+ * @returns {string} The Cypress key sequence
+ */
+function getCmdShortcut(key) {
+    return `${platformKeys.cmdMod}${key}`;
+}
+
+// Export for use in test files
+Cypress.env('platformKeys', platformKeys);
+Cypress.env('isMac', isMac);
+
+/**
+ * Type a platform-aware navigation shortcut (Alt/Ctrl + Number)
+ * @param {number} num - The number key (1-4)
+ */
+Cypress.Commands.add('typeNavShortcut', (num) => {
+    cy.get('body').type(getNavShortcut(num));
+});
+
+/**
+ * Type a platform-aware command shortcut (Cmd/Ctrl + Key)
+ * @param {string} key - The key to combine with Cmd/Ctrl
+ * @param {Object} options - Additional options like shift
+ */
+Cypress.Commands.add('typeCmdShortcut', (key, options = {}) => {
+    let combo = platformKeys.cmdMod;
+    if (options.shift) {
+        combo += '{shift}';
+    }
+    combo += key;
+    cy.get('body').type(combo);
+});
+
 Cypress.Commands.add("goto", (route) => {
     cy.visit(`/${route}`);
 });
@@ -1590,7 +1661,8 @@ Cypress.Commands.add('verifyChatSQL', (expectedSQL) => {
  */
 Cypress.Commands.add('openMoveToScratchpad', () => {
     cy.get('.group\\/table-preview').last().within(() => {
-        cy.get('[title="Move to Scratchpad"]').click({ force: true });
+        // The button uses aria-label instead of title for accessibility
+        cy.get('[aria-label="Move to Scratchpad"]').click({ force: true });
     });
     cy.contains('h2', 'Move to Scratchpad', { timeout: 5000 }).should('be.visible');
 });

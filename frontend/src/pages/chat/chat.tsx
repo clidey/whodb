@@ -198,6 +198,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
                     variant="outline"
                     onClick={handleMoveToScratchpad}
                     data-testid="icon-button"
+                    title={t('moveToScratchpad')}
                     aria-label={t('moveToScratchpad')}
                 >
                     <CommandLineIcon className="w-6 h-6" aria-hidden="true" />
