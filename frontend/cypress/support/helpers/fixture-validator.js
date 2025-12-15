@@ -44,7 +44,7 @@ const TEST_TABLE_REQUIRED_FIELDS = {
 const TEST_VALUES_REQUIRED_FIELDS = ['original', 'modified', 'rowIndex'];
 
 /**
- * Required feature flags
+ * Required feature flags - must be present in every fixture
  */
 const REQUIRED_FEATURES = [
     'graph',
@@ -54,6 +54,18 @@ const REQUIRED_FEATURES = [
     'chat',
     'whereConditions',
     'queryHistory'
+];
+
+/**
+ * All valid feature names - used to catch typos in fixtures and test files
+ * Optional features don't need to be present in fixtures, but if present must be boolean
+ */
+export const VALID_FEATURES = [
+    ...REQUIRED_FEATURES,
+    'crud',                // Optional: databases with async mutations may disable (e.g., ClickHouse)
+    'scratchpadUpdate',    // Optional: databases that don't support UPDATE via scratchpad
+    'multiConditionFilter', // Optional: databases that don't support multiple WHERE conditions
+    'typeCasting'          // Optional: databases that support numeric type casting
 ];
 
 /**
@@ -80,9 +92,17 @@ export function validateFixture(fixture, name) {
 
     // Validate features object
     if (fixture.features) {
+        // Check required features are present
         for (const feature of REQUIRED_FEATURES) {
             if (typeof fixture.features[feature] !== 'boolean') {
                 errors.push(`Missing or invalid feature flag: ${feature} (must be boolean)`);
+            }
+        }
+
+        // Check for unknown feature names (typos)
+        for (const feature of Object.keys(fixture.features)) {
+            if (!VALID_FEATURES.includes(feature)) {
+                errors.push(`Unknown feature: '${feature}'. Valid features: ${VALID_FEATURES.join(', ')}`);
             }
         }
     }
@@ -188,5 +208,6 @@ export default {
     validateAllFixtures,
     assertFixturesValid,
     REQUIRED_FIELDS,
-    REQUIRED_FEATURES
+    REQUIRED_FEATURES,
+    VALID_FEATURES
 };

@@ -54,7 +54,7 @@ Additional docs: `.claude/docs/cli.md` (CLI), `.claude/docs/desktop.md` (desktop
 
 ## When Working on Frontend (TypeScript)
 
-- Use PNPM, not NPM
+- Use PNPM, not NPM. Use pnpmx, not npx
 - Define GraphQL operations in `.graphql` files, then run `pnpm run generate`
 - Import generated hooks from `@graphql` alias - never use inline `gql` strings
 - CE features in `frontend/src/`

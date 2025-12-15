@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 
-import {forEachDatabase, hasFeature} from '../../support/test-runner';
+import {forEachDatabase} from '../../support/test-runner';
 
 describe('Chat AI Integration', () => {
 
     // Only SQL databases with chat feature
     forEachDatabase('sql', (db) => {
-        if (!hasFeature(db, 'chat')) {
-            return;
-        }
-
         const schemaPrefix = db.sql?.schemaPrefix || '';
 
         beforeEach(() => {
@@ -283,6 +279,6 @@ describe('Chat AI Integration', () => {
                 cy.verifyChatEmpty();
             });
         });
-    });
+    }, { features: ['chat'] });
 
 });

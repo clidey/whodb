@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {validateAllFixtures} from './helpers/fixture-validator';
+import {validateAllFixtures, VALID_FEATURES} from './helpers/fixture-validator';
 
 // CE Database configurations - loaded from fixtures
 const ceDatabaseConfigs = {
@@ -175,14 +175,27 @@ export function loginToDatabase(dbConfig) {
  *     it('does something', () => { ... });
  *   });
  *
+ *   // Only run for databases that support specific features (skips others entirely)
+ *   forEachDatabase('sql', (db) => {
+ *     it('tests graph', () => { ... });
+ *   }, { features: ['graph'] });
+ *
  * @param {string} categoryFilter - 'sql', 'document', 'keyvalue', or 'all'
  * @param {Function} testFn - Function that receives database config and defines tests
  * @param {Object} options - Additional options
  * @param {boolean} options.login - Whether to auto-login before each test (default: true)
  * @param {boolean} options.logout - Whether to auto-logout after each test (default: true)
+ * @param {string[]} options.features - Required features; databases without ALL features are skipped entirely
  */
 export function forEachDatabase(categoryFilter, testFn, options = {}) {
-    const {login = true, logout = true} = options;
+    const {login = true, logout = true, features = []} = options;
+
+    // Validate requested features to catch typos early
+    for (const feature of features) {
+        if (!VALID_FEATURES.includes(feature)) {
+            throw new Error(`Unknown feature '${feature}' in forEachDatabase options. Valid features: ${VALID_FEATURES.join(', ')}`);
+        }
+    }
 
     // Get target database from env (if running single database)
     const targetDb = Cypress.env('database');
@@ -190,6 +203,14 @@ export function forEachDatabase(categoryFilter, testFn, options = {}) {
 
     // Get databases matching category filter
     let databases = getDatabasesByCategory(categoryFilter);
+
+    // Filter by required features BEFORE creating any test blocks
+    // This avoids login/setup overhead for databases that don't support the feature
+    if (features.length > 0) {
+        databases = databases.filter(db =>
+            features.every(feature => hasFeature(db, feature))
+        );
+    }
 
     // If running specific database, filter to just that one
     if (targetDb) {

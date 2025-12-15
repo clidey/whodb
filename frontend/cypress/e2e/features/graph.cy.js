@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 
-import {forEachDatabase, getTableConfig, hasFeature} from '../../support/test-runner';
+import {forEachDatabase, getTableConfig} from '../../support/test-runner';
 
 describe('Graph Visualization', () => {
 
     // SQL Databases
     forEachDatabase('sql', (db) => {
-        if (!hasFeature(db, 'graph')) {
-            return;
-        }
-
         const testTable = db.testTable || {name: 'users'};
         const tableName = testTable.name;
 
@@ -82,14 +78,10 @@ describe('Graph Visualization', () => {
             cy.url().should('include', '/storage-unit/explore');
             cy.contains('Total Count:').should('be.visible');
         });
-    });
+    }, { features: ['graph'] });
 
     // Document Databases (MongoDB has graph support)
     forEachDatabase('document', (db) => {
-        if (!hasFeature(db, 'graph')) {
-            return;
-        }
-
         it('displays graph with expected topology', () => {
             cy.goto('graph');
 
@@ -122,6 +114,6 @@ describe('Graph Visualization', () => {
                 }
             });
         });
-    });
+    }, { features: ['graph'] });
 
 });

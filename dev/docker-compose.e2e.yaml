@@ -13,18 +13,18 @@
 # limitations under the License.
 
 services:
-  e2e_sqlite3:
-    image: nouchka/sqlite3:latest
-    container_name: e2e_sqlite3
-    volumes:
-      - e2e_sqlite3:/root/db
-      - ./sample-data/sqlite3/data.sql:/docker-entrypoint-initdb.d/init.sql
-    entrypoint: >
-      sh -c "
-      sqlite3 /root/db/e2e_test.db < /docker-entrypoint-initdb.d/init.sql &&
-      echo 'SQLite3 Started...' &&
-      tail -f /dev/null
-      "
+  # e2e_sqlite3:
+  #   image: nouchka/sqlite3:latest
+  #   container_name: e2e_sqlite3
+  #   volumes:
+  #     - e2e_sqlite3:/root/db
+  #     - ./sample-data/sqlite3/data.sql:/docker-entrypoint-initdb.d/init.sql
+  #   entrypoint: >
+  #     sh -c "
+  #     sqlite3 /root/db/e2e_test.db < /docker-entrypoint-initdb.d/init.sql &&
+  #     echo 'SQLite3 Started...' &&
+  #     tail -f /dev/null
+  #     "
 
   e2e_postgres:
     image: postgres
@@ -223,7 +223,7 @@ networks:
     driver: bridge
 
 volumes:
-  e2e_sqlite3:
+  # e2e_sqlite3:
   e2e_postgres:
   e2e_mysql:
   e2e_mariadb:

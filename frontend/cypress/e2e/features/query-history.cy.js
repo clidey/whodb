@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 
-import {forEachDatabase, getSqlQuery, hasFeature} from '../../support/test-runner';
+import {forEachDatabase, getSqlQuery} from '../../support/test-runner';
 
 describe('Query History', () => {
 
     // SQL Databases with scratchpad support
     forEachDatabase('sql', (db) => {
-        if (!hasFeature(db, 'queryHistory') || !hasFeature(db, 'scratchpad')) {
-            return;
-        }
-
         it('stores executed queries in history', () => {
             cy.goto('scratchpad');
 
@@ -96,6 +92,6 @@ describe('Query History', () => {
                 expect(rows.length).to.be.greaterThan(0);
             });
         });
-    });
+    }, { features: ['queryHistory', 'scratchpad'] });
 
 });

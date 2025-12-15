@@ -20,10 +20,6 @@ describe('Scratchpad', () => {
 
     // SQL Databases only
     forEachDatabase('sql', (db) => {
-        if (!hasFeature(db, 'scratchpad')) {
-            return;
-        }
-
         describe('Query Execution', () => {
             // Get expected column names from config or use defaults
             const expectedIdentifierCol = db.testTable?.identifierField || 'username';
@@ -199,6 +195,6 @@ describe('Scratchpad', () => {
                 cy.get('[data-testid="table-search"]').should('be.visible');
             });
         });
-    });
+    }, { features: ['scratchpad'] });
 
 });
