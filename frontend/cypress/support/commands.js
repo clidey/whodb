@@ -244,10 +244,8 @@ Cypress.Commands.add('getTableData', () => {
     return cy.get('table:visible', {timeout: 10000}).should('exist').then(() => {
         // Wait for at least one table row to be present with proper scoping
         return cy.get('table:visible tbody tr', {timeout: 10000})
+            .should('have.length.at.least', 1)
             .then(() => {
-                // Additional wait to ensure data is fully rendered
-                cy.wait(100);
-
                 // Now get the visible table and extract data
                 return cy.get('table:visible').first().then($table => {
                     const columns = Cypress.$.makeArray($table.find('th'))
@@ -690,7 +688,8 @@ Cypress.Commands.add("addRow", (data, isSingleInput = false) => {
     // Ensure body no longer has scroll lock
     cy.get('body', { timeout: 5000 }).should('not.have.attr', 'data-scroll-locked');
 
-    // Wait for GraphQL mutation to complete and UI to update
+    // Wait for GraphQL mutation to complete and UI to re-fetch/render
+    // This cannot be assertion-based because table already has rows
     cy.wait(500);
 
     // Ensure table is visible
@@ -755,7 +754,7 @@ Cypress.Commands.add("deleteRow", (rowIndex) => {
 });
 
 Cypress.Commands.add("updateRow", (rowIndex, columnIndex, text, cancel = true) => {
-    // Wait for table to stabilize
+    // Wait for table to stabilize before interacting
     cy.wait(500);
 
     // Use the helper to open context menu with retry logic
@@ -827,8 +826,8 @@ Cypress.Commands.add("searchTable", (search) => {
     // Break up the chain to avoid element detachment after clear
     cy.get('[data-testid="table-search"]').clear();
     cy.get('[data-testid="table-search"]').type(`${search}{enter}`);
-    // Wait for search to process and highlight to appear
-    cy.wait(300);
+    // Search completes when the input value is stable (no loading)
+    cy.get('[data-testid="table-search"]').should('have.value', search);
 });
 
 Cypress.Commands.add("getGraph", () => {

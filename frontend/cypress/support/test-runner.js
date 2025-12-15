@@ -113,7 +113,8 @@ export function getDatabaseId(dbConfig) {
 }
 
 /**
- * Login to database using configuration
+ * Login to database using configuration with session caching
+ * Uses cy.session() to cache login state and avoid re-authenticating on every test
  * @param {Object} dbConfig - Database configuration
  */
 export function loginToDatabase(dbConfig) {
@@ -127,19 +128,43 @@ export function loginToDatabase(dbConfig) {
     // Use uiType for dropdown selection if available, otherwise use type
     const databaseType = dbConfig.uiType || dbConfig.type;
 
-    cy.login(
+    // Create unique session key based on connection details
+    const sessionKey = [
         databaseType,
-        host,
-        user,
-        password,
-        database,
-        advanced
-    );
+        host || 'default',
+        database || 'default',
+        dbConfig.schema || 'default'
+    ];
 
-    // Select schema if applicable
-    if (dbConfig.schema) {
-        cy.selectSchema(dbConfig.schema);
-    }
+    cy.session(sessionKey, () => {
+        // Perform actual login (only runs if session not cached)
+        cy.login(
+            databaseType,
+            host,
+            user,
+            password,
+            database,
+            advanced
+        );
+
+        // Select schema if applicable
+        if (dbConfig.schema) {
+            cy.selectSchema(dbConfig.schema);
+        }
+    }, {
+        validate() {
+            // Quick validation that session is still valid
+            cy.visit('/storage-unit', { failOnStatusCode: false });
+            cy.get('[data-testid="sidebar-database"], [data-testid="sidebar-schema"]', { timeout: 5000 })
+                .should('exist');
+        },
+        cacheAcrossSpecs: true // Share session across spec files for same database
+    });
+
+    // After session restore, navigate to storage-unit page
+    cy.visit('/storage-unit');
+    cy.get('[data-testid="storage-unit-card"]', { timeout: 15000 })
+        .should('have.length.at.least', 1);
 }
 
 /**
