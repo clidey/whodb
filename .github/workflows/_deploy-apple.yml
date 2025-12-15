@@ -611,9 +611,13 @@ jobs:
           echo "✅ Upload complete!"
           echo "═══════════════════════════════════════════════════════════"
 
-      - name: Install PyJWT for API authentication
+      - name: Setup Python virtual environment
         if: steps.check_creds.outputs.has_creds == 'true' && inputs.stage-only != true
-        run: pip3 install PyJWT cryptography
+        run: |
+          python3 -m venv $RUNNER_TEMP/venv
+          source $RUNNER_TEMP/venv/bin/activate
+          pip install PyJWT cryptography
+          echo "✅ Python virtual environment created with PyJWT and cryptography"
 
       - name: Submit for App Store Review
         if: steps.check_creds.outputs.has_creds == 'true' && inputs.stage-only != true
@@ -623,6 +627,9 @@ jobs:
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
           set -e
+
+          # Activate virtual environment with PyJWT for JWT token generation
+          source $RUNNER_TEMP/venv/bin/activate
 
           VERSION="${{ inputs.version }}"
           # Strip 'v' prefix if present for build number
