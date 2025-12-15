@@ -12,8 +12,11 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
--- Use the test_db database
-CREATE DATABASE IF NOT EXISTS test_db;
+-- Drop existing database to ensure fresh data on every init
+DROP DATABASE IF EXISTS test_db;
+
+-- Create the test_db database
+CREATE DATABASE test_db;
 
 -- Users Table
 CREATE TABLE IF NOT EXISTS test_db.users (
