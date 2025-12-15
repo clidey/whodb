@@ -16,6 +16,7 @@
 
 import {defineConfig} from "cypress";
 import codeCoverageTask from "@cypress/code-coverage/task.js";
+import createBundler from "@bahmutov/cypress-esbuild-preprocessor";
 
 export default defineConfig({
     numTestsKeptInMemory: 0,
@@ -33,6 +34,7 @@ export default defineConfig({
       experimentalMemoryManagement: true, // Reduce memory pressure during long test runs
     async setupNodeEvents(on, config) {
         codeCoverageTask(on, config);
+        on('file:preprocessor', createBundler());
 
         config.env = config.env || {};
 

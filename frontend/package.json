@@ -101,6 +101,7 @@
   },
   "devDependencies": {
     "@babel/core": "7.28.0",
+    "@bahmutov/cypress-esbuild-preprocessor": "2.2.8",
     "@cypress/code-coverage": "3.14.5",
     "@graphql-codegen/cli": "5.0.7",
     "@graphql-codegen/typescript": "4.1.6",
@@ -113,6 +114,7 @@
     "@vitejs/plugin-react": "4.7.0",
     "baseline-browser-mapping": "2.8.32",
     "cypress": "15.7.1",
+    "esbuild": "0.27.1",
     "eslint-plugin-cypress": "5.2.0",
     "nyc": "17.1.0",
     "typescript": "5.8.3",
