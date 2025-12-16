@@ -324,8 +324,8 @@ export const StorageUnitTable: FC<TableProps> = ({
         } else if (typeof rowIndex === "number") {
             indexesToDelete = [rowIndex];
         }
-        if (selectedRowsData && selectedRowsData.length > 0) {
-            indexesToDelete = selectedRowsData.map((_, idx) => idx);
+        if (checked.length > 0) {
+            indexesToDelete = [...checked];
         }
         if (indexesToDelete.length === 0) return;
         toast.info(indexesToDelete.length === 1 ? t('deletingRow') : t('deletingRows'));
@@ -355,7 +355,7 @@ export const StorageUnitTable: FC<TableProps> = ({
             toast.success(t('rowDeleted'));
         }
         onRefresh?.();
-    }, [deleteRow, schema, storageUnit, rows, columns, selectedRowsData, onRefresh, t]);
+    }, [deleteRow, schema, storageUnit, rows, columns, checked, onRefresh, t]);
 
     const paginatedRows = useMemo(() => {
         // For server-side pagination, rows are already paginated
