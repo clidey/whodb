@@ -116,24 +116,10 @@ describe('CRUD Operations', () => {
 
                 const identifierValue = newRowData[testTable.identifierField];
 
-                // Wait for async mutations (e.g., ClickHouse)
-                if (mutationDelay > 0) {
-                    cy.wait(mutationDelay);
-                    cy.data(tableName);
-                }
-
-                // Verify row was added
-                cy.getTableData().then(({rows}) => {
-                    const addedRow = rows.find(r => r[colIndex + 1] === identifierValue);
-                    expect(addedRow, `Row with ${testTable.identifierField}=${identifierValue} should exist`).to.exist;
-                });
-
-                // Clean up - delete the added row
-                cy.getTableData().then(({rows}) => {
-                    const rowIndex = rows.findIndex(r => r[colIndex + 1] === identifierValue);
-                    if (rowIndex >= 0) {
-                        cy.deleteRow(rowIndex);
-                    }
+                // Wait for row to appear using retry-able assertion
+                cy.waitForRowValue(colIndex + 1, identifierValue).then((rowIndex) => {
+                    // Clean up - delete the added row
+                    cy.deleteRow(rowIndex);
                 });
             });
         });
@@ -160,31 +146,20 @@ describe('CRUD Operations', () => {
 
                 cy.addRow(newRowData);
 
-                // Wait for async mutations (e.g., ClickHouse)
-                if (mutationDelay > 0) {
-                    cy.wait(mutationDelay);
-                    cy.data(tableName);
-                }
-
                 const identifierValue = newRowData[testTable.identifierField];
 
-                cy.getTableData().then(({rows}) => {
-                    const initialCount = rows.length;
-                    const rowIndex = rows.findIndex(r => r[colIndex + 1] === identifierValue);
+                // Wait for row to appear using retry-able assertion
+                cy.waitForRowValue(colIndex + 1, identifierValue).then((rowIndex) => {
+                    cy.getTableData().then(({rows}) => {
+                        const initialCount = rows.length;
 
-                    if (rowIndex >= 0) {
                         cy.deleteRow(rowIndex);
 
-                        // Wait for async mutations
-                        if (mutationDelay > 0) {
-                            cy.wait(mutationDelay);
-                            cy.data(tableName);
-                        }
-
+                        // Verify row count decreased
                         cy.getTableData().then(({rows: newRows}) => {
                             expect(newRows.length).to.equal(initialCount - 1);
                         });
-                    }
+                    });
                 });
             });
         });
@@ -216,33 +191,12 @@ describe('CRUD Operations', () => {
 
                 cy.addRow(newDoc, true);
 
-                if (refreshDelay > 0) {
-                    cy.wait(refreshDelay);
-                }
-
                 cy.submitTable();
-                cy.get('table tbody tr', {timeout: 15000}).should('have.length.at.least', 1);
 
-                cy.getTableData().then(({rows}) => {
-                    const addedRow = rows.find(r => {
-                        const text = (r[1] || '').toLowerCase();
-                        return text.includes(uniqueId);
-                    });
-                    expect(addedRow, 'New document should be found').to.exist;
-                });
-
-                // Clean up
-                cy.getTableData().then(({rows}) => {
-                    const rowIndex = rows.findIndex(r => {
-                        const text = (r[1] || '').toLowerCase();
-                        return text.includes(uniqueId);
-                    });
-                    if (rowIndex >= 0) {
-                        cy.deleteRow(rowIndex);
-                        if (refreshDelay > 0) {
-                            cy.wait(refreshDelay);
-                        }
-                    }
+                // Wait for row to appear using retry-able assertion
+                cy.waitForRowContaining(uniqueId).then((rowIndex) => {
+                    // Clean up
+                    cy.deleteRow(rowIndex);
                 });
             });
         });
@@ -345,31 +299,18 @@ describe('CRUD Operations', () => {
 
                 cy.addRow(newDoc, true);
 
-                if (refreshDelay > 0) {
-                    cy.wait(refreshDelay);
-                    cy.data(tableName);
-                }
+                // Wait for row to appear using retry-able assertion
+                cy.waitForRowContaining(uniqueId).then((rowIndex) => {
+                    cy.getTableData().then(({rows}) => {
+                        const initialCount = rows.length;
 
-                cy.getTableData().then(({rows}) => {
-                    const initialCount = rows.length;
-                    const rowIndex = rows.findIndex(r => {
-                        const text = (r[1] || '');
-                        return text.includes(uniqueId);
-                    });
-
-                    if (rowIndex >= 0) {
                         cy.deleteRow(rowIndex);
 
-                        if (refreshDelay > 0) {
-                            cy.wait(refreshDelay);
-                            cy.data(tableName);
-                            cy.wait(1000);
-                        }
-
+                        // Verify row count decreased
                         cy.getTableData().then(({rows: newRows}) => {
                             expect(newRows.length).to.equal(initialCount - 1);
                         });
-                    }
+                    });
                 });
             });
         });

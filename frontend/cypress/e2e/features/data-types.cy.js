@@ -83,27 +83,11 @@ describe('Data Types CRUD Operations', () => {
 
                     cy.addRow({[columnName]: testConfig.addValue});
 
-                    if (mutationDelay > 0) {
-                        cy.wait(mutationDelay);
-                        cy.data(tableName);
-                    }
-
-                    cy.getTableData().then(({rows}) => {
-                        // Debug: Get all values in this column to see actual format
-                        const columnValues = rows.map(r => String(r[columnIndex + 1] || '').trim());
-
-                        const rowIndex = rows.findIndex(r => {
-                            const cellValue = String(r[columnIndex + 1] || '').trim();
-                            return cellValue === String(expectedAddDisplay).trim();
-                        });
-                        // Include actual values in assertion message for debugging
-                        expect(rowIndex, `Row with ${columnName}=${expectedAddDisplay} should exist. Actual values: ${JSON.stringify(columnValues)}`).to.not.equal(-1);
-
+                    // Use retry-able assertion to wait for the new row to appear
+                    // columnIndex + 1 accounts for the checkbox column
+                    cy.waitForRowValue(columnIndex + 1, expectedAddDisplay).then((rowIndex) => {
                         // Clean up - delete the row we just added
                         cy.deleteRow(rowIndex);
-                        if (mutationDelay > 0) {
-                            cy.wait(mutationDelay);
-                        }
                     });
                 });
 
@@ -157,30 +141,18 @@ describe('Data Types CRUD Operations', () => {
 
                     cy.addRow({[columnName]: deleteValue});
 
-                    if (mutationDelay > 0) {
-                        cy.wait(mutationDelay);
-                        cy.data(tableName);
-                    }
+                    // Use retry-able assertion to wait for the new row to appear
+                    cy.waitForRowValue(columnIndex + 1, expectedDeleteDisplay).then((rowIndex) => {
+                        // Get initial count after the row has appeared
+                        cy.getTableData().then(({rows}) => {
+                            const initialCount = rows.length;
 
-                    cy.getTableData().then(({rows}) => {
-                        const initialCount = rows.length;
-                        const columnValues = rows.map(r => String(r[columnIndex + 1] || '').trim());
-                        const rowIndex = rows.findIndex(r => {
-                            const cellValue = String(r[columnIndex + 1] || '').trim();
-                            return cellValue === String(expectedDeleteDisplay).trim();
-                        });
+                            cy.deleteRow(rowIndex);
 
-                        expect(rowIndex, `Row with ${columnName}=${expectedDeleteDisplay} should exist to delete. Actual values: ${JSON.stringify(columnValues)}`).to.not.equal(-1);
-
-                        cy.deleteRow(rowIndex);
-
-                        if (mutationDelay > 0) {
-                            cy.wait(mutationDelay);
-                            cy.data(tableName);
-                        }
-
-                        cy.getTableData().then(({rows: newRows}) => {
-                            expect(newRows.length).to.equal(initialCount - 1);
+                            // Verify row count decreased
+                            cy.getTableData().then(({rows: newRows}) => {
+                                expect(newRows.length).to.equal(initialCount - 1);
+                            });
                         });
                     });
                 });

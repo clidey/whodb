@@ -56,34 +56,30 @@ describe('Type Casting', () => {
                 const newRow = tableConfig.testData.newRow;
 
                 // Add a row and verify it was added by checking for its description
+                const descValue = getValue(newRow, 'description');
                 cy.addRow(newRow);
 
-                // Wait for async mutations (e.g., ClickHouse)
-                if (mutationDelay > 0) {
-                    cy.wait(mutationDelay);
-                    cy.data(typeCastingTable);
-                }
+                // Wait for row to appear using retry-able assertion
+                cy.waitForRowContaining(descValue, { caseSensitive: true }).then((rowIndex) => {
+                    cy.sortBy(0);
 
-                // Verify the row was added with correct types by finding it via description
-                const descValue = getValue(newRow, 'description');
-                cy.sortBy(0);
-                cy.getTableData().then(({rows}) => {
-                    const addedRow = rows.find(r => r.includes(descValue));
-                    expect(addedRow, 'Added row should exist').to.exist;
-                    expect(addedRow[1]).to.match(/^\d+$/); // id should be a number
-                    expect(addedRow[2]).to.equal(getValue(newRow, 'bigint_col'));
-                    expect(addedRow[3]).to.equal(getValue(newRow, 'integer_col'));
-                    expect(addedRow[4]).to.equal(getValue(newRow, 'smallint_col'));
-                    expect(addedRow[5]).to.equal(getValue(newRow, 'numeric_col'));
-                    expect(addedRow[6]).to.equal(descValue);
-                });
+                    // Verify the row was added with correct types
+                    cy.getTableData().then(({rows}) => {
+                        const addedRow = rows.find(r => r.includes(descValue));
+                        expect(addedRow, 'Added row should exist').to.exist;
+                        expect(addedRow[1]).to.match(/^\d+$/); // id should be a number
+                        expect(addedRow[2]).to.equal(getValue(newRow, 'bigint_col'));
+                        expect(addedRow[3]).to.equal(getValue(newRow, 'integer_col'));
+                        expect(addedRow[4]).to.equal(getValue(newRow, 'smallint_col'));
+                        expect(addedRow[5]).to.equal(getValue(newRow, 'numeric_col'));
+                        expect(addedRow[6]).to.equal(descValue);
 
-                // Clean up
-                cy.getTableData().then(({rows}) => {
-                    const rowIndex = rows.findIndex(r => r.includes(descValue));
-                    if (rowIndex >= 0) {
-                        cy.deleteRow(rowIndex);
-                    }
+                        // Clean up - find row index again after sort
+                        const deleteIndex = rows.findIndex(r => r.includes(descValue));
+                        if (deleteIndex >= 0) {
+                            cy.deleteRow(deleteIndex);
+                        }
+                    });
                 });
             });
 
@@ -101,24 +97,16 @@ describe('Type Casting', () => {
 
                 cy.addRow(largeNumberRow);
 
-                // Wait for async mutations (e.g., ClickHouse)
-                if (mutationDelay > 0) {
-                    cy.wait(mutationDelay);
-                    cy.data(typeCastingTable);
-                }
+                // Wait for row to appear using retry-able assertion
+                cy.waitForRowContaining('Large bigint test', { caseSensitive: true }).then((rowIndex) => {
+                    cy.getTableData().then(({rows}) => {
+                        const addedRow = rows.find(r => r.includes('Large bigint test'));
+                        expect(addedRow).to.exist;
+                        expect(addedRow).to.include('5000000000');
 
-                cy.getTableData().then(({rows}) => {
-                    const addedRow = rows.find(r => r.includes('Large bigint test'));
-                    expect(addedRow).to.exist;
-                    expect(addedRow).to.include('5000000000');
-                });
-
-                // Clean up
-                cy.getTableData().then(({rows}) => {
-                    const rowIndex = rows.findIndex(r => r.includes('Large bigint test'));
-                    if (rowIndex >= 0) {
+                        // Clean up
                         cy.deleteRow(rowIndex);
-                    }
+                    });
                 });
             });
         });

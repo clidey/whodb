@@ -200,12 +200,9 @@
         "order_items",
         "payments"
       ],
-      "order_items": [],
       "products": [
         "order_items"
-      ],
-      "payments": [],
-      "order_summary": []
+      ]
     }
   },
   "sql": {
