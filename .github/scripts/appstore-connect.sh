@@ -87,8 +87,20 @@ except Exception as e:
     sys.exit(1)
 " 2>&1)
 
-    if [[ $? -ne 0 ]] || [[ "$result" == ERROR:* ]]; then
-        error "Failed to generate JWT: $result"
+    if [[ $? -ne 0 ]] || [[ "$result" == ERROR:* ]] || [[ -z "$result" ]]; then
+        error "Failed to generate JWT token"
+        error "Python output: $result"
+        error ""
+        error "Troubleshooting:"
+        error "  - Ensure PyJWT is installed: pip install PyJWT cryptography"
+        error "  - Verify APP_STORE_CONNECT_API_KEY contains valid .p8 key content"
+        error "  - Check the key starts with '-----BEGIN PRIVATE KEY-----'"
+        return 1
+    fi
+
+    # Validate the result contains expected format (token|expiry)
+    if [[ ! "$result" == *"|"* ]]; then
+        error "JWT generation returned unexpected format: $result"
         return 1
     fi
 
@@ -138,6 +150,21 @@ api_request() {
         error "Curl failed with exit code $curl_exit"
         error "Endpoint: $method $url"
         error "Response: $response"
+        error ""
+        error "Troubleshooting:"
+        error "  - Check network connectivity to api.appstoreconnect.apple.com"
+        error "  - Verify egress rules allow HTTPS to Apple's API servers"
+        return 1
+    fi
+
+    # Validate http_code is numeric
+    if ! [[ "$http_code" =~ ^[0-9]+$ ]]; then
+        error "Failed to extract HTTP status code from response"
+        error "Endpoint: $method $endpoint"
+        error "Extracted code: $http_code"
+        error "Full response (first 500 chars): ${response:0:500}"
+        error ""
+        error "This usually indicates a network or proxy issue."
         return 1
     fi
 
@@ -147,6 +174,19 @@ api_request() {
         error "Endpoint: $method $endpoint"
         error "HTTP Code: $http_code"
         error "Response (first 500 chars): ${response:0:500}"
+        error ""
+        error "Troubleshooting:"
+        if [[ "$http_code" == "401" ]] || [[ "$http_code" == "403" ]]; then
+            error "  - Authentication failed. Verify API key is valid and not expired"
+            error "  - Check API key has 'App Manager' or 'Admin' role in App Store Connect"
+            error "  - Ensure API Key ID and Issuer ID match the key"
+        elif [[ "$http_code" == "000" ]]; then
+            error "  - No HTTP response received (connection failed)"
+            error "  - Check network connectivity and firewall rules"
+        else
+            error "  - Apple's API may be experiencing issues"
+            error "  - Check https://developer.apple.com/system-status/"
+        fi
         return 1
     fi
 
@@ -167,13 +207,28 @@ get_app_id() {
     log "Looking up app ID for bundle: $bundle_id"
 
     local response
-    response=$(api_request GET "/apps?filter[bundleId]=$bundle_id")
+    if ! response=$(api_request GET "/apps?filter[bundleId]=$bundle_id"); then
+        error "API request failed when looking up app"
+        return 1
+    fi
 
-    local app_id
-    app_id=$(echo "$response" | jq -r '.data[0].id // empty')
+    # Validate response is parseable before extracting app_id
+    local app_id jq_error
+    jq_error=$(echo "$response" | jq -r '.data[0].id // empty' 2>&1 >/dev/null) || true
+    if [[ -n "$jq_error" ]]; then
+        error "Failed to parse API response: $jq_error"
+        error "Response: ${response:0:500}"
+        return 1
+    fi
+    app_id=$(echo "$response" | jq -r '.data[0].id // empty' 2>/dev/null)
 
     if [[ -z "$app_id" ]]; then
         error "App not found for bundle ID: $bundle_id"
+        error "This could mean:"
+        error "  - The app hasn't been created in App Store Connect yet"
+        error "  - The bundle ID is incorrect (expected: $bundle_id)"
+        error "  - The API key doesn't have access to this app"
+        error "API response: ${response:0:500}"
         return 1
     fi
 
