@@ -767,6 +767,65 @@ Cypress.Commands.add("addRow", (data, isSingleInput = false) => {
     cy.get('table tbody').should('be.visible');
 });
 
+/**
+ * Waits for a row containing a specific value in a given column to appear in the table.
+ * Uses Cypress retry-ability to poll until found or timeout.
+ * @param {number} columnIndex - The column index (1-based, accounting for checkbox column)
+ * @param {string} expectedValue - The value to search for
+ * @param {object} options - Optional config: { timeout: 10000 }
+ * @returns {Cypress.Chainable<number>} - The row index where the value was found
+ */
+Cypress.Commands.add("waitForRowValue", (columnIndex, expectedValue, options = {}) => {
+    const timeout = options.timeout || 10000;
+    const expectedStr = String(expectedValue).trim();
+
+    return cy.get('table tbody', { timeout }).should(($tbody) => {
+        const rows = $tbody.find('tr').toArray();
+        const foundIndex = rows.findIndex((row) => {
+            const cell = Cypress.$(row).find('td').eq(columnIndex);
+            const cellValue = cell.text().trim();
+            return cellValue === expectedStr;
+        });
+        expect(foundIndex, `Row with value "${expectedStr}" in column ${columnIndex} should exist`).to.not.equal(-1);
+    }).then(($tbody) => {
+        // Return the row index for use in subsequent operations
+        const rows = $tbody.find('tr').toArray();
+        return rows.findIndex((row) => {
+            const cell = Cypress.$(row).find('td').eq(columnIndex);
+            return cell.text().trim() === expectedStr;
+        });
+    });
+});
+
+/**
+ * Waits for a row containing a specific value (anywhere in the row) to appear in the table.
+ * Uses Cypress retry-ability to poll until found or timeout.
+ * @param {string} expectedValue - The value to search for (case-insensitive partial match)
+ * @param {object} options - Optional config: { timeout: 10000, caseSensitive: false }
+ * @returns {Cypress.Chainable<number>} - The row index where the value was found
+ */
+Cypress.Commands.add("waitForRowContaining", (expectedValue, options = {}) => {
+    const timeout = options.timeout || 10000;
+    const caseSensitive = options.caseSensitive || false;
+    const searchStr = caseSensitive ? String(expectedValue) : String(expectedValue).toLowerCase();
+
+    return cy.get('table tbody', { timeout }).should(($tbody) => {
+        const rows = $tbody.find('tr').toArray();
+        const foundIndex = rows.findIndex((row) => {
+            const rowText = caseSensitive ? Cypress.$(row).text() : Cypress.$(row).text().toLowerCase();
+            return rowText.includes(searchStr);
+        });
+        expect(foundIndex, `Row containing "${expectedValue}" should exist`).to.not.equal(-1);
+    }).then(($tbody) => {
+        // Return the row index for use in subsequent operations
+        const rows = $tbody.find('tr').toArray();
+        return rows.findIndex((row) => {
+            const rowText = caseSensitive ? Cypress.$(row).text() : Cypress.$(row).text().toLowerCase();
+            return rowText.includes(searchStr);
+        });
+    });
+});
+
 Cypress.Commands.add("openContextMenu", (rowIndex, maxRetries = 3) => {
     const attemptContextMenu = (attempt) => {
         // Get a fresh reference to the row
