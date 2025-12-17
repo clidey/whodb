@@ -161,6 +161,16 @@ func NewConnectionView(parent *MainModel) *ConnectionView {
 	dbInput.Cursor.Style = lipgloss.NewStyle().Foreground(styles.Primary)
 	inputs = append(inputs, dbInput)
 
+	// Schema name (optional)
+	schemaInput := textinput.New()
+	schemaInput.Placeholder = "Schema name (optional, DB-specific)"
+	schemaInput.CharLimit = 50
+	schemaInput.Width = 40
+	schemaInput.PromptStyle = lipgloss.NewStyle().Foreground(styles.Primary)
+	schemaInput.TextStyle = lipgloss.NewStyle().Foreground(styles.Foreground)
+	schemaInput.Cursor.Style = lipgloss.NewStyle().Foreground(styles.Primary)
+	inputs = append(inputs, schemaInput)
+
 	mode := "list"
 	if len(parent.config.Connections) == 0 {
 		mode = "form"
@@ -343,7 +353,7 @@ func (v *ConnectionView) updateForm(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 			return v, nil
 
 		case "left":
-			if v.focusIndex == 6 {
+			if v.focusIndex == 7 {
 				v.dbTypeIndex--
 				if v.dbTypeIndex < 0 {
 					v.dbTypeIndex = len(v.dbTypes) - 1
@@ -353,7 +363,7 @@ func (v *ConnectionView) updateForm(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 			return v, nil
 
 		case "right":
-			if v.focusIndex == 6 {
+			if v.focusIndex == 7 {
 				v.dbTypeIndex++
 				if v.dbTypeIndex >= len(v.dbTypes) {
 					v.dbTypeIndex = 0
@@ -363,7 +373,7 @@ func (v *ConnectionView) updateForm(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 			return v, nil
 
 		case "enter":
-			if v.focusIndex == 7 {
+			if v.focusIndex == 8 {
 				// If password is empty, prompt securely before connecting
 				if v.inputs[4].Value() == "" {
 					v.awaitingPassword = true
@@ -504,9 +514,21 @@ func (v *ConnectionView) renderForm() string {
 	b.WriteString(v.inputs[5].View())
 	b.WriteString("\n\n")
 
-	// Database Type (index 6)
-	label = "Database Type:"
+	// Schema (index 6)
+	label = "Schema:"
 	if v.focusIndex == 6 {
+		label = styles.KeyStyle.Render("▶ " + label)
+	} else {
+		label = "  " + label
+	}
+	b.WriteString(label)
+	b.WriteString("\n  ")
+	b.WriteString(v.inputs[6].View())
+	b.WriteString("\n\n")
+
+	// Database Type (index 7)
+	label = "Database Type:"
+	if v.focusIndex == 7 {
 		label = styles.KeyStyle.Render("▶ " + label)
 	} else {
 		label = "  " + label
@@ -515,7 +537,7 @@ func (v *ConnectionView) renderForm() string {
 	b.WriteString("\n  ")
 	for i, dbType := range v.dbTypes {
 		if i == v.dbTypeIndex {
-			if v.focusIndex == 6 {
+			if v.focusIndex == 7 {
 				b.WriteString(styles.ActiveListItemStyle.Render(" " + dbType + " "))
 			} else {
 				b.WriteString(styles.KeyStyle.Render("[" + dbType + "]"))
@@ -527,9 +549,9 @@ func (v *ConnectionView) renderForm() string {
 	}
 	b.WriteString("\n\n")
 
-	// Connect button (index 7)
+	// Connect button (index 8)
 	connectBtn := "[Connect]"
-	if v.focusIndex == 7 {
+	if v.focusIndex == 8 {
 		connectBtn = styles.ActiveListItemStyle.Render(" Connect ")
 	} else {
 		connectBtn = styles.KeyStyle.Render(connectBtn)
@@ -585,7 +607,7 @@ func (v *ConnectionView) nextInput() {
 		v.inputs[v.focusIndex].Blur()
 	}
 	v.focusIndex++
-	if v.focusIndex > 7 {
+	if v.focusIndex > 8 {
 		v.focusIndex = 0
 	}
 	if v.focusIndex < len(v.inputs) {
@@ -599,7 +621,7 @@ func (v *ConnectionView) prevInput() {
 	}
 	v.focusIndex--
 	if v.focusIndex < 0 {
-		v.focusIndex = 7
+		v.focusIndex = 8
 	}
 	if v.focusIndex < len(v.inputs) {
 		v.inputs[v.focusIndex].Focus()
@@ -667,6 +689,7 @@ func (v *ConnectionView) connect() tea.Cmd {
 		username := v.inputs[3].Value()
 		password := v.inputs[4].Value()
 		database := v.inputs[5].Value()
+		schema := v.inputs[6].Value()
 		dbType := v.dbTypes[v.dbTypeIndex]
 
 		conn := config.Connection{
@@ -677,6 +700,7 @@ func (v *ConnectionView) connect() tea.Cmd {
 			Username: username,
 			Password: password,
 			Database: database,
+			Schema:   schema,
 		}
 
 		// Try to connect
