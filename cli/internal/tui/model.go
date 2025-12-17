@@ -201,30 +201,33 @@ func (m *MainModel) View() string {
 		return renderError(m.err.Error())
 	}
 
+	viewIndicator := m.renderViewIndicator()
+
+	var content string
 	switch m.mode {
 	case ViewConnection:
-		return m.connectionView.View()
+		content = m.connectionView.View()
 	case ViewBrowser:
-		return m.browserView.View()
+		content = m.browserView.View()
 	case ViewEditor:
-		return m.editorView.View()
+		content = m.editorView.View()
 	case ViewResults:
-		return m.resultsView.View()
+		content = m.resultsView.View()
 	case ViewHistory:
-		return m.historyView.View()
+		content = m.historyView.View()
 	case ViewExport:
-		return m.exportView.View()
+		content = m.exportView.View()
 	case ViewWhere:
-		return m.whereView.View()
+		content = m.whereView.View()
 	case ViewColumns:
-		return m.columnsView.View()
+		content = m.columnsView.View()
 	case ViewChat:
-		return m.chatView.View()
+		content = m.chatView.View()
 	case ViewSchema:
-		return m.schemaView.View()
+		content = m.schemaView.View()
 	}
 
-	return ""
+	return viewIndicator + "\n" + content
 }
 
 func (m *MainModel) handleTabSwitch() (tea.Model, tea.Cmd) {
@@ -305,6 +308,54 @@ func (m *MainModel) updateSchemaView(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	m.schemaView, cmd = m.schemaView.Update(msg)
 	return m, cmd
+}
+
+func (m *MainModel) renderViewIndicator() string {
+	views := []struct {
+		mode ViewMode
+		name string
+	}{
+		{ViewConnection, "Connection"},
+		{ViewBrowser, "Browser"},
+		{ViewEditor, "Editor"},
+		{ViewResults, "Results"},
+		{ViewHistory, "History"},
+		{ViewExport, "Export"},
+		{ViewWhere, "Where"},
+		{ViewColumns, "Columns"},
+		{ViewChat, "Chat"},
+		{ViewSchema, "Schema"},
+	}
+
+	var parts []string
+	for _, view := range views {
+		if view.mode == m.mode {
+			// Current view: white background with black text
+			activeStyle := styles.BaseStyle.
+				Foreground(styles.Background).
+				Background(styles.Foreground).
+				Padding(0, 1)
+			parts = append(parts, activeStyle.Render(view.name))
+		} else {
+			// Other views: white text, no highlighting
+			inactiveStyle := styles.BaseStyle.
+				Foreground(styles.Foreground).
+				Padding(0, 1)
+			parts = append(parts, inactiveStyle.Render(view.name))
+		}
+	}
+
+	// Join all parts with a separator
+	separator := " "
+	result := ""
+	for i, part := range parts {
+		if i > 0 {
+			result += separator
+		}
+		result += part
+	}
+
+	return result
 }
 
 func renderError(message string) string {
