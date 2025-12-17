@@ -24,6 +24,8 @@ import (
 )
 
 func init() {
+	// Disable all logging output to prevent logs from leaking into TUI
+	log.DisableOutput()
 	log.SetLogLevel("none")
 }
 
