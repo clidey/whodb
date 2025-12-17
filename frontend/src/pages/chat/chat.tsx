@@ -47,7 +47,7 @@ import {
     TableCellsIcon
 } from "../../components/heroicons";
 import classNames from "classnames";
-import {cloneElement, FC, KeyboardEventHandler, useCallback, useMemo, useRef, useState} from "react";
+import {cloneElement, FC, KeyboardEventHandler, useCallback, useMemo, useRef, useState, useEffect} from "react";
 import logoImage from "../../../public/images/logo.png";
 import {AIProvider, useAI} from "../../components/ai";
 import {CodeEditor} from "../../components/editor";
@@ -284,8 +284,30 @@ export const ChatPage: FC = () => {
         return getAIChatLoading;
     }, [getAIChatLoading]);
 
+    // Store random indices in a ref so they remain stable across re-renders
+    const exampleIndicesRef = useRef<number[] | null>(null);
+
+    // Initialize random indices once
+    useEffect(() => {
+        if (exampleIndicesRef.current === null && chatExamples.length > 0) {
+            const indices: number[] = [];
+            const available = [...Array(chatExamples.length).keys()];
+            const count = Math.min(3, chatExamples.length);
+            for (let i = 0; i < count; i++) {
+                const randomIndex = Math.floor(Math.random() * available.length);
+                indices.push(available[randomIndex]);
+                available.splice(randomIndex, 1);
+            }
+            exampleIndicesRef.current = indices;
+        }
+    }, [chatExamples.length]);
+
+    // Apply stable indices to current examples (allows localization changes to work)
     const examples = useMemo(() => {
-        return chooseRandomItems(chatExamples);
+        if (exampleIndicesRef.current === null) {
+            return chatExamples.slice(0, 3);
+        }
+        return exampleIndicesRef.current.map(i => chatExamples[i]);
     }, [chatExamples]);
 
     const handleSubmitQuery = useCallback(() => {
@@ -305,6 +327,7 @@ export const ChatPage: FC = () => {
         }, 250);
         getAIChat({
             variables: {
+                providerId: modelType.id,
                 modelType: modelType.modelType,
                 token: modelType.token,
                 query: sanitizedQuery,

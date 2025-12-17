@@ -172,6 +172,33 @@ type AIProvider {
   IsEnvironmentDefined: Boolean!
 }
 
+enum TypeCategory {
+  numeric
+  text
+  binary
+  datetime
+  boolean
+  json
+  other
+}
+
+type TypeDefinition {
+  id: String!
+  label: String!
+  hasLength: Boolean!
+  hasPrecision: Boolean!
+  defaultLength: Int
+  defaultPrecision: Int
+  category: TypeCategory!
+}
+
+type DatabaseMetadata {
+  databaseType: String!
+  typeDefinitions: [TypeDefinition!]!
+  operators: [String!]!
+  aliasMap: [Record!]!
+}
+
 
 type Query {
   Version: String!
@@ -181,7 +208,7 @@ type Query {
   StorageUnit(schema: String!): [StorageUnit!]!
   Row(schema: String!, storageUnit: String!, where: WhereCondition, sort: [SortCondition!], pageSize: Int!, pageOffset: Int!): RowsResult!
   Columns(schema: String!, storageUnit: String!): [Column!]!
-    ColumnsBatch(schema: String!, storageUnits: [String!]!): [StorageUnitColumns!]!
+  ColumnsBatch(schema: String!, storageUnits: [String!]!): [StorageUnitColumns!]!
   RawExecute(query: String!): RowsResult!
   Graph(schema: String!): [GraphUnit!]!
   AIProviders: [AIProvider!]!
@@ -189,6 +216,7 @@ type Query {
   AIChat(providerId: String, modelType: String!, token: String, schema: String!, input: ChatInput!): [AIChatMessage!]!
   SettingsConfig: SettingsConfig!
   MockDataMaxRowCount: Int!
+  DatabaseMetadata: DatabaseMetadata
 }
 
 type Mutation {

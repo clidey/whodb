@@ -25,22 +25,13 @@ import (
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
-	mapset "github.com/deckarep/golang-set/v2"
 	"gorm.io/gorm"
 )
 
 var (
-	supportedColumnDataTypes = mapset.NewSet(
-		"TINYINT", "SMALLINT", "MEDIUMINT", "INT", "INTEGER", "BIGINT", "FLOAT", "DOUBLE", "DECIMAL",
-		"DATE", "DATETIME", "TIMESTAMP", "TIME", "YEAR",
-		"CHAR", "VARCHAR(255)", "BINARY", "VARBINARY", "TINYBLOB", "BLOB", "MEDIUMBLOB", "LONGBLOB",
-		"TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT",
-		"ENUM", "SET", "JSON", "BOOLEAN", "VARCHAR(100)", "VARCHAR(1000)",
-	)
-
 	supportedOperators = map[string]string{
 		"=": "=", ">=": ">=", ">": ">", "<=": "<=", "<": "<", "<>": "<>",
-		"!=": "!=", "!>": "!>", "!<": "!<", "BETWEEN": "BETWEEN", "NOT BETWEEN": "NOT BETWEEN",
+		"!=": "!=", "BETWEEN": "BETWEEN", "NOT BETWEEN": "NOT BETWEEN",
 		"LIKE": "LIKE", "NOT LIKE": "NOT LIKE", "IN": "IN", "NOT IN": "NOT IN",
 		"IS NULL": "IS NULL", "IS NOT NULL": "IS NOT NULL", "AND": "AND", "OR": "OR", "NOT": "NOT",
 	}
@@ -63,10 +54,6 @@ func (p *MySQLPlugin) FormTableName(schema string, storageUnit string) string {
 		return storageUnit
 	}
 	return schema + "." + storageUnit
-}
-
-func (p *MySQLPlugin) GetSupportedColumnDataTypes() mapset.Set[string] {
-	return supportedColumnDataTypes
 }
 
 func (p *MySQLPlugin) GetSupportedOperators() map[string]string {

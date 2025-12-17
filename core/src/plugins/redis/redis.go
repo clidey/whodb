@@ -534,6 +534,17 @@ func (p *RedisPlugin) GetForeignKeyRelationships(config *engine.PluginConfig, sc
 	return make(map[string]*engine.ForeignKeyRelationship), nil
 }
 
+// GetDatabaseMetadata returns Redis metadata for frontend configuration.
+// Redis is a key-value store without traditional type definitions or operators.
+func (p *RedisPlugin) GetDatabaseMetadata() *engine.DatabaseMetadata {
+	return &engine.DatabaseMetadata{
+		DatabaseType:    engine.DatabaseType_Redis,
+		TypeDefinitions: []engine.TypeDefinition{},
+		Operators:       []string{},
+		AliasMap:        map[string]string{},
+	}
+}
+
 func NewRedisPlugin() *engine.Plugin {
 	return &engine.Plugin{
 		Type:            engine.DatabaseType_Redis,

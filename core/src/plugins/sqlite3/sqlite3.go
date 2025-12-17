@@ -31,7 +31,6 @@ import (
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
-	mapset "github.com/deckarep/golang-set/v2"
 	"gorm.io/gorm"
 )
 
@@ -41,14 +40,12 @@ func (p *Sqlite3Plugin) CreateSQLBuilder(db *gorm.DB) gorm_plugin.SQLBuilderInte
 }
 
 var (
-	supportedColumnDataTypes = mapset.NewSet(
-		"NULL", "INTEGER", "REAL", "TEXT", "BLOB",
-		"NUMERIC", "BOOLEAN", "DATE", "DATETIME",
-	)
-
 	supportedOperators = map[string]string{
-		"=": "=", ">=": ">=", ">": ">", "<=": "<=", "<": "<", "<>": "<>", "!=": "!=", "!>": "!>", "!<": "!<", "BETWEEN": "BETWEEN", "NOT BETWEEN": "NOT BETWEEN",
-		"LIKE": "LIKE", "NOT LIKE": "NOT LIKE", "IN": "IN", "NOT IN": "NOT IN", "IS NULL": "IS NULL", "IS NOT NULL": "IS NOT NULL", "AND": "AND", "OR": "OR", "NOT": "NOT",
+		"=": "=", ">=": ">=", ">": ">", "<=": "<=", "<": "<", "<>": "<>", "!=": "!=",
+		"BETWEEN": "BETWEEN", "NOT BETWEEN": "NOT BETWEEN",
+		"LIKE": "LIKE", "NOT LIKE": "NOT LIKE", "GLOB": "GLOB",
+		"IN": "IN", "NOT IN": "NOT IN", "IS NULL": "IS NULL", "IS NOT NULL": "IS NOT NULL",
+		"AND": "AND", "OR": "OR", "NOT": "NOT",
 	}
 )
 
@@ -56,10 +53,6 @@ type Sqlite3Plugin struct {
 	gorm_plugin.GormPlugin
 	strictTableCache map[string]bool
 	cacheMutex       sync.RWMutex
-}
-
-func (p *Sqlite3Plugin) GetSupportedColumnDataTypes() mapset.Set[string] {
-	return supportedColumnDataTypes
 }
 
 func (p *Sqlite3Plugin) GetSupportedOperators() map[string]string {

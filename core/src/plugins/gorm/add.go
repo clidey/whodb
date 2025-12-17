@@ -46,9 +46,10 @@ func (p *GormPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, 
 		}
 
 		var columns []engine.Record
+		metadata := p.GetDatabaseMetadata()
 		for _, fieldType := range fields {
-			if !p.GetSupportedColumnDataTypes().Contains(fieldType.Value) {
-				return false, fmt.Errorf("data type: %s not supported by: %s", fieldType.Value, p.Plugin.Type)
+			if err := engine.ValidateColumnType(fieldType.Value, metadata); err != nil {
+				return false, err
 			}
 
 			// Keep original field name without quoting for column definition

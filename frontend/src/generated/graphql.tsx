@@ -66,10 +66,21 @@ export type Column = {
   __typename?: 'Column';
   IsForeignKey: Scalars['Boolean']['output'];
   IsPrimary: Scalars['Boolean']['output'];
+  Length?: Maybe<Scalars['Int']['output']>;
   Name: Scalars['String']['output'];
+  Precision?: Maybe<Scalars['Int']['output']>;
   ReferencedColumn?: Maybe<Scalars['String']['output']>;
   ReferencedTable?: Maybe<Scalars['String']['output']>;
+  Scale?: Maybe<Scalars['Int']['output']>;
   Type: Scalars['String']['output'];
+};
+
+export type DatabaseMetadata = {
+  __typename?: 'DatabaseMetadata';
+  aliasMap: Array<Record>;
+  databaseType: Scalars['String']['output'];
+  operators: Array<Scalars['String']['output']>;
+  typeDefinitions: Array<TypeDefinition>;
 };
 
 export enum DatabaseType {
@@ -216,8 +227,9 @@ export type Query = {
   AIModel: Array<Scalars['String']['output']>;
   AIProviders: Array<AiProvider>;
   Columns: Array<Column>;
-    ColumnsBatch: Array<StorageUnitColumns>;
+  ColumnsBatch: Array<StorageUnitColumns>;
   Database: Array<Scalars['String']['output']>;
+  DatabaseMetadata?: Maybe<DatabaseMetadata>;
   Graph: Array<GraphUnit>;
   MockDataMaxRowCount: Scalars['Int']['output'];
   Profiles: Array<LoginProfile>;
@@ -253,8 +265,8 @@ export type QueryColumnsArgs = {
 
 
 export type QueryColumnsBatchArgs = {
-    schema: Scalars['String']['input'];
-    storageUnits: Array<Scalars['String']['input']>;
+  schema: Scalars['String']['input'];
+  storageUnits: Array<Scalars['String']['input']>;
 };
 
 
@@ -304,7 +316,7 @@ export type RowsResult = {
   Columns: Array<Column>;
   DisableUpdate: Scalars['Boolean']['output'];
   Rows: Array<Array<Scalars['String']['output']>>;
-    TotalCount: Scalars['Int']['output'];
+  TotalCount: Scalars['Int']['output'];
 };
 
 export type SettingsConfig = {
@@ -339,9 +351,30 @@ export type StorageUnit = {
 };
 
 export type StorageUnitColumns = {
-    __typename?: 'StorageUnitColumns';
-    Columns: Array<Column>;
-    StorageUnit: Scalars['String']['output'];
+  __typename?: 'StorageUnitColumns';
+  Columns: Array<Column>;
+  StorageUnit: Scalars['String']['output'];
+};
+
+export enum TypeCategory {
+  Binary = 'binary',
+  Boolean = 'boolean',
+  Datetime = 'datetime',
+  Json = 'json',
+  Numeric = 'numeric',
+  Other = 'other',
+  Text = 'text'
+}
+
+export type TypeDefinition = {
+  __typename?: 'TypeDefinition';
+  category: TypeCategory;
+  defaultLength?: Maybe<Scalars['Int']['output']>;
+  defaultPrecision?: Maybe<Scalars['Int']['output']>;
+  hasLength: Scalars['Boolean']['output'];
+  hasPrecision: Scalars['Boolean']['output'];
+  id: Scalars['String']['output'];
+  label: Scalars['String']['output'];
 };
 
 export type WhereCondition = {
@@ -371,6 +404,11 @@ export type GetVersionQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetVersionQuery = { __typename?: 'Query', Version: string };
+
+export type GetDatabaseMetadataQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetDatabaseMetadataQuery = { __typename?: 'Query', DatabaseMetadata?: { __typename?: 'DatabaseMetadata', databaseType: string, operators: Array<string>, typeDefinitions: Array<{ __typename?: 'TypeDefinition', id: string, label: string, hasLength: boolean, hasPrecision: boolean, defaultLength?: number | null, defaultPrecision?: number | null, category: TypeCategory }>, aliasMap: Array<{ __typename?: 'Record', Key: string, Value: string }> } | null };
 
 export type MockDataMaxRowCountQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -443,7 +481,7 @@ export type GetColumnsQueryVariables = Exact<{
 }>;
 
 
-export type GetColumnsQuery = { __typename?: 'Query', Columns: Array<{ __typename?: 'Column', Name: string, Type: string, IsPrimary: boolean, IsForeignKey: boolean, ReferencedTable?: string | null, ReferencedColumn?: string | null }> };
+export type GetColumnsQuery = { __typename?: 'Query', Columns: Array<{ __typename?: 'Column', Name: string, Type: string, IsPrimary: boolean, IsForeignKey: boolean, ReferencedTable?: string | null, ReferencedColumn?: string | null, Length?: number | null, Precision?: number | null, Scale?: number | null }> };
 
 export type GetGraphQueryVariables = Exact<{
   schema: Scalars['String']['input'];
@@ -458,7 +496,7 @@ export type ColumnsQueryVariables = Exact<{
 }>;
 
 
-export type ColumnsQuery = { __typename?: 'Query', Columns: Array<{ __typename?: 'Column', Name: string, Type: string, IsPrimary: boolean, IsForeignKey: boolean, ReferencedTable?: string | null, ReferencedColumn?: string | null }> };
+export type ColumnsQuery = { __typename?: 'Query', Columns: Array<{ __typename?: 'Column', Name: string, Type: string, IsPrimary: boolean, IsForeignKey: boolean, ReferencedTable?: string | null, ReferencedColumn?: string | null, Length?: number | null, Precision?: number | null, Scale?: number | null }> };
 
 export type RawExecuteQueryVariables = Exact<{
   query: Scalars['String']['input'];
@@ -507,27 +545,12 @@ export type DeleteRowMutationVariables = Exact<{
 export type DeleteRowMutation = { __typename?: 'Mutation', DeleteRow: { __typename?: 'StatusResponse', Status: boolean } };
 
 export type GetColumnsBatchQueryVariables = Exact<{
-    schema: Scalars['String']['input'];
-    storageUnits: Array<Scalars['String']['input']> | Scalars['String']['input'];
+  schema: Scalars['String']['input'];
+  storageUnits: Array<Scalars['String']['input']> | Scalars['String']['input'];
 }>;
 
 
-export type GetColumnsBatchQuery = {
-    __typename?: 'Query',
-    ColumnsBatch: Array<{
-        __typename?: 'StorageUnitColumns',
-        StorageUnit: string,
-        Columns: Array<{
-            __typename?: 'Column',
-            Name: string,
-            Type: string,
-            IsPrimary: boolean,
-            IsForeignKey: boolean,
-            ReferencedTable?: string | null,
-            ReferencedColumn?: string | null
-        }>
-    }>
-};
+export type GetColumnsBatchQuery = { __typename?: 'Query', ColumnsBatch: Array<{ __typename?: 'StorageUnitColumns', StorageUnit: string, Columns: Array<{ __typename?: 'Column', Name: string, Type: string, IsPrimary: boolean, IsForeignKey: boolean, ReferencedTable?: string | null, ReferencedColumn?: string | null, Length?: number | null, Precision?: number | null, Scale?: number | null }> }> };
 
 export type GetStorageUnitRowsQueryVariables = Exact<{
   schema: Scalars['String']['input'];
@@ -539,24 +562,7 @@ export type GetStorageUnitRowsQueryVariables = Exact<{
 }>;
 
 
-export type GetStorageUnitRowsQuery = {
-    __typename?: 'Query',
-    Row: {
-        __typename?: 'RowsResult',
-        Rows: Array<Array<string>>,
-        DisableUpdate: boolean,
-        TotalCount: number,
-        Columns: Array<{
-            __typename?: 'Column',
-            Type: string,
-            Name: string,
-            IsPrimary: boolean,
-            IsForeignKey: boolean,
-            ReferencedTable?: string | null,
-            ReferencedColumn?: string | null
-        }>
-    }
-};
+export type GetStorageUnitRowsQuery = { __typename?: 'Query', Row: { __typename?: 'RowsResult', Rows: Array<Array<string>>, DisableUpdate: boolean, TotalCount: number, Columns: Array<{ __typename?: 'Column', Type: string, Name: string, IsPrimary: boolean, IsForeignKey: boolean, ReferencedTable?: string | null, ReferencedColumn?: string | null, Length?: number | null, Precision?: number | null, Scale?: number | null }> } };
 
 export type GetStorageUnitsQueryVariables = Exact<{
   schema: Scalars['String']['input'];
@@ -694,6 +700,59 @@ export type GetVersionQueryHookResult = ReturnType<typeof useGetVersionQuery>;
 export type GetVersionLazyQueryHookResult = ReturnType<typeof useGetVersionLazyQuery>;
 export type GetVersionSuspenseQueryHookResult = ReturnType<typeof useGetVersionSuspenseQuery>;
 export type GetVersionQueryResult = Apollo.QueryResult<GetVersionQuery, GetVersionQueryVariables>;
+export const GetDatabaseMetadataDocument = gql`
+    query GetDatabaseMetadata {
+  DatabaseMetadata {
+    databaseType
+    typeDefinitions {
+      id
+      label
+      hasLength
+      hasPrecision
+      defaultLength
+      defaultPrecision
+      category
+    }
+    operators
+    aliasMap {
+      Key
+      Value
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetDatabaseMetadataQuery__
+ *
+ * To run a query within a React component, call `useGetDatabaseMetadataQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetDatabaseMetadataQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetDatabaseMetadataQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetDatabaseMetadataQuery(baseOptions?: Apollo.QueryHookOptions<GetDatabaseMetadataQuery, GetDatabaseMetadataQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetDatabaseMetadataQuery, GetDatabaseMetadataQueryVariables>(GetDatabaseMetadataDocument, options);
+      }
+export function useGetDatabaseMetadataLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetDatabaseMetadataQuery, GetDatabaseMetadataQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetDatabaseMetadataQuery, GetDatabaseMetadataQueryVariables>(GetDatabaseMetadataDocument, options);
+        }
+export function useGetDatabaseMetadataSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetDatabaseMetadataQuery, GetDatabaseMetadataQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetDatabaseMetadataQuery, GetDatabaseMetadataQueryVariables>(GetDatabaseMetadataDocument, options);
+        }
+export type GetDatabaseMetadataQueryHookResult = ReturnType<typeof useGetDatabaseMetadataQuery>;
+export type GetDatabaseMetadataLazyQueryHookResult = ReturnType<typeof useGetDatabaseMetadataLazyQuery>;
+export type GetDatabaseMetadataSuspenseQueryHookResult = ReturnType<typeof useGetDatabaseMetadataSuspenseQuery>;
+export type GetDatabaseMetadataQueryResult = Apollo.QueryResult<GetDatabaseMetadataQuery, GetDatabaseMetadataQueryVariables>;
 export const MockDataMaxRowCountDocument = gql`
     query MockDataMaxRowCount {
   MockDataMaxRowCount
@@ -1050,6 +1109,9 @@ export const GetColumnsDocument = gql`
     IsForeignKey
     ReferencedTable
     ReferencedColumn
+    Length
+    Precision
+    Scale
   }
 }
     `;
@@ -1148,6 +1210,9 @@ export const ColumnsDocument = gql`
     IsForeignKey
     ReferencedTable
     ReferencedColumn
+    Length
+    Precision
+    Scale
   }
 }
     `;
@@ -1408,19 +1473,22 @@ export type DeleteRowMutationResult = Apollo.MutationResult<DeleteRowMutation>;
 export type DeleteRowMutationOptions = Apollo.BaseMutationOptions<DeleteRowMutation, DeleteRowMutationVariables>;
 export const GetColumnsBatchDocument = gql`
     query GetColumnsBatch($schema: String!, $storageUnits: [String!]!) {
-        ColumnsBatch(schema: $schema, storageUnits: $storageUnits) {
-            StorageUnit
-            Columns {
-                Name
-                Type
-                IsPrimary
-                IsForeignKey
-                ReferencedTable
-                ReferencedColumn
-            }
-        }
+  ColumnsBatch(schema: $schema, storageUnits: $storageUnits) {
+    StorageUnit
+    Columns {
+      Name
+      Type
+      IsPrimary
+      IsForeignKey
+      ReferencedTable
+      ReferencedColumn
+      Length
+      Precision
+      Scale
     }
-`;
+  }
+}
+    `;
 
 /**
  * __useGetColumnsBatchQuery__
@@ -1439,24 +1507,18 @@ export const GetColumnsBatchDocument = gql`
  *   },
  * });
  */
-export function useGetColumnsBatchQuery(baseOptions: Apollo.QueryHookOptions<GetColumnsBatchQuery, GetColumnsBatchQueryVariables> & ({
-    variables: GetColumnsBatchQueryVariables;
-    skip?: boolean;
-} | { skip: boolean; })) {
-    const options = {...defaultOptions, ...baseOptions}
-    return Apollo.useQuery<GetColumnsBatchQuery, GetColumnsBatchQueryVariables>(GetColumnsBatchDocument, options);
-}
-
+export function useGetColumnsBatchQuery(baseOptions: Apollo.QueryHookOptions<GetColumnsBatchQuery, GetColumnsBatchQueryVariables> & ({ variables: GetColumnsBatchQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetColumnsBatchQuery, GetColumnsBatchQueryVariables>(GetColumnsBatchDocument, options);
+      }
 export function useGetColumnsBatchLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetColumnsBatchQuery, GetColumnsBatchQueryVariables>) {
-    const options = {...defaultOptions, ...baseOptions}
-    return Apollo.useLazyQuery<GetColumnsBatchQuery, GetColumnsBatchQueryVariables>(GetColumnsBatchDocument, options);
-}
-
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetColumnsBatchQuery, GetColumnsBatchQueryVariables>(GetColumnsBatchDocument, options);
+        }
 export function useGetColumnsBatchSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetColumnsBatchQuery, GetColumnsBatchQueryVariables>) {
-    const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-    return Apollo.useSuspenseQuery<GetColumnsBatchQuery, GetColumnsBatchQueryVariables>(GetColumnsBatchDocument, options);
-}
-
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetColumnsBatchQuery, GetColumnsBatchQueryVariables>(GetColumnsBatchDocument, options);
+        }
 export type GetColumnsBatchQueryHookResult = ReturnType<typeof useGetColumnsBatchQuery>;
 export type GetColumnsBatchLazyQueryHookResult = ReturnType<typeof useGetColumnsBatchLazyQuery>;
 export type GetColumnsBatchSuspenseQueryHookResult = ReturnType<typeof useGetColumnsBatchSuspenseQuery>;
@@ -1478,6 +1540,9 @@ export const GetStorageUnitRowsDocument = gql`
       IsForeignKey
       ReferencedTable
       ReferencedColumn
+      Length
+      Precision
+      Scale
     }
     Rows
     DisableUpdate

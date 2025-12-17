@@ -28,7 +28,6 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
-	mapset "github.com/deckarep/golang-set/v2"
 	"gorm.io/gorm"
 )
 
@@ -64,7 +63,6 @@ type GormPluginFunctions interface {
 
 	// these below are meant to be implemented by the specific database plugins
 	DB(config *engine.PluginConfig) (*gorm.DB, error)
-	GetSupportedColumnDataTypes() mapset.Set[string]
 	GetPlaceholder(index int) string
 
 	GetTableInfoQuery() string
@@ -763,4 +761,10 @@ func (p *GormPlugin) NormalizeType(typeName string) string {
 	// Default: strip length and return uppercase base type
 	spec := common.ParseTypeSpec(typeName)
 	return common.FormatTypeSpec(spec)
+}
+
+// GetDatabaseMetadata returns nil by default.
+// Database plugins should override this to provide metadata for frontend configuration.
+func (p *GormPlugin) GetDatabaseMetadata() *engine.DatabaseMetadata {
+	return nil
 }

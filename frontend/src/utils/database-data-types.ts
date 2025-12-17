@@ -16,27 +16,65 @@
 
 import { DatabaseType } from '@graphql';
 import { getDatabaseTypeDropdownItemsSync, TypeDefinition } from '../config/database-types';
+import { reduxStore } from '../store';
 
 /**
- * Get type definitions for a database (config-driven, no switch statements)
+ * Get type definitions for a database from the backend-driven Redux store.
+ *
  * @param databaseType The database type (can be CE or EE type)
  * @returns Array of TypeDefinition objects for the database
  */
 export function getDatabaseTypeDefinitions(databaseType: DatabaseType | string): TypeDefinition[] {
-    const dbTypeItems = getDatabaseTypeDropdownItemsSync();
-    const dbConfig = dbTypeItems.find(item => item.id === databaseType);
-    return dbConfig?.typeDefinitions ?? [];
+    const metadataState = reduxStore.getState().databaseMetadata;
+
+    if (
+        metadataState.databaseType === databaseType &&
+        metadataState.typeDefinitions.length > 0
+    ) {
+        // Convert backend format to frontend TypeDefinition format
+        return metadataState.typeDefinitions.map(td => ({
+            id: td.id,
+            label: td.label,
+            hasLength: td.hasLength || undefined,
+            hasPrecision: td.hasPrecision || undefined,
+            defaultLength: td.defaultLength ?? undefined,
+            defaultPrecision: td.defaultPrecision ?? undefined,
+            category: td.category,
+        }));
+    }
+
+    // No fallback - backend is the source of truth.
+    console.warn(
+        `[database-data-types] No type definitions found for ${databaseType}. ` +
+            `Ensure DatabaseMetadata query has completed.`
+    );
+    return [];
 }
 
 /**
- * Get the alias map for a database (config-driven)
+ * Get the alias map for a database from the backend-driven Redux store.
+ *
  * @param databaseType The database type (can be CE or EE type)
  * @returns Record mapping aliases to canonical type names
  */
 export function getDatabaseAliasMap(databaseType: DatabaseType | string): Record<string, string> {
-    const dbTypeItems = getDatabaseTypeDropdownItemsSync();
-    const dbConfig = dbTypeItems.find(item => item.id === databaseType);
-    return dbConfig?.aliasMap ?? {};
+    const metadataState = reduxStore.getState().databaseMetadata;
+
+    if (
+        metadataState.databaseType === databaseType &&
+        Object.keys(metadataState.aliasMap).length > 0
+    ) {
+        return metadataState.aliasMap;
+    }
+
+    // Note: Empty alias map is valid for some databases, so only warn if databaseType mismatch
+    if (metadataState.databaseType !== databaseType) {
+        console.warn(
+            `[database-data-types] No alias map found for ${databaseType}. ` +
+                `Ensure DatabaseMetadata query has completed.`
+        );
+    }
+    return {};
 }
 
 /**

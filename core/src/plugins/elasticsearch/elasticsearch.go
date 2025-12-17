@@ -772,6 +772,21 @@ func (p *ElasticSearchPlugin) GetSupportedOperators() map[string]string { //noli
 	return supportedOperators
 }
 
+// GetDatabaseMetadata returns ElasticSearch metadata for frontend configuration.
+// ElasticSearch is a search engine without traditional type definitions.
+func (p *ElasticSearchPlugin) GetDatabaseMetadata() *engine.DatabaseMetadata {
+	operators := make([]string, 0, len(supportedOperators))
+	for op := range supportedOperators {
+		operators = append(operators, op)
+	}
+	return &engine.DatabaseMetadata{
+		DatabaseType:    engine.DatabaseType_ElasticSearch,
+		TypeDefinitions: []engine.TypeDefinition{},
+		Operators:       operators,
+		AliasMap:        map[string]string{},
+	}
+}
+
 func NewElasticSearchPlugin() *engine.Plugin {
 	return &engine.Plugin{
 		Type:            engine.DatabaseType_ElasticSearch,

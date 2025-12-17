@@ -147,6 +147,9 @@ type PluginFunctions interface {
 
 	// Transaction support
 	WithTransaction(config *PluginConfig, operation func(tx any) error) error
+
+	// Database metadata for frontend type/operator configuration
+	GetDatabaseMetadata() *DatabaseMetadata
 }
 
 // Plugin wraps PluginFunctions with a database type identifier.

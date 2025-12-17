@@ -87,6 +87,13 @@ type ComplexityRoot struct {
 		Type             func(childComplexity int) int
 	}
 
+	DatabaseMetadata struct {
+		AliasMap        func(childComplexity int) int
+		DatabaseType    func(childComplexity int) int
+		Operators       func(childComplexity int) int
+		TypeDefinitions func(childComplexity int) int
+	}
+
 	GraphUnit struct {
 		Relations func(childComplexity int) int
 		Unit      func(childComplexity int) int
@@ -131,6 +138,7 @@ type ComplexityRoot struct {
 		Columns             func(childComplexity int, schema string, storageUnit string) int
 		ColumnsBatch        func(childComplexity int, schema string, storageUnits []string) int
 		Database            func(childComplexity int, typeArg string) int
+		DatabaseMetadata    func(childComplexity int) int
 		Graph               func(childComplexity int, schema string) int
 		MockDataMaxRowCount func(childComplexity int) int
 		Profiles            func(childComplexity int) int
@@ -172,6 +180,16 @@ type ComplexityRoot struct {
 		Columns     func(childComplexity int) int
 		StorageUnit func(childComplexity int) int
 	}
+
+	TypeDefinition struct {
+		Category         func(childComplexity int) int
+		DefaultLength    func(childComplexity int) int
+		DefaultPrecision func(childComplexity int) int
+		HasLength        func(childComplexity int) int
+		HasPrecision     func(childComplexity int) int
+		ID               func(childComplexity int) int
+		Label            func(childComplexity int) int
+	}
 }
 
 type MutationResolver interface {
@@ -201,6 +219,7 @@ type QueryResolver interface {
 	AIChat(ctx context.Context, providerID *string, modelType string, token *string, schema string, input model.ChatInput) ([]*model.AIChatMessage, error)
 	SettingsConfig(ctx context.Context) (*model.SettingsConfig, error)
 	MockDataMaxRowCount(ctx context.Context) (int, error)
+	DatabaseMetadata(ctx context.Context) (*model.DatabaseMetadata, error)
 }
 
 type executableSchema struct {
@@ -314,6 +333,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Column.Type(childComplexity), true
+
+	case "DatabaseMetadata.aliasMap":
+		if e.complexity.DatabaseMetadata.AliasMap == nil {
+			break
+		}
+
+		return e.complexity.DatabaseMetadata.AliasMap(childComplexity), true
+	case "DatabaseMetadata.databaseType":
+		if e.complexity.DatabaseMetadata.DatabaseType == nil {
+			break
+		}
+
+		return e.complexity.DatabaseMetadata.DatabaseType(childComplexity), true
+	case "DatabaseMetadata.operators":
+		if e.complexity.DatabaseMetadata.Operators == nil {
+			break
+		}
+
+		return e.complexity.DatabaseMetadata.Operators(childComplexity), true
+	case "DatabaseMetadata.typeDefinitions":
+		if e.complexity.DatabaseMetadata.TypeDefinitions == nil {
+			break
+		}
+
+		return e.complexity.DatabaseMetadata.TypeDefinitions(childComplexity), true
 
 	case "GraphUnit.Relations":
 		if e.complexity.GraphUnit.Relations == nil {
@@ -553,6 +597,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Database(childComplexity, args["type"].(string)), true
+	case "Query.DatabaseMetadata":
+		if e.complexity.Query.DatabaseMetadata == nil {
+			break
+		}
+
+		return e.complexity.Query.DatabaseMetadata(childComplexity), true
 	case "Query.Graph":
 		if e.complexity.Query.Graph == nil {
 			break
@@ -711,6 +761,49 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.StorageUnitColumns.StorageUnit(childComplexity), true
+
+	case "TypeDefinition.category":
+		if e.complexity.TypeDefinition.Category == nil {
+			break
+		}
+
+		return e.complexity.TypeDefinition.Category(childComplexity), true
+	case "TypeDefinition.defaultLength":
+		if e.complexity.TypeDefinition.DefaultLength == nil {
+			break
+		}
+
+		return e.complexity.TypeDefinition.DefaultLength(childComplexity), true
+	case "TypeDefinition.defaultPrecision":
+		if e.complexity.TypeDefinition.DefaultPrecision == nil {
+			break
+		}
+
+		return e.complexity.TypeDefinition.DefaultPrecision(childComplexity), true
+	case "TypeDefinition.hasLength":
+		if e.complexity.TypeDefinition.HasLength == nil {
+			break
+		}
+
+		return e.complexity.TypeDefinition.HasLength(childComplexity), true
+	case "TypeDefinition.hasPrecision":
+		if e.complexity.TypeDefinition.HasPrecision == nil {
+			break
+		}
+
+		return e.complexity.TypeDefinition.HasPrecision(childComplexity), true
+	case "TypeDefinition.id":
+		if e.complexity.TypeDefinition.ID == nil {
+			break
+		}
+
+		return e.complexity.TypeDefinition.ID(childComplexity), true
+	case "TypeDefinition.label":
+		if e.complexity.TypeDefinition.Label == nil {
+			break
+		}
+
+		return e.complexity.TypeDefinition.Label(childComplexity), true
 
 	}
 	return 0, false
@@ -1646,6 +1739,144 @@ func (ec *executionContext) fieldContext_Column_Scale(_ context.Context, field g
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DatabaseMetadata_databaseType(ctx context.Context, field graphql.CollectedField, obj *model.DatabaseMetadata) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DatabaseMetadata_databaseType,
+		func(ctx context.Context) (any, error) {
+			return obj.DatabaseType, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DatabaseMetadata_databaseType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DatabaseMetadata",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DatabaseMetadata_typeDefinitions(ctx context.Context, field graphql.CollectedField, obj *model.DatabaseMetadata) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DatabaseMetadata_typeDefinitions,
+		func(ctx context.Context) (any, error) {
+			return obj.TypeDefinitions, nil
+		},
+		nil,
+		ec.marshalNTypeDefinition2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐTypeDefinitionᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DatabaseMetadata_typeDefinitions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DatabaseMetadata",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_TypeDefinition_id(ctx, field)
+			case "label":
+				return ec.fieldContext_TypeDefinition_label(ctx, field)
+			case "hasLength":
+				return ec.fieldContext_TypeDefinition_hasLength(ctx, field)
+			case "hasPrecision":
+				return ec.fieldContext_TypeDefinition_hasPrecision(ctx, field)
+			case "defaultLength":
+				return ec.fieldContext_TypeDefinition_defaultLength(ctx, field)
+			case "defaultPrecision":
+				return ec.fieldContext_TypeDefinition_defaultPrecision(ctx, field)
+			case "category":
+				return ec.fieldContext_TypeDefinition_category(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TypeDefinition", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DatabaseMetadata_operators(ctx context.Context, field graphql.CollectedField, obj *model.DatabaseMetadata) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DatabaseMetadata_operators,
+		func(ctx context.Context) (any, error) {
+			return obj.Operators, nil
+		},
+		nil,
+		ec.marshalNString2ᚕstringᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DatabaseMetadata_operators(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DatabaseMetadata",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DatabaseMetadata_aliasMap(ctx context.Context, field graphql.CollectedField, obj *model.DatabaseMetadata) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DatabaseMetadata_aliasMap,
+		func(ctx context.Context) (any, error) {
+			return obj.AliasMap, nil
+		},
+		nil,
+		ec.marshalNRecord2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DatabaseMetadata_aliasMap(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DatabaseMetadata",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "Key":
+				return ec.fieldContext_Record_Key(ctx, field)
+			case "Value":
+				return ec.fieldContext_Record_Value(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Record", field.Name)
 		},
 	}
 	return fc, nil
@@ -3076,6 +3307,45 @@ func (ec *executionContext) fieldContext_Query_MockDataMaxRowCount(_ context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_DatabaseMetadata(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_DatabaseMetadata,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Query().DatabaseMetadata(ctx)
+		},
+		nil,
+		ec.marshalODatabaseMetadata2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDatabaseMetadata,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_DatabaseMetadata(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "databaseType":
+				return ec.fieldContext_DatabaseMetadata_databaseType(ctx, field)
+			case "typeDefinitions":
+				return ec.fieldContext_DatabaseMetadata_typeDefinitions(ctx, field)
+			case "operators":
+				return ec.fieldContext_DatabaseMetadata_operators(ctx, field)
+			case "aliasMap":
+				return ec.fieldContext_DatabaseMetadata_aliasMap(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DatabaseMetadata", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3602,6 +3872,209 @@ func (ec *executionContext) fieldContext_StorageUnitColumns_Columns(_ context.Co
 				return ec.fieldContext_Column_Scale(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Column", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TypeDefinition_id(ctx context.Context, field graphql.CollectedField, obj *model.TypeDefinition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TypeDefinition_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TypeDefinition_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TypeDefinition",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TypeDefinition_label(ctx context.Context, field graphql.CollectedField, obj *model.TypeDefinition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TypeDefinition_label,
+		func(ctx context.Context) (any, error) {
+			return obj.Label, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TypeDefinition_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TypeDefinition",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TypeDefinition_hasLength(ctx context.Context, field graphql.CollectedField, obj *model.TypeDefinition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TypeDefinition_hasLength,
+		func(ctx context.Context) (any, error) {
+			return obj.HasLength, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TypeDefinition_hasLength(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TypeDefinition",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TypeDefinition_hasPrecision(ctx context.Context, field graphql.CollectedField, obj *model.TypeDefinition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TypeDefinition_hasPrecision,
+		func(ctx context.Context) (any, error) {
+			return obj.HasPrecision, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TypeDefinition_hasPrecision(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TypeDefinition",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TypeDefinition_defaultLength(ctx context.Context, field graphql.CollectedField, obj *model.TypeDefinition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TypeDefinition_defaultLength,
+		func(ctx context.Context) (any, error) {
+			return obj.DefaultLength, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_TypeDefinition_defaultLength(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TypeDefinition",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TypeDefinition_defaultPrecision(ctx context.Context, field graphql.CollectedField, obj *model.TypeDefinition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TypeDefinition_defaultPrecision,
+		func(ctx context.Context) (any, error) {
+			return obj.DefaultPrecision, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_TypeDefinition_defaultPrecision(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TypeDefinition",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TypeDefinition_category(ctx context.Context, field graphql.CollectedField, obj *model.TypeDefinition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TypeDefinition_category,
+		func(ctx context.Context) (any, error) {
+			return obj.Category, nil
+		},
+		nil,
+		ec.marshalNTypeCategory2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐTypeCategory,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TypeDefinition_category(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TypeDefinition",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type TypeCategory does not have child fields")
 		},
 	}
 	return fc, nil
@@ -5658,6 +6131,60 @@ func (ec *executionContext) _Column(ctx context.Context, sel ast.SelectionSet, o
 	return out
 }
 
+var databaseMetadataImplementors = []string{"DatabaseMetadata"}
+
+func (ec *executionContext) _DatabaseMetadata(ctx context.Context, sel ast.SelectionSet, obj *model.DatabaseMetadata) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, databaseMetadataImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DatabaseMetadata")
+		case "databaseType":
+			out.Values[i] = ec._DatabaseMetadata_databaseType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "typeDefinitions":
+			out.Values[i] = ec._DatabaseMetadata_typeDefinitions(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "operators":
+			out.Values[i] = ec._DatabaseMetadata_operators(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "aliasMap":
+			out.Values[i] = ec._DatabaseMetadata_aliasMap(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var graphUnitImplementors = []string{"GraphUnit"}
 
 func (ec *executionContext) _GraphUnit(ctx context.Context, sel ast.SelectionSet, obj *model.GraphUnit) graphql.Marshaler {
@@ -6301,6 +6828,25 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "DatabaseMetadata":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_DatabaseMetadata(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -6572,6 +7118,69 @@ func (ec *executionContext) _StorageUnitColumns(ctx context.Context, sel ast.Sel
 			}
 		case "Columns":
 			out.Values[i] = ec._StorageUnitColumns_Columns(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var typeDefinitionImplementors = []string{"TypeDefinition"}
+
+func (ec *executionContext) _TypeDefinition(ctx context.Context, sel ast.SelectionSet, obj *model.TypeDefinition) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, typeDefinitionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TypeDefinition")
+		case "id":
+			out.Values[i] = ec._TypeDefinition_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "label":
+			out.Values[i] = ec._TypeDefinition_label(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hasLength":
+			out.Values[i] = ec._TypeDefinition_hasLength(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hasPrecision":
+			out.Values[i] = ec._TypeDefinition_hasPrecision(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "defaultLength":
+			out.Values[i] = ec._TypeDefinition_defaultLength(ctx, field, obj)
+		case "defaultPrecision":
+			out.Values[i] = ec._TypeDefinition_defaultPrecision(ctx, field, obj)
+		case "category":
+			out.Values[i] = ec._TypeDefinition_category(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -7663,6 +8272,70 @@ func (ec *executionContext) marshalNString2ᚕᚕstringᚄ(ctx context.Context, 
 	return ret
 }
 
+func (ec *executionContext) unmarshalNTypeCategory2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐTypeCategory(ctx context.Context, v any) (model.TypeCategory, error) {
+	var res model.TypeCategory
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNTypeCategory2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐTypeCategory(ctx context.Context, sel ast.SelectionSet, v model.TypeCategory) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) marshalNTypeDefinition2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐTypeDefinitionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.TypeDefinition) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNTypeDefinition2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐTypeDefinition(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNTypeDefinition2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐTypeDefinition(ctx context.Context, sel ast.SelectionSet, v *model.TypeDefinition) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TypeDefinition(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNWhereCondition2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐWhereConditionᚄ(ctx context.Context, v any) ([]*model.WhereCondition, error) {
 	var vSlice []any
 	vSlice = graphql.CoerceList(v)
@@ -7982,6 +8655,13 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	_ = ctx
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) marshalODatabaseMetadata2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDatabaseMetadata(ctx context.Context, sel ast.SelectionSet, v *model.DatabaseMetadata) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._DatabaseMetadata(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v any) (*int, error) {
