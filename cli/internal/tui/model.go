@@ -162,8 +162,15 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c":
 			return m, tea.Quit
 
-		case "tab":
-			return m.handleTabSwitch()
+		case "tab", "shift+tab":
+			// Let connection view handle Tab for its own navigation
+			if m.mode == ViewConnection {
+				return m.updateConnectionView(msg)
+			}
+			if msg.String() == "tab" {
+				return m.handleTabSwitch()
+			}
+			return m, nil
 
 		case "?":
 			return m, nil
@@ -235,18 +242,25 @@ func (m *MainModel) handleTabSwitch() (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	nextMode := (m.mode + 1) % 10
+	// Define explicit tab order for tabbable views
+	tabOrder := []ViewMode{ViewBrowser, ViewEditor, ViewResults, ViewHistory, ViewChat}
 
-	if nextMode == ViewConnection {
-		nextMode = ViewBrowser
+	// Find current position in tab order
+	currentIndex := -1
+	for i, mode := range tabOrder {
+		if mode == m.mode {
+			currentIndex = i
+			break
+		}
 	}
 
-	// Skip export, where, columns, and schema views in tab switching
-	if nextMode == ViewExport || nextMode == ViewWhere || nextMode == ViewColumns || nextMode == ViewSchema {
-		nextMode = ViewBrowser
+	// Move to next view in tab order (or start at beginning if not in tabbable view)
+	if currentIndex == -1 {
+		m.mode = tabOrder[0]
+	} else {
+		m.mode = tabOrder[(currentIndex+1)%len(tabOrder)]
 	}
 
-	m.mode = nextMode
 	return m, nil
 }
 
@@ -320,10 +334,10 @@ func (m *MainModel) renderViewIndicator() string {
 		{ViewEditor, "Editor"},
 		{ViewResults, "Results"},
 		{ViewHistory, "History"},
+		{ViewChat, "Chat"},
 		{ViewExport, "Export"},
 		{ViewWhere, "Where"},
 		{ViewColumns, "Columns"},
-		{ViewChat, "Chat"},
 		{ViewSchema, "Schema"},
 	}
 

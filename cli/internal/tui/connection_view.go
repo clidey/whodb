@@ -238,6 +238,14 @@ func (v *ConnectionView) updateList(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch msg.String() {
+		case "tab":
+			v.list.CursorDown()
+			return v, nil
+
+		case "shift+tab":
+			v.list.CursorUp()
+			return v, nil
+
 		case "enter":
 			if item, ok := v.list.SelectedItem().(connectionItem); ok {
 				if err := v.parent.dbManager.Connect(&item.conn); err != nil {
@@ -411,8 +419,8 @@ func (v *ConnectionView) View() string {
 	b.WriteString(v.list.View())
 	b.WriteString("\n\n")
 	b.WriteString(styles.RenderHelp(
-		"↑/k", "up",
-		"↓/j", "down",
+		"↑/k/shift+tab", "up",
+		"↓/j/tab", "down",
 		"enter", "connect",
 		"[n]", "new",
 		"[d]", "delete",
@@ -575,7 +583,7 @@ func (v *ConnectionView) renderForm() string {
 	helpText := ""
 	if len(v.parent.config.Connections) > 0 {
 		helpText = styles.RenderHelp(
-			"↑/↓", "navigate",
+			"↑/↓/tab", "navigate",
 			"←/→", "change type",
 			"enter", "connect",
 			"esc", "back",
@@ -583,7 +591,7 @@ func (v *ConnectionView) renderForm() string {
 		)
 	} else {
 		helpText = styles.RenderHelp(
-			"↑/↓", "navigate",
+			"↑/↓/tab", "navigate",
 			"←/→", "change type",
 			"enter", "connect",
 			"ctrl+c", "quit",
