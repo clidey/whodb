@@ -1,0 +1,19 @@
+query GetDatabaseMetadata {
+  DatabaseMetadata {
+    databaseType
+    typeDefinitions {
+      id
+      label
+      hasLength
+      hasPrecision
+      defaultLength
+      defaultPrecision
+      category
+    }
+    operators
+    aliasMap {
+      Key
+      Value
+    }
+  }
+}

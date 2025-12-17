@@ -63,6 +63,13 @@ type Column struct {
 	Scale            *int    `json:"Scale,omitempty"`
 }
 
+type DatabaseMetadata struct {
+	DatabaseType    string            `json:"databaseType"`
+	TypeDefinitions []*TypeDefinition `json:"typeDefinitions"`
+	Operators       []string          `json:"operators"`
+	AliasMap        []*Record         `json:"aliasMap"`
+}
+
 type GraphUnit struct {
 	Unit      *StorageUnit             `json:"Unit"`
 	Relations []*GraphUnitRelationship `json:"Relations"`
@@ -166,6 +173,16 @@ type StorageUnit struct {
 type StorageUnitColumns struct {
 	StorageUnit string    `json:"StorageUnit"`
 	Columns     []*Column `json:"Columns"`
+}
+
+type TypeDefinition struct {
+	ID               string       `json:"id"`
+	Label            string       `json:"label"`
+	HasLength        bool         `json:"hasLength"`
+	HasPrecision     bool         `json:"hasPrecision"`
+	DefaultLength    *int         `json:"defaultLength,omitempty"`
+	DefaultPrecision *int         `json:"defaultPrecision,omitempty"`
+	Category         TypeCategory `json:"category"`
 }
 
 type WhereCondition struct {
@@ -353,6 +370,71 @@ func (e *SortDirection) UnmarshalJSON(b []byte) error {
 }
 
 func (e SortDirection) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type TypeCategory string
+
+const (
+	TypeCategoryNumeric  TypeCategory = "numeric"
+	TypeCategoryText     TypeCategory = "text"
+	TypeCategoryBinary   TypeCategory = "binary"
+	TypeCategoryDatetime TypeCategory = "datetime"
+	TypeCategoryBoolean  TypeCategory = "boolean"
+	TypeCategoryJSON     TypeCategory = "json"
+	TypeCategoryOther    TypeCategory = "other"
+)
+
+var AllTypeCategory = []TypeCategory{
+	TypeCategoryNumeric,
+	TypeCategoryText,
+	TypeCategoryBinary,
+	TypeCategoryDatetime,
+	TypeCategoryBoolean,
+	TypeCategoryJSON,
+	TypeCategoryOther,
+}
+
+func (e TypeCategory) IsValid() bool {
+	switch e {
+	case TypeCategoryNumeric, TypeCategoryText, TypeCategoryBinary, TypeCategoryDatetime, TypeCategoryBoolean, TypeCategoryJSON, TypeCategoryOther:
+		return true
+	}
+	return false
+}
+
+func (e TypeCategory) String() string {
+	return string(e)
+}
+
+func (e *TypeCategory) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = TypeCategory(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid TypeCategory", str)
+	}
+	return nil
+}
+
+func (e TypeCategory) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *TypeCategory) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e TypeCategory) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

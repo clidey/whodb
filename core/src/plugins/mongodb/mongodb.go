@@ -554,6 +554,21 @@ func (p *MongoDBPlugin) GetForeignKeyRelationships(config *engine.PluginConfig, 
 	return make(map[string]*engine.ForeignKeyRelationship), nil
 }
 
+// GetDatabaseMetadata returns MongoDB metadata for frontend configuration.
+// MongoDB is a document database without traditional type definitions.
+func (p *MongoDBPlugin) GetDatabaseMetadata() *engine.DatabaseMetadata {
+	operators := make([]string, 0, len(supportedOperators))
+	for op := range supportedOperators {
+		operators = append(operators, op)
+	}
+	return &engine.DatabaseMetadata{
+		DatabaseType:    engine.DatabaseType_MongoDB,
+		TypeDefinitions: []engine.TypeDefinition{}, // Document DB - no traditional types
+		Operators:       operators,
+		AliasMap:        map[string]string{},
+	}
+}
+
 func NewMongoDBPlugin() *engine.Plugin {
 	return &engine.Plugin{
 		Type:            engine.DatabaseType_MongoDB,
