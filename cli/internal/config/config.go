@@ -68,10 +68,15 @@ type DisplayConfig struct {
 	PageSize int    `json:"page_size" yaml:"page_size"`
 }
 
+type AIConfig struct {
+	ConsentGiven bool `json:"consent_given" yaml:"consent_given"`
+}
+
 type Config struct {
 	Connections         []Connection  `json:"connections" yaml:"connections"`
 	History             HistoryConfig `json:"history" yaml:"history"`
 	Display             DisplayConfig `json:"display" yaml:"display"`
+	AI                  AIConfig      `json:"ai" yaml:"ai"`
 	useKeyring          bool          `json:"-" yaml:"-"` // Not persisted
 	keyringWarningShown bool          `json:"-" yaml:"-"` // Track if warning was shown
 }
@@ -86,6 +91,9 @@ func DefaultConfig() *Config {
 		Display: DisplayConfig{
 			Theme:    "dark",
 			PageSize: 50,
+		},
+		AI: AIConfig{
+			ConsentGiven: false,
 		},
 		// Don't check here - LoadConfig() will set this
 		useKeyring: false,
@@ -222,6 +230,7 @@ func (c *Config) Save() error {
 	viper.Set("connections", c.Connections)
 	viper.Set("history", c.History)
 	viper.Set("display", c.Display)
+	viper.Set("ai", c.AI)
 
 	if err := viper.WriteConfigAs(configPath); err != nil {
 		return fmt.Errorf("error writing config: %w", err)
@@ -268,4 +277,14 @@ func (c *Config) GetConnection(name string) (*Connection, error) {
 		}
 	}
 	return nil, fmt.Errorf("connection '%s' not found", name)
+}
+
+// SetAIConsent updates the AI consent preference
+func (c *Config) SetAIConsent(consent bool) {
+	c.AI.ConsentGiven = consent
+}
+
+// GetAIConsent returns the current AI consent preference
+func (c *Config) GetAIConsent() bool {
+	return c.AI.ConsentGiven
 }
