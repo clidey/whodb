@@ -22,6 +22,7 @@
  */
 
 import {ComponentType} from 'react';
+import {TypeDefinition} from './database-types';
 
 // Types from analyze-view component
 type IPlanNode = {
@@ -81,7 +82,7 @@ export interface FeatureFlags {
 export interface EEDatabaseType {
     id: string;
     label: string;
-    iconName: string; // Name of icon to resolve from Icons.Logos
+    iconName: string;
     extra: Record<string, string>;
     fields?: {
         hostname?: boolean;
@@ -89,11 +90,12 @@ export interface EEDatabaseType {
         password?: boolean;
         database?: boolean;
     };
-    operators?: string[]; // Valid SQL operators for this database type
-    dataTypes?: string[]; // Valid data types for creating tables/collections
-    supportsModifiers?: boolean; // Whether this database supports field modifiers (primary, nullable)
-    supportsScratchpad?: boolean; // Whether this database supports scratchpad/raw query execution
-    supportsSchema?: boolean; // Whether this database supports schemas
-    supportsDatabaseSwitching?: boolean; // Whether this database supports switching between databases in the UI
-    usesSchemaForGraph?: boolean; // Whether this database should use the schema field (true) or database field (false) for graph queries
+    operators?: string[];
+    typeDefinitions?: TypeDefinition[];
+    aliasMap?: Record<string, string>;
+    supportsModifiers?: boolean;
+    supportsScratchpad?: boolean;
+    supportsSchema?: boolean;
+    supportsDatabaseSwitching?: boolean;
+    usesSchemaForGraph?: boolean;
 }

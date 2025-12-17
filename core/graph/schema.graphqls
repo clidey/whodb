@@ -16,6 +16,9 @@ type Column {
   IsForeignKey: Boolean!
   ReferencedTable: String
   ReferencedColumn: String
+  Length: Int
+  Precision: Int
+  Scale: Int
 }
 
 type StorageUnitColumns {

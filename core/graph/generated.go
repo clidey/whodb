@@ -78,9 +78,12 @@ type ComplexityRoot struct {
 	Column struct {
 		IsForeignKey     func(childComplexity int) int
 		IsPrimary        func(childComplexity int) int
+		Length           func(childComplexity int) int
 		Name             func(childComplexity int) int
+		Precision        func(childComplexity int) int
 		ReferencedColumn func(childComplexity int) int
 		ReferencedTable  func(childComplexity int) int
+		Scale            func(childComplexity int) int
 		Type             func(childComplexity int) int
 	}
 
@@ -269,12 +272,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Column.IsPrimary(childComplexity), true
+	case "Column.Length":
+		if e.complexity.Column.Length == nil {
+			break
+		}
+
+		return e.complexity.Column.Length(childComplexity), true
 	case "Column.Name":
 		if e.complexity.Column.Name == nil {
 			break
 		}
 
 		return e.complexity.Column.Name(childComplexity), true
+	case "Column.Precision":
+		if e.complexity.Column.Precision == nil {
+			break
+		}
+
+		return e.complexity.Column.Precision(childComplexity), true
 	case "Column.ReferencedColumn":
 		if e.complexity.Column.ReferencedColumn == nil {
 			break
@@ -287,6 +302,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Column.ReferencedTable(childComplexity), true
+	case "Column.Scale":
+		if e.complexity.Column.Scale == nil {
+			break
+		}
+
+		return e.complexity.Column.Scale(childComplexity), true
 	case "Column.Type":
 		if e.complexity.Column.Type == nil {
 			break
@@ -1543,6 +1564,93 @@ func (ec *executionContext) fieldContext_Column_ReferencedColumn(_ context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _Column_Length(ctx context.Context, field graphql.CollectedField, obj *model.Column) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Column_Length,
+		func(ctx context.Context) (any, error) {
+			return obj.Length, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Column_Length(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Column",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Column_Precision(ctx context.Context, field graphql.CollectedField, obj *model.Column) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Column_Precision,
+		func(ctx context.Context) (any, error) {
+			return obj.Precision, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Column_Precision(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Column",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Column_Scale(ctx context.Context, field graphql.CollectedField, obj *model.Column) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Column_Scale,
+		func(ctx context.Context) (any, error) {
+			return obj.Scale, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Column_Scale(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Column",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _GraphUnit_Unit(ctx context.Context, field graphql.CollectedField, obj *model.GraphUnit) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2610,6 +2718,12 @@ func (ec *executionContext) fieldContext_Query_Columns(ctx context.Context, fiel
 				return ec.fieldContext_Column_ReferencedTable(ctx, field)
 			case "ReferencedColumn":
 				return ec.fieldContext_Column_ReferencedColumn(ctx, field)
+			case "Length":
+				return ec.fieldContext_Column_Length(ctx, field)
+			case "Precision":
+				return ec.fieldContext_Column_Precision(ctx, field)
+			case "Scale":
+				return ec.fieldContext_Column_Scale(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Column", field.Name)
 		},
@@ -3164,6 +3278,12 @@ func (ec *executionContext) fieldContext_RowsResult_Columns(_ context.Context, f
 				return ec.fieldContext_Column_ReferencedTable(ctx, field)
 			case "ReferencedColumn":
 				return ec.fieldContext_Column_ReferencedColumn(ctx, field)
+			case "Length":
+				return ec.fieldContext_Column_Length(ctx, field)
+			case "Precision":
+				return ec.fieldContext_Column_Precision(ctx, field)
+			case "Scale":
+				return ec.fieldContext_Column_Scale(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Column", field.Name)
 		},
@@ -3474,6 +3594,12 @@ func (ec *executionContext) fieldContext_StorageUnitColumns_Columns(_ context.Co
 				return ec.fieldContext_Column_ReferencedTable(ctx, field)
 			case "ReferencedColumn":
 				return ec.fieldContext_Column_ReferencedColumn(ctx, field)
+			case "Length":
+				return ec.fieldContext_Column_Length(ctx, field)
+			case "Precision":
+				return ec.fieldContext_Column_Precision(ctx, field)
+			case "Scale":
+				return ec.fieldContext_Column_Scale(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Column", field.Name)
 		},
@@ -5503,6 +5629,12 @@ func (ec *executionContext) _Column(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = ec._Column_ReferencedTable(ctx, field, obj)
 		case "ReferencedColumn":
 			out.Values[i] = ec._Column_ReferencedColumn(ctx, field, obj)
+		case "Length":
+			out.Values[i] = ec._Column_Length(ctx, field, obj)
+		case "Precision":
+			out.Values[i] = ec._Column_Precision(ctx, field, obj)
+		case "Scale":
+			out.Values[i] = ec._Column_Scale(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7849,6 +7981,24 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	_ = sel
 	_ = ctx
 	res := graphql.MarshalBoolean(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalInt(*v)
 	return res
 }
 

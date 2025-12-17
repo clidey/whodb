@@ -114,39 +114,70 @@ const DynamicExport: FC<{
     return <ExportComponent {...props} />;
 };
 
-// Type sets based on core/src/plugins/gorm/utils.go
+// Type sets for icon mapping
+// Includes both canonical forms and common aliases for broad matching
 const stringTypes = new Set([
-    "TEXT", "STRING", "VARCHAR", "CHAR"
+    "TEXT", "STRING", "VARCHAR", "CHAR",
+    "CHARACTER VARYING", "CHARACTER",
+    "FIXEDSTRING",
 ]);
 const intTypes = new Set([
-    "INTEGER", "SMALLINT", "BIGINT", "INT", "TINYINT", "MEDIUMINT", "INT4", "INT8", "INT16", "INT32", "INT64"
+    "INTEGER", "SMALLINT", "BIGINT", "INT", "TINYINT", "MEDIUMINT",
+    "INT2", "INT4", "INT8",
+    "INT16", "INT32", "INT64", "INT128", "INT256",
+    "SERIAL", "BIGSERIAL", "SMALLSERIAL",
 ]);
 const uintTypes = new Set([
-    "TINYINT UNSIGNED", "SMALLINT UNSIGNED", "MEDIUMINT UNSIGNED", "BIGINT UNSIGNED", "UINT8", "UINT16", "UINT32", "UINT64"
+    "TINYINT UNSIGNED", "SMALLINT UNSIGNED", "MEDIUMINT UNSIGNED", "BIGINT UNSIGNED",
+    "UINT8", "UINT16", "UINT32", "UINT64", "UINT128", "UINT256",
 ]);
 const floatTypes = new Set([
-    "REAL", "NUMERIC", "DOUBLE PRECISION", "FLOAT", "NUMBER", "DOUBLE", "DECIMAL"
+    "REAL", "NUMERIC", "DOUBLE PRECISION", "FLOAT", "NUMBER", "DOUBLE", "DECIMAL",
+    "FLOAT4", "FLOAT8",
+    "FLOAT32", "FLOAT64",
+    "DECIMAL32", "DECIMAL64", "DECIMAL128", "DECIMAL256",
+    "MONEY",
 ]);
 const boolTypes = new Set([
-    "BOOLEAN", "BIT", "BOOL"
+    "BOOLEAN", "BIT", "BOOL",
 ]);
 const dateTypes = new Set([
-    "DATE"
+    "DATE",
+    "DATE32",
 ]);
 const dateTimeTypes = new Set([
-    "DATETIME", "TIMESTAMP", "TIMESTAMP WITH TIME ZONE", "TIMESTAMP WITHOUT TIME ZONE", "DATETIME2", "SMALLDATETIME", "TIMETZ", "TIMESTAMPTZ"
+    "DATETIME", "TIMESTAMP", "TIME",
+    "TIMESTAMP WITH TIME ZONE", "TIMESTAMP WITHOUT TIME ZONE",
+    "TIME WITH TIME ZONE", "TIME WITHOUT TIME ZONE",
+    "DATETIME2", "SMALLDATETIME",
+    "TIMETZ", "TIMESTAMPTZ",
+    "INTERVAL",
+    "DATETIME64",
+    "YEAR",
 ]);
 const uuidTypes = new Set([
-    "UUID"
+    "UUID",
 ]);
 const binaryTypes = new Set([
-    "BLOB", "BYTEA", "VARBINARY", "BINARY", "IMAGE", "TINYBLOB", "MEDIUMBLOB", "LONGBLOB"
+    "BLOB", "BYTEA", "VARBINARY", "BINARY", "IMAGE",
+    "TINYBLOB", "MEDIUMBLOB", "LONGBLOB",
 ]);
+
+/**
+ * Strips length/precision suffix from a type string.
+ * e.g., "VARCHAR(255)" -> "VARCHAR", "DECIMAL(10,2)" -> "DECIMAL"
+ */
+function stripTypeSuffix(type: string): string {
+    return type.replace(/\(.*\)$/, '').trim();
+}
 
 
 export function getColumnIcons(columns: string[], columnTypes?: string[], t?: (key: string) => string) {
     return columns.map((col, idx) => {
-        const type = columnTypes?.[idx]?.toUpperCase?.() || "";
+        const rawType = columnTypes?.[idx] || "";
+        // Strip length/precision suffix and uppercase for matching
+        const type = stripTypeSuffix(rawType).toUpperCase();
+
         if (intTypes.has(type) || uintTypes.has(type)) return <HashtagIcon className="w-4 h-4" aria-label={t?.('integerType') ?? 'Integer type'} />;
         if (floatTypes.has(type)) return <CalculatorIcon className="w-4 h-4" aria-label={t?.('decimalType') ?? 'Decimal type'} />;
         if (boolTypes.has(type)) return <CheckCircleIcon className="w-4 h-4" aria-label={t?.('booleanType') ?? 'Boolean type'} />;
@@ -1171,7 +1202,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                                             : <ChevronDownIcon className="w-4 h-4" />
                                                     )}
                                                 </p>
-                                                <p className="text-xs">{columnTypes?.[idx]}</p>
+                                                <p className="text-xs">{columnTypes?.[idx]?.toLowerCase()}</p>
                                             </Tip>
                                         </TableHead>
                                     ))}

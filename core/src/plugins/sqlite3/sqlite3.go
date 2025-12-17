@@ -168,18 +168,6 @@ func (p *Sqlite3Plugin) GetTableNameAndAttributes(rows *sql.Rows) (string, []eng
 	return tableName, attributes
 }
 
-func (p *Sqlite3Plugin) GetSchemaTableQuery() string {
-	return `
-		SELECT m.name AS TABLE_NAME,
-			   p.name AS COLUMN_NAME,
-			   p.type AS DATA_TYPE
-		FROM sqlite_master m,
-			 pragma_table_info(m.name) p
-		WHERE m.type = 'table'
-		  AND m.name NOT LIKE 'sqlite_%';
-	`
-}
-
 // GetRows overrides the base GORM implementation to handle SQLite datetime quirks
 func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
@@ -469,6 +457,11 @@ func (p *Sqlite3Plugin) GetForeignKeyRelationships(config *engine.PluginConfig, 
 
 		return relationships, nil
 	})
+}
+
+// NormalizeType converts SQLite type aliases to their canonical form.
+func (p *Sqlite3Plugin) NormalizeType(typeName string) string {
+	return NormalizeType(typeName)
 }
 
 func NewSqlite3Plugin() *engine.Plugin {

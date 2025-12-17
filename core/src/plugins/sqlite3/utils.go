@@ -84,9 +84,5 @@ func (p *Sqlite3Plugin) GetPrimaryKeyColQuery() string {
 		ORDER BY m.name, p.pk;`
 }
 
-func (p *Sqlite3Plugin) GetColTypeQuery() string {
-	// Order by cid to preserve column definition order
-	return `SELECT name AS column_name, type AS data_type FROM pragma_table_info(?) ORDER BY cid`
-}
 
 // Identifier quoting handled by GORM Dialector

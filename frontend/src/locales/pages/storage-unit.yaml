@@ -17,6 +17,10 @@ en:
   fieldTypeLabel: Field Type
   fieldTypePlaceholder: Select Type
   searchTypePlaceholder: Search Type...
+  fieldLengthLabel: Length
+  fieldLengthPlaceholder: e.g., 255
+  fieldPrecisionLabel: Precision
+  fieldScaleLabel: Scale
   modifiersLabel: Modifiers
   primaryModifier: Primary
   nullableModifier: Nullable

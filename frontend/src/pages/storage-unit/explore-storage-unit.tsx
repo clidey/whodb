@@ -732,7 +732,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                                                     {col.Name}
                                                 </Label> 
                                             </div>
-                                            <p className="text-xs">{col.Type}</p>
+                                            <p className="text-xs">{col.Type?.toLowerCase()}</p>
                                         </Tip>
                                         <Input
                                             value={addRowData[col.Name] ?? ""}

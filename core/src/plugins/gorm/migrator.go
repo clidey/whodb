@@ -17,11 +17,10 @@
 package gorm_plugin
 
 import (
-	"database/sql"
+	"fmt"
 	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/log"
 	"gorm.io/gorm"
 )
 
@@ -73,134 +72,112 @@ func (m *MigratorHelper) GetConstraints(tableName string) (map[string][]gorm.Col
 	return constraints, nil
 }
 
-// GetColumnTypes gets column types using Migrator's ColumnTypes
+// GetColumnTypes gets column types using Migrator's ColumnTypes.
+// Returns types with length info when available (e.g., "VARCHAR(255)").
 func (m *MigratorHelper) GetColumnTypes(tableName string) (map[string]string, error) {
 	columnTypes := make(map[string]string)
 
-	// Try to use GORM's Migrator ColumnTypes method
 	types, err := m.migrator.ColumnTypes(tableName)
 	if err != nil {
-		// Fall back to raw SQL if Migrator doesn't work
-		return m.getColumnTypesRaw(tableName)
+		return nil, err
 	}
 
 	for _, col := range types {
-		columnTypes[col.Name()] = strings.ToUpper(col.DatabaseTypeName())
+		fullType := m.buildFullTypeName(col)
+		// Normalize the type using the plugin's normalization
+		normalizedType := m.plugin.NormalizeType(fullType)
+		columnTypes[col.Name()] = normalizedType
 	}
 
 	return columnTypes, nil
 }
 
-// GetOrderedColumns returns columns in their definition order
+// typesWithLength lists types where showing length is meaningful to users.
+// These are types where users can specify a length/size when creating columns.
+var typesWithLength = map[string]bool{
+	// Character types
+	"VARCHAR": true, "CHAR": true, "CHARACTER": true, "CHARACTER VARYING": true,
+	"NVARCHAR": true, "NCHAR": true, "BPCHAR": true,
+	// Binary types
+	"BINARY": true, "VARBINARY": true, "BIT": true, "BIT VARYING": true, "VARBIT": true,
+	// ClickHouse string types
+	"FIXEDSTRING": true,
+}
+
+// typesWithPrecision lists types where showing precision/scale is meaningful.
+var typesWithPrecision = map[string]bool{
+	"DECIMAL": true, "NUMERIC": true, "NUMBER": true,
+	// Some databases use FLOAT/DOUBLE with precision
+	"FLOAT": true, "DOUBLE": true, "REAL": true,
+}
+
+// buildFullTypeName constructs the full type name including length/precision.
+// Only appends length for types where it's user-specifiable (VARCHAR, CHAR, etc.)
+// to avoid showing internal storage sizes for types like BOX or POLYGON.
+func (m *MigratorHelper) buildFullTypeName(col gorm.ColumnType) string {
+	baseName := strings.ToUpper(col.DatabaseTypeName())
+
+	// Only show length for types where users can specify it
+	if typesWithLength[baseName] {
+		if length, ok := col.Length(); ok && length > 0 {
+			return fmt.Sprintf("%s(%d)", baseName, length)
+		}
+	}
+
+	// Only show precision/scale for decimal-like types
+	if typesWithPrecision[baseName] {
+		if precision, scale, ok := col.DecimalSize(); ok && precision > 0 {
+			if scale > 0 {
+				return fmt.Sprintf("%s(%d,%d)", baseName, precision, scale)
+			}
+			return fmt.Sprintf("%s(%d)", baseName, precision)
+		}
+	}
+
+	return baseName
+}
+
+// GetOrderedColumns returns columns in their definition order.
+// Returns types with length info when available and normalized to canonical form.
 func (m *MigratorHelper) GetOrderedColumns(tableName string) ([]engine.Column, error) {
-	// Try to use GORM's Migrator ColumnTypes method
 	types, err := m.migrator.ColumnTypes(tableName)
 	if err != nil {
-		// Fall back to raw SQL if Migrator doesn't work
-		return m.getOrderedColumnsRaw(tableName)
+		return nil, err
 	}
 
 	columns := make([]engine.Column, 0, len(types))
 	for _, col := range types {
-		columns = append(columns, engine.Column{
+		fullType := m.buildFullTypeName(col)
+		normalizedType := m.plugin.NormalizeType(fullType)
+		baseName := strings.ToUpper(col.DatabaseTypeName())
+
+		column := engine.Column{
 			Name: col.Name(),
-			Type: strings.ToUpper(col.DatabaseTypeName()),
-		})
+			Type: normalizedType,
+		}
+
+		// Only extract length for types where it's user-specifiable
+		if typesWithLength[baseName] {
+			if length, ok := col.Length(); ok && length > 0 {
+				l := int(length)
+				column.Length = &l
+			}
+		}
+
+		// Only extract precision/scale for decimal-like types
+		if typesWithPrecision[baseName] {
+			if precision, scale, ok := col.DecimalSize(); ok && precision > 0 {
+				p := int(precision)
+				column.Precision = &p
+				if scale > 0 {
+					s := int(scale)
+					column.Scale = &s
+				}
+			}
+		}
+
+		columns = append(columns, column)
 	}
 
 	return columns, nil
-}
-
-// getOrderedColumnsRaw falls back to raw SQL for ordered columns
-func (m *MigratorHelper) getOrderedColumnsRaw(tableName string) ([]engine.Column, error) {
-	var columns []engine.Column
-
-	// Extract schema and table name
-	parts := strings.Split(tableName, ".")
-	var schema, table string
-	if len(parts) == 2 {
-		schema = parts[0]
-		table = parts[1]
-	} else {
-		table = tableName
-	}
-
-	query := m.plugin.GetColTypeQuery()
-
-	var rows *sql.Rows
-	var err error
-
-	if m.plugin.GetDatabaseType() == engine.DatabaseType_Sqlite3 {
-		rows, err = m.db.Raw(query, table).Rows()
-	} else {
-		rows, err = m.db.Raw(query, schema, table).Rows()
-	}
-
-	if err != nil {
-		log.Logger.WithError(err).WithField("table", tableName).Error("Failed to execute column types query")
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var columnName, dataType string
-		if err := rows.Scan(&columnName, &dataType); err != nil {
-			log.Logger.WithError(err).Error("Failed to scan column type")
-			return nil, err
-		}
-		columns = append(columns, engine.Column{
-			Name: columnName,
-			Type: strings.ToUpper(dataType),
-		})
-	}
-
-	return columns, nil
-}
-
-// getColumnTypesRaw falls back to raw SQL for column types
-func (m *MigratorHelper) getColumnTypesRaw(tableName string) (map[string]string, error) {
-	columnTypes := make(map[string]string)
-
-	// Extract schema and table name
-	parts := strings.Split(tableName, ".")
-	var schema, table string
-	if len(parts) == 2 {
-		schema = parts[0]
-		table = parts[1]
-	} else {
-		table = tableName
-	}
-
-	query := m.plugin.GetColTypeQuery()
-
-	var rows *sql.Rows
-	var err error
-
-	if m.plugin.GetDatabaseType() == engine.DatabaseType_Sqlite3 {
-		rows, err = m.db.Raw(query, table).Rows()
-	} else {
-		rows, err = m.db.Raw(query, schema, table).Rows()
-	}
-
-	if err != nil {
-		log.Logger.WithError(err).WithField("table", tableName).Error("Failed to execute column types query")
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var columnName, dataType string
-		if err := rows.Scan(&columnName, &dataType); err != nil {
-			log.Logger.WithError(err).WithField("table", tableName).Error("Failed to scan column type data")
-			return nil, err
-		}
-		columnTypes[columnName] = dataType
-	}
-
-	if err := rows.Err(); err != nil {
-		log.Logger.WithError(err).WithField("table", tableName).Error("Row iteration error while getting column types")
-		return nil, err
-	}
-
-	return columnTypes, nil
 }

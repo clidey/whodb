@@ -130,7 +130,6 @@ func (p *GormPlugin) GetOrderedColumnsWithTypes(db *gorm.DB, schema, tableName s
 }
 
 func (p *GormPlugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[string]string, error) {
-	// Try using Migrator first
 	migrator := NewMigratorHelper(db, p)
 
 	// Build full table name for Migrator
@@ -141,47 +140,7 @@ func (p *GormPlugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[
 		fullTableName = tableName
 	}
 
-	// Attempt to get column types using Migrator
-	columnTypes, err := migrator.GetColumnTypes(fullTableName)
-	if err == nil && len(columnTypes) > 0 {
-		return columnTypes, nil
-	}
-
-	// Fall back to raw SQL if Migrator didn't work
-	log.Logger.Debug("Migrator failed to get column types, falling back to raw SQL")
-
-	columnTypes = make(map[string]string)
-	query := p.GetColTypeQuery()
-
-	var rows *sql.Rows
-
-	if p.Type == engine.DatabaseType_Sqlite3 {
-		rows, err = db.Raw(query, tableName).Rows()
-	} else {
-		rows, err = db.Raw(query, schema, tableName).Rows()
-	}
-
-	if err != nil {
-		log.Logger.WithError(err).WithField("schema", schema).WithField("tableName", tableName).Error("Failed to execute column types query")
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var columnName, dataType string
-		if err := rows.Scan(&columnName, &dataType); err != nil {
-			log.Logger.WithError(err).WithField("schema", schema).WithField("tableName", tableName).Error("Failed to scan column type data")
-			return nil, err
-		}
-		columnTypes[columnName] = dataType
-	}
-
-	if err := rows.Err(); err != nil {
-		log.Logger.WithError(err).WithField("schema", schema).WithField("tableName", tableName).Error("Row iteration error while getting column types")
-		return nil, err
-	}
-
-	return columnTypes, nil
+	return migrator.GetColumnTypes(fullTableName)
 }
 
 // todo: test this thouroughly for each DB to ensure that the casting is correct and there's no data loss
@@ -196,6 +155,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (interface{}, 
 	}
 
 	columnType = strings.ToUpper(columnType)
+	columnType = p.NormalizeType(columnType)
 
 	// Check if plugin wants to handle this data type
 	if customValue, handled, err := p.GormPluginFunctions.HandleCustomDataType(value, columnType, isNullable); handled {

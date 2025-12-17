@@ -70,18 +70,6 @@ func (p *PostgresPlugin) GetAllSchemasQuery() string {
 	return "SELECT schema_name AS schemaname FROM information_schema.schemata"
 }
 
-func (p *PostgresPlugin) GetSchemaTableQuery() string {
-	return `
-		SELECT 
-			table_name AS "TABLE_NAME", 
-			column_name AS "COLUMN_NAME", 
-			data_type AS "DATA_TYPE"
-		FROM information_schema.columns
-		WHERE table_schema = ?
-		ORDER BY table_name, ordinal_position
-	`
-}
-
 func (p *PostgresPlugin) GetTableInfoQuery() string {
 	return `
 		SELECT
@@ -197,6 +185,11 @@ func (p *PostgresPlugin) GetForeignKeyRelationships(config *engine.PluginConfig,
 
 		return relationships, nil
 	})
+}
+
+// NormalizeType converts PostgreSQL type aliases to their canonical form.
+func (p *PostgresPlugin) NormalizeType(typeName string) string {
+	return NormalizeType(typeName)
 }
 
 func NewPostgresPlugin() *engine.Plugin {

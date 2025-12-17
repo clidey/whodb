@@ -8,6 +8,9 @@ query GetColumnsBatch($schema: String!, $storageUnits: [String!]!) {
             IsForeignKey
             ReferencedTable
             ReferencedColumn
+            Length
+            Precision
+            Scale
         }
     }
 }

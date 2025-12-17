@@ -38,7 +38,7 @@ import {
     toast,
     VirtualizedTableBody
 } from '@clidey/ux';
-import {SearchSelect} from "../../components/ux";
+import {TypeSelector} from "../../components/type-selector";
 import {
     DatabaseType,
     RecordInput,
@@ -74,7 +74,7 @@ import {InternalPage} from "../../components/page";
 import {InternalRoutes} from "../../config/routes";
 import {trackFrontendEvent} from "../../config/posthog";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
-import {databaseSupportsModifiers, getDatabaseDataTypes} from "../../utils/database-data-types";
+import {databaseSupportsModifiers} from "../../utils/database-data-types";
 import {databaseSupportsScratchpad} from "../../utils/database-features";
 import {getDatabaseStorageUnitLabel, isNoSQL} from "../../utils/functions";
 import {Tip} from '../../components/tip';
@@ -130,7 +130,7 @@ const StorageUnitCard: FC<{ unit: StorageUnit, columns?: any[] }> = ({ unit, col
                 </Tip>
                 {
                     introAttributes.slice(0,2).map(attribute => (
-                        <p key={attribute.Key} className="text-xs">{attribute.Key}: {attribute.Value}</p>
+                        <p key={attribute.Key} className="text-xs">{attribute.Key}: {attribute.Value?.toLowerCase()}</p>
                     ))
                 }
             </div>
@@ -157,7 +157,7 @@ const StorageUnitCard: FC<{ unit: StorageUnit, columns?: any[] }> = ({ unit, col
                                 return (
                                     <StackListItem key={attribute.Key} item={isForeignKey ?
                                         <Badge className="text-lg" data-testid="foreign-key-attribute">{attribute.Key}</Badge> : attribute.Key}>
-                                        {attribute.Value}
+                                        {attribute.Value?.toLowerCase()}
                                     </StackListItem>
                                 );
                             })
@@ -168,7 +168,7 @@ const StorageUnitCard: FC<{ unit: StorageUnit, columns?: any[] }> = ({ unit, col
                                 return (
                                     <StackListItem key={attribute.Key} item={isForeignKey ?
                                         <Badge className="text-lg" data-testid="foreign-key-attribute">{attribute.Key}</Badge> : attribute.Key}>
-                                        {attribute.Value}
+                                        {attribute.Value?.toLowerCase()}
                                     </StackListItem>
                                 );
                             })
@@ -319,18 +319,6 @@ export const StorageUnitPage: FC = () => {
         })
     }, [fields.length]);
 
-    const storageUnitTypesDropdownItems = useMemo(() => {
-        if (current?.Type == null || isNoSQL(current.Type)) {
-            return [];
-        }
-        
-        const dataTypes = getDatabaseDataTypes(current.Type);
-        return dataTypes.map(item => ({
-            id: item,
-            label: item,
-        }));
-    }, [current?.Type]);
-    
     useEffect(() => {
         refetch();
     }, [current, refetch]);
@@ -444,11 +432,8 @@ export const StorageUnitPage: FC = () => {
                                             <Label>{t('fieldNameLabel')}</Label>
                                             <Input value={field.Key} onChange={e => handleFieldValueChange("Key", index, e.target.value)} placeholder={t('fieldNamePlaceholder')}/>
                                             <Label>{t('fieldTypeLabel')}</Label>
-                                            <SearchSelect
-                                                options={storageUnitTypesDropdownItems.map(item => ({
-                                                    value: item.id,
-                                                    label: item.label,
-                                                }))}
+                                            <TypeSelector
+                                                databaseType={current?.Type}
                                                 value={field.Value}
                                                 onChange={value => handleFieldValueChange("Value", index, value)}
                                                 placeholder={t('fieldTypePlaceholder')}
@@ -573,7 +558,7 @@ export const StorageUnitPage: FC = () => {
                                             return (
                                                 <StackListItem key={attribute.Key} item={isForeignKey ?
                                                     <Badge className="text-lg" data-testid="foreign-key-attribute">{attribute.Key}</Badge> : attribute.Key}>
-                                                    {attribute.Value}
+                                                    {attribute.Value?.toLowerCase()}
                                                 </StackListItem>
                                             );
                                         })}
@@ -582,7 +567,7 @@ export const StorageUnitPage: FC = () => {
                                             return (
                                                 <StackListItem key={attribute.Key} item={isForeignKey ?
                                                     <Badge className="text-lg" data-testid="foreign-key-attribute">{attribute.Key}</Badge> : attribute.Key}>
-                                                    {attribute.Value}
+                                                    {attribute.Value?.toLowerCase()}
                                                 </StackListItem>
                                             );
                                         })}
@@ -659,7 +644,9 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit & { columns?: 
                             {
                                 displayItems.map((item: any, index: number) => {
                                     const name = item.Name || item.Key;
-                                    const value = item.Type || item.Value;
+                                    const rawValue = item.Type || item.Value;
+                                    // Lowercase type names for cleaner UI display
+                                    const value = item.Type ? rawValue?.toLowerCase() : rawValue;
 
                                     // Check if this field has FK/PK info from columns data
                                     const colInfo = columnsMap.get(name);
