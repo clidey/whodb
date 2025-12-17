@@ -97,6 +97,14 @@ export const KeyboardShortcutsHelp: FC<KeyboardShortcutsHelpProps> = ({
             ],
         },
         {
+            title: t('categoryChat'),
+            shortcuts: [
+                { keys: ["Mod", "I"], description: t('focusChatInput') },
+                { keys: ["/"], description: t('focusChatInputAlt') },
+                { keys: ["Mod", "P"], description: t('focusProviderConfig') },
+            ],
+        },
+        {
             title: t('categoryTableNavigation'),
             shortcuts: [
                 { keys: ["ArrowDown"], description: t('moveDown') },

@@ -4,6 +4,7 @@ en:
   hint: Press ? to open
   categoryGlobal: Global
   categoryNavigation: Navigation
+  categoryChat: AI Chat
   categoryTableNavigation: Table Navigation
   categoryTableSelection: Table Selection
   categoryTableActions: Table Actions
@@ -16,6 +17,9 @@ en:
   navSecond: Go to second view
   navThird: Go to third view
   navFourth: Go to fourth view (if available)
+  focusChatInput: Focus chat input
+  focusChatInputAlt: Focus chat input
+  focusProviderConfig: Focus provider/model selection
   moveDown: Move to next row
   moveUp: Move to previous row
   moveFirst: Move to first row

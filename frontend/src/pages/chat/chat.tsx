@@ -268,6 +268,8 @@ export const ChatPage: FC = () => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const schema = useAppSelector(state => state.database.schema);
     const [currentSearchIndex, setCurrentSearchIndex] = useState<number>();
+    const chatInputRef = useRef<HTMLInputElement>(null);
+    const providerConfigRef = useRef<HTMLDivElement>(null);
 
     const dispatch = useAppDispatch();
 
@@ -416,6 +418,43 @@ export const ChatPage: FC = () => {
         setCurrentSearchIndex(undefined);
     }, [dispatch]);
 
+    // Keyboard shortcuts for chat interface navigation
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            // Skip if typing in an input/textarea (except for our chat input which handles its own keys)
+            const target = event.target as HTMLElement;
+            const isInInput = target instanceof HTMLInputElement ||
+                            target instanceof HTMLTextAreaElement ||
+                            target.isContentEditable;
+
+            // Ctrl/Cmd+I: Focus chat input
+            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'i') {
+                event.preventDefault();
+                chatInputRef.current?.focus();
+                return;
+            }
+
+            // Ctrl/Cmd+P: Focus provider/model config section
+            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'p') {
+                event.preventDefault();
+                // Focus the first button in the provider config section
+                const firstButton = providerConfigRef.current?.querySelector('button');
+                firstButton?.focus();
+                return;
+            }
+
+            // "/" key: Focus chat input (common in chat apps)
+            if (event.key === '/' && !isInInput) {
+                event.preventDefault();
+                chatInputRef.current?.focus();
+                return;
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
+
     const disableAll = useMemo(() => {
         return models.length === 0 || !modelAvailable;
     }, [modelAvailable, models.length]);
@@ -423,10 +462,12 @@ export const ChatPage: FC = () => {
     return (
         <InternalPage routes={[InternalRoutes.Chat]} className="h-full">
             <div className="flex flex-col w-full h-full gap-2">
-                <AIProvider 
-                    {...aiState}
-                    onClear={handleClear}
-                />
+                <div ref={providerConfigRef}>
+                    <AIProvider
+                        {...aiState}
+                        onClear={handleClear}
+                    />
+                </div>
                 <div className={classNames("flex grow w-full rounded-xl overflow-hidden", {
                     "hidden": disableAll,
                 })}>
@@ -510,6 +551,7 @@ export const ChatPage: FC = () => {
                     "opacity-10": disableAll,
                 })}>
                     <Input
+                        ref={chatInputRef}
                         value={query}
                         onChange={e => setQuery(e.target.value)}
                         placeholder={t('placeholder')}
