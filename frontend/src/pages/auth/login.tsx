@@ -184,6 +184,20 @@ export const LoginForm: FC<LoginFormProps> = ({
                     shouldUpdateLastAccessed.current = true;
                     dispatch(AuthActions.login(profileData));
                     markFirstLoginComplete();
+
+                    // Clear login-related URL params before navigation
+                    if (searchParams.has("credentials") || searchParams.has("login")) {
+                        const newParams = new URLSearchParams(searchParams);
+                        newParams.delete("credentials");
+                        newParams.delete("login");
+                        newParams.delete("type");
+                        newParams.delete("host");
+                        newParams.delete("username");
+                        newParams.delete("password");
+                        newParams.delete("database");
+                        setSearchParams(newParams, { replace: true });
+                    }
+
                     if (onLoginSuccess) {
                         onLoginSuccess();
                     } else {
@@ -229,6 +243,14 @@ export const LoginForm: FC<LoginFormProps> = ({
                         IsEnvironmentDefined: profile?.IsEnvironmentDefined ?? false,
                     }));
                     markFirstLoginComplete();
+
+                    // Clear login-related URL params before navigation
+                    if (searchParams.has("resource")) {
+                        const newParams = new URLSearchParams(searchParams);
+                        newParams.delete("resource");
+                        setSearchParams(newParams, { replace: true });
+                    }
+
                     if (onLoginSuccess) {
                         onLoginSuccess();
                     } else {
@@ -416,7 +438,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                     }
                 }
                 if (credentials.host) setHostName(credentials.host);
-                if (credentials.user) setUsername(credentials.user);
+                if (credentials.username) setUsername(credentials.username);
                 if (credentials.password) setPassword(credentials.password);
                 if (credentials.database) setDatabase(credentials.database);
 
@@ -477,11 +499,8 @@ export const LoginForm: FC<LoginFormProps> = ({
                 setSearchParams(newParams, { replace: true });
             }, 10);
         }
-    // Note: handleLoginWithProfileSubmit is intentionally excluded because it depends on
-    // selectedAvailableProfile, which would cause a cycle that clears user's profile selection.
-    // This is safe because when called, we pass selectedProfile.value explicitly.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [searchParams, databaseTypeItems, availableProfiles, handleDatabaseTypeChange, handleSubmit, setSearchParams, t]);
+    }, [searchParams, databaseTypeItems, profiles?.Profiles, availableProfiles]);
 
     const handleHostNameChange = useCallback((newHostName: string) => {
         if (databaseType.id !== DatabaseType.MongoDb || !newHostName.startsWith("mongodb+srv://")) {
