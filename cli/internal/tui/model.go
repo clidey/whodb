@@ -327,6 +327,14 @@ func (m *MainModel) renderViewIndicator() string {
 		{ViewSchema, "Schema"},
 	}
 
+	// Define which views are tab-accessible
+	tabbableViews := map[ViewMode]bool{
+		ViewBrowser: true,
+		ViewEditor:  true,
+		ViewResults: true,
+		ViewHistory: true,
+	}
+
 	var parts []string
 	for _, view := range views {
 		if view.mode == m.mode {
@@ -336,12 +344,18 @@ func (m *MainModel) renderViewIndicator() string {
 				Background(styles.Foreground).
 				Padding(0, 1)
 			parts = append(parts, activeStyle.Render(view.name))
-		} else {
-			// Other views: white text, no highlighting
+		} else if tabbableViews[view.mode] {
+			// Tab-accessible views: normal white text
 			inactiveStyle := styles.BaseStyle.
 				Foreground(styles.Foreground).
 				Padding(0, 1)
 			parts = append(parts, inactiveStyle.Render(view.name))
+		} else {
+			// Non-tabbable views: dimmed gray text
+			dimmedStyle := styles.BaseStyle.
+				Foreground(styles.Muted).
+				Padding(0, 1)
+			parts = append(parts, dimmedStyle.Render(view.name))
 		}
 	}
 
