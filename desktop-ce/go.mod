@@ -71,6 +71,7 @@ require (
 	github.com/sosodev/duration v1.3.1 // indirect
 	github.com/tiendc/go-deepcopy v1.7.1 // indirect
 	github.com/tkrajina/go-reflector v0.5.8 // indirect
+	github.com/twpayne/go-geom v1.6.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.31 // indirect

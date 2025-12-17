@@ -103,6 +103,9 @@ func NewChatView(parent *MainModel) *ChatView {
 		}
 	}
 
+	// Load consent from config
+	consentGiven := parent.config.GetAIConsent()
+
 	return &ChatView{
 		parent:           parent,
 		providers:        providers,
@@ -120,7 +123,7 @@ func NewChatView(parent *MainModel) *ChatView {
 		selectedMessage:  -1,
 		viewingResult:    false,
 		focusField:       focusFieldMessage,
-		consented:        false,
+		consented:        consentGiven,
 	}
 }
 
@@ -134,6 +137,12 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 			switch m.String() {
 			case "a":
 				v.consented = true
+				// Persist consent to config
+				v.parent.config.SetAIConsent(true)
+				if err := v.parent.config.Save(); err != nil {
+					v.err = fmt.Errorf("failed to save consent: %w", err)
+					return v, nil
+				}
 				if len(v.providers) > 0 {
 					return v, v.loadModels()
 				}
@@ -229,6 +238,15 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch msg.String() {
+		case "ctrl+r":
+			// Revoke consent
+			v.consented = false
+			v.parent.config.SetAIConsent(false)
+			if err := v.parent.config.Save(); err != nil {
+				v.err = fmt.Errorf("failed to revoke consent: %w", err)
+			}
+			return v, nil
+
 		case "esc":
 			if v.viewingResult {
 				v.viewingResult = false
@@ -587,6 +605,7 @@ func (v *ChatView) View() string {
 		"ctrl+f", "focus field",
 		"←/→", "change selection",
 		"ctrl+l", "load models",
+		"ctrl+r", "revoke consent",
 		"tab", "next view",
 		"esc", "back",
 	))
