@@ -13,6 +13,10 @@ WhoDB is a database management tool with dual-edition architecture: Community Ed
 3. **No SQL injection** - Never use `fmt.Sprintf` with user input for SQL. Use parameterized queries or GORM builders. See `.claude/docs/sql-security.md`
 4. **Plugin architecture** - Never use `switch dbType` or `if dbType ==` in shared code. All database-specific logic goes in plugins. See `.claude/docs/plugin-architecture.md`
 5. **CE/EE separation** - EE code MUST stay in the ee submodule. All EE documentation is in `ee/`. No exceptions
+6. **Documentation requirements** - All exported Go functions/types need doc comments. All exported TypeScript functions/components need JSDoc. See `.claude/docs/documentation.md`
+7. **Localization requirements** - All user-facing strings must use `t()` with YAML keys. No fallback strings. No hardcoded UI text. See `.claude/docs/localization.md`
+8. **Verify before completing** - After finishing any task, verify: (1) type checks pass (`pnpm run typecheck` for frontend, `go build` for backend), (2) no linting errors, (3) all added code is actually used (no dead code). See `.claude/docs/verification.md`
+9. **Fallback clarification** - Do not include fallback logic UNLESS you were asked to. If you think the project could benefit from fallback logic, first ask and clarify
 
 ## Project Structure
 
@@ -81,3 +85,4 @@ See `.claude/docs/commands.md` for full reference. EE commands are in `ee/GEMINI
 - Ask questions to understand requirements fully
 - Maintain professional, neutral tone without excessive enthusiasm
 - When you finish a task, go back and check your work. Check that it is correct and that it is not over-engineered
+- When you finish a task, if the ee submodule is available, then go through it and see if it needs to be modified to accomodate your changes. For example if you change a plugin signature in CE, update it in EE as well
