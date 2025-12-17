@@ -438,7 +438,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                     }
                 }
                 if (credentials.host) setHostName(credentials.host);
-                if (credentials.user) setUsername(credentials.user);
+                if (credentials.username) setUsername(credentials.username);
                 if (credentials.password) setPassword(credentials.password);
                 if (credentials.database) setDatabase(credentials.database);
 
