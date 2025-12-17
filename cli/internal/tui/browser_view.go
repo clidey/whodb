@@ -431,10 +431,27 @@ func (v *BrowserView) loadTables() tea.Cmd {
 			}
 		}
 
-		// Use currentSchema if already set, otherwise auto-select
+		// Use currentSchema if already set, otherwise check for preferred schema from connection
 		schema := v.currentSchema
 		if schema == "" {
-			schema = selectBestSchema(schemas)
+			// Check if connection has a preferred schema
+			if conn.Schema != "" {
+				// Try to use the preferred schema if it exists
+				schemaExists := false
+				for _, s := range schemas {
+					if s == conn.Schema {
+						schemaExists = true
+						schema = conn.Schema
+						break
+					}
+				}
+				if !schemaExists {
+					// Fall back to auto-selection if preferred schema doesn't exist
+					schema = selectBestSchema(schemas)
+				}
+			} else {
+				schema = selectBestSchema(schemas)
+			}
 			v.currentSchema = schema
 		}
 

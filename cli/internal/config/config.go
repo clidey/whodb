@@ -41,6 +41,7 @@ type Connection struct {
 	Username string            `json:"username" yaml:"username"`
 	Password string            `json:"password,omitempty" yaml:"password,omitempty"`
 	Database string            `json:"database" yaml:"database"`
+	Schema   string            `json:"schema,omitempty" yaml:"schema,omitempty"`
 	Advanced map[string]string `json:"advanced,omitempty" yaml:"advanced,omitempty"`
 }
 
