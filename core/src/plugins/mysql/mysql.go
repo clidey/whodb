@@ -73,13 +73,6 @@ func (p *MySQLPlugin) GetSupportedOperators() map[string]string {
 	return supportedOperators
 }
 
-func (p *MySQLPlugin) GetSchemaTableQuery() string {
-	return `SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE
-			FROM INFORMATION_SCHEMA.COLUMNS
-			WHERE TABLE_SCHEMA = ?
-			ORDER BY TABLE_NAME, ORDINAL_POSITION`
-}
-
 func (p *MySQLPlugin) GetTableInfoQuery() string {
 	return `
 		SELECT
@@ -173,6 +166,11 @@ func (p *MySQLPlugin) GetForeignKeyRelationships(config *engine.PluginConfig, sc
 
 		return relationships, nil
 	})
+}
+
+// NormalizeType converts MySQL type aliases to their canonical form.
+func (p *MySQLPlugin) NormalizeType(typeName string) string {
+	return NormalizeType(typeName)
 }
 
 func NewMySQLPlugin() *engine.Plugin {

@@ -7,6 +7,9 @@ query GetStorageUnitRows($schema: String!, $storageUnit: String!, $where: WhereC
       IsForeignKey
       ReferencedTable
       ReferencedColumn
+      Length
+      Precision
+      Scale
     }
     Rows
     DisableUpdate

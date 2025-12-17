@@ -31,10 +31,3 @@ func (p *PostgresPlugin) GetPrimaryKeyColQuery() string {
 	`
 }
 
-func (p *PostgresPlugin) GetColTypeQuery() string {
-	return `
-		SELECT column_name, data_type
-		FROM information_schema.columns
-		WHERE table_schema = ? AND table_name = ?;
-	`
-}

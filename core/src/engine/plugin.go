@@ -65,6 +65,9 @@ type Column struct {
 	IsForeignKey     bool
 	ReferencedTable  *string
 	ReferencedColumn *string
+	Length           *int // For VARCHAR(n), CHAR(n) types
+	Precision        *int // For DECIMAL(p,s) types
+	Scale            *int // For DECIMAL(p,s) types
 }
 
 // GetRowsResult contains the result of a row query including columns, data, and pagination info.

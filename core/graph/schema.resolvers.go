@@ -865,6 +865,9 @@ func (r *queryResolver) Row(ctx context.Context, schema string, storageUnit stri
 			IsForeignKey:     isForeignKey,
 			ReferencedTable:  referencedTable,
 			ReferencedColumn: referencedColumn,
+			Length:           column.Length,
+			Precision:        column.Precision,
+			Scale:            column.Scale,
 		})
 	}
 	return &model.RowsResult{

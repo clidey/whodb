@@ -411,89 +411,93 @@ export const LoginForm: FC<LoginFormProps> = ({
         return profiles?.Profiles.find(p => p.Source === "builtin");
     }, [profiles?.Profiles]);
     
+    // Handle URL parameters for pre-filling credentials or auto-login
+    // Note: This effect intentionally does NOT clear selectedAvailableProfile because:
+    // 1. Initial state is already undefined via useState
+    // 2. Clearing on re-runs would reset user's manual profile selection
+    // 3. Multiple dependencies (handleSubmit, profiles, etc.) can trigger re-runs
     useEffect(() => {
-        if (searchParams.size > 0) {
-            // Handle credentials parameter (base64 encoded JSON)
-            if (searchParams.has("credentials")) {
-                try {
-                    const credentialsBase64 = searchParams.get("credentials")!;
-                    const credentialsJson = atob(credentialsBase64);
-                    const credentials = JSON.parse(credentialsJson);
+        if (searchParams.size === 0) {
+            return;
+        }
 
-                    // Map Go backend field names to frontend state
-                    if (credentials.type) {
-                        const dbType = databaseTypeItems.find(item =>
-                            item.id.toLowerCase() === credentials.type.toLowerCase()
-                        );
-                        if (dbType) {
-                            handleDatabaseTypeChange(dbType);
-                        }
-                    }
-                    if (credentials.host) setHostName(credentials.host);
-                    if (credentials.username) setUsername(credentials.username);
-                    if (credentials.password) setPassword(credentials.password);
-                    if (credentials.database) setDatabase(credentials.database);
+        // Handle credentials parameter (base64 encoded JSON)
+        if (searchParams.has("credentials")) {
+            try {
+                const credentialsBase64 = searchParams.get("credentials")!;
+                const credentialsJson = atob(credentialsBase64);
+                const credentials = JSON.parse(credentialsJson);
 
-                    if (credentials.port) {
-                        setAdvancedForm(prev => ({...prev, 'Port': credentials.port}));
-                        setShowAdvanced(true);
-                    }
-
-                    // Handle advanced/config fields
-                    if (credentials.config && typeof credentials.config === 'object') {
-                        const advancedFormData: Record<string, string> = {};
-                        for (const [key, value] of Object.entries(credentials.config)) {
-                            advancedFormData[key] = String(value);
-                        }
-                        // Add port if provided
-                        if (credentials.port) {
-                            advancedFormData['Port'] = credentials.port;
-                        }
-                        setAdvancedForm(advancedFormData);
-                        if (Object.keys(advancedFormData).length > 0) {
-                            setShowAdvanced(true);
-                        }
-                    }
-                } catch (error) {
-                    console.error('Failed to parse credentials:', error);
-                    toast.error(t('failedToParseCredentials'));
-                }
-            } else {
-                // Handle individual URL parameters (existing logic)
-                if (searchParams.has("type")) {
-                    const typeParam = searchParams.get("type")!;
+                // Map Go backend field names to frontend state
+                if (credentials.type) {
                     const dbType = databaseTypeItems.find(item =>
-                        item.id.toLowerCase() === typeParam.toLowerCase()
+                        item.id.toLowerCase() === credentials.type.toLowerCase()
                     );
                     if (dbType) {
                         handleDatabaseTypeChange(dbType);
                     }
                 }
+                if (credentials.host) setHostName(credentials.host);
+                if (credentials.user) setUsername(credentials.user);
+                if (credentials.password) setPassword(credentials.password);
+                if (credentials.database) setDatabase(credentials.database);
 
-                if (searchParams.has("host")) setHostName(searchParams.get("host")!);
-                if (searchParams.has("username")) setUsername(searchParams.get("username")!);
-                if (searchParams.has("password")) setPassword(searchParams.get("password")!);
-                if (searchParams.has("database")) setDatabase(searchParams.get("database")!);
-            }
-
-            if (searchParams.has("resource")) {
-                const selectedProfile = availableProfiles.find(profile => profile.value === searchParams.get("resource"));
-                if (selectedProfile?.value) {
-                    setSelectedAvailableProfile(selectedProfile?.value);
-                    handleLoginWithProfileSubmit(selectedProfile.value);
+                if (credentials.port) {
+                    setAdvancedForm(prev => ({...prev, 'Port': credentials.port}));
+                    setShowAdvanced(true);
                 }
-            } else if (searchParams.has("login")) {
-                setTimeout(() => {
-                    handleSubmit();
-                    const newParams = new URLSearchParams(searchParams);
-                    newParams.delete("login");
-                    setSearchParams(newParams, { replace: true });
-                }, 10);
-            } else {
-                setSelectedAvailableProfile(undefined);
+
+                // Handle advanced/config fields
+                if (credentials.config && typeof credentials.config === 'object') {
+                    const advancedFormData: Record<string, string> = {};
+                    for (const [key, value] of Object.entries(credentials.config)) {
+                        advancedFormData[key] = String(value);
+                    }
+                    // Add port if provided
+                    if (credentials.port) {
+                        advancedFormData['Port'] = credentials.port;
+                    }
+                    setAdvancedForm(advancedFormData);
+                    if (Object.keys(advancedFormData).length > 0) {
+                        setShowAdvanced(true);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to parse credentials:', error);
+                toast.error(t('failedToParseCredentials'));
             }
         } else {
-            setSelectedAvailableProfile(undefined);
+            // Handle individual URL parameters (existing logic)
+            if (searchParams.has("type")) {
+                const typeParam = searchParams.get("type")!;
+                const dbType = databaseTypeItems.find(item =>
+                    item.id.toLowerCase() === typeParam.toLowerCase()
+                );
+                if (dbType) {
+                    handleDatabaseTypeChange(dbType);
+                }
+            }
+
+            if (searchParams.has("host")) setHostName(searchParams.get("host")!);
+            if (searchParams.has("username")) setUsername(searchParams.get("username")!);
+            if (searchParams.has("password")) setPassword(searchParams.get("password")!);
+            if (searchParams.has("database")) setDatabase(searchParams.get("database")!);
+        }
+
+        // Handle auto-login with profile from URL
+        if (searchParams.has("resource")) {
+            const selectedProfile = availableProfiles.find(profile => profile.value === searchParams.get("resource"));
+            if (selectedProfile?.value) {
+                setSelectedAvailableProfile(selectedProfile?.value);
+                handleLoginWithProfileSubmit(selectedProfile.value);
+            }
+        } else if (searchParams.has("login")) {
+            setTimeout(() => {
+                handleSubmit();
+                const newParams = new URLSearchParams(searchParams);
+                newParams.delete("login");
+                setSearchParams(newParams, { replace: true });
+            }, 10);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchParams, databaseTypeItems, profiles?.Profiles, availableProfiles]);

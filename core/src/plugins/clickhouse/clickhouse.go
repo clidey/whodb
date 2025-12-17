@@ -25,9 +25,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/clidey/whodb/core/src/log"
-
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	mapset "github.com/deckarep/golang-set/v2"
@@ -141,18 +140,6 @@ func (p *ClickHousePlugin) GetTableNameAndAttributes(rows *sql.Rows) (string, []
 	}
 
 	return tableName, attributes
-}
-
-func (p *ClickHousePlugin) GetSchemaTableQuery() string {
-	return `
-		SELECT 
-		    table AS TABLE_NAME,
-			name AS COLUMN_NAME,
-			type AS DATA_TYPE
-		FROM system.columns
-		WHERE database = ?
-		ORDER BY TABLE_NAME, position
-	`
 }
 
 func (p *ClickHousePlugin) RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error) {
@@ -284,6 +271,11 @@ func (p *ClickHousePlugin) FormatColumnValue(typeName string, value interface{})
 
 	// Fallback to string representation
 	return fmt.Sprintf("%v", value), nil
+}
+
+// NormalizeType converts ClickHouse type aliases to their canonical form.
+func (p *ClickHousePlugin) NormalizeType(typeName string) string {
+	return NormalizeType(typeName)
 }
 
 func NewClickHousePlugin() *engine.Plugin {

@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"github.com/clidey/whodb/core/graph/model"
+	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
@@ -68,9 +69,7 @@ type GormPluginFunctions interface {
 
 	GetTableInfoQuery() string
 	GetStorageUnitExistsQuery() string
-	GetSchemaTableQuery() string
 	GetPrimaryKeyColQuery() string
-	GetColTypeQuery() string
 	GetAllSchemasQuery() string
 	GetCreateTableQuery(db *gorm.DB, schema string, storageUnit string, columns []engine.Record) string
 
@@ -119,6 +118,11 @@ type GormPluginFunctions interface {
 
 	// GetColumnConstraints retrieves column constraints for a table
 	GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error)
+
+	// NormalizeType converts a type alias to its canonical form for this database.
+	// For example, PostgreSQL: "INT4" -> "INTEGER", "VARCHAR" -> "CHARACTER VARYING"
+	// Returns the input unchanged if no mapping exists.
+	NormalizeType(typeName string) string
 }
 
 func (p *GormPlugin) GetStorageUnits(config *engine.PluginConfig, schema string) ([]engine.StorageUnit, error) {
@@ -131,11 +135,7 @@ func (p *GormPlugin) GetStorageUnits(config *engine.PluginConfig, schema string)
 		}
 		defer rows.Close()
 
-		allTablesWithColumns, err := p.GetTableSchema(db, schema)
-		if err != nil {
-			log.Logger.WithError(err).Error("Failed to get table schema for schema: " + schema)
-			return nil, err
-		}
+		helper := NewMigratorHelper(db, p.GormPluginFunctions)
 
 		for rows.Next() {
 			tableName, attributes := p.GetTableNameAndAttributes(rows)
@@ -143,7 +143,16 @@ func (p *GormPlugin) GetStorageUnits(config *engine.PluginConfig, schema string)
 				continue
 			}
 
-			attributes = append(attributes, allTablesWithColumns[tableName]...)
+			// Use GORM migrator to get column types with length info (preserves column order)
+			fullTableName := p.FormTableName(schema, tableName)
+			orderedColumns, err := helper.GetOrderedColumns(fullTableName)
+			if err != nil {
+				log.Logger.WithError(err).Warnf("Failed to get column types for table %s, skipping columns", fullTableName)
+			} else {
+				for _, col := range orderedColumns {
+					attributes = append(attributes, engine.Record{Key: col.Name, Value: col.Type})
+				}
+			}
 
 			storageUnits = append(storageUnits, engine.StorageUnit{
 				Name:       tableName,
@@ -164,30 +173,6 @@ func (p *GormPlugin) StorageUnitExists(config *engine.PluginConfig, schema strin
 		}
 		return exists, nil
 	})
-}
-
-func (p *GormPlugin) GetTableSchema(db *gorm.DB, schema string) (map[string][]engine.Record, error) {
-	var result []struct {
-		TableName  string `gorm:"column:TABLE_NAME"`
-		ColumnName string `gorm:"column:COLUMN_NAME"`
-		DataType   string `gorm:"column:DATA_TYPE"`
-	}
-
-	// Most plugins use information_schema.columns, but query structure varies
-	// Keep using Raw query since it's defined by each plugin
-	query := p.GetSchemaTableQuery()
-
-	if err := db.Raw(query, schema).Scan(&result).Error; err != nil {
-		log.Logger.WithError(err).Error("Failed to execute schema table query for schema: " + schema)
-		return nil, err
-	}
-
-	tableColumnsMap := make(map[string][]engine.Record)
-	for _, row := range result {
-		tableColumnsMap[row.TableName] = append(tableColumnsMap[row.TableName], engine.Record{Key: row.ColumnName, Value: row.DataType})
-	}
-
-	return tableColumnsMap, nil
 }
 
 func (p *GormPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, error) {
@@ -541,7 +526,38 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 			if customName := p.GormPluginFunctions.GetCustomColumnTypeName(col, colTypeName); customName != "" {
 				colTypeName = customName
 			}
-			result.Columns = append(result.Columns, engine.Column{Name: col, Type: colTypeName})
+
+			column := engine.Column{Name: col, Type: colTypeName}
+			baseTypeName := strings.ToUpper(colType.DatabaseTypeName())
+
+			// Only extract length for types where it's user-specifiable
+			if typesWithLength[baseTypeName] {
+				if length, ok := colType.Length(); ok && length > 0 {
+					l := int(length)
+					column.Length = &l
+					// Include length in type name for display
+					colTypeName = fmt.Sprintf("%s(%d)", colTypeName, length)
+					column.Type = colTypeName
+				}
+			}
+
+			// Only extract precision/scale for decimal-like types
+			if typesWithPrecision[baseTypeName] {
+				if precision, scale, ok := colType.DecimalSize(); ok && precision > 0 {
+					prec := int(precision)
+					column.Precision = &prec
+					if scale > 0 {
+						s := int(scale)
+						column.Scale = &s
+						colTypeName = fmt.Sprintf("%s(%d,%d)", colType.DatabaseTypeName(), precision, scale)
+					} else {
+						colTypeName = fmt.Sprintf("%s(%d)", colType.DatabaseTypeName(), precision)
+					}
+					column.Type = colTypeName
+				}
+			}
+
+			result.Columns = append(result.Columns, column)
 		}
 	}
 
@@ -739,4 +755,12 @@ func (p *GormPlugin) ClearTableDataInTx(tx *gorm.DB, schema string, storageUnit 
 // GetForeignKeyRelationships returns foreign key relationships for a table (default empty implementation)
 func (p *GormPlugin) GetForeignKeyRelationships(config *engine.PluginConfig, schema string, storageUnit string) (map[string]*engine.ForeignKeyRelationship, error) {
 	return make(map[string]*engine.ForeignKeyRelationship), nil
+}
+
+// NormalizeType returns the type unchanged by default.
+// Database plugins should override this to normalize aliases to canonical types.
+func (p *GormPlugin) NormalizeType(typeName string) string {
+	// Default: strip length and return uppercase base type
+	spec := common.ParseTypeSpec(typeName)
+	return common.FormatTypeSpec(spec)
 }

@@ -35,11 +35,11 @@ jobs:
     runs-on: ubuntu-latest
     environment: claude-review
     permissions:
-      contents: read
-      pull-requests: read
-      issues: read
+      contents: write        # Required to create branches and push via gh pr create
+      pull-requests: write   # Required to create PRs
+      issues: write          # Required to comment on issues
       id-token: write
-      actions: read # Required for Claude to read CI results on PRs
+      actions: read          # Required for Claude to read CI results on PRs
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
@@ -64,8 +64,7 @@ jobs:
           # Optional: Give a custom prompt to Claude. If this is not specified, Claude will perform the instructions specified in the comment that tagged it.
           # prompt: 'Update the pull request description to include a summary of changes.'
 
-          # Optional: Add claude_args to customize behavior and configuration
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          # or https://docs.claude.com/en/docs/claude-code/sdk#command-line for available options
-          # claude_args: '--model claude-opus-4-1-20250805 --allowed-tools Bash(gh pr:*)'
+          # Restrict tools: allow gh CLI for PRs/issues, but block direct git push
+          # This ensures Claude can only create PRs (which go to new branches), never push to main
+          claude_args: '--allowed-tools "Bash(gh pr create:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(gh pr comment:*),Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh issue list:*),Bash(git checkout -b:*),Bash(git add:*),Bash(git commit:*),Bash(git branch:*),Bash(git status:*),Bash(git diff:*)"'
 

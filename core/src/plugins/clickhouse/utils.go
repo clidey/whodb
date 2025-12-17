@@ -60,11 +60,3 @@ func (p *ClickHousePlugin) GetPrimaryKeyColQuery() string {
 	`
 }
 
-func (p *ClickHousePlugin) GetColTypeQuery() string {
-	return `
-		SELECT 
-			name,
-			type
-		FROM system.columns
-		WHERE database = ? AND table = ?`
-}

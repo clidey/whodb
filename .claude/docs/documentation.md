@@ -55,6 +55,7 @@ var fullTableName string  // NO - obvious from code
 - Standard library function calls
 - Obvious control flow
 - Index positions (e.g., "// index 0")
+- Per-item comments in data lists (e.g., `dbtypes.go` type sets should NOT have comments like "// PostgreSQL canonical" next to each type)
 
 ## TypeScript/React Documentation
 

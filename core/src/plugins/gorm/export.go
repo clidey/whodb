@@ -68,25 +68,25 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 		return err
 	}
 
-	// Get column information using existing GetTableSchema
-	tableSchema, err := p.GetTableSchema(db, schema)
+	// Get ordered columns using GORM migrator (preserves column order)
+	helper := NewMigratorHelper(db, p.GormPluginFunctions)
+	fullTableName := p.FormTableName(schema, storageUnit)
+	orderedColumns, err := helper.GetOrderedColumns(fullTableName)
 	if err != nil {
-		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get table schema for export of schema: %s", schema))
-		return fmt.Errorf("failed to get table schema: %v", err)
+		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get columns for export of table %s.%s", schema, storageUnit))
+		return fmt.Errorf("failed to get columns: %v", err)
 	}
 
-	// Extract columns for the specific table
-	tableColumns, exists := tableSchema[storageUnit]
-	if !exists || len(tableColumns) == 0 {
+	if len(orderedColumns) == 0 {
 		return fmt.Errorf("no columns found for table %s.%s", schema, storageUnit)
 	}
 
 	// Convert to separate arrays for columns and types
-	columns := make([]string, len(tableColumns))
-	columnTypes := make([]string, len(tableColumns))
-	for i, col := range tableColumns {
-		columns[i] = col.Key       // Column name
-		columnTypes[i] = col.Value // Data type
+	columns := make([]string, len(orderedColumns))
+	columnTypes := make([]string, len(orderedColumns))
+	for i, col := range orderedColumns {
+		columns[i] = col.Name
+		columnTypes[i] = col.Type
 	}
 
 	// Write headers with type information

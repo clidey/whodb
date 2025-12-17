@@ -58,6 +58,9 @@ type Column struct {
 	IsForeignKey     bool    `json:"IsForeignKey"`
 	ReferencedTable  *string `json:"ReferencedTable,omitempty"`
 	ReferencedColumn *string `json:"ReferencedColumn,omitempty"`
+	Length           *int    `json:"Length,omitempty"`
+	Precision        *int    `json:"Precision,omitempty"`
+	Scale            *int    `json:"Scale,omitempty"`
 }
 
 type GraphUnit struct {
