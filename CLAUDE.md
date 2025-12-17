@@ -84,3 +84,4 @@ See `.claude/docs/commands.md` for full reference. EE commands are in `ee/CLAUDE
 - Ask questions to understand requirements fully
 - Use subagents to accomplish tasks faster
 - Maintain professional, neutral tone without excessive enthusiasm
+- When you finish a task, go back and check your work. Check that it is correct and that it is not over-engineered
