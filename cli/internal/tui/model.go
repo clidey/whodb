@@ -238,8 +238,8 @@ func (m *MainModel) handleTabSwitch() (tea.Model, tea.Cmd) {
 		nextMode = ViewBrowser
 	}
 
-	// Skip export, where, columns, chat, and schema views in tab switching
-	if nextMode == ViewExport || nextMode == ViewWhere || nextMode == ViewColumns || nextMode == ViewChat || nextMode == ViewSchema {
+	// Skip export, where, columns, and schema views in tab switching
+	if nextMode == ViewExport || nextMode == ViewWhere || nextMode == ViewColumns || nextMode == ViewSchema {
 		nextMode = ViewBrowser
 	}
 
