@@ -41,6 +41,11 @@ type Connection struct {
 	Username string            `json:"username" yaml:"username"`
 	Password string            `json:"password,omitempty" yaml:"password,omitempty"`
 	Database string            `json:"database" yaml:"database"`
+	// Schema field is optional and database-specific:
+	// - PostgreSQL: Specific schema within the database (e.g., "public", "staging")
+	// - MySQL/MariaDB: Not typically used (schema IS the database)
+	// - MongoDB: Not used (no schema concept)
+	// - Others: Consult database documentation
 	Schema   string            `json:"schema,omitempty" yaml:"schema,omitempty"`
 	Advanced map[string]string `json:"advanced,omitempty" yaml:"advanced,omitempty"`
 }

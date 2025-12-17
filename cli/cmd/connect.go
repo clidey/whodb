@@ -208,7 +208,7 @@ func init() {
 	connectCmd.Flags().IntVar(&port, "port", 0, "database port (default depends on database type)")
 	connectCmd.Flags().StringVar(&username, "user", "", "database username")
 	connectCmd.Flags().StringVar(&database, "database", "", "database name")
-	connectCmd.Flags().StringVar(&schema, "schema", "", "default schema (optional)")
+	connectCmd.Flags().StringVar(&schema, "schema", "", "preferred schema (PostgreSQL: schema name; MySQL: not needed; MongoDB: not applicable)")
 	connectCmd.Flags().StringVar(&name, "name", "", "connection name (save for later use)")
 	connectCmd.Flags().BoolVar(&passwordFromStdin, "password", false, "read password from stdin when not using a TTY")
 }
