@@ -211,9 +211,9 @@ Navigate schemas and tables in a visual grid layout.
 
 Write and execute SQL queries with syntax highlighting and autocomplete.
 
-| Key                         | Action               |
-|-----------------------------|----------------------|
-| `Ctrl+Enter` or `Alt+Enter` | Execute query        |
+| Key                              | Action               |
+|----------------------------------|----------------------|
+| `Alt+Enter` (`Option+Enter` Mac) | Execute query        |
 | `Ctrl+Space`                | Trigger autocomplete |
 | `Tab` / `Shift+Tab`         | Navigate suggestions |
 | `Ctrl+L`                    | Clear editor         |

@@ -116,12 +116,9 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 		}
 
 	case tea.KeyMsg:
-		// IMPORTANT: Check for Ctrl+Enter FIRST before passing to textarea
+		// IMPORTANT: Check for execute query shortcut FIRST before passing to textarea
+		// Alt+Enter (Option+Enter on macOS) - works reliably across all platforms
 		if msg.Type == tea.KeyEnter && msg.Alt {
-			return v, v.executeQuery()
-		}
-
-		if msg.String() == "ctrl+enter" {
 			return v, v.executeQuery()
 		}
 
@@ -242,7 +239,7 @@ func (v *EditorView) View() string {
 
 	b.WriteString("\n\n")
 	b.WriteString(styles.RenderHelp(
-		"ctrl+enter", "run query",
+		styles.KeyExecute, styles.KeyExecuteDesc,
 		"ctrl+@", "autocomplete",
 		"[e]", "export results",
 		"ctrl+l", "clear",
