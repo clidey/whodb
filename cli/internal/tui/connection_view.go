@@ -163,7 +163,7 @@ func NewConnectionView(parent *MainModel) *ConnectionView {
 
 	// Schema name (optional)
 	schemaInput := textinput.New()
-	schemaInput.Placeholder = "Schema name (optional, DB-specific)"
+	schemaInput.Placeholder = "Schema name (optional)"
 	schemaInput.CharLimit = 50
 	schemaInput.Width = 40
 	schemaInput.PromptStyle = lipgloss.NewStyle().Foreground(styles.Primary)

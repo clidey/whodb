@@ -261,14 +261,19 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 			v.input.Focus()
 			return v, nil
 
-		case "ctrl+p":
-			// Focus provider/model config section
-			v.focusField = focusFieldProvider
-			v.input.Blur()
+		case "tab":
+			// Cycle forward: provider -> model -> message -> provider
+			v.focusField = (v.focusField + 1) % 3
+			if v.focusField == focusFieldMessage {
+				v.input.Focus()
+			} else {
+				v.input.Blur()
+			}
 			return v, nil
 
-		case "ctrl+f":
-			v.focusField = (v.focusField + 1) % 3
+		case "shift+tab":
+			// Cycle backward: message -> model -> provider -> message
+			v.focusField = (v.focusField + 2) % 3 // +2 is same as -1 mod 3
 			if v.focusField == focusFieldMessage {
 				v.input.Focus()
 			} else {
@@ -411,7 +416,20 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 			return v, nil
 
 		case "enter":
-			if v.focusField == focusFieldMessage && !v.sending {
+			if v.focusField == focusFieldProvider {
+				// Confirm provider selection, load models, and move to model field
+				if !v.loadingModels {
+					v.loadingModels = true
+					v.focusField = focusFieldModel
+					return v, v.loadModels()
+				}
+				return v, nil
+			} else if v.focusField == focusFieldModel {
+				// Confirm model selection and move to message field
+				v.focusField = focusFieldMessage
+				v.input.Focus()
+				return v, nil
+			} else if v.focusField == focusFieldMessage && !v.sending {
 				query := strings.TrimSpace(v.input.Value())
 				if query != "" {
 					v.messages = append(v.messages, chatMessage{
@@ -610,16 +628,12 @@ func (v *ChatView) View() string {
 	b.WriteString("\n\n")
 
 	b.WriteString(styles.RenderHelp(
-		"↑/↓", "select",
-		"[v]", "view table",
-		"scroll", "trackpad/mouse",
-		"enter", "send",
-		"ctrl+i / /", "focus input",
-		"ctrl+p", "focus config",
+		"tab/shift+tab", "cycle fields",
 		"←/→", "change selection",
-		"ctrl+l", "load models",
+		"enter", "confirm/send",
+		"↑/↓", "select message",
+		"[v]", "view table",
 		"ctrl+r", "revoke consent",
-		"tab", "next view",
 		"esc", "back",
 	))
 
