@@ -18,9 +18,11 @@ package tui
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/table"
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/clidey/whodb/cli/pkg/styles"
@@ -29,20 +31,28 @@ import (
 )
 
 type ResultsView struct {
-	parent         *MainModel
-	table          table.Model
-	results        *engine.GetRowsResult
-	query          string
-	currentPage    int
-	pageSize       int
-	totalRows      int
-	schema         string
-	tableName      string
-	columnOffset   int
-	maxColumns     int
-	whereCondition *model.WhereCondition
-	visibleColumns []string
+	parent          *MainModel
+	table           table.Model
+	results         *engine.GetRowsResult
+	query           string
+	currentPage     int
+	pageSize        int
+	totalRows       int
+	schema          string
+	tableName       string
+	columnOffset    int
+	maxColumns      int
+	whereCondition  *model.WhereCondition
+	visibleColumns  []string
+	editingPageSize bool
+	pageSizeInput   textinput.Model
 }
+
+// Available page sizes for cycling
+var pageSizes = []int{10, 25, 50, 100}
+
+// Message to trigger re-render after page load
+type pageLoadedMsg struct{}
 
 func NewResultsView(parent *MainModel) *ResultsView {
 	columns := []table.Column{}
@@ -68,13 +78,20 @@ func NewResultsView(parent *MainModel) *ResultsView {
 		Bold(false)
 	t.SetStyles(s)
 
+	// Page size input
+	ti := textinput.New()
+	ti.Placeholder = "e.g. 25"
+	ti.CharLimit = 5
+	ti.Width = 10
+
 	return &ResultsView{
-		parent:       parent,
-		table:        t,
-		currentPage:  0,
-		pageSize:     50,
-		columnOffset: 0,
-		maxColumns:   10,
+		parent:        parent,
+		table:         t,
+		currentPage:   0,
+		pageSize:      50,
+		columnOffset:  0,
+		maxColumns:    10,
+		pageSizeInput: ti,
 	}
 }
 
@@ -100,7 +117,36 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 		}
 		return v, nil
 
+	case pageLoadedMsg:
+		// Page loaded, trigger re-render
+		return v, nil
+
 	case tea.KeyMsg:
+		// Handle page size editing mode
+		if v.editingPageSize {
+			switch msg.String() {
+			case "enter":
+				if size, err := strconv.Atoi(v.pageSizeInput.Value()); err == nil && size > 0 {
+					v.pageSize = size
+					v.currentPage = 0
+					v.editingPageSize = false
+					v.pageSizeInput.Blur()
+					return v, v.loadPage()
+				}
+				// Invalid input, just exit edit mode
+				v.editingPageSize = false
+				v.pageSizeInput.Blur()
+				return v, nil
+			case "esc":
+				v.editingPageSize = false
+				v.pageSizeInput.Blur()
+				return v, nil
+			default:
+				v.pageSizeInput, cmd = v.pageSizeInput.Update(msg)
+				return v, cmd
+			}
+		}
+
 		switch msg.String() {
 		case "esc":
 			v.parent.mode = ViewBrowser
@@ -182,11 +228,56 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 				return v, nil
 			}
 
-			//case "s":
-			//	if v.schema != "" && v.tableName != "" {
-			//		v.parent.mode = ViewSchema
-			//		return v, v.parent.schemaView.Init()
-			//	}
+		case "s":
+			// Cycle through page sizes
+			currentIndex := 0
+			for i, size := range pageSizes {
+				if size == v.pageSize {
+					currentIndex = i
+					break
+				}
+			}
+			v.pageSize = pageSizes[(currentIndex+1)%len(pageSizes)]
+			v.currentPage = 0
+			return v, v.loadPage()
+
+		case "S":
+			// Enter custom page size mode
+			v.editingPageSize = true
+			v.pageSizeInput.SetValue("")
+			v.pageSizeInput.Focus()
+			return v, nil
+
+		case "down", "j":
+			// Check if at bottom of current page - auto-paginate to next
+			if v.results != nil && len(v.results.Rows) > 0 {
+				cursor := v.table.Cursor()
+				if cursor >= len(v.results.Rows)-1 {
+					// At bottom, try to go to next page
+					canGoNext := false
+					if v.totalRows > 0 {
+						totalPages := (v.totalRows + v.pageSize - 1) / v.pageSize
+						canGoNext = v.currentPage+1 < totalPages
+					} else {
+						canGoNext = len(v.results.Rows) == v.pageSize
+					}
+					if canGoNext {
+						v.currentPage++
+						v.table.SetCursor(0)
+						return v, v.loadPage()
+					}
+				}
+			}
+
+		case "up", "k":
+			// Check if at top of current page - auto-paginate to previous
+			if v.results != nil && len(v.results.Rows) > 0 {
+				cursor := v.table.Cursor()
+				if cursor <= 0 && v.currentPage > 0 {
+					v.currentPage--
+					return v, v.loadPageAndGoToBottom()
+				}
+			}
 		}
 	}
 
@@ -226,12 +317,20 @@ func (v *ResultsView) View() string {
 		var rowInfo string
 		if v.totalRows > 0 {
 			totalPages := (v.totalRows + v.pageSize - 1) / v.pageSize
-			rowInfo = fmt.Sprintf("Showing %d rows (Page %d of %d)", len(v.results.Rows), v.currentPage+1, totalPages)
+			rowInfo = fmt.Sprintf("Showing %d rows (Page %d of %d, size: %d)", len(v.results.Rows), v.currentPage+1, totalPages, v.pageSize)
 		} else {
-			rowInfo = fmt.Sprintf("Showing %d rows (Page %d)", len(v.results.Rows), v.currentPage+1)
+			rowInfo = fmt.Sprintf("Showing %d rows (Page %d, size: %d)", len(v.results.Rows), v.currentPage+1, v.pageSize)
 		}
 
 		b.WriteString(styles.MutedStyle.Render(columnInfo + " • " + rowInfo))
+
+		// Show page size input if editing
+		if v.editingPageSize {
+			b.WriteString("\n\n")
+			b.WriteString(styles.KeyStyle.Render("Page size: "))
+			b.WriteString(v.pageSizeInput.View())
+			b.WriteString(styles.MutedStyle.Render(" (enter to confirm, esc to cancel)"))
+		}
 	}
 
 	b.WriteString("\n\n")
@@ -263,6 +362,7 @@ func (v *ResultsView) View() string {
 			"[c]", columnsLabel,
 			"[e]", "export",
 			"[n/p]", "page",
+			"[s/S]", "page size",
 			"esc", "back",
 		))
 	} else {
@@ -273,11 +373,10 @@ func (v *ResultsView) View() string {
 			"→/l", "col right",
 			"scroll", "trackpad/mouse",
 			"[e]", "export",
-			"tab", "next view",
+			"[n/p]", "page",
+			"[s/S]", "page size",
 			"esc", "back",
 		))
-		b.WriteString("\n")
-		b.WriteString(styles.MutedStyle.Render("(WHERE and Columns only available for table data, not query results)"))
 	}
 
 	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
@@ -413,23 +512,14 @@ func (v *ResultsView) updateTable() {
 	}
 
 	// Handle the ordering carefully to avoid index out of range:
-	// 1. If we're changing the number of columns, set columns first (with empty rows)
-	// 2. Then set the cursor to 0
-	// 3. Finally set the rows
-	currentCols := len(v.table.Columns())
-	newCols := len(columns)
-
-	if currentCols != newCols {
-		// Column count is changing - set columns first with no rows
-		v.table.SetRows([]table.Row{})
-		v.table.SetColumns(columns)
-		v.table.SetCursor(0)
-		v.table.SetRows(rows)
-	} else {
-		// Same column count - just update rows and cursor
-		v.table.SetCursor(0)
-		v.table.SetRows(rows)
-	}
+	// 1. Clear rows first to prevent index issues
+	// 2. Set new columns (headers need to update even if count is same)
+	// 3. Reset cursor
+	// 4. Set the rows
+	v.table.SetRows([]table.Row{})
+	v.table.SetColumns(columns)
+	v.table.SetCursor(0)
+	v.table.SetRows(rows)
 }
 
 func (v *ResultsView) loadPage() tea.Cmd {
@@ -440,13 +530,35 @@ func (v *ResultsView) loadPage() tea.Cmd {
 			if err != nil {
 				v.parent.err = err
 				v.whereCondition = nil
-				return nil
+				return pageLoadedMsg{}
 			}
 			v.results = results
 			v.totalRows = int(results.TotalCount)
 			v.updateTable()
 		}
-		return nil
+		return pageLoadedMsg{}
+	}
+}
+
+func (v *ResultsView) loadPageAndGoToBottom() tea.Cmd {
+	return func() tea.Msg {
+		// Only reload if we're viewing a table (not query results)
+		if v.tableName != "" && v.schema != "" {
+			results, err := v.parent.dbManager.GetRows(v.schema, v.tableName, v.whereCondition, v.pageSize, v.currentPage*v.pageSize)
+			if err != nil {
+				v.parent.err = err
+				v.whereCondition = nil
+				return pageLoadedMsg{}
+			}
+			v.results = results
+			v.totalRows = int(results.TotalCount)
+			v.updateTable()
+			// Set cursor to bottom of the new page
+			if len(v.results.Rows) > 0 {
+				v.table.SetCursor(len(v.results.Rows) - 1)
+			}
+		}
+		return pageLoadedMsg{}
 	}
 }
 
