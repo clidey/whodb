@@ -16,38 +16,8 @@
 
 package clickhouse
 
-import "strings"
-
-// clickhouseTypeMap normalizes ClickHouse canonical types to standard SQL types
-// that the base GormPlugin's ConvertStringValue understands.
-var clickhouseTypeMap = map[string]string{
-	"INT8":    "TINYINT",
-	"INT16":   "SMALLINT",
-	"INT32":   "INT",
-	"INT64":   "BIGINT",
-	"INT128":  "BIGINT",
-	"INT256":  "BIGINT",
-	"UINT8":   "TINYINT",
-	"UINT16":  "SMALLINT",
-	"UINT32":  "INT",
-	"UINT64":  "BIGINT",
-	"UINT128": "BIGINT",
-	"UINT256": "BIGINT",
-	"FLOAT32": "FLOAT",
-	"FLOAT64": "DOUBLE",
-}
-
-// normalizeClickHouseType converts ClickHouse canonical types to standard SQL types
-func normalizeClickHouseType(columnType string) string {
-	upper := strings.ToUpper(columnType)
-	if normalized, ok := clickhouseTypeMap[upper]; ok {
-		return normalized
-	}
-	return columnType
-}
-
 func (p *ClickHousePlugin) ConvertStringValueDuringMap(value, columnType string) (interface{}, error) {
-	return p.ConvertStringValue(value, normalizeClickHouseType(columnType))
+	return p.ConvertStringValue(value, columnType)
 }
 
 // Identifier quoting handled by GORM Dialector
@@ -59,4 +29,3 @@ func (p *ClickHousePlugin) GetPrimaryKeyColQuery() string {
 		WHERE database = ? AND table = ? AND is_in_primary_key = 1
 	`
 }
-
