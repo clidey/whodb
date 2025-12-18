@@ -1422,7 +1422,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                                 {editRow &&
                                     columns.map((col, idx) => (
                                         <div key={col} className="flex flex-col gap-2">
-                                            <Label>{col}</Label>
+                                            <div className="flex flex-col gap-0.5">
+                                                <Label>{col}</Label>
+                                                {columnTypes?.[idx] && (
+                                                    <span className="text-xs text-muted-foreground">
+                                                        {t('typeHint', { type: columnTypes[idx] })}
+                                                    </span>
+                                                )}
+                                            </div>
                                             {
                                                 editRowInitialLengths[idx] < 50 ?
                                                     <Input
