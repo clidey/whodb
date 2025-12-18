@@ -57,9 +57,9 @@
     "users": {
       "columns": {
         "id": "int",
-        "username": "varchar",
-        "email": "varchar",
-        "password": "varchar",
+        "username": "varchar(50)",
+        "email": "varchar(100)",
+        "password": "varchar(100)",
         "created_at": "timestamp"
       },
       "expectedColumns": [
@@ -114,8 +114,8 @@
         "bigint_col": "bigint",
         "integer_col": "int",
         "smallint_col": "smallint",
-        "numeric_col": "decimal",
-        "description": "text"
+        "numeric_col": "decimal(10,2)",
+        "description": "varchar(100)"
       },
       "testData": {
         "newRow": {
@@ -137,20 +137,20 @@
         "col_bigint": "bigint",
         "col_float": "float",
         "col_double": "double",
-        "col_decimal": "decimal",
+        "col_decimal": "decimal(10,2)",
         "col_date": "date",
         "col_datetime": "datetime",
         "col_timestamp": "timestamp",
         "col_time": "time",
         "col_year": "year",
-        "col_char": "char",
-        "col_varchar": "varchar",
+        "col_char": "char(10)",
+        "col_varchar": "varchar(255)",
         "col_tinytext": "tinytext",
         "col_text": "text",
         "col_mediumtext": "mediumtext",
         "col_longtext": "longtext",
-        "col_json": "json",
-        "col_boolean": "tinyint"
+        "col_json": "longtext",
+        "col_boolean": "tinyint(1)"
       },
       "testData": {
         "typeTests": {
