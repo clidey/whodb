@@ -51,7 +51,7 @@ get_docker_services() {
         mongodb)     echo "e2e_mongo" ;;
         redis)       echo "e2e_redis redis-init" ;;
         elasticsearch) echo "e2e_elasticsearch elasticsearch-init" ;;
-        clickhouse)  echo "e2e_clickhouse clickhouse-init" ;;
+        clickhouse)  echo "e2e_clickhouse" ;;
         all)         echo "" ;;  # Empty means start all
         *)           echo "" ;;
     esac
