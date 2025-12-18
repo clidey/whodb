@@ -107,8 +107,20 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 			return v, nil
 
 		case "n":
-			v.currentPage++
-			return v, v.loadPage()
+			// Check if we can go to next page
+			if v.totalRows > 0 {
+				// For tables with known count, check if we're at the last page
+				totalPages := (v.totalRows + v.pageSize - 1) / v.pageSize
+				if v.currentPage+1 < totalPages {
+					v.currentPage++
+					return v, v.loadPage()
+				}
+			} else if v.results != nil && len(v.results.Rows) == v.pageSize {
+				// For query results without total count, allow next page if current page is full
+				v.currentPage++
+				return v, v.loadPage()
+			}
+			return v, nil
 
 		case "p":
 			if v.currentPage > 0 {
@@ -210,7 +222,14 @@ func (v *ResultsView) View() string {
 		}
 
 		columnInfo := fmt.Sprintf("Columns %d-%d of %d", v.columnOffset+1, v.columnOffset+visibleCols, totalCols)
-		rowInfo := fmt.Sprintf("Showing %d rows (Page %d)", len(v.results.Rows), v.currentPage+1)
+
+		var rowInfo string
+		if v.totalRows > 0 {
+			totalPages := (v.totalRows + v.pageSize - 1) / v.pageSize
+			rowInfo = fmt.Sprintf("Showing %d rows (Page %d of %d)", len(v.results.Rows), v.currentPage+1, totalPages)
+		} else {
+			rowInfo = fmt.Sprintf("Showing %d rows (Page %d)", len(v.results.Rows), v.currentPage+1)
+		}
 
 		b.WriteString(styles.MutedStyle.Render(columnInfo + " • " + rowInfo))
 	}
@@ -271,6 +290,7 @@ func (v *ResultsView) SetResults(results *engine.GetRowsResult, query string) {
 	v.columnOffset = 0
 	v.schema = ""
 	v.tableName = ""
+	v.totalRows = int(results.TotalCount)
 	v.updateTable()
 }
 
@@ -299,6 +319,7 @@ func (v *ResultsView) LoadTable(schema string, tableName string) {
 	v.columnOffset = 0
 	v.schema = schema
 	v.tableName = tableName
+	v.totalRows = int(results.TotalCount)
 	v.updateTable()
 }
 
@@ -323,6 +344,7 @@ func (v *ResultsView) loadWithWhere() {
 	v.query = ""
 	v.currentPage = 0
 	v.columnOffset = 0
+	v.totalRows = int(results.TotalCount)
 	v.updateTable()
 }
 
@@ -408,8 +430,6 @@ func (v *ResultsView) updateTable() {
 		v.table.SetCursor(0)
 		v.table.SetRows(rows)
 	}
-
-	v.totalRows = len(rows)
 }
 
 func (v *ResultsView) loadPage() tea.Cmd {
@@ -423,6 +443,7 @@ func (v *ResultsView) loadPage() tea.Cmd {
 				return nil
 			}
 			v.results = results
+			v.totalRows = int(results.TotalCount)
 			v.updateTable()
 		}
 		return nil
