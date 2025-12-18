@@ -36,6 +36,7 @@ type ResultsView struct {
 	currentPage    int
 	pageSize       int
 	totalRows      int
+	totalCount     int64 // Total number of rows in the table/query result
 	schema         string
 	tableName      string
 	columnOffset   int
@@ -75,7 +76,16 @@ func NewResultsView(parent *MainModel) *ResultsView {
 		pageSize:     50,
 		columnOffset: 0,
 		maxColumns:   10,
+		totalCount:   0,
 	}
+}
+
+// getTotalPages calculates the total number of pages based on totalCount and pageSize
+func (v *ResultsView) getTotalPages() int {
+	if v.totalCount == 0 || v.pageSize == 0 {
+		return 0
+	}
+	return int((v.totalCount + int64(v.pageSize) - 1) / int64(v.pageSize))
 }
 
 func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
@@ -107,6 +117,17 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 			return v, nil
 
 		case "n":
+			// Only advance to next page if we're not at the last page
+			totalPages := v.getTotalPages()
+			if totalPages > 0 && v.currentPage >= totalPages-1 {
+				// Already at or past the last page
+				return v, nil
+			}
+			// For query results (no totalCount), check if current page has data
+			if totalPages == 0 && len(v.results.Rows) < v.pageSize {
+				// Current page is not full, likely the last page
+				return v, nil
+			}
 			v.currentPage++
 			return v, v.loadPage()
 
@@ -210,7 +231,15 @@ func (v *ResultsView) View() string {
 		}
 
 		columnInfo := fmt.Sprintf("Columns %d-%d of %d", v.columnOffset+1, v.columnOffset+visibleCols, totalCols)
-		rowInfo := fmt.Sprintf("Showing %d rows (Page %d)", len(v.results.Rows), v.currentPage+1)
+
+		// Build row info with page indicator
+		var rowInfo string
+		totalPages := v.getTotalPages()
+		if totalPages > 0 {
+			rowInfo = fmt.Sprintf("Showing %d rows (Page %d of %d)", len(v.results.Rows), v.currentPage+1, totalPages)
+		} else {
+			rowInfo = fmt.Sprintf("Showing %d rows (Page %d)", len(v.results.Rows), v.currentPage+1)
+		}
 
 		b.WriteString(styles.MutedStyle.Render(columnInfo + " • " + rowInfo))
 	}
@@ -271,6 +300,11 @@ func (v *ResultsView) SetResults(results *engine.GetRowsResult, query string) {
 	v.columnOffset = 0
 	v.schema = ""
 	v.tableName = ""
+	if results != nil {
+		v.totalCount = results.TotalCount
+	} else {
+		v.totalCount = 0
+	}
 	v.updateTable()
 }
 
@@ -299,6 +333,11 @@ func (v *ResultsView) LoadTable(schema string, tableName string) {
 	v.columnOffset = 0
 	v.schema = schema
 	v.tableName = tableName
+	if results != nil {
+		v.totalCount = results.TotalCount
+	} else {
+		v.totalCount = 0
+	}
 	v.updateTable()
 }
 
@@ -323,6 +362,11 @@ func (v *ResultsView) loadWithWhere() {
 	v.query = ""
 	v.currentPage = 0
 	v.columnOffset = 0
+	if results != nil {
+		v.totalCount = results.TotalCount
+	} else {
+		v.totalCount = 0
+	}
 	v.updateTable()
 }
 
@@ -422,7 +466,19 @@ func (v *ResultsView) loadPage() tea.Cmd {
 				v.whereCondition = nil
 				return nil
 			}
+
+			// If no results returned, we've gone past the last page, go back
+			if results == nil || len(results.Rows) == 0 {
+				if v.currentPage > 0 {
+					v.currentPage--
+				}
+				return nil
+			}
+
 			v.results = results
+			if results != nil {
+				v.totalCount = results.TotalCount
+			}
 			v.updateTable()
 		}
 		return nil
