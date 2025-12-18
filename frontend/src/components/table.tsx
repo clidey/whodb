@@ -74,17 +74,20 @@ import {
     ChevronUpIcon,
     CircleStackIcon,
     ClockIcon,
+    CodeBracketIcon,
     CursorArrowRaysIcon,
     DocumentDuplicateIcon,
     DocumentIcon,
     DocumentTextIcon,
     EllipsisVerticalIcon,
+    GlobeAltIcon,
     HashtagIcon,
     KeyIcon,
     ListBulletIcon,
     MagnifyingGlassIcon,
     PencilSquareIcon,
     ShareIcon,
+    Squares2X2Icon,
     TrashIcon,
     XMarkIcon
 } from "./heroicons";
@@ -162,6 +165,21 @@ const binaryTypes = new Set([
     "BLOB", "BYTEA", "VARBINARY", "BINARY", "IMAGE",
     "TINYBLOB", "MEDIUMBLOB", "LONGBLOB",
 ]);
+const jsonTypes = new Set([
+    "JSON", "JSONB",
+]);
+const networkTypes = new Set([
+    "CIDR", "INET", "MACADDR", "MACADDR8",
+    "IPV4", "IPV6",
+]);
+const geometryTypes = new Set([
+    "POINT", "LINE", "LSEG", "BOX", "PATH", "POLYGON", "CIRCLE",
+    "GEOMETRY", "GEOGRAPHY",
+    "LINESTRING", "MULTIPOINT", "MULTILINESTRING", "MULTIPOLYGON", "GEOMETRYCOLLECTION",
+]);
+const xmlTypes = new Set([
+    "XML",
+]);
 
 /**
  * Strips length/precision suffix from a type string.
@@ -185,6 +203,10 @@ export function getColumnIcons(columns: string[], columnTypes?: string[], t?: (k
         if (dateTimeTypes.has(type)) return <ClockIcon className="w-4 h-4" aria-label={t?.('dateTimeType') ?? 'DateTime type'} />;
         if (uuidTypes.has(type)) return <KeyIcon className="w-4 h-4" aria-label={t?.('uuidType') ?? 'UUID type'} />;
         if (binaryTypes.has(type)) return <DocumentDuplicateIcon className="w-4 h-4" aria-label={t?.('binaryType') ?? 'Binary type'} />;
+        if (jsonTypes.has(type)) return <CodeBracketIcon className="w-4 h-4" aria-label={t?.('jsonType') ?? 'JSON type'} />;
+        if (networkTypes.has(type)) return <GlobeAltIcon className="w-4 h-4" aria-label={t?.('networkType') ?? 'Network type'} />;
+        if (geometryTypes.has(type)) return <Squares2X2Icon className="w-4 h-4" aria-label={t?.('geometryType') ?? 'Geometry type'} />;
+        if (xmlTypes.has(type)) return <CodeBracketIcon className="w-4 h-4" aria-label={t?.('xmlType') ?? 'XML type'} />;
         if (type.startsWith("ARRAY")) return <ListBulletIcon className="w-4 h-4" aria-label={t?.('arrayType') ?? 'Array type'} />;
         if (stringTypes.has(type)) return <DocumentTextIcon className="w-4 h-4" aria-label={t?.('textType') ?? 'Text type'} />;
         return <CircleStackIcon className="w-4 h-4" aria-label={t?.('dataType') ?? 'Data type'} />;
