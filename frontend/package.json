@@ -51,6 +51,7 @@
     "# Primary test commands - use these for running tests": "",
     "cypress:ce": "VITE_E2E_TEST=true bash ../dev/run-cypress.sh false all",
     "cypress:ce:headless": "VITE_E2E_TEST=true bash ../dev/run-cypress.sh true all",
+    "cypress:ce:headless:debug": "DEBUG=cypress:* VITE_E2E_TEST=true bash ../dev/run-cypress.sh true all",
     "cypress:ee": "VITE_E2E_TEST=true bash ../ee/dev/run-cypress-ee-only.sh",
     "cypress:ee:headless": "VITE_E2E_TEST=true bash ../ee/dev/run-cypress.sh ee-only true all",
     "cypress:all": "VITE_E2E_TEST=true bash ../ee/dev/run-cypress-ee.sh",
