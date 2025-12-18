@@ -255,6 +255,18 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 			v.parent.mode = ViewBrowser
 			return v, nil
 
+		case "ctrl+i", "/":
+			// Focus chat input
+			v.focusField = focusFieldMessage
+			v.input.Focus()
+			return v, nil
+
+		case "ctrl+p":
+			// Focus provider/model config section
+			v.focusField = focusFieldProvider
+			v.input.Blur()
+			return v, nil
+
 		case "ctrl+f":
 			v.focusField = (v.focusField + 1) % 3
 			if v.focusField == focusFieldMessage {
@@ -602,7 +614,8 @@ func (v *ChatView) View() string {
 		"[v]", "view table",
 		"scroll", "trackpad/mouse",
 		"enter", "send",
-		"ctrl+f", "focus field",
+		"ctrl+i / /", "focus input",
+		"ctrl+p", "focus config",
 		"←/→", "change selection",
 		"ctrl+l", "load models",
 		"ctrl+r", "revoke consent",
