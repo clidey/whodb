@@ -121,6 +121,10 @@ type GormPluginFunctions interface {
 	// For example, PostgreSQL: "INT4" -> "INTEGER", "VARCHAR" -> "CHARACTER VARYING"
 	// Returns the input unchanged if no mapping exists.
 	NormalizeType(typeName string) string
+
+	// GetColumnTypes returns a map of column names to their types for a table.
+	// Used for type conversion during CRUD operations.
+	GetColumnTypes(db *gorm.DB, schema, tableName string) (map[string]string, error)
 }
 
 func (p *GormPlugin) GetStorageUnits(config *engine.PluginConfig, schema string) ([]engine.StorageUnit, error) {
@@ -202,7 +206,7 @@ func (p *GormPlugin) GetRowCount(config *engine.PluginConfig, schema string, sto
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (int64, error) {
 		var columnTypes map[string]string
 		if where != nil {
-			columnTypes, _ = p.GetColumnTypes(db, schema, storageUnit)
+			columnTypes, _ = p.GormPluginFunctions.GetColumnTypes(db, schema, storageUnit)
 		}
 
 		builder := p.GormPluginFunctions.CreateSQLBuilder(db)
@@ -281,7 +285,7 @@ func contains(slice []string, item string) bool {
 func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	var columnTypes map[string]string
 	if where != nil {
-		columnTypes, _ = p.GetColumnTypes(db, schema, storageUnit)
+		columnTypes, _ = p.GormPluginFunctions.GetColumnTypes(db, schema, storageUnit)
 	}
 
 	builder := p.GormPluginFunctions.CreateSQLBuilder(db)

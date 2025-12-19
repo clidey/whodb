@@ -265,6 +265,48 @@ func (p *ClickHousePlugin) NormalizeType(typeName string) string {
 	return NormalizeType(typeName)
 }
 
+// GetColumnTypes overrides the base implementation because GORM ClickHouse's
+// migrator.ColumnTypes() doesn't support "database.table" format - it uses
+// m.CurrentDatabase() internally and expects just the table name.
+func (p *ClickHousePlugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[string]string, error) {
+	migrator := gorm_plugin.NewMigratorHelper(db, p)
+	// Pass just table name - ClickHouse GORM driver handles database context
+	return migrator.GetColumnTypes(tableName)
+}
+
+// GetColumnsForTable overrides the base implementation for the same reason as GetColumnTypes.
+func (p *ClickHousePlugin) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]engine.Column, error) {
+		migrator := gorm_plugin.NewMigratorHelper(db, p)
+
+		// Pass just table name - ClickHouse GORM driver handles database context
+		columns, err := migrator.GetOrderedColumns(storageUnit)
+		if err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get columns for table %s.%s", schema, storageUnit))
+			return nil, err
+		}
+
+		// Get primary keys
+		primaryKeys, err := p.GetPrimaryKeyColumns(db, schema, storageUnit)
+		if err != nil {
+			log.Logger.WithError(err).Warn(fmt.Sprintf("Failed to get primary keys for table %s.%s", schema, storageUnit))
+			primaryKeys = []string{}
+		}
+
+		// Enrich columns with primary key information
+		for i := range columns {
+			for _, pk := range primaryKeys {
+				if columns[i].Name == pk {
+					columns[i].IsPrimary = true
+					break
+				}
+			}
+		}
+
+		return columns, nil
+	})
+}
+
 // GetStorageUnits overrides the base implementation because GORM ClickHouse's
 // ColumnTypes() doesn't support "database.table" format - it always uses
 // m.CurrentDatabase() and expects just the table name.

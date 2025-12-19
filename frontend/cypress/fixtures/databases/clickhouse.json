@@ -106,7 +106,7 @@
         }
       },
       "metadata": {
-        "type": "MergeTree",
+        "type": "mergetree",
         "hasSize": true,
         "hasCount": true
       }

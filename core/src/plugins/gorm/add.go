@@ -101,7 +101,7 @@ func (p *GormPlugin) addRowWithDB(db *gorm.DB, schema string, storageUnit string
 	}
 
 	// Fetch column types to ensure proper type conversion
-	columnTypes, err := p.GetColumnTypes(db, schema, storageUnit)
+	columnTypes, err := p.GormPluginFunctions.GetColumnTypes(db, schema, storageUnit)
 	if err != nil {
 		log.Logger.WithError(err).WithField("schema", schema).WithField("storageUnit", storageUnit).
 			Warn("Failed to fetch column types, continuing without type information")
