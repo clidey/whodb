@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/clidey/whodb/core/src/common"
@@ -29,10 +30,45 @@ import (
 
 // ExportData exports ElasticSearch index data to tabular format
 func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error {
-	// ElasticSearch doesn't support exporting selected rows from frontend
+	// If selected rows provided, export only those
 	if len(selectedRows) > 0 {
-		err := fmt.Errorf("exporting selected rows is not supported for ElasticSearch")
-		return err
+		fieldSet := make(map[string]bool)
+		for _, row := range selectedRows {
+			for k := range row {
+				fieldSet[k] = true
+			}
+		}
+
+		fieldNames := make([]string, 0, len(fieldSet))
+		for field := range fieldSet {
+			fieldNames = append(fieldNames, field)
+		}
+		sort.Strings(fieldNames)
+
+		// Write headers
+		headers := make([]string, len(fieldNames))
+		for i, field := range fieldNames {
+			headers[i] = common.FormatCSVHeader(field, "JSON")
+		}
+		if err := writer(headers); err != nil {
+			return fmt.Errorf("failed to write headers: %v", err)
+		}
+
+		// Write rows
+		for _, row := range selectedRows {
+			rowData := make([]string, len(fieldNames))
+			for i, field := range fieldNames {
+				if val, exists := row[field]; exists {
+					rowData[i] = p.formatElasticValue(val)
+				} else {
+					rowData[i] = ""
+				}
+			}
+			if err := writer(rowData); err != nil {
+				return fmt.Errorf("failed to write row: %v", err)
+			}
+		}
+		return nil
 	}
 	db, err := DB(config)
 	if err != nil {

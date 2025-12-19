@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/clidey/whodb/core/src/common"
@@ -33,15 +34,53 @@ import (
 
 // ExportData exports MongoDB collection data to tabular format
 func (p *MongoDBPlugin) ExportData(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error {
-	// MongoDB doesn't support exporting selected rows from frontend
+	// If selected rows are provided, export only those
 	if len(selectedRows) > 0 {
-		return fmt.Errorf("exporting selected rows is not supported for MongoDB")
+		// Extract field names from selected rows
+		fieldSet := make(map[string]bool)
+		for _, row := range selectedRows {
+			for k := range row {
+				fieldSet[k] = true
+			}
+		}
+
+		// Convert to sorted slice
+		fieldNames := make([]string, 0, len(fieldSet))
+		for field := range fieldSet {
+			fieldNames = append(fieldNames, field)
+		}
+		sort.Strings(fieldNames)
+
+		// Write headers
+		headers := make([]string, len(fieldNames))
+		for i, field := range fieldNames {
+			headers[i] = common.FormatCSVHeader(field, "BSON")
+		}
+		if err := writer(headers); err != nil {
+			return fmt.Errorf("failed to write headers: %v", err)
+		}
+
+		// Write selected rows
+		for _, row := range selectedRows {
+			rowData := make([]string, len(fieldNames))
+			for i, field := range fieldNames {
+				if val, exists := row[field]; exists {
+					rowData[i] = p.formatBSONValue(val)
+				} else {
+					rowData[i] = ""
+				}
+			}
+			if err := writer(rowData); err != nil {
+				return fmt.Errorf("failed to write row: %v", err)
+			}
+		}
+		return nil
 	}
 	client, err := DB(config)
 	if err != nil {
 		log.Logger.WithError(err).WithFields(map[string]interface{}{
-			"hostname": config.Credentials.Hostname,
-			"schema": schema,
+			"hostname":    config.Credentials.Hostname,
+			"schema":      schema,
 			"storageUnit": storageUnit,
 		}).Error("Failed to connect to MongoDB for data export")
 		return err
@@ -54,8 +93,8 @@ func (p *MongoDBPlugin) ExportData(config *engine.PluginConfig, schema string, s
 	fieldNames, err := p.getCollectionFields(collection)
 	if err != nil {
 		log.Logger.WithError(err).WithFields(map[string]interface{}{
-			"hostname": config.Credentials.Hostname,
-			"schema": schema,
+			"hostname":    config.Credentials.Hostname,
+			"schema":      schema,
 			"storageUnit": storageUnit,
 		}).Error("Failed to get MongoDB collection fields for export")
 		return fmt.Errorf("failed to get collection fields: %v", err)
@@ -68,8 +107,8 @@ func (p *MongoDBPlugin) ExportData(config *engine.PluginConfig, schema string, s
 	}
 	if err := writer(headers); err != nil {
 		log.Logger.WithError(err).WithFields(map[string]interface{}{
-			"hostname": config.Credentials.Hostname,
-			"schema": schema,
+			"hostname":    config.Credentials.Hostname,
+			"schema":      schema,
 			"storageUnit": storageUnit,
 			"headerCount": len(headers),
 		}).Error("Failed to write CSV headers for MongoDB export")
@@ -80,8 +119,8 @@ func (p *MongoDBPlugin) ExportData(config *engine.PluginConfig, schema string, s
 	cursor, err := collection.Find(context.Background(), bson.D{})
 	if err != nil {
 		log.Logger.WithError(err).WithFields(map[string]interface{}{
-			"hostname": config.Credentials.Hostname,
-			"schema": schema,
+			"hostname":    config.Credentials.Hostname,
+			"schema":      schema,
 			"storageUnit": storageUnit,
 		}).Error("Failed to query MongoDB collection for export")
 		return fmt.Errorf("failed to query collection: %v", err)
@@ -93,10 +132,10 @@ func (p *MongoDBPlugin) ExportData(config *engine.PluginConfig, schema string, s
 		var doc bson.M
 		if err := cursor.Decode(&doc); err != nil {
 			log.Logger.WithError(err).WithFields(map[string]interface{}{
-				"hostname": config.Credentials.Hostname,
-				"schema": schema,
+				"hostname":    config.Credentials.Hostname,
+				"schema":      schema,
 				"storageUnit": storageUnit,
-				"rowNumber": rowCount + 1,
+				"rowNumber":   rowCount + 1,
 			}).Error("Failed to decode MongoDB document during export")
 			return fmt.Errorf("failed to decode document: %v", err)
 		}
@@ -112,10 +151,10 @@ func (p *MongoDBPlugin) ExportData(config *engine.PluginConfig, schema string, s
 
 		if err := writer(row); err != nil {
 			log.Logger.WithError(err).WithFields(map[string]interface{}{
-				"hostname": config.Credentials.Hostname,
-				"schema": schema,
+				"hostname":    config.Credentials.Hostname,
+				"schema":      schema,
 				"storageUnit": storageUnit,
-				"rowNumber": rowCount + 1,
+				"rowNumber":   rowCount + 1,
 			}).Error("Failed to write CSV row for MongoDB export")
 			return fmt.Errorf("failed to write row: %v", err)
 		}
@@ -239,7 +278,7 @@ func (p *MongoDBPlugin) formatBSONValue(val any) string {
 		// Fallback for any other types
 		strVal = fmt.Sprintf("%v", v)
 	}
-	
+
 	// Apply formula injection protection
 	return common.EscapeFormula(strVal)
 }
