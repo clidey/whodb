@@ -1,17 +1,17 @@
 /*
- * Copyright 2025 Clidey, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * // Copyright 2025 Clidey, Inc.
+ * //
+ * // Licensed under the Apache License, Version 2.0 (the "License");
+ * // you may not use this file except in compliance with the License.
+ * // You may obtain a copy of the License at
+ * //
+ * //     http://www.apache.org/licenses/LICENSE-2.0
+ * //
+ * // Unless required by applicable law or agreed to in writing, software
+ * // distributed under the License is distributed on an "AS IS" BASIS,
+ * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * // See the License for the specific language governing permissions and
+ * // limitations under the License.
  */
 
 package clickhouse
@@ -304,49 +304,6 @@ func (p *ClickHousePlugin) GetColumnsForTable(config *engine.PluginConfig, schem
 		}
 
 		return columns, nil
-	})
-}
-
-// GetStorageUnits overrides the base implementation because GORM ClickHouse's
-// ColumnTypes() doesn't support "database.table" format - it always uses
-// m.CurrentDatabase() and expects just the table name.
-func (p *ClickHousePlugin) GetStorageUnits(config *engine.PluginConfig, schema string) ([]engine.StorageUnit, error) {
-	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]engine.StorageUnit, error) {
-		var storageUnits []engine.StorageUnit
-		rows, err := db.Raw(p.GetTableInfoQuery(), schema).Rows()
-		if err != nil {
-			log.Logger.WithError(err).Error("Failed to execute table info query for schema: " + schema)
-			return nil, err
-		}
-		defer rows.Close()
-
-		helper := gorm_plugin.NewMigratorHelper(db, p)
-
-		for rows.Next() {
-			tableName, attributes := p.GetTableNameAndAttributes(rows)
-			if attributes == nil && tableName == "" {
-				continue
-			}
-
-			// ClickHouse GORM driver's ColumnTypes() uses m.CurrentDatabase()
-			// internally, so we pass just the table name (not database.table)
-			orderedColumns, err := helper.GetOrderedColumns(tableName)
-			if err != nil {
-				fullTableName := p.FormTableName(schema, tableName)
-				log.Logger.WithError(err).Warnf("Failed to get column types for table %s, skipping columns", fullTableName)
-			} else {
-				for _, col := range orderedColumns {
-					attributes = append(attributes, engine.Record{Key: col.Name, Value: col.Type})
-				}
-			}
-
-			storageUnits = append(storageUnits, engine.StorageUnit{
-				Name:       tableName,
-				Attributes: attributes,
-			})
-		}
-
-		return storageUnits, nil
 	})
 }
 

@@ -1,17 +1,17 @@
 /*
- * Copyright 2025 Clidey, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * // Copyright 2025 Clidey, Inc.
+ * //
+ * // Licensed under the Apache License, Version 2.0 (the "License");
+ * // you may not use this file except in compliance with the License.
+ * // You may obtain a copy of the License at
+ * //
+ * //     http://www.apache.org/licenses/LICENSE-2.0
+ * //
+ * // Unless required by applicable law or agreed to in writing, software
+ * // distributed under the License is distributed on an "AS IS" BASIS,
+ * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * // See the License for the specific language governing permissions and
+ * // limitations under the License.
  */
 
 package redis
@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/engine"
@@ -305,7 +306,9 @@ func (p *RedisPlugin) GetRows(
 		}
 		var rows [][]string
 		for i, value := range setValues {
-			rows = append(rows, []string{strconv.Itoa(i), value})
+			if where == nil || filterRedisSet(value, where) {
+				rows = append(rows, []string{strconv.Itoa(i), value})
+			}
 		}
 		result = &engine.GetRowsResult{
 			Columns:       []engine.Column{{Name: "index", Type: "string"}, {Name: "value", Type: "string"}},
@@ -320,7 +323,11 @@ func (p *RedisPlugin) GetRows(
 		}
 		var rows [][]string
 		for i, member := range zsetValues {
-			rows = append(rows, []string{strconv.Itoa(i), member.Member.(string), fmt.Sprintf("%.2f", member.Score)})
+			value := member.Member.(string)
+			scoreStr := fmt.Sprintf("%.2f", member.Score)
+			if where == nil || filterRedisZSet(value, scoreStr, where) {
+				rows = append(rows, []string{strconv.Itoa(i), value, scoreStr})
+			}
 		}
 		result = &engine.GetRowsResult{
 			Columns: []engine.Column{{Name: "index", Type: "string"}, {Name: "member", Type: "string"}, {Name: "score", Type: "string"}},
@@ -451,9 +458,63 @@ func filterRedisList(value string, where *model.WhereCondition) bool {
 	return true
 }
 
+func filterRedisSet(value string, where *model.WhereCondition) bool {
+	condition, err := convertWhereConditionToRedisFilter(where)
+	if err != nil {
+		return true
+	}
+
+	for key, op := range condition {
+		if key == "value" || key == "member" {
+			if !evaluateRedisCondition(value, op.Operator, op.Value) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func filterRedisZSet(member string, score string, where *model.WhereCondition) bool {
+	condition, err := convertWhereConditionToRedisFilter(where)
+	if err != nil {
+		return true
+	}
+
+	for key, op := range condition {
+		switch strings.ToLower(key) {
+		case "member":
+			if !evaluateRedisCondition(member, op.Operator, op.Value) {
+				return false
+			}
+		case "score":
+			if !evaluateRedisCondition(score, op.Operator, op.Value) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 type redisFilter struct {
 	Operator string
 	Value    string
+}
+
+func (p *RedisPlugin) GetSupportedOperators() map[string]string {
+	return map[string]string{
+		"=":           "=",
+		"!=":          "!=",
+		"<>":          "!=",
+		">":           ">",
+		">=":          ">=",
+		"<":           "<",
+		"<=":          "<=",
+		"CONTAINS":    "CONTAINS",
+		"STARTS WITH": "STARTS WITH",
+		"ENDS WITH":   "ENDS WITH",
+		"IN":          "IN",
+		"NOT IN":      "NOT IN",
+	}
 }
 
 func convertWhereConditionToRedisFilter(where *model.WhereCondition) (map[string]redisFilter, error) {
@@ -469,7 +530,7 @@ func convertWhereConditionToRedisFilter(where *model.WhereCondition) (map[string
 
 		return map[string]redisFilter{
 			where.Atomic.Key: {
-				Operator: where.Atomic.Operator,
+				Operator: strings.ToUpper(where.Atomic.Operator),
 				Value:    where.Atomic.Value,
 			},
 		}, nil
@@ -481,14 +542,43 @@ func convertWhereConditionToRedisFilter(where *model.WhereCondition) (map[string
 
 func evaluateRedisCondition(value, operator, target string) bool {
 	switch operator {
-	case "=":
+	case "=", "EQ":
 		return value == target
-	case "!=":
+	case "!=", "NE", "<>":
 		return value != target
 	case ">":
 		return value > target
+	case ">=":
+		return value >= target
 	case "<":
 		return value < target
+	case "<=":
+		return value <= target
+	case "CONTAINS":
+		return strings.Contains(value, target)
+	case "STARTS WITH":
+		return strings.HasPrefix(value, target)
+	case "ENDS WITH":
+		return strings.HasSuffix(value, target)
+	case "IN":
+		parts := strings.Split(target, ",")
+		for _, p := range parts {
+			if value == strings.TrimSpace(p) {
+				return true
+			}
+		}
+		return false
+	case "NOT IN":
+		parts := strings.Split(target, ",")
+		for _, p := range parts {
+			if value == strings.TrimSpace(p) {
+				return false
+			}
+		}
+		return true
+	}
+
+	switch operator {
 	default:
 		return false
 	}

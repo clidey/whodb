@@ -1,16 +1,18 @@
-// Copyright 2025 Clidey, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * // Copyright 2025 Clidey, Inc.
+ * //
+ * // Licensed under the Apache License, Version 2.0 (the "License");
+ * // you may not use this file except in compliance with the License.
+ * // You may obtain a copy of the License at
+ * //
+ * //     http://www.apache.org/licenses/LICENSE-2.0
+ * //
+ * // Unless required by applicable law or agreed to in writing, software
+ * // distributed under the License is distributed on an "AS IS" BASIS,
+ * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * // See the License for the specific language governing permissions and
+ * // limitations under the License.
+ */
 
 package elasticsearch
 
@@ -72,7 +74,7 @@ func (p *ElasticSearchPlugin) GetGraph(config *engine.PluginConfig, database str
 	for indexName := range indicesStats {
 		var buf bytes.Buffer
 		query := map[string]interface{}{
-			"size": 1,
+			"size": 100,
 			"query": map[string]interface{}{
 				"match_all": map[string]interface{}{},
 			},
@@ -94,7 +96,7 @@ func (p *ElasticSearchPlugin) GetGraph(config *engine.PluginConfig, database str
 		defer res.Body.Close()
 
 		if res.IsError() {
-			err := fmt.Errorf("error searching documents: %s", res.String())
+			err := fmt.Errorf("error searching documents: %s", formatElasticError(res))
 			log.Logger.WithError(err).WithField("indexName", indexName).Error("ElasticSearch search API returned error for graph generation")
 			return nil, err
 		}
@@ -107,35 +109,53 @@ func (p *ElasticSearchPlugin) GetGraph(config *engine.PluginConfig, database str
 
 		hits := searchResult["hits"].(map[string]interface{})["hits"].([]interface{})
 		if len(hits) > 0 {
-			doc := hits[0].(map[string]interface{})["_source"].(map[string]interface{})
-
 			foreignKeys := make(map[string]string)
 
-			for fieldName := range doc {
-				if fieldName == "_id" {
+			for _, h := range hits {
+				doc, ok := h.(map[string]any)["_source"].(map[string]any)
+				if !ok {
 					continue
 				}
 
-				for _, otherIndex := range indices {
-					if otherIndex == indexName {
+				for fieldName := range doc {
+					if fieldName == "_id" {
 						continue
 					}
 
-					singularName := strings.TrimSuffix(otherIndex, "s")
-					pluralName := otherIndex
-					if !strings.HasSuffix(otherIndex, "s") {
-						pluralName = otherIndex + "s"
+					// Check for explicit relation hints
+					if strings.Contains(strings.ToLower(fieldName), ".id") {
+						for _, otherIndex := range indices {
+							if otherIndex == indexName {
+								continue
+							}
+							if strings.Contains(strings.ToLower(fieldName), strings.ToLower(otherIndex)) {
+								foreignKeys[otherIndex] = fieldName
+								break
+							}
+						}
 					}
 
-					lowerField := strings.ToLower(fieldName)
-					if lowerField == strings.ToLower(singularName)+"_id" ||
-						lowerField == strings.ToLower(singularName)+"id" ||
-						lowerField == strings.ToLower(otherIndex)+"_id" ||
-						lowerField == strings.ToLower(otherIndex)+"id" ||
-						lowerField == strings.ToLower(pluralName)+"_id" ||
-						lowerField == strings.ToLower(pluralName)+"id" {
-						foreignKeys[otherIndex] = fieldName
-						break
+					for _, otherIndex := range indices {
+						if otherIndex == indexName {
+							continue
+						}
+
+						singularName := strings.TrimSuffix(otherIndex, "s")
+						pluralName := otherIndex
+						if !strings.HasSuffix(otherIndex, "s") {
+							pluralName = otherIndex + "s"
+						}
+
+						lowerField := strings.ToLower(fieldName)
+						if lowerField == strings.ToLower(singularName)+"_id" ||
+							lowerField == strings.ToLower(singularName)+"id" ||
+							lowerField == strings.ToLower(otherIndex)+"_id" ||
+							lowerField == strings.ToLower(otherIndex)+"id" ||
+							lowerField == strings.ToLower(pluralName)+"_id" ||
+							lowerField == strings.ToLower(pluralName)+"id" {
+							foreignKeys[otherIndex] = fieldName
+							break
+						}
 					}
 				}
 			}

@@ -1,17 +1,17 @@
 /*
- * Copyright 2025 Clidey, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * // Copyright 2025 Clidey, Inc.
+ * //
+ * // Licensed under the Apache License, Version 2.0 (the "License");
+ * // you may not use this file except in compliance with the License.
+ * // You may obtain a copy of the License at
+ * //
+ * //     http://www.apache.org/licenses/LICENSE-2.0
+ * //
+ * // Unless required by applicable law or agreed to in writing, software
+ * // distributed under the License is distributed on an "AS IS" BASIS,
+ * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * // See the License for the specific language governing permissions and
+ * // limitations under the License.
  */
 
 package gorm_plugin
@@ -137,25 +137,11 @@ func (p *GormPlugin) GetStorageUnits(config *engine.PluginConfig, schema string)
 		}
 		defer rows.Close()
 
-		helper := NewMigratorHelper(db, p.GormPluginFunctions)
-
 		for rows.Next() {
 			tableName, attributes := p.GetTableNameAndAttributes(rows)
 			if attributes == nil && tableName == "" {
 				continue
 			}
-
-			// Use GORM migrator to get column types with length info (preserves column order)
-			fullTableName := p.FormTableName(schema, tableName)
-			orderedColumns, err := helper.GetOrderedColumns(fullTableName)
-			if err != nil {
-				log.Logger.WithError(err).Warnf("Failed to get column types for table %s, skipping columns", fullTableName)
-			} else {
-				for _, col := range orderedColumns {
-					attributes = append(attributes, engine.Record{Key: col.Name, Value: col.Type})
-				}
-			}
-
 			storageUnits = append(storageUnits, engine.StorageUnit{
 				Name:       tableName,
 				Attributes: attributes,

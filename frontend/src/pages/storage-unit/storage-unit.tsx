@@ -100,17 +100,6 @@ const StorageUnitCard: FC<{ unit: StorageUnit, columns?: any[] }> = ({ unit, col
         setExpanded(s => !s);
     }, []);
 
-    const foreignKeyMap = useMemo(() => {
-        if (!columns) return new Map<string, boolean>();
-        const map = new Map<string, boolean>();
-        columns.forEach(col => {
-            if (col.IsForeignKey) {
-                map.set(col.Name, true);
-            }
-        });
-        return map;
-    }, [columns]);
-
     const [introAttributes, expandedAttributes] = useMemo(() => {
         return [ unit.Attributes.slice(0,4), unit.Attributes.slice(4) ];
     }, [unit.Attributes]);
@@ -156,47 +145,43 @@ const StorageUnitCard: FC<{ unit: StorageUnit, columns?: any[] }> = ({ unit, col
                         <InformationCircleIcon className="w-4 h-4" />
                         <span>{t('sampledSchemaBadge')}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground">{t('sampledSchemaTooltip', { db: current?.Type })}</p>
                 </div>
             )}
             <div className="w-full" data-testid="explore-fields">
                 <div className="flex flex-col gap-xs2">
+                    <StackList>
+                        {/* Metadata attributes (Type, Total Size, etc.) */}
+                        {
+                            introAttributes.map(attribute => (
+                                <StackListItem key={attribute.Key} item={attribute.Key}>
+                                    {attribute.Value?.toLowerCase()}
+                                </StackListItem>
+                            ))
+                        }
+                        {
+                            expandedAttributes.map(attribute => (
+                                <StackListItem key={attribute.Key} item={attribute.Key}>
+                                    {attribute.Value?.toLowerCase()}
+                                </StackListItem>
+                            ))
+                        }
+                    </StackList>
                     {columns && columns.length > 0 && (
-                        <div className="mb-2">
+                        <div className="mt-2">
                             <h3 className="text-xs font-semibold uppercase text-muted-foreground">{t('columnsTitle')}</h3>
                             <StackList>
-                                {columns.map(col => (
-                                    <StackListItem key={col.Name} item={col.Name}>
-                                        {col.Type?.toLowerCase()}
-                                    </StackListItem>
-                                ))}
+                                {columns.map(col => {
+                                    const isForeignKey = col.IsForeignKey;
+                                    return (
+                                        <StackListItem key={col.Name} item={isForeignKey ?
+                                            <Badge className="text-lg" data-testid="foreign-key-attribute">{col.Name}</Badge> : col.Name}>
+                                            {col.Type?.toLowerCase()}
+                                        </StackListItem>
+                                    );
+                                })}
                             </StackList>
                         </div>
                     )}
-                    <StackList>
-                        {
-                            introAttributes.map(attribute => {
-                                const isForeignKey = foreignKeyMap.has(attribute.Key);
-                                return (
-                                    <StackListItem key={attribute.Key} item={isForeignKey ?
-                                        <Badge className="text-lg" data-testid="foreign-key-attribute">{attribute.Key}</Badge> : attribute.Key}>
-                                        {attribute.Value?.toLowerCase()}
-                                    </StackListItem>
-                                );
-                            })
-                        }
-                        {
-                            expandedAttributes.map(attribute => {
-                                const isForeignKey = foreignKeyMap.has(attribute.Key);
-                                return (
-                                    <StackListItem key={attribute.Key} item={isForeignKey ?
-                                        <Badge className="text-lg" data-testid="foreign-key-attribute">{attribute.Key}</Badge> : attribute.Key}>
-                                        {attribute.Value?.toLowerCase()}
-                                    </StackListItem>
-                                );
-                            })
-                        }
-                    </StackList>
                 </div>
             </div>
             <div className="flex items-end grow">
@@ -388,13 +373,14 @@ export const StorageUnitPage: FC = () => {
         }
 
         // Get attributes that exist in ALL storage units (intersection of all attributes)
-        const firstUnitAttributeKeys = new Set(data.StorageUnit[0].Attributes.map(attr => attr.Key));
+        // Preserve the order from the first unit (backend returns metadata like Type first)
+        const firstUnitKeys = data.StorageUnit[0].Attributes.map(attr => attr.Key);
 
-        return Array.from(firstUnitAttributeKeys).filter(key =>
+        return firstUnitKeys.filter(key =>
             data.StorageUnit.every(unit =>
                 unit.Attributes.some(attr => attr.Key === key)
             )
-        ).sort();
+        );
     }, [data?.StorageUnit]);
 
     if (loading) {
@@ -560,15 +546,6 @@ export const StorageUnitPage: FC = () => {
                         if (!unit) return null;
 
                         const columns = tableColumns[unit.Name];
-                        const foreignKeyMap = new Map<string, boolean>();
-                        if (columns) {
-                            columns.forEach(col => {
-                                if (col.IsForeignKey) {
-                                    foreignKeyMap.set(col.Name, true);
-                                }
-                            });
-                        }
-
                         const [introAttributes, expandedAttributes] = [unit.Attributes.slice(0,4), unit.Attributes.slice(4)];
 
                         return (
@@ -576,25 +553,34 @@ export const StorageUnitPage: FC = () => {
                                 <div className="flex flex-col gap-4">
                                     <h2 className="text-2xl font-bold">{unit.Name}</h2>
                                     <StackList>
-                                        {introAttributes.map(attribute => {
-                                            const isForeignKey = foreignKeyMap.has(attribute.Key);
-                                            return (
-                                                <StackListItem key={attribute.Key} item={isForeignKey ?
-                                                    <Badge className="text-lg" data-testid="foreign-key-attribute">{attribute.Key}</Badge> : attribute.Key}>
-                                                    {attribute.Value?.toLowerCase()}
-                                                </StackListItem>
-                                            );
-                                        })}
-                                        {expandedAttributes.map(attribute => {
-                                            const isForeignKey = foreignKeyMap.has(attribute.Key);
-                                            return (
-                                                <StackListItem key={attribute.Key} item={isForeignKey ?
-                                                    <Badge className="text-lg" data-testid="foreign-key-attribute">{attribute.Key}</Badge> : attribute.Key}>
-                                                    {attribute.Value?.toLowerCase()}
-                                                </StackListItem>
-                                            );
-                                        })}
+                                        {/* Metadata attributes */}
+                                        {introAttributes.map(attribute => (
+                                            <StackListItem key={attribute.Key} item={attribute.Key}>
+                                                {attribute.Value?.toLowerCase()}
+                                            </StackListItem>
+                                        ))}
+                                        {expandedAttributes.map(attribute => (
+                                            <StackListItem key={attribute.Key} item={attribute.Key}>
+                                                {attribute.Value?.toLowerCase()}
+                                            </StackListItem>
+                                        ))}
                                     </StackList>
+                                    {columns && columns.length > 0 && (
+                                        <div>
+                                            <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">{t('columnsTitle')}</h3>
+                                            <StackList>
+                                                {columns.map((col: any) => {
+                                                    const isForeignKey = col.IsForeignKey;
+                                                    return (
+                                                        <StackListItem key={col.Name} item={isForeignKey ?
+                                                            <Badge className="text-lg" data-testid="foreign-key-attribute">{col.Name}</Badge> : col.Name}>
+                                                            {col.Type?.toLowerCase()}
+                                                        </StackListItem>
+                                                    );
+                                                })}
+                                            </StackList>
+                                        </div>
+                                    )}
                                     <div className="flex gap-sm mt-4">
                                         <Button
                                             onClick={() => {
@@ -641,15 +627,10 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit & { columns?: 
         });
     }, [navigate, data]);
 
-    // Always display Attributes (which contains both metadata and field definitions)
-    // Use columns data ONLY for IsForeignKey/IsPrimary flags to render handles
-    const displayItems = data?.Attributes || [];
-    const columnsMap = new Map();
-    if (data?.columns) {
-        data.columns.forEach((col: any) => {
-            columnsMap.set(col.Name, col);
-        });
-    }
+    // Attributes contains metadata (Type, Total Size, etc.)
+    // Columns contains field definitions with FK/PK info for handles
+    const metadataItems = data?.Attributes || [];
+    const columnItems = data?.columns || [];
 
     if (data == null) {
         return (<Card icon={<ArrowPathRoundedSquareIcon className="w-4 h-4" />}>
@@ -664,20 +645,28 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit & { columns?: 
                     <div className="flex flex-col grow">
                         <h2 className="text-3xl font-semibold mb-2 break-words">{data.Name}</h2>
                         <StackList>
+                            {/* Show metadata first (Type, Total Size, etc.) */}
                             {
-                                displayItems.map((item: any, index: number) => {
-                                    const name = item.Name || item.Key;
-                                    const rawValue = item.Type || item.Value;
-                                    // Lowercase type/value names for cleaner UI display
-                                    const value = rawValue?.toLowerCase();
-
-                                    // Check if this field has FK/PK info from columns data
-                                    const colInfo = columnsMap.get(name);
-                                    const isFKColumn = colInfo?.IsForeignKey || false;
-                                    const isPKColumn = colInfo?.IsPrimary || false;
+                                metadataItems.map((item: any, index: number) => {
+                                    const name = item.Key;
+                                    const value = item.Value?.toLowerCase();
+                                    return (
+                                        <StackListItem key={`meta-${name}-${index}`} rowClassName="items-start" item={name}>
+                                            {value}
+                                        </StackListItem>
+                                    );
+                                })
+                            }
+                            {/* Show columns with FK/PK handles */}
+                            {
+                                columnItems.map((col: any, index: number) => {
+                                    const name = col.Name;
+                                    const value = col.Type?.toLowerCase();
+                                    const isFKColumn = col.IsForeignKey || false;
+                                    const isPKColumn = col.IsPrimary || false;
 
                                     return (
-                                        <div key={`${name}-${index}`} className="relative">
+                                        <div key={`col-${name}-${index}`} className="relative">
                                             {isFKColumn && (
                                                 <Handle
                                                     type="source"
