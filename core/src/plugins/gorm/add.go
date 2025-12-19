@@ -33,7 +33,7 @@ func (p *GormPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, 
 			return false, errors.New("no fields provided for table creation")
 		}
 
-		migrator := NewMigratorHelper(db, p)
+		migrator := NewMigratorHelper(db, p.GormPluginFunctions)
 		var fullTableName string
 		if schema != "" && p.Type != engine.DatabaseType_Sqlite3 {
 			fullTableName = schema + "." + storageUnit
