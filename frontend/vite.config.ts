@@ -114,7 +114,7 @@ export default defineConfig(async () => {
     publicDir: eeExists ? path.resolve(__dirname, '../ee/frontend/public') : undefined,
   build: {
     outDir: 'build',
-    sourcemap: true,
+    sourcemap: process.env.NODE_ENV === 'production' ? 'hidden' : true,
       // Removed manual chunking to avoid dependency order issues
       // Let Vite handle chunking automatically to prevent React context errors
       chunkSizeWarningLimit: 1000, // Increase warning limit since we're not manually splitting
